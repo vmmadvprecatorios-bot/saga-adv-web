@@ -31,13 +31,13 @@
     +'<div class="nav-item" data-tela="dashboard" onclick="window.location.href=\'dashboard_padrao_metalico.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Dashboard</div>'
-    +'<div class="nav-item" data-tela="biblioteca" onclick="window.location.href=\'biblioteca_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="biblioteca" onclick="window.location.href=\'biblioteca_padrao_metalico_FINAL.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 4v16a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v16" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Biblioteca de Modelos</div>'
-    +'<div class="nav-item" data-tela="financeiro" onclick="window.location.href=\'financeiro_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="financeiro" onclick="window.location.href=\'financeiro.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Financeiro</div>'
-    +'<div class="nav-item" data-tela="marketing" onclick="window.location.href=\'marketing_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="marketing" onclick="window.location.href=\'marketing_campanhas_padrao_metalico.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8v18l-18-8v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 15v4a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Marketing</div>';
 

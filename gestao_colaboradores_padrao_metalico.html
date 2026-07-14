@@ -34,9 +34,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .hidden{display:none!important}.grow{flex:1}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* Navegação de protótipo */
-.prototype-nav{position:fixed;z-index:1500;left:50%;top:10px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:7px 9px;border:1px solid rgba(111,163,216,.3);border-radius:14px;background:linear-gradient(135deg,#17213a 0%,#11182d 100%);box-shadow:0 14px 35px rgba(0,0,0,.32)}
-[data-theme="light"] .prototype-nav{background:linear-gradient(135deg,#fffdf8,#f4eddc);border-color:rgba(138,106,35,.25)}
-.prototype-label{font-size:8px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding:0 4px;white-space:nowrap}.prototype-btn{padding:7px 9px;border-radius:8px;color:#c3cee0;font-size:9px;font-weight:700;white-space:nowrap}.prototype-btn:hover{background:rgba(201,168,76,.12);color:var(--gold-light)}.prototype-btn.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1)}[data-theme="light"] .prototype-btn{color:#7a7461}
+
 
 /* Topbar e navegação global */
 .topbar{height:64px;position:sticky;top:0;z-index:180;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px)}
@@ -67,7 +65,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .icon-btn.girando svg{animation:sagaGirar .7s ease-in-out}
 
 /* Conteúdo administrativo */
-.admin-screen{display:block}.guest-screen{display:none}.guest-screen.active{display:flex}.content{padding:28px;min-width:0;flex:1}.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:20px}.page-title-stack{display:flex;flex-direction:column;gap:5px}.page-head h1{font-family:'Cormorant Garamond',serif;font-size:30px;line-height:1.05;font-weight:600}.page-sub{font-size:11.5px;color:var(--muted)}.security-note{display:flex;align-items:center;gap:8px;max-width:480px;background:rgba(93,216,160,.08);border:1px solid rgba(93,216,160,.26);border-radius:10px;padding:10px 12px;color:var(--success);font-size:10px;line-height:1.45}.security-note svg{flex:0 0 auto}
+.admin-screen{display:block}.content{padding:28px;min-width:0;flex:1}.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:20px}.page-title-stack{display:flex;flex-direction:column;gap:5px}.page-head h1{font-family:'Cormorant Garamond',serif;font-size:30px;line-height:1.05;font-weight:600}.page-sub{font-size:11.5px;color:var(--muted)}.security-note{display:flex;align-items:center;gap:8px;max-width:480px;background:rgba(93,216,160,.08);border:1px solid rgba(93,216,160,.26);border-radius:10px;padding:10px 12px;color:var(--success);font-size:10px;line-height:1.45}.security-note svg{flex:0 0 auto}
 .panel{background:var(--panel);backdrop-filter:blur(18px);border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:0 10px 22px rgba(0,0,0,.06)}.btn-primary,.btn-secondary,.btn-danger{height:38px;border-radius:10px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:11px;font-weight:700;white-space:nowrap}.btn-primary{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));background-size:200% 100%;color:var(--navy-1);box-shadow:0 6px 15px rgba(201,168,76,.18);transition:background-position .45s ease,transform .15s}.btn-primary:hover{background-position:100% 0;transform:translateY(-1px)}.btn-secondary{background:var(--panel);border:1px solid var(--border);color:var(--text)}.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}.btn-danger{background:rgba(232,93,93,.11);border:1px solid rgba(232,93,93,.32);color:var(--danger)}.btn-danger:hover{background:rgba(232,93,93,.18)}.btn-danger:disabled,.btn-secondary:disabled,.btn-primary:disabled{opacity:.45;cursor:not-allowed}.btn-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);letter-spacing:1px}.btn-icon:hover{border-color:var(--gold);color:var(--gold)}.field,.textarea{width:100%;min-height:38px;padding:0 11px;background:rgba(255,255,255,.05);border:1px solid var(--border-soft);border-radius:9px;color:var(--text);outline:0;font-size:11px}.field:focus,.textarea:focus{border-color:var(--gold)}.textarea{min-height:78px;padding:10px;resize:vertical}[data-theme="light"] .field,[data-theme="light"] .textarea{background:rgba(255,255,255,.86);border-color:rgba(138,106,35,.18)}
 
 .kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:16px}.kpi-card{padding:16px;position:relative;overflow:hidden}.kpi-card:before{content:"";position:absolute;right:-18px;top:-18px;width:86px;height:86px;border-radius:50%;background:rgba(201,168,76,.09)}.kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700}.kpi-number{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;margin-top:5px}.kpi-meta{display:flex;align-items:center;gap:7px;margin-top:4px;font-size:9.5px;color:var(--muted)}.kpi-icon{position:absolute;right:14px;bottom:14px;color:var(--gold);opacity:.75}
@@ -81,23 +79,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .history-list{display:flex;flex-direction:column;gap:9px}.history-item{padding:12px;border:1px solid var(--border-soft);border-radius:11px;background:rgba(255,255,255,.025);display:flex;align-items:flex-start;gap:10px}.history-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto}.history-icon.admin{background:rgba(232,184,76,.12);color:var(--warning)}.history-icon.self{background:rgba(93,216,160,.12);color:var(--success)}.history-item strong{font-size:10.5px}.history-item p{font-size:9.5px;color:var(--muted);line-height:1.5;margin-top:3px}.empty-state{padding:30px 16px;text-align:center;color:var(--muted);font-size:10px}.empty-state svg{color:var(--gold);margin-bottom:8px}.empty-state h3{font-family:'Cormorant Garamond',serif;color:var(--text);font-size:20px;margin-bottom:5px}
 
 /* Recuperação de senha */
-.guest-screen{position:relative;z-index:1;min-height:100vh;align-items:center;justify-content:center;padding:102px 18px 48px}.guest-top{position:fixed;z-index:180;top:0;left:0;right:0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px)}[data-theme="light"] .guest-top{background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(247,245,240,.98))}.guest-panel{width:min(100%,460px);padding:30px;text-align:center}.guest-crest{width:75px;height:75px;margin:0 auto 16px;display:grid;place-items:center;border-radius:22px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700}.guest-panel h1{font-family:'Cormorant Garamond',serif;font-size:32px;line-height:1.05}.guest-panel .lead{margin:9px auto 20px;font-size:10.5px;color:var(--muted);line-height:1.6;max-width:350px}.guest-form{text-align:left}.guest-form .field-group{margin-top:12px}.password-wrap{position:relative}.password-wrap .field{padding-right:40px}.password-eye{position:absolute;right:8px;bottom:4px;width:30px;height:30px;color:var(--muted);display:grid;place-items:center}.password-eye:hover{color:var(--gold)}.password-meter{margin-top:8px}.meter-track{height:6px;border-radius:8px;background:rgba(255,255,255,.09);overflow:hidden}.meter-fill{height:100%;width:0;border-radius:8px;transition:.25s}.meter-text{font-size:9px;color:var(--muted);margin-top:6px}.guest-action{width:100%;margin-top:16px}.guest-footer{margin-top:15px;font-size:9.5px;color:var(--muted)}.guest-footer button{color:var(--gold);font-weight:700}.guest-notice{display:flex;gap:8px;text-align:left;padding:11px;border-radius:11px;background:rgba(232,184,76,.09);border:1px solid rgba(232,184,76,.24);color:var(--warning);font-size:9.5px;line-height:1.5;margin-bottom:13px}.guest-success-icon{width:70px;height:70px;border-radius:22px;display:grid;place-items:center;margin:0 auto 16px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:var(--gold)}.guest-success-icon svg{width:34px;height:34px}.guest-panel .help-text{font-size:9px;color:var(--muted);margin-top:10px;line-height:1.5}
+
 .toast-area{position:fixed;right:22px;top:78px;z-index:1800;display:flex;flex-direction:column;gap:9px}.toast{display:flex;gap:9px;align-items:flex-start;width:min(340px,calc(100vw - 32px));padding:12px;border-radius:12px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);border:1px solid var(--border);box-shadow:var(--shadow);transform:translateX(18px);opacity:0;transition:.25s}.toast.show{transform:translateX(0);opacity:1}[data-theme="light"] .toast{background:linear-gradient(135deg,#fffdf8 0%,#f4eddc 100%)}.toast-icon{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto}.toast.success .toast-icon{background:rgba(93,216,160,.15);color:var(--success)}.toast.error .toast-icon{background:rgba(232,93,93,.15);color:var(--danger)}.toast.info .toast-icon{background:rgba(111,163,216,.15);color:var(--info)}.toast p{font-size:10.5px;line-height:1.45}.toast p b{color:var(--gold)}
 
 @media(max-width:1024px){.sidebar{width:190px;flex-basis:190px}.content{padding:22px}.quick-search{width:230px}.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:760px){.prototype-nav{left:12px;right:12px;transform:none;top:7px;overflow-x:auto;justify-content:flex-start}.prototype-label{display:none}.topbar{padding:0 14px}.hamburger{display:block}.brand-name{font-size:16px}.quick-search{display:none}.presence-btn{padding:7px 9px}.presence-btn span{display:none}.theme-toggle{width:62px}.theme-toggle .knob{width:22px;height:22px}.theme-toggle svg{width:13px}.theme-toggle .knob{left:3px}[data-theme="light"] .theme-toggle .knob{left:35px}.sidebar{position:fixed;top:64px;left:-230px;width:220px;height:calc(100vh - 64px);z-index:170;transition:left .28s}.sidebar.open{left:0}.content{padding:18px 13px}.page-head h1{font-size:26px}.security-note{max-width:none}.kpi-grid{grid-template-columns:1fr}.toolbar{padding:11px}.toolbar-left,.toolbar-right{width:100%}.employee-search{min-width:0}.toolbar-right .btn-primary{width:100%}.employee-table,.employee-table thead,.employee-table tbody,.employee-table tr,.employee-table th,.employee-table td{display:block;min-width:0}.employee-table thead{display:none}.employee-table{border:0}.employee-table tr{margin-bottom:10px;border:1px solid var(--border-soft);border-radius:13px;padding:6px;background:rgba(255,255,255,.02)}.employee-table td{border-bottom:1px solid var(--border-soft);padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:right}.employee-table td:last-child{border-bottom:0}.employee-table td:before{content:attr(data-label);font-size:8.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.55px;text-align:left}.employee-table td[data-label="Colaborador"]{display:block;text-align:left}.employee-table td[data-label="Colaborador"]:before{display:none}.field-grid{grid-template-columns:1fr}.field-group.full{grid-column:auto}.modal-overlay{padding:8px}.modal-body{padding:14px}.modal-head,.modal-foot{padding-left:14px;padding-right:14px}.pagination{align-items:flex-start;flex-direction:column}.page-pages{width:100%}.guest-top{padding:0 14px}.guest-screen{padding:128px 13px 48px}.guest-panel{padding:24px 18px}.guest-panel h1{font-size:28px}.toast-area{right:12px;top:122px}.top-right{gap:8px}.avatar{width:32px;height:32px}.popover{position:fixed;right:10px;top:68px;width:min(330px,calc(100vw - 20px))}}
+@media(max-width:760px){.topbar{padding:0 14px}.hamburger{display:block}.brand-name{font-size:16px}.quick-search{display:none}.presence-btn{padding:7px 9px}.presence-btn span{display:none}.theme-toggle{width:62px}.theme-toggle .knob{width:22px;height:22px}.theme-toggle svg{width:13px}.theme-toggle .knob{left:3px}[data-theme="light"] .theme-toggle .knob{left:35px}.sidebar{position:fixed;top:64px;left:-230px;width:220px;height:calc(100vh - 64px);z-index:170;transition:left .28s}.sidebar.open{left:0}.content{padding:18px 13px}.page-head h1{font-size:26px}.security-note{max-width:none}.kpi-grid{grid-template-columns:1fr}.toolbar{padding:11px}.toolbar-left,.toolbar-right{width:100%}.employee-search{min-width:0}.toolbar-right .btn-primary{width:100%}.employee-table,.employee-table thead,.employee-table tbody,.employee-table tr,.employee-table th,.employee-table td{display:block;min-width:0}.employee-table thead{display:none}.employee-table{border:0}.employee-table tr{margin-bottom:10px;border:1px solid var(--border-soft);border-radius:13px;padding:6px;background:rgba(255,255,255,.02)}.employee-table td{border-bottom:1px solid var(--border-soft);padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:right}.employee-table td:last-child{border-bottom:0}.employee-table td:before{content:attr(data-label);font-size:8.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.55px;text-align:left}.employee-table td[data-label="Colaborador"]{display:block;text-align:left}.employee-table td[data-label="Colaborador"]:before{display:none}.field-grid{grid-template-columns:1fr}.field-group.full{grid-column:auto}.modal-overlay{padding:8px}.modal-body{padding:14px}.modal-head,.modal-foot{padding-left:14px;padding-right:14px}.pagination{align-items:flex-start;flex-direction:column}.page-pages{width:100%}.toast-area{right:12px;top:122px}.top-right{gap:8px}.avatar{width:32px;height:32px}.popover{position:fixed;right:10px;top:68px;width:min(330px,calc(100vw - 20px))}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body data-theme="dark">
-
-<div class="prototype-nav" aria-label="Navegação de protótipo">
-  <span class="prototype-label">Protótipo</span>
-  <button class="prototype-btn active" data-prototype="admin">Gestão</button>
-  <button class="prototype-btn" data-prototype="reset-modal">Modal de reset</button>
-  <button class="prototype-btn" data-prototype="forgot">Esqueci a senha</button>
-  <button class="prototype-btn" data-prototype="new-password">Nova senha</button>
-</div>
 
 <div id="adminApp" class="admin-screen">
   <div class="overlay" id="overlay"></div>
@@ -118,11 +108,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
     </main>
   </div>
 </div>
-
-<section class="guest-screen" id="guestScreen">
-  <header class="guest-top"><div class="brand"><svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="guestCrestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e8d48a"/><stop offset="38%" stop-color="#c9a84c"/><stop offset="60%" stop-color="#8a6f33"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#guestCrestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#guestCrestGold)">VM</text></g></svg><div class="brand-name">VMM<b>ADV</b></div></div><button class="theme-toggle" id="guestThemeToggle" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button></header>
-  <article class="guest-panel panel" id="guestPanel"></article>
-</section>
 
 <div class="modal-overlay" id="resetModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h2 id="resetModalTitle">Resetar senha</h2><p id="resetModalSubtitle"></p></div><button class="modal-close" data-close="resetModal">✕</button></div><div class="modal-body" id="resetModalBody"></div><div class="modal-foot"><button class="btn-secondary" data-close="resetModal">Cancelar</button><button class="btn-danger" id="confirmResetButton">Confirmar reset</button></div></div></div>
 <div class="modal-overlay" id="historyModal"><div class="modal wide"><div class="modal-head"><div class="modal-title-stack"><h2 id="historyModalTitle">Histórico de senha</h2><p>Registro de metadados de segurança. Nenhuma senha é exibida.</p></div><button class="modal-close" data-close="historyModal">✕</button></div><div class="modal-body"><div id="historyModalBody"></div><div class="pagination" id="historyPagination"></div></div><div class="modal-foot"><button class="btn-secondary" data-close="historyModal">Fechar</button></div></div></div>
@@ -155,9 +140,6 @@ var state = {
   historyEmployeeId: null, historyPage: 1,
   historyItems: [],
   historyLoading: false,
-  guestMode: 'forgot',
-  guestRequestSent: false,
-  guestResetComplete: false,
   session: null,
   meuInternoId: null,
   employees: [],
@@ -503,122 +485,6 @@ function renderHistory(){
   });
 }
 
-// ── Tela de recuperação de senha (guest) ──────────────────────
-function renderGuest(){
-  var panel = document.getElementById('guestPanel');
-  // Fluxo "esqueci a senha"
-  if(state.guestMode === 'forgot'){
-    if(state.guestRequestSent){
-      panel.innerHTML =
-        '<div class="guest-success-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.7"/></svg></div>' +
-        '<h1>Verifique seu e-mail</h1>' +
-        '<p class="lead">Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha em poucos minutos.</p>' +
-        '<button class="btn-primary guest-action" id="backLoginButton">Voltar para o login</button>';
-      document.getElementById('backLoginButton').addEventListener('click', function(){window.location.href='login_padrao_metalico.html';});
-      return;
-    }
-    panel.innerHTML =
-      '<div class="guest-crest">VM</div>' +
-      '<h1>Esqueceu sua senha?</h1>' +
-      '<p class="lead">Informe o e-mail cadastrado no Sistema VMM<span style="color:var(--gold)">ADV</span> para receber o link de redefinição.</p>' +
-      '<form class="guest-form" id="forgotForm">' +
-      '<div class="field-group"><label for="forgotEmail">E-mail cadastrado</label><input class="field" id="forgotEmail" type="email" placeholder="nome@vmmadv.com.br" required></div>' +
-      '<button class="btn-primary guest-action" type="submit">Enviar link de redefinição</button>' +
-      '</form>' +
-      '<p class="guest-footer">Lembrou a senha? <button id="guestLoginLink">Voltar para o login</button></p>';
-    document.getElementById('guestLoginLink').addEventListener('click', function(){window.location.href='login_padrao_metalico.html';});
-    document.getElementById('forgotForm').addEventListener('submit', async function(e){
-      e.preventDefault();
-      var btn = e.currentTarget.querySelector('button[type="submit"]');
-      var email = document.getElementById('forgotEmail').value.trim();
-      btn.disabled = true;
-      btn.innerHTML = '<span class="loading-inline"><span class="spinner"></span> Enviando</span>';
-      try{
-        var resetUrl = window.location.href.replace(/\/[^\/]*(\?.*)?$/, '/reset_senha_padrao_metalico.html');
-        var r = await _sb.auth.resetPasswordForEmail(email, {redirectTo: resetUrl});
-        // Não revelamos se o e-mail existe ou não (segurança)
-        if(r.error && r.error.message !== 'For security purposes, you can only request this once every 60 seconds'){
-          console.warn('[forgot]', r.error.message);
-        }
-        state.guestRequestSent = true;
-        renderGuest();
-      }catch(err){
-        showToast('Erro ao processar solicitação. Tente novamente.','error');
-        btn.disabled = false;
-        btn.textContent = 'Enviar link de redefinição';
-      }
-    });
-    return;
-  }
-
-  // Estado de sucesso — protótipo visual (sem chamada real ao Supabase)
-  if(state.guestResetComplete){
-    panel.innerHTML =
-      '<div class="guest-success-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
-      '<h1>Senha redefinida com sucesso.</h1>' +
-      '<p class="lead">Sua nova senha foi registrada de forma segura. Você já pode acessar o sistema com suas novas credenciais.</p>' +
-      '<div class="guest-notice" style="background:rgba(111,163,216,.09);border-color:rgba(111,163,216,.28);color:var(--info);text-align:left;margin-bottom:14px">' +
-      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-      '<span><b>Protótipo visual.</b> Nenhuma senha foi alterada. O fluxo real é executado por <code>reset_senha_padrao_metalico.html</code>.</span>' +
-      '</div>' +
-      '<button class="btn-primary guest-action" id="goLoginButton">Ir para o login</button>';
-    document.getElementById('goLoginButton').addEventListener('click', function(){window.location.href='login_padrao_metalico.html';});
-    return;
-  }
-
-  // ── VIEW "NOVA SENHA" — PROTÓTIPO VISUAL APENAS ──────────────
-  // Esta view existe exclusivamente para revisão de design (navegação do protótipo).
-  // O fluxo real de redefinição de senha via token de recovery é processado
-  // integralmente por reset_senha_padrao_metalico.html, que é o redirectTo
-  // de todos os links enviados por e-mail. Nenhuma chamada Supabase é feita aqui.
-  panel.innerHTML =
-    '<div class="guest-crest">VM</div>' +
-    '<h1>Definir nova senha</h1>' +
-    '<p class="lead">Olá, <b>colaborador</b>. Escolha uma nova senha para acessar o Sistema VMM<span style="color:var(--gold)">ADV</span>.</p>' +
-    '<div class="guest-notice" style="background:rgba(111,163,216,.09);border-color:rgba(111,163,216,.28);color:var(--info)">' +
-    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
-    '<span><b>Visualização de protótipo.</b> O fluxo real é tratado por <code>reset_senha_padrao_metalico.html</code>. Este formulário valida campos localmente mas não chama o Supabase.</span>' +
-    '</div>' +
-    '<form class="guest-form" id="newPasswordForm">' +
-    '<div class="field-group"><label for="newPassword">Nova senha</label><div class="password-wrap"><input class="field" id="newPassword" type="password" autocomplete="new-password" required><button type="button" class="password-eye" data-password-eye="newPassword">◉</button></div></div>' +
-    '<div class="field-group"><label for="confirmPassword">Confirmar nova senha</label><div class="password-wrap"><input class="field" id="confirmPassword" type="password" autocomplete="new-password" required><button type="button" class="password-eye" data-password-eye="confirmPassword">◉</button></div></div>' +
-    '<div class="password-meter"><div class="meter-track"><div class="meter-fill" id="meterFill"></div></div><div class="meter-text" id="meterText">Digite uma senha para verificar a segurança.</div></div>' +
-    '<button class="btn-primary guest-action" type="submit">Redefinir senha e entrar</button>' +
-    '</form>';
-
-  document.querySelectorAll('[data-password-eye]').forEach(function(btn){
-    btn.addEventListener('click', function(){var inp=document.getElementById(btn.dataset.passwordEye);inp.type=inp.type==='password'?'text':'password';});
-  });
-  document.getElementById('newPassword').addEventListener('input', function(e){updatePasswordStrength(e.target.value);});
-
-  // Protótipo: valida campos localmente e exibe tela de sucesso visual.
-  // NÃO chama _sb.auth.updateUser() nem acessa o banco de dados.
-  document.getElementById('newPasswordForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    var a = document.getElementById('newPassword').value;
-    var b = document.getElementById('confirmPassword').value;
-    if(a.length<8){showToast('A nova senha deve ter ao menos 8 caracteres.','error');return;}
-    if(a!==b){showToast('A confirmação da senha não confere.','error');return;}
-    // Exibe tela de sucesso como protótipo visual
-    state.guestResetComplete = true;
-    renderGuest();
-  });
-}
-
-function updatePasswordStrength(value){
-  var score=0;
-  if(value.length>=8)score++;
-  if(/[A-Z]/.test(value))score++;
-  if(/[0-9]/.test(value))score++;
-  if(/[^A-Za-z0-9]/.test(value))score++;
-  var labels=['Fraca','Fraca','Média','Boa','Forte'];
-  var colors=['var(--danger)','var(--danger)','var(--warning)','var(--gold)','var(--success)'];
-  var widths=[18,28,52,74,100];
-  var fill=document.getElementById('meterFill');
-  var text=document.getElementById('meterText');
-  if(fill){fill.style.width=widths[score]+'%';fill.style.background=colors[score];text.textContent='Segurança da senha: '+labels[score]+'.';}
-}
-
 // ── Topbar ────────────────────────────────────────────────────
 // Obsoleto: presença, notificações, hamburguer e tema da topbar/sidebar
 // principais agora são cuidados exclusivamente pelo saga_ui.js.
@@ -626,35 +492,11 @@ function renderPresence(){ /* obsoleto: saga_ui.js cuida da presença e das noti
 
 function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='dark'?'light':'dark';}
 function setupTopbar(){
-  // guestThemeToggle pertence à tela de "Esqueci a senha/Nova senha" (protótipo
-  // visual isolado), que não usa a topbar/sidebar unificadas do saga_ui.js.
-  document.getElementById('guestThemeToggle').addEventListener('click',toggleTheme);
   document.addEventListener('click',function(e){
     if(!e.target.closest('.action-menu-wrap')&&!e.target.closest('.status-badge')&&!e.target.closest('.action-menu')&&!e.target.closest('.status-menu'))closeActionMenus();
   });
   window.addEventListener('resize',closeActionMenus);
   window.addEventListener('scroll',closeActionMenus,true);
-}
-
-// ── Navegação do protótipo ────────────────────────────────────
-function switchPrototype(target){
-  document.querySelectorAll('[data-prototype]').forEach(function(btn){btn.classList.toggle('active',btn.dataset.prototype===target);});
-  if(target==='admin'||target==='reset-modal'){
-    document.getElementById('adminApp').style.display='block';
-    document.getElementById('guestScreen').classList.remove('active');
-    if(target==='reset-modal'){
-      // Abrir modal de reset no primeiro colaborador não-protegido
-      var first=state.employees.find(function(e){return !e.protected;});
-      if(first)openResetModal(first.id);
-    }
-    return;
-  }
-  document.getElementById('adminApp').style.display='none';
-  document.getElementById('guestScreen').classList.add('active');
-  state.guestMode=target==='forgot'?'forgot':'new-password';
-  state.guestRequestSent=false;
-  state.guestResetComplete=false;
-  renderGuest();
 }
 
 // ── Inicialização ─────────────────────────────────────────────
@@ -691,9 +533,6 @@ async function init(){
   });
   document.getElementById('employeeSearch').addEventListener('input',function(e){state.search=e.target.value;state.page=1;renderEmployees();});
   document.getElementById('globalSearch').addEventListener('input',function(e){state.search=e.target.value;document.getElementById('employeeSearch').value=e.target.value;state.page=1;renderEmployees();});
-
-  // Navegação do protótipo
-  document.querySelectorAll('[data-prototype]').forEach(function(btn){btn.addEventListener('click',function(){switchPrototype(btn.dataset.prototype);});});
 
   // Modais
   document.querySelectorAll('[data-close]').forEach(function(btn){btn.addEventListener('click',function(){closeModal(btn.dataset.close);});});
