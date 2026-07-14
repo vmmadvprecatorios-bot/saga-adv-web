@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Importação de Listas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+  --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;
+  --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+  --border:rgba(201,168,76,.17);--border-soft:rgba(201,168,76,.12);
+  --text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;
+  --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
+}
+[data-theme="light"]{
+  --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+  --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
+  --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.89);--panel-solid:#fffdf8;
+  --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
+  --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden;transition:background .25s ease,color .25s ease}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,rgba(201,168,76,.08),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
+button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+a,a:visited,a:hover,a:focus{color:inherit;text-decoration:none}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--gold) 32%,transparent);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+.hidden{display:none!important}.overlay{display:none;position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.48)}.overlay.open{display:block}.grow{flex:1}.text-warning{color:var(--warning)}.text-success{color:var(--success)}.text-muted{color:var(--muted)}
+
+/* Topbar */
+.topbar{height:64px;position:sticky;top:0;z-index:180;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.95),rgba(10,14,26,.98));backdrop-filter:blur(18px)}
+[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.95),rgba(247,245,240,.99))}
+.top-left,.top-right{display:flex;align-items:center;gap:14px}.top-left{min-width:0}.top-right{flex:0 0 auto}
+.hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px}.hamburger span{display:block;width:18px;height:1.7px;margin:3px auto;border-radius:2px;background:var(--gold)}
+.brand{display:flex;align-items:center;gap:9px;flex:0 0 auto}.crest{width:32px;height:32px}.brand-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:.5px}.brand-name b{color:var(--gold)}
+.quick-search{width:min(330px,34vw);height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--panel)}.quick-search:focus-within{border-color:var(--gold)}.quick-search svg{color:var(--muted);flex:0 0 auto}.quick-search input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:11px}.quick-search input::placeholder{color:var(--muted)}
+.presence-wrap,.notification-wrap{position:relative}.presence-btn{display:flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--border-soft);border-radius:18px;background:var(--panel);color:var(--muted);font-size:11px;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;display:inline-block}.dot.online{background:var(--success);box-shadow:0 0 7px var(--success)}.icon-btn{width:36px;height:36px;display:grid;place-items:center;position:relative;border:1px solid var(--border-soft);border-radius:var(--radius-sm);background:var(--panel)}.notif-count{position:absolute;right:-5px;top:-5px;min-width:16px;height:16px;display:grid;place-items:center;border-radius:8px;background:var(--danger);color:var(--navy-1);font-size:9px;font-weight:700}
+.theme-toggle{width:70px;height:32px;display:flex;align-items:center;justify-content:space-between;position:relative;padding:3px;border:1px solid var(--border-soft);border-radius:18px;background:var(--panel)}.theme-toggle svg{width:15px;height:15px;z-index:2}.theme-toggle .sun{color:var(--gold)}.theme-toggle .moon{color:var(--muted)}.theme-toggle .knob{width:24px;height:24px;position:absolute;left:3px;top:3px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-deep));box-shadow:0 2px 7px rgba(0,0,0,.18);transition:left .25s ease}[data-theme="light"] .theme-toggle .knob{left:41px}
+.avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-deep));color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700}
+.popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:292px;padding:9px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));box-shadow:var(--shadow);z-index:900}.popover.open{display:block}.pop-title{padding:7px 8px 5px;color:var(--muted);font-size:9px;letter-spacing:1.1px;text-transform:uppercase}.pop-item,.notification-item{width:100%;display:flex;align-items:center;gap:9px;padding:8px;border-radius:9px;font-size:11px}.pop-item:hover,.notification-item:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}.pop-meta,.notification-time{margin-top:2px;color:var(--muted);font-size:9px}.small-avatar{width:23px;height:23px;display:grid;place-items:center;border-radius:50%;background:var(--gold-light);color:var(--navy-1);font-size:8px;font-weight:700}.notification-pop{width:330px}.notification-item{align-items:flex-start}.n-dot{width:7px;height:7px;flex:0 0 auto;margin-top:5px;border-radius:50%;background:var(--gold)}.notification-text{font-size:10.5px;line-height:1.45}
+
+/* Shell */
+.app{position:relative;z-index:1;display:flex}.sidebar{width:220px;flex:0 0 220px;min-height:calc(100vh - 64px);height:calc(100vh - 64px);position:sticky;top:64px;align-self:flex-start;overflow-y:auto;padding:18px 0;border-right:1px solid var(--border-soft);background:var(--panel);backdrop-filter:blur(14px)}.nav-section{padding:15px 22px 6px;color:var(--muted);font-size:9px;letter-spacing:1.8px;text-transform:uppercase}.nav-item{display:flex;align-items:center;gap:10px;padding:10px 21px;border-left:2px solid transparent;color:var(--muted);font-size:12px;transition:.18s}.nav-item svg{width:15px;height:15px;flex:0 0 auto}.nav-item:hover{color:var(--text);background:color-mix(in srgb,var(--text) 3%,transparent)}.nav-item.active{border-left-color:var(--gold);background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 14%,transparent),transparent);color:var(--gold);font-weight:700}
+.conteudo{min-width:0;flex:1;padding:28px}.header-pagina{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:20px}.title-stack{display:flex;flex-direction:column;gap:5px}.header-pagina h1{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;line-height:1.05}.page-sub{font-size:11.5px;color:var(--muted);line-height:1.55}.panel{border:1px solid var(--border-soft);border-radius:var(--radius);background:var(--panel);backdrop-filter:blur(18px);box-shadow:0 10px 22px rgba(0,0,0,.06)}[data-theme="light"] .panel{box-shadow:0 10px 22px rgba(81,61,20,.06)}
+
+/* Buttons and common chips */
+.btn-primary,.btn-secondary,.btn-danger{height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 14px;border-radius:var(--radius-sm);font-size:11px;font-weight:700;white-space:nowrap}.btn-primary{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold-deep));background-size:200% 100%;box-shadow:0 6px 15px color-mix(in srgb,var(--gold) 18%,transparent);color:var(--navy-1);transition:background-position .45s ease,transform .15s}.btn-primary:hover:not(:disabled){background-position:100% 0;transform:translateY(-1px)}.btn-secondary{border:1px solid var(--border);background:var(--panel);color:var(--text)}.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}.btn-danger{border:1px solid color-mix(in srgb,var(--danger) 32%,transparent);background:color-mix(in srgb,var(--danger) 11%,transparent);color:var(--danger)}.btn-primary:disabled,.btn-secondary:disabled,.btn-danger:disabled{opacity:.45;cursor:not-allowed;filter:saturate(.6)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:12px;font-size:9px;font-weight:700;white-space:nowrap}.badge::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}.badge-neutral{color:var(--info);background:color-mix(in srgb,var(--info) 13%,transparent)}.badge-additional{color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent)}.badge-warning{color:var(--warning);background:color-mix(in srgb,var(--warning) 14%,transparent)}.badge-success{color:var(--success);background:color-mix(in srgb,var(--success) 14%,transparent)}.badge-muted{color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent)}
+
+/* Wizard */
+.wizard-shell{padding:18px;margin-bottom:18px}.wizard-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}.wizard-top h2,.history-head h2{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600}.wizard-note{max-width:440px;color:var(--muted);font-size:10.5px;line-height:1.5}.stepper{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-bottom:22px}.step{position:relative;display:flex;align-items:center;gap:9px;min-width:0;padding:11px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 2.4%,transparent)}.step-index{width:23px;height:23px;display:grid;place-items:center;flex:0 0 auto;border:1px solid var(--border-soft);border-radius:50%;color:var(--muted);font-size:10px;font-weight:700}.step-copy{display:flex;flex-direction:column;gap:2px;min-width:0}.step-copy b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.step-copy small{font-size:8.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.step.active{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent)}.step.active .step-index{border-color:var(--gold);background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-deep));color:var(--navy-1)}.step.done .step-index{border-color:var(--success);color:var(--success)}.step.done .step-index::after{content:"✓"}.step.done .step-index{font-size:0}.step.done .step-index::after{font-size:12px}.wizard-step{display:none}.wizard-step.active{display:block}.step-actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:20px}.step-actions .right-actions{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+
+/* Step 1 */
+.upload-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:258px;padding:32px;border:1.5px dashed color-mix(in srgb,var(--gold) 36%,transparent);border-radius:var(--radius);background:linear-gradient(145deg,color-mix(in srgb,var(--gold) 6%,transparent),color-mix(in srgb,var(--text) 1.5%,transparent));text-align:center;cursor:pointer;transition:.2s}.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,transparent)}.upload-illustration{width:62px;height:62px;display:grid;place-items:center;margin-bottom:15px;border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-radius:18px;background:color-mix(in srgb,var(--gold) 11%,transparent);color:var(--gold)}.upload-zone h3{font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:600}.upload-zone p{max-width:510px;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.6}.file-types{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin-top:14px}.type-pill{padding:5px 8px;border:1px solid var(--border-soft);border-radius:9px;color:var(--muted);font-size:9px;font-weight:700}.upload-helper{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:13px}.upload-helper button{font-size:10px;color:var(--gold);text-decoration:underline dotted}.selected-file{display:none;align-items:center;gap:13px;padding:16px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--text) 2.6%,transparent)}.selected-file.visible{display:flex}.file-type-icon{width:44px;height:44px;display:grid;place-items:center;flex:0 0 auto;border-radius:12px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700}.file-info{display:flex;flex-direction:column;gap:3px;min-width:0}.file-info b{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-info small{color:var(--muted);font-size:10px}.file-side{margin-left:auto;display:flex;gap:8px;align-items:center}.pdf-notice{display:none;align-items:flex-start;gap:9px;margin-top:12px;padding:11px;border:1px solid color-mix(in srgb,var(--warning) 28%,transparent);border-radius:11px;background:color-mix(in srgb,var(--warning) 8%,transparent);color:var(--warning);font-size:10.5px;line-height:1.5}.pdf-notice.visible{display:flex}
+
+/* Step 2 */
+.mapping-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}.table-wrap{position:relative;overflow:auto;border:1px solid var(--border-soft);border-radius:13px}.preview-table,.review-table{width:100%;border-collapse:collapse;min-width:940px}.preview-table th,.review-table th{padding:11px 12px;background:color-mix(in srgb,var(--text) 2.8%,transparent);border-bottom:1px solid var(--border-soft);color:var(--muted);font-size:9px;font-weight:700;letter-spacing:.65px;text-align:left;text-transform:uppercase}.preview-table td,.review-table td{padding:10px 12px;border-bottom:1px solid color-mix(in srgb,var(--text) 4%,transparent);font-size:10.5px;vertical-align:top}.preview-table tr:last-child td,.review-table tr:last-child td{border-bottom:0}.preview-table tr:hover,.review-table tr:hover{background:color-mix(in srgb,var(--text) 2%,transparent)}.mapping-panel{padding:16px}.mapping-head{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}.mapping-head h3{font-family:'Cormorant Garamond',serif;font-size:22px}.mapping-head p{font-size:10px;color:var(--muted);line-height:1.5}.mapping-list{display:flex;flex-direction:column;gap:9px}.mapping-row{display:grid;grid-template-columns:minmax(0,1fr) 1.1fr;gap:8px;align-items:center;padding:9px;border:1px solid var(--border-soft);border-radius:10px;background:color-mix(in srgb,var(--text) 2%,transparent)}.mapping-source{display:flex;flex-direction:column;gap:2px;min-width:0}.mapping-source b{font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mapping-source small{font-size:8.5px;color:var(--muted)}.custom-select{position:relative;z-index:10}.custom-select.open{z-index:850}.custom-select-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 9px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel-solid);color:var(--text);font-size:9.5px}.custom-select-trigger:hover,.custom-select.open .custom-select-trigger{border-color:var(--gold)}.select-caret{width:8px;height:8px;flex:0 0 auto;margin-top:-4px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg)}.custom-select.open .select-caret{margin-top:4px;transform:rotate(-135deg)}.custom-select-menu{display:none;position:absolute;left:0;right:0;top:calc(100% + 5px);max-height:245px;overflow:auto;padding:6px;border:1px solid var(--border);border-radius:11px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));box-shadow:0 18px 44px rgba(0,0,0,.42);z-index:900}.custom-select.open .custom-select-menu{display:block}.custom-select-option{display:flex;width:100%;padding:8px;border-radius:7px;color:var(--text);font-size:9.5px}.custom-select-option:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold)}.custom-select-option.selected{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700}.validation-box{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding:12px;border:1px solid color-mix(in srgb,var(--warning) 27%,transparent);border-radius:11px;background:color-mix(in srgb,var(--warning) 8%,transparent);color:var(--warning);font-size:10px;line-height:1.5}.validation-box.ok{border-color:color-mix(in srgb,var(--success) 28%,transparent);background:color-mix(in srgb,var(--success) 8%,transparent);color:var(--success)}
+
+/* Step 3 */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.kpi-card{padding:16px}.kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:700}.kpi-value{margin-top:7px;font-family:'Cormorant Garamond',serif;font-size:33px;font-weight:600;line-height:1}.kpi-meta{margin-top:8px;color:var(--muted);font-size:9px;line-height:1.4}.kpi-card.additional .kpi-value{color:var(--gold)}.kpi-card.warning .kpi-value{color:var(--warning)}.review-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}.review-head h3{font-family:'Cormorant Garamond',serif;font-size:22px}.review-head p{margin-top:3px;color:var(--muted);font-size:10px;line-height:1.45}.filter-pills{display:flex;gap:4px;flex-wrap:wrap;padding:4px;border:1px solid var(--border-soft);border-radius:13px;background:color-mix(in srgb,var(--text) 3%,transparent)}.filter-pill{padding:7px 10px;border-radius:9px;color:var(--muted);font-size:9px;font-weight:700;white-space:nowrap}.filter-pill:hover{color:var(--text)}.filter-pill.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1)}.classification-detail{max-width:280px;color:var(--muted);font-size:9.5px;line-height:1.45}.classification-detail strong{color:var(--gold)}.review-actions{display:flex;gap:6px;flex-wrap:wrap}.btn-inline{padding:6px 8px;border:1px solid var(--border-soft);border-radius:7px;font-size:9px;font-weight:700}.btn-inline:hover{border-color:var(--gold);color:var(--gold)}.btn-inline.ignore{border-color:color-mix(in srgb,var(--danger) 26%,transparent);color:var(--danger)}.ignored-row{opacity:.45}.pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:13px;border-top:1px solid var(--border-soft)}.page-size,.page-pages{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.page-size span,.page-pages span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}.page-size button,.page-pages button{min-width:30px;height:30px;border:1px solid var(--border-soft);border-radius:9px;font-size:9px;color:var(--muted)}.page-size button.active,.page-pages button.active{background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 38%,transparent);color:var(--gold)}.page-size input{width:58px;height:30px;border:1px solid var(--border-soft);border-radius:9px;background:transparent;color:var(--text);font-size:9px;padding:0 7px}
+
+/* Step 4 */
+.result-screen{display:none;min-height:325px;padding:34px;text-align:center}.result-screen.visible{display:block}.result-icon{width:76px;height:76px;display:grid;place-items:center;margin:0 auto 14px;border:1px solid color-mix(in srgb,var(--gold) 33%,transparent);border-radius:24px;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 15%,transparent),color-mix(in srgb,var(--gold-light) 10%,transparent));color:var(--gold);font-size:32px}.result-screen h3{font-family:'Cormorant Garamond',serif;font-size:31px;font-weight:600}.result-screen p{max-width:570px;margin:7px auto 0;color:var(--muted);font-size:11px;line-height:1.65}.result-summary{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px}.result-metric{padding:10px 12px;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 2.4%,transparent);font-size:10px}.result-metric b{display:block;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:22px}.result-actions{display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin-top:20px}.processing-screen{display:none;min-height:325px;align-items:center;justify-content:center;flex-direction:column;padding:34px;text-align:center}.processing-screen.visible{display:flex}.processing-spinner{width:44px;height:44px;border:4px solid color-mix(in srgb,var(--gold) 18%,transparent);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}.processing-screen h3{margin-top:16px;font-family:'Cormorant Garamond',serif;font-size:27px}.processing-screen p{margin-top:5px;color:var(--muted);font-size:10.5px}@keyframes spin{to{transform:rotate(360deg)}}
+
+/* History */
+.history-panel{padding:18px}.history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}.history-head p{margin-top:4px;color:var(--muted);font-size:10px;line-height:1.5}.history-list{display:flex;flex-direction:column;gap:8px}.history-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;padding:11px;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 2%,transparent)}.history-file-icon{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--gold) 11%,transparent);color:var(--gold);font-family:'Cormorant Garamond',serif;font-weight:700}.history-copy{display:flex;flex-direction:column;gap:3px;min-width:0}.history-copy b{font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.history-copy small{font-size:9px;color:var(--muted)}.history-meta{display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.history-summary{font-size:9px;color:var(--muted)}
+
+/* Modals and toasts */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1700;align-items:center;justify-content:center;padding:16px;background:rgba(4,7,14,.66);backdrop-filter:blur(6px);overflow-y:auto}.modal-overlay.open{display:flex}.modal{width:100%;max-width:560px;margin:auto;border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));color:var(--text);box-shadow:0 32px 78px rgba(0,0,0,.5);overflow:visible}.modal.large{max-width:780px}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:19px 20px 14px;border-bottom:1px solid var(--border-soft)}.modal-title-stack{display:flex;flex-direction:column;gap:4px}.modal-title-stack h3{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600}.modal-title-stack p{font-size:10px;color:var(--muted);line-height:1.5}.modal-close{width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--border-soft);border-radius:9px;color:var(--muted)}.modal-close:hover{color:var(--gold);border-color:var(--gold)}.modal-body{padding:18px 20px;max-height:70vh;overflow:auto}.modal-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:13px 20px;border-top:1px solid var(--border-soft);flex-wrap:wrap}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form-field{display:flex;flex-direction:column;gap:6px}.form-field.full{grid-column:1/-1}.form-field label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.65px;color:var(--gold)}.form-field input,.form-field textarea{width:100%;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text);font-size:11px;padding:10px;outline:0}.form-field input:focus,.form-field textarea:focus{border-color:var(--gold)}.form-field textarea{min-height:84px;resize:vertical}.detail-list{display:flex;flex-direction:column;gap:9px}.detail-row{display:grid;grid-template-columns:130px 1fr;gap:10px;padding:10px;border:1px solid var(--border-soft);border-radius:10px;background:color-mix(in srgb,var(--text) 2%,transparent)}.detail-row b{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.55px}.detail-row span{font-size:10px;line-height:1.5}.toast-area{position:fixed;right:22px;top:78px;z-index:2200;display:flex;flex-direction:column;gap:9px}.toast{width:min(340px,calc(100vw - 28px));display:flex;gap:9px;align-items:flex-start;padding:12px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));box-shadow:var(--shadow);transform:translateX(20px);opacity:0;transition:.25s}.toast.show{transform:translateX(0);opacity:1}.toast-icon{width:26px;height:26px;display:grid;place-items:center;flex:0 0 auto;border-radius:8px;background:color-mix(in srgb,var(--success) 15%,transparent);color:var(--success);font-weight:700}.toast.warning .toast-icon{background:color-mix(in srgb,var(--warning) 15%,transparent);color:var(--warning)}.toast.error .toast-icon{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)}.toast.info .toast-icon{background:color-mix(in srgb,var(--info) 15%,transparent);color:var(--info)}.toast p{font-size:10.5px;line-height:1.45}.toast p b{color:var(--gold)}
+
+/* Controle de acesso e navegação de protótipo */
+.prototype-nav{position:fixed;z-index:2600;left:50%;top:10px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;padding:6px;border:1px solid rgba(111,163,216,.34);border-radius:13px;background:linear-gradient(145deg,#17213a,#0e1728);box-shadow:0 14px 32px rgba(0,0,0,.3)}
+.prototype-label{padding:0 5px;color:#9faec5;font-size:8px;font-weight:700;letter-spacing:.75px;text-transform:uppercase;white-space:nowrap}.prototype-btn{padding:7px 9px;border-radius:8px;color:#cbd5e6;font-size:9px;font-weight:700;white-space:nowrap}.prototype-btn:hover{background:rgba(111,163,216,.13)}.prototype-btn.active{background:linear-gradient(120deg,#6fa3d8,#a9c7e7,#6fa3d8);color:#0a0e1a}
+.access-denied{display:flex;min-height:440px;align-items:center;justify-content:center;padding:24px}.access-denied-card{width:min(580px,100%);padding:32px;text-align:center}.access-denied-icon{width:68px;height:68px;display:grid;place-items:center;margin:0 auto 14px;border:1px solid color-mix(in srgb,var(--warning) 28%,transparent);border-radius:20px;background:color-mix(in srgb,var(--warning) 10%,transparent);color:var(--warning);font-size:28px}.access-denied-card h2{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600}.access-denied-card p{max-width:420px;margin:8px auto 18px;color:var(--muted);font-size:11px;line-height:1.65}
+@media(max-width:1120px){.mapping-layout{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.history-item{grid-template-columns:42px minmax(0,1fr)}.history-meta{grid-column:2;justify-content:flex-start}.stepper{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:980px){.sidebar{width:190px;flex-basis:190px}.conteudo{padding:22px}.quick-search{width:230px}}
+@media(max-width:760px){.prototype-nav{width:calc(100% - 18px);top:7px;justify-content:center;overflow-x:auto}.prototype-label{display:none}.prototype-btn{font-size:8px;padding:6px 8px}.topbar{padding:0 14px;margin-top:47px}.hamburger{display:block}.quick-search{display:none}.presence-btn{padding:7px 9px}.presence-btn span:last-child{display:none}.theme-toggle{width:62px}.theme-toggle .knob{width:22px;height:22px}[data-theme="light"] .theme-toggle .knob{left:35px}.sidebar{width:220px;height:calc(100vh - 64px);position:fixed;top:64px;left:-230px;z-index:170;transition:left .28s}.sidebar.open{left:0}.conteudo{padding:18px 14px}.header-pagina h1{font-size:25px}.wizard-shell,.history-panel{padding:14px}.stepper{grid-template-columns:1fr}.step-copy b,.step-copy small{white-space:normal}.kpi-grid{grid-template-columns:1fr}.mapping-row{grid-template-columns:1fr}.preview-table,.review-table{min-width:760px}.review-table,.review-table thead,.review-table tbody,.review-table tr,.review-table th,.review-table td{display:block;min-width:0}.review-table thead{display:none}.review-table tr{margin:9px;border:1px solid var(--border-soft);border-radius:12px;padding:5px;background:color-mix(in srgb,var(--text) 2%,transparent)}.review-table td{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px;border-bottom:1px solid var(--border-soft);text-align:right}.review-table td:last-child{border-bottom:0}.review-table td::before{content:attr(data-label);color:var(--muted);font-size:8.5px;font-weight:700;letter-spacing:.55px;text-transform:uppercase;text-align:left}.review-table td[data-label="Cliente"]{display:block;text-align:left}.review-table td[data-label="Cliente"]::before{display:none}.classification-detail{max-width:190px}.history-item{grid-template-columns:40px minmax(0,1fr)}.history-meta{grid-column:1/-1;justify-content:flex-start}.modal-overlay{padding:8px}.modal-head,.modal-foot{padding-left:14px;padding-right:14px}.modal-body{padding:14px}.form-grid{grid-template-columns:1fr}.form-field.full{grid-column:auto}.detail-row{grid-template-columns:1fr}.toast-area{right:12px;top:72px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto;animation:none!important;transition-duration:.01ms}}
+</style>
+</head>
+<body data-theme="dark">
+<div class="overlay hidden" id="overlay"></div>
+<header class="topbar">
+  <div class="top-left">
+    <button class="hamburger" id="hamburger" aria-label="Abrir navegação"><span></span><span></span><span></span></button>
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e8d48a"/><stop offset="38%" stop-color="#c9a84c"/><stop offset="60%" stop-color="#8a6f33"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#crestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#crestGold)">VM</text></g></svg>
+      <div class="brand-name">VMM<b>ADV</b></div>
+    </div>
+    <label class="quick-search" aria-label="Busca rápida"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><input id="globalSearch" placeholder="Buscar importação recente..."></label>
+  </div>
+  <div class="top-right">
+    <div class="presence-wrap"><button class="presence-btn" id="presenceBtn"><span class="dot online"></span><span>6 online agora</span></button><div class="popover" id="presencePop"></div></div>
+    <div class="notification-wrap"><button class="icon-btn" id="notifBtn" aria-label="Notificações"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="var(--gold)" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="var(--gold)" stroke-width="1.6"/></svg><span class="notif-count">2</span></button><div class="popover notification-pop" id="notifPop"></div></div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
+    <div class="avatar" title="Dr. Victor Morais">DV</div>
+  </div>
+</header>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="nav-section">Visão Geral</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/></svg>Dashboard</a>
+    <div class="nav-section">Operação</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Lista de Processos</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>Kanban</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.5"/></svg>Calendário</a>
+    <div id="importSidebarItem"></div>
+    <div class="nav-section">Equipe</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 11-4-7.2L21 6l-1.5 4.5z" stroke="currentColor" stroke-width="1.5"/></svg>Chat Interno</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Ponto Eletrônico</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>Biblioteca de Modelos</a>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V7m5 12V4m5 15v-8m5 8V9" stroke="currentColor" stroke-width="1.5"/></svg>Financeiro</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 13a8 8 0 000-2l2.1-1.6-2-3.5-2.5 1a8 8 0 00-1.7-1l-.3-2.7h-4l-.3 2.7a8 8 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a8 8 0 000 2l-2.1 1.6 2 3.5 2.5-1a8 8 0 001.7 1l.3 2.7h4l.3-2.7a8 8 0 001.7-1l2.5 1 2-3.5L19.4 13z" stroke="currentColor" stroke-width="1.3"/></svg>Configurações</a>
+  </aside>
+  <main class="conteudo">
+    <section class="access-denied hidden" id="accessDenied" aria-live="polite">
+      <article class="panel access-denied-card">
+        <div class="access-denied-icon">⌁</div>
+        <h2>Você não tem permissão para acessar esta área</h2>
+        <p>A Importação de Listas é restrita ao Sócio/Admin e às pessoas que receberam a concessão individual <strong>dados.importar_listas</strong>.</p>
+        <button class="btn-secondary" id="backFromDenied">Voltar</button>
+      </article>
+    </section>
+    <div id="importContent">
+    <div class="header-pagina">
+      <div class="title-stack"><h1>Importação de Listas</h1><p class="page-sub">Crie clientes e vincule novos processos a registros existentes a partir de planilhas e tabelas.</p></div>
+      <button class="btn-secondary" id="scrollHistoryButton">Ver importações recentes</button>
+    </div>
+
+    <section class="panel wizard-shell" id="wizardPanel">
+      <div class="wizard-top"><div class="title-stack"><h2>Nova importação</h2><p class="wizard-note">O CPF identifica o cliente. Quando ele já existir, a nova linha será classificada como processo adicional, sem descartar o registro.</p></div><span class="badge badge-success" id="wizardStatus">Fluxo guiado</span></div>
+      <div class="stepper" id="stepper"></div>
+
+      <section class="wizard-step active" id="stepUpload">
+        <input id="fileInput" class="hidden" type="file" accept=".xlsx,.csv,.pdf">
+        <div class="upload-zone" id="uploadZone" tabindex="0" role="button" aria-label="Selecionar arquivo para importação">
+          <div class="upload-illustration"><svg width="31" height="31" viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L7 9m5-5l5 5M5 20h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3>Arraste sua lista aqui</h3>
+          <p>Ou clique para escolher uma planilha Excel, arquivo CSV ou PDF com dados de clientes e processos.</p>
+          <div class="file-types"><span class="type-pill">XLSX</span><span class="type-pill">CSV</span><span class="type-pill">PDF</span></div>
+          <div class="upload-helper"><button type="button" data-mock-file="xlsx">Carregar exemplo Excel</button><button type="button" data-mock-file="csv">Carregar exemplo CSV</button><button type="button" data-mock-file="pdf">Carregar exemplo PDF</button></div>
+        </div>
+        <div class="selected-file" id="selectedFile"></div>
+        <div class="pdf-notice" id="pdfNotice"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 10v5M12 7h.01" stroke="currentColor" stroke-width="1.8"/></svg><span>A extração de tabelas em PDF pode exigir conferência adicional dos dados antes de confirmar a importação.</span></div>
+        <div class="step-actions"><span class="text-muted" style="font-size:10px">O arquivo original não é alterado durante este fluxo.</span><div class="right-actions"><button class="btn-primary" id="continueUpload" disabled>Continuar para mapeamento</button></div></div>
+      </section>
+
+      <section class="wizard-step" id="stepMapping">
+        <div class="mapping-layout">
+          <div class="table-wrap"><table class="preview-table" id="previewTable"></table></div>
+          <aside class="panel mapping-panel"><div class="mapping-head"><h3>Mapeamento de colunas</h3><p>Associe os campos detectados às informações que serão levadas para a base.</p></div><div class="mapping-list" id="mappingList"></div><div class="validation-box" id="mappingValidation"></div></aside>
+        </div>
+        <div class="step-actions"><button class="btn-secondary" data-step-back="1">Voltar</button><div class="right-actions"><button class="btn-primary" id="continueMapping" disabled>Continuar para revisão</button></div></div>
+      </section>
+
+      <section class="wizard-step" id="stepReview">
+        <div class="kpi-grid" id="reviewKpis"></div>
+        <div class="review-head"><div class="title-stack"><h3>Revisão do lote</h3><p>Confira como cada linha será classificada antes de confirmar a importação.</p></div><div class="filter-pills" id="reviewFilters"></div></div>
+        <div class="table-wrap"><table class="review-table" id="reviewTable"></table><div class="pagination" id="reviewPagination"></div></div>
+        <div class="step-actions"><button class="btn-secondary" data-step-back="2">Voltar</button><div class="right-actions"><button class="btn-primary" id="confirmImportButton">Confirmar importação</button></div></div>
+      </section>
+
+      <section class="wizard-step" id="stepResult">
+        <div class="processing-screen" id="processingScreen"><div class="processing-spinner"></div><h3>Importando lista</h3><p>Criando clientes e preparando processos vinculados à base existente.</p></div>
+        <div class="result-screen" id="resultScreen"></div>
+      </section>
+    </section>
+
+    <section class="panel history-panel" id="historyPanel">
+      <div class="history-head"><div class="title-stack"><h2>Importações Recentes</h2><p>Acompanhe os últimos lotes processados pela equipe.</p></div><span class="badge badge-muted">Histórico mock</span></div>
+      <div class="history-list" id="historyList"></div>
+    </section>
+    </div>
+  </main>
+</div>
+
+<nav class="prototype-nav" aria-label="Navegação do protótipo">
+  <span class="prototype-label">Navegação do protótipo</span>
+  <button class="prototype-btn active" data-prototype-user="admin">Visão Sócio/Admin</button>
+  <button class="prototype-btn" data-prototype-user="captacao">Visão Captação com permissão</button>
+  <button class="prototype-btn" data-prototype-user="sem-permissao">Visão sem permissão</button>
+</nav>
+
+<div class="modal-overlay" id="editRowModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Corrigir linha da importação</h3><p>Atualize somente os campos necessários para que esta linha possa seguir no lote.</p></div><button class="modal-close" data-close-modal="editRowModal">✕</button></div><div class="modal-body"><div class="form-grid"><div class="form-field"><label for="editName">Nome completo</label><input id="editName" type="text"></div><div class="form-field"><label for="editCpf">CPF</label><input id="editCpf" type="text"></div><div class="form-field full"><label for="editNotes">Observação da correção</label><textarea id="editNotes" placeholder="Informe a correção realizada, se necessário."></textarea></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="editRowModal">Cancelar</button><button class="btn-primary" id="saveRowCorrection">Salvar correção</button></div></div></div>
+<div class="modal-overlay" id="historyDetailModal"><div class="modal large"><div class="modal-head"><div class="modal-title-stack"><h3>Detalhes da importação</h3><p>Resumo em modo somente leitura do lote já processado.</p></div><button class="modal-close" data-close-modal="historyDetailModal">✕</button></div><div class="modal-body" id="historyDetailBody"></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="historyDetailModal">Fechar</button></div></div></div>
+<div class="modal-overlay" id="ignoreConfirmModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Ignorar linha do lote</h3><p>Esta linha não será criada nem vinculada a qualquer cliente.</p></div><button class="modal-close" data-close-modal="ignoreConfirmModal">✕</button></div><div class="modal-body"><p style="font-size:11px;line-height:1.6;color:var(--muted)">Você poderá concluir a importação das demais linhas normalmente. A linha ignorada aparecerá apenas no resumo final do lote.</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="ignoreConfirmModal">Cancelar</button><button class="btn-danger" id="confirmIgnoreRow">Ignorar esta linha</button></div></div></div>
+<div class="toast-area" id="toastArea"></div>
+
+<script>
+let currentUser={
+  id:'u1',
+  nome:'Dr. Victor Morais',
+  perfil:'socio_admin',
+  permissoesExtra:[]
+};
+
+const prototypeUsers={
+  admin:{id:'u1',nome:'Dr. Victor Morais',perfil:'socio_admin',permissoesExtra:[]},
+  captacao:{id:'u2',nome:'Tuany Martiniano',perfil:'captacao',permissoesExtra:['dados.importar_listas']},
+  semPermissao:{id:'u3',nome:'Rafael Costa',perfil:'administrativo',permissoesExtra:[]}
+};
+
+function podeImportarListas(user){
+  if(user.perfil==='socio_admin') return true;
+  return Array.isArray(user.permissoesExtra)&&user.permissoesExtra.includes('dados.importar_listas');
+}
+
+const state={
+  activeStep:1,
+  selectedFile:null,
+  mapping:{'Coluna A':'ignorar',Nome:'nome',CPF:'cpf',Telefone:'telefone','Tipo de Processo':'tipo','Número CNJ':'cnj',Tribunal:'tribunal',Observações:'observacoes'},
+  reviewFilter:'todos',
+  reviewPage:1,
+  reviewPageSize:5,
+  activeEditId:null,
+  activeIgnoreId:null,
+  rows:[
+    {id:'r1',nome:'Ana Beatriz de Lima',cpf:'123.456.789-09',telefone:'(82) 98820-4102',tipo:'PASEP',cnj:'0801245-48.2026.4.05.8000',tribunal:'JFAL',status:'novo',observacoes:'Servidor aposentado, lista precatório.'},
+    {id:'r2',nome:'Carlos Henrique Melo',cpf:'274.815.630-32',telefone:'(82) 99110-2654',tipo:'PSS',cnj:'0802834-09.2026.4.05.8000',tribunal:'JFAL',status:'novo',observacoes:'Desconto previdenciário em RPV.'},
+    {id:'r3',nome:'Maria do Carmo Souza',cpf:'391.702.684-15',telefone:'(82) 98705-1189',tipo:'28,86%',cnj:'5004658-33.2026.4.05.8000',tribunal:'TRF5',status:'novo',observacoes:'Ex-servidora federal.'},
+    {id:'r4',nome:'José Augusto Nunes',cpf:'019.643.857-20',telefone:'(82) 99200-4421',tipo:'GDASS',cnj:'0809135-56.2026.4.05.8000',tribunal:'JFAL',status:'novo',observacoes:'Analisar documentação complementar.'},
+    {id:'r5',nome:'Elisa Ferreira Rocha',cpf:'680.541.230-17',telefone:'(82) 98440-9120',tipo:'Habilitação de Herdeiros',cnj:'0801788-77.2026.4.05.8000',tribunal:'JFAL',status:'novo',observacoes:'Herdeira de servidor falecido.'},
+    {id:'r6',nome:'Roberto Almeida Costa',cpf:'740.816.952-60',telefone:'(82) 99841-3610',tipo:'PSS',cnj:'5001164-26.2026.4.05.8000',tribunal:'TRF5',status:'novo',observacoes:'Precatório com retenção de PSS.'},
+    {id:'r7',nome:'Helena Maria Duarte',cpf:'347.910.268-52',telefone:'(82) 99158-3372',tipo:'PSS',cnj:'0804402-14.2026.4.05.8000',tribunal:'JFAL',status:'adicional',clienteExistente:'Helena Maria Duarte',processoExistente:'PASEP',observacoes:'CPF já cadastrado com ação de PASEP.'},
+    {id:'r8',nome:'Francisco Vieira da Silva',cpf:'502.743.981-36',telefone:'(82) 98244-7098',tipo:'28,86%',cnj:'5009074-61.2026.4.05.8000',tribunal:'TRF5',status:'adicional',clienteExistente:'Francisco Vieira da Silva',processoExistente:'PSS',observacoes:'CPF já cadastrado com ação de PSS.'},
+    {id:'r9',nome:'Sônia Aparecida Ramos',cpf:'813.205.679-44',telefone:'(82) 98830-2114',tipo:'Habilitação de Herdeiros',cnj:'0806019-82.2026.4.05.8000',tribunal:'JFAL',status:'adicional',clienteExistente:'Sônia Aparecida Ramos',processoExistente:'28,86%',observacoes:'CPF já cadastrado com ação coletiva em execução.'},
+    {id:'r10',nome:'Marcos Pereira',cpf:'123.123.123',telefone:'(82) 98540-0188',tipo:'PASEP',cnj:'0807330-13.2026.4.05.8000',tribunal:'JFAL',status:'erro',erro:'CPF inválido, informe os 11 dígitos.',observacoes:'Formato de CPF incompleto.'},
+    {id:'r11',nome:'',cpf:'658.902.741-03',telefone:'(82) 99910-3379',tipo:'Outro',cnj:'0809054-42.2026.4.05.8000',tribunal:'JFAL',status:'erro',erro:'Nome completo não informado.',observacoes:'Linha sem identificação do cliente.'}
+  ],
+  history:[
+    {id:'h1',arquivo:'lista_pasep_servidores_junho.xlsx',tipo:'XLSX',data:'23/06/2026, 09:40',por:'Dr. Victor Morais',clientes:18,processos:6,ignoradas:0,erros:0},
+    {id:'h2',arquivo:'herdeiros_ufal_maio.csv',tipo:'CSV',data:'18/06/2026, 16:12',por:'Mikaeli Santos',clientes:12,processos:3,ignoradas:1,erros:1},
+    {id:'h3',arquivo:'relacao_precatórios_pSS.pdf',tipo:'PDF',data:'12/06/2026, 11:04',por:'Dr. Victor Morais',clientes:22,processos:9,ignoradas:2,erros:2},
+    {id:'h4',arquivo:'execucoes_2886_ufal.xlsx',tipo:'XLSX',data:'03/06/2026, 14:26',por:'Hevelyn',clientes:15,processos:4,ignoradas:0,erros:0}
+  ]
+};
+
+const mappingOptions=[
+  {id:'ignorar',label:'Ignorar esta coluna'},
+  {id:'nome',label:'Nome Completo'},
+  {id:'cpf',label:'CPF'},
+  {id:'email',label:'E-mail'},
+  {id:'telefone',label:'Telefone'},
+  {id:'tipo',label:'Tipo de Processo'},
+  {id:'cnj',label:'Número do Processo (CNJ)'},
+  {id:'tribunal',label:'Tribunal'},
+  {id:'valor',label:'Valor da Causa'},
+  {id:'status',label:'Status do Processo'},
+  {id:'observacoes',label:'Observações'}
+];
+const sourceColumns=['Coluna A','Nome','CPF','Telefone','Tipo de Processo','Número CNJ','Tribunal','Observações'];
+const sourceSamples=[
+  ['001','Ana Beatriz de Lima','123.456.789-09','(82) 98820-4102','PASEP','0801245-48.2026.4.05.8000','JFAL','Servidor aposentado'],
+  ['002','Carlos Henrique Melo','274.815.630-32','(82) 99110-2654','PSS','0802834-09.2026.4.05.8000','JFAL','RPV com PSS'],
+  ['003','Maria do Carmo Souza','391.702.684-15','(82) 98705-1189','28,86%','5004658-33.2026.4.05.8000','TRF5','Servidor federal'],
+  ['004','José Augusto Nunes','019.643.857-20','(82) 99200-4421','GDASS','0809135-56.2026.4.05.8000','JFAL','Documentação pendente'],
+  ['005','Elisa Ferreira Rocha','680.541.230-17','(82) 98440-9120','Habilitação de Herdeiros','0801788-77.2026.4.05.8000','JFAL','Herdeira'],
+  ['006','Helena Maria Duarte','347.910.268-52','(82) 99158-3372','PSS','0804402-14.2026.4.05.8000','JFAL','Cliente já possui PASEP']
+];
+
+function esc(value){const el=document.createElement('div');el.textContent=value||'';return el.innerHTML;}
+function formatNumber(value){return new Intl.NumberFormat('pt-BR').format(value);}
+function showToast(message,type='success'){const toast=document.createElement('div');toast.className='toast '+type;toast.innerHTML='<span class="toast-icon">'+(type==='warning'?'!':type==='error'?'×':type==='info'?'i':'✓')+'</span><p>'+message+'</p>';document.getElementById('toastArea').appendChild(toast);requestAnimationFrame(()=>toast.classList.add('show'));setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),260);},3700);}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function getActiveRows(){return state.rows.filter(row=>!row.ignored);}
+function getUnresolvedErrors(){return getActiveRows().filter(row=>row.status==='erro');}
+function currentFileExtension(){return state.selectedFile?.ext||'xlsx';}
+
+function renderPresence(){
+  document.getElementById('presencePop').innerHTML='<div class="pop-title">Online agora</div>'+[
+    ['DV','Dr. Victor Morais','Importação de Listas'],['MS','Mikaeli Santos','Lista de Processos'],['HV','Hevelyn','Minhas Tarefas'],['RS','Rafael Costa','Ponto Eletrônico'],['TS','Tuany Martiniano','Cadastro de Clientes']
+  ].map(item=>'<button class="pop-item"><span class="dot online"></span><span class="small-avatar">'+item[0]+'</span><span class="grow"><b>'+item[1]+'</b><small class="pop-meta">Visualizando: '+item[2]+'</small></span></button>').join('');
+  document.getElementById('notifPop').innerHTML='<div class="pop-title">Notificações</div><button class="notification-item"><span class="n-dot"></span><span><span class="notification-text">Há uma importação em rascunho aguardando revisão.</span><small class="notification-time">Agora</small></span></button><button class="notification-item"><span class="n-dot"></span><span><span class="notification-text">Lista de PASEP de junho foi importada com sucesso.</span><small class="notification-time">ontem</small></span></button>';
+}
+function setupTopbar(){
+  renderPresence();
+  document.getElementById('themeToggle').addEventListener('click',()=>{document.body.dataset.theme=document.body.dataset.theme==='dark'?'light':'dark';});
+  document.getElementById('presenceBtn').addEventListener('click',event=>{event.stopPropagation();document.getElementById('presencePop').classList.toggle('open');document.getElementById('notifPop').classList.remove('open');});
+  document.getElementById('notifBtn').addEventListener('click',event=>{event.stopPropagation();document.getElementById('notifPop').classList.toggle('open');document.getElementById('presencePop').classList.remove('open');});
+  document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+  document.getElementById('globalSearch').addEventListener('keydown',event=>{if(event.key==='Enter'){const term=event.target.value.trim().toLowerCase();const match=state.history.find(item=>item.arquivo.toLowerCase().includes(term));if(match){openHistoryDetail(match.id);event.target.value='';}else{showToast('Nenhuma importação recente foi encontrada.','info');}}});
+  document.addEventListener('click',event=>{if(!event.target.closest('.presence-wrap')&&!event.target.closest('.notification-wrap'))document.querySelectorAll('.popover').forEach(pop=>pop.classList.remove('open'));if(!event.target.closest('.custom-select'))document.querySelectorAll('.custom-select.open').forEach(select=>select.classList.remove('open'));});
+}
+
+function renderStepper(){
+  const steps=[['1','Upload do arquivo','Selecione a origem'],['2','Mapeamento','Associe as colunas'],['3','Revisão','Valide o lote'],['4','Conclusão','Finalize a importação']];
+  document.getElementById('stepper').innerHTML=steps.map((step,index)=>{const number=index+1;const className=number===state.activeStep?'active':number<state.activeStep?'done':'';return '<div class="step '+className+'"><span class="step-index">'+step[0]+'</span><div class="step-copy"><b>'+step[1]+'</b><small>'+step[2]+'</small></div></div>';}).join('');
+}
+function setStep(step){
+  state.activeStep=step;
+  renderStepper();
+  document.querySelectorAll('.wizard-step').forEach(section=>section.classList.toggle('active',section.id===['','stepUpload','stepMapping','stepReview','stepResult'][step]));
+  if(step===2){renderMappingStep();}
+  if(step===3){renderReviewStep();}
+  if(step===4){document.getElementById('processingScreen').classList.remove('visible');document.getElementById('resultScreen').classList.remove('visible');}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function selectFile(file){
+  const name=file.name||'lista_clientes_processos.xlsx';
+  const ext=(name.split('.').pop()||'xlsx').toLowerCase();
+  const type=['xlsx','csv','pdf'].includes(ext)?ext:'xlsx';
+  const size=file.size?Math.max(1,Math.round(file.size/1024))+' KB':type==='pdf'?'786 KB':'248 KB';
+  state.selectedFile={name,ext:type,size};
+  const selected=document.getElementById('selectedFile');
+  selected.classList.add('visible');
+  selected.innerHTML='<div class="file-type-icon">'+(type==='pdf'?'PDF':type.toUpperCase())+'</div><div class="file-info"><b>'+esc(name)+'</b><small>'+size+' , arquivo '+(type==='pdf'?'PDF':'de planilha')+' pronto para conferência</small></div><div class="file-side"><button class="btn-danger" id="removeSelectedFile">Remover</button></div>';
+  document.getElementById('pdfNotice').classList.toggle('visible',type==='pdf');
+  document.getElementById('continueUpload').disabled=false;
+  document.getElementById('removeSelectedFile').addEventListener('click',removeFile);
+  showToast('Arquivo preparado para o mapeamento de colunas.','success');
+}
+function removeFile(){
+  state.selectedFile=null;
+  document.getElementById('fileInput').value='';
+  document.getElementById('selectedFile').classList.remove('visible');
+  document.getElementById('selectedFile').innerHTML='';
+  document.getElementById('pdfNotice').classList.remove('visible');
+  document.getElementById('continueUpload').disabled=true;
+  showToast('Arquivo removido. Você pode escolher outro arquivo.','info');
+}
+function setupUpload(){
+  const zone=document.getElementById('uploadZone');const input=document.getElementById('fileInput');
+  zone.addEventListener('click',()=>input.click());zone.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();input.click();}});
+  input.addEventListener('change',event=>{const file=event.target.files[0];if(file)selectFile(file);});
+  ['dragenter','dragover'].forEach(eventName=>zone.addEventListener(eventName,event=>{event.preventDefault();zone.classList.add('drag');}));
+  ['dragleave','drop'].forEach(eventName=>zone.addEventListener(eventName,event=>{event.preventDefault();zone.classList.remove('drag');}));
+  zone.addEventListener('drop',event=>{const file=event.dataTransfer.files[0];if(file)selectFile(file);});
+  document.querySelectorAll('[data-mock-file]').forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();const type=button.dataset.mockFile;selectFile({name:type==='pdf'?'precatórios_pasep_junho.pdf':type==='csv'?'clientes_processos_junho.csv':'clientes_processos_junho.xlsx',size:type==='pdf'?804864:253952});}));
+  document.getElementById('continueUpload').addEventListener('click',()=>setStep(2));
+}
+
+function mappingLabel(id){return mappingOptions.find(option=>option.id===id)?.label||'Ignorar esta coluna';}
+function renderPreviewTable(){
+  document.getElementById('previewTable').innerHTML='<thead><tr>'+sourceColumns.map(column=>'<th>'+column+'</th>').join('')+'</tr></thead><tbody>'+sourceSamples.map(row=>'<tr>'+row.map(cell=>'<td>'+esc(cell)+'</td>').join('')+'</tr>').join('')+'</tbody>';
+}
+function renderMappingStep(){
+  renderPreviewTable();
+  const root=document.getElementById('mappingList');
+  root.innerHTML=sourceColumns.map(column=>'<div class="mapping-row"><div class="mapping-source"><b>'+column+'</b><small>Coluna detectada</small></div><div class="custom-select" data-map-column="'+column+'"><button class="custom-select-trigger"><span>'+mappingLabel(state.mapping[column])+'</span><i class="select-caret"></i></button><div class="custom-select-menu">'+mappingOptions.map(option=>'<button class="custom-select-option '+(state.mapping[column]===option.id?'selected':'')+'" data-map-option="'+option.id+'">'+option.label+'</button>').join('')+'</div></div></div>').join('');
+  root.querySelectorAll('[data-map-column]').forEach(select=>{
+    select.querySelector('.custom-select-trigger').addEventListener('click',event=>{event.stopPropagation();const open=select.classList.contains('open');document.querySelectorAll('.custom-select.open').forEach(item=>item.classList.remove('open'));if(!open)select.classList.add('open');});
+    select.querySelectorAll('[data-map-option]').forEach(option=>option.addEventListener('click',()=>{state.mapping[select.dataset.mapColumn]=option.dataset.mapOption;select.classList.remove('open');renderMappingStep();}));
+  });
+  validateMapping();
+}
+function validateMapping(){
+  const mapped=Object.values(state.mapping);const missing=[];if(!mapped.includes('nome'))missing.push('Nome Completo');if(!mapped.includes('cpf'))missing.push('CPF');
+  const box=document.getElementById('mappingValidation');const btn=document.getElementById('continueMapping');
+  if(missing.length){box.className='validation-box';box.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 10v5M12 7h.01" stroke="currentColor" stroke-width="1.8"/></svg><span>Campos obrigatórios ainda não mapeados: <b>'+missing.join(', ')+'</b>.</span>';btn.disabled=true;}
+  else{box.className='validation-box ok';box.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Mapeamento válido. Nome Completo e CPF serão usados para identificar os clientes.</span>';btn.disabled=false;}
+}
+
+function rowBadge(row){if(row.ignored)return '<span class="badge badge-muted">Ignorada</span>';if(row.status==='novo')return '<span class="badge badge-neutral">Novo Cliente</span>';if(row.status==='adicional')return '<span class="badge badge-additional">Processo Adicional</span>';return '<span class="badge badge-warning">Erro</span>';}
+function reviewCounts(){const active=getActiveRows();return {novos:active.filter(row=>row.status==='novo').length,adicionais:active.filter(row=>row.status==='adicional').length,erros:active.filter(row=>row.status==='erro').length,total:active.length,ignoradas:state.rows.filter(row=>row.ignored).length};}
+function filteredReviewRows(){return state.rows.filter(row=>{if(state.reviewFilter==='todos')return true;if(state.reviewFilter==='novos')return row.status==='novo'&&!row.ignored;if(state.reviewFilter==='adicionais')return row.status==='adicional'&&!row.ignored;if(state.reviewFilter==='erros')return row.status==='erro'&&!row.ignored;return true;});}
+function renderReviewStep(){
+  const count=reviewCounts();
+  document.getElementById('reviewKpis').innerHTML='<article class="panel kpi-card"><div class="kpi-label">Novos clientes a criar</div><div class="kpi-value">'+count.novos+'</div><div class="kpi-meta">CPFs ainda não encontrados na base.</div></article><article class="panel kpi-card additional"><div class="kpi-label">Novos processos para clientes existentes</div><div class="kpi-value">'+count.adicionais+'</div><div class="kpi-meta">Mesmo CPF, novo processo a vincular.</div></article><article class="panel kpi-card warning"><div class="kpi-label">Linhas com erro ou dados incompletos</div><div class="kpi-value">'+count.erros+'</div><div class="kpi-meta">Corrija ou ignore antes de confirmar.</div></article><article class="panel kpi-card"><div class="kpi-label">Total de linhas processadas</div><div class="kpi-value">'+count.total+'</div><div class="kpi-meta">'+count.ignoradas+' linha(s) ignorada(s) no lote.</div></article>';
+  const filters=[['todos','Todos'],['novos','Novos Clientes'],['adicionais','Processos Adicionais'],['erros','Erros']];
+  document.getElementById('reviewFilters').innerHTML=filters.map(filter=>'<button class="filter-pill '+(state.reviewFilter===filter[0]?'active':'')+'" data-review-filter="'+filter[0]+'">'+filter[1]+'</button>').join('');
+  document.querySelectorAll('[data-review-filter]').forEach(button=>button.addEventListener('click',()=>{state.reviewFilter=button.dataset.reviewFilter;state.reviewPage=1;renderReviewStep();}));
+  renderReviewTable();
+  const confirm=document.getElementById('confirmImportButton');confirm.disabled=count.erros>0;confirm.textContent=count.erros>0?'Corrija ou ignore os erros':'Confirmar importação';
+}
+function renderReviewTable(){
+  const rows=filteredReviewRows();const allMode=state.reviewPageSize==='all';const maxPage=allMode?1:Math.max(1,Math.ceil(rows.length/state.reviewPageSize));if(state.reviewPage>maxPage)state.reviewPage=maxPage;const visible=allMode?rows:rows.slice((state.reviewPage-1)*state.reviewPageSize,state.reviewPage*state.reviewPageSize);
+  document.getElementById('reviewTable').innerHTML='<thead><tr><th>Cliente</th><th>Classificação</th><th>Tipo de processo</th><th>Processo CNJ</th><th>Observação de vínculo ou erro</th><th>Ações</th></tr></thead><tbody>'+visible.map(row=>{let detail='';if(row.ignored)detail='Linha removida do lote pelo usuário.';else if(row.status==='adicional')detail='<strong>CPF já cadastrado.</strong> Será vinculado como novo processo de '+esc(row.clienteExistente)+', que já possui '+esc(row.processoExistente)+'.';else if(row.status==='erro')detail=esc(row.erro);else detail='Cliente será criado com o processo informado.';return '<tr class="'+(row.ignored?'ignored-row':'')+'"><td data-label="Cliente"><b>'+esc(row.nome||'Nome não informado')+'</b><br><span class="text-muted" style="font-size:9px">'+esc(row.cpf)+'</span></td><td data-label="Classificação">'+rowBadge(row)+'</td><td data-label="Tipo de processo">'+esc(row.tipo)+'</td><td data-label="Processo CNJ"><span class="text-muted" style="font-size:9px">'+esc(row.cnj)+'</span></td><td data-label="Detalhe"><div class="classification-detail">'+detail+'</div></td><td data-label="Ações"><div class="review-actions">'+(row.status==='erro'&&!row.ignored?'<button class="btn-inline" data-correct-row="'+row.id+'">Corrigir</button><button class="btn-inline ignore" data-ignore-row="'+row.id+'">Ignorar esta linha</button>':'<span class="text-muted" style="font-size:9px">'+(row.ignored?'Sem ação':'Pronto para importar')+'</span>')+'</div></td></tr>';}).join('')+'</tbody>';
+  document.querySelectorAll('[data-correct-row]').forEach(button=>button.addEventListener('click',()=>openEditRow(button.dataset.correctRow)));
+  document.querySelectorAll('[data-ignore-row]').forEach(button=>button.addEventListener('click',()=>openIgnoreConfirm(button.dataset.ignoreRow)));
+  renderReviewPagination(rows.length,maxPage);
+}
+function renderReviewPagination(total,maxPage){
+  const node=document.getElementById('reviewPagination');const pageControls=state.reviewPageSize==='all'?'':Array.from({length:maxPage},(_,index)=>'<button class="'+(state.reviewPage===index+1?'active':'')+'" data-review-page="'+(index+1)+'">'+(index+1)+'</button>').join('');
+  node.innerHTML='<div class="page-size"><span>Exibir</span>'+[5,20,50,100,'all'].map(size=>'<button class="'+(state.reviewPageSize===size?'active':'')+'" data-review-size="'+size+'">'+(size==='all'?'Todos':size)+'</button>').join('')+'<input id="reviewCustomSize" type="number" min="1" placeholder="Outro"><span>'+total+' linha(s)</span></div><div class="page-pages"><span>Página</span><button data-review-prev>‹</button>'+pageControls+'<button data-review-next>›</button></div>';
+  node.querySelectorAll('[data-review-size]').forEach(button=>button.addEventListener('click',()=>{const raw=button.dataset.reviewSize;state.reviewPageSize=raw==='all'?'all':Number(raw);state.reviewPage=1;renderReviewTable();}));
+  node.querySelectorAll('[data-review-page]').forEach(button=>button.addEventListener('click',()=>{state.reviewPage=Number(button.dataset.reviewPage);renderReviewTable();}));
+  node.querySelector('[data-review-prev]').addEventListener('click',()=>{if(state.reviewPage>1){state.reviewPage--;renderReviewTable();}});
+  node.querySelector('[data-review-next]').addEventListener('click',()=>{if(state.reviewPage<maxPage){state.reviewPage++;renderReviewTable();}});
+  node.querySelector('#reviewCustomSize').addEventListener('change',event=>{state.reviewPageSize=Math.max(1,Number(event.target.value)||5);state.reviewPage=1;renderReviewTable();});
+}
+function openEditRow(id){const row=state.rows.find(item=>item.id===id);if(!row)return;state.activeEditId=id;document.getElementById('editName').value=row.nome;document.getElementById('editCpf').value=row.cpf;document.getElementById('editNotes').value=row.observacoes||'';openModal('editRowModal');}
+function saveRowCorrection(){const row=state.rows.find(item=>item.id===state.activeEditId);if(!row)return;const nome=document.getElementById('editName').value.trim();const cpf=document.getElementById('editCpf').value.trim();if(!nome||cpf.replace(/\D/g,'').length!==11){showToast('Informe nome completo e CPF com 11 dígitos para corrigir a linha.','warning');return;}row.nome=nome;row.cpf=cpf;row.observacoes=document.getElementById('editNotes').value.trim();row.status='novo';row.erro='';closeModal('editRowModal');renderReviewStep();showToast('Linha corrigida e classificada como novo cliente.','success');}
+function openIgnoreConfirm(id){state.activeIgnoreId=id;openModal('ignoreConfirmModal');}
+function confirmIgnoreRow(){const row=state.rows.find(item=>item.id===state.activeIgnoreId);if(!row)return;row.ignored=true;closeModal('ignoreConfirmModal');renderReviewStep();showToast('Linha ignorada. O restante do lote continua disponível para importação.','info');}
+
+function startImport(){
+  const count=reviewCounts();if(count.erros>0){showToast('Ainda existem linhas com erro que precisam ser corrigidas ou ignoradas.','warning');return;}
+  setStep(4);document.getElementById('processingScreen').classList.add('visible');
+  setTimeout(()=>{
+    document.getElementById('processingScreen').classList.remove('visible');
+    const result=document.getElementById('resultScreen');result.classList.add('visible');
+    result.innerHTML='<div class="result-icon">✓</div><h3>Importação concluída com sucesso.</h3><p>Os novos clientes foram preparados para cadastro e os processos adicionais foram direcionados para vinculação aos clientes já reconhecidos pelo CPF.</p><div class="result-summary"><div class="result-metric"><b>'+count.novos+'</b>novos clientes</div><div class="result-metric"><b>'+count.adicionais+'</b>processos vinculados</div><div class="result-metric"><b>'+count.ignoradas+'</b>linhas ignoradas</div></div><div class="result-actions"><button class="btn-primary" id="importAnotherButton">Importar outro arquivo</button><button class="btn-secondary" id="viewImportedButton">Ver clientes importados</button></div>';
+    state.history.unshift({id:'h'+Date.now(),arquivo:state.selectedFile?.name||'lista_importada.xlsx',tipo:(state.selectedFile?.ext||'xlsx').toUpperCase(),data:'23/06/2026, 15:30',por:'Dr. Victor Morais',clientes:count.novos,processos:count.adicionais,ignoradas:count.ignoradas,erros:0});
+    renderHistory();showToast('Importação concluída com sucesso.','success');
+    document.getElementById('importAnotherButton').addEventListener('click',resetWizard);
+    document.getElementById('viewImportedButton').addEventListener('click',()=>showToast('A navegação para Clientes será conectada na etapa de backend.','info'));
+  },1400);
+}
+function resetWizard(){
+  state.activeStep=1;state.selectedFile=null;state.reviewFilter='todos';state.reviewPage=1;state.reviewPageSize=5;state.rows.forEach(row=>{row.ignored=false;});
+  document.getElementById('selectedFile').classList.remove('visible');document.getElementById('selectedFile').innerHTML='';document.getElementById('pdfNotice').classList.remove('visible');document.getElementById('continueUpload').disabled=true;document.getElementById('fileInput').value='';
+  setStep(1);showToast('Fluxo reiniciado para uma nova importação.','info');
+}
+
+function renderHistory(){
+  document.getElementById('historyList').innerHTML=state.history.slice(0,5).map(item=>'<div class="history-item"><div class="history-file-icon">'+esc(item.tipo)+'</div><div class="history-copy"><b>'+esc(item.arquivo)+'</b><small>'+esc(item.data)+' , importado por '+esc(item.por)+'</small></div><div class="history-meta"><span class="history-summary">'+item.clientes+' clientes, '+item.processos+' processos, '+item.ignoradas+' ignoradas</span><button class="btn-inline" data-history-detail="'+item.id+'">Ver detalhes</button></div></div>').join('');
+  document.querySelectorAll('[data-history-detail]').forEach(button=>button.addEventListener('click',()=>openHistoryDetail(button.dataset.historyDetail)));
+}
+function openHistoryDetail(id){const item=state.history.find(history=>history.id===id);if(!item)return;document.getElementById('historyDetailBody').innerHTML='<div class="detail-list"><div class="detail-row"><b>Arquivo</b><span>'+esc(item.arquivo)+'</span></div><div class="detail-row"><b>Importado em</b><span>'+esc(item.data)+'</span></div><div class="detail-row"><b>Responsável</b><span>'+esc(item.por)+'</span></div><div class="detail-row"><b>Novos clientes</b><span>'+item.clientes+' registros criados.</span></div><div class="detail-row"><b>Processos adicionais</b><span>'+item.processos+' processos vinculados a clientes existentes pelo CPF.</span></div><div class="detail-row"><b>Linhas ignoradas</b><span>'+item.ignoradas+' linha(s) ignorada(s), '+item.erros+' com erro na revisão final.</span></div></div>';openModal('historyDetailModal');}
+
+function renderImportSidebarItem(){
+  const root=document.getElementById('importSidebarItem');
+  if(!podeImportarListas(currentUser)){
+    root.innerHTML='';
+    return;
+  }
+  root.innerHTML='<a class="nav-item active" href="#" aria-current="page"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="1.5"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.5"/></svg>Importação de Listas</a>';
+}
+function renderAccessState(){
+  const allowed=podeImportarListas(currentUser);
+  document.getElementById('importContent').classList.toggle('hidden',!allowed);
+  document.getElementById('accessDenied').classList.toggle('hidden',allowed);
+  renderImportSidebarItem();
+}
+function setPrototypeUser(key){
+  const user=key==='sem-permissao'?prototypeUsers.semPermissao:prototypeUsers[key]||prototypeUsers.admin;
+  currentUser={id:user.id,nome:user.nome,perfil:user.perfil,permissoesExtra:[...user.permissoesExtra]};
+  document.querySelectorAll('[data-prototype-user]').forEach(button=>button.classList.toggle('active',button.dataset.prototypeUser===key));
+  renderAccessState();
+  if(!podeImportarListas(currentUser)){
+    window.scrollTo({top:0,behavior:'smooth'});
+    showToast('Acesso à Importação de Listas indisponível para este perfil.','info');
+  }
+}
+function setupPrototypeNavigation(){
+  document.querySelectorAll('[data-prototype-user]').forEach(button=>button.addEventListener('click',()=>setPrototypeUser(button.dataset.prototypeUser)));
+  document.getElementById('backFromDenied').addEventListener('click',()=>showToast('Retorno ao Dashboard será conectado na etapa de navegação geral.','info'));
+  renderAccessState();
+}
+
+function setupStaticEvents(){
+  document.querySelectorAll('[data-step-back]').forEach(button=>button.addEventListener('click',()=>setStep(Number(button.dataset.stepBack))));
+  document.getElementById('continueMapping').addEventListener('click',()=>setStep(3));
+  document.getElementById('confirmImportButton').addEventListener('click',startImport);
+  document.getElementById('saveRowCorrection').addEventListener('click',saveRowCorrection);
+  document.getElementById('confirmIgnoreRow').addEventListener('click',confirmIgnoreRow);
+  document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>closeModal(button.dataset.closeModal)));
+  document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));
+  document.getElementById('scrollHistoryButton').addEventListener('click',()=>document.getElementById('historyPanel').scrollIntoView({behavior:'smooth',block:'start'}));
+}
+function setup(){setupTopbar();setupUpload();setupStaticEvents();setupPrototypeNavigation();renderStepper();renderHistory();}
+setup();
+</script>
+</body>
+</html>

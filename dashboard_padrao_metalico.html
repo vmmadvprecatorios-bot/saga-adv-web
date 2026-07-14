@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV Sistema | Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+    --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;
+    --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+    --border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);
+    --text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;
+    --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
+  }
+  [data-theme="light"]{
+    --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+    --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
+    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+    --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
+    --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, color-mix(in srgb,var(--gold) 7%,transparent), transparent 40%),
+      radial-gradient(circle at 90% 90%, color-mix(in srgb,var(--info) 5%,transparent), transparent 45%),
+      linear-gradient(160deg, var(--navy-1) 0%, var(--navy-2) 50%, var(--navy-3) 100%);
+    font-family:'Montserrat',sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+    transition:background .3s ease, color .3s ease;
+  }
+  body::before{
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(color-mix(in srgb,var(--gold) 2%,transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb,var(--gold) 2%,transparent) 1px, transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none; z-index:0;
+  }
+
+  .topbar{
+    height:62px;
+    background:linear-gradient(135deg,var(--navy-3),var(--navy-1));
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 26px; position:sticky; top:0; z-index:100;
+  }
+  .topbar{height:64px;position:sticky;top:0;z-index:200;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.94),rgba(10,14,26,.98));backdrop-filter:blur(18px);gap:16px;}
+  [data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.96),rgba(247,245,240,.985));}
+  .top-left,.top-right{display:flex;align-items:center;gap:14px;}
+  .top-left{flex:0 0 auto;}
+  .top-right{flex:0 0 auto;}
+  .top-center{flex:1;display:flex;justify-content:center;min-width:0;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .crest{width:32px;height:32px;}
+  .brand-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;letter-spacing:.5px;}
+  .brand-name b{color:var(--gold);}
+  .hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px;background:none;border:none;cursor:pointer;}
+  .hamburger span{display:block;width:18px;height:1.7px;background:var(--gold);margin:3px auto;border-radius:2px;}
+  .quick-search{width:min(520px,50vw);height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border-soft);background:var(--panel);border-radius:10px;position:relative;}
+  .quick-search:focus-within{border-color:var(--gold);}
+  .quick-search svg{color:var(--muted);flex:0 0 auto;}
+  .quick-search input{border:0;outline:0;background:transparent;color:var(--text);font-size:11px;width:100%;font-family:'Montserrat',sans-serif;}
+  .quick-search input::placeholder{color:var(--muted);}
+  .presence-wrap,.notification-wrap,.avatar-wrap{position:relative;}
+  .presence-btn{border:1px solid var(--border-soft);background:var(--panel);border-radius:18px;padding:7px 12px;display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;white-space:nowrap;cursor:pointer;}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+  .dot.online{background:var(--success);box-shadow:0 0 7px var(--success);}
+  .icon-btn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);position:relative;cursor:pointer;}
+  .icon-btn:hover{border-color:var(--gold);}
+  @keyframes sagaGirar{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  .icon-btn.girando svg{animation:sagaGirar .7s ease-in-out;}
+  .notif-count{position:absolute;right:-5px;top:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--danger);color:#fff;font-size:9px;display:grid;place-items:center;font-weight:700;}
+  .theme-toggle{width:70px;height:32px;padding:3px;border-radius:18px;border:1px solid var(--border-soft);background:var(--panel);position:relative;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .theme-toggle svg{z-index:2;width:15px;height:15px;}
+  .theme-toggle .sun{color:var(--muted);}
+  .theme-toggle .moon{color:var(--gold);}
+  [data-theme="light"] .theme-toggle .sun{color:var(--gold);}
+  [data-theme="light"] .theme-toggle .moon{color:var(--muted);}
+  .theme-toggle .knob{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));box-shadow:0 2px 7px rgba(0,0,0,.18);transition:left .25s ease;}
+  [data-theme="light"] .theme-toggle .knob{left:41px;}
+  .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px;cursor:pointer;}
+  .popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:300px;z-index:600;padding:8px;border:1px solid var(--border-soft);border-radius:14px;background:linear-gradient(145deg,#1b2540,#11182c);box-shadow:0 24px 50px rgba(0,0,0,.5);}
+  .popover.open{display:block;}
+  [data-theme="light"] .popover{background:linear-gradient(145deg,#fffdf8,#f4eddc);}
+  .pop-title{padding:7px 8px 5px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .pop-row{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;cursor:pointer;}
+  .pop-row:hover{background:rgba(201,168,76,.09);}
+  .online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 7px var(--success);flex:0 0 auto;}
+  .notification-pop{width:340px;}
+  .notification-item{display:flex;gap:9px;padding:10px;border-radius:10px;width:100%;}
+  .notification-item:hover{background:rgba(201,168,76,.1);}
+  .notification-item .n-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:5px;flex:0 0 auto;}
+  .notification-item .n-dot.read{visibility:hidden;}
+  .notification-text{font-size:10.5px;line-height:1.45;}
+  .notification-time{font-size:9px;color:var(--muted);margin-top:3px;}
+  .global-search-pop{width:100%;left:0;right:auto;max-height:420px;overflow-y:auto;}
+  .avatar-pop{width:240px;}
+  .avatar-pop-info{padding:12px;}
+  .avatar-pop-nome{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .avatar-pop-email{font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pop-divisor{height:1px;background:var(--border-soft);margin:2px 0;}
+  .pop-row-sair{color:var(--danger);}
+  .pop-row-sair:hover{background:rgba(224,91,91,.1);}
+  @media(max-width:760px){.hamburger{display:flex;}.top-center{display:none;}.brand-name{font-size:16px;}.presence-btn span:not(.dot){display:none;}}
+
+  .overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:90; }
+  .overlay.aberto{ display:block; }
+
+  .app{ display:flex; position:relative; z-index:1; }
+
+  .sidebar{
+    width:208px; background:var(--panel); backdrop-filter:blur(14px);
+    border-right:1px solid var(--border-soft); min-height:calc(100vh - 62px); padding:22px 0; flex:0 0 auto;
+  }
+  .nav-item{ display:flex; align-items:center; gap:11px; padding:11px 22px; font-size:12.5px; color:var(--muted); cursor:pointer; border-left:2px solid transparent; transition:all 0.2s; }
+  .nav-item:hover{ color:var(--text); background:var(--panel); }
+  .nav-item.ativo{ color:var(--gold-light); border-left:2px solid var(--gold-light); background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 8%,transparent),transparent); }
+  .nav-icon{ width:15px;height:15px;flex:0 0 auto;color:var(--muted); }
+  .nav-item.ativo .nav-icon{ color:var(--gold-light); }
+  .nav-secao,.nav-section{ font-size:9.5px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; padding:17px 22px 7px; }
+  .nav-item.ativo,.nav-item.active{ background:color-mix(in srgb,var(--gold) 8%,transparent); color:var(--gold-light); border-left-color:var(--gold-light); font-weight:600; }
+
+  @media (max-width:760px){
+    .sidebar .nav-item{ color:#c3cee0; }
+    .sidebar .nav-item.ativo{ color:var(--gold-light); }
+  }
+
+  .conteudo{ flex:1; padding:28px 30px; min-width:0; }
+
+  .header-pagina{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; gap:14px; flex-wrap:wrap; }
+  .header-pagina h1{ font-family:'Cormorant Garamond',serif; font-size:27px; font-weight:600; color:var(--text); }
+  .contagem{ font-size:12px; color:var(--muted); margin-top:4px; font-weight:300; }
+  .contagem strong{ color:var(--gold-light); font-weight:500; }
+
+  /* ===== FILTROS ===== */
+  .barra-filtros-dash{ display:flex; align-items:center; gap:9px; margin-bottom:24px; flex-wrap:wrap; }
+  .grupo-datas{ display:flex; align-items:center; gap:7px; }
+  .label-data{ font-size:10.5px; color:var(--muted); white-space:nowrap; }
+  input.campo-data{
+    background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:9px; padding:8px 12px; font-size:12px; color:var(--text);
+    font-family:'Montserrat',sans-serif; cursor:pointer; outline:none;
+    color-scheme:dark; transition:border-color .2s;
+  }
+  [data-theme="light"] input.campo-data{ color-scheme:light; }
+  input.campo-data:focus{ border-color:var(--gold-light); }
+  .separador-filtros{ width:1px; height:22px; background:var(--border-soft); flex:0 0 auto; }
+  .btn-aplicar-filtros{
+    padding:8px 16px; border-radius:9px;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--navy-1); font-size:11.5px; font-weight:700; cursor:pointer;
+    transition:filter .2s;
+  }
+  .btn-aplicar-filtros:hover{ filter:brightness(1.08); }
+  .btn-limpar-filtros{ font-size:11.5px; color:var(--gold-light); cursor:pointer; padding:9px 6px; text-decoration:underline; text-decoration-style:dotted; }
+
+  /* ===== DROPDOWN CUSTOM ===== */
+  .dropdown-custom{ position:relative; }
+  .dropdown-custom-valor{
+    background:var(--panel); backdrop-filter:blur(10px);
+    border:1px solid var(--border-soft); border-radius:9px;
+    padding:9px 14px; font-size:12px; color:var(--text);
+    cursor:pointer; display:flex; align-items:center; gap:8px; white-space:nowrap;
+    transition:border-color 0.2s;
+  }
+  .dropdown-custom-valor svg{ color:var(--gold-light); }
+  .dropdown-custom-valor:hover,.dropdown-custom.aberto .dropdown-custom-valor{ border-color:var(--gold-light); }
+  .dropdown-custom-valor .seta-dropdown{ width:7px;height:7px; border-right:1.4px solid var(--muted); border-bottom:1.4px solid var(--muted); transform:rotate(45deg); transition:transform 0.2s; }
+  .dropdown-custom.aberto .seta-dropdown{ transform:rotate(-135deg); }
+
+  /* ===== MULTISELECT EQUIPE ===== */
+  .dropdown-multi-lista{
+    position:absolute; top:calc(100% + 6px); left:0; min-width:240px;
+    background:linear-gradient(145deg,var(--panel-solid),var(--navy-2)); backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft); border-radius:10px; padding:8px;
+    z-index:60; display:none; max-height:300px; overflow-y:auto;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+  }
+  .dropdown-custom.aberto .dropdown-multi-lista{ display:block; }
+  .grupo-equipe-multi{ margin-bottom:6px; }
+  .grupo-equipe-multi-titulo{
+    font-size:9.5px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--muted); font-weight:700; padding:7px 8px 5px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .link-selecionar-todos{ font-size:9px; color:var(--gold-light); cursor:pointer; text-transform:none; font-weight:600; }
+  .opcao-checkbox-equipe{
+    display:flex; align-items:center; gap:9px;
+    padding:8px 9px; border-radius:8px; cursor:pointer;
+    font-size:12px; color:var(--text); transition:background 0.15s;
+  }
+  .opcao-checkbox-equipe:hover{ background:color-mix(in srgb,var(--gold) 8%,transparent); }
+  .checkbox-equipe-custom{
+    width:15px;height:15px; border-radius:4px; flex:0 0 auto;
+    border:1.4px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .opcao-checkbox-equipe.marcado .checkbox-equipe-custom{
+    background:var(--gold-light); border-color:var(--gold-light); color:var(--navy-1);
+  }
+  .btn-aplicar-multi{
+    width:100%; margin-top:6px; padding:9px; border-radius:8px;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--navy-1); font-size:11.5px; font-weight:700; cursor:pointer; border:none;
+  }
+  .info-carregando-equipe{ padding:12px 8px; font-size:11.5px; color:var(--muted); text-align:center; }
+
+  /* ===== TOAST ===== */
+  #toast-container{ position:fixed; bottom:28px; right:28px; z-index:9999; display:flex; flex-direction:column; gap:10px; pointer-events:none; }
+  .toast{ padding:12px 18px; border-radius:10px; font-size:12.5px; font-weight:500; color:var(--text); max-width:340px;
+    background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));
+    border:1px solid var(--border-soft); box-shadow:var(--shadow); animation:toastIn 0.3s ease; pointer-events:auto; }
+  .toast.sucesso{ border-left:3px solid var(--success); }
+  .toast.erro{ border-left:3px solid var(--danger); }
+  .toast.info{ border-left:3px solid var(--info); }
+  @keyframes toastIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+
+  /* ===== SKELETON ===== */
+  .skeleton-anim{
+    background:linear-gradient(90deg, var(--panel) 25%, var(--panel-2) 50%, var(--panel) 75%);
+    background-size:200% 100%;
+    animation:shimmer 1.4s infinite linear;
+    border-radius:6px;
+    color:transparent !important;
+    min-height:30px; min-width:50px;
+    user-select:none; display:inline-block;
+  }
+  @keyframes shimmer{
+    from{ background-position:200% 0; }
+    to{ background-position:-200% 0; }
+  }
+
+  /* ===== KPIs ===== */
+  .grid-kpis{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+    gap:16px; margin-bottom:26px;
+  }
+  .card-kpi{
+    background:var(--panel); backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft); border-radius:16px; padding:20px;
+  }
+  .kpi-topo{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+  .kpi-icone{ width:38px;height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+  .kpi-icone.azul{ background:color-mix(in srgb,var(--info) 15%,transparent); color:var(--info); }
+  .kpi-icone.verde{ background:color-mix(in srgb,var(--success) 15%,transparent); color:var(--success); }
+  .kpi-icone.dourado{ background:color-mix(in srgb,var(--gold) 15%,transparent); color:var(--gold-light); }
+  .kpi-icone.vermelho{ background:color-mix(in srgb,var(--danger) 15%,transparent); color:var(--danger); }
+  .kpi-variacao{ font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:8px; }
+  .kpi-variacao.alerta{ background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger); }
+  .kpi-variacao.ok{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+  .kpi-variacao.neutro{ background:color-mix(in srgb,var(--muted) 14%,transparent); color:var(--muted); }
+  .kpi-valor{ font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:700; color:var(--text); margin-bottom:3px; }
+  .kpi-label{ font-size:11.5px; color:var(--muted); }
+
+  /* ===== GRID PRINCIPAL ===== */
+  .grid-dashboard{
+    display:grid; grid-template-columns:1.4fr 1fr;
+    gap:18px; margin-bottom:20px;
+  }
+  .painel-dash{
+    background:var(--panel); backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft); border-radius:16px; padding:22px;
+  }
+  .painel-dash-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .painel-dash-titulo{ font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:var(--text); }
+  .painel-dash + .painel-dash{ margin-top:0; }
+
+  /* ===== BARRAS DE STATUS ===== */
+  .barra-tese{ margin-bottom:14px; }
+  .barra-tese-label{ display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:5px; }
+  .barra-tese-nome{ color:var(--text); font-weight:500; }
+  .barra-tese-pct{ font-size:10px; color:var(--muted); }
+  .barra-tese-valor{ color:var(--gold-light); font-weight:700; }
+  .barra-tese-trilho{ width:100%; height:8px; border-radius:5px; background:var(--panel-2); overflow:hidden; }
+  .barra-tese-fill{ height:100%; border-radius:5px; background:linear-gradient(90deg,var(--gold-light),var(--gold)); transition:width .6s ease; }
+
+  /* ===== TABELA SEM MOVIMENTAÇÃO ===== */
+  .tabela-sem-mov{ width:100%; border-collapse:collapse; }
+  .tabela-sem-mov tr{ border-bottom:1px solid var(--border-soft); }
+  .tabela-sem-mov tr:last-child{ border-bottom:none; }
+  .tabela-sem-mov td{ padding:10px 4px; font-size:12px; }
+  .tabela-sem-mov .td-label{ color:var(--muted); }
+  .tabela-sem-mov .td-valor{
+    text-align:right; font-family:'Cormorant Garamond',serif;
+    font-size:20px; font-weight:700; color:var(--text);
+  }
+  .tabela-sem-mov .faixa-critica .td-valor{ color:var(--danger); }
+
+  /* ===== UF ===== */
+  .linha-uf{
+    display:flex; align-items:center; gap:12px; margin-bottom:13px;
+    padding:6px 8px; border-radius:9px; cursor:pointer; transition:background .18s;
+  }
+  .linha-uf:hover{ background:color-mix(in srgb,var(--gold) 6%,transparent); }
+  .badge-sigla-uf{
+    width:32px;height:32px; border-radius:9px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:700; border:1px solid var(--border-soft);
+    background:var(--panel); color:var(--muted);
+  }
+  .badge-sigla-uf.uf-primeiro{
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--navy-1); border:none;
+  }
+  .badge-sigla-uf.uf-destaque{
+    background:color-mix(in srgb,var(--info) 18%,transparent); color:var(--info);
+    border-color:color-mix(in srgb,var(--info) 30%,transparent);
+  }
+  .corpo-linha-uf{ flex:1; min-width:0; }
+  .linha-uf-topo{ display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:5px; }
+  .linha-uf-nome{ color:var(--text); font-weight:500; }
+  .linha-uf-valor{ color:var(--gold-light); font-weight:700; }
+  .linha-uf-trilho{ width:100%; height:7px; border-radius:5px; background:var(--panel-2); overflow:hidden; }
+  .linha-uf-fill{ height:100%; border-radius:5px; background:linear-gradient(90deg,var(--gold-light),var(--gold)); transition:width .6s ease; }
+
+  /* ===== CNJ CARD ===== */
+  .card-cnj-nao-lidas{
+    display:flex; align-items:center; gap:14px;
+    background:color-mix(in srgb,var(--danger) 8%,transparent);
+    border:1px solid color-mix(in srgb,var(--danger) 28%,transparent);
+    border-radius:13px; padding:14px 16px; margin-bottom:16px; cursor:pointer;
+    transition:background .2s, border-color .2s;
+  }
+  .card-cnj-nao-lidas:hover{ background:color-mix(in srgb,var(--danger) 14%,transparent); border-color:color-mix(in srgb,var(--danger) 45%,transparent); }
+  .icone-sino-wrapper{ position:relative; flex:0 0 auto; }
+  .icone-sino-cnj{
+    width:38px;height:38px; border-radius:10px;
+    background:color-mix(in srgb,var(--danger) 16%,transparent);
+    display:flex; align-items:center; justify-content:center; color:var(--danger);
+  }
+  .badge-contador-nao-lidas{
+    position:absolute; top:-6px; right:-6px;
+    min-width:18px; height:18px; border-radius:9px;
+    background:var(--danger); color:#fff;
+    font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 4px; box-shadow:0 0 0 2px var(--navy-2);
+  }
+  .info-cnj-nao-lidas{ flex:1; min-width:0; }
+  .titulo-cnj-nao-lidas{ font-size:13px; font-weight:700; color:var(--text); }
+  .sub-cnj-nao-lidas{ font-size:10.5px; color:var(--muted); margin-top:2px; }
+  .card-cnj-oculto{ display:none; }
+
+  /* ===== SLA ===== */
+  .card-sla-resposta{
+    background:var(--panel); backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft); border-radius:16px;
+    padding:20px; margin-bottom:16px;
+  }
+  .sla-corpo{ display:flex; align-items:center; gap:18px; }
+  .sla-anel-wrapper{ position:relative; width:84px; height:84px; flex:0 0 auto; }
+  .sla-anel-texto{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .sla-anel-valor{ font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:700; color:var(--text); line-height:1.1; }
+  .sla-anel-label{ font-size:8px; color:var(--muted); margin-top:1px; text-transform:uppercase; letter-spacing:0.5px; }
+  .sla-info{ flex:1; min-width:0; }
+  .sla-titulo{ font-size:12px; font-weight:700; color:var(--text); margin-bottom:3px; }
+  .sla-meta{ font-size:10.5px; color:var(--muted); }
+  .sla-status-badge{ display:inline-block; margin-top:7px; font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:8px; }
+  .sla-status-badge.sla-bom{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+  .sla-status-badge.sla-atencao{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
+  .sla-status-badge.sla-atrasado{ background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger); }
+  .sla-lista{ margin-top:14px; padding-top:12px; border-top:1px solid var(--border-soft); }
+  .sla-item{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px; padding:5px 0;
+  }
+  .sla-item-nome{ color:var(--text); }
+  .sla-item-badge{ font-weight:700; font-size:10px; padding:2px 8px; border-radius:7px; flex:0 0 auto; }
+  .sla-item-badge.dentro-meta{ background:color-mix(in srgb,var(--success) 12%,transparent); color:var(--success); }
+  .sla-item-badge.atencao{ background:color-mix(in srgb,var(--warning) 12%,transparent); color:var(--warning); }
+  .sla-item-badge.atrasado{ background:color-mix(in srgb,var(--danger) 12%,transparent); color:var(--danger); }
+
+  /* ===== TAREFAS WIDGET ===== */
+  .lista-tarefas{ display:flex; flex-direction:column; gap:8px; max-height:320px; overflow-y:auto; }
+  .item-tarefa{
+    display:flex; align-items:center; gap:10px; padding:10px 11px;
+    background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:10px; transition:background .15s;
+  }
+  .item-tarefa:hover{ background:var(--panel-2); }
+  .info-tarefa{ flex:1; min-width:0; }
+  .titulo-tarefa{ font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .meta-tarefa{ font-size:10.5px; color:var(--muted); margin-top:2px; }
+  .badge-prazo{ font-size:10px; font-weight:700; padding:3px 8px; border-radius:7px; flex:0 0 auto; white-space:nowrap; }
+  .badge-prazo.vencido{ background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger); }
+  .badge-prazo.urgente{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
+  .badge-prazo.proximo{ background:color-mix(in srgb,var(--info) 14%,transparent); color:var(--info); }
+  .badge-prazo.normal{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+  .btn-concluir-tarefa{
+    width:26px; height:26px; border-radius:7px; flex:0 0 auto;
+    border:1.4px solid var(--border-soft); background:transparent;
+    color:var(--muted); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .btn-concluir-tarefa:hover{ border-color:var(--success); color:var(--success); background:color-mix(in srgb,var(--success) 10%,transparent); }
+  .btn-concluir-tarefa:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  /* ===== NOTIFICAÇÕES WIDGET ===== */
+  .lista-notificacoes{ display:flex; flex-direction:column; gap:7px; max-height:270px; overflow-y:auto; margin-bottom:8px; }
+  .item-notificacao{
+    display:flex; align-items:flex-start; gap:10px; padding:10px 11px;
+    background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:10px; cursor:pointer; transition:background .15s;
+  }
+  .item-notificacao.nao-lida{ border-color:color-mix(in srgb,var(--gold) 28%,transparent); }
+  .item-notificacao.nao-lida .resumo-notif{ font-weight:600; }
+  .item-notificacao:hover{ background:var(--panel-2); }
+  .badge-tipo-notif{
+    font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:7px; flex:0 0 auto; margin-top:1px;
+    background:color-mix(in srgb,var(--info) 14%,transparent); color:var(--info);
+  }
+  .resumo-notif{ flex:1; font-size:11.5px; color:var(--text); line-height:1.4; }
+  .tempo-notif{ font-size:10px; color:var(--muted); flex:0 0 auto; margin-top:1px; white-space:nowrap; }
+  .btn-marcar-todas{
+    display:block; width:100%; padding:8px; border-radius:9px;
+    background:var(--panel); border:1px solid var(--border-soft);
+    font-size:11.5px; font-weight:600; color:var(--muted); cursor:pointer;
+    text-align:center; transition:color .2s, border-color .2s;
+  }
+  .btn-marcar-todas:hover{ color:var(--gold-light); border-color:var(--gold-light); }
+
+  /* ===== ESTADO VAZIO ===== */
+  .estado-vazio{
+    text-align:center; padding:28px 0;
+    color:var(--muted); font-size:12px; line-height:1.6;
+  }
+
+  /* ===== MODAL DASH ===== */
+  .modal-overlay-dash{
+    display:none; position:fixed; inset:0;
+    background:color-mix(in srgb,var(--navy-1) 72%,transparent); backdrop-filter:blur(4px);
+    z-index:300; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-overlay-dash.aberto{ display:flex; }
+  .modal-dash{
+    width:100%; max-width:460px;
+    background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));
+    backdrop-filter:blur(24px); border:1px solid var(--border-soft);
+    border-radius:18px; padding:28px; box-shadow:0 30px 70px rgba(0,0,0,0.5);
+  }
+  .modal-dash h3{ font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--text); margin-bottom:6px; }
+  .modal-dash .modal-sub{ font-size:11.5px; color:var(--muted); margin-bottom:18px; line-height:1.6; }
+  .modal-campo-dash{ margin-bottom:14px; }
+  .modal-campo-dash label{ display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px; color:var(--gold-light); margin-bottom:7px; font-weight:600; }
+  .modal-campo-dash input{
+    width:100%; background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:9px; padding:9px 12px; color:var(--text); font-size:13px;
+    font-family:'Montserrat',sans-serif; outline:none;
+  }
+  .modal-campo-dash input:focus{ border-color:var(--gold-light); }
+  .modal-botoes-dash{ display:flex; gap:10px; margin-top:6px; }
+  .modal-botoes-dash button{ flex:1; padding:11px; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer; border:none; }
+  .btn-cancelar-dash{ background:var(--panel-2); color:var(--muted); }
+  .btn-confirmar-dash{ background:linear-gradient(135deg,var(--gold-light),var(--gold)); color:var(--navy-1); }
+
+  /* ===== RESPONSIVO ===== */
+  @media (max-width:980px){
+    .sidebar{ width:178px; }
+    .nav-item{ padding:10px 16px; font-size:12px; }
+    .grid-dashboard{ grid-template-columns:1fr; }
+  }
+  @media (max-width:760px){
+    .hamburguer{ display:flex; }
+    .sidebar{
+      position:fixed; left:-220px; top:62px;
+      height:calc(100vh - 62px); width:210px; z-index:95;
+      transition:left 0.28s ease; box-shadow:4px 0 24px rgba(0,0,0,0.4);
+    }
+    .sidebar.aberta, .sidebar.open{ left:0; }
+    .conteudo{ padding:16px; }
+    .header-pagina h1{ font-size:22px; }
+    .grid-kpis{ grid-template-columns:repeat(2,1fr); }
+    .presenca{ display:none; }
+  }
+  [data-theme="light"] .topbar{ background:linear-gradient(135deg,var(--panel-solid),var(--navy-1)); }
+  [data-theme="light"] .dropdown-multi-lista,
+  [data-theme="light"] .modal-dash,
+  [data-theme="light"] .toast{ background:linear-gradient(145deg,var(--panel-solid),var(--navy-2)); }
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="overlay" id="overlay"></div>
+
+<!-- ===== TOPBAR ===== -->
+<header class="topbar" id="topbarSaga"></header>
+
+<div class="app">
+
+  <!-- ===== SIDEBAR ===== -->
+  <div class="sidebar" id="sidebarSaga"></div>
+
+  <!-- ===== CONTEUDO ===== -->
+  <div class="conteudo">
+
+    <div class="header-pagina">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="contagem">Ola, <strong id="nomeUsuarioHeader">...</strong> &middot; <span id="textoFiltroAtivo">Sem filtros ativos</span></div>
+      </div>
+    </div>
+
+    <!-- ===== FILTROS ===== -->
+    <div class="barra-filtros-dash">
+      <div class="grupo-datas">
+        <span class="label-data">De</span>
+        <input type="date" class="campo-data" id="filtroDataInicio" aria-label="Data inicio">
+        <span class="label-data">ate</span>
+        <input type="date" class="campo-data" id="filtroDataFim" aria-label="Data fim">
+      </div>
+
+      <div class="separador-filtros"></div>
+
+      <div class="dropdown-custom" id="dropFiltroEquipe">
+        <div class="dropdown-custom-valor">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span id="textoFiltroEquipe">Toda a equipe</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-multi-lista" id="listaMultiEquipe">
+          <div class="info-carregando-equipe" id="infoCarregandoEquipe">Carregando colaboradores...</div>
+          <button class="btn-aplicar-multi" id="btnAplicarEquipe">Aplicar selecao</button>
+        </div>
+      </div>
+
+      <button class="btn-aplicar-filtros" id="btnAplicarFiltros">Aplicar</button>
+      <div class="btn-limpar-filtros" id="btnLimparFiltros">Limpar filtros</div>
+    </div>
+
+    <!-- ===== KPIs ===== -->
+    <div class="grid-kpis">
+      <div class="card-kpi">
+        <div class="kpi-topo">
+          <div class="kpi-icone azul"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"/></svg></div>
+          <span class="kpi-variacao neutro" id="kpi1badge">...</span>
+        </div>
+        <div class="kpi-valor skeleton-anim" id="kpi1valor">000</div>
+        <div class="kpi-label">Processos ativos</div>
+      </div>
+      <div class="card-kpi">
+        <div class="kpi-topo">
+          <div class="kpi-icone vermelho"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.6"/></svg></div>
+          <span class="kpi-variacao neutro" id="kpi2badge">...</span>
+        </div>
+        <div class="kpi-valor skeleton-anim" id="kpi2valor">000</div>
+        <div class="kpi-label">Prazos vencidos</div>
+      </div>
+      <div class="card-kpi">
+        <div class="kpi-topo">
+          <div class="kpi-icone dourado"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="2"/></svg></div>
+          <span class="kpi-variacao neutro" id="kpi3badge">...</span>
+        </div>
+        <div class="kpi-valor skeleton-anim" id="kpi3valor">000</div>
+        <div class="kpi-label">Minhas tarefas pendentes</div>
+      </div>
+      <div class="card-kpi">
+        <div class="kpi-topo">
+          <div class="kpi-icone verde"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="currentColor" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="currentColor" stroke-width="1.6"/></svg></div>
+          <span class="kpi-variacao neutro" id="kpi4badge">...</span>
+        </div>
+        <div class="kpi-valor skeleton-anim" id="kpi4valor">000</div>
+        <div class="kpi-label">Notificacoes nao lidas</div>
+      </div>
+    </div>
+
+    <!-- ===== GRID PRINCIPAL ===== -->
+    <div class="grid-dashboard">
+
+      <!-- PAINEL ESQUERDO -->
+      <div class="painel-dash">
+
+        <!-- Widget 1: Processos por Status -->
+        <div class="painel-dash-header">
+          <div class="painel-dash-titulo">Processos por Status</div>
+        </div>
+        <div id="barsStatus">
+          <div class="skeleton-anim" style="height:12px;width:100%;margin-bottom:14px;"></div>
+          <div class="skeleton-anim" style="height:12px;width:80%;margin-bottom:14px;"></div>
+          <div class="skeleton-anim" style="height:12px;width:60%;margin-bottom:14px;"></div>
+        </div>
+
+        <!-- Widget 2: Sem Movimentacao -->
+        <div class="painel-dash-header" style="margin-top:26px;">
+          <div class="painel-dash-titulo">Processos sem Movimentacao</div>
+        </div>
+        <table class="tabela-sem-mov">
+          <tbody id="tabelaSemMov">
+            <tr><td class="td-label">Mais de 30 dias</td><td class="td-valor skeleton-anim" id="semMov30">000</td></tr>
+            <tr><td class="td-label">Mais de 60 dias</td><td class="td-valor skeleton-anim" id="semMov60">000</td></tr>
+            <tr><td class="td-label">Mais de 90 dias</td><td class="td-valor skeleton-anim" id="semMov90">000</td></tr>
+            <tr class="faixa-critica"><td class="td-label">Mais de 120 dias</td><td class="td-valor skeleton-anim" id="semMov120">000</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Widget 3: Distribuicao por UF -->
+        <div class="painel-dash-header" style="margin-top:26px;">
+          <div class="painel-dash-titulo">Distribuicao por UF</div>
+        </div>
+        <div id="listaUF">
+          <div class="skeleton-anim" style="height:36px;width:100%;margin-bottom:10px;border-radius:9px;"></div>
+          <div class="skeleton-anim" style="height:36px;width:100%;margin-bottom:10px;border-radius:9px;"></div>
+          <div class="skeleton-anim" style="height:36px;width:100%;border-radius:9px;"></div>
+        </div>
+
+      </div>
+
+      <!-- PAINEL DIREITO -->
+      <div class="painel-dash">
+
+        <!-- CNJ nao lidas -->
+        <div class="card-cnj-nao-lidas" id="cardCNJ">
+          <div class="icone-sino-wrapper">
+            <div class="icone-sino-cnj"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="currentColor" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="currentColor" stroke-width="1.6"/></svg></div>
+            <div class="badge-contador-nao-lidas" id="contadorCNJ">...</div>
+          </div>
+          <div class="info-cnj-nao-lidas">
+            <div class="titulo-cnj-nao-lidas"><span id="textoCNJPrincipal">...</span> movimentacoes nao revisadas</div>
+            <div class="sub-cnj-nao-lidas" id="textoCNJSub">Carregando...</div>
+          </div>
+        </div>
+
+        <!-- Widget 6: SLA -->
+        <div class="card-sla-resposta">
+          <div class="sla-corpo">
+            <div class="sla-anel-wrapper">
+              <svg width="84" height="84" viewBox="0 0 84 84" id="slaAnelSvg">
+                <circle cx="42" cy="42" r="36" fill="none" stroke="var(--border-soft)" stroke-width="7"/>
+                <circle cx="42" cy="42" r="36" fill="none" stroke="var(--success)" stroke-width="7" stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="226" transform="rotate(-90 42 42)" id="slaCirculo"/>
+              </svg>
+              <div class="sla-anel-texto">
+                <div class="sla-anel-valor" id="slaMediaHoras">--</div>
+                <div class="sla-anel-label">medio</div>
+              </div>
+            </div>
+            <div class="sla-info">
+              <div class="sla-titulo">SLA de Resposta</div>
+              <div class="sla-meta" id="slaMeta">Carregando...</div>
+              <div class="sla-status-badge" id="slaBadge">...</div>
+            </div>
+          </div>
+          <div class="sla-lista" id="slaLista">
+            <div class="sla-item">
+              <span class="sla-item-nome skeleton-anim" style="width:80%;">...</span>
+              <span class="sla-item-badge skeleton-anim">...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Widget 4: Minhas Tarefas -->
+        <div class="painel-dash-header">
+          <div class="painel-dash-titulo">Minhas Tarefas</div>
+        </div>
+        <div class="lista-tarefas" id="listaTarefas">
+          <div class="skeleton-anim" style="height:50px;width:100%;border-radius:10px;"></div>
+          <div class="skeleton-anim" style="height:50px;width:100%;border-radius:10px;margin-top:8px;"></div>
+        </div>
+
+        <!-- Widget 5: Notificacoes -->
+        <div class="painel-dash-header" style="margin-top:22px;">
+          <div class="painel-dash-titulo">Ultimas Notificacoes</div>
+        </div>
+        <div class="lista-notificacoes" id="listaNotificacoes">
+          <div class="skeleton-anim" style="height:50px;width:100%;border-radius:10px;"></div>
+          <div class="skeleton-anim" style="height:50px;width:100%;border-radius:10px;margin-top:7px;"></div>
+        </div>
+        <button class="btn-marcar-todas" id="btnMarcarTodasLidas">Marcar todas como lidas</button>
+
+      </div>
+
+    </div>
+
+  </div><!-- /conteudo -->
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div class="modal-overlay-dash" id="modalCriarFiltro">
+  <div class="modal-dash">
+    <h3>Criar Filtro Personalizado</h3>
+    <div class="modal-sub">Funcionalidade em desenvolvimento. Em breve disponivel.</div>
+    <div class="modal-botoes-dash">
+      <button class="btn-cancelar-dash" id="btnCancelarFiltro">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- SUPABASE SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="saga_ui.js"></script>
+
+<script>
+// ================================================================
+// VMMADV - Dashboard Conectado ao Supabase
+// Fase 3B: autenticacao real + queries reais
+// ================================================================
+
+var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ----- ESTADO GLOBAL -----
+var meuPerfilId  = null;
+var meuNome      = '';
+var filtros      = { dataInicio: '', dataFim: '', responsaveisIds: [] };
+var dadosEquipe  = []; // cache da lista de colaboradores
+
+// ================================================================
+// TOAST
+// ================================================================
+function showToast(msg, tipo) {
+  tipo = tipo || 'info';
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.innerHTML = msg;
+  c.appendChild(t);
+  setTimeout(function() {
+    t.style.opacity = '0'; t.style.transition = 'opacity .4s';
+    setTimeout(function() { t.remove(); }, 400);
+  }, 3400);
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function numBR(n) {
+  if (n === null || n === undefined) return '--';
+  return Number(n).toLocaleString('pt-BR');
+}
+
+function dataRelativa(iso) {
+  if (!iso) return '';
+  var diff = Date.now() - new Date(iso).getTime();
+  var min  = Math.floor(diff / 60000);
+  var h    = Math.floor(diff / 3600000);
+  var d    = Math.floor(diff / 86400000);
+  if (min < 2)  return 'agora';
+  if (min < 60) return 'ha ' + min + ' min';
+  if (h < 24)   return 'ha ' + h + 'h';
+  if (d === 1)  return 'ontem';
+  return 'ha ' + d + ' dias';
+}
+
+function formatarDataBR(isoDate) {
+  if (!isoDate) return 'Sem prazo';
+  var d = new Date(isoDate + 'T00:00:00');
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+}
+
+function urgenciaPrazo(isoDate) {
+  if (!isoDate) return 'normal';
+  var hoje  = new Date().toISOString().split('T')[0];
+  var manhaIso = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  if (isoDate < hoje)     return 'vencido';
+  if (isoDate <= manhaIso) return 'urgente';
+  var diff = (new Date(isoDate) - new Date(hoje)) / 86400000;
+  if (diff <= 4)           return 'proximo';
+  return 'normal';
+}
+
+function labelUrgencia(u) {
+  var m = { vencido: 'Vencido', urgente: 'Urgente', proximo: 'Em breve', normal: 'No prazo' };
+  return m[u] || u;
+}
+
+function ativarSkeleton(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.add('skeleton-anim');
+}
+
+function resolverSkeleton(id, val) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('skeleton-anim');
+  el.textContent = val !== undefined ? val : el.textContent;
+}
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', function() {
+  inicializar();
+});
+
+async function inicializar() {
+  try {
+    await SagaUI.carregar('dashboard');
+    var r = await _sb.auth.getSession();
+    var session = r.data && r.data.session;
+    if (!session) {
+      window.location.href = 'login_padrao_metalico.html';
+      return;
+    }
+
+    // Carregar perfil do usuario logado
+    var pr = await _sb.from('usuarios')
+      .select('id, nome_completo')
+      .eq('auth_user_id', session.user.id)
+      .single();
+
+    if (pr.error || !pr.data) {
+      window.location.href = 'login_padrao_metalico.html';
+      return;
+    }
+
+    meuPerfilId = pr.data.id;
+    meuNome     = pr.data.nome_completo;
+
+    var elNomeHeader = document.getElementById('nomeUsuarioHeader');
+    if (elNomeHeader) elNomeHeader.textContent = meuNome.split(' ')[0];
+
+    // Restaurar filtros salvos
+    await carregarPreferencias();
+
+    // Carregar equipe para o multiselect
+    carregarEquipe();
+
+    // Carregar todos os widgets
+    await carregarTudo();
+
+  } catch(e) {
+    showToast('Erro ao inicializar o dashboard. Recarregue a pagina.', 'erro');
+  }
+}
+document.addEventListener('saga-atualizar', function() {
+  carregarTudo();
+});
+
+// ================================================================
+// PREFERENCIAS
+// ================================================================
+async function carregarPreferencias() {
+  try {
+    var r = await _sb.from('preferencias_filtros_usuario')
+      .select('filtros')
+      .eq('usuario_id', meuPerfilId)
+      .eq('tela', 'dashboard')
+      .single();
+
+    if (!r.error && r.data && r.data.filtros) {
+      var f = r.data.filtros;
+      if (f.dataInicio) {
+        filtros.dataInicio = f.dataInicio;
+        document.getElementById('filtroDataInicio').value = f.dataInicio;
+      }
+      if (f.dataFim) {
+        filtros.dataFim = f.dataFim;
+        document.getElementById('filtroDataFim').value = f.dataFim;
+      }
+      if (Array.isArray(f.responsaveisIds)) {
+        filtros.responsaveisIds = f.responsaveisIds;
+      }
+    }
+  } catch(e) {
+    // Sem preferencias salvas - usar defaults
+  }
+  atualizarTextoFiltro();
+}
+
+async function salvarPreferencias() {
+  if (!meuPerfilId) return;
+  try {
+    await _sb.from('preferencias_filtros_usuario').upsert({
+      usuario_id: meuPerfilId,
+      tela: 'dashboard',
+      filtros: filtros,
+      atualizado_em: new Date().toISOString()
+    }, { onConflict: 'usuario_id,tela' });
+  } catch(e) {
+    // Silencioso: preferencias nao sao criticas
+  }
+}
+
+function atualizarTextoFiltro() {
+  var partes = [];
+  if (filtros.dataInicio && filtros.dataFim) {
+    partes.push('De ' + formatarDataBR(filtros.dataInicio) + ' a ' + formatarDataBR(filtros.dataFim));
+  } else if (filtros.dataInicio) {
+    partes.push('A partir de ' + formatarDataBR(filtros.dataInicio));
+  } else if (filtros.dataFim) {
+    partes.push('Ate ' + formatarDataBR(filtros.dataFim));
+  }
+  if (filtros.responsaveisIds.length > 0) {
+    partes.push(filtros.responsaveisIds.length + ' colaborador(es) selecionado(s)');
+  }
+  document.getElementById('textoFiltroAtivo').textContent = partes.length > 0 ? partes.join(' | ') : 'Sem filtros ativos';
+}
+
+// ================================================================
+// EQUIPE (multiselect dinamico)
+// ================================================================
+async function carregarEquipe() {
+  try {
+    var r = await _sb.from('usuarios')
+      .select('id, nome_completo, usuarios_papeis(papeis(nome))')
+      .eq('ativo', true)
+      .order('nome_completo');
+
+    if (r.error || !r.data) return;
+    dadosEquipe = r.data;
+    renderizarMultiselectEquipe();
+  } catch(e) {
+    // Silencioso
+  }
+}
+
+function renderizarMultiselectEquipe() {
+  var container  = document.getElementById('listaMultiEquipe');
+  var btnAplicar = document.getElementById('btnAplicarEquipe');
+
+  // Agrupar por papel
+  var grupos = {};
+  dadosEquipe.forEach(function(u) {
+    var papel = 'Outros';
+    if (u.usuarios_papeis && u.usuarios_papeis.length > 0 && u.usuarios_papeis[0].papeis) {
+      papel = u.usuarios_papeis[0].papeis.nome || 'Outros';
+    }
+    if (!grupos[papel]) grupos[papel] = [];
+    grupos[papel].push(u);
+  });
+
+  var html = '';
+  Object.keys(grupos).sort().forEach(function(papel) {
+    html += '<div class="grupo-equipe-multi">';
+    html += '<div class="grupo-equipe-multi-titulo">' + papel + '</div>';
+    grupos[papel].forEach(function(u) {
+      var marcado = filtros.responsaveisIds.indexOf(u.id) >= 0;
+      var check   = marcado
+        ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '';
+      html += '<div class="opcao-checkbox-equipe' + (marcado ? ' marcado' : '') + '" data-id="' + u.id + '">';
+      html += '<div class="checkbox-equipe-custom">' + check + '</div>';
+      html += u.nome_completo;
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+  container.appendChild(btnAplicar);
+
+  // Eventos
+  container.querySelectorAll('.opcao-checkbox-equipe').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      e.stopPropagation();
+      item.classList.toggle('marcado');
+      var caixa = item.querySelector('.checkbox-equipe-custom');
+      caixa.innerHTML = item.classList.contains('marcado')
+        ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '';
+    });
+  });
+}
+
+function obterIdsSelecionados() {
+  var marcados = document.querySelectorAll('#listaMultiEquipe .opcao-checkbox-equipe.marcado');
+  return Array.prototype.map.call(marcados, function(m) { return m.getAttribute('data-id'); });
+}
+
+function atualizarTextoEquipe() {
+  var ids  = filtros.responsaveisIds;
+  var txt  = 'Toda a equipe';
+  if (ids.length === 1) {
+    var u = dadosEquipe.find(function(x) { return x.id === ids[0]; });
+    txt = u ? u.nome_completo.split(' ')[0] : '1 colaborador';
+  } else if (ids.length > 1) {
+    txt = ids.length + ' colaboradores';
+  }
+  document.getElementById('textoFiltroEquipe').textContent = txt;
+}
+
+// ================================================================
+// PRESENCA (a presenca oficial fica na topbar unificada, saga_ui.js)
+// ================================================================
+async function carregarPresenca() { /* obsoleto: saga_ui.js cuida da presenca */ }
+
+// ================================================================
+// CARREGAR TUDO
+// ================================================================
+async function carregarTudo() {
+  var btn = document.getElementById('refreshBtn');
+  if (btn) btn.classList.add('girando');
+  try {
+    await Promise.allSettled([
+      carregarKPIs(),
+      carregarStatusDistribuicao(),
+      carregarSemMovimentacao(),
+      carregarUF(),
+      carregarTarefas(),
+      carregarNotificacoes(),
+      carregarSLA(),
+      carregarCNJ()
+    ]);
+  } finally {
+    if (btn) btn.classList.remove('girando');
+  }
+}
+
+// ================================================================
+// KPIs
+// ================================================================
+async function carregarKPIs() {
+  // Reiniciar skeletons
+  ['kpi1valor','kpi2valor','kpi3valor','kpi4valor'].forEach(ativarSkeleton);
+  ['kpi1badge','kpi2badge','kpi3badge','kpi4badge'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.className = 'kpi-variacao neutro'; el.textContent = '...'; }
+  });
+
+  try {
+    var hoje = new Date().toISOString().split('T')[0];
+
+    // Montar filtros base para processos
+    var qBase = _sb.from('processos').select('*', { count: 'exact', head: true }).eq('excluido_logico', false);
+    if (filtros.responsaveisIds.length > 0) qBase = qBase.in('responsavel_id', filtros.responsaveisIds);
+    if (filtros.dataInicio) qBase = qBase.gte('criado_em', filtros.dataInicio + 'T00:00:00');
+    if (filtros.dataFim)    qBase = qBase.lte('criado_em', filtros.dataFim + 'T23:59:59');
+
+    var qVencidos = _sb.from('processos').select('*', { count: 'exact', head: true })
+      .eq('excluido_logico', false)
+      .lt('data_prazo', hoje);
+    if (filtros.responsaveisIds.length > 0) qVencidos = qVencidos.in('responsavel_id', filtros.responsaveisIds);
+
+    var qTarefas = _sb.from('tarefas').select('*', { count: 'exact', head: true })
+      .eq('responsavel_id', meuPerfilId)
+      .eq('concluida', false);
+
+    var qNotif = _sb.from('notificacoes').select('*', { count: 'exact', head: true })
+      .eq('usuario_id', meuPerfilId)
+      .eq('lida', false);
+
+    var results = await Promise.all([qBase, qVencidos, qTarefas, qNotif]);
+
+    var totalAtivos   = results[0].count || 0;
+    var totalVencidos = results[1].count || 0;
+    var totalTarefas  = results[2].count || 0;
+    var totalNotif    = results[3].count || 0;
+
+    resolverSkeleton('kpi1valor', numBR(totalAtivos));
+    resolverSkeleton('kpi2valor', numBR(totalVencidos));
+    resolverSkeleton('kpi3valor', numBR(totalTarefas));
+    resolverSkeleton('kpi4valor', numBR(totalNotif));
+
+    // Badges
+    var b1 = document.getElementById('kpi1badge');
+    b1.className = 'kpi-variacao ok'; b1.textContent = 'ativos';
+
+    var b2 = document.getElementById('kpi2badge');
+    if (totalVencidos > 0) { b2.className = 'kpi-variacao alerta'; b2.textContent = 'urgente'; }
+    else { b2.className = 'kpi-variacao ok'; b2.textContent = 'em dia'; }
+
+    var b3 = document.getElementById('kpi3badge');
+    b3.className = totalTarefas > 0 ? 'kpi-variacao alerta' : 'kpi-variacao ok';
+    b3.textContent = totalTarefas > 0 ? 'pendente' : 'em dia';
+
+    var b4 = document.getElementById('kpi4badge');
+    b4.className = totalNotif > 0 ? 'kpi-variacao alerta' : 'kpi-variacao ok';
+    b4.textContent = totalNotif > 0 ? 'nova(s)' : 'sem novas';
+
+  } catch(e) {
+    ['kpi1valor','kpi2valor','kpi3valor','kpi4valor'].forEach(function(id) { resolverSkeleton(id, '--'); });
+    showToast('Erro ao carregar KPIs. Verifique a conexao.', 'erro');
+  }
+}
+
+// ================================================================
+// WIDGET 1: STATUS DISTRIBUICAO
+// ================================================================
+async function carregarStatusDistribuicao() {
+  var container = document.getElementById('barsStatus');
+  try {
+    // Buscar todos os status
+    var rStatus = await _sb.from('status_funil').select('id, nome, cor').order('nome');
+    if (rStatus.error || !rStatus.data || rStatus.data.length === 0) {
+      container.innerHTML = '<div class="estado-vazio">Nenhum status cadastrado.</div>';
+      return;
+    }
+
+    var statuses = rStatus.data;
+
+    // Contar processos por status em paralelo
+    var queries = statuses.map(function(s) {
+      var q = _sb.from('processos').select('*', { count: 'exact', head: true })
+        .eq('status_id', s.id)
+        .eq('excluido_logico', false);
+      if (filtros.responsaveisIds.length > 0) q = q.in('responsavel_id', filtros.responsaveisIds);
+      if (filtros.dataInicio) q = q.gte('criado_em', filtros.dataInicio + 'T00:00:00');
+      if (filtros.dataFim)    q = q.lte('criado_em', filtros.dataFim + 'T23:59:59');
+      return q;
+    });
+
+    var resultados = await Promise.all(queries);
+
+    var dados = statuses.map(function(s, i) {
+      return { nome: s.nome, cor: s.cor || null, total: resultados[i].count || 0 };
+    }).filter(function(d) { return d.total > 0; }).sort(function(a, b) { return b.total - a.total; });
+
+    if (dados.length === 0) {
+      container.innerHTML = '<div class="estado-vazio">Nenhum processo encontrado para os filtros selecionados.</div>';
+      return;
+    }
+
+    var totalGeral = dados.reduce(function(s, d) { return s + d.total; }, 0);
+    var maximo     = dados[0].total;
+
+    var html = '';
+    dados.forEach(function(d, idx) {
+      var pct    = totalGeral > 0 ? Math.round((d.total / totalGeral) * 100) : 0;
+      var barra  = Math.round((d.total / maximo) * 100);
+      var gradiente = d.cor
+        ? 'background:' + d.cor + ';'
+        : (idx % 4 === 0 ? '' : idx % 4 === 1
+            ? 'background:linear-gradient(90deg,var(--info),color-mix(in srgb,var(--info) 72%,var(--navy-1)));'
+            : idx % 4 === 2
+              ? 'background:linear-gradient(90deg,var(--success),color-mix(in srgb,var(--success) 72%,var(--navy-1)));'
+              : 'background:linear-gradient(90deg,var(--warning),var(--gold-deep));');
+      html += '<div class="barra-tese">';
+      html += '<div class="barra-tese-label">';
+      html += '<span class="barra-tese-nome">' + d.nome + '</span>';
+      html += '<span><span class="barra-tese-pct">' + pct + '%</span> &nbsp;<span class="barra-tese-valor">' + numBR(d.total) + '</span></span>';
+      html += '</div>';
+      html += '<div class="barra-tese-trilho"><div class="barra-tese-fill" style="width:' + barra + '%;' + gradiente + '"></div></div>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+
+  } catch(e) {
+    container.innerHTML = '<div class="estado-vazio">Erro ao carregar distribuicao por status.</div>';
+  }
+}
+
+// ================================================================
+// WIDGET 2: SEM MOVIMENTACAO
+// ================================================================
+async function carregarSemMovimentacao() {
+  try {
+    var r = await _sb.from('vw_dashboard_processos_sem_movimentacao').select('faixa_dias, total_processos');
+    if (r.error || !r.data) throw r.error;
+
+    var mapa = { 30: '--', 60: '--', 90: '--', 120: '--' };
+    r.data.forEach(function(row) {
+      if (mapa.hasOwnProperty(row.faixa_dias)) {
+        mapa[row.faixa_dias] = numBR(row.total_processos);
+      }
+    });
+
+    resolverSkeleton('semMov30',  mapa[30]);
+    resolverSkeleton('semMov60',  mapa[60]);
+    resolverSkeleton('semMov90',  mapa[90]);
+    resolverSkeleton('semMov120', mapa[120]);
+
+  } catch(e) {
+    ['semMov30','semMov60','semMov90','semMov120'].forEach(function(id) { resolverSkeleton(id, '--'); });
+  }
+}
+
+// ================================================================
+// WIDGET 3: UF
+// ================================================================
+async function carregarUF() {
+  var container = document.getElementById('listaUF');
+  try {
+    var r = await _sb.from('vw_dashboard_mapa_uf')
+      .select('uf, total_processos, pct_relativo_ao_maior')
+      .order('total_processos', { ascending: false })
+      .limit(10);
+
+    if (r.error || !r.data || r.data.length === 0) {
+      container.innerHTML = '<div class="estado-vazio">Nenhum dado de UF disponivel.</div>';
+      return;
+    }
+
+    var html = '';
+    r.data.forEach(function(row, idx) {
+      var classBadge = idx === 0 ? 'badge-sigla-uf uf-primeiro' : (idx <= 2 ? 'badge-sigla-uf uf-destaque' : 'badge-sigla-uf');
+      var pct = Math.round(row.pct_relativo_ao_maior || 0);
+      html += '<div class="linha-uf">';
+      html += '<div class="' + classBadge + '">' + (row.uf || 'N/D').substring(0, 2).toUpperCase() + '</div>';
+      html += '<div class="corpo-linha-uf">';
+      html += '<div class="linha-uf-topo"><span class="linha-uf-nome">' + (row.uf || 'Indefinido') + '</span><span class="linha-uf-valor">' + numBR(row.total_processos) + '</span></div>';
+      html += '<div class="linha-uf-trilho"><div class="linha-uf-fill" style="width:' + pct + '%;"></div></div>';
+      html += '</div></div>';
+    });
+    container.innerHTML = html;
+
+  } catch(e) {
+    container.innerHTML = '<div class="estado-vazio">Erro ao carregar distribuicao por UF.</div>';
+  }
+}
+
+// ================================================================
+// WIDGET 4: MINHAS TAREFAS
+// ================================================================
+async function carregarTarefas() {
+  var container = document.getElementById('listaTarefas');
+  try {
+    var r = await _sb.from('tarefas')
+      .select('id, titulo, data_prazo, tipo')
+      .eq('responsavel_id', meuPerfilId)
+      .eq('concluida', false)
+      .order('data_prazo', { ascending: true })
+      .limit(10);
+
+    if (r.error) throw r.error;
+
+    if (!r.data || r.data.length === 0) {
+      container.innerHTML = '<div class="estado-vazio">Sem tarefas pendentes. Bom trabalho!</div>';
+      return;
+    }
+
+    var html = '';
+    r.data.forEach(function(t) {
+      var urg   = urgenciaPrazo(t.data_prazo);
+      var label = labelUrgencia(urg);
+      var data  = t.data_prazo ? formatarDataBR(t.data_prazo) : 'Sem prazo';
+      var tipo  = t.tipo ? ' &middot; ' + t.tipo : '';
+      html += '<div class="item-tarefa" data-id="' + t.id + '">';
+      html += '<div class="info-tarefa">';
+      html += '<div class="titulo-tarefa">' + (t.titulo || 'Tarefa sem titulo') + '</div>';
+      html += '<div class="meta-tarefa">' + data + tipo + '</div>';
+      html += '</div>';
+      html += '<span class="badge-prazo ' + urg + '">' + label + '</span>';
+      html += '<button class="btn-concluir-tarefa" title="Marcar como concluida" data-tarefa-id="' + t.id + '">';
+      html += '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      html += '</button>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+
+    // Eventos de conclusao
+    container.querySelectorAll('.btn-concluir-tarefa').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        concluirTarefa(btn.getAttribute('data-tarefa-id'), btn);
+      });
+    });
+
+  } catch(e) {
+    container.innerHTML = '<div class="estado-vazio">Erro ao carregar tarefas.</div>';
+  }
+}
+
+async function concluirTarefa(idTarefa, btn) {
+  btn.disabled = true;
+  try {
+    var r = await _sb.from('tarefas').update({
+      concluida: true,
+      concluida_em: new Date().toISOString(),
+      concluida_por_id: meuPerfilId
+    }).eq('id', idTarefa);
+
+    if (r.error) throw r.error;
+
+    // Remover o item da lista com animacao
+    var item = btn.closest('.item-tarefa');
+    if (item) {
+      item.style.opacity = '0'; item.style.transition = 'opacity .3s';
+      setTimeout(function() {
+        item.remove();
+        // Atualizar KPI
+        var kpi = document.getElementById('kpi3valor');
+        if (kpi) {
+          var atual = parseInt(kpi.textContent.replace(/\D/g, '')) || 0;
+          kpi.textContent = numBR(Math.max(0, atual - 1));
+        }
+        // Verificar se a lista ficou vazia
+        var lista = document.getElementById('listaTarefas');
+        if (lista && lista.querySelectorAll('.item-tarefa').length === 0) {
+          lista.innerHTML = '<div class="estado-vazio">Sem tarefas pendentes. Bom trabalho!</div>';
+        }
+      }, 300);
+    }
+
+    showToast('Tarefa marcada como concluida.', 'sucesso');
+  } catch(e) {
+    showToast('Erro ao concluir a tarefa. Tente novamente.', 'erro');
+    btn.disabled = false;
+  }
+}
+
+// ================================================================
+// WIDGET 5: NOTIFICACOES
+// ================================================================
+async function carregarNotificacoes() {
+  var container = document.getElementById('listaNotificacoes');
+  try {
+    var r = await _sb.from('notificacoes')
+      .select('id, tipo, resumo, lida, criado_em')
+      .eq('usuario_id', meuPerfilId)
+      .order('criado_em', { ascending: false })
+      .limit(8);
+
+    if (r.error) throw r.error;
+
+    if (!r.data || r.data.length === 0) {
+      container.innerHTML = '<div class="estado-vazio">Sem notificacoes recentes.</div>';
+      return;
+    }
+
+    var html = '';
+    r.data.forEach(function(n) {
+      var cls     = n.lida ? 'item-notificacao' : 'item-notificacao nao-lida';
+      var tipo    = (n.tipo || 'sistema').toLowerCase();
+      var resumo  = n.resumo || 'Notificacao do sistema';
+      var tempo   = dataRelativa(n.criado_em);
+      html += '<div class="' + cls + '" data-id="' + n.id + '" data-lida="' + n.lida + '">';
+      html += '<span class="badge-tipo-notif">' + tipo + '</span>';
+      html += '<span class="resumo-notif">' + resumo + '</span>';
+      html += '<span class="tempo-notif">' + tempo + '</span>';
+      html += '</div>';
+    });
+    container.innerHTML = html;
+
+    // Click marca como lida
+    container.querySelectorAll('.item-notificacao').forEach(function(item) {
+      item.addEventListener('click', function() {
+        if (item.getAttribute('data-lida') === 'false') {
+          marcarNotificacaoLida(item.getAttribute('data-id'), item);
+        }
+      });
+    });
+
+  } catch(e) {
+    container.innerHTML = '<div class="estado-vazio">Erro ao carregar notificacoes.</div>';
+  }
+}
+
+async function marcarNotificacaoLida(idNotif, itemEl) {
+  try {
+    var r = await _sb.from('notificacoes').update({ lida: true }).eq('id', idNotif).eq('usuario_id', meuPerfilId);
+    if (r.error) return;
+    itemEl.classList.remove('nao-lida');
+    itemEl.setAttribute('data-lida', 'true');
+    // Decrementar KPI
+    var kpi = document.getElementById('kpi4valor');
+    if (kpi) {
+      var atual = parseInt(kpi.textContent.replace(/\D/g, '')) || 0;
+      kpi.textContent = numBR(Math.max(0, atual - 1));
+    }
+  } catch(e) {
+    // Silencioso
+  }
+}
+
+document.getElementById('btnMarcarTodasLidas').addEventListener('click', async function() {
+  try {
+    var r = await _sb.from('notificacoes')
+      .update({ lida: true })
+      .eq('usuario_id', meuPerfilId)
+      .eq('lida', false);
+    if (r.error) throw r.error;
+
+    // Atualizar UI
+    document.querySelectorAll('#listaNotificacoes .item-notificacao.nao-lida').forEach(function(el) {
+      el.classList.remove('nao-lida');
+      el.setAttribute('data-lida', 'true');
+    });
+    resolverSkeleton('kpi4valor', '0');
+    var b4 = document.getElementById('kpi4badge');
+    if (b4) { b4.className = 'kpi-variacao ok'; b4.textContent = 'sem novas'; }
+    showToast('Todas as notificacoes foram marcadas como lidas.', 'sucesso');
+  } catch(e) {
+    showToast('Erro ao marcar notificacoes. Tente novamente.', 'erro');
+  }
+});
+
+// ================================================================
+// WIDGET 6: SLA
+// ================================================================
+async function carregarSLA() {
+  try {
+    var r = await _sb.from('vw_dashboard_sla_resposta').select('*').single();
+    if (r.error || !r.data) throw r.error;
+
+    var d = r.data;
+
+    // Media de horas
+    var media = d.avg_horas_resposta ? parseFloat(d.avg_horas_resposta) : null;
+    var mediaStr = '--';
+    if (media !== null) {
+      var hh  = Math.floor(media);
+      var mm  = Math.round((media - hh) * 60);
+      mediaStr = hh + 'h' + (mm > 0 ? mm : '');
+    }
+    document.getElementById('slaMediaHoras').textContent = mediaStr;
+
+    // Badge de status
+    var badge = document.getElementById('slaBadge');
+    var status = (d.status_sla_historico || '').toLowerCase();
+    if (status.indexOf('bom') >= 0 || status.indexOf('meta') >= 0) {
+      badge.className = 'sla-status-badge sla-bom';
+      badge.textContent = 'Dentro da meta';
+    } else if (status.indexOf('aten') >= 0) {
+      badge.className = 'sla-status-badge sla-atencao';
+      badge.textContent = 'Atencao';
+    } else {
+      badge.className = 'sla-status-badge sla-atrasado';
+      badge.textContent = d.status_sla_historico || 'Ver detalhes';
+    }
+
+    // Meta texto
+    document.getElementById('slaMeta').textContent =
+      numBR(d.total_respondidas) + ' respondidas | ' +
+      numBR(d.pendentes_dentro_meta) + ' no prazo | ' +
+      numBR(d.pendentes_atrasados) + ' em atraso';
+
+    // Animo do circulo: percentual dentro da meta
+    var total   = (d.total_pendentes && d.total_pendentes > 0) ? d.total_pendentes : 1;
+    var dentroPct = Math.min(100, Math.round(((d.pendentes_dentro_meta || 0) / total) * 100));
+    var circunf  = 2 * Math.PI * 36; // 226.2
+    var offset   = circunf - (circunf * dentroPct / 100);
+    var circulo  = document.getElementById('slaCirculo');
+    if (circulo) { circulo.setAttribute('stroke-dashoffset', offset.toFixed(1)); }
+
+    // Lista de pendencias
+    var lista = document.getElementById('slaLista');
+    var itensSla = [];
+    if (d.pendentes_dentro_meta > 0) itensSla.push({ label: numBR(d.pendentes_dentro_meta) + ' dentro da meta', cls: 'dentro-meta' });
+    if (d.pendentes_atencao     > 0) itensSla.push({ label: numBR(d.pendentes_atencao)     + ' em atencao',     cls: 'atencao' });
+    if (d.pendentes_atrasados   > 0) itensSla.push({ label: numBR(d.pendentes_atrasados)   + ' em atraso',      cls: 'atrasado' });
+
+    if (itensSla.length === 0) {
+      lista.innerHTML = '<div class="estado-vazio" style="padding:10px 0;">Sem pendencias no momento.</div>';
+    } else {
+      lista.innerHTML = itensSla.map(function(i) {
+        return '<div class="sla-item"><span class="sla-item-nome">Pendentes</span><span class="sla-item-badge ' + i.cls + '">' + i.label + '</span></div>';
+      }).join('');
+    }
+
+  } catch(e) {
+    document.getElementById('slaMeta').textContent = 'Dados nao disponiveis.';
+  }
+}
+
+// ================================================================
+// CARD CNJ
+// ================================================================
+async function carregarCNJ() {
+  try {
+    var r = await _sb.from('vw_dashboard_cnj_nao_lidas').select('*').single();
+    if (r.error || !r.data) throw r.error;
+
+    var d = r.data;
+    var total = d.total_nao_lidas || 0;
+
+    var cardCNJ = document.getElementById('cardCNJ');
+    document.getElementById('contadorCNJ').textContent    = numBR(total);
+    document.getElementById('textoCNJPrincipal').textContent = numBR(total);
+
+    var sub = '';
+    if (d.nao_lidas_ultimas_24h) sub += numBR(d.nao_lidas_ultimas_24h) + ' nas ultimas 24h';
+    if (d.processos_com_pendencias) {
+      if (sub) sub += ' | ';
+      sub += numBR(d.processos_com_pendencias) + ' processos com pendencias';
+    }
+    document.getElementById('textoCNJSub').textContent = sub || 'Clique para visualizar';
+
+    if (total === 0) {
+      cardCNJ.style.display = 'none';
+    } else {
+      cardCNJ.style.display = '';
+    }
+
+  } catch(e) {
+    document.getElementById('cardCNJ').style.display = 'none';
+  }
+}
+
+// ================================================================
+// FILTROS - APLICAR e LIMPAR
+// ================================================================
+document.getElementById('btnAplicarEquipe').addEventListener('click', function(e) {
+  e.stopPropagation();
+  filtros.responsaveisIds = obterIdsSelecionados();
+  atualizarTextoEquipe();
+  document.getElementById('dropFiltroEquipe').classList.remove('aberto');
+});
+
+document.getElementById('btnAplicarFiltros').addEventListener('click', async function() {
+  filtros.dataInicio        = document.getElementById('filtroDataInicio').value;
+  filtros.dataFim           = document.getElementById('filtroDataFim').value;
+  filtros.responsaveisIds   = obterIdsSelecionados();
+  atualizarTextoFiltro();
+  atualizarTextoEquipe();
+  await salvarPreferencias();
+  await carregarTudo();
+});
+
+document.getElementById('btnLimparFiltros').addEventListener('click', async function() {
+  filtros = { dataInicio: '', dataFim: '', responsaveisIds: [] };
+  document.getElementById('filtroDataInicio').value = '';
+  document.getElementById('filtroDataFim').value    = '';
+  // Desmarcar todos no multiselect
+  document.querySelectorAll('#listaMultiEquipe .opcao-checkbox-equipe.marcado').forEach(function(el) {
+    el.classList.remove('marcado');
+    var caixa = el.querySelector('.checkbox-equipe-custom');
+    if (caixa) caixa.innerHTML = '';
+  });
+  atualizarTextoFiltro();
+  atualizarTextoEquipe();
+  await salvarPreferencias();
+  await carregarTudo();
+});
+
+// ================================================================
+// REFRESH / TEMA / HAMBURGER
+// Ligacoes cuidadas pelo saga_ui.js (topbar/sidebar unificadas).
+// ================================================================
+
+// ================================================================
+// DROPDOWNS
+// ================================================================
+document.addEventListener('click', function(e) {
+  // Fechar dropdowns ao clicar fora
+  document.querySelectorAll('.dropdown-custom.aberto').forEach(function(d) {
+    if (!d.contains(e.target)) d.classList.remove('aberto');
+  });
+});
+
+document.getElementById('dropFiltroEquipe').querySelector('.dropdown-custom-valor').addEventListener('click', function(e) {
+  e.stopPropagation();
+  var aberto = document.getElementById('dropFiltroEquipe').classList.toggle('aberto');
+});
+
+// ================================================================
+// MODAL CRIAR FILTRO
+// ================================================================
+document.getElementById('btnCancelarFiltro').addEventListener('click', function() {
+  document.getElementById('modalCriarFiltro').classList.remove('aberto');
+});
+document.getElementById('modalCriarFiltro').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('aberto');
+});
+</script>
+
+</body>
+</html>

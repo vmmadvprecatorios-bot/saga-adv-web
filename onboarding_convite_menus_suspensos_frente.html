@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Convites de Colaboradores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;--gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;--panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;--border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);--text:#e8eaf0;--muted:#8b93a8;--danger:#e85d5d;--warning:#e8b84c;--success:#5dd8a0;--info:#6fa3d8;--radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35)}
+[data-theme="light"]{--navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;--gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;--panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;--border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);--text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13)}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{min-height:100vh;color:var(--text);font-family:Montserrat,Arial,sans-serif;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));overflow-x:hidden;transition:background .25s,color .25s}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at 8% 0%,rgba(201,168,76,.08),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
+button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+a,a:visited{color:inherit;text-decoration:none}
+input,textarea,select{font:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(201,168,76,.32);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+.hidden{display:none!important}.grow{flex:1}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Navegação protótipo */
+.prototype-nav{position:fixed;z-index:1500;left:50%;top:10px;transform:translateX(-50%);display:flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid rgba(111,163,216,.3);border-radius:14px;background:linear-gradient(135deg,#17213a 0%,#11182d 100%);box-shadow:0 14px 35px rgba(0,0,0,.32)}
+[data-theme="light"] .prototype-nav{background:linear-gradient(135deg,#fffdf8,#f4eddc);border-color:rgba(138,106,35,.25)}
+.prototype-label{font-size:8px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding:0 4px;white-space:nowrap}
+.prototype-nav button{padding:7px 9px;border-radius:8px;color:#c3cee0;font-size:9px;font-weight:700;white-space:nowrap}
+.prototype-nav button:hover{background:rgba(201,168,76,.12);color:var(--gold-light)}
+.prototype-nav button.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1)}
+[data-theme="light"] .prototype-nav button{color:#7a7461}
+
+/* Topbar */
+.topbar{height:64px;position:sticky;top:0;z-index:180;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px);margin-top:47px}
+[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(247,245,240,.98))}
+.top-left,.top-right{display:flex;align-items:center;gap:14px}.top-left{min-width:0}.top-right{flex:0 0 auto}
+.hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px}
+.hamburger span{display:block;width:18px;height:1.7px;background:var(--gold);margin:3px auto;border-radius:2px}
+.brand{display:flex;align-items:center;gap:9px;flex:0 0 auto}.crest{width:32px;height:32px}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:.5px}.brand-name b{color:var(--gold)}
+.quick-search{width:min(330px,34vw);height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border-soft);background:var(--panel);border-radius:10px}
+.quick-search:focus-within{border-color:var(--gold)}.quick-search svg{color:var(--muted);flex:0 0 auto}
+.quick-search input{border:0;outline:0;background:transparent;color:var(--text);font-size:11px;width:100%}
+.quick-search input::placeholder{color:var(--muted)}
+.presence-wrap,.notification-wrap{position:relative}
+.presence-btn{border:1px solid var(--border-soft);background:var(--panel);border-radius:18px;padding:7px 12px;display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}.dot.online{background:var(--success);box-shadow:0 0 7px var(--success)}.dot.offline{background:var(--muted)}
+.icon-btn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);position:relative}
+.notif-count{position:absolute;right:-5px;top:-5px;min-width:16px;height:16px;border-radius:8px;background:var(--danger);color:white;font-size:9px;display:grid;place-items:center;font-weight:700}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));display:grid;place-items:center;color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px}
+.theme-toggle{width:70px;height:32px;border:1px solid var(--border-soft);border-radius:18px;background:var(--panel);padding:3px;position:relative;display:flex;align-items:center;justify-content:space-between}
+.theme-toggle svg{width:15px;height:15px;z-index:2}.theme-toggle .sun{color:var(--gold)}.theme-toggle .moon{color:var(--muted)}
+.theme-toggle .knob{width:24px;height:24px;border-radius:50%;position:absolute;top:3px;left:3px;background:linear-gradient(135deg,var(--gold-light),var(--gold));transition:left .25s ease;box-shadow:0 2px 7px rgba(0,0,0,.18)}
+[data-theme="light"] .theme-toggle .knob{left:41px}
+.popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:290px;padding:9px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);box-shadow:var(--shadow);z-index:700}.popover.open{display:block}
+[data-theme="light"] .popover{background:linear-gradient(135deg,#fffdf8 0%,#f4eddc 100%)}
+.pop-title{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);padding:7px 8px 5px}
+.pop-item,.notification-item{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11px;width:100%}
+.pop-item:hover,.notification-item:hover{background:rgba(201,168,76,.1)}
+.pop-meta,.notification-time{font-size:9px;color:var(--muted);margin-top:2px}
+.small-avatar{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;font-size:8px;font-weight:700;color:var(--navy-1)}
+.notification-pop{width:330px}.notification-item{align-items:flex-start}
+.n-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:5px;flex:0 0 auto}.n-dot.read{visibility:hidden}
+.notification-text{font-size:10.5px;line-height:1.45}
+.app{position:relative;z-index:1;display:flex}
+.sidebar{width:220px;flex:0 0 220px;min-height:calc(100vh - 111px);position:sticky;top:111px;align-self:flex-start;height:calc(100vh - 111px);overflow-y:auto;padding:18px 0;border-right:1px solid var(--border-soft);background:var(--panel);backdrop-filter:blur(14px)}
+.nav-section{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);padding:15px 22px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;padding:10px 21px;border-left:2px solid transparent;transition:.18s;text-decoration:none}
+.nav-item svg{width:15px;height:15px;flex:0 0 auto}.nav-item:hover{color:var(--text);background:rgba(255,255,255,.035)}
+.nav-item.active{color:var(--gold);font-weight:700;border-left-color:var(--gold);background:linear-gradient(90deg,rgba(201,168,76,.14),transparent)}
+.content{padding:28px;min-width:0;flex:1}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+.title-stack{display:flex;flex-direction:column;gap:5px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:30px;line-height:1.05;font-weight:600}
+.page-sub{font-size:11.5px;color:var(--muted)}
+.panel{background:var(--panel);backdrop-filter:blur(18px);border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:0 10px 22px rgba(0,0,0,.06)}
+.btn-primary,.btn-secondary,.btn-danger{height:38px;border-radius:10px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:11px;font-weight:700;white-space:nowrap}
+.btn-primary{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));background-size:200% 100%;color:var(--navy-1);box-shadow:0 6px 15px rgba(201,168,76,.18);transition:background-position .45s,transform .15s}
+.btn-primary:hover{background-position:100% 0;transform:translateY(-1px)}
+.btn-secondary{background:var(--panel);border:1px solid var(--border);color:var(--text)}.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
+.btn-danger{background:rgba(232,93,93,.11);border:1px solid rgba(232,93,93,.32);color:var(--danger)}.btn-danger:hover{background:rgba(232,93,93,.18)}
+.btn-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);letter-spacing:1px}.btn-icon:hover{border-color:var(--gold);color:var(--gold)}
+.btn-primary:disabled,.btn-secondary:disabled,.btn-danger:disabled{opacity:.45;cursor:not-allowed}
+.field,.textarea{width:100%;min-height:38px;padding:0 11px;background:rgba(255,255,255,.05);border:1px solid var(--border-soft);border-radius:9px;color:var(--text);outline:0;font-size:11px}
+.field:focus,.textarea:focus{border-color:var(--gold)}.textarea{min-height:78px;padding:10px;resize:vertical}
+[data-theme="light"] .field,[data-theme="light"] .textarea{background:rgba(255,255,255,.86);border-color:rgba(138,106,35,.18)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:12px;font-size:9px;font-weight:700;white-space:nowrap}
+.badge.pendente{color:var(--warning);background:rgba(232,184,76,.12);border:1px solid rgba(232,184,76,.26)}
+.badge.aceito{color:var(--success);background:rgba(93,216,160,.12);border:1px solid rgba(93,216,160,.23)}
+.badge.expirado{color:var(--muted);background:rgba(139,147,168,.12);border:1px solid rgba(139,147,168,.22)}
+.badge.cancelado{color:var(--danger);background:rgba(232,93,93,.1);border:1px solid rgba(232,93,93,.2)}
+.badge.advogado{color:#e8d48a;background:rgba(201,168,76,.13);border:1px solid rgba(201,168,76,.28)}.badge.administrativo{color:var(--info);background:rgba(111,163,216,.12);border:1px solid rgba(111,163,216,.23)}.badge.estagiario{color:var(--success);background:rgba(93,216,160,.12);border:1px solid rgba(93,216,160,.23)}.badge.socio_admin,.badge.administrador{color:#f1dd95;background:rgba(232,212,138,.12);border:1px solid rgba(232,212,138,.28)}.badge.captacao{color:var(--warning);background:rgba(232,184,76,.12);border:1px solid rgba(232,184,76,.23)}.badge.marketing{color:#d7a1e5;background:rgba(201,142,216,.12);border:1px solid rgba(201,142,216,.23)}.badge.financeiro{color:var(--info);background:rgba(111,163,216,.12);border:1px solid rgba(111,163,216,.23)}
+
+/* Tela administrativa */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:18px}.kpi-card{padding:16px;display:flex;align-items:center;gap:12px}.kpi-icon{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;background:rgba(201,168,76,.12);color:var(--gold)}.kpi-card strong{display:block;font-family:'Cormorant Garamond',serif;font-size:26px;line-height:1}.kpi-card span{display:block;font-size:10px;color:var(--muted);margin-top:5px}.kpi-card.expired .kpi-icon{background:rgba(232,184,76,.12);color:var(--warning)}.kpi-card.accepted .kpi-icon{background:rgba(93,216,160,.12);color:var(--success)}
+.toolbar{position:relative;z-index:50;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;flex-wrap:wrap;margin-bottom:14px;overflow:visible}.toolbar-left,.toolbar-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.status-filter{display:flex;gap:4px;padding:4px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid var(--border-soft)}.filter-pill{padding:8px 12px;border-radius:9px;color:var(--muted);font-size:10px;font-weight:700}.filter-pill:hover{color:var(--text)}.filter-pill.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1)}.invite-search{min-width:250px}
+.invite-wrap{position:relative;overflow-x:auto;overflow-y:visible;z-index:1}.invite-table{width:100%;border-collapse:collapse;min-width:920px}.invite-table th{font-size:9px;text-align:left;text-transform:uppercase;letter-spacing:.65px;color:var(--muted);padding:12px;border-bottom:1px solid var(--border-soft)}.invite-table td{padding:12px;border-bottom:1px solid var(--border-soft);font-size:10.5px;vertical-align:middle;overflow:visible}.invite-table tr:last-child td{border-bottom:0}.invite-table tr:hover{background:rgba(255,255,255,.025)}.guest-name{display:flex;align-items:center;gap:9px}.guest-avatar{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;color:var(--navy-1)}.guest-name b{display:block;font-size:11px}.guest-name small{display:block;color:var(--muted);font-size:9px;margin-top:3px}.date-small{font-size:9px;color:var(--muted)}
+.action-menu-wrap{position:relative;display:inline-flex;z-index:20;overflow:visible}.action-menu-wrap:has(.action-menu.open){z-index:320}.action-menu{display:none;position:absolute;right:0;top:calc(100% + 7px);width:212px;padding:6px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);box-shadow:0 20px 48px rgba(0,0,0,.44);z-index:350}.action-menu.open{display:block}[data-theme="light"] .action-menu{background:linear-gradient(135deg,#fffdf8 0%,#f4eddc 100%)}.action-menu button{display:flex;width:100%;align-items:center;gap:8px;padding:9px;border-radius:8px;font-size:10px;color:var(--text)}.action-menu button:hover{background:rgba(201,168,76,.1);color:var(--gold)}.action-menu button.danger{color:var(--danger)}
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:13px 14px;margin-top:14px}.page-size,.page-pages{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.page-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.65px;margin-right:3px}.page-pill{min-width:31px;height:29px;padding:0 8px;border-radius:9px;border:1px solid var(--border-soft);display:inline-flex;align-items:center;justify-content:center;color:var(--muted);font-size:9px;font-weight:700}.page-pill:hover{border-color:var(--gold);color:var(--gold)}.page-pill.active{background:rgba(201,168,76,.14);color:var(--gold);border-color:rgba(201,168,76,.35)}.custom-limit{width:62px;min-width:62px}.empty-state{padding:58px 20px;text-align:center}.empty-icon{width:56px;height:56px;margin:0 auto 14px;border-radius:17px;display:grid;place-items:center;color:var(--gold);background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.22)}.empty-state h3{font-family:'Cormorant Garamond',serif;font-size:23px}.empty-state p{font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.55}
+
+/* Modais */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(4,7,14,.66);backdrop-filter:blur(6px);padding:16px;overflow-y:auto}.modal-overlay.open{display:flex;align-items:center;justify-content:center}.modal{width:100%;max-width:760px;margin:auto;border-radius:18px;border:1px solid var(--border);background:linear-gradient(145deg,rgba(28,37,64,.97),rgba(17,24,44,.985));box-shadow:0 32px 78px rgba(0,0,0,.5);overflow:hidden}.modal.small{max-width:450px}[data-theme="light"] .modal{background:linear-gradient(145deg,rgba(255,253,248,.99),rgba(244,237,220,.995))}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:19px 20px 14px;border-bottom:1px solid var(--border-soft)}.modal-title-stack{display:flex;flex-direction:column;gap:4px}.modal-head h2{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600}.modal-head p{font-size:10.5px;color:var(--muted);line-height:1.45}.modal-close{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;border:1px solid var(--border-soft);color:var(--muted)}.modal-close:hover{color:var(--gold);border-color:var(--gold)}.modal-body{padding:18px 20px;max-height:69vh;overflow:auto}.modal-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:13px 20px;border-top:1px solid var(--border-soft)}.modal-foot .spacer{flex:1}
+.invite-tabs{display:flex;gap:5px;padding:4px;border:1px solid var(--border-soft);border-radius:12px;background:rgba(255,255,255,.035);width:max-content}.invite-tab{padding:7px 10px;border-radius:8px;font-size:10px;font-weight:700;color:var(--muted)}.invite-tab.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1)}.invite-pane{display:none;margin-top:16px}.invite-pane.active{display:block}.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field-group{display:flex;flex-direction:column;gap:6px}.field-group.full{grid-column:1/-1}.field-group label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gold)}.field-group .field{width:100%}.input-help{font-size:9px;color:var(--muted);line-height:1.45}.form-error{min-height:16px;margin-top:5px;color:var(--danger);font-size:9px}
+.custom-select{position:relative}.custom-select-trigger{height:38px;width:100%;border:1px solid var(--border-soft);border-radius:9px;background:rgba(255,255,255,.05);padding:0 11px;display:flex;align-items:center;justify-content:space-between;color:var(--text);font-size:11px}.custom-select-trigger:hover,.custom-select.open .custom-select-trigger{border-color:var(--gold)}[data-theme="light"] .custom-select-trigger{background:rgba(255,255,255,.86);border-color:rgba(138,106,35,.18)}.select-caret{width:8px;height:8px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:rotate(45deg);margin-top:-4px}.custom-select-menu{display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);padding:6px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);box-shadow:0 20px 48px rgba(0,0,0,.44);z-index:180}.custom-select.open .custom-select-menu{display:block}[data-theme="light"] .custom-select-menu{background:linear-gradient(135deg,#fffdf8 0%,#f4eddc 100%)}.custom-select-option{width:100%;padding:9px;border-radius:8px;font-size:10.5px;color:var(--text);display:flex;align-items:center;justify-content:space-between}.custom-select-option:hover{background:rgba(201,168,76,.1);color:var(--gold)}.custom-select-option.selected{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700}
+.profile-summary{margin-top:11px;padding:12px;border-radius:11px;border:1px solid rgba(111,163,216,.25);background:rgba(111,163,216,.08)}.profile-summary strong{font-size:10px;color:var(--info)}.profile-summary ul{margin:7px 0 0 16px;color:var(--muted);font-size:9.5px;line-height:1.65}.info-note{display:flex;gap:9px;margin-top:14px;padding:12px;border:1px solid rgba(201,168,76,.24);border-radius:11px;background:rgba(201,168,76,.08);font-size:10px;color:var(--text);line-height:1.55}.info-note svg{flex:0 0 auto;color:var(--gold)}
+.email-notice{font-size:9px;color:var(--info);margin-bottom:10px}.email-preview{background:#fffdf8;color:#2a2517;border-radius:13px;padding:14px;border:1px solid #e6dcc8}.mail-header{padding-bottom:11px;border-bottom:1px solid #e5ddcd;font-family:Montserrat,Arial,sans-serif}.mail-from,.mail-to,.mail-subject{font-size:9px;line-height:1.55}.mail-subject{margin-top:5px;font-weight:700}.mail-body{padding:18px 2px 4px;font-family:Montserrat,Arial,sans-serif}.mail-brand{display:flex;align-items:center;gap:9px;font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:700;color:#2a2517}.mail-crest{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;border:1px solid #a3812f;color:#8a6a23;font-family:'Cormorant Garamond',serif;font-weight:700}.mail-body h3{font-family:'Cormorant Garamond',serif;font-size:22px;margin-top:18px}.mail-body p{font-size:10px;line-height:1.7;color:#5d5649;margin-top:8px}.mail-button{display:inline-flex;margin-top:15px;padding:10px 13px;border-radius:9px;background:linear-gradient(120deg,#a3812f,#d7b85e,#a3812f);color:#2a2517;font-size:10px;font-weight:700}
+.spinner{width:14px;height:14px;border:2px solid rgba(10,14,26,.28);border-top-color:var(--navy-1);border-radius:50%;display:inline-block;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Tela do convidado */
+.guest-screen{position:relative;z-index:1;min-height:100vh;display:none;align-items:center;justify-content:center;padding:95px 18px 48px}.guest-screen.active{display:flex}.guest-top{position:fixed;z-index:180;top:0;left:0;right:0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px)}[data-theme="light"] .guest-top{background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(247,245,240,.98))}.guest-top .brand-name{font-size:20px}.guest-panel{width:min(100%,450px);padding:29px;text-align:center}.guest-crest{width:73px;height:73px;margin:0 auto 16px;display:grid;place-items:center;border-radius:22px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:700}.guest-panel h1{font-family:'Cormorant Garamond',serif;font-size:31px;line-height:1.06}.guest-sub{font-size:10.5px;line-height:1.6;color:var(--muted);margin-top:9px}.account-for{margin-top:17px;padding:11px;border-radius:11px;border:1px solid var(--border-soft);background:rgba(255,255,255,.03);font-size:10px;line-height:1.55;color:var(--muted)}.account-for b{color:var(--text)}.guest-form{text-align:left;margin-top:18px}.password-row{margin-top:12px}.terms-line{display:flex;align-items:flex-start;gap:8px;margin-top:15px;font-size:9.5px;color:var(--muted);line-height:1.55}.terms-line input{margin-top:2px;accent-color:var(--gold)}.terms-button{color:var(--gold);font-weight:700}.password-meter{height:7px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:7px}.password-meter span{display:block;height:100%;width:0;background:var(--danger);transition:.25s}.password-feedback{font-size:9px;color:var(--muted);margin-top:6px}.guest-submit{width:100%;margin-top:17px}.guest-submit:disabled{opacity:.42;cursor:not-allowed;filter:saturate(.45)}.guest-footer{position:fixed;bottom:15px;text-align:center;left:0;right:0;font-size:9px;color:var(--muted)}.guest-success{padding:8px 0 3px}.success-check{width:63px;height:63px;margin:0 auto 15px;border-radius:50%;display:grid;place-items:center;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:var(--gold)}.guest-success h2{font-family:'Cormorant Garamond',serif;font-size:29px}.guest-success p{font-size:10.5px;line-height:1.65;color:var(--muted);margin-top:9px}
+
+/* Toast */
+.toast-area{position:fixed;right:22px;top:78px;z-index:1300;display:flex;flex-direction:column;gap:9px}.toast{display:flex;align-items:flex-start;gap:9px;width:min(335px,calc(100vw - 30px));padding:12px;border-radius:12px;border:1px solid var(--border);background:linear-gradient(135deg,#161d33,#11172c);box-shadow:var(--shadow);transform:translateX(20px);opacity:0;transition:.25s}.toast.show{transform:translateX(0);opacity:1}[data-theme="light"] .toast{background:linear-gradient(135deg,#fffdf8,#f4eddc)}.toast-icon{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto}.toast.success .toast-icon{background:rgba(93,216,160,.15);color:var(--success)}.toast.error .toast-icon{background:rgba(232,93,93,.15);color:var(--danger)}.toast.info .toast-icon{background:rgba(111,163,216,.15);color:var(--info)}.toast p{font-size:10.5px;line-height:1.5}.toast p b{color:var(--gold)}
+
+@media(max-width:980px){.sidebar{width:190px;flex-basis:190px}.content{padding:22px}.quick-search{width:230px}.invite-search{min-width:220px}.kpi-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.prototype-nav{top:6px;max-width:calc(100vw - 18px);overflow:auto}.prototype-label{display:none}.prototype-nav button{font-size:8px;padding:6px 7px}.topbar{padding:0 13px;margin-top:47px}.guest-top{top:47px;padding:0 14px}.hamburger{display:block}.quick-search{display:none}.presence-btn{padding:7px 9px}.presence-btn span:not(.dot){display:none}.theme-toggle{width:62px}.theme-toggle .knob{width:22px;height:22px;left:35px}[data-theme="light"] .theme-toggle .knob{left:3px}.top-right{gap:7px}.sidebar{position:fixed;top:111px;left:-230px;width:220px;height:calc(100vh - 111px);z-index:170;transition:left .28s}.sidebar.open{left:0}.content{padding:18px 12px}.page-head h1{font-size:26px}.kpi-grid{grid-template-columns:1fr}.toolbar{padding:11px}.toolbar-left,.toolbar-right{width:100%}.invite-search{width:100%;min-width:0}.toolbar-right .btn-primary{width:100%}.invite-wrap{overflow:visible}.invite-table,.invite-table thead,.invite-table tbody,.invite-table tr,.invite-table th,.invite-table td{display:block;min-width:0}.invite-table thead{display:none}.invite-table{border:0}.invite-table tr{margin-bottom:10px;border:1px solid var(--border-soft);border-radius:13px;padding:6px;background:rgba(255,255,255,.02)}.invite-table td{border-bottom:1px solid var(--border-soft);padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:right}.invite-table td:last-child{border-bottom:0}.invite-table td:before{content:attr(data-label);font-size:8.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.55px;text-align:left}.invite-table td[data-label="Convidado"]{display:block;text-align:left}.invite-table td[data-label="Convidado"]:before{display:none}.field-grid{grid-template-columns:1fr}.field-group.full{grid-column:auto}.modal-overlay{padding:8px}.modal-body{padding:14px}.modal-head,.modal-foot{padding-left:14px;padding-right:14px}.invite-link-row{align-items:flex-start;flex-direction:column}.guest-screen{padding:128px 13px 48px}.guest-panel{padding:24px 18px}.guest-panel h1{font-size:28px}.guest-footer{font-size:8px}.toast-area{right:12px;top:121px}.pagination{align-items:flex-start;flex-direction:column}.page-pages{width:100%}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="prototype-nav" aria-label="Navegação do protótipo">
+  <span class="prototype-label">Navegação do protótipo</span>
+  <button class="active" data-prototype-view="admin">Gestão de Convites</button>
+  <button data-prototype-view="new">Modal Novo Convite</button>
+  <button data-prototype-view="guest">Tela do Convidado</button>
+</div>
+
+<section id="adminScreen">
+<header class="topbar">
+  <div class="top-left">
+    <button class="hamburger" id="hamburger" aria-label="Abrir navegação"><span></span><span></span><span></span></button>
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e8d48a"/><stop offset="38%" stop-color="#c9a84c"/><stop offset="60%" stop-color="#8a6f33"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#crestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#crestGold)">VM</text></g></svg>
+      <div class="brand-name">VMM<b>ADV</b></div>
+    </div>
+    <label class="quick-search" aria-label="Busca rápida"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><input id="globalSearch" placeholder="Buscar no sistema..."></label>
+  </div>
+  <div class="top-right">
+    <div class="presence-wrap"><button class="presence-btn" id="presenceBtn"><span class="dot online"></span><span id="onlineText">5 online agora</span></button><div class="popover" id="presencePop"></div></div>
+    <div class="notification-wrap"><button class="icon-btn" id="notifBtn" aria-label="Notificações"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="var(--gold)" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="var(--gold)" stroke-width="1.6"/></svg><span class="notif-count" id="notifCount">0</span></button><div class="popover notification-pop" id="notifPop"></div></div>
+    <button class="theme-toggle" data-theme-toggle aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
+    <div class="avatar" title="Dr. Victor">DV</div>
+  </div>
+</header>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="nav-section">Visão Geral</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/></svg>Dashboard</a>
+    <div class="nav-section">Operação</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Lista de Processos</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>Kanban</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>Ficha do Cliente</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Calendário</a>
+    <div class="nav-section">Equipe</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 11-4-7.2L21 6l-1.5 4.5z" stroke="currentColor" stroke-width="1.5"/></svg>Chat Interno</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Ponto Eletrônico</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>Biblioteca de Modelos</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Marketing/Campanhas</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5"/></svg>Minhas Tarefas</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="1.5"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.5"/></svg>Monitoramento Multi-OAB</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V7m5 12V4m5 15v-8m5 8V9" stroke="currentColor" stroke-width="1.5"/></svg>Financeiro</a>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 13a8 8 0 000-2l2.1-1.6-2-3.5-2.5 1a8 8 0 00-1.7-1l-.3-2.7h-4l-.3 2.7a8 8 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a8 8 0 000 2l-2.1 1.6 2 3.5 2.5-1a8 8 0 001.7 1l.3 2.7h4l.3-2.7a8 8 0 001.7-1l2.5 1 2-3.5L19.4 13z" stroke="currentColor" stroke-width="1.3"/></svg>Configurações</a>
+    <a class="nav-item active" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h16M4 17h9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="17" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg>Convites de Colaboradores</a>
+  </aside>
+  <main class="content">
+    <section class="page-head">
+      <div class="title-stack"><h1>Convites de Colaboradores</h1><p class="page-sub">Gerencie os acessos enviados e acompanhe a entrada de novos integrantes no sistema.</p></div>
+      <button class="btn-primary" id="newInviteButton"><span>+</span> Novo convite</button>
+    </section>
+    <section class="kpi-grid" id="kpiGrid"></section>
+    <section class="toolbar panel">
+      <div class="toolbar-left"><div class="status-filter" id="statusFilter"><button class="filter-pill active" data-status-filter="todos">Todos</button><button class="filter-pill" data-status-filter="pendente">Pendente</button><button class="filter-pill" data-status-filter="aceito">Aceito</button><button class="filter-pill" data-status-filter="expirado">Expirado</button></div><input class="field invite-search" id="inviteSearch" placeholder="Buscar por nome ou e-mail"></div>
+      <div class="toolbar-right"><span class="page-label" id="resultCounter"></span></div>
+    </section>
+    <section class="panel invite-wrap" id="inviteTableWrap"></section>
+    <section class="panel pagination" id="pagination"></section>
+  </main>
+</div>
+</section>
+
+<section class="guest-screen" id="guestScreen">
+  <header class="guest-top"><div class="brand"><svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="guestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e8d48a"/><stop offset="38%" stop-color="#c9a84c"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#guestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#guestGold)">VM</text></g></svg><div class="brand-name">VMM<b>ADV</b></div></div><button class="theme-toggle" data-theme-toggle aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button></header>
+  <div class="guest-panel panel" id="guestPanel"></div>
+  <footer class="guest-footer">Victor Morais Advocacia, OAB/AL 15.318</footer>
+</section>
+
+<div class="modal-overlay" id="inviteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h2>Novo convite</h2><p>Registre o convite de acesso para um novo colaborador do escritório.</p></div><button class="modal-close" data-close="inviteModal">✕</button></div><div class="modal-body"><div class="invite-tabs"><button class="invite-tab active" data-invite-tab="form">Dados do convite</button><button class="invite-tab" data-invite-tab="preview">Pré-visualização</button></div><section class="invite-pane active" id="invitePaneForm"></section><section class="invite-pane" id="invitePanePreview"></section></div><div class="modal-foot"><span class="spacer"></span><button class="btn-secondary" data-close="inviteModal">Cancelar</button><button class="btn-primary" id="sendInviteButton">Registrar convite</button></div></div></div>
+<div class="modal-overlay" id="confirmModal"><div class="modal small"><div class="modal-head"><div class="modal-title-stack"><h2 id="confirmTitle">Confirmar ação</h2><p id="confirmText"></p></div><button class="modal-close" data-close="confirmModal">✕</button></div><div class="modal-foot"><button class="btn-secondary" data-close="confirmModal">Cancelar</button><button class="btn-danger" id="confirmButton">Confirmar</button></div></div></div>
+<div class="modal-overlay" id="termsModal"><div class="modal small"><div class="modal-head"><div class="modal-title-stack"><h2>Termos de uso e privacidade</h2><p>Leia antes de criar a sua conta.</p></div><button class="modal-close" data-close="termsModal">✕</button></div><div class="modal-body"><p style="font-size:10.5px;line-height:1.7;color:var(--muted)">Ao criar a conta, o colaborador concorda em utilizar o Sistema VMM<span style="color:var(--gold)">ADV</span> exclusivamente para finalidades profissionais autorizadas, preservar a confidencialidade das informações acessadas e respeitar as políticas internas de segurança e proteção de dados do escritório.</p></div><div class="modal-foot"><button class="btn-primary" data-close="termsModal">Entendi</button></div></div></div>
+<div class="toast-area" id="toastArea"></div>
+
+<!-- Supabase JS SDK v2 (UMD) — apenas Anon Key (Publishable Key) no frontend -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<script>
+// ============================================================
+// VMMADV — Onboarding / Gestão de Convites
+// Fase 2: Conexão com Supabase real
+//
+// SEGURANÇA CRÍTICA: apenas Anon Key (Publishable Key) aqui.
+// Nunca inserir Service Role Key (sb_secret_...) neste arquivo.
+// Toda operação é protegida por RLS no banco de dados.
+// ============================================================
+
+var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Descrições de perfil para o seletor do modal de convite
+var perfilDescricoes = {
+  'Administrador':  ['Acesso total a todas as funcionalidades.','Gerencia papéis, permissões e colaboradores.','Autoridade máxima do sistema.'],
+  'Jurídico':       ['Acesso completo a processos, clientes e calendário.','Pode editar fluxos jurídicos, tarefas e documentos.','Visualiza o Financeiro sem acesso administrativo.'],
+  'Administrativo': ['Acesso operacional a clientes, calendário e ponto.','Pode organizar dados administrativos do escritório.','Sem acesso às configurações sensíveis.'],
+  'Captação':       ['Foco em localizar clientes e gerir o funil.','Acesso total ao módulo de Localização.','Sem acesso a dados financeiros do processo.'],
+  'Marketing':      ['Criação e gestão de campanhas e materiais.','Pode fazer upload na área de marketing da Biblioteca.','Sem acesso a dados jurídicos restritos.'],
+  'Financeiro':     ['DRE, lançamentos, rateio de honorários.','Pode gerenciar parceiros e repasses.','Sem acesso a módulos jurídicos restritos.'],
+  'Estagiário':     ['Acesso supervisionado a processos e tarefas.','Pode comentar em fluxos e registrar atividades.','Sem acesso ao Financeiro e às configurações.'],
+};
+
+var state = {
+  statusFilter: 'todos', search: '', page: 1, limit: 5, customLimit: 5,
+  activeActionId: null,
+  draft: {nome: '', email: '', perfil_id: null, perfil_nome: '', mensagem: ''},
+  inviteTab: 'form',
+  confirmAction: null,
+  guestSuccess: false,
+  invites: [],
+  papeis: [],
+  loading: false,
+  session: null,
+  meuInternoId: null,
+  guestEmail: '',
+  guestNome: '',
+  guestPerfilNome: '',
+};
+
+// ── Utilitários ───────────────────────────────────────────────
+function esc(v){var e=document.createElement('div');e.textContent=v||'';return e.innerHTML;}
+function initials(n){return String(n||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0];}).join('').toUpperCase();}
+function fmtDate(v){if(!v)return '';try{return new Intl.DateTimeFormat('pt-BR').format(new Date(v));}catch(e){return '';}}
+function daysBetween(a,b){return Math.round((new Date(b)-new Date(a))/86400000);}
+function statusLabel(s){var m={pendente:'Pendente',aceito:'Aceito',expirado:'Expirado',aguardando_envio:'Aguardando envio',cancelado:'Cancelado'};return m[s]||s;}
+function statusClass(s){return s==='aguardando_envio'?'pendente':s;}
+function avatarBg(nome){var m={'Jurídico':'#c9a84c','Administrativo':'#6fa3d8','Estagiário':'#5dd8a0','Captação':'#e8b84c','Marketing':'#d7a1e5','Financeiro':'#8ca8e8','Administrador':'#e8d48a'};return m[nome]||'#8b93a8';}
+
+function showToast(msg, type){
+  type = type || 'success';
+  var t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = '<div class="toast-icon">' + (type==='success'?'✓':type==='error'?'!':'i') + '</div><p>' + msg + '</p>';
+  document.getElementById('toastArea').appendChild(t);
+  requestAnimationFrame(function(){t.classList.add('show');});
+  setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},260);}, 3600);
+}
+
+function copyText(text, msg){
+  msg = msg || 'Copiado.';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){showToast(msg);}).catch(function(){_fallbackCopy(text,msg);});
+    return;
+  }
+  _fallbackCopy(text, msg);
+}
+function _fallbackCopy(text, msg){
+  var a = document.createElement('textarea');
+  a.value = text;
+  a.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(a);
+  a.select();
+  try{document.execCommand('copy');showToast(msg);}catch(e){showToast('Não foi possível copiar.','error');}
+  a.remove();
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeAllActionMenus(){document.querySelectorAll('.action-menu.open').forEach(function(m){m.classList.remove('open');});state.activeActionId=null;}
+
+// ── Supabase: carregar dados ──────────────────────────────────
+async function loadPapeis(){
+  var r = await _sb.from('papeis').select('id,nome').order('nome');
+  if(!r.error && r.data) state.papeis = r.data;
+}
+
+async function loadMeuPerfil(){
+  if(!state.session) return;
+  var r = await _sb.from('usuarios').select('id').eq('auth_user_id', state.session.user.id).maybeSingle();
+  state.meuInternoId = (r.data && r.data.id) || null;
+}
+
+async function loadInvites(){
+  state.loading = true;
+  document.getElementById('inviteTableWrap').innerHTML = '<div class="empty-state"><p style="color:var(--muted);font-size:10.5px">Carregando convites...</p></div>';
+  try{
+    var r = await _sb.from('convites')
+      .select('id,email,nome_sugerido,status,criado_em,expira_em,aceito_em,papeis(id,nome)')
+      .neq('status','cancelado')
+      .order('criado_em', {ascending:false});
+    if(r.error) throw r.error;
+    state.invites = (r.data||[]).map(function(c){return {
+      id: c.id,
+      nome: c.nome_sugerido || c.email,
+      email: c.email,
+      perfil_nome: (c.papeis && c.papeis.nome) || '',
+      perfil_id: (c.papeis && c.papeis.id) || null,
+      status: c.status,
+      enviado: c.criado_em,
+      expira_em: c.expira_em,
+      aceito_em: c.aceito_em,
+    };});
+  }catch(e){
+    showToast('Erro ao carregar convites: ' + (e.message||'verifique sua conexão.'), 'error');
+    state.invites = [];
+  }
+  state.loading = false;
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+function renderKpis(){
+  var pending = state.invites.filter(function(i){return i.status==='pendente'||i.status==='aguardando_envio';}).length;
+  var accepted = state.invites.filter(function(i){return i.status==='aceito';}).length;
+  var expired = state.invites.filter(function(i){return i.status==='expirado';}).length;
+  document.getElementById('kpiGrid').innerHTML =
+    '<article class="panel kpi-card"><div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><div><strong>'+pending+'</strong><span>Convites pendentes</span></div></article>' +
+    '<article class="panel kpi-card accepted"><div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.7"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><div><strong>'+accepted+'</strong><span>Convites aceitos</span></div></article>' +
+    '<article class="panel kpi-card expired"><div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l9 17H3L12 3z" stroke="currentColor" stroke-width="1.7"/><path d="M12 9v4M12 16h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div><div><strong>'+expired+'</strong><span>Convites expirados</span></div></article>';
+}
+
+// ── Tabela de convites ────────────────────────────────────────
+function filteredInvites(){
+  var term = state.search.trim().toLowerCase();
+  return state.invites.filter(function(inv){
+    var matchStatus = state.statusFilter==='todos' ||
+      (state.statusFilter==='pendente' && (inv.status==='pendente'||inv.status==='aguardando_envio')) ||
+      inv.status===state.statusFilter;
+    var matchSearch = !term || [inv.nome,inv.email,inv.perfil_nome].join(' ').toLowerCase().indexOf(term) >= 0;
+    return matchStatus && matchSearch;
+  });
+}
+
+function expiryText(inv){
+  if(inv.status==='aceito') return '<span class="date-small">Aceito em '+fmtDate(inv.aceito_em||inv.enviado)+'</span>';
+  if(inv.status==='expirado') return '<span class="date-small">Expirado</span>';
+  if(inv.status==='aguardando_envio') return '<span class="date-small">Aguardando envio</span>';
+  if(inv.expira_em){
+    var d = Math.max(0, daysBetween(new Date().toISOString(), inv.expira_em));
+    return '<span class="date-small">Expira em '+fmtDate(inv.expira_em)+'<br>'+d+' dia'+(d===1?'':'s')+' restante'+(d===1?'':'s')+'</span>';
+  }
+  return '';
+}
+
+function renderInvites(){
+  var list = filteredInvites();
+  var safeLimit = state.limit==='all' ? Math.max(1,list.length) : state.limit==='custom' ? Math.max(1,state.customLimit) : Math.max(1,Number(state.limit)||5);
+  var totalPages = Math.max(1, Math.ceil(list.length/safeLimit));
+  if(state.page > totalPages) state.page = totalPages;
+  var start = (state.page-1)*safeLimit;
+  var paged = state.limit==='all' ? list : list.slice(start, start+safeLimit);
+  document.getElementById('resultCounter').textContent = list.length + ' convite' + (list.length===1?'':'s');
+
+  if(!list.length){
+    document.getElementById('inviteTableWrap').innerHTML = '<div class="empty-state"><div class="empty-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.6"/></svg></div><h3>Nenhum convite encontrado</h3><p>Não há convites compatíveis com os filtros aplicados.</p></div>';
+    renderPagination(list.length, totalPages);
+    return;
+  }
+
+  var rows = paged.map(function(inv){
+    return '<tr>' +
+      '<td data-label="Convidado"><div class="guest-name"><span class="guest-avatar" style="background:'+avatarBg(inv.perfil_nome)+'">'+initials(inv.nome)+'</span><span><b>'+esc(inv.nome)+'</b><small>'+esc(inv.email)+'</small></span></div></td>' +
+      '<td data-label="Perfil"><span class="badge">'+esc(inv.perfil_nome||'Sem perfil')+'</span></td>' +
+      '<td data-label="Status"><span class="badge '+statusClass(inv.status)+'">'+statusLabel(inv.status)+'</span></td>' +
+      '<td data-label="Data do convite"><span class="date-small">'+fmtDate(inv.enviado)+'</span></td>' +
+      '<td data-label="Expiração">'+expiryText(inv)+'</td>' +
+      '<td data-label="Ações"><div class="action-menu-wrap"><button class="btn-icon" data-actions-toggle="'+inv.id+'" aria-label="Abrir ações">•••</button><div class="action-menu" id="actionMenu-'+inv.id+'">' +
+      (inv.status!=='aceito'?'<button data-copy-invite="'+inv.id+'"><span>⧉</span> Copiar e-mail do convidado</button>':'') +
+      (['pendente','aguardando_envio'].indexOf(inv.status)>=0?'<button class="danger" data-cancel-invite="'+inv.id+'"><span>×</span> Cancelar convite</button>':'') +
+      '</div></div></td></tr>';
+  }).join('');
+
+  document.getElementById('inviteTableWrap').innerHTML = '<table class="invite-table"><thead><tr><th>Convidado</th><th>Perfil</th><th>Status</th><th>Data do convite</th><th>Expiração</th><th>Ações</th></tr></thead><tbody>'+rows+'</tbody></table>';
+
+  document.querySelectorAll('[data-actions-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var id = btn.dataset.actionsToggle;
+      var menu = document.getElementById('actionMenu-'+id);
+      var shouldOpen = !menu.classList.contains('open');
+      closeAllActionMenus();
+      if(shouldOpen){menu.classList.add('open');state.activeActionId=id;}
+    });
+  });
+  document.querySelectorAll('[data-copy-invite]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var inv = state.invites.find(function(i){return i.id===btn.dataset.copyInvite;});
+      if(inv) copyText(inv.email, 'E-mail copiado.');
+      closeAllActionMenus();
+    });
+  });
+  document.querySelectorAll('[data-cancel-invite]').forEach(function(btn){
+    btn.addEventListener('click', function(){askCancelInvite(btn.dataset.cancelInvite);});
+  });
+  renderPagination(list.length, totalPages);
+}
+
+function renderAdmin(){renderKpis();renderInvites();}
+
+// ── Paginação ─────────────────────────────────────────────────
+function renderPagination(total, totalPages){
+  var pages = [];
+  for(var i=1;i<=totalPages;i++) pages.push(i);
+  var p = document.getElementById('pagination');
+  p.innerHTML =
+    '<div class="page-size"><span class="page-label">Itens por página</span>' +
+    [5,20,50,100].map(function(v){return '<button class="page-pill '+(state.limit===v?'active':'')+'" data-page-limit="'+v+'">'+v+'</button>';}).join('') +
+    '<button class="page-pill '+(state.limit==='all'?'active':'')+'" data-page-limit="all">Todos</button>' +
+    '<button class="page-pill '+(state.limit==='custom'?'active':'')+'" data-page-limit="custom">Customizado</button>' +
+    (state.limit==='custom'?'<input class="field custom-limit" id="customLimitInput" min="1" max="100" type="number" value="'+state.customLimit+'">':'') +
+    '</div><div class="page-pages"><span class="page-label">Página</span>' +
+    '<button class="page-pill" id="prevPage" '+(state.page===1?'disabled':'')+'>‹</button>' +
+    pages.map(function(pg){return '<button class="page-pill '+(state.page===pg?'active':'')+'" data-page-number="'+pg+'">'+pg+'</button>';}).join('') +
+    '<button class="page-pill" id="nextPage" '+(state.page===totalPages?'disabled':'')+'>›</button></div>';
+
+  p.querySelectorAll('[data-page-limit]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var v = btn.dataset.pageLimit;
+      state.limit = v==='all'?'all':v==='custom'?'custom':Number(v);
+      state.page = 1;
+      renderInvites();
+    });
+  });
+  var customInput = document.getElementById('customLimitInput');
+  if(customInput) customInput.addEventListener('input', function(e){state.customLimit=Math.min(100,Math.max(1,Number(e.target.value)||1));state.page=1;renderInvites();});
+  p.querySelectorAll('[data-page-number]').forEach(function(btn){
+    btn.addEventListener('click', function(){state.page=Number(btn.dataset.pageNumber);renderInvites();});
+  });
+  var prevBtn = document.getElementById('prevPage');
+  var nextBtn = document.getElementById('nextPage');
+  if(prevBtn) prevBtn.addEventListener('click', function(){if(state.page>1){state.page--;renderInvites();}});
+  if(nextBtn) nextBtn.addEventListener('click', function(){if(state.page<totalPages){state.page++;renderInvites();}});
+}
+
+// ── Cancelar convite ──────────────────────────────────────────
+function askCancelInvite(id){
+  var inv = state.invites.find(function(i){return i.id===id;});
+  if(!inv) return;
+  document.getElementById('confirmTitle').textContent = 'Cancelar convite';
+  document.getElementById('confirmText').textContent = 'Deseja cancelar o convite enviado para '+inv.nome+'? O link deixará de ser válido.';
+  state.confirmAction = async function(){
+    var r = await _sb.from('convites').update({status:'cancelado'}).eq('id', id);
+    closeModal('confirmModal');
+    closeAllActionMenus();
+    if(r.error){showToast('Erro ao cancelar convite.','error');return;}
+    await loadInvites();
+    renderAdmin();
+    showToast('Convite cancelado.','info');
+  };
+  openModal('confirmModal');
+}
+
+// ── Modal de novo convite ─────────────────────────────────────
+function perfilSummary(nome){
+  var desc = perfilDescricoes[nome] || [];
+  if(!desc.length) return '<strong style="font-size:10px;color:var(--info)">'+esc(nome)+'</strong>';
+  return '<strong style="font-size:10px;color:var(--info)">Permissões principais de '+esc(nome)+'</strong><ul style="margin:7px 0 0 16px;color:var(--muted);font-size:9.5px;line-height:1.65">'+desc.map(function(d){return '<li>'+esc(d)+'</li>';}).join('')+'</ul>';
+}
+
+function renderInviteForm(){
+  var draft = state.draft;
+  var papeis = state.papeis;
+  if(!papeis.length){
+    document.getElementById('invitePaneForm').innerHTML = '<p style="color:var(--muted);font-size:10.5px;padding:10px 0">Carregando perfis disponíveis...</p>';
+    return;
+  }
+  if(!draft.perfil_id && papeis.length){draft.perfil_id=papeis[0].id;draft.perfil_nome=papeis[0].nome;}
+  var nomePerfil = draft.perfil_nome || (papeis[0]&&papeis[0].nome) || '';
+  document.getElementById('invitePaneForm').innerHTML =
+    '<div class="field-grid">' +
+    '<div class="field-group"><label for="inviteName">Nome completo</label><input class="field" id="inviteName" value="'+esc(draft.nome)+'" placeholder="Nome do convidado"><span class="form-error" id="inviteNameError"></span></div>' +
+    '<div class="field-group"><label for="inviteEmail">E-mail</label><input class="field" id="inviteEmail" type="email" value="'+esc(draft.email)+'" placeholder="nome@vmmadv.com.br"><span class="form-error" id="inviteEmailError"></span></div>' +
+    '<div class="field-group full"><label>Perfil/cargo</label>' +
+    '<div class="custom-select" id="profileSelect">' +
+    '<button type="button" class="custom-select-trigger" id="profileSelectTrigger"><span>'+esc(nomePerfil)+'</span><i class="select-caret"></i></button>' +
+    '<div class="custom-select-menu">' +
+    papeis.map(function(p){return '<button type="button" class="custom-select-option '+(p.id===draft.perfil_id?'selected':'')+'" data-pid="'+p.id+'" data-pnome="'+esc(p.nome)+'">'+esc(p.nome)+(p.id===draft.perfil_id?'<span>&#10003;</span>':'')+'</button>';}).join('') +
+    '</div></div>' +
+    '<div class="profile-summary" id="profileSummary">'+perfilSummary(nomePerfil)+'</div></div>' +
+    '<div class="field-group full"><label for="inviteMessage">Mensagem pessoal, opcional</label><textarea class="textarea" id="inviteMessage" placeholder="Adicione uma mensagem de boas-vindas ao convite">'+esc(draft.mensagem)+'</textarea></div>' +
+    '</div>' +
+    '<div class="info-note"><svg width="17" height="17" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 10v5M12 7h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>O registro do convite será salvo aqui. O e-mail de convite é enviado pelo sistema de onboarding do escritório em seguida.</span></div>';
+
+  document.getElementById('inviteName').addEventListener('input', function(e){state.draft.nome=e.target.value;renderEmailPreview();});
+  document.getElementById('inviteEmail').addEventListener('input', function(e){state.draft.email=e.target.value;renderEmailPreview();});
+  document.getElementById('inviteMessage').addEventListener('input', function(e){state.draft.mensagem=e.target.value;renderEmailPreview();});
+  document.getElementById('profileSelectTrigger').addEventListener('click', function(e){e.stopPropagation();document.getElementById('profileSelect').classList.toggle('open');});
+  document.querySelectorAll('[data-pid]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.draft.perfil_id = btn.dataset.pid;
+      state.draft.perfil_nome = btn.dataset.pnome;
+      document.getElementById('profileSelect').classList.remove('open');
+      renderInviteForm();
+      renderEmailPreview();
+    });
+  });
+}
+
+function renderEmailPreview(){
+  var draft = state.draft;
+  var name = draft.nome.trim() || 'novo colaborador';
+  var email = draft.email.trim() || 'convidado@vmmadv.com.br';
+  var msg = draft.mensagem.trim() ? '<p>'+esc(draft.mensagem)+'</p>' : '';
+  document.getElementById('invitePanePreview').innerHTML =
+    '<p class="email-notice">Esta é uma pré-visualização. O e-mail real é enviado pelo sistema de onboarding do escritório.</p>' +
+    '<article class="email-preview"><div class="mail-header">' +
+    '<div class="mail-from"><b>De:</b> Victor Morais Advocacia &lt;onboarding@vmmadv.com.br&gt;</div>' +
+    '<div class="mail-to"><b>Para:</b> '+esc(email)+'</div>' +
+    '<div class="mail-subject">Assunto: Você foi convidado para o Sistema VMM<span style="color:#a3812f">ADV</span></div>' +
+    '</div><div class="mail-body"><div class="mail-brand"><span class="mail-crest">VM</span><span>VMMADV</span></div>' +
+    '<h3>Olá, '+esc(name)+'</h3>' +
+    '<p>Você foi convidado por Victor Morais Advocacia para integrar o Sistema VMM<span style="color:#a3812f">ADV</span> como <b>'+esc(draft.perfil_nome||'colaborador')+'</b>.</p>' +
+    msg +
+    '<button class="mail-button">Aceitar convite e criar senha</button>' +
+    '</div></article>';
+}
+
+function validateDraft(){
+  var ok = true;
+  var name = state.draft.nome.trim();
+  var email = state.draft.email.trim();
+  document.getElementById('inviteNameError').textContent = '';
+  document.getElementById('inviteEmailError').textContent = '';
+  if(!name){document.getElementById('inviteNameError').textContent='Informe o nome completo.';ok=false;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){document.getElementById('inviteEmailError').textContent='Informe um e-mail válido.';ok=false;}
+  if(!state.draft.perfil_id){showToast('Selecione um perfil para o convidado.','error');ok=false;}
+  return ok;
+}
+
+function openNewInviteModal(){
+  if(!state.papeis.length){loadPapeis().then(function(){openNewInviteModal();});return;}
+  state.draft = {nome:'',email:'',perfil_id:(state.papeis[0]&&state.papeis[0].id)||null,perfil_nome:(state.papeis[0]&&state.papeis[0].nome)||'',mensagem:''};
+  state.inviteTab = 'form';
+  renderInviteModal();
+  openModal('inviteModal');
+}
+
+function renderInviteModal(){
+  document.querySelectorAll('[data-invite-tab]').forEach(function(btn){btn.classList.toggle('active',btn.dataset.inviteTab===state.inviteTab);});
+  document.getElementById('invitePaneForm').classList.toggle('active', state.inviteTab==='form');
+  document.getElementById('invitePanePreview').classList.toggle('active', state.inviteTab==='preview');
+  renderInviteForm();
+  renderEmailPreview();
+}
+
+async function sendInvite(){
+  if(!validateDraft()) return;
+  var btn = document.getElementById('sendInviteButton');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando';
+  try{
+    var expira = new Date(Date.now() + 7*86400000).toISOString();
+    var payload = {
+      email: state.draft.email.trim(),
+      nome_sugerido: state.draft.nome.trim(),
+      papel_sugerido_id: state.draft.perfil_id,
+      status: 'aguardando_envio',
+      expira_em: expira,
+    };
+    if(state.meuInternoId) payload.convidado_por_id = state.meuInternoId;
+    var r = await _sb.from('convites').insert(payload);
+    if(r.error) throw r.error;
+    closeModal('inviteModal');
+    await loadInvites();
+    renderAdmin();
+    showToast('Convite registrado com sucesso. O e-mail será enviado em breve.');
+  }catch(e){
+    showToast('Erro ao registrar convite: ' + (e.message||'tente novamente.'), 'error');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Registrar convite';
+  }
+}
+
+// ── Tela do convidado (onboarding via link de convite) ────────
+function renderGuest(){
+  var panel = document.getElementById('guestPanel');
+  if(state.guestSuccess){
+    panel.innerHTML =
+      '<div class="guest-success"><div class="success-check"><svg width="33" height="33" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
+      '<h2>Conta criada com sucesso</h2>' +
+      '<p>Você já pode acessar o Sistema VMM<span style="color:var(--gold)">ADV</span>'+(state.guestPerfilNome?' como <b>'+esc(state.guestPerfilNome)+'</b>':'')+'. Redirecionando para o login...</p></div>';
+    return;
+  }
+  var nome = state.guestNome || state.guestEmail || 'colaborador';
+  var email = state.guestEmail || '';
+  panel.innerHTML =
+    '<div class="guest-crest">VM</div>' +
+    '<h1>Bem-vindo ao Sistema VMM<span style="color:var(--gold)">ADV</span></h1>' +
+    '<p class="guest-sub">Você foi convidado por Victor Morais Advocacia. Defina sua senha para começar.</p>' +
+    '<div class="account-for">Conta sendo criada para:<br><b>'+esc(nome)+'</b>'+(email&&nome!==email?'<br>'+esc(email):'')+'</div>' +
+    '<form class="guest-form" id="guestForm">' +
+    '<div class="field-group"><label for="guestPassword">Criar senha</label>' +
+    '<input class="field" id="guestPassword" type="password" autocomplete="new-password" placeholder="Crie uma senha segura">' +
+    '<div class="password-meter"><span id="passwordMeter"></span></div>' +
+    '<div class="password-feedback" id="passwordFeedback">Use ao menos 8 caracteres, com letras e números.</div></div>' +
+    '<div class="field-group password-row"><label for="guestPasswordConfirm">Confirmar senha</label>' +
+    '<input class="field" id="guestPasswordConfirm" type="password" autocomplete="new-password" placeholder="Repita a senha">' +
+    '<div class="form-error" id="passwordMatchError"></div></div>' +
+    '<label class="terms-line"><input id="termsCheck" type="checkbox"><span>Li e aceito os <button type="button" class="terms-button" id="openTermsButton">termos de uso e a política de privacidade</button> do escritório.</span></label>' +
+    '<button class="btn-primary guest-submit" id="createAccountButton" type="submit" disabled>Criar conta e entrar</button>' +
+    '</form>';
+
+  var password = document.getElementById('guestPassword');
+  var confirmation = document.getElementById('guestPasswordConfirm');
+  var terms = document.getElementById('termsCheck');
+  var submit = document.getElementById('createAccountButton');
+
+  function score(v){var s=0;if(v.length>=8)s++;if(/[A-Z]/.test(v))s++;if(/[0-9]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;return s;}
+  function syncForm(){
+    var v = password.value;
+    var s = score(v);
+    var labels = ['Muito fraca','Fraca','Média','Boa','Forte'];
+    var colors = ['var(--danger)','var(--danger)','var(--warning)','var(--gold)','var(--success)'];
+    var widths = [10,28,52,75,100];
+    var meter = document.getElementById('passwordMeter');
+    meter.style.width = widths[s]+'%';
+    meter.style.background = colors[s];
+    document.getElementById('passwordFeedback').textContent = v ? 'Força da senha: '+labels[s]+'.' : 'Use ao menos 8 caracteres, com letras e números.';
+    var match = !confirmation.value || v===confirmation.value;
+    document.getElementById('passwordMatchError').textContent = match ? '' : 'As senhas não coincidem.';
+    submit.disabled = !(v.length>=8 && v===confirmation.value && terms.checked);
+  }
+  password.addEventListener('input', syncForm);
+  confirmation.addEventListener('input', syncForm);
+  terms.addEventListener('change', syncForm);
+  document.getElementById('openTermsButton').addEventListener('click', function(){openModal('termsModal');});
+
+  document.getElementById('guestForm').addEventListener('submit', async function(e){
+    e.preventDefault();
+    if(submit.disabled) return;
+    submit.disabled = true;
+    submit.innerHTML = '<span class="spinner"></span> Criando conta';
+    try{
+      // 1. Definir a senha — a sessão de convite do Supabase já está ativa
+      var r1 = await _sb.auth.updateUser({password: password.value});
+      if(r1.error) throw r1.error;
+
+      // 2. Obter sessão atualizada
+      var r2 = await _sb.auth.getSession();
+      var session = r2.data && r2.data.session;
+      var authUserId = (session&&session.user&&session.user.id) || (state.session&&state.session.user&&state.session.user.id);
+      var userEmail = (session&&session.user&&session.user.email) || state.guestEmail;
+
+      if(authUserId && userEmail){
+        // 3. Vincular auth_user_id no registro do colaborador
+        //    RLS "onboarding_vincula_auth_user_id": só quando auth_user_id IS NULL
+        //    e email bate com o JWT
+        var r3 = await _sb.from('usuarios')
+          .update({auth_user_id: authUserId})
+          .eq('email', userEmail)
+          .is('auth_user_id', null);
+        if(r3.error) console.warn('[onboarding] vincular auth_user_id:', r3.error.message);
+
+        // 4. Marcar convite como aceito
+        //    RLS "guest_marca_convite_aceito": status pendente/aguardando_envio → aceito
+        var r4 = await _sb.from('convites')
+          .update({status:'aceito', aceito_em: new Date().toISOString()})
+          .eq('email', userEmail)
+          .in('status', ['pendente','aguardando_envio']);
+        if(r4.error) console.warn('[onboarding] aceitar convite:', r4.error.message);
+
+        // 5. Registrar no histórico de segurança (melhor esforço)
+        try{
+          var r5 = await _sb.from('usuarios').select('id').eq('email', userEmail).maybeSingle();
+          if(r5.data && r5.data.id){
+            await _sb.from('historico_seguranca_usuarios').insert({
+              usuario_id: r5.data.id,
+              tipo: 'convite_aceito',
+              motivo: 'Conta criada via link de convite',
+            });
+          }
+        }catch(_){}
+      }
+
+      state.guestSuccess = true;
+      renderGuest();
+      showToast('Conta criada com sucesso!');
+
+      // Encerrar sessão de convite e redirecionar para login
+      setTimeout(async function(){
+        await _sb.auth.signOut();
+        window.location.href = 'login_padrao_metalico.html';
+      }, 3000);
+
+    }catch(err){
+      showToast('Erro ao criar conta: ' + (err.message||'tente novamente.'), 'error');
+      submit.disabled = false;
+      submit.textContent = 'Criar conta e entrar';
+    }
+  });
+}
+
+// ── Navegação entre telas ─────────────────────────────────────
+function switchPrototypeView(view){
+  document.querySelectorAll('[data-prototype-view]').forEach(function(btn){btn.classList.toggle('active', btn.dataset.prototypeView===view);});
+  if(view==='guest'){
+    document.getElementById('adminScreen').classList.add('hidden');
+    document.getElementById('guestScreen').classList.add('active');
+    renderGuest();
+    return;
+  }
+  document.getElementById('guestScreen').classList.remove('active');
+  document.getElementById('adminScreen').classList.remove('hidden');
+  if(view==='new') openNewInviteModal();
+  else closeModal('inviteModal');
+}
+
+function setupPrototypeNav(){
+  document.querySelectorAll('[data-prototype-view]').forEach(function(btn){
+    btn.addEventListener('click', function(){switchPrototypeView(btn.dataset.prototypeView);});
+  });
+}
+
+function setupFilters(){
+  document.querySelectorAll('[data-status-filter]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.statusFilter = btn.dataset.statusFilter;
+      state.page = 1;
+      document.querySelectorAll('[data-status-filter]').forEach(function(f){f.classList.toggle('active', f.dataset.statusFilter===state.statusFilter);});
+      renderInvites();
+    });
+  });
+  document.getElementById('inviteSearch').addEventListener('input', function(e){state.search=e.target.value;state.page=1;renderInvites();});
+}
+
+function setupInviteModal(){
+  document.getElementById('newInviteButton').addEventListener('click', openNewInviteModal);
+  document.querySelectorAll('[data-invite-tab]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      state.inviteTab = btn.dataset.inviteTab;
+      document.querySelectorAll('[data-invite-tab]').forEach(function(t){t.classList.toggle('active', t.dataset.inviteTab===state.inviteTab);});
+      document.getElementById('invitePaneForm').classList.toggle('active', state.inviteTab==='form');
+      document.getElementById('invitePanePreview').classList.toggle('active', state.inviteTab==='preview');
+    });
+  });
+  document.getElementById('sendInviteButton').addEventListener('click', sendInvite);
+}
+
+function setupModals(){
+  document.querySelectorAll('[data-close]').forEach(function(btn){
+    btn.addEventListener('click', function(){closeModal(btn.dataset.close);});
+  });
+  document.querySelectorAll('.modal-overlay').forEach(function(modal){
+    modal.addEventListener('click', function(e){if(e.target===modal) closeModal(modal.id);});
+  });
+  document.getElementById('confirmButton').addEventListener('click', function(){if(state.confirmAction)state.confirmAction();state.confirmAction=null;});
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){
+      document.querySelectorAll('.modal-overlay.open').forEach(function(m){closeModal(m.id);});
+      closeAllActionMenus();
+    }
+  });
+}
+
+function renderPresence(){
+  var online = [['DV','Dr. Victor','Convites de Colaboradores','#d7b85e'],['HS','Hevelyn','Lista de Processos','#7fb0eb'],['CS','Camila Souza','Minhas Tarefas','#e8b84c'],['BL','Bruno Lima','Kanban','#cf94e2'],['LR','Laíza Roberta','Marketing','#8ca8e8']];
+  document.getElementById('onlineText').textContent = online.length + ' online agora';
+  document.getElementById('presencePop').innerHTML = '<div class="pop-title">Online agora</div>' +
+    online.map(function(u){return '<button class="pop-item"><span class="dot online"></span><span class="small-avatar" style="background:'+u[3]+'">'+u[0]+'</span><span class="grow"><b>'+u[1]+'</b><small class="pop-meta">Visualizando: '+u[2]+'</small></span></button>';}).join('');
+  document.getElementById('notifCount').textContent = '0';
+  document.getElementById('notifPop').innerHTML = '<div class="pop-title">Notificações</div><button class="notification-item"><span class="n-dot read"></span><span><span class="notification-text">Nenhuma notificação nova.</span><small class="notification-time">agora</small></span></button>';
+}
+
+function setupTopbar(){
+  renderPresence();
+  document.getElementById('presenceBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    document.getElementById('presencePop').classList.toggle('open');
+    document.getElementById('notifPop').classList.remove('open');
+  });
+  document.getElementById('notifBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    document.getElementById('notifPop').classList.toggle('open');
+    document.getElementById('presencePop').classList.remove('open');
+  });
+  document.querySelectorAll('[data-theme-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.body.dataset.theme = document.body.dataset.theme==='dark' ? 'light' : 'dark';
+    });
+  });
+  document.getElementById('hamburger').addEventListener('click', function(){
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.presence-wrap') && !e.target.closest('.notification-wrap')){
+      document.querySelectorAll('.popover').forEach(function(p){p.classList.remove('open');});
+    }
+    if(!e.target.closest('.action-menu-wrap')) closeAllActionMenus();
+    if(!e.target.closest('.custom-select')) document.querySelectorAll('.custom-select.open').forEach(function(s){s.classList.remove('open');});
+  });
+}
+
+// ── Inicialização ─────────────────────────────────────────────
+async function init(){
+  setupTopbar();
+  setupFilters();
+  setupInviteModal();
+  setupPrototypeNav();
+  setupModals();
+
+  // Detectar token de convite ou recuperação no hash da URL
+  var hash = window.location.hash || '';
+  if(hash.indexOf('type=invite') >= 0 || hash.indexOf('type=recovery') >= 0){
+    // Aguardar o SDK processar o hash (padrão: 150ms)
+    await new Promise(function(resolve){setTimeout(resolve, 150);});
+    var r = await _sb.auth.getSession();
+    var session = r.data && r.data.session;
+    if(session && session.user){
+      state.session = session;
+      state.guestEmail = session.user.email || '';
+      // Tentar carregar nome e perfil do colaborador pré-cadastrado
+      try{
+        var ru = await _sb.from('usuarios').select('nome_completo').eq('email', state.guestEmail).maybeSingle();
+        state.guestNome = (ru.data && ru.data.nome_completo) || '';
+        var rc = await _sb.from('convites')
+          .select('papeis(nome)')
+          .eq('email', state.guestEmail)
+          .in('status', ['pendente','aguardando_envio'])
+          .maybeSingle();
+        state.guestPerfilNome = (rc.data && rc.data.papeis && rc.data.papeis.nome) || '';
+      }catch(_){}
+      switchPrototypeView('guest');
+      return;
+    }
+  }
+
+  // Sessão administrativa normal
+  var rs = await _sb.auth.getSession();
+  state.session = rs.data && rs.data.session;
+
+  if(state.session){
+    await Promise.all([loadMeuPerfil(), loadPapeis(), loadInvites()]);
+  }else{
+    state.invites = [];
+    state.papeis = [];
+  }
+
+  renderAdmin();
+  renderInviteModal();
+}
+
+init();
+</script>
+</body>
+</html>

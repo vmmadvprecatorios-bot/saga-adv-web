@@ -1,0 +1,3075 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Biblioteca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+    --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;
+    --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+    --border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);
+    --text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;
+    --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
+  }
+  [data-theme="light"]{
+    --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+    --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
+    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+    --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
+    --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, color-mix(in srgb,var(--gold) 7%,transparent), transparent 40%),
+      radial-gradient(circle at 90% 90%, color-mix(in srgb,var(--info) 5%,transparent), transparent 45%),
+      linear-gradient(160deg, var(--navy-1) 0%, var(--navy-2) 50%, var(--navy-3) 100%);
+    font-family:'Montserrat',sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+    transition:background .3s ease, color .3s ease;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;
+    background-image:
+      linear-gradient(color-mix(in srgb,var(--gold) 2%,transparent) 1px,transparent 1px),
+      linear-gradient(90deg,color-mix(in srgb,var(--gold) 2%,transparent) 1px,transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none;z-index:0;
+  }
+
+  .topbar{
+    height:62px;
+    background:linear-gradient(135deg,var(--navy-3),var(--navy-1));
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border-soft);
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 26px;position:sticky;top:0;z-index:100;
+  }
+  [data-theme="light"] .topbar{background:linear-gradient(135deg,var(--panel-solid),var(--navy-1));}
+  .brand{display:flex;align-items:center;gap:11px;}
+  .hamburguer{display:none;flex-direction:column;gap:4px;cursor:pointer;margin-right:8px;}
+  .hamburguer span{width:18px;height:1.6px;background:var(--gold-light);border-radius:2px;}
+  .crest{width:24px;height:24px;flex:0 0 auto;}
+  .brand-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--text);letter-spacing:.5px;}
+  .brand-name span{color:var(--gold);}
+  .topbar-direita{display:flex;align-items:center;gap:20px;}
+  .presenca{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);padding:6px 13px;border:1px solid var(--border-soft);border-radius:20px;background:var(--panel);cursor:pointer;}
+  .ponto-verde{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 7px var(--success);}
+  .theme-toggle{width:66px;height:29px;background:var(--panel);border:1px solid var(--border-soft);border-radius:20px;position:relative;cursor:pointer;}
+  .theme-toggle .knob{width:23px;height:23px;background:linear-gradient(135deg,var(--gold-light),var(--gold));border-radius:50%;position:absolute;top:3px;left:3px;transition:left .25s ease;z-index:2;}
+  [data-theme="light"] .theme-toggle .knob{left:41px;}
+  .icone-tema{position:absolute;top:50%;transform:translateY(-50%);z-index:1;transition:color .25s ease,opacity .25s ease;}
+  .icone-tema-sol{left:5px;color:var(--muted);opacity:.45;}
+  .icone-tema-lua{right:6px;color:var(--gold);opacity:.95;}
+  [data-theme="light"] .icone-tema-sol{color:var(--gold);opacity:.95;}
+  [data-theme="light"] .icone-tema-lua{color:var(--muted);opacity:.4;}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px;color:var(--navy-1);cursor:pointer;box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 15%,transparent);}
+
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;}
+  .overlay.aberto{display:block;}
+  .app{display:flex;position:relative;z-index:1;}
+
+  .sidebar{width:208px;background:var(--panel);backdrop-filter:blur(14px);border-right:1px solid var(--border-soft);min-height:calc(100vh - 62px);padding:22px 0;flex:0 0 auto;}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 22px;font-size:12.5px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all .2s;}
+  .nav-item:hover{color:var(--text);background:color-mix(in srgb,var(--text) 3%,transparent);}
+  .nav-item.ativo{color:var(--gold);border-left-color:var(--gold);background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 10%,transparent),transparent);}
+  .nav-icon{width:15px;height:15px;flex:0 0 auto;color:var(--muted);}
+  .nav-item.ativo .nav-icon{color:var(--gold);}
+  .nav-secao{font-size:9.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:17px 22px 7px;}
+
+  .layout-biblioteca{flex:1;display:flex;min-width:0;}
+  .coluna-categorias{width:220px;flex:0 0 auto;padding:24px 14px;border-right:1px solid var(--border-soft);}
+  .titulo-categorias{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text);margin-bottom:16px;padding:0 8px;}
+  .item-categoria-lateral{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:10px;cursor:pointer;margin-bottom:3px;transition:background .15s;font-size:12px;color:var(--muted);font-weight:500;}
+  .item-categoria-lateral:hover{background:color-mix(in srgb,var(--text) 4%,transparent);}
+  .item-categoria-lateral.ativa{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold);font-weight:700;}
+  .item-categoria-lateral svg{flex:0 0 auto;}
+  .btn-nova-categoria-lateral{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;border:1px dashed var(--border-soft);color:var(--gold);font-size:11px;font-weight:600;cursor:pointer;margin-top:8px;}
+  .categorias-cabecalho{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px;padding:0 4px 0 8px;}
+  .categorias-cabecalho .titulo-categorias{margin-bottom:0;padding:0;white-space:nowrap;}
+  .btn-retrair-categorias{width:28px;height:28px;border-radius:8px;border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;color:var(--muted);transition:color .2s ease,background .2s ease,transform .2s ease;flex:0 0 auto;}
+  .btn-retrair-categorias:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold);}
+  .btn-retrair-categorias svg{transition:transform .28s ease;}
+  .layout-biblioteca.categorias-retraidas .coluna-categorias{width:62px;padding-left:10px;padding-right:10px;}
+  .layout-biblioteca.categorias-retraidas .titulo-categorias,.layout-biblioteca.categorias-retraidas .categoria-label{max-width:0;opacity:0;overflow:hidden;pointer-events:none;white-space:nowrap;}
+  .layout-biblioteca.categorias-retraidas .categorias-cabecalho{justify-content:center;padding:0;margin-bottom:16px;}
+  .layout-biblioteca.categorias-retraidas .btn-retrair-categorias svg{transform:rotate(180deg);}
+  .layout-biblioteca.categorias-retraidas .item-categoria-lateral,.layout-biblioteca.categorias-retraidas .btn-nova-categoria-lateral{justify-content:center;gap:0;padding-left:0;padding-right:0;}
+  .layout-biblioteca.categorias-retraidas .item-categoria-lateral svg,.layout-biblioteca.categorias-retraidas .btn-nova-categoria-lateral svg{margin:0;}
+  .coluna-categorias{transition:width .3s cubic-bezier(.22,1,.36,1),padding .3s cubic-bezier(.22,1,.36,1);overflow:hidden;}
+  .categoria-label{display:inline-block;max-width:160px;opacity:1;overflow:hidden;white-space:nowrap;transition:max-width .25s ease,opacity .18s ease;}
+
+  .conteudo-biblioteca{flex:1;padding:28px 30px;min-width:0;}
+  .header-pagina{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:14px;flex-wrap:wrap;}
+  .header-pagina h1{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;color:var(--text);}
+  .botoes-view{display:flex;gap:5px;background:var(--panel);backdrop-filter:blur(10px);padding:4px;border-radius:9px;border:1px solid var(--border-soft);}
+  .btn-view{padding:8px 15px;font-size:12px;border-radius:7px;cursor:pointer;color:var(--muted);display:flex;align-items:center;gap:6px;transition:all .2s;}
+  .btn-view.ativo{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-weight:600;}
+
+  .breadcrumb-wrap{display:flex;align-items:center;gap:6px;margin-bottom:18px;flex-wrap:wrap;font-size:12.5px;}
+  .breadcrumb-item{color:var(--muted);cursor:pointer;padding:4px 9px;border-radius:7px;transition:background .15s,color .15s;display:flex;align-items:center;gap:5px;}
+  .breadcrumb-item:hover{background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--text);}
+  .breadcrumb-item.atual{color:var(--gold);font-weight:600;}
+  .breadcrumb-separador{color:var(--muted);font-size:11px;}
+
+  .barra-filtros{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+  .busca{flex:1;min-width:220px;background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--border-soft);border-radius:9px;padding:9px 14px;display:flex;align-items:center;gap:9px;color:var(--muted);}
+  .busca input{background:none;border:none;outline:none;color:var(--text);font-size:12.5px;width:100%;font-family:'Montserrat',sans-serif;}
+  .busca input::placeholder{color:var(--muted);}
+  .btn-nova-pasta{background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px dashed var(--border-soft);color:var(--gold);padding:9px 16px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;}
+  .btn-upload{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);padding:9px 18px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;box-shadow:0 4px 14px color-mix(in srgb,var(--gold) 25%,transparent);}
+
+  .grid-itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;min-height:220px;transform-origin:center top;transition:opacity .18s ease,transform .18s ease,filter .18s ease;}
+  .grid-itens.trocando-saida{opacity:0;transform:translateY(9px) scale(.992);filter:blur(2px);pointer-events:none;}
+  .grid-itens.trocando-entrada{animation:entradaConteudoBiblioteca .48s cubic-bezier(.22,1,.36,1) both;}
+  .item-card.entrada-suave{opacity:0;transform:translateY(18px) scale(.985);animation:entradaItemBiblioteca .5s cubic-bezier(.22,1,.36,1) forwards;animation-delay:var(--reveal-delay,0ms);}
+  .breadcrumb-wrap.atualizando{animation:entradaBreadcrumb .34s ease both;}
+  .item-categoria-lateral.em-transicao{animation:pulsoCategoria .36s ease both;}
+  @keyframes entradaConteudoBiblioteca{from{opacity:0;transform:translateY(8px);filter:blur(2px);}to{opacity:1;transform:translateY(0);filter:blur(0);}}
+  @keyframes entradaItemBiblioteca{0%{opacity:0;transform:translateY(18px) scale(.985);}65%{opacity:1;transform:translateY(-2px) scale(1.005);}100%{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes entradaBreadcrumb{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+  @keyframes pulsoCategoria{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--gold) 0%,transparent);}55%{box-shadow:0 0 0 5px color-mix(in srgb,var(--gold) 14%,transparent);}100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--gold) 0%,transparent);}}
+  .cabecalho-lista{display:none;grid-template-columns:42px minmax(0,1fr) minmax(150px,.55fr) auto 28px;gap:14px;align-items:center;padding:0 16px 8px;color:var(--muted);font-size:9.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+  .cabecalho-lista.visivel{display:grid;animation:entradaBreadcrumb .28s ease both;}
+  .cabecalho-lista .lista-col-item{grid-column:1 / span 2;}
+  .cabecalho-lista .lista-col-meta{grid-column:3;}
+  .cabecalho-lista .lista-col-detalhe{grid-column:4;}
+  .cabecalho-lista .lista-col-acoes{grid-column:5;text-align:center;}
+  .grid-itens.modo-lista{display:flex;flex-direction:column;gap:8px;}
+  .grid-itens.modo-lista .item-card{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(150px,.55fr) auto 28px;gap:14px;align-items:center;padding:12px 15px;min-height:68px;}
+  .grid-itens.modo-lista .item-card:hover{transform:translateY(-1px);}
+  .grid-itens.modo-lista .icone-item-wrap{margin-bottom:0;width:42px;height:42px;grid-column:1;grid-row:1;}
+  .grid-itens.modo-lista .nome-item-card{margin-bottom:0;grid-column:2;grid-row:1;}
+  .grid-itens.modo-lista .meta-item-card{grid-column:3;grid-row:1;}
+  .grid-itens.modo-lista .rodape-item-card{grid-column:4;grid-row:1;margin-top:0;justify-content:flex-end;gap:7px;}
+  .grid-itens.modo-lista .btn-mais-item{position:static;grid-column:5;grid-row:1;opacity:1;}
+  .grid-itens.modo-lista .popover-item-acoes{top:calc(100% + 3px);right:10px;z-index:80;}
+  @media (prefers-reduced-motion:reduce){.grid-itens,.item-card.entrada-suave,.breadcrumb-wrap.atualizando,.item-categoria-lateral.em-transicao{animation:none;transition:none;transform:none;filter:none;}}
+
+  .destino-pasta-atual{max-height:0;opacity:0;overflow:hidden;display:flex;align-items:center;gap:10px;margin:0;border:1px dashed transparent;border-radius:11px;padding:0 14px;color:var(--muted);font-size:11.5px;pointer-events:none;transition:max-height .24s ease,opacity .2s ease,margin .24s ease,padding .24s ease,border-color .2s ease,background .2s ease;}
+  .destino-pasta-atual svg{color:var(--gold);flex:0 0 auto;}
+  .destino-pasta-atual strong{color:var(--text);font-weight:600;}
+  body.arrastando-biblioteca .destino-pasta-atual{max-height:62px;opacity:1;margin:-7px 0 16px;padding:12px 14px;pointer-events:auto;border-color:var(--border-soft);background:color-mix(in srgb,var(--gold) 6%,var(--panel));}
+  .destino-pasta-atual.zona-destino{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,var(--panel));box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 10%,transparent);}
+  .item-card.arrastavel{cursor:grab;}
+  .item-card.arrastavel:active{cursor:grabbing;}
+  .item-card.arrastando-item{opacity:.34;transform:scale(.97);filter:saturate(.75);}
+  .item-card.zona-destino{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--panel));box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 10%,transparent),0 16px 30px rgba(0,0,0,.18);}
+  .item-card.zona-destino .icone-item-wrap.pasta{transform:scale(1.06);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 12%,transparent);}
+  .icone-item-wrap{transition:transform .2s ease,box-shadow .2s ease;}
+  .breadcrumb-item.zona-destino,.item-categoria-lateral.zona-destino{background:color-mix(in srgb,var(--gold) 14%,var(--panel));color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 12%,transparent);}
+  .modal-mover-bib{max-width:520px;}
+  .item-em-movimento{display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--gold) 7%,var(--panel));border:1px solid var(--border-soft);margin-bottom:14px;color:var(--muted);font-size:11.5px;}
+  .item-em-movimento strong{color:var(--text);font-weight:600;}
+  .lista-destinos-mover{max-height:290px;overflow-y:auto;padding:4px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);}
+  .destino-mover-item{width:100%;display:flex;align-items:center;gap:9px;min-height:39px;padding:8px 10px;border-radius:8px;color:var(--text);font-size:12px;transition:background .15s ease,color .15s ease,box-shadow .15s ease;}
+  .destino-mover-item:hover{background:color-mix(in srgb,var(--gold) 9%,transparent);}
+  .destino-mover-item.selecionado{background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--gold);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 36%,transparent);}
+  .destino-mover-item.indisponivel{opacity:.45;cursor:not-allowed;}
+  .destino-mover-item.indisponivel:hover{background:transparent;color:var(--text);}
+  .destino-mover-item .destino-mover-icone{width:22px;height:22px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--gold) 11%,transparent);color:var(--gold);flex:0 0 auto;}
+  .destino-mover-item .destino-mover-texto{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .destino-mover-item .destino-mover-status{font-size:9px;color:var(--muted);font-weight:600;white-space:nowrap;}
+  .destino-mover-vazio{padding:20px 14px;text-align:center;color:var(--muted);font-size:11.5px;}
+  .btn-confirmar-bib:disabled{opacity:.52;cursor:not-allowed;filter:saturate(.55);}
+
+  .item-card{background:var(--panel);backdrop-filter:blur(16px);border:1px solid var(--border-soft);border-radius:13px;padding:16px;cursor:pointer;transition:transform .16s,box-shadow .16s,border-color .16s;position:relative;}
+  .item-card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--gold) 35%,transparent);box-shadow:0 12px 26px rgba(0,0,0,.28);}
+  .icone-item-wrap{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+  .icone-item-wrap.pasta{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold);}
+  .icone-item-wrap.arquivo{background:color-mix(in srgb,var(--info) 12%,transparent);color:var(--info);}
+  .icone-item-wrap.gerador{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold);}
+  .nome-item-card{font-size:12.5px;font-weight:600;color:var(--text);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .meta-item-card{font-size:10px;color:var(--muted);}
+  .rodape-item-card{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+  .badge-versao{font-size:9px;font-weight:700;padding:2px 7px;border-radius:7px;background:var(--panel-2);color:var(--muted);}
+  .badge-gerador{font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:6px;background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--gold);display:flex;align-items:center;gap:3px;}
+  .btn-mais-item{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:var(--panel-2);color:var(--muted);opacity:0;transition:opacity .15s,background .15s;}
+  .item-card:hover .btn-mais-item{opacity:1;}
+  .btn-mais-item:hover{background:color-mix(in srgb,var(--gold) 15%,transparent);}
+  .popover-item-acoes{position:absolute;top:38px;right:10px;width:180px;background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));backdrop-filter:blur(20px);border:1px solid var(--border-soft);border-radius:11px;padding:6px;z-index:50;display:none;box-shadow:0 20px 50px rgba(0,0,0,.45);}
+  .popover-item-acoes.aberto{display:block;}
+  #actionMenuPortal{position:fixed;inset:0;z-index:6000;pointer-events:none;}
+  #actionMenuPortal .popover-item-acoes.portalizado{position:fixed;top:auto;right:auto;display:block;z-index:6001;pointer-events:auto;}
+  .opcao-acao-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;font-size:11.5px;color:var(--text);cursor:pointer;transition:background .15s;}
+  .opcao-acao-item:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);}
+
+  .modal-overlay-bib{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay-bib.aberto{display:flex;}
+  .modal-bib{width:100%;max-width:440px;background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));backdrop-filter:blur(24px);border:1px solid var(--border-soft);border-radius:18px;padding:28px;box-shadow:0 30px 70px rgba(0,0,0,.5);}
+  .modal-bib h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--text);margin-bottom:6px;}
+  .modal-bib .modal-sub{font-size:11.5px;color:var(--muted);margin-bottom:18px;line-height:1.6;}
+  .modal-campo-bib{margin-bottom:14px;}
+  .modal-campo-bib label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:7px;font-weight:600;}
+  .modal-campo-bib input{width:100%;background:var(--panel);border:1px solid var(--border-soft);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Montserrat',sans-serif;outline:none;}
+  .modal-campo-bib input:focus{border-color:var(--gold);}
+  .aviso-preenchimento{background:color-mix(in srgb,var(--gold) 6%,transparent);border:1px solid color-mix(in srgb,var(--gold) 20%,transparent);border-radius:10px;padding:11px 13px;font-size:11px;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+  .opcoes-acao-documento{display:flex;gap:8px;margin-bottom:18px;}
+  .opcao-acao-documento{flex:1;padding:12px 10px;border-radius:11px;border:1.5px solid var(--border-soft);background:var(--panel);cursor:pointer;text-align:center;transition:all .18s;}
+  .opcao-acao-documento:hover{border-color:color-mix(in srgb,var(--gold) 30%,transparent);}
+  .opcao-acao-documento.selecionada{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 7%,transparent);}
+  .opcao-acao-documento svg{margin-bottom:6px;}
+  .opcao-acao-documento-titulo{font-size:11.5px;font-weight:600;color:var(--text);}
+  .opcao-acao-documento.selecionada .opcao-acao-documento-titulo{color:var(--gold);}
+  .opcao-acao-documento-desc{font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.4;}
+  .campos-preenchimento-wrap{display:none;}
+  .campos-preenchimento-wrap.visivel{display:block;}
+  .modal-botoes-bib{display:flex;gap:10px;margin-top:6px;}
+  .modal-botoes-bib button{flex:1;padding:11px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .btn-cancelar-bib{background:var(--panel-2);color:var(--muted);}
+  .btn-confirmar-bib{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);}
+
+  .visualizador-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);z-index:400;align-items:center;justify-content:center;padding:30px;}
+  .visualizador-overlay.aberto{display:flex;}
+  .visualizador-caixa{width:100%;max-width:760px;height:82vh;background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));backdrop-filter:blur(24px);border:1px solid var(--border-soft);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;overflow:hidden;}
+  .visualizador-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border-soft);flex:0 0 auto;}
+  .visualizador-titulo-grupo{display:flex;align-items:center;gap:10px;}
+  .visualizador-nome-arquivo{font-size:13.5px;font-weight:600;color:var(--text);}
+  .visualizador-meta{font-size:10.5px;color:var(--muted);margin-top:2px;}
+  .visualizador-acoes{display:flex;gap:8px;}
+  .visualizador-btn-acao{width:32px;height:32px;border-radius:9px;background:var(--panel);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;color:var(--gold);}
+  .visualizador-btn-acao:hover{background:color-mix(in srgb,var(--gold) 12%,transparent);}
+  .visualizador-btn-acao.fechar{color:var(--muted);}
+  .visualizador-btn-acao.fechar:hover{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger);}
+  .visualizador-corpo{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.2);padding:20px;}
+  .visualizador-pdf-placeholder{text-align:center;color:var(--muted);}
+  .visualizador-pdf-placeholder svg{margin-bottom:14px;opacity:.5;color:var(--info);}
+  .visualizador-pdf-placeholder p{font-size:12.5px;max-width:300px;line-height:1.6;}
+
+  #toast-container{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;}
+  .toast{padding:12px 18px;border-radius:10px;font-size:12.5px;font-weight:500;color:var(--text);max-width:340px;background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));border:1px solid var(--border-soft);box-shadow:var(--shadow);animation:toastIn .3s ease;}
+  .toast.sucesso{border-left:3px solid var(--success);}
+  .toast.erro{border-left:3px solid var(--danger);}
+  .toast.info{border-left:3px solid var(--info);}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  .modal-confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px;}
+  .modal-confirm-overlay.aberto{display:flex;}
+  .modal-confirm-caixa{width:100%;max-width:360px;background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));border:1px solid var(--border-soft);border-radius:14px;padding:24px;box-shadow:var(--shadow);}
+  .modal-confirm-caixa p{font-size:13px;color:var(--text);line-height:1.6;margin-bottom:18px;}
+  .modal-confirm-botoes{display:flex;gap:10px;}
+  .modal-confirm-botoes button{flex:1;padding:10px;border-radius:9px;font-size:12px;font-weight:600;}
+  .btn-confirm-cancelar{background:var(--panel-2);color:var(--muted);}
+  .btn-confirm-excluir{background:var(--danger);color:#fff;}
+
+  @media (max-width:980px){
+    .sidebar{width:178px;}
+    .nav-item{padding:10px 16px;font-size:12px;}
+    .coluna-categorias{width:170px;}
+  }
+  @media (max-width:760px){
+    .hamburguer{display:flex;}
+    .sidebar{position:fixed;left:-220px;top:62px;height:calc(100vh - 62px);width:210px;z-index:95;transition:left .28s ease;box-shadow:4px 0 24px rgba(0,0,0,.4);}
+    .sidebar.aberta{left:0;}
+    .sidebar .nav-item{color:#c3cee0;}
+    .sidebar .nav-item.ativo{color:var(--gold-light);}
+    [data-theme="light"] .sidebar .nav-item{color:var(--text);}
+    .layout-biblioteca{flex-direction:column;}
+    .coluna-categorias{width:100%;border-right:none;border-bottom:1px solid var(--border-soft);display:flex;overflow-x:auto;padding:14px 16px;gap:8px;}
+    .item-categoria-lateral{flex:0 0 auto;white-space:nowrap;margin-bottom:0;}
+    .titulo-categorias,.btn-nova-categoria-lateral,.btn-retrair-categorias{display:none;}
+    .conteudo-biblioteca{padding:18px;}
+    .header-pagina h1{font-size:22px;}
+    .grid-itens{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));}
+    .cabecalho-lista{display:none;}
+    .grid-itens.modo-lista .item-card{grid-template-columns:40px minmax(0,1fr) 28px;gap:10px;padding:11px 12px;}
+    .grid-itens.modo-lista .icone-item-wrap{grid-column:1;grid-row:1 / span 3;width:40px;height:40px;}
+    .grid-itens.modo-lista .nome-item-card{grid-column:2;grid-row:1;}
+    .grid-itens.modo-lista .meta-item-card{grid-column:2;grid-row:2;}
+    .grid-itens.modo-lista .rodape-item-card{grid-column:2;grid-row:3;justify-content:flex-start;}
+    .grid-itens.modo-lista .btn-mais-item{grid-column:3;grid-row:1 / span 3;}
+  }
+
+</style>
+
+<!-- Dependências adicionadas para a integração da biblioteca -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://unpkg.com/pizzip@3.1.6/dist/pizzip.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.44.0/build/docxtemplater.min.js"></script>
+
+</head>
+<body data-theme="dark">
+
+<div class="overlay" id="overlay"></div>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;">
+    <div class="hamburguer" id="hamburguer"><span></span><span></span><span></span></div>
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 220 220">
+        <defs>
+          <linearGradient id="metalTop" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#e8d2a0"/>
+            <stop offset="35%" stop-color="#c9a05c"/>
+            <stop offset="55%" stop-color="#8a6a38"/>
+            <stop offset="75%" stop-color="#d8b878"/>
+            <stop offset="100%" stop-color="#f0e4c8"/>
+          </linearGradient>
+        </defs>
+        <g transform="translate(110,110)">
+          <path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#metalTop)" stroke-width="6"/>
+          <path d="M-22 0l13 13 28-30" stroke="url(#metalTop)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+      </svg>
+      <div class="brand-name">VMM<span>ADV</span></div>
+    </div>
+  </div>
+
+  <div class="topbar-direita">
+    <div class="presenca"><div class="ponto-verde"></div><span>7 online agora</span></div>
+    <button class="theme-toggle" id="toggleTema" aria-label="Alternar tema">
+      <svg class="icone-tema icone-tema-sol" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></g></svg>
+      <svg class="icone-tema icone-tema-lua" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M20.6 14.7A8.6 8.6 0 1 1 9.3 3.4a7 7 0 0 0 11.3 11.3z"/></svg>
+      <div class="knob"></div>
+    </button>
+    <div class="avatar">VM</div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="sidebar" id="sidebar">
+    <div class="nav-secao">Operacao</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+      Lista de Processos
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      Kanban
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+      Calendario
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      Minhas Tarefas
+    </div>
+    <div class="nav-secao">Equipe</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>
+      Chat Interno
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>
+      Ponto Eletronico
+    </div>
+    <div class="nav-secao">Gestao</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 18V9l9-6 9 6v9" stroke="currentColor" stroke-width="1.5"/></svg>
+      Financeiro
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+      Marketing
+    </div>
+    <div class="nav-item ativo">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>
+      Biblioteca
+    </div>
+  </div>
+
+  <div class="layout-biblioteca">
+
+    <div class="coluna-categorias">
+      <div class="categorias-cabecalho">
+        <div class="titulo-categorias">Categorias</div>
+        <button class="btn-retrair-categorias" id="btnAlternarCategorias" type="button" aria-label="Recolher categorias" title="Recolher categorias">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      <div class="item-categoria-lateral ativa" data-raiz="raiz" title="Todas">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="categoria-label">Todas</span>
+      </div>
+      <div class="item-categoria-lateral" data-raiz="juridico" title="Juridico">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="categoria-label">Juridico</span>
+      </div>
+      <div class="item-categoria-lateral" data-raiz="administrativo" title="Administrativo">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="categoria-label">Administrativo</span>
+      </div>
+      <div class="item-categoria-lateral" data-raiz="treinamento" title="Treinamento">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3l9 5-9 5-9-5 9-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span class="categoria-label">Treinamento</span>
+      </div>
+      <div class="item-categoria-lateral" data-raiz="marketing-arquivos" title="Marketing">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span class="categoria-label">Marketing</span>
+      </div>
+
+      <button class="btn-nova-categoria-lateral" id="btnNovaCategoriaTopo" type="button" title="Nova Categoria">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <span class="categoria-label">Nova Categoria</span>
+      </button>
+    </div>
+
+    <div class="conteudo-biblioteca">
+
+    <div class="header-pagina">
+      <div>
+        <h1>Biblioteca</h1>
+      </div>
+      <div class="botoes-view" aria-label="Modo de visualizacao">
+        <button class="btn-view ativo" type="button" data-view="grade" aria-pressed="true">Grade</button>
+        <button class="btn-view" type="button" data-view="lista" aria-pressed="false">Lista</button>
+      </div>
+    </div>
+
+    <div class="breadcrumb-wrap" id="breadcrumbWrap">
+      <div class="breadcrumb-item atual" data-id="raiz">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V21H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        Biblioteca
+      </div>
+    </div>
+
+    <div class="barra-filtros">
+      <div class="busca">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><line x1="20" y1="20" x2="16.5" y2="16.5" stroke="currentColor" stroke-width="2"/></svg>
+        <input type="text" placeholder="Buscar nesta pasta...">
+      </div>
+      <div class="btn-nova-pasta" id="btnNovaPasta">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><line x1="12" y1="11" x2="12" y2="15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Nova Pasta
+      </div>
+      <div class="btn-upload" id="btnUpload">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 20V8m0 0l-5 5m5-5l5 5M5 20h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Enviar Arquivo
+      </div>
+    </div>
+
+    <div class="destino-pasta-atual" id="destinoPastaAtual" aria-live="polite">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Solte para mover para <strong id="nomeDestinoPastaAtual">Biblioteca</strong></span>
+    </div>
+
+    <div class="cabecalho-lista" id="cabecalhoLista" aria-hidden="true">
+      <span class="lista-col-item">Item</span>
+      <span class="lista-col-meta">Atualizacao</span>
+      <span class="lista-col-detalhe">Detalhes</span>
+      <span class="lista-col-acoes">Acoes</span>
+    </div>
+    <div class="grid-itens" id="gridItens"></div>
+
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay-bib" id="modalNovaPasta">
+  <div class="modal-bib">
+    <h3>Nova Pasta</h3>
+    <div class="modal-sub" id="subNovaPasta">Esta pasta sera criada dentro de "Biblioteca".</div>
+    <div class="modal-campo-bib">
+      <label>Nome da pasta</label>
+      <input type="text" id="inputNomePasta" placeholder="Ex: Direito Previdenciario">
+    </div>
+    <div class="modal-botoes-bib">
+      <button class="btn-cancelar-bib" id="btnCancelarNovaPasta">Cancelar</button>
+      <button class="btn-confirmar-bib" id="btnConfirmarNovaPasta">Criar Pasta</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay-bib" id="modalRenomear">
+  <div class="modal-bib">
+    <h3>Renomear</h3>
+    <div class="modal-sub">Voce pode prefixar numeros (ex: "01 - ", "02 - ") para controlar a ordem de exibicao.</div>
+    <div class="modal-campo-bib">
+      <label>Novo nome</label>
+      <input type="text" id="inputRenomear">
+    </div>
+    <div class="modal-botoes-bib">
+      <button class="btn-cancelar-bib" id="btnCancelarRenomear">Cancelar</button>
+      <button class="btn-confirmar-bib" id="btnConfirmarRenomear">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay-bib" id="modalGerarDocumento">
+  <div class="modal-bib">
+    <h3 id="tituloModalGerar">Gerar Documento</h3>
+    <div class="modal-sub" id="subModalGerar">Escolha como deseja proceder com este modelo.</div>
+
+    <div class="opcoes-acao-documento">
+      <div class="opcao-acao-documento" data-acao="baixar-branco">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>
+        <div class="opcao-acao-documento-titulo">Baixar Modelo em Branco</div>
+        <div class="opcao-acao-documento-desc">Sem preenchimento, do jeito que esta na biblioteca</div>
+      </div>
+      <div class="opcao-acao-documento selecionada" data-acao="preencher">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <div class="opcao-acao-documento-titulo">Preencher e Gerar</div>
+        <div class="opcao-acao-documento-desc">Informar os dados e ja baixar o documento pronto</div>
+      </div>
+    </div>
+
+    <div class="campos-preenchimento-wrap visivel" id="camposPreenchimentoWrap">
+      <div class="aviso-preenchimento">Os campos abaixo correspondem aos marcadores configurados neste modelo.</div>
+      <div id="camposDinamicosGerar"></div>
+    </div>
+
+    <div class="modal-botoes-bib">
+      <button class="btn-cancelar-bib" id="btnCancelarGerar">Cancelar</button>
+      <button class="btn-confirmar-bib" id="btnConfirmarGerar">Gerar Documento</button>
+    </div>
+  </div>
+</div>
+
+<div class="visualizador-overlay" id="visualizadorOverlay">
+  <div class="visualizador-caixa">
+    <div class="visualizador-header">
+      <div class="visualizador-titulo-grupo">
+        <div class="icone-item-wrap arquivo" style="width:32px;height:32px;margin-bottom:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>
+        </div>
+        <div>
+          <div class="visualizador-nome-arquivo" id="visualizadorNomeArquivo">Arquivo.pdf</div>
+          <div class="visualizador-meta" id="visualizadorMeta">N/D</div>
+        </div>
+      </div>
+      <div class="visualizador-acoes">
+        <div class="visualizador-btn-acao" id="btnDownloadVisualizador" title="Baixar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 4v12m0 0l-5-5m5 5l5-5M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="visualizador-btn-acao fechar" id="btnFecharVisualizador" title="Fechar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="visualizador-corpo" id="visualizadorCorpo"></div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMACAO EXCLUSAO -->
+<div class="modal-confirm-overlay" id="modalConfirmExcluir">
+  <div class="modal-confirm-caixa">
+    <p id="textoConfirmExcluir">Tem certeza que deseja excluir este item?</p>
+    <div class="modal-confirm-botoes">
+      <button class="btn-confirm-cancelar" id="btnCancelarExcluir">Cancelar</button>
+      <button class="btn-confirm-excluir" id="btnConfirmarExcluir">Excluir</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay-bib" id="modalMoverItem">
+  <div class="modal-bib modal-mover-bib">
+    <h3>Mover item</h3>
+    <div class="modal-sub">Escolha a pasta de destino. A organização é atualizada sem criar cópias.</div>
+    <div class="item-em-movimento" id="itemEmMovimento">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span>Movendo <strong id="nomeItemEmMovimento">item</strong></span>
+    </div>
+    <div class="lista-destinos-mover" id="listaDestinosMover"></div>
+    <div class="modal-botoes-bib">
+      <button class="btn-cancelar-bib" id="btnCancelarMover" type="button">Cancelar</button>
+      <button class="btn-confirmar-bib" id="btnConfirmarMover" type="button" disabled>Mover para esta pasta</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  // ===== TOAST =====
+  function showToast(msg, tipo){
+    tipo = tipo || 'info';
+    var c = document.getElementById('toast-container');
+    var t = document.createElement('div');
+    t.className = 'toast ' + tipo;
+    t.textContent = msg;
+    c.appendChild(t);
+    setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(function(){ t.remove(); }, 400); }, 3200);
+  }
+
+  // ===== MODAL CONFIRMAR EXCLUSAO =====
+  var callbackExcluir = null;
+function confirmarExclusao(mensagem, callback){
+  document.getElementById('textoConfirmExcluir').textContent = mensagem;
+  document.getElementById('btnConfirmarExcluir').style.display = '';
+  document.getElementById('btnCancelarExcluir').textContent = 'Cancelar';
+  callbackExcluir = callback;
+  document.getElementById('modalConfirmExcluir').classList.add('aberto');
+}
+  document.getElementById('btnCancelarExcluir').addEventListener('click', function(){
+    document.getElementById('modalConfirmExcluir').classList.remove('aberto');
+    callbackExcluir = null;
+  });
+  document.getElementById('btnConfirmarExcluir').addEventListener('click', function(){
+    document.getElementById('modalConfirmExcluir').classList.remove('aberto');
+    if(callbackExcluir){ callbackExcluir(); callbackExcluir = null; }
+  });
+
+  // ===== TEMA =====
+  document.getElementById('toggleTema').addEventListener('click', function(){
+    var body = document.body;
+    body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+
+  var hamburguer = document.getElementById('hamburguer');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  function abrirMenu(){ sidebar.classList.add('aberta'); overlay.classList.add('aberto'); }
+  function fecharMenu(){ sidebar.classList.remove('aberta'); overlay.classList.remove('aberto'); }
+  hamburguer.addEventListener('click', function(){ sidebar.classList.contains('aberta') ? fecharMenu() : abrirMenu(); });
+  overlay.addEventListener('click', fecharMenu);
+
+  // ===== ARVORE DE DADOS =====
+  var arvore = {
+    raiz: { nome: 'Biblioteca', pastas: ['juridico', 'administrativo', 'treinamento', 'marketing-arquivos'], arquivos: [] },
+    juridico: { nome: 'Juridico', pastas: ['peticoes', 'procuracoes-raiz', 'timbrado-raiz'], arquivos: [] },
+    administrativo: {
+      nome: 'Administrativo',
+      pastas: ['planilhas-raiz', 'contratos-raiz'],
+      arquivos: [ { nome: 'Checklist Onboarding Cliente.docx', tipo:'docx', versao:1, atualizado:'ha 2 semanas', tamanho:'18 KB' } ]
+    },
+    treinamento: {
+      nome: 'Treinamento', pastas: [],
+      arquivos: [
+        { nome: 'Roteiro Treinamento - Captacao.pptx', tipo:'pptx', versao:2, atualizado:'ha 3 semanas', tamanho:'5.2 MB' },
+        { nome: 'Manual de Onboarding.pdf', tipo:'pdf', versao:1, atualizado:'ha 2 meses', tamanho:'1.1 MB' }
+      ]
+    },
+    'marketing-arquivos': { nome: 'Marketing', pastas: [], arquivos: [] },
+    peticoes: { nome: 'Peticoes', pastas: ['previdenciario', 'sucessorio', 'trabalhista-pasta'], arquivos: [] },
+    'procuracoes-raiz': {
+      nome: 'Procuracoes', pastas: [],
+      arquivos: [ { nome: 'Procuracao Padrao.docx', tipo:'docx', versao:3, atualizado:'ha 3 dias', tamanho:'41 KB', gerador:true, campos:['Nome do Cliente','CPF','Numero do Processo'] } ]
+    },
+    'timbrado-raiz': {
+      nome: 'Papel Timbrado', pastas: [],
+      arquivos: [ { nome: 'Papel Timbrado Oficial.docx', tipo:'docx', versao:2, atualizado:'ha 2 meses', tamanho:'89 KB' } ]
+    },
+    'planilhas-raiz': {
+      nome: 'Planilhas Contabeis', pastas: [],
+      arquivos: [ { nome: 'Planilha de Calculo PSS.xlsx', tipo:'xlsx', versao:7, atualizado:'ontem', tamanho:'304 KB' } ]
+    },
+    'contratos-raiz': {
+      nome: 'Contratos', pastas: [],
+      arquivos: [ { nome: 'Contrato de Honorarios.docx', tipo:'docx', versao:4, atualizado:'ha 1 mes', tamanho:'38 KB', gerador:true, campos:['Nome do Cliente','CPF','Percentual','Valor da Causa'] } ]
+    },
+    previdenciario: { nome: 'Direito Previdenciario', pastas: ['pss-peticoes', 'pasep-peticoes'], arquivos: [] },
+    sucessorio: { nome: 'Direito Sucessorio', pastas: ['habilitacao-peticoes'], arquivos: [] },
+    'trabalhista-pasta': {
+      nome: 'Licenca-Premio', pastas: [],
+      arquivos: [
+        { nome: 'Peticao Licenca-Premio.docx', tipo:'docx', versao:3, atualizado:'ha 4 dias', tamanho:'96 KB' }
+      ]
+    },
+    'pss-peticoes': {
+      nome: 'PSS', pastas: [],
+      arquivos: [
+        { nome: 'Peticao PSS - Inativos pre-2004.docx', tipo:'docx', versao:5, atualizado:'ha 1 semana', tamanho:'128 KB' },
+        { nome: 'Peticao PSS - Progressiva EC 103.docx', tipo:'docx', versao:2, atualizado:'ha 2 semanas', tamanho:'112 KB' }
+      ]
+    },
+    'pasep-peticoes': {
+      nome: 'PASEP', pastas: [],
+      arquivos: [ { nome: 'Peticao Revisional PASEP.docx', tipo:'docx', versao:1, atualizado:'ha 1 mes', tamanho:'98 KB' } ]
+    },
+    'habilitacao-peticoes': {
+      nome: 'Habilitacao de Herdeiros', pastas: [],
+      arquivos: [
+        { nome: 'Peticao Habilitacao de Herdeiros.docx', tipo:'docx', versao:3, atualizado:'ha 4 dias', tamanho:'96 KB' },
+        { nome: 'Declaracao de Hipossuficiencia.docx', tipo:'docx', versao:1, atualizado:'ha 5 dias', tamanho:'22 KB', gerador:true, campos:['Nome do Cliente','CPF','Endereco'] }
+      ]
+    }
+  };
+
+  var caminhoAtual = ['raiz'];
+  var modoVisualizacao = 'grade';
+  var categoriasRetraidas = false;
+  var itemArrastado = null;
+  var cliqueSuprimidoAposArrasto = false;
+  var contextoMover = null;
+  var destinoSelecionadoMover = null;
+  var categoriasFixas = ['juridico', 'administrativo', 'treinamento', 'marketing-arquivos'];
+
+  function garantirIdentificadoresArquivos(){
+    var contador = 1;
+    Object.keys(arvore).forEach(function(pastaId){
+      arvore[pastaId].arquivos.forEach(function(arquivo){
+        if(!arquivo._id){
+          arquivo._id = 'arquivo-' + contador++;
+        }
+      });
+    });
+  }
+
+  function ehCategoriaFixa(id){
+    return categoriasFixas.indexOf(id) !== -1;
+  }
+
+  function obterPastaPaiId(id){
+    var encontrada = null;
+    Object.keys(arvore).some(function(pastaId){
+      if(arvore[pastaId].pastas.indexOf(id) !== -1){
+        encontrada = pastaId;
+        return true;
+      }
+      return false;
+    });
+    return encontrada;
+  }
+
+  function obterCaminhoAtePasta(alvoId, atualId, caminho, visitados){
+    var inicio = atualId || 'raiz';
+    var trilha = caminho || [];
+    var vistos = visitados || {};
+    if(vistos[inicio]) return null;
+    vistos[inicio] = true;
+    var novoCaminho = trilha.concat(inicio);
+    if(inicio === alvoId) return novoCaminho;
+    var filhos = arvore[inicio] ? arvore[inicio].pastas : [];
+    for(var i = 0; i < filhos.length; i++){
+      var resultado = obterCaminhoAtePasta(alvoId, filhos[i], novoCaminho, vistos);
+      if(resultado) return resultado;
+    }
+    return null;
+  }
+
+  function obterDescendentesPasta(id, lista){
+    var resultado = lista || [];
+    if(!arvore[id]) return resultado;
+    arvore[id].pastas.forEach(function(filho){
+      resultado.push(filho);
+      obterDescendentesPasta(filho, resultado);
+    });
+    return resultado;
+  }
+
+  function normalizarCaminhoAtual(){
+    var idAtual = caminhoAtual[caminhoAtual.length - 1];
+    var novoCaminho = obterCaminhoAtePasta(idAtual);
+    caminhoAtual = novoCaminho || ['raiz'];
+  }
+
+  function nomeCaminhoPasta(id){
+    if(!id || id === 'raiz') return 'Biblioteca';
+    var caminho = montarBreadcrumbCategoria(id);
+    return ['Biblioteca'].concat(caminho.map(function(categoria){ return categoria.nome; })).join(' / ');
+  }
+
+function podeMoverItem(payload, destinoId){
+  if(!payload) return false;
+
+  var destinoCategoriaId = destinoId === 'raiz' || destinoId === undefined ? null : destinoId;
+  var origemCategoriaId = payload.parentId === 'raiz' || payload.parentId === undefined ? null : payload.parentId;
+
+  if(origemCategoriaId === destinoCategoriaId) return false;
+  if(destinoCategoriaId && !buscarCategoriaPorId(destinoCategoriaId)) return false;
+
+  if(payload.tipo === 'pasta'){
+    if(!buscarCategoriaPorId(payload.id)) return false;
+    if(payload.id === destinoCategoriaId) return false;
+
+    var descendentes = buscarDescendentesCategoria(payload.id).map(function(categoria){
+      return categoria.id;
+    });
+    if(descendentes.indexOf(destinoCategoriaId) !== -1) return false;
+  } else if(payload.tipo === 'arquivo'){
+    var arquivo = state.arquivosAtivosCategoriaAtual.filter(function(item){
+      return item.id === payload.id;
+    })[0];
+    if(!arquivo) return false;
+  } else {
+    return false;
+  }
+
+  return true;
+}
+
+  function localizarArquivo(parentId, arquivoId){
+    if(!arvore[parentId]) return null;
+    return arvore[parentId].arquivos.filter(function(arquivo){ return arquivo._id === arquivoId; })[0] || null;
+  }
+
+async function moverItem(payload, destinoId){
+  var destinoCategoriaId = destinoId === 'raiz' || destinoId === undefined ? null : destinoId;
+
+  if(!podeMoverItem(payload, destinoCategoriaId)){
+    showToast('Este item não pode ser movido para a pasta selecionada.', 'info');
+    return false;
+  }
+
+  var permissao = payload.tipo === 'pasta'
+    ? await validarPermissaoBiblioteca('biblioteca_categorias', 'gerenciar', 'Você não possui permissão para mover pastas.')
+    : await validarPermissaoBiblioteca('biblioteca', 'gerenciar', 'Você não possui permissão para mover arquivos.');
+
+  if(!permissao) return false;
+
+  var resposta;
+  if(payload.tipo === 'pasta'){
+    resposta = await _sb
+      .from('biblioteca_categorias')
+      .update({ categoria_pai_id: destinoCategoriaId })
+      .eq('id', payload.id);
+  } else {
+    resposta = await _sb
+      .from('biblioteca_arquivos')
+      .update({ categoria_id: destinoCategoriaId })
+      .eq('id', payload.id);
+  }
+
+  if(resposta.error){
+    showToast('Não foi possível mover o item: ' + resposta.error.message, 'erro');
+    return false;
+  }
+
+  await carregarCategorias();
+  await carregarArquivosDaPasta(state.categoriaAtualId);
+  renderizarTudo();
+  animarEntradaBiblioteca();
+
+  var destino = destinoCategoriaId ? buscarCategoriaPorId(destinoCategoriaId) : null;
+  var nomeDestino = destino ? destino.nome : 'Biblioteca';
+  showToast((payload.tipo === 'pasta' ? 'Pasta' : 'Arquivo') + ' movido para ' + nomeDestino + '.', 'sucesso');
+  return true;
+}
+
+  function limparIndicadoresArraste(){
+    document.body.classList.remove('arrastando-biblioteca');
+    document.querySelectorAll('.zona-destino').forEach(function(elemento){ elemento.classList.remove('zona-destino'); });
+    document.querySelectorAll('.arrastando-item').forEach(function(elemento){ elemento.classList.remove('arrastando-item'); });
+  }
+
+function configurarDestinoArraste(elemento, resolverDestino){
+  elemento.addEventListener('dragover', function(evento){
+    var destinoId = typeof resolverDestino === 'function' ? resolverDestino() : resolverDestino;
+    if(!podeMoverItem(itemArrastado, destinoId)) return;
+    evento.preventDefault();
+    if(evento.dataTransfer) evento.dataTransfer.dropEffect = 'move';
+    elemento.classList.add('zona-destino');
+  });
+
+  elemento.addEventListener('dragleave', function(evento){
+    if(!elemento.contains(evento.relatedTarget)) elemento.classList.remove('zona-destino');
+  });
+
+  elemento.addEventListener('drop', function(evento){
+    var destinoId = typeof resolverDestino === 'function' ? resolverDestino() : resolverDestino;
+    if(!podeMoverItem(itemArrastado, destinoId)) return;
+
+    evento.preventDefault();
+    evento.stopPropagation();
+    var payload = itemArrastado;
+    limparIndicadoresArraste();
+    itemArrastado = null;
+    moverItem(payload, destinoId);
+  });
+}
+
+  function configurarArrasteDoCard(card, payload){
+    card.addEventListener('dragstart', function(evento){
+      itemArrastado = payload;
+      cliqueSuprimidoAposArrasto = true;
+      card.classList.add('arrastando-item');
+      document.body.classList.add('arrastando-biblioteca');
+      if(evento.dataTransfer){
+        evento.dataTransfer.effectAllowed = 'move';
+        evento.dataTransfer.setData('text/plain', payload.tipo + ':' + payload.id);
+      }
+    });
+    card.addEventListener('dragend', function(){
+      window.setTimeout(function(){ cliqueSuprimidoAposArrasto = false; }, 80);
+      limparIndicadoresArraste();
+      itemArrastado = null;
+    });
+  }
+
+  function atualizarDestinoPastaAtual(){
+    var destino = document.getElementById('destinoPastaAtual');
+    if(!destino) return;
+    var pastaId = caminhoAtual[caminhoAtual.length - 1];
+    destino.setAttribute('data-destino-id', pastaId);
+    document.getElementById('nomeDestinoPastaAtual').textContent = nomeCaminhoPasta(pastaId);
+  }
+
+  function configurarDestinoPastaAtual(){
+    var destino = document.getElementById('destinoPastaAtual');
+    if(destino) configurarDestinoArraste(destino, function(){ return destino.getAttribute('data-destino-id'); });
+  }
+
+function montarListaPastasDestino(atualId, nivel, resultado){
+  var lista = resultado || [];
+  var categoriaId = atualId === 'raiz' || atualId === undefined ? null : atualId;
+  var nivelAtual = nivel || 0;
+
+  if(categoriaId === null){
+    lista.push({ id:'raiz', nome:'Biblioteca', nivel:nivelAtual });
+  } else {
+    var categoria = buscarCategoriaPorId(categoriaId);
+    if(!categoria) return lista;
+    lista.push({ id:categoria.id, nome:categoria.nome, nivel:nivelAtual });
+  }
+
+  buscarCategoriasFilhas(categoriaId).forEach(function(filha){
+    montarListaPastasDestino(filha.id, nivelAtual + 1, lista);
+  });
+
+  return lista;
+}
+
+function renderizarDestinosMover(){
+  var lista = document.getElementById('listaDestinosMover');
+  if(!lista) return;
+
+  lista.innerHTML = '';
+  if(!contextoMover) return;
+
+  var destinos = montarListaPastasDestino('raiz', 0, []);
+  var disponiveis = 0;
+
+  destinos.forEach(function(destino){
+    var podeSelecionar = podeMoverItem(contextoMover, destino.id);
+    var item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'destino-mover-item' + (podeSelecionar ? '' : ' indisponivel') + (destinoSelecionadoMover === destino.id ? ' selecionado' : '');
+    item.style.marginLeft = (destino.nivel * 17) + 'px';
+    item.setAttribute('aria-disabled', podeSelecionar ? 'false' : 'true');
+    item.innerHTML =
+      '<span class="destino-mover-icone"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>' +
+      '<span class="destino-mover-texto">' + escaparHtml(destino.nome) + '</span>' +
+      (podeSelecionar ? '<span class="destino-mover-status">Selecionar</span>' : '<span class="destino-mover-status">Indisponível</span>');
+
+    if(podeSelecionar){
+      disponiveis++;
+      item.addEventListener('click', function(){
+        destinoSelecionadoMover = destino.id;
+        document.getElementById('btnConfirmarMover').disabled = false;
+        renderizarDestinosMover();
+      });
+    }
+
+    lista.appendChild(item);
+  });
+
+  if(!disponiveis){
+    lista.innerHTML = '<div class="destino-mover-vazio">Não há outra pasta disponível para este item.</div>';
+  }
+}
+
+function abrirModalMover(payload){
+  var podeGerenciar = payload && payload.tipo === 'pasta'
+    ? state.permissoes.acoes.moverCategoria
+    : state.permissoes.acoes.moverArquivo;
+
+  if(!payload || !podeGerenciar){
+    showToast('Você não possui permissão para mover este item.', 'info');
+    return;
+  }
+
+  contextoMover = payload;
+  destinoSelecionadoMover = null;
+  document.getElementById('nomeItemEmMovimento').textContent = payload.nome;
+  document.getElementById('btnConfirmarMover').disabled = true;
+  renderizarDestinosMover();
+  document.getElementById('modalMoverItem').classList.add('aberto');
+}
+
+  garantirIdentificadoresArquivos();
+
+  function atualizarControlesVisualizacao(){
+    document.querySelectorAll('.btn-view[data-view]').forEach(function(botao){
+      var ativo = botao.getAttribute('data-view') === modoVisualizacao;
+      botao.classList.toggle('ativo', ativo);
+      botao.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+    });
+  }
+
+  function trocarModoVisualizacao(novoModo){
+    if(novoModo === modoVisualizacao || transicaoBibliotecaEmAndamento) return;
+    modoVisualizacao = novoModo;
+    atualizarControlesVisualizacao();
+    var grid = document.getElementById('gridItens');
+    grid.classList.remove('trocando-entrada');
+    grid.classList.add('trocando-saida');
+    window.setTimeout(function(){
+      renderizarTudo();
+      animarEntradaBiblioteca();
+    }, 150);
+  }
+
+  function atualizarEstadoCategorias(){
+    var layout = document.querySelector('.layout-biblioteca');
+    var botao = document.getElementById('btnAlternarCategorias');
+    layout.classList.toggle('categorias-retraidas', categoriasRetraidas);
+    botao.setAttribute('aria-label', categoriasRetraidas ? 'Expandir categorias' : 'Recolher categorias');
+    botao.setAttribute('title', categoriasRetraidas ? 'Expandir categorias' : 'Recolher categorias');
+  }
+
+  function corPorTipo(tipo){
+    if(tipo === 'docx') return 'var(--info)';
+    if(tipo === 'xlsx') return 'var(--success)';
+    if(tipo === 'pptx') return 'var(--warning)';
+    return 'var(--muted)';
+  }
+
+  function svgIconeArquivo(tipo){
+    var cor = corPorTipo(tipo);
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="' + cor + '" stroke-width="1.6"/></svg>';
+  }
+
+function renderizarBreadcrumb(){
+  var wrap = document.getElementById('breadcrumbWrap');
+  if(!wrap) return;
+
+  wrap.innerHTML = '';
+  var itens = [{ id:'raiz', nome:'Biblioteca' }].concat(montarBreadcrumbCategoria(state.categoriaAtualId));
+
+  itens.forEach(function(itemDados, indice){
+    if(indice > 0){
+      var sep = document.createElement('span');
+      sep.className = 'breadcrumb-separador';
+      sep.textContent = '/';
+      wrap.appendChild(sep);
+    }
+
+    var item = document.createElement('div');
+    item.className = 'breadcrumb-item' + (indice === itens.length - 1 ? ' atual' : '');
+
+    if(indice === 0){
+      item.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V21H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>' + escaparHtml(itemDados.nome) + '</span>';
+    } else {
+      item.innerHTML = '<span>' + escaparHtml(itemDados.nome) + '</span>';
+    }
+
+    item.addEventListener('click', function(){
+      var caminho = itens.slice(0, indice + 1).map(function(itemCaminho){
+        return itemCaminho.id;
+      });
+      navegarParaCaminho(caminho, 'breadcrumb');
+    });
+
+    if(state.permissoes.acoes.moverCategoria || state.permissoes.acoes.moverArquivo){
+      configurarDestinoArraste(item, function(){
+        return itemDados.id === 'raiz' ? 'raiz' : itemDados.id;
+      });
+    }
+
+    wrap.appendChild(item);
+  });
+}
+
+function renderizarGrid(){
+  var pastaId = state.categoriaAtualId || 'raiz';
+  var subcategorias = buscarCategoriasFilhas(state.categoriaAtualId);
+  var arquivos = state.arquivosAtivosCategoriaAtual || [];
+  var grid = document.getElementById('gridItens');
+  var cabecalhoLista = document.getElementById('cabecalhoLista');
+
+  if(!grid || !cabecalhoLista) return;
+
+  grid.classList.toggle('modo-lista', modoVisualizacao === 'lista');
+  cabecalhoLista.classList.toggle('visivel', modoVisualizacao === 'lista');
+  cabecalhoLista.setAttribute('aria-hidden', modoVisualizacao === 'lista' ? 'false' : 'true');
+  grid.innerHTML = '';
+
+  subcategorias.forEach(function(sub){
+    var quantidadeItens = buscarCategoriasFilhas(sub.id).length;
+    var podeGerenciar = !!state.permissoes.acoes.moverCategoria;
+    var payload = { tipo:'pasta', id:sub.id, parentId:pastaId, nome:sub.nome };
+    var card = document.createElement('div');
+
+    card.className = 'item-card pasta-card' + (podeGerenciar ? ' arrastavel' : '');
+    card.setAttribute('draggable', podeGerenciar ? 'true' : 'false');
+    card.setAttribute('data-item-id', sub.id);
+    card.setAttribute('data-item-tipo', 'pasta');
+    card.setAttribute('data-parent-id', pastaId);
+    card.setAttribute('title', podeGerenciar ? 'Arraste para mover ou abra o menu de ações' : 'Abra a pasta');
+
+    card.innerHTML =
+      '<div class="icone-item-wrap pasta"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>' +
+      '<div class="nome-item-card">' + escaparHtml(sub.nome) + '</div>' +
+      '<div class="meta-item-card">' + quantidadeItens + ' itens</div>' +
+      '<div class="btn-mais-item" draggable="false"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg></div>' +
+      '<div class="popover-item-acoes"></div>';
+
+    card.addEventListener('click', function(e){
+      if(cliqueSuprimidoAposArrasto || e.target.closest('.btn-mais-item') || e.target.closest('.popover-item-acoes')) return;
+      var caminho = ['raiz'].concat(montarBreadcrumbCategoria(sub.id).map(function(categoria){
+        return categoria.id;
+      }));
+      navegarParaCaminho(caminho, 'pasta');
+    });
+
+    if(podeGerenciar) configurarArrasteDoCard(card, payload);
+    if(state.permissoes.acoes.moverCategoria || state.permissoes.acoes.moverArquivo){
+      configurarDestinoArraste(card, sub.id);
+    }
+    configurarMenuItem(card, 'pasta', sub.id, sub.nome, pastaId, null);
+    grid.appendChild(card);
+  });
+
+  arquivos.forEach(function(arquivo){
+    var extensao = obterExtensaoArquivo(arquivo.nome_arquivo);
+    var atualizado = formatarDataBiblioteca(arquivo.criado_em, true) || 'Sem data';
+    var arqRef = {
+      _id: arquivo.id,
+      id: arquivo.id,
+      nome: arquivo.nome_arquivo,
+      nome_arquivo: arquivo.nome_arquivo,
+      tipo: extensao,
+      versao: arquivo.versao || 1,
+      atualizado: atualizado,
+      tamanho: 'Sem informação',
+      gerador: false,
+      criado_em: arquivo.criado_em,
+      caminho_storage: arquivo.caminho_storage,
+      descricao: arquivo.descricao || ''
+    };
+    var podeGerenciar = !!state.permissoes.acoes.moverArquivo;
+    var payload = { tipo:'arquivo', id:arquivo.id, parentId:pastaId, nome:arquivo.nome_arquivo };
+    var card = document.createElement('div');
+
+    card.className = 'item-card arquivo-card' + (podeGerenciar ? ' arrastavel' : '');
+    card.setAttribute('draggable', podeGerenciar ? 'true' : 'false');
+    card.setAttribute('data-item-id', arquivo.id);
+    card.setAttribute('data-item-tipo', 'arquivo');
+    card.setAttribute('data-parent-id', pastaId);
+    card.setAttribute('title', podeGerenciar ? 'Arraste para mover ou abra o menu de ações' : 'Abra o arquivo');
+
+    var iconeClasse = arqRef.gerador ? 'gerador' : 'arquivo';
+    var badgeGerador = arqRef.gerador
+      ? '<span class="badge-gerador"><svg width="8" height="8" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg>Gerador</span>'
+      : '';
+
+    card.innerHTML =
+      '<div class="icone-item-wrap ' + iconeClasse + '">' + svgIconeArquivo(arqRef.tipo) + '</div>' +
+      '<div class="nome-item-card">' + escaparHtml(arqRef.nome) + '</div>' +
+      '<div class="meta-item-card">' + escaparHtml(arqRef.atualizado) + ' - ' + arqRef.tamanho + '</div>' +
+      '<div class="rodape-item-card"><span class="badge-versao">v' + arqRef.versao + '</span>' + badgeGerador + '</div>' +
+      '<div class="btn-mais-item" draggable="false"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg></div>' +
+      '<div class="popover-item-acoes"></div>';
+
+    card.addEventListener('click', function(e){
+      if(cliqueSuprimidoAposArrasto || e.target.closest('.btn-mais-item') || e.target.closest('.popover-item-acoes')) return;
+      if(!state.permissoes.acoes.visualizarBiblioteca){
+        showToast('Você não possui permissão para baixar este arquivo.', 'info');
+        return;
+      }
+      abrirVisualizador(arqRef);
+    });
+
+    if(podeGerenciar) configurarArrasteDoCard(card, payload);
+    configurarMenuItem(card, 'arquivo', arquivo.id, arquivo.nome_arquivo, pastaId, arqRef);
+    grid.appendChild(card);
+  });
+
+  if(subcategorias.length === 0 && arquivos.length === 0){
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px 0; color:var(--muted); font-size:12.5px;">Esta pasta está vazia. Use Nova Pasta ou Enviar Arquivo para começar.</div>';
+  }
+}
+
+function configurarMenuItem(card, tipo, id, nomeAtual, pastaPaiId, arqRef){
+  var btnMais = card.querySelector('.btn-mais-item');
+  var popover = card.querySelector('.popover-item-acoes');
+  var opcoes = [];
+
+  if(tipo === 'pasta'){
+    if(state.permissoes.acoes.moverCategoria) opcoes.push('Mover para...');
+    if(state.permissoes.acoes.renomearCategoria) opcoes.push('Renomear');
+    if(state.permissoes.acoes.excluirCategoria) opcoes.push('Excluir Pasta');
+  } else {
+    if(state.permissoes.acoes.visualizarBiblioteca) opcoes.push('Visualizar', 'Baixar');
+    if(state.permissoes.acoes.moverArquivo) opcoes.push('Mover para...');
+    if(state.permissoes.acoes.renomearArquivo) opcoes.push('Renomear');
+    if(state.permissoes.acoes.excluirArquivo) opcoes.push('Excluir');
+  }
+
+  if(!opcoes.length){
+    btnMais.style.display = 'none';
+    return;
+  }
+
+  popover.innerHTML = opcoes.map(function(op){
+    return '<div class="opcao-acao-item" data-op="' + op + '">' + op + '</div>';
+  }).join('');
+
+  btnMais.addEventListener('click', function(e){
+    e.stopPropagation();
+    abrirMenuAcoes(btnMais, popover);
+  });
+
+  popover.querySelectorAll('.opcao-acao-item').forEach(function(opcaoEl){
+    opcaoEl.addEventListener('click', function(e){
+      e.stopPropagation();
+      fecharMenuAcoes();
+
+      var op = opcaoEl.getAttribute('data-op');
+      if(op === 'Mover para...'){
+        abrirModalMover({ tipo:tipo, id:id, parentId:pastaPaiId, nome:nomeAtual });
+      } else if(op === 'Renomear'){
+        abrirModalRenomear(tipo, id, nomeAtual, pastaPaiId);
+      } else if(op === 'Excluir Pasta' || op === 'Excluir'){
+        confirmarExclusao('Tem certeza que deseja excluir "' + nomeAtual + '"?', function(){
+          excluirItemBiblioteca(tipo, id, nomeAtual);
+        });
+      } else if(op === 'Visualizar'){
+        abrirVisualizador(arqRef);
+      } else if(op === 'Baixar'){
+        baixarArquivoBiblioteca(id);
+      }
+    });
+  });
+}
+
+  var actionMenuPortal = document.createElement('div');
+  actionMenuPortal.id = 'actionMenuPortal';
+  document.body.appendChild(actionMenuPortal);
+  var popoverAcaoAtivo = null;
+
+  function fecharMenuAcoes(){
+    if(!popoverAcaoAtivo) return;
+    var popover = popoverAcaoAtivo.popover;
+    popover.classList.remove('aberto', 'portalizado');
+    popover.style.top = '';
+    popover.style.left = '';
+    popover.style.right = '';
+    if(popoverAcaoAtivo.placeholder.parentNode){
+      popoverAcaoAtivo.placeholder.parentNode.replaceChild(popover, popoverAcaoAtivo.placeholder);
+    }
+    popoverAcaoAtivo = null;
+  }
+
+  function abrirMenuAcoes(btn, popover){
+    if(popoverAcaoAtivo && popoverAcaoAtivo.popover === popover){
+      fecharMenuAcoes();
+      return;
+    }
+    fecharMenuAcoes();
+    var placeholder = document.createComment('popover-item-acoes');
+    popover.parentNode.insertBefore(placeholder, popover);
+    actionMenuPortal.appendChild(popover);
+    popover.classList.add('aberto', 'portalizado');
+
+    var botaoRect = btn.getBoundingClientRect();
+    var larguraMenu = popover.offsetWidth;
+    var alturaMenu = popover.offsetHeight;
+    var margem = 10;
+    var esquerda = Math.min(Math.max(margem, botaoRect.right - larguraMenu), window.innerWidth - larguraMenu - margem);
+    var topo = botaoRect.bottom + 8;
+    if(topo + alturaMenu > window.innerHeight - margem){
+      topo = botaoRect.top - alturaMenu - 8;
+    }
+    topo = Math.max(margem, topo);
+
+    popover.style.left = esquerda + 'px';
+    popover.style.top = topo + 'px';
+    popoverAcaoAtivo = { popover: popover, placeholder: placeholder };
+  }
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.popover-item-acoes') && !e.target.closest('.btn-mais-item')){
+      fecharMenuAcoes();
+    }
+  });
+  window.addEventListener('resize', fecharMenuAcoes);
+  window.addEventListener('scroll', fecharMenuAcoes, true);
+
+  var transicaoBibliotecaEmAndamento = false;
+
+  function animarEntradaBiblioteca(){
+    var grid = document.getElementById('gridItens');
+    var breadcrumb = document.getElementById('breadcrumbWrap');
+    grid.classList.remove('trocando-saida');
+    grid.classList.remove('trocando-entrada');
+    breadcrumb.classList.remove('atualizando');
+    void grid.offsetWidth;
+    grid.classList.add('trocando-entrada');
+    breadcrumb.classList.add('atualizando');
+
+    grid.querySelectorAll('.item-card').forEach(function(card, indice){
+      card.classList.add('entrada-suave');
+      card.style.setProperty('--reveal-delay', Math.min(indice * 58, 360) + 'ms');
+    });
+  }
+
+  async function navegarParaCaminho(novoCaminho, origem){
+    if(transicaoBibliotecaEmAndamento) return;
+    if(!novoCaminho || !novoCaminho.length) novoCaminho = ['raiz'];
+
+    var idDestino = novoCaminho[novoCaminho.length - 1];
+    var categoriaDestinoId = idDestino === 'raiz' ? null : idDestino;
+    var destino = categoriaDestinoId || 'raiz';
+    var destinoAtual = state.categoriaAtualId || 'raiz';
+    if(destino === destinoAtual) return;
+    if(categoriaDestinoId && !buscarCategoriaPorId(categoriaDestinoId)) return;
+
+    transicaoBibliotecaEmAndamento = true;
+    var grid = document.getElementById('gridItens');
+    var categoria = origem === 'categoria'
+      ? document.querySelector('.item-categoria-lateral[data-categoria-id="' + (categoriaDestinoId || 'raiz') + '"]')
+      : null;
+
+    if(categoria){
+      categoria.classList.remove('em-transicao');
+      void categoria.offsetWidth;
+      categoria.classList.add('em-transicao');
+    }
+
+    if(grid){
+      grid.classList.remove('trocando-entrada');
+      grid.classList.add('trocando-saida');
+    }
+
+    state.categoriaAtualId = categoriaDestinoId;
+    var carregamentoArquivos = carregarArquivosDaPasta(categoriaDestinoId);
+
+    await carregamentoArquivos;
+
+    caminhoAtual = categoriaDestinoId
+      ? ['raiz'].concat(montarBreadcrumbCategoria(categoriaDestinoId).map(function(item){ return item.id; }))
+      : ['raiz'];
+
+    renderizarTudo();
+    animarEntradaBiblioteca();
+    transicaoBibliotecaEmAndamento = false;
+  }
+
+function renderizarTudo(){
+  fecharMenuAcoes();
+  aplicarPermissoesBiblioteca();
+  renderizarSidebar();
+  renderizarBreadcrumb();
+  renderizarGrid();
+  atualizarCategoriaAtivaLateral();
+  atualizarDestinoPastaAtual();
+}
+
+  document.querySelectorAll('.item-categoria-lateral').forEach(function(item){
+    item.addEventListener('click', function(){
+      var raizId = item.getAttribute('data-raiz');
+      navegarParaCaminho([raizId], 'categoria');
+    });
+    configurarDestinoArraste(item, function(){ return item.getAttribute('data-raiz'); });
+  });
+
+  document.querySelectorAll('.btn-view[data-view]').forEach(function(botao){
+    botao.addEventListener('click', function(){
+      trocarModoVisualizacao(botao.getAttribute('data-view'));
+    });
+  });
+
+  document.getElementById('btnAlternarCategorias').addEventListener('click', function(){
+    categoriasRetraidas = !categoriasRetraidas;
+    atualizarEstadoCategorias();
+  });
+
+  function atualizarCategoriaAtivaLateral(){
+    var categoriaAtual = state.categoriaAtualId || 'raiz';
+    document.querySelectorAll('.item-categoria-lateral[data-categoria-id]').forEach(function(item){
+      item.classList.toggle('ativa', item.getAttribute('data-categoria-id') === categoriaAtual);
+    });
+  }
+
+  document.getElementById('btnNovaCategoriaTopo').addEventListener('click', function(){
+    abrirModalNovaCategoriaBiblioteca(null);
+  });
+
+  document.getElementById('btnCancelarMover').addEventListener('click', function(){
+    document.getElementById('modalMoverItem').classList.remove('aberto');
+    contextoMover = null;
+    destinoSelecionadoMover = null;
+  });
+  document.getElementById('modalMoverItem').addEventListener('click', function(evento){
+    if(evento.target === this){
+      this.classList.remove('aberto');
+      contextoMover = null;
+      destinoSelecionadoMover = null;
+    }
+  });
+  document.getElementById('btnConfirmarMover').addEventListener('click', async function(){
+    if(!contextoMover || !destinoSelecionadoMover) return;
+    var payload = contextoMover;
+    var destino = destinoSelecionadoMover;
+    document.getElementById('modalMoverItem').classList.remove('aberto');
+    contextoMover = null;
+    destinoSelecionadoMover = null;
+    await moverItem(payload, destino);
+  });
+
+  configurarDestinoPastaAtual();
+  atualizarControlesVisualizacao();
+  atualizarEstadoCategorias();
+
+  var modalNovaPasta = document.getElementById('modalNovaPasta');
+  document.getElementById('btnNovaPasta').addEventListener('click', function(){
+    abrirModalNovaCategoriaBiblioteca(state.categoriaAtualId);
+  });
+  document.getElementById('btnCancelarNovaPasta').addEventListener('click', function(){ modalNovaPasta.classList.remove('aberto'); });
+  modalNovaPasta.addEventListener('click', function(e){ if(e.target === modalNovaPasta) modalNovaPasta.classList.remove('aberto'); });
+
+  document.getElementById('btnConfirmarNovaPasta').addEventListener('click', async function(){
+    var nome = document.getElementById('inputNomePasta').value.trim();
+    if(!nome){
+      showToast('Informe o nome da categoria.', 'info');
+      return;
+    }
+
+    var permitido = await validarPermissaoBiblioteca(
+      'biblioteca_categorias',
+      'gerenciar',
+      'Você não possui permissão para criar categorias.'
+    );
+    if(!permitido) return;
+
+    var resposta = await _sb.from('biblioteca_categorias').insert({
+      nome: nome,
+      descricao: null,
+      categoria_pai_id: state.categoriaPaiNovaId || null,
+      criado_por_id: state.usuario.internoId || state.usuario.authId
+    });
+
+    if(resposta.error){
+      showToast('Não foi possível criar a categoria: ' + resposta.error.message, 'erro');
+      return;
+    }
+
+    modalNovaPasta.classList.remove('aberto');
+    state.categoriaPaiNovaId = null;
+    await carregarCategorias();
+    await carregarArquivosDaPasta(state.categoriaAtualId);
+    renderizarTudo();
+    animarEntradaBiblioteca();
+    showToast('Categoria criada com sucesso.', 'sucesso');
+  });
+
+  var modalRenomear = document.getElementById('modalRenomear');
+  var contextoRenomear = null;
+
+function abrirModalRenomear(tipo, id, nomeAtual, pastaPaiId){
+  var permitido = tipo === 'pasta'
+    ? state.permissoes.acoes.renomearCategoria
+    : state.permissoes.acoes.renomearArquivo;
+
+  if(!permitido){
+    showToast('Você não possui permissão para renomear este item.', 'info');
+    return;
+  }
+
+  contextoRenomear = { tipo: tipo, id: id, pastaPaiId: pastaPaiId };
+  document.getElementById('inputRenomear').value = nomeAtual;
+  modalRenomear.classList.add('aberto');
+}
+
+  document.getElementById('btnCancelarRenomear').addEventListener('click', function(){
+    modalRenomear.classList.remove('aberto');
+  });
+  modalRenomear.addEventListener('click', function(e){ if(e.target === modalRenomear) modalRenomear.classList.remove('aberto'); });
+
+  document.getElementById('btnConfirmarRenomear').addEventListener('click', async function(){
+    var novoNome = document.getElementById('inputRenomear').value.trim();
+    if(!novoNome || !contextoRenomear) return;
+
+    var tipo = contextoRenomear.tipo;
+    var permitido = tipo === 'pasta'
+      ? await validarPermissaoBiblioteca('biblioteca_categorias', 'gerenciar', 'Você não possui permissão para renomear categorias.')
+      : await validarPermissaoBiblioteca('biblioteca', 'gerenciar', 'Você não possui permissão para renomear arquivos.');
+
+    if(!permitido) return;
+
+    var resposta = tipo === 'pasta'
+      ? await _sb.from('biblioteca_categorias').update({ nome:novoNome }).eq('id', contextoRenomear.id)
+      : await _sb.from('biblioteca_arquivos').update({ nome_arquivo:novoNome }).eq('id', contextoRenomear.id);
+
+    if(resposta.error){
+      showToast('Não foi possível renomear o item: ' + resposta.error.message, 'erro');
+      return;
+    }
+
+    modalRenomear.classList.remove('aberto');
+    contextoRenomear = null;
+
+    if(tipo === 'pasta') await carregarCategorias();
+    await carregarArquivosDaPasta(state.categoriaAtualId);
+    renderizarTudo();
+    animarEntradaBiblioteca();
+    showToast('Item renomeado com sucesso.', 'sucesso');
+  });
+
+  var modalGerar = document.getElementById('modalGerarDocumento');
+
+  function abrirModalGerar(arq){
+    document.getElementById('tituloModalGerar').textContent = 'Gerar: ' + arq.nome;
+    document.getElementById('subModalGerar').textContent = 'Escolha como deseja proceder com este modelo.';
+    var container = document.getElementById('camposDinamicosGerar');
+    container.innerHTML = '';
+    if(arq.campos){
+      arq.campos.forEach(function(campo){
+        var div = document.createElement('div');
+        div.className = 'modal-campo-bib';
+        div.innerHTML = '<label>' + campo + '</label><input type="text" placeholder="Digite ' + campo.toLowerCase() + '...">';
+        container.appendChild(div);
+      });
+    }
+    document.getElementById('camposPreenchimentoWrap').classList.add('visivel');
+    modalGerar.classList.add('aberto');
+  }
+
+  document.querySelectorAll('.opcao-acao-documento').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('.opcao-acao-documento').forEach(function(b){ b.classList.remove('selecionada'); });
+      btn.classList.add('selecionada');
+      var wrap = document.getElementById('camposPreenchimentoWrap');
+      if(btn.getAttribute('data-acao') === 'preencher'){
+        wrap.classList.add('visivel');
+      } else {
+        wrap.classList.remove('visivel');
+      }
+    });
+  });
+
+  document.getElementById('btnCancelarGerar').addEventListener('click', function(){
+    modalGerar.classList.remove('aberto');
+  });
+  modalGerar.addEventListener('click', function(e){ if(e.target === modalGerar) modalGerar.classList.remove('aberto'); });
+
+  document.getElementById('btnConfirmarGerar').addEventListener('click', function(){
+    showToast('Documento gerado com sucesso! Disponivel para download.', 'sucesso');
+    modalGerar.classList.remove('aberto');
+  });
+
+function abrirVisualizador(arq){
+  state.arquivoVisualizadoId = arq && (arq.id || arq._id) ? (arq.id || arq._id) : null;
+  document.getElementById('visualizadorNomeArquivo').textContent = arq.nome;
+  document.getElementById('visualizadorMeta').textContent = arq.atualizado + ' - ' + arq.tamanho;
+
+  var botaoDownload = document.getElementById('btnDownloadVisualizador');
+  botaoDownload.style.display = state.permissoes.acoes.visualizarBiblioteca ? '' : 'none';
+
+  var corpo = document.getElementById('visualizadorCorpo');
+  corpo.innerHTML = '<div class="visualizador-pdf-placeholder">' +
+    '<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.3"/></svg>' +
+    '<p>Visualização de "' + escaparHtml(arq.nome) + '" disponível na versão completa do sistema. Aqui você pode baixar o arquivo ou gerenciar suas versões.</p>' +
+    '</div>';
+
+  document.getElementById('visualizadorOverlay').classList.add('aberto');
+}
+
+  document.getElementById('btnFecharVisualizador').addEventListener('click', function(){
+    document.getElementById('visualizadorOverlay').classList.remove('aberto');
+  });
+  document.getElementById('visualizadorOverlay').addEventListener('click', function(e){
+    if(e.target === this) this.classList.remove('aberto');
+  });
+  document.getElementById('btnDownloadVisualizador').addEventListener('click', function(){
+    if(state.arquivoVisualizadoId) baixarArquivoBiblioteca(state.arquivoVisualizadoId);
+  });
+
+  document.getElementById('btnUpload').addEventListener('click', function(){
+    abrirModalUploadBiblioteca();
+  });
+</script>
+
+
+
+<script>
+  // ===== ETAPA 1: ESTRUTURA DE INTEGRAÇÃO =====
+  var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+  var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var BUCKET_BIBLIOTECA = 'biblioteca-arquivos';
+
+  var state = {
+    sessao: null,
+    usuario: {
+      authId: null,
+      internoId: null,
+      nome: ''
+    },
+    permissoes: {
+      carregadas: false,
+      consulta: {
+        'biblioteca.visualizar': null,
+        'biblioteca.gerenciar': null,
+        'biblioteca_categorias.gerenciar': null,
+        'modelos_documentos.gerenciar': null,
+        'modelos_documentos.gerar': null
+      },
+      acoes: {
+        visualizarBiblioteca: null,
+        criarCategoria: null,
+        editarCategoria: null,
+        excluirCategoria: null,
+        enviarArquivo: null,
+        moverArquivo: null,
+        renomearArquivo: null,
+        excluirArquivo: null,
+        criarVersaoArquivo: null,
+        configurarModelo: null,
+        gerarDocumento: null
+      }
+    },
+    categorias: [],
+    categoriaAtualId: null,
+    arquivosAtivosCategoriaAtual: [],
+    modelosDaCategoriaAtual: []
+  };
+
+  function escaparHtml(valor){
+    return String(valor === null || valor === undefined ? '' : valor)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function obterIniciaisNome(nome){
+    return String(nome || '')
+      .trim()
+      .split(/\s+/)
+      .filter(function(parte){ return parte.length > 0; })
+      .slice(0, 2)
+      .map(function(parte){ return parte.charAt(0); })
+      .join('')
+      .toUpperCase();
+  }
+
+  function formatarDataBiblioteca(valor, incluirHora){
+    if(!valor) return '';
+    var data = valor instanceof Date ? valor : new Date(valor);
+    if(Number.isNaN(data.getTime())) return '';
+    var opcoes = incluirHora
+      ? { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }
+      : { day:'2-digit', month:'2-digit', year:'numeric' };
+    return new Intl.DateTimeFormat('pt-BR', opcoes).format(data);
+  }
+
+  function obterExtensaoArquivo(nomeArquivo){
+    var nome = String(nomeArquivo || '').trim();
+    var indice = nome.lastIndexOf('.');
+    return indice > -1 ? nome.slice(indice + 1).toLowerCase() : '';
+  }
+
+  function buscarCategoriaPorId(categoriaId){
+    return state.categorias.filter(function(categoria){
+      return categoria.id === categoriaId;
+    })[0] || null;
+  }
+
+  function buscarCategoriasFilhas(categoriaPaiId){
+    return state.categorias.filter(function(categoria){
+      return (categoria.categoria_pai_id || null) === (categoriaPaiId || null);
+    });
+  }
+
+  function buscarDescendentesCategoria(categoriaId){
+    var descendentes = [];
+    function visitar(categoriaPaiId){
+      buscarCategoriasFilhas(categoriaPaiId).forEach(function(filha){
+        descendentes.push(filha);
+        visitar(filha.id);
+      });
+    }
+    visitar(categoriaId);
+    return descendentes;
+  }
+
+  function montarBreadcrumbCategoria(categoriaId){
+    var caminho = [];
+    var visitados = {};
+    var atual = buscarCategoriaPorId(categoriaId);
+    while(atual && !visitados[atual.id]){
+      visitados[atual.id] = true;
+      caminho.unshift(atual);
+      atual = atual.categoria_pai_id ? buscarCategoriaPorId(atual.categoria_pai_id) : null;
+    }
+    return caminho;
+  }
+
+  state.helpers = {
+    escaparHtml: escaparHtml,
+    obterIniciaisNome: obterIniciaisNome,
+    formatarDataBiblioteca: formatarDataBiblioteca,
+    obterExtensaoArquivo: obterExtensaoArquivo,
+    corPorTipo: corPorTipo,
+    buscarCategoriaPorId: buscarCategoriaPorId,
+    buscarCategoriasFilhas: buscarCategoriasFilhas,
+    buscarDescendentesCategoria: buscarDescendentesCategoria,
+    montarBreadcrumbCategoria: montarBreadcrumbCategoria
+  };
+
+  // A árvore antiga permanece fisicamente no arquivo para preservar todas as funções originais.
+  // Nesta etapa, os dados fictícios são neutralizados em execução e não são exibidos na interface.
+  function neutralizarDadosFicticiosDaBiblioteca(){
+    arvore = {
+      raiz: { nome:'Biblioteca', pastas:[], arquivos:[] }
+    };
+    caminhoAtual = ['raiz'];
+    categoriasFixas = [];
+    state.categoriaAtualId = null;
+    state.arquivosAtivosCategoriaAtual = [];
+    document.querySelectorAll('.item-categoria-lateral[data-raiz]').forEach(function(item){
+      item.remove();
+    });
+  }
+
+  neutralizarDadosFicticiosDaBiblioteca();
+</script>
+
+
+<script>
+  // ===== ETAPA 2: LEITURA DA BIBLIOTECA REAL =====
+  state.requisicaoArquivosAtual = 0;
+
+  async function carregarCategorias(){
+    try {
+      var resposta = await _sb
+        .from('biblioteca_categorias')
+        .select('*')
+        .order('nome', { ascending:true });
+
+      if(resposta.error) throw resposta.error;
+      state.categorias = resposta.data || [];
+      return state.categorias;
+    } catch(erro){
+      state.categorias = [];
+      showToast('Não foi possível carregar as categorias da biblioteca.', 'erro');
+      return [];
+    }
+  }
+
+  async function carregarArquivosDaPasta(categoriaId){
+    var requisicaoAtual = state.requisicaoArquivosAtual + 1;
+    state.requisicaoArquivosAtual = requisicaoAtual;
+
+    try {
+      var consulta = _sb
+        .from('biblioteca_arquivos')
+        .select('*')
+        .eq('ativo', true)
+        .order('criado_em', { ascending:false });
+
+      consulta = categoriaId
+        ? consulta.eq('categoria_id', categoriaId)
+        : consulta.is('categoria_id', null);
+
+      var resposta = await consulta;
+      if(resposta.error) throw resposta.error;
+      if(requisicaoAtual !== state.requisicaoArquivosAtual) return state.arquivosAtivosCategoriaAtual;
+
+      var arquivosDaPasta = resposta.data || [];
+      var arquivosAnteriores = {};
+      arquivosDaPasta.forEach(function(arquivo){
+        if(arquivo.arquivo_anterior_id){
+          arquivosAnteriores[arquivo.arquivo_anterior_id] = true;
+        }
+      });
+
+      state.arquivosAtivosCategoriaAtual = arquivosDaPasta.filter(function(arquivo){
+        return !arquivosAnteriores[arquivo.id];
+      });
+      return state.arquivosAtivosCategoriaAtual;
+    } catch(erro){
+      if(requisicaoAtual === state.requisicaoArquivosAtual){
+        state.arquivosAtivosCategoriaAtual = [];
+        showToast('Não foi possível carregar os arquivos desta pasta.', 'erro');
+      }
+      return [];
+    }
+  }
+
+function renderizarSidebar(){
+  var colunaCategorias = document.querySelector('.coluna-categorias');
+  var botaoNovaCategoria = document.getElementById('btnNovaCategoriaTopo');
+  if(!colunaCategorias || !botaoNovaCategoria) return;
+
+  colunaCategorias.querySelectorAll('.item-categoria-lateral').forEach(function(item){
+    item.remove();
+  });
+
+  function criarItem(categoria, nivel){
+    var categoriaId = categoria ? categoria.id : 'raiz';
+    var nome = categoria ? categoria.nome : 'Todas';
+    var item = document.createElement('div');
+
+    item.className = 'item-categoria-lateral';
+    item.setAttribute('data-raiz', categoriaId);
+    item.setAttribute('data-categoria-id', categoriaId);
+    item.setAttribute('data-nivel', String(nivel));
+    item.setAttribute('title', nome);
+    item.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.5"/></svg>' +
+      '<span class="categoria-label">' + escaparHtml(nome) + '</span>';
+
+    var label = item.querySelector('.categoria-label');
+    if(label && nivel > 0){
+      label.style.paddingLeft = (nivel * 12) + 'px';
+    }
+
+    item.addEventListener('click', function(){
+      var caminho = categoria
+        ? ['raiz'].concat(montarBreadcrumbCategoria(categoria.id).map(function(itemCaminho){
+            return itemCaminho.id;
+          }))
+        : ['raiz'];
+      navegarParaCaminho(caminho, 'categoria');
+    });
+
+    if(state.permissoes.acoes.moverCategoria || state.permissoes.acoes.moverArquivo){
+      configurarDestinoArraste(item, function(){
+        return categoria ? categoria.id : 'raiz';
+      });
+    }
+
+    colunaCategorias.insertBefore(item, botaoNovaCategoria);
+  }
+
+  criarItem(null, 0);
+
+  function renderizarFilhas(categoriaPaiId, nivel){
+    buscarCategoriasFilhas(categoriaPaiId).forEach(function(categoria){
+      criarItem(categoria, nivel);
+      renderizarFilhas(categoria.id, nivel + 1);
+    });
+  }
+
+  renderizarFilhas(null, 0);
+}
+
+async function inicializarBibliotecaReal(){
+  try {
+    var sessaoResposta = await _sb.auth.getSession();
+    state.sessao = sessaoResposta.data ? sessaoResposta.data.session : null;
+
+    if(!state.sessao || !state.sessao.user){
+      showToast('Sua sessão não foi encontrada. Faça login novamente.', 'erro');
+      return;
+    }
+
+    state.usuario.authId = state.sessao.user.id;
+    state.usuario.internoId = state.sessao.user.id;
+    await carregarPerfilUsuarioBiblioteca();
+    await carregarPermissoesBiblioteca();
+
+    state.categoriaAtualId = null;
+    caminhoAtual = ['raiz'];
+
+    await carregarCategorias();
+    await carregarArquivosDaPasta(null);
+
+    renderizarTudo();
+    animarEntradaBiblioteca();
+  } catch(erro){
+    showToast('Não foi possível inicializar a biblioteca.', 'erro');
+  }
+}
+
+  // A inicialização é disparada ao final das integrações da Etapa 3.
+</script>
+
+<script>
+  // ===== ETAPA 3: PERMISSÕES E AÇÕES DE ESCRITA =====
+  async function checkPerm(modulo, acao){
+    if(!state.usuario.authId) return false;
+
+    try {
+      var resposta = await _sb.rpc('verificar_permissao', {
+        p_usuario_id: state.usuario.internoId,
+        p_modulo: modulo,
+        p_acao: acao
+      });
+
+      if(resposta.error) throw resposta.error;
+      var permitido = resposta.data === true;
+      state.permissoes.consulta[modulo + '.' + acao] = permitido;
+      return permitido;
+    } catch(erro){
+      state.permissoes.consulta[modulo + '.' + acao] = false;
+      return false;
+    }
+  }
+
+  async function carregarPerfilUsuarioBiblioteca(){
+    try {
+      var resposta = await _sb
+        .from('usuarios')
+        .select('id,nome_completo')
+        .eq('auth_user_id', state.usuario.authId)
+        .maybeSingle();
+
+      if(!resposta.error && resposta.data){
+        state.usuario.internoId = resposta.data.id || state.usuario.authId;
+        state.usuario.nome = resposta.data.nome_completo || '';
+      }
+    } catch(erro){
+      state.usuario.internoId = state.usuario.authId;
+    }
+  }
+
+  async function carregarPermissoesBiblioteca(){
+    var respostas = await Promise.all([
+      checkPerm('biblioteca', 'visualizar'),
+      checkPerm('biblioteca', 'gerenciar'),
+      checkPerm('biblioteca_categorias', 'gerenciar'),
+      checkPerm('modelos_documentos', 'gerenciar'),
+      checkPerm('modelos_documentos', 'gerar')
+    ]);
+
+    var podeVisualizar = respostas[0];
+    var podeGerenciarArquivos = respostas[1];
+    var podeGerenciarCategorias = respostas[2];
+    var podeGerenciarModelos = respostas[3];
+    var podeGerarModelos = respostas[4];
+
+    state.permissoes.acoes.visualizarBiblioteca = podeVisualizar;
+    state.permissoes.acoes.gerenciarBiblioteca = podeGerenciarArquivos;
+    state.permissoes.acoes.criarCategoria = podeGerenciarCategorias;
+    state.permissoes.acoes.editarCategoria = podeGerenciarCategorias;
+    state.permissoes.acoes.renomearCategoria = podeGerenciarCategorias;
+    state.permissoes.acoes.moverCategoria = podeGerenciarCategorias;
+    state.permissoes.acoes.excluirCategoria = podeGerenciarCategorias;
+    state.permissoes.acoes.enviarArquivo = podeGerenciarArquivos;
+    state.permissoes.acoes.moverArquivo = podeGerenciarArquivos;
+    state.permissoes.acoes.renomearArquivo = podeGerenciarArquivos;
+    state.permissoes.acoes.excluirArquivo = podeGerenciarArquivos;
+    state.permissoes.acoes.criarVersaoArquivo = podeGerenciarArquivos;
+    state.permissoes.acoes.configurarModelo = podeGerenciarModelos;
+    state.permissoes.acoes.gerarDocumento = podeGerarModelos;
+    state.permissoes.carregadas = true;
+  }
+
+  async function validarPermissaoBiblioteca(modulo, acao, mensagemNegada){
+    var permitido = await checkPerm(modulo, acao);
+    if(!permitido){
+      showToast(mensagemNegada || 'Você não possui permissão para realizar esta ação.', 'info');
+      return false;
+    }
+    return true;
+  }
+
+  function aplicarPermissoesBiblioteca(){
+    var podeCriarCategoria = !!state.permissoes.acoes.criarCategoria;
+    var podeGerenciarArquivos = !!state.permissoes.acoes.enviarArquivo;
+    var botaoNovaPasta = document.getElementById('btnNovaPasta');
+    var botaoNovaCategoria = document.getElementById('btnNovaCategoriaTopo');
+    var botaoUpload = document.getElementById('btnUpload');
+
+    if(botaoNovaPasta){
+      botaoNovaPasta.style.display = podeCriarCategoria ? '' : 'none';
+      botaoNovaPasta.disabled = !podeCriarCategoria;
+    }
+
+    if(botaoNovaCategoria){
+      botaoNovaCategoria.style.display = podeCriarCategoria ? '' : 'none';
+      botaoNovaCategoria.disabled = !podeCriarCategoria;
+    }
+
+    if(botaoUpload){
+      var podeEnviarNaPastaAtual = podeGerenciarArquivos && !!state.categoriaAtualId;
+      botaoUpload.style.display = podeEnviarNaPastaAtual ? '' : 'none';
+      botaoUpload.disabled = !podeEnviarNaPastaAtual;
+    }
+  }
+
+  function abrirModalNovaCategoriaBiblioteca(categoriaPaiId){
+    if(!state.permissoes.acoes.criarCategoria){
+      showToast('Você não possui permissão para criar categorias.', 'info');
+      return;
+    }
+
+    var categoriaPai = categoriaPaiId ? buscarCategoriaPorId(categoriaPaiId) : null;
+    state.categoriaPaiNovaId = categoriaPaiId || null;
+
+    document.getElementById('subNovaPasta').textContent = categoriaPai
+      ? 'Esta pasta será criada dentro de "' + categoriaPai.nome + '".'
+      : 'Esta pasta será criada na raiz da Biblioteca.';
+    document.getElementById('inputNomePasta').value = '';
+    modalNovaPasta.classList.add('aberto');
+  }
+
+  function criarModalUploadBiblioteca(){
+    if(document.getElementById('modalUploadBiblioteca')) return;
+
+    var modal = document.createElement('div');
+    modal.className = 'modal-overlay-bib';
+    modal.id = 'modalUploadBiblioteca';
+    modal.innerHTML =
+      '<div class="modal-bib">' +
+        '<h3>Enviar Arquivo</h3>' +
+        '<div class="modal-sub" id="subUploadBiblioteca">O arquivo será enviado para a pasta selecionada.</div>' +
+        '<div class="modal-campo-bib">' +
+          '<label>Arquivo</label>' +
+          '<input type="file" id="inputArquivoBiblioteca">' +
+        '</div>' +
+        '<div class="modal-campo-bib">' +
+          '<label>Descrição opcional</label>' +
+          '<input type="text" id="inputDescricaoArquivoBiblioteca" placeholder="Descreva brevemente este arquivo">' +
+        '</div>' +
+        '<div class="modal-botoes-bib">' +
+          '<button class="btn-cancelar-bib" id="btnCancelarUploadBiblioteca" type="button">Cancelar</button>' +
+          '<button class="btn-confirmar-bib" id="btnConfirmarUploadBiblioteca" type="button">Enviar Arquivo</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btnCancelarUploadBiblioteca').addEventListener('click', function(){
+      modal.classList.remove('aberto');
+    });
+
+    modal.addEventListener('click', function(evento){
+      if(evento.target === modal) modal.classList.remove('aberto');
+    });
+
+    document.getElementById('btnConfirmarUploadBiblioteca').addEventListener('click', function(){
+      confirmarUploadBiblioteca();
+    });
+  }
+
+  function abrirModalUploadBiblioteca(){
+    if(!state.permissoes.acoes.enviarArquivo){
+      showToast('Você não possui permissão para enviar arquivos.', 'info');
+      return;
+    }
+
+    if(!state.categoriaAtualId){
+      showToast('Abra uma categoria antes de enviar um arquivo.', 'info');
+      return;
+    }
+
+    criarModalUploadBiblioteca();
+
+    var categoriaAtual = buscarCategoriaPorId(state.categoriaAtualId);
+    document.getElementById('subUploadBiblioteca').textContent =
+      'O arquivo será enviado para "' + (categoriaAtual ? categoriaAtual.nome : 'a pasta atual') + '".';
+    document.getElementById('inputArquivoBiblioteca').value = '';
+    document.getElementById('inputDescricaoArquivoBiblioteca').value = '';
+    document.getElementById('modalUploadBiblioteca').classList.add('aberto');
+  }
+
+  async function confirmarUploadBiblioteca(){
+    var permitido = await validarPermissaoBiblioteca(
+      'biblioteca',
+      'gerenciar',
+      'Você não possui permissão para enviar arquivos.'
+    );
+    if(!permitido) return;
+
+    if(!state.categoriaAtualId){
+      showToast('Selecione uma categoria de destino para o arquivo.', 'info');
+      return;
+    }
+
+    var inputArquivo = document.getElementById('inputArquivoBiblioteca');
+    var arquivo = inputArquivo && inputArquivo.files ? inputArquivo.files[0] : null;
+    if(!arquivo){
+      showToast('Selecione um arquivo para enviar.', 'info');
+      return;
+    }
+
+    var botao = document.getElementById('btnConfirmarUploadBiblioteca');
+    botao.disabled = true;
+    botao.textContent = 'Enviando...';
+
+    var nomeSeguro = arquivo.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    var caminhoStorage = state.categoriaAtualId + '/' + crypto.randomUUID() + '_' + nomeSeguro;
+
+    try {
+      var upload = await _sb.storage.from(BUCKET_BIBLIOTECA).upload(caminhoStorage, arquivo);
+      if(upload.error) throw upload.error;
+
+      var insercao = await _sb.from('biblioteca_arquivos').insert({
+        categoria_id: state.categoriaAtualId,
+        usuario_id: state.usuario.internoId || state.usuario.authId,
+        nome_arquivo: arquivo.name,
+        caminho_storage: caminhoStorage,
+        descricao: document.getElementById('inputDescricaoArquivoBiblioteca').value.trim() || null,
+        versao: 1,
+        ativo: true
+      });
+
+      if(insercao.error){
+        await _sb.storage.from(BUCKET_BIBLIOTECA).remove([caminhoStorage]);
+        throw insercao.error;
+      }
+
+      document.getElementById('modalUploadBiblioteca').classList.remove('aberto');
+      await carregarArquivosDaPasta(state.categoriaAtualId);
+      renderizarTudo();
+      animarEntradaBiblioteca();
+      showToast('Arquivo enviado com sucesso.', 'sucesso');
+    } catch(erro){
+      showToast('Não foi possível enviar o arquivo: ' + (erro.message || 'erro desconhecido'), 'erro');
+    } finally {
+      botao.disabled = false;
+      botao.textContent = 'Enviar Arquivo';
+    }
+  }
+
+  async function baixarArquivoBiblioteca(arquivoId){
+    var permitido = await validarPermissaoBiblioteca(
+      'biblioteca',
+      'visualizar',
+      'Você não possui permissão para baixar arquivos.'
+    );
+    if(!permitido) return;
+
+    var arquivo = state.arquivosAtivosCategoriaAtual.filter(function(item){
+      return item.id === arquivoId;
+    })[0];
+
+    if(!arquivo){
+      var consulta = await _sb
+        .from('biblioteca_arquivos')
+        .select('*')
+        .eq('id', arquivoId)
+        .maybeSingle();
+
+      if(consulta.error || !consulta.data){
+        showToast('Arquivo não encontrado.', 'erro');
+        return;
+      }
+
+      arquivo = consulta.data;
+    }
+
+    try {
+      var urlAssinada = await _sb
+        .storage
+        .from(BUCKET_BIBLIOTECA)
+        .createSignedUrl(arquivo.caminho_storage, 300);
+
+      if(urlAssinada.error) throw urlAssinada.error;
+
+      var resposta = await fetch(urlAssinada.data.signedUrl);
+      if(!resposta.ok) throw new Error('Não foi possível baixar o arquivo.');
+
+      var blob = await resposta.blob();
+      var urlTemporaria = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = urlTemporaria;
+      link.download = arquivo.nome_arquivo;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(urlTemporaria);
+      showToast('Download iniciado.', 'sucesso');
+    } catch(erro){
+      showToast('Não foi possível baixar o arquivo: ' + (erro.message || 'erro desconhecido'), 'erro');
+    }
+  }
+
+  function mostrarErroNoModalExclusao(mensagem){
+    var texto = document.getElementById('textoConfirmExcluir');
+    var botaoConfirmar = document.getElementById('btnConfirmarExcluir');
+    var botaoCancelar = document.getElementById('btnCancelarExcluir');
+
+    texto.textContent = mensagem;
+    botaoConfirmar.style.display = 'none';
+    botaoCancelar.textContent = 'Fechar';
+    callbackExcluir = null;
+    document.getElementById('modalConfirmExcluir').classList.add('aberto');
+  }
+
+  async function excluirItemBiblioteca(tipo, id, nome){
+    var permitido = tipo === 'pasta'
+      ? await validarPermissaoBiblioteca('biblioteca_categorias', 'gerenciar', 'Você não possui permissão para excluir categorias.')
+      : await validarPermissaoBiblioteca('biblioteca', 'gerenciar', 'Você não possui permissão para excluir arquivos.');
+
+    if(!permitido) return;
+
+    try {
+      var resposta = tipo === 'pasta'
+        ? await _sb.from('biblioteca_categorias').delete().eq('id', id)
+        : await _sb.from('biblioteca_arquivos').update({ ativo:false }).eq('id', id);
+
+      if(resposta.error){
+        var mensagemErro = String(resposta.error.message || '');
+        if(tipo === 'pasta' && /(foreign key|restrict|violates)/i.test(mensagemErro)){
+          mostrarErroNoModalExclusao('Não foi possível excluir "' + nome + '" porque existem subpastas vinculadas. Mova ou exclua as subpastas primeiro.');
+          return;
+        }
+        throw resposta.error;
+      }
+
+      if(tipo === 'pasta') await carregarCategorias();
+      await carregarArquivosDaPasta(state.categoriaAtualId);
+      renderizarTudo();
+      animarEntradaBiblioteca();
+      showToast(tipo === 'pasta' ? 'Categoria excluída com sucesso.' : 'Arquivo removido da biblioteca.', 'sucesso');
+    } catch(erro){
+      showToast('Não foi possível excluir o item: ' + (erro.message || 'erro desconhecido'), 'erro');
+    }
+  }
+
+  inicializarBibliotecaReal();
+</script>
+
+
+<script>
+  // ===== ETAPA 4: VERSÕES, MODELOS E GERAÇÃO LOCAL =====
+  var carregarArquivosDaPastaEtapa2 = carregarArquivosDaPasta;
+  var renderizarTudoEtapa3 = renderizarTudo;
+  var abrirModalGerarEtapa3 = abrirModalGerar;
+
+  async function carregarModelosDaPasta(){
+    var idsArquivos = (state.arquivosAtivosCategoriaAtual || []).map(function(arquivo){
+      return arquivo.id;
+    });
+
+    if(!idsArquivos.length){
+      state.modelosDaCategoriaAtual = [];
+      return [];
+    }
+
+    try {
+      var resposta = await _sb
+        .from('modelos_documentos')
+        .select('*')
+        .in('biblioteca_arquivo_id', idsArquivos)
+        .eq('ativo', true);
+
+      if(resposta.error) throw resposta.error;
+      state.modelosDaCategoriaAtual = resposta.data || [];
+      return state.modelosDaCategoriaAtual;
+    } catch(erro){
+      state.modelosDaCategoriaAtual = [];
+      showToast('Não foi possível carregar os modelos configurados.', 'erro');
+      return [];
+    }
+  }
+
+  carregarArquivosDaPasta = async function(categoriaId){
+    var arquivos = await carregarArquivosDaPastaEtapa2(categoriaId);
+    await carregarModelosDaPasta();
+    return arquivos;
+  };
+
+  function obterModeloPorArquivoId(arquivoId){
+    return (state.modelosDaCategoriaAtual || []).filter(function(modelo){
+      return modelo.biblioteca_arquivo_id === arquivoId && modelo.ativo !== false;
+    })[0] || null;
+  }
+
+  async function obterArquivoBibliotecaPorId(arquivoId){
+    var arquivoAtual = (state.arquivosAtivosCategoriaAtual || []).filter(function(arquivo){
+      return arquivo.id === arquivoId;
+    })[0];
+
+    if(arquivoAtual) return arquivoAtual;
+
+    var resposta = await _sb
+      .from('biblioteca_arquivos')
+      .select('*')
+      .eq('id', arquivoId)
+      .maybeSingle();
+
+    if(resposta.error) throw resposta.error;
+    return resposta.data || null;
+  }
+
+  async function recarregarBibliotecaAposEscrita(recarregarCategorias){
+    if(recarregarCategorias) await carregarCategorias();
+    await carregarArquivosDaPasta(state.categoriaAtualId);
+    renderizarTudo();
+    animarEntradaBiblioteca();
+  }
+
+  function criarModalNovaVersaoBiblioteca(){
+    if(document.getElementById('modalNovaVersaoBiblioteca')) return;
+
+    var modal = document.createElement('div');
+    modal.className = 'modal-overlay-bib';
+    modal.id = 'modalNovaVersaoBiblioteca';
+    modal.innerHTML =
+      '<div class="modal-bib">' +
+        '<h3>Enviar nova versão</h3>' +
+        '<div class="modal-sub" id="subNovaVersaoBiblioteca">A versão anterior continuará disponível no histórico.</div>' +
+        '<div class="modal-campo-bib">' +
+          '<label>Novo arquivo</label>' +
+          '<input type="file" id="inputNovaVersaoBiblioteca">' +
+        '</div>' +
+        '<div class="aviso-preenchimento">A nova versão mantém a mesma pasta, descrição e cadeia de histórico do arquivo selecionado.</div>' +
+        '<div class="modal-botoes-bib">' +
+          '<button class="btn-cancelar-bib" id="btnCancelarNovaVersaoBiblioteca" type="button">Cancelar</button>' +
+          '<button class="btn-confirmar-bib" id="btnConfirmarNovaVersaoBiblioteca" type="button">Enviar nova versão</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btnCancelarNovaVersaoBiblioteca').addEventListener('click', function(){
+      modal.classList.remove('aberto');
+    });
+
+    modal.addEventListener('click', function(evento){
+      if(evento.target === modal) modal.classList.remove('aberto');
+    });
+
+    document.getElementById('btnConfirmarNovaVersaoBiblioteca').addEventListener('click', function(){
+      confirmarNovaVersaoBiblioteca();
+    });
+  }
+
+  async function abrirModalNovaVersaoBiblioteca(arquivoId){
+    var permitido = await validarPermissaoBiblioteca(
+      'biblioteca',
+      'gerenciar',
+      'Você não possui permissão para enviar uma nova versão.'
+    );
+    if(!permitido) return;
+
+    try {
+      var arquivo = await obterArquivoBibliotecaPorId(arquivoId);
+      if(!arquivo){
+        showToast('Arquivo não encontrado.', 'erro');
+        return;
+      }
+
+      criarModalNovaVersaoBiblioteca();
+      state.arquivoNovaVersaoId = arquivo.id;
+      document.getElementById('subNovaVersaoBiblioteca').textContent =
+        'Nova versão de "' + arquivo.nome_arquivo + '". A versão atual é v' + (arquivo.versao || 1) + '.';
+      document.getElementById('inputNovaVersaoBiblioteca').value = '';
+      document.getElementById('modalNovaVersaoBiblioteca').classList.add('aberto');
+    } catch(erro){
+      showToast('Não foi possível abrir o envio de nova versão.', 'erro');
+    }
+  }
+
+  async function confirmarNovaVersaoBiblioteca(){
+    var permitido = await validarPermissaoBiblioteca(
+      'biblioteca',
+      'gerenciar',
+      'Você não possui permissão para enviar uma nova versão.'
+    );
+    if(!permitido) return;
+
+    var input = document.getElementById('inputNovaVersaoBiblioteca');
+    var arquivoSelecionado = input && input.files ? input.files[0] : null;
+    if(!arquivoSelecionado){
+      showToast('Selecione o arquivo da nova versão.', 'info');
+      return;
+    }
+
+    var botao = document.getElementById('btnConfirmarNovaVersaoBiblioteca');
+    botao.disabled = true;
+    botao.textContent = 'Enviando...';
+
+    try {
+      var arquivoAnterior = await obterArquivoBibliotecaPorId(state.arquivoNovaVersaoId);
+      if(!arquivoAnterior) throw new Error('Arquivo anterior não encontrado.');
+
+      var nomeSeguro = arquivoSelecionado.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var caminhoStorage = String(arquivoAnterior.categoria_id || 'raiz') + '/' + crypto.randomUUID() + '_' + nomeSeguro;
+
+      var upload = await _sb.storage
+        .from(BUCKET_BIBLIOTECA)
+        .upload(caminhoStorage, arquivoSelecionado);
+
+      if(upload.error) throw upload.error;
+
+      var insercao = await _sb.from('biblioteca_arquivos').insert({
+        categoria_id: arquivoAnterior.categoria_id,
+        usuario_id: state.usuario.internoId || state.usuario.authId,
+        nome_arquivo: arquivoSelecionado.name,
+        caminho_storage: caminhoStorage,
+        descricao: arquivoAnterior.descricao || null,
+        versao: (arquivoAnterior.versao || 1) + 1,
+        arquivo_anterior_id: arquivoAnterior.id,
+        ativo: true
+      });
+
+      if(insercao.error){
+        await _sb.storage.from(BUCKET_BIBLIOTECA).remove([caminhoStorage]);
+        throw insercao.error;
+      }
+
+      document.getElementById('modalNovaVersaoBiblioteca').classList.remove('aberto');
+      await recarregarBibliotecaAposEscrita(false);
+      showToast('Nova versão registrada com sucesso.', 'sucesso');
+    } catch(erro){
+      showToast('Não foi possível registrar a nova versão: ' + (erro.message || 'erro desconhecido'), 'erro');
+    } finally {
+      botao.disabled = false;
+      botao.textContent = 'Enviar nova versão';
+    }
+  }
+
+  function criarModalHistoricoVersoesBiblioteca(){
+    if(document.getElementById('modalHistoricoVersoesBiblioteca')) return;
+
+    var modal = document.createElement('div');
+    modal.className = 'modal-overlay-bib';
+    modal.id = 'modalHistoricoVersoesBiblioteca';
+    modal.innerHTML =
+      '<div class="modal-bib" style="max-width:560px">' +
+        '<h3>Histórico de versões</h3>' +
+        '<div class="modal-sub" id="subHistoricoVersoesBiblioteca">Versões disponíveis para download.</div>' +
+        '<div id="listaHistoricoVersoesBiblioteca" style="display:flex;flex-direction:column;gap:8px;max-height:330px;overflow:auto"></div>' +
+        '<div class="modal-botoes-bib">' +
+          '<button class="btn-cancelar-bib" id="btnFecharHistoricoVersoesBiblioteca" type="button">Fechar</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btnFecharHistoricoVersoesBiblioteca').addEventListener('click', function(){
+      modal.classList.remove('aberto');
+    });
+
+    modal.addEventListener('click', function(evento){
+      if(evento.target === modal) modal.classList.remove('aberto');
+    });
+  }
+
+  async function carregarCadeiaVersoesBiblioteca(arquivoId){
+    var cadeia = [];
+    var visitados = {};
+    var atualId = arquivoId;
+
+    while(atualId && !visitados[atualId] && cadeia.length < 50){
+      visitados[atualId] = true;
+      var arquivo = await obterArquivoBibliotecaPorId(atualId);
+      if(!arquivo) break;
+      cadeia.push(arquivo);
+      atualId = arquivo.arquivo_anterior_id || null;
+    }
+
+    return cadeia;
+  }
+
+  async function abrirHistoricoVersoesBiblioteca(arquivoId){
+    var permitido = await validarPermissaoBiblioteca(
+      'biblioteca',
+      'visualizar',
+      'Você não possui permissão para consultar o histórico de versões.'
+    );
+    if(!permitido) return;
+
+    criarModalHistoricoVersoesBiblioteca();
+
+    try {
+      var cadeia = await carregarCadeiaVersoesBiblioteca(arquivoId);
+      var lista = document.getElementById('listaHistoricoVersoesBiblioteca');
+      var subtitulo = document.getElementById('subHistoricoVersoesBiblioteca');
+
+      lista.innerHTML = '';
+      if(!cadeia.length){
+        lista.innerHTML = '<div class="destino-mover-vazio">Nenhuma versão encontrada para este arquivo.</div>';
+      } else {
+        subtitulo.textContent = cadeia[0].nome_arquivo;
+
+        cadeia.forEach(function(arquivo, indice){
+          var linha = document.createElement('div');
+          linha.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border:1px solid var(--border-soft);border-radius:10px;background:var(--panel)';
+
+          var detalhes = document.createElement('div');
+          var titulo = document.createElement('div');
+          titulo.style.cssText = 'font-size:12px;font-weight:600;color:var(--text)';
+          titulo.textContent = 'v' + (arquivo.versao || 1) + (indice === 0 ? ' - versão atual' : '') + ' - ' + arquivo.nome_arquivo;
+
+          var data = document.createElement('div');
+          data.style.cssText = 'font-size:10px;color:var(--muted);margin-top:3px';
+          data.textContent = formatarDataBiblioteca(arquivo.criado_em, true) || 'Sem data';
+
+          detalhes.appendChild(titulo);
+          detalhes.appendChild(data);
+
+          var botao = document.createElement('button');
+          botao.type = 'button';
+          botao.className = 'btn-cancelar-bib';
+          botao.style.cssText = 'padding:8px 10px;flex:0 0 auto';
+          botao.textContent = 'Baixar';
+          botao.addEventListener('click', function(){
+            baixarArquivoBiblioteca(arquivo.id);
+          });
+
+          linha.appendChild(detalhes);
+          linha.appendChild(botao);
+          lista.appendChild(linha);
+        });
+      }
+
+      document.getElementById('modalHistoricoVersoesBiblioteca').classList.add('aberto');
+    } catch(erro){
+      showToast('Não foi possível carregar o histórico de versões.', 'erro');
+    }
+  }
+
+  function criarModalModeloGeravelBiblioteca(){
+    if(document.getElementById('modalModeloGeravelBiblioteca')) return;
+
+    var modal = document.createElement('div');
+    modal.className = 'modal-overlay-bib';
+    modal.id = 'modalModeloGeravelBiblioteca';
+    modal.innerHTML =
+      '<div class="modal-bib" style="max-width:680px">' +
+        '<h3>Configurar modelo gerável</h3>' +
+        '<div class="modal-sub" id="subModeloGeravelBiblioteca">Defina os campos que serão usados na geração local do documento.</div>' +
+        '<div class="modal-campo-bib">' +
+          '<label>Nome do modelo</label>' +
+          '<input type="text" id="inputNomeModeloBiblioteca" placeholder="Ex: Contrato de Honorários">' +
+        '</div>' +
+        '<div class="modal-campo-bib">' +
+          '<label>Tipo de saída</label>' +
+          '<div id="opcoesTipoSaidaBiblioteca" style="display:flex;gap:8px"></div>' +
+        '</div>' +
+        '<div class="modal-campo-bib">' +
+          '<label>Campos variáveis</label>' +
+          '<div id="listaCamposModeloBiblioteca" style="display:flex;flex-direction:column;gap:9px"></div>' +
+          '<button class="btn-nova-pasta" id="btnAdicionarCampoModeloBiblioteca" type="button" style="margin-top:10px">Adicionar campo</button>' +
+        '</div>' +
+        '<div class="aviso-preenchimento">Use no DOCX os marcadores simples entre chaves, por exemplo: {nome_cliente}. Os valores serão processados somente no navegador.</div>' +
+        '<div class="modal-botoes-bib">' +
+          '<button class="btn-cancelar-bib" id="btnCancelarModeloGeravelBiblioteca" type="button">Cancelar</button>' +
+          '<button class="btn-confirmar-bib" id="btnSalvarModeloGeravelBiblioteca" type="button">Salvar modelo</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btnCancelarModeloGeravelBiblioteca').addEventListener('click', function(){
+      modal.classList.remove('aberto');
+    });
+
+    modal.addEventListener('click', function(evento){
+      if(evento.target === modal) modal.classList.remove('aberto');
+    });
+
+    document.getElementById('btnAdicionarCampoModeloBiblioteca').addEventListener('click', function(){
+      state.camposModeloGeravel.push({ chave:'', label:'', tipo:'texto' });
+      renderizarCamposModeloGeravelBiblioteca();
+    });
+
+    document.getElementById('btnSalvarModeloGeravelBiblioteca').addEventListener('click', function(){
+      salvarModeloGeravelBiblioteca();
+    });
+  }
+
+  function renderizarTipoSaidaModeloBiblioteca(){
+    var area = document.getElementById('opcoesTipoSaidaBiblioteca');
+    if(!area) return;
+
+    area.innerHTML = '';
+    ['docx', 'pdf'].forEach(function(tipo){
+      var botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'opcao-acao-documento' + (state.tipoSaidaModeloGeravel === tipo ? ' selecionada' : '');
+      botao.style.cssText = 'padding:9px 12px;text-align:center';
+      botao.textContent = tipo.toUpperCase();
+      botao.addEventListener('click', function(){
+        state.tipoSaidaModeloGeravel = tipo;
+        renderizarTipoSaidaModeloBiblioteca();
+      });
+      area.appendChild(botao);
+    });
+  }
+
+  function renderizarCamposModeloGeravelBiblioteca(){
+    var lista = document.getElementById('listaCamposModeloBiblioteca');
+    if(!lista) return;
+
+    lista.innerHTML = '';
+
+    state.camposModeloGeravel.forEach(function(campo, indice){
+      var linha = document.createElement('div');
+      linha.style.cssText = 'display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(145px,auto) auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--border-soft);border-radius:10px;background:var(--panel)';
+
+      var grupoChave = document.createElement('div');
+      var labelChave = document.createElement('label');
+      labelChave.textContent = 'Chave';
+      var inputChave = document.createElement('input');
+      inputChave.type = 'text';
+      inputChave.placeholder = 'nome_cliente';
+      inputChave.value = campo.chave || '';
+      inputChave.addEventListener('input', function(){
+        state.camposModeloGeravel[indice].chave = inputChave.value.trim().replace(/\s+/g, '_');
+      });
+      grupoChave.appendChild(labelChave);
+      grupoChave.appendChild(inputChave);
+
+      var grupoLabel = document.createElement('div');
+      var labelLabel = document.createElement('label');
+      labelLabel.textContent = 'Rótulo';
+      var inputLabel = document.createElement('input');
+      inputLabel.type = 'text';
+      inputLabel.placeholder = 'Nome do cliente';
+      inputLabel.value = campo.label || '';
+      inputLabel.addEventListener('input', function(){
+        state.camposModeloGeravel[indice].label = inputLabel.value;
+      });
+      grupoLabel.appendChild(labelLabel);
+      grupoLabel.appendChild(inputLabel);
+
+      var grupoTipo = document.createElement('div');
+      var labelTipo = document.createElement('label');
+      labelTipo.textContent = 'Tipo';
+      var opcoesTipo = document.createElement('div');
+      opcoesTipo.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap';
+
+      ['texto', 'data', 'numero'].forEach(function(tipo){
+        var botaoTipo = document.createElement('button');
+        botaoTipo.type = 'button';
+        botaoTipo.className = 'opcao-acao-documento' + (campo.tipo === tipo ? ' selecionada' : '');
+        botaoTipo.style.cssText = 'padding:6px 8px;font-size:10px';
+        botaoTipo.textContent = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+        botaoTipo.addEventListener('click', function(){
+          state.camposModeloGeravel[indice].tipo = tipo;
+          renderizarCamposModeloGeravelBiblioteca();
+        });
+        opcoesTipo.appendChild(botaoTipo);
+      });
+
+      grupoTipo.appendChild(labelTipo);
+      grupoTipo.appendChild(opcoesTipo);
+
+      var remover = document.createElement('button');
+      remover.type = 'button';
+      remover.className = 'btn-cancelar-bib';
+      remover.style.cssText = 'padding:8px 10px';
+      remover.textContent = 'Remover';
+      remover.addEventListener('click', function(){
+        state.camposModeloGeravel.splice(indice, 1);
+        renderizarCamposModeloGeravelBiblioteca();
+      });
+
+      linha.appendChild(grupoChave);
+      linha.appendChild(grupoLabel);
+      linha.appendChild(grupoTipo);
+      linha.appendChild(remover);
+
+      lista.appendChild(linha);
+    });
+  }
+
+  async function abrirConfiguracaoModeloGeravelBiblioteca(arquivoId){
+    var permitido = await validarPermissaoBiblioteca(
+      'modelos_documentos',
+      'gerenciar',
+      'Você não possui permissão para configurar modelos.'
+    );
+    if(!permitido) return;
+
+    try {
+      var arquivo = await obterArquivoBibliotecaPorId(arquivoId);
+      if(!arquivo || obterExtensaoArquivo(arquivo.nome_arquivo) !== 'docx'){
+        showToast('Somente arquivos DOCX podem ser configurados como modelos geráveis.', 'info');
+        return;
+      }
+
+      criarModalModeloGeravelBiblioteca();
+
+      var modelo = obterModeloPorArquivoId(arquivoId);
+      if(!modelo){
+        var resposta = await _sb
+          .from('modelos_documentos')
+          .select('*')
+          .eq('biblioteca_arquivo_id', arquivoId)
+          .eq('ativo', true)
+          .maybeSingle();
+
+        if(resposta.error) throw resposta.error;
+        modelo = resposta.data || null;
+      }
+
+      state.arquivoModeloGeravelId = arquivoId;
+      state.modeloGeravelId = modelo ? modelo.id : null;
+      state.camposModeloGeravel = modelo && Array.isArray(modelo.campos_variaveis)
+        ? modelo.campos_variaveis.map(function(campo){
+            return {
+              chave: campo.chave || '',
+              label: campo.label || '',
+              tipo: ['texto', 'data', 'numero'].indexOf(campo.tipo) !== -1 ? campo.tipo : 'texto'
+            };
+          })
+        : [];
+      state.tipoSaidaModeloGeravel = modelo && modelo.tipo_saida === 'pdf' ? 'pdf' : 'docx';
+
+      document.getElementById('subModeloGeravelBiblioteca').textContent =
+        'Arquivo: ' + arquivo.nome_arquivo;
+      document.getElementById('inputNomeModeloBiblioteca').value =
+        modelo ? modelo.nome_modelo : arquivo.nome_arquivo.replace(/\.docx$/i, '');
+
+      renderizarTipoSaidaModeloBiblioteca();
+      renderizarCamposModeloGeravelBiblioteca();
+      document.getElementById('modalModeloGeravelBiblioteca').classList.add('aberto');
+    } catch(erro){
+      showToast('Não foi possível abrir a configuração do modelo.', 'erro');
+    }
+  }
+
+  async function salvarModeloGeravelBiblioteca(){
+    var permitido = await validarPermissaoBiblioteca(
+      'modelos_documentos',
+      'gerenciar',
+      'Você não possui permissão para salvar modelos.'
+    );
+    if(!permitido) return;
+
+    var nomeModelo = document.getElementById('inputNomeModeloBiblioteca').value.trim();
+    if(!nomeModelo){
+      showToast('Informe o nome do modelo.', 'info');
+      return;
+    }
+
+    var campos = state.camposModeloGeravel.map(function(campo){
+      return {
+        chave: String(campo.chave || '').trim().replace(/\s+/g, '_'),
+        label: String(campo.label || '').trim(),
+        tipo: campo.tipo
+      };
+    });
+
+    for(var indice = 0; indice < campos.length; indice++){
+      if(!campos[indice].chave || !campos[indice].label){
+        showToast('Preencha a chave e o rótulo de todos os campos.', 'info');
+        return;
+      }
+    }
+
+    var payload = {
+      biblioteca_arquivo_id: state.arquivoModeloGeravelId,
+      nome_modelo: nomeModelo,
+      campos_variaveis: campos,
+      tipo_saida: state.tipoSaidaModeloGeravel,
+      ativo: true
+    };
+
+    if(state.modeloGeravelId) payload.id = state.modeloGeravelId;
+
+    var botao = document.getElementById('btnSalvarModeloGeravelBiblioteca');
+    botao.disabled = true;
+    botao.textContent = 'Salvando...';
+
+    try {
+      var resposta = await _sb
+        .from('modelos_documentos')
+        .upsert(payload, { onConflict:'biblioteca_arquivo_id' });
+
+      if(resposta.error) throw resposta.error;
+
+      document.getElementById('modalModeloGeravelBiblioteca').classList.remove('aberto');
+      await carregarModelosDaPasta();
+      renderizarTudo();
+      showToast('Modelo configurado com sucesso.', 'sucesso');
+    } catch(erro){
+      showToast('Não foi possível salvar o modelo: ' + (erro.message || 'erro desconhecido'), 'erro');
+    } finally {
+      botao.disabled = false;
+      botao.textContent = 'Salvar modelo';
+    }
+  }
+
+  function criarModalGeracaoDocumentoBiblioteca(){
+    if(document.getElementById('modalGeracaoDocumentoBiblioteca')) return;
+
+    var modal = document.createElement('div');
+    modal.className = 'modal-overlay-bib';
+    modal.id = 'modalGeracaoDocumentoBiblioteca';
+    modal.innerHTML =
+      '<div class="modal-bib" style="max-width:560px">' +
+        '<h3 id="tituloGeracaoDocumentoBiblioteca">Gerar documento</h3>' +
+        '<div class="modal-sub" id="subGeracaoDocumentoBiblioteca">Preencha os campos abaixo.</div>' +
+        '<div class="aviso-preenchimento">Privacidade: os dados deste formulário são processados somente no seu navegador e não são enviados ao Supabase, a outro servidor, ao localStorage, ao sessionStorage ou ao console.</div>' +
+        '<div id="camposGeracaoDocumentoBiblioteca"></div>' +
+        '<div class="modal-botoes-bib">' +
+          '<button class="btn-cancelar-bib" id="btnCancelarGeracaoDocumentoBiblioteca" type="button">Cancelar</button>' +
+          '<button class="btn-confirmar-bib" id="btnConfirmarGeracaoDocumentoBiblioteca" type="button">Gerar e baixar</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    document.getElementById('btnCancelarGeracaoDocumentoBiblioteca').addEventListener('click', function(){
+      modal.classList.remove('aberto');
+    });
+
+    modal.addEventListener('click', function(evento){
+      if(evento.target === modal) modal.classList.remove('aberto');
+    });
+
+    document.getElementById('btnConfirmarGeracaoDocumentoBiblioteca').addEventListener('click', function(){
+      gerarDocumentoBiblioteca();
+    });
+  }
+
+  abrirModalGerar = async function(arquivoOuId){
+    var permitido = await validarPermissaoBiblioteca(
+      'modelos_documentos',
+      'gerar',
+      'Você não possui permissão para gerar documentos.'
+    );
+    if(!permitido) return;
+
+    var arquivoId = typeof arquivoOuId === 'string'
+      ? arquivoOuId
+      : arquivoOuId && (arquivoOuId.id || arquivoOuId._id);
+
+    if(!arquivoId){
+      showToast('Arquivo do modelo não encontrado.', 'erro');
+      return;
+    }
+
+    try {
+      var modelo = obterModeloPorArquivoId(arquivoId);
+      if(!modelo){
+        var respostaModelo = await _sb
+          .from('modelos_documentos')
+          .select('*')
+          .eq('biblioteca_arquivo_id', arquivoId)
+          .eq('ativo', true)
+          .maybeSingle();
+
+        if(respostaModelo.error) throw respostaModelo.error;
+        modelo = respostaModelo.data || null;
+      }
+
+      if(!modelo){
+        showToast('Este arquivo ainda não possui um modelo gerável configurado.', 'info');
+        return;
+      }
+
+      var arquivo = await obterArquivoBibliotecaPorId(arquivoId);
+      if(!arquivo){
+        showToast('Arquivo do modelo não encontrado.', 'erro');
+        return;
+      }
+
+      criarModalGeracaoDocumentoBiblioteca();
+      state.modeloGeracaoDocumento = modelo;
+      state.arquivoGeracaoDocumento = arquivo;
+
+      document.getElementById('tituloGeracaoDocumentoBiblioteca').textContent = modelo.nome_modelo;
+      document.getElementById('subGeracaoDocumentoBiblioteca').textContent =
+        'Modelo baseado em ' + arquivo.nome_arquivo + '.';
+
+      var container = document.getElementById('camposGeracaoDocumentoBiblioteca');
+      container.innerHTML = '';
+
+      (modelo.campos_variaveis || []).forEach(function(campo){
+        var grupo = document.createElement('div');
+        grupo.className = 'modal-campo-bib';
+
+        var label = document.createElement('label');
+        label.textContent = campo.label || campo.chave || 'Campo';
+
+        var input = document.createElement('input');
+        input.type = campo.tipo === 'data' ? 'date' : (campo.tipo === 'numero' ? 'number' : 'text');
+        input.id = 'campoGeracaoBiblioteca_' + campo.chave;
+        input.setAttribute('data-chave', campo.chave);
+        input.autocomplete = 'off';
+
+        grupo.appendChild(label);
+        grupo.appendChild(input);
+        container.appendChild(grupo);
+      });
+
+      if(!(modelo.campos_variaveis || []).length){
+        var vazio = document.createElement('div');
+        vazio.className = 'aviso-preenchimento';
+        vazio.textContent = 'Este modelo não possui campos variáveis. O arquivo original será baixado como documento gerado.';
+        container.appendChild(vazio);
+      }
+
+      document.getElementById('modalGeracaoDocumentoBiblioteca').classList.add('aberto');
+    } catch(erro){
+      showToast('Não foi possível abrir a geração do documento.', 'erro');
+    }
+  };
+
+  async function gerarDocumentoBiblioteca(){
+    var permitido = await validarPermissaoBiblioteca(
+      'modelos_documentos',
+      'gerar',
+      'Você não possui permissão para gerar documentos.'
+    );
+    if(!permitido) return;
+
+    var modelo = state.modeloGeracaoDocumento;
+    var arquivo = state.arquivoGeracaoDocumento;
+    if(!modelo || !arquivo){
+      showToast('Modelo ou arquivo base não encontrado.', 'erro');
+      return;
+    }
+
+    var valores = {};
+    (modelo.campos_variaveis || []).forEach(function(campo){
+      var input = document.getElementById('campoGeracaoBiblioteca_' + campo.chave);
+      valores[campo.chave] = input ? input.value : '';
+    });
+
+    var botao = document.getElementById('btnConfirmarGeracaoDocumentoBiblioteca');
+    botao.disabled = true;
+    botao.textContent = 'Gerando...';
+
+    try {
+      var urlAssinada = await _sb
+        .storage
+        .from(BUCKET_BIBLIOTECA)
+        .createSignedUrl(arquivo.caminho_storage, 300);
+
+      if(urlAssinada.error) throw urlAssinada.error;
+
+      var resposta = await fetch(urlAssinada.data.signedUrl);
+      if(!resposta.ok) throw new Error('Não foi possível baixar o arquivo base.');
+
+      var conteudo = await resposta.arrayBuffer();
+      var ConstrutorZip = window.PizZip;
+      var ConstrutorDocumento = window.docxtemplater || window.Docxtemplater;
+
+      if(!ConstrutorZip || !ConstrutorDocumento){
+        throw new Error('As bibliotecas de geração de DOCX não foram carregadas.');
+      }
+
+      var zip = new ConstrutorZip(conteudo);
+      var documento = new ConstrutorDocumento(zip, {
+        paragraphLoop:true,
+        linebreaks:true,
+        delimiters:{ start:'{', end:'}' }
+      });
+
+      documento.render(valores);
+
+      var blob = documento.getZip().generate({
+        type:'blob',
+        mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
+
+      var urlTemporaria = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href = urlTemporaria;
+      link.download = String(modelo.nome_modelo || arquivo.nome_arquivo || 'documento')
+        .replace(/[^a-zA-Z0-9._ -]/g, '_') + '_preenchido.docx';
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(urlTemporaria);
+
+      document.getElementById('modalGeracaoDocumentoBiblioteca').classList.remove('aberto');
+
+      if(modelo.tipo_saida === 'pdf'){
+        showToast('O documento foi baixado em DOCX. Para obter PDF, abra-o no Word ou LibreOffice e faça a conversão manual.', 'info');
+      } else {
+        showToast('Documento gerado e baixado com sucesso.', 'sucesso');
+      }
+    } catch(erro){
+      showToast('Não foi possível gerar o documento: ' + (erro.message || 'verifique os marcadores do DOCX'), 'erro');
+    } finally {
+      botao.disabled = false;
+      botao.textContent = 'Gerar e baixar';
+    }
+  }
+
+  function adicionarOpcaoEtapa4(popover, texto, acao){
+    var opcao = document.createElement('div');
+    opcao.className = 'opcao-acao-item';
+    opcao.setAttribute('data-op-etapa-4', texto);
+    opcao.textContent = texto;
+    opcao.addEventListener('click', function(evento){
+      evento.stopPropagation();
+      fecharMenuAcoes();
+      acao();
+    });
+    popover.appendChild(opcao);
+  }
+
+  function enriquecerArquivosComEtapa4(){
+    document.querySelectorAll('.item-card.arquivo-card[data-item-id]').forEach(function(card){
+      if(card.getAttribute('data-etapa-4-pronto') === 'true') return;
+
+      var arquivoId = card.getAttribute('data-item-id');
+      var arquivo = (state.arquivosAtivosCategoriaAtual || []).filter(function(item){
+        return item.id === arquivoId;
+      })[0];
+
+      if(!arquivo) return;
+      card.setAttribute('data-etapa-4-pronto', 'true');
+
+      var modelo = obterModeloPorArquivoId(arquivoId);
+      var extensao = obterExtensaoArquivo(arquivo.nome_arquivo);
+      var popover = card.querySelector('.popover-item-acoes');
+      var btnMais = card.querySelector('.btn-mais-item');
+
+      if(modelo){
+        var rodape = card.querySelector('.rodape-item-card');
+        if(rodape){
+          var indicador = document.createElement(state.permissoes.acoes.gerarDocumento ? 'button' : 'span');
+          indicador.className = 'badge-gerador';
+          indicador.textContent = 'Gerador';
+          indicador.title = 'Modelo gerável configurado';
+          if(state.permissoes.acoes.gerarDocumento){
+            indicador.type = 'button';
+            indicador.addEventListener('click', function(evento){
+              evento.stopPropagation();
+              abrirModalGerar(arquivoId);
+            });
+          }
+          rodape.appendChild(indicador);
+        }
+
+        if(state.permissoes.acoes.gerarDocumento){
+          card.addEventListener('click', function(evento){
+            if(evento.target.closest('.btn-mais-item') || evento.target.closest('.popover-item-acoes') || evento.target.closest('.badge-gerador')) return;
+            evento.preventDefault();
+            evento.stopImmediatePropagation();
+            abrirModalGerar(arquivoId);
+          }, true);
+        }
+      }
+
+      if(!popover || !btnMais) return;
+
+      var temAcaoEtapa4 = false;
+
+      if(state.permissoes.acoes.visualizarBiblioteca){
+        adicionarOpcaoEtapa4(popover, 'Histórico de versões', function(){
+          abrirHistoricoVersoesBiblioteca(arquivoId);
+        });
+        temAcaoEtapa4 = true;
+      }
+
+      if(state.permissoes.acoes.criarVersaoArquivo){
+        adicionarOpcaoEtapa4(popover, 'Enviar nova versão', function(){
+          abrirModalNovaVersaoBiblioteca(arquivoId);
+        });
+        temAcaoEtapa4 = true;
+      }
+
+      if(extensao === 'docx' && state.permissoes.acoes.configurarModelo){
+        adicionarOpcaoEtapa4(popover, 'Configurar modelo gerável', function(){
+          abrirConfiguracaoModeloGeravelBiblioteca(arquivoId);
+        });
+        temAcaoEtapa4 = true;
+      }
+
+      if(modelo && state.permissoes.acoes.gerarDocumento){
+        adicionarOpcaoEtapa4(popover, 'Gerar documento', function(){
+          abrirModalGerar(arquivoId);
+        });
+        temAcaoEtapa4 = true;
+      }
+
+      if(temAcaoEtapa4 && btnMais.style.display === 'none'){
+        btnMais.style.display = '';
+      }
+    });
+  }
+
+  renderizarTudo = function(){
+    renderizarTudoEtapa3();
+    enriquecerArquivosComEtapa4();
+  };
+
+  // A Etapa 4 não utiliza interceptador genérico de cliques.
+  void abrirModalGerarEtapa3;
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV Sistema | Marketing e Campanhas (Padrão Metálico/Vidro)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+    --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;
+    --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+    --border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);
+    --text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;
+    --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
+  }
+  [data-theme="light"]{
+    --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+    --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
+    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+    --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
+    --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, color-mix(in srgb,var(--gold) 7%,transparent), transparent 40%),
+      radial-gradient(circle at 90% 90%, color-mix(in srgb,var(--info) 5%,transparent), transparent 45%),
+      linear-gradient(160deg, var(--navy-1) 0%, var(--navy-2) 50%, var(--navy-3) 100%);
+    font-family:'Montserrat',sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+    transition:background .3s ease, color .3s ease;
+  }
+
+  body::before{
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(color-mix(in srgb,var(--gold) 2%,transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb,var(--gold) 2%,transparent) 1px, transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none; z-index:0;
+  }
+
+  .topbar{
+    height:62px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--navy-3) 92%,transparent),color-mix(in srgb,var(--navy-1) 96%,transparent));
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 26px; position:sticky; top:0; z-index:100;
+  }
+  .brand{ display:flex; align-items:center; gap:11px; }
+  .hamburguer{ display:none; flex-direction:column; gap:4px; cursor:pointer; margin-right:8px; }
+  .hamburguer span{ width:18px;height:1.6px; background:var(--gold-light); border-radius:2px; }
+  .crest{ width:24px; height:24px; flex:0 0 auto; }
+  .brand-name{ font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:600; color:var(--text); letter-spacing:0.5px; }
+  .brand-name span{ color:var(--gold-light); }
+  .topbar-direita{ display:flex; align-items:center; gap:20px; }
+
+  .presenca{ position:relative; }
+  .presenca-resumo{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--muted); padding:6px 13px; border:1px solid var(--border-soft); border-radius:20px; background:var(--panel); cursor:pointer; }
+  .ponto-verde{ width:7px;height:7px;border-radius:50%; background:var(--success); box-shadow:0 0 7px var(--success); }
+  .painel-presenca{
+    display:none; position:absolute; top:calc(100% + 8px); right:0; min-width:220px;
+    background:linear-gradient(135deg,var(--panel-solid),var(--navy-2)); backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft); border-radius:12px; padding:10px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45); z-index:120;
+  }
+  .presenca:hover .painel-presenca{ display:block; }
+  .item-presenca{ display:flex; align-items:center; gap:9px; padding:7px 8px; font-size:11.5px; color:var(--text); border-radius:8px; }
+  .item-presenca:hover{ background:color-mix(in srgb,var(--gold) 8%,transparent); }
+
+  .theme-toggle{ width:64px;height:28px; background:var(--panel-2); border:1px solid var(--border-soft); border-radius:20px; position:relative; cursor:pointer; display:flex; align-items:center; padding:0 6px; justify-content:space-between; }
+  .theme-toggle svg{ width:13px;height:13px; flex:0 0 auto; opacity:0.7; }
+  .theme-toggle .knob{ width:18px;height:18px; background:linear-gradient(135deg,var(--gold-light),var(--gold)); border-radius:50%; position:absolute; top:4px; left:3px; transition:left 0.25s ease; }
+  [data-theme="light"] .theme-toggle .knob{ left:41px; }
+  .avatar{ width:32px;height:32px; border-radius:50%; background:linear-gradient(135deg,var(--gold-light),var(--gold)); display:flex;align-items:center;justify-content:center; font-family:'Cormorant Garamond',serif; font-weight:700; font-size:13px; color:var(--navy-1); cursor:pointer; box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 15%,transparent); }
+
+  .overlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:90; }
+  .overlay.aberto{ display:block; }
+
+  .app{ display:flex; position:relative; z-index:1; }
+
+  .sidebar{
+    width:208px; background:var(--panel); backdrop-filter:blur(14px);
+    border-right:1px solid var(--border-soft); min-height:calc(100vh - 62px); padding:22px 0; flex:0 0 auto;
+  }
+  .nav-item{ display:flex; align-items:center; gap:11px; padding:11px 22px; font-size:12.5px; color:var(--muted); cursor:pointer; border-left:2px solid transparent; transition:all 0.2s; }
+  .nav-item:hover{ color:var(--text); background:var(--panel); }
+  .nav-item.ativo{ color:var(--gold-light); border-left:2px solid var(--gold-light); background:linear-gradient(90deg, color-mix(in srgb,var(--gold) 8%,transparent), transparent); }
+  .nav-icon{ width:15px;height:15px;flex:0 0 auto; }
+  .nav-secao{ font-size:9.5px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; padding:17px 22px 7px; }
+
+  @media (max-width: 760px){
+    .sidebar .nav-item{ color:#c3cee0; }
+    .sidebar .nav-item.ativo{ color:var(--gold-light); }
+  }
+
+  .conteudo{ flex:1; padding:28px 30px; min-width:0; }
+
+  .header-pagina{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; gap:14px; flex-wrap:wrap; }
+  .header-pagina h1{ font-family:'Cormorant Garamond',serif; font-size:27px; font-weight:600; color:var(--text); }
+  .contagem{ font-size:12px; color:var(--muted); margin-top:4px; font-weight:300; }
+  .contagem strong{ color:var(--gold-light); font-weight:500; }
+
+  .header-pagina-acoes{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  /* ===== BOTÕES PADRÃO ===== */
+  .btn-dourado{
+    display:flex; align-items:center; gap:7px;
+    padding:10px 18px; border-radius:10px;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:var(--navy-1); font-size:12px; font-weight:700;
+    cursor:pointer; border:none; white-space:nowrap;
+    box-shadow:0 6px 18px color-mix(in srgb,var(--gold) 18%,transparent);
+    transition:transform 0.15s ease;
+  }
+  .btn-dourado:hover{ transform:translateY(-1px); }
+  .btn-tracejado{
+    display:flex; align-items:center; gap:7px;
+    padding:10px 18px; border-radius:10px;
+    border:1px dashed var(--border-soft);
+    color:var(--gold-light); background:color-mix(in srgb,var(--gold) 8%,transparent);
+    font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+  .btn-secundario-claro{
+    padding:10px 16px; border-radius:10px; border:1px solid var(--border-soft);
+    background:var(--panel); color:var(--text);
+    font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap;
+  }
+
+  /* ===== DROPDOWN CUSTOMIZADO (padrão do sistema) ===== */
+  .dropdown-custom{ position:relative; }
+  .dropdown-custom-valor{
+    background:var(--panel); backdrop-filter:blur(10px);
+    border:1px solid var(--border-soft); border-radius:9px;
+    padding:9px 14px; font-size:12px; color:var(--text);
+    cursor:pointer; display:flex; align-items:center; gap:8px; white-space:nowrap;
+    transition:border-color 0.2s;
+  }
+  .dropdown-custom-valor:hover, .dropdown-custom.aberto .dropdown-custom-valor{ border-color:var(--gold-light); }
+  .dropdown-custom-valor .seta-dropdown{ width:7px;height:7px; border-right:1.4px solid var(--muted); border-bottom:1.4px solid var(--muted); transform:rotate(45deg); transition:transform 0.2s; }
+  .dropdown-custom.aberto .seta-dropdown{ transform:rotate(-135deg); }
+
+  .dropdown-custom-lista{
+    position:absolute; top:calc(100% + 6px); left:0; min-width:200px;
+    background:linear-gradient(135deg,var(--panel-solid),var(--navy-2)); backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft); border-radius:10px; padding:6px;
+    z-index:60; display:none; max-height:280px; overflow-y:auto;
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+  }
+  .dropdown-custom.aberto .dropdown-custom-lista{ display:block; }
+  .dropdown-custom-opcao{ padding:9px 11px; border-radius:7px; font-size:12px; color:var(--text); cursor:pointer; transition:background 0.15s; display:flex; align-items:center; justify-content:space-between; }
+  .dropdown-custom-opcao:hover{ background:color-mix(in srgb,var(--gold) 10%,transparent); }
+  .dropdown-custom-opcao.selecionada{ background:color-mix(in srgb,var(--gold) 8%,transparent); color:var(--gold-light); font-weight:600; }
+
+  .barra-filtros-mkt{ display:flex; align-items:center; gap:9px; margin-bottom:24px; flex-wrap:wrap; }
+  .btn-limpar-filtros{ font-size:11.5px; color:var(--gold-light); cursor:pointer; padding:9px 6px; text-decoration:underline; text-decoration-style:dotted; }
+
+  /* ===== FUNCIONALIDADE 5: DASHBOARD/RESUMO DE MARKETING (KPIs) ===== */
+  .grid-kpis-mkt{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));
+    gap:16px;
+    margin-bottom:26px;
+  }
+  .card-kpi{
+    background:var(--panel);
+    backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft);
+    border-radius:16px;
+    padding:20px;
+  }
+  .kpi-topo{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+  .kpi-icone{ width:38px;height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; }
+  .kpi-icone.azul{ background:color-mix(in srgb,var(--info) 15%,transparent); }
+  .kpi-icone.verde{ background:color-mix(in srgb,var(--success) 15%,transparent); }
+  .kpi-icone.dourado{ background:color-mix(in srgb,var(--gold) 15%,transparent); }
+  .kpi-icone.vermelho{ background:color-mix(in srgb,var(--danger) 15%,transparent); }
+  .kpi-variacao{ font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:8px; }
+  .kpi-variacao.positiva{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+  .kpi-variacao.negativa{ background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger); }
+  .kpi-variacao.neutra{ background:color-mix(in srgb,var(--gold) 14%,transparent); color:var(--gold-light); }
+  .kpi-valor{ font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:700; color:var(--text); margin-bottom:3px; }
+  .kpi-label{ font-size:11.5px; color:var(--muted); }
+  .card-kpi.kpi-alerta{ border-color:color-mix(in srgb,var(--danger) 30%,transparent); background:color-mix(in srgb,var(--danger) 5%,transparent); }
+
+  /* ===== FUNCIONALIDADE 1: LISTA DE CAMPANHAS (grid de cards) ===== */
+  .secao-titulo-mkt{
+    font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    color:var(--muted); font-weight:700; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .grid-campanhas{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(290px, 1fr));
+    gap:16px;
+    margin-bottom:34px;
+  }
+  .card-campanha{
+    background:var(--panel);
+    backdrop-filter:blur(20px);
+    border:1px solid var(--border-soft);
+    border-radius:16px;
+    padding:20px;
+    cursor:pointer;
+    transition:transform 0.18s ease, border-color 0.18s ease;
+  }
+  .card-campanha:hover{ transform:translateY(-3px); border-color:color-mix(in srgb,var(--gold) 40%,transparent); }
+
+  .card-campanha-topo{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px; }
+  .card-campanha-nome{ font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:600; color:var(--text); line-height:1.25; }
+  .card-campanha-periodo{ font-size:10.5px; color:var(--muted); margin-top:4px; }
+
+  .badge-status-campanha{ font-size:9.5px; font-weight:700; padding:4px 10px; border-radius:9px; white-space:nowrap; flex:0 0 auto; display:flex; align-items:center; gap:5px; }
+  .badge-status-campanha::before{ content:''; width:6px;height:6px;border-radius:50%; }
+  .bsc-planejada{ background:color-mix(in srgb,var(--info) 14%,transparent); color:var(--info); }
+  .bsc-planejada::before{ background:var(--info); }
+  .bsc-andamento{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+  .bsc-andamento::before{ background:var(--success); }
+  .bsc-finalizada{ background:color-mix(in srgb,var(--muted) 14%,transparent); color:var(--muted); }
+  .bsc-finalizada::before{ background:var(--muted); }
+  .bsc-pausada{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
+  .bsc-pausada::before{ background:var(--warning); }
+
+  .card-campanha-orcamento{ margin:14px 0 12px; }
+  .orcamento-label{ display:flex; justify-content:space-between; font-size:11px; margin-bottom:6px; }
+  .orcamento-label-nome{ color:var(--muted); }
+  .orcamento-label-valor{ font-weight:700; color:var(--text); }
+  .orcamento-trilho{ width:100%; height:8px; border-radius:5px; background:var(--panel-2); overflow:hidden; }
+  .orcamento-fill{ height:100%; border-radius:5px; transition:width 0.3s ease; }
+  .orcamento-fill.fill-ok{ background:linear-gradient(90deg,var(--success),color-mix(in srgb,var(--success) 72%,var(--navy-1))); }
+  .orcamento-fill.fill-atencao{ background:linear-gradient(90deg,var(--warning),color-mix(in srgb,var(--warning) 72%,var(--navy-1))); }
+  .orcamento-fill.fill-excedido{ background:linear-gradient(90deg,var(--danger),color-mix(in srgb,var(--danger) 72%,var(--navy-1))); }
+
+  .card-campanha-rodape{ display:flex; justify-content:space-between; align-items:center; padding-top:10px; border-top:1px solid var(--border-soft); }
+  .card-campanha-responsavel{ display:flex; align-items:center; gap:7px; font-size:10.5px; color:var(--muted); }
+  .mini-avatar-mkt{
+    width:22px;height:22px; border-radius:50%; flex:0 0 auto;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 25%,transparent),color-mix(in srgb,var(--gold) 10%,transparent));
+    display:flex;align-items:center;justify-content:center;
+    font-size:9px; font-weight:700; color:var(--gold-light);
+    border:1px solid var(--border-soft);
+  }
+  .card-campanha-leads{ font-size:10.5px; color:var(--gold-light); font-weight:700; }
+
+  /* ===== MODAIS (padrão do sistema) ===== */
+  .modal-overlay-mkt{
+    display:none; position:fixed; inset:0;
+    background:rgba(5,12,22,0.65); backdrop-filter:blur(4px);
+    z-index:300; align-items:center; justify-content:center; padding:20px; overflow-y:auto;
+  }
+  .modal-overlay-mkt.aberto{ display:flex; }
+
+  .modal-mkt{
+    width:100%; max-width:460px;
+    background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));
+    backdrop-filter:blur(24px);
+    border:1px solid var(--border-soft);
+    border-radius:18px;
+    padding:28px;
+    box-shadow:0 30px 70px rgba(0,0,0,0.5);
+    margin:auto;
+  }
+  .modal-mkt.modal-largo{ max-width:760px; }
+  .modal-mkt h3{ font-family:'Cormorant Garamond',serif; font-size:20px; color:var(--text); margin-bottom:6px; }
+  .modal-mkt .modal-sub{ font-size:11.5px; color:var(--muted); margin-bottom:18px; line-height:1.6; }
+
+  .modal-campo-mkt{ margin-bottom:14px; }
+  .modal-campo-mkt label{
+    display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:0.5px;
+    color:var(--gold-light); margin-bottom:7px; font-weight:600;
+  }
+  .modal-campo-mkt input, .modal-campo-mkt textarea{
+    width:100%; background:var(--panel-2); border:1px solid var(--border-soft);
+    border-radius:9px; padding:9px 12px; color:var(--text); font-size:13px;
+    font-family:'Montserrat',sans-serif; outline:none;
+  }
+  .modal-campo-mkt input:focus, .modal-campo-mkt textarea:focus{ border-color:var(--gold-light); }
+  .modal-campo-mkt textarea{ resize:vertical; min-height:64px; }
+  .linha-2-campos{ display:flex; gap:12px; }
+  .linha-2-campos > div{ flex:1; }
+
+  .modal-botoes-mkt{ display:flex; gap:10px; margin-top:6px; }
+  .modal-botoes-mkt button{ flex:1; padding:11px; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer; border:none; }
+  .btn-cancelar-mkt{ background:var(--panel-2); color:var(--muted); }
+  .btn-confirmar-mkt{ background:linear-gradient(135deg,var(--gold-light),var(--gold)); color:var(--navy-1); }
+
+  .btn-fechar-modal-mkt{
+    width:30px;height:30px; border-radius:9px;
+    background:var(--panel-2); border:1px solid var(--border-soft);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    flex:0 0 auto;
+  }
+
+  /* ===== MODAL DETALHE DA CAMPANHA: abas internas ===== */
+  .modal-detalhe-header{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; gap:10px; }
+  .modal-detalhe-titulo-bloco{ flex:1; min-width:0; }
+  .modal-detalhe-titulo{ font-family:'Cormorant Garamond',serif; font-size:21px; font-weight:600; color:var(--text); }
+  .modal-detalhe-sub{ font-size:11px; color:var(--muted); margin-top:3px; }
+
+  .abas-detalhe-campanha{ display:flex; gap:6px; border-bottom:1px solid var(--border-soft); margin-bottom:18px; flex-wrap:wrap; }
+  .aba-detalhe{
+    padding:9px 14px; font-size:12px; color:var(--muted); cursor:pointer;
+    border-bottom:2px solid transparent; transition:all 0.18s ease;
+  }
+  .aba-detalhe:hover{ color:var(--text); }
+  .aba-detalhe.ativa{ color:var(--gold-light); border-bottom-color:var(--gold-light); font-weight:600; }
+
+  .painel-aba{ display:none; }
+  .painel-aba.visivel{ display:block; }
+
+  /* ===== FUNCIONALIDADE 2: LANÇAMENTOS FINANCEIROS ===== */
+  .resumo-financeiro-campanha{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin-bottom:18px;
+  }
+  .mini-resumo-financ{
+    background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:10px; padding:11px 13px;
+  }
+  .mini-resumo-financ-label{ font-size:9.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; }
+  .mini-resumo-financ-valor{ font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:700; margin-top:3px; }
+  .mini-resumo-financ-valor.cor-verde{ color:var(--success); }
+  .mini-resumo-financ-valor.cor-amarelo{ color:var(--warning); }
+  .mini-resumo-financ-valor.cor-vermelho{ color:var(--danger); }
+  .mini-resumo-financ-valor.cor-dourado{ color:var(--gold-light); }
+
+  .tabela-lancamentos{ display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto; margin-bottom:14px; }
+  .linha-lancamento{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 13px;
+    background:var(--panel);
+    border:1px solid var(--border-soft);
+    border-radius:10px;
+  }
+  .lancamento-info{ flex:1; min-width:0; }
+  .lancamento-descricao{ font-size:12.5px; font-weight:600; color:var(--text); }
+  .lancamento-meta{ font-size:10.5px; color:var(--muted); margin-top:2px; }
+  .lancamento-valor{ font-size:13px; font-weight:700; color:var(--text); flex:0 0 auto; }
+
+  .badge-status-pagamento{ font-size:9.5px; font-weight:700; padding:3px 9px; border-radius:9px; flex:0 0 auto; white-space:nowrap; }
+  .bsp-previsto{ background:color-mix(in srgb,var(--info) 14%,transparent); color:var(--info); }
+  .bsp-curso{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
+  .bsp-realizado{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+
+  /* ===== FUNCIONALIDADE 3: BIBLIOTECA DE MATERIAIS ===== */
+  .grid-materiais{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px;
+  }
+  .card-material{
+    background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:13px; padding:15px; cursor:pointer;
+    transition:border-color 0.18s ease, transform 0.18s ease;
+  }
+  .card-material:hover{ border-color:color-mix(in srgb,var(--gold) 35%,transparent); transform:translateY(-2px); }
+
+  .icone-tipo-material{
+    width:36px;height:36px; border-radius:9px; margin-bottom:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb,var(--gold) 12%,transparent);
+  }
+  .card-material-nome{ font-size:12.5px; font-weight:600; color:var(--text); line-height:1.35; margin-bottom:4px; }
+  .card-material-data{ font-size:10px; color:var(--muted); margin-bottom:9px; }
+
+  .badge-status-material{ font-size:9px; font-weight:700; padding:3px 9px; border-radius:8px; display:inline-flex; align-items:center; gap:5px; }
+  .badge-status-material::before{ content:''; width:5px;height:5px;border-radius:50%; }
+  .bsm-rascunho{ background:color-mix(in srgb,var(--muted) 14%,transparent); color:var(--muted); }
+  .bsm-rascunho::before{ background:var(--muted); }
+  .bsm-revisao{ background:color-mix(in srgb,var(--warning) 14%,transparent); color:var(--warning); }
+  .bsm-revisao::before{ background:var(--warning); }
+  .bsm-aprovado{ background:color-mix(in srgb,var(--success) 14%,transparent); color:var(--success); }
+  .bsm-aprovado::before{ background:var(--success); }
+  .bsm-publicado{ background:color-mix(in srgb,var(--info) 14%,transparent); color:var(--info); }
+  .bsm-publicado::before{ background:var(--info); }
+  .bsm-reprovado{ background:color-mix(in srgb,var(--danger) 14%,transparent); color:var(--danger); }
+  .bsm-reprovado::before{ background:var(--danger); }
+
+  /* toggle de visualização (aprovador/colaborador) */
+  .toggle-visualizacao{
+    display:flex; align-items:center; gap:9px;
+    background:var(--panel); border:1px solid var(--border-soft);
+    border-radius:20px; padding:5px 6px 5px 14px; margin-bottom:16px; width:fit-content;
+  }
+  .toggle-visualizacao-label{ font-size:11px; color:var(--muted); }
+  .toggle-visualizacao-switch{
+    width:42px;height:22px; background:var(--panel-2); border:1px solid var(--border-soft);
+    border-radius:20px; position:relative; cursor:pointer; flex:0 0 auto;
+  }
+  .toggle-visualizacao-bolinha{
+    width:16px;height:16px; background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    border-radius:50%; position:absolute; top:2px; left:2px; transition:left 0.22s ease;
+  }
+  .toggle-visualizacao-switch.ativo .toggle-visualizacao-bolinha{ left:23px; }
+  .toggle-visualizacao-texto{ font-size:11px; font-weight:700; color:var(--gold-light); min-width:140px; }
+
+  /* painel de detalhe do material */
+  .preview-material{
+    width:100%; height:160px; border-radius:12px; margin-bottom:16px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 12%,transparent),color-mix(in srgb,var(--info) 8%,transparent));
+    display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--border-soft);
+  }
+
+  .historico-aprovacao{ margin-top:16px; }
+  .item-historico-aprovacao{
+    display:flex; gap:11px; padding:10px 0;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .item-historico-aprovacao:last-child{ border-bottom:none; }
+  .icone-historico{ width:28px;height:28px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+  .icone-historico.hist-aprovado{ background:color-mix(in srgb,var(--success) 15%,transparent); }
+  .icone-historico.hist-reprovado{ background:color-mix(in srgb,var(--danger) 15%,transparent); }
+  .icone-historico.hist-ajuste{ background:color-mix(in srgb,var(--warning) 15%,transparent); }
+  .corpo-historico{ flex:1; min-width:0; }
+  .titulo-historico{ font-size:12px; color:var(--text); font-weight:500; }
+  .meta-historico{ font-size:10px; color:var(--muted); margin-top:2px; }
+  .comentario-historico{ font-size:11px; color:var(--muted); margin-top:4px; font-style:italic; line-height:1.5; }
+
+  .botoes-aprovacao-material{ display:flex; gap:8px; margin-top:18px; flex-wrap:wrap; }
+  .btn-aprovar-mat{ flex:1; padding:11px; border-radius:10px; border:none; cursor:pointer; font-size:12px; font-weight:700; background:color-mix(in srgb,var(--success) 15%,transparent); color:var(--success); }
+  .btn-reprovar-mat{ flex:1; padding:11px; border-radius:10px; border:none; cursor:pointer; font-size:12px; font-weight:700; background:color-mix(in srgb,var(--danger) 15%,transparent); color:var(--danger); }
+  .btn-ajuste-mat{ flex:1; padding:11px; border-radius:10px; border:none; cursor:pointer; font-size:12px; font-weight:700; background:color-mix(in srgb,var(--warning) 15%,transparent); color:var(--warning); }
+
+  .aviso-sem-permissao-mat{
+    margin-top:16px; padding:12px 14px; border-radius:10px;
+    background:color-mix(in srgb,var(--info) 8%,transparent); border:1px solid color-mix(in srgb,var(--info) 25%,transparent);
+    font-size:11.5px; color:var(--muted); line-height:1.6;
+  }
+
+  /* ===== FUNCIONALIDADE 4: PERMISSÕES DE MARKETING ===== */
+  .link-gerenciar-permissoes{
+    display:flex; align-items:center; gap:7px;
+    font-size:11.5px; color:var(--gold-light); cursor:pointer;
+    text-decoration:underline; text-decoration-style:dotted;
+  }
+
+  .aviso-admin-irrestrito{
+    display:flex; align-items:center; gap:10px;
+    background:color-mix(in srgb,var(--gold) 7%,transparent); border:1px solid var(--border-soft);
+    border-radius:11px; padding:12px 14px; margin-bottom:18px;
+    font-size:11.5px; color:var(--muted); line-height:1.5;
+  }
+  .aviso-admin-irrestrito strong{ color:var(--gold-light); }
+
+  .bloco-cargo-permissoes{ margin-bottom:8px; border:1px solid var(--border-soft); border-radius:12px; overflow:hidden; }
+  .cargo-permissoes-header{
+    display:flex; justify-content:space-between; align-items:center;
+    padding:12px 15px; background:var(--panel); cursor:pointer;
+  }
+  .cargo-permissoes-nome{ font-size:12.5px; font-weight:700; color:var(--text); }
+  .cargo-permissoes-aplicar-todos{ font-size:10px; color:var(--gold-light); font-weight:600; cursor:pointer; text-transform:none; }
+
+  .lista-colaboradores-permissao{ padding:4px 15px 12px; }
+  .linha-colaborador-permissao{
+    display:flex; align-items:center; gap:12px;
+    padding:9px 0; border-bottom:1px solid var(--border-soft);
+  }
+  .linha-colaborador-permissao:last-child{ border-bottom:none; }
+  .nome-colaborador-permissao{ flex:1; min-width:0; font-size:12px; color:var(--text); display:flex; align-items:center; gap:9px; }
+
+  .grupo-toggles-permissao{ display:flex; gap:16px; flex:0 0 auto; }
+  .item-toggle-permissao{ display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .item-toggle-permissao-label{ font-size:8.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+  .switch-permissao{
+    width:34px;height:18px; background:var(--panel-2); border:1px solid var(--border-soft);
+    border-radius:18px; position:relative; cursor:pointer;
+  }
+  .switch-permissao-bolinha{
+    width:13px;height:13px; background:var(--muted); border-radius:50%;
+    position:absolute; top:1.5px; left:1.5px; transition:left 0.2s ease, background 0.2s ease;
+  }
+  .switch-permissao.marcado{ border-color:color-mix(in srgb,var(--gold) 40%,transparent); }
+  .switch-permissao.marcado .switch-permissao-bolinha{ left:18px; background:linear-gradient(135deg,var(--gold-light),var(--gold)); }
+
+  /* ===== TOAST DE NOTIFICAÇÃO (padrão do sistema) ===== */
+  #toast-container{ position:fixed; bottom:28px; right:28px; z-index:9999; display:flex; flex-direction:column; gap:10px; }
+  .toast{ padding:12px 18px; border-radius:10px; font-size:12.5px; font-weight:500; color:var(--text); max-width:340px;
+    background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));
+    border:1px solid var(--border-soft); box-shadow:var(--shadow); animation:toastIn 0.3s ease; }
+  .toast.sucesso{ border-left:3px solid var(--success); }
+  .toast.erro{ border-left:3px solid var(--danger); }
+  .toast.info{ border-left:3px solid var(--info); }
+  @keyframes toastIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+  .toast-texto strong{ color:var(--gold-light); }
+
+  @media (max-width: 980px){
+    .sidebar{ width:178px; }
+    .nav-item{ padding:10px 16px; font-size:12px; }
+    .resumo-financeiro-campanha{ grid-template-columns:repeat(2, 1fr); }
+  }
+
+  @media (max-width: 760px){
+    .hamburguer{ display:flex; }
+    .sidebar{
+      position:fixed; left:-220px; top:62px;
+      height:calc(100vh - 62px); width:210px; z-index:95;
+      transition:left 0.28s ease; box-shadow:4px 0 24px rgba(0,0,0,0.4);
+    }
+    .sidebar.aberta{ left:0; }
+    .conteudo{ padding:16px; }
+    .header-pagina h1{ font-size:22px; }
+    .grid-kpis-mkt{ grid-template-columns:repeat(2, 1fr); }
+    .grid-campanhas{ grid-template-columns:1fr; }
+    .grid-materiais{ grid-template-columns:repeat(2, 1fr); }
+    .resumo-financeiro-campanha{ grid-template-columns:repeat(2, 1fr); }
+    .grupo-toggles-permissao{ gap:10px; }
+  }
+
+
+  /* ===== TEMA RESPONSIVO E ÍCONES SEMÂNTICOS ===== */
+  .topbar{background:linear-gradient(135deg,color-mix(in srgb,var(--navy-3) 92%,transparent),color-mix(in srgb,var(--navy-1) 96%,transparent));}
+  [data-theme="light"] .topbar{background:linear-gradient(135deg,var(--panel-solid),var(--navy-1));}
+  .brand-name{color:var(--text);}
+  .brand-name span{color:var(--gold-light);}
+  [data-theme="light"] .brand-name span{color:var(--gold);}
+  .presenca-resumo,.theme-toggle,.btn-secundario-claro,.dropdown-custom-valor,.card-kpi,.card-campanha,.painel-aba,.card-sla-resposta{background:var(--panel);}
+  .painel-presenca,.dropdown-custom-lista,.modal-mkt,.toast{background:linear-gradient(135deg,var(--panel-solid),var(--navy-2));}
+  .modal-campo-mkt input,.modal-campo-mkt textarea{background:var(--panel);border-color:var(--border-soft);color:var(--text);}
+  .sidebar{background:var(--panel);}
+  .nav-item:hover{background:color-mix(in srgb,var(--text) 3%,transparent);}
+  .nav-item.ativo{background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 10%,transparent),transparent);}
+  .nav-secao,.secao-titulo-mkt,.meta-historico,.item-toggle-permissao-label{color:var(--muted);}
+  .nav-item .nav-icon{color:var(--muted);}
+  .nav-item.ativo .nav-icon{color:var(--gold-light);}
+  .btn-dourado svg,.btn-confirmar-mkt svg{color:var(--navy-1);}
+  .btn-tracejado svg,.link-gerenciar-permissoes svg,.dropdown-custom-valor svg{color:var(--gold-light);}
+  .btn-fechar-modal-mkt{color:var(--muted);background:var(--panel-2);}
+  .kpi-icone.azul{background:color-mix(in srgb,var(--info) 15%,transparent);color:var(--info);}
+  .kpi-icone.verde{background:color-mix(in srgb,var(--success) 15%,transparent);color:var(--success);}
+  .kpi-icone.dourado{background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--gold-light);}
+  .kpi-icone.vermelho{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger);}
+  .kpi-icone svg,.icone-tipo-material svg,.preview-material svg,.icone-historico svg{color:inherit;}
+  .icone-tipo-material,.preview-material{color:var(--gold-light);}
+  .icone-historico.hist-aprovado{color:var(--success);}
+  .icone-historico.hist-reprovado{color:var(--danger);}
+  .icone-historico.hist-ajuste{color:var(--warning);}
+  .orcamento-trilho,.toggle-visualizacao,.toggle-visualizacao-switch,.mini-resumo-financ,.linha-lancamento,.card-material,.bloco-cargo-permissoes,.cargo-permissoes-header,.badge-status-material,.badge-status-campanha,.badge-status-pagamento{border-color:var(--border-soft);}
+  .orcamento-trilho{background:var(--panel-2);}
+  .card-campanha-rodape,.abas-detalhe-campanha,.item-historico-aprovacao,.linha-colaborador-permissao{border-color:var(--border-soft);}
+  .card-campanha:hover,.card-material:hover{border-color:color-mix(in srgb,var(--gold) 40%,transparent);}
+  .card-kpi.kpi-alerta{border-color:color-mix(in srgb,var(--danger) 30%,transparent);background:color-mix(in srgb,var(--danger) 5%,var(--panel));}
+  .kpi-variacao.positiva,.bsc-andamento,.bsp-realizado,.bsm-aprovado,.icone-historico.hist-aprovado,.btn-aprovar-mat{background:color-mix(in srgb,var(--success) 14%,transparent);}
+  .kpi-variacao.negativa,.bsm-reprovado,.icone-historico.hist-reprovado,.btn-reprovar-mat{background:color-mix(in srgb,var(--danger) 14%,transparent);}
+  .kpi-variacao.neutra,.bsc-pausada,.bsp-curso,.bsm-revisao,.icone-historico.hist-ajuste,.btn-ajuste-mat{background:color-mix(in srgb,var(--warning) 14%,transparent);}
+  .bsc-planejada,.bsp-previsto,.bsm-publicado{background:color-mix(in srgb,var(--info) 14%,transparent);}
+  .bsc-finalizada,.bsm-rascunho{background:color-mix(in srgb,var(--muted) 14%,transparent);}
+  .aviso-sem-permissao-mat{background:color-mix(in srgb,var(--info) 8%,transparent);border-color:color-mix(in srgb,var(--info) 25%,transparent);}
+  .aviso-admin-irrestrito{background:color-mix(in srgb,var(--gold) 7%,transparent);}
+  .aviso-admin-irrestrito svg{color:var(--gold-light);}
+  .switch-permissao-bolinha{background:var(--muted);}
+  .switch-permissao.marcado{border-color:color-mix(in srgb,var(--gold) 40%,transparent);}
+  .seta-ir-resultado-mkt{color:var(--muted);}
+  [data-theme="light"] .bsc-planejada,[data-theme="light"] .bsp-previsto,[data-theme="light"] .bsm-publicado{color:color-mix(in srgb,var(--info) 65%,var(--navy-1));}
+  [data-theme="light"] .bsc-andamento,[data-theme="light"] .bsp-realizado,[data-theme="light"] .bsm-aprovado,[data-theme="light"] .kpi-variacao.positiva{color:color-mix(in srgb,var(--success) 72%,var(--navy-1));}
+  [data-theme="light"] .bsc-pausada,[data-theme="light"] .bsp-curso,[data-theme="light"] .bsm-revisao,[data-theme="light"] .kpi-variacao.neutra{color:color-mix(in srgb,var(--warning) 72%,var(--navy-1));}
+  [data-theme="light"] .bsm-reprovado,[data-theme="light"] .kpi-variacao.negativa{color:color-mix(in srgb,var(--danger) 72%,var(--navy-1));}
+
+
+  /* ===== EXPANSÃO: GESTÃO DE CAMPANHAS EM KANBAN E LISTA ===== */
+  .secao-campanhas-header,.biblioteca-mkt-header{gap:16px;align-items:flex-end;}
+  .secao-campanhas-header > div:first-child,.biblioteca-mkt-header > div:first-child{display:flex;flex-direction:column;gap:5px;}
+  .secao-campanhas-header small,.biblioteca-mkt-header small{font-size:10.5px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:400;max-width:620px;line-height:1.45;}
+  .campaign-view-switch{display:flex;gap:4px;padding:4px;background:var(--panel);border:1px solid var(--border-soft);border-radius:10px;}
+  .campaign-view-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:7px;color:var(--muted);font-size:11.5px;font-weight:600;transition:background .18s ease,color .18s ease;}
+  .campaign-view-btn.active{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);}
+  .campaign-workspace{margin-bottom:34px;min-height:300px;}
+  .kanban-campanhas-view{display:block;}
+  .kanban-campanhas-view.hidden,.lista-campanhas-view.hidden{display:none;}
+  .kanban-campanhas-board{display:flex;gap:14px;overflow-x:auto;padding:2px 2px 16px;scrollbar-color:var(--gold-deep) transparent;}
+  .kanban-campanhas-board::-webkit-scrollbar{height:8px;}
+  .kanban-campanhas-board::-webkit-scrollbar-thumb{background:var(--gold-deep);border-radius:12px;}
+  .kanban-campanha-coluna{flex:0 0 292px;min-height:280px;background:var(--panel);border:1px solid var(--border-soft);border-radius:15px;overflow:hidden;transition:border-color .25s ease,background .25s ease,box-shadow .25s ease;}
+  .kanban-campanha-coluna.drop-ativa{border-color:var(--gold-light);background:color-mix(in srgb,var(--gold) 7%,var(--panel));box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 25%,transparent),0 12px 30px color-mix(in srgb,var(--gold) 8%,transparent);}
+  .kanban-campanha-coluna-cabecalho{display:flex;align-items:center;gap:8px;padding:13px 14px;border-bottom:1px solid var(--border-soft);}
+  .kanban-status-dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 4px color-mix(in srgb,currentColor 14%,transparent);}
+  .kanban-status-dot.planejada{background:var(--info);color:var(--info);}
+  .kanban-status-dot.andamento{background:var(--success);color:var(--success);}
+  .kanban-status-dot.pausada{background:var(--warning);color:var(--warning);}
+  .kanban-status-dot.finalizada{background:var(--muted);color:var(--muted);}
+  .kanban-campanha-coluna-titulo{font-size:12px;font-weight:700;color:var(--text);flex:1;}
+  .kanban-campanha-coluna-qtd{font-size:9.5px;color:var(--muted);padding:3px 7px;border-radius:8px;background:var(--panel-2);border:1px solid var(--border-soft);}
+  .kanban-campanha-coluna-corpo{padding:10px;min-height:222px;display:flex;flex-direction:column;gap:9px;transition:background .2s ease;}
+  .kanban-campanha-coluna-corpo:empty::after{content:'Arraste campanhas para esta etapa';display:flex;align-items:center;justify-content:center;min-height:112px;color:var(--muted);font-size:10.5px;text-align:center;border:1px dashed var(--border-soft);border-radius:10px;padding:12px;}
+  .campaign-kanban-card{background:var(--panel-2);border:1px solid var(--border-soft);border-radius:12px;padding:13px;cursor:grab;transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .22s ease,border-color .22s ease,opacity .18s ease;will-change:transform;animation:campaignEnter .32s ease both;}
+  .campaign-kanban-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--gold) 55%,var(--border-soft));box-shadow:0 12px 24px rgba(0,0,0,.18);}
+  .campaign-kanban-card.dragging{opacity:.3;transform:scale(.94);}
+  .campaign-kanban-card:active{cursor:grabbing;}
+  @keyframes campaignCardLanding{0%{transform:scale(.9) translateY(-6px);box-shadow:0 0 0 color-mix(in srgb,var(--gold) 0%,transparent)}55%{transform:scale(1.025) translateY(1px);box-shadow:0 10px 24px color-mix(in srgb,var(--gold) 22%,transparent)}100%{transform:scale(1) translateY(0);box-shadow:0 0 0 color-mix(in srgb,var(--gold) 0%,transparent)}}
+  .campaign-kanban-card.pousando{animation:campaignCardLanding .42s cubic-bezier(.22,1,.36,1);}
+  @keyframes campaignColumnReceive{0%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 60%,transparent),0 0 24px color-mix(in srgb,var(--gold) 18%,transparent)}100%{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 0%,transparent),0 0 0 color-mix(in srgb,var(--gold) 0%,transparent)}}
+  .kanban-campanha-coluna.recebeu-campanha{animation:campaignColumnReceive .6s ease-out;}
+  .campaign-drop-indicator{height:3px;background:var(--gold-light);border-radius:2px;margin:2px 0;box-shadow:0 0 8px color-mix(in srgb,var(--gold) 60%,transparent);animation:campaignDropIndicatorIn .16s ease both;}
+  @keyframes campaignDropIndicatorIn{from{opacity:0;transform:scaleX(.55)}to{opacity:1;transform:scaleX(1)}}
+  .campaign-kanban-card-topo{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;}
+  .campaign-kanban-card-nome{font-family:'Cormorant Garamond',serif;font-size:17px;line-height:1.18;font-weight:600;color:var(--text);flex:1;}
+  .campaign-kanban-card-periodo{font-size:9.8px;color:var(--muted);line-height:1.45;}
+  .campaign-kanban-card-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px;padding-top:10px;border-top:1px solid var(--border-soft);}
+  .campaign-kanban-card-resp{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);min-width:0;}
+  .campaign-kanban-card-resp span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:134px;}
+  .campaign-kanban-card-leads{font-size:10px;font-weight:700;color:var(--gold-light);white-space:nowrap;}
+  .campaign-kanban-card-orcamento{margin-top:10px;}
+  .campaign-kanban-card-orcamento .orcamento-label{font-size:10px;}
+  .lista-campanhas-view{display:none;animation:campaignEnter .26s ease both;}
+  .lista-campanhas-view.visible{display:block;}
+  .lista-campanhas-table{border:1px solid var(--border-soft);border-radius:15px;overflow:hidden;background:var(--panel);}
+  .lista-campanhas-head,.lista-campanhas-row{display:grid;grid-template-columns:minmax(220px,1.7fr) minmax(130px,.9fr) minmax(140px,.85fr) minmax(120px,.7fr) minmax(100px,.55fr);gap:16px;align-items:center;padding:13px 16px;}
+  .lista-campanhas-head{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;background:var(--panel-2);border-bottom:1px solid var(--border-soft);}
+  .lista-campanhas-row{font-size:11px;color:var(--muted);border-bottom:1px solid var(--border-soft);cursor:pointer;transition:background .15s ease;}
+  .lista-campanhas-row:last-child{border-bottom:0;}
+  .lista-campanhas-row:hover{background:color-mix(in srgb,var(--gold) 7%,transparent);}
+  .lista-campanhas-nome{display:flex;flex-direction:column;gap:3px;min-width:0;}
+  .lista-campanhas-nome strong{font-size:12.5px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .lista-campanhas-nome span{font-size:10px;color:var(--muted);}
+  .lista-campanhas-status{justify-self:start;}
+  .lista-campanhas-orcamento{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .lista-campanhas-orcamento .orcamento-trilho{height:6px;}
+  .lista-empty{padding:34px;text-align:center;color:var(--muted);font-size:11.5px;}
+  @keyframes campaignEnter{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ===== EXPANSÃO: BIBLIOTECA CRIATIVA COM PASTAS ===== */
+  .biblioteca-mkt-acoes{display:flex;gap:9px;flex-wrap:wrap;}
+  .biblioteca-mkt-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:15px;flex-wrap:wrap;}
+  .biblioteca-mkt-breadcrumb{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;}
+  .biblioteca-mkt-crumb{color:var(--muted);cursor:pointer;padding:4px 7px;border-radius:7px;transition:background .15s ease,color .15s ease;}
+  .biblioteca-mkt-crumb:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--text);}
+  .biblioteca-mkt-crumb.current{color:var(--gold-light);font-weight:700;cursor:default;}
+  .biblioteca-mkt-separator{color:var(--muted);opacity:.72;}
+  .grid-pastas-mkt{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px;margin-bottom:14px;}
+  .folder-card-mkt{position:relative;display:flex;flex-direction:column;gap:8px;min-height:124px;padding:16px;border-radius:13px;background:var(--panel);border:1px solid var(--border-soft);cursor:pointer;transition:transform .17s ease,border-color .17s ease,box-shadow .17s ease;animation:campaignEnter .3s ease both;}
+  .folder-card-mkt:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--gold) 54%,var(--border-soft));box-shadow:0 12px 25px rgba(0,0,0,.16);}
+  .folder-card-mkt.drag-target{border-color:var(--gold-light);background:color-mix(in srgb,var(--gold) 10%,var(--panel));}
+  .folder-card-icon{width:41px;height:41px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--gold-light);}
+  .folder-card-title{font-size:12.5px;font-weight:700;color:var(--text);padding-right:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .folder-card-meta{font-size:10px;color:var(--muted);}
+  .folder-card-menu-trigger{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--muted);background:var(--panel-2);opacity:0;transition:opacity .15s ease,background .15s ease;}
+  .folder-card-mkt:hover .folder-card-menu-trigger{opacity:1;}
+  .folder-card-menu-trigger:hover{background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--gold-light);}
+  .folder-menu-portal{position:fixed;inset:0;z-index:6000;pointer-events:none;}
+  .folder-menu-popover{position:fixed;width:190px;padding:7px;background:var(--panel-solid);border:1px solid var(--border-soft);border-radius:11px;box-shadow:var(--shadow);pointer-events:auto;opacity:0;transform:translateY(-4px);transition:opacity .14s ease,transform .14s ease;}
+  .folder-menu-popover.open{opacity:1;transform:translateY(0);}
+  .folder-menu-option{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;border-radius:7px;color:var(--text);font-size:11.5px;transition:background .15s ease;}
+  .folder-menu-option:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);}
+  .folder-menu-option.danger{color:var(--danger);}
+  .folder-menu-option.danger:hover{background:color-mix(in srgb,var(--danger) 10%,transparent);}
+  .folder-empty-state{grid-column:1/-1;border:1px dashed var(--border-soft);border-radius:12px;padding:24px;text-align:center;font-size:11px;color:var(--muted);}
+  .material-library-separator{grid-column:1/-1;display:flex;align-items:center;gap:10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:6px 0 0;}
+  .material-library-separator::after{content:'';height:1px;background:var(--border-soft);flex:1;}
+  .modal-overlay-mkt .dropdown-custom-lista{z-index:500;}
+
+  [data-theme="light"] .kanban-campanha-coluna,.lista-campanhas-table,.folder-card-mkt{box-shadow:0 12px 28px rgba(81,61,20,.06);}
+  [data-theme="light"] .campaign-kanban-card:hover,.folder-card-mkt:hover{box-shadow:0 12px 25px rgba(81,61,20,.12);}
+
+  @media (max-width: 860px){
+    .lista-campanhas-head{display:none;}
+    .lista-campanhas-row{grid-template-columns:1fr auto;gap:10px;}
+    .lista-campanhas-row > :not(.lista-campanhas-nome):not(.lista-campanhas-status){display:none;}
+  }
+  @media (max-width: 560px){
+    .secao-campanhas-header,.biblioteca-mkt-header{align-items:stretch;}
+    .campaign-view-switch{width:100%;}
+    .campaign-view-btn{justify-content:center;flex:1;}
+    .biblioteca-mkt-acoes{width:100%;}
+    .biblioteca-mkt-acoes > button{flex:1;justify-content:center;}
+    .kanban-campanha-coluna{flex-basis:84vw;}
+    .grid-pastas-mkt{grid-template-columns:1fr;}
+  }
+
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="overlay" id="overlay"></div>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;">
+    <div class="hamburguer" id="hamburguer"><span></span><span></span><span></span></div>
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 220 220">
+        <defs>
+          <linearGradient id="metalTop" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#e8d2a0"/>
+            <stop offset="35%" stop-color="#c9a05c"/>
+            <stop offset="55%" stop-color="#8a6a38"/>
+            <stop offset="75%" stop-color="#d8b878"/>
+            <stop offset="100%" stop-color="#f0e4c8"/>
+          </linearGradient>
+        </defs>
+        <g transform="translate(110,110)">
+          <path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#metalTop)" stroke-width="6"/>
+          <path d="M-22 0l13 13 28-30" stroke="url(#metalTop)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </g>
+      </svg>
+      <div class="brand-name">VMM<span>ADV</span></div>
+    </div>
+  </div>
+
+  <div class="topbar-direita">
+    <div class="presenca">
+      <div class="presenca-resumo"><div class="ponto-verde"></div><span>7 online agora</span></div>
+      <div class="painel-presenca">
+        <div class="item-presenca"><div class="ponto-verde"></div>Dr. Victor</div>
+        <div class="item-presenca"><div class="ponto-verde"></div>Hevelyn</div>
+        <div class="item-presenca"><div class="ponto-verde"></div>Camila Souza</div>
+        <div class="item-presenca"><div class="ponto-verde"></div>Bruno Lima</div>
+        <div class="item-presenca"><div class="ponto-verde"></div>Tuany Martiniano</div>
+      </div>
+    </div>
+    <button class="theme-toggle" id="toggleTema" aria-label="Alternar tema">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="2"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <div class="knob"></div>
+      <svg viewBox="0 0 24 24" fill="none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="avatar">VM</div>
+  </div>
+</div>
+
+<div class="app">
+
+  <div class="sidebar" id="sidebar">
+    <div class="nav-secao">Visão Geral</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-secao">Operação</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+      Lista de Processos
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>
+      Kanban
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>
+      Calendário
+    </div>
+    <div class="nav-secao">Equipe</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>
+      Chat Interno
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>
+      Ponto Eletrônico
+    </div>
+    <div class="nav-secao">Gestão</div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 18V9l9-6 9 6v9" stroke="currentColor" stroke-width="1.5"/></svg>
+      Financeiro
+    </div>
+    <div class="nav-item ativo">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="1.5"/></svg>
+      Marketing
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>
+      Biblioteca
+    </div>
+  </div>
+
+  <div class="conteudo">
+
+    <div class="header-pagina">
+      <div>
+        <h1>Marketing / Campanhas</h1>
+        <div class="contagem">Visão consolidada: <strong id="textoFiltroAtivoMkt">Todos os Status · Este mês</strong></div>
+      </div>
+      <div class="header-pagina-acoes">
+        <div class="link-gerenciar-permissoes" id="btnAbrirPermissoes">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 3l8 3.5v5.5c0 5-3.5 8-8 9.5-4.5-1.5-8-4.5-8-9.5V6.5L12 3z" stroke="currentColor" stroke-width="1.5"/></svg>
+          Gerenciar Permissões de Marketing
+        </div>
+        <div class="btn-dourado" id="btnNovaCampanha">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Nova Campanha
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FUNCIONALIDADE 5: Filtros (Período, Status, Responsável) ===== -->
+    <div class="barra-filtros-mkt">
+      <div class="dropdown-custom" id="dropFiltroPeriodoMkt" data-valor="Este mês">
+        <div class="dropdown-custom-valor">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span>Este mês</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-custom-lista">
+          <div class="dropdown-custom-opcao selecionada">Este mês</div>
+          <div class="dropdown-custom-opcao">Últimos 7 dias</div>
+          <div class="dropdown-custom-opcao">Este ano</div>
+          <div class="dropdown-custom-opcao">Personalizado...</div>
+        </div>
+      </div>
+
+      <div class="dropdown-custom" id="dropFiltroStatusMkt" data-valor="Todos os Status">
+        <div class="dropdown-custom-valor">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span>Todos os Status</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-custom-lista">
+          <div class="dropdown-custom-opcao selecionada">Todos os Status</div>
+          <div class="dropdown-custom-opcao">Planejada</div>
+          <div class="dropdown-custom-opcao">Em Andamento</div>
+          <div class="dropdown-custom-opcao">Finalizada</div>
+          <div class="dropdown-custom-opcao">Pausada</div>
+        </div>
+      </div>
+
+      <div class="dropdown-custom" id="dropFiltroResponsavelMkt" data-valor="Todos os Responsáveis">
+        <div class="dropdown-custom-valor">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span>Todos os Responsáveis</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-custom-lista">
+          <div class="dropdown-custom-opcao selecionada">Todos os Responsáveis</div>
+          <div class="dropdown-custom-opcao">Camila Souza</div>
+          <div class="dropdown-custom-opcao">Bruno Lima</div>
+          <div class="dropdown-custom-opcao">Dr. Victor</div>
+        </div>
+      </div>
+
+      <div class="btn-limpar-filtros" id="btnLimparFiltrosMkt">Limpar filtros</div>
+    </div>
+
+    <!-- ===== FUNCIONALIDADE 5: KPIs de Marketing ===== -->
+    <div class="grid-kpis-mkt">
+      <div class="card-kpi">
+        <div class="kpi-topo">
+          <div class="kpi-icone dourado"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 18V9l9-6 9 6v9" stroke="currentColor" stroke-width="1.6"/></svg></div>
+          <div class="kpi-variacao positiva">+9,2%</div>
+        </div>
+        <div class="kpi-valor">R$ 37.450</div>
+        <div class="kpi-label">Total Investido no Período</div>
+      </div>
+
+      <div class="card-kpi">
+        <div class="kpi-topo">
+          <div class="kpi-icone azul"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg></div>
+          <div class="kpi-variacao positiva">+14,8%</div>
+        </div>
+        <div class="kpi-valor">418</div>
+        <div class="kpi-label">Clientes Gerados</div>
+      </div>
+
+      <div class="card-kpi">
+        <div class="kpi-topo">
+          <div class="kpi-icone verde"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="2"/></svg></div>
+          <div class="kpi-variacao neutra">3 ativas</div>
+        </div>
+        <div class="kpi-valor">3</div>
+        <div class="kpi-label">Campanhas Ativas</div>
+      </div>
+
+      <div class="card-kpi kpi-alerta">
+        <div class="kpi-topo">
+          <div class="kpi-icone vermelho"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.6"/></svg></div>
+          <div class="kpi-variacao negativa">atenção</div>
+        </div>
+        <div class="kpi-valor">4</div>
+        <div class="kpi-label">Materiais Pendentes de Aprovação</div>
+      </div>
+    </div>
+
+    <!-- ===== GESTÃO DE CAMPANHAS: KANBAN E LISTA ===== -->
+    <div class="secao-titulo-mkt secao-campanhas-header">
+      <div>
+        <span>Gestão de Campanhas</span>
+        <small>Organize campanhas por etapa, acompanhe o orçamento e abra os detalhes sem perder o contexto.</small>
+      </div>
+      <div class="campaign-view-switch" id="campaignViewSwitch" aria-label="Alternar visualização de campanhas">
+        <button class="campaign-view-btn active" type="button" data-view="kanban">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
+          Kanban
+        </button>
+        <button class="campaign-view-btn" type="button" data-view="lista">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="7" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="7" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><line x1="7" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="3.5" cy="6" r="1" fill="currentColor"/><circle cx="3.5" cy="12" r="1" fill="currentColor"/><circle cx="3.5" cy="18" r="1" fill="currentColor"/></svg>
+          Lista
+        </button>
+      </div>
+    </div>
+
+    <div class="campaign-workspace">
+      <div class="kanban-campanhas-view" id="kanbanCampanhasView" aria-live="polite"></div>
+      <div class="lista-campanhas-view" id="listaCampanhasView" aria-live="polite"></div>
+    </div>
+
+    <!-- ===== BIBLIOTECA DE MATERIAIS ===== -->
+    <div class="secao-titulo-mkt biblioteca-mkt-header" style="margin-top:8px;">
+      <div>
+        <span>Biblioteca Criativa</span>
+        <small>Guarde logos, artes prontas, vídeos e referências reutilizáveis em pastas organizadas.</small>
+      </div>
+      <div class="biblioteca-mkt-acoes">
+        <button class="btn-tracejado" id="btnNovaPastaMkt" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><line x1="12" y1="11" x2="12" y2="15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="10" y1="13" x2="14" y2="13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Nova Pasta
+        </button>
+        <button class="btn-dourado" id="btnEnviarMaterial" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 16V4M7 9l5-5 5 5M5 20h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Enviar Material
+        </button>
+      </div>
+    </div>
+
+    <div class="biblioteca-mkt-toolbar">
+      <div class="biblioteca-mkt-breadcrumb" id="bibliotecaMktBreadcrumb"></div>
+      <div class="toggle-visualizacao" id="toggleVisualizacaoWrapper">
+        <span class="toggle-visualizacao-label">Visualizando como:</span>
+        <div class="toggle-visualizacao-switch" id="toggleVisualizacao"><div class="toggle-visualizacao-bolinha"></div></div>
+        <span class="toggle-visualizacao-texto" id="textoToggleVisualizacao">Colaborador</span>
+      </div>
+    </div>
+
+    <div class="grid-pastas-mkt" id="gridPastasMkt"></div>
+    <div class="grid-materiais" id="gridMateriais">
+      <!-- cards de material gerados via JavaScript a partir de dadosMateriais -->
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== MODAL: Nova Campanha (Funcionalidade 1) ===== -->
+<div class="modal-overlay-mkt" id="modalNovaCampanha">
+  <div class="modal-mkt">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h3>Nova Campanha</h3>
+        <div class="modal-sub">Cadastre uma nova campanha de marketing para acompanhamento de orçamento e leads gerados.</div>
+      </div>
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Nome da campanha</label>
+      <input type="text" id="inputNomeCampanha" placeholder="Ex: Campanha PSS - Julho/2026">
+    </div>
+
+    <div class="linha-2-campos">
+      <div class="modal-campo-mkt">
+        <label>Data de início</label>
+        <input type="date" id="inputDataInicioCampanha">
+      </div>
+      <div class="modal-campo-mkt">
+        <label>Data de término</label>
+        <input type="date" id="inputDataFimCampanha">
+      </div>
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Orçamento previsto (R$)</label>
+      <input type="text" id="inputOrcamentoCampanha" placeholder="Ex: 5.000,00">
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Responsável</label>
+      <div class="dropdown-custom" id="dropResponsavelNovaCampanha" data-valor="Camila Souza">
+        <div class="dropdown-custom-valor">
+          <span>Camila Souza</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-custom-lista">
+          <div class="dropdown-custom-opcao selecionada">Camila Souza</div>
+          <div class="dropdown-custom-opcao">Bruno Lima</div>
+          <div class="dropdown-custom-opcao">Dr. Victor</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-botoes-mkt">
+      <button class="btn-cancelar-mkt" id="btnCancelarNovaCampanha">Cancelar</button>
+      <button class="btn-confirmar-mkt" id="btnConfirmarNovaCampanha">Criar Campanha</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Detalhe da Campanha: abas Lançamentos / Materiais / Clientes (Funcionalidades 1 e 2) ===== -->
+<div class="modal-overlay-mkt" id="modalDetalheCampanha">
+  <div class="modal-mkt modal-largo">
+    <div class="modal-detalhe-header">
+      <div class="modal-detalhe-titulo-bloco">
+        <div class="modal-detalhe-titulo" id="tituloDetalheCampanha">Campanha PSS - Maio/2026</div>
+        <div class="modal-detalhe-sub" id="subDetalheCampanha">01/05/2026 a 31/05/2026 · Responsável: Camila Souza</div>
+      </div>
+      <div class="btn-fechar-modal-mkt" id="btnFecharDetalheCampanha">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <div class="abas-detalhe-campanha">
+      <div class="aba-detalhe ativa" data-aba="lancamentos">Lançamentos Financeiros</div>
+      <div class="aba-detalhe" data-aba="materiais">Materiais Vinculados</div>
+      <div class="aba-detalhe" data-aba="clientes">Clientes Gerados</div>
+    </div>
+
+    <!-- ACRÉSCIMO/FUNCIONALIDADE 2: Lançamentos Financeiros -->
+    <div class="painel-aba visivel" id="painelAbaLancamentos">
+      <div class="resumo-financeiro-campanha" id="resumoFinanceiroCampanha">
+        <!-- preenchido via JS conforme a campanha aberta -->
+      </div>
+
+      <div class="tabela-lancamentos" id="tabelaLancamentosCampanha">
+        <!-- linhas de lançamento geradas via JS -->
+      </div>
+
+      <div class="btn-tracejado" id="btnAdicionarLancamento" style="justify-content:center;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Adicionar Lançamento
+      </div>
+    </div>
+
+    <!-- FUNCIONALIDADE 1 (detalhe): Materiais vinculados à campanha -->
+    <div class="painel-aba" id="painelAbaMateriais">
+      <div class="grid-materiais" id="gridMateriaisCampanha" style="grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));">
+        <!-- preenchido via JS -->
+      </div>
+    </div>
+
+    <!-- FUNCIONALIDADE 1 (detalhe): Clientes gerados pela campanha -->
+    <div class="painel-aba" id="painelAbaClientes">
+      <div class="tabela-lancamentos" id="listaClientesCampanha">
+        <!-- preenchido via JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Adicionar Lançamento Financeiro (Funcionalidade 2) ===== -->
+<div class="modal-overlay-mkt" id="modalAdicionarLancamento">
+  <div class="modal-mkt">
+    <h3>Adicionar Lançamento</h3>
+    <div class="modal-sub">Registre um novo lançamento financeiro vinculado a esta campanha.</div>
+
+    <div class="modal-campo-mkt">
+      <label>Descrição</label>
+      <input type="text" id="inputDescricaoLancamento" placeholder="Ex: Impulsionamento Meta Ads - semana 2">
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Categoria de gasto</label>
+      <div class="dropdown-custom" id="dropCategoriaLancamento" data-valor="Tráfego Pago">
+        <div class="dropdown-custom-valor">
+          <span>Tráfego Pago</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-custom-lista">
+          <div class="dropdown-custom-opcao selecionada">Tráfego Pago</div>
+          <div class="dropdown-custom-opcao">Produção</div>
+          <div class="dropdown-custom-opcao">Freelancer</div>
+          <div class="dropdown-custom-opcao">Outros</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="linha-2-campos">
+      <div class="modal-campo-mkt">
+        <label>Valor (R$)</label>
+        <input type="text" id="inputValorLancamento" placeholder="Ex: 850,00">
+      </div>
+      <div class="modal-campo-mkt">
+        <label>Data</label>
+        <input type="date" id="inputDataLancamento">
+      </div>
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Status de pagamento</label>
+      <div class="dropdown-custom" id="dropStatusPagamentoLancamento" data-valor="Previsto">
+        <div class="dropdown-custom-valor">
+          <span>Previsto</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-custom-lista">
+          <div class="dropdown-custom-opcao selecionada">Previsto</div>
+          <div class="dropdown-custom-opcao">Em Curso</div>
+          <div class="dropdown-custom-opcao">Realizado</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Referência de nota fiscal (opcional)</label>
+      <input type="text" id="inputNfLancamento" placeholder="Ex: NF 00214">
+    </div>
+
+    <div class="modal-botoes-mkt">
+      <button class="btn-cancelar-mkt" id="btnCancelarLancamento">Cancelar</button>
+      <button class="btn-confirmar-mkt" id="btnConfirmarLancamento">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Enviar Material (Funcionalidade 3) ===== -->
+<div class="modal-overlay-mkt" id="modalEnviarMaterial">
+  <div class="modal-mkt">
+    <h3>Enviar Material</h3>
+    <div class="modal-sub">Faça o upload (simulado) de uma arte, vídeo ou carrossel e vincule a uma campanha existente.</div>
+
+    <div class="modal-campo-mkt">
+      <label>Nome do material</label>
+      <input type="text" id="inputNomeMaterial" placeholder="Ex: Carrossel PSS - Restituição">
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Arquivo</label>
+      <div style="border:1px dashed var(--border-soft); border-radius:10px; padding:20px; text-align:center; font-size:11.5px; color:var(--muted); cursor:pointer;" id="areaUploadSimulado">
+        Clique para selecionar o arquivo (upload simulado neste protótipo)
+      </div>
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Pasta de destino</label>
+      <div class="dropdown-custom" id="dropPastaVinculadaMaterial" data-valor="Biblioteca Criativa">
+        <div class="dropdown-custom-valor"><span>Biblioteca Criativa</span><div class="seta-dropdown"></div></div>
+        <div class="dropdown-custom-lista" id="listaPastasVinculoMaterial"></div>
+      </div>
+    </div>
+
+    <div class="modal-campo-mkt">
+      <label>Campanha vinculada</label>
+      <div class="dropdown-custom" id="dropCampanhaVinculadaMaterial" data-valor="Campanha PSS - Maio/2026">
+        <div class="dropdown-custom-valor">
+          <span>Campanha PSS - Maio/2026</span>
+          <div class="seta-dropdown"></div>
+        </div>
+        <div class="dropdown-custom-lista" id="listaCampanhasVinculoMaterial">
+          <!-- preenchido via JS com base em dadosCampanhas -->
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-botoes-mkt">
+      <button class="btn-cancelar-mkt" id="btnCancelarEnviarMaterial">Cancelar</button>
+      <button class="btn-confirmar-mkt" id="btnConfirmarEnviarMaterial">Enviar para Revisão</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Detalhe do Material com fluxo de aprovação (Funcionalidade 3) ===== -->
+<div class="modal-overlay-mkt" id="modalDetalheMaterial">
+  <div class="modal-mkt">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+      <div>
+        <h3 id="tituloDetalheMaterial">Carrossel PSS - Restituição</h3>
+        <div class="modal-sub" style="margin-bottom:0;" id="subDetalheMaterial">Campanha PSS - Maio/2026 · Enviado por Camila Souza em 03/05/2026</div>
+      </div>
+      <div class="btn-fechar-modal-mkt" id="btnFecharDetalheMaterial">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <div id="badgeStatusDetalheMaterial"></div>
+
+    <div class="preview-material" style="margin-top:14px;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M21 16l-5.5-6-4 4.5L9 12l-6 6" stroke="currentColor" stroke-width="1.4"/></svg>
+    </div>
+
+    <div class="historico-aprovacao" id="historicoAprovacaoMaterial">
+      <!-- preenchido via JS -->
+    </div>
+
+    <div id="areaAcoesAprovacaoMaterial">
+      <!-- botões de aprovação ou aviso de permissão, conforme toggle de visualização -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Gerenciar Permissões de Marketing (Funcionalidade 4) ===== -->
+<div class="modal-overlay-mkt" id="modalPermissoesMkt">
+  <div class="modal-mkt modal-largo">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+      <h3>Gerenciar Permissões de Marketing</h3>
+      <div class="btn-fechar-modal-mkt" id="btnFecharPermissoesMkt">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+    <div class="modal-sub">Defina, por colaborador ou por cargo, quem pode visualizar, criar/editar e aprovar materiais neste módulo.</div>
+
+    <div class="aviso-admin-irrestrito">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex:0 0 auto;"><path d="M12 3l8 3.5v5.5c0 5-3.5 8-8 9.5-4.5-1.5-8-4.5-8-9.5V6.5L12 3z" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4.5" stroke="currentColor" stroke-width="1.5"/></svg>
+      <div><strong>Dr. Victor</strong> possui acesso irrestrito a todas as permissões deste módulo e é quem delega as demais permissões para pessoas ou cargos.</div>
+    </div>
+
+    <!-- bloco por cargo: Marketing -->
+    <div class="bloco-cargo-permissoes">
+      <div class="cargo-permissoes-header">
+        <span class="cargo-permissoes-nome">Cargo: Marketing</span>
+        <span class="cargo-permissoes-aplicar-todos" data-cargo="marketing">aplicar a todo o cargo</span>
+      </div>
+      <div class="lista-colaboradores-permissao">
+        <div class="linha-colaborador-permissao" data-pessoa="Camila Souza" data-cargo="marketing">
+          <div class="nome-colaborador-permissao"><div class="mini-avatar-mkt">CS</div>Camila Souza</div>
+          <div class="grupo-toggles-permissao">
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Visualizar</span>
+              <div class="switch-permissao marcado" data-permissao="visualizar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Criar/Editar</span>
+              <div class="switch-permissao marcado" data-permissao="criar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Aprovar</span>
+              <div class="switch-permissao" data-permissao="aprovar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="linha-colaborador-permissao" data-pessoa="Bruno Lima" data-cargo="marketing">
+          <div class="nome-colaborador-permissao"><div class="mini-avatar-mkt">BL</div>Bruno Lima</div>
+          <div class="grupo-toggles-permissao">
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Visualizar</span>
+              <div class="switch-permissao marcado" data-permissao="visualizar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Criar/Editar</span>
+              <div class="switch-permissao marcado" data-permissao="criar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Aprovar</span>
+              <div class="switch-permissao" data-permissao="aprovar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- bloco por cargo: Jurídico (aprovadores designados) -->
+    <div class="bloco-cargo-permissoes">
+      <div class="cargo-permissoes-header">
+        <span class="cargo-permissoes-nome">Cargo: Jurídico (Aprovadores)</span>
+        <span class="cargo-permissoes-aplicar-todos" data-cargo="juridico">aplicar a todo o cargo</span>
+      </div>
+      <div class="lista-colaboradores-permissao">
+        <div class="linha-colaborador-permissao" data-pessoa="Hevelyn" data-cargo="juridico">
+          <div class="nome-colaborador-permissao"><div class="mini-avatar-mkt">HV</div>Hevelyn</div>
+          <div class="grupo-toggles-permissao">
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Visualizar</span>
+              <div class="switch-permissao marcado" data-permissao="visualizar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Criar/Editar</span>
+              <div class="switch-permissao marcado" data-permissao="criar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+            <div class="item-toggle-permissao">
+              <span class="item-toggle-permissao-label">Aprovar</span>
+              <div class="switch-permissao marcado" data-permissao="aprovar"><div class="switch-permissao-bolinha"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-botoes-mkt" style="margin-top:18px;">
+      <button class="btn-confirmar-mkt" id="btnSalvarPermissoesMkt" style="flex:none; padding:11px 28px;">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Nova Pasta da Biblioteca Criativa ===== -->
+<div class="modal-overlay-mkt" id="modalNovaPastaMkt">
+  <div class="modal-mkt">
+    <h3>Nova Pasta</h3>
+    <div class="modal-sub" id="subNovaPastaMkt">A pasta será criada na Biblioteca Criativa.</div>
+    <div class="modal-campo-mkt">
+      <label>Nome da pasta</label>
+      <input type="text" id="inputNomePastaMkt" placeholder="Ex: Logos Institucionais">
+    </div>
+    <div class="modal-botoes-mkt">
+      <button class="btn-cancelar-mkt" id="btnCancelarNovaPastaMkt">Cancelar</button>
+      <button class="btn-confirmar-mkt" id="btnConfirmarNovaPastaMkt">Criar Pasta</button>
+    </div>
+  </div>
+</div>
+
+<div id="folderMenuPortal" class="folder-menu-portal" aria-hidden="true"></div>
+<div id="toast-container"></div>
+
+<script>
+  // ===== TEMA =====
+  document.getElementById('toggleTema').addEventListener('click', function(){
+    var body = document.body;
+    body.setAttribute('data-theme', body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+  });
+
+  // ===== TOAST =====
+  function showToast(msg, tipo){
+    tipo = tipo || 'info';
+    var c = document.getElementById('toast-container');
+    var t = document.createElement('div');
+    t.className = 'toast ' + tipo;
+    t.innerHTML = msg;
+    c.appendChild(t);
+    setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity 0.4s'; setTimeout(function(){ t.remove(); }, 400); }, 3200);
+  }
+  function mostrarToast(msg){ showToast(msg, 'info'); }
+
+  var hamburguer = document.getElementById('hamburguer');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('overlay');
+  function abrirMenu(){ sidebar.classList.add('aberta'); overlay.classList.add('aberto'); }
+  function fecharMenu(){ sidebar.classList.remove('aberta'); overlay.classList.remove('aberto'); }
+  hamburguer.addEventListener('click', function(){ sidebar.classList.contains('aberta') ? fecharMenu() : abrirMenu(); });
+  overlay.addEventListener('click', fecharMenu);
+
+  // ===== Dropdowns customizados (padrão do sistema, nunca seletor nativo) =====
+  function ativarDropdowns(escopo){
+    (escopo || document).querySelectorAll('.dropdown-custom').forEach(function(dropdown){
+      if(dropdown.getAttribute('data-ativado')) return;
+      dropdown.setAttribute('data-ativado', '1');
+      var valorEl = dropdown.querySelector('.dropdown-custom-valor span');
+
+      dropdown.querySelector('.dropdown-custom-valor').addEventListener('click', function(e){
+        e.stopPropagation();
+        var jaAberto = dropdown.classList.contains('aberto');
+        document.querySelectorAll('.dropdown-custom').forEach(function(d){ d.classList.remove('aberto'); });
+        if(!jaAberto){ dropdown.classList.add('aberto'); }
+      });
+
+      dropdown.querySelectorAll('.dropdown-custom-opcao').forEach(function(opcao){
+        opcao.addEventListener('click', function(e){
+          e.stopPropagation();
+          dropdown.querySelectorAll('.dropdown-custom-opcao').forEach(function(o){ o.classList.remove('selecionada'); });
+          opcao.classList.add('selecionada');
+          var textoLimpo = opcao.textContent.trim();
+          if(valorEl) valorEl.textContent = textoLimpo;
+          dropdown.setAttribute('data-valor', textoLimpo);
+          dropdown.classList.remove('aberto');
+          atualizarResumoFiltrosMkt();
+        });
+      });
+    });
+  }
+
+  document.addEventListener('click', function(){
+    document.querySelectorAll('.dropdown-custom').forEach(function(d){ d.classList.remove('aberto'); });
+  });
+
+  function atualizarResumoFiltrosMkt(){
+    var status = document.getElementById('dropFiltroStatusMkt').getAttribute('data-valor') || 'Todos os Status';
+    var periodo = document.getElementById('dropFiltroPeriodoMkt').getAttribute('data-valor') || 'Este mês';
+    document.getElementById('textoFiltroAtivoMkt').textContent = status + ' · ' + periodo;
+  }
+
+  document.getElementById('btnLimparFiltrosMkt').addEventListener('click', function(){
+    document.querySelectorAll('.barra-filtros-mkt .dropdown-custom').forEach(function(dropdown){
+      var primeiraOpcao = dropdown.querySelector('.dropdown-custom-opcao');
+      if(!primeiraOpcao) return;
+      dropdown.querySelectorAll('.dropdown-custom-opcao').forEach(function(o){ o.classList.remove('selecionada'); });
+      primeiraOpcao.classList.add('selecionada');
+      var texto = primeiraOpcao.textContent.trim();
+      var span = dropdown.querySelector('.dropdown-custom-valor span');
+      if(span) span.textContent = texto;
+      dropdown.setAttribute('data-valor', texto);
+    });
+    atualizarResumoFiltrosMkt();
+    mostrarToast('Filtros restaurados ao padrão.');
+  });
+
+  // =====================================================================
+  // DADOS DEMONSTRATIVOS (mock): escritório de precatórios federais
+  // =====================================================================
+
+  // ===== FUNCIONALIDADE 1: dados de campanhas =====
+  var dadosCampanhas = [
+    {
+      id:'camp1', nome:'Campanha PSS - Maio/2026', inicio:'01/05/2026', fim:'31/05/2026',
+      status:'andamento', orcamento:8000, gasto:6420, leads:186, responsavel:'Camila Souza', responsavelIniciais:'CS'
+    },
+    {
+      id:'camp2', nome:'Reexpedição Lei 13.463 - Redes Sociais', inicio:'10/04/2026', fim:'10/06/2026',
+      status:'andamento', orcamento:5000, gasto:5380, leads:94, responsavel:'Bruno Lima', responsavelIniciais:'BL'
+    },
+    {
+      id:'camp3', nome:'Habilitação de Herdeiros - Google Ads', inicio:'01/06/2026', fim:'30/06/2026',
+      status:'andamento', orcamento:6500, gasto:2870, leads:58, responsavel:'Camila Souza', responsavelIniciais:'CS'
+    },
+    {
+      id:'camp4', nome:'28,86% - Campanha Institucional', inicio:'01/03/2026', fim:'30/04/2026',
+      status:'finalizada', orcamento:15000, gasto:14210, leads:312, responsavel:'Bruno Lima', responsavelIniciais:'BL'
+    },
+    {
+      id:'camp5', nome:'PASEP - Captação Sergipe/Bahia', inicio:'15/07/2026', fim:'31/08/2026',
+      status:'planejada', orcamento:4000, gasto:0, leads:0, responsavel:'Dr. Victor', responsavelIniciais:'DV'
+    },
+    {
+      id:'camp6', nome:'GDASS - Pausa Estratégica', inicio:'01/02/2026', fim:'31/05/2026',
+      status:'pausada', orcamento:2000, gasto:1180, leads:21, responsavel:'Camila Souza', responsavelIniciais:'CS'
+    }
+  ];
+
+  // ===== FUNCIONALIDADE 2: lançamentos financeiros por campanha =====
+  var dadosLancamentos = {
+    camp1: [
+      { descricao:'Impulsionamento Meta Ads - semana 1', categoria:'Tráfego Pago', valor:1200, status:'realizado', data:'05/05/2026', nf:'N/D' },
+      { descricao:'Impulsionamento Meta Ads - semana 2', categoria:'Tráfego Pago', valor:1350, status:'realizado', data:'12/05/2026', nf:'N/D' },
+      { descricao:'Produção de carrossel PSS', categoria:'Produção', valor:900, status:'realizado', data:'08/05/2026', nf:'NF 00214' },
+      { descricao:'Freelancer roteiro de vídeo', categoria:'Freelancer', valor:600, status:'realizado', data:'15/05/2026', nf:'NF 00219' },
+      { descricao:'Impulsionamento Google Ads', categoria:'Tráfego Pago', valor:1370, status:'curso', data:'20/05/2026', nf:'N/D' },
+      { descricao:'Produção de vídeo institucional curto', categoria:'Produção', valor:1000, status:'previsto', data:'28/05/2026', nf:'N/D' }
+    ],
+    camp2: [
+      { descricao:'Impulsionamento Meta Ads - Lei 13.463', categoria:'Tráfego Pago', valor:2800, status:'realizado', data:'15/04/2026', nf:'NF 00198' },
+      { descricao:'Design de artes para feed e stories', categoria:'Freelancer', valor:780, status:'realizado', data:'18/04/2026', nf:'NF 00201' },
+      { descricao:'Impulsionamento adicional (correção de meta)', categoria:'Tráfego Pago', valor:1800, status:'realizado', data:'30/05/2026', nf:'N/D' }
+    ],
+    camp3: [
+      { descricao:'Google Ads - palavras-chave herdeiros', categoria:'Tráfego Pago', valor:1870, status:'realizado', data:'02/06/2026', nf:'N/D' },
+      { descricao:'Produção de vídeo institucional', categoria:'Produção', valor:1000, status:'curso', data:'10/06/2026', nf:'N/D' }
+    ],
+    camp4: [
+      { descricao:'Tráfego pago consolidado (Meta + Google)', categoria:'Tráfego Pago', valor:9800, status:'realizado', data:'15/03/2026', nf:'NF 00150' },
+      { descricao:'Produção de vídeo institucional 28,86%', categoria:'Produção', valor:3200, status:'realizado', data:'20/03/2026', nf:'NF 00158' },
+      { descricao:'Freelancer motion graphics', categoria:'Freelancer', valor:1210, status:'realizado', data:'25/03/2026', nf:'NF 00161' }
+    ],
+    camp5: [],
+    camp6: [
+      { descricao:'Impulsionamento Meta Ads (encerrado)', categoria:'Tráfego Pago', valor:1180, status:'realizado', data:'10/02/2026', nf:'NF 00102' }
+    ]
+  };
+
+  // ===== FUNCIONALIDADE 1 (detalhe): clientes gerados por campanha =====
+  var dadosClientesPorCampanha = {
+    camp1: [
+      { nome:'Maria das Graças Souza', tese:'PSS', data:'06/05/2026' },
+      { nome:'José Carlos Andrade Filho', tese:'PSS', data:'09/05/2026' },
+      { nome:'Francisca Alves Monteiro', tese:'PSS', data:'14/05/2026' }
+    ],
+    camp2: [
+      { nome:'Antônia Ferreira Lima', tese:'Reexpedição', data:'17/04/2026' },
+      { nome:'Pedro Henrique Souza', tese:'Reexpedição', data:'22/04/2026' }
+    ],
+    camp3: [
+      { nome:'Luzia Maria Costa', tese:'Habilitação de Herdeiros', data:'05/06/2026' }
+    ],
+    camp4: [
+      { nome:'Sebastião Nunes Pereira', tese:'28,86%', data:'18/03/2026' },
+      { nome:'Raimundo Alves Pinto', tese:'28,86%', data:'24/03/2026' }
+    ],
+    camp5: [],
+    camp6: [
+      { nome:'Iolanda Pereira da Rocha', tese:'GDASS', data:'12/02/2026' }
+    ]
+  };
+
+  // ===== FUNCIONALIDADE 3: biblioteca de materiais =====
+  var dadosMateriais = [
+    { id:'mat1', nome:'Carrossel PSS - Restituição', tipo:'carrossel', campanha:'Campanha PSS - Maio/2026', status:'aprovado', autor:'Camila Souza', data:'03/05/2026',
+      historico:[
+        { tipo:'aprovado', autor:'Dr. Victor', data:'04/05/2026', comentario:'Aprovado. Pode publicar.' }
+      ] },
+    { id:'mat2', nome:'Vídeo Institucional 28,86%', tipo:'video', campanha:'28,86% - Campanha Institucional', status:'publicado', autor:'Bruno Lima', data:'19/03/2026',
+      historico:[
+        { tipo:'aprovado', autor:'Hevelyn', data:'20/03/2026', comentario:'Excelente, alinhado com a tese.' }
+      ] },
+    { id:'mat3', nome:'Arte Stories - Lei 13.463', tipo:'arte', campanha:'Reexpedição Lei 13.463 - Redes Sociais', status:'revisao', autor:'Bruno Lima', data:'16/06/2026',
+      historico:[] },
+    { id:'mat4', nome:'Carrossel Habilitação de Herdeiros', tipo:'carrossel', campanha:'Habilitação de Herdeiros - Google Ads', status:'revisao', autor:'Camila Souza', data:'17/06/2026',
+      historico:[] },
+    { id:'mat5', nome:'Arte Feed - Restituição PSS v2', tipo:'arte', campanha:'Campanha PSS - Maio/2026', status:'reprovado', autor:'Camila Souza', data:'10/05/2026',
+      historico:[
+        { tipo:'reprovado', autor:'Dr. Victor', data:'11/05/2026', comentario:'Texto legal impreciso sobre o prazo de restituição. Ajustar antes de novo envio.' }
+      ] },
+    { id:'mat6', nome:'Vídeo Curto - GDASS Explicado', tipo:'video', campanha:'GDASS - Pausa Estratégica', status:'rascunho', autor:'Bruno Lima', data:'18/06/2026',
+      historico:[] },
+    { id:'mat7', nome:'Arte Anúncio - PASEP Sergipe/Bahia', tipo:'arte', campanha:'PASEP - Captação Sergipe/Bahia', status:'revisao', autor:'Camila Souza', data:'19/06/2026',
+      historico:[] },
+    { id:'mat8', nome:'Carrossel Institucional VMMADV', tipo:'carrossel', campanha:'28,86% - Campanha Institucional', status:'revisao', autor:'Bruno Lima', data:'20/06/2026',
+      historico:[] }
+  ];
+
+  // =====================================================================
+  // FUNCIONALIDADE 1: renderização da lista de campanhas (grid de cards)
+  // =====================================================================
+  var mapaStatusCampanha = {
+    planejada:{ classe:'bsc-planejada', label:'Planejada' },
+    andamento:{ classe:'bsc-andamento', label:'Em Andamento' },
+    finalizada:{ classe:'bsc-finalizada', label:'Finalizada' },
+    pausada:{ classe:'bsc-pausada', label:'Pausada' }
+  };
+
+  function formatarMoeda(valor){
+    return 'R$ ' + valor.toLocaleString('pt-BR', { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  function classeOrcamento(percentual){
+    if(percentual > 100) return 'fill-excedido';
+    if(percentual >= 80) return 'fill-atencao';
+    return 'fill-ok';
+  }
+
+  function renderizarCampanhas(){
+    var grid = document.getElementById('gridCampanhas');
+    grid.innerHTML = '';
+    dadosCampanhas.forEach(function(camp){
+      var percentual = camp.orcamento > 0 ? Math.round((camp.gasto / camp.orcamento) * 100) : 0;
+      var statusInfo = mapaStatusCampanha[camp.status];
+      var card = document.createElement('div');
+      card.className = 'card-campanha';
+      card.setAttribute('data-campanha', camp.id);
+
+      card.innerHTML =
+        '<div class="card-campanha-topo">' +
+          '<div>' +
+            '<div class="card-campanha-nome">' + camp.nome + '</div>' +
+            '<div class="card-campanha-periodo">' + camp.inicio + ' a ' + camp.fim + '</div>' +
+          '</div>' +
+          '<div class="badge-status-campanha ' + statusInfo.classe + '">' + statusInfo.label + '</div>' +
+        '</div>' +
+        '<div class="card-campanha-orcamento">' +
+          '<div class="orcamento-label">' +
+            '<span class="orcamento-label-nome">Orçamento</span>' +
+            '<span class="orcamento-label-valor">' + formatarMoeda(camp.gasto) + ' / ' + formatarMoeda(camp.orcamento) + '</span>' +
+          '</div>' +
+          '<div class="orcamento-trilho"><div class="orcamento-fill ' + classeOrcamento(percentual) + '" style="width:' + Math.min(percentual,100) + '%;"></div></div>' +
+        '</div>' +
+        '<div class="card-campanha-rodape">' +
+          '<div class="card-campanha-responsavel"><div class="mini-avatar-mkt">' + camp.responsavelIniciais + '</div>' + camp.responsavel + '</div>' +
+          '<div class="card-campanha-leads">' + camp.leads + ' clientes gerados</div>' +
+        '</div>';
+
+      card.addEventListener('click', function(){ abrirDetalheCampanha(camp.id); });
+      grid.appendChild(card);
+    });
+  }
+
+  // =====================================================================
+  // FUNCIONALIDADE 1 + 2: modal de detalhe da campanha (abas)
+  // =====================================================================
+  var modalDetalheCampanha = document.getElementById('modalDetalheCampanha');
+  var campanhaAbertaId = null;
+
+  function abrirDetalheCampanha(idCampanha){
+    var camp = dadosCampanhas.filter(function(c){ return c.id === idCampanha; })[0];
+    if(!camp) return;
+    campanhaAbertaId = idCampanha;
+
+    document.getElementById('tituloDetalheCampanha').textContent = camp.nome;
+    document.getElementById('subDetalheCampanha').textContent = camp.inicio + ' a ' + camp.fim + ' · Responsável: ' + camp.responsavel;
+
+    renderizarLancamentos(idCampanha, camp);
+    renderizarMateriaisDaCampanha(camp.nome);
+    renderizarClientesDaCampanha(idCampanha);
+
+    // sempre abre na primeira aba
+    document.querySelectorAll('.aba-detalhe').forEach(function(a){ a.classList.remove('ativa'); });
+    document.querySelector('.aba-detalhe[data-aba="lancamentos"]').classList.add('ativa');
+    document.querySelectorAll('.painel-aba').forEach(function(p){ p.classList.remove('visivel'); });
+    document.getElementById('painelAbaLancamentos').classList.add('visivel');
+
+    modalDetalheCampanha.classList.add('aberto');
+  }
+
+  document.getElementById('btnFecharDetalheCampanha').addEventListener('click', function(){ modalDetalheCampanha.classList.remove('aberto'); });
+  modalDetalheCampanha.addEventListener('click', function(e){ if(e.target === modalDetalheCampanha) modalDetalheCampanha.classList.remove('aberto'); });
+
+  document.querySelectorAll('.aba-detalhe').forEach(function(aba){
+    aba.addEventListener('click', function(){
+      document.querySelectorAll('.aba-detalhe').forEach(function(a){ a.classList.remove('ativa'); });
+      aba.classList.add('ativa');
+      document.querySelectorAll('.painel-aba').forEach(function(p){ p.classList.remove('visivel'); });
+      var nomeAba = aba.getAttribute('data-aba');
+      document.getElementById('painelAba' + nomeAba.charAt(0).toUpperCase() + nomeAba.slice(1)).classList.add('visivel');
+    });
+  });
+
+  // ===== FUNCIONALIDADE 2: renderização dos lançamentos financeiros =====
+  var mapaStatusPagamento = {
+    previsto:{ classe:'bsp-previsto', label:'Previsto' },
+    curso:{ classe:'bsp-curso', label:'Em Curso' },
+    realizado:{ classe:'bsp-realizado', label:'Realizado' }
+  };
+
+  function renderizarLancamentos(idCampanha, camp){
+    var lancamentos = dadosLancamentos[idCampanha] || [];
+    var totalRealizado = lancamentos.filter(function(l){ return l.status === 'realizado'; }).reduce(function(s,l){ return s + l.valor; }, 0);
+    var totalPendente = lancamentos.filter(function(l){ return l.status !== 'realizado'; }).reduce(function(s,l){ return s + l.valor; }, 0);
+    var saldo = camp.orcamento - totalRealizado - totalPendente;
+
+    var resumo = document.getElementById('resumoFinanceiroCampanha');
+    resumo.innerHTML =
+      '<div class="mini-resumo-financ"><div class="mini-resumo-financ-label">Orçamento Previsto</div><div class="mini-resumo-financ-valor cor-dourado">' + formatarMoeda(camp.orcamento) + '</div></div>' +
+      '<div class="mini-resumo-financ"><div class="mini-resumo-financ-label">Total Realizado</div><div class="mini-resumo-financ-valor cor-verde">' + formatarMoeda(totalRealizado) + '</div></div>' +
+      '<div class="mini-resumo-financ"><div class="mini-resumo-financ-label">Total Pendente</div><div class="mini-resumo-financ-valor cor-amarelo">' + formatarMoeda(totalPendente) + '</div></div>' +
+      '<div class="mini-resumo-financ"><div class="mini-resumo-financ-label">Saldo Restante</div><div class="mini-resumo-financ-valor ' + (saldo < 0 ? 'cor-vermelho' : 'cor-verde') + '">' + formatarMoeda(saldo) + '</div></div>';
+
+    var tabela = document.getElementById('tabelaLancamentosCampanha');
+    tabela.innerHTML = '';
+    if(lancamentos.length === 0){
+      tabela.innerHTML = '<div style="text-align:center; padding:20px 0; color:var(--muted); font-size:12px;">Nenhum lançamento registrado para esta campanha ainda.</div>';
+      return;
+    }
+    lancamentos.forEach(function(l){
+      var statusInfo = mapaStatusPagamento[l.status];
+      var linha = document.createElement('div');
+      linha.className = 'linha-lancamento';
+      linha.innerHTML =
+        '<div class="lancamento-info">' +
+          '<div class="lancamento-descricao">' + l.descricao + '</div>' +
+          '<div class="lancamento-meta">' + l.categoria + ' · ' + l.data + ' · NF: ' + l.nf + '</div>' +
+        '</div>' +
+        '<div class="lancamento-valor">' + formatarMoeda(l.valor) + '</div>' +
+        '<div class="badge-status-pagamento ' + statusInfo.classe + '">' + statusInfo.label + '</div>';
+      tabela.appendChild(linha);
+    });
+  }
+
+  document.getElementById('btnAdicionarLancamento').addEventListener('click', function(){
+    document.getElementById('inputDescricaoLancamento').value = '';
+    document.getElementById('inputValorLancamento').value = '';
+    document.getElementById('inputDataLancamento').value = '';
+    document.getElementById('inputNfLancamento').value = '';
+    document.getElementById('modalAdicionarLancamento').classList.add('aberto');
+  });
+
+  var modalAdicionarLancamento = document.getElementById('modalAdicionarLancamento');
+  document.getElementById('btnCancelarLancamento').addEventListener('click', function(){ modalAdicionarLancamento.classList.remove('aberto'); });
+  modalAdicionarLancamento.addEventListener('click', function(e){ if(e.target === modalAdicionarLancamento) modalAdicionarLancamento.classList.remove('aberto'); });
+
+  document.getElementById('btnConfirmarLancamento').addEventListener('click', function(){
+    var descricao = document.getElementById('inputDescricaoLancamento').value.trim();
+    var valorTexto = document.getElementById('inputValorLancamento').value.trim();
+    if(!descricao || !valorTexto || !campanhaAbertaId) return;
+
+    var valorNumerico = parseFloat(valorTexto.replace(/\./g,'').replace(',', '.')) || 0;
+    var categoria = document.getElementById('dropCategoriaLancamento').getAttribute('data-valor') || 'Outros';
+    var statusPagLabel = document.getElementById('dropStatusPagamentoLancamento').getAttribute('data-valor') || 'Previsto';
+    var statusPagChave = statusPagLabel === 'Em Curso' ? 'curso' : (statusPagLabel === 'Realizado' ? 'realizado' : 'previsto');
+    var dataInput = document.getElementById('inputDataLancamento').value;
+    var dataFormatada = dataInput ? dataInput.split('-').reverse().join('/') : 'N/D';
+    var nf = document.getElementById('inputNfLancamento').value.trim() || 'N/D';
+
+    dadosLancamentos[campanhaAbertaId] = dadosLancamentos[campanhaAbertaId] || [];
+    dadosLancamentos[campanhaAbertaId].push({ descricao:descricao, categoria:categoria, valor:valorNumerico, status:statusPagChave, data:dataFormatada, nf:nf });
+
+    var camp = dadosCampanhas.filter(function(c){ return c.id === campanhaAbertaId; })[0];
+    if(statusPagChave === 'realizado') camp.gasto += valorNumerico;
+    renderizarLancamentos(campanhaAbertaId, camp);
+    renderizarCampanhas();
+
+    modalAdicionarLancamento.classList.remove('aberto');
+    mostrarToast('Lançamento <strong>' + descricao + '</strong> adicionado.');
+  });
+
+  // ===== FUNCIONALIDADE 1 (detalhe): materiais e clientes vinculados à campanha =====
+  function renderizarMateriaisDaCampanha(nomeCampanha){
+    var grid = document.getElementById('gridMateriaisCampanha');
+    grid.innerHTML = '';
+    var materiaisDaCampanha = dadosMateriais.filter(function(m){ return m.campanha === nomeCampanha; });
+    if(materiaisDaCampanha.length === 0){
+      grid.innerHTML = '<div style="text-align:center; padding:20px 0; color:var(--muted); font-size:12px; grid-column:1/-1;">Nenhum material vinculado a esta campanha ainda.</div>';
+      return;
+    }
+    materiaisDaCampanha.forEach(function(mat){
+      grid.appendChild(criarCardMaterial(mat));
+    });
+  }
+
+  function renderizarClientesDaCampanha(idCampanha){
+    var lista = document.getElementById('listaClientesCampanha');
+    var clientes = dadosClientesPorCampanha[idCampanha] || [];
+    lista.innerHTML = '';
+    if(clientes.length === 0){
+      lista.innerHTML = '<div style="text-align:center; padding:20px 0; color:var(--muted); font-size:12px;">Nenhum cliente gerado por esta campanha ainda.</div>';
+      return;
+    }
+    clientes.forEach(function(cli){
+      var linha = document.createElement('div');
+      linha.className = 'linha-lancamento';
+      linha.innerHTML =
+        '<div class="lancamento-info">' +
+          '<div class="lancamento-descricao">' + cli.nome + '</div>' +
+          '<div class="lancamento-meta">' + cli.tese + ' · cadastrado em ' + cli.data + '</div>' +
+        '</div>' +
+        '<div class="seta-ir-resultado-mkt" style="width:7px;height:7px; border-right:1.4px solid var(--muted); border-bottom:1.4px solid var(--muted); transform:rotate(-45deg);"></div>';
+      linha.style.cursor = 'pointer';
+      linha.addEventListener('click', function(){ mostrarToast('Redirecionando para a ficha completa de <strong>' + cli.nome + '</strong>...'); });
+      lista.appendChild(linha);
+    });
+  }
+
+  // =====================================================================
+  // FUNCIONALIDADE 1: modal Nova Campanha
+  // =====================================================================
+  var modalNovaCampanha = document.getElementById('modalNovaCampanha');
+  document.getElementById('btnNovaCampanha').addEventListener('click', function(){
+    document.getElementById('inputNomeCampanha').value = '';
+    document.getElementById('inputDataInicioCampanha').value = '';
+    document.getElementById('inputDataFimCampanha').value = '';
+    document.getElementById('inputOrcamentoCampanha').value = '';
+    modalNovaCampanha.classList.add('aberto');
+  });
+  document.getElementById('btnCancelarNovaCampanha').addEventListener('click', function(){ modalNovaCampanha.classList.remove('aberto'); });
+  modalNovaCampanha.addEventListener('click', function(e){ if(e.target === modalNovaCampanha) modalNovaCampanha.classList.remove('aberto'); });
+
+  document.getElementById('btnConfirmarNovaCampanha').addEventListener('click', function(){
+    var nome = document.getElementById('inputNomeCampanha').value.trim();
+    var orcamentoTexto = document.getElementById('inputOrcamentoCampanha').value.trim();
+    if(!nome || !orcamentoTexto) return;
+
+    var inicioInput = document.getElementById('inputDataInicioCampanha').value;
+    var fimInput = document.getElementById('inputDataFimCampanha').value;
+    var inicio = inicioInput ? inicioInput.split('-').reverse().join('/') : 'N/D';
+    var fim = fimInput ? fimInput.split('-').reverse().join('/') : 'N/D';
+    var orcamento = parseFloat(orcamentoTexto.replace(/\./g,'').replace(',', '.')) || 0;
+    var responsavel = document.getElementById('dropResponsavelNovaCampanha').getAttribute('data-valor') || 'Camila Souza';
+    var iniciaisResp = responsavel.split(' ').slice(0,2).map(function(p){ return p[0]; }).join('').toUpperCase();
+    var idNova = 'camp' + (dadosCampanhas.length + 1) + '_' + Date.now();
+
+    dadosCampanhas.unshift({
+      id:idNova, nome:nome, inicio:inicio, fim:fim, status:'planejada',
+      orcamento:orcamento, gasto:0, leads:0, responsavel:responsavel, responsavelIniciais:iniciaisResp,
+      kanbanOrder:campanhasOrdenadasPorStatus('planejada').length
+    });
+    dadosLancamentos[idNova] = [];
+    dadosClientesPorCampanha[idNova] = [];
+
+    renderizarCampanhas();
+    atualizarListaCampanhasVinculoMaterial();
+    modalNovaCampanha.classList.remove('aberto');
+    mostrarToast('Campanha <strong>' + nome + '</strong> criada com sucesso.');
+  });
+
+  // =====================================================================
+  // FUNCIONALIDADE 3: biblioteca de materiais: toggle aprovador/colaborador
+  // =====================================================================
+  var visualizandoComoAprovador = false;
+  var toggleVisualizacao = document.getElementById('toggleVisualizacao');
+
+  toggleVisualizacao.addEventListener('click', function(){
+    visualizandoComoAprovador = !visualizandoComoAprovador;
+    toggleVisualizacao.classList.toggle('ativo', visualizandoComoAprovador);
+    document.getElementById('textoToggleVisualizacao').textContent = visualizandoComoAprovador ? 'Aprovador (Dr. Victor)' : 'Colaborador';
+    mostrarToast(visualizandoComoAprovador
+      ? 'Visualizando como <strong>Aprovador</strong>. Ações de aprovação liberadas.'
+      : 'Visualizando como <strong>Colaborador</strong>. Ações de aprovação restritas.');
+  });
+
+  var mapaStatusMaterial = {
+    rascunho:{ classe:'bsm-rascunho', label:'Rascunho' },
+    revisao:{ classe:'bsm-revisao', label:'Em Revisão' },
+    aprovado:{ classe:'bsm-aprovado', label:'Aprovado' },
+    publicado:{ classe:'bsm-publicado', label:'Publicado' },
+    reprovado:{ classe:'bsm-reprovado', label:'Reprovado' }
+  };
+
+  var iconesPorTipoMaterial = {
+    arte:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><circle cx="8.5" cy="8.5" r="1.6" stroke="currentColor" stroke-width="1.4"/><path d="M21 16l-5.5-6-4 4.5L9 12l-6 6" stroke="currentColor" stroke-width="1.4"/></svg>',
+    video:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M17 10l4-2.5v9L17 14" stroke="currentColor" stroke-width="1.5"/></svg>',
+    carrossel:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="8" height="12" rx="1.5" stroke="currentColor" stroke-width="1.4"/><rect x="13" y="3" width="9" height="18" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>'
+  };
+
+  function criarCardMaterial(mat){
+    var statusInfo = mapaStatusMaterial[mat.status];
+    var card = document.createElement('div');
+    card.className = 'card-material';
+    card.innerHTML =
+      '<div class="icone-tipo-material">' + (iconesPorTipoMaterial[mat.tipo] || iconesPorTipoMaterial.arte) + '</div>' +
+      '<div class="card-material-nome">' + mat.nome + '</div>' +
+      '<div class="card-material-data">' + mat.campanha + ' · ' + mat.data + '</div>' +
+      '<div class="badge-status-material ' + statusInfo.classe + '">' + statusInfo.label + '</div>';
+    card.addEventListener('click', function(){ abrirDetalheMaterial(mat.id); });
+    return card;
+  }
+
+  function renderizarMateriais(){
+    var grid = document.getElementById('gridMateriais');
+    grid.innerHTML = '';
+    dadosMateriais.forEach(function(mat){ grid.appendChild(criarCardMaterial(mat)); });
+  }
+
+  // ===== FUNCIONALIDADE 3: modal de detalhe do material + fluxo de aprovação =====
+  var modalDetalheMaterial = document.getElementById('modalDetalheMaterial');
+  var materialAbertoId = null;
+  var aprovadoresDesignados = ['Dr. Victor', 'Hevelyn'];
+
+  var iconesHistorico = {
+    aprovado:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    reprovado:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+    ajuste:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 9v4l2.5 2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg>'
+  };
+
+  function abrirDetalheMaterial(idMaterial){
+    var mat = dadosMateriais.filter(function(m){ return m.id === idMaterial; })[0];
+    if(!mat) return;
+    materialAbertoId = idMaterial;
+
+    document.getElementById('tituloDetalheMaterial').textContent = mat.nome;
+    document.getElementById('subDetalheMaterial').textContent = mat.campanha + ' · Enviado por ' + mat.autor + ' em ' + mat.data;
+
+    var statusInfo = mapaStatusMaterial[mat.status];
+    document.getElementById('badgeStatusDetalheMaterial').innerHTML = '<div class="badge-status-material ' + statusInfo.classe + '">' + statusInfo.label + '</div>';
+
+    var historicoEl = document.getElementById('historicoAprovacaoMaterial');
+    historicoEl.innerHTML = '';
+    if(mat.historico.length === 0){
+      historicoEl.innerHTML = '<div style="text-align:center; padding:10px 0; color:var(--muted); font-size:11.5px;">Sem histórico de decisões ainda; material aguardando revisão.</div>';
+    } else {
+      mat.historico.forEach(function(h){
+        var item = document.createElement('div');
+        item.className = 'item-historico-aprovacao';
+        item.innerHTML =
+          '<div class="icone-historico hist-' + h.tipo + '">' + iconesHistorico[h.tipo] + '</div>' +
+          '<div class="corpo-historico">' +
+            '<div class="titulo-historico">' + h.autor + ': ' + (h.tipo === 'aprovado' ? 'Aprovou' : (h.tipo === 'reprovado' ? 'Reprovou' : 'Solicitou ajuste')) + '</div>' +
+            '<div class="meta-historico">' + h.data + '</div>' +
+            (h.comentario ? '<div class="comentario-historico">"' + h.comentario + '"</div>' : '') +
+          '</div>';
+        historicoEl.appendChild(item);
+      });
+    }
+
+    renderizarAcoesAprovacao(mat);
+    modalDetalheMaterial.classList.add('aberto');
+  }
+
+  function renderizarAcoesAprovacao(mat){
+    var area = document.getElementById('areaAcoesAprovacaoMaterial');
+    if(visualizandoComoAprovador){
+      area.innerHTML =
+        '<div class="botoes-aprovacao-material">' +
+          '<button class="btn-aprovar-mat" id="btnAprovarMaterial">Aprovar</button>' +
+          '<button class="btn-ajuste-mat" id="btnAjusteMaterial">Solicitar Ajuste</button>' +
+          '<button class="btn-reprovar-mat" id="btnReprovarMaterial">Reprovar</button>' +
+        '</div>';
+      document.getElementById('btnAprovarMaterial').addEventListener('click', function(){ decidirMaterial('aprovado'); });
+      document.getElementById('btnAjusteMaterial').addEventListener('click', function(){ decidirMaterial('ajuste'); });
+      document.getElementById('btnReprovarMaterial').addEventListener('click', function(){ decidirMaterial('reprovado'); });
+    } else {
+      area.innerHTML =
+        '<div class="aviso-sem-permissao-mat">Você não tem permissão para aprovar materiais neste módulo. Esta permissão pode ser delegada pelo Admin (Dr. Victor) em "Gerenciar Permissões de Marketing".</div>';
+    }
+  }
+
+  function decidirMaterial(decisao){
+    var mat = dadosMateriais.filter(function(m){ return m.id === materialAbertoId; })[0];
+    if(!mat) return;
+
+    var autorDecisao = 'Dr. Victor';
+    var agora = new Date();
+    var dataFormatada = String(agora.getDate()).padStart(2,'0') + '/' + String(agora.getMonth()+1).padStart(2,'0') + '/' + agora.getFullYear();
+
+    if(decisao === 'aprovado'){
+      mat.status = 'aprovado';
+      mat.historico.unshift({ tipo:'aprovado', autor:autorDecisao, data:dataFormatada, comentario:'Aprovado para publicação.' });
+      mostrarToast('Material <strong>' + mat.nome + '</strong> aprovado.');
+    } else if(decisao === 'reprovado'){
+      mat.status = 'reprovado';
+      mat.historico.unshift({ tipo:'reprovado', autor:autorDecisao, data:dataFormatada, comentario:'Material reprovado. Revisar antes de novo envio.' });
+      mostrarToast('Material <strong>' + mat.nome + '</strong> reprovado.');
+    } else {
+      mat.status = 'revisao';
+      mat.historico.unshift({ tipo:'ajuste', autor:autorDecisao, data:dataFormatada, comentario:'Solicitado ajuste antes da aprovação final.' });
+      mostrarToast('Ajuste solicitado para <strong>' + mat.nome + '</strong>.');
+    }
+
+    renderizarMateriais();
+    modalDetalheMaterial.classList.remove('aberto');
+  }
+
+  document.getElementById('btnFecharDetalheMaterial').addEventListener('click', function(){ modalDetalheMaterial.classList.remove('aberto'); });
+  modalDetalheMaterial.addEventListener('click', function(e){ if(e.target === modalDetalheMaterial) modalDetalheMaterial.classList.remove('aberto'); });
+
+  // ===== FUNCIONALIDADE 3: modal Enviar Material =====
+  var modalEnviarMaterial = document.getElementById('modalEnviarMaterial');
+
+  function atualizarListaCampanhasVinculoMaterial(){
+    var lista = document.getElementById('listaCampanhasVinculoMaterial');
+    lista.innerHTML = '';
+    dadosCampanhas.forEach(function(camp, idx){
+      var opcao = document.createElement('div');
+      opcao.className = 'dropdown-custom-opcao' + (idx === 0 ? ' selecionada' : '');
+      opcao.textContent = camp.nome;
+      lista.appendChild(opcao);
+    });
+    ativarDropdowns(document.getElementById('dropCampanhaVinculadaMaterial').parentElement);
+  }
+  atualizarListaCampanhasVinculoMaterial();
+
+  document.getElementById('btnEnviarMaterial').addEventListener('click', function(){
+    document.getElementById('inputNomeMaterial').value = '';
+    modalEnviarMaterial.classList.add('aberto');
+  });
+  document.getElementById('btnCancelarEnviarMaterial').addEventListener('click', function(){ modalEnviarMaterial.classList.remove('aberto'); });
+  modalEnviarMaterial.addEventListener('click', function(e){ if(e.target === modalEnviarMaterial) modalEnviarMaterial.classList.remove('aberto'); });
+
+  document.getElementById('areaUploadSimulado').addEventListener('click', function(){
+    mostrarToast('Upload simulado neste protótipo; em produção, abriria o seletor de arquivos do sistema.');
+  });
+
+  document.getElementById('btnConfirmarEnviarMaterial').addEventListener('click', function(){
+    var nome = document.getElementById('inputNomeMaterial').value.trim();
+    if(!nome) return;
+    var campanhaVinculada = document.getElementById('dropCampanhaVinculadaMaterial').getAttribute('data-valor') || dadosCampanhas[0].nome;
+    var idNovo = 'mat' + (dadosMateriais.length + 1) + '_' + Date.now();
+
+    dadosMateriais.unshift({
+      id:idNovo, nome:nome, tipo:'arte', campanha:campanhaVinculada, status:'rascunho',
+      autor:'Camila Souza', data:new Date().toLocaleDateString('pt-BR'), historico:[]
+    });
+
+    renderizarMateriais();
+    modalEnviarMaterial.classList.remove('aberto');
+    mostrarToast('Material <strong>' + nome + '</strong> enviado para revisão.');
+  });
+
+  // =====================================================================
+  // FUNCIONALIDADE 4: Gerenciar Permissões de Marketing
+  // =====================================================================
+  var modalPermissoesMkt = document.getElementById('modalPermissoesMkt');
+  document.getElementById('btnAbrirPermissoes').addEventListener('click', function(){ modalPermissoesMkt.classList.add('aberto'); });
+  document.getElementById('btnFecharPermissoesMkt').addEventListener('click', function(){ modalPermissoesMkt.classList.remove('aberto'); });
+  modalPermissoesMkt.addEventListener('click', function(e){ if(e.target === modalPermissoesMkt) modalPermissoesMkt.classList.remove('aberto'); });
+
+  document.querySelectorAll('.switch-permissao').forEach(function(sw){
+    sw.addEventListener('click', function(){ sw.classList.toggle('marcado'); });
+  });
+
+  document.querySelectorAll('.cargo-permissoes-aplicar-todos').forEach(function(link){
+    link.addEventListener('click', function(){
+      var cargo = link.getAttribute('data-cargo');
+      var linhas = document.querySelectorAll('.linha-colaborador-permissao[data-cargo="' + cargo + '"]');
+      if(linhas.length === 0) return;
+      var primeiraLinha = linhas[0];
+      var estadoReferencia = {};
+      primeiraLinha.querySelectorAll('.switch-permissao').forEach(function(sw){
+        var permissao = sw.getAttribute('data-permissao');
+        estadoReferencia[permissao] = sw.classList.contains('marcado');
+      });
+      linhas.forEach(function(linha){
+        linha.querySelectorAll('.switch-permissao').forEach(function(sw){
+          var permissao = sw.getAttribute('data-permissao');
+          if(estadoReferencia[permissao] !== undefined){
+            sw.classList.toggle('marcado', estadoReferencia[permissao]);
+          }
+        });
+      });
+      mostrarToast('Permissões aplicadas a todo o cargo.');
+    });
+  });
+
+
+
+  // =====================================================================
+  // EXPANSÃO: VISUALIZAÇÃO KANBAN, LISTA E BIBLIOTECA CRIATIVA
+  // =====================================================================
+  var visualizacaoCampanhas = 'kanban';
+  var campanhaArrastadaId = null;
+  var campanhaArrastadaElemento = null;
+  var suprimirCliqueCampanhaAte = 0;
+  var statusKanbanCampanhas = [
+    { chave:'planejada', titulo:'Planejadas' },
+    { chave:'andamento', titulo:'Em andamento' },
+    { chave:'pausada', titulo:'Pausadas' },
+    { chave:'finalizada', titulo:'Finalizadas' }
+  ];
+
+  function garantirOrdensKanban(){
+    dadosCampanhas.forEach(function(camp, indice){
+      if(typeof camp.kanbanOrder !== 'number') camp.kanbanOrder = indice;
+    });
+  }
+
+  function campanhasOrdenadasPorStatus(status, idParaIgnorar){
+    garantirOrdensKanban();
+    return dadosCampanhas
+      .filter(function(camp){ return camp.status === status && camp.id !== idParaIgnorar; })
+      .sort(function(a, b){ return a.kanbanOrder - b.kanbanOrder; });
+  }
+
+  function reindexarStatusKanban(status, campanhasOrdenadas){
+    campanhasOrdenadas.forEach(function(camp, indice){ camp.kanbanOrder = indice; });
+  }
+
+  function limparIndicadoresDropCampanha(){
+    document.querySelectorAll('.campaign-drop-indicator').forEach(function(indicador){ indicador.remove(); });
+    document.querySelectorAll('.kanban-campanha-coluna-corpo').forEach(function(corpo){
+      corpo.removeAttribute('data-drop-before-id');
+    });
+  }
+
+  function obterCardAposPontoDrop(corpo, y){
+    var cards = Array.prototype.slice.call(corpo.querySelectorAll('.campaign-kanban-card:not(.dragging)'));
+    return cards.reduce(function(maisProximo, card){
+      var box = card.getBoundingClientRect();
+      var deslocamento = y - box.top - (box.height / 2);
+      if(deslocamento < 0 && deslocamento > maisProximo.deslocamento){
+        return { deslocamento:deslocamento, elemento:card };
+      }
+      return maisProximo;
+    }, { deslocamento:Number.NEGATIVE_INFINITY, elemento:null }).element;
+  }
+
+  function mostrarIndicadorDropCampanha(corpo, y){
+    var cardApos = obterCardAposPontoDrop(corpo, y);
+    var idAntesDaPosicao = cardApos ? cardApos.getAttribute('data-campanha-id') : '';
+    var indicadorAtual = corpo.querySelector('.campaign-drop-indicator');
+    if(indicadorAtual && corpo.getAttribute('data-drop-before-id') === idAntesDaPosicao){ return; }
+    if(indicadorAtual) indicadorAtual.remove();
+
+    var indicador = document.createElement('div');
+    indicador.className = 'campaign-drop-indicator';
+    if(cardApos){
+      corpo.insertBefore(indicador, cardApos);
+    } else {
+      corpo.appendChild(indicador);
+    }
+    corpo.setAttribute('data-drop-before-id', idAntesDaPosicao);
+  }
+
+  function moverCampanhaParaPosicao(idCampanha, destinoStatus, idAntesDaPosicao){
+    var campanha = dadosCampanhas.filter(function(camp){ return camp.id === idCampanha; })[0];
+    if(!campanha) return false;
+
+    var statusOrigem = campanha.status;
+    var destinoOrdenado = campanhasOrdenadasPorStatus(destinoStatus, idCampanha);
+    var indiceDestino = idAntesDaPosicao
+      ? destinoOrdenado.findIndex(function(camp){ return camp.id === idAntesDaPosicao; })
+      : destinoOrdenado.length;
+
+    if(indiceDestino < 0) indiceDestino = destinoOrdenado.length;
+    campanha.status = destinoStatus;
+    destinoOrdenado.splice(indiceDestino, 0, campanha);
+    reindexarStatusKanban(destinoStatus, destinoOrdenado);
+
+    if(statusOrigem !== destinoStatus){
+      reindexarStatusKanban(statusOrigem, campanhasOrdenadasPorStatus(statusOrigem));
+    }
+    return true;
+  }
+
+  function campanhasFiltradas(){
+    var statusFiltro = (document.getElementById('dropFiltroStatusMkt') || {}).getAttribute ? document.getElementById('dropFiltroStatusMkt').getAttribute('data-valor') : 'Todos os Status';
+    var responsavelFiltro = (document.getElementById('dropFiltroResponsavelMkt') || {}).getAttribute ? document.getElementById('dropFiltroResponsavelMkt').getAttribute('data-valor') : 'Todos os Responsáveis';
+    return dadosCampanhas.filter(function(camp){
+      var correspondeStatus = !statusFiltro || statusFiltro === 'Todos os Status' || mapaStatusCampanha[camp.status].label === statusFiltro;
+      var correspondeResponsavel = !responsavelFiltro || responsavelFiltro === 'Todos os Responsáveis' || camp.responsavel === responsavelFiltro;
+      return correspondeStatus && correspondeResponsavel;
+    });
+  }
+
+  function criarCardCampanhaKanban(camp, indice){
+    var percentual = camp.orcamento > 0 ? Math.round((camp.gasto / camp.orcamento) * 100) : 0;
+    var card = document.createElement('article');
+    card.className = 'campaign-kanban-card';
+    card.draggable = true;
+    card.setAttribute('data-campanha-id', camp.id);
+    card.style.animationDelay = Math.min(indice * 35, 180) + 'ms';
+    card.innerHTML =
+      '<div class="campaign-kanban-card-topo">' +
+        '<div><div class="campaign-kanban-card-nome">' + camp.nome + '</div><div class="campaign-kanban-card-periodo">' + camp.inicio + ' a ' + camp.fim + '</div></div>' +
+      '</div>' +
+      '<div class="campaign-kanban-card-orcamento">' +
+        '<div class="orcamento-label"><span class="orcamento-label-nome">Orçamento</span><span class="orcamento-label-valor">' + formatarMoeda(camp.gasto) + ' / ' + formatarMoeda(camp.orcamento) + '</span></div>' +
+        '<div class="orcamento-trilho"><div class="orcamento-fill ' + classeOrcamento(percentual) + '" style="width:' + Math.min(percentual,100) + '%"></div></div>' +
+      '</div>' +
+      '<div class="campaign-kanban-card-meta">' +
+        '<div class="campaign-kanban-card-resp"><div class="mini-avatar-mkt">' + camp.responsavelIniciais + '</div><span>' + camp.responsavel + '</span></div>' +
+        '<div class="campaign-kanban-card-leads">' + camp.leads + ' clientes</div>' +
+      '</div>';
+
+    card.addEventListener('dragstart', function(e){
+      campanhaArrastadaId = camp.id;
+      campanhaArrastadaElemento = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', camp.id);
+    });
+    card.addEventListener('dragend', function(){
+      card.classList.remove('dragging');
+      campanhaArrastadaId = null;
+      campanhaArrastadaElemento = null;
+      document.querySelectorAll('.kanban-campanha-coluna').forEach(function(col){ col.classList.remove('drop-ativa'); });
+      limparIndicadoresDropCampanha();
+      setTimeout(function(){ suprimirCliqueCampanhaAte = Date.now() + 80; }, 0);
+    });
+    card.addEventListener('click', function(){
+      if(Date.now() < suprimirCliqueCampanhaAte) return;
+      abrirDetalheCampanha(camp.id);
+    });
+    return card;
+  }
+
+  function renderizarCampanhas(){
+    garantirOrdensKanban();
+    var kanban = document.getElementById('kanbanCampanhasView');
+    var lista = document.getElementById('listaCampanhasView');
+    if(!kanban || !lista) return;
+    var campanhas = campanhasFiltradas();
+    var board = document.createElement('div');
+    board.className = 'kanban-campanhas-board';
+
+    statusKanbanCampanhas.forEach(function(status){
+      var campanhasColuna = campanhas.filter(function(c){ return c.status === status.chave; });
+      var coluna = document.createElement('section');
+      coluna.className = 'kanban-campanha-coluna';
+      coluna.setAttribute('data-status-destino', status.chave);
+      coluna.innerHTML =
+        '<div class="kanban-campanha-coluna-cabecalho">' +
+          '<span class="kanban-status-dot ' + status.chave + '"></span>' +
+          '<span class="kanban-campanha-coluna-titulo">' + status.titulo + '</span>' +
+          '<span class="kanban-campanha-coluna-qtd">' + campanhasColuna.length + '</span>' +
+        '</div>' +
+        '<div class="kanban-campanha-coluna-corpo"></div>';
+      var corpo = coluna.querySelector('.kanban-campanha-coluna-corpo');
+      campanhasColuna.sort(function(a, b){ return a.kanbanOrder - b.kanbanOrder; });
+      campanhasColuna.forEach(function(camp, indice){ corpo.appendChild(criarCardCampanhaKanban(camp, indice)); });
+      corpo.addEventListener('dragover', function(e){
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        coluna.classList.add('drop-ativa');
+        mostrarIndicadorDropCampanha(corpo, e.clientY);
+      });
+      corpo.addEventListener('dragleave', function(e){
+        if(!corpo.contains(e.relatedTarget)){
+          coluna.classList.remove('drop-ativa');
+          var indicador = corpo.querySelector('.campaign-drop-indicator');
+          if(indicador) indicador.remove();
+          corpo.removeAttribute('data-drop-before-id');
+        }
+      });
+      corpo.addEventListener('drop', function(e){
+        e.preventDefault();
+        coluna.classList.remove('drop-ativa');
+        var id = e.dataTransfer.getData('text/plain') || campanhaArrastadaId;
+        var destino = coluna.getAttribute('data-status-destino');
+        var idAntesDaPosicao = corpo.getAttribute('data-drop-before-id') || '';
+        var campanha = dadosCampanhas.filter(function(c){ return c.id === id; })[0];
+        limparIndicadoresDropCampanha();
+        if(!campanha) return;
+
+        var statusAnterior = campanha.status;
+        if(moverCampanhaParaPosicao(id, destino, idAntesDaPosicao)){
+          renderizarCampanhas();
+          var cardPousado = document.querySelector('.kanban-campanha-coluna[data-status-destino="' + destino + '"] .campaign-kanban-card[data-campanha-id="' + id + '"]');
+          var colunaRecebedora = document.querySelector('.kanban-campanha-coluna[data-status-destino="' + destino + '"]');
+          if(cardPousado){
+            cardPousado.classList.add('pousando');
+            cardPousado.addEventListener('animationend', function(){ cardPousado.classList.remove('pousando'); }, { once:true });
+          }
+          if(colunaRecebedora){
+            colunaRecebedora.classList.add('recebeu-campanha');
+            colunaRecebedora.addEventListener('animationend', function(){ colunaRecebedora.classList.remove('recebeu-campanha'); }, { once:true });
+          }
+          var acao = statusAnterior === destino ? 'reordenada' : 'movida';
+          mostrarToast('Campanha <strong>' + campanha.nome + '</strong> ' + acao + ' para a posição escolhida em ' + mapaStatusCampanha[destino].label + '.');
+        }
+      });
+      board.appendChild(coluna);
+    });
+    kanban.innerHTML = '';
+    kanban.appendChild(board);
+
+    lista.innerHTML = '';
+    var tabela = document.createElement('div');
+    tabela.className = 'lista-campanhas-table';
+    tabela.innerHTML = '<div class="lista-campanhas-head"><span>Campanha</span><span>Status</span><span>Orçamento</span><span>Responsável</span><span>Clientes</span></div>';
+    if(campanhas.length === 0){
+      tabela.insertAdjacentHTML('beforeend','<div class="lista-empty">Nenhuma campanha encontrada para os filtros selecionados.</div>');
+    } else {
+      campanhas.forEach(function(camp){
+        var percentual = camp.orcamento > 0 ? Math.round((camp.gasto / camp.orcamento) * 100) : 0;
+        var statusInfo = mapaStatusCampanha[camp.status];
+        var linha = document.createElement('div');
+        linha.className = 'lista-campanhas-row';
+        linha.innerHTML =
+          '<div class="lista-campanhas-nome"><strong>' + camp.nome + '</strong><span>' + camp.inicio + ' a ' + camp.fim + '</span></div>' +
+          '<div class="lista-campanhas-status"><span class="badge-status-campanha ' + statusInfo.classe + '">' + statusInfo.label + '</span></div>' +
+          '<div class="lista-campanhas-orcamento"><span>' + formatarMoeda(camp.gasto) + ' / ' + formatarMoeda(camp.orcamento) + '</span><div class="orcamento-trilho"><div class="orcamento-fill ' + classeOrcamento(percentual) + '" style="width:' + Math.min(percentual,100) + '%"></div></div></div>' +
+          '<div class="campaign-kanban-card-resp"><div class="mini-avatar-mkt">' + camp.responsavelIniciais + '</div><span>' + camp.responsavel + '</span></div>' +
+          '<div class="campaign-kanban-card-leads">' + camp.leads + '</div>';
+        linha.addEventListener('click', function(){ abrirDetalheCampanha(camp.id); });
+        tabela.appendChild(linha);
+      });
+    }
+    lista.appendChild(tabela);
+    aplicarVisualizacaoCampanhas();
+  }
+
+  function aplicarVisualizacaoCampanhas(){
+    var kanban = document.getElementById('kanbanCampanhasView');
+    var lista = document.getElementById('listaCampanhasView');
+    if(!kanban || !lista) return;
+    kanban.classList.toggle('hidden', visualizacaoCampanhas !== 'kanban');
+    lista.classList.toggle('visible', visualizacaoCampanhas === 'lista');
+    lista.classList.toggle('hidden', visualizacaoCampanhas !== 'lista');
+    document.querySelectorAll('.campaign-view-btn').forEach(function(btn){ btn.classList.toggle('active', btn.getAttribute('data-view') === visualizacaoCampanhas); });
+  }
+
+  // Biblioteca criativa com pastas de logos, artes, vídeos e referências.
+  var estruturaPastasMarketing = {
+    raiz: { id:'raiz', nome:'Biblioteca Criativa', pai:null, pastas:['logos-mkt','artes-prontas-mkt','videos-mkt','referencias-mkt'] },
+    'logos-mkt': { id:'logos-mkt', nome:'Logos e Identidade Visual', pai:'raiz', pastas:[] },
+    'artes-prontas-mkt': { id:'artes-prontas-mkt', nome:'Artes Prontas', pai:'raiz', pastas:[] },
+    'videos-mkt': { id:'videos-mkt', nome:'Vídeos e Reels', pai:'raiz', pastas:[] },
+    'referencias-mkt': { id:'referencias-mkt', nome:'Referências e Inspirações', pai:'raiz', pastas:[] }
+  };
+  var pastaMarketingAtual = 'raiz';
+  var pastaMarketingMenuAberto = null;
+
+  dadosMateriais.forEach(function(mat, idx){
+    if(!mat.pasta){
+      if(idx === 0) mat.pasta = 'artes-prontas-mkt';
+      else if(idx === 1 || idx === 5) mat.pasta = 'videos-mkt';
+      else if(idx === 2 || idx === 4 || idx === 6 || idx === 7) mat.pasta = 'artes-prontas-mkt';
+      else mat.pasta = 'referencias-mkt';
+    }
+  });
+
+  function materiaisNaPasta(idPasta){ return dadosMateriais.filter(function(mat){ return mat.pasta === idPasta; }); }
+  function contarItensPasta(idPasta){
+    var pasta = estruturaPastasMarketing[idPasta];
+    if(!pasta) return 0;
+    return pasta.pastas.length + materiaisNaPasta(idPasta).length;
+  }
+
+  function renderizarBreadcrumbMarketing(){
+    var container = document.getElementById('bibliotecaMktBreadcrumb');
+    if(!container) return;
+    var caminho = [];
+    var cursor = estruturaPastasMarketing[pastaMarketingAtual];
+    while(cursor){ caminho.unshift(cursor); cursor = cursor.pai ? estruturaPastasMarketing[cursor.pai] : null; }
+    container.innerHTML = '';
+    caminho.forEach(function(pasta, indice){
+      if(indice > 0){
+        var separador = document.createElement('span'); separador.className = 'biblioteca-mkt-separator'; separador.textContent = '/'; container.appendChild(separador);
+      }
+      var crumb = document.createElement('button');
+      crumb.type = 'button';
+      crumb.className = 'biblioteca-mkt-crumb' + (indice === caminho.length - 1 ? ' current' : '');
+      crumb.textContent = pasta.nome;
+      if(indice !== caminho.length - 1){ crumb.addEventListener('click', function(){ pastaMarketingAtual = pasta.id; renderizarMateriais(); }); }
+      container.appendChild(crumb);
+    });
+  }
+
+  function criarCardPastaMarketing(pasta){
+    var card = document.createElement('article');
+    card.className = 'folder-card-mkt';
+    card.setAttribute('data-folder-id', pasta.id);
+    card.draggable = pasta.id !== 'raiz';
+    card.innerHTML =
+      '<div class="folder-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></div>' +
+      '<div class="folder-card-title">' + pasta.nome + '</div>' +
+      '<div class="folder-card-meta">' + contarItensPasta(pasta.id) + ' item(ns)</div>' +
+      '<button class="folder-card-menu-trigger" type="button" aria-label="Mais opções"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg></button>';
+    card.addEventListener('click', function(e){
+      if(e.target.closest('.folder-card-menu-trigger')) return;
+      pastaMarketingAtual = pasta.id;
+      renderizarMateriais();
+    });
+    card.addEventListener('dragstart', function(e){
+      if(pasta.id === 'raiz') return;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('application/x-mkt-item', JSON.stringify({ tipo:'pasta', id:pasta.id }));
+    });
+    card.addEventListener('dragover', function(e){ e.preventDefault(); card.classList.add('drag-target'); });
+    card.addEventListener('dragleave', function(){ card.classList.remove('drag-target'); });
+    card.addEventListener('drop', function(e){
+      e.preventDefault(); card.classList.remove('drag-target');
+      var payload = e.dataTransfer.getData('application/x-mkt-item');
+      if(!payload) return;
+      try{
+        var dado = JSON.parse(payload);
+        moverItemMarketing(dado, pasta.id);
+      }catch(err){}
+    });
+    card.querySelector('.folder-card-menu-trigger').addEventListener('click', function(e){ e.stopPropagation(); abrirMenuPastaMarketing(e.currentTarget, pasta.id); });
+    return card;
+  }
+
+  function abrirMenuPastaMarketing(botao, pastaId){
+    fecharMenuPastaMarketing();
+    var portal = document.getElementById('folderMenuPortal');
+    if(!portal) return;
+    var menu = document.createElement('div');
+    menu.className = 'folder-menu-popover';
+    menu.innerHTML =
+      '<button class="folder-menu-option" type="button" data-action="abrir">Abrir pasta</button>' +
+      '<button class="folder-menu-option" type="button" data-action="renomear">Renomear</button>' +
+      (pastaId === 'logos-mkt' || pastaId === 'artes-prontas-mkt' || pastaId === 'videos-mkt' || pastaId === 'referencias-mkt' ? '' : '<button class="folder-menu-option danger" type="button" data-action="excluir">Excluir pasta</button>');
+    portal.appendChild(menu);
+    var rect = botao.getBoundingClientRect();
+    var menuHeight = 116;
+    var top = rect.bottom + 7;
+    if(top + menuHeight > window.innerHeight - 10) top = rect.top - menuHeight - 7;
+    menu.style.top = Math.max(10, top) + 'px';
+    menu.style.left = Math.max(10, Math.min(rect.right - 190, window.innerWidth - 200)) + 'px';
+    requestAnimationFrame(function(){ menu.classList.add('open'); });
+    pastaMarketingMenuAberto = menu;
+    menu.querySelectorAll('.folder-menu-option').forEach(function(opcao){
+      opcao.addEventListener('click', function(e){
+        e.stopPropagation();
+        var acao = opcao.getAttribute('data-action');
+        var pasta = estruturaPastasMarketing[pastaId];
+        if(!pasta) return;
+        if(acao === 'abrir'){ pastaMarketingAtual = pastaId; renderizarMateriais(); }
+        if(acao === 'renomear'){ abrirModalPastaMarketing(pastaId); }
+        if(acao === 'excluir'){
+          if(materiaisNaPasta(pastaId).length || pasta.pastas.length){ mostrarToast('Esvazie a pasta antes de excluí-la.', 'info'); }
+          else { var pai = estruturaPastasMarketing[pasta.pai]; pai.pastas = pai.pastas.filter(function(id){ return id !== pastaId; }); delete estruturaPastasMarketing[pastaId]; if(pastaMarketingAtual === pastaId) pastaMarketingAtual = 'raiz'; renderizarMateriais(); mostrarToast('Pasta removida.'); }
+        }
+        fecharMenuPastaMarketing();
+      });
+    });
+  }
+
+  function fecharMenuPastaMarketing(){
+    var portal = document.getElementById('folderMenuPortal');
+    if(portal) portal.innerHTML = '';
+    pastaMarketingMenuAberto = null;
+  }
+
+  function abrirModalPastaMarketing(pastaId){
+    var pasta = pastaId ? estruturaPastasMarketing[pastaId] : null;
+    document.getElementById('inputNomePastaMkt').value = pasta ? pasta.nome : '';
+    document.getElementById('subNovaPastaMkt').textContent = pasta ? 'Atualize o nome desta pasta da Biblioteca Criativa.' : 'A pasta será criada dentro de "' + estruturaPastasMarketing[pastaMarketingAtual].nome + '".';
+    document.getElementById('modalNovaPastaMkt').setAttribute('data-edit-folder', pastaId || '');
+    document.getElementById('btnConfirmarNovaPastaMkt').textContent = pasta ? 'Salvar Nome' : 'Criar Pasta';
+    document.getElementById('modalNovaPastaMkt').classList.add('aberto');
+  }
+
+  function moverItemMarketing(dado, destino){
+    if(!estruturaPastasMarketing[destino]) return;
+    if(dado.tipo === 'material'){
+      var mat = dadosMateriais.filter(function(m){ return m.id === dado.id; })[0];
+      if(!mat || mat.pasta === destino) return;
+      mat.pasta = destino;
+      renderizarMateriais();
+      mostrarToast('Material movido para <strong>' + estruturaPastasMarketing[destino].nome + '</strong>.');
+    }
+    if(dado.tipo === 'pasta'){
+      var pasta = estruturaPastasMarketing[dado.id];
+      if(!pasta || pasta.id === destino || pasta.pai === destino || destino === pasta.id) return;
+      var destinoCursor = estruturaPastasMarketing[destino];
+      while(destinoCursor){ if(destinoCursor.id === pasta.id) return; destinoCursor = destinoCursor.pai ? estruturaPastasMarketing[destinoCursor.pai] : null; }
+      var paiAntigo = estruturaPastasMarketing[pasta.pai];
+      if(paiAntigo) paiAntigo.pastas = paiAntigo.pastas.filter(function(id){ return id !== pasta.id; });
+      pasta.pai = destino;
+      estruturaPastasMarketing[destino].pastas.push(pasta.id);
+      renderizarMateriais();
+      mostrarToast('Pasta movida para <strong>' + estruturaPastasMarketing[destino].nome + '</strong>.');
+    }
+  }
+
+  function criarCardMaterialBiblioteca(mat){
+    var card = criarCardMaterial(mat);
+    card.draggable = true;
+    card.classList.add('material-library-card');
+    card.addEventListener('dragstart', function(e){
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('application/x-mkt-item', JSON.stringify({ tipo:'material', id:mat.id }));
+    });
+    return card;
+  }
+
+  function renderizarMateriais(){
+    var gridPastas = document.getElementById('gridPastasMkt');
+    var gridMateriais = document.getElementById('gridMateriais');
+    if(!gridPastas || !gridMateriais) return;
+    renderizarBreadcrumbMarketing();
+    gridPastas.innerHTML = '';
+    gridMateriais.innerHTML = '';
+    var atual = estruturaPastasMarketing[pastaMarketingAtual];
+    if(!atual) { pastaMarketingAtual = 'raiz'; atual = estruturaPastasMarketing.raiz; }
+    atual.pastas.forEach(function(id){
+      var pasta = estruturaPastasMarketing[id];
+      if(pasta) gridPastas.appendChild(criarCardPastaMarketing(pasta));
+    });
+    if(atual.pastas.length === 0){ gridPastas.innerHTML = ''; }
+    var materiais = materiaisNaPasta(pastaMarketingAtual);
+    if(materiais.length && atual.pastas.length){
+      var titulo = document.createElement('div'); titulo.className = 'material-library-separator'; titulo.textContent = 'Materiais nesta pasta'; gridMateriais.appendChild(titulo);
+    }
+    materiais.forEach(function(mat){ gridMateriais.appendChild(criarCardMaterialBiblioteca(mat)); });
+    if(!atual.pastas.length && !materiais.length){
+      gridMateriais.innerHTML = '<div class="folder-empty-state">Esta pasta está vazia. Crie uma pasta ou envie um material para começar.</div>';
+    }
+    atualizarListaPastasVinculoMaterial();
+  }
+
+  function atualizarListaPastasVinculoMaterial(){
+    var lista = document.getElementById('listaPastasVinculoMaterial');
+    var drop = document.getElementById('dropPastaVinculadaMaterial');
+    if(!lista || !drop) return;
+    lista.innerHTML = '';
+    Object.keys(estruturaPastasMarketing).forEach(function(id){
+      if(id === 'raiz') return;
+      var pasta = estruturaPastasMarketing[id];
+      var opcao = document.createElement('div');
+      opcao.className = 'dropdown-custom-opcao' + (drop.getAttribute('data-valor') === pasta.nome ? ' selecionada' : '');
+      opcao.textContent = pasta.nome;
+      opcao.setAttribute('data-folder-id', pasta.id);
+      opcao.addEventListener('click', function(e){
+        e.stopPropagation();
+        lista.querySelectorAll('.dropdown-custom-opcao').forEach(function(o){ o.classList.remove('selecionada'); });
+        opcao.classList.add('selecionada');
+        drop.setAttribute('data-valor', pasta.nome);
+        drop.setAttribute('data-folder-id', pasta.id);
+        var label = drop.querySelector('.dropdown-custom-valor span'); if(label) label.textContent = pasta.nome;
+        drop.classList.remove('aberto');
+      });
+      lista.appendChild(opcao);
+    });
+  }
+
+  document.querySelectorAll('.campaign-view-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){ visualizacaoCampanhas = btn.getAttribute('data-view'); aplicarVisualizacaoCampanhas(); });
+  });
+
+  document.getElementById('btnNovaPastaMkt').addEventListener('click', function(){ abrirModalPastaMarketing(''); });
+  document.getElementById('btnCancelarNovaPastaMkt').addEventListener('click', function(){ document.getElementById('modalNovaPastaMkt').classList.remove('aberto'); });
+  document.getElementById('modalNovaPastaMkt').addEventListener('click', function(e){ if(e.target === this) this.classList.remove('aberto'); });
+  document.getElementById('btnConfirmarNovaPastaMkt').addEventListener('click', function(){
+    var nome = document.getElementById('inputNomePastaMkt').value.trim();
+    var modal = document.getElementById('modalNovaPastaMkt');
+    if(!nome) return;
+    var idEdicao = modal.getAttribute('data-edit-folder');
+    if(idEdicao && estruturaPastasMarketing[idEdicao]){
+      estruturaPastasMarketing[idEdicao].nome = nome;
+      mostrarToast('Pasta renomeada para <strong>' + nome + '</strong>.');
+    }else{
+      var novoId = 'pasta-mkt-' + Date.now();
+      estruturaPastasMarketing[novoId] = { id:novoId, nome:nome, pai:pastaMarketingAtual, pastas:[] };
+      estruturaPastasMarketing[pastaMarketingAtual].pastas.push(novoId);
+      mostrarToast('Pasta <strong>' + nome + '</strong> criada.');
+    }
+    modal.classList.remove('aberto');
+    renderizarMateriais();
+  });
+
+  // O listener original do upload cria o material. Este completa a pasta escolhida e redesenha a biblioteca.
+  document.getElementById('btnConfirmarEnviarMaterial').addEventListener('click', function(){
+    var nomeMaterialUpload = document.getElementById('inputNomeMaterial').value.trim();
+    if(!nomeMaterialUpload) return;
+    setTimeout(function(){
+      var drop = document.getElementById('dropPastaVinculadaMaterial');
+      var idPasta = drop.getAttribute('data-folder-id') || pastaMarketingAtual;
+      if(dadosMateriais.length && estruturaPastasMarketing[idPasta]){
+        dadosMateriais[0].pasta = idPasta;
+        renderizarMateriais();
+      }
+    }, 0);
+  });
+
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.folder-card-menu-trigger') && !e.target.closest('.folder-menu-popover')) fecharMenuPastaMarketing();
+  });
+  window.addEventListener('resize', fecharMenuPastaMarketing);
+  window.addEventListener('scroll', fecharMenuPastaMarketing, true);
+
+  // Faz os dropdowns existentes funcionarem e atualiza o Kanban quando filtros forem trocados.
+  ativarDropdowns();
+  ['dropFiltroStatusMkt','dropFiltroResponsavelMkt','dropFiltroPeriodoMkt'].forEach(function(id){
+    var dropdown = document.getElementById(id);
+    if(!dropdown) return;
+    dropdown.querySelectorAll('.dropdown-custom-opcao').forEach(function(opcao){
+      opcao.addEventListener('click', function(){ setTimeout(renderizarCampanhas, 0); });
+    });
+  });
+
+  renderizarCampanhas();
+  renderizarMateriais();
+
+</script>
+
+</body>
+</html>

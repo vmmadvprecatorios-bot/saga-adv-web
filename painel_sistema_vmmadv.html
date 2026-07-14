@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema VMMADV</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+  :root{
+    --navy-900:#0a1628;
+    --navy-800:#0f2138;
+    --navy-700:#16304f;
+    --navy-600:#1d3f66;
+    --gold-500:#c9a05c;
+    --gold-400:#d8b878;
+    --gold-300:#e8d2a0;
+    --cream:#f7f3ea;
+    --white:#ffffff;
+    --ink:#16304f;
+    --muted:#a8b6cc;
+    --soft:#c3cee0;
+    --panel:rgba(255,255,255,.02);
+    --panel-strong:rgba(255,255,255,.04);
+    --border:color-mix(in srgb,var(--gold-500) 25%,transparent);
+    --border-soft:color-mix(in srgb,var(--gold-500) 20%,transparent);
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+
+  body{
+    background: linear-gradient(135deg, var(--navy-900) 0%, var(--navy-800) 45%, var(--navy-700) 100%);
+    font-family:'Montserrat',sans-serif;
+    color:var(--cream);
+    padding:64px 48px 80px;
+    min-height:100vh;
+  }
+
+  .topo{
+    text-align:center;
+    margin-bottom:64px;
+    position:relative;
+  }
+
+  .selo{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:22px;
+  }
+
+  .selo-linha{
+    width:46px;
+    height:1px;
+    background:var(--gold-400);
+  }
+
+  .selo-texto{
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--gold-400);
+    font-weight:500;
+  }
+
+  h1{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:600;
+    font-size:54px;
+    color:var(--white);
+    letter-spacing:0.5px;
+    line-height:1.15;
+  }
+
+  h1 span{
+    color:var(--gold-400);
+    font-style:italic;
+  }
+
+  .subtitulo{
+    margin-top:18px;
+    font-size:15.5px;
+    color:var(--muted);
+    font-weight:300;
+    letter-spacing:0.3px;
+    max-width:620px;
+    margin-left:auto;
+    margin-right:auto;
+    line-height:1.7;
+  }
+
+  .moldura-central{
+    max-width:1180px;
+    margin:0 auto;
+  }
+
+  /* Pilares centrais - 4 grandes blocos */
+  .pilares{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:0;
+    margin-bottom:60px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    overflow:hidden;
+  }
+
+  .pilar{
+    padding:34px 26px;
+    text-align:center;
+    border-right:1px solid var(--border-soft);
+    background:var(--panel);
+    transition:background 0.3s;
+  }
+  .pilar:last-child{border-right:none;}
+
+  .pilar-numero{
+    font-family:'Cormorant Garamond',serif;
+    font-size:13px;
+    color:var(--gold-400);
+    letter-spacing:2px;
+    margin-bottom:14px;
+  }
+
+  .pilar-titulo{
+    font-family:'Cormorant Garamond',serif;
+    font-size:23px;
+    font-weight:600;
+    color:var(--white);
+    margin-bottom:10px;
+  }
+
+  .pilar-desc{
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.6;
+    font-weight:300;
+  }
+
+  /* Grid de módulos com ilustração */
+  .secao-titulo{
+    text-align:center;
+    margin-bottom:8px;
+  }
+
+  .secao-titulo h2{
+    font-family:'Cormorant Garamond',serif;
+    font-size:30px;
+    color:var(--white);
+    font-weight:600;
+  }
+
+  .secao-titulo .linha-dourada{
+    width:70px;
+    height:2px;
+    background:var(--gold-400);
+    margin:18px auto 50px;
+  }
+
+  .modulos{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:22px;
+    margin-bottom:70px;
+  }
+
+  .modulo{
+    background:linear-gradient(160deg, var(--panel-strong), var(--panel));
+    border:1px solid var(--border-soft);
+    border-radius:6px;
+    padding:30px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .modulo::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;
+    width:3px;
+    height:100%;
+    background:var(--gold-500);
+    opacity:0.6;
+  }
+
+  .modulo-icone{
+    width:46px;
+    height:46px;
+    margin-bottom:18px;
+  }
+
+  .modulo h3{
+    font-family:'Cormorant Garamond',serif;
+    font-size:21px;
+    color:var(--white);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+
+  .modulo p{
+    font-size:12.5px;
+    color:var(--muted);
+    line-height:1.65;
+    font-weight:300;
+  }
+
+  .modulo ul{
+    margin-top:12px;
+    padding-left:0;
+    list-style:none;
+  }
+
+  .modulo li{
+    font-size:11.5px;
+    color:var(--soft);
+    padding:4px 0 4px 16px;
+    position:relative;
+    font-weight:300;
+  }
+
+  .modulo li::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:11px;
+    width:5px;
+    height:1px;
+    background:var(--gold-400);
+  }
+
+  /* Jornada do dado - ilustração de fluxo */
+  .jornada-wrap{
+    margin-bottom:70px;
+  }
+
+  .jornada-svg{
+    width:100%;
+    display:block;
+  }
+
+  /* Ícones e diagrama acompanham o tema ativo */
+  .modulo-icone [stroke]{ stroke:var(--gold-400); }
+  .modulo-icone [fill="#d8b878"]{ fill:var(--gold-400); }
+  .jornada-svg [stroke="#d8b878"]{ stroke:var(--gold-400); }
+  .jornada-svg [fill="#d8b878"]{ fill:var(--gold-400); }
+  .jornada-svg [stroke="#3a4f6e"]{ stroke:var(--border); }
+  .jornada-svg [fill="#0f2138"]{ fill:var(--navy-800); }
+  .jornada-svg [fill="#16304f"]{ fill:var(--navy-700); }
+  .jornada-svg text[fill="#ffffff"]{ fill:var(--white); }
+  .jornada-svg text[fill="#9aa8c2"]{ fill:var(--muted); }
+
+  /* rodapé */
+  .rodape{
+    text-align:center;
+    padding-top:40px;
+    border-top:1px solid var(--border-soft);
+  }
+
+  .rodape-marca{
+    font-family:'Cormorant Garamond',serif;
+    font-size:19px;
+    color:var(--gold-400);
+    letter-spacing:1px;
+    margin-bottom:8px;
+  }
+
+  .rodape-sub{
+    font-size:10.5px;
+    color:var(--muted);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    font-weight:400;
+  }
+
+  /* Toggle de tema */
+  .theme-toggle-btn{position:fixed;top:16px;right:18px;z-index:999;width:66px;height:30px;border:1px solid var(--border);border-radius:18px;background:var(--panel-strong);backdrop-filter:blur(10px);padding:3px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+  .theme-toggle-btn svg{width:13px;height:13px;z-index:2;color:var(--gold-400);flex:0 0 auto}
+  .theme-toggle-btn .knob{width:22px;height:22px;border-radius:50%;position:absolute;top:3px;left:3px;background:linear-gradient(135deg,var(--gold-300),var(--gold-500));transition:left .25s ease;box-shadow:0 2px 7px rgba(0,0,0,.18)}
+  [data-theme="light"] .theme-toggle-btn .knob{left:39px}
+
+  /* Tema claro, padrão VMMADV */
+  [data-theme="light"]{
+    --navy-900:#f7f5f0;
+    --navy-800:#fdfcf9;
+    --navy-700:#f1ede4;
+    --navy-600:#e5ded0;
+    --gold-500:#a3812f;
+    --gold-400:#d7b85e;
+    --gold-300:#ecd994;
+    --cream:#2a2517;
+    --white:#2a2517;
+    --ink:#2a2517;
+    --muted:#7a7461;
+    --soft:#4a4636;
+    --panel:rgba(255,255,255,.74);
+    --panel-strong:#fffdf8;
+    --border:rgba(138,106,35,.28);
+    --border-soft:rgba(138,106,35,.18);
+  }
+
+  [data-theme="light"] .theme-toggle-btn .knob{left:39px}
+
+</style>
+</head>
+<body data-theme="dark">
+<button class="theme-toggle-btn" id="btnTheme" aria-label="Alternar tema claro e escuro"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
+
+<div class="topo">
+  <div class="selo">
+    <div class="selo-linha"></div>
+    <div class="selo-texto">Victor Morais Advocacia</div>
+    <div class="selo-linha"></div>
+  </div>
+  <h1>O ecossistema digital<br><span>do seu escritório</span></h1>
+  <p class="subtitulo">Um único sistema para captar, organizar, acompanhar e entregar, unindo o que hoje vive espalhado em planilhas, WhatsApp e pastas do Drive em uma estrutura só, pensada para escalar.</p>
+</div>
+
+<div class="moldura-central">
+
+  <!-- 4 pilares -->
+  <div class="pilares">
+    <div class="pilar">
+      <div class="pilar-numero">I</div>
+      <div class="pilar-titulo">Captar</div>
+      <div class="pilar-desc">Centenas de milhares de leads organizados, filtrados e prontos para abordagem</div>
+    </div>
+    <div class="pilar">
+      <div class="pilar-numero">II</div>
+      <div class="pilar-titulo">Converter</div>
+      <div class="pilar-desc">Do primeiro contato à documentação completa, sem perder o fio da história</div>
+    </div>
+    <div class="pilar">
+      <div class="pilar-numero">III</div>
+      <div class="pilar-titulo">Conduzir</div>
+      <div class="pilar-desc">Processos acompanhados automaticamente, prazos sob controle, equipe alinhada</div>
+    </div>
+    <div class="pilar">
+      <div class="pilar-numero">IV</div>
+      <div class="pilar-titulo">Entregar</div>
+      <div class="pilar-desc">Cliente informado, honorários claros, resultado mensurável</div>
+    </div>
+  </div>
+
+  <div class="secao-titulo">
+    <h2>O que a equipe poderá fazer</h2>
+    <div class="linha-dourada"></div>
+  </div>
+
+  <div class="modulos">
+
+    <!-- Modulo 1 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <rect x="6" y="10" width="36" height="28" rx="2" stroke="#d8b878" stroke-width="1.5"/>
+        <line x1="6" y1="18" x2="42" y2="18" stroke="#d8b878" stroke-width="1.5"/>
+        <line x1="14" y1="10" x2="14" y2="6" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="34" y1="10" x2="34" y2="6" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="24" x2="20" y2="24" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="12" y1="30" x2="24" y2="30" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <h3>Lista &amp; Kanban</h3>
+      <p>A mesma base de dados, em duas visões: planilha com filtros e etiquetas para volume alto, ou quadro visual arrastável para acompanhar o funil.</p>
+      <ul>
+        <li>Filtros por tese, status, UF, responsável</li>
+        <li>Centenas de milhares de registros, sem perda de performance</li>
+        <li>Etiquetas livres e personalizáveis</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 2 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="16" r="7" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M10 40c0-8 6-13 14-13s14 5 14 13" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M36 20l3 3 5-6" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h3>Pessoa &amp; Processo</h3>
+      <p>Cada cliente é um único registro, mesmo quando atendido em mais de uma tese. Sem duplicidade, sem retrabalho de copiar linha entre planilhas.</p>
+      <ul>
+        <li>Histórico completo de cada movimentação</li>
+        <li>Vínculo entre pessoas (herança, sucessão)</li>
+        <li>Evolução de lead até cliente, no mesmo lugar</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 3 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <path d="M24 4l16 8v12c0 10-7 16-16 20-9-4-16-10-16-20V12l16-8z" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M17 24l5 5 10-11" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h3>Permissões &amp; Auditoria</h3>
+      <p>Cada papel vê e edita exatamente o que deve. Toda alteração relevante fica registrada: quem mudou, o quê e quando.</p>
+      <ul>
+        <li>Papéis configuráveis: jurídico, captação, marketing...</li>
+        <li>Exceções individuais de acesso</li>
+        <li>Histórico de edição protegido</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 4 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <rect x="8" y="6" width="32" height="36" rx="2" stroke="#d8b878" stroke-width="1.5"/>
+        <circle cx="24" cy="18" r="4" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M16 30c0-4 4-6 8-6s8 2 8 6" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M30 9l3 3 4-5" stroke="#d8b878" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h3>Portal do Cliente</h3>
+      <p>Uma linha do tempo simples, como o rastreio de uma encomenda: o cliente acompanha o andamento sem precisar ligar, e sem ver bastidores internos.</p>
+      <ul>
+        <li>Status traduzido em linguagem simples</li>
+        <li>Documentos liberados sob seu controle</li>
+        <li>Menos ligações, mais transparência</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 5 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <path d="M24 6v8M24 34v8M6 24h8M34 24h8" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="24" cy="24" r="10" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M24 19v5l4 3" stroke="#d8b878" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <h3>Monitoramento CNJ</h3>
+      <p>Movimentações processuais e publicações capturadas automaticamente. Prazos calculados e alertas gerados sem depender de e-mail avulso.</p>
+      <ul>
+        <li>Integração com DataJud e DJEN</li>
+        <li>Alerta automático de novo andamento</li>
+        <li>Atualização direta no cartão do cliente</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 6 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <path d="M8 38V20l16-12 16 12v18" stroke="#d8b878" stroke-width="1.5" stroke-linejoin="round"/>
+        <rect x="19" y="26" width="10" height="12" stroke="#d8b878" stroke-width="1.5"/>
+        <line x1="8" y1="38" x2="40" y2="38" stroke="#d8b878" stroke-width="1.5"/>
+      </svg>
+      <h3>Financeiro &amp; Honorários</h3>
+      <p>Valor principal, correção e honorários separados com clareza. Repasses a parceiros configurados caso a caso, sem fórmula forçada.</p>
+      <ul>
+        <li>Detalhamento principal vs. SELIC</li>
+        <li>Múltiplos parceiros por processo</li>
+        <li>Relatórios por tese, captador e campanha</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 7 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <rect x="6" y="14" width="36" height="24" rx="2" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M6 18h36" stroke="#d8b878" stroke-width="1.5"/>
+        <circle cx="14" cy="10" r="2" fill="#d8b878"/>
+        <circle cx="24" cy="10" r="2" fill="#d8b878"/>
+        <circle cx="34" cy="10" r="2" fill="#d8b878"/>
+      </svg>
+      <h3>Marketing &amp; Aprovação</h3>
+      <p>Campanhas com orçamento, gastos lançados nota a nota e retorno medido pelos clientes que ela trouxe. Artes seguem fluxo de aprovação antes de publicar.</p>
+      <ul>
+        <li>Previsto x realizado por campanha</li>
+        <li>Fluxo de aprovação configurável</li>
+        <li>Origem do cliente rastreada</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 8 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <path d="M10 32V14a2 2 0 012-2h18l8 8v12a2 2 0 01-2 2H12a2 2 0 01-2-2z" stroke="#d8b878" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M30 12v8h8" stroke="#d8b878" stroke-width="1.5" stroke-linejoin="round"/>
+        <line x1="16" y1="22" x2="28" y2="22" stroke="#d8b878" stroke-width="1.3" stroke-linecap="round"/>
+        <line x1="16" y1="27" x2="24" y2="27" stroke="#d8b878" stroke-width="1.3" stroke-linecap="round"/>
+      </svg>
+      <h3>Biblioteca &amp; Modelos</h3>
+      <p>Petições, papel timbrado e materiais de treinamento em um único repositório institucional. Modelos preenchem automaticamente com os dados do cliente.</p>
+      <ul>
+        <li>Categorias organizadas, acesso controlado</li>
+        <li>Geração automática de procurações e petições</li>
+        <li>Versionamento de cada arquivo</li>
+      </ul>
+    </div>
+
+    <!-- Modulo 9 -->
+    <div class="modulo">
+      <svg class="modulo-icone" viewBox="0 0 48 48" fill="none">
+        <path d="M8 14a4 4 0 014-4h24a4 4 0 014 4v14a4 4 0 01-4 4H20l-8 8V14z" stroke="#d8b878" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="17" cy="21" r="1.6" fill="#d8b878"/>
+        <circle cx="24" cy="21" r="1.6" fill="#d8b878"/>
+        <circle cx="31" cy="21" r="1.6" fill="#d8b878"/>
+      </svg>
+      <h3>Comunicação Interna</h3>
+      <p>Chat individual e em grupo, menções diretas em comentários de cada cliente e tarefas que nascem automaticamente quando o sistema identifica uma pendência.</p>
+      <ul>
+        <li>Conversas e grupos com anexos</li>
+        <li>Notificações centralizadas</li>
+        <li>Tarefas sincronizadas com o cartão do cliente</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- Jornada do dado, ilustração de fluxo horizontal -->
+  <div class="secao-titulo">
+    <h2>A jornada de um cliente, do início ao fim</h2>
+    <div class="linha-dourada"></div>
+  </div>
+
+  <div class="jornada-wrap">
+    <svg class="jornada-svg" viewBox="0 0 1180 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- linha conectora -->
+      <line x1="90" y1="70" x2="1090" y2="70" stroke="#3a4f6e" stroke-width="1.5" stroke-dasharray="2 6"/>
+
+      <!-- etapa 1 -->
+      <g>
+        <circle cx="90" cy="70" r="30" fill="#0f2138" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M78 70a12 12 0 1124 0" stroke="#d8b878" stroke-width="1.3" fill="none"/>
+        <circle cx="90" cy="64" r="5" stroke="#d8b878" stroke-width="1.3" fill="none"/>
+        <text x="90" y="124" text-anchor="middle" fill="#ffffff" font-family="Cormorant Garamond, serif" font-size="17" font-weight="600">Localizado</text>
+        <text x="90" y="146" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">Lead identificado</text>
+        <text x="90" y="160" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">na base de captação</text>
+      </g>
+
+      <!-- etapa 2 -->
+      <g>
+        <circle cx="310" cy="70" r="30" fill="#0f2138" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M298 76l8-12M298 76h16M298 76l4 8" stroke="#d8b878" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="translate(-3,-8)"/>
+        <path d="M300 64l6 6 10-12" stroke="#d8b878" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <text x="310" y="124" text-anchor="middle" fill="#ffffff" font-family="Cormorant Garamond, serif" font-size="17" font-weight="600">Abordado</text>
+        <text x="310" y="146" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">WhatsApp, e-mail</text>
+        <text x="310" y="160" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">ou ligação registrada</text>
+      </g>
+
+      <!-- etapa 3 -->
+      <g>
+        <circle cx="530" cy="70" r="30" fill="#0f2138" stroke="#d8b878" stroke-width="1.5"/>
+        <rect x="518" y="58" width="24" height="24" rx="2" stroke="#d8b878" stroke-width="1.3" fill="none"/>
+        <line x1="522" y1="65" x2="538" y2="65" stroke="#d8b878" stroke-width="1.1"/>
+        <line x1="522" y1="71" x2="534" y2="71" stroke="#d8b878" stroke-width="1.1"/>
+        <text x="530" y="124" text-anchor="middle" fill="#ffffff" font-family="Cormorant Garamond, serif" font-size="17" font-weight="600">Documentado</text>
+        <text x="530" y="146" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">Documentação enviada</text>
+        <text x="530" y="160" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">e organizada no sistema</text>
+      </g>
+
+      <!-- etapa 4 -->
+      <g>
+        <circle cx="750" cy="70" r="30" fill="#0f2138" stroke="#d8b878" stroke-width="1.5"/>
+        <path d="M738 58l24 0 0 24-24 0z" stroke="#d8b878" stroke-width="1.2" fill="none"/>
+        <path d="M738 70a12 12 0 0024 0" stroke="#d8b878" stroke-width="1.3" fill="none"/>
+        <circle cx="750" cy="70" r="3" fill="#d8b878"/>
+        <text x="750" y="124" text-anchor="middle" fill="#ffffff" font-family="Cormorant Garamond, serif" font-size="17" font-weight="600">Protocolado</text>
+        <text x="750" y="146" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">Processo em curso,</text>
+        <text x="750" y="160" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">monitorado pelo CNJ</text>
+      </g>
+
+      <!-- etapa 5 -->
+      <g>
+        <circle cx="970" cy="70" r="30" fill="#16304f" stroke="#d8b878" stroke-width="2"/>
+        <path d="M958 70l8 8 14-16" stroke="#d8b878" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <text x="970" y="124" text-anchor="middle" fill="#ffffff" font-family="Cormorant Garamond, serif" font-size="17" font-weight="600">Finalizado</text>
+        <text x="970" y="146" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">Honorários apurados,</text>
+        <text x="970" y="160" text-anchor="middle" fill="#9aa8c2" font-family="Montserrat, sans-serif" font-size="10.5">cliente informado</text>
+      </g>
+
+    </svg>
+  </div>
+
+  <div class="rodape">
+    <div class="rodape-marca">Victor Morais Advocacia</div>
+    <div class="rodape-sub">Sistema de Gestão &middot; Estrutura Conceitual</div>
+  </div>
+
+</div>
+
+<script>
+document.getElementById('btnTheme').addEventListener('click',()=>{
+  document.body.dataset.theme=document.body.dataset.theme==='dark'?'light':'dark';
+});
+</script>
+</body>
+</html>

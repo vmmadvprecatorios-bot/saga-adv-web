@@ -1,0 +1,25 @@
+# Segredos e configuracoes — nunca commitar
+.env
+.env.*
+*.env
+
+# Dependencias Node
+node_modules/
+
+# Scripts de banco de dados (ficam fora do repo publico)
+*.sql
+
+# Documentacao e diagramas internos
+*.md
+*.mermaid
+
+# Ferramenta administrativa com credenciais
+bootstrap-admin/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/

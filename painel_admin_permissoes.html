@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Painel Admin de Permissões</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+:root{
+  --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+  --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;
+  --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+  --border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);
+  --text:#e8eaf0;--muted:#8b93a8;--sidebar-mobile:#c3cee0;
+  --danger:#e85d5d;--warning:#e8b84c;--success:#5dd8a0;--info:#6fa3d8;
+  --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
+}
+[data-theme="light"]{
+  --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+  --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
+  --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+  --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
+  --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+a,a:visited,a:hover,a:focus{color:inherit;text-decoration:none}
+html{scroll-behavior:smooth}
+body{min-height:100vh;color:var(--text);font-family:Montserrat,Arial,sans-serif;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));overflow-x:hidden;transition:background .25s ease,color .25s ease}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at 8% 0%,rgba(201,168,76,.08),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
+button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+input,select,textarea{font:inherit}
+button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:rgba(201,168,76,.32);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+.hidden{display:none!important}
+
+/* Topbar */
+.topbar{height:64px;position:sticky;top:0;z-index:180;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px)}
+[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(247,245,240,.98))}
+.top-left,.top-right{display:flex;align-items:center;gap:14px}.top-left{min-width:0}.top-right{flex:0 0 auto}
+.hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px}.hamburger span{display:block;width:18px;height:1.7px;background:var(--gold);margin:3px auto;border-radius:2px}
+.brand{display:flex;align-items:center;gap:9px;flex:0 0 auto}.crest{width:32px;height:32px}.brand-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:.5px}.brand-name b{color:var(--gold)}
+.quick-search{width:min(330px,34vw);height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border-soft);background:var(--panel);border-radius:10px}.quick-search:focus-within{border-color:var(--gold)}.quick-search svg{color:var(--muted);flex:0 0 auto}.quick-search input{border:0;outline:0;background:transparent;color:var(--text);font-size:11px;width:100%}.quick-search input::placeholder{color:var(--muted)}
+.presence-wrap,.notification-wrap{position:relative}.presence-btn{border:1px solid var(--border-soft);background:var(--panel);border-radius:18px;padding:7px 12px;display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;display:inline-block}.dot.online{background:var(--success);box-shadow:0 0 7px var(--success)}.dot.offline{background:var(--muted)}
+.icon-btn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);position:relative}.notif-count{position:absolute;right:-5px;top:-5px;min-width:16px;height:16px;border-radius:8px;background:var(--danger);color:white;font-size:9px;display:grid;place-items:center;font-weight:700}.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));display:grid;place-items:center;color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px}
+.theme-toggle{width:70px;height:32px;border:1px solid var(--border-soft);border-radius:18px;background:var(--panel);padding:3px;position:relative;display:flex;align-items:center;justify-content:space-between}.theme-toggle svg{width:15px;height:15px;z-index:2;transition:.2s}.theme-toggle .sun{color:var(--gold)}.theme-toggle .moon{color:var(--muted)}.theme-toggle .knob{width:24px;height:24px;border-radius:50%;position:absolute;top:3px;left:3px;background:linear-gradient(135deg,var(--gold-light),var(--gold));transition:left .25s ease;box-shadow:0 2px 7px rgba(0,0,0,.18)}[data-theme="light"] .theme-toggle .knob{left:41px}[data-theme="light"] .theme-toggle .sun{color:var(--gold)}[data-theme="light"] .theme-toggle .moon{color:var(--muted)}
+.popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:290px;padding:9px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(145deg,#1c2540 0%,#11182c 100%);box-shadow:var(--shadow);z-index:700}.popover.open{display:block}[data-theme="light"] .popover{background:linear-gradient(145deg,#fffdf8,#f4eddc)}.pop-title{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);padding:7px 8px 5px}.pop-item{display:flex;align-items:center;gap:9px;padding:8px;border-radius:9px;font-size:11px}.pop-item:hover{background:rgba(201,168,76,.1)}.pop-meta{font-size:9px;color:var(--muted);margin-top:2px}.pop-item .grow{flex:1}.pop-item .small-avatar{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;font-size:8px;font-weight:700;color:var(--navy-1)}
+.notification-pop{width:330px}.notification-item{display:flex;gap:9px;padding:10px;border-radius:10px}.notification-item:hover{background:rgba(201,168,76,.1)}.notification-item .n-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:5px}.notification-item .n-dot.read{visibility:hidden}.notification-text{font-size:10.5px;line-height:1.45}.notification-time{font-size:9px;color:var(--muted);margin-top:3px}
+
+/* App shell */
+.app{position:relative;z-index:1;display:flex}.sidebar{width:220px;flex:0 0 220px;min-height:calc(100vh - 64px);position:sticky;top:64px;align-self:flex-start;height:calc(100vh - 64px);overflow-y:auto;padding:18px 0;border-right:1px solid var(--border-soft);background:var(--panel);backdrop-filter:blur(14px)}
+.nav-section{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);padding:15px 22px 6px}.nav-item{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;padding:10px 21px;border-left:2px solid transparent;transition:.18s;text-decoration:none}.nav-item:visited{text-decoration:none}.nav-item svg{width:15px;height:15px;flex:0 0 auto}.nav-item:hover{color:var(--text);background:rgba(255,255,255,.035)}.nav-item.active{color:var(--gold);font-weight:700;border-left-color:var(--gold);background:linear-gradient(90deg,rgba(201,168,76,.14),transparent)}
+.content{padding:28px;min-width:0;flex:1}.restricted-access{max-width:680px;margin:8vh auto 0;padding:30px;text-align:center}.restricted-icon{width:54px;height:54px;margin:0 auto 15px;border-radius:16px;display:grid;place-items:center;background:rgba(232,93,93,.1);border:1px solid rgba(232,93,93,.24);color:var(--danger)}.restricted-access h1{font-family:'Cormorant Garamond',serif;font-size:28px;margin-bottom:8px}.restricted-access p{font-size:11.5px;color:var(--muted);line-height:1.65;max-width:490px;margin:0 auto}.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:20px}.page-head h1{font-family:'Cormorant Garamond',serif;font-size:29px;line-height:1.05;font-weight:600}.page-sub{font-size:11.5px;color:var(--muted);margin-top:6px}.security-note{display:flex;align-items:center;gap:8px;max-width:500px;background:rgba(93,216,160,.08);border:1px solid rgba(93,216,160,.26);border-radius:10px;padding:10px 12px;color:var(--success);font-size:10.5px;line-height:1.45}.security-note svg{flex:0 0 auto}
+
+/* Generic UI */
+.panel{background:var(--panel);backdrop-filter:blur(18px);border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:0 10px 22px rgba(0,0,0,.06)}
+.btn-primary,.btn-secondary,.btn-danger{height:38px;border-radius:10px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:11px;font-weight:700;white-space:nowrap}.btn-primary{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));background-size:200% 100%;color:var(--navy-1);box-shadow:0 6px 15px rgba(201,168,76,.18);transition:background-position .45s ease,transform .15s}.btn-primary:hover{background-position:100% 0;transform:translateY(-1px)}.btn-secondary{background:var(--panel);border:1px solid var(--border);color:var(--text)}.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}.btn-danger{background:rgba(232,93,93,.11);border:1px solid rgba(232,93,93,.32);color:var(--danger)}.btn-danger:hover{background:rgba(232,93,93,.18)}
+.segmented{display:flex;gap:4px;padding:4px;border-radius:13px;background:var(--panel);border:1px solid var(--border-soft);width:max-content;max-width:100%;overflow:auto}.segment{padding:8px 13px;border-radius:9px;color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap}.segment.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700}.toolbar{position:relative;z-index:80;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;flex-wrap:wrap;margin-bottom:16px;overflow:visible}.toolbar-left,.toolbar-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap;overflow:visible}.field{height:37px;min-width:220px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.11);border-radius:9px;color:var(--text);padding:0 11px;outline:0;font-size:11px}.field:focus{border-color:var(--gold)}[data-theme="light"] .field{background:rgba(255,255,255,.8);border-color:rgba(138,106,35,.18)}.select-field{appearance:auto}.counter{font-size:10.5px;color:var(--muted)}.counter b{color:var(--text)}#viewRoot{position:relative;z-index:1}
+.badge{display:inline-flex;align-items:center;gap:5px;border-radius:12px;padding:4px 8px;font-size:9.5px;font-weight:700;white-space:nowrap}.badge.default{background:rgba(111,163,216,.13);color:var(--info);border:1px solid rgba(111,163,216,.22)}.badge.grant{background:rgba(93,216,160,.13);color:var(--success);border:1px solid rgba(93,216,160,.24)}.badge.revoke{background:rgba(232,93,93,.13);color:var(--danger);border:1px solid rgba(232,93,93,.24)}.badge.neutral{background:rgba(139,147,168,.14);color:var(--muted)}
+.level{display:inline-flex;align-items:center;justify-content:center;padding:5px 8px;border-radius:8px;font-size:9px;font-weight:700;text-transform:capitalize}.level-sem_acesso{background:rgba(139,147,168,.14);color:var(--muted)}.level-visualizar{background:rgba(111,163,216,.15);color:var(--info)}.level-comentar{background:rgba(232,184,76,.15);color:var(--warning)}.level-editar{background:rgba(201,168,76,.17);color:var(--gold)}.level-admin_total{background:rgba(93,216,160,.15);color:var(--success)}
+
+/* Collaborators */
+.collab-list{display:grid;gap:10px}.collab-card{padding:14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;cursor:pointer;transition:transform .18s,border-color .18s}.collab-card:hover{transform:translateY(-1px);border-color:var(--gold)}.avatar-lg{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--navy-1);font-size:14px}.collab-name{font-size:12.5px;font-weight:700;line-height:1.3}.collab-role{font-size:10px;color:var(--muted);margin-top:3px}.collab-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.exception-count{font-size:10px;color:var(--warning);white-space:nowrap}.arrow{color:var(--muted);font-size:18px}
+.empty{padding:44px 18px;text-align:center;color:var(--muted);font-size:11px}.empty svg{color:var(--gold);margin-bottom:10px}.empty h3{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--text);margin-bottom:5px}
+
+/* Modules */
+.modules-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:13px}.module-card{padding:15px;cursor:pointer;transition:.18s}.module-card:hover{border-color:var(--gold);transform:translateY(-1px)}.module-top{display:flex;gap:9px;align-items:center}.module-top>span:last-child{display:flex;flex-direction:column;min-width:0}.module-icon{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;background:rgba(201,168,76,.11);color:var(--gold);flex:0 0 auto}.module-name{font-size:12px;font-weight:700}.module-sub{font-size:9.5px;color:var(--muted);margin-top:3px}.module-bars{margin-top:12px;display:flex;height:7px;border-radius:7px;overflow:hidden;background:rgba(255,255,255,.05)}.module-bars span{height:100%}.module-counts{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}.module-counts small{font-size:9px;color:var(--muted)}
+
+/* Profiles */
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}.profile-card{padding:16px}.profile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.profile-title{display:flex;align-items:center;gap:8px}.profile-dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 3px rgba(255,255,255,.04)}.profile-title h3{font-size:13px}.profile-desc{font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px;min-height:30px}.profile-users{font-size:10px;color:var(--muted);margin-top:10px}.profile-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:13px}.profile-mini{height:23px;border-radius:6px;display:grid;place-items:center;font-size:8px;font-weight:700}.profile-actions{display:flex;gap:7px;margin-top:14px}.profile-actions .btn-secondary,.profile-actions .btn-danger{height:33px;font-size:10px;flex:1}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(4,7,14,.64);backdrop-filter:blur(6px);padding:18px;overflow-y:auto}.modal-overlay.open{display:flex;align-items:center;justify-content:center}.modal{width:100%;max-width:970px;margin:auto;background:linear-gradient(145deg,rgba(28,37,64,.9),rgba(16,23,42,.92));backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:18px;box-shadow:0 32px 78px rgba(0,0,0,.5);overflow:hidden}.modal.small{max-width:460px}.modal-header{padding:19px 20px 14px;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.modal-header h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}.modal-header p{font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.45}.close-btn{width:30px;height:30px;border:1px solid var(--border-soft);border-radius:9px;display:grid;place-items:center;color:var(--muted)}.close-btn:hover{color:var(--gold);border-color:var(--gold)}.modal-body{padding:18px 20px;max-height:65vh;overflow:auto}.modal-footer{border-top:1px solid var(--border-soft);padding:13px 20px;display:flex;align-items:center;justify-content:flex-end;gap:9px}.modal-footer .spacer{flex:1}
+[data-theme="light"] .modal{background:linear-gradient(145deg,rgba(255,253,248,.93),rgba(245,237,218,.95));backdrop-filter:blur(22px)}
+.detail-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}.detail-person{display:flex;align-items:center;gap:10px}.detail-person h3{font-size:13px}.detail-person p{font-size:10px;color:var(--muted);margin-top:3px}.profile-change{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.profile-change label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}.profile-change select{height:34px;min-width:170px}
+.permission-table{width:100%;border-collapse:collapse;min-width:720px}.perm-wrap{overflow-x:auto;overflow-y:visible;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel);backdrop-filter:blur(18px)}.permission-table th{font-size:9px;text-align:left;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);padding:10px;border-bottom:1px solid var(--border-soft)}.permission-table td{padding:10px;border-bottom:1px solid var(--border-soft);font-size:10.5px;vertical-align:middle}.permission-table tr:last-child td{border-bottom:0}.permission-table tr:hover{background:rgba(255,255,255,.025)}.module-cell{font-weight:700}.permission-select{height:31px;min-width:125px;padding:0 7px;border:1px solid var(--border-soft);border-radius:7px;background:rgba(255,255,255,.05);color:var(--text);font-size:10px}.native-select-hidden{display:none!important}.custom-select{position:relative;min-width:125px;z-index:90}.custom-select.open{z-index:400}.custom-select.field-like{min-width:170px}.custom-select-trigger{width:100%;height:34px;padding:0 12px;border:1px solid var(--border-soft);border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.045));color:var(--text);display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}.permission-select + .custom-select .custom-select-trigger{height:31px;border-radius:7px;padding:0 9px;font-size:10px}.custom-select-trigger:hover{border-color:var(--gold)}.custom-select.open .custom-select-trigger,.custom-select-trigger:focus-visible{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.12)}.custom-select-trigger .value{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}.custom-select-trigger .caret{width:8px;height:8px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg);margin-top:-3px;color:var(--muted);flex:0 0 auto}.custom-select-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;max-height:240px;overflow:auto;padding:6px;border:1px solid rgba(201,168,76,.2);border-radius:12px;background:linear-gradient(145deg,rgba(28,37,64,.98),rgba(17,24,44,.985));box-shadow:0 24px 50px rgba(0,0,0,.5);backdrop-filter:none;z-index:120}.custom-select.open .custom-select-menu{display:block}.custom-select-option{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border-radius:9px;font-size:10.5px;line-height:1.3;color:var(--text);background:transparent}.custom-select-option:hover{background:rgba(201,168,76,.12);color:var(--gold-light)}.custom-select-option.selected{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700}.custom-select-option.selected::after{content:'✓';font-weight:700}.custom-select.disabled .custom-select-trigger{opacity:.58;cursor:not-allowed}.custom-select.disabled .caret{opacity:.75}[data-theme="light"] .custom-select-trigger{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(252,248,239,.95));color:#2a2517;border-color:rgba(138,106,35,.18)}[data-theme="light"] .custom-select-trigger:hover{border-color:var(--gold)}[data-theme="light"] .custom-select.open .custom-select-trigger,[data-theme="light"] .custom-select-trigger:focus-visible{box-shadow:0 0 0 3px rgba(163,129,47,.12)}[data-theme="light"] .custom-select-menu{background:linear-gradient(145deg,rgba(255,253,248,.99),rgba(244,237,220,.99));border-color:rgba(138,106,35,.22);box-shadow:0 24px 50px rgba(81,61,20,.18)}[data-theme="light"] .custom-select-option{color:#2a2517}[data-theme="light"] .custom-select-option:hover{background:rgba(163,129,47,.1);color:#8a6a23}[data-theme="light"] .custom-select-option.selected{color:#2a2517}
+.form-grid{display:grid;grid-template-columns:1fr 150px;gap:12px}.form-group{display:flex;flex-direction:column;gap:6px}.form-group label{font-size:9.5px;color:var(--gold);text-transform:uppercase;letter-spacing:.7px;font-weight:700}.form-group input,.form-group textarea,.form-group select{height:37px;background:rgba(255,255,255,.055);border:1px solid var(--border-soft);border-radius:9px;padding:0 10px;color:var(--text);outline:0;font-size:11px}.form-group textarea{height:74px;padding:10px;resize:vertical}.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--gold)}.form-group input[type="color"]{padding:3px;width:100%;cursor:pointer}.profile-perm-editor{margin-top:18px}.profile-perm-editor h4{font-size:10px;text-transform:uppercase;color:var(--gold);letter-spacing:.8px;margin-bottom:9px}.profile-perm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.profile-perm-row{border:1px solid var(--border-soft);border-radius:10px;padding:9px;display:flex;align-items:center;justify-content:space-between;gap:8px}.profile-perm-row span{font-size:10px;font-weight:600}.profile-perm-row select{height:30px;width:125px}.locked-note{padding:12px;border-radius:10px;background:rgba(232,184,76,.1);border:1px solid rgba(232,184,76,.25);color:var(--warning);font-size:10.5px;line-height:1.5}
+
+/* Toast */
+.toast-area{position:fixed;right:22px;top:78px;z-index:1000;display:flex;flex-direction:column;gap:9px}.toast{width:min(330px,calc(100vw - 32px));display:flex;gap:9px;align-items:flex-start;padding:12px;border-radius:12px;background:linear-gradient(145deg,#202a46,#11172a);border:1px solid var(--border);box-shadow:var(--shadow);transform:translateX(20px);opacity:0;transition:.25s}.toast.show{transform:translateX(0);opacity:1}[data-theme="light"] .toast{background:linear-gradient(145deg,#fffdf8,#f5edda)}.toast i{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-style:normal;flex:0 0 auto}.toast.success i{background:rgba(93,216,160,.15);color:var(--success)}.toast.error i{background:rgba(232,93,93,.15);color:var(--danger)}.toast.info i{background:rgba(111,163,216,.15);color:var(--info)}.toast p{font-size:10.5px;line-height:1.45}.toast p b{color:var(--gold)}
+
+/* Mobile */
+.overlay{display:none;position:fixed;inset:0;z-index:160;background:rgba(0,0,0,.48)}.overlay.open{display:block}
+@media(max-width:980px){.sidebar{width:190px;flex-basis:190px}.content{padding:22px}.quick-search{width:230px}.security-note{max-width:100%}}
+@media(max-width:760px){.topbar{padding:0 14px}.hamburger{display:block}.brand-name{font-size:16px}.quick-search{display:none}.presence-btn{padding:7px 9px}.presence-btn span{display:none}.theme-toggle{width:62px}.theme-toggle .knob{width:22px;height:22px}.theme-toggle svg{width:13px}.theme-toggle .knob{left:3px}[data-theme="light"] .theme-toggle .knob{left:35px}.sidebar{position:fixed;top:64px;left:-230px;width:220px;height:calc(100vh - 64px);z-index:170;transition:left .28s}.sidebar.open{left:0}.content{padding:18px 14px}.page-head h1{font-size:25px}.toolbar{padding:11px}.field{min-width:0;width:100%}.toolbar-left,.toolbar-right{width:100%}.toolbar-right .btn-primary{width:100%}.form-grid{grid-template-columns:1fr}.profile-perm-grid{grid-template-columns:1fr}.modal-overlay{padding:8px}.modal-body{padding:14px}.modal-header,.modal-footer{padding-left:14px;padding-right:14px}.popover{position:fixed;right:10px;top:68px;width:min(330px,calc(100vw - 20px))}.top-right{gap:8px}.avatar{width:32px;height:32px}.profile-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body data-theme="dark">
+<div class="overlay" id="mobileOverlay"></div>
+<header class="topbar">
+  <div class="top-left">
+    <button class="hamburger" id="hamburger" aria-label="Abrir navegação"><span></span><span></span><span></span></button>
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e8d48a"/><stop offset="38%" stop-color="#c9a84c"/><stop offset="60%" stop-color="#8a6f33"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#crestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#crestGold)">VM</text></g></svg>
+      <div class="brand-name">VMM<b>ADV</b></div>
+    </div>
+    <label class="quick-search" aria-label="Busca rápida">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <input id="globalSearch" placeholder="Buscar colaborador, perfil ou módulo...">
+    </label>
+  </div>
+  <div class="top-right">
+    <div class="presence-wrap">
+      <button class="presence-btn" id="presenceBtn"><span class="dot online"></span><span id="onlineText">Online</span></button>
+      <div class="popover" id="presencePop"></div>
+    </div>
+    <div class="notification-wrap">
+      <button class="icon-btn" id="notifBtn" aria-label="Notificações"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="var(--gold)" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="var(--gold)" stroke-width="1.6"/></svg><span class="notif-count" id="notifCount" style="display:none">0</span></button>
+      <div class="popover notification-pop" id="notifPop"></div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
+    <div class="avatar" id="topAvatar">DV</div>
+  </div>
+</header>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="nav-section">Visão Geral</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/></svg>Dashboard</a>
+    <div class="nav-section">Operação</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Lista de Processos</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>Kanban</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>Ficha do Cliente</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Calendário</a>
+    <div class="nav-section">Equipe</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 11-4-7.2L21 6l-1.5 4.5z" stroke="currentColor" stroke-width="1.5"/></svg>Chat Interno</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Ponto Eletrônico</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>Biblioteca de Modelos</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Marketing/Campanhas</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5"/></svg>Minhas Tarefas</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="1.5"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.5"/></svg>Monitoramento Multi-OAB</a>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V7m5 12V4m5 15v-8m5 8V9" stroke="currentColor" stroke-width="1.5"/></svg>Financeiro</a>
+    <div class="nav-section">Gestão</div>
+    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 13a8 8 0 000-2l2.1-1.6-2-3.5-2.5 1a8 8 0 00-1.7-1l-.3-2.7h-4l-.3 2.7a8 8 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a8 8 0 000 2l-2.1 1.6 2 3.5 2.5-1a8 8 0 001.7 1l.3 2.7h4l.3-2.7a8 8 0 001.7-1l2.5 1 2-3.5L19.4 13z" stroke="currentColor" stroke-width="1.3"/></svg>Configurações</a>
+    <a class="nav-item active" id="permissionsNavItem" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Painel de Permissões</a>
+  </aside>
+  <main class="content">
+    <section class="page-head">
+      <div><h1>Painel Admin de Permissões</h1><p class="page-sub">Defina o que cada perfil e cada colaborador pode acessar em todo o sistema.</p></div>
+      <div class="security-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.7"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Dr. Victor é a autoridade máxima do sistema.</b> O perfil Administrador não permite alterar, reduzir ou revogar as permissões dele.</span></div>
+    </section>
+    <section class="toolbar panel">
+      <div class="toolbar-left">
+        <div class="segmented" id="viewToggle">
+          <button class="segment active" data-view="collaborators">Por Colaborador</button>
+          <button class="segment" data-view="modules">Por Módulo</button>
+          <button class="segment" data-view="profiles">Perfis</button>
+        </div>
+        <input class="field" id="viewSearch" placeholder="Buscar por nome, perfil ou módulo...">
+        <select class="field select-field native-select-hidden" id="profileFilter"><option value="all">Todos os perfis</option></select>
+      </div>
+      <div class="toolbar-right"><span class="counter" id="viewCounter"></span><button class="btn-primary hidden" id="newProfileBtn"><span>+</span> Novo Perfil</button></div>
+    </section>
+    <section id="viewRoot"></section>
+  </main>
+</div>
+
+<div class="modal-overlay" id="collabModal"><div class="modal"><div class="modal-header"><div><h2 id="collabModalTitle">Permissões do colaborador</h2><p>As mudanças diferentes do perfil base ficam registradas como exceções individuais.</p></div><button class="close-btn" data-close="collabModal">✕</button></div><div class="modal-body" id="collabModalBody"></div><div class="modal-footer"><span class="spacer"></span><button class="btn-secondary" data-close="collabModal">Fechar</button></div></div></div>
+<div class="modal-overlay" id="moduleModal"><div class="modal"><div class="modal-header"><div><h2 id="moduleModalTitle">Permissões do módulo</h2><p>Altere o acesso individual por colaborador. As exceções são calculadas sobre o perfil base.</p></div><button class="close-btn" data-close="moduleModal">✕</button></div><div class="modal-body" id="moduleModalBody"></div><div class="modal-footer"><span class="spacer"></span><button class="btn-secondary" data-close="moduleModal">Fechar</button></div></div></div>
+<div class="modal-overlay" id="profileModal"><div class="modal"><div class="modal-header"><div><h2 id="profileModalTitle">Novo Perfil</h2><p>Defina os níveis de acesso padrão para todos os módulos.</p></div><button class="close-btn" data-close="profileModal">✕</button></div><div class="modal-body" id="profileModalBody"></div><div class="modal-footer"><span class="spacer"></span><button class="btn-danger hidden" id="profileDeleteBtn">Excluir perfil</button><button class="btn-secondary" data-close="profileModal">Cancelar</button><button class="btn-primary" id="profileSaveBtn">Salvar Perfil</button></div></div></div>
+<div class="modal-overlay" id="confirmModal"><div class="modal small"><div class="modal-header"><div><h2 id="confirmTitle">Confirmar ação</h2><p id="confirmText"></p></div><button class="close-btn" data-close="confirmModal">✕</button></div><div class="modal-footer"><button class="btn-secondary" data-close="confirmModal">Cancelar</button><button class="btn-danger" id="confirmBtn">Confirmar</button></div></div></div>
+<div class="toast-area" id="toastArea"></div>
+
+<script>
+/* ================================================================
+   SUPABASE
+================================================================ */
+var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ================================================================
+   CONSTANTES
+   TODO: este painel deve ser a fonte única de verdade para controle
+   de acesso dos demais módulos (Financeiro, Biblioteca, Marketing).
+================================================================ */
+const moduleList = [
+  {key:'dashboard',    name:'Dashboard',              short:'DB'},
+  {key:'processos',    name:'Lista de Processos',     short:'PR'},
+  {key:'kanban',       name:'Kanban',                 short:'KB'},
+  {key:'ficha_cliente',name:'Ficha do Cliente',       short:'FC'},
+  {key:'calendario',   name:'Calendário',             short:'CA'},
+  {key:'chat',         name:'Chat Interno',           short:'CH'},
+  {key:'ponto',        name:'Ponto Eletrônico',       short:'PT'},
+  {key:'biblioteca',   name:'Biblioteca de Modelos',  short:'BM'},
+  {key:'marketing',    name:'Marketing/Campanhas',    short:'MK'},
+  {key:'tarefas',      name:'Minhas Tarefas',         short:'MT'},
+  {key:'multi_oab',    name:'Monitoramento Multi-OAB',short:'MO'},
+  {key:'financeiro',   name:'Financeiro',             short:'FI'},
+  {key:'configuracoes',name:'Configurações',          short:'CF'}
+];
+const levels = ['sem_acesso','visualizar','comentar','editar','admin_total'];
+const levelLabels = {sem_acesso:'Sem acesso',visualizar:'Visualizar',comentar:'Comentar',editar:'Editar',admin_total:'Admin total'};
+
+/*
+  NIVEL_ACTIONS — mapeamento painel → DB
+  Cada nível define quais pares (modulo_db, acao) devem estar presentes
+  em papeis_permissoes para que esse nível seja considerado atingido.
+  dashboard: sem permissão dedicada no DB — calculado via processos.visualizar.
+  kanban: compartilha processos + status_funil no admin_total.
+*/
+const NIVEL_ACTIONS = {
+  dashboard:    {visualizar:[],comentar:[],editar:[],admin_total:[]},
+  processos:    {
+    visualizar: [['processos','visualizar']],
+    comentar:   [['processos','visualizar'],['comentarios','criar']],
+    editar:     [['processos','visualizar'],['processos','criar'],['processos','editar'],['comentarios','criar'],['comentarios','editar_proprio'],['comentarios','excluir_proprio']],
+    admin_total:[['processos','visualizar'],['processos','criar'],['processos','editar'],['processos','excluir'],['processos','atribuir'],['processos','editar_dados'],['comentarios','criar'],['comentarios','editar_proprio'],['comentarios','excluir_proprio']]
+  },
+  kanban:       {
+    visualizar: [['processos','visualizar']],
+    comentar:   [['processos','visualizar'],['comentarios','criar']],
+    editar:     [['processos','visualizar'],['processos','editar']],
+    admin_total:[['processos','visualizar'],['processos','editar'],['status_funil','gerenciar']]
+  },
+  ficha_cliente:{
+    visualizar: [['pessoas','visualizar']],
+    comentar:   [['pessoas','visualizar'],['localizacao','visualizar']],
+    editar:     [['pessoas','visualizar'],['pessoas','criar'],['pessoas','editar'],['localizacao','visualizar']],
+    admin_total:[['pessoas','visualizar'],['pessoas','criar'],['pessoas','editar'],['localizacao','visualizar'],['localizacao','criar'],['localizacao','editar']]
+  },
+  calendario:   {
+    visualizar: [['compromissos','visualizar']],
+    comentar:   [['compromissos','visualizar']],
+    editar:     [['compromissos','visualizar'],['compromissos','criar'],['compromissos','editar']],
+    admin_total:[['compromissos','visualizar'],['compromissos','criar'],['compromissos','editar']]
+  },
+  chat:         {
+    visualizar: [['chat','usar']],
+    comentar:   [['chat','usar']],
+    editar:     [['chat','usar']],
+    admin_total:[['chat','usar']]
+  },
+  ponto:        {
+    visualizar: [['ponto','bater'],['ponto','visualizar_proprio']],
+    comentar:   [['ponto','bater'],['ponto','visualizar_proprio']],
+    editar:     [['ponto','bater'],['ponto','visualizar_proprio'],['ponto','visualizar_equipe'],['atestados','enviar']],
+    admin_total:[['ponto','bater'],['ponto','visualizar_proprio'],['ponto','visualizar_equipe'],['ponto','aprovar_ajuste'],['atestados','enviar'],['atestados','aprovar'],['abonos','gerenciar'],['jornadas','gerenciar']]
+  },
+  biblioteca:   {
+    visualizar: [['biblioteca','visualizar']],
+    comentar:   [['biblioteca','visualizar']],
+    editar:     [['biblioteca','visualizar'],['documentos','criar'],['modelos_documentos','gerar']],
+    admin_total:[['biblioteca','visualizar'],['biblioteca','gerenciar'],['documentos','criar'],['documentos','excluir'],['modelos_documentos','gerenciar'],['modelos_documentos','gerar']]
+  },
+  marketing:    {
+    visualizar: [['campanhas','visualizar'],['materiais_marketing','visualizar']],
+    comentar:   [['campanhas','visualizar'],['materiais_marketing','visualizar']],
+    editar:     [['campanhas','visualizar'],['campanhas','criar'],['campanhas','editar'],['materiais_marketing','visualizar'],['materiais_marketing','criar']],
+    admin_total:[['campanhas','visualizar'],['campanhas','criar'],['campanhas','editar'],['materiais_marketing','visualizar'],['materiais_marketing','criar'],['materiais_marketing','aprovar']]
+  },
+  tarefas:      {
+    visualizar: [['tarefas','visualizar']],
+    comentar:   [['tarefas','visualizar']],
+    editar:     [['tarefas','visualizar'],['tarefas','criar'],['tarefas','editar']],
+    admin_total:[['tarefas','visualizar'],['tarefas','criar'],['tarefas','editar'],['tarefas','excluir']]
+  },
+  multi_oab:    {
+    visualizar: [['monitoramento_oab','visualizar']],
+    comentar:   [['monitoramento_oab','visualizar']],
+    editar:     [['monitoramento_oab','visualizar'],['monitoramento_oab','gerenciar']],
+    admin_total:[['monitoramento_oab','visualizar'],['monitoramento_oab','gerenciar']]
+  },
+  financeiro:   {
+    visualizar: [['financeiro','visualizar']],
+    comentar:   [['financeiro','visualizar']],
+    editar:     [['financeiro','visualizar'],['financeiro','criar'],['financeiro','editar']],
+    admin_total:[['financeiro','visualizar'],['financeiro','criar'],['financeiro','editar'],['parceiros','visualizar'],['parceiros','gerenciar']]
+  },
+  configuracoes:{
+    visualizar: [['configuracoes_sistema','gerenciar']],
+    comentar:   [['configuracoes_sistema','gerenciar']],
+    editar:     [['configuracoes_sistema','gerenciar']],
+    admin_total:[['configuracoes_sistema','gerenciar'],['permissoes','gerenciar']]
+  }
+};
+
+/* ================================================================
+   ESTADO RUNTIME
+================================================================ */
+let _currentUser   = null;   // { id, nome_completo, eh_administrador }
+let _permCatalog   = [];     // [{ id, modulo, acao }]
+let _papeis        = [];     // [{ id, nome, cor, editavel, descricao }]
+let _papPermMap    = {};     // { papel_id: Set<permissao_id> }
+let _colaboradores = [];     // [{ id, nome_completo, cargo_titulo, eh_administrador, papel_id, papel_nome, papel_cor, excecoes }]
+
+let activeView           = 'collaborators';
+let activeCollaboratorId = null;
+let activeProfileId      = null;
+let activeModuleKey      = null;
+let confirmAction        = null;
+
+/* ================================================================
+   UTILITÁRIOS
+================================================================ */
+function esc(t){const d=document.createElement('div');d.textContent=t||'';return d.innerHTML}
+function initials(n){return(n||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase()}
+function levelClass(l){return 'level level-'+l}
+function levelOptions(sel,disabled=false){return levels.map(l=>`<option value="${l}"${l===sel?' selected':''}${disabled?' disabled':''}>${levelLabels[l]}</option>`).join('')}
+
+function permId(mod,acao){const p=_permCatalog.find(x=>x.modulo===mod&&x.acao===acao);return p?p.id:null}
+
+function allModulePermIds(modKey){
+  const pairs=Object.values(NIVEL_ACTIONS[modKey]||{}).flat();
+  const seen=new Map();
+  pairs.forEach(([m,a])=>{const id=permId(m,a);if(id)seen.set(id,true)});
+  return[...seen.keys()];
+}
+
+function computeLevel(permIdSet,modKey){
+  const def=NIVEL_ACTIONS[modKey];
+  if(!def)return'sem_acesso';
+  for(const lv of['admin_total','editar','comentar','visualizar']){
+    const pairs=def[lv]||[];
+    if(!pairs.length)continue;
+    if(pairs.every(([m,a])=>{const id=permId(m,a);return id&&permIdSet.has(id)}))return lv;
+  }
+  return'sem_acesso';
+}
+
+function getPapel(id){return _papeis.find(p=>p.id===id)}
+function getCollab(id){return _colaboradores.find(c=>c.id===id)}
+
+function finalLevel(c,modKey){
+  if(c.eh_administrador)return'admin_total';
+  const base=_papPermMap[c.papel_id]||new Set();
+  const eff=new Set(base);
+  (c.excecoes||[]).forEach(ex=>{if(ex.concedida)eff.add(ex.permissao_id);else eff.delete(ex.permissao_id)});
+  return computeLevel(eff,modKey);
+}
+
+function sourceFor(c,modKey){
+  if(c.eh_administrador)return{type:'default',label:'Autoridade máxima'};
+  const ids=new Set(allModulePermIds(modKey));
+  const excs=(c.excecoes||[]).filter(ex=>ids.has(ex.permissao_id));
+  const hasGrant=excs.some(ex=>ex.concedida);
+  const hasRevoke=excs.some(ex=>!ex.concedida);
+  if(hasGrant||hasRevoke)return{type:hasRevoke?'revoke':'grant',label:hasRevoke?'Revogado manualmente':'Concedido manualmente'};
+  return{type:'default',label:'Padrão do perfil'};
+}
+
+function exceptionModuleCount(c){
+  return moduleList.filter(m=>{
+    const ids=new Set(allModulePermIds(m.key));
+    return(c.excecoes||[]).some(ex=>ids.has(ex.permissao_id));
+  }).length;
+}
+
+function avatarHtml(c,cl='avatar-lg'){
+  const bg=c.papel_cor||'#8b93a8';
+  return`<div class="${cl}" style="background:${bg}">${initials(c.nome_completo)}</div>`;
+}
+
+function canManageFor(c){return _currentUser&&_currentUser.eh_administrador&&!c.eh_administrador}
+
+/* ================================================================
+   TOAST
+================================================================ */
+function showToast(msg,type='success'){
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=`<i>${type==='success'?'✓':type==='error'?'!':'i'}</i><p>${msg}</p>`;
+  document.getElementById('toastArea').appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),260)},3900);
+}
+
+/* ================================================================
+   CUSTOM SELECTS
+================================================================ */
+let activeCustomSelect=null;
+function closeCustomSelects(scope=document){scope.querySelectorAll('.custom-select.open').forEach(el=>el.classList.remove('open'));activeCustomSelect=null}
+function buildCustomSelect(select){
+  if(!select||select.dataset.enhanced==='true')return;
+  select.dataset.enhanced='true';select.classList.add('native-select-hidden');
+  const wrap=document.createElement('div');wrap.className='custom-select';
+  if(select.classList.contains('field'))wrap.classList.add('field-like');
+  if(select.disabled)wrap.classList.add('disabled');
+  const trigger=document.createElement('button');trigger.type='button';trigger.className='custom-select-trigger';trigger.disabled=select.disabled;
+  trigger.innerHTML='<span class="value"></span><span class="caret" aria-hidden="true"></span>';
+  const menu=document.createElement('div');menu.className='custom-select-menu';
+  const sync=()=>{
+    const sel=select.options[select.selectedIndex];
+    trigger.querySelector('.value').textContent=sel?sel.textContent:'';
+    [...menu.children].forEach(b=>b.classList.toggle('selected',b.dataset.value===select.value));
+    wrap.classList.toggle('disabled',select.disabled);trigger.disabled=select.disabled;
+  };
+  [...select.options].forEach(opt=>{
+    const btn=document.createElement('button');btn.type='button';btn.className='custom-select-option';btn.textContent=opt.textContent;btn.dataset.value=opt.value;
+    if(opt.disabled)btn.disabled=true;
+    btn.addEventListener('click',()=>{if(opt.disabled)return;select.value=opt.value;select.dispatchEvent(new Event('change',{bubbles:true}));sync();wrap.classList.remove('open');activeCustomSelect=null});
+    menu.appendChild(btn);
+  });
+  trigger.addEventListener('click',e=>{if(select.disabled)return;e.stopPropagation();if(activeCustomSelect&&activeCustomSelect!==wrap)activeCustomSelect.classList.remove('open');wrap.classList.toggle('open');activeCustomSelect=wrap.classList.contains('open')?wrap:null});
+  select.insertAdjacentElement('afterend',wrap);wrap.append(trigger,menu);select.addEventListener('change',sync);sync();
+}
+function refreshCustomSelect(select){if(!select)return;const ex=select.nextElementSibling;if(ex&&ex.classList&&ex.classList.contains('custom-select'))ex.remove();delete select.dataset.enhanced;select.classList.remove('native-select-hidden');buildCustomSelect(select)}
+function enhanceSelectsWithin(root){const s=typeof root==='string'?document.querySelector(root):root;if(s)s.querySelectorAll('select').forEach(buildCustomSelect)}
+
+/* ================================================================
+   MODAIS
+================================================================ */
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){const m=document.getElementById(id);m.classList.remove('open');closeCustomSelects(m)}
+function closePopovers(){document.querySelectorAll('.popover').forEach(p=>p.classList.remove('open'))}
+
+/* ================================================================
+   TOPBAR
+================================================================ */
+function setupTopbar(){
+  const saved=localStorage.getItem('saga-theme');
+  if(saved)document.body.dataset.theme=saved;
+
+  document.getElementById('themeToggle').addEventListener('click',()=>{
+    const next=document.body.dataset.theme==='dark'?'light':'dark';
+    document.body.dataset.theme=next;localStorage.setItem('saga-theme',next);
+  });
+  document.getElementById('hamburger').addEventListener('click',()=>{
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('mobileOverlay').classList.toggle('open');
+  });
+  document.getElementById('mobileOverlay').addEventListener('click',()=>{
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('mobileOverlay').classList.remove('open');
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.presence-wrap')&&!e.target.closest('.notification-wrap'))closePopovers();
+    if(!e.target.closest('.custom-select'))closeCustomSelects();
+  });
+  document.getElementById('presenceBtn').addEventListener('click',e=>{
+    e.stopPropagation();
+    document.getElementById('presencePop').classList.toggle('open');
+    document.getElementById('notifPop').classList.remove('open');
+  });
+  document.getElementById('notifBtn').addEventListener('click',e=>{
+    e.stopPropagation();
+    document.getElementById('notifPop').classList.toggle('open');
+    document.getElementById('presencePop').classList.remove('open');
+  });
+  document.getElementById('presencePop').innerHTML='<div class="pop-title">Presença online</div><div class="pop-item"><span class="grow" style="font-size:10px;color:var(--muted)">Indicador em tempo real disponível em breve.</span></div>';
+  document.getElementById('notifPop').innerHTML='<div class="pop-title">Notificações</div><div class="pop-item"><span class="grow" style="font-size:10px;color:var(--muted)">Sem notificações no momento.</span></div>';
+}
+
+/* ================================================================
+   CARGA DE DADOS (Supabase)
+================================================================ */
+async function loadData(){
+  const [papRes,permRes,ppRes,usrRes,extRes]=await Promise.all([
+    _sb.from('papeis').select('id,nome,descricao,cor,editavel,eh_papel_padrao').order('nome'),
+    _sb.from('permissoes').select('id,modulo,acao'),
+    _sb.from('papeis_permissoes').select('papel_id,permissao_id'),
+    _sb.from('usuarios').select('id,nome_completo,cargo_titulo,ativo,auth_user_id,eh_administrador,usuarios_papeis(papel_id)').eq('ativo',true).order('nome_completo'),
+    _sb.from('usuarios_permissoes_extra').select('usuario_id,permissao_id,concedida,motivo')
+  ]);
+  for(const r of[papRes,permRes,ppRes,usrRes,extRes]){if(r.error)throw new Error(r.error.message)}
+
+  _papeis=papRes.data||[];
+  _permCatalog=permRes.data||[];
+
+  _papPermMap={};
+  (ppRes.data||[]).forEach(row=>{
+    if(!_papPermMap[row.papel_id])_papPermMap[row.papel_id]=new Set();
+    _papPermMap[row.papel_id].add(row.permissao_id);
+  });
+
+  const extrasMap={};
+  (extRes.data||[]).forEach(row=>{
+    if(!extrasMap[row.usuario_id])extrasMap[row.usuario_id]=[];
+    extrasMap[row.usuario_id].push({permissao_id:row.permissao_id,concedida:row.concedida,motivo:row.motivo});
+  });
+
+  _colaboradores=(usrRes.data||[]).map(u=>{
+    const papel_id=u.usuarios_papeis?.[0]?.papel_id||null;
+    const papel=_papeis.find(p=>p.id===papel_id);
+    return{id:u.id,nome_completo:u.nome_completo,cargo_titulo:u.cargo_titulo||'',eh_administrador:u.eh_administrador,auth_user_id:u.auth_user_id,papel_id,papel_nome:papel?.nome||'—',papel_cor:papel?.cor||'#8b93a8',excecoes:extrasMap[u.id]||[]};
+  });
+}
+
+/* ================================================================
+   ESCRITAS NO DB
+================================================================ */
+async function dbSetException(c,modKey,newLevel){
+  const allIds=allModulePermIds(modKey);
+  const targetPairs=NIVEL_ACTIONS[modKey]?.[newLevel]||[];
+  const targetIds=new Set(targetPairs.map(([m,a])=>permId(m,a)).filter(Boolean));
+  const papelIds=_papPermMap[c.papel_id]||new Set();
+
+  if(allIds.length){
+    const{error}=await _sb.from('usuarios_permissoes_extra').delete().eq('usuario_id',c.id).in('permissao_id',allIds);
+    if(error)throw new Error(error.message);
+  }
+
+  const toInsert=[];
+  allIds.forEach(pid=>{
+    const inTarget=targetIds.has(pid),inPapel=papelIds.has(pid);
+    if(inTarget&&!inPapel)toInsert.push({usuario_id:c.id,permissao_id:pid,concedida:true,definido_por_id:_currentUser.id});
+    else if(!inTarget&&inPapel)toInsert.push({usuario_id:c.id,permissao_id:pid,concedida:false,definido_por_id:_currentUser.id});
+  });
+
+  if(toInsert.length){const{error}=await _sb.from('usuarios_permissoes_extra').insert(toInsert);if(error)throw new Error(error.message)}
+}
+
+async function dbChangeProfile(userId,newPapelId){
+  const{error:de}=await _sb.from('usuarios_papeis').delete().eq('usuario_id',userId);
+  if(de)throw new Error(de.message);
+  if(newPapelId){
+    const{error}=await _sb.from('usuarios_papeis').insert({usuario_id:userId,papel_id:newPapelId,atribuido_por_id:_currentUser.id});
+    if(error)throw new Error(error.message);
+  }
+}
+
+async function dbSaveProfileLevel(papelId,modKey,newLevel){
+  const allIds=allModulePermIds(modKey);
+  const targetPairs=NIVEL_ACTIONS[modKey]?.[newLevel]||[];
+  const targetIds=targetPairs.map(([m,a])=>permId(m,a)).filter(Boolean);
+  if(allIds.length){const{error}=await _sb.from('papeis_permissoes').delete().eq('papel_id',papelId).in('permissao_id',allIds);if(error)throw new Error(error.message)}
+  if(targetIds.length){const{error}=await _sb.from('papeis_permissoes').insert(targetIds.map(pid=>({papel_id:papelId,permissao_id:pid})));if(error)throw new Error(error.message)}
+}
+
+async function dbSaveProfile(payload,existingId=null){
+  if(existingId){
+    const{error}=await _sb.from('papeis').update({nome:payload.nome,cor:payload.cor,descricao:payload.descricao}).eq('id',existingId);
+    if(error)throw new Error(error.message);
+    for(const m of moduleList)await dbSaveProfileLevel(existingId,m.key,payload.niveis[m.key]||'sem_acesso');
+    return existingId;
+  }else{
+    const{data,error}=await _sb.from('papeis').insert({nome:payload.nome,cor:payload.cor,descricao:payload.descricao,editavel:true,criado_por_id:_currentUser.id}).select('id').single();
+    if(error)throw new Error(error.message);
+    for(const m of moduleList)await dbSaveProfileLevel(data.id,m.key,payload.niveis[m.key]||'sem_acesso');
+    return data.id;
+  }
+}
+
+async function dbDeleteProfile(papelId){
+  const fallback=_papeis.find(p=>p.nome==='Administrativo');
+  if(fallback){await _sb.from('usuarios_papeis').update({papel_id:fallback.id}).eq('papel_id',papelId)}
+  const{error}=await _sb.from('papeis').delete().eq('id',papelId);
+  if(error)throw new Error(error.message);
+}
+
+/* ================================================================
+   GATE DE ACESSO
+================================================================ */
+function canAccessPanel(){return _currentUser&&_currentUser.eh_administrador}
+
+function applyAccessGate(){
+  if(canAccessPanel())return true;
+  document.querySelector('.content').innerHTML=`<section class="restricted-access panel"><div class="restricted-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.7"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h1>Acesso restrito</h1><p>O Painel Admin de Permissões é exclusivo para administradores do sistema.</p></section>`;
+  return false;
+}
+
+/* ================================================================
+   FILTRO DE PERFIS (toolbar)
+================================================================ */
+function refreshProfileFilter(){
+  const f=document.getElementById('profileFilter');
+  const cur=f.value;
+  f.innerHTML='<option value="all">Todos os perfis</option>'+_papeis.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('');
+  if([...f.options].some(o=>o.value===cur))f.value=cur;
+  refreshCustomSelect(f);
+}
+
+/* ================================================================
+   VISÃO: COLABORADORES
+================================================================ */
+function renderCollaborators(){
+  const root=document.getElementById('viewRoot');
+  const term=document.getElementById('viewSearch').value.trim().toLowerCase();
+  const pf=document.getElementById('profileFilter').value;
+  const filtered=_colaboradores.filter(c=>(!term||[c.nome_completo,c.cargo_titulo,c.papel_nome].join(' ').toLowerCase().includes(term))&&(pf==='all'||c.papel_id===pf));
+  document.getElementById('viewCounter').innerHTML=`<b>${filtered.length}</b> de ${_colaboradores.length} colaboradores`;
+  root.innerHTML=`<div class="collab-list">${filtered.map(c=>{
+    const ec=exceptionModuleCount(c);
+    return`<button class="collab-card panel" data-collab-card="${c.id}">${avatarHtml(c)}<span><span class="collab-name">${esc(c.nome_completo)}</span><span class="collab-role">${esc(c.cargo_titulo)}</span><span class="collab-meta"><span class="badge" style="background:${c.papel_cor}22;color:${c.papel_cor};border:1px solid ${c.papel_cor}55"><span class="dot" style="background:${c.papel_cor}"></span>${esc(c.papel_nome)}</span>${c.eh_administrador?'<span class="badge grant">Administrador</span>':`<span class="exception-count">${ec?ec+' módulo(s) com exceção':'Sem exceções'}</span>`}</span></span><span class="arrow">›</span></button>`;
+  }).join('')||`<div class="panel empty"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.5"/></svg><h3>Nenhum colaborador encontrado</h3><p>Ajuste a busca ou o filtro de perfil.</p></div>`}</div>`;
+  root.querySelectorAll('[data-collab-card]').forEach(b=>b.addEventListener('click',()=>openCollaborator(b.dataset.collabCard)));
+}
+
+async function openCollaborator(id){
+  activeCollaboratorId=id;
+  const c=getCollab(id);if(!c)return;
+  document.getElementById('collabModalTitle').textContent='Permissões de '+c.nome_completo;
+  const canEdit=canManageFor(c);
+  const protectedNote=c.eh_administrador?'<div class="locked-note">Este colaborador é administrador — permissões totais e permanentes, não editáveis via painel.</div>':'';
+  const papelOptions=_papeis.map(p=>`<option value="${p.id}"${p.id===c.papel_id?' selected':''}>${esc(p.nome)}</option>`).join('');
+
+  document.getElementById('collabModalBody').innerHTML=`
+    <div class="detail-top">
+      <div class="detail-person">${avatarHtml(c)}<span><h3>${esc(c.nome_completo)}</h3><p>${esc(c.cargo_titulo)} · Perfil base: <b style="color:${c.papel_cor}">${esc(c.papel_nome)}</b></p></span></div>
+      <div class="profile-change"><label for="changeProfile">Trocar perfil</label><select class="field" id="changeProfile"${canEdit?'':' disabled'}>${papelOptions}</select></div>
+    </div>
+    ${protectedNote}
+    <div class="perm-wrap" style="margin-top:14px">
+      <table class="permission-table"><thead><tr><th>Módulo</th><th>Nível final</th><th>Origem</th><th>Alterar</th></tr></thead>
+      <tbody>${moduleList.map(m=>{const f=finalLevel(c,m.key),s=sourceFor(c,m.key);return`<tr><td class="module-cell">${esc(m.name)}</td><td><span class="${levelClass(f)}">${levelLabels[f]}</span></td><td><span class="badge ${s.type}">${s.label}</span></td><td><select class="permission-select" data-perm-c="${c.id}" data-perm-m="${m.key}"${canEdit?'':' disabled'}>${levelOptions(f,c.eh_administrador)}</select></td></tr>`}).join('')}</tbody></table>
+    </div>`;
+
+  document.getElementById('changeProfile').addEventListener('change',async e=>{
+    if(!canEdit){showToast('Sem autoridade para alterar este perfil.','error');return}
+    try{await dbChangeProfile(c.id,e.target.value);await loadData();openCollaborator(c.id);showToast('Perfil de <b>'+esc(c.nome_completo)+'</b> atualizado.','success')}
+    catch(err){showToast('Erro: '+err.message,'error')}
+  });
+  document.querySelectorAll('[data-perm-c]').forEach(sel=>sel.addEventListener('change',async()=>{
+    const col=getCollab(sel.dataset.permC);if(!col)return;
+    try{await dbSetException(col,sel.dataset.permM,sel.value);await loadData();openCollaborator(col.id);showToast('Permissão de <b>'+esc(col.nome_completo)+'</b> atualizada.','success')}
+    catch(err){showToast('Erro: '+err.message,'error')}
+  }));
+  enhanceSelectsWithin(document.getElementById('collabModal'));
+  openModal('collabModal');
+}
+
+/* ================================================================
+   VISÃO: MÓDULOS
+================================================================ */
+function renderModules(){
+  const root=document.getElementById('viewRoot');
+  const term=document.getElementById('viewSearch').value.trim().toLowerCase();
+  const mods=moduleList.filter(m=>!term||m.name.toLowerCase().includes(term));
+  document.getElementById('viewCounter').innerHTML=`<b>${mods.length}</b> de ${moduleList.length} módulos`;
+  root.innerHTML=`<div class="modules-grid">${mods.map(m=>{
+    const vals=_colaboradores.map(c=>finalLevel(c,m.key));
+    const counts=Object.fromEntries(levels.map(l=>[l,vals.filter(x=>x===l).length]));
+    const active=levels.filter(l=>counts[l]);
+    const total=_colaboradores.length||1;
+    return`<button class="module-card panel" data-module-card="${m.key}"><span class="module-top"><span class="module-icon">${esc(m.short)}</span><span><span class="module-name">${esc(m.name)}</span><span class="module-sub">${_colaboradores.length} colaboradores</span></span></span><span class="module-bars">${active.map(l=>`<span class="level-${l}" style="width:${(counts[l]/total)*100}%"></span>`).join('')}</span><span class="module-counts">${active.map(l=>`<small>${counts[l]} ${levelLabels[l].toLowerCase()}</small>`).join('')}</span></button>`;
+  }).join('')}</div>`;
+  root.querySelectorAll('[data-module-card]').forEach(b=>b.addEventListener('click',()=>openModule(b.dataset.moduleCard)));
+}
+
+async function openModule(key){
+  activeModuleKey=key;
+  const m=moduleList.find(x=>x.key===key);
+  document.getElementById('moduleModalTitle').textContent='Acesso ao módulo: '+m.name;
+  document.getElementById('moduleModalBody').innerHTML=`<div class="perm-wrap"><table class="permission-table"><thead><tr><th>Colaborador</th><th>Perfil</th><th>Nível final</th><th>Origem</th><th>Alterar</th></tr></thead><tbody>${_colaboradores.map(c=>{
+    const f=finalLevel(c,key),s=sourceFor(c,key),ce=canManageFor(c);
+    return`<tr><td><span style="display:flex;align-items:center;gap:8px">${avatarHtml(c,'small-avatar')}<span><b>${esc(c.nome_completo)}</b><small class="pop-meta">${esc(c.cargo_titulo)}</small></span></span></td><td><span class="badge" style="background:${c.papel_cor}22;color:${c.papel_cor};border:1px solid ${c.papel_cor}55">${esc(c.papel_nome)}</span></td><td><span class="${levelClass(f)}">${levelLabels[f]}</span></td><td><span class="badge ${s.type}">${s.label}</span></td><td><select class="permission-select" data-module-c="${c.id}"${ce?'':' disabled'}>${levelOptions(f,c.eh_administrador)}</select></td></tr>`;
+  }).join('')}</tbody></table></div>`;
+  document.querySelectorAll('[data-module-c]').forEach(sel=>sel.addEventListener('change',async()=>{
+    const c=getCollab(sel.dataset.moduleC);if(!c)return;
+    try{await dbSetException(c,key,sel.value);await loadData();openModule(key);showToast('Acesso de <b>'+esc(c.nome_completo)+'</b> atualizado.','success')}
+    catch(err){showToast('Erro: '+err.message,'error')}
+  }));
+  enhanceSelectsWithin(document.getElementById('moduleModal'));
+  openModal('moduleModal');
+}
+
+/* ================================================================
+   VISÃO: PERFIS
+================================================================ */
+function renderProfiles(){
+  const root=document.getElementById('viewRoot');
+  const term=document.getElementById('viewSearch').value.trim().toLowerCase();
+  const list=_papeis.filter(p=>!term||[p.nome,p.descricao||''].join(' ').toLowerCase().includes(term));
+  document.getElementById('viewCounter').innerHTML=`<b>${list.length}</b> de ${_papeis.length} perfis`;
+  root.innerHTML=`<div class="profile-grid">${list.map(p=>{
+    const users=_colaboradores.filter(c=>c.papel_id===p.id).length;
+    const perms=_papPermMap[p.id]||new Set();
+    return`<article class="profile-card panel"><div class="profile-top"><span><span class="profile-title"><span class="profile-dot" style="background:${p.cor}"></span><h3>${esc(p.nome)}</h3></span><p class="profile-desc">${esc(p.descricao||'')}</p></span>${p.editavel?'<span class="badge default">Editável</span>':'<span class="badge grant">Protegido</span>'}</div><p class="profile-users">${users} colaborador(es) usando este perfil</p><div class="profile-mini-grid">${moduleList.map(m=>{const lv=computeLevel(perms,m.key);return`<span class="profile-mini level-${lv}" title="${esc(m.name)}: ${levelLabels[lv]}">${m.short}</span>`}).join('')}</div><div class="profile-actions"><button class="btn-secondary" data-edit-profile="${p.id}">${p.editavel?'Editar perfil':'Visualizar perfil'}</button>${p.editavel?`<button class="btn-danger" data-delete-profile="${p.id}">Excluir</button>`:''}</div></article>`;
+  }).join('')}</div>`;
+  root.querySelectorAll('[data-edit-profile]').forEach(b=>b.addEventListener('click',()=>openProfileModal(b.dataset.editProfile)));
+  root.querySelectorAll('[data-delete-profile]').forEach(b=>b.addEventListener('click',()=>askDeleteProfile(b.dataset.deleteProfile)));
+}
+
+function openProfileModal(id=null){
+  activeProfileId=id;
+  const p=id?getPapel(id):{id:null,nome:'',cor:'#6fa3d8',descricao:'',editavel:true};
+  if(!p)return;
+  const locked=!p.editavel;
+  const perms=p.id?(_papPermMap[p.id]||new Set()):new Set();
+  document.getElementById('profileModalTitle').textContent=id?(locked?'Perfil protegido':'Editar Perfil'):'Novo Perfil';
+  document.getElementById('profileDeleteBtn').classList.toggle('hidden',!id||locked);
+  document.getElementById('profileSaveBtn').classList.toggle('hidden',locked);
+  document.getElementById('profileModalBody').innerHTML=`
+    ${locked?'<div class="locked-note">Este perfil é protegido — permissões totais, não editáveis via painel.</div>':''}
+    <div class="form-grid" style="margin-top:${locked?'14px':'0'}">
+      <div class="form-group"><label for="profileName">Nome do perfil</label><input id="profileName" value="${esc(p.nome)}"${locked?' disabled':''}></div>
+      <div class="form-group"><label for="profileColor">Cor</label><input type="color" id="profileColor" value="${p.cor}"${locked?' disabled':''}></div>
+    </div>
+    <div class="form-group" style="margin-top:12px"><label for="profileDesc">Descrição</label><textarea id="profileDesc"${locked?' disabled':''}>${esc(p.descricao||'')}</textarea></div>
+    <div class="profile-perm-editor"><h4>Permissões padrão por módulo</h4><div class="profile-perm-grid">${moduleList.map(m=>{
+      const lv=computeLevel(perms,m.key);
+      return`<label class="profile-perm-row"><span>${esc(m.name)}</span><select data-profile-perm="${m.key}"${locked?' disabled':''}>${levelOptions(lv)}</select></label>`;
+    }).join('')}</div></div>`;
+  enhanceSelectsWithin(document.getElementById('profileModal'));
+  openModal('profileModal');
+}
+
+async function saveProfile(){
+  const name=document.getElementById('profileName').value.trim();
+  if(!name){showToast('Informe o nome do perfil.','error');return}
+  const niveis={};
+  document.querySelectorAll('[data-profile-perm]').forEach(s=>niveis[s.dataset.profilePerm]=s.value);
+  const payload={nome:name,cor:document.getElementById('profileColor').value,descricao:document.getElementById('profileDesc').value.trim(),niveis};
+  const btn=document.getElementById('profileSaveBtn');
+  btn.disabled=true;btn.textContent='Salvando…';
+  try{
+    await dbSaveProfile(payload,activeProfileId);
+    await loadData();closeModal('profileModal');refreshProfileFilter();renderAll();
+    showToast(activeProfileId?'Perfil atualizado.':'Novo perfil criado.','success');
+  }catch(err){showToast('Erro ao salvar: '+err.message,'error')}
+  finally{btn.disabled=false;btn.textContent='Salvar Perfil'}
+}
+
+function askDeleteProfile(id){
+  const p=getPapel(id);if(!p)return;
+  const users=_colaboradores.filter(c=>c.papel_id===id).length;
+  document.getElementById('confirmTitle').textContent='Excluir perfil';
+  document.getElementById('confirmText').innerHTML=`Deseja excluir o perfil <b>${esc(p.nome)}</b>?${users?` Os ${users} colaborador(es) serão reatribuídos ao perfil Administrativo.`:''}`;
+  confirmAction=async()=>{
+    try{await dbDeleteProfile(id);await loadData();closeModal('confirmModal');refreshProfileFilter();renderAll();showToast('Perfil excluído.','success')}
+    catch(err){showToast('Erro: '+err.message,'error')}
+  };
+  openModal('confirmModal');
+}
+
+/* ================================================================
+   RENDER GERAL + TROCA DE VISÃO
+================================================================ */
+function renderAll(){
+  if(activeView==='collaborators')renderCollaborators();
+  else if(activeView==='modules')renderModules();
+  else renderProfiles();
+}
+
+function changeView(v){
+  activeView=v;
+  document.querySelectorAll('.segment').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  const pfSel=document.getElementById('profileFilter');
+  pfSel.classList.toggle('hidden',v!=='collaborators');
+  const pfCs=pfSel.nextElementSibling;
+  if(pfCs&&pfCs.classList.contains('custom-select'))pfCs.classList.toggle('hidden',v!=='collaborators');
+  document.getElementById('newProfileBtn').classList.toggle('hidden',v!=='profiles');
+  document.getElementById('viewSearch').placeholder=v==='collaborators'?'Buscar por nome, cargo ou perfil…':v==='modules'?'Buscar módulo…':'Buscar perfil…';
+  renderAll();
+}
+
+/* ================================================================
+   INIT
+================================================================ */
+async function init(){
+  setupTopbar();
+
+  // Verifica sessão
+  const{data:{session}}=await _sb.auth.getSession();
+  if(!session){
+    document.querySelector('.content').innerHTML=`<section class="restricted-access panel"><div class="restricted-icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.7"/></svg></div><h1>Não autenticado</h1><p>Faça login para acessar este painel.</p></section>`;
+    return;
+  }
+
+  // Carrega perfil do usuário logado
+  const{data:meId}=await _sb.rpc('meu_perfil_id');
+  if(meId){
+    const{data:me}=await _sb.from('usuarios').select('id,nome_completo,eh_administrador').eq('id',meId).single();
+    _currentUser=me;
+    if(me){
+      document.getElementById('topAvatar').textContent=initials(me.nome_completo);
+      document.getElementById('topAvatar').title=me.nome_completo;
+    }
+  }
+
+  if(!applyAccessGate())return;
+
+  // Carrega dados
+  document.getElementById('viewRoot').innerHTML=`<div class="panel empty"><p style="color:var(--muted)">Carregando dados…</p></div>`;
+  try{await loadData()}
+  catch(err){
+    document.getElementById('viewRoot').innerHTML=`<div class="panel empty"><h3>Erro ao carregar</h3><p>${esc(err.message)}</p></div>`;
+    return;
+  }
+
+  refreshProfileFilter();
+  changeView('collaborators');
+  enhanceSelectsWithin(document.querySelector('.toolbar'));
+
+  document.querySelectorAll('.segment').forEach(b=>b.addEventListener('click',()=>changeView(b.dataset.view)));
+  document.getElementById('viewSearch').addEventListener('input',renderAll);
+  document.getElementById('globalSearch').addEventListener('input',e=>{document.getElementById('viewSearch').value=e.target.value;renderAll()});
+  document.getElementById('profileFilter').addEventListener('change',renderAll);
+  document.getElementById('newProfileBtn').addEventListener('click',()=>openProfileModal());
+  document.getElementById('profileSaveBtn').addEventListener('click',saveProfile);
+  document.getElementById('profileDeleteBtn').addEventListener('click',()=>activeProfileId&&askDeleteProfile(activeProfileId));
+  document.getElementById('confirmBtn').addEventListener('click',()=>{if(confirmAction)confirmAction()});
+  document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+  document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id)}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(m=>closeModal(m.id));closePopovers()}});
+}
+
+init();
+</script>
+</body>
+</html>

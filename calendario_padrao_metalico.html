@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV Sistema | Calendario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+    --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;
+    --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+    --border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);
+    --text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;
+    --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
+  }
+  [data-theme="light"]{
+    --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+    --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
+    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+    --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
+    --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+  body{
+    background:
+      radial-gradient(circle at 15% 0%, color-mix(in srgb,var(--gold) 7%,transparent), transparent 40%),
+      radial-gradient(circle at 90% 90%, color-mix(in srgb,var(--info) 5%,transparent), transparent 45%),
+      linear-gradient(160deg, var(--navy-1) 0%, var(--navy-2) 50%, var(--navy-3) 100%);
+    font-family:'Montserrat',sans-serif;
+    color:var(--text);
+    min-height:100vh;
+    overflow-x:hidden;
+    transition:background .3s ease, color .3s ease;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;
+    background-image:
+      linear-gradient(color-mix(in srgb,var(--gold) 2%,transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb,var(--gold) 2%,transparent) 1px, transparent 1px);
+    background-size:48px 48px;
+    pointer-events:none;z-index:0;
+  }
+
+  /* TOPBAR (padrão unificado saga_ui) */
+  .topbar{height:64px;position:sticky;top:0;z-index:200;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.94),rgba(10,14,26,.98));backdrop-filter:blur(18px);gap:16px;}
+  [data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.96),rgba(247,245,240,.985));}
+  .top-left,.top-right{display:flex;align-items:center;gap:14px;}
+  .top-left{flex:0 0 auto;}
+  .top-right{flex:0 0 auto;}
+  .top-center{flex:1;display:flex;justify-content:center;min-width:0;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .crest{width:32px;height:32px;flex:0 0 auto;}
+  .brand-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--text);letter-spacing:.5px;}
+  .brand-name b{color:var(--gold);}
+  .hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px;background:none;border:none;cursor:pointer;}
+  .hamburger span{display:block;width:18px;height:1.7px;background:var(--gold);margin:3px auto;border-radius:2px;}
+  .quick-search{width:min(520px,50vw);height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border-soft);background:var(--panel);border-radius:10px;position:relative;}
+  .quick-search:focus-within{border-color:var(--gold);}
+  .quick-search svg{color:var(--muted);flex:0 0 auto;}
+  .quick-search input{border:0;outline:0;background:transparent;color:var(--text);font-size:11px;width:100%;font-family:'Montserrat',sans-serif;}
+  .quick-search input::placeholder{color:var(--muted);}
+  .presence-wrap,.notification-wrap,.avatar-wrap{position:relative;}
+  .presence-btn{border:1px solid var(--border-soft);background:var(--panel);border-radius:18px;padding:7px 12px;display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;white-space:nowrap;cursor:pointer;}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+  .dot.online{background:var(--success);box-shadow:0 0 7px var(--success);}
+  .icon-btn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);position:relative;cursor:pointer;}
+  .icon-btn:hover{border-color:var(--gold);}
+  @keyframes sagaGirar{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+  .icon-btn.girando svg{animation:sagaGirar .7s ease-in-out;}
+  .notif-count{position:absolute;right:-5px;top:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--danger);color:#fff;font-size:9px;display:grid;place-items:center;font-weight:700;}
+  .theme-toggle{width:70px;height:32px;padding:3px;border-radius:18px;border:1px solid var(--border-soft);background:var(--panel);position:relative;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+  .theme-toggle svg{z-index:2;width:15px;height:15px;}
+  .theme-toggle .sun{color:var(--muted);}
+  .theme-toggle .moon{color:var(--gold);}
+  [data-theme="light"] .theme-toggle .sun{color:var(--gold);}
+  [data-theme="light"] .theme-toggle .moon{color:var(--muted);}
+  .theme-toggle .knob{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));box-shadow:0 2px 7px rgba(0,0,0,.18);transition:left .25s ease;}
+  [data-theme="light"] .theme-toggle .knob{left:41px;}
+  .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px;cursor:pointer;}
+  .popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:300px;z-index:600;padding:8px;border:1px solid var(--border-soft);border-radius:14px;background:linear-gradient(145deg,#1b2540,#11182c);box-shadow:0 24px 50px rgba(0,0,0,.5);}
+  .popover.open{display:block;}
+  [data-theme="light"] .popover{background:linear-gradient(145deg,#fffdf8,#f4eddc);}
+  .pop-title{padding:7px 8px 5px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .pop-row{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;cursor:pointer;}
+  .pop-row:hover{background:rgba(201,168,76,.09);}
+  .online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 7px var(--success);flex:0 0 auto;}
+  .notification-pop{width:340px;}
+  .notification-item{display:flex;gap:9px;padding:10px;border-radius:10px;width:100%;}
+  .notification-item:hover{background:rgba(201,168,76,.1);}
+  .notification-item .n-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:5px;flex:0 0 auto;}
+  .notification-item .n-dot.read{visibility:hidden;}
+  .notification-text{font-size:10.5px;line-height:1.45;}
+  .notification-time{font-size:9px;color:var(--muted);margin-top:3px;}
+  .global-search-pop{width:100%;left:0;right:auto;max-height:420px;overflow-y:auto;}
+  .avatar-pop{width:240px;}
+  .avatar-pop-info{padding:12px;}
+  .avatar-pop-nome{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .avatar-pop-email{font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pop-divisor{height:1px;background:var(--border-soft);margin:2px 0;}
+  .pop-row-sair{color:var(--danger);}
+  .pop-row-sair:hover{background:rgba(224,91,91,.1);}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;}
+  .overlay.aberto{display:block;}
+
+  /* APP LAYOUT */
+  .app{display:flex;position:relative;z-index:1;}
+  .sidebar{width:208px;background:var(--panel);backdrop-filter:blur(14px);border-right:1px solid var(--border-soft);min-height:calc(100vh - 62px);padding:22px 0;flex:0 0 auto;}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:11px 22px;font-size:12.5px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all .2s;}
+  .nav-item:hover{color:var(--text);background:var(--panel);}
+  .nav-item.ativo,.nav-item.active{color:var(--gold-light);border-left:2px solid var(--gold-light);background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 8%,transparent),transparent);}
+  .nav-icon{width:15px;height:15px;flex:0 0 auto;color:var(--muted);}
+  .nav-item.ativo .nav-icon,.nav-item.active .nav-icon{color:var(--gold-light);}
+  .nav-secao,.nav-section{font-size:9.5px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding:17px 22px 7px;}
+  .conteudo{flex:1;padding:28px 30px;min-width:0;display:flex;flex-direction:column;}
+
+  /* HEADER */
+  .header-pagina{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:14px;flex-wrap:wrap;}
+  .header-pagina h1{font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:600;color:var(--text);}
+  .contagem{font-size:12px;color:var(--muted);margin-top:4px;font-weight:300;}
+  .contagem strong{color:var(--gold-light);font-weight:500;}
+  .botoes-view{display:flex;gap:5px;background:var(--panel);backdrop-filter:blur(10px);padding:4px;border-radius:9px;border:1px solid var(--border-soft);}
+  .btn-view{padding:8px 14px;font-size:11.5px;border-radius:7px;cursor:pointer;color:var(--muted);transition:all .2s;}
+  .btn-view.ativo{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700;}
+
+  /* BARRA DE NAVEGACAO */
+  .barra-calendario{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .navegacao-periodo{display:flex;align-items:center;gap:8px;}
+  .btn-nav-cal{width:32px;height:32px;border-radius:9px;background:var(--panel);backdrop-filter:blur(10px);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:border-color .2s;color:var(--muted);}
+  .btn-nav-cal:hover{border-color:var(--gold-light);color:var(--text);}
+  .periodo-texto{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--text);min-width:210px;text-align:center;cursor:pointer;}
+  .btn-hoje{background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid var(--border-soft);color:var(--gold-light);padding:8px 14px;border-radius:9px;font-size:11.5px;font-weight:700;cursor:pointer;}
+  .btn-novo-comp{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);border:none;padding:9px 16px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 4px 14px color-mix(in srgb,var(--gold) 25%,transparent);margin-left:auto;}
+
+  /* LEGENDA */
+  .legenda-calendario{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .item-legenda{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer;padding:4px 9px;border-radius:8px;transition:background .15s;position:relative;}
+  .item-legenda:hover{background:var(--panel);}
+  .pontinho-legenda{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+  .btn-add-legenda{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--gold-light);cursor:pointer;padding:4px 9px;border-radius:8px;border:1px dashed var(--border-soft);}
+  .btn-add-legenda:hover{background:color-mix(in srgb,var(--gold) 8%,transparent);}
+  .item-legenda-tarefas{pointer-events:none;}
+
+  /* POPOVER LEGENDA */
+  .popover-legenda{position:absolute;top:calc(100% + 6px);left:0;width:220px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));backdrop-filter:blur(20px);border:1px solid var(--border-soft);border-radius:12px;padding:14px;z-index:250;display:none;box-shadow:0 20px 50px rgba(0,0,0,.45);}
+  .popover-legenda.aberto{display:block;}
+  .popover-legenda label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+  .popover-legenda input[type="text"]{width:100%;background:var(--panel);border:1px solid var(--border-soft);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12.5px;font-family:'Montserrat',sans-serif;outline:none;margin-bottom:10px;}
+  .popover-legenda input[type="text"]:focus{border-color:var(--gold-light);}
+  .popover-cor-wrap{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+  .popover-cor-wrap input[type="color"]{width:36px;height:36px;border-radius:8px;border:1px solid var(--border-soft);cursor:pointer;padding:2px;background:var(--panel);}
+  .popover-cor-preview{width:22px;height:22px;border-radius:50%;flex:0 0 auto;border:2px solid var(--border-soft);}
+  .popover-legenda-acoes{display:flex;gap:8px;}
+  .popover-legenda-acoes button{flex:1;padding:8px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;border:none;}
+  .btn-salvar-legenda{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);}
+  .btn-excluir-legenda{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger);}
+
+  /* CALENDÁRIO WRAP */
+  .calendario-wrap{flex:1;background:var(--panel);backdrop-filter:blur(14px);border:1px solid var(--border-soft);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-height:500px;}
+
+  /* VIEW MES */
+  .dias-semana-header{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border-soft);}
+  .dia-semana-label{text-align:center;padding:11px 0;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+  .grade-mes{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:minmax(105px,1fr);flex:1;}
+  .celula-dia{border-right:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);padding:7px;position:relative;cursor:pointer;transition:background .15s;display:flex;flex-direction:column;}
+  .celula-dia:hover{background:color-mix(in srgb,var(--gold) 5%,transparent);}
+  .celula-dia.outro-mes{opacity:.28;}
+  .celula-dia.hoje{background:color-mix(in srgb,var(--gold) 7%,transparent);}
+  .celula-dia.hoje .numero-dia{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);}
+  .numero-dia{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;flex:0 0 auto;}
+  .eventos-dia{display:flex;flex-direction:column;gap:2px;overflow:hidden;flex:1;}
+  .evento-mini{font-size:9.5px;padding:3px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:500;transition:filter .15s;}
+  .evento-mini:hover{filter:brightness(1.2);}
+  .evento-mini .dot-mini{width:5px;height:5px;border-radius:50%;flex:0 0 auto;}
+  .mais-mini{font-size:9px;color:var(--gold-light);padding:2px 6px;font-weight:600;cursor:pointer;}
+  .skeleton-cel{height:12px;background:linear-gradient(90deg,var(--panel) 25%,var(--panel-2) 50%,var(--panel) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite linear;border-radius:5px;margin-bottom:3px;}
+  @keyframes shimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
+
+  /* VIEW SEMANA / DIA */
+  .grade-temporal{display:flex;flex:1;overflow:auto;}
+  .coluna-horas{width:52px;flex:0 0 52px;border-right:1px solid var(--border-soft);position:relative;}
+  .hora-label{height:60px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px 8px 0;font-size:9.5px;color:var(--muted);border-top:1px solid var(--border-soft);}
+  .hora-label:first-child{border-top:none;}
+  .colunas-dias{display:flex;flex:1;}
+  .coluna-dia-temporal{flex:1;position:relative;border-right:1px solid var(--border-soft);min-width:80px;}
+  .coluna-dia-temporal:last-child{border-right:none;}
+  .header-dia-temporal{padding:8px 6px;text-align:center;border-bottom:1px solid var(--border-soft);position:sticky;top:0;background:var(--panel);backdrop-filter:blur(8px);z-index:5;}
+  .header-dia-num{font-size:13px;font-weight:700;color:var(--text);}
+  .header-dia-nome{font-size:10px;color:var(--muted);}
+  .header-dia-temporal.hoje .header-dia-num{color:var(--gold-light);}
+  .fundo-horas{position:relative;}
+  .linha-hora{height:60px;border-top:1px solid var(--border-soft);}
+  .evento-temporal{position:absolute;left:2px;right:2px;border-radius:6px;padding:4px 6px;font-size:10px;font-weight:600;overflow:hidden;cursor:pointer;z-index:3;transition:filter .15s;}
+  .evento-temporal:hover{filter:brightness(1.15);}
+  .evento-temporal .hora-ev{font-size:9px;opacity:.8;margin-bottom:1px;}
+  .evento-temporal .titulo-ev{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .linha-atual{position:absolute;left:0;right:0;height:2px;background:var(--danger);z-index:4;pointer-events:none;}
+  .linha-atual::before{content:'';position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--danger);}
+
+  /* PAINEL LATERAL DIA */
+  .painel-dia-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:300;align-items:center;justify-content:flex-end;}
+  .painel-dia-overlay.aberto{display:flex;}
+  .painel-dia{width:380px;max-width:90vw;height:100vh;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));backdrop-filter:blur(24px);border-left:1px solid var(--border-soft);padding:26px;overflow-y:auto;box-shadow:-20px 0 60px rgba(0,0,0,.4);}
+  .painel-dia-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+  .painel-dia-data{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);}
+  .painel-dia-sub{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .btn-fechar-painel{width:30px;height:30px;border-radius:9px;background:var(--panel);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);}
+  .evento-card-painel{background:var(--panel);border:1px solid var(--border-soft);border-left:3px solid var(--gold-light);border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:background .15s;}
+  .evento-card-painel:hover{background:color-mix(in srgb,var(--gold) 5%,transparent);}
+  .evento-card-hora{font-size:11px;color:var(--gold-light);font-weight:700;margin-bottom:3px;}
+  .evento-card-titulo{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+  .evento-card-detalhe{font-size:11px;color:var(--muted);}
+  .btn-novo-ev-painel{width:100%;padding:11px;border-radius:10px;background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px dashed var(--border-soft);color:var(--gold-light);font-size:12px;font-weight:600;cursor:pointer;margin-top:8px;}
+
+  /* SELETOR RAPIDO */
+  .seletor-rapido-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.56);backdrop-filter:blur(4px);z-index:400;align-items:center;justify-content:center;padding:20px;}
+  .seletor-rapido-overlay.aberto{display:flex;}
+  .seletor-rapido-caixa{width:100%;max-width:340px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));backdrop-filter:blur(24px);border:1px solid var(--border-soft);border-radius:16px;padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.5);}
+  .seletor-rapido-anos{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .ano-texto{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:var(--text);}
+  .grade-meses-rapida{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .mes-rapido-item{padding:11px 6px;text-align:center;border-radius:9px;font-size:12.5px;color:var(--muted);cursor:pointer;background:var(--panel);transition:all .15s;}
+  .mes-rapido-item:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--text);}
+  .mes-rapido-item.selecionado{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700;}
+
+  /* MODAL COMPROMISSO */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.aberto{display:flex;}
+  .modal-comp{width:100%;max-width:520px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));backdrop-filter:blur(24px);border:1px solid var(--border-soft);border-radius:18px;padding:28px;box-shadow:0 30px 70px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;}
+  .modal-comp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+  .modal-comp-header h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--text);}
+  .btn-fechar-modal{width:30px;height:30px;border-radius:9px;background:var(--panel);border:1px solid var(--border-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);}
+  .campo-modal{margin-bottom:14px;}
+  .campo-modal label{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gold-light);margin-bottom:7px;font-weight:600;}
+  .campo-modal input[type="text"],
+  .campo-modal input[type="datetime-local"],
+  .campo-modal textarea{width:100%;background:var(--panel);border:1px solid var(--border-soft);border-radius:9px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Montserrat',sans-serif;outline:none;transition:border-color .2s;}
+  .campo-modal input:focus,
+  .campo-modal textarea:focus{border-color:var(--gold-light);}
+  .campo-modal input:disabled,
+  .campo-modal textarea:disabled{opacity:.5;cursor:not-allowed;}
+  .campo-modal textarea{resize:vertical;min-height:72px;}
+  .campo-modal input[type="datetime-local"]{color-scheme:dark;}
+  [data-theme="light"] .campo-modal input[type="datetime-local"]{color-scheme:light;}
+  .grid-2-campos{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .aviso-leitura{font-size:11.5px;color:var(--warning);background:color-mix(in srgb,var(--warning) 10%,transparent);border:1px solid color-mix(in srgb,var(--warning) 25%,transparent);border-radius:9px;padding:9px 12px;margin-bottom:14px;}
+  .modal-botoes{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;}
+  .modal-botoes button{padding:11px 18px;border-radius:10px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;}
+  .btn-cancelar-modal{background:var(--panel-2);color:var(--muted);}
+  .btn-salvar-modal{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);}
+  .btn-excluir-modal{background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger);}
+
+  /* DROPDOWN TIPO (no modal) */
+  .dropdown-tipo{position:relative;}
+  .dropdown-tipo-valor{background:var(--panel);border:1px solid var(--border-soft);border-radius:9px;padding:10px 12px;font-size:13px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:border-color .2s;}
+  .dropdown-tipo-valor:hover{border-color:var(--gold-light);}
+  .dropdown-tipo-valor.desabilitado{opacity:.5;pointer-events:none;}
+  .dropdown-tipo-seta{width:7px;height:7px;border-right:1.4px solid var(--muted);border-bottom:1.4px solid var(--muted);transform:rotate(45deg);transition:transform .2s;}
+  .dropdown-tipo.aberto .dropdown-tipo-seta{transform:rotate(-135deg);}
+  .dropdown-tipo-lista{position:absolute;top:calc(100% + 5px);left:0;right:0;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));border:1px solid var(--border-soft);border-radius:10px;padding:6px;z-index:60;display:none;box-shadow:0 20px 50px rgba(0,0,0,.45);}
+  .dropdown-tipo.aberto .dropdown-tipo-lista{display:block;}
+  .dropdown-tipo-opcao{padding:9px 11px;border-radius:7px;font-size:12.5px;color:var(--text);cursor:pointer;transition:background .15s;}
+  .dropdown-tipo-opcao:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);}
+  .dropdown-tipo-opcao.selecionada{color:var(--gold-light);font-weight:600;}
+
+  /* TYPEAHEAD PROCESSO */
+  .typeahead-wrap{position:relative;}
+  .typeahead-lista{position:absolute;top:calc(100% + 4px);left:0;right:0;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));border:1px solid var(--border-soft);border-radius:10px;padding:6px;z-index:70;display:none;box-shadow:0 20px 50px rgba(0,0,0,.45);max-height:180px;overflow-y:auto;}
+  .typeahead-lista.aberto{display:block;}
+  .typeahead-opcao{padding:8px 10px;border-radius:7px;font-size:12px;color:var(--text);cursor:pointer;transition:background .15s;}
+  .typeahead-opcao:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);}
+  .typeahead-opcao small{display:block;font-size:10.5px;color:var(--muted);margin-top:1px;}
+
+  /* MODAL GENERICO (confirm) */
+  .modal-gen-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center;padding:20px;}
+  .modal-gen-overlay.aberto{display:flex;}
+  .modal-gen-caixa{width:100%;max-width:360px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));border:1px solid var(--border-soft);border-radius:14px;padding:24px;box-shadow:var(--shadow);}
+  .modal-gen-caixa h4{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--text);margin-bottom:8px;}
+  .modal-gen-caixa p{font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:18px;}
+  .modal-gen-caixa .modal-gen-botoes{display:flex;gap:10px;}
+  .modal-gen-caixa button{flex:1;padding:10px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;border:none;}
+  .btn-gen-cancelar{background:var(--panel-2);color:var(--muted);}
+  .btn-gen-danger{background:var(--danger);color:#fff;}
+
+  /* MODAL TAREFA */
+  .modal-tarefa{max-width:420px;}
+  .badge-prazo-modal{display:inline-block;font-size:11px;font-weight:700;padding:4px 11px;border-radius:9px;margin-bottom:14px;}
+  .badge-prazo-modal.vencido{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger);}
+  .badge-prazo-modal.urgente{background:color-mix(in srgb,var(--warning) 14%,transparent);color:var(--warning);}
+  .badge-prazo-modal.normal{background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success);}
+  .btn-concluir-tarefa-modal{background:linear-gradient(135deg,var(--success),color-mix(in srgb,var(--success) 72%,var(--navy-1)));color:var(--navy-1);}
+
+  /* TOAST */
+  #toast-container{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+  .toast{padding:12px 18px;border-radius:10px;font-size:12.5px;font-weight:500;color:var(--text);max-width:340px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));border:1px solid var(--border-soft);box-shadow:var(--shadow);animation:toastIn .3s ease;pointer-events:auto;}
+  .toast.sucesso{border-left:3px solid var(--success);}
+  .toast.erro{border-left:3px solid var(--danger);}
+  .toast.info{border-left:3px solid var(--info);}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ESTADO VAZIO */
+  .estado-vazio-cal{text-align:center;padding:40px 20px;color:var(--muted);font-size:12px;line-height:1.8;}
+
+  /* RESPONSIVO */
+  @media (max-width:980px){.sidebar{width:178px;}.nav-item{padding:10px 16px;font-size:12px;}}
+  @media (max-width:760px){
+    .hamburger{display:flex;}
+    .top-center{display:none;}
+    .sidebar{position:fixed;left:-220px;top:62px;height:calc(100vh - 62px);width:210px;z-index:95;transition:left .28s ease;box-shadow:4px 0 24px rgba(0,0,0,.4);}
+    .sidebar.aberta,.sidebar.open{left:0;}
+    .conteudo{padding:16px;}
+    .header-pagina h1{font-size:22px;}
+    .barra-calendario{flex-wrap:wrap;}
+    .celula-dia{min-height:70px;}
+    .painel-dia{width:100%;}
+    .grid-2-campos{grid-template-columns:1fr;}
+    .presence-btn span:not(.dot){display:none;}
+  }
+
+  [data-theme="light"] .topbar{background:linear-gradient(135deg,var(--panel-solid),var(--navy-1));}
+  [data-theme="light"] .popover-legenda,
+  [data-theme="light"] .seletor-rapido-caixa,
+  [data-theme="light"] .painel-dia,
+  [data-theme="light"] .toast,
+  [data-theme="light"] .modal-comp,
+  [data-theme="light"] .modal-gen-caixa,
+  [data-theme="light"] .dropdown-tipo-lista,
+  [data-theme="light"] .typeahead-lista{background:linear-gradient(145deg,var(--panel-solid),var(--navy-1));}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="overlay" id="overlay"></div>
+
+<!-- TOPBAR -->
+<header class="topbar" id="topbarSaga"></header>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebarSaga"></div>
+
+  <!-- CONTEUDO -->
+  <div class="conteudo">
+
+    <div class="header-pagina">
+      <div>
+        <h1>Calendario</h1>
+        <div class="contagem">Compromissos do escritorio e tarefas de <strong id="nomeUsuarioHeader">...</strong></div>
+      </div>
+      <div class="botoes-view">
+        <div class="btn-view" id="btnViewMes">Mes</div>
+        <div class="btn-view" id="btnViewSemana">Semana</div>
+        <div class="btn-view" id="btnViewDia">Dia</div>
+      </div>
+    </div>
+
+    <div class="barra-calendario">
+      <div class="navegacao-periodo">
+        <button class="btn-nav-cal" id="btnPeriodoAnterior" aria-label="Periodo anterior">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="periodo-texto" id="periodoTexto" title="Clique para navegar rapidamente">Junho de 2026</div>
+        <button class="btn-nav-cal" id="btnPeriodoSeguinte" aria-label="Proximo periodo">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <button class="btn-hoje" id="btnHoje">Hoje</button>
+      <button class="btn-novo-comp" id="btnNovoCompromisso">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Novo Compromisso
+      </button>
+    </div>
+
+    <div class="legenda-calendario" id="legendaCalendario"></div>
+
+    <div class="calendario-wrap" id="calendarioWrap"></div>
+
+  </div>
+</div>
+
+<!-- PAINEL DIA (slide-over) -->
+<div class="painel-dia-overlay" id="painelDiaOverlay">
+  <div class="painel-dia">
+    <div class="painel-dia-header">
+      <div>
+        <div class="painel-dia-data" id="painelDiaData">...</div>
+        <div class="painel-dia-sub" id="painelDiaSub">...</div>
+      </div>
+      <button class="btn-fechar-painel" id="btnFecharPainel" aria-label="Fechar">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="listaEventosPainel"></div>
+    <button class="btn-novo-ev-painel" id="btnNovoEvPainel">+ Adicionar compromisso neste dia</button>
+  </div>
+</div>
+
+<!-- SELETOR RAPIDO MES/ANO -->
+<div class="seletor-rapido-overlay" id="seletorRapidoOverlay">
+  <div class="seletor-rapido-caixa">
+    <div class="seletor-rapido-anos">
+      <button class="btn-nav-cal" id="anoAnteriorRapido" aria-label="Ano anterior">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="ano-texto" id="anoRapidoTexto">2026</div>
+      <button class="btn-nav-cal" id="anoSeguinteRapido" aria-label="Proximo ano">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    <div class="grade-meses-rapida" id="gradeMesesRapida"></div>
+  </div>
+</div>
+
+<!-- MODAL COMPROMISSO -->
+<div class="modal-overlay" id="modalCompromisso">
+  <div class="modal-comp">
+    <div class="modal-comp-header">
+      <h3 id="modalCompTitulo">Novo Compromisso</h3>
+      <button class="btn-fechar-modal" id="btnFecharModalComp" aria-label="Fechar modal">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="aviso-leitura" id="avisoLeitura" style="display:none;">Voce esta visualizando um compromisso criado por outro colaborador. Apenas o criador pode edita-lo.</div>
+    <div class="campo-modal">
+      <label>Titulo</label>
+      <input type="text" id="compTitulo" placeholder="Ex.: Audiencia - Cliente Fulano" maxlength="200">
+    </div>
+    <div class="campo-modal">
+      <label>Tipo</label>
+      <div class="dropdown-tipo" id="dropdownTipo">
+        <div class="dropdown-tipo-valor" id="dropTipoValor">
+          <span id="dropTipoTexto">Selecionar tipo...</span>
+          <div class="dropdown-tipo-seta"></div>
+        </div>
+        <div class="dropdown-tipo-lista" id="dropTipoLista"></div>
+      </div>
+    </div>
+    <div class="grid-2-campos">
+      <div class="campo-modal">
+        <label>Inicio</label>
+        <input type="datetime-local" id="compInicio">
+      </div>
+      <div class="campo-modal">
+        <label>Fim (opcional)</label>
+        <input type="datetime-local" id="compFim">
+      </div>
+    </div>
+    <div class="campo-modal">
+      <label>Local ou link</label>
+      <input type="text" id="compLocal" placeholder="Ex.: Rua das Flores 42, sala 3 ou https://meet.google.com/...">
+    </div>
+    <div class="campo-modal">
+      <label>Processo vinculado (opcional)</label>
+      <div class="typeahead-wrap">
+        <input type="text" id="compProcessoBusca" placeholder="Numero ou nome do cliente...">
+        <div class="typeahead-lista" id="typeaheadProcesso"></div>
+      </div>
+      <input type="hidden" id="compProcessoId">
+    </div>
+    <div class="campo-modal">
+      <label>Observacao</label>
+      <textarea id="compObservacao" placeholder="Informacoes adicionais..."></textarea>
+    </div>
+    <div class="modal-botoes">
+      <button class="btn-cancelar-modal" id="btnCancelarComp">Cancelar</button>
+      <button class="btn-excluir-modal" id="btnExcluirComp" style="display:none;">Excluir compromisso</button>
+      <button class="btn-salvar-modal" id="btnSalvarComp">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TAREFA -->
+<div class="modal-overlay" id="modalTarefa">
+  <div class="modal-comp modal-tarefa">
+    <div class="modal-comp-header">
+      <h3>Tarefa</h3>
+      <button class="btn-fechar-modal" id="btnFecharModalTarefa" aria-label="Fechar modal">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="tarefaBadge" class="badge-prazo-modal normal">No prazo</div>
+    <div class="campo-modal">
+      <label>Titulo</label>
+      <input type="text" id="tarefaTitulo" disabled>
+    </div>
+    <div class="campo-modal">
+      <label>Prazo</label>
+      <input type="text" id="tarefaPrazo" disabled>
+    </div>
+    <div class="campo-modal">
+      <label>Tipo</label>
+      <input type="text" id="tarefaTipo" disabled>
+    </div>
+    <div class="modal-botoes">
+      <button class="btn-cancelar-modal" id="btnCancelarTarefa">Fechar</button>
+      <button class="btn-salvar-modal btn-concluir-tarefa-modal" id="btnConcluirTarefa">Marcar como concluida</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR EXCLUSAO -->
+<div class="modal-gen-overlay" id="modalConfirmarExclusao">
+  <div class="modal-gen-caixa">
+    <h4>Confirmar exclusao</h4>
+    <p id="textoConfirmarExclusao">Deseja realmente excluir este compromisso? Esta acao nao pode ser desfeita.</p>
+    <div class="modal-gen-botoes">
+      <button class="btn-gen-cancelar" id="btnCancelarExclusao">Cancelar</button>
+      <button class="btn-gen-danger" id="btnConfirmarExclusao">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="saga_ui.js"></script>
+<script>
+// ================================================================
+// VMMADV - Calendario Conectado ao Supabase
+// Fase 4A
+// ================================================================
+
+var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ---- TIPOS PADRAO ----
+var TIPOS_PADRAO = ['Audiencia','Reuniao','Prazo Processual','Despacho','Pericia','Outros'];
+var CORES_PADRAO = ['#6fa3d8','#5dd8a0','#e85d5d','#e8b84c','#c9a84c','#8b93a8','#a78bfa','#f97316'];
+var COR_TAREFA  = '#e8b84c'; // var(--warning)
+
+// ---- ESTADO GLOBAL ----
+var meuPerfilId    = null;
+var meuNome        = '';
+var viewAtual      = 'mes'; // 'mes' | 'semana' | 'dia'
+var dataAtual      = new Date();
+var hoje           = new Date();
+var compromissos   = []; // array de objetos do banco
+var tarefas        = []; // array de objetos do banco
+var categoriasMap  = {}; // tipo -> { nome, cor }
+var editandoId     = null; // id do compromisso em edicao
+var tipoSelecionado = null;
+var processoIdSelecionado = null;
+var painelDiaAtual = null; // data (Date) do painel lateral aberto
+var _cbExcluir     = null;
+var _debounceTimer = null;
+var anoSeletorRapido = dataAtual.getFullYear();
+
+var NOMES_MESES  = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+var NOMES_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+
+// ================================================================
+// TOAST
+// ================================================================
+function showToast(msg, tipo) {
+  tipo = tipo || 'info';
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.innerHTML = msg;
+  c.appendChild(t);
+  setTimeout(function() {
+    t.style.opacity = '0'; t.style.transition = 'opacity .4s';
+    setTimeout(function() { t.remove(); }, 400);
+  }, 3400);
+}
+
+// ================================================================
+// HELPERS
+// ================================================================
+function iso(date) {
+  // returns YYYY-MM-DD
+  return date.toISOString().split('T')[0];
+}
+
+function inicioDia(date) {
+  var d = new Date(date); d.setHours(0,0,0,0); return d;
+}
+
+function fimDia(date) {
+  var d = new Date(date); d.setHours(23,59,59,999); return d;
+}
+
+function inicioSemana(date) {
+  var d = new Date(date);
+  d.setDate(d.getDate() - d.getDay());
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function fimSemana(date) {
+  var d = inicioSemana(date);
+  d.setDate(d.getDate() + 6);
+  d.setHours(23,59,59,999);
+  return d;
+}
+
+function inicioMes(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function fimMes(date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+}
+
+function formatarHora(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function formatarDataHora(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + formatarHora(iso);
+}
+
+function formatarDataBR(isoDate) {
+  if (!isoDate) return '';
+  var d = new Date(isoDate + 'T00:00:00');
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+}
+
+function isMesmodia(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear() &&
+         d1.getMonth()    === d2.getMonth() &&
+         d1.getDate()     === d2.getDate();
+}
+
+function toLocalDatetimeValue(d) {
+  if (!d) return '';
+  var dt = new Date(d);
+  var pad = function(n) { return n.toString().padStart(2,'0'); };
+  return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+}
+
+function corDoTipo(tipo) {
+  if (!tipo) return CORES_PADRAO[5];
+  if (categoriasMap[tipo]) return categoriasMap[tipo].cor;
+  var idx = TIPOS_PADRAO.indexOf(tipo);
+  return idx >= 0 ? CORES_PADRAO[idx % CORES_PADRAO.length] : CORES_PADRAO[5];
+}
+
+function nomeDoTipo(tipo) {
+  if (!tipo) return tipo;
+  if (categoriasMap[tipo]) return categoriasMap[tipo].nome;
+  return tipo;
+}
+
+function classUrgenciaTarefa(data_prazo) {
+  if (!data_prazo) return 'normal';
+  var hoje_iso = iso(hoje);
+  if (data_prazo < hoje_iso) return 'vencido';
+  var amanha = new Date(hoje); amanha.setDate(amanha.getDate() + 1);
+  if (data_prazo <= iso(amanha)) return 'urgente';
+  return 'normal';
+}
+
+function textoBadgeUrgencia(u) {
+  return u === 'vencido' ? 'Prazo vencido' : u === 'urgente' ? 'Urgente' : 'No prazo';
+}
+
+// ================================================================
+// INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', function() {
+  inicializar();
+});
+
+async function inicializar() {
+  try {
+    await SagaUI.carregar('agenda');
+
+    var r = await _sb.auth.getSession();
+    var session = r.data && r.data.session;
+    if (!session) { window.location.href = 'login_padrao_metalico.html'; return; }
+
+    var pr = await _sb.from('usuarios').select('id, nome_completo')
+      .eq('auth_user_id', session.user.id).single();
+    if (pr.error || !pr.data) { window.location.href = 'login_padrao_metalico.html'; return; }
+
+    meuPerfilId = pr.data.id;
+    meuNome     = pr.data.nome_completo;
+
+    document.getElementById('nomeUsuarioHeader').textContent   = meuNome.split(' ')[0];
+
+    await carregarPreferencias();
+    renderizarLegenda();
+    ativarViewButtons();
+    await carregarEventos();
+
+  } catch(e) {
+    showToast('Erro ao inicializar. Recarregue a pagina.', 'erro');
+  }
+}
+
+// ================================================================
+// PREFERENCIAS (categorias de legenda)
+// ================================================================
+async function carregarPreferencias() {
+  try {
+    var r = await _sb.from('preferencias_filtros_usuario').select('filtros')
+      .eq('usuario_id', meuPerfilId).eq('tela', 'calendario').single();
+    if (!r.error && r.data && r.data.filtros && r.data.filtros.categorias) {
+      var salvas = r.data.filtros.categorias;
+      Object.keys(salvas).forEach(function(k) { categoriasMap[k] = salvas[k]; });
+    }
+  } catch(e) { /* sem preferencias salvas */ }
+
+  // garantir que todos os tipos padrao tenham entradas no mapa
+  TIPOS_PADRAO.forEach(function(tipo, idx) {
+    if (!categoriasMap[tipo]) {
+      categoriasMap[tipo] = { nome: tipo, cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
+    }
+  });
+}
+
+async function salvarPreferencias() {
+  if (!meuPerfilId) return;
+  try {
+    await _sb.from('preferencias_filtros_usuario').upsert({
+      usuario_id: meuPerfilId,
+      tela: 'calendario',
+      filtros: { categorias: categoriasMap },
+      atualizado_em: new Date().toISOString()
+    }, { onConflict: 'usuario_id,tela' });
+  } catch(e) { /* silencioso */ }
+}
+
+// ================================================================
+// PRESENCA
+// Obsoleto: a presenca oficial fica na topbar unificada, saga_ui.js
+// ================================================================
+
+// ================================================================
+// CARREGAR EVENTOS
+// ================================================================
+async function carregarEventos() {
+  var inicio, fim;
+  if (viewAtual === 'mes') {
+    // pegar a grade completa do mes (inclui dias do mes anterior/seguinte visíveis)
+    var primeiroDia = inicioMes(dataAtual);
+    inicio = new Date(primeiroDia); inicio.setDate(inicio.getDate() - primeiroDia.getDay());
+    fim    = new Date(inicio); fim.setDate(fim.getDate() + 41); fim.setHours(23,59,59,999);
+  } else if (viewAtual === 'semana') {
+    inicio = inicioSemana(dataAtual);
+    fim    = fimSemana(dataAtual);
+  } else {
+    inicio = inicioDia(dataAtual);
+    fim    = fimDia(dataAtual);
+  }
+
+  mostrarSkeletonCalendario();
+
+  try {
+    var rComp = await _sb.from('compromissos')
+      .select('id, titulo, tipo, data_hora_inicio, data_hora_fim, local_ou_link, observacao, criado_por_id, processo_id')
+      .gte('data_hora_inicio', inicio.toISOString())
+      .lte('data_hora_inicio', fim.toISOString())
+      .order('data_hora_inicio');
+
+    if (rComp.error) throw rComp.error;
+    compromissos = rComp.data || [];
+
+    // Atualizar mapa de tipos com novos tipos encontrados no banco
+    compromissos.forEach(function(c) {
+      if (c.tipo && !categoriasMap[c.tipo]) {
+        var idx = Object.keys(categoriasMap).length;
+        categoriasMap[c.tipo] = { nome: c.tipo, cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
+      }
+    });
+
+    var rTar = await _sb.from('tarefas')
+      .select('id, titulo, tipo, data_prazo, responsavel_id, concluida')
+      .eq('responsavel_id', meuPerfilId)
+      .eq('concluida', false)
+      .gte('data_prazo', iso(inicio))
+      .lte('data_prazo', iso(fim));
+
+    if (rTar.error) throw rTar.error;
+    tarefas = rTar.data || [];
+
+  } catch(e) {
+    showToast('Erro ao carregar eventos do periodo.', 'erro');
+    compromissos = []; tarefas = [];
+  }
+
+  renderizarLegenda();
+  renderizarView();
+  atualizarContagem();
+}
+
+function mostrarSkeletonCalendario() {
+  var wrap = document.getElementById('calendarioWrap');
+  wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted);font-size:12.5px;">Carregando eventos...</div>';
+}
+
+function atualizarContagem() {
+  var total = compromissos.length + tarefas.length;
+  document.getElementById('nomeUsuarioHeader').textContent = meuNome.split(' ')[0];
+}
+
+// ================================================================
+// VIEW SWITCHER
+// ================================================================
+function ativarViewButtons() {
+  var mapa = { 'mes': 'btnViewMes', 'semana': 'btnViewSemana', 'dia': 'btnViewDia' };
+  Object.keys(mapa).forEach(function(v) {
+    var btn = document.getElementById(mapa[v]);
+    btn.className = 'btn-view' + (v === viewAtual ? ' ativo' : '');
+    btn.addEventListener('click', function() { viewAtual = v; atualizarPeriodoTexto(); carregarEventos(); ativarViewButtons(); });
+  });
+}
+
+// ================================================================
+// TEXTO DO PERIODO
+// ================================================================
+function atualizarPeriodoTexto() {
+  var el = document.getElementById('periodoTexto');
+  if (viewAtual === 'mes') {
+    el.textContent = NOMES_MESES[dataAtual.getMonth()] + ' de ' + dataAtual.getFullYear();
+  } else if (viewAtual === 'semana') {
+    var ini = inicioSemana(dataAtual);
+    var fim = fimSemana(dataAtual);
+    el.textContent = ini.getDate() + '-' + fim.getDate() + ' ' + NOMES_MESES[fim.getMonth()].substring(0,3) + ' ' + fim.getFullYear();
+  } else {
+    el.textContent = NOMES_SEMANA[dataAtual.getDay()] + ', ' + dataAtual.getDate() + ' ' + NOMES_MESES[dataAtual.getMonth()].substring(0,3) + ' ' + dataAtual.getFullYear();
+  }
+}
+
+// ================================================================
+// NAVEGACAO
+// ================================================================
+document.getElementById('btnPeriodoAnterior').addEventListener('click', function() {
+  if (viewAtual === 'mes')    { dataAtual.setMonth(dataAtual.getMonth() - 1); }
+  else if (viewAtual === 'semana') { dataAtual.setDate(dataAtual.getDate() - 7); }
+  else { dataAtual.setDate(dataAtual.getDate() - 1); }
+  carregarEventos(); atualizarPeriodoTexto();
+});
+document.getElementById('btnPeriodoSeguinte').addEventListener('click', function() {
+  if (viewAtual === 'mes')    { dataAtual.setMonth(dataAtual.getMonth() + 1); }
+  else if (viewAtual === 'semana') { dataAtual.setDate(dataAtual.getDate() + 7); }
+  else { dataAtual.setDate(dataAtual.getDate() + 1); }
+  carregarEventos(); atualizarPeriodoTexto();
+});
+document.getElementById('btnHoje').addEventListener('click', function() {
+  dataAtual = new Date(); atualizarPeriodoTexto(); carregarEventos();
+});
+
+// ================================================================
+// SELETOR RAPIDO MES/ANO
+// ================================================================
+document.getElementById('periodoTexto').addEventListener('click', function() {
+  anoSeletorRapido = dataAtual.getFullYear();
+  renderizarGradeMesesRapida();
+  document.getElementById('seletorRapidoOverlay').classList.add('aberto');
+});
+document.getElementById('seletorRapidoOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('aberto');
+});
+document.getElementById('anoAnteriorRapido').addEventListener('click', function() { anoSeletorRapido--; renderizarGradeMesesRapida(); });
+document.getElementById('anoSeguinteRapido').addEventListener('click', function()  { anoSeletorRapido++; renderizarGradeMesesRapida(); });
+
+function renderizarGradeMesesRapida() {
+  document.getElementById('anoRapidoTexto').textContent = anoSeletorRapido;
+  var grade = document.getElementById('gradeMesesRapida');
+  grade.innerHTML = '';
+  NOMES_MESES.forEach(function(nome, idx) {
+    var item = document.createElement('div');
+    item.className = 'mes-rapido-item' + (idx === dataAtual.getMonth() && anoSeletorRapido === dataAtual.getFullYear() ? ' selecionado' : '');
+    item.textContent = nome.substring(0,3);
+    item.addEventListener('click', function() {
+      dataAtual.setFullYear(anoSeletorRapido); dataAtual.setMonth(idx);
+      viewAtual = 'mes'; ativarViewButtons(); atualizarPeriodoTexto();
+      carregarEventos();
+      document.getElementById('seletorRapidoOverlay').classList.remove('aberto');
+    });
+    grade.appendChild(item);
+  });
+}
+
+// ================================================================
+// RENDERIZAR VIEW
+// ================================================================
+function renderizarView() {
+  atualizarPeriodoTexto();
+  if      (viewAtual === 'mes')    renderizarMes();
+  else if (viewAtual === 'semana') renderizarSemana();
+  else                              renderizarDia();
+}
+
+// --- eventos de um dia especifico ---
+function eventosNoDia(date) {
+  var compDia = compromissos.filter(function(c) {
+    return isMesmodia(new Date(c.data_hora_inicio), date);
+  });
+  var tarDia = tarefas.filter(function(t) {
+    return t.data_prazo && isMesmodia(new Date(t.data_prazo + 'T00:00:00'), date);
+  });
+  return { comp: compDia, tar: tarDia };
+}
+
+// ================================================================
+// VIEW: MES
+// ================================================================
+function renderizarMes() {
+  var wrap = document.getElementById('calendarioWrap');
+  wrap.innerHTML = '';
+
+  // Header dias da semana
+  var header = document.createElement('div');
+  header.className = 'dias-semana-header';
+  ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'].forEach(function(d) {
+    var el = document.createElement('div');
+    el.className = 'dia-semana-label';
+    el.textContent = d;
+    header.appendChild(el);
+  });
+  wrap.appendChild(header);
+
+  var grade = document.createElement('div');
+  grade.className = 'grade-mes';
+
+  var ano = dataAtual.getFullYear(), mes = dataAtual.getMonth();
+  var primeiroDia    = new Date(ano, mes, 1).getDay();
+  var diasNoMes      = new Date(ano, mes + 1, 0).getDate();
+  var diasMesAnt     = new Date(ano, mes, 0).getDate();
+  var diaContador    = 1, diaProx = 1;
+
+  for (var i = 0; i < 42; i++) {
+    var celula = document.createElement('div');
+    var ehAtual = true, diaNum, dataCell;
+
+    if (i < primeiroDia) {
+      diaNum = diasMesAnt - primeiroDia + i + 1;
+      dataCell = new Date(ano, mes - 1, diaNum);
+      celula.className = 'celula-dia outro-mes';
+      ehAtual = false;
+    } else if (diaContador <= diasNoMes) {
+      diaNum = diaContador;
+      dataCell = new Date(ano, mes, diaNum);
+      celula.className = 'celula-dia' + (isMesmodia(dataCell, hoje) ? ' hoje' : '');
+      diaContador++;
+    } else {
+      diaNum = diaProx++;
+      dataCell = new Date(ano, mes + 1, diaNum);
+      celula.className = 'celula-dia outro-mes';
+      ehAtual = false;
+    }
+
+    var numEl = document.createElement('div');
+    numEl.className = 'numero-dia';
+    numEl.textContent = diaNum;
+    celula.appendChild(numEl);
+
+    var evWrap = document.createElement('div');
+    evWrap.className = 'eventos-dia';
+
+    var ev = eventosNoDia(dataCell);
+    var todos = ev.tar.map(function(t) { return { _tipo:'tarefa', obj:t }; })
+              .concat(ev.comp.map(function(c) { return { _tipo:'compromisso', obj:c }; }));
+
+    var MAX = 3;
+    todos.slice(0, MAX).forEach(function(item) {
+      var el = document.createElement('div');
+      el.className = 'evento-mini';
+      var dot = document.createElement('span');
+      dot.className = 'dot-mini';
+      if (item._tipo === 'tarefa') {
+        dot.style.background = COR_TAREFA;
+        el.style.background  = 'color-mix(in srgb,' + COR_TAREFA + ' 18%,transparent)';
+        el.style.color       = COR_TAREFA;
+        el.appendChild(dot);
+        el.appendChild(document.createTextNode(item.obj.titulo || 'Tarefa'));
+        el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalTarefa(item.obj); });
+      } else {
+        var cor = corDoTipo(item.obj.tipo);
+        dot.style.background = cor;
+        el.style.background  = 'color-mix(in srgb,' + cor + ' 18%,transparent)';
+        el.style.color       = cor;
+        el.appendChild(dot);
+        el.appendChild(document.createTextNode((formatarHora(item.obj.data_hora_inicio) ? formatarHora(item.obj.data_hora_inicio) + ' ' : '') + (item.obj.titulo || 'Compromisso')));
+        el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalCompromisso(item.obj); });
+      }
+      evWrap.appendChild(el);
+    });
+
+    if (todos.length > MAX) {
+      var mais = document.createElement('div');
+      mais.className = 'mais-mini';
+      mais.textContent = '+' + (todos.length - MAX) + ' mais';
+      mais.addEventListener('click', function(e) { e.stopPropagation(); abrirPainelDia(dataCell); });
+      evWrap.appendChild(mais);
+    }
+
+    celula.appendChild(evWrap);
+    celula.addEventListener('click', (function(dc) { return function() { abrirPainelDia(dc); }; })(dataCell));
+    grade.appendChild(celula);
+  }
+  wrap.appendChild(grade);
+}
+
+// ================================================================
+// VIEW: SEMANA
+// ================================================================
+function renderizarSemana() {
+  var wrap = document.getElementById('calendarioWrap');
+  wrap.innerHTML = '';
+  renderizarGradeTemporal(wrap, 7, inicioSemana(dataAtual));
+}
+
+// ================================================================
+// VIEW: DIA
+// ================================================================
+function renderizarDia() {
+  var wrap = document.getElementById('calendarioWrap');
+  wrap.innerHTML = '';
+  renderizarGradeTemporal(wrap, 1, inicioDia(dataAtual));
+}
+
+// ================================================================
+// GRADE TEMPORAL (semana/dia)
+// ================================================================
+function renderizarGradeTemporal(wrap, numDias, dataInicio) {
+  var HORAS = 24;
+  var PX_H  = 60; // px por hora
+
+  var grade = document.createElement('div');
+  grade.className = 'grade-temporal';
+
+  // Coluna de horas
+  var colHoras = document.createElement('div');
+  colHoras.className = 'coluna-horas';
+  for (var h = 0; h < HORAS; h++) {
+    var lh = document.createElement('div');
+    lh.className = 'hora-label';
+    lh.textContent = h.toString().padStart(2,'0') + ':00';
+    colHoras.appendChild(lh);
+  }
+  grade.appendChild(colHoras);
+
+  // Colunas dos dias
+  var colsDias = document.createElement('div');
+  colsDias.className = 'colunas-dias';
+
+  for (var d = 0; d < numDias; d++) {
+    var dataDia = new Date(dataInicio);
+    dataDia.setDate(dataDia.getDate() + d);
+
+    var col = document.createElement('div');
+    col.className = 'coluna-dia-temporal';
+
+    // Header do dia
+    var hd = document.createElement('div');
+    hd.className = 'header-dia-temporal' + (isMesmodia(dataDia, hoje) ? ' hoje' : '');
+    hd.innerHTML = '<div class="header-dia-num">' + dataDia.getDate() + '</div>' +
+                   '<div class="header-dia-nome">' + NOMES_SEMANA[dataDia.getDay()] + '</div>';
+    col.appendChild(hd);
+
+    // Fundo de horas
+    var fundo = document.createElement('div');
+    fundo.className = 'fundo-horas';
+    fundo.style.position = 'relative';
+    fundo.style.height   = (HORAS * PX_H) + 'px';
+    for (var hh = 0; hh < HORAS; hh++) {
+      var linha = document.createElement('div');
+      linha.className = 'linha-hora';
+      fundo.appendChild(linha);
+    }
+
+    // Linha do horario atual
+    if (isMesmodia(dataDia, hoje)) {
+      var agora = new Date();
+      var topAtual = (agora.getHours() * 60 + agora.getMinutes()) * (PX_H / 60);
+      var linhaAtual = document.createElement('div');
+      linhaAtual.className = 'linha-atual';
+      linhaAtual.style.top = topAtual + 'px';
+      fundo.appendChild(linhaAtual);
+    }
+
+    // Eventos do dia
+    var ev = eventosNoDia(dataDia);
+
+    ev.tar.forEach(function(t) {
+      var top = 0; // tarefas sem hora: posicionar no topo
+      var el  = document.createElement('div');
+      el.className = 'evento-temporal';
+      el.style.top    = top + 'px';
+      el.style.height = '34px';
+      el.style.background = 'color-mix(in srgb,' + COR_TAREFA + ' 22%,transparent)';
+      el.style.color      = COR_TAREFA;
+      el.style.border     = '1px solid color-mix(in srgb,' + COR_TAREFA + ' 35%,transparent)';
+      el.innerHTML = '<div class="hora-ev">Prazo</div><div class="titulo-ev">' + (t.titulo || 'Tarefa') + '</div>';
+      el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalTarefa(t); });
+      fundo.appendChild(el);
+    });
+
+    ev.comp.forEach(function(c, ci) {
+      var dtIni = new Date(c.data_hora_inicio);
+      var top   = (dtIni.getHours() * 60 + dtIni.getMinutes()) * (PX_H / 60);
+      var dur   = 60; // default 60 min se sem fim
+      if (c.data_hora_fim) {
+        var dtFim = new Date(c.data_hora_fim);
+        dur = Math.max(30, (dtFim - dtIni) / 60000);
+      }
+      var h_ev  = dur * (PX_H / 60);
+      var cor   = corDoTipo(c.tipo);
+
+      var el = document.createElement('div');
+      el.className = 'evento-temporal';
+      el.style.top        = top + 'px';
+      el.style.height     = Math.max(h_ev, 30) + 'px';
+      el.style.background = 'color-mix(in srgb,' + cor + ' 22%,transparent)';
+      el.style.color      = cor;
+      el.style.border     = '1px solid color-mix(in srgb,' + cor + ' 35%,transparent)';
+      el.innerHTML = '<div class="hora-ev">' + formatarHora(c.data_hora_inicio) + '</div><div class="titulo-ev">' + (c.titulo || 'Compromisso') + '</div>';
+      el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalCompromisso(c); });
+      fundo.appendChild(el);
+    });
+
+    col.appendChild(fundo);
+    colsDias.appendChild(col);
+  }
+
+  grade.appendChild(colsDias);
+  wrap.appendChild(grade);
+
+  // Scroll para 7h por padrao
+  grade.scrollTop = 7 * PX_H;
+
+  // Click em celula vazia (view dia/semana) para abrir modal novo compromisso com data pre-preenchida
+  colsDias.querySelectorAll('.coluna-dia-temporal').forEach(function(col, di) {
+    col.addEventListener('click', function(e) {
+      if (e.target.classList.contains('evento-temporal') || e.target.closest('.evento-temporal')) return;
+      var dataDia = new Date(dataInicio);
+      dataDia.setDate(dataDia.getDate() + di);
+      var rect = col.getBoundingClientRect();
+      var scrollTop = grade.scrollTop;
+      var yRel  = e.clientY - rect.top + scrollTop - colsDias.querySelector('.header-dia-temporal').offsetHeight;
+      var minutos = Math.round(yRel / (PX_H / 60) / 15) * 15;
+      minutos = Math.max(0, Math.min(minutos, 23 * 60 + 45));
+      dataDia.setHours(Math.floor(minutos / 60), minutos % 60, 0, 0);
+      abrirModalNovoComDataHora(dataDia);
+    });
+  });
+}
+
+// ================================================================
+// PAINEL DIA (slide-over)
+// ================================================================
+function abrirPainelDia(date) {
+  painelDiaAtual = date;
+  var ev = eventosNoDia(date);
+  var total = ev.comp.length + ev.tar.length;
+
+  var meses = ['janeiro','fevereiro','marco','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  document.getElementById('painelDiaData').textContent = date.getDate() + ' de ' + meses[date.getMonth()];
+  document.getElementById('painelDiaSub').textContent  = total + (total === 1 ? ' evento agendado' : ' eventos agendados');
+
+  var lista = document.getElementById('listaEventosPainel');
+  lista.innerHTML = '';
+
+  if (total === 0) {
+    lista.innerHTML = '<div class="estado-vazio-cal">Nenhum evento neste dia.</div>';
+  }
+
+  // Tarefas
+  ev.tar.forEach(function(t) {
+    var card = document.createElement('div');
+    card.className = 'evento-card-painel';
+    card.style.borderLeftColor = COR_TAREFA;
+    card.innerHTML = '<div class="evento-card-hora" style="color:' + COR_TAREFA + ';">Prazo</div>' +
+      '<div class="evento-card-titulo">' + (t.titulo || 'Tarefa') + '</div>' +
+      '<div class="evento-card-detalhe">' + (t.tipo || 'Tarefa pessoal') + '</div>';
+    card.addEventListener('click', function() { abrirModalTarefa(t); });
+    lista.appendChild(card);
+  });
+
+  // Compromissos
+  ev.comp.sort(function(a,b) { return new Date(a.data_hora_inicio) - new Date(b.data_hora_inicio); })
+    .forEach(function(c) {
+    var cor = corDoTipo(c.tipo);
+    var card = document.createElement('div');
+    card.className = 'evento-card-painel';
+    card.style.borderLeftColor = cor;
+    card.innerHTML = '<div class="evento-card-hora" style="color:' + cor + ';">' + formatarHora(c.data_hora_inicio) + (c.data_hora_fim ? ' - ' + formatarHora(c.data_hora_fim) : '') + '</div>' +
+      '<div class="evento-card-titulo">' + (c.titulo || 'Compromisso') + '</div>' +
+      '<div class="evento-card-detalhe">' + nomeDoTipo(c.tipo) + (c.local_ou_link ? ' &middot; ' + c.local_ou_link : '') + '</div>';
+    card.addEventListener('click', function() { document.getElementById('painelDiaOverlay').classList.remove('aberto'); abrirModalCompromisso(c); });
+    lista.appendChild(card);
+  });
+
+  document.getElementById('painelDiaOverlay').classList.add('aberto');
+}
+
+document.getElementById('btnFecharPainel').addEventListener('click', function() {
+  document.getElementById('painelDiaOverlay').classList.remove('aberto');
+});
+document.getElementById('painelDiaOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('aberto');
+});
+document.getElementById('btnNovoEvPainel').addEventListener('click', function() {
+  document.getElementById('painelDiaOverlay').classList.remove('aberto');
+  if (painelDiaAtual) {
+    var d = new Date(painelDiaAtual); d.setHours(9, 0, 0, 0);
+    abrirModalNovoComDataHora(d);
+  } else {
+    abrirModalNovoCompromisso();
+  }
+});
+
+// ================================================================
+// LEGENDA EDITAVEL
+// ================================================================
+function renderizarLegenda() {
+  var container = document.getElementById('legendaCalendario');
+  container.innerHTML = '';
+
+  // Item fixo: tarefas
+  var itemTar = document.createElement('div');
+  itemTar.className = 'item-legenda item-legenda-tarefas';
+  itemTar.innerHTML = '<div class="pontinho-legenda" style="background:' + COR_TAREFA + ';"></div><span>Minhas tarefas</span>';
+  container.appendChild(itemTar);
+
+  // Tipos de compromisso
+  Object.keys(categoriasMap).forEach(function(tipo) {
+    var cat = categoriasMap[tipo];
+    var item = document.createElement('div');
+    item.className = 'item-legenda';
+
+    var popover = document.createElement('div');
+    popover.className = 'popover-legenda';
+    popover.innerHTML =
+      '<label>Nome da categoria</label>' +
+      '<input type="text" class="input-nome-leg" value="' + cat.nome.replace(/"/g,'&quot;') + '">' +
+      '<label>Cor</label>' +
+      '<div class="popover-cor-wrap">' +
+        '<input type="color" class="input-cor-leg" value="' + (cat.cor.startsWith('#') ? cat.cor : '#c9a84c') + '">' +
+        '<div class="popover-cor-preview" style="background:' + cat.cor + ';"></div>' +
+      '</div>' +
+      '<div class="popover-legenda-acoes">' +
+        '<button class="btn-excluir-legenda">Excluir</button>' +
+        '<button class="btn-salvar-legenda">Salvar</button>' +
+      '</div>';
+
+    var inputCor     = popover.querySelector('.input-cor-leg');
+    var preview      = popover.querySelector('.popover-cor-preview');
+    inputCor.addEventListener('input', function() { preview.style.background = inputCor.value; });
+
+    popover.querySelector('.btn-salvar-legenda').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var novoNome = popover.querySelector('.input-nome-leg').value.trim();
+      if (!novoNome) return;
+      categoriasMap[tipo].nome = novoNome;
+      categoriasMap[tipo].cor  = inputCor.value;
+      salvarPreferencias();
+      renderizarLegenda();
+      renderizarView();
+    });
+
+    popover.querySelector('.btn-excluir-legenda').addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('textoConfirmarExclusao').textContent = 'Deseja remover a categoria "' + cat.nome + '" da legenda? Os compromissos existentes com este tipo nao serao alterados.';
+      _cbExcluir = function() {
+        delete categoriasMap[tipo];
+        salvarPreferencias();
+        renderizarLegenda();
+        renderizarView();
+      };
+      document.getElementById('modalConfirmarExclusao').classList.add('aberto');
+      popover.classList.remove('aberto');
+    });
+
+    item.innerHTML = '<div class="pontinho-legenda" style="background:' + cat.cor + ';"></div><span>' + cat.nome + '</span>';
+    item.appendChild(popover);
+
+    item.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var aberto = popover.classList.contains('aberto');
+      document.querySelectorAll('.popover-legenda').forEach(function(p) { p.classList.remove('aberto'); });
+      if (!aberto) popover.classList.add('aberto');
+    });
+
+    container.appendChild(item);
+  });
+
+  // Botao nova categoria
+  var btnAdd = document.createElement('div');
+  btnAdd.className = 'btn-add-legenda';
+  btnAdd.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Nova categoria';
+  btnAdd.addEventListener('click', function() {
+    var novoTipo = 'Categoria ' + (Object.keys(categoriasMap).length + 1);
+    var idx = Object.keys(categoriasMap).length;
+    categoriasMap[novoTipo] = { nome: novoTipo, cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
+    salvarPreferencias();
+    renderizarLegenda();
+    // Abrir o popover automaticamente para que o usuario edite
+    var itens = document.querySelectorAll('#legendaCalendario .item-legenda');
+    var ultimo = itens[itens.length - 2]; // penultimo (antes do btn)
+    if (ultimo) {
+      var pop = ultimo.querySelector('.popover-legenda');
+      if (pop) pop.classList.add('aberto');
+    }
+  });
+  container.appendChild(btnAdd);
+}
+
+document.addEventListener('click', function() {
+  document.querySelectorAll('.popover-legenda').forEach(function(p) { p.classList.remove('aberto'); });
+  document.querySelectorAll('.dropdown-tipo.aberto').forEach(function(d) { d.classList.remove('aberto'); });
+  document.querySelectorAll('.typeahead-lista.aberto').forEach(function(t) { t.classList.remove('aberto'); });
+});
+
+// ================================================================
+// MODAL COMPROMISSO
+// ================================================================
+function popularDropdownTipo(desabilitado) {
+  var lista = document.getElementById('dropTipoLista');
+  lista.innerHTML = '';
+  // Usar todos os tipos conhecidos
+  var tipos = Object.keys(categoriasMap);
+  if (tipos.length === 0) tipos = TIPOS_PADRAO;
+  tipos.forEach(function(tipo) {
+    var opt = document.createElement('div');
+    opt.className = 'dropdown-tipo-opcao' + (tipo === tipoSelecionado ? ' selecionada' : '');
+    opt.textContent = nomeDoTipo(tipo);
+    if (!desabilitado) {
+      opt.addEventListener('click', function(e) {
+        e.stopPropagation();
+        tipoSelecionado = tipo;
+        document.getElementById('dropTipoTexto').textContent = nomeDoTipo(tipo);
+        document.getElementById('dropdownTipo').classList.remove('aberto');
+        lista.querySelectorAll('.dropdown-tipo-opcao').forEach(function(o) { o.classList.remove('selecionada'); });
+        opt.classList.add('selecionada');
+      });
+    }
+    lista.appendChild(opt);
+  });
+  if (desabilitado) {
+    document.getElementById('dropTipoValor').classList.add('desabilitado');
+  } else {
+    document.getElementById('dropTipoValor').classList.remove('desabilitado');
+  }
+}
+
+document.getElementById('dropTipoValor').addEventListener('click', function(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('dropdownTipo');
+  var aberto = dd.classList.toggle('aberto');
+});
+
+function limparModalComp() {
+  editandoId = null; tipoSelecionado = null; processoIdSelecionado = null;
+  document.getElementById('compTitulo').value     = '';
+  document.getElementById('dropTipoTexto').textContent = 'Selecionar tipo...';
+  document.getElementById('compInicio').value     = '';
+  document.getElementById('compFim').value        = '';
+  document.getElementById('compLocal').value      = '';
+  document.getElementById('compObservacao').value = '';
+  document.getElementById('compProcessoBusca').value = '';
+  document.getElementById('compProcessoId').value    = '';
+  document.getElementById('avisoLeitura').style.display   = 'none';
+  document.getElementById('btnExcluirComp').style.display = 'none';
+  document.getElementById('btnSalvarComp').style.display  = 'block';
+  setCompReadOnly(false);
+}
+
+function setCompReadOnly(ro) {
+  ['compTitulo','compInicio','compFim','compLocal','compObservacao','compProcessoBusca'].forEach(function(id) {
+    document.getElementById(id).disabled = ro;
+  });
+}
+
+function abrirModalNovoCompromisso() {
+  limparModalComp();
+  document.getElementById('modalCompTitulo').textContent = 'Novo Compromisso';
+  popularDropdownTipo(false);
+  document.getElementById('modalCompromisso').classList.add('aberto');
+}
+
+function abrirModalNovoComDataHora(dataHora) {
+  limparModalComp();
+  document.getElementById('modalCompTitulo').textContent = 'Novo Compromisso';
+  popularDropdownTipo(false);
+  var ini  = new Date(dataHora);
+  var fim  = new Date(ini); fim.setHours(fim.getHours() + 1);
+  document.getElementById('compInicio').value = toLocalDatetimeValue(ini);
+  document.getElementById('compFim').value    = toLocalDatetimeValue(fim);
+  document.getElementById('modalCompromisso').classList.add('aberto');
+}
+
+function abrirModalCompromisso(comp) {
+  limparModalComp();
+  editandoId = comp.id;
+  var eEuCriador = comp.criado_por_id === meuPerfilId;
+
+  document.getElementById('modalCompTitulo').textContent = eEuCriador ? 'Editar Compromisso' : 'Compromisso';
+  tipoSelecionado = comp.tipo;
+  document.getElementById('dropTipoTexto').textContent = nomeDoTipo(comp.tipo) || comp.tipo || 'Selecionar tipo...';
+  document.getElementById('compTitulo').value           = comp.titulo || '';
+  document.getElementById('compInicio').value           = toLocalDatetimeValue(new Date(comp.data_hora_inicio));
+  document.getElementById('compFim').value              = comp.data_hora_fim ? toLocalDatetimeValue(new Date(comp.data_hora_fim)) : '';
+  document.getElementById('compLocal').value            = comp.local_ou_link || '';
+  document.getElementById('compObservacao').value       = comp.observacao || '';
+  // processo
+  document.getElementById('compProcessoId').value   = comp.processo_id || '';
+
+  popularDropdownTipo(!eEuCriador);
+
+  if (!eEuCriador) {
+    document.getElementById('avisoLeitura').style.display  = 'block';
+    document.getElementById('btnSalvarComp').style.display = 'none';
+    document.getElementById('btnExcluirComp').style.display = 'none';
+    setCompReadOnly(true);
+    // Buscar nome do processo se houver
+    if (comp.processo_id) {
+      _sb.from('processos').select('numero_processo_cnj, pessoas!pessoa_id(nome_completo)').eq('id', comp.processo_id).single().then(function(pr) {
+        if (!pr.error && pr.data) {
+          document.getElementById('compProcessoBusca').value = (pr.data.numero_processo_cnj || '') + (pr.data.pessoas?.nome_completo ? ' - ' + pr.data.pessoas.nome_completo : '');
+        }
+      });
+    }
+  } else {
+    document.getElementById('btnExcluirComp').style.display = 'inline-block';
+    // Buscar nome do processo
+    if (comp.processo_id) {
+      _sb.from('processos').select('numero_processo_cnj, pessoas!pessoa_id(nome_completo)').eq('id', comp.processo_id).single().then(function(pr) {
+        if (!pr.error && pr.data) {
+          document.getElementById('compProcessoBusca').value = (pr.data.numero_processo_cnj || '') + (pr.data.pessoas?.nome_completo ? ' - ' + pr.data.pessoas.nome_completo : '');
+        }
+      });
+    }
+  }
+
+  document.getElementById('modalCompromisso').classList.add('aberto');
+}
+
+document.getElementById('btnNovoCompromisso').addEventListener('click', abrirModalNovoCompromisso);
+
+document.getElementById('btnFecharModalComp').addEventListener('click', function() {
+  document.getElementById('modalCompromisso').classList.remove('aberto');
+});
+document.getElementById('modalCompromisso').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('aberto');
+});
+document.getElementById('btnCancelarComp').addEventListener('click', function() {
+  document.getElementById('modalCompromisso').classList.remove('aberto');
+});
+
+// Salvar compromisso
+document.getElementById('btnSalvarComp').addEventListener('click', async function() {
+  var titulo  = document.getElementById('compTitulo').value.trim();
+  var inicio  = document.getElementById('compInicio').value;
+  var fim     = document.getElementById('compFim').value;
+  var local   = document.getElementById('compLocal').value.trim();
+  var obs     = document.getElementById('compObservacao').value.trim();
+  var procId  = document.getElementById('compProcessoId').value || null;
+
+  if (!titulo)          { showToast('Informe o titulo do compromisso.', 'erro'); return; }
+  if (!inicio)          { showToast('Informe a data e hora de inicio.', 'erro'); return; }
+  if (!tipoSelecionado) { showToast('Selecione o tipo do compromisso.', 'erro'); return; }
+
+  var payload = {
+    titulo:          titulo,
+    tipo:            tipoSelecionado,
+    data_hora_inicio: new Date(inicio).toISOString(),
+    data_hora_fim:    fim ? new Date(fim).toISOString() : null,
+    local_ou_link:    local || null,
+    observacao:       obs || null,
+    processo_id:      procId
+  };
+
+  document.getElementById('btnSalvarComp').disabled = true;
+  document.getElementById('btnSalvarComp').textContent = 'Salvando...';
+
+  try {
+    var r;
+    if (editandoId) {
+      r = await _sb.from('compromissos').update(payload).eq('id', editandoId).eq('criado_por_id', meuPerfilId);
+    } else {
+      payload.criado_por_id = meuPerfilId;
+      r = await _sb.from('compromissos').insert(payload);
+    }
+    if (r.error) throw r.error;
+    showToast(editandoId ? 'Compromisso atualizado.' : 'Compromisso criado.', 'sucesso');
+    document.getElementById('modalCompromisso').classList.remove('aberto');
+    await carregarEventos();
+    if (document.getElementById('painelDiaOverlay').classList.contains('aberto') && painelDiaAtual) {
+      abrirPainelDia(painelDiaAtual);
+    }
+  } catch(e) {
+    showToast('Erro ao salvar o compromisso. Tente novamente.', 'erro');
+  } finally {
+    document.getElementById('btnSalvarComp').disabled = false;
+    document.getElementById('btnSalvarComp').textContent = 'Salvar';
+  }
+});
+
+// Excluir compromisso
+document.getElementById('btnExcluirComp').addEventListener('click', function() {
+  document.getElementById('textoConfirmarExclusao').textContent = 'Deseja excluir este compromisso? Esta acao nao pode ser desfeita.';
+  _cbExcluir = async function() {
+    try {
+      var r = await _sb.from('compromissos').delete().eq('id', editandoId).eq('criado_por_id', meuPerfilId);
+      if (r.error) throw r.error;
+      showToast('Compromisso excluido.', 'sucesso');
+      document.getElementById('modalCompromisso').classList.remove('aberto');
+      await carregarEventos();
+    } catch(e) {
+      showToast('Erro ao excluir. Tente novamente.', 'erro');
+    }
+  };
+  document.getElementById('modalConfirmarExclusao').classList.add('aberto');
+});
+
+// ================================================================
+// MODAL CONFIRMAR EXCLUSAO (generico)
+// ================================================================
+document.getElementById('btnCancelarExclusao').addEventListener('click', function() {
+  document.getElementById('modalConfirmarExclusao').classList.remove('aberto');
+  _cbExcluir = null;
+});
+document.getElementById('btnConfirmarExclusao').addEventListener('click', function() {
+  document.getElementById('modalConfirmarExclusao').classList.remove('aberto');
+  if (_cbExcluir) { _cbExcluir(); _cbExcluir = null; }
+});
+
+// ================================================================
+// TYPEAHEAD PROCESSOS
+// ================================================================
+document.getElementById('compProcessoBusca').addEventListener('input', function() {
+  clearTimeout(_debounceTimer);
+  var val = this.value.trim();
+  if (val.length < 2) {
+    document.getElementById('compProcessoId').value = '';
+    document.getElementById('typeaheadProcesso').classList.remove('aberto');
+    return;
+  }
+  _debounceTimer = setTimeout(function() { buscarProcessos(val); }, 380);
+});
+
+async function buscarProcessos(termo) {
+  try {
+    var r = await _sb.from('processos').select('id, numero_processo_cnj, pessoas!pessoa_id(nome_completo)')
+      .or('numero_processo_cnj.ilike.%' + termo + '%')
+      .eq('excluido_logico', false).limit(5);
+    if (r.error || !r.data) return;
+    var lista = document.getElementById('typeaheadProcesso');
+    lista.innerHTML = '';
+    if (r.data.length === 0) { lista.classList.remove('aberto'); return; }
+    r.data.forEach(function(p) {
+      var nomeCliente = p.pessoas && p.pessoas.nome_completo ? p.pessoas.nome_completo : '';
+      var opt = document.createElement('div');
+      opt.className = 'typeahead-opcao';
+      opt.innerHTML = (p.numero_processo_cnj || 'N/D') + '<small>' + nomeCliente + '</small>';
+      opt.addEventListener('click', function() {
+        processoIdSelecionado = p.id;
+        document.getElementById('compProcessoId').value     = p.id;
+        document.getElementById('compProcessoBusca').value  = (p.numero_processo_cnj || '') + (nomeCliente ? ' - ' + nomeCliente : '');
+        lista.classList.remove('aberto');
+      });
+      lista.appendChild(opt);
+    });
+    lista.classList.add('aberto');
+  } catch(e) { /* silencioso */ }
+}
+
+document.getElementById('compProcessoBusca').addEventListener('click', function(e) { e.stopPropagation(); });
+
+// ================================================================
+// MODAL TAREFA
+// ================================================================
+var tarefaAberta = null;
+
+function abrirModalTarefa(tarefa) {
+  tarefaAberta = tarefa;
+  var urg = classUrgenciaTarefa(tarefa.data_prazo);
+  var badge = document.getElementById('tarefaBadge');
+  badge.className = 'badge-prazo-modal ' + urg;
+  badge.textContent = textoBadgeUrgencia(urg);
+
+  document.getElementById('tarefaTitulo').value = tarefa.titulo || '';
+  document.getElementById('tarefaPrazo').value  = tarefa.data_prazo ? formatarDataBR(tarefa.data_prazo) : 'Sem prazo';
+  document.getElementById('tarefaTipo').value   = tarefa.tipo || 'Tarefa';
+  document.getElementById('modalTarefa').classList.add('aberto');
+}
+
+document.getElementById('btnFecharModalTarefa').addEventListener('click', function() {
+  document.getElementById('modalTarefa').classList.remove('aberto');
+});
+document.getElementById('btnCancelarTarefa').addEventListener('click', function() {
+  document.getElementById('modalTarefa').classList.remove('aberto');
+});
+document.getElementById('modalTarefa').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('aberto');
+});
+
+document.getElementById('btnConcluirTarefa').addEventListener('click', async function() {
+  if (!tarefaAberta) return;
+  var btn = document.getElementById('btnConcluirTarefa');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    var r = await _sb.from('tarefas').update({
+      concluida:       true,
+      concluida_em:    new Date().toISOString(),
+      concluida_por_id: meuPerfilId
+    }).eq('id', tarefaAberta.id).eq('responsavel_id', meuPerfilId);
+    if (r.error) throw r.error;
+    showToast('Tarefa marcada como concluida.', 'sucesso');
+    document.getElementById('modalTarefa').classList.remove('aberto');
+    await carregarEventos();
+  } catch(e) {
+    showToast('Erro ao concluir a tarefa. Tente novamente.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Marcar como concluida';
+  }
+});
+
+// ================================================================
+// TEMA e HAMBURGUER
+// Obsoleto: tema, hamburguer e sidebar mobile agora sao cuidados
+// exclusivamente pelo saga_ui.js (topbar/sidebar unificadas).
+// ================================================================
+
+// ================================================================
+// INIT INICIAL
+// ================================================================
+atualizarPeriodoTexto();
+</script>
+</body>
+</html>
