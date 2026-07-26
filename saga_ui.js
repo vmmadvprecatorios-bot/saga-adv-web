@@ -18,6 +18,10 @@
       '#hamburger{display:flex !important;flex-direction:column !important;}'+
       '#sidebarSaga{position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;transition:width .22s ease,min-width .22s ease,padding .22s ease,opacity .18s ease;}'+
       '#sidebarSaga.collapsed{width:0 !important;min-width:0 !important;padding:0 !important;opacity:0;overflow:hidden;border:none !important;}'+
+      '#hamburger span{transition:transform .25s ease, opacity .2s ease;}'+
+      '#hamburger.ativo span:nth-child(1){transform:translateY(7px) rotate(45deg);}'+
+      '#hamburger.ativo span:nth-child(2){opacity:0;}'+
+      '#hamburger.ativo span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}'+
       '@media(max-width:760px){#sidebarSaga{position:fixed !important;}}';
     (document.head||document.documentElement).appendChild(style);
   }
@@ -140,17 +144,21 @@
     var ham=document.getElementById('hamburger');
     if(!ham||ham.dataset.ligado)return;
     ham.dataset.ligado='true';
+    var sbInicial=document.getElementById('sidebarSaga');
+    if(sbInicial&&sbInicial.classList.contains('collapsed'))ham.classList.add('ativo');
     ham.addEventListener('click',function(){
       var sb=document.getElementById('sidebarSaga');
       var ov=document.getElementById('overlay');
       if(window.innerWidth<=760){
         if(sb)sb.classList.toggle('open');
         if(ov)ov.classList.toggle('aberto');
+        ham.classList.toggle('ativo',!!(sb&&sb.classList.contains('open')));
         return;
       }
       if(sb){
         sb.classList.toggle('collapsed');
         localStorage.setItem('saga-sidebar-colapsada',sb.classList.contains('collapsed')?'true':'false');
+        ham.classList.toggle('ativo',sb.classList.contains('collapsed'));
       }
     });
     var ov=document.getElementById('overlay');
@@ -160,6 +168,7 @@
         var sb=document.getElementById('sidebarSaga');
         if(sb)sb.classList.remove('open');
         ov.classList.remove('aberto');
+        ham.classList.remove('ativo');
       });
     }
   }
