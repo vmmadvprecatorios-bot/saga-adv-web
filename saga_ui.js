@@ -15,7 +15,7 @@
     var style=document.createElement('style');
     style.id='sagaUiEstiloBase';
     style.textContent=
-      '#hamburger{display:flex !important;}'+
+      '#hamburger{display:flex !important;flex-direction:column !important;}'+
       '#sidebarSaga{position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;transition:width .22s ease,min-width .22s ease,padding .22s ease,opacity .18s ease;}'+
       '#sidebarSaga.collapsed{width:0 !important;min-width:0 !important;padding:0 !important;opacity:0;overflow:hidden;border:none !important;}'+
       '@media(max-width:760px){#sidebarSaga{position:fixed !important;}}';
