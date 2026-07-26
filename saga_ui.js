@@ -7,6 +7,31 @@
   if(document.body)document.body.setAttribute('data-theme',_temaSalvo);
   else document.addEventListener('DOMContentLoaded',function(){document.body.setAttribute('data-theme',_temaSalvo);});
 
+  // Estilo base injetado uma unica vez: torna a sidebar fixa (sticky) em todas
+  // as telas e habilita o modo retratil (colapsado), sem precisar editar o
+  // CSS de cada pagina individualmente.
+  function _injetarEstiloBase(){
+    if(document.getElementById('sagaUiEstiloBase'))return;
+    var style=document.createElement('style');
+    style.id='sagaUiEstiloBase';
+    style.textContent=
+      '#hamburger{display:flex !important;}'+
+      '#sidebarSaga{position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;transition:width .22s ease,min-width .22s ease,padding .22s ease,opacity .18s ease;}'+
+      '#sidebarSaga.collapsed{width:0 !important;min-width:0 !important;padding:0 !important;opacity:0;overflow:hidden;border:none !important;}'+
+      '@media(max-width:760px){#sidebarSaga{position:fixed !important;}}';
+    (document.head||document.documentElement).appendChild(style);
+  }
+  if(document.head)_injetarEstiloBase();
+  else document.addEventListener('DOMContentLoaded',_injetarEstiloBase);
+
+  var _sidebarColapsada=localStorage.getItem('saga-sidebar-colapsada')==='true';
+  function _aplicarColapsoSalvo(){
+    var sb=document.getElementById('sidebarSaga');
+    if(sb&&_sidebarColapsada)sb.classList.add('collapsed');
+  }
+  if(document.getElementById('sidebarSaga'))_aplicarColapsoSalvo();
+  else document.addEventListener('DOMContentLoaded',_aplicarColapsoSalvo);
+
   var _perfilAtual=null;
 
   var SIDEBAR_HTML=''
@@ -118,8 +143,15 @@
     ham.addEventListener('click',function(){
       var sb=document.getElementById('sidebarSaga');
       var ov=document.getElementById('overlay');
-      if(sb)sb.classList.toggle('open');
-      if(ov)ov.classList.toggle('aberto');
+      if(window.innerWidth<=760){
+        if(sb)sb.classList.toggle('open');
+        if(ov)ov.classList.toggle('aberto');
+        return;
+      }
+      if(sb){
+        sb.classList.toggle('collapsed');
+        localStorage.setItem('saga-sidebar-colapsada',sb.classList.contains('collapsed')?'true':'false');
+      }
     });
     var ov=document.getElementById('overlay');
     if(ov&&!ov.dataset.ligado){
