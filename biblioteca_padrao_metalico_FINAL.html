@@ -321,6 +321,25 @@
     .grid-itens.modo-lista .btn-mais-item{grid-column:3;grid-row:1 / span 3;}
   }
 
+  /* ===== ARVORE DE CATEGORIAS (6B.1) ===== */
+  .cat-no{position:relative;}
+  .cat-linha{display:flex;align-items:center;width:100%;gap:0;min-width:0;}
+  .cat-toggle{flex-shrink:0;width:18px;height:18px;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:transform .18s ease;border-radius:3px;opacity:.7;}
+  .cat-toggle:hover{background:var(--surface2,rgba(255,255,255,.06));opacity:1;}
+  .cat-toggle.expandido{transform:rotate(90deg);}
+  .cat-toggle.sem-filhas{visibility:hidden;pointer-events:none;}
+  .cat-filhas{display:none;padding-left:10px;}
+  .cat-filhas.expandida{display:block;}
+  .item-categoria-lateral .cat-icone{flex-shrink:0;display:flex;align-items:center;margin-right:5px;color:var(--dourado,#c9a84c);opacity:.8;}
+  .item-categoria-lateral .categoria-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .cat-acoes-hover{flex-shrink:0;display:flex;gap:2px;opacity:0;pointer-events:none;transition:opacity .15s ease;margin-left:2px;}
+  .item-categoria-lateral:hover .cat-acoes-hover{opacity:1;pointer-events:auto;}
+  .cat-acoes-hover button{background:none;border:none;cursor:pointer;width:18px;height:18px;padding:0;border-radius:3px;color:var(--muted);display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
+  .cat-acoes-hover button:hover{background:var(--surface2,rgba(255,255,255,.09));color:var(--fg);}
+  .cat-acoes-hover .cat-btn-excluir:hover{color:#e55;}
+  .item-categoria-lateral{display:flex;align-items:center;width:100%;box-sizing:border-box;}
+  .cat-no .item-categoria-lateral .categoria-label{padding-left:0!important;}
+
 </style>
 
 <!-- Dependências adicionadas para a integração da biblioteca -->
@@ -1277,6 +1296,15 @@ function configurarMenuItem(card, tipo, id, nomeAtual, pastaPaiId, arqRef){
     }
 
     state.categoriaAtualId = categoriaDestinoId;
+
+    /* Auto-expande arvore lateral ate a categoria de destino */
+    if(categoriaDestinoId && typeof expandirCaminhoCategoria === 'function'){
+      expandirCaminhoCategoria(categoriaDestinoId);
+      expandidosCategorias.add(categoriaDestinoId);
+    } else if(!categoriaDestinoId){
+      expandidosCategorias.add('raiz');
+    }
+
     var carregamentoArquivos = carregarArquivosDaPasta(categoriaDestinoId);
 
     await carregamentoArquivos;
@@ -1734,62 +1762,168 @@ function abrirVisualizador(arq){
     }
   }
 
+  /* Estado de expansao da arvore — persiste entre re-renders */
+  if(typeof expandidosCategorias === 'undefined'){
+    var expandidosCategorias = new Set(['raiz']);
+  }
+
+  function expandirCaminhoCategoria(categoriaId){
+    if(!categoriaId) return;
+    var atual = buscarCategoriaPorId(categoriaId);
+    while(atual){
+      if(atual.categoria_pai_id){
+        expandidosCategorias.add(atual.categoria_pai_id);
+      }
+      atual = atual.categoria_pai_id ? buscarCategoriaPorId(atual.categoria_pai_id) : null;
+    }
+  }
+
 function renderizarSidebar(){
   var colunaCategorias = document.querySelector('.coluna-categorias');
   var botaoNovaCategoria = document.getElementById('btnNovaCategoriaTopo');
   if(!colunaCategorias || !botaoNovaCategoria) return;
 
-  colunaCategorias.querySelectorAll('.item-categoria-lateral').forEach(function(item){
-    item.remove();
+  /* Remove todos os nos dinamicos anteriores */
+  colunaCategorias.querySelectorAll('.item-categoria-lateral, .cat-no, .cat-filhas').forEach(function(el){
+    el.remove();
   });
 
-  function criarItem(categoria, nivel){
+  var podeGerenciar = !!(state.permissoes.acoes.criarCategoria || state.permissoes.acoes.excluirCategoria);
+
+  function svgChevron(){
+    return '<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><polyline points="9 18 15 12 9 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+  function svgPastaIcone(){
+    return '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.5"/></svg>';
+  }
+
+  function criarItemLateral(categoria){
     var categoriaId = categoria ? categoria.id : 'raiz';
     var nome = categoria ? categoria.nome : 'Todas';
-    var item = document.createElement('div');
+    var filhas = categoria ? buscarCategoriasFilhas(categoria.id) : buscarCategoriasFilhas(null);
+    var temFilhas = filhas.length > 0;
 
+    var item = document.createElement('div');
     item.className = 'item-categoria-lateral';
     item.setAttribute('data-raiz', categoriaId);
     item.setAttribute('data-categoria-id', categoriaId);
-    item.setAttribute('data-nivel', String(nivel));
     item.setAttribute('title', nome);
-    item.innerHTML =
-      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.5"/></svg>' +
-      '<span class="categoria-label">' + escaparHtml(nome) + '</span>';
 
-    var label = item.querySelector('.categoria-label');
-    if(label && nivel > 0){
-      label.style.paddingLeft = (nivel * 12) + 'px';
+    var acoesBtns = '';
+    if(categoria && podeGerenciar){
+      if(state.permissoes.acoes.criarCategoria){
+        acoesBtns += '<button class="cat-btn-nova" title="Nova subpasta" tabindex="-1">' +
+          '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>' +
+          '</button>';
+      }
+      if(state.permissoes.acoes.excluirCategoria){
+        acoesBtns += '<button class="cat-btn-excluir" title="Excluir pasta" tabindex="-1">' +
+          '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>' +
+          '</button>';
+      }
     }
 
-    item.addEventListener('click', function(){
+    item.innerHTML =
+      '<div class="cat-linha">' +
+        '<button class="cat-toggle' + (temFilhas ? '' : ' sem-filhas') + (expandidosCategorias.has(categoriaId) ? ' expandido' : '') + '" data-toggle-id="' + categoriaId + '">' + svgChevron() + '</button>' +
+        '<span class="cat-icone">' + svgPastaIcone() + '</span>' +
+        '<span class="categoria-label">' + escaparHtml(nome) + '</span>' +
+        (acoesBtns ? '<div class="cat-acoes-hover">' + acoesBtns + '</div>' : '') +
+      '</div>';
+
+    /* Toggle expand/collapse */
+    var btnToggle = item.querySelector('.cat-toggle');
+    if(btnToggle && temFilhas){
+      btnToggle.addEventListener('click', function(e){
+        e.stopPropagation();
+        var estaExpandido = expandidosCategorias.has(categoriaId);
+        if(estaExpandido){
+          expandidosCategorias.delete(categoriaId);
+        } else {
+          expandidosCategorias.add(categoriaId);
+        }
+        renderizarSidebar();
+        atualizarCategoriaAtivaLateral();
+      });
+    }
+
+    /* Navegacao ao clicar no item (mas nao no toggle nem nas acoes) */
+    item.addEventListener('click', function(e){
+      if(e.target.closest('.cat-toggle') || e.target.closest('.cat-acoes-hover')) return;
       var caminho = categoria
-        ? ['raiz'].concat(montarBreadcrumbCategoria(categoria.id).map(function(itemCaminho){
-            return itemCaminho.id;
-          }))
+        ? ['raiz'].concat(montarBreadcrumbCategoria(categoria.id).map(function(c){ return c.id; }))
         : ['raiz'];
       navegarParaCaminho(caminho, 'categoria');
     });
 
+    /* Botoes de acao */
+    var btnNova = item.querySelector('.cat-btn-nova');
+    if(btnNova && categoria){
+      btnNova.addEventListener('click', function(e){
+        e.stopPropagation();
+        expandidosCategorias.add(categoria.id);
+        abrirModalNovaCategoriaBiblioteca(categoria.id);
+      });
+    }
+
+    var btnExcluir = item.querySelector('.cat-btn-excluir');
+    if(btnExcluir && categoria){
+      btnExcluir.addEventListener('click', function(e){
+        e.stopPropagation();
+        confirmarExclusao('Tem certeza que deseja excluir "' + categoria.nome + '"?', function(){
+          excluirItemBiblioteca('pasta', categoria.id, categoria.nome);
+        });
+      });
+    }
+
+    /* Drag-and-drop como destino */
     if(state.permissoes.acoes.moverCategoria || state.permissoes.acoes.moverArquivo){
       configurarDestinoArraste(item, function(){
         return categoria ? categoria.id : 'raiz';
       });
     }
 
-    colunaCategorias.insertBefore(item, botaoNovaCategoria);
+    return item;
   }
 
-  criarItem(null, 0);
+  function construirNo(categoria, container){
+    var categoriaId = categoria ? categoria.id : 'raiz';
+    var filhas = categoria ? buscarCategoriasFilhas(categoria.id) : [];
+    var temFilhas = filhas.length > 0;
+    var estaExpandido = expandidosCategorias.has(categoriaId);
 
-  function renderizarFilhas(categoriaPaiId, nivel){
-    buscarCategoriasFilhas(categoriaPaiId).forEach(function(categoria){
-      criarItem(categoria, nivel);
-      renderizarFilhas(categoria.id, nivel + 1);
-    });
+    if(categoria){
+      var no = document.createElement('div');
+      no.className = 'cat-no';
+
+      var itemLateral = criarItemLateral(categoria);
+      no.appendChild(itemLateral);
+
+      if(temFilhas){
+        var containerFilhas = document.createElement('div');
+        containerFilhas.className = 'cat-filhas' + (estaExpandido ? ' expandida' : '');
+        filhas.forEach(function(filha){
+          construirNo(filha, containerFilhas);
+        });
+        no.appendChild(containerFilhas);
+      }
+
+      container.appendChild(no);
+    } else {
+      /* Nivel raiz: item "Todas" direto + filhas abaixo */
+      var itemRaiz = criarItemLateral(null);
+      colunaCategorias.insertBefore(itemRaiz, botaoNovaCategoria);
+
+      var containerRaiz = document.createElement('div');
+      containerRaiz.className = 'cat-filhas' + (expandidosCategorias.has('raiz') ? ' expandida' : '');
+      buscarCategoriasFilhas(null).forEach(function(filha){
+        construirNo(filha, containerRaiz);
+      });
+      colunaCategorias.insertBefore(containerRaiz, botaoNovaCategoria);
+    }
   }
 
-  renderizarFilhas(null, 0);
+  construirNo(null, colunaCategorias);
 }
 
 async function inicializarBibliotecaReal(){

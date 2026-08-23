@@ -27,7 +27,7 @@
       '#topbarSaga .brand-name b{color:#c9a84c !important;}'+
       '[data-theme="light"] #topbarSaga .brand-name b{color:#a3812f !important;}'+
       '#hamburger{display:flex !important;flex-direction:column !important;width:32px !important;height:32px !important;align-items:center !important;justify-content:center !important;border-radius:8px !important;background:none !important;border:none !important;}'+
-      '#hamburger span{display:block !important;width:18px !important;height:1.7px !important;background:#c9a84c !important;margin:3px auto !important;border-radius:2px !important;transition:transform .25s ease,opacity .2s ease !important;}'+
+      '#hamburger span{display:block !important;width:18px !important;height:1.7px !important;min-height:1.7px !important;flex-shrink:0 !important;background:#c9a84c !important;margin:3px auto !important;border-radius:2px !important;transition:transform .25s ease,opacity .2s ease !important;}'+
       '[data-theme="light"] #hamburger span{background:#a3812f !important;}'+
       '#hamburger.ativo span:nth-child(1){transform:translateY(7px) rotate(45deg) !important;}'+
       '#hamburger.ativo span:nth-child(2){opacity:0 !important;}'+
