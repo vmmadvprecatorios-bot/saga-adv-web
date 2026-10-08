@@ -550,6 +550,19 @@ function renderInviteModal(){
   renderEmailPreview();
 }
 
+// Pede ao servidor (Edge Function enviar-convite) o envio do e-mail
+async function dispararEmailConvite(conviteId){
+  try{
+    var r = await _sb.functions.invoke('enviar-convite', { body: { convite_id: conviteId } });
+    if(!r.error) return { ok: true };
+    var msg = 'O convite foi registrado, mas o e-mail não pôde ser enviado agora.';
+    try{ var corpo = r.error.context && await r.error.context.json(); if(corpo && corpo.erro) msg = corpo.erro; }catch(_){}
+    return { ok: false, msg: msg };
+  }catch(e){
+    return { ok: false, msg: 'O convite foi registrado, mas o e-mail não pôde ser enviado agora.' };
+  }
+}
+
 async function sendInvite(){
   if(!validateDraft()) return;
   var btn = document.getElementById('sendInviteButton');
@@ -565,12 +578,15 @@ async function sendInvite(){
       expira_em: expira,
     };
     if(state.meuInternoId) payload.convidado_por_id = state.meuInternoId;
-    var r = await _sb.from('convites').insert(payload);
+    var r = await _sb.from('convites').insert(payload).select('id').single();
     if(r.error) throw r.error;
+    btn.innerHTML = '<span class="spinner"></span> Enviando e-mail';
+    var envio = await dispararEmailConvite(r.data.id);
     closeModal('inviteModal');
     await loadInvites();
     renderAdmin();
-    showToast('Convite registrado com sucesso. O e-mail será enviado em breve.');
+    if(envio.ok) showToast('Convite enviado para '+esc(payload.email)+'.');
+    else showToast(esc(envio.msg), 'error');
   }catch(e){
     showToast('Erro ao registrar convite: ' + (e.message||'tente novamente.'), 'error');
   }finally{

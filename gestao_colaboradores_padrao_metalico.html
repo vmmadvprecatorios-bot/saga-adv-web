@@ -123,7 +123,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
     <div class="modal-head">
       <div class="modal-title-stack">
         <h2>Convidar Colaborador</h2>
-        <p>O convite sera registrado e o e-mail enviado pelo sistema de onboarding.</p>
+        <p>O colaborador receberá por e-mail um link para criar a senha de acesso.</p>
       </div>
       <button class="modal-close" data-close="inviteModal">&#10005;</button>
     </div>
@@ -740,6 +740,19 @@ function validateInviteDraft(){
   return ok;
 }
 
+// Pede ao servidor (Edge Function enviar-convite) o envio do e-mail
+async function dispararEmailConvite(conviteId){
+  try{
+    var r = await _sb.functions.invoke('enviar-convite', { body: { convite_id: conviteId } });
+    if(!r.error) return { ok: true };
+    var msg = 'O convite foi registrado, mas o e-mail não pôde ser enviado agora.';
+    try{ var corpo = r.error.context && await r.error.context.json(); if(corpo && corpo.erro) msg = corpo.erro; }catch(_){}
+    return { ok: false, msg: msg };
+  }catch(e){
+    return { ok: false, msg: 'O convite foi registrado, mas o e-mail não pôde ser enviado agora.' };
+  }
+}
+
 async function sendInvite(){
   if(!validateInviteDraft()) return;
   var btn = document.getElementById('sendInviteBtn');
@@ -757,10 +770,14 @@ async function sendInvite(){
     var mensagem = document.getElementById('inviteMensagem').value.trim();
     if(mensagem) payload.mensagem_pessoal = mensagem;
     if(state.meuInternoId) payload.convidado_por_id = state.meuInternoId;
-    var r = await _sb.from('convites').insert(payload);
+    var r = await _sb.from('convites').insert(payload).select('id').single();
     if(r.error) throw r.error;
+    btn.innerHTML = '<span class="spinner"></span> Enviando e-mail';
+    var envio = await dispararEmailConvite(r.data.id);
     closeModal('inviteModal');
-    showToast('Convite registrado. O e-mail sera enviado em breve.', 'success');
+    if(envio.ok) showToast('Convite enviado para <b>'+esc(payload.email)+'</b>.', 'success');
+    else showToast(esc(envio.msg), 'error');
+    loadEmployees();
   } catch(e) {
     showToast('Erro ao registrar convite: ' + (e.message || 'verifique sua conexao.'), 'error');
   } finally {
