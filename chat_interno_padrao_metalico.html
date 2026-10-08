@@ -708,6 +708,7 @@ function renderMensagens() {
 
 function appendMensagem(m) {
   var scroll = document.getElementById('mensagensScroll');
+  if (state.mensagens.length <= 1) scroll.innerHTML = '';
   var precisaSep = false;
   if (state.mensagens.length > 1) {
     var penult = state.mensagens[state.mensagens.length - 2];
@@ -926,6 +927,7 @@ function toggleTipoConversa(tipo) {
 }
 
 var _buscaTimeout = null;
+var _resultadosBusca = [];
 function buscarUsuariosModal(termo) {
   clearTimeout(_buscaTimeout);
   var el = document.getElementById('resultadosBuscaUsuario');
@@ -939,8 +941,9 @@ function buscarUsuariosModal(termo) {
       return;
     }
     el.style.display = 'block';
-    el.innerHTML = res.data.map(function(u){
-      return '<div class="item-busca-modal" onclick="selecionarUsuarioDireto(' + JSON.stringify(u) + ')">' +
+    _resultadosBusca = res.data;
+    el.innerHTML = res.data.map(function(u, i){
+      return '<div class="item-busca-modal" onclick="selecionarUsuarioDireto(_resultadosBusca[' + i + '])">' +
         '<div class="av-mini">' + esc(iniciais(u.nome_completo)) + '</div>' +
         '<span>' + esc(u.nome_completo) + '</span></div>';
     }).join('');
@@ -971,7 +974,7 @@ function carregarListaUsuariosGrupo() {
     .sort(function(a,b){ return a.nome_completo.localeCompare(b.nome_completo); });
   lista.innerHTML = todos.map(function(u){
     var sel = state.novaConversa.membrosGrupo.indexOf(u.id) !== -1;
-    return '<div class="item-membro-modal ' + (sel ? 'selecionado' : '') + '" onclick="toggleMembro(\'' + u.id + '\',\'' + esc(u.nome_completo) + '\')">' +
+    return '<div class="item-membro-modal ' + (sel ? 'selecionado' : '') + '" onclick="toggleMembro(\'' + u.id + '\')">' +
       '<div class="av-mini">' + esc(iniciais(u.nome_completo)) + '</div>' +
       '<span>' + esc(u.nome_completo) + '</span>' +
       '<svg class="check-membro" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -979,7 +982,7 @@ function carregarListaUsuariosGrupo() {
   }).join('');
 }
 
-function toggleMembro(id, nome) {
+function toggleMembro(id) {
   var idx = state.novaConversa.membrosGrupo.indexOf(id);
   if (idx === -1) state.novaConversa.membrosGrupo.push(id);
   else state.novaConversa.membrosGrupo.splice(idx, 1);
@@ -991,7 +994,7 @@ function renderChipsMembros() {
   document.getElementById('chipsMembros').innerHTML = state.novaConversa.membrosGrupo.map(function(id){
     var nome = state.usuarios[id] || 'Desconhecido';
     return '<div class="chip-membro">' + esc(nome.split(' ')[0]) +
-      '<button onclick="toggleMembro(\'' + id + '\',\'' + esc(nome) + '\')">x</button></div>';
+      '<button onclick="toggleMembro(\'' + id + '\')">x</button></div>';
   }).join('');
 }
 
