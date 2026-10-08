@@ -259,6 +259,71 @@
   .btn-gen-cancelar{background:var(--panel-2);}
   .btn-gen-excluir,.btn-gen-confirmar{color:var(--navy-1);}
   .btn-enviar-msg svg{color:var(--navy-1);}
+
+  /* ===== ANEXOS ===== */
+  .btn-anexar{width:38px;height:38px;border-radius:10px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-soft);background:var(--panel);color:var(--gold-light);}
+  .btn-anexar:hover{border-color:var(--gold);}
+  .anexos-pendentes{display:none;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .anexos-pendentes.tem{display:flex;}
+  .chip-anexo{display:flex;align-items:center;gap:6px;max-width:240px;padding:6px 10px;border-radius:9px;border:1px solid var(--border-soft);background:color-mix(in srgb,var(--gold) 8%,transparent);font-size:11px;color:var(--text);}
+  .chip-anexo span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chip-anexo small{color:var(--muted);flex:0 0 auto;}
+  .chip-anexo button{color:var(--muted);font-size:12px;padding:0 2px;flex:0 0 auto;}
+  .chip-anexo button:hover{color:var(--danger);}
+  .anexos-msg{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+  .bolha-mensagem:empty{display:none;}
+  .cartao-anexo{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel-2);min-width:220px;max-width:340px;}
+  .cartao-anexo .ico-arq{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold-light);font-size:9px;font-weight:700;letter-spacing:.5px;}
+  .cartao-anexo .info-arq{flex:1;min-width:0;}
+  .cartao-anexo .nome-arq{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .cartao-anexo .tam-arq{font-size:10px;color:var(--muted);margin-top:2px;}
+  .cartao-anexo .baixar-arq{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--gold-light);flex:0 0 auto;}
+  .cartao-anexo .baixar-arq:hover{background:color-mix(in srgb,var(--gold) 14%,transparent);}
+  .anexo-imagem{display:block;max-width:300px;border-radius:11px;border:1px solid var(--border-soft);overflow:hidden;cursor:pointer;background:var(--panel-2);}
+  .anexo-imagem img{display:block;max-width:300px;max-height:240px;object-fit:cover;}
+  .anexo-imagem .carregando-img{width:220px;height:140px;}
+  .enviando-anexos{font-size:11px;color:var(--muted);margin-bottom:8px;display:none;}
+
+  /* ===== MENCAO A CLIENTE ===== */
+  .mencao-cliente{display:inline-block;padding:0 7px;border-radius:7px;background:color-mix(in srgb,var(--info) 16%,transparent);border:1px solid color-mix(in srgb,var(--info) 35%,transparent);color:var(--info);text-decoration:none;font-weight:600;font-size:12.5px;}
+  .mencao-cliente:hover{background:color-mix(in srgb,var(--info) 26%,transparent);}
+  .mencao-pop{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 6px);max-height:240px;overflow-y:auto;padding:5px;border-radius:11px;border:1px solid var(--border-soft);background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));box-shadow:0 16px 40px rgba(0,0,0,.4);z-index:60;}
+  .mencao-pop.aberto{display:block;}
+  .mencao-pop-titulo{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:6px 9px 4px;}
+  .item-mencao{display:flex;justify-content:space-between;gap:10px;width:100%;padding:8px 10px;border-radius:8px;font-size:12px;color:var(--text);}
+  .item-mencao small{color:var(--muted);flex:0 0 auto;}
+  .item-mencao:hover,.item-mencao.foco{background:color-mix(in srgb,var(--gold) 10%,transparent);}
+
+  /* ===== AVISOS NA BARRA DE ENVIO ===== */
+  .aviso-barra{display:none;align-items:center;justify-content:center;gap:10px;padding:6px 4px;font-size:12px;color:var(--muted);text-align:center;}
+  .aviso-barra.aberto{display:flex;}
+  .aviso-barra button{padding:7px 14px;border-radius:8px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700;font-size:11.5px;}
+
+  /* ===== GERENCIAR GRUPO ===== */
+  .grupo-secao-titulo{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:16px 0 8px;}
+  .linha-nome-grupo{display:flex;gap:8px;}
+  .linha-nome-grupo .campo-modal{flex:1;}
+  .btn-pequeno{padding:0 14px;border-radius:9px;font-size:11.5px;font-weight:700;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);flex:0 0 auto;}
+  .lista-membros-grupo{max-height:260px;overflow-y:auto;border:1px solid var(--border-soft);border-radius:10px;}
+  .membro-grupo{display:flex;align-items:center;gap:10px;padding:9px 11px;border-bottom:1px solid var(--border-soft);}
+  .membro-grupo:last-child{border-bottom:0;}
+  .membro-grupo .av-mini{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:9.5px;font-weight:700;color:var(--gold-light);background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 25%,transparent),color-mix(in srgb,var(--gold-deep) 10%,transparent));border:1px solid var(--border-soft);flex:0 0 auto;}
+  .membro-grupo .nome-membro{flex:1;min-width:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .membro-grupo .nome-membro small{color:var(--muted);}
+  .seletor-papel{display:flex;padding:2px;border-radius:8px;background:color-mix(in srgb,var(--text) 5%,transparent);flex:0 0 auto;}
+  .seletor-papel button{padding:4px 8px;border-radius:6px;font-size:10px;color:var(--muted);}
+  .seletor-papel button.ativo{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold-light);font-weight:700;}
+  .etiqueta-papel{font-size:10px;padding:3px 8px;border-radius:6px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold-light);flex:0 0 auto;}
+  .btn-remover-membro{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;color:var(--muted);flex:0 0 auto;}
+  .btn-remover-membro:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 10%,transparent);}
+  .legenda-papeis{font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:8px;}
+  .acoes-grupo{display:flex;gap:10px;margin-top:18px;}
+  .acoes-grupo button{flex:1;padding:10px;border-radius:9px;font-size:12px;font-weight:600;}
+  .tag-gestao{font-size:9px;padding:2px 6px;border-radius:5px;margin-left:6px;background:color-mix(in srgb,var(--info) 16%,transparent);color:var(--info);font-weight:600;vertical-align:middle;}
+  @media (max-width:760px){
+    .modal-gen-caixa{min-width:0 !important;width:calc(100vw - 32px);}
+    .seletor-papel button{padding:4px 6px;}
+  }
 </style>
 </head>
 <body data-theme="dark">
@@ -303,6 +368,35 @@
     <div class="modal-gen-botoes">
       <button class="btn-gen-cancelar" onclick="closeModal('modalExcluirMsg')">Cancelar</button>
       <button class="btn-gen-excluir" onclick="confirmarExclusao()">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Gerenciar Grupo -->
+<div class="modal-gen-overlay" id="modalGrupo">
+  <div class="modal-gen-caixa" style="min-width:460px;max-width:540px;">
+    <div class="modal-titulo">Membros e configurações do grupo</div>
+    <div class="grupo-secao-titulo">Nome do grupo</div>
+    <div class="linha-nome-grupo" id="linhaNomeGrupo"></div>
+    <div class="grupo-secao-titulo" id="tituloMembrosGrupo">Membros</div>
+    <div class="lista-membros-grupo" id="listaMembrosGrupo"></div>
+    <div class="legenda-papeis"><b>Administrador:</b> adiciona e remove pessoas, muda papéis, renomeia e apaga o grupo e qualquer mensagem. <b>Comentador:</b> envia mensagens e arquivos. <b>Leitor:</b> só lê e baixa arquivos.</div>
+    <div id="secaoAdicionarMembros" style="display:none">
+      <div class="grupo-secao-titulo">Adicionar pessoas</div>
+      <input type="text" class="campo-modal" id="inputAddMembro" placeholder="Buscar colega pelo nome..." oninput="renderCandidatosGrupo(this.value)" autocomplete="off">
+      <div id="candidatosGrupo" class="resultados-busca-modal" style="display:none"></div>
+    </div>
+    <div class="acoes-grupo" id="acoesGrupo"></div>
+  </div>
+</div>
+
+<!-- MODAL: Confirmacao generica -->
+<div class="modal-gen-overlay" id="modalConfirmar">
+  <div class="modal-gen-caixa">
+    <p id="textoConfirmar"></p>
+    <div class="modal-gen-botoes">
+      <button class="btn-gen-cancelar" onclick="closeModal('modalConfirmar')">Cancelar</button>
+      <button class="btn-gen-excluir" id="btnConfirmarAcao">Confirmar</button>
     </div>
   </div>
 </div>
@@ -366,9 +460,7 @@
             <button onclick="toggleMenuOpcConv()" style="opacity:0.7;padding:4px;display:flex;align-items:center;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>
             </button>
-            <div class="menu-opc-conv" id="menuOpcConv">
-              <div class="item-opc-conv perigo" onclick="openModal('modalSairGrupo');toggleMenuOpcConv()">Sair do grupo</div>
-            </div>
+            <div class="menu-opc-conv" id="menuOpcConv"></div>
           </div>
         </div>
       </div>
@@ -378,9 +470,17 @@
 
       <!-- Barra de envio (oculta ate selecionar) -->
       <div class="barra-envio" id="barraEnvio" style="display:none;flex-direction:column;align-items:stretch;">
-        <div style="display:flex;align-items:flex-end;gap:10px;">
+        <div class="aviso-barra" id="avisoBarra"></div>
+        <div class="enviando-anexos" id="enviandoAnexos"></div>
+        <div class="anexos-pendentes" id="anexosPendentes"></div>
+        <div style="display:flex;align-items:flex-end;gap:10px;" id="linhaEnvio">
+          <button class="btn-anexar" id="btnAnexar" title="Anexar arquivos (até 10, 25 MB cada)">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <input type="file" id="inputAnexos" multiple style="display:none">
           <div class="campo-mensagem-wrap">
-            <textarea class="campo-mensagem" id="campoMensagem" rows="1" placeholder="Escreva uma mensagem..."></textarea>
+            <div class="mencao-pop" id="mencaoPop"></div>
+            <textarea class="campo-mensagem" id="campoMensagem" rows="1" placeholder="Mensagem (# para citar cliente)"></textarea>
           </div>
           <button class="btn-enviar-msg" id="btnEnviarMsg">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-8 18-2-8-8-2z" fill="currentColor"/></svg>
@@ -413,8 +513,75 @@ var state = {
   buscaTexto: '',
   editandoMsgId: null,
   msgParaExcluirId: null,
-  novaConversa: { tipo: 'direto', usuarioSelecionado: null, membrosGrupo: [] }
+  novaConversa: { tipo: 'direto', usuarioSelecionado: null, membrosGrupo: [] },
+  souAdminSistema: false,
+  anexosPendentes: [],
+  mencoesPendentes: [],
+  mencoesEdicao: []
 };
+
+var LIMITE_ARQUIVOS = 10;
+var LIMITE_BYTES = 25 * 1024 * 1024;
+var NOME_PAPEL = { admin: 'Administrador', comentador: 'Comentador', leitor: 'Leitor' };
+var REGEX_TOKEN_MENCAO = /#\[([^\]\n]{1,120})\]\(([0-9a-f-]{36})\)/g;
+
+// ===== PAPEIS =====
+function minhaParticipacao(c) {
+  return (c && c.participantes || []).find(function(p){ return p.usuario_id === state.meuInternoId; }) || null;
+}
+function meuPapel(c) {
+  var p = minhaParticipacao(c);
+  return p ? (p.papel || 'comentador') : null;
+}
+function possoGerenciar(c) {
+  return !!c && c.tipo === 'grupo' && (meuPapel(c) === 'admin' || state.souAdminSistema);
+}
+function possoEscrever(c) {
+  var papel = meuPapel(c);
+  return papel === 'admin' || papel === 'comentador';
+}
+
+// ===== MENCOES A CLIENTES =====
+// No banco a mencao fica como #[Nome](id); na tela vira etiqueta clicavel
+function renderConteudo(texto) {
+  return escMsg(texto).replace(REGEX_TOKEN_MENCAO, function(_, nome, id){
+    return '<a class="mencao-cliente" href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id=' + id + '" target="_blank" rel="noopener">#' + nome + '</a>';
+  });
+}
+function textoSemTokens(texto) {
+  return String(texto || '').replace(REGEX_TOKEN_MENCAO, '#$1');
+}
+function extrairMencoes(texto) {
+  var lista = [];
+  String(texto || '').replace(REGEX_TOKEN_MENCAO, function(_, nome, id){ lista.push({ nome: nome, id: id }); return _; });
+  return lista;
+}
+// Troca "#Nome" pelo token; nomes mais longos primeiro (ex.: "Ana Maria" antes de "Ana")
+function aplicarTokens(texto, mencoes) {
+  return mencoes.slice().sort(function(a, b){ return b.nome.length - a.nome.length; })
+    .reduce(function(saida, m){
+      return saida.split('#' + m.nome).join('#[' + m.nome + '](' + m.id + ')');
+    }, texto);
+}
+
+// ===== ARQUIVOS =====
+function fmtTamanho(bytes) {
+  if (!bytes && bytes !== 0) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+}
+function extensao(nome) {
+  var p = String(nome || '').split('.');
+  return p.length > 1 ? p.pop().slice(0, 4).toUpperCase() : 'ARQ';
+}
+function nomeSeguro(nome) {
+  var base = String(nome || 'arquivo').normalize('NFD').replace(/[̀-ͯ]/g, '');
+  return base.replace(/[^A-Za-z0-9._-]+/g, '_').replace(/_+/g, '_').slice(-120) || 'arquivo';
+}
+function ehImagem(a) {
+  return /^image\/(png|jpe?g|gif|webp)$/i.test(a.tipo_mime || '') || /\.(png|jpe?g|gif|webp)$/i.test(a.nome_arquivo || '');
+}
 
 // ===== UTILS =====
 function esc(v) {
@@ -494,7 +661,7 @@ function iniciaisConversa(c) {
 // ===== CONVERSAS =====
 async function carregarConversas() {
   var res = await _sb.from('chat_conversas')
-    .select('id,tipo,nome_grupo,criado_em,participantes:chat_participantes!conversa_id(usuario_id)');
+    .select('id,tipo,nome_grupo,criado_em,criado_por_id,participantes:chat_participantes!conversa_id(usuario_id,papel,oculta_em,entrou_em)');
   if (res.error) { showToast('Erro ao carregar conversas: ' + res.error.message, 'erro'); return; }
 
   var convs = res.data || [];
@@ -521,10 +688,17 @@ async function carregarConversas() {
   state.conversas = convs.map(function(c) {
     var lastMsg = lastMsgs[c.id] || null;
     var lidaAte = receipts[c.id] || null;
+    var eu = minhaParticipacao(c);
+    var ocultaEm = eu && eu.oculta_em ? eu.oculta_em : null;
+    // Mensagens anteriores ao "apagar conversa" nao contam mais
+    if (lastMsg && ocultaEm && new Date(lastMsg.criado_em) <= new Date(ocultaEm)) lastMsg = null;
     var temNaoLida = lastMsg
       && lastMsg.autor_id !== state.meuInternoId
       && (!lidaAte || new Date(lastMsg.criado_em) > new Date(lidaAte));
-    return Object.assign({}, c, { lastMsg: lastMsg, temNaoLida: temNaoLida });
+    return Object.assign({}, c, { lastMsg: lastMsg, temNaoLida: temNaoLida, ocultaEm: ocultaEm, souMembro: !!eu });
+  }).filter(function(c){
+    // Conversa apagada por mim volta a aparecer se chegar mensagem nova
+    return !(c.ocultaEm && !c.lastMsg);
   });
 
   state.conversas.sort(function(a, b){
@@ -568,15 +742,17 @@ function renderConversas() {
     var nome = nomeConversa(c);
     var ativa = state.conversaAtiva && state.conversaAtiva.id === c.id ? 'ativa' : '';
     var isGrupo = c.tipo === 'grupo';
+    var textoPrev = c.lastMsg ? textoSemTokens(c.lastMsg.conteudo).replace(/\n/g,' ') : '';
+    if (c.lastMsg && !textoPrev) textoPrev = 'Arquivo enviado';
     var preview = c.lastMsg
-      ? ((c.lastMsg.autor_id === state.meuInternoId ? 'Voce: ' : '') + (c.lastMsg.conteudo || '').replace(/\n/g,' ').substring(0, 55))
-      : 'Sem mensagens ainda';
+      ? ((c.lastMsg.autor_id === state.meuInternoId ? 'Você: ' : '') + textoPrev.substring(0, 55))
+      : (c.souMembro ? 'Sem mensagens ainda' : 'Você não participa deste grupo');
     var hora = c.lastMsg ? fmtDataRelativa(c.lastMsg.criado_em) : '';
     var badge = c.temNaoLida ? '<div class="badge-nao-lida">N</div>' : '';
     return '<div class="item-conversa ' + ativa + '" onclick="abrirConversa(\'' + c.id + '\')">' +
       '<div class="avatar-conversa ' + (isGrupo ? 'grupo' : '') + '">' + esc(iniciais(nome)) + '</div>' +
       '<div class="info-conversa">' +
-        '<div class="info-conversa-topo"><span class="nome-conversa">' + esc(nome) + '</span><span class="hora-conversa">' + esc(hora) + '</span></div>' +
+        '<div class="info-conversa-topo"><span class="nome-conversa">' + esc(nome) + (c.souMembro ? '' : '<span class="tag-gestao">gestão</span>') + '</span><span class="hora-conversa">' + esc(hora) + '</span></div>' +
         '<div class="ultima-mensagem">' + esc(preview) + '</div>' +
       '</div>' + badge + '</div>';
   }).join('');
@@ -586,6 +762,10 @@ function renderConversas() {
 async function abrirConversa(id) {
   unsubscribeConversa();
   var conv = state.conversas.find(function(c){ return c.id === id; }) || { id: id, tipo: 'direto', participantes: [] };
+  if (!state.conversaAtiva || state.conversaAtiva.id !== id) {
+    limparAnexosPendentes();
+    state.mencoesPendentes = [];
+  }
   state.conversaAtiva = conv;
 
   renderConversas();
@@ -609,7 +789,7 @@ async function abrirConversa(id) {
   if (window.innerWidth <= 760) {
     document.getElementById('listaConversas').classList.add('escondida');
   }
-  document.getElementById('campoMensagem').focus();
+  if (possoEscrever(conv)) document.getElementById('campoMensagem').focus();
 }
 
 function atualizarHeader(conv) {
@@ -623,24 +803,118 @@ function atualizarHeader(conv) {
 
   if (conv.tipo === 'grupo') {
     var membros = (conv.participantes || []).map(function(p){ return (state.usuarios[p.usuario_id] || '').split(' ')[0]; }).filter(Boolean).join(', ');
-    document.getElementById('conversaHeaderStatus').textContent = membros;
-    document.getElementById('menuOpcConvWrap').style.display = 'block';
+    var papel = meuPapel(conv);
+    document.getElementById('conversaHeaderStatus').textContent = (papel ? 'Você: ' + NOME_PAPEL[papel] + ' · ' : '') + membros;
   } else {
     document.getElementById('conversaHeaderStatus').textContent = '';
-    document.getElementById('menuOpcConvWrap').style.display = 'none';
   }
+  renderMenuOpcConv(conv);
+  ajustarBarraEnvio(conv);
+}
+
+function renderMenuOpcConv(conv) {
+  var itens = [];
+  if (conv.tipo === 'grupo') {
+    itens.push('<div class="item-opc-conv" onclick="toggleMenuOpcConv();abrirGerenciarGrupo()">Membros e configurações</div>');
+    if (conv.souMembro) itens.push('<div class="item-opc-conv perigo" onclick="toggleMenuOpcConv();openModal(\'modalSairGrupo\')">Sair do grupo</div>');
+    if (possoGerenciar(conv)) itens.push('<div class="item-opc-conv perigo" onclick="toggleMenuOpcConv();pedirApagarGrupo()">Apagar grupo</div>');
+  } else {
+    itens.push('<div class="item-opc-conv perigo" onclick="toggleMenuOpcConv();pedirApagarConversa()">Apagar conversa</div>');
+  }
+  document.getElementById('menuOpcConv').innerHTML = itens.join('');
+  document.getElementById('menuOpcConvWrap').style.display = 'block';
+}
+
+// Leitor e administrador do sistema fora do grupo nao escrevem
+function ajustarBarraEnvio(conv) {
+  var aviso = document.getElementById('avisoBarra');
+  var linha = document.getElementById('linhaEnvio');
+  var pode = possoEscrever(conv);
+  linha.style.display = pode ? 'flex' : 'none';
+  if (pode) { aviso.className = 'aviso-barra'; aviso.innerHTML = ''; return; }
+  if (!conv.souMembro && state.souAdminSistema) {
+    aviso.innerHTML = 'Você não participa deste grupo. <button onclick="entrarNoGrupoComoAdmin()">Entrar no grupo</button>';
+  } else {
+    aviso.textContent = 'Você é leitor neste grupo: pode ler e baixar arquivos, mas não enviar mensagens.';
+  }
+  aviso.className = 'aviso-barra aberto';
+  limparAnexosPendentes();
 }
 
 // ===== MENSAGENS =====
 async function carregarMensagens(conversaId) {
-  var res = await _sb.from('chat_mensagens')
-    .select('id,conteudo,editada,criado_em,autor_id,autor:usuarios!autor_id(id,nome_completo)')
-    .eq('conversa_id', conversaId)
-    .order('criado_em', { ascending: true })
-    .limit(200);
+  var q = _sb.from('chat_mensagens')
+    .select('id,conteudo,editada,criado_em,autor_id,conversa_id,autor:usuarios!autor_id(id,nome_completo),anexos:chat_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime)')
+    .eq('conversa_id', conversaId);
+  var conv = state.conversas.find(function(c){ return c.id === conversaId; });
+  if (conv && conv.ocultaEm) q = q.gt('criado_em', conv.ocultaEm);
+  var res = await q.order('criado_em', { ascending: false }).limit(200);
   if (res.error) { showToast('Erro ao carregar mensagens: ' + res.error.message, 'erro'); return false; }
-  state.mensagens = res.data || [];
+  state.mensagens = (res.data || []).reverse();
   return true;
+}
+
+// Anexos de uma mensagem que chegou em tempo real (sao gravados logo depois dela)
+async function carregarAnexosMensagem(msgId) {
+  var msg = state.mensagens.find(function(m){ return m.id === msgId; });
+  if (!msg) return;
+  var r = await _sb.from('chat_anexos').select('id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime').eq('mensagem_id', msgId);
+  if (r.error || !r.data || !r.data.length) return;
+  msg.anexos = r.data;
+  substituirMensagemNaTela(msg);
+}
+
+function substituirMensagemNaTela(msg) {
+  var el = document.querySelector('[data-msg-id="' + msg.id + '"]');
+  if (!el) return;
+  var tmp = document.createElement('div');
+  tmp.innerHTML = htmlMensagem(msg);
+  el.replaceWith(tmp.firstElementChild);
+  carregarMiniaturas();
+}
+
+function htmlAnexos(anexos) {
+  if (!anexos || !anexos.length) return '';
+  return '<div class="anexos-msg">' + anexos.map(function(a){
+    if (ehImagem(a)) {
+      return '<div class="anexo-imagem" title="' + esc(a.nome_arquivo) + '" onclick="abrirAnexo(\'' + a.id + '\')">' +
+        '<img data-caminho="' + esc(a.caminho_storage) + '" alt="' + esc(a.nome_arquivo) + '" class="carregando-img sk"></div>';
+    }
+    return '<div class="cartao-anexo">' +
+      '<div class="ico-arq">' + esc(extensao(a.nome_arquivo)) + '</div>' +
+      '<div class="info-arq"><div class="nome-arq" title="' + esc(a.nome_arquivo) + '">' + esc(a.nome_arquivo) + '</div>' +
+      '<div class="tam-arq">' + esc(fmtTamanho(a.tamanho_bytes)) + '</div></div>' +
+      '<button class="baixar-arq" title="Abrir ou baixar" onclick="abrirAnexo(\'' + a.id + '\')">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '</button></div>';
+  }).join('') + '</div>';
+}
+
+function acharAnexo(id) {
+  for (var i = 0; i < state.mensagens.length; i++) {
+    var a = (state.mensagens[i].anexos || []).find(function(x){ return x.id === id; });
+    if (a) return a;
+  }
+  return null;
+}
+
+async function abrirAnexo(id) {
+  var a = acharAnexo(id);
+  if (!a) return;
+  var r = await _sb.storage.from('chat-anexos').createSignedUrl(a.caminho_storage, 300, ehImagem(a) ? undefined : { download: a.nome_arquivo });
+  if (r.error) { showToast('Não foi possível abrir o arquivo: ' + r.error.message, 'erro'); return; }
+  window.open(r.data.signedUrl, '_blank', 'noopener');
+}
+
+async function carregarMiniaturas() {
+  var imgs = Array.prototype.slice.call(document.querySelectorAll('#mensagensScroll img[data-caminho]:not([src])'));
+  if (!imgs.length) return;
+  var caminhos = imgs.map(function(i){ return i.getAttribute('data-caminho'); });
+  var r = await _sb.storage.from('chat-anexos').createSignedUrls(caminhos, 3600);
+  if (r.error || !r.data) return;
+  r.data.forEach(function(item, idx){
+    if (item.signedUrl) { imgs[idx].src = item.signedUrl; imgs[idx].classList.remove('sk', 'carregando-img'); }
+  });
 }
 
 function mostrarSkeletonMensagens() {
@@ -673,12 +947,14 @@ function htmlMensagem(m) {
   var hora = fmtHora(m.criado_em);
   var editLabel = m.editada ? '<span class="label-editada">(editada)</span>' : '';
   var autorLabel = !ehMinha ? '<div class="autor-mensagem">' + esc(nomeAutor) + '</div>' : '';
-  var acoes = ehMinha
-    ? '<div class="menu-acoes-mensagem">' +
-        '<button class="btn-acao-msg" title="Editar" onclick="iniciarEdicao(\'' + m.id + '\');event.stopPropagation()">' +
-          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="1.8"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="1.8"/></svg>' +
-        '</button>' +
-        '<div class="separador-acoes-msg"></div>' +
+  var btnEditar = ehMinha && m.conteudo
+    ? '<button class="btn-acao-msg" title="Editar" onclick="iniciarEdicao(\'' + m.id + '\');event.stopPropagation()">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="1.8"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="1.8"/></svg>' +
+      '</button><div class="separador-acoes-msg"></div>'
+    : '';
+  var podeExcluir = ehMinha || possoGerenciar(state.conversaAtiva);
+  var acoes = podeExcluir
+    ? '<div class="menu-acoes-mensagem">' + btnEditar +
         '<button class="btn-acao-msg" title="Excluir" style="color:var(--danger)" onclick="abrirModalExcluir(\'' + m.id + '\');event.stopPropagation()">' +
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="1.8"/><path d="M19 6l-1 14H6L5 6M8 6V4h8v2" stroke="currentColor" stroke-width="1.8"/></svg>' +
         '</button>' +
@@ -688,7 +964,8 @@ function htmlMensagem(m) {
     '<div class="avatar-mensagem">' + esc(iniciais(nomeAutor)) + '</div>' +
     '<div class="conteudo-mensagem-wrap">' +
       autorLabel +
-      '<div class="bolha-mensagem" id="bolha-' + m.id + '">' + escMsg(m.conteudo || '') + '</div>' +
+      '<div class="bolha-mensagem" id="bolha-' + m.id + '">' + renderConteudo(m.conteudo || '') + '</div>' +
+      htmlAnexos(m.anexos) +
       '<div class="hora-mensagem">' + esc(hora) + editLabel + '</div>' +
     '</div>' + acoes + '</div>';
 }
@@ -704,6 +981,7 @@ function renderMensagens() {
     if (item.tipo === 'sep') return '<div class="separador-data">' + esc(labelData(item.ts)) + '</div>';
     return htmlMensagem(item.msg);
   }).join('');
+  carregarMiniaturas();
 }
 
 function appendMensagem(m) {
@@ -725,6 +1003,7 @@ function appendMensagem(m) {
   var tmp = document.createElement('div');
   tmp.innerHTML = htmlMensagem(m);
   scroll.appendChild(tmp.firstElementChild);
+  carregarMiniaturas();
   scrollBaixo();
 }
 
@@ -737,32 +1016,199 @@ function scrollBaixo() {
 var _enviando = false;
 document.getElementById('btnEnviarMsg').addEventListener('click', enviarMensagem);
 document.getElementById('campoMensagem').addEventListener('keydown', function(e){
+  if (mencaoAberta()) {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moverFocoMencao(e.key === 'ArrowDown' ? 1 : -1); return; }
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); escolherMencaoEmFoco(); return; }
+    if (e.key === 'Escape') { e.preventDefault(); fecharMencao(); return; }
+  }
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviarMensagem(); }
   setTimeout(function(){ this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 100) + 'px'; }.bind(this), 0);
 });
+document.getElementById('campoMensagem').addEventListener('input', verificarGatilhoMencao);
+document.getElementById('campoMensagem').addEventListener('blur', function(){ setTimeout(fecharMencao, 180); });
 
+// ===== ANEXOS PENDENTES =====
+document.getElementById('btnAnexar').addEventListener('click', function(){ document.getElementById('inputAnexos').click(); });
+document.getElementById('inputAnexos').addEventListener('change', function(){
+  adicionarArquivos(Array.prototype.slice.call(this.files || []));
+  this.value = '';
+});
+// Arrastar e soltar arquivos na conversa
+['dragover', 'drop'].forEach(function(ev){
+  document.getElementById('janelaConversa').addEventListener(ev, function(e){
+    if (!state.conversaAtiva || !possoEscrever(state.conversaAtiva)) return;
+    if (!e.dataTransfer || Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') === -1) return;
+    e.preventDefault();
+    if (ev === 'drop') adicionarArquivos(Array.prototype.slice.call(e.dataTransfer.files || []));
+  });
+});
+
+function adicionarArquivos(arquivos) {
+  var recusados = [];
+  arquivos.forEach(function(f){
+    if (f.size > LIMITE_BYTES) { recusados.push(f.name + ' (maior que 25 MB)'); return; }
+    if (state.anexosPendentes.length >= LIMITE_ARQUIVOS) { recusados.push(f.name + ' (limite de 10 arquivos)'); return; }
+    state.anexosPendentes.push(f);
+  });
+  if (recusados.length) showToast('Não anexados: ' + recusados.join('; '), 'aviso');
+  renderAnexosPendentes();
+}
+
+function removerAnexoPendente(i) {
+  state.anexosPendentes.splice(i, 1);
+  renderAnexosPendentes();
+}
+
+function limparAnexosPendentes() {
+  state.anexosPendentes = [];
+  renderAnexosPendentes();
+}
+
+function renderAnexosPendentes() {
+  var el = document.getElementById('anexosPendentes');
+  el.className = 'anexos-pendentes' + (state.anexosPendentes.length ? ' tem' : '');
+  el.innerHTML = state.anexosPendentes.map(function(f, i){
+    return '<div class="chip-anexo"><span title="' + esc(f.name) + '">' + esc(f.name) + '</span><small>' + esc(fmtTamanho(f.size)) + '</small>' +
+      '<button title="Remover" onclick="removerAnexoPendente(' + i + ')">&#10005;</button></div>';
+  }).join('');
+}
+
+// ===== ENVIAR =====
 async function enviarMensagem() {
   if (_enviando || !state.conversaAtiva) return;
+  if (!possoEscrever(state.conversaAtiva)) return;
   var textarea = document.getElementById('campoMensagem');
-  var conteudo = textarea.value.trim();
-  if (!conteudo) return;
+  var texto = textarea.value.trim();
+  var arquivos = state.anexosPendentes.slice();
+  if (!texto && !arquivos.length) return;
   _enviando = true;
+  fecharMencao();
+  var conteudo = texto ? aplicarTokens(texto, state.mencoesPendentes) : null;
   textarea.value = '';
   textarea.style.height = 'auto';
+  state.mencoesPendentes = [];
+  limparAnexosPendentes();
+  var conversaId = state.conversaAtiva.id;
 
   var res = await _sb.from('chat_mensagens').insert({
-    conversa_id: state.conversaAtiva.id,
+    conversa_id: conversaId,
     autor_id: state.meuInternoId,
     conteudo: conteudo
-  }).select('id,conteudo,editada,criado_em,autor_id').single();
+  }).select('id,conteudo,editada,criado_em,autor_id,conversa_id').single();
 
-  _enviando = false;
-  if (res.error) { showToast('Erro ao enviar: ' + res.error.message, 'erro'); textarea.value = conteudo; return; }
+  if (res.error) {
+    _enviando = false;
+    showToast('Erro ao enviar: ' + res.error.message, 'erro');
+    textarea.value = texto;
+    state.anexosPendentes = arquivos;
+    renderAnexosPendentes();
+    return;
+  }
 
-  var msg = Object.assign({}, res.data, { autor: { id: state.meuInternoId, nome_completo: state.meuNome } });
-  state.mensagens.push(msg);
-  appendMensagem(msg);
+  // A mensagem pode ja ter chegado pelo tempo real
+  var msg = state.mensagens.find(function(m){ return m.id === res.data.id; });
+  if (!msg) {
+    msg = Object.assign({}, res.data, { autor: { id: state.meuInternoId, nome_completo: state.meuNome }, anexos: [] });
+    state.mensagens.push(msg);
+    appendMensagem(msg);
+  }
   atualizarPreviewConversa(res.data);
+
+  if (arquivos.length) {
+    var aviso = document.getElementById('enviandoAnexos');
+    var enviados = [], falhas = [];
+    for (var i = 0; i < arquivos.length; i++) {
+      var f = arquivos[i];
+      aviso.style.display = 'block';
+      aviso.textContent = 'Enviando arquivo ' + (i + 1) + ' de ' + arquivos.length + ': ' + f.name;
+      var caminho = conversaId + '/' + msg.id + '/' + Date.now() + '_' + nomeSeguro(f.name);
+      var up = await _sb.storage.from('chat-anexos').upload(caminho, f, { contentType: f.type || 'application/octet-stream', upsert: false });
+      if (up.error) { falhas.push(f.name); continue; }
+      var reg = await _sb.from('chat_anexos').insert({
+        mensagem_id: msg.id, nome_arquivo: f.name, caminho_storage: caminho,
+        tamanho_bytes: f.size, tipo_mime: f.type || null
+      }).select('id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime').single();
+      if (reg.error) { falhas.push(f.name); await _sb.storage.from('chat-anexos').remove([caminho]); continue; }
+      enviados.push(reg.data);
+    }
+    aviso.style.display = 'none';
+    msg.anexos = enviados;
+    substituirMensagemNaTela(msg);
+    if (falhas.length) showToast('Falha ao enviar: ' + falhas.join(', '), 'erro');
+    // Mensagem so de arquivos que nao subiram: remove a mensagem vazia
+    if (!conteudo && !enviados.length) await _sb.from('chat_mensagens').delete().eq('id', msg.id);
+  }
+  _enviando = false;
+}
+
+// ===== MENCAO A CLIENTE (#) =====
+var _mencao = { inicio: -1, resultados: [], foco: 0, timer: null };
+
+function mencaoAberta() { return document.getElementById('mencaoPop').classList.contains('aberto'); }
+
+function fecharMencao() {
+  document.getElementById('mencaoPop').classList.remove('aberto');
+  _mencao.inicio = -1;
+  _mencao.resultados = [];
+}
+
+function verificarGatilhoMencao() {
+  var ta = document.getElementById('campoMensagem');
+  var antes = ta.value.slice(0, ta.selectionStart);
+  var m = antes.match(/(^|\s)#([^#\n]{2,40})$/);
+  if (!m) { fecharMencao(); return; }
+  var termo = m[2];
+  _mencao.inicio = antes.length - termo.length - 1;
+  clearTimeout(_mencao.timer);
+  _mencao.timer = setTimeout(function(){ buscarClientesMencao(termo); }, 250);
+}
+
+async function buscarClientesMencao(termo) {
+  var digitos = termo.replace(/\D/g, '');
+  var filtro = digitos.length >= 3
+    ? 'cpf.ilike.%' + digitos + '%,nome_completo.ilike.%' + termo.replace(/[%,()]/g, ' ').trim() + '%'
+    : 'nome_completo.ilike.%' + termo.replace(/[%,()]/g, ' ').trim() + '%';
+  var r = await _sb.from('pessoas').select('id,nome_completo,cpf').or(filtro).order('nome_completo').limit(8);
+  var pop = document.getElementById('mencaoPop');
+  if (_mencao.inicio === -1) return;
+  _mencao.resultados = r.data || [];
+  _mencao.foco = 0;
+  if (r.error) { pop.innerHTML = '<div class="sem-resultado-busca">Sem acesso à lista de clientes.</div>'; pop.classList.add('aberto'); return; }
+  if (!_mencao.resultados.length) {
+    pop.innerHTML = '<div class="sem-resultado-busca">Nenhum cliente encontrado.</div>';
+  } else {
+    pop.innerHTML = '<div class="mencao-pop-titulo">Mencionar cliente</div>' + _mencao.resultados.map(function(p, i){
+      var cpf = String(p.cpf || '').replace(/\D/g, '');
+      var cpfFmt = cpf.length === 11 ? '***.' + cpf.slice(3, 6) + '.' + cpf.slice(6, 9) + '-**' : '';
+      return '<button class="item-mencao' + (i === 0 ? ' foco' : '') + '" onmousedown="event.preventDefault();escolherMencao(' + i + ')">' +
+        '<span>' + esc(p.nome_completo) + '</span><small>' + esc(cpfFmt) + '</small></button>';
+    }).join('');
+  }
+  pop.classList.add('aberto');
+}
+
+function moverFocoMencao(passo) {
+  if (!_mencao.resultados.length) return;
+  _mencao.foco = (_mencao.foco + passo + _mencao.resultados.length) % _mencao.resultados.length;
+  document.querySelectorAll('#mencaoPop .item-mencao').forEach(function(b, i){ b.classList.toggle('foco', i === _mencao.foco); });
+}
+
+function escolherMencaoEmFoco() {
+  if (_mencao.resultados.length) escolherMencao(_mencao.foco); else fecharMencao();
+}
+
+function escolherMencao(i) {
+  var p = _mencao.resultados[i];
+  var ta = document.getElementById('campoMensagem');
+  if (!p || _mencao.inicio < 0) return;
+  var nome = String(p.nome_completo).replace(/[\[\]\n]/g, ' ').trim();
+  var depois = ta.value.slice(ta.selectionStart);
+  var novoAntes = ta.value.slice(0, _mencao.inicio) + '#' + nome + ' ';
+  ta.value = novoAntes + depois;
+  ta.selectionStart = ta.selectionEnd = novoAntes.length;
+  if (!state.mencoesPendentes.some(function(m){ return m.id === p.id; })) state.mencoesPendentes.push({ nome: nome, id: p.id });
+  fecharMencao();
+  ta.focus();
 }
 
 // ===== EDITAR MENSAGEM =====
@@ -773,8 +1219,9 @@ function iniciarEdicao(id) {
   if (!msg) return;
   var bolha = document.getElementById('bolha-' + id);
   if (!bolha) return;
+  state.mencoesEdicao = extrairMencoes(msg.conteudo);
   bolha.innerHTML =
-    '<textarea class="campo-edicao-msg" id="edicao-' + id + '">' + esc(msg.conteudo || '') + '</textarea>' +
+    '<textarea class="campo-edicao-msg" id="edicao-' + id + '">' + esc(textoSemTokens(msg.conteudo)) + '</textarea>' +
     '<div class="edicao-botoes">' +
       '<button class="btn-edicao btn-edicao-cancelar" onclick="cancelarEdicao(\'' + id + '\')">Cancelar</button>' +
       '<button class="btn-edicao btn-edicao-salvar" onclick="salvarEdicao(\'' + id + '\')">Salvar</button>' +
@@ -788,21 +1235,21 @@ function cancelarEdicao(id) {
   var msg = state.mensagens.find(function(m){ return m.id === id; });
   if (!msg) return;
   var bolha = document.getElementById('bolha-' + id);
-  if (bolha) bolha.innerHTML = escMsg(msg.conteudo || '');
+  if (bolha) bolha.innerHTML = renderConteudo(msg.conteudo || '');
 }
 
 async function salvarEdicao(id) {
   var ta = document.getElementById('edicao-' + id);
   if (!ta) return;
-  var novo = ta.value.trim();
-  if (!novo) { showToast('A mensagem nao pode estar vazia.', 'aviso'); return; }
+  var novo = aplicarTokens(ta.value.trim(), state.mencoesEdicao);
+  if (!novo) { showToast('A mensagem não pode estar vazia.', 'aviso'); return; }
   var res = await _sb.from('chat_mensagens').update({ conteudo: novo, editada: true }).eq('id', id);
   if (res.error) { showToast('Erro ao editar: ' + res.error.message, 'erro'); return; }
   var idx = state.mensagens.findIndex(function(m){ return m.id === id; });
   if (idx !== -1) { state.mensagens[idx].conteudo = novo; state.mensagens[idx].editada = true; }
   state.editandoMsgId = null;
   var bolha = document.getElementById('bolha-' + id);
-  if (bolha) bolha.innerHTML = escMsg(novo);
+  if (bolha) bolha.innerHTML = renderConteudo(novo);
   var horaEl = bolha && bolha.parentElement ? bolha.parentElement.querySelector('.hora-mensagem') : null;
   if (horaEl && !horaEl.querySelector('.label-editada')) {
     var s = document.createElement('span'); s.className = 'label-editada'; s.textContent = '(editada)'; horaEl.appendChild(s);
@@ -820,6 +1267,9 @@ async function confirmarExclusao() {
   if (!state.msgParaExcluirId) return;
   var id = state.msgParaExcluirId;
   state.msgParaExcluirId = null;
+  var alvo = state.mensagens.find(function(m){ return m.id === id; });
+  var caminhos = ((alvo && alvo.anexos) || []).map(function(a){ return a.caminho_storage; });
+  if (caminhos.length) await _sb.storage.from('chat-anexos').remove(caminhos);
   var res = await _sb.from('chat_mensagens').delete().eq('id', id);
   if (res.error) { showToast('Erro ao excluir: ' + res.error.message, 'erro'); return; }
   state.mensagens = state.mensagens.filter(function(m){ return m.id !== id; });
@@ -830,10 +1280,13 @@ async function confirmarExclusao() {
 // ===== READ RECEIPTS =====
 async function marcarComoLida(conversaId) {
   if (!state.meuInternoId) return;
+  // Relogio do computador pode estar atrasado: usa o da ultima mensagem se for maior
+  var marco = Date.now();
+  state.mensagens.forEach(function(m){ marco = Math.max(marco, new Date(m.criado_em).getTime()); });
   await _sb.from('chat_read_receipts').upsert({
     conversa_id: conversaId,
     usuario_id: state.meuInternoId,
-    lida_ate: new Date().toISOString()
+    lida_ate: new Date(marco).toISOString()
   }, { onConflict: 'conversa_id,usuario_id' });
   var conv = state.conversas.find(function(c){ return c.id === conversaId; });
   if (conv) { conv.temNaoLida = false; renderConversas(); }
@@ -859,10 +1312,15 @@ function handleInsert(payload) {
   var msg = payload.new;
   if (!msg || state.mensagens.find(function(m){ return m.id === msg.id; })) return;
   var nomeAutor = state.usuarios[msg.autor_id] || 'Desconhecido';
-  var msgCompleta = Object.assign({}, msg, { autor: { id: msg.autor_id, nome_completo: nomeAutor } });
+  var msgCompleta = Object.assign({}, msg, { autor: { id: msg.autor_id, nome_completo: nomeAutor }, anexos: [] });
   state.mensagens.push(msgCompleta);
   appendMensagem(msgCompleta);
   atualizarPreviewConversa(msg);
+  // Anexos de outras pessoas sao gravados logo depois da mensagem
+  if (msg.autor_id !== state.meuInternoId) {
+    setTimeout(function(){ carregarAnexosMensagem(msg.id); }, 2000);
+    setTimeout(function(){ carregarAnexosMensagem(msg.id); }, 7000);
+  }
   if (msg.autor_id !== state.meuInternoId) marcarComoLida(msg.conversa_id);
 }
 
@@ -875,7 +1333,7 @@ function handleUpdate(payload) {
   state.mensagens[idx].editada = novo.editada;
   if (state.editandoMsgId === novo.id) return;
   var bolha = document.getElementById('bolha-' + novo.id);
-  if (bolha) bolha.innerHTML = escMsg(novo.conteudo || '');
+  if (bolha) bolha.innerHTML = renderConteudo(novo.conteudo || '');
   var horaEl = bolha && bolha.parentElement ? bolha.parentElement.querySelector('.hora-mensagem') : null;
   if (horaEl && novo.editada && !horaEl.querySelector('.label-editada')) {
     var s = document.createElement('span'); s.className = 'label-editada'; s.textContent = '(editada)'; horaEl.appendChild(s);
@@ -1039,7 +1497,7 @@ async function criarConversaGrupo() {
   if (rc.error) { showToast('Erro ao criar grupo: ' + rc.error.message, 'erro'); return; }
   var ids = [state.meuInternoId].concat(state.novaConversa.membrosGrupo);
   var rp = await _sb.from('chat_participantes').insert(ids.map(function(uid){
-    return { conversa_id: rc.data.id, usuario_id: uid, entrou_em: new Date().toISOString() };
+    return { conversa_id: rc.data.id, usuario_id: uid, entrou_em: new Date().toISOString(), papel: uid === state.meuInternoId ? 'admin' : 'comentador' };
   }));
   if (rp.error) { showToast('Erro ao adicionar membros: ' + rp.error.message, 'erro'); return; }
   closeModal('modalNovaConversa');
@@ -1066,6 +1524,191 @@ async function confirmarSairGrupo() {
   showToast('Voce saiu do grupo.', 'sucesso');
 }
 
+// ===== CONFIRMACAO GENERICA =====
+function pedirConfirmacao(texto, rotulo, acao) {
+  document.getElementById('textoConfirmar').textContent = texto;
+  var btn = document.getElementById('btnConfirmarAcao');
+  btn.textContent = rotulo;
+  btn.onclick = async function(){ closeModal('modalConfirmar'); await acao(); };
+  openModal('modalConfirmar');
+}
+
+function fecharJanelaConversa() {
+  unsubscribeConversa();
+  state.conversaAtiva = null;
+  document.getElementById('estadoVazioChat').style.display = 'flex';
+  document.getElementById('conversaHeader').style.display = 'none';
+  document.getElementById('mensagensScroll').style.display = 'none';
+  document.getElementById('barraEnvio').style.display = 'none';
+  document.getElementById('listaConversas').classList.remove('escondida');
+}
+
+// Recarrega a lista e reaplica a conversa aberta (apos mudar membros/papeis)
+async function recarregarConversaAtiva() {
+  var id = state.conversaAtiva && state.conversaAtiva.id;
+  await carregarConversas();
+  if (!id) return;
+  var conv = state.conversas.find(function(c){ return c.id === id; });
+  if (!conv) { fecharJanelaConversa(); return; }
+  state.conversaAtiva = conv;
+  atualizarHeader(conv);
+  renderMensagens();
+}
+
+// ===== APAGAR CONVERSA INDIVIDUAL (SO PARA MIM) =====
+function pedirApagarConversa() {
+  pedirConfirmacao('Apagar esta conversa? Ela sai da sua lista e o histórico some para você. A outra pessoa continua vendo normalmente. Se chegar mensagem nova, a conversa volta a aparecer.', 'Apagar', async function(){
+    // Usa o horario da ultima mensagem (relogio do servidor), pois o relogio
+    // do computador pode estar atrasado
+    var marco = Date.now();
+    state.mensagens.concat(state.conversaAtiva.lastMsg ? [state.conversaAtiva.lastMsg] : []).forEach(function(m){
+      marco = Math.max(marco, new Date(m.criado_em).getTime() + 1000);
+    });
+    var res = await _sb.from('chat_participantes').update({ oculta_em: new Date(marco).toISOString() })
+      .eq('conversa_id', state.conversaAtiva.id).eq('usuario_id', state.meuInternoId);
+    if (res.error) { showToast('Erro ao apagar conversa: ' + res.error.message, 'erro'); return; }
+    fecharJanelaConversa();
+    await carregarConversas();
+    showToast('Conversa apagada.', 'sucesso');
+  });
+}
+
+// ===== APAGAR GRUPO =====
+function pedirApagarGrupo() {
+  var conv = state.conversaAtiva;
+  if (!possoGerenciar(conv)) return;
+  pedirConfirmacao('Apagar o grupo "' + nomeConversa(conv) + '" para todos? Todas as mensagens e arquivos do grupo serão apagados definitivamente.', 'Apagar grupo', async function(){
+    var ra = await _sb.from('chat_anexos').select('caminho_storage,mensagem:chat_mensagens!inner(conversa_id)').eq('mensagem.conversa_id', conv.id);
+    var caminhos = (ra.data || []).map(function(a){ return a.caminho_storage; });
+    for (var i = 0; i < caminhos.length; i += 100) await _sb.storage.from('chat-anexos').remove(caminhos.slice(i, i + 100));
+    var res = await _sb.from('chat_conversas').delete().eq('id', conv.id);
+    if (res.error) { showToast('Erro ao apagar grupo: ' + res.error.message, 'erro'); return; }
+    closeModal('modalGrupo');
+    fecharJanelaConversa();
+    await carregarConversas();
+    showToast('Grupo apagado.', 'sucesso');
+  });
+}
+
+// ===== ADMINISTRADOR DO SISTEMA ENTRA NO GRUPO =====
+async function entrarNoGrupoComoAdmin() {
+  var conv = state.conversaAtiva;
+  if (!conv || !state.souAdminSistema) return;
+  var res = await _sb.from('chat_participantes').insert({ conversa_id: conv.id, usuario_id: state.meuInternoId, papel: 'admin' });
+  if (res.error) { showToast('Erro ao entrar no grupo: ' + res.error.message, 'erro'); return; }
+  await recarregarConversaAtiva();
+  showToast('Você entrou no grupo como administrador.', 'sucesso');
+}
+
+// ===== GERENCIAR GRUPO =====
+function abrirGerenciarGrupo() {
+  document.getElementById('inputAddMembro').value = '';
+  document.getElementById('candidatosGrupo').style.display = 'none';
+  renderGerenciarGrupo();
+  openModal('modalGrupo');
+}
+
+function renderGerenciarGrupo() {
+  var conv = state.conversaAtiva;
+  if (!conv) return;
+  var gerencia = possoGerenciar(conv);
+
+  document.getElementById('linhaNomeGrupo').innerHTML = gerencia
+    ? '<input type="text" class="campo-modal" id="inputRenomearGrupo" maxlength="80" value="' + esc(conv.nome_grupo || '') + '">' +
+      '<button class="btn-pequeno" onclick="salvarNomeGrupo()">Salvar</button>'
+    : '<div style="font-size:13px;color:var(--text);padding:6px 0">' + esc(conv.nome_grupo || 'Grupo') + '</div>';
+
+  var membros = (conv.participantes || []).slice().sort(function(a, b){
+    var ordem = { admin: 0, comentador: 1, leitor: 2 };
+    var d = (a.papel in ordem ? ordem[a.papel] : 1) - (b.papel in ordem ? ordem[b.papel] : 1);
+    return d || (state.usuarios[a.usuario_id] || '').localeCompare(state.usuarios[b.usuario_id] || '');
+  });
+  document.getElementById('tituloMembrosGrupo').textContent = 'Membros (' + membros.length + ')';
+  document.getElementById('listaMembrosGrupo').innerHTML = membros.map(function(p){
+    var nome = state.usuarios[p.usuario_id] || 'Colaborador inativo';
+    var ehEu = p.usuario_id === state.meuInternoId;
+    var papel = p.papel || 'comentador';
+    var controle = gerencia
+      ? '<div class="seletor-papel">' + ['admin', 'comentador', 'leitor'].map(function(k){
+          return '<button class="' + (k === papel ? 'ativo' : '') + '" onclick="mudarPapel(\'' + p.usuario_id + '\',\'' + k + '\')">' + NOME_PAPEL[k] + '</button>';
+        }).join('') + '</div>'
+      : '<span class="etiqueta-papel">' + NOME_PAPEL[papel] + '</span>';
+    var remover = gerencia && !ehEu
+      ? '<button class="btn-remover-membro" title="Remover do grupo" onclick="pedirRemoverMembro(\'' + p.usuario_id + '\')">&#10005;</button>'
+      : '';
+    return '<div class="membro-grupo"><div class="av-mini">' + esc(iniciais(nome)) + '</div>' +
+      '<div class="nome-membro">' + esc(nome) + (ehEu ? ' <small>(você)</small>' : '') + '</div>' + controle + remover + '</div>';
+  }).join('');
+
+  document.getElementById('secaoAdicionarMembros').style.display = gerencia ? 'block' : 'none';
+
+  var acoes = ['<button class="btn-gen-cancelar" onclick="closeModal(\'modalGrupo\')">Fechar</button>'];
+  if (conv.souMembro) acoes.push('<button class="btn-gen-cancelar" style="color:var(--danger)" onclick="closeModal(\'modalGrupo\');openModal(\'modalSairGrupo\')">Sair do grupo</button>');
+  if (gerencia) acoes.push('<button class="btn-gen-excluir" onclick="pedirApagarGrupo()">Apagar grupo</button>');
+  document.getElementById('acoesGrupo').innerHTML = acoes.join('');
+}
+
+async function salvarNomeGrupo() {
+  var nome = document.getElementById('inputRenomearGrupo').value.trim();
+  if (!nome) { showToast('Informe o nome do grupo.', 'aviso'); return; }
+  var res = await _sb.from('chat_conversas').update({ nome_grupo: nome }).eq('id', state.conversaAtiva.id);
+  if (res.error) { showToast('Erro ao renomear: ' + res.error.message, 'erro'); return; }
+  await recarregarConversaAtiva();
+  renderGerenciarGrupo();
+  showToast('Nome do grupo atualizado.', 'sucesso');
+}
+
+async function mudarPapel(usuarioId, papel) {
+  var res = await _sb.from('chat_participantes').update({ papel: papel })
+    .eq('conversa_id', state.conversaAtiva.id).eq('usuario_id', usuarioId);
+  if (res.error) {
+    var msg = /pelo menos um administrador/i.test(res.error.message) ? 'O grupo precisa de pelo menos um administrador.' : res.error.message;
+    showToast(msg, 'erro');
+    return;
+  }
+  await recarregarConversaAtiva();
+  renderGerenciarGrupo();
+}
+
+function pedirRemoverMembro(usuarioId) {
+  var nome = state.usuarios[usuarioId] || 'este colaborador';
+  closeModal('modalGrupo');
+  pedirConfirmacao('Remover ' + nome + ' do grupo? A pessoa deixa de ver as mensagens e arquivos do grupo.', 'Remover', async function(){
+    var res = await _sb.from('chat_participantes').delete()
+      .eq('conversa_id', state.conversaAtiva.id).eq('usuario_id', usuarioId);
+    if (res.error) { showToast('Erro ao remover: ' + res.error.message, 'erro'); return; }
+    await recarregarConversaAtiva();
+    abrirGerenciarGrupo();
+  });
+}
+
+function renderCandidatosGrupo(termo) {
+  var el = document.getElementById('candidatosGrupo');
+  var conv = state.conversaAtiva;
+  var atuais = (conv.participantes || []).map(function(p){ return p.usuario_id; });
+  var t = String(termo || '').trim().toLowerCase();
+  if (t.length < 2) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  var lista = Object.keys(state.usuarios).filter(function(id){
+    return atuais.indexOf(id) === -1 && state.usuarios[id].toLowerCase().indexOf(t) !== -1;
+  }).slice(0, 10);
+  el.style.display = 'block';
+  el.innerHTML = lista.length
+    ? lista.map(function(id){
+        return '<div class="item-busca-modal" onclick="adicionarMembro(\'' + id + '\')"><div class="av-mini">' + esc(iniciais(state.usuarios[id])) + '</div><span>' + esc(state.usuarios[id]) + '</span></div>';
+      }).join('')
+    : '<div class="sem-resultado-busca">Nenhum colega encontrado fora do grupo.</div>';
+}
+
+async function adicionarMembro(usuarioId) {
+  var res = await _sb.from('chat_participantes').insert({ conversa_id: state.conversaAtiva.id, usuario_id: usuarioId, papel: 'comentador' });
+  if (res.error) { showToast('Erro ao adicionar: ' + res.error.message, 'erro'); return; }
+  document.getElementById('inputAddMembro').value = '';
+  document.getElementById('candidatosGrupo').style.display = 'none';
+  await recarregarConversaAtiva();
+  renderGerenciarGrupo();
+  showToast((state.usuarios[usuarioId] || 'Colaborador') + ' entrou no grupo como Comentador.', 'sucesso');
+}
+
 // ===== INIT =====
 async function init() {
   try {
@@ -1076,10 +1719,11 @@ async function init() {
     if (!session) { window.location.href = 'login_padrao_metalico.html'; return; }
     state.session = session;
 
-    var rp = await _sb.from('usuarios').select('id,nome_completo').eq('auth_user_id', session.user.id).maybeSingle();
+    var rp = await _sb.from('usuarios').select('id,nome_completo,eh_administrador').eq('auth_user_id', session.user.id).maybeSingle();
     if (rp.data) {
       state.meuInternoId = rp.data.id;
       state.meuNome = rp.data.nome_completo;
+      state.souAdminSistema = !!rp.data.eh_administrador;
     }
 
     var ru = await _sb.from('usuarios').select('id,nome_completo').eq('ativo', true);
