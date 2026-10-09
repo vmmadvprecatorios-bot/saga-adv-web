@@ -414,6 +414,9 @@ function showToast(msg, tipo) {
 // Se o usuario ja estiver autenticado, redireciona direto.
 // ================================================================
 (async function verificarSessaoInicial() {
+  if (new URLSearchParams(window.location.search).get('motivo') === 'inatividade') {
+    showToast('Sua sessão foi encerrada após 2 horas sem uso fora do horário de expediente. Entre novamente.', 'info');
+  }
   try {
     var r = await _sb.auth.getSession();
     if (r.data && r.data.session) {
@@ -463,6 +466,8 @@ document.getElementById('formLogin').addEventListener('submit', async function (
       return;
     }
 
+    // Marca a entrada como atividade, para a contagem de inatividade do saga_ui.js
+    try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
     showToast('Acesso autorizado. Redirecionando...', 'sucesso');
     setTimeout(function () {
       window.location.href = TELA_POS_LOGIN;

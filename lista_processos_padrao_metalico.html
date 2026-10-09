@@ -1487,8 +1487,8 @@ function selStatus(s){state.filtroStatus=s;document.getElementById('labelFiltroS
 function selResp(u){state.filtroResponsavel=u;document.getElementById('labelFiltroResponsavel').textContent=u?(u.nome_completo.split(' ')[0]||'Responsavel'):'Responsavel';fecharTodosDropdowns();renderDropdownsResponsavel();aplicarFiltros();}
 
 // Acoes por linha
-function verFicha(id){window.location.href='ficha_cliente_padrao_metalico.html?processo_id='+id;}
-function editarProcesso(id){window.location.href='ficha_cliente_padrao_metalico.html?processo_id='+id+'&modo=editar';}
+function verFicha(id){window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id;}
+function editarProcesso(id){window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id+'&modo=editar';}
 function confirmarExclusao(id){
   state.processoParaExcluir=id;
   var p=state.processos.find(function(x){return x.id===id;});

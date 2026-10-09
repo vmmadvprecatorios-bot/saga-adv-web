@@ -310,21 +310,114 @@
     }catch(e){}
   }
 
+  // ===== PRESENCA EM TEMPO REAL =====
+  // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
+  // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
+  var NOMES_TELAS={processos:'Processos',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente'};
+  var _canalPresenca=null;
+  var _telaAtual='';
+  var _colaboradoresAtivos=null;
+
+  function iniciarPresenca(){
+    if(!global._sb||!_perfilAtual||_canalPresenca)return;
+    _canalPresenca=global._sb.channel('presenca-saga',{config:{presence:{key:_perfilAtual.id}}});
+    _canalPresenca.on('presence',{event:'sync'},renderizarPresenca);
+    _canalPresenca.subscribe(function(status){
+      if(status==='SUBSCRIBED'){
+        _canalPresenca.track({nome:_perfilAtual.nome_completo,tela:NOMES_TELAS[_telaAtual]||'',desde:new Date().toISOString()});
+      }
+    });
+  }
+
+  function renderizarPresenca(){
+    var estado=_canalPresenca?_canalPresenca.presenceState():{};
+    var online=Object.keys(estado).map(function(id){
+      var metas=estado[id]||[];
+      var telas=metas.map(function(m){return m.tela;}).filter(Boolean);
+      return {id:id,nome:(metas[0]&&metas[0].nome)||'Colaborador',telas:telas.filter(function(t,i){return telas.indexOf(t)===i;})};
+    }).sort(function(a,b){return a.nome.localeCompare(b.nome);});
+    var lbl=document.getElementById('onlineText');
+    if(lbl)lbl.textContent=online.length+' online agora';
+    var pop=document.getElementById('presencePop');
+    if(!pop)return;
+    var idsOnline=online.map(function(u){return u.id;});
+    var offline=(_colaboradoresAtivos||[]).filter(function(u){return idsOnline.indexOf(u.id)===-1;});
+    var htmlOnline=online.map(function(u){
+      return '<div class="pop-row"><span class="online-dot"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(u.nome)+'</div><div style="font-size:9px;color:var(--muted)">'+esc(u.telas.length?'Em: '+u.telas.join(', '):'Online')+'</div></div></div>';
+    }).join('');
+    var htmlOffline=offline.map(function(u){
+      return '<div class="pop-row" style="opacity:.6"><span style="width:7px;height:7px;border-radius:50%;background:#8b93a8;flex:0 0 auto"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(u.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">Offline</div></div></div>';
+    }).join('');
+    pop.innerHTML='<div class="pop-title">Online agora</div>'+(htmlOnline||'<div style="font-size:10.5px;color:var(--muted);padding:10px;text-align:center">Ninguém online.</div>')+
+      (htmlOffline?'<div class="pop-title">Offline</div>'+htmlOffline:'');
+  }
+
   async function carregarPresenca(){
     if(!global._sb)return;
     try{
-      var q=await global._sb.from('usuarios').select('id,nome_completo').eq('ativo',true);
-      var total=(q.data||[]).length;
-      var lbl=document.getElementById('onlineText');
-      if(lbl)lbl.textContent=total+' online agora';
-      var pop=document.getElementById('presencePop');
-      if(pop){
-        var linhas=(q.data||[]).map(function(u){
-          return '<div class="pop-row"><span class="online-dot"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(u.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">Online</div></div></div>';
-        }).join('');
-        pop.innerHTML='<div class="pop-title">Colaboradores ativos</div>'+(linhas||'<div style="font-size:10.5px;color:var(--muted);padding:12px;text-align:center">Ninguem online.</div>');
+      if(!_colaboradoresAtivos){
+        var q=await global._sb.from('usuarios').select('id,nome_completo').eq('ativo',true).order('nome_completo');
+        _colaboradoresAtivos=q.data||[];
       }
+      iniciarPresenca();
+      renderizarPresenca();
     }catch(e){}
+  }
+
+  // ===== SAIDA AUTOMATICA POR INATIVIDADE =====
+  // Expediente: segunda a sexta, das 8h as 18h (horario de Maceio).
+  // Durante o expediente o sistema nunca desconecta sozinho. Fora dele,
+  // desconecta apos 2 horas sem uso, contando so o tempo fora do expediente.
+  var HORA_INICIO_EXPEDIENTE=8,HORA_FIM_EXPEDIENTE=18;
+  var LIMITE_INATIVIDADE_MIN=120;
+  var CHAVE_ATIVIDADE='saga-ultima-atividade';
+  var _fmtMaceio=new Intl.DateTimeFormat('en-US',{timeZone:'America/Maceio',weekday:'short',hour:'2-digit',hour12:false});
+
+  function emExpediente(ms){
+    var partes={};
+    _fmtMaceio.formatToParts(new Date(ms)).forEach(function(p){partes[p.type]=p.value;});
+    var hora=parseInt(partes.hour,10)%24;
+    var diaUtil=['Mon','Tue','Wed','Thu','Fri'].indexOf(partes.weekday)!==-1;
+    return diaUtil&&hora>=HORA_INICIO_EXPEDIENTE&&hora<HORA_FIM_EXPEDIENTE;
+  }
+
+  // Minutos fora do expediente entre a ultima atividade e agora
+  function minutosOciososForaDoExpediente(){
+    var ultima=parseInt(localStorage.getItem(CHAVE_ATIVIDADE)||'0',10);
+    if(!ultima)return 0;
+    var agora=Date.now(),passo=5*60*1000,total=0;
+    var inicio=Math.max(ultima,agora-15*24*60*60*1000);
+    for(var t=inicio;t<agora;t+=passo){
+      if(!emExpediente(t))total+=Math.min(passo,agora-t)/60000;
+      if(total>=LIMITE_INATIVIDADE_MIN)break;
+    }
+    return total;
+  }
+
+  var _ultimoRegistroAtividade=0;
+  function registrarAtividade(){
+    var agora=Date.now();
+    if(agora-_ultimoRegistroAtividade<30000)return;
+    _ultimoRegistroAtividade=agora;
+    try{localStorage.setItem(CHAVE_ATIVIDADE,String(agora));}catch(e){}
+  }
+
+  async function verificarInatividade(){
+    if(!global._sb)return false;
+    if(minutosOciososForaDoExpediente()>=LIMITE_INATIVIDADE_MIN){
+      await global.sagaLogout('inatividade');
+      return true;
+    }
+    return false;
+  }
+
+  function ligarControleInatividade(){
+    if(document.body.dataset.sagaInatividadeLigada)return;
+    document.body.dataset.sagaInatividadeLigada='true';
+    ['mousemove','mousedown','keydown','scroll','touchstart','wheel'].forEach(function(ev){
+      document.addEventListener(ev,registrarAtividade,{passive:true,capture:true});
+    });
+    setInterval(verificarInatividade,60000);
   }
 
   async function carregarNotificacoes(){
@@ -427,13 +520,20 @@
     }
   }
 
-  global.sagaLogout=async function(){
+  global.sagaLogout=async function(motivo){
     if(!global._sb)return;
+    try{if(_canalPresenca)await _canalPresenca.untrack();}catch(e){}
     try{await global._sb.auth.signOut();}catch(e){}
-    window.location.href='login_padrao_metalico.html';
+    try{localStorage.removeItem(CHAVE_ATIVIDADE);}catch(e){}
+    window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'?'?motivo=inatividade':'');
   };
 
   async function carregar(telaAtiva){
+    _telaAtual=telaAtiva||'';
+    // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
+    if(await verificarInatividade())return;
+    registrarAtividade();
+    ligarControleInatividade();
     var sb=document.getElementById('sidebarSaga');
     if(sb)sb.innerHTML=SIDEBAR_HTML;
     var tb=document.getElementById('topbarSaga');

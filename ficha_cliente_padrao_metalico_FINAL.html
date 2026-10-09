@@ -3338,9 +3338,20 @@ async function init(){
     if(nav)nav.style.display='none';
     const params=new URLSearchParams(window.location.search);
     const pessoaId=params.get('pessoa_id');
+    const processoIdUrl=params.get('processo_id');
     if(pessoaId){
-      await carregarFicha(pessoaId,null);
+      await carregarFicha(pessoaId,processoIdUrl||null);
       return;
+    }
+    // Lista de processos, Kanban e busca do topo abrem a ficha pelo processo:
+    // descobre o cliente dono do processo e abre com ele selecionado
+    if(processoIdUrl){
+      const rproc=await _sb.from('processos').select('id,pessoa_id').eq('id',processoIdUrl).maybeSingle();
+      if(rproc.data&&rproc.data.pessoa_id){
+        await carregarFicha(rproc.data.pessoa_id,rproc.data.id);
+        return;
+      }
+      showToast('Processo não encontrado ou sem permissão de acesso.','error');
     }
     state.processos=[];
     state.activeProcessId=null;
