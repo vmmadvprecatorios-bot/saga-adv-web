@@ -1109,7 +1109,7 @@ async function carregarPerfil(){
 
 // Opcoes de filtros
 async function carregarOpcoesFiltros(){
-  var t=await _sb.from('teses').select('id,nome').eq('ativo',true).order('nome');state.teses=t.data||[];
+  var t=await _sb.from('teses').select('id,nome,cor').eq('ativo',true).order('nome');state.teses=t.data||[];
   var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem').eq('ativo',true).order('ordem');state.statusList=s.data||[];
   var u=await _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).order('nome_completo');state.responsaveis=u.data||[];
   renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();
@@ -1177,7 +1177,7 @@ async function carregarProcessos(){
     }
     var SELECT='id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,'+
       'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp),'+
-      'tese:teses!tese_id(id,nome),'+
+      'tese:teses!tese_id(id,nome,cor),'+
       'status:status_funil!status_id(id,nome,cor,fase,ordem),'+
       'responsavel:usuarios!responsavel_id(id,nome_completo)';
     var query=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
@@ -1241,9 +1241,14 @@ function renderEstadoVazio(){
 
 // Helpers de render
 function statusBadge(st){
-  if(!st)return '<span class="badge-status" style="background:rgba(139,147,168,.14);color:#8b93a8"><span style="background:#8b93a8"></span>Sem status</span>';
-  var cor=st.cor||'#9aa8c2';
-  return '<span class="badge-status" style="background:'+cor+'22;color:'+cor+'"><span style="background:'+cor+'"></span>'+esc(st.nome)+'</span>';
+  if(!st)return '<span class="etq"><span class="etq-ponto"></span>Sem status</span>';
+  return '<span class="etq" style="--c:'+esc(st.cor||'#8a94a8')+'"><span class="etq-ponto"></span>'+esc(st.nome)+'</span>';
+}
+// Etiqueta da tese na cor escolhida no catalogo (estilo .etq em saga_tema.css)
+function teseTag(te){
+  if(!te||!te.nome)return '<span class="etq">N/D</span>';
+  var cor=te.cor||(state.teses.find(function(t){return t.id===te.id;})||{}).cor||'#8a94a8';
+  return '<span class="etq" style="--c:'+esc(cor)+'">'+esc(te.nome)+'</span>';
 }
 function borrar(val,sigilo){
   if(sigilo&&!state.permissoes.editar_dados)return '<span class="dado-sigiloso">'+esc(String(val))+'</span>';
@@ -1273,7 +1278,7 @@ function renderLista(){
     return '<tr onclick="verFicha(\''+p.id+'\')">'
       +'<td onclick="event.stopPropagation()"><input type="checkbox" class="chk-linha" value="'+p.id+'"></td>'
       +'<td><div style="display:flex;align-items:center;gap:5px">'+sigiloIcone(sig)+'<div><span class="nome-cliente">'+borrar(pe.nome_completo||'N/D',sig)+'</span><span class="cpf-pequeno">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</span></div></div></td>'
-      +'<td><span class="mini-tag">'+esc(te.nome||'N/D')+'</span></td>'
+      +'<td>'+teseTag(te)+'</td>'
       +'<td>'+statusBadge(st)+'</td>'
       +'<td>'+respHtml+'</td>'
       +'<td style="font-size:11.5px">'+esc(fmtData(p.data_inicio))+'</td>'
@@ -1288,7 +1293,7 @@ function renderLista(){
     var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var st=p.status||{};var re=p.responsavel||{};
     return '<div class="cartao-cliente" onclick="verFicha(\''+p.id+'\')">'
       +'<div class="cartao-topo"><div><div class="cartao-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div><div class="cartao-cpf">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</div></div>'+statusBadge(st)+'</div>'
-      +'<div class="cartao-linha"><span class="cartao-label">Tese</span><span class="mini-tag">'+esc(te.nome||'N/D')+'</span></div>'
+      +'<div class="cartao-linha"><span class="cartao-label">Tese</span>'+teseTag(te)+'</div>'
       +'<div class="cartao-linha"><span class="cartao-label">Responsavel</span>'+(re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted)">N/A</span>')+'</div>'
       +'<div class="cartao-rodape">'+prazoHtml(p.data_prazo)+acoesBtns(p)+'</div>'
       +'</div>';
@@ -1363,7 +1368,7 @@ function renderKanban(){
         +(sig?'<div class="card-sigilo">'+lockSvg()+' Sigiloso</div>':'')
         +'<div class="card-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div>'
         +'<div class="card-cpf">'+(pe.cpf?'CPF '+mascaraCpf(pe.cpf):'CPF nao informado')+'</div>'
-        +'<div class="card-tags">'+(te.nome?'<span class="card-mini-tag">'+esc(te.nome)+'</span>':'')+'</div>'
+        +'<div class="card-tags">'+(te.nome?teseTag(te):'')+'</div>'
         +'<div class="card-rodape">'
         +'<div style="display:flex;align-items:center;gap:6px">'
         +(re.nome_completo?'<div class="card-avatar" title="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>':'')

@@ -84,3 +84,21 @@ body[data-theme="light"]{
 
 /* Legibilidade: titulos de colunas de tabela mais fortes nos dois modos */
 th{color:var(--muted)!important;font-weight:600!important}
+
+/* Etiquetas coloridas (tese, status): a cor vem de --c, definida no proprio elemento.
+   O texto e clareado no modo escuro e escurecido no claro para ficar sempre legivel. */
+.etq{
+  --c:#8a94a8;
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:999px;
+  font-size:11px;font-weight:600;line-height:1.25;white-space:nowrap;
+  background:color-mix(in srgb,var(--c) 20%,transparent);
+  border:1px solid color-mix(in srgb,var(--c) 45%,transparent);
+  color:color-mix(in srgb,var(--c) 55%,#ffffff);
+}
+.etq .etq-ponto{width:7px;height:7px;border-radius:50%;background:var(--c);flex:0 0 auto}
+[data-theme="light"] .etq{
+  background:color-mix(in srgb,var(--c) 13%,#ffffff);
+  border-color:color-mix(in srgb,var(--c) 45%,#ffffff);
+  color:color-mix(in srgb,var(--c) 65%,#000000);
+}
