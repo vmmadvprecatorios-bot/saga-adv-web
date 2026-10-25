@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;--gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;--panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;--border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);--text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;--radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35)}
-[data-theme="light"]{--navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;--gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;--panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#ffffff;--border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);--text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13)}
+:root{--navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;--gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#2f6cd6;--panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;--border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);--text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;--radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35)}
+[data-theme="light"]{--navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;--gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;--panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#ffffff;--border:rgba(19,38,66,.28);--border-soft:rgba(19,38,66,.18);--text:#13233a;--muted:#4a586e;--shadow:0 22px 55px rgba(13,25,45,.13)}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
 body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden;transition:background .25s,color .25s}
 body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--gold) 8%,transparent),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
@@ -40,7 +40,7 @@ button{border:0;background:transparent;color:inherit;text-align:inherit;font:inh
 .aba-topo{padding:8px 14px;border-radius:9px;color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap}.aba-topo.ativa{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700}
 .main-tab{display:none}.main-tab.active{display:block}
 .panel{border:1px solid var(--border-soft);border-radius:var(--radius);background:var(--panel);backdrop-filter:blur(18px);box-shadow:0 10px 22px rgba(0,0,0,.06)}
-[data-theme="light"] .panel{box-shadow:0 10px 22px rgba(81,61,20,.06)}
+[data-theme="light"] .panel{box-shadow:0 10px 22px rgba(13,25,45,.06)}
 .filters-panel{padding:16px;margin-bottom:16px;border:1px solid var(--border-soft);border-radius:var(--radius);background:var(--panel)}
 .filters-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .field{height:37px;background:color-mix(in srgb,var(--text) 5%,transparent);border:1px solid var(--border-soft);border-radius:9px;color:var(--text);padding:0 11px;outline:0;font-size:11px;font-family:Montserrat,sans-serif;min-width:130px}.field:focus{border-color:var(--gold)}.field::placeholder{color:var(--muted)}
@@ -209,7 +209,7 @@ button{border:0;background:transparent;color:inherit;text-align:inherit;font:inh
   <div class="top-left">
     <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
     <div class="brand">
-      <svg class="crest" viewBox="0 0 220 220"><defs><linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6fa2ff"/><stop offset="38%" stop-color="#4b8af5"/><stop offset="60%" stop-color="#8a6f33"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#cg)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#cg)">VM</text></g></svg>
+      <svg class="crest" viewBox="0 0 220 220"><defs><linearGradient id="cg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6fa2ff"/><stop offset="38%" stop-color="#4b8af5"/><stop offset="60%" stop-color="#2f6cd6"/><stop offset="100%" stop-color="#cfe0ff"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#cg)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#cg)">VM</text></g></svg>
       <div class="brand-name">VMM<b>ADV</b></div>
     </div>
   </div>

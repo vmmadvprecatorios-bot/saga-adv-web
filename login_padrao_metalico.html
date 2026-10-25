@@ -88,7 +88,7 @@
   }
   .frase-visual h2 em{color:var(--gold-light);font-style:italic;}
   .frase-visual p{
-    font-size:12.5px;color:var(--muted);line-height:1.72;font-weight:300;
+    font-size:12.5px;color:var(--muted);line-height:1.72;font-weight:400;
   }
 
   .rodape-esquerdo{
@@ -110,7 +110,7 @@
     content:'';position:absolute;inset:0;
     background:
       radial-gradient(circle at 70% 25%, color-mix(in srgb,var(--gold) 7%,transparent), transparent 52%),
-      radial-gradient(circle at 20% 80%, rgba(138,106,35,.04), transparent 42%);
+      radial-gradient(circle at 20% 80%, rgba(19,38,66,.04), transparent 42%);
   }
 
   .formulario-login{
@@ -121,29 +121,29 @@
   .form-cabecalho{text-align:center;margin-bottom:32px;}
   .form-cabecalho h1{
     font-family:'Cormorant Garamond',serif;
-    font-size:27px;font-weight:600;color:#2a2517;margin-bottom:7px;
+    font-size:27px;font-weight:600;color:#13233a;margin-bottom:7px;
   }
-  .form-cabecalho p{font-size:12px;color:#7a7461;font-weight:300;}
+  .form-cabecalho p{font-size:12px;color:#4a586e;font-weight:400;}
 
   .campo-form{margin-bottom:15px;}
   .campo-form label{
     display:block;
-    font-size:10.5px;font-weight:600;color:#5a4f3a;
+    font-size:10.5px;font-weight:600;color:#3b4b64;
     letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px;
   }
   .campo-form input{
     width:100%;
     background:#fff;
-    border:1.5px solid rgba(138,106,35,.22);
+    border:1.5px solid rgba(19,38,66,.22);
     border-radius:var(--radius-sm);
     padding:13px 15px;
-    color:#2a2517;
+    color:#13233a;
     font-size:13.5px;
     font-family:'Montserrat',sans-serif;
     outline:none;
     transition:border-color .25s,box-shadow .25s;
   }
-  .campo-form input::placeholder{color:#b5a98a;}
+  .campo-form input::placeholder{color:#8c99ad;}
   .campo-form input:focus{
     border-color:var(--gold);
     box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 13%,transparent);
@@ -151,7 +151,7 @@
 
   .opcoes-form{
     display:flex;justify-content:space-between;align-items:center;
-    font-size:11.5px;color:#7a7461;
+    font-size:11.5px;color:#4a586e;
     margin:6px 0 24px;
   }
   .opcoes-form label{
@@ -166,7 +166,7 @@
   .btn-entrar{
     display:block;width:100%;
     background:linear-gradient(135deg, var(--gold-light), var(--gold));
-    color:#2a2517;
+    color:#13233a;
     padding:14px;
     font-size:13px;font-weight:700;letter-spacing:.4px;
     border-radius:var(--radius-sm);
@@ -177,7 +177,7 @@
   .btn-entrar:disabled{opacity:0.6;cursor:not-allowed;}
 
   .rodape-form{
-    text-align:center;font-size:10.5px;color:#9a9076;
+    text-align:center;font-size:10.5px;color:#6b778a;
     margin-top:24px;
   }
 
@@ -204,7 +204,7 @@
   /* ===== MODAL RECUPERACAO DE SENHA ===== */
   .modal-recuperacao-overlay{
     display:none;position:fixed;inset:0;
-    background:rgba(42,37,23,.52);
+    background:rgba(19,35,58,.52);
     z-index:500;
     align-items:center;justify-content:center;
     padding:20px;
@@ -213,7 +213,7 @@
   .modal-recuperacao-card{
     width:100%;max-width:380px;
     background:linear-gradient(160deg,#ffffff 0%,#f3f5f8 100%);
-    border:1.5px solid rgba(138,106,35,.28);
+    border:1.5px solid rgba(19,38,66,.28);
     border-radius:var(--radius);
     padding:36px 32px 32px;
     box-shadow:0 28px 60px rgba(0,0,0,.28);
@@ -221,26 +221,26 @@
   }
   .modal-recuperacao-card h3{
     font-family:'Cormorant Garamond',serif;
-    font-size:22px;font-weight:600;color:#2a2517;
+    font-size:22px;font-weight:600;color:#13233a;
     margin-bottom:8px;
   }
   .modal-recuperacao-card > p{
-    font-size:12px;color:#7a7461;line-height:1.65;
+    font-size:12px;color:#4a586e;line-height:1.65;
     margin-bottom:24px;
   }
   .btn-fechar-modal{
     position:absolute;top:14px;right:16px;
     width:28px;height:28px;border-radius:50%;
-    background:rgba(138,106,35,.09);
+    background:rgba(19,38,66,.09);
     color:var(--gold-deep);font-size:15px;
     display:flex;align-items:center;justify-content:center;
     transition:background .2s;
   }
-  .btn-fechar-modal:hover{background:rgba(138,106,35,.18);}
+  .btn-fechar-modal:hover{background:rgba(19,38,66,.18);}
   .btn-recuperar{
     display:block;width:100%;
     background:linear-gradient(135deg,var(--gold-light),var(--gold));
-    color:#2a2517;
+    color:#13233a;
     padding:13px;
     font-size:13px;font-weight:700;letter-spacing:.4px;
     border-radius:var(--radius-sm);
@@ -304,11 +304,11 @@
       <svg width="210" height="210" viewBox="0 0 220 220">
         <defs>
           <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%"   stop-color="#e8d2a0"/>
+            <stop offset="0%"   stop-color="#b9d0f1"/>
             <stop offset="30%"  stop-color="#4b8af5"/>
-            <stop offset="55%"  stop-color="#8a6a38"/>
+            <stop offset="55%"  stop-color="#2f6cd6"/>
             <stop offset="78%"  stop-color="#6fa2ff"/>
-            <stop offset="100%" stop-color="#f0e8d0"/>
+            <stop offset="100%" stop-color="#e6ecf3"/>
           </linearGradient>
         </defs>
         <g transform="translate(110,110)">

@@ -19,7 +19,7 @@ body[data-theme="dark"]{
   --border-soft:rgba(255,255,255,.06);
   /* texto */
   --text:#e7eaf0;
-  --muted:#8d97a8;
+  --muted:#a0aabb;
   /* destaque (antigo dourado): azul vivo */
   --gold:#4b8af5;
   --gold-light:#6fa2ff;
@@ -44,7 +44,7 @@ body[data-theme="light"]{
   --border:rgba(19,38,66,.20);
   --border-soft:rgba(19,38,66,.12);
   --text:#13233a;
-  --muted:#55637a;
+  --muted:#4a586e;
   --gold:#1f3e6d;
   --gold-light:#2c5592;
   --gold-deep:#142b4d;
@@ -81,3 +81,6 @@ body[data-theme="light"]{
   background:var(--gold)!important;
   border-color:var(--gold)!important;
 }
+
+/* Legibilidade: titulos de colunas de tabela mais fortes nos dois modos */
+th{color:var(--muted)!important;font-weight:600!important}
