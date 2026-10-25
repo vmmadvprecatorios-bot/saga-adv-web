@@ -361,6 +361,32 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
   .seletor-quantidade{justify-content:space-between;}
 }
 @media(max-width:400px){.brand-name{font-size:15px;}.avatar{width:28px;height:28px;}.top-right{gap:12px;}}
+/* Catalogo de Teses e Status */
+.modal-box{width:100%;max-width:480px;margin:auto;border:1px solid var(--border);border-radius:18px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));color:var(--text);box-shadow:0 32px 78px rgba(0,0,0,.5);}
+.cat-tabs{display:flex;gap:5px;margin-bottom:14px;background:var(--panel);padding:4px;border-radius:10px;border:1px solid var(--border-soft);}
+.cat-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;height:32px;border-radius:7px;font-size:11px;font-weight:600;color:var(--muted);transition:background .15s,color .15s;}
+.cat-tab:hover{color:var(--text);}
+.cat-tab.ativo{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-weight:700;}
+.cat-tab-qtd{min-width:20px;height:18px;padding:0 6px;border-radius:9px;background:color-mix(in srgb,var(--text) 10%,transparent);font-size:9.5px;display:inline-flex;align-items:center;justify-content:center;}
+.cat-tab.ativo .cat-tab-qtd{background:rgba(10,18,36,.18);}
+.cat-lista{max-height:46vh;overflow-y:auto;padding-right:2px;}
+.cat-grupo{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);padding:12px 0 4px;}
+.cat-grupo:first-child{padding-top:0;}
+.cat-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-soft);}
+.cat-item input[type=text]{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border-soft);border-radius:7px;color:inherit;padding:6px 8px;font-size:12px;font-family:inherit;outline:0;}
+.cat-item input[type=text]:focus{border-color:var(--gold);}
+.cat-swatch{width:26px;height:26px;flex:0 0 auto;border-radius:7px;border:2px solid color-mix(in srgb,var(--text) 18%,transparent);cursor:pointer;transition:transform .15s,border-color .15s;}
+.cat-swatch:hover{transform:scale(1.08);border-color:var(--gold-light);}
+.cat-nova-cor{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.cat-nova-cor span{color:var(--gold);font-size:9px;font-weight:700;letter-spacing:.65px;text-transform:uppercase;}
+.paleta-pop{position:fixed;z-index:2000;display:none;width:214px;padding:12px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));box-shadow:0 18px 44px rgba(0,0,0,.45);}
+.paleta-pop.aberto{display:block;}
+.paleta-grade{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;}
+.paleta-cor{width:26px;height:26px;border-radius:7px;border:2px solid transparent;cursor:pointer;transition:transform .12s;}
+.paleta-cor:hover{transform:scale(1.12);}
+.paleta-cor.selecionada{border-color:var(--text);box-shadow:0 0 0 2px var(--gold);}
+.paleta-personalizada{display:flex;align-items:center;gap:8px;margin-top:11px;padding-top:10px;border-top:1px solid var(--border-soft);font-size:11px;color:var(--muted);cursor:pointer;}
+.paleta-personalizada input{width:26px;height:26px;padding:0;border:none;border-radius:6px;background:none;cursor:pointer;}
 </style>
 </head>
 <body data-theme="dark">
@@ -463,21 +489,21 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
   <div class="modal-box" style="max-width:520px">
     <div class="modal-head"><div><h3>Gerenciar catalogos</h3><p>Crie, renomeie, escolha cores ou desative teses e status.</p></div><button class="modal-close" onclick="closeModal('modalGerenciarCatalogos')">&#x2715;</button></div>
     <div class="modal-body">
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <button type="button" class="btn-secondary" id="tabCatTeses" onclick="trocarTabCatalogo('teses')">Teses</button>
-        <button type="button" class="btn-secondary" id="tabCatStatus" onclick="trocarTabCatalogo('status')">Status</button>
+      <div class="cat-tabs">
+        <button type="button" class="cat-tab" id="tabCatTeses" onclick="trocarTabCatalogo('teses')">Teses <span class="cat-tab-qtd" id="qtdCatTeses">0</span></button>
+        <button type="button" class="cat-tab" id="tabCatStatus" onclick="trocarTabCatalogo('status')">Status <span class="cat-tab-qtd" id="qtdCatStatus">0</span></button>
       </div>
-      <div id="listaCatalogoTeses"></div>
-      <div id="listaCatalogoStatus" style="display:none"></div>
+      <div class="cat-lista" id="listaCatalogoTeses"></div>
+      <div class="cat-lista" id="listaCatalogoStatus" style="display:none"></div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
         <div id="formNovaTeseCat">
           <div class="form-field"><label>Nova tese</label><input type="text" id="novaTeseCatNome" placeholder="Nome da tese"></div>
-          <div class="form-field" style="margin-top:8px;display:flex;align-items:center;gap:10px"><label style="margin:0">Cor</label><input type="color" id="novaTeseCatCor" value="#c9a227"></div>
+          <div class="cat-nova-cor"><span>Cor</span><button type="button" class="cat-swatch" id="swatchNovaTese" title="Escolher cor" onclick="abrirPaletaNovo(this,'novaTeseCatCor')"></button><input type="hidden" id="novaTeseCatCor" value="#c9a227"></div>
           <button type="button" class="btn-secondary" style="margin-top:10px" onclick="criarTeseCatalogo()">+ Adicionar tese</button>
         </div>
         <div id="formNovoStatusCat" style="display:none">
           <div class="form-field"><label>Novo status</label><input type="text" id="novoStatusCatNome" placeholder="Nome do status"></div>
-          <div class="form-field" style="margin-top:8px;display:flex;align-items:center;gap:10px"><label style="margin:0">Cor</label><input type="color" id="novoStatusCatCor" value="#c9a227"></div>
+          <div class="cat-nova-cor"><span>Cor</span><button type="button" class="cat-swatch" id="swatchNovoStatus" title="Escolher cor" onclick="abrirPaletaNovo(this,'novoStatusCatCor')"></button><input type="hidden" id="novoStatusCatCor" value="#c9a227"></div>
           <div class="form-field" style="margin-top:8px">
             <label>Fase</label>
             <div class="dropdown-custom" id="dropdownNovaFaseCat"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovaFaseCat')"><span id="labelNovaFaseCat">Selecione a fase...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovaFaseCat"></div></div>
@@ -503,6 +529,8 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
     <div class="modal-foot"><button class="btn-secondary" onclick="closeModal('modalRealocarCatalogo')">Cancelar</button><button class="btn-danger-solid" onclick="confirmarRealocarEDesativar()">Confirmar desativacao</button></div>
   </div>
 </div>
+
+<div class="paleta-pop" id="paletaPop"><div class="paleta-grade" id="paletaGrade"></div><label class="paleta-personalizada"><input type="color" id="paletaPersonalizada" value="#c9a227">Cor personalizada</label></div>
 
 <!-- TOPBAR -->
 <header class="topbar" id="topbarSaga"></header>
@@ -742,14 +770,92 @@ function selNovoResponsavel(u){
 /* ---------- Gerenciar catalogos (Teses e Status) ---------- */
 state.catalogoTab='teses';
 state.realocar={tipo:null,id:null,nome:null,afetados:0,destinoId:null};
+var PALETA_CATALOGO=['#c9a227','#e07a3f','#e85d5d','#d9467a','#c46a9c','#b05cc8','#7c6cf0','#4f7de0','#3aa0d8','#2bb5b5','#4cc3a0','#2fae7a','#6cbf4a','#a8b83a','#d4a73a','#a0785a','#8a94a8','#5b6b8a'];
+var COR_CINZA_PADRAO='#9aa8c2';
+function corSemDefinir(cor){return !cor||String(cor).toLowerCase()===COR_CINZA_PADRAO;}
+function proximaCorLivre(lista){
+  var usadas=(lista||[]).map(function(x){return String(x.cor||'').toLowerCase();});
+  var livre=PALETA_CATALOGO.find(function(c){return usadas.indexOf(c)===-1;});
+  return livre||PALETA_CATALOGO[(lista||[]).length%PALETA_CATALOGO.length];
+}
+// O Supabase nao devolve erro quando uma regra de permissao (RLS) bloqueia um
+// update: so nao altera nenhuma linha. Por isso o update pede as linhas de
+// volta (.select) e, se nada voltar, a alteracao foi recusada.
+async function atualizarCatalogo(tabela,id,campos){
+  var r=await _sb.from(tabela).update(campos).eq('id',id).select('id');
+  if(r.error)return {ok:false,motivo:'erro'};
+  if(!r.data||!r.data.length)return {ok:false,motivo:'recusado'};
+  return {ok:true};
+}
+function avisarFalhaCatalogo(res,acao){
+  if(res.motivo==='recusado')showToast('O banco recusou '+acao+'. Sua conta nao tem permissao de gravar nesta tabela.','error');
+  else showToast('Nao foi possivel '+acao.replace(/^a /,'')+'. Tente novamente.','error');
+}
+// Itens sem cor (ou com o cinza padrao) recebem uma cor da paleta, gravada no banco.
+async function colorirSemCor(tabela,lista){
+  var pendentes=lista.filter(function(x){return corSemDefinir(x.cor);});
+  for(var i=0;i<pendentes.length;i++){
+    var item=pendentes[i];
+    var cor=proximaCorLivre(lista);
+    var res=await atualizarCatalogo(tabela,item.id,{cor:cor});
+    if(!res.ok)return false;
+    item.cor=cor;
+  }
+  return pendentes.length>0;
+}
+
+/* Paleta de cores (popover unico, reaproveitado por todos os quadradinhos) */
+var _paletaAoEscolher=null;
+function abrirPaleta(ancora,corAtual,aoEscolher){
+  var pop=document.getElementById('paletaPop');
+  var grade=document.getElementById('paletaGrade');
+  var atual=String(corAtual||'').toLowerCase();
+  grade.innerHTML=PALETA_CATALOGO.map(function(c){return '<button type="button" class="paleta-cor'+(c===atual?' selecionada':'')+'" data-paleta-cor="'+c+'" style="background:'+c+'" title="'+c+'"></button>';}).join('');
+  document.getElementById('paletaPersonalizada').value=/^#[0-9a-f]{6}$/.test(atual)?atual:'#c9a227';
+  _paletaAoEscolher=aoEscolher;
+  pop.classList.add('aberto');
+  var r=ancora.getBoundingClientRect();
+  var larg=pop.offsetWidth,alt=pop.offsetHeight;
+  var x=Math.min(Math.max(8,r.left),window.innerWidth-larg-8);
+  var y=r.bottom+6;if(y+alt>window.innerHeight-8)y=Math.max(8,r.top-alt-6);
+  pop.style.left=x+'px';pop.style.top=y+'px';
+}
+function fecharPaleta(){document.getElementById('paletaPop').classList.remove('aberto');_paletaAoEscolher=null;}
+function escolherCorPaleta(cor){var fn=_paletaAoEscolher;fecharPaleta();if(fn)fn(cor);}
+document.getElementById('paletaGrade').addEventListener('click',function(e){
+  var b=e.target.closest('[data-paleta-cor]');if(b)escolherCorPaleta(b.getAttribute('data-paleta-cor'));
+});
+document.getElementById('paletaPersonalizada').addEventListener('change',function(){escolherCorPaleta(this.value);});
+document.addEventListener('mousedown',function(e){
+  var pop=document.getElementById('paletaPop');
+  if(pop.classList.contains('aberto')&&!pop.contains(e.target)&&!e.target.closest('.cat-swatch'))fecharPaleta();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&document.getElementById('paletaPop').classList.contains('aberto')){e.preventDefault();e.stopImmediatePropagation();fecharPaleta();}
+},true);
+document.getElementById('modalGerenciarCatalogos').addEventListener('scroll',fecharPaleta,true);
+function abrirPaletaNovo(botao,inputId){
+  var input=document.getElementById(inputId);
+  abrirPaleta(botao,input.value,function(cor){input.value=cor;botao.style.background=cor;});
+}
+function prepararCorNova(inputId,swatchId,lista){
+  var cor=proximaCorLivre(lista);
+  document.getElementById(inputId).value=cor;
+  document.getElementById(swatchId).style.background=cor;
+}
+
 async function abrirGerenciarCatalogos(){
-  await carregarTodasTeses();
-  await carregarTodosStatus();
+  await Promise.all([carregarTodasTeses(),carregarTodosStatus()]);
   trocarTabCatalogo('teses');
   openModal('modalGerenciarCatalogos');
+  var r=await Promise.all([colorirSemCor('teses',state.todasTeses),colorirSemCor('status_funil',state.todosStatus)]);
+  if(r[0])renderCatalogoTeses();
+  if(r[1])renderCatalogoStatus();
+  if(r[0]||r[1])await carregarOpcoesFiltros();
 }
 function trocarTabCatalogo(tab){
   state.catalogoTab=tab;
+  fecharPaleta();
   document.getElementById('tabCatTeses').classList.toggle('ativo',tab==='teses');
   document.getElementById('tabCatStatus').classList.toggle('ativo',tab==='status');
   document.getElementById('listaCatalogoTeses').style.display=tab==='teses'?'':'none';
@@ -768,78 +874,96 @@ async function carregarTodosStatus(){
   state.todosStatus=s.data||[];
   renderCatalogoStatus();
 }
-function renderCatalogoTeses(){
-  var l=document.getElementById('listaCatalogoTeses');
-  if(!state.todasTeses.length){l.innerHTML='<div style="font-size:11px;color:var(--muted)">Nenhuma tese cadastrada.</div>';return;}
-  l.innerHTML=state.todasTeses.map(function(t){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06)">'+
-      '<input type="color" value="'+esc(t.cor||'#9aa8c2')+'" data-tese-cor-id="'+esc(t.id)+'" style="width:28px;height:28px;padding:0;border:none;border-radius:6px;flex:0 0 auto;cursor:pointer">'+
-      '<input type="text" value="'+esc(t.nome)+'" data-tese-nome-id="'+esc(t.id)+'" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:inherit;padding:6px 8px;font-size:12px">'+
-      '<button type="button" class="btn-acao btn-acao-danger" data-tese-del-id="'+esc(t.id)+'" title="Desativar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="1.7"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="1.7"/></svg></button>'+
-      '</div>';
-  }).join('');
-  l.querySelectorAll('[data-tese-cor-id]').forEach(function(input){
-    input.addEventListener('change',function(){salvarCorTese(input.getAttribute('data-tese-cor-id'),input.value);});
-  });
-  l.querySelectorAll('[data-tese-nome-id]').forEach(function(input){
-    input.addEventListener('blur',function(){salvarNomeTese(input.getAttribute('data-tese-nome-id'),input.value);});
-  });
-  l.querySelectorAll('[data-tese-del-id]').forEach(function(botao){
-    botao.addEventListener('click',function(){
-      var id=botao.getAttribute('data-tese-del-id');
-      var t=state.todasTeses.find(function(x){return String(x.id)===id;});
-      if(t)pedirDesativarCatalogo('tese',t.id,t.nome);
+var ICONE_DESATIVAR='<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="1.7"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="1.7"/></svg>';
+function itemCatalogoHtml(prefixo,item){
+  var cor=corSemDefinir(item.cor)?COR_CINZA_PADRAO:item.cor;
+  return '<div class="cat-item">'+
+    '<button type="button" class="cat-swatch" data-'+prefixo+'-cor-id="'+esc(item.id)+'" title="Trocar cor" style="background:'+esc(cor)+'"></button>'+
+    '<input type="text" value="'+esc(item.nome)+'" data-'+prefixo+'-nome-id="'+esc(item.id)+'">'+
+    '<button type="button" class="btn-acao btn-acao-danger" data-'+prefixo+'-del-id="'+esc(item.id)+'" title="Desativar">'+ICONE_DESATIVAR+'</button>'+
+    '</div>';
+}
+function ligarItensCatalogo(l,prefixo,lista,salvarCor,salvarNome,tipo){
+  l.querySelectorAll('[data-'+prefixo+'-cor-id]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var id=btn.getAttribute('data-'+prefixo+'-cor-id');
+      var item=lista.find(function(x){return String(x.id)===id;});
+      abrirPaleta(btn,item&&item.cor,function(cor){salvarCor(id,cor,btn);});
     });
   });
+  l.querySelectorAll('[data-'+prefixo+'-nome-id]').forEach(function(input){
+    input.addEventListener('keydown',function(e){if(e.key==='Enter')input.blur();});
+    input.addEventListener('blur',function(){
+      var id=input.getAttribute('data-'+prefixo+'-nome-id');
+      var item=lista.find(function(x){return String(x.id)===id;});
+      if(item&&item.nome===(input.value||'').trim())return;
+      salvarNome(id,input.value);
+    });
+  });
+  l.querySelectorAll('[data-'+prefixo+'-del-id]').forEach(function(botao){
+    botao.addEventListener('click',function(){
+      var id=botao.getAttribute('data-'+prefixo+'-del-id');
+      var item=lista.find(function(x){return String(x.id)===id;});
+      if(item)pedirDesativarCatalogo(tipo,item.id,item.nome);
+    });
+  });
+}
+function renderCatalogoTeses(){
+  var l=document.getElementById('listaCatalogoTeses');
+  document.getElementById('qtdCatTeses').textContent=state.todasTeses.length;
+  prepararCorNova('novaTeseCatCor','swatchNovaTese',state.todasTeses);
+  if(!state.todasTeses.length){l.innerHTML='<div style="font-size:11px;color:var(--muted)">Nenhuma tese cadastrada.</div>';return;}
+  l.innerHTML=state.todasTeses.map(function(t){return itemCatalogoHtml('tese',t);}).join('');
+  ligarItensCatalogo(l,'tese',state.todasTeses,salvarCorTese,salvarNomeTese,'tese');
 }
 function renderCatalogoStatus(){
   var l=document.getElementById('listaCatalogoStatus');
+  document.getElementById('qtdCatStatus').textContent=state.todosStatus.length;
+  prepararCorNova('novoStatusCatCor','swatchNovoStatus',state.todosStatus);
   if(!state.todosStatus.length){l.innerHTML='<div style="font-size:11px;color:var(--muted)">Nenhum status cadastrado.</div>';return;}
-  l.innerHTML=state.todosStatus.map(function(s){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06)">'+
-      '<input type="color" value="'+esc(s.cor||'#9aa8c2')+'" data-status-cor-id="'+esc(s.id)+'" style="width:28px;height:28px;padding:0;border:none;border-radius:6px;flex:0 0 auto;cursor:pointer">'+
-      '<input type="text" value="'+esc(s.nome)+'" data-status-nome-id="'+esc(s.id)+'" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:inherit;padding:6px 8px;font-size:12px">'+
-      '<span style="font-size:10px;color:var(--muted);flex:0 0 auto">'+esc(s.fase||'')+'</span>'+
-      '<button type="button" class="btn-acao btn-acao-danger" data-status-del-id="'+esc(s.id)+'" title="Desativar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="1.7"/><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="1.7"/></svg></button>'+
-      '</div>';
+  // Agrupa por fase, na ordem em que cada fase aparece primeiro
+  var fases=[],porFase={};
+  state.todosStatus.forEach(function(s){
+    var f=s.fase||'Sem fase';
+    if(!porFase[f]){porFase[f]=[];fases.push(f);}
+    porFase[f].push(s);
+  });
+  l.innerHTML=fases.map(function(f){
+    return '<div class="cat-grupo">'+esc(f)+' · '+porFase[f].length+'</div>'+porFase[f].map(function(s){return itemCatalogoHtml('status',s);}).join('');
   }).join('');
-  l.querySelectorAll('[data-status-cor-id]').forEach(function(input){
-    input.addEventListener('change',function(){salvarCorStatus(input.getAttribute('data-status-cor-id'),input.value);});
-  });
-  l.querySelectorAll('[data-status-nome-id]').forEach(function(input){
-    input.addEventListener('blur',function(){salvarNomeStatus(input.getAttribute('data-status-nome-id'),input.value);});
-  });
-  l.querySelectorAll('[data-status-del-id]').forEach(function(botao){
-    botao.addEventListener('click',function(){
-      var id=botao.getAttribute('data-status-del-id');
-      var s=state.todosStatus.find(function(x){return String(x.id)===id;});
-      if(s)pedirDesativarCatalogo('status',s.id,s.nome);
-    });
-  });
+  ligarItensCatalogo(l,'status',state.todosStatus,salvarCorStatus,salvarNomeStatus,'status');
 }
-async function salvarCorTese(id,cor){
-  var r=await _sb.from('teses').update({cor:cor}).eq('id',id);
-  if(r.error)showToast('Nao foi possivel salvar a cor.','error');
-  else{showToast('Cor atualizada.','success');await carregarOpcoesFiltros();}
+async function salvarCorItem(tabela,lista,id,cor,btn){
+  var item=lista.find(function(x){return String(x.id)===String(id);});
+  var anterior=item?item.cor:null;
+  if(btn)btn.style.background=cor;
+  var res=await atualizarCatalogo(tabela,id,{cor:cor});
+  if(!res.ok){
+    if(btn)btn.style.background=corSemDefinir(anterior)?COR_CINZA_PADRAO:anterior;
+    avisarFalhaCatalogo(res,'a nova cor');
+    return;
+  }
+  if(item)item.cor=cor;
+  showToast('Cor atualizada.','success');
+  await carregarOpcoesFiltros();
 }
+async function salvarCorTese(id,cor,btn){await salvarCorItem('teses',state.todasTeses,id,cor,btn);}
+async function salvarCorStatus(id,cor,btn){await salvarCorItem('status_funil',state.todosStatus,id,cor,btn);}
 async function salvarNomeTese(id,nome){
   nome=(nome||'').trim();
   if(!nome){showToast('O nome da tese nao pode ficar em branco.','warning');await carregarTodasTeses();return;}
-  var r=await _sb.from('teses').update({nome:nome}).eq('id',id);
-  if(r.error)showToast('Nao foi possivel renomear a tese.','error');
-  else{showToast('Tese renomeada.','success');await carregarOpcoesFiltros();}
-}
-async function salvarCorStatus(id,cor){
-  var r=await _sb.from('status_funil').update({cor:cor}).eq('id',id);
-  if(r.error)showToast('Nao foi possivel salvar a cor.','error');
-  else{showToast('Cor atualizada.','success');await carregarOpcoesFiltros();}
+  var res=await atualizarCatalogo('teses',id,{nome:nome});
+  if(!res.ok){avisarFalhaCatalogo(res,'a mudanca de nome');await carregarTodasTeses();return;}
+  var t=state.todasTeses.find(function(x){return String(x.id)===String(id);});if(t)t.nome=nome;
+  showToast('Tese renomeada.','success');await carregarOpcoesFiltros();
 }
 async function salvarNomeStatus(id,nome){
   nome=(nome||'').trim();
   if(!nome){showToast('O nome do status nao pode ficar em branco.','warning');await carregarTodosStatus();return;}
-  var r=await _sb.from('status_funil').update({nome:nome}).eq('id',id);
-  if(r.error)showToast('Nao foi possivel renomear o status.','error');
-  else{showToast('Status renomeado.','success');await carregarOpcoesFiltros();}
+  var res=await atualizarCatalogo('status_funil',id,{nome:nome});
+  if(!res.ok){avisarFalhaCatalogo(res,'a mudanca de nome');await carregarTodosStatus();return;}
+  var s=state.todosStatus.find(function(x){return String(x.id)===String(id);});if(s)s.nome=nome;
+  showToast('Status renomeado.','success');await carregarOpcoesFiltros();
 }
 function renderNovaFaseCatOptions(){
   var l=document.getElementById('listaNovaFaseCat');
@@ -865,8 +989,8 @@ async function criarTeseCatalogo(){
   var nome=(document.getElementById('novaTeseCatNome').value||'').trim();
   var cor=document.getElementById('novaTeseCatCor').value;
   if(!nome){showToast('Informe o nome da tese.','warning');return;}
-  var r=await _sb.from('teses').insert({nome:nome,cor:cor,ativo:true});
-  if(r.error){showToast('Nao foi possivel criar a tese. Verifique suas permissoes.','error');return;}
+  var r=await _sb.from('teses').insert({nome:nome,cor:cor,ativo:true}).select('id');
+  if(r.error||!r.data||!r.data.length){showToast('Nao foi possivel criar a tese. Verifique suas permissoes.','error');return;}
   document.getElementById('novaTeseCatNome').value='';
   showToast('Tese criada.','success');
   await carregarTodasTeses();await carregarOpcoesFiltros();
@@ -879,8 +1003,8 @@ async function criarStatusCatalogo(){
   if(!nome){showToast('Informe o nome do status.','warning');return;}
   if(!fase){showToast('Selecione ou informe a fase.','warning');return;}
   var maiorOrdem=state.todosStatus.reduce(function(max,s){return Math.max(max,s.ordem||0);},0);
-  var r=await _sb.from('status_funil').insert({nome:nome,cor:cor,fase:fase,ordem:maiorOrdem+1,ativo:true});
-  if(r.error){showToast('Nao foi possivel criar o status. Verifique suas permissoes.','error');return;}
+  var r=await _sb.from('status_funil').insert({nome:nome,cor:cor,fase:fase,ordem:maiorOrdem+1,ativo:true}).select('id');
+  if(r.error||!r.data||!r.data.length){showToast('Nao foi possivel criar o status. Verifique suas permissoes.','error');return;}
   document.getElementById('novoStatusCatNome').value='';
   showToast('Status criado.','success');
   await carregarTodosStatus();await carregarOpcoesFiltros();
@@ -1649,8 +1773,10 @@ async function salvarNovoProcesso(){
 }
 
 // Toggle Lista/Kanban
+var CHAVE_VIEW_PROCESSOS='saga-processos-view';
 function toggleView(view){
   state.view=view;
+  try{localStorage.setItem(CHAVE_VIEW_PROCESSOS,view);}catch(e){}
   document.getElementById('btnViewLista').classList.toggle('ativo',view==='lista');
   document.getElementById('btnViewKanban').classList.toggle('ativo',view==='kanban');
   document.getElementById('listaView').style.display=view==='lista'?'block':'none';
@@ -1688,6 +1814,9 @@ async function init(){
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';
   await carregarOpcoesFiltros();
   await restaurarPreferencias();
+  var viewSalva=null;
+  try{viewSalva=localStorage.getItem(CHAVE_VIEW_PROCESSOS);}catch(e){}
+  if(viewSalva==='kanban')toggleView('kanban');
   await carregarProcessos();
 }
 function ligarInteracoesSagaUI(){

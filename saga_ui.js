@@ -189,6 +189,55 @@
     document.querySelectorAll('.popover').forEach(function(p){p.classList.remove('open');});
   }
 
+  // Janelas (modais): clicar no fundo escuro ou apertar Esc fecha a janela,
+  // como o X. Usa o proprio botao de fechar da janela, para manter a limpeza
+  // que cada tela faz ao fechar. Ligado ao carregar o arquivo, em todas as telas.
+  var SELETOR_JANELAS='[class*="modal"][class*="overlay"],.visualizador-overlay,.painel-dia-overlay,.seletor-rapido-overlay';
+  var SELETOR_BOTAO_FECHAR='.modal-close,[data-close-modal],[data-close],[aria-label^="Fechar"],[title^="Fechar"]';
+  function janelaVisivel(el){
+    if(!el.getClientRects().length)return false;
+    var cs=getComputedStyle(el);
+    return cs.display!=='none'&&cs.visibility!=='hidden'&&parseFloat(cs.opacity||'1')>0.05;
+  }
+  function janelaDoTopo(){
+    var abertas=Array.prototype.filter.call(document.querySelectorAll(SELETOR_JANELAS),janelaVisivel);
+    if(!abertas.length)return null;
+    abertas.sort(function(a,b){return (parseInt(getComputedStyle(a).zIndex,10)||0)-(parseInt(getComputedStyle(b).zIndex,10)||0);});
+    return abertas[abertas.length-1];
+  }
+  function fecharJanela(ov){
+    var btn=ov.querySelector(SELETOR_BOTAO_FECHAR);
+    if(!btn){
+      btn=Array.prototype.find.call(ov.querySelectorAll('button'),function(b){
+        var t=(b.textContent||'').trim();
+        return t==='✕'||t==='×'||t==='Cancelar'||t==='Fechar';
+      });
+    }
+    if(btn){btn.click();return;}
+    ov.classList.remove('open','aberto','show','ativo');
+    if(ov.style.display&&ov.style.display!=='none')ov.style.display='none';
+  }
+  function ligarFechamentoJanelas(){
+    var inicioNoFundo=null;
+    // So fecha quando o clique comeca e termina no fundo: arrastar para
+    // selecionar um texto e soltar fora da janela nao fecha nada.
+    document.addEventListener('mousedown',function(e){
+      inicioNoFundo=(e.target.matches&&e.target.matches(SELETOR_JANELAS))?e.target:null;
+    },true);
+    document.addEventListener('click',function(e){
+      var ov=e.target;
+      if(!ov.matches||!ov.matches(SELETOR_JANELAS)||ov!==inicioNoFundo)return;
+      inicioNoFundo=null;
+      fecharJanela(ov);
+    });
+    document.addEventListener('keydown',function(e){
+      if(e.key!=='Escape'||e.defaultPrevented)return;
+      var ov=janelaDoTopo();
+      if(ov){e.preventDefault();fecharJanela(ov);}
+    });
+  }
+  ligarFechamentoJanelas();
+
   function ligarTema(){
     var btn=document.getElementById('themeToggle');
     if(!btn||btn.dataset.ligado)return;
@@ -547,8 +596,9 @@
     ligarPresencaESino();
     ligarBuscaGlobal();
     await carregarPerfil();
-    await carregarPresenca();
-    await contarNaoLidas();
+    // Presenca e contador do sino carregam em paralelo e nao seguram a tela
+    carregarPresenca();
+    contarNaoLidas();
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
 
