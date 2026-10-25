@@ -1622,8 +1622,11 @@ function confirmarExclusao(id){
 async function executarExclusao(){
   if(!state.processoParaExcluir)return;
   closeModal('modalConfirmarExclusao');
-  var r=await _sb.from('processos').update({excluido_logico:true,excluido_por_id:state.meuInternoId,excluido_em:new Date().toISOString()}).eq('id',state.processoParaExcluir);
+  // Mesma funcao do banco usada pela Ficha: confere a permissao e marca a exclusao.
+  // Um update direto na tabela e recusado, porque a regra de leitura esconde processos excluidos.
+  var r=await _sb.rpc('excluir_processo',{p_processo_id:state.processoParaExcluir});
   if(r.error)showToast('Erro ao excluir: '+(r.error.message||'tente novamente.'),'danger');
+  else if(r.data!==true)showToast('Este processo ja tinha sido excluido.','warning');
   else{showToast('Processo movido para a lixeira.','success');state.processoParaExcluir=null;carregarProcessos();}
 }
 function abrirAtribuir(id){
