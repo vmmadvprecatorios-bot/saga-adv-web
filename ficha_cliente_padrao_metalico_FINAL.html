@@ -2371,7 +2371,7 @@ function atualizarBotaoChecklist(){const btn=document.getElementById('btnAddChec
 // ===== EXCLUIR CLIENTE (somente administrador) =====
 // O banco faz a exclusao numa unica transacao pela funcao excluir_cliente
 // (bloco 27), que confere se quem pede e administrador e registra na auditoria.
-// Os arquivos do Storage sao removidos depois, so se o banco confirmar.
+// A funcao devolve os caminhos dos arquivos, removidos do Storage depois que o banco confirma.
 function abrirModalExcluirCliente(){
   if(state.ehAdmin!==true||!state.pessoaRow)return;
   const qtd=(state.processos||[]).length;
@@ -2390,13 +2390,15 @@ async function excluirClienteDefinitivo(){
   const pessoaId=state.pessoaRow.id;
   botao.disabled=true;botao.textContent='Excluindo...';
   try{
-    const docs=await _sb.from('documentos').select('caminho_storage').eq('pessoa_id',pessoaId);
-    const caminhos=((docs.data)||[]).map(d=>d.caminho_storage).filter(Boolean);
     const r=await _sb.rpc('excluir_cliente',{p_pessoa_id:pessoaId});
     if(r.error)throw r.error;
-    for(let i=0;i<caminhos.length;i+=100){
-      try{await _sb.storage.from(BUCKET_DOCUMENTOS_CLIENTES).remove(caminhos.slice(i,i+100));}catch(e){}
-    }
+    const removerArquivos=async(bucket,caminhos)=>{
+      for(let i=0;i<caminhos.length;i+=100){
+        try{await _sb.storage.from(bucket).remove(caminhos.slice(i,i+100));}catch(e){}
+      }
+    };
+    await removerArquivos(BUCKET_DOCUMENTOS_CLIENTES,(r.data&&r.data.arquivos_documentos)||[]);
+    await removerArquivos('tarefas-anexos',(r.data&&r.data.arquivos_tarefas)||[]);
     closeModal('excluirClienteModal');
     showToast('Cliente excluído.','success');
     setTimeout(()=>{window.location.href='lista_processos_padrao_metalico.html';},900);
