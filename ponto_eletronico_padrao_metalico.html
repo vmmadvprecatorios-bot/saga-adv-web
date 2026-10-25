@@ -8,15 +8,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;--gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#8a6f33;--panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;--border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);--text:#e8eaf0;--muted:#8b93a8;--success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;--radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35)}
-[data-theme="light"]{--navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;--gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;--panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;--border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);--text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13)}
+[data-theme="light"]{--navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;--gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;--panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#ffffff;--border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);--text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13)}
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
 body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden;transition:background .25s ease,color .25s ease}
-body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,rgba(201,168,76,.08),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--gold) 8%,transparent),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
 button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}a,a:visited{color:inherit;text-decoration:none}
 ::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--gold) 32%,transparent);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
 .hidden{display:none}.grow{flex:1}
 .topbar{height:64px;position:sticky;top:0;z-index:180;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px)}
-[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.94),rgba(247,245,240,.98))}
+[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(243,245,248,.98))}
 .top-left,.top-right{display:flex;align-items:center;gap:14px}.top-left{min-width:0}.top-right{flex:0 0 auto}
 .hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px}.hamburger span{display:block;width:18px;height:1.7px;margin:3px auto;border-radius:2px;background:var(--gold)}
 .brand{display:flex;align-items:center;gap:9px;flex:0 0 auto}.crest{width:32px;height:32px}.brand-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:.5px}.brand-name b{color:var(--gold)}
@@ -29,7 +29,7 @@ button{border:0;background:transparent;color:inherit;text-align:inherit;font:inh
 @keyframes sagaGirar{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}.icon-btn.girando svg{animation:sagaGirar .7s ease-in-out}
 .notif-count{position:absolute;right:-5px;top:-5px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--danger);color:#fff;font-size:9px;display:grid;place-items:center;font-weight:700}
 .avatar{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-deep));color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-size:13px;font-weight:700}
-.popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:300px;z-index:600;padding:8px;border:1px solid var(--border-soft);border-radius:14px;background:linear-gradient(145deg,#1b2540,#11182c);box-shadow:0 24px 50px rgba(0,0,0,.5)}.popover.open{display:block}[data-theme="light"] .popover{background:linear-gradient(145deg,#fffdf8,#f4eddc)}
+.popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:300px;z-index:600;padding:8px;border:1px solid var(--border-soft);border-radius:14px;background:linear-gradient(145deg,#1b2540,#11182c);box-shadow:0 24px 50px rgba(0,0,0,.5)}.popover.open{display:block}[data-theme="light"] .popover{background:linear-gradient(145deg,#ffffff,#f4eddc)}
 .pop-title{padding:7px 8px 5px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
 .pop-row{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;cursor:pointer}.pop-row:hover{background:color-mix(in srgb,var(--gold) 9%,transparent)}
 .online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 7px var(--success);flex:0 0 auto}
@@ -165,6 +165,7 @@ button{border:0;background:transparent;color:inherit;text-align:inherit;font:inh
 @media(max-width:760px){.hamburger{display:flex}.top-center{display:none}.presence-btn span:not(.dot){display:none}.sidebar{width:220px;height:calc(100vh - 64px);position:fixed;top:64px;left:-230px;z-index:170;transition:left .28s}.sidebar.open{left:0}.conteudo{padding:18px 14px}.totalizadores{grid-template-columns:1fr 1fr}}
 @media print{.topbar,.sidebar,.toast-area,.modal-overlay,.abas-topo,.filters-panel .btn-primary,.btn-exportar{display:none!important}.app{display:block!important}.sidebar{display:none!important}.conteudo{padding:0!important}.main-tab{display:none!important}.main-tab.print-show{display:block!important}body{background:white!important;color:black!important}body::before{display:none!important}.panel{border:1px solid #ccc!important;box-shadow:none!important;background:white!important}.tabela-ponto th{background:#eee!important;color:#333!important}.tabela-ponto td{color:#222!important}.tabela-ponto{font-size:10px}}
 </style>
+<link rel="stylesheet" href="saga_tema.css">
 </head>
 <body data-theme="dark">
 

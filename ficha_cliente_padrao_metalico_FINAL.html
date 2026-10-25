@@ -16,16 +16,16 @@
   --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
 }
 [data-theme="light"]{
-  --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+  --navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;
   --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
-  --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+  --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#ffffff;
   --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
   --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden;transition:background .25s ease,color .25s ease}
-body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,rgba(201,168,76,.08),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--gold) 8%,transparent),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
 button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
 a,a:visited,a:hover,a:focus{color:inherit;text-decoration:none}
 button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -37,7 +37,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 /* Topbar (padrão SAGA — mesmo do Dashboard e Processos em Andamento) */
 .topbar{height:64px;position:sticky;top:0;z-index:200;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.94),rgba(10,14,26,.98));backdrop-filter:blur(18px);gap:16px;}
-[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.96),rgba(247,245,240,.985));}
+[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(243,245,248,.985));}
 .top-left,.top-right{display:flex;align-items:center;gap:14px;}
 .top-left{flex:0 0 auto;}
 .top-right{flex:0 0 auto;}
@@ -73,14 +73,14 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px;cursor:pointer;}
 .popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:300px;z-index:600;padding:8px;border:1px solid var(--border-soft);border-radius:14px;background:linear-gradient(145deg,#1b2540,#11182c);box-shadow:0 24px 50px rgba(0,0,0,.5);}
 .popover.open{display:block;}
-[data-theme="light"] .popover{background:linear-gradient(145deg,#fffdf8,#f4eddc);}
+[data-theme="light"] .popover{background:linear-gradient(145deg,#ffffff,#f4eddc);}
 .pop-title{padding:7px 8px 5px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
 .pop-row{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;cursor:pointer;}
-.pop-row:hover{background:rgba(201,168,76,.09);}
+.pop-row:hover{background:color-mix(in srgb,var(--gold) 9%,transparent);}
 .online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 7px var(--success);flex:0 0 auto;}
 .notification-pop{width:340px;}
 .notification-item{display:flex;gap:9px;padding:10px;border-radius:10px;width:100%;}
-.notification-item:hover{background:rgba(201,168,76,.1);}
+.notification-item:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);}
 .notification-item .n-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:5px;flex:0 0 auto;}
 .notification-item .n-dot.read{visibility:hidden;}
 .notification-text{font-size:10.5px;line-height:1.45;}
@@ -276,6 +276,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<link rel="stylesheet" href="saga_tema.css">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -364,7 +365,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 </div>
 
 <div class="modal-overlay" id="clienteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="tituloClienteModal">Editar dados do cliente</h3><p id="subClienteModal">Atualize os dados cadastrais desta pessoa.</p></div><button class="modal-close" data-close-modal="clienteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="ecNome">Nome completo</label><input id="ecNome" type="text" placeholder="Nome completo"></div><div class="form-field"><label for="ecCpf">CPF</label><input id="ecCpf" type="text" placeholder="000.000.000-00"></div><div class="form-field"><label>Situação vital</label><div id="ecSituacaoSelect"></div></div><div class="form-field" id="ecDataFalecimentoWrap" style="display:none"><label for="ecDataFalecimento">Data de falecimento</label><input id="ecDataFalecimento" type="date"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="clienteModal">Cancelar</button><button class="btn-primary" id="saveClienteButton">Salvar dados</button></div></div></div>
-<div class="modal-overlay" id="tagModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Nova etiqueta</h3><p>Adicione uma etiqueta de organização à ficha da cliente.</p></div><button class="modal-close" data-close-modal="tagModal">✕</button></div><div class="modal-body"><div id="tagCatalogoSugestoes" style="display:none;margin-bottom:13px"></div><div style="margin:0 0 8px;color:var(--muted);font-size:9.5px;line-height:1.45">Ou digite uma etiqueta personalizada:</div><div class="form-field"><label for="tagInput">Etiqueta</label><input id="tagInput" type="text" placeholder="Ex.: Prioridade de análise"></div><div class="form-field"><label for="tagColorInput">Cor da etiqueta</label><input id="tagColorInput" type="color" value="#c9a84c" style="width:100%;height:40px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer"></div><div id="tagSalvarCatalogoWrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;font-weight:500"><input type="checkbox" id="tagSalvarCatalogo" style="accent-color:var(--gold)"> Salvar esta etiqueta no catálogo para reutilizar depois</label></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="tagModal">Cancelar</button><button class="btn-primary" id="saveTagButton">Adicionar etiqueta</button></div></div></div>
+<div class="modal-overlay" id="tagModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Nova etiqueta</h3><p>Adicione uma etiqueta de organização à ficha da cliente.</p></div><button class="modal-close" data-close-modal="tagModal">✕</button></div><div class="modal-body"><div id="tagCatalogoSugestoes" style="display:none;margin-bottom:13px"></div><div style="margin:0 0 8px;color:var(--muted);font-size:9.5px;line-height:1.45">Ou digite uma etiqueta personalizada:</div><div class="form-field"><label for="tagInput">Etiqueta</label><input id="tagInput" type="text" placeholder="Ex.: Prioridade de análise"></div><div class="form-field"><label for="tagColorInput">Cor da etiqueta</label><input id="tagColorInput" type="color" value="#4b8af5" style="width:100%;height:40px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer"></div><div id="tagSalvarCatalogoWrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;font-weight:500"><input type="checkbox" id="tagSalvarCatalogo" style="accent-color:var(--gold)"> Salvar esta etiqueta no catálogo para reutilizar depois</label></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="tagModal">Cancelar</button><button class="btn-primary" id="saveTagButton">Adicionar etiqueta</button></div></div></div>
 <div class="modal-overlay" id="deleteProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir processo</h3><p>O processo será removido do sistema e deixará de aparecer nesta ficha.</p></div><button class="modal-close" data-close-modal="deleteProcessModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja realmente excluir o processo <strong id="deleteProcessLabel" style="color:var(--text)"></strong>? Os comentários, documentos e tarefas vinculados deixarão de ser exibidos.</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="deleteProcessModal">Cancelar</button><button class="btn-danger" id="deleteProcessButton">Excluir processo</button></div></div></div>
 <div class="modal-overlay" id="checklistItemModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Adicionar item ao checklist</h3><p>Inclua uma nova atividade de acompanhamento.</p></div><button class="modal-close" data-close-modal="checklistItemModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="checklistItemInput">Descrição do item</label><input id="checklistItemInput" type="text" placeholder="Ex.: Conferir documento complementar"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="checklistItemModal">Cancelar</button><button class="btn-primary" id="saveChecklistItemButton">Adicionar item</button></div></div></div>
 <div class="modal-overlay" id="customChecklistModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Criar checklist personalizado</h3><p>Defina o título e o primeiro item deste checklist.</p></div><button class="modal-close" data-close-modal="customChecklistModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="customChecklistName">Nome do checklist</label><input id="customChecklistName" type="text" placeholder="Ex.: Conferência de documentos"></div><div class="form-field"><label for="customChecklistFirstItem">Primeiro item</label><input id="customChecklistFirstItem" type="text" placeholder="Ex.: Revisar todos os anexos"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="customChecklistModal">Cancelar</button><button class="btn-primary" id="saveCustomChecklistButton">Criar checklist</button></div></div></div>
@@ -570,7 +571,7 @@ function renderSugestoesCatalogoEtiquetas(){
     const rotulo=rotulosCategoria[grupo.categoria]||grupo.categoria;
     const chips=grupo.itens.map(item=>{
       const nome=String(item.nome||'');
-      const cor=String(item.cor||'#c9a84c');
+      const cor=String(item.cor||'#4b8af5');
       return '<button type="button" class="ficha-mini-tag" data-tag-catalogo-nome="'+esc(nome)+'" data-tag-catalogo-cor="'+esc(cor)+'" style="border:1px solid color-mix(in srgb,'+esc(cor)+' 45%,transparent);background:color-mix(in srgb,'+esc(cor)+' 16%,transparent);color:'+esc(cor)+';border-radius:50px;font-size:9px;cursor:pointer">'+esc(nome)+'</button>';
     }).join('');
     return '<div style="margin-bottom:10px"><div style="margin-bottom:5px;color:var(--muted);font-size:8.5px;font-weight:700;letter-spacing:.65px;text-transform:uppercase">'+esc(rotulo)+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+chips+'</div></div>';
@@ -588,7 +589,7 @@ function abrirModalNovaEtiqueta(){
   const catalogoWrap=document.getElementById('tagSalvarCatalogoWrap');
   const salvarCatalogo=document.getElementById('tagSalvarCatalogo');
   if(input)input.value='';
-  if(corInput)corInput.value='#c9a84c';
+  if(corInput)corInput.value='#4b8af5';
   if(catalogoWrap)catalogoWrap.style.display=perms.pessoasEtiquetasGerenciar===true?'':'none';
   if(salvarCatalogo)salvarCatalogo.checked=false;
   renderSugestoesCatalogoEtiquetas();
@@ -1040,7 +1041,7 @@ async function saveTag(){
   const value=input.value.trim();
   if(!value){showToast('Informe o nome da etiqueta.','warning');return;}
   const corInput=document.getElementById('tagColorInput');
-  const cor=corInput&&corInput.value?corInput.value:'#c9a84c';
+  const cor=corInput&&corInput.value?corInput.value:'#4b8af5';
   const checkboxCatalogo=document.getElementById('tagSalvarCatalogo');
   const salvarNoCatalogo=checkboxCatalogo&&checkboxCatalogo.checked===true&&perms.pessoasEtiquetasGerenciar===true;
   process.tags.push({texto:value,cor:cor});

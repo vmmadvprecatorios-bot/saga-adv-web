@@ -16,9 +16,9 @@
     --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
   }
   [data-theme="light"]{
-    --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+    --navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;
     --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
-    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#ffffff;
     --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
     --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
   }
@@ -49,7 +49,7 @@
 
   /* TOPBAR (padrão unificado saga_ui) */
   .topbar{height:64px;position:sticky;top:0;z-index:200;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.94),rgba(10,14,26,.98));backdrop-filter:blur(18px);gap:16px;}
-  [data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.96),rgba(247,245,240,.985));}
+  [data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(243,245,248,.985));}
   .top-left,.top-right{display:flex;align-items:center;gap:14px;}
   .top-left{flex:0 0 auto;}
   .top-right{flex:0 0 auto;}
@@ -85,14 +85,14 @@
   .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px;cursor:pointer;}
   .popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:300px;z-index:600;padding:8px;border:1px solid var(--border-soft);border-radius:14px;background:linear-gradient(145deg,#1b2540,#11182c);box-shadow:0 24px 50px rgba(0,0,0,.5);}
   .popover.open{display:block;}
-  [data-theme="light"] .popover{background:linear-gradient(145deg,#fffdf8,#f4eddc);}
+  [data-theme="light"] .popover{background:linear-gradient(145deg,#ffffff,#f4eddc);}
   .pop-title{padding:7px 8px 5px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
   .pop-row{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;cursor:pointer;}
-  .pop-row:hover{background:rgba(201,168,76,.09);}
+  .pop-row:hover{background:color-mix(in srgb,var(--gold) 9%,transparent);}
   .online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 7px var(--success);flex:0 0 auto;}
   .notification-pop{width:340px;}
   .notification-item{display:flex;gap:9px;padding:10px;border-radius:10px;width:100%;}
-  .notification-item:hover{background:rgba(201,168,76,.1);}
+  .notification-item:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);}
   .notification-item .n-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:5px;flex:0 0 auto;}
   .notification-item .n-dot.read{visibility:hidden;}
   .notification-text{font-size:10.5px;line-height:1.45;}
@@ -698,6 +698,7 @@
   }
 
 </style>
+<link rel="stylesheet" href="saga_tema.css">
 </head>
 <body data-theme="dark">
 

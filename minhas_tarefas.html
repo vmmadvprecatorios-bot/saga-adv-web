@@ -20,9 +20,9 @@
   }
 
   [data-theme="light"]{
-    --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+    --navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;
     --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
-    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#fffdf8;
+    --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#ffffff;
     --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
     --text:#2a2517;--muted:#7a7461;--texto-sidebar-mobile:#4a4636;
     --info:#3d6fa0;
@@ -1564,6 +1564,7 @@
     background:color-mix(in srgb,var(--gold) 15%,transparent); color:color-mix(in srgb,var(--gold) 75%,black);
   }
 </style>
+<link rel="stylesheet" href="saga_tema.css">
 </head>
 <body data-theme="dark">
 
@@ -1910,7 +1911,7 @@
       <label>Cor de etiqueta (opcional)</label>
       <div class="linha-cor-etiqueta">
         <div class="preview-cor-etiqueta" id="previewCorEtiqueta" style="background:transparent;"></div>
-        <input type="color" class="input-color-picker" id="inputCorEtiqueta" value="#c9a84c">
+        <input type="color" class="input-color-picker" id="inputCorEtiqueta" value="#4b8af5">
         <span class="btn-limpar-cor-etiqueta" id="btnLimparCorEtiqueta">Remover cor</span>
       </div>
     </div>
@@ -2043,7 +2044,7 @@ var dadosColunas = [];
 var dadosNotificacoes = [];
 window.SAGA_TASKS = [];
 
-var CORES_COLABORADORES = ['#c9a84c', '#6fa3d8', '#5dd8a0', '#e8b84c', '#c98ed8', '#e8857a', '#7fc8c8', '#d8a06f', '#a3b8e8', '#b8d86f'];
+var CORES_COLABORADORES = ['#4b8af5', '#6fa3d8', '#5dd8a0', '#e8b84c', '#c98ed8', '#e8857a', '#7fc8c8', '#d8a06f', '#a3b8e8', '#b8d86f'];
 
 function getColaborador(id){ return dadosColaboradores.filter(function(c){ return c.id === id; })[0]; }
 
@@ -3559,7 +3560,7 @@ function resetarFormularioTarefa(){
   document.querySelectorAll('.opcao-tipo-tarefa').forEach(function(o){ o.classList.toggle('ativa', o.getAttribute('data-tipo') === 'pessoal'); });
   document.querySelectorAll('.pill-prioridade-opcao').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === 'media'); });
   document.getElementById('previewCorEtiqueta').style.background = 'transparent';
-  document.getElementById('inputCorEtiqueta').value = '#c9a84c';
+  document.getElementById('inputCorEtiqueta').value = '#4b8af5';
   document.getElementById('btnExcluirTarefaModal').style.display = 'none';
   document.getElementById('secaoComentariosTarefa').style.display = 'none';
   renderizarSubtarefasModal();
@@ -3794,7 +3795,7 @@ function renderizarAnexosModal(){
     var item = document.createElement('div');
     item.className = 'item-anexo-modal';
     item.innerHTML =
-      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="#c9a84c" stroke-width="1.5"/></svg>' +
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="#4b8af5" stroke-width="1.5"/></svg>' +
       '<span class="nome-anexo" style="cursor:' + (anexo.caminho ? 'pointer' : 'default') + '" title="' + (anexo.caminho ? 'Abrir ou baixar' : 'Será enviado ao salvar') + '">' + escaparHtml(anexo.nome) +
         ' <small style="color:var(--muted)">' + escaparHtml(anexo.pendente ? 'a enviar' : tamanhoLegivel(anexo.tamanho)) + '</small></span>' +
       '<button class="btn-remover-subtarefa" data-idx-remover-anexo="' + idx + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>';

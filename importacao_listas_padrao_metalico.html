@@ -16,16 +16,16 @@
   --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
 }
 [data-theme="light"]{
-  --navy-1:#f7f5f0;--navy-2:#fdfcf9;--navy-3:#f1ede4;
+  --navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;
   --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
-  --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.89);--panel-solid:#fffdf8;
+  --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.89);--panel-solid:#ffffff;
   --border:rgba(138,106,35,.28);--border-soft:rgba(138,106,35,.18);
   --text:#2a2517;--muted:#7a7461;--shadow:0 22px 55px rgba(81,61,20,.13);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden;transition:background .25s ease,color .25s ease}
-body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,rgba(201,168,76,.08),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--gold) 8%,transparent),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
 button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
 a,a:visited,a:hover,a:focus{color:inherit;text-decoration:none}
 button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -34,7 +34,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 /* Topbar */
 .topbar{height:64px;position:sticky;top:0;z-index:180;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.95),rgba(10,14,26,.98));backdrop-filter:blur(18px)}
-[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,253,248,.95),rgba(247,245,240,.99))}
+[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(243,245,248,.99))}
 .top-left,.top-right{display:flex;align-items:center;gap:14px}.top-left{min-width:0}.top-right{flex:0 0 auto}
 .hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px}.hamburger span{display:block;width:18px;height:1.7px;margin:3px auto;border-radius:2px;background:var(--gold)}
 .brand{display:flex;align-items:center;gap:9px;flex:0 0 auto}.crest{width:32px;height:32px}.brand-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:.5px}.brand-name b{color:var(--gold)}
@@ -82,6 +82,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 @media(max-width:760px){.prototype-nav{width:calc(100% - 18px);top:7px;justify-content:center;overflow-x:auto}.prototype-label{display:none}.prototype-btn{font-size:8px;padding:6px 8px}.topbar{padding:0 14px;margin-top:47px}.hamburger{display:block}.quick-search{display:none}.presence-btn{padding:7px 9px}.presence-btn span:last-child{display:none}.theme-toggle{width:62px}.theme-toggle .knob{width:22px;height:22px}[data-theme="light"] .theme-toggle .knob{left:35px}.sidebar{width:220px;height:calc(100vh - 64px);position:fixed;top:64px;left:-230px;z-index:170;transition:left .28s}.sidebar.open{left:0}.conteudo{padding:18px 14px}.header-pagina h1{font-size:25px}.wizard-shell,.history-panel{padding:14px}.stepper{grid-template-columns:1fr}.step-copy b,.step-copy small{white-space:normal}.kpi-grid{grid-template-columns:1fr}.mapping-row{grid-template-columns:1fr}.preview-table,.review-table{min-width:760px}.review-table,.review-table thead,.review-table tbody,.review-table tr,.review-table th,.review-table td{display:block;min-width:0}.review-table thead{display:none}.review-table tr{margin:9px;border:1px solid var(--border-soft);border-radius:12px;padding:5px;background:color-mix(in srgb,var(--text) 2%,transparent)}.review-table td{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px;border-bottom:1px solid var(--border-soft);text-align:right}.review-table td:last-child{border-bottom:0}.review-table td::before{content:attr(data-label);color:var(--muted);font-size:8.5px;font-weight:700;letter-spacing:.55px;text-transform:uppercase;text-align:left}.review-table td[data-label="Cliente"]{display:block;text-align:left}.review-table td[data-label="Cliente"]::before{display:none}.classification-detail{max-width:190px}.history-item{grid-template-columns:40px minmax(0,1fr)}.history-meta{grid-column:1/-1;justify-content:flex-start}.modal-overlay{padding:8px}.modal-head,.modal-foot{padding-left:14px;padding-right:14px}.modal-body{padding:14px}.form-grid{grid-template-columns:1fr}.form-field.full{grid-column:auto}.detail-row{grid-template-columns:1fr}.toast-area{right:12px;top:72px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto;animation:none!important;transition-duration:.01ms}}
 </style>
+<link rel="stylesheet" href="saga_tema.css">
 </head>
 <body data-theme="dark">
 <div class="overlay hidden" id="overlay"></div>
@@ -89,7 +90,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
   <div class="top-left">
     <button class="hamburger" id="hamburger" aria-label="Abrir navegação"><span></span><span></span><span></span></button>
     <div class="brand">
-      <svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#e8d48a"/><stop offset="38%" stop-color="#c9a84c"/><stop offset="60%" stop-color="#8a6f33"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#crestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#crestGold)">VM</text></g></svg>
+      <svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6fa2ff"/><stop offset="38%" stop-color="#4b8af5"/><stop offset="60%" stop-color="#8a6f33"/><stop offset="100%" stop-color="#f3e6bd"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#crestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#crestGold)">VM</text></g></svg>
       <div class="brand-name">VMM<b>ADV</b></div>
     </div>
     <label class="quick-search" aria-label="Busca rápida"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><input id="globalSearch" placeholder="Buscar importação recente..."></label>

@@ -1,0 +1,83 @@
+/* SAGA - tema central (azul-marinho, cinza e branco)
+   Carregado por ultimo em todas as telas: redefine as cores que cada pagina
+   declara (--navy-*, --panel*, --border*, --text, --muted e --gold*).
+   Os nomes --gold* foram mantidos para nao mexer no CSS de cada tela, mas
+   agora sao o tom de destaque azul. Para ajustar o visual, mude so aqui. */
+
+:root,
+[data-theme="dark"],
+body[data-theme="dark"]{
+  color-scheme:dark;
+  /* fundo e superficies (referencia: modo escuro do ADVBOX) */
+  --navy-1:#0d131d;
+  --navy-2:#111927;
+  --navy-3:#161f2e;
+  --panel:#182131;
+  --panel-2:#1e2839;
+  --panel-solid:#182131;
+  --border:rgba(255,255,255,.09);
+  --border-soft:rgba(255,255,255,.06);
+  /* texto */
+  --text:#e7eaf0;
+  --muted:#8d97a8;
+  /* destaque (antigo dourado): azul vivo */
+  --gold:#4b8af5;
+  --gold-light:#6fa2ff;
+  --gold-deep:#2f6cd6;
+  /* estados */
+  --success:#4cc38a;
+  --warning:#e0a93b;
+  --danger:#e5636a;
+  --info:#5fa8f0;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+
+[data-theme="light"],
+body[data-theme="light"]{
+  color-scheme:light;
+  --navy-1:#e8ecf1;
+  --navy-2:#f3f5f8;
+  --navy-3:#dce3eb;
+  --panel:#ffffff;
+  --panel-2:#f6f8fb;
+  --panel-solid:#ffffff;
+  --border:rgba(19,38,66,.20);
+  --border-soft:rgba(19,38,66,.12);
+  --text:#13233a;
+  --muted:#55637a;
+  --gold:#1f3e6d;
+  --gold-light:#2c5592;
+  --gold-deep:#142b4d;
+  --success:#23855a;
+  --warning:#a86d12;
+  --danger:#c0413f;
+  --info:#2b6aad;
+  --shadow:0 10px 28px rgba(19,38,66,.12);
+}
+
+/* Modo claro: cartoes brancos precisam de uma sombra leve para se separar do fundo cinza */
+[data-theme="light"] .panel,
+[data-theme="light"] .card,
+[data-theme="light"] .modal,
+[data-theme="light"] .modal-box{
+  box-shadow:0 1px 2px rgba(19,38,66,.06),0 6px 18px rgba(19,38,66,.07);
+}
+
+/* Botoes principais, abas e opcoes selecionadas: azul solido com texto branco
+   (antes: degrade dourado com texto escuro). !important porque cada tela
+   declara o proprio degrade, as vezes com seletor mais especifico. */
+.btn-primary,
+.btn-view.ativo,.cat-tab.ativo,.pill-quantidade.ativo,.pag-btn.ativo,.pill-fase.ativo,.pill-direcao.ativo,
+.filter-pill.active,.aba-topo.ativa,.segment.active,.process-tab.active,.page-pill.active,.invite-tab.active,
+.choice-pill.active,.signature-tab.active,.pill-qtd-pagina.selecionada,.pill-filtro-rapido.selecionada,
+.opcao-visao-tarefas.ativa,.opcao-tipo-tarefa.ativa,.mes-rapido-item.selecionado,.custom-select-option.selected,
+.step-index,.avatar,.mini-avatar{
+  background:var(--gold)!important;
+  color:#fff!important;
+  border-color:transparent!important;
+}
+.btn-primary:hover{background:var(--gold-deep)!important}
+.checkbox-conclusao.marcado,.checkbox-conclusao-card.marcado,.switch-permissao-bolinha{
+  background:var(--gold)!important;
+  border-color:var(--gold)!important;
+}
