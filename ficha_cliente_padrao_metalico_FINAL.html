@@ -2547,12 +2547,13 @@ async function salvarModalCliente(){
   const nome=document.getElementById('ecNome').value.trim();
   const cpf=document.getElementById('ecCpf').value.replace(/\D/g,'');
   if(!nome){showToast('Informe o nome completo.','warning');return;}
-  if(cpf.length!==11){showToast('Informe um CPF válido com 11 dígitos.','warning');return;}
+  // CPF e opcional (contatos de captacao chegam sem ele), mas se vier precisa estar completo
+  if(cpf&&cpf.length!==11){showToast('Informe um CPF válido com 11 dígitos, ou deixe o campo em branco.','warning');return;}
   const situacaoVital=document.getElementById('ecSituacao').value||'vivo';
   const dataFalecimentoInput=document.getElementById('ecDataFalecimento');
   const payload={
     nome_completo:nome,
-    cpf:cpf,
+    cpf:cpf||null,
     situacao_vital:situacaoVital,
     data_falecimento:situacaoVital==='falecido'?((dataFalecimentoInput&&dataFalecimentoInput.value)||null):null
   };
