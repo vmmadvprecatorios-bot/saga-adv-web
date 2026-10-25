@@ -469,19 +469,46 @@
     setInterval(verificarInatividade,60000);
   }
 
+  // Tipos gravados pelos gatilhos do banco (notificar_nova_tarefa, notificar_mencao etc.)
+  var TIPOS_NOTIF={
+    tarefa_prazo:{titulo:'Tarefa',tela:'minhas_tarefas.html'},
+    tarefa_repasse:{titulo:'Tarefa repassada',tela:'minhas_tarefas.html'},
+    chat_mensagem:{titulo:'Chat',tela:'chat_interno_padrao_metalico.html'},
+    mencao:{titulo:'Menção'}
+  };
+  function infoNotif(n){
+    var t=TIPOS_NOTIF[n.tipo];
+    if(t)return t;
+    if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
+    return {titulo:'Aviso'};
+  }
+  async function abrirNotificacao(n){
+    try{if(!n.lida)await global._sb.from('notificacoes').update({lida:true}).eq('id',n.id);}catch(e){}
+    var tela=infoNotif(n).tela;
+    if(tela)window.location.href=tela;
+    else contarNaoLidas();
+  }
+
   async function carregarNotificacoes(){
     if(!global._sb||!_perfilAtual)return;
     var pop=document.getElementById('notifPop');
     if(!pop)return;
     pop.innerHTML='<div class="pop-title">Notificacoes</div><div style="font-size:10.5px;color:var(--muted);padding:12px;text-align:center">Carregando...</div>';
     try{
-      var r=await global._sb.from('notificacoes').select('id,titulo,mensagem,lida,criado_em').eq('usuario_id',_perfilAtual.id).order('criado_em',{ascending:false}).limit(20);
+      var r=await global._sb.from('notificacoes').select('id,tipo,resumo,referencia_tabela,referencia_id,lida,criado_em').eq('usuario_id',_perfilAtual.id).order('criado_em',{ascending:false}).limit(20);
       if(r.error)throw r.error;
       var cabecalho='<div class="pop-title" style="display:flex;justify-content:space-between;align-items:center"><span>Notificacoes</span><button type="button" id="btnMarcarTodasLidas" style="background:none;border:none;color:var(--gold);font-size:10px;cursor:pointer">Marcar todas como lidas</button></div>';
       if(!r.data||!r.data.length){pop.innerHTML=cabecalho+'<div style="font-size:10.5px;color:var(--muted);padding:12px;text-align:center">Sem notificacoes recentes.</div>';return;}
       pop.innerHTML=cabecalho+r.data.map(function(n){
-        return '<div class="notification-item"><span class="n-dot '+(n.lida?'read':'')+'"></span><div class="notification-text"><div style="font-weight:600">'+esc(n.titulo||'Notificacao')+'</div><div style="color:var(--muted);margin-top:2px">'+esc(n.mensagem||'')+'</div><div class="notification-time">'+formatarDataRel(n.criado_em)+'</div></div></div>';
+        return '<div class="notification-item" data-notif-id="'+esc(n.id)+'" style="cursor:pointer"><span class="n-dot '+(n.lida?'read':'')+'"></span><div class="notification-text"><div style="font-weight:600">'+esc(infoNotif(n).titulo)+'</div><div style="color:var(--muted);margin-top:2px">'+esc(n.resumo||'')+'</div><div class="notification-time">'+formatarDataRel(n.criado_em)+'</div></div></div>';
       }).join('');
+      pop.querySelectorAll('[data-notif-id]').forEach(function(el){
+        el.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          var n=r.data.find(function(x){return String(x.id)===el.getAttribute('data-notif-id');});
+          if(n)abrirNotificacao(n);
+        });
+      });
       var btnMarcar=document.getElementById('btnMarcarTodasLidas');
       if(btnMarcar)btnMarcar.addEventListener('click',function(ev){ev.stopPropagation();marcarTodasComoLidas();});
       atualizarBadgeNotif(r.data.filter(function(n){return !n.lida;}).length);
