@@ -196,7 +196,34 @@
       '[data-theme="dark"] #topbarSaga .theme-toggle svg.moon{color:#ffffff !important;}'+
       '[data-theme="dark"] #topbarSaga .theme-toggle svg.sun{color:#7b8799 !important;}'+
       '#topbarSaga .theme-toggle .knob{transition:left .25s ease,background .25s ease !important;}'+
-      '@media(max-width:760px){#sidebarSaga{position:fixed !important;}#topbarSaga .top-center{display:none !important;}}';
+      '@media(max-width:760px){#sidebarSaga{position:fixed !important;}#topbarSaga .top-center{display:none !important;}}'+
+      /* ===== CELULAR (ate 760px): menu lateral deslizante, barra compacta, sem rolagem lateral ===== */
+      '@media(max-width:760px){'+
+        'html,body{overflow-x:clip !important;max-width:100vw !important;}'+
+        '#topbarSaga{padding:0 10px !important;gap:8px !important;width:100% !important;}'+
+        '#topbarSaga .top-left{gap:8px !important;min-width:0 !important;}'+
+        '#topbarSaga .top-right{gap:6px !important;margin-left:auto !important;}'+
+        '#topbarSaga .crest{width:26px !important;height:26px !important;}'+
+        '#topbarSaga .brand-name{font-size:16px !important;}'+
+        '#topbarSaga .presence-btn{padding:0 !important;width:34px !important;height:34px !important;justify-content:center !important;}'+
+        '#topbarSaga #onlineText{display:none !important;}'+
+        '#topbarSaga .icon-btn{width:34px !important;height:34px !important;}'+
+        '#topbarSaga .theme-toggle{width:56px !important;height:30px !important;}'+
+        '#topbarSaga .theme-toggle svg{width:13px !important;height:13px !important;}'+
+        '#topbarSaga .theme-toggle .knob{width:22px !important;height:22px !important;top:3px !important;}'+
+        '[data-theme="light"] #topbarSaga .theme-toggle .knob{left:3px !important;}'+
+        '[data-theme="dark"] #topbarSaga .theme-toggle .knob{left:29px !important;}'+
+        '#topbarSaga .avatar{width:32px !important;height:32px !important;}'+
+        '#sidebarSaga,#sidebarSaga.collapsed{position:fixed !important;top:64px !important;left:0 !important;bottom:0 !important;height:auto !important;min-height:0 !important;'+
+          'width:min(290px,84vw) !important;min-width:0 !important;flex-basis:auto !important;padding:16px 0 24px !important;opacity:1 !important;overflow-y:auto !important;'+
+          'border:none !important;z-index:1500 !important;transform:translateX(-105%) !important;transition:transform .25s ease !important;box-shadow:none !important;}'+
+        '#sidebarSaga.open{transform:translateX(0) !important;box-shadow:8px 0 30px rgba(0,0,0,.35) !important;}'+
+        '#sidebarSaga .nav-item{padding:14px 22px !important;font-size:15px !important;font-weight:500 !important;}'+
+        '#sidebarSaga .nav-item .nav-icon{width:18px !important;height:18px !important;}'+
+        '#sidebarSaga .nav-section{font-size:11px !important;padding:18px 22px 8px !important;}'+
+        /* o fundo escuro cobre so a area a direita do menu: em telas onde o menu fica dentro de outra camada, ele nunca fica por cima dos itens */
+        '#overlay{position:fixed !important;top:64px !important;bottom:0 !important;right:0 !important;left:min(290px,84vw) !important;width:auto !important;height:auto !important;z-index:1400 !important;background:rgba(5,10,20,.45) !important;}'+
+      '}';
     (document.head||document.documentElement).appendChild(style);
   }
   if(document.head)_injetarEstiloBase();

@@ -597,6 +597,17 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 
     <div class="tags-ativas" id="tagsAtivas"></div>
 
+    <div class="barra-kanban" id="barraKanban">
+      <div class="seletor-fase-kanban" id="seletorFaseKanban"></div>
+      <div class="busca-kanban">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><line x1="20" y1="20" x2="16.5" y2="16.5" stroke="currentColor" stroke-width="2"/></svg>
+        <input type="text" id="buscaKanban" placeholder="Buscar cliente, CPF...">
+      </div>
+      <button type="button" class="btn-nova-coluna-kanban" id="btnNovaColunaKanban" onclick="abrirGerenciarCatalogos()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+        Nova coluna
+      </button>
+    </div>
     <div id="listaView">
       <div class="tabela-wrap">
         <div class="tabela-scroll">
@@ -633,17 +644,6 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
       </div>
     </div>
 
-    <div class="barra-kanban" id="barraKanban">
-      <div class="seletor-fase-kanban" id="seletorFaseKanban"></div>
-      <div class="busca-kanban">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><line x1="20" y1="20" x2="16.5" y2="16.5" stroke="currentColor" stroke-width="2"/></svg>
-        <input type="text" id="buscaKanban" placeholder="Buscar cliente, CPF...">
-      </div>
-      <button type="button" class="btn-nova-coluna-kanban" id="btnNovaColunaKanban" onclick="abrirGerenciarCatalogos()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
-        Nova coluna
-      </button>
-    </div>
     <div id="kanbanView" class="kanban-wrap"></div>
   </div>
 </div>
@@ -1184,6 +1184,8 @@ async function carregarProcessos(){
     if(state.filtroTese)query=query.eq('tese_id',state.filtroTese.id);
     if(state.filtroStatus)query=query.eq('status_id',state.filtroStatus.id);
     if(state.filtroResponsavel)query=query.eq('responsavel_id',state.filtroResponsavel.id);
+    var idsFase=statusIdsDaFaseLista();
+    if(idsFase)query=idsFase.length?query.in('status_id',idsFase):query.eq('status_id','00000000-0000-0000-0000-000000000000');
     if(state.filtroPeriodoDe)query=query.gte('data_inicio',state.filtroPeriodoDe);
     if(state.filtroPeriodoAte)query=query.lte('data_inicio',state.filtroPeriodoAte);
     if(busca){
@@ -1311,19 +1313,31 @@ function prazoKanbanHtml(d){
   if(dias<=15)return '<span class="card-prazo atencao">'+dias+' dias</span>';
   return '<span class="card-prazo normal">'+dias+' dias</span>';
 }
+// Fases (captacao, juridico...): no Kanban escolhem as colunas; na Lista filtram
+// os processos pelos status da fase, com a opcao Todas (padrao).
+var FASE_TODAS='__todas__';
 function renderSeletorFaseKanban(){
   var el=document.getElementById('seletorFaseKanban');
   var fases=Array.from(new Set(state.statusList.map(function(s){return s.fase||'Sem fase';})));
   if(!fases.length){el.innerHTML='';el.style.display='none';return;}
   el.style.display='flex';
-  if(!state.faseKanbanAtiva||fases.indexOf(state.faseKanbanAtiva)===-1)state.faseKanbanAtiva=fases[0];
-  el.innerHTML=fases.map(function(f){return '<div class="pill-fase '+(f===state.faseKanbanAtiva?'ativo':'')+'" data-fase="'+esc(f)+'">'+esc(f)+'</div>';}).join('');
+  var lista=state.view==='lista';
+  var opcoes=lista?[FASE_TODAS].concat(fases):fases;
+  if(lista){if(!state.faseLista||opcoes.indexOf(state.faseLista)===-1)state.faseLista=FASE_TODAS;}
+  else if(!state.faseKanbanAtiva||fases.indexOf(state.faseKanbanAtiva)===-1)state.faseKanbanAtiva=fases[0];
+  var ativa=lista?state.faseLista:state.faseKanbanAtiva;
+  el.innerHTML=opcoes.map(function(f){return '<div class="pill-fase '+(f===ativa?'ativo':'')+'" data-fase="'+esc(f)+'">'+(f===FASE_TODAS?'Todas':esc(f))+'</div>';}).join('');
   el.querySelectorAll('[data-fase]').forEach(function(pill){
     pill.addEventListener('click',function(){
-      state.faseKanbanAtiva=pill.getAttribute('data-fase');
-      renderSeletorFaseKanban();renderKanban();
+      var f=pill.getAttribute('data-fase');
+      if(state.view==='lista'){state.faseLista=f;state.page=1;renderSeletorFaseKanban();carregarProcessos();}
+      else{state.faseKanbanAtiva=f;renderSeletorFaseKanban();renderKanban();}
     });
   });
+}
+function statusIdsDaFaseLista(){
+  if(state.view!=='lista'||!state.faseLista||state.faseLista===FASE_TODAS)return null;
+  return state.statusList.filter(function(s){return (s.fase||'Sem fase')===state.faseLista;}).map(function(s){return s.id;});
 }
 function ordenarCardsColuna(cards,criterio,direcao){
   if(criterio==='padrao')return cards;
@@ -1783,15 +1797,18 @@ async function salvarNovoProcesso(){
 
 // Toggle Lista/Kanban
 var CHAVE_VIEW_PROCESSOS='saga-processos-view';
-function toggleView(view){
+function toggleView(view,semCarregar){
   state.view=view;
   try{localStorage.setItem(CHAVE_VIEW_PROCESSOS,view);}catch(e){}
   document.getElementById('btnViewLista').classList.toggle('ativo',view==='lista');
   document.getElementById('btnViewKanban').classList.toggle('ativo',view==='kanban');
   document.getElementById('listaView').style.display=view==='lista'?'block':'none';
   document.getElementById('kanbanView').style.display=view==='kanban'?'block':'none';
-  document.getElementById('barraKanban').style.display=view==='kanban'?'flex':'none';
-  if(view==='kanban'){renderSeletorFaseKanban();renderKanban();}
+  document.getElementById('barraKanban').style.display='flex';
+  document.querySelector('#barraKanban .busca-kanban').style.display=view==='kanban'?'':'none';
+  document.getElementById('btnNovaColunaKanban').style.display=view==='kanban'?'':'none';
+  renderSeletorFaseKanban();
+  if(view==='kanban')renderKanban();else if(!semCarregar)carregarProcessos();
 }
 
 // UI
@@ -1825,7 +1842,7 @@ async function init(){
   await restaurarPreferencias();
   var viewSalva=null;
   try{viewSalva=localStorage.getItem(CHAVE_VIEW_PROCESSOS);}catch(e){}
-  if(viewSalva==='kanban')toggleView('kanban');
+  toggleView(viewSalva==='kanban'?'kanban':'lista',true);
   await carregarProcessos();
 }
 function ligarInteracoesSagaUI(){

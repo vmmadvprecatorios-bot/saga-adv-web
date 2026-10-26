@@ -191,3 +191,29 @@ th{color:var(--muted)!important;font-weight:600!important}
 [data-theme="dark"] .grade-mes > .celula-dia:nth-child(even){background:#2a3a54}
 [data-theme="dark"] .grade-mes > .celula-dia:hover{background:#314565}
 [data-theme="dark"] .grade-mes > .celula-dia.hoje{background:#2c4a78}
+
+/* ===== Celular (ate 760px): telas com layout proprio ===== */
+@media (max-width:760px){
+  html,body{overflow-x:clip;max-width:100vw}
+  /* Configuracoes: menu de secoes acima do conteudo, em linha rolavel */
+  .settings-layout,.settings-layout.collapsed{grid-template-columns:minmax(0,1fr)!important}
+  .settings-nav,.settings-layout.collapsed .settings-nav{position:static!important;width:auto!important;max-width:100%}
+  .settings-nav-list{flex-direction:row!important;overflow-x:auto;gap:6px}
+  .settings-nav-item{flex:0 0 auto;width:auto!important}
+  .collapse-btn{display:none!important}
+  .title-wrap,.title-wrap h1,.title-wrap p{max-width:100%;overflow-wrap:anywhere}
+  .field-grid,.field-grid.three,.identity-row,.logo-layout{grid-template-columns:minmax(0,1fr)!important}
+  .field-group,.field-group input,.field-group select,.field-group textarea{min-width:0!important;max-width:100%!important;box-sizing:border-box}
+  .photo-actions{flex-wrap:wrap;justify-content:center}
+  .settings-layout [class*="actions"],.settings-layout [class*="row"],.settings-layout [class*="head"],.settings-layout [class*="foot"]{flex-wrap:wrap}
+  .settings-layout .btn-secondary,.settings-layout .btn-primary,.settings-layout .btn-danger{white-space:normal;max-width:100%}
+  .signature-tabs{max-width:100%;overflow-x:auto;flex-wrap:nowrap}
+  .signature-tab{flex:0 0 auto}
+  /* Tabelas largas (Monitoramento OAB e afins) rolam dentro do proprio quadro */
+  .tabela-oab{display:block;max-width:100%;overflow-x:auto}
+  /* Financeiro: abas rolam para o lado em vez de cortar */
+  .tabs{max-width:100%!important;overflow-x:auto;flex-wrap:nowrap}
+  .tab-btn{flex:0 0 auto;white-space:nowrap}
+  /* Topo das telas sem o menu padrao */
+  .top-right{gap:6px!important;min-width:0}
+}
