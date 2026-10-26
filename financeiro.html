@@ -207,10 +207,11 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
       <div class="campo"><label>Data do recebimento</label><input id="mpDataRecebido" type="date"></div>
     </div>
     <div class="secao">4. Distribuição entre colaboradores</div>
+    <div class="sub" style="margin:-4px 0 8px">Informe o percentual de cada um <b>sobre o valor da causa</b>. Ex.: honorários de 25% → Victor 12%, SCS 12%, Ancref 1%. Quando entrar a sentença ou o recebido, cada parte acompanha na mesma proporção.</div>
     <div id="mpRateio"></div>
     <div class="rateio-novo" id="mpRateioNovo">
       <div class="campo"><label>Beneficiário</label><select id="rnBeneficiario"></select></div>
-      <div class="campo"><label>Forma</label><select id="rnForma"><option value="percentual">%</option><option value="fixo">R$ fixo</option></select></div>
+      <div class="campo"><label>Forma</label><select id="rnForma"><option value="percentual">% da causa</option><option value="fixo">R$ fixo</option></select></div>
       <div class="campo"><label>Valor</label><input id="rnValor" inputmode="decimal" placeholder="Ex.: 30"></div>
       <button class="btn-secondary btn-sm" id="rnAdicionar" type="button" style="height:38px">Adicionar</button>
     </div>
@@ -306,8 +307,14 @@ function renderPills(elId,opcoes,atual,aoEscolher){
 }
 var PERIODOS=[['mes','Este mês'],['ano','Este ano'],['tudo','Tudo']];
 
-// Valor de cada linha do rateio sobre a base do processo
-function valorRateio(r,base){return r.valor_fixo!=null?Number(r.valor_fixo):Math.round(Number(base||0)*Number(r.percentual||0))/100;}
+// Valor de cada linha do rateio. O percentual e sobre o VALOR DA CAUSA: a parte da pessoa nos honorarios
+// e percentual / percentual_honorarios (ex.: 12% da causa com honorarios de 25% = 48% do que entrar).
+// Base = recebido, senao sentenca, senao expectativa.
+function valorRateio(r,base,pctHon){
+  if(r.valor_fixo!=null)return Number(r.valor_fixo);
+  if(!pctHon||Number(pctHon)<=0)return 0;
+  return Math.round(Number(base||0)*Number(r.percentual||0)/Number(pctHon)*100)/100;
+}
 function nomeBeneficiario(r){
   if(r.usuario_id){var u=state.usuarios.find(function(x){return x.id===r.usuario_id;});return u?u.nome_completo:'Colaborador';}
   return r.beneficiario_externo||'Externo';
@@ -347,7 +354,7 @@ function renderVisao(){
   var receitasAv=soma(L.filter(function(l){return l.tipo==='receita';}),'valor');
   var despesasAv=soma(L.filter(function(l){return l.tipo==='despesa';}),'valor');
   var distribuido=0,pago=0;
-  state.rateios.forEach(function(r){var p=P.find(function(x){return x.processo_id===r.processo_id;});if(!p)return;var v=valorRateio(r,p.base_rateio);distribuido+=v;if(r.pago&&dentroDoPeriodo(r.data_pagamento,per))pago+=v;});
+  state.rateios.forEach(function(r){var p=P.find(function(x){return x.processo_id===r.processo_id;});if(!p)return;var v=valorRateio(r,p.base_rateio,p.percentual_honorarios);distribuido+=v;if(r.pago&&dentroDoPeriodo(r.data_pagamento,per))pago+=v;});
   var resultado=soma(recPer,'valor_recebido')+receitasAv-despesasAv-pago;
   var rotPer={mes:'neste mês',ano:'neste ano',tudo:'no total'}[per];
   var cards=[
@@ -423,7 +430,7 @@ function baseDoModal(){
   var exp=(p.valor_causa!=null&&pct!=null&&!isNaN(pct))?Math.round(Number(p.valor_causa)*pct)/100:null;
   var sen=moedaParaNumero(document.getElementById('mpSentenca').value);
   var rec=moedaParaNumero(document.getElementById('mpRecebido').value);
-  return {exp:exp,sen:sen,rec:rec,base:(rec&&rec>0)?rec:(sen!=null?sen:(exp||0))};
+  return {exp:exp,sen:sen,rec:rec,pct:(pct!=null&&!isNaN(pct))?pct:null,base:(rec&&rec>0)?rec:(sen!=null?sen:(exp||0))};
 }
 function atualizarResumoModal(){
   var b=baseDoModal();
@@ -433,8 +440,9 @@ function atualizarResumoModal(){
   if(!state.rateioModal.length){el.innerHTML='<div class="sub" style="padding:4px 0 2px">Ninguém na distribuição ainda.</div>';return;}
   var total=0;
   el.innerHTML=state.rateioModal.map(function(r,i){
-    var v=valorRateio(r,b.base);total+=v;
-    return '<div class="rateio-linha"><div><b>'+esc(nomeBeneficiario(r))+'</b><div class="sub">'+(r.valor_fixo!=null?'Valor fixo':Number(r.percentual).toLocaleString('pt-BR')+'% dos honorários')+'</div></div>'+
+    var v=valorRateio(r,b.base,b.pct);total+=v;
+    var desc=r.valor_fixo!=null?'Valor fixo':(Number(r.percentual).toLocaleString('pt-BR')+'% da causa'+(b.pct?' · '+(Math.round(Number(r.percentual)/b.pct*1000)/10).toLocaleString('pt-BR')+'% dos honorários':' · informe os honorários (%)'));
+    return '<div class="rateio-linha"><div><b>'+esc(nomeBeneficiario(r))+'</b><div class="sub">'+desc+'</div></div>'+
       '<div class="num" style="font-weight:700">'+moeda(v)+'</div>'+
       '<label class="chk"><input type="checkbox" data-pago="'+i+'"'+(r.pago?' checked':'')+(state.podeEditar?'':' disabled')+'> Pago</label>'+
       (state.podeEditar?'<button class="btn-secondary btn-sm" data-remover="'+i+'" type="button">Remover</button>':'<span></span>')+'</div>';
@@ -453,12 +461,14 @@ function adicionarRateio(){
   var bruto=document.getElementById('rnValor').value;
   var valor=forma==='percentual'?percentualParaNumero(bruto):moedaParaNumero(bruto)||percentualParaNumero(bruto);
   if(valor==null||isNaN(valor)||valor<=0){showToast('Informe um valor válido para a distribuição.','error');return;}
-  if(forma==='percentual'&&valor>100){showToast('O percentual não pode passar de 100%.','error');return;}
+  var pctHon=percentualParaNumero(document.getElementById('mpPercentual').value);
+  if(forma==='percentual'&&(pctHon==null||isNaN(pctHon)||pctHon<=0)){showToast('Informe primeiro os honorários (%) do processo: a distribuição é feita sobre o valor da causa.','error');return;}
+  if(forma==='percentual'&&valor>pctHon){showToast('O percentual de cada um é sobre o valor da causa e não pode passar dos honorários ('+pctHon.toLocaleString('pt-BR')+'%).','error');return;}
   var linha={processo_id:state.procAberto.processo_id,usuario_id:null,beneficiario_externo:null,percentual:forma==='percentual'?valor:null,valor_fixo:forma==='fixo'?valor:null,pago:false,data_pagamento:null};
   if(benef==='__externo__'){var nome=document.getElementById('rnExterno').value.trim();if(!nome){showToast('Informe o nome do beneficiário externo.','error');return;}linha.beneficiario_externo=nome;}
   else linha.usuario_id=benef;
   var somaPct=state.rateioModal.reduce(function(s,r){return s+(r.percentual?Number(r.percentual):0);},0)+(linha.percentual||0);
-  if(somaPct>100){showToast('A soma dos percentuais passaria de 100% ('+somaPct.toLocaleString('pt-BR')+'%).','error');return;}
+  if(forma==='percentual'&&somaPct>pctHon+0.0001){showToast('A soma passaria dos honorários: '+somaPct.toLocaleString('pt-BR')+'% da causa, mas os honorários são '+pctHon.toLocaleString('pt-BR')+'%.','error');return;}
   state.rateioModal.push(linha);
   document.getElementById('rnValor').value='';document.getElementById('rnExterno').value='';
   atualizarResumoModal();
@@ -568,7 +578,7 @@ function renderDistribuicao(){
     var p=state.processos.find(function(x){return x.processo_id===r.processo_id;});if(!p)return;
     var chave=r.usuario_id||('ext:'+(r.beneficiario_externo||''));
     var g=grupos[chave]=grupos[chave]||{nome:nomeBeneficiario(r),externo:!r.usuario_id,previsto:0,pago:0,aPagar:0,processos:0};
-    var v=valorRateio(r,p.base_rateio);g.previsto+=v;g.processos++;
+    var v=valorRateio(r,p.base_rateio,p.percentual_honorarios);g.previsto+=v;g.processos++;
     if(r.pago)g.pago+=v;else if(p.etapa==='recebido')g.aPagar+=v;
   });
   var lista=Object.keys(grupos).map(function(k){return grupos[k];}).sort(function(a,b){return b.previsto-a.previsto;});
