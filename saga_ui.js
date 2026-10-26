@@ -217,7 +217,7 @@
         '[data-theme="light"] #topbarSaga .theme-toggle .knob{left:3px !important;}'+
         '[data-theme="dark"] #topbarSaga .theme-toggle .knob{left:29px !important;}'+
         '#topbarSaga .avatar{width:32px !important;height:32px !important;}'+
-        '#sidebarSaga,#sidebarSaga.collapsed{position:fixed !important;top:64px !important;left:0 !important;bottom:0 !important;height:auto !important;min-height:0 !important;'+
+        '#sidebarSaga,#sidebarSaga.collapsed{position:fixed !important;top:64px !important;left:0 !important;bottom:0 !important;height:calc(100vh - 64px) !important;height:calc(100dvh - 64px) !important;max-height:none !important;min-height:0 !important;overscroll-behavior:contain !important;'+
           'width:min(290px,84vw) !important;min-width:0 !important;flex-basis:auto !important;padding:16px 0 24px !important;opacity:1 !important;overflow-y:auto !important;'+
           'border:none !important;z-index:1500 !important;transform:translateX(-105%) !important;transition:transform .25s ease !important;box-shadow:none !important;}'+
         '#sidebarSaga.open{transform:translateX(0) !important;box-shadow:8px 0 30px rgba(0,0,0,.35) !important;}'+
@@ -225,6 +225,10 @@
         '#sidebarSaga .nav-item .nav-icon{width:18px !important;height:18px !important;}'+
         '#sidebarSaga .nav-section{font-size:11px !important;padding:18px 22px 8px !important;}'+
         /* o fundo escuro cobre so a area a direita do menu: em telas onde o menu fica dentro de outra camada, ele nunca fica por cima dos itens */
+        /* janelas da barra superior (notificacoes, online, busca, perfil): largura da tela, logo abaixo da barra */
+        '#topbarSaga .popover{position:fixed !important;top:68px !important;left:8px !important;right:8px !important;width:auto !important;max-width:none !important;max-height:calc(100dvh - 84px) !important;overflow-y:auto !important;overscroll-behavior:contain !important;}'+
+        'html.saga-menu-aberto,html.saga-menu-aberto body{overflow:hidden !important;overscroll-behavior:none !important;}'+
+        '#overlay{touch-action:none !important;}#overlay:not(.aberto){display:none !important;}#overlay.aberto{display:block !important;}'+
         '#overlay{position:fixed !important;top:64px !important;bottom:0 !important;right:0 !important;left:min(290px,84vw) !important;width:auto !important;height:auto !important;z-index:1400 !important;background:rgba(5,10,20,.45) !important;}'+
       '}';
     (document.head||document.documentElement).appendChild(style);
@@ -233,6 +237,50 @@
   else document.addEventListener('DOMContentLoaded',_injetarEstiloBase);
 
   var _sidebarColapsada=localStorage.getItem('saga-sidebar-colapsada')==='true';
+
+  // Celular: o menu lateral e o fundo escuro ficam direto no <body>. Dentro do layout da tela
+  // eles herdavam a altura de outra camada e sobrava um espaco branco embaixo.
+  var _lugarOriginalMenu=null,_rolagemTravada=0;
+  function ajustarMenuParaCelular(){
+    var sb=document.getElementById('sidebarSaga'),ov=document.getElementById('overlay');
+    if(!sb)return;
+    if(window.innerWidth<=760){
+      if(sb.parentElement!==document.body){
+        _lugarOriginalMenu={pai:sb.parentElement,prox:sb.nextSibling,ovPai:ov&&ov.parentElement,ovProx:ov&&ov.nextSibling};
+        document.body.appendChild(sb);
+        if(ov)document.body.appendChild(ov);
+      }
+    }else{
+      if(sb.classList.contains('open'))fecharMenuCelular();
+      if(_lugarOriginalMenu&&sb.parentElement===document.body){
+        _lugarOriginalMenu.pai.insertBefore(sb,_lugarOriginalMenu.prox);
+        if(ov&&_lugarOriginalMenu.ovPai)_lugarOriginalMenu.ovPai.insertBefore(ov,_lugarOriginalMenu.ovProx);
+        _lugarOriginalMenu=null;
+      }
+    }
+  }
+  // Com o menu aberto no celular, a pagina de tras nao rola nem recebe toques
+  function travarPagina(travar){
+    var html=document.documentElement,b=document.body;
+    if(travar){
+      if(html.classList.contains('saga-menu-aberto'))return;
+      _rolagemTravada=window.scrollY||0;
+      html.classList.add('saga-menu-aberto');
+      b.style.position='fixed';b.style.top=(-_rolagemTravada)+'px';b.style.left='0';b.style.right='0';b.style.width='100%';
+    }else{
+      if(!html.classList.contains('saga-menu-aberto'))return;
+      html.classList.remove('saga-menu-aberto');
+      b.style.position='';b.style.top='';b.style.left='';b.style.right='';b.style.width='';
+      window.scrollTo(0,_rolagemTravada);
+    }
+  }
+  function fecharMenuCelular(){
+    var sb=document.getElementById('sidebarSaga'),ov=document.getElementById('overlay'),ham=document.getElementById('hamburger');
+    if(sb)sb.classList.remove('open');
+    if(ov)ov.classList.remove('aberto');
+    if(ham)ham.classList.remove('ativo');
+    travarPagina(false);
+  }
   function _aplicarColapsoSalvo(){
     var sb=document.getElementById('sidebarSaga');
     if(sb&&_sidebarColapsada)sb.classList.add('collapsed');
@@ -401,15 +449,22 @@
     var ham=document.getElementById('hamburger');
     if(!ham||ham.dataset.ligado)return;
     ham.dataset.ligado='true';
+    // Toda tela precisa do fundo escuro do menu do celular (tocar nele fecha o menu)
+    if(!document.getElementById('overlay')){var ovNovo=document.createElement('div');ovNovo.id='overlay';ovNovo.className='overlay';ovNovo.style.display='none';document.body.appendChild(ovNovo);}
+    ajustarMenuParaCelular();
+    window.addEventListener('resize',ajustarMenuParaCelular);
     var sbInicial=document.getElementById('sidebarSaga');
     if(sbInicial&&sbInicial.classList.contains('collapsed'))ham.classList.add('ativo');
     ham.addEventListener('click',function(){
       var sb=document.getElementById('sidebarSaga');
       var ov=document.getElementById('overlay');
       if(window.innerWidth<=760){
-        if(sb)sb.classList.toggle('open');
-        if(ov)ov.classList.toggle('aberto');
-        ham.classList.toggle('ativo',!!(sb&&sb.classList.contains('open')));
+        ajustarMenuParaCelular();
+        if(sb&&sb.classList.contains('open')){fecharMenuCelular();return;}
+        if(sb)sb.classList.add('open');
+        if(ov)ov.classList.add('aberto');
+        ham.classList.add('ativo');
+        travarPagina(true);
         return;
       }
       if(sb){
@@ -421,12 +476,9 @@
     var ov=document.getElementById('overlay');
     if(ov&&!ov.dataset.ligado){
       ov.dataset.ligado='true';
-      ov.addEventListener('click',function(){
-        var sb=document.getElementById('sidebarSaga');
-        if(sb)sb.classList.remove('open');
-        ov.classList.remove('aberto');
-        ham.classList.remove('ativo');
-      });
+      ov.addEventListener('click',fecharMenuCelular);
+      // Arrastar o dedo no fundo escuro nao rola a pagina de tras
+      ov.addEventListener('touchmove',function(e){e.preventDefault();},{passive:false});
     }
   }
 
