@@ -60,6 +60,9 @@
       '#topbarSaga .online-dot{width:7px !important;height:7px !important;border-radius:50% !important;background:#5dd8a0 !important;box-shadow:0 0 7px #5dd8a0 !important;flex:0 0 auto !important;}'+
       '#topbarSaga .notification-item .n-dot{width:7px !important;height:7px !important;border-radius:50% !important;background:var(--gold) !important;margin-top:5px !important;flex:0 0 auto !important;}'+
       '#topbarSaga .notification-item .n-dot.read{visibility:hidden !important;}'+
+      '#topbarSaga .notif-grupo-qtd{min-width:26px !important;height:26px !important;padding:0 6px !important;border-radius:13px !important;color:#fff !important;font-size:11.5px !important;font-weight:700 !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;}'+
+      '#topbarSaga .notif-ok{flex:0 0 auto !important;border:1px solid var(--border) !important;background:transparent !important;color:var(--text) !important;border-radius:7px !important;padding:5px 10px !important;font-size:10.5px !important;font-weight:700 !important;cursor:pointer !important;}'+
+      '#topbarSaga .notif-ok:hover{background:var(--gold) !important;color:#fff !important;border-color:var(--gold) !important;}'+
       '#topbarSaga .avatar-pop-nome{color:#e8eaf0 !important;}[data-theme="light"] #topbarSaga .avatar-pop-nome{color:#13233a !important;}'+
       '#topbarSaga .avatar-pop-email{color:#8b93a8 !important;}[data-theme="light"] #topbarSaga .avatar-pop-email{color:#4a586e !important;}'+
       '#topbarSaga .pop-divisor{background:color-mix(in srgb,var(--gold) 12%,transparent) !important;}'+
@@ -631,8 +634,40 @@
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
     return {titulo:'Aviso'};
   }
-  async function abrirNotificacao(n){
-    try{if(!n.lida)await global._sb.from('notificacoes').update({lida:true}).eq('id',n.id);}catch(e){}
+  // Sino agrupado: uma linha por tipo (Chat, Tarefas, Agenda, Mencoes, Outros), so com o que nao foi lido.
+  // Clicar abre o lugar (o item exato quando ha um so) e tira o grupo do sino; o botao OK so dispensa.
+  var GRUPOS_NOTIF=[
+    {chave:'chat',titulo:'Chat',tipos:['chat_mensagem'],tela:'chat_interno_padrao_metalico.html',um:'mensagem nova',varios:'mensagens novas',cor:'#e5484d'},
+    {chave:'tarefas',titulo:'Tarefas',tipos:['tarefa_prazo','tarefa_repasse','tarefa_hoje','tarefa_atrasada'],tela:'minhas_tarefas.html',um:'aviso de tarefa',varios:'avisos de tarefas',cor:'#f59e0b'},
+    {chave:'agenda',titulo:'Agenda',tipos:['compromisso_hoje'],tela:'calendario_padrao_metalico.html',um:'compromisso hoje',varios:'compromissos hoje',cor:'#3b82f6'},
+    {chave:'mencao',titulo:'Menções',tipos:['mencao'],tela:null,um:'menção em comentário',varios:'menções em comentários',cor:'#8b5cf6'},
+    {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
+  ];
+  function grupoDoTipo(tipo){
+    for(var i=0;i<GRUPOS_NOTIF.length-1;i++){if(GRUPOS_NOTIF[i].tipos.indexOf(tipo)!==-1)return GRUPOS_NOTIF[i];}
+    return GRUPOS_NOTIF[GRUPOS_NOTIF.length-1];
+  }
+  function agruparNotif(lista){
+    var mapa={};
+    lista.forEach(function(n){var g=grupoDoTipo(n.tipo);(mapa[g.chave]=mapa[g.chave]||{grupo:g,itens:[]}).itens.push(n);});
+    return GRUPOS_NOTIF.filter(function(g){return mapa[g.chave];}).map(function(g){return mapa[g.chave];});
+  }
+  async function marcarLidas(ids){
+    if(!ids.length)return;
+    try{await global._sb.from('notificacoes').update({lida:true}).in('id',ids);}catch(e){}
+  }
+  async function abrirGrupoNotif(g){
+    var ids=g.itens.map(function(n){return n.id;});
+    // Um item so (ou todos do mesmo item): vai direto nele
+    var refs={};g.itens.forEach(function(n){refs[n.referencia_id||n.id]=1;});
+    if(Object.keys(refs).length===1){await abrirNotificacao(g.itens[0],ids);return;}
+    await marcarLidas(ids);
+    if(g.grupo.tela)window.location.href=g.grupo.tela;
+    else carregarNotificacoes();
+  }
+
+  async function abrirNotificacao(n,idsParaMarcar){
+    await marcarLidas(idsParaMarcar||(n.lida?[]:[n.id]));
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{
       var d=await global._sb.rpc('destino_notificacao',{p_id:n.id});
@@ -652,35 +687,49 @@
     if(!global._sb||!_perfilAtual)return;
     var pop=document.getElementById('notifPop');
     if(!pop)return;
-    pop.innerHTML='<div class="pop-title">Notificacoes</div><div style="font-size:10.5px;color:var(--muted);padding:12px;text-align:center">Carregando...</div>';
+    pop.innerHTML='<div class="pop-title">Notificações</div><div style="font-size:10.5px;color:var(--muted);padding:12px;text-align:center">Carregando...</div>';
     try{
-      var r=await global._sb.from('notificacoes').select('id,tipo,resumo,referencia_tabela,referencia_id,lida,criado_em').eq('usuario_id',_perfilAtual.id).order('criado_em',{ascending:false}).limit(20);
+      var r=await global._sb.from('notificacoes').select('id,tipo,resumo,referencia_tabela,referencia_id,lida,criado_em').eq('usuario_id',_perfilAtual.id).eq('lida',false).order('criado_em',{ascending:false}).limit(300);
       if(r.error)throw r.error;
-      var cabecalho='<div class="pop-title" style="display:flex;justify-content:space-between;align-items:center"><span>Notificacoes</span><button type="button" id="btnMarcarTodasLidas" style="background:none;border:none;color:var(--gold);font-size:10px;cursor:pointer">Marcar todas como lidas</button></div>';
-      if(!r.data||!r.data.length){pop.innerHTML=cabecalho+'<div style="font-size:10.5px;color:var(--muted);padding:12px;text-align:center">Sem notificacoes recentes.</div>';return;}
-      pop.innerHTML=cabecalho+r.data.map(function(n){
-        return '<div class="notification-item" data-notif-id="'+esc(n.id)+'" style="cursor:pointer"><span class="n-dot '+(n.lida?'read':'')+'"></span><div class="notification-text"><div style="font-weight:600">'+esc(infoNotif(n).titulo)+'</div><div style="color:var(--muted);margin-top:2px">'+esc(n.resumo||'')+'</div><div class="notification-time">'+formatarDataRel(n.criado_em)+'</div></div></div>';
+      var grupos=agruparNotif(r.data||[]);
+      atualizarBadgeNotif(grupos.length);
+      var cabecalho='<div class="pop-title" style="display:flex;justify-content:space-between;align-items:center"><span>Notificações</span>'+(grupos.length?'<button type="button" id="btnMarcarTodasLidas" style="background:none;border:none;color:var(--gold);font-size:10px;cursor:pointer">Dispensar todas</button>':'')+'</div>';
+      if(!grupos.length){pop.innerHTML=cabecalho+'<div style="font-size:11px;color:var(--muted);padding:16px;text-align:center">Nenhuma notificação nova.</div>';return;}
+      pop.innerHTML=cabecalho+grupos.map(function(g,i){
+        var q=g.itens.length,ult=g.itens[0];
+        return '<div class="notification-item notif-grupo" data-grupo="'+i+'" style="cursor:pointer;align-items:center">'
+          +'<span class="notif-grupo-qtd" style="background:'+g.grupo.cor+'">'+(q>99?'99+':q)+'</span>'
+          +'<div class="notification-text" style="flex:1;min-width:0"><div style="font-weight:700">'+esc(g.grupo.titulo)+' <span style="font-weight:500;color:var(--muted)">· '+q+' '+esc(q===1?g.grupo.um:g.grupo.varios)+'</span></div>'
+          +'<div style="color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(ult.resumo||'')+'</div>'
+          +'<div class="notification-time">'+formatarDataRel(ult.criado_em)+'</div></div>'
+          +'<button type="button" class="notif-ok" data-ok="'+i+'" title="Dispensar estes avisos">OK</button></div>';
       }).join('');
-      pop.querySelectorAll('[data-notif-id]').forEach(function(el){
-        el.addEventListener('click',function(ev){
+      pop.querySelectorAll('[data-grupo]').forEach(function(el){
+        el.addEventListener('click',function(ev){ev.stopPropagation();abrirGrupoNotif(grupos[+el.getAttribute('data-grupo')]);});
+      });
+      pop.querySelectorAll('[data-ok]').forEach(function(el){
+        el.addEventListener('click',async function(ev){
           ev.stopPropagation();
-          var n=r.data.find(function(x){return String(x.id)===el.getAttribute('data-notif-id');});
-          if(n)abrirNotificacao(n);
+          el.disabled=true;
+          await marcarLidas(grupos[+el.getAttribute('data-ok')].itens.map(function(n){return n.id;}));
+          carregarNotificacoes();
         });
       });
       var btnMarcar=document.getElementById('btnMarcarTodasLidas');
       if(btnMarcar)btnMarcar.addEventListener('click',function(ev){ev.stopPropagation();marcarTodasComoLidas();});
-      atualizarBadgeNotif(r.data.filter(function(n){return !n.lida;}).length);
     }catch(e){
-      pop.innerHTML='<div class="pop-title">Notificacoes</div><div style="font-size:10.5px;color:#e08383;padding:12px;text-align:center">Erro ao carregar.</div>';
+      pop.innerHTML='<div class="pop-title">Notificações</div><div style="font-size:10.5px;color:#e08383;padding:12px;text-align:center">Erro ao carregar.</div>';
     }
   }
 
+  // Numero do sino = quantos tipos (grupos) tem novidade
   async function contarNaoLidas(){
     if(!global._sb||!_perfilAtual)return;
     try{
-      var r=await global._sb.from('notificacoes').select('id',{count:'exact',head:true}).eq('usuario_id',_perfilAtual.id).eq('lida',false);
-      atualizarBadgeNotif(r.count||0);
+      var r=await global._sb.from('notificacoes').select('tipo').eq('usuario_id',_perfilAtual.id).eq('lida',false).limit(1000);
+      if(r.error)return;
+      var g={};(r.data||[]).forEach(function(n){g[grupoDoTipo(n.tipo).chave]=1;});
+      atualizarBadgeNotif(Object.keys(g).length);
     }catch(e){}
   }
 
@@ -839,7 +888,7 @@
   }
 
 
-  // Contador de mensagens nao lidas do Chat: numero no item do menu lateral, ponto no botao do menu
+  // Contador de mensagens nao lidas do Chat: numero no item do menu lateral
   // e numero no titulo da aba do navegador. Atualiza na hora quando chega mensagem (tempo real).
   var _chatCanal=null,_chatTimer=null,_tituloOriginal=null;
   async function contarChat(){
@@ -850,8 +899,6 @@
       var total=r.data.reduce(function(s,x){return s+(x.qtd||0);},0);
       var b=document.getElementById('navBadgeChat');
       if(b){b.textContent=total>99?'99+':String(total);b.style.display=total>0?'':'none';}
-      var ham=document.getElementById('hamburger');
-      if(ham)ham.classList.toggle('tem-chat',total>0);
       if(_tituloOriginal===null)_tituloOriginal=document.title.replace(/^\(\d+\+?\)\s*/,'');
       document.title=(total>0?'('+(total>99?'99+':total)+') ':'')+_tituloOriginal;
       document.dispatchEvent(new CustomEvent('saga-chat-nao-lidas',{detail:{total:total,porConversa:r.data||[]}}));
@@ -881,7 +928,7 @@
       var st=document.createElement('style');st.id='sagaChatEstilo';
       st.textContent='#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#e5484d !important;color:#fff !important;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.25)}'
         +'#sidebarSaga .nav-badge-dia{background:#3b82f6 !important}#sidebarSaga .nav-badge-dia.atrasada{background:#e5484d !important}'
-        +'#hamburger{position:relative !important}#hamburger.tem-chat::after{content:"";position:absolute;top:3px;right:2px;width:9px;height:9px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 2px var(--panel,#fff)}';
+        +'';
       document.head.appendChild(st);
     }
     contarChat();
@@ -924,5 +971,5 @@
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
 
-  global.SagaUI={carregar:carregar,atualizarChat:agendarContagemChat,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={carregar:carregar,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);

@@ -1306,6 +1306,8 @@ async function marcarComoLida(conversaId) {
   var conv = state.conversas.find(function(c){ return c.id === conversaId; });
   if (conv) { conv.temNaoLida = false; conv.qtdNaoLidas = 0; renderConversas(); }
   if (window.SagaUI && SagaUI.atualizarChat) SagaUI.atualizarChat();
+  // Avisos dessa conversa saem do sino
+  _sb.rpc('marcar_avisos_conversa_lidos', { p_conversa: conversaId }).then(function(){ if (window.SagaUI && SagaUI.contarAvisos) SagaUI.contarAvisos(); }, function(){});
 }
 
 // ===== REALTIME =====
