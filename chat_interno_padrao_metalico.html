@@ -132,7 +132,10 @@
   .nome-conversa{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .hora-conversa{font-size:10px;color:var(--muted);flex:0 0 auto;}
   .ultima-mensagem{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;}
-  .badge-nao-lida{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;flex:0 0 auto;}
+  .item-conversa.nao-lida .nome-conversa{font-weight:800;}
+  .item-conversa.nao-lida .ultima-mensagem{color:var(--text);font-weight:600;}
+  .item-conversa.nao-lida .hora-conversa{color:#e5484d;font-weight:700;}
+  .badge-nao-lida{background:#e5484d;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 5px;flex:0 0 auto;}
   .btn-novo-chat{margin:10px 14px 14px;padding:10px;border-radius:10px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);text-align:center;font-size:12px;font-weight:700;cursor:pointer;}
   .janela-conversa{flex:1;display:flex;flex-direction:column;min-width:0;}
   .conversa-header{height:68px;flex:0 0 auto;padding:0 22px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-soft);background:var(--panel);}
@@ -686,6 +689,10 @@ async function carregarConversas() {
     (rr.data || []).forEach(function(r){ receipts[r.conversa_id] = r.lida_ate; });
   }
 
+  var naoLidas = null;
+  var rn = await _sb.rpc('chat_nao_lidas');
+  if (!rn.error && Array.isArray(rn.data)) { naoLidas = {}; rn.data.forEach(function(x){ naoLidas[x.conversa_id] = x.qtd; }); }
+
   state.conversas = convs.map(function(c) {
     var lastMsg = lastMsgs[c.id] || null;
     var lidaAte = receipts[c.id] || null;
@@ -696,7 +703,11 @@ async function carregarConversas() {
     var temNaoLida = lastMsg
       && lastMsg.autor_id !== state.meuInternoId
       && (!lidaAte || new Date(lastMsg.criado_em) > new Date(lidaAte));
-    return Object.assign({}, c, { lastMsg: lastMsg, temNaoLida: temNaoLida, ocultaEm: ocultaEm, souMembro: !!eu });
+    var qtd = naoLidas ? (naoLidas[c.id] || 0) : (temNaoLida ? 1 : 0);
+    // Conversa aberta e na tela: o que chega ja esta sendo lido
+    if (state.conversaAtiva && state.conversaAtiva.id === c.id && !document.hidden) qtd = 0;
+    temNaoLida = qtd > 0;
+    return Object.assign({}, c, { lastMsg: lastMsg, temNaoLida: temNaoLida, qtdNaoLidas: qtd, ocultaEm: ocultaEm, souMembro: !!eu });
   }).filter(function(c){
     // Conversa apagada por mim volta a aparecer se chegar mensagem nova
     return !(c.ocultaEm && !c.lastMsg);
@@ -749,8 +760,9 @@ function renderConversas() {
       ? ((c.lastMsg.autor_id === state.meuInternoId ? 'Você: ' : '') + textoPrev.substring(0, 55))
       : (c.souMembro ? 'Sem mensagens ainda' : 'Você não participa deste grupo');
     var hora = c.lastMsg ? fmtDataRelativa(c.lastMsg.criado_em) : '';
-    var badge = c.temNaoLida ? '<div class="badge-nao-lida">N</div>' : '';
-    return '<div class="item-conversa ' + ativa + '" onclick="abrirConversa(\'' + c.id + '\')">' +
+    var qtd = c.qtdNaoLidas || (c.temNaoLida ? 1 : 0);
+    var badge = qtd ? '<div class="badge-nao-lida">' + (qtd > 99 ? '99+' : qtd) + '</div>' : '';
+    return '<div class="item-conversa ' + ativa + (qtd ? ' nao-lida' : '') + '" onclick="abrirConversa(\'' + c.id + '\')">' +
       '<div class="avatar-conversa ' + (isGrupo ? 'grupo' : '') + '">' + esc(iniciais(nome)) + '</div>' +
       '<div class="info-conversa">' +
         '<div class="info-conversa-topo"><span class="nome-conversa">' + esc(nome) + (c.souMembro ? '' : '<span class="tag-gestao">gestão</span>') + '</span><span class="hora-conversa">' + esc(hora) + '</span></div>' +
@@ -1281,6 +1293,8 @@ async function confirmarExclusao() {
 // ===== READ RECEIPTS =====
 async function marcarComoLida(conversaId) {
   if (!state.meuInternoId) return;
+  // Janela minimizada ou em outra aba: so marca como lida quando a pessoa voltar
+  if (document.hidden) return;
   // Relogio do computador pode estar atrasado: usa o da ultima mensagem se for maior
   var marco = Date.now();
   state.mensagens.forEach(function(m){ marco = Math.max(marco, new Date(m.criado_em).getTime()); });
@@ -1290,7 +1304,8 @@ async function marcarComoLida(conversaId) {
     lida_ate: new Date(marco).toISOString()
   }, { onConflict: 'conversa_id,usuario_id' });
   var conv = state.conversas.find(function(c){ return c.id === conversaId; });
-  if (conv) { conv.temNaoLida = false; renderConversas(); }
+  if (conv) { conv.temNaoLida = false; conv.qtdNaoLidas = 0; renderConversas(); }
+  if (window.SagaUI && SagaUI.atualizarChat) SagaUI.atualizarChat();
 }
 
 // ===== REALTIME =====
@@ -1353,7 +1368,8 @@ function atualizarPreviewConversa(msg) {
   var conv = state.conversas.find(function(c){ return c.id === msg.conversa_id; });
   if (conv) {
     conv.lastMsg = msg;
-    conv.temNaoLida = msg.autor_id !== state.meuInternoId && (!state.conversaAtiva || state.conversaAtiva.id !== msg.conversa_id);
+    conv.temNaoLida = msg.autor_id !== state.meuInternoId && (!state.conversaAtiva || state.conversaAtiva.id !== msg.conversa_id || document.hidden);
+    if (conv.temNaoLida) conv.qtdNaoLidas = (conv.qtdNaoLidas || 0) + 1;
   }
   state.conversas.sort(function(a, b){
     var ta = a.lastMsg ? new Date(a.lastMsg.criado_em) : new Date(a.criado_em);
@@ -1731,6 +1747,18 @@ async function init() {
     (ru.data || []).forEach(function(u){ state.usuarios[u.id] = u.nome_completo; });
 
     await carregarConversas();
+
+    // Mensagem nova em qualquer conversa (o contador geral do menu avisa): atualiza a lista
+    var assinaturaNaoLidas = null;
+    document.addEventListener('saga-chat-nao-lidas', function(ev){
+      var porConv = (ev.detail && ev.detail.porConversa) || [];
+      var assinatura = porConv.map(function(x){ return x.conversa_id + ':' + x.qtd; }).sort().join('|');
+      if (assinaturaNaoLidas !== null && assinatura !== assinaturaNaoLidas) carregarConversas();
+      assinaturaNaoLidas = assinatura;
+    });
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden && state.conversaAtiva) marcarComoLida(state.conversaAtiva.id);
+    });
   } catch(e) {
     showToast('Erro ao inicializar: ' + (e.message || e), 'erro');
   }

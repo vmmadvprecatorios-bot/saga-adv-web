@@ -253,7 +253,7 @@
     +'<div class="nav-section">Comunicacao</div>'
     +'<div class="nav-item" data-tela="chat" onclick="window.location.href=\'chat_interno_padrao_metalico.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Chat Interno</div>'
+    +'Chat Interno<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
     +'<div class="nav-item" data-tela="ponto" onclick="window.location.href=\'ponto_eletronico_padrao_metalico.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Ponto Eletronico</div>'
@@ -825,6 +825,43 @@
     privDefinir(salvo==='1');
   }
 
+
+  // Contador de mensagens nao lidas do Chat: numero no item do menu lateral, ponto no botao do menu
+  // e numero no titulo da aba do navegador. Atualiza na hora quando chega mensagem (tempo real).
+  var _chatCanal=null,_chatTimer=null,_tituloOriginal=null;
+  async function contarChat(){
+    if(!global._sb||!_perfilAtual)return;
+    try{
+      var r=await global._sb.rpc('chat_nao_lidas');
+      if(r.error||!Array.isArray(r.data))return;
+      var total=r.data.reduce(function(s,x){return s+(x.qtd||0);},0);
+      var b=document.getElementById('navBadgeChat');
+      if(b){b.textContent=total>99?'99+':String(total);b.style.display=total>0?'':'none';}
+      var ham=document.getElementById('hamburger');
+      if(ham)ham.classList.toggle('tem-chat',total>0);
+      if(_tituloOriginal===null)_tituloOriginal=document.title.replace(/^\(\d+\+?\)\s*/,'');
+      document.title=(total>0?'('+(total>99?'99+':total)+') ':'')+_tituloOriginal;
+      document.dispatchEvent(new CustomEvent('saga-chat-nao-lidas',{detail:{total:total,porConversa:r.data||[]}}));
+    }catch(e){}
+  }
+  function agendarContagemChat(){clearTimeout(_chatTimer);_chatTimer=setTimeout(contarChat,400);}
+  function ligarContadorChat(){
+    if(!document.getElementById('sagaChatEstilo')){
+      var st=document.createElement('style');st.id='sagaChatEstilo';
+      st.textContent='#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#e5484d !important;color:#fff !important;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.25)}'
+        +'#hamburger{position:relative !important}#hamburger.tem-chat::after{content:"";position:absolute;top:3px;right:2px;width:9px;height:9px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 2px var(--panel,#fff)}';
+      document.head.appendChild(st);
+    }
+    contarChat();
+    if(global._sb&&!_chatCanal){
+      _chatCanal=global._sb.channel('saga-chat-contador')
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_mensagens'},agendarContagemChat)
+        .subscribe();
+    }
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)agendarContagemChat();});
+    setInterval(contarChat,60000);
+  }
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
@@ -848,8 +885,9 @@
     // Presenca e contador do sino carregam em paralelo e nao seguram a tela
     carregarPresenca();
     contarNaoLidas();
+    ligarContadorChat();
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
 
-  global.SagaUI={carregar:carregar,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={carregar:carregar,atualizarChat:agendarContagemChat,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);
