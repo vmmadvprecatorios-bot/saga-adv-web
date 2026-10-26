@@ -118,7 +118,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <div class="modal-overlay" id="resetModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h2 id="resetModalTitle">Resetar senha</h2><p id="resetModalSubtitle"></p></div><button class="modal-close" data-close="resetModal">✕</button></div><div class="modal-body" id="resetModalBody"></div><div class="modal-foot"><button class="btn-secondary" data-close="resetModal">Cancelar</button><button class="btn-danger" id="confirmResetButton">Confirmar reset</button></div></div></div>
 <div class="modal-overlay" id="historyModal"><div class="modal wide"><div class="modal-head"><div class="modal-title-stack"><h2 id="historyModalTitle">Histórico de senha</h2><p>Registro de metadados de segurança. Nenhuma senha é exibida.</p></div><button class="modal-close" data-close="historyModal">✕</button></div><div class="modal-body"><div id="historyModalBody"></div><div class="pagination" id="historyPagination"></div></div><div class="modal-foot"><button class="btn-secondary" data-close="historyModal">Fechar</button></div></div></div>
-<div class="modal-overlay" id="confirmStatusModal"><div class="modal small"><div class="modal-head"><div class="modal-title-stack"><h2>Alterar status do colaborador</h2><p id="confirmStatusText"></p></div><button class="modal-close" data-close="confirmStatusModal">✕</button></div><div class="modal-foot"><button class="btn-secondary" data-close="confirmStatusModal">Cancelar</button><button class="btn-danger" id="confirmStatusButton">Confirmar inativação</button></div></div></div>
+<div class="modal-overlay" id="confirmStatusModal"><div class="modal small"><div class="modal-head"><div class="modal-title-stack"><h2>Alterar status do colaborador</h2><p id="confirmStatusText"></p></div><button class="modal-close" data-close="confirmStatusModal">✕</button></div><div class="modal-foot"><button class="btn-secondary" data-close="confirmStatusModal">Cancelar</button><button class="btn-danger" id="confirmStatusButton">Desligar colaborador</button></div></div></div>
+<div class="modal-overlay" id="excluirAcessoModal"><div class="modal small"><div class="modal-head"><div class="modal-title-stack"><h2>Excluir acesso definitivamente</h2><p>O login de <strong id="excluirAcessoNome"></strong> será apagado e o e-mail ficará livre. Esta ação não pode ser desfeita. O nome continua no histórico de processos, tarefas, comentários e ponto. Para voltar a ter acesso, a pessoa precisará de um novo convite.</p></div><button class="modal-close" data-close="excluirAcessoModal">✕</button></div><div class="modal-body" style="padding:0 20px 16px"><label for="excluirAcessoConfirmacao" style="display:block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Para confirmar, digite EXCLUIR</label><input type="text" id="excluirAcessoConfirmacao" autocomplete="off" placeholder="EXCLUIR" style="width:100%;padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font:inherit;font-size:12px"></div><div class="modal-foot"><button class="btn-secondary" data-close="excluirAcessoModal">Cancelar</button><button class="btn-danger" id="confirmExcluirAcessoButton" disabled>Excluir acesso</button></div></div></div>
 <div class="modal-overlay" id="inviteModal">
   <div class="modal">
     <div class="modal-head">
@@ -254,8 +255,9 @@ async function loadEmployees(){
 
 async function loadMeuPerfil(){
   if(!state.session) return;
-  var r = await _sb.from('usuarios').select('id').eq('auth_user_id', state.session.user.id).maybeSingle();
+  var r = await _sb.from('usuarios').select('id,eh_administrador').eq('auth_user_id', state.session.user.id).maybeSingle();
   state.meuInternoId = (r.data && r.data.id) || null;
+  state.souAdmin = !!(r.data && r.data.eh_administrador);
 }
 
 // ── KPIs ──────────────────────────────────────────────────────
@@ -367,11 +369,14 @@ function openActionMenu(employeeId, anchor){
   var menu = document.getElementById('actionMenuPortal');
   menu.innerHTML =
     '<button data-reset-password="'+emp.id+'"><span>↻</span> Resetar senha</button>' +
-    '<button data-view-history="'+emp.id+'"><span>◌</span> Ver histórico de senha</button>';
+    '<button data-view-history="'+emp.id+'"><span>◌</span> Ver histórico de senha</button>' +
+    (emp.protected || !state.souAdmin ? '' : '<button data-excluir-acesso="'+emp.id+'" style="color:var(--danger)"><span>✕</span> Excluir acesso definitivamente</button>');
   menu.classList.add('open');
   positionPortalMenu(menu, anchor);
   menu.querySelector('[data-reset-password]').addEventListener('click', function(){closeActionMenus();openResetModal(emp.id);});
   menu.querySelector('[data-view-history]').addEventListener('click', function(){closeActionMenus();openHistoryModal(emp.id);});
+  var btnExcluirAcesso = menu.querySelector('[data-excluir-acesso]');
+  if(btnExcluirAcesso) btnExcluirAcesso.addEventListener('click', function(){closeActionMenus();openExcluirAcessoModal(emp.id);});
 }
 
 // ── Status menu ───────────────────────────────────────────────
@@ -390,7 +395,7 @@ function openStatusMenu(employeeId, anchor){
       var target = getEmployee(btn.dataset.employeeStatus);
       closeActionMenus();
       if(!nextAtivo){
-        document.getElementById('confirmStatusText').textContent = 'Deseja inativar '+target.nome+'? O colaborador perderá acesso ao sistema até uma nova reativação.';
+        document.getElementById('confirmStatusText').textContent = 'Deseja desligar '+target.nome+'? O login é bloqueado na hora, inclusive se a pessoa estiver com o sistema aberto. Você pode reativar depois.';
         document.getElementById('confirmStatusButton').onclick = function(){
           confirmStatusChange(target.id, false);
           closeModal('confirmStatusModal');
@@ -403,14 +408,56 @@ function openStatusMenu(employeeId, anchor){
   });
 }
 
+// Desligar, reativar ou excluir o acesso passa pela Edge Function gerenciar-acesso,
+// que bloqueia/desbloqueia o login no Supabase Auth (so o servidor tem essa chave).
+async function chamarGerenciarAcesso(employeeId, acao){
+  try{
+    var r = await _sb.functions.invoke('gerenciar-acesso', { body: { usuario_id: employeeId, acao: acao } });
+    if(!r.error) return { ok: true, msg: (r.data && r.data.mensagem) || 'Acesso atualizado.' };
+    var msg = 'Não foi possível alterar o acesso agora.';
+    try{ var corpo = r.error.context && await r.error.context.json(); if(corpo && corpo.erro) msg = corpo.erro; }catch(_){}
+    return { ok: false, msg: msg };
+  }catch(e){
+    return { ok: false, msg: 'Não foi possível alterar o acesso agora. Verifique sua conexão.' };
+  }
+}
+
 async function confirmStatusChange(employeeId, nextAtivo){
   var emp = getEmployee(employeeId);
   if(!emp) return;
-  var r = await _sb.from('usuarios').update({ativo: nextAtivo}).eq('id', employeeId);
-  if(r.error){showToast('Erro ao alterar status: '+(r.error.message||''),'error');return;}
+  var res = await chamarGerenciarAcesso(employeeId, nextAtivo ? 'reativar' : 'desligar');
+  if(!res.ok){showToast(esc(res.msg),'error');return;}
   emp.ativo = nextAtivo;
   renderEmployees();
-  showToast('Status de <b>'+esc(emp.nome)+'</b> alterado para '+(nextAtivo?'ativo':'inativo')+'.', nextAtivo?'success':'info');
+  showToast(esc(res.msg), nextAtivo?'success':'info');
+}
+
+// Exclusao definitiva do login (so administrador; pede para digitar EXCLUIR)
+function openExcluirAcessoModal(employeeId){
+  var emp = getEmployee(employeeId);
+  if(!emp) return;
+  if(emp.protected){showToast('Você não pode excluir o seu próprio acesso.','error');return;}
+  state.excluirAcessoId = employeeId;
+  document.getElementById('excluirAcessoNome').textContent = emp.nome;
+  var campo = document.getElementById('excluirAcessoConfirmacao');
+  campo.value = '';
+  document.getElementById('confirmExcluirAcessoButton').disabled = true;
+  openModal('excluirAcessoModal');
+  setTimeout(function(){campo.focus();},50);
+}
+async function confirmarExcluirAcesso(){
+  var emp = getEmployee(state.excluirAcessoId);
+  if(!emp) return;
+  if(document.getElementById('excluirAcessoConfirmacao').value.trim().toUpperCase()!=='EXCLUIR') return;
+  var btn = document.getElementById('confirmExcluirAcessoButton');
+  btn.disabled = true; btn.textContent = 'Excluindo...';
+  var res = await chamarGerenciarAcesso(emp.id, 'excluir');
+  btn.textContent = 'Excluir acesso';
+  if(!res.ok){btn.disabled=false;showToast(esc(res.msg),'error');return;}
+  closeModal('excluirAcessoModal');
+  emp.ativo = false; emp.authLinked = false;
+  renderEmployees();
+  showToast(esc(res.msg),'info');
 }
 
 // ── Modal de reset de senha ───────────────────────────────────
@@ -821,13 +868,16 @@ async function init(){
     });
   });
   document.getElementById('employeeSearch').addEventListener('input',function(e){state.search=e.target.value;state.page=1;renderEmployees();});
-  document.getElementById('globalSearch').addEventListener('input',function(e){state.search=e.target.value;document.getElementById('employeeSearch').value=e.target.value;state.page=1;renderEmployees();});
+  document.getElementById('globalSearch')?.addEventListener('input',function(e){state.search=e.target.value;document.getElementById('employeeSearch').value=e.target.value;state.page=1;renderEmployees();});
 
   // Navegação do protótipo
   document.querySelectorAll('[data-prototype]').forEach(function(btn){btn.addEventListener('click',function(){switchPrototype(btn.dataset.prototype);});});
 
   // Modais
   document.querySelectorAll('[data-close]').forEach(function(btn){btn.addEventListener('click',function(){closeModal(btn.dataset.close);});});
+  var campoExcluirAcesso = document.getElementById('excluirAcessoConfirmacao');
+  campoExcluirAcesso.addEventListener('input',function(){document.getElementById('confirmExcluirAcessoButton').disabled = campoExcluirAcesso.value.trim().toUpperCase()!=='EXCLUIR';});
+  document.getElementById('confirmExcluirAcessoButton').addEventListener('click', confirmarExcluirAcesso);
   document.querySelectorAll('.modal-overlay').forEach(function(modal){modal.addEventListener('click',function(e){if(e.target===modal)closeModal(modal.id);});});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(function(m){closeModal(m.id);});closeActionMenus();closePopovers();}});
 

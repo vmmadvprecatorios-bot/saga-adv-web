@@ -410,13 +410,18 @@ function showToast(msg, tipo) {
   }, 3600);
 }
 
+var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o administrador do escritório.';
+
 // ================================================================
 // VERIFICACAO DE SESSAO INICIAL
 // Se o usuario ja estiver autenticado, redireciona direto.
 // ================================================================
 (async function verificarSessaoInicial() {
-  if (new URLSearchParams(window.location.search).get('motivo') === 'inatividade') {
+  var motivo = new URLSearchParams(window.location.search).get('motivo');
+  if (motivo === 'inatividade') {
     showToast('Sua sessão foi encerrada após 2 horas sem uso fora do horário de expediente. Entre novamente.', 'info');
+  } else if (motivo === 'desligado') {
+    showToast(MSG_ACESSO_DESATIVADO, 'erro');
   }
   try {
     var r = await _sb.auth.getSession();
@@ -460,12 +465,26 @@ document.getElementById('formLogin').addEventListener('submit', async function (
         msg = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
       } else if (em.indexOf('User not found') >= 0) {
         msg = 'Usuario nao encontrado. Verifique o e-mail digitado.';
+      } else if (/banned/i.test(em)) {
+        msg = MSG_ACESSO_DESATIVADO;
       }
       showToast(msg, 'erro');
       btn.disabled    = false;
       btn.textContent = 'Entrar no Sistema';
       return;
     }
+
+    // Colaborador desligado (inativo) nao entra, mesmo com a senha certa
+    try {
+      var perfil = await _sb.from('usuarios').select('ativo').eq('auth_user_id', r.data.user.id).maybeSingle();
+      if (perfil.data && perfil.data.ativo === false) {
+        await _sb.auth.signOut();
+        showToast(MSG_ACESSO_DESATIVADO, 'erro');
+        btn.disabled    = false;
+        btn.textContent = 'Entrar no Sistema';
+        return;
+      }
+    } catch (e) {}
 
     // Marca a entrada como atividade, para a contagem de inatividade do saga_ui.js
     try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}

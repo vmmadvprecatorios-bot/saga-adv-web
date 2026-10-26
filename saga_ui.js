@@ -466,8 +466,10 @@
       var s=await global._sb.auth.getSession();
       if(!s.data||!s.data.session)return;
       var authId=s.data.session.user.id;
-      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador').eq('auth_user_id',authId).single();
+      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo').eq('auth_user_id',authId).single();
       if(r.error||!r.data)return;
+      // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
+      if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
       _perfilAtual=r.data;
       var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo);
       var nm=document.getElementById('avatarPopNome');if(nm)nm.textContent=r.data.nome_completo||'';
@@ -717,7 +719,7 @@
     try{if(_canalPresenca)await _canalPresenca.untrack();}catch(e){}
     try{await global._sb.auth.signOut();}catch(e){}
     try{localStorage.removeItem(CHAVE_ATIVIDADE);}catch(e){}
-    window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'?'?motivo=inatividade':'');
+    window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'?'?motivo='+motivo:'');
   };
 
   async function carregar(telaAtiva){
