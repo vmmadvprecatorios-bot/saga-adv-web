@@ -722,13 +722,14 @@ async function carregarPreferencias() {
 async function salvarPreferencias() {
   if (!meuPerfilId) return;
   try {
-    await _sb.from('preferencias_filtros_usuario').upsert({
+    var r = await _sb.from('preferencias_filtros_usuario').upsert({
       usuario_id: meuPerfilId,
       tela: 'calendario',
       filtros: { categorias: categoriasMap },
       atualizado_em: new Date().toISOString()
     }, { onConflict: 'usuario_id,tela' });
-  } catch(e) { /* silencioso */ }
+    if (r && r.error) showToast('Nao foi possivel salvar as categorias: ' + (r.error.message || ''), 'erro');
+  } catch(e) { showToast('Nao foi possivel salvar as categorias. Verifique a conexao.', 'erro'); }
 }
 
 // ================================================================
@@ -1250,6 +1251,12 @@ function renderizarLegenda() {
     var inputCor     = popover.querySelector('.input-cor-leg');
     var preview      = popover.querySelector('.popover-cor-preview');
     inputCor.addEventListener('input', function() { preview.style.background = inputCor.value; });
+    // Cliques dentro da janelinha (campo do nome, cor) nao podem chegar na etiqueta,
+    // senao ela fecha a janelinha antes de a pessoa conseguir digitar
+    popover.addEventListener('click', function(e) { e.stopPropagation(); });
+    popover.querySelector('.input-nome-leg').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); popover.querySelector('.btn-salvar-legenda').click(); }
+    });
 
     popover.querySelector('.btn-salvar-legenda').addEventListener('click', function(e) {
       e.stopPropagation();
@@ -1258,6 +1265,7 @@ function renderizarLegenda() {
       categoriasMap[tipo].nome = novoNome;
       categoriasMap[tipo].cor  = inputCor.value;
       salvarPreferencias();
+      showToast('Categoria atualizada.', 'sucesso');
       renderizarLegenda();
       renderizarView();
     });
@@ -1292,7 +1300,8 @@ function renderizarLegenda() {
   var btnAdd = document.createElement('div');
   btnAdd.className = 'btn-add-legenda';
   btnAdd.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg> Nova categoria';
-  btnAdd.addEventListener('click', function() {
+  btnAdd.addEventListener('click', function(e) {
+    e.stopPropagation(); // senao o clique chega na pagina e fecha a janelinha recem-aberta
     var novoTipo = 'Categoria ' + (Object.keys(categoriasMap).length + 1);
     var idx = Object.keys(categoriasMap).length;
     categoriasMap[novoTipo] = { nome: novoTipo, cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
@@ -1300,10 +1309,14 @@ function renderizarLegenda() {
     renderizarLegenda();
     // Abrir o popover automaticamente para que o usuario edite
     var itens = document.querySelectorAll('#legendaCalendario .item-legenda');
-    var ultimo = itens[itens.length - 2]; // penultimo (antes do btn)
+    var ultimo = itens[itens.length - 1]; // a categoria recem-criada (o botao "Nova categoria" nao e .item-legenda)
     if (ultimo) {
       var pop = ultimo.querySelector('.popover-legenda');
-      if (pop) pop.classList.add('aberto');
+      if (pop) {
+        pop.classList.add('aberto');
+        var campo = pop.querySelector('.input-nome-leg');
+        if (campo) { campo.focus(); campo.select(); }
+      }
     }
   });
   container.appendChild(btnAdd);
