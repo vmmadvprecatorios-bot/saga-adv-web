@@ -180,13 +180,13 @@
 
   /* VIEW SEMANA / DIA */
   .grade-temporal{display:flex;flex:1;overflow:auto;}
-  .coluna-horas{width:52px;flex:0 0 52px;border-right:1px solid var(--border-soft);position:relative;}
+  .coluna-horas{width:52px;flex:0 0 52px;border-right:1px solid var(--border-soft);position:relative;padding-top:46px;}
   .hora-label{height:60px;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px 8px 0;font-size:9.5px;color:var(--muted);border-top:1px solid var(--border-soft);}
   .hora-label:first-child{border-top:none;}
   .colunas-dias{display:flex;flex:1;}
   .coluna-dia-temporal{flex:1;position:relative;border-right:1px solid var(--border-soft);min-width:80px;}
   .coluna-dia-temporal:last-child{border-right:none;}
-  .header-dia-temporal{padding:8px 6px;text-align:center;border-bottom:1px solid var(--border-soft);position:sticky;top:0;background:var(--panel);backdrop-filter:blur(8px);z-index:5;}
+  .header-dia-temporal{height:46px;box-sizing:border-box;padding:8px 6px;text-align:center;border-bottom:1px solid var(--border-soft);position:sticky;top:0;background:var(--panel);backdrop-filter:blur(8px);z-index:5;}
   .header-dia-num{font-size:13px;font-weight:700;color:var(--text);}
   .header-dia-nome{font-size:10px;color:var(--muted);}
   .header-dia-temporal.hoje .header-dia-num{color:var(--gold-light);}

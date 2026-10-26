@@ -191,6 +191,12 @@ th{color:var(--muted)!important;font-weight:600!important}
 [data-theme="dark"] .grade-mes > .celula-dia:nth-child(even){background:#2a3a54}
 [data-theme="dark"] .grade-mes > .celula-dia:hover{background:#314565}
 [data-theme="dark"] .grade-mes > .celula-dia.hoje{background:#2c4a78}
+/* Agenda: faixas alternadas por hora na Semana e no Dia (mesmas cores do Mes) */
+[data-theme="light"] .fundo-horas > .linha-hora:nth-child(odd),[data-theme="light"] .coluna-horas > .hora-label:nth-child(odd){background:#ffffff}
+[data-theme="light"] .fundo-horas > .linha-hora:nth-child(even),[data-theme="light"] .coluna-horas > .hora-label:nth-child(even){background:#eef2f7}
+[data-theme="dark"] .fundo-horas > .linha-hora:nth-child(odd),[data-theme="dark"] .coluna-horas > .hora-label:nth-child(odd){background:#212e44}
+[data-theme="dark"] .fundo-horas > .linha-hora:nth-child(even),[data-theme="dark"] .coluna-horas > .hora-label:nth-child(even){background:#2a3a54}
+.fundo-horas > .linha-hora{box-sizing:border-box}
 
 /* ===== Celular (ate 760px): telas com layout proprio ===== */
 @media (max-width:760px){
