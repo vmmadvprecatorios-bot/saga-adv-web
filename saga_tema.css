@@ -170,3 +170,8 @@ th{color:var(--muted)!important;font-weight:600!important}
 .btn-dourado{background:var(--gold)!important;color:#ffffff!important;border-color:transparent!important;box-shadow:none!important}
 .btn-dourado:hover{background:var(--gold-deep)!important}
 .btn-dourado svg{color:#ffffff!important}
+
+/* Modo claro: tabelas com linhas alternadas (branca / cinza-claro) para quebrar o branco */
+[data-theme="light"] tbody tr:nth-child(odd) > td{background:#ffffff}
+[data-theme="light"] tbody tr:nth-child(even) > td{background:#eef2f7}
+[data-theme="light"] tbody tr:hover > td{background:#e2e9f3}
