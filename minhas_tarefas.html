@@ -430,6 +430,18 @@
   .item-menu-coluna:hover{ background:color-mix(in srgb,var(--gold) 8%,transparent); }
   .item-menu-coluna.item-excluir{ color:var(--danger); }
 
+  .chips-compartilhar{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip-compartilhar{ display:inline-flex; align-items:center; gap:6px; padding:5px 10px 5px 5px; border-radius:16px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:11px; cursor:pointer; }
+  .chip-compartilhar .mini{ width:20px; height:20px; border-radius:50%; color:#fff; font-size:8.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; }
+  .chip-compartilhar.marcado{ background:var(--gold); border-color:var(--gold); color:#fff; }
+  .chip-compartilhar[disabled]{ cursor:default; opacity:.75; }
+  .aviso-somente-leitura{ display:flex; gap:8px; align-items:center; background:color-mix(in srgb,var(--gold) 10%,transparent); border:1px solid color-mix(in srgb,var(--gold) 30%,transparent); color:var(--text); border-radius:10px; padding:9px 12px; font-size:11.5px; margin-bottom:12px; }
+  .modal-tf.somente-leitura input:not(#textareaNovoComentario), .modal-tf.somente-leitura textarea:not(#textareaNovoComentario),
+  .modal-tf.somente-leitura .opcao-tipo-tarefa, .modal-tf.somente-leitura .pill-prioridade-opcao, .modal-tf.somente-leitura .select-custom-tf,
+  .modal-tf.somente-leitura .atalhos-data-rapida, .modal-tf.somente-leitura .btn-add-subtarefa, .modal-tf.somente-leitura .area-anexos-drop,
+  .modal-tf.somente-leitura .linha-cor-etiqueta, .modal-tf.somente-leitura .lista-subtarefas-modal{ pointer-events:none; }
+  .modal-tf.somente-leitura #campoCompartilharTarefa, .modal-tf.somente-leitura #btnSalvarTarefa, .modal-tf.somente-leitura #btnExcluirTarefaModal, .modal-tf.somente-leitura .btn-add-subtarefa, .modal-tf.somente-leitura .area-anexos-drop{ display:none !important; }
+  .selo-compartilhada-card{ display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; color:var(--gold); margin-top:4px; }
   .lista-cards-coluna{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:9px; min-height:40px; }
 
   .card-tarefa{
@@ -1826,6 +1838,8 @@
       </div>
     </div>
 
+    <div class="aviso-somente-leitura" id="avisoSomenteLeituraTarefa" style="display:none"></div>
+
     <div class="campo-tf">
       <label for="inputTituloTarefa">Titulo</label>
       <input type="text" id="inputTituloTarefa" placeholder="Ex: Protocolar peticao de cumprimento de sentenca">
@@ -1878,6 +1892,11 @@
         </div>
         <select id="selectResponsavelTarefa" class="select-nativo-oculto" aria-hidden="true" tabindex="-1"></select>
       </div>
+    </div>
+
+    <div class="campo-tf" id="campoCompartilharTarefa">
+      <label>Compartilhar com <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(veem e comentam, não editam)</span></label>
+      <div class="chips-compartilhar" id="chipsCompartilharTarefa"></div>
     </div>
 
     <div class="linha-2-campos-tf">
@@ -2108,8 +2127,14 @@ function tarefaDoBanco(r){
     subtarefas: Array.isArray(r.subtarefas) ? r.subtarefas : [],
     anexos: (r.anexos || []).map(function(a){ return { id:a.id, nome:a.nome_arquivo, caminho:a.caminho_storage, tamanho:a.tamanho_bytes, tipo:a.tipo_mime, enviadoPorId:a.enviado_por_id }; }),
     comentarios: (r.comentarios || []).slice().sort(function(a, b){ return new Date(a.criado_em) - new Date(b.criado_em); })
-      .map(function(c){ return { id:c.id, autorId:c.autor_id, texto:c.texto, timestamp:c.criado_em }; })
+      .map(function(c){ return { id:c.id, autorId:c.autor_id, texto:c.texto, timestamp:c.criado_em }; }),
+    compartilhadaCom: (r.compartilhadas || []).map(function(x){ return x.usuario_id; })
   };
+}
+
+// Dono da tarefa: quem criou, o responsavel ou o administrador. Marcados so veem e comentam.
+function souDonoDaTarefa(t){
+  return !!t && (isAdmin || t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId);
 }
 
 function diaLocal(ts){
@@ -2120,7 +2145,8 @@ function diaLocal(ts){
 var SELECT_TAREFA = 'id,titulo,descricao,tipo,processo_id,responsavel_id,criado_por_id,delegado_por_id,data_prazo,hora_prazo,prioridade,status,concluida,concluida_em,cor_etiqueta,subtarefas,coluna_id,ordem_kanban,criado_em,' +
   'processo:processos(' + SELECT_PROCESSO + '),' +
   'anexos:tarefas_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime,enviado_por_id),' +
-  'comentarios:tarefas_comentarios(id,autor_id,texto,criado_em)';
+  'comentarios:tarefas_comentarios(id,autor_id,texto,criado_em),' +
+  'compartilhadas:tarefas_compartilhadas(usuario_id)';
 
 async function carregarDadosTarefas(){
   var sessao = await _sb.auth.getSession();
@@ -2143,8 +2169,8 @@ async function carregarDadosTarefas(){
   dadosColunas = (cols.data || []).map(function(c){ return { id:c.id, nome:c.nome }; });
 
   var q = _sb.from('tarefas').select(SELECT_TAREFA).order('ordem_kanban').order('criado_em');
-  // Colaborador ve as tarefas dele (responsavel ou criador); administrador ve todas
-  if(!isAdmin) q = q.or('responsavel_id.eq.' + usuarioLogadoId + ',criado_por_id.eq.' + usuarioLogadoId);
+  // O banco ja entrega so o que a pessoa pode ver: as dela (criou ou e responsavel) e as compartilhadas com ela.
+  // O administrador recebe todas.
   var ts = await q;
   if(ts.error){ mostrarToast('Erro ao carregar tarefas: ' + escaparHtml(ts.error.message), 'erro'); return false; }
   window.SAGA_TASKS = (ts.data || []).map(tarefaDoBanco);
@@ -2168,6 +2194,21 @@ function tarefaParaBanco(t){
     cor_etiqueta: t.corEtiqueta || null,
     subtarefas: t.subtarefas || []
   };
+}
+
+// Marca e desmarca colegas na tarefa (cada marcado recebe aviso no sino)
+async function sincronizarCompartilhamentoTarefa(idTarefa, antes, depois){
+  var incluir = depois.filter(function(id){ return antes.indexOf(id) === -1; });
+  var remover = antes.filter(function(id){ return depois.indexOf(id) === -1; });
+  if(incluir.length){
+    var ri = await _sb.from('tarefas_compartilhadas').insert(incluir.map(function(id){ return { tarefa_id:idTarefa, usuario_id:id }; }));
+    if(ri.error){ mostrarToast('Não foi possível compartilhar: ' + escaparHtml(ri.error.message), 'erro'); return antes; }
+  }
+  if(remover.length){
+    var rr = await _sb.from('tarefas_compartilhadas').delete().eq('tarefa_id', idTarefa).in('usuario_id', remover);
+    if(rr.error){ mostrarToast('Não foi possível remover o compartilhamento: ' + escaparHtml(rr.error.message), 'erro'); return antes; }
+  }
+  return depois.slice();
 }
 
 async function salvarCamposTarefa(idTarefa, campos){
@@ -2829,7 +2870,8 @@ function criarCardTarefaEl(tarefa){
   var card = document.createElement('div');
   var cardEstaAtrasado = tarefa.status !== 'concluida' && tarefaEstaAtrasada(tarefa);
   card.className = 'card-tarefa' + (tarefa.status === 'concluida' ? ' concluida' : '') + (cardEstaAtrasado ? ' atrasada' : '');
-  card.setAttribute('draggable', tarefa.status === 'concluida' ? 'false' : 'true');
+  var podeMexer = souDonoDaTarefa(tarefa);
+  card.setAttribute('draggable', tarefa.status === 'concluida' || !podeMexer ? 'false' : 'true');
   card.setAttribute('data-tarefa-id', tarefa.id);
 
   var badgeTipoHtml = tarefa.tipo === 'pessoal'
@@ -2870,6 +2912,7 @@ function criarCardTarefaEl(tarefa){
       etiquetaHtml +
     '</div>' +
     '<div class="titulo-card-tarefa">' + escaparHtml(tarefa.titulo) + '</div>' +
+    (!podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '')) +
     (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
     numeroProcessoHtml +
     metaProcessoHtml +
@@ -2910,6 +2953,7 @@ function criarCardTarefaEl(tarefa){
   card.querySelector('[data-acao="alternar-conclusao"]').addEventListener('click', function(e){
     e.preventDefault();
     e.stopPropagation();
+    if(!podeMexer){ mostrarToast('Esta tarefa foi compartilhada com você: só quem é dono dela pode concluir.', 'erro'); return; }
     alternarConclusaoTarefa(tarefa.id);
   });
 
@@ -3584,7 +3628,10 @@ function popularSelectResponsavel(){
 }
 
 function resetarFormularioTarefa(){
-  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[] };
+  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], somenteLeitura:false };
+  document.querySelector('#modalTarefa .modal-tf').classList.remove('somente-leitura');
+  document.getElementById('avisoSomenteLeituraTarefa').style.display = 'none';
+  document.getElementById('btnCancelarModalTarefa').textContent = 'Cancelar';
   document.getElementById('inputTituloTarefa').value = '';
   document.getElementById('textareaDescricaoTarefa').value = '';
   document.getElementById('inputDataPrazoTarefa').value = '';
@@ -3601,6 +3648,28 @@ function resetarFormularioTarefa(){
   document.getElementById('secaoComentariosTarefa').style.display = 'none';
   renderizarSubtarefasModal();
   renderizarAnexosModal();
+  renderizarChipsCompartilhar();
+}
+
+function renderizarChipsCompartilhar(){
+  var wrap = document.getElementById('chipsCompartilharTarefa');
+  if(!wrap) return;
+  var responsavel = document.getElementById('selectResponsavelTarefa').value || usuarioLogadoId;
+  var pessoas = dadosColaboradores.filter(function(c){ return c.id !== usuarioLogadoId && c.id !== responsavel; });
+  if(!pessoas.length){ wrap.innerHTML = '<span style="font-size:11px;color:var(--muted)">Nenhum colega disponível.</span>'; return; }
+  wrap.innerHTML = pessoas.map(function(c){
+    var marcado = estadoModalTarefa.compartilhar.indexOf(c.id) !== -1;
+    return '<button type="button" class="chip-compartilhar' + (marcado ? ' marcado' : '') + '" data-id="' + c.id + '"' + (estadoModalTarefa.somenteLeitura ? ' disabled' : '') + '>' +
+      '<span class="mini" style="background:' + c.cor + '">' + escaparHtml(c.iniciais) + '</span>' + escaparHtml(c.nome.split(' ')[0]) + '</button>';
+  }).join('');
+  wrap.querySelectorAll('.chip-compartilhar').forEach(function(b){
+    b.addEventListener('click', function(){
+      if(estadoModalTarefa.somenteLeitura) return;
+      var id = b.getAttribute('data-id'), i = estadoModalTarefa.compartilhar.indexOf(id);
+      if(i === -1) estadoModalTarefa.compartilhar.push(id); else estadoModalTarefa.compartilhar.splice(i, 1);
+      renderizarChipsCompartilhar();
+    });
+  });
 }
 
 function abrirModalTarefa(idTarefa, colunaPreSelecionada){
@@ -3640,8 +3709,21 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     estadoModalTarefa.subtarefas = tarefa.subtarefas.map(function(s){ return { texto:s.texto, concluida:s.concluida }; });
     estadoModalTarefa.anexos = tarefa.anexos.map(function(a){ return Object.assign({}, a); });
     estadoModalTarefa.comentarios = tarefa.comentarios.slice();
+    estadoModalTarefa.compartilhar = (tarefa.compartilhadaCom || []).slice();
+    estadoModalTarefa.somenteLeitura = !souDonoDaTarefa(tarefa);
     renderizarSubtarefasModal();
     renderizarAnexosModal();
+    renderizarChipsCompartilhar();
+    if(estadoModalTarefa.somenteLeitura){
+      var dono = getColaborador(tarefa.criadoPorId) || getColaborador(tarefa.responsavelId);
+      document.querySelector('#modalTarefa .modal-tf').classList.add('somente-leitura');
+      document.getElementById('tituloModalTarefa').textContent = 'Tarefa compartilhada';
+      var aviso = document.getElementById('avisoSomenteLeituraTarefa');
+      aviso.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg>' +
+        '<span><b>' + escaparHtml(dono ? dono.nome.split(' ')[0] : 'Um colega') + '</b> compartilhou esta tarefa com você. Você pode ver e comentar; só quem é dono dela edita.</span>';
+      aviso.style.display = 'flex';
+      document.getElementById('btnCancelarModalTarefa').textContent = 'Fechar';
+    }
 
     document.getElementById('btnExcluirTarefaModal').style.display = 'flex';
     document.getElementById('secaoComentariosTarefa').style.display = 'block';
@@ -3653,7 +3735,7 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
   }
 
   modalTarefaEl.classList.add('aberto');
-  document.getElementById('inputTituloTarefa').focus();
+  if(!estadoModalTarefa.somenteLeitura) document.getElementById('inputTituloTarefa').focus();
 }
 
 document.getElementById('btnNovaTarefa').addEventListener('click', function(){ abrirModalTarefa(null); });
@@ -3991,6 +4073,7 @@ document.getElementById('btnSalvarTarefa').addEventListener('click', async funct
     if(r.error){ mostrarToast('Não foi possível salvar a tarefa: ' + escaparHtml(r.error.message), 'erro'); return; }
 
     var salva = tarefaDoBanco(r.data);
+    salva.compartilhadaCom = await sincronizarCompartilhamentoTarefa(salva.id, tarefaExistente ? (tarefaExistente.compartilhadaCom || []) : [], estadoModalTarefa.compartilhar.filter(function(id){ return id !== responsavelId; }));
     salva.anexos = await sincronizarAnexosTarefa(salva.id);
     salva.comentarios = estadoModalTarefa.comentarios.slice();
     if(tarefaExistente){
@@ -4183,7 +4266,7 @@ async function iniciarMinhasTarefas(){
   var eu = getColaborador(usuarioLogadoId);
   document.getElementById('textoResumoVisao').textContent = isAdmin
     ? 'visualizando como ' + (eu ? eu.nome : '') + ' (Administrador): todas as tarefas do escritório'
-    : 'visualizando como ' + (eu ? eu.nome : '') + ': suas tarefas e as que você criou';
+    : 'visualizando como ' + (eu ? eu.nome : '') + ': suas tarefas e as compartilhadas com você';
   atualizarListasDeFiltro();
   popularSelectColunas();
   popularSelectResponsavel();
@@ -4200,6 +4283,13 @@ async function iniciarMinhasTarefas(){
 // Botao de atualizar da barra superior
 document.addEventListener('saga-atualizar', async function(){
   if(await carregarDadosTarefas()){ atualizarListasDeFiltro(); aplicarFiltrosERenderizar(); }
+});
+
+// Trocar o responsavel atualiza a lista de colegas para compartilhar (o responsavel nao entra nela)
+document.getElementById('selectResponsavelTarefa').addEventListener('change', function(){
+  var resp = this.value;
+  estadoModalTarefa.compartilhar = estadoModalTarefa.compartilhar.filter(function(id){ return id !== resp; });
+  renderizarChipsCompartilhar();
 });
 
 iniciarMinhasTarefas();
