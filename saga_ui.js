@@ -26,12 +26,12 @@
       '[data-theme="light"] #topbarSaga .brand-name{color:#13233a !important;}'+
       '#topbarSaga .brand-name b{color:var(--gold) !important;}'+
       '[data-theme="light"] #topbarSaga .brand-name b{color:var(--gold) !important;}'+
-      '#hamburger{display:flex !important;flex-direction:column !important;width:32px !important;height:32px !important;align-items:center !important;justify-content:center !important;border-radius:8px !important;background:none !important;border:none !important;}'+
-      '#hamburger span{display:block !important;width:18px !important;height:1.7px !important;min-height:1.7px !important;flex-shrink:0 !important;background:var(--gold) !important;margin:3px auto !important;border-radius:2px !important;transition:transform .25s ease,opacity .2s ease !important;}'+
+      '#hamburger{display:flex !important;flex-direction:column !important;width:32px !important;height:32px !important;align-items:center !important;justify-content:center !important;gap:4px !important;padding:0 !important;margin-right:0 !important;border-radius:8px !important;background:none !important;border:none !important;}'+
+      '#hamburger span{display:block !important;width:18px !important;height:2px !important;min-height:2px !important;flex-shrink:0 !important;background:var(--gold) !important;margin:0 !important;border-radius:2px !important;transition:transform .25s ease,opacity .2s ease !important;}'+
       '[data-theme="light"] #hamburger span{background:var(--gold) !important;}'+
-      '#hamburger.ativo span:nth-child(1){transform:translateY(7px) rotate(45deg) !important;}'+
+      '#hamburger.ativo span:nth-child(1){transform:translateY(6px) rotate(45deg) !important;}'+
       '#hamburger.ativo span:nth-child(2){opacity:0 !important;}'+
-      '#hamburger.ativo span:nth-child(3){transform:translateY(-7px) rotate(-45deg) !important;}'+
+      '#hamburger.ativo span:nth-child(3){transform:translateY(-6px) rotate(-45deg) !important;}'+
       '#topbarSaga .quick-search{width:min(520px,50vw) !important;height:36px !important;display:flex !important;align-items:center !important;gap:8px !important;padding:0 12px !important;border:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;background:rgba(255,255,255,.045) !important;border-radius:10px !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search{border-color:rgba(19,38,66,.18) !important;background:rgba(255,255,255,.74) !important;}'+
       '#topbarSaga .quick-search svg{color:#8b93a8 !important;flex:0 0 auto !important;}'+
@@ -188,6 +188,14 @@
       '[data-theme="dark"] #topbarSaga .quick-search input::placeholder{color:#5b6880 !important;}'+
       '[data-theme="dark"] #topbarSaga .icon-btn svg,[data-theme="dark"] #topbarSaga .theme-toggle svg{color:#22324a !important;}'+
       '[data-theme="dark"] #topbarSaga .theme-toggle .knob,[data-theme="dark"] #topbarSaga .avatar{background:#2f6cd6 !important;color:#ffffff !important;}'+
+      /* Botao claro/escuro: bolinha amarela (sol) no claro, azul-noite (lua) no escuro */
+      '[data-theme="light"] #topbarSaga .theme-toggle .knob{left:3px !important;background:linear-gradient(135deg,#ffcf5c,#f5a623) !important;box-shadow:0 2px 8px rgba(245,166,35,.45) !important;}'+
+      '[data-theme="dark"] #topbarSaga .theme-toggle .knob{left:41px !important;background:linear-gradient(135deg,#3b5ba8,#1d3263) !important;box-shadow:0 2px 8px rgba(29,50,99,.5) !important;}'+
+      '[data-theme="light"] #topbarSaga .theme-toggle svg.sun{color:#ffffff !important;}'+
+      '[data-theme="light"] #topbarSaga .theme-toggle svg.moon{color:#7b8799 !important;}'+
+      '[data-theme="dark"] #topbarSaga .theme-toggle svg.moon{color:#ffffff !important;}'+
+      '[data-theme="dark"] #topbarSaga .theme-toggle svg.sun{color:#7b8799 !important;}'+
+      '#topbarSaga .theme-toggle .knob{transition:left .25s ease,background .25s ease !important;}'+
       '@media(max-width:760px){#sidebarSaga{position:fixed !important;}#topbarSaga .top-center{display:none !important;}}';
     (document.head||document.documentElement).appendChild(style);
   }
