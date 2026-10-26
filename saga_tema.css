@@ -180,3 +180,14 @@ th{color:var(--muted)!important;font-weight:600!important}
 [data-theme="dark"] tbody tr:nth-child(odd) > td{background:#212e44}
 [data-theme="dark"] tbody tr:nth-child(even) > td{background:#2a3a54}
 [data-theme="dark"] tbody tr:hover > td{background:#314565}
+
+/* Agenda (mes): quadrados alternados em xadrez, nos mesmos tons das tabelas.
+   Com 7 colunas, alternar um sim, um nao forma o xadrez sozinho. */
+[data-theme="light"] .grade-mes > .celula-dia:nth-child(odd){background:#ffffff}
+[data-theme="light"] .grade-mes > .celula-dia:nth-child(even){background:#eef2f7}
+[data-theme="light"] .grade-mes > .celula-dia:hover{background:#e2e9f3}
+[data-theme="light"] .grade-mes > .celula-dia.hoje{background:#d9e5f7}
+[data-theme="dark"] .grade-mes > .celula-dia:nth-child(odd){background:#212e44}
+[data-theme="dark"] .grade-mes > .celula-dia:nth-child(even){background:#2a3a54}
+[data-theme="dark"] .grade-mes > .celula-dia:hover{background:#314565}
+[data-theme="dark"] .grade-mes > .celula-dia.hoje{background:#2c4a78}
