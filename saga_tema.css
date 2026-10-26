@@ -9,14 +9,14 @@
 body[data-theme="dark"]{
   color-scheme:dark;
   /* fundo e superficies (referencia: modo escuro do ADVBOX) */
-  --navy-1:#0d131d;
-  --navy-2:#111927;
-  --navy-3:#161f2e;
-  --panel:#182131;
-  --panel-2:#1e2839;
-  --panel-solid:#182131;
-  --border:rgba(255,255,255,.09);
-  --border-soft:rgba(255,255,255,.06);
+  --navy-1:#172234;
+  --navy-2:#1a2639;
+  --navy-3:#1e2b40;
+  --panel:#212e44;
+  --panel-2:#28374f;
+  --panel-solid:#212e44;
+  --border:rgba(255,255,255,.12);
+  --border-soft:rgba(255,255,255,.08);
   /* texto */
   --text:#e7eaf0;
   --muted:#a0aabb;
@@ -177,6 +177,6 @@ th{color:var(--muted)!important;font-weight:600!important}
 [data-theme="light"] tbody tr:hover > td{background:#e2e9f3}
 
 /* Modo escuro: tabelas com linhas alternadas (dois tons de azul-escuro) */
-[data-theme="dark"] tbody tr:nth-child(odd) > td{background:#172030}
-[data-theme="dark"] tbody tr:nth-child(even) > td{background:#1d293c}
-[data-theme="dark"] tbody tr:hover > td{background:#233250}
+[data-theme="dark"] tbody tr:nth-child(odd) > td{background:#212e44}
+[data-theme="dark"] tbody tr:nth-child(even) > td{background:#2a3a54}
+[data-theme="dark"] tbody tr:hover > td{background:#314565}

@@ -175,6 +175,19 @@
       '[data-theme="dark"] #sidebarSaga .nav-item:hover{color:#ffffff !important;background:rgba(255,255,255,.08) !important;}'+
       '[data-theme="dark"] #sidebarSaga .nav-item.active,[data-theme="dark"] #sidebarSaga .nav-item.ativo{color:#ffffff !important;border-left-color:#9cc0ff !important;background:rgba(255,255,255,.15) !important;}'+
       '[data-theme="dark"] #sidebarSaga .nav-item.active .nav-icon,[data-theme="dark"] #sidebarSaga .nav-item.ativo .nav-icon{color:#9cc0ff !important;}'+
+      /* Modo escuro (versao final): barra superior branca como no claro; menu lateral azul em degrade */
+      '[data-theme="dark"] #topbarSaga{background:#ffffff !important;border-bottom:1px solid rgba(19,38,66,.14) !important;box-shadow:0 1px 4px rgba(0,0,0,.18) !important;}'+
+      '[data-theme="dark"] #topbarSaga .brand-name{color:#13233a !important;}'+
+      '[data-theme="dark"] #topbarSaga .brand-name b{color:#2f6cd6 !important;}'+
+      '[data-theme="dark"] #hamburger{color:#1f3e6d !important;}'+
+      '[data-theme="dark"] #topbarSaga .quick-search,[data-theme="dark"] #topbarSaga .presence-btn,[data-theme="dark"] #topbarSaga .icon-btn,[data-theme="dark"] #topbarSaga .theme-toggle{background:#eef2f7 !important;border-color:rgba(19,38,66,.18) !important;color:#22324a !important;}'+
+      '[data-theme="dark"] #topbarSaga .icon-btn:hover,[data-theme="dark"] #topbarSaga .presence-btn:hover,[data-theme="dark"] #topbarSaga .theme-toggle:hover{background:#e2e8f0 !important;border-color:rgba(19,38,66,.28) !important;}'+
+      '[data-theme="dark"] #topbarSaga .quick-search:focus-within{background:#ffffff !important;border-color:#2f6cd6 !important;}'+
+      '[data-theme="dark"] #topbarSaga .quick-search svg{color:#4a586e !important;}'+
+      '[data-theme="dark"] #topbarSaga .quick-search input{color:#13233a !important;}'+
+      '[data-theme="dark"] #topbarSaga .quick-search input::placeholder{color:#5b6880 !important;}'+
+      '[data-theme="dark"] #topbarSaga .icon-btn svg,[data-theme="dark"] #topbarSaga .theme-toggle svg{color:#22324a !important;}'+
+      '[data-theme="dark"] #topbarSaga .theme-toggle .knob,[data-theme="dark"] #topbarSaga .avatar{background:#2f6cd6 !important;color:#ffffff !important;}'+
       '@media(max-width:760px){#sidebarSaga{position:fixed !important;}#topbarSaga .top-center{display:none !important;}}';
     (document.head||document.documentElement).appendChild(style);
   }
