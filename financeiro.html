@@ -274,7 +274,7 @@ function moeda(n){return n==null||isNaN(n)?'—':Number(n).toLocaleString('pt-BR
 function num(v){return v==null||v===''?null:Number(v);}
 function dataBR(d){if(!d)return '—';var p=String(d).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function hojeISO(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
-function mascaraCpf(c){var l=String(c||'').replace(/\D/g,'');return l.length===11?l.slice(0,3)+'.***.***-'+l.slice(9):(c||'');}
+function mascaraCpf(c){var l=String(c||'').replace(/\D/g,'');return l.length===11?l.slice(0,3)+'.'+l.slice(3,6)+'.'+l.slice(6,9)+'-'+l.slice(9):(c||'');}
 function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4200);}
 function etq(texto,cor){return '<span class="etq" style="--c:'+esc(cor||'#8a94a8')+'">'+esc(texto)+'</span>';}
 function abrirModal(id){document.getElementById(id).classList.add('open');}

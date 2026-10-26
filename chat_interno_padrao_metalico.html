@@ -1180,7 +1180,7 @@ async function buscarClientesMencao(termo) {
   } else {
     pop.innerHTML = '<div class="mencao-pop-titulo">Mencionar cliente</div>' + _mencao.resultados.map(function(p, i){
       var cpf = String(p.cpf || '').replace(/\D/g, '');
-      var cpfFmt = cpf.length === 11 ? '***.' + cpf.slice(3, 6) + '.' + cpf.slice(6, 9) + '-**' : '';
+      var cpfFmt = cpf.length === 11 ? cpf.slice(0, 3) + '.' + cpf.slice(3, 6) + '.' + cpf.slice(6, 9) + '-' + cpf.slice(9) : '';
       return '<button class="item-mencao' + (i === 0 ? ' foco' : '') + '" onmousedown="event.preventDefault();escolherMencao(' + i + ')">' +
         '<span>' + esc(p.nome_completo) + '</span><small>' + esc(cpfFmt) + '</small></button>';
     }).join('');

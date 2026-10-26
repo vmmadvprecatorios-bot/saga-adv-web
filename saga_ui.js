@@ -298,6 +298,7 @@
     +'<button class="icon-btn" id="notifBtn" type="button" aria-label="Notificacoes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="var(--gold)" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="var(--gold)" stroke-width="1.6"/></svg><span class="notif-count" id="notifCount" style="display:none">0</span></button>'
     +'<div class="popover notification-pop" id="notifPop"></div>'
     +'</div>'
+    +'<button class="icon-btn" id="privBtn" type="button" aria-label="Modo privacidade" title="Ocultar dados dos clientes (para gravar tela)"><svg class="olho-aberto" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="var(--gold)" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="var(--gold)" stroke-width="1.6"/></svg><svg class="olho-fechado" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17.9 17.9A10.4 10.4 0 0112 20c-7 0-11-8-11-8a19 19 0 015.1-5.9M9.9 4.2A9.7 9.7 0 0112 4c7 0 11 8 11 8a19 19 0 01-2.2 3.2M14.1 14.1a3 3 0 11-4.2-4.2" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/><path d="M1 1l22 22" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/></svg></button>'
     +'<button class="icon-btn" id="refreshBtn" type="button" aria-label="Atualizar informacoes"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 11-3-6.7L21 8" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
     +'<button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
     +'<div class="avatar-wrap" id="avatarWrap">'
@@ -749,6 +750,81 @@
     window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'?'?motivo='+motivo:'');
   };
 
+
+  // Modo privacidade (para gravar tela): oculta parte do CPF, do nome do cliente, do numero do processo e os valores.
+  // Por padrao fica desligado e todos veem os dados completos. A escolha fica guardada neste navegador.
+  var PRIV_CHAVE='saga_privacidade';
+  var PRIV_NOMES='.nome-cliente,.cartao-nome,.card-nome,.pessoa-selecionada-nome,.ficha-titulo h1,.cli,.client-picker-row b,.client-picker-row strong,.item-mencao span,[data-saga-nome]';
+  var _privLigado=false,_privObs=null,_privTimer=null;
+  function privNome(t){
+    var fora={da:1,das:1,de:1,di:1,'do':1,dos:1,e:1};
+    var primeiro=true;
+    return t.replace(/[A-Za-zÀ-ÿ]+/g,function(p){
+      if(primeiro){primeiro=false;return p;}
+      if(fora[p.toLowerCase()])return '';
+      return p.charAt(0)+'.';
+    }).replace(/\s{2,}/g,' ');
+  }
+  function privTexto(t){
+    return t
+      .replace(/\b(\d{3})\.\d{3}\.\d{3}-(\d{2})\b/g,'$1.•••.•••-$2')
+      .replace(/\b\d+?(\d{2}-\d{2}\.\d{4}\.\d\.\d{2}\.)\d{4}\b/g,'•••••$1••••')
+      .replace(/R\$\s?-?[\d.]+(,\d{2})?/g,'R$ •••••');
+  }
+  function privAplicar(raiz){
+    var w=document.createTreeWalker(raiz||document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+      var p=n.parentElement;
+      if(!p||/^(SCRIPT|STYLE|TEXTAREA)$/.test(p.tagName)||p.isContentEditable)return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }});
+    var n;
+    while((n=w.nextNode())){
+      if(n.__sagaMasc!==undefined&&n.data===n.__sagaMasc)continue;
+      var orig=n.data;
+      var m=privTexto(orig);
+      if(n.parentElement.closest(PRIV_NOMES))m=privNome(m);
+      if(m!==orig){n.__sagaOrig=orig;n.__sagaMasc=m;n.data=m;}
+      else{n.__sagaOrig=undefined;n.__sagaMasc=undefined;}
+    }
+  }
+  function privRestaurar(){
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n;
+    while((n=w.nextNode())){
+      if(n.__sagaMasc!==undefined&&n.data===n.__sagaMasc)n.data=n.__sagaOrig;
+      n.__sagaOrig=undefined;n.__sagaMasc=undefined;
+    }
+  }
+  function privDefinir(ligar){
+    _privLigado=!!ligar;
+    try{localStorage.setItem(PRIV_CHAVE,_privLigado?'1':'0');}catch(e){}
+    document.documentElement.classList.toggle('saga-privado',_privLigado);
+    var b=document.getElementById('privBtn');
+    if(b){b.classList.toggle('ativo',_privLigado);b.title=_privLigado?'Modo privacidade ligado: clique para mostrar os dados':'Ocultar dados dos clientes (para gravar tela)';}
+    if(_privLigado){
+      privAplicar();
+      if(!_privObs){
+        _privObs=new MutationObserver(function(){clearTimeout(_privTimer);_privTimer=setTimeout(function(){if(_privLigado)privAplicar();},30);});
+        _privObs.observe(document.body,{childList:true,subtree:true,characterData:true});
+      }
+    }else{
+      if(_privObs){_privObs.disconnect();_privObs=null;}
+      privRestaurar();
+    }
+  }
+  function ligarPrivacidade(){
+    if(!document.getElementById('sagaPrivEstilo')){
+      var st=document.createElement('style');st.id='sagaPrivEstilo';
+      st.textContent='#privBtn .olho-fechado{display:none}#privBtn.ativo .olho-aberto{display:none}#privBtn.ativo .olho-fechado{display:inline}'
+        +'#topbarSaga #privBtn.ativo{background:#c0392b !important;border-color:#c0392b !important}#topbarSaga #privBtn.ativo svg [stroke]{stroke:#fff !important}'
+        +'html.saga-privado input:not([type=checkbox]):not([type=radio]):not([type=search]):not(:placeholder-shown){filter:blur(5px)}html.saga-privado #topbarSaga input{filter:none}html.saga-privado input:focus{filter:none}';
+      document.head.appendChild(st);
+    }
+    var b=document.getElementById('privBtn');
+    if(b)b.addEventListener('click',function(){privDefinir(!_privLigado);});
+    var salvo='0';try{salvo=localStorage.getItem(PRIV_CHAVE)||'0';}catch(e){}
+    privDefinir(salvo==='1');
+  }
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
@@ -764,6 +840,7 @@
       if(alvo)alvo.classList.add('active');
     }
     ligarTema();
+    ligarPrivacidade();
     ligarHamburger();
     ligarPresencaESino();
     ligarBuscaGlobal();

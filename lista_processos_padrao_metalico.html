@@ -676,7 +676,7 @@ var state={
 // Utils
 function esc(v){var d=document.createElement('div');d.textContent=v||'';return d.innerHTML;}
 function iniciais(n){return String(n||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase();}
-function mascaraCpf(c){if(!c)return '';var l=c.replace(/\D/g,'');if(l.length!==11)return c;return l.substring(0,3)+'.***.***-'+l.substring(9,11);}
+function mascaraCpf(c){if(!c)return '';var l=c.replace(/\D/g,'');if(l.length!==11)return c;return l.substring(0,3)+'.'+l.substring(3,6)+'.'+l.substring(6,9)+'-'+l.substring(9,11);}
 function fmtMoeda(v){if(v===null||v===undefined||v==='')return 'N/D';return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v));}
 function fmtData(d){if(!d)return 'N/D';var p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function diasRestantes(d){if(!d)return null;var h=new Date();h.setHours(0,0,0,0);return Math.round((new Date(d+'T00:00:00')-h)/86400000);}
