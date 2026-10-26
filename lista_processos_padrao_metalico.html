@@ -839,6 +839,11 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Escape'&&document.getElementById('paletaPop').classList.contains('aberto')){e.preventDefault();e.stopImmediatePropagation();fecharPaleta();}
 },true);
 document.getElementById('modalGerenciarCatalogos').addEventListener('scroll',fecharPaleta,true);
+// menus das colunas do Kanban ficam em posicao fixa: fecham se a pagina ou o quadro rolar
+document.addEventListener('scroll',function(e){
+  if(e.target&&e.target.closest&&e.target.closest('.menu-ordenar'))return;
+  document.querySelectorAll('.menu-ordenar.aberto').forEach(function(m){m.classList.remove('aberto');});
+},true);
 function abrirPaletaNovo(botao,inputId){
   var input=document.getElementById(inputId);
   abrirPaleta(botao,input.value,function(cor){input.value=cor;botao.style.background=cor;});
@@ -1358,6 +1363,7 @@ function ordenarCardsColuna(cards,criterio,direcao){
 }
 function renderKanban(){
   var kv=document.getElementById('kanbanView');
+  document.querySelectorAll('body > .menu-ordenar').forEach(function(m){m.remove();});
   if(!state.processos.length){kv.innerHTML='<div class="estado-vazio-kanban"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="opacity:.3"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum processo</b><p>Ajuste os filtros ou cadastre novos processos.</p></div>';return;}
   var podeArrastar=state.permissoes.editar===true;
   var termoBusca=(state.buscaKanban||'').trim().toLowerCase();
@@ -1396,8 +1402,12 @@ function renderKanban(){
     }).join('');
     var filtroAtivo=pref.criterio!=='padrao';
     var menuOrdenar='<div class="btn-ordenar-coluna '+(filtroAtivo?'tem-filtro-ativo':'')+'" data-coluna-ord="'+esc(s.id)+'" onclick="event.stopPropagation();toggleMenuOrdenar(this)">'
-      +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 7h11M4 12h7M4 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M17 14l3 3 3-3M20 17V7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      +'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-label="Opções da coluna"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>'
       +'<div class="menu-ordenar" data-menu-coluna="'+esc(s.id)+'">'
+        +(state.podeGerenciarColunas?'<div class="menu-ordenar-titulo">Editar coluna</div>'
+          +'<div class="menu-ordenar-opcao" onclick="event.stopPropagation();renomearColunaKanban(\''+s.id+'\',this)"><span>Renomear</span></div>'
+          +'<div class="menu-ordenar-opcao" onclick="event.stopPropagation();trocarCorColunaKanban(\''+s.id+'\',this)"><span>Mudar cor da etiqueta</span><span class="coluna-cor-dot" style="background:'+cor+'"></span></div>'
+          +'<div class="menu-ordenar-opcao" style="color:var(--danger)" onclick="event.stopPropagation();excluirColunaKanban(\''+s.id+'\')"><span>Excluir coluna</span></div><div style="margin:8px 0;border-top:1px solid var(--border-soft)"></div>':'')
         +'<div class="menu-ordenar-titulo">Organizar esta coluna</div>'
         +['padrao','alfabetica','data','prazo','valor_causa','valor_precatorio'].map(function(c){
           var rot={padrao:'Padrao (mais recente)',alfabetica:'Ordem alfabetica',data:'Data de entrada',prazo:'Prazo mais proximo',valor_causa:'Valor da causa',valor_precatorio:'Valor do precatorio'}[c];
@@ -1416,11 +1426,71 @@ function renderKanban(){
   kv.innerHTML='<div class="quadro-kanban">'+colunas+'</div>';
   if(podeArrastar)ativarArrasteKanban(kv);
 }
+// ---- Editar colunas do Kanban (cada coluna e um status do catalogo) ----
+function fecharMenusOrdenar(){document.querySelectorAll('.menu-ordenar').forEach(function(m){m.classList.remove('aberto');});}
+function statusPorId(id){return state.statusList.find(function(x){return String(x.id)===String(id);});}
+function renomearColunaKanban(id,el){
+  fecharMenusOrdenar();
+  var st=statusPorId(id);if(!st)return;
+  var titulo=document.querySelector('.coluna-kanban[data-coluna-id="'+id+'"] .coluna-titulo');
+  if(!titulo)return;
+  var campo=document.createElement('input');
+  campo.value=st.nome;campo.className='input-renomear-coluna';
+  campo.style.cssText='width:100%;font:inherit;font-weight:600;padding:3px 6px;border-radius:6px;border:1px solid var(--gold);background:var(--panel-2);color:var(--text);outline:0';
+  titulo.replaceWith(campo);campo.focus();campo.select();
+  var feito=false;
+  async function concluir(salvar){
+    if(feito)return;feito=true;
+    var nome=campo.value.trim();
+    if(salvar&&nome&&nome!==st.nome){
+      if(!state.todosStatus||!state.todosStatus.length)await carregarTodosStatus();
+      await salvarNomeStatus(id,nome);
+    }
+    await carregarOpcoesFiltros();renderSeletorFaseKanban();renderKanban();
+  }
+  campo.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();concluir(true);}if(e.key==='Escape'){e.preventDefault();e.stopPropagation();concluir(false);}});
+  campo.addEventListener('blur',function(){concluir(true);});
+  campo.addEventListener('click',function(e){e.stopPropagation();});
+}
+function trocarCorColunaKanban(id,el){
+  var st=statusPorId(id);if(!st)return;
+  var ancora=document.querySelector('.coluna-kanban[data-coluna-id="'+id+'"] .coluna-cor-dot')||el;
+  fecharMenusOrdenar();
+  abrirPaleta(ancora,st.cor,async function(cor){
+    if(!state.todosStatus||!state.todosStatus.length)await carregarTodosStatus();
+    await salvarCorStatus(id,cor,null);
+    renderKanban();
+  });
+}
+async function excluirColunaKanban(id){
+  fecharMenusOrdenar();
+  var st=statusPorId(id);if(!st)return;
+  if(!state.todosStatus||!state.todosStatus.length)await carregarTodosStatus();
+  pedirDesativarCatalogo('status',st.id,st.nome);
+}
+
 function toggleMenuOrdenar(botao){
-  var menu=botao.querySelector('.menu-ordenar');
+  // o menu e levado para o <body>: dentro da coluna ele ficava cortado (a coluna usa
+  // backdrop-filter, que prende ate elementos com position:fixed)
+  var id=botao.getAttribute('data-coluna-ord');
+  var menu=document.querySelector('.menu-ordenar[data-menu-coluna="'+id+'"]');
+  if(!menu)return;
+  if(menu.parentElement!==document.body){
+    document.querySelectorAll('body > .menu-ordenar[data-menu-coluna="'+id+'"]').forEach(function(m){if(m!==menu)m.remove();});
+    document.body.appendChild(menu);
+  }
   var jaAberto=menu.classList.contains('aberto');
   document.querySelectorAll('.menu-ordenar').forEach(function(m){m.classList.remove('aberto');});
-  if(!jaAberto)menu.classList.add('aberto');
+  if(!jaAberto){
+    // posicao fixa: o menu nao fica mais cortado pela borda da coluna do Kanban
+    menu.classList.add('aberto');
+    var r=botao.getBoundingClientRect();
+    menu.style.position='fixed';
+    menu.style.top=Math.min(r.bottom+6,window.innerHeight-menu.offsetHeight-8)+'px';
+    menu.style.left=Math.max(8,Math.min(r.right-menu.offsetWidth,window.innerWidth-menu.offsetWidth-8))+'px';
+    menu.style.right='auto';menu.style.zIndex='1600';
+    menu.style.maxHeight=(window.innerHeight-16)+'px';menu.style.overflowY='auto';
+  }
 }
 function selecionarCriterioOrdenar(colId,criterio){
   state.prefsOrdenacaoKanban=state.prefsOrdenacaoKanban||{};
@@ -1864,6 +1934,7 @@ async function init(){
   var btnNovo=document.getElementById('btnNovoProcesso');
   if(btnNovo)btnNovo.style.display=state.permissoes.criar?'flex':'none';
   var podeGerenciarCatalogos=await verificarPermissao('teses','gerenciar')||await verificarPermissao('status_funil','gerenciar');
+  state.podeGerenciarColunas=await verificarPermissao('status_funil','gerenciar');
   var btnCat=document.getElementById('btnGerenciarCatalogos');
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';
   await carregarOpcoesFiltros();
