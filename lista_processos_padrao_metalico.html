@@ -842,7 +842,7 @@ document.getElementById('modalGerenciarCatalogos').addEventListener('scroll',fec
 // menus das colunas do Kanban ficam em posicao fixa: fecham se a pagina ou o quadro rolar
 document.addEventListener('scroll',function(e){
   if(e.target&&e.target.closest&&e.target.closest('.menu-ordenar'))return;
-  document.querySelectorAll('.menu-ordenar.aberto').forEach(function(m){m.classList.remove('aberto');});
+  document.querySelectorAll('body > .menu-ordenar.aberto').forEach(posicionarMenuOrdenar);
 },true);
 function abrirPaletaNovo(botao,inputId){
   var input=document.getElementById(inputId);
@@ -1484,13 +1484,20 @@ function toggleMenuOrdenar(botao){
   if(!jaAberto){
     // posicao fixa: o menu nao fica mais cortado pela borda da coluna do Kanban
     menu.classList.add('aberto');
-    var r=botao.getBoundingClientRect();
-    menu.style.position='fixed';
-    menu.style.top=Math.min(r.bottom+6,window.innerHeight-menu.offsetHeight-8)+'px';
-    menu.style.left=Math.max(8,Math.min(r.right-menu.offsetWidth,window.innerWidth-menu.offsetWidth-8))+'px';
-    menu.style.right='auto';menu.style.zIndex='1600';
-    menu.style.maxHeight=(window.innerHeight-16)+'px';menu.style.overflowY='auto';
+    menu._botao=botao;
+    posicionarMenuOrdenar(menu);
   }
+}
+// Menu junto ao botao, cabendo na tela; acompanha a rolagem da pagina
+function posicionarMenuOrdenar(menu){
+  var botao=menu._botao;
+  if(!botao||!document.body.contains(botao)){menu.classList.remove('aberto');return;}
+  var r=botao.getBoundingClientRect();
+  if(r.bottom<0||r.top>window.innerHeight){menu.classList.remove('aberto');return;}
+  menu.style.position='fixed';menu.style.right='auto';menu.style.zIndex='1600';menu.style.overflowY='auto';
+  menu.style.maxHeight=(window.innerHeight-16)+'px';
+  menu.style.top=Math.max(8,Math.min(r.bottom+6,window.innerHeight-menu.offsetHeight-8))+'px';
+  menu.style.left=Math.max(8,Math.min(r.right-menu.offsetWidth,window.innerWidth-menu.offsetWidth-8))+'px';
 }
 function selecionarCriterioOrdenar(colId,criterio){
   state.prefsOrdenacaoKanban=state.prefsOrdenacaoKanban||{};

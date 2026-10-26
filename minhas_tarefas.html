@@ -2969,6 +2969,26 @@ function reordenarColunas(origemId, destinoId){
   mostrarToast('Coluna <strong>' + escaparHtml(colunaMovida.nome) + '</strong> reposicionada.', 'sucesso');
 }
 
+// Posiciona o menu da coluna junto ao botao (cabe na tela; abre para cima se faltar espaco embaixo)
+function posicionarMenuColunaTarefa(menu){
+  var botao = menu._botao;
+  if(!botao || !document.body.contains(botao)){ menu.classList.remove('aberto'); return; }
+  var r = botao.getBoundingClientRect();
+  if(r.bottom < 0 || r.top > window.innerHeight){ menu.classList.remove('aberto'); return; }
+  menu.style.position = 'fixed'; menu.style.zIndex = '1600'; menu.style.right = 'auto'; menu.style.width = '240px';
+  menu.style.left = Math.min(Math.max(8, r.right - 240), window.innerWidth - 248) + 'px';
+  var abaixo = window.innerHeight - r.bottom - 12, acima = r.top - 12;
+  menu.style.maxHeight = '';
+  var natural = Math.min(menu.scrollHeight, 390);
+  if(natural <= abaixo || abaixo >= acima){
+    menu.style.top = (r.bottom + 4) + 'px';
+    menu.style.maxHeight = Math.max(160, Math.min(390, abaixo)) + 'px';
+  } else {
+    var h = Math.max(160, Math.min(390, acima));
+    menu.style.maxHeight = h + 'px';
+    menu.style.top = Math.max(8, r.top - 4 - Math.min(natural, h)) + 'px';
+  }
+}
 function renderizarKanban(tarefasFiltradas){
   // Menus de coluna que foram levados para o corpo da pagina saem junto com o quadro antigo
   document.querySelectorAll('body > .dropdown-menu-coluna').forEach(function(m){ m.remove(); });
@@ -3036,18 +3056,8 @@ function renderizarKanban(tarefasFiltradas){
       if(dropdownMenu.classList.contains('aberto')){
         // Menu vai para o corpo da pagina: dentro da coluna ele ficava cortado/por tras
         if(dropdownMenu.parentElement !== document.body) document.body.appendChild(dropdownMenu);
-        var r = btnMenu.getBoundingClientRect();
-        dropdownMenu.style.position = 'fixed';
-        dropdownMenu.style.zIndex = '1600';
-        dropdownMenu.style.right = 'auto';
-        dropdownMenu.style.width = '240px';
-        var largura = dropdownMenu.offsetWidth || 224;
-        var esquerda = Math.min(Math.max(8, r.right - largura), window.innerWidth - largura - 8);
-        dropdownMenu.style.left = esquerda + 'px';
-        var topo = r.bottom + 4;
-        var altura = dropdownMenu.offsetHeight;
-        if(topo + altura > window.innerHeight - 8) topo = Math.max(8, r.top - altura - 4);
-        dropdownMenu.style.top = topo + 'px';
+        dropdownMenu._botao = btnMenu;
+        posicionarMenuColunaTarefa(dropdownMenu);
       }
     });
 
@@ -3531,8 +3541,12 @@ function configurarSelectsCustomTarefa(){
   document.addEventListener('click', function(){ fecharSelectsCustomTarefa(); });
   // Clicar fora fecha o menu da coluna
   document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('.dropdown-menu-coluna')) return; document.querySelectorAll('.dropdown-menu-coluna.aberto').forEach(function(m){ m.classList.remove('aberto'); }); });
-  // Rolar a pagina ou o quadro fecha o menu da coluna (ele fica fixo na tela)
-  window.addEventListener('scroll', function(){ document.querySelectorAll('body > .dropdown-menu-coluna.aberto').forEach(function(m){ m.classList.remove('aberto'); }); }, true);
+  window.addEventListener('scroll', function(e){
+    // Rolar dentro do menu nao mexe nele; rolar a pagina ou o quadro faz o menu acompanhar o botao
+    if(e.target && e.target.closest && e.target.closest('.dropdown-menu-coluna')) return;
+    document.querySelectorAll('body > .dropdown-menu-coluna.aberto').forEach(posicionarMenuColunaTarefa);
+  }, true);
+  window.addEventListener('resize', function(){ document.querySelectorAll('body > .dropdown-menu-coluna.aberto').forEach(posicionarMenuColunaTarefa); });
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape') fecharSelectsCustomTarefa();
   });
