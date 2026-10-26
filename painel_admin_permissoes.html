@@ -89,53 +89,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 <link rel="stylesheet" href="saga_tema.css">
 </head>
 <body data-theme="dark">
-<div class="overlay" id="mobileOverlay"></div>
-<header class="topbar">
-  <div class="top-left">
-    <button class="hamburger" id="hamburger" aria-label="Abrir navegação"><span></span><span></span><span></span></button>
-    <div class="brand">
-      <svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6fa2ff"/><stop offset="38%" stop-color="#4b8af5"/><stop offset="60%" stop-color="#2f6cd6"/><stop offset="100%" stop-color="#cfe0ff"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#crestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#crestGold)">VM</text></g></svg>
-      <div class="brand-name">VMM<b>ADV</b></div>
-    </div>
-    <label class="quick-search" aria-label="Busca rápida">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-      <input id="globalSearch" placeholder="Buscar colaborador, perfil ou módulo...">
-    </label>
-  </div>
-  <div class="top-right">
-    <div class="presence-wrap">
-      <button class="presence-btn" id="presenceBtn"><span class="dot online"></span><span id="onlineText">Online</span></button>
-      <div class="popover" id="presencePop"></div>
-    </div>
-    <div class="notification-wrap">
-      <button class="icon-btn" id="notifBtn" aria-label="Notificações"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="var(--gold)" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="var(--gold)" stroke-width="1.6"/></svg><span class="notif-count" id="notifCount" style="display:none">0</span></button>
-      <div class="popover notification-pop" id="notifPop"></div>
-    </div>
-    <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>
-    <div class="avatar" id="topAvatar">DV</div>
-  </div>
-</header>
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
 <div class="app">
-  <aside class="sidebar" id="sidebar">
-    <div class="nav-section">Visão Geral</div>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/><rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="1.5"/></svg>Dashboard</a>
-    <div class="nav-section">Operação</div>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Lista de Processos</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>Kanban</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M5 19c0-3.5 3-5.5 7-5.5s7 2 7 5.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.5"/></svg>Ficha do Cliente</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Calendário</a>
-    <div class="nav-section">Equipe</div>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5a8.5 8.5 0 11-4-7.2L21 6l-1.5 4.5z" stroke="currentColor" stroke-width="1.5"/></svg>Chat Interno</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Ponto Eletrônico</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>Biblioteca de Modelos</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Marketing/Campanhas</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5"/></svg>Minhas Tarefas</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z" stroke="currentColor" stroke-width="1.5"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="1.5"/></svg>Monitoramento Multi-OAB</a>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V7m5 12V4m5 15v-8m5 8V9" stroke="currentColor" stroke-width="1.5"/></svg>Financeiro</a>
-    <div class="nav-section">Gestão</div>
-    <a class="nav-item" href="#"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 13a8 8 0 000-2l2.1-1.6-2-3.5-2.5 1a8 8 0 00-1.7-1l-.3-2.7h-4l-.3 2.7a8 8 0 00-1.7 1l-2.5-1-2 3.5L6.6 11a8 8 0 000 2l-2.1 1.6 2 3.5 2.5-1a8 8 0 001.7 1l.3 2.7h4l.3-2.7a8 8 0 001.7-1l2.5 1 2-3.5L19.4 13z" stroke="currentColor" stroke-width="1.3"/></svg>Configurações</a>
-    <a class="nav-item active" id="permissionsNavItem" href="#"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Painel de Permissões</a>
-  </aside>
+  <div class="sidebar" id="sidebarSaga"></div>
   <main class="content">
     <section class="page-head">
       <div><h1>Painel Admin de Permissões</h1><p class="page-sub">Defina o que cada perfil e cada colaborador pode acessar em todo o sistema.</p></div>
@@ -163,6 +120,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 <div class="modal-overlay" id="confirmModal"><div class="modal small"><div class="modal-header"><div><h2 id="confirmTitle">Confirmar ação</h2><p id="confirmText"></p></div><button class="close-btn" data-close="confirmModal">✕</button></div><div class="modal-footer"><button class="btn-secondary" data-close="confirmModal">Cancelar</button><button class="btn-danger" id="confirmBtn">Confirmar</button></div></div></div>
 <div class="toast-area" id="toastArea"></div>
 
+<script src="saga_ui.js"></script>
 <script>
 /* ================================================================
    SUPABASE
@@ -189,6 +147,7 @@ const moduleList = [
   {key:'tarefas',      name:'Minhas Tarefas',         short:'MT'},
   {key:'multi_oab',    name:'Monitoramento Multi-OAB',short:'MO'},
   {key:'financeiro',   name:'Financeiro',             short:'FI'},
+  {key:'colaboradores',name:'Colaboradores',          short:'CO'},
   {key:'configuracoes',name:'Configurações',          short:'CF'}
 ];
 const levels = ['sem_acesso','visualizar','comentar','editar','admin_total'];
@@ -198,11 +157,22 @@ const levelLabels = {sem_acesso:'Sem acesso',visualizar:'Visualizar',comentar:'C
   NIVEL_ACTIONS — mapeamento painel → DB
   Cada nível define quais pares (modulo_db, acao) devem estar presentes
   em papeis_permissoes para que esse nível seja considerado atingido.
-  dashboard: sem permissão dedicada no DB — calculado via processos.visualizar.
+  dashboard e colaboradores: permissoes proprias (bloco 38).
   kanban: compartilha processos + status_funil no admin_total.
 */
 const NIVEL_ACTIONS = {
-  dashboard:    {visualizar:[],comentar:[],editar:[],admin_total:[]},
+  dashboard:    {
+    visualizar: [['dashboard','visualizar']],
+    comentar:   [['dashboard','visualizar']],
+    editar:     [['dashboard','visualizar']],
+    admin_total:[['dashboard','visualizar']]
+  },
+  colaboradores:{
+    visualizar: [['colaboradores','visualizar']],
+    comentar:   [['colaboradores','visualizar']],
+    editar:     [['colaboradores','visualizar'],['usuarios','convidar']],
+    admin_total:[['colaboradores','visualizar'],['usuarios','convidar'],['usuarios','gerenciar_papeis']]
+  },
   processos:    {
     visualizar: [['processos','visualizar']],
     comentar:   [['processos','visualizar'],['comentarios','criar']],
@@ -410,37 +380,10 @@ function closePopovers(){document.querySelectorAll('.popover').forEach(p=>p.clas
    TOPBAR
 ================================================================ */
 function setupTopbar(){
-  const saved=localStorage.getItem('saga-theme');
-  if(saved)document.body.dataset.theme=saved;
-
-  document.getElementById('themeToggle').addEventListener('click',()=>{
-    const next=document.body.dataset.theme==='dark'?'light':'dark';
-    document.body.dataset.theme=next;localStorage.setItem('saga-theme',next);
-  });
-  document.getElementById('hamburger').addEventListener('click',()=>{
-    document.getElementById('sidebar').classList.toggle('open');
-    document.getElementById('mobileOverlay').classList.toggle('open');
-  });
-  document.getElementById('mobileOverlay').addEventListener('click',()=>{
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('mobileOverlay').classList.remove('open');
-  });
+  // Barra superior, menu lateral, tema, notificacoes e presenca vem do saga_ui.js
   document.addEventListener('click',e=>{
-    if(!e.target.closest('.presence-wrap')&&!e.target.closest('.notification-wrap'))closePopovers();
     if(!e.target.closest('.custom-select'))closeCustomSelects();
   });
-  document.getElementById('presenceBtn').addEventListener('click',e=>{
-    e.stopPropagation();
-    document.getElementById('presencePop').classList.toggle('open');
-    document.getElementById('notifPop').classList.remove('open');
-  });
-  document.getElementById('notifBtn').addEventListener('click',e=>{
-    e.stopPropagation();
-    document.getElementById('notifPop').classList.toggle('open');
-    document.getElementById('presencePop').classList.remove('open');
-  });
-  document.getElementById('presencePop').innerHTML='<div class="pop-title">Presença online</div><div class="pop-item"><span class="grow" style="font-size:10px;color:var(--muted)">Indicador em tempo real disponível em breve.</span></div>';
-  document.getElementById('notifPop').innerHTML='<div class="pop-title">Notificações</div><div class="pop-item"><span class="grow" style="font-size:10px;color:var(--muted)">Sem notificações no momento.</span></div>';
 }
 
 /* ================================================================
@@ -740,6 +683,7 @@ function changeView(v){
    INIT
 ================================================================ */
 async function init(){
+  await SagaUI.carregar('permissoes');
   setupTopbar();
 
   // Verifica sessão
@@ -754,10 +698,6 @@ async function init(){
   if(meId){
     const{data:me}=await _sb.from('usuarios').select('id,nome_completo,eh_administrador').eq('id',meId).single();
     _currentUser=me;
-    if(me){
-      document.getElementById('topAvatar').textContent=initials(me.nome_completo);
-      document.getElementById('topAvatar').title=me.nome_completo;
-    }
   }
 
   if(!applyAccessGate())return;
@@ -776,7 +716,6 @@ async function init(){
 
   document.querySelectorAll('.segment').forEach(b=>b.addEventListener('click',()=>changeView(b.dataset.view)));
   document.getElementById('viewSearch').addEventListener('input',renderAll);
-  document.getElementById('globalSearch').addEventListener('input',e=>{document.getElementById('viewSearch').value=e.target.value;renderAll()});
   document.getElementById('profileFilter').addEventListener('change',renderAll);
   document.getElementById('newProfileBtn').addEventListener('click',()=>openProfileModal());
   document.getElementById('profileSaveBtn').addEventListener('click',saveProfile);

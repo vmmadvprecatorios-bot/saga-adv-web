@@ -199,6 +199,7 @@
       '[data-theme="dark"] #topbarSaga .theme-toggle svg.moon{color:#ffffff !important;}'+
       '[data-theme="dark"] #topbarSaga .theme-toggle svg.sun{color:#7b8799 !important;}'+
       '#topbarSaga .theme-toggle .knob{transition:left .25s ease,background .25s ease !important;}'+
+      '#sidebarSaga .sem-permissao{display:none !important;}'+
       '@media(max-width:760px){#sidebarSaga{position:fixed !important;}#topbarSaga .top-center{display:none !important;}}'+
       /* ===== CELULAR (ate 760px): menu lateral deslizante, barra compacta, sem rolagem lateral ===== */
       '@media(max-width:760px){'+
@@ -323,7 +324,10 @@
     +'Financeiro</div>'
     +'<div class="nav-item" data-tela="marketing" onclick="window.location.href=\'marketing_campanhas_padrao_metalico.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8v18l-18-8v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 15v4a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Marketing</div>';
+    +'Marketing</div>'
+    +'<div class="nav-item sem-permissao" data-tela="permissoes" onclick="window.location.href=\'painel_admin_permissoes.html\'">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Permissões</div>';
 
   var TOPBAR_HTML=''
     +'<div class="top-left">'
@@ -996,6 +1000,69 @@
     setInterval(function(){contarChat();contarDia();contarNaoLidas();},60000);
   }
 
+
+  // Permissoes aplicadas no menu e nas telas (a mesma regra do banco: perfil + excecoes individuais).
+  // Basta ter UMA das permissoes da lista para ver a tela. Telas sem lista ficam liberadas.
+  var PERMS_TELA={
+    processos:['processos.visualizar'],
+    agenda:['compromissos.visualizar'],
+    tarefas:['tarefas.visualizar'],
+    chat:['chat.usar'],
+    ponto:['ponto.bater','ponto.visualizar_proprio','ponto.visualizar_equipe'],
+    colaboradores:['colaboradores.visualizar','usuarios.convidar','usuarios.gerenciar_papeis'],
+    dashboard:['dashboard.visualizar'],
+    biblioteca:['biblioteca.visualizar'],
+    financeiro:['financeiro.visualizar'],
+    marketing:['campanhas.visualizar','materiais_marketing.visualizar'],
+    permissoes:['permissoes.gerenciar']
+  };
+  var _minhasPermissoes=null;
+  function podeVerTela(tela){
+    var req=PERMS_TELA[tela];
+    if(!req||!_minhasPermissoes)return true;
+    return req.some(function(p){return _minhasPermissoes.indexOf(p)!==-1;});
+  }
+  async function aplicarPermissoes(telaAtiva){
+    if(!global._sb||!_perfilAtual)return;
+    try{
+      var r=await global._sb.rpc('minhas_permissoes');
+      if(r.error||!Array.isArray(r.data))return;
+      _minhasPermissoes=r.data;
+    }catch(e){return;}
+    // Menu: esconde o que a pessoa nao pode ver (e o titulo da secao que ficar vazia)
+    if(!document.getElementById('sagaPermEstilo')){
+      var st=document.createElement('style');st.id='sagaPermEstilo';
+      st.textContent='#sidebarSaga .sem-permissao{display:none !important;}';
+      document.head.appendChild(st);
+    }
+    document.querySelectorAll('#sidebarSaga .nav-item[data-tela]').forEach(function(it){
+      it.classList.toggle('sem-permissao',!podeVerTela(it.getAttribute('data-tela')));
+    });
+    document.querySelectorAll('#sidebarSaga .nav-section').forEach(function(sec){
+      var el=sec.nextElementSibling,algum=false;
+      while(el&&!el.classList.contains('nav-section')){if(el.classList.contains('nav-item')&&!el.classList.contains('sem-permissao'))algum=true;el=el.nextElementSibling;}
+      sec.classList.toggle('sem-permissao',!algum);
+    });
+    // Tela aberta sem permissao (link direto ou favorito): bloqueia o conteudo
+    if(telaAtiva&&!podeVerTela(telaAtiva))bloquearTela();
+  }
+  function bloquearTela(){
+    if(document.getElementById('sagaSemAcesso'))return;
+    var sb=document.getElementById('sidebarSaga');
+    var esq=(sb&&window.innerWidth>760)?Math.max(0,sb.getBoundingClientRect().right):0;
+    var primeira=document.querySelector('#sidebarSaga .nav-item[data-tela]:not(.sem-permissao)');
+    var destino=primeira?(primeira.getAttribute('onclick')||'').replace(/^.*href='([^']+)'.*$/,'$1'):'';
+    var d=document.createElement('div');d.id='sagaSemAcesso';
+    d.style.cssText='position:fixed;top:64px;right:0;bottom:0;left:'+esq+'px;z-index:1300;background:var(--navy-1,#e8ecf1);display:flex;align-items:center;justify-content:center;padding:24px;';
+    d.innerHTML='<div style="max-width:420px;text-align:center;background:var(--panel,#fff);border:1px solid var(--border,#d5dbe4);border-radius:16px;padding:32px 28px;box-shadow:0 10px 30px rgba(0,0,0,.12)">'
+      +'<div style="width:52px;height:52px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#e5484d 14%,transparent);color:#e5484d"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.8"/></svg></div>'
+      +'<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:600;color:var(--text,#13233a);margin-bottom:6px">Sem acesso a esta tela</div>'
+      +'<div style="font-size:12.5px;color:var(--muted,#4a586e);line-height:1.5;margin-bottom:18px">Seu perfil não tem permissão para abrir esta área. Se precisar, peça ao administrador para liberar.</div>'
+      +(destino?'<a href="'+destino+'" style="display:inline-block;background:var(--gold,#1f3e6d);color:#fff;text-decoration:none;font-size:12.5px;font-weight:700;padding:10px 18px;border-radius:9px">Voltar ao início</a>':'')
+      +'</div>';
+    document.body.appendChild(d);
+  }
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
@@ -1016,6 +1083,7 @@
     ligarPresencaESino();
     ligarBuscaGlobal();
     await carregarPerfil();
+    await aplicarPermissoes(telaAtiva);
     // Presenca e contador do sino carregam em paralelo e nao seguram a tela
     carregarPresenca();
     contarNaoLidas();
@@ -1023,5 +1091,5 @@
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
 
-  global.SagaUI={carregar:carregar,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);
