@@ -781,7 +781,7 @@ function renderProcessData(){
     const campoValorCausa=canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessValorCausa" value="'+esc(process.valorCausa==='Não informado'?'':process.valorCausa)+'">':'<div class="campo-dado-valor dourado">'+esc(process.valorCausa)+'</div>';
     heading.innerHTML=headingBase+'<div class="process-edit-actions"><button class="btn-inline-cancel" id="cancelProcessEdit" type="button">Cancelar</button><button class="btn-inline-save" id="saveProcessEdit" type="button">Salvar</button></div>';
     grid.classList.add('process-data-editing');
-    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Tese</div>'+campoTese+'</div><div class="campo-dado"><div class="campo-dado-label">Responsável</div>'+campoResponsavel+'</div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div>'+campoPrecatorio+'</div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div>'+campoValorCausa+'</div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><input class="campo-dado-edit-input" id="editProcessCnj" value="'+esc(process.cnj==='Não informado'?'':process.cnj)+'"></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><input class="campo-dado-edit-input" id="editProcessProtocolo" type="date" value="'+esc(process.dataInicio||'')+'"></div>';
+    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Tese</div>'+campoTese+'</div><div class="campo-dado"><div class="campo-dado-label">Responsável</div>'+campoResponsavel+'</div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div>'+campoPrecatorio+'</div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div>'+campoValorCausa+'</div><div class="campo-dado"><div class="campo-dado-label">Honorários (%)</div>'+(canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessHonorarios" inputmode="decimal" placeholder="Ex.: 20" value="'+esc(process.honorariosPct==null?'':String(process.honorariosPct).replace('.',','))+'">':'<div class="campo-dado-valor">'+esc(textoHonorarios(process))+'</div>')+'</div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><input class="campo-dado-edit-input" id="editProcessCnj" value="'+esc(process.cnj==='Não informado'?'':process.cnj)+'"></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><input class="campo-dado-edit-input" id="editProcessProtocolo" type="date" value="'+esc(process.dataInicio||'')+'"></div>';
     if(canEditSensitive){
       bindCustomSelects(grid);
       attachCurrencyMask(document.getElementById('editProcessPrecatório'));
@@ -797,7 +797,7 @@ function renderProcessData(){
     if(canDelete)acoesHeading.push('<button class="btn-edit-process" id="btnDeleteProcess" type="button" title="Excluir processo" aria-label="Excluir processo" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m3 0l-1 13a1 1 0 01-1 1H8a1 1 0 01-1-1L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
     heading.innerHTML=headingBase+(acoesHeading.length?'<div class="process-edit-actions">'+acoesHeading.join('')+'</div>':'');
     grid.classList.remove('process-data-editing');
-    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Tese</div><div class="campo-dado-valor">'+esc(process.tese)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Responsável</div><div class="campo-dado-valor">'+esc(process.responsavel.nome)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div><div class="campo-dado-valor">'+esc(process.precatório)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div><div class="campo-dado-valor dourado">'+esc(process.valorCausa)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><div class="campo-dado-valor">'+esc(process.cnj)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><div class="campo-dado-valor">'+esc(process.protocolo)+'</div></div>';
+    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Tese</div><div class="campo-dado-valor">'+esc(process.tese)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Responsável</div><div class="campo-dado-valor">'+esc(process.responsavel.nome)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div><div class="campo-dado-valor">'+esc(process.precatório)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div><div class="campo-dado-valor dourado">'+esc(process.valorCausa)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Honorários</div><div class="campo-dado-valor">'+esc(textoHonorarios(process))+'</div></div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><div class="campo-dado-valor">'+esc(process.cnj)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><div class="campo-dado-valor">'+esc(process.protocolo)+'</div></div>';
     if(canEdit)document.getElementById('btnEditProcess').addEventListener('click',()=>{state.isEditingProcess=true;renderProcessData();});
     if(canDelete)document.getElementById('btnDeleteProcess').addEventListener('click',()=>{const processoAtual=getActiveProcess();if(!processoAtual)return;document.getElementById('deleteProcessLabel').textContent=processoAtual.tese+(processoAtual.cnj&&processoAtual.cnj!=='Não informado'?', CNJ '+processoAtual.cnj:'');openModal('deleteProcessModal');});
   }
@@ -1926,6 +1926,22 @@ function mapearProcesso(row){
     carregado:false
   };
 }
+// Percentual de honorarios de cada processo (tabela financeiro_processo).
+// Quem nao tem permissao de ver o financeiro simplesmente nao recebe o valor.
+async function carregarHonorariosDosProcessos(lista){
+  lista.forEach(p=>{p.honorariosPct=null;});
+  if(!lista.length)return;
+  try{
+    const r=await _sb.from('financeiro_processo').select('processo_id,percentual_honorarios').in('processo_id',lista.map(p=>p.id));
+    (r.data||[]).forEach(f=>{const p=lista.find(x=>x.id===f.processo_id);if(p)p.honorariosPct=f.percentual_honorarios==null?null:Number(f.percentual_honorarios);});
+  }catch(e){}
+}
+function textoHonorarios(p){
+  if(p.honorariosPct==null)return 'Não informado';
+  const pct=p.honorariosPct.toLocaleString('pt-BR')+'%';
+  return p.valorCausaNum==null?pct:pct+' · expectativa '+fmtMoeda(Math.round(p.valorCausaNum*p.honorariosPct)/100);
+}
+
 async function carregarProcessosDaPessoa(pessoaId){
   if(!perms.processosVisualizar){
     state.processos=[];
@@ -1936,6 +1952,7 @@ async function carregarProcessosDaPessoa(pessoaId){
     const r=await _sb.from('processos').select(SELECT_PROCESSO).eq('pessoa_id',pessoaId).eq('excluido_logico',false).order('criado_em',{ascending:true});
     if(r.error)throw r.error;
     state.processos=(r.data||[]).map(mapearProcesso);
+    await carregarHonorariosDosProcessos(state.processos);
     if(!state.processos.some(proc=>proc.id===state.activeProcessId))state.activeProcessId=state.processos[0]?state.processos[0].id:null;
     return state.processos;
   }catch(erro){
@@ -2162,6 +2179,7 @@ async function carregarDetalhesProcesso(pid){
     const r=await _sb.from('processos').select(SELECT_PROCESSO).eq('id',pid).eq('excluido_logico',false).maybeSingle();
     if(r.error||!r.data)return null;
     const processo=mapearProcesso(r.data);
+    await carregarHonorariosDosProcessos([processo]);
     const dadosExtra=state.pessoaRow&&state.pessoaRow.dados_extra&&typeof state.pessoaRow.dados_extra==='object'&&!Array.isArray(state.pessoaRow.dados_extra)
       ? state.pessoaRow.dados_extra
       : {};
@@ -2255,11 +2273,22 @@ async function salvarEdicaoProcesso(){
     payload.valor_precatorio_origem=novoValorPrecatorio;
     payload.valor_causa=novoValorCausa;
   }
+  const honorariosInput=document.getElementById('editProcessHonorarios');
+  let novoPct=proc.honorariosPct;
+  if(honorariosInput){
+    const t=honorariosInput.value.trim();
+    novoPct=t?parseFloat(t.replace('%','').replace(',','.')):null;
+    if(t&&(isNaN(novoPct)||novoPct<0||novoPct>100)){showToast('O percentual de honorários deve ficar entre 0 e 100.','warning');return false;}
+  }
   const r=await _sb.from('processos').update(payload).eq('id',proc.id).eq('pessoa_id',state.pessoaRow.id);
   if(r.error){
     if(String(r.error.code)==='23505'){showToast('Esta pessoa já possui um processo com esta tese.','warning');return false;}
     showToast('Não foi possível atualizar o processo. Verifique os dados e suas permissões.','error');
     return false;
+  }
+  if(novoPct!==proc.honorariosPct){
+    const rf=await _sb.from('financeiro_processo').upsert({processo_id:proc.id,percentual_honorarios:novoPct,atualizado_em:new Date().toISOString()},{onConflict:'processo_id'}).select('processo_id');
+    if(rf.error||!rf.data||!rf.data.length)showToast('Processo salvo, mas o percentual de honorários não foi gravado (verifique a permissão de financeiro).','warning');
   }
   state.isEditingProcess=false;
   await recarregarProcessoAtivo();
