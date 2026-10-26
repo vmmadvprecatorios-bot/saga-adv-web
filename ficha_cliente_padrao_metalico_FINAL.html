@@ -286,7 +286,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
     <section class="prototype-nav" id="prototypeNav" aria-label="Navegação do protótipo"></section>
     <div class="page-toolbar">
       <button class="back-button" id="btnVoltar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M14.5 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Voltar para Lista de Processos</button>
-      <div class="page-context"><b>Ficha individual do cliente</b><small>Processo selecionado: PSS</small></div>
+      <div class="page-context"><b>Ficha individual do cliente</b><small></small></div>
     </div>
 
     <section class="panel ficha" id="fichaCliente">
@@ -294,7 +294,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
         <div class="ficha-header-topo">
           <div class="ficha-titulo-bloco">
             <div class="icone-pessoa"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" stroke="currentColor" stroke-width="1.6"/></svg></div>
-            <div class="ficha-titulo"><h1>Maria das Graças Souza</h1><div class="cpf-info">CPF 023.***.***-45 , Maceió, AL</div></div>
+            <div class="ficha-titulo"><h1 style="opacity:.55">Carregando…</h1><div class="cpf-info"></div></div>
             <button class="btn-tel-icon editar" id="btnEditarCliente" title="Editar dados da cliente" aria-label="Editar dados da cliente" style="display:none;width:26px;height:26px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1L20 7l-3-3L5 16l-1 4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>
             <button class="btn-tel-icon excluir" id="btnExcluirCliente" title="Excluir cliente" aria-label="Excluir cliente" style="display:none;width:26px;height:26px;margin-top:2px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m3 0l-1 13a1 1 0 01-1 1H8a1 1 0 01-1-1L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <div id="clienteTelChip" style="margin-top:4px"></div>
@@ -398,7 +398,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 <!-- Modal: excluir telefone -->
 <div class="modal-overlay" id="excluirTelefoneModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir telefone</h3><p>O número será marcado como excluído e não aparecerá mais na ficha.</p></div><button class="modal-close" data-close-modal="excluirTelefoneModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja excluir o telefone <strong id="excluirTelLabel" style="color:var(--text)"></strong>?</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="excluirTelefoneModal">Cancelar</button><button class="btn-danger" id="confirmarExcluirTelButton">Excluir telefone</button></div></div></div>
 
-<div class="modal-overlay" id="newProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Novo processo para Maria das Graças Souza</h3><p>O processo será vinculado a esta cliente, preservando os dados pessoais já cadastrados.</p></div><button class="modal-close" data-close-modal="newProcessModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="newProcessTese">Tese</label><div id="newProcessTeseSelect"></div></div><div class="form-field"><label for="newProcessCnj">Número do Processo, CNJ</label><input id="newProcessCnj" type="text" placeholder="Ex.: 0000000-00.2026.4.05.8000"></div><div class="form-field"><label for="newProcessDataInicio">Data de início</label><input id="newProcessDataInicio" type="date"></div><div class="form-field"><label for="newProcessResponsavel">Responsável</label><div id="newProcessResponsavelSelect"></div></div><div class="form-field"><label for="newProcessValor">Valor da causa, opcional</label><input id="newProcessValor" type="text" placeholder="Ex.: R$ 9.100,00"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newProcessModal">Cancelar</button><button class="btn-primary" id="saveNewProcessButton">Criar processo</button></div></div></div>
+<div class="modal-overlay" id="newProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Novo processo</h3><p>O processo será vinculado a esta cliente, preservando os dados pessoais já cadastrados.</p></div><button class="modal-close" data-close-modal="newProcessModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="newProcessTese">Tese</label><div id="newProcessTeseSelect"></div></div><div class="form-field"><label for="newProcessCnj">Número do Processo, CNJ</label><input id="newProcessCnj" type="text" placeholder="Ex.: 0000000-00.2026.4.05.8000"></div><div class="form-field"><label for="newProcessDataInicio">Data de início</label><input id="newProcessDataInicio" type="date"></div><div class="form-field"><label for="newProcessResponsavel">Responsável</label><div id="newProcessResponsavelSelect"></div></div><div class="form-field"><label for="newProcessValor">Valor da causa, opcional</label><input id="newProcessValor" type="text" placeholder="Ex.: R$ 9.100,00"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newProcessModal">Cancelar</button><button class="btn-primary" id="saveNewProcessButton">Criar processo</button></div></div></div>
 
 <div class="modal-overlay" id="locationImportModal">
   <div class="modal large">
@@ -1847,9 +1847,9 @@ function aplicarPessoaNoEstado(row){
 }
 function renderHeaderCliente(){
   const h1=document.querySelector('.ficha-titulo h1');
-  if(h1)h1.textContent=state.cliente.nome;
+  if(h1){h1.textContent=state.cliente.nome;h1.style.opacity='';}
   const cpfInfo=document.querySelector('.ficha-titulo .cpf-info');
-  if(cpfInfo)cpfInfo.textContent='CPF '+state.cliente.cpf+' , '+state.cliente.cidade;
+  if(cpfInfo)cpfInfo.textContent='CPF '+state.cliente.cpf+(state.cliente.cidade?', '+state.cliente.cidade:'');
 
   const header=document.querySelector('.ficha-header');
   if(header){
