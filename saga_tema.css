@@ -102,3 +102,71 @@ th{color:var(--muted)!important;font-weight:600!important}
   border-color:color-mix(in srgb,var(--c) 45%,#ffffff);
   color:color-mix(in srgb,var(--c) 65%,#000000);
 }
+
+
+/* ===== Ajustes gerais do novo visual (todas as telas) ===== */
+
+/* Botoes de acao e opcoes selecionadas: azul solido com texto branco, sem o degrade antigo */
+.aba-topo.ativa,.btn-aplicar-filtros,.btn-aplicar-multi,.btn-aplicar-multi-filtro,
+.btn-aplicar-periodo,.btn-bater-ponto,.btn-confirmar,.btn-confirmar-bib,
+.btn-confirmar-dash,.btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,
+.btn-entrar,.btn-enviar-comentario,.btn-enviar-msg,.btn-gen-confirmar,
+.btn-inline-save,.btn-novo,.btn-novo-chat,.btn-novo-comp,
+.btn-pequeno,.btn-primary,.btn-recuperar,.btn-salvar-legenda,
+.btn-salvar-modal,.btn-upload,.btn-view.ativo,.campaign-view-btn.active,
+.cat-tab.ativo,.choice-pill.active,.custom-select-option.selected,.dourado-metalico,
+.filter-pill.active,.invite-tab.active,.mes-rapido-item.selecionado,.opcao-tipo-tarefa.ativa,
+.opcao-visao-tarefas.ativa,.pag-btn.ativo,.page-pill.active,.pill-direcao.ativo,
+.pill-fase.ativo,.pill-filtro-rapido.selecionada,.pill-qtd-pagina.selecionada,.pill-quantidade.ativo,
+.pill.active,.process-tab.active,.prototype-nav button.active,.segment.active,
+.select-custom-tf-opcao.selecionada,.signature-tab.active,.step.active .step-index,.tab-btn.active,
+.toggle-choice.active{
+  background:var(--gold)!important;
+  background-size:auto!important;
+  color:#ffffff!important;
+  border-color:transparent!important;
+  box-shadow:none!important;
+}
+.btn-aplicar-filtros:hover,.btn-aplicar-multi:hover,.btn-aplicar-multi-filtro:hover,.btn-aplicar-periodo:hover,
+.btn-bater-ponto:hover,.btn-confirmar:hover,.btn-confirmar-bib:hover,.btn-confirmar-dash:hover,
+.btn-confirmar-mkt:hover,.btn-confirmar-tf:hover,.btn-edicao-salvar:hover,.btn-entrar:hover,
+.btn-enviar-comentario:hover,.btn-enviar-msg:hover,.btn-gen-confirmar:hover,.btn-inline-save:hover,
+.btn-novo:hover,.btn-novo-chat:hover,.btn-novo-comp:hover,.btn-pequeno:hover,
+.btn-primary:hover,.btn-recuperar:hover,.btn-salvar-legenda:hover,.btn-salvar-modal:hover,
+.btn-upload:hover,.dourado-metalico:hover{
+  background:var(--gold-deep)!important;
+}
+.aba-topo.ativa svg,.btn-aplicar-filtros svg,.btn-aplicar-multi svg,.btn-aplicar-multi-filtro svg,
+.btn-aplicar-periodo svg,.btn-bater-ponto svg,.btn-confirmar svg,.btn-confirmar-bib svg,
+.btn-confirmar-dash svg,.btn-confirmar-mkt svg,.btn-confirmar-tf svg,.btn-edicao-salvar svg,
+.btn-entrar svg,.btn-enviar-comentario svg,.btn-enviar-msg svg,.btn-gen-confirmar svg,
+.btn-inline-save svg,.btn-novo svg,.btn-novo-chat svg,.btn-novo-comp svg,
+.btn-pequeno svg,.btn-primary svg,.btn-recuperar svg,.btn-salvar-legenda svg,
+.btn-salvar-modal svg,.btn-upload svg,.btn-view.ativo svg,.campaign-view-btn.active svg,
+.cat-tab.ativo svg,.choice-pill.active svg,.custom-select-option.selected svg,.dourado-metalico svg,
+.filter-pill.active svg,.invite-tab.active svg,.mes-rapido-item.selecionado svg,.opcao-tipo-tarefa.ativa svg,
+.opcao-visao-tarefas.ativa svg,.pag-btn.ativo svg,.page-pill.active svg,.pill-direcao.ativo svg,
+.pill-fase.ativo svg,.pill-filtro-rapido.selecionada svg,.pill-qtd-pagina.selecionada svg,.pill-quantidade.ativo svg,
+.pill.active svg,.process-tab.active svg,.prototype-nav button.active svg,.segment.active svg,
+.select-custom-tf-opcao.selecionada svg,.signature-tab.active svg,.step.active .step-index svg,.tab-btn.active svg,
+.toggle-choice.active svg{color:#ffffff!important}
+
+/* Numeros de resumo (valores, totais, contadores): fonte do sistema, sem serifa,
+   para o 0 nao parecer a letra O e os valores em R$ nao ficarem cortados */
+.category-total,.donut-inner,.kpi-card strong,.kpi-number,
+.kpi-tarefa-valor,.kpi-valor,.kpi-value,.location-kpi b,
+.mini-resumo-financ-valor,.payroll-summary-card .summary-value,.summary-value,.pilar-numero,
+.receivable-value,.result-metric b,.resumo-horas-valor,.sla-anel-valor,
+.tabela-sem-mov .td-valor,.totalizador-valor{
+  font-family:'Montserrat',system-ui,sans-serif!important;
+  font-weight:700!important;
+  font-variant-numeric:tabular-nums;
+  letter-spacing:-.3px!important;
+  line-height:1.2!important;
+}
+
+/* Manchas decorativas dos cartoes do Financeiro (sobra do tema antigo) */
+.kpi-card:after,.kpi-card::after,.payroll-summary-card::after,.payroll-summary-card:after{display:none!important}
+.btn-dourado{background:var(--gold)!important;color:#ffffff!important;border-color:transparent!important;box-shadow:none!important}
+.btn-dourado:hover{background:var(--gold-deep)!important}
+.btn-dourado svg{color:#ffffff!important}
