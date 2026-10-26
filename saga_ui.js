@@ -96,8 +96,8 @@
       '#topbarSaga .avatar{background:var(--gold) !important;color:#ffffff !important;}'+
       '#hamburger span,[data-theme="light"] #hamburger span{background:currentColor !important;}#hamburger{color:#e3e9f1 !important;}'+
       '[data-theme="light"] #hamburger{color:var(--gold) !important;}'+
-      '[data-theme="light"] #topbarSaga .quick-search,[data-theme="light"] #topbarSaga .presence-btn,[data-theme="light"] #topbarSaga .icon-btn,[data-theme="light"] #topbarSaga .theme-toggle{background:#eef2f7 !important;border-color:rgba(19,38,66,.18) !important;color:#22324a !important;}'+
-      '[data-theme="light"] #topbarSaga .icon-btn:hover,[data-theme="light"] #topbarSaga .presence-btn:hover,[data-theme="light"] #topbarSaga .theme-toggle:hover{background:#e2e8f0 !important;border-color:rgba(19,38,66,.28) !important;}'+
+      '[data-theme="light"] #topbarSaga .quick-search,[data-theme="light"] #topbarSaga .presence-btn,[data-theme="light"] #topbarSaga .icon-btn,[data-theme="light"] #topbarSaga .theme-toggle{background:#eef1f5 !important;border-color:rgba(19,38,66,.22) !important;color:#22324a !important;}'+
+      '[data-theme="light"] #topbarSaga .icon-btn:hover,[data-theme="light"] #topbarSaga .presence-btn:hover,[data-theme="light"] #topbarSaga .theme-toggle:hover{background:#f7f9fb !important;border-color:rgba(19,38,66,.32) !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search:focus-within{background:#ffffff !important;border-color:var(--gold) !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search svg{color:#4a586e !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search input{color:#13233a !important;}'+
@@ -142,12 +142,12 @@
       '[data-theme="dark"] #sidebarSaga .nav-item.active,[data-theme="dark"] #sidebarSaga .nav-item.ativo{color:#1f3e6d !important;border-left-color:#2f6cd6 !important;background:rgba(47,108,214,.12) !important;}'+
       '[data-theme="dark"] #sidebarSaga .nav-item.active .nav-icon,[data-theme="dark"] #sidebarSaga .nav-item.ativo .nav-icon{color:#2f6cd6 !important;}'+
       /* Modo claro (ajuste final): barra superior branca, menu lateral azul em degrade */
-      '[data-theme="light"] #topbarSaga{background:#ffffff !important;border-bottom:1px solid rgba(19,38,66,.14) !important;box-shadow:0 1px 3px rgba(19,38,66,.06) !important;}'+
+      '[data-theme="light"] #topbarSaga{background:#dde3ea !important;border-bottom:1px solid rgba(19,38,66,.18) !important;box-shadow:0 1px 4px rgba(19,38,66,.10) !important;}'+
       '[data-theme="light"] #topbarSaga .brand-name{color:#13233a !important;}'+
       '[data-theme="light"] #topbarSaga .brand-name b{color:#2f6cd6 !important;}'+
       '[data-theme="light"] #hamburger{color:#1f3e6d !important;}'+
-      '[data-theme="light"] #topbarSaga .quick-search,[data-theme="light"] #topbarSaga .presence-btn,[data-theme="light"] #topbarSaga .icon-btn,[data-theme="light"] #topbarSaga .theme-toggle{background:#eef2f7 !important;border-color:rgba(19,38,66,.18) !important;color:#22324a !important;}'+
-      '[data-theme="light"] #topbarSaga .icon-btn:hover,[data-theme="light"] #topbarSaga .presence-btn:hover,[data-theme="light"] #topbarSaga .theme-toggle:hover{background:#e2e8f0 !important;border-color:rgba(19,38,66,.28) !important;}'+
+      '[data-theme="light"] #topbarSaga .quick-search,[data-theme="light"] #topbarSaga .presence-btn,[data-theme="light"] #topbarSaga .icon-btn,[data-theme="light"] #topbarSaga .theme-toggle{background:#eef1f5 !important;border-color:rgba(19,38,66,.22) !important;color:#22324a !important;}'+
+      '[data-theme="light"] #topbarSaga .icon-btn:hover,[data-theme="light"] #topbarSaga .presence-btn:hover,[data-theme="light"] #topbarSaga .theme-toggle:hover{background:#f7f9fb !important;border-color:rgba(19,38,66,.32) !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search:focus-within{background:#ffffff !important;border-color:#2f6cd6 !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search svg{color:#4a586e !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search input{color:#13233a !important;}'+
