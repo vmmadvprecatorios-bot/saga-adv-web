@@ -246,10 +246,10 @@
     +'Processos em Andamento</div>'
     +'<div class="nav-item" data-tela="agenda" onclick="window.location.href=\'calendario_padrao_metalico.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Agenda</div>'
+    +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
     +'<div class="nav-item" data-tela="tarefas" onclick="window.location.href=\'minhas_tarefas.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Minhas Tarefas</div>'
+    +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
     +'<div class="nav-section">Comunicacao</div>'
     +'<div class="nav-item" data-tela="chat" onclick="window.location.href=\'chat_interno_padrao_metalico.html\'">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
@@ -620,7 +620,10 @@
     tarefa_prazo:{titulo:'Tarefa',tela:'minhas_tarefas.html'},
     tarefa_repasse:{titulo:'Tarefa repassada',tela:'minhas_tarefas.html'},
     chat_mensagem:{titulo:'Chat',tela:'chat_interno_padrao_metalico.html'},
-    mencao:{titulo:'Menção'}
+    mencao:{titulo:'Menção'},
+    tarefa_hoje:{titulo:'Tarefa para hoje',tela:'minhas_tarefas.html'},
+    tarefa_atrasada:{titulo:'Tarefa atrasada',tela:'minhas_tarefas.html'},
+    compromisso_hoje:{titulo:'Compromisso hoje',tela:'calendario_padrao_metalico.html'}
   };
   function infoNotif(n){
     var t=TIPOS_NOTIF[n.tipo];
@@ -630,6 +633,16 @@
   }
   async function abrirNotificacao(n){
     try{if(!n.lida)await global._sb.from('notificacoes').update({lida:true}).eq('id',n.id);}catch(e){}
+    // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
+    try{
+      var d=await global._sb.rpc('destino_notificacao',{p_id:n.id});
+      if(d.data&&d.data.tela){
+        var p=new URLSearchParams();
+        Object.keys(d.data).forEach(function(k){if(k!=='tela'&&d.data[k])p.set(k,d.data[k]);});
+        window.location.href=d.data.tela+'?'+p.toString();
+        return;
+      }
+    }catch(e){}
     var tela=infoNotif(n).tela;
     if(tela)window.location.href=tela;
     else contarNaoLidas();
@@ -844,11 +857,30 @@
       document.dispatchEvent(new CustomEvent('saga-chat-nao-lidas',{detail:{total:total,porConversa:r.data||[]}}));
     }catch(e){}
   }
+  // Itens do dia no menu lateral: compromissos de hoje (Agenda) e tarefas de hoje + atrasadas (Minhas Tarefas)
+  async function contarDia(){
+    if(!global._sb||!_perfilAtual)return;
+    try{
+      var r=await global._sb.rpc('resumo_do_dia');
+      if(r.error||!r.data||typeof r.data!=='object')return;
+      var d=r.data;
+      var ag=document.getElementById('navBadgeAgenda');
+      if(ag){var c=d.compromissos_hoje||0;ag.textContent=c>99?'99+':String(c);ag.style.display=c>0?'':'none';}
+      var tf=document.getElementById('navBadgeTarefas');
+      if(tf){
+        var hoje=d.tarefas_hoje||0,atr=d.tarefas_atrasadas||0,tot=hoje+atr;
+        tf.textContent=tot>99?'99+':String(tot);tf.style.display=tot>0?'':'none';
+        tf.classList.toggle('atrasada',atr>0);
+        tf.title=(hoje?hoje+' para hoje':'')+(hoje&&atr?' e ':'')+(atr?atr+' atrasada'+(atr>1?'s':''):'');
+      }
+    }catch(e){}
+  }
   function agendarContagemChat(){clearTimeout(_chatTimer);_chatTimer=setTimeout(contarChat,400);}
   function ligarContadorChat(){
     if(!document.getElementById('sagaChatEstilo')){
       var st=document.createElement('style');st.id='sagaChatEstilo';
       st.textContent='#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#e5484d !important;color:#fff !important;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.25)}'
+        +'#sidebarSaga .nav-badge-dia{background:#3b82f6 !important}#sidebarSaga .nav-badge-dia.atrasada{background:#e5484d !important}'
         +'#hamburger{position:relative !important}#hamburger.tem-chat::after{content:"";position:absolute;top:3px;right:2px;width:9px;height:9px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 2px var(--panel,#fff)}';
       document.head.appendChild(st);
     }
@@ -858,8 +890,11 @@
         .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_mensagens'},agendarContagemChat)
         .subscribe();
     }
-    document.addEventListener('visibilitychange',function(){if(!document.hidden)agendarContagemChat();});
-    setInterval(contarChat,60000);
+    document.addEventListener('visibilitychange',function(){if(!document.hidden){agendarContagemChat();contarDia();contarNaoLidas();}});
+    // Avisos do dia (tarefas de hoje, atrasadas, compromissos) entram no sino uma vez por dia
+    if(global._sb&&_perfilAtual)global._sb.rpc('gerar_avisos_do_dia').then(function(){contarNaoLidas();},function(){});
+    contarDia();
+    setInterval(function(){contarChat();contarDia();contarNaoLidas();},60000);
   }
 
   async function carregar(telaAtiva){

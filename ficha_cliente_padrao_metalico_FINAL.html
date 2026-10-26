@@ -3435,6 +3435,11 @@ async function init(){
       const rproc=await _sb.from('processos').select('id,pessoa_id').eq('id',processoIdUrl).maybeSingle();
       if(rproc.data&&rproc.data.pessoa_id){
         await carregarFicha(rproc.data.pessoa_id,rproc.data.id);
+        // Veio de uma notificacao de mencao: rola ate os comentarios
+        if(params.get('foco')==='comentarios'){
+          const secao=document.getElementById('secaoHistorico');
+          if(secao)setTimeout(()=>secao.scrollIntoView({behavior:'smooth',block:'start'}),300);
+        }
         return;
       }
       showToast('Processo não encontrado ou sem permissão de acesso.','error');

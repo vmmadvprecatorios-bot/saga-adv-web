@@ -4152,6 +4152,13 @@ async function iniciarMinhasTarefas(){
   popularSelectColunas();
   popularSelectResponsavel();
   aplicarFiltrosERenderizar();
+  // Veio de uma notificacao: abre a tarefa direto
+  var idTarefaUrl = new URLSearchParams(location.search).get('tarefa');
+  if(idTarefaUrl){
+    history.replaceState(null,'',location.pathname);
+    if(window.SAGA_TASKS.some(function(t){ return t.id === idTarefaUrl; })) abrirModalTarefa(idTarefaUrl);
+    else mostrarToast('Essa tarefa não existe mais ou não está com você.', 'erro');
+  }
 }
 
 // Botao de atualizar da barra superior

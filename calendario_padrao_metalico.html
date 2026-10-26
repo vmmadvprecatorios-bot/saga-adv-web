@@ -689,9 +689,19 @@ async function inicializar() {
     document.getElementById('nomeUsuarioHeader').textContent   = meuNome.split(' ')[0];
 
     await carregarPreferencias();
+    // Veio de uma notificacao: abre o dia do compromisso e o compromisso
+    var paramsUrl = new URLSearchParams(location.search);
+    var dataUrl = paramsUrl.get('data'), compUrl = paramsUrl.get('compromisso');
+    if (dataUrl && /^\d{4}-\d{2}-\d{2}$/.test(dataUrl)) { viewAtual = 'dia'; dataAtual = new Date(dataUrl + 'T12:00:00'); atualizarPeriodoTexto(); }
     renderizarLegenda();
     ativarViewButtons();
     await carregarEventos();
+    if (compUrl) {
+      history.replaceState(null,'',location.pathname);
+      var compAchado = compromissos.find(function(c){ return c.id === compUrl; });
+      if (compAchado) abrirModalCompromisso(compAchado);
+      else showToast('Esse compromisso não existe mais.', 'erro');
+    }
 
   } catch(e) {
     showToast('Erro ao inicializar. Recarregue a pagina.', 'erro');

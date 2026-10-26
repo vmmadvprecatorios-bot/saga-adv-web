@@ -1748,6 +1748,13 @@ async function init() {
 
     await carregarConversas();
 
+    // Veio de uma notificacao: abre a conversa
+    var conversaUrl = new URLSearchParams(location.search).get('conversa');
+    if (conversaUrl) {
+      history.replaceState(null,'',location.pathname);
+      if (state.conversas.some(function(c){ return c.id === conversaUrl; })) abrirConversa(conversaUrl);
+    }
+
     // Mensagem nova em qualquer conversa (o contador geral do menu avisa): atualiza a lista
     var assinaturaNaoLidas = null;
     document.addEventListener('saga-chat-nao-lidas', function(ev){
