@@ -2970,6 +2970,8 @@ function reordenarColunas(origemId, destinoId){
 }
 
 function renderizarKanban(tarefasFiltradas){
+  // Menus de coluna que foram levados para o corpo da pagina saem junto com o quadro antigo
+  document.querySelectorAll('body > .dropdown-menu-coluna').forEach(function(m){ m.remove(); });
   var wrapper = document.getElementById('kanbanWrapper');
   wrapper.innerHTML = '';
 
@@ -3031,6 +3033,22 @@ function renderizarKanban(tarefasFiltradas){
       e.stopPropagation();
       document.querySelectorAll('.dropdown-menu-coluna').forEach(function(d){ if(d !== dropdownMenu) d.classList.remove('aberto'); });
       dropdownMenu.classList.toggle('aberto');
+      if(dropdownMenu.classList.contains('aberto')){
+        // Menu vai para o corpo da pagina: dentro da coluna ele ficava cortado/por tras
+        if(dropdownMenu.parentElement !== document.body) document.body.appendChild(dropdownMenu);
+        var r = btnMenu.getBoundingClientRect();
+        dropdownMenu.style.position = 'fixed';
+        dropdownMenu.style.zIndex = '1600';
+        dropdownMenu.style.right = 'auto';
+        dropdownMenu.style.width = '240px';
+        var largura = dropdownMenu.offsetWidth || 224;
+        var esquerda = Math.min(Math.max(8, r.right - largura), window.innerWidth - largura - 8);
+        dropdownMenu.style.left = esquerda + 'px';
+        var topo = r.bottom + 4;
+        var altura = dropdownMenu.offsetHeight;
+        if(topo + altura > window.innerHeight - 8) topo = Math.max(8, r.top - altura - 4);
+        dropdownMenu.style.top = topo + 'px';
+      }
     });
 
     dropdownMenu.querySelectorAll('[data-ordenacao]').forEach(function(botaoOrdenacao){
@@ -3511,6 +3529,10 @@ function configurarSelectsCustomTarefa(){
   });
 
   document.addEventListener('click', function(){ fecharSelectsCustomTarefa(); });
+  // Clicar fora fecha o menu da coluna
+  document.addEventListener('click', function(e){ if(e.target.closest && e.target.closest('.dropdown-menu-coluna')) return; document.querySelectorAll('.dropdown-menu-coluna.aberto').forEach(function(m){ m.classList.remove('aberto'); }); });
+  // Rolar a pagina ou o quadro fecha o menu da coluna (ele fica fixo na tela)
+  window.addEventListener('scroll', function(){ document.querySelectorAll('body > .dropdown-menu-coluna.aberto').forEach(function(m){ m.classList.remove('aberto'); }); }, true);
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape') fecharSelectsCustomTarefa();
   });
