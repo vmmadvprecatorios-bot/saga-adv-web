@@ -199,7 +199,7 @@
       '[data-theme="dark"] #topbarSaga .theme-toggle svg.moon{color:#ffffff !important;}'+
       '[data-theme="dark"] #topbarSaga .theme-toggle svg.sun{color:#7b8799 !important;}'+
       '#topbarSaga .theme-toggle .knob{transition:left .25s ease,background .25s ease !important;}'+
-      '#sidebarSaga .sem-permissao{display:none !important;}'+
+      '#sidebarSaga .sem-permissao,#sidebarSaga .perm-pendente{display:none !important;}'+
       '@media(max-width:760px){#sidebarSaga{position:fixed !important;}#topbarSaga .top-center{display:none !important;}}'+
       /* ===== CELULAR (ate 760px): menu lateral deslizante, barra compacta, sem rolagem lateral ===== */
       '@media(max-width:760px){'+
@@ -865,6 +865,7 @@
     try{if(_canalPresenca)await _canalPresenca.untrack();}catch(e){}
     try{await global._sb.auth.signOut();}catch(e){}
     try{localStorage.removeItem(CHAVE_ATIVIDADE);}catch(e){}
+    try{localStorage.removeItem('saga-permissoes');}catch(e){}
     window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'?'?motivo='+motivo:'');
   };
 
@@ -1022,27 +1023,63 @@
     if(!req||!_minhasPermissoes)return true;
     return req.some(function(p){return _minhasPermissoes.indexOf(p)!==-1;});
   }
-  async function aplicarPermissoes(telaAtiva){
-    if(!global._sb||!_perfilAtual)return;
+  // Usuario da sessao salva pelo Supabase neste navegador (leitura imediata, sem esperar a rede)
+  function idSessaoLocal(){
     try{
-      var r=await global._sb.rpc('minhas_permissoes');
-      if(r.error||!Array.isArray(r.data))return;
-      _minhasPermissoes=r.data;
-    }catch(e){return;}
-    // Menu: esconde o que a pessoa nao pode ver (e o titulo da secao que ficar vazia)
-    if(!document.getElementById('sagaPermEstilo')){
-      var st=document.createElement('style');st.id='sagaPermEstilo';
-      st.textContent='#sidebarSaga .sem-permissao{display:none !important;}';
-      document.head.appendChild(st);
-    }
+      for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        if(/^sb-.*-auth-token$/.test(k)){var v=JSON.parse(localStorage.getItem(k));return v&&v.user&&v.user.id||null;}
+      }
+    }catch(e){}
+    return null;
+  }
+  function pintarMenuPermissoes(){
     document.querySelectorAll('#sidebarSaga .nav-item[data-tela]').forEach(function(it){
+      it.classList.remove('perm-pendente');
       it.classList.toggle('sem-permissao',!podeVerTela(it.getAttribute('data-tela')));
     });
     document.querySelectorAll('#sidebarSaga .nav-section').forEach(function(sec){
+      sec.classList.remove('perm-pendente');
       var el=sec.nextElementSibling,algum=false;
       while(el&&!el.classList.contains('nav-section')){if(el.classList.contains('nav-item')&&!el.classList.contains('sem-permissao'))algum=true;el=el.nextElementSibling;}
       sec.classList.toggle('sem-permissao',!algum);
     });
+  }
+  // Logo que o menu e desenhado: usa as permissoes guardadas da ultima vez (mesmo usuario).
+  // Sem guardadas (primeiro acesso ou outro usuario), as telas com restricao ficam ocultas ate o banco responder.
+  function prepararMenuPermissoes(){
+    var uid=idSessaoLocal(),guardado=null;
+    try{guardado=JSON.parse(localStorage.getItem('saga-permissoes')||'null');}catch(e){}
+    if(uid&&guardado&&guardado.uid===uid&&Array.isArray(guardado.perms)){
+      _minhasPermissoes=guardado.perms;
+      pintarMenuPermissoes();
+      return;
+    }
+    document.querySelectorAll('#sidebarSaga .nav-item[data-tela],#sidebarSaga .nav-section').forEach(function(el){
+      var tela=el.getAttribute('data-tela');
+      // Telas basicas (Processos, Agenda, Tarefas, Chat, Ponto) aparecem; as restritas esperam
+      if(!tela||['processos','agenda','tarefas','chat','ponto'].indexOf(tela)===-1)el.classList.add('perm-pendente');
+    });
+    document.querySelectorAll('#sidebarSaga .nav-section').forEach(function(sec){
+      if(/operac|comunic/i.test(sec.textContent))sec.classList.remove('perm-pendente');
+    });
+  }
+  async function aplicarPermissoes(telaAtiva){
+    if(!global._sb||!_perfilAtual)return;
+    var ok=false;
+    try{
+      var r=await global._sb.rpc('minhas_permissoes');
+      if(!r.error&&Array.isArray(r.data)){
+        _minhasPermissoes=r.data;ok=true;
+        try{localStorage.setItem('saga-permissoes',JSON.stringify({uid:idSessaoLocal(),perms:r.data}));}catch(e){}
+      }
+    }catch(e){}
+    if(!ok&&!_minhasPermissoes){
+      // Sem resposta do banco: mostra o menu completo (o banco continua bloqueando os dados)
+      document.querySelectorAll('#sidebarSaga .perm-pendente').forEach(function(el){el.classList.remove('perm-pendente');});
+      return;
+    }
+    pintarMenuPermissoes();
     // Tela aberta sem permissao (link direto ou favorito): bloqueia o conteudo
     if(telaAtiva&&!podeVerTela(telaAtiva))bloquearTela();
   }
@@ -1070,7 +1107,7 @@
     registrarAtividade();
     ligarControleInatividade();
     var sb=document.getElementById('sidebarSaga');
-    if(sb)sb.innerHTML=SIDEBAR_HTML;
+    if(sb){sb.innerHTML=SIDEBAR_HTML;prepararMenuPermissoes();}
     var tb=document.getElementById('topbarSaga');
     if(tb)tb.innerHTML=TOPBAR_HTML;
     if(telaAtiva){
