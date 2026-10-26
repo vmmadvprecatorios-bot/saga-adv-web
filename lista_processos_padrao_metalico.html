@@ -1712,8 +1712,28 @@ function selStatus(s){state.filtroStatus=s;document.getElementById('labelFiltroS
 function selResp(u){state.filtroResponsavel=u;document.getElementById('labelFiltroResponsavel').textContent=u?(u.nome_completo.split(' ')[0]||'Responsavel'):'Responsavel';fecharTodosDropdowns();renderDropdownsResponsavel();aplicarFiltros();}
 
 // Acoes por linha
-function verFicha(id){window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id;}
-function editarProcesso(id){window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id+'&modo=editar';}
+// Posicao da tela (aba de fase, pagina, rolagem): guardada ao sair e restaurada ao voltar da ficha ou de outra tela
+var CHAVE_POSICAO_PROCESSOS='saga-processos-posicao';
+function guardarPosicao(){
+  try{
+    var qk=document.querySelector('.quadro-kanban'),main=document.querySelector('main.content');
+    sessionStorage.setItem(CHAVE_POSICAO_PROCESSOS,JSON.stringify({faseLista:state.faseLista||null,faseKanbanAtiva:state.faseKanbanAtiva||null,page:state.page||1,
+      buscaKanban:state.buscaKanban||'',rolagem:window.scrollY||0,rolagemMain:main?main.scrollTop:0,kanbanX:qk?qk.scrollLeft:0}));
+  }catch(e){}
+}
+function lerPosicao(){try{return JSON.parse(sessionStorage.getItem(CHAVE_POSICAO_PROCESSOS)||'null');}catch(e){return null;}}
+function restaurarRolagem(pos){
+  if(!pos)return;
+  setTimeout(function(){
+    var qk=document.querySelector('.quadro-kanban'),main=document.querySelector('main.content');
+    if(qk&&pos.kanbanX)qk.scrollLeft=pos.kanbanX;
+    if(main&&pos.rolagemMain)main.scrollTop=pos.rolagemMain;
+    if(pos.rolagem)window.scrollTo(0,pos.rolagem);
+  },120);
+}
+window.addEventListener('pagehide',guardarPosicao);
+function verFicha(id){guardarPosicao();window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id;}
+function editarProcesso(id){guardarPosicao();window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id+'&modo=editar';}
 function confirmarExclusao(id){
   state.processoParaExcluir=id;
   var p=state.processos.find(function(x){return x.id===id;});
@@ -1946,10 +1966,18 @@ async function init(){
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';
   await carregarOpcoesFiltros();
   await restaurarPreferencias();
+  var pos=lerPosicao();
+  if(pos){
+    if(pos.faseLista)state.faseLista=pos.faseLista;
+    if(pos.faseKanbanAtiva)state.faseKanbanAtiva=pos.faseKanbanAtiva;
+    if(pos.page)state.page=pos.page;
+    if(pos.buscaKanban){state.buscaKanban=pos.buscaKanban;var bk=document.getElementById('buscaKanban');if(bk)bk.value=pos.buscaKanban;}
+  }
   var viewSalva=null;
   try{viewSalva=localStorage.getItem(CHAVE_VIEW_PROCESSOS);}catch(e){}
   toggleView(viewSalva==='kanban'?'kanban':'lista',true);
   await carregarProcessos();
+  restaurarRolagem(pos);
 }
 function ligarInteracoesSagaUI(){
   // Todas as interacoes da topbar sao ligadas dentro do saga_ui.js
