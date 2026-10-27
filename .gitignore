@@ -11,6 +11,8 @@ node_modules/
 
 # Documentacao e diagramas internos
 *.md
+# Excecao: instrucoes para o Claude (sem dados sensiveis; aponta para a continuidade privada)
+!CLAUDE.md
 *.mermaid
 
 # Ferramenta administrativa com credenciais
