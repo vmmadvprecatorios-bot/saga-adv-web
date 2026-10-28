@@ -24,19 +24,33 @@
   var estilo=document.createElement('style');
   estilo.id='sagaGuardEstilo';
   estilo.textContent=
+    // Ate o login ser confirmado e os menus montados, nada aparece
     'html.saga-entrando body{opacity:0 !important;}'+
-    'body{transition:opacity .14s ease;}'+
-    'html.saga-saindo body{opacity:0 !important;transition:opacity .08s ease;}'+
-    '@media (prefers-reduced-motion:reduce){body,html.saga-saindo body{transition:none !important;}}';
+    // Menus superior e lateral ficam parados; so o conteudo da tela faz a transicao
+    '@keyframes sagaEntra{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}'+
+    '@keyframes sagaSai{from{opacity:1;}to{opacity:0;transform:translateY(-4px);}}'+
+    'html.saga-carregando .saga-conteudo{opacity:0 !important;}'+
+    'html.saga-entrou .saga-conteudo{animation:sagaEntra .16s ease-out backwards;}'+
+    'html.saga-saindo .saga-conteudo{animation:sagaSai .09s ease-in forwards;}'+
+    '@media (prefers-reduced-motion:reduce){html.saga-entrou .saga-conteudo,html.saga-saindo .saga-conteudo{animation:none !important;}}';
   (document.head||html).appendChild(estilo);
-  html.classList.add('saga-entrando');
+  html.classList.add('saga-entrando','saga-carregando');
 
   if(!temSessao){
     location.replace(LOGIN);
     return;
   }
 
-  function mostrar(){html.classList.remove('saga-entrando');}
+  function mostrarMoldura(){html.classList.remove('saga-entrando');}
+  var jaMostrou=false;
+  function mostrar(){
+    mostrarMoldura();
+    if(jaMostrou)return;jaMostrou=true;
+    html.classList.add('saga-entrou');
+    html.classList.remove('saga-carregando');
+    setTimeout(function(){html.classList.remove('saga-entrou');},400);
+  }
+  document.addEventListener('saga-ui-moldura',mostrarMoldura);
   document.addEventListener('saga-ui-visivel',mostrar);
   document.addEventListener('saga-ui-pronto',mostrar);
   // Rede de seguranca: se algo travar, a tela aparece mesmo assim
@@ -44,7 +58,7 @@
 
   // Volta pelo botao do navegador (pagina guardada em cache): nao fica apagada
   window.addEventListener('pageshow',function(ev){
-    if(ev.persisted){html.classList.remove('saga-saindo');mostrar();}
+    if(ev.persisted){html.classList.remove('saga-saindo','saga-carregando');mostrarMoldura();}
   });
 
   // Saida suave ao trocar de tela pelo menu
@@ -53,6 +67,6 @@
     var reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
     if(reduz){location.href=url;return;}
     html.classList.add('saga-saindo');
-    setTimeout(function(){location.href=url;},80);
+    setTimeout(function(){location.href=url;},90);
   };
 })();

@@ -560,7 +560,7 @@
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
       _perfilAtual=r.data;
-      var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo);
+      var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo);try{localStorage.setItem('saga-iniciais',iniciais(r.data.nome_completo));}catch(e){}
       var nm=document.getElementById('avatarPopNome');if(nm)nm.textContent=r.data.nome_completo||'';
       var em=document.getElementById('avatarPopEmail');if(em)em.textContent=r.data.email||'';
     }catch(e){}
@@ -1102,6 +1102,20 @@
     document.body.appendChild(d);
   }
 
+  // Marca os blocos de conteudo da tela (tudo que nao e menu superior nem lateral)
+  function marcarConteudo(){
+    var molduras=[document.getElementById('sidebarSaga'),document.getElementById('topbarSaga')].filter(Boolean);
+    function temMoldura(el){return molduras.some(function(m){return el===m||el.contains(m);});}
+    (function percorrer(pai){
+      Array.prototype.forEach.call(pai.children,function(el){
+        if(/^(SCRIPT|STYLE|LINK|TEMPLATE)$/.test(el.tagName)||molduras.indexOf(el)!==-1)return;
+        if(el.id==='overlay'||el.id==='sagaSemAcesso')return;
+        if(temMoldura(el))percorrer(el);
+        else{var pos=getComputedStyle(el).position;if(pos!=='fixed')el.classList.add('saga-conteudo');}
+      });
+    })(document.body);
+  }
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sem login valido: vai para o login sem mostrar nada da tela (saga_guard.js a mantem escondida)
@@ -1123,13 +1137,17 @@
       var alvo=document.querySelector('#sidebarSaga [data-tela="'+telaAtiva+'"]');
       if(alvo)alvo.classList.add('active');
     }
-    // Permissoes guardadas permitem esta tela: ja pode aparecer (o restante carrega por tras)
-    if(_minhasPermissoes&&(!telaAtiva||podeVerTela(telaAtiva)))document.dispatchEvent(new CustomEvent('saga-ui-visivel'));
+    try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;}catch(e){}
     ligarTema();
     ligarPrivacidade();
     ligarHamburger();
     ligarPresencaESino();
     ligarBuscaGlobal();
+    // Menus prontos: aparecem parados; so o conteudo da tela entra com transicao (saga_guard.js)
+    marcarConteudo();
+    document.dispatchEvent(new CustomEvent('saga-ui-moldura'));
+    // Permissoes guardadas permitem esta tela: o conteudo ja pode aparecer (o restante carrega por tras)
+    if(_minhasPermissoes&&(!telaAtiva||podeVerTela(telaAtiva)))document.dispatchEvent(new CustomEvent('saga-ui-visivel'));
     await carregarPerfil();
     await aplicarPermissoes(telaAtiva);
     // Presenca e contador do sino carregam em paralelo e nao seguram a tela
