@@ -46,6 +46,12 @@
   }
 
   function mostrarMoldura(){html.classList.remove('saga-entrando');}
+  // Telas antigas sem o menu padrao (data-simples): basta ter login salvo; aparecem quando a pagina termina de carregar
+  if(document.currentScript&&document.currentScript.dataset.simples){
+    html.classList.remove('saga-carregando','saga-fixando');
+    document.addEventListener('DOMContentLoaded',mostrarMoldura);
+    return;
+  }
   var jaMostrou=false;
   function mostrar(){
     mostrarMoldura();
