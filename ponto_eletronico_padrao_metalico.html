@@ -155,6 +155,12 @@ tr.apagado td{color:var(--muted)}
 @media(max-width:900px){.hoje-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.botoes-ponto{grid-template-columns:repeat(2,minmax(0,1fr))}.relogio{font-size:36px}.resumo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
   .banco-meu{margin-top:14px}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  @media (max-width:760px){.grid3{grid-template-columns:1fr}}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12.5px;margin:8px 0;cursor:pointer}
+  .chk input{width:16px;height:16px}
+  .lnk{background:none;border:0;color:var(--gold,#4f7de0);font-weight:600;font-size:12px;cursor:pointer;padding:2px 6px;text-decoration:underline}
+  .lnk.perigo{color:#e5484d}
   table.banco td,table.banco th{padding:10px 10px}
   table.banco th{white-space:nowrap}
   #tbBanco td.num,table.banco th.num{text-align:right;white-space:nowrap}
@@ -181,6 +187,7 @@ tr.apagado td{color:var(--muted)}
     <button class="tab-btn" data-aba="ho">Home office</button>
     <button class="tab-btn" data-aba="equipe" id="abaEquipeBtn" style="display:none">Equipe <span class="qtd" id="qtdPend" style="display:none">0</span></button>
     <button class="tab-btn" data-aba="banco" id="abaBancoBtn" style="display:none">Banco de horas</button>
+    <button class="tab-btn" data-aba="cadastro" id="abaCadastroBtn" style="display:none">Cadastro</button>
   </div>
 
   <!-- MEU PONTO -->
@@ -274,6 +281,42 @@ tr.apagado td{color:var(--muted)}
     <div class="tabela-wrap"><table class="banco"><thead><tr><th>Colaborador</th><th>Regime</th><th class="num" title="Saldo transportado do mês anterior">Anterior</th><th class="num" id="bhColPeriodo" title="Saldo do dia 1º até o fechamento">1º a 25</th><th class="num" title="Saldo anterior + saldo do período">Total</th><th class="num" title="Descontar na folha">Descontar</th><th class="num" title="Compensar até o fim do mês (até 1 dia de carga)">Compensar</th><th class="num" title="Excedente desconsiderado (acima de 1 dia de carga)">Excedente</th><th class="num" id="bhColPos" title="Saldo do dia seguinte ao fechamento até o fim do mês">26 ao fim</th><th class="num" title="Saldo levado para o próximo mês">Transportar</th><th>Situação</th></tr></thead><tbody id="tbBanco"></tbody></table></div>
     <p class="sub" style="margin-top:12px;max-width:900px">Regras da planilha: no dia do fechamento (dia 25) soma-se o saldo do dia 1º até o fechamento com o saldo transportado do mês anterior. Saldo negativo é descontado na folha. Saldo positivo, até 1 dia de carga, deve ser compensado até o fim do mês (saída mais cedo ou folga); o que passar de 1 dia é desconsiderado. No dia 1º do mês seguinte o sistema apura do dia 26 ao fim do mês e transporta o resultado. O fechamento e o transporte acontecem sozinhos quando o gestor abre o Ponto; o botão serve para fechar antes do dia 25 ou refazer.</p>
   </section>
+
+  <!-- CADASTRO (gestor) -->
+  <section class="tab-pane" id="aba-cadastro">
+    <div class="toolbar"><div class="secao-titulo" style="margin:0">Colaboradores no ponto</div><button class="btn-primary btn-sm" id="cadIncluir" type="button" style="margin-left:auto">+ Incluir colaborador</button></div>
+    <p class="sub" style="margin:0 0 10px">Só entra no ponto quem tem conta no SAGA. Para incluir alguém novo, convide a pessoa em Colaboradores; quando ela criar a conta, ela aparece aqui para ser incluída.</p>
+    <div class="tabela-wrap"><table class="banco"><thead><tr><th>Código</th><th>Nome</th><th>Regime</th><th>Cargo</th><th>Horário vigente</th><th>Admissão</th><th>Situação</th><th></th></tr></thead><tbody id="tbCadColab"></tbody></table></div>
+
+    <div class="toolbar" style="margin-top:22px"><div class="secao-titulo" style="margin:0">Feriados</div>
+      <div class="nav-mes" style="margin-left:12px"><button class="btn-secondary btn-sm" id="ferAnt" type="button">‹</button><b id="ferAno"></b><button class="btn-secondary btn-sm" id="ferProx" type="button">›</button></div>
+      <button class="btn-secondary btn-sm" id="ferIncluir" type="button" style="margin-left:auto">+ Incluir feriado</button></div>
+    <div class="tabela-wrap"><table class="banco"><thead><tr><th>Data</th><th>Dia</th><th>Descrição</th><th>Abrangência</th><th>Expediente</th><th></th></tr></thead><tbody id="tbFeriados"></tbody></table></div>
+
+    <div class="secao-titulo" style="margin-top:22px">Configurações do ponto</div>
+    <div class="panel" style="max-width:900px">
+      <div class="grid3">
+        <div class="campo"><label>Início da contagem</label><input id="cfInicio" type="date"></div>
+        <div class="campo"><label>Tolerância de atraso (min)</label><input id="cfTol" type="number" min="0" max="60"></div>
+        <div class="campo"><label>Ocorrências para alerta no mês</label><input id="cfLimite" type="number" min="1" max="31"></div>
+        <div class="campo"><label>Dia do fechamento</label><input id="cfFech" type="number" min="1" max="31"></div>
+        <div class="campo"><label>Hora do relatório diário</label><input id="cfHora" type="number" min="0" max="23"></div>
+        <div class="campo"><label>Relatório semanal</label><select id="cfSemanal"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div>
+      </div>
+      <div class="grid2">
+        <div class="campo"><label>E-mails do gestor (separados por vírgula)</label><input id="cfEmails"></div>
+        <div class="campo"><label>E-mails extras no fechamento (ex.: contadora)</label><input id="cfExtras"></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="cfLocal"> Exigir que a marcação seja feita no escritório (conferência de local)</label>
+      <div class="secao-titulo" style="margin-top:16px">Local do escritório</div>
+      <div class="grid3">
+        <div class="campo"><label>Latitude</label><input id="cfLat" type="number" step="0.000001"></div>
+        <div class="campo"><label>Longitude</label><input id="cfLng" type="number" step="0.000001"></div>
+        <div class="campo"><label>Raio permitido (metros)</label><input id="cfRaio" type="number" min="10" max="2000"></div>
+      </div>
+      <div class="toolbar" style="margin:6px 0 0"><button class="btn-secondary btn-sm" id="cfAqui" type="button">Usar a minha localização atual</button><span class="sub" id="cfLocalInfo"></span><button class="btn-primary" id="cfSalvar" type="button" style="margin-left:auto">Salvar configurações</button></div>
+    </div>
+  </section>
 </main>
 </div>
 
@@ -292,6 +335,64 @@ tr.apagado td{color:var(--muted)}
     <div class="tabela-wrap"><table class="mes"><thead id="mcThead"></thead><tbody id="mcTb"></tbody></table></div>
   </div>
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalColab" type="button">Fechar</button></div>
+</div></div>
+
+<!-- Colaborador do ponto (gestor) -->
+<div class="modal-overlay" id="modalCadColab"><div class="modal" style="max-width:640px">
+  <div class="modal-head"><div><h2 id="ccTitulo">Incluir colaborador</h2><p id="ccSub">Escolha a pessoa entre os usuários do SAGA.</p></div><button class="modal-close" data-fechar="modalCadColab" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="campo" id="ccUsuarioCampo"><label>Usuário do SAGA</label><select id="ccUsuario"></select></div>
+    <div class="grid2">
+      <div class="campo"><label>Regime</label><select id="ccRegime"></select></div>
+      <div class="campo"><label>Cargo</label><input id="ccCargo" placeholder="Ex.: Estagiária de captação"></div>
+    </div>
+    <div class="grid2">
+      <div class="campo"><label>Admissão</label><input id="ccAdmissao" type="date"></div>
+      <div class="campo" id="ccDemissaoCampo"><label>Desligamento (deixe vazio se ativo)</label><input id="ccDemissao" type="date"></div>
+    </div>
+    <div id="ccHorario">
+      <div class="secao-titulo" style="margin-top:4px">Horário de trabalho</div>
+      <div class="grid3">
+        <div class="campo"><label>Entrada</label><input id="ccEntrada" type="time"></div>
+        <div class="campo"><label>Saída</label><input id="ccSaida" type="time"></div>
+        <div class="campo"><label>Carga do dia</label><input id="ccCarga" type="time"></div>
+      </div>
+    </div>
+    <label class="chk"><input type="checkbox" id="ccRelatorio" checked> Exigir relatório diário de atividades</label>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalCadColab" type="button">Cancelar</button><button class="btn-primary" id="ccSalvar" type="button">Salvar</button></div>
+</div></div>
+
+<!-- Horarios com vigencia (gestor) -->
+<div class="modal-overlay" id="modalJornada"><div class="modal" style="max-width:640px">
+  <div class="modal-head"><div><h2 id="jnTitulo">Horário de trabalho</h2><p>Mudança de horário vale a partir da data informada; os dias anteriores continuam com o horário antigo.</p></div><button class="modal-close" data-fechar="modalJornada" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="tabela-wrap"><table class="banco"><thead><tr><th>Vale a partir de</th><th>Entrada</th><th>Saída</th><th>Carga</th><th></th></tr></thead><tbody id="tbJornadas"></tbody></table></div>
+    <div class="secao-titulo">Novo horário</div>
+    <div class="grid2">
+      <div class="campo"><label>Vale a partir de</label><input id="jnDesde" type="date"></div>
+      <div class="campo"><label>Carga do dia</label><input id="jnCarga" type="time"></div>
+    </div>
+    <div class="grid2">
+      <div class="campo"><label>Entrada</label><input id="jnEntrada" type="time"></div>
+      <div class="campo"><label>Saída</label><input id="jnSaida" type="time"></div>
+    </div>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalJornada" type="button">Fechar</button><button class="btn-primary" id="jnSalvar" type="button">Gravar novo horário</button></div>
+</div></div>
+
+<!-- Feriado (gestor) -->
+<div class="modal-overlay" id="modalFeriado"><div class="modal" style="max-width:520px">
+  <div class="modal-head"><div><h2>Incluir feriado</h2></div><button class="modal-close" data-fechar="modalFeriado" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="grid2">
+      <div class="campo"><label>Data</label><input id="frData" type="date"></div>
+      <div class="campo"><label>Abrangência</label><select id="frAbr"><option>Nacional</option><option>Estadual</option><option>Municipal</option><option>Ponto facultativo</option></select></div>
+    </div>
+    <div class="campo"><label>Descrição</label><input id="frDesc" placeholder="Ex.: Emancipação Política de Alagoas"></div>
+    <label class="chk"><input type="checkbox" id="frLiberado" checked> Escritório fechado (dia liberado, sem carga)</label>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalFeriado" type="button">Cancelar</button><button class="btn-primary" id="frSalvar" type="button">Incluir</button></div>
 </div></div>
 
 <!-- Confirmacao -->
@@ -753,10 +854,203 @@ function renderBancoMeu(){
   document.getElementById('bancoMeuGrid').innerHTML=itens.map(function(i){return '<div><span>'+esc(i[0])+'</span><b>'+i[1]+'</b></div>';}).join('');
 }
 
+/* ----- Cadastro do ponto (gestor): colaboradores, horarios, feriados e configuracoes ----- */
+function hm(min){return min===null||min===undefined?'':dois(Math.floor(min/60))+':'+dois(min%60);}
+function jornadaVigente(c){var j=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),state.hoje);return j&&j.carga?hm(j.entrada)+'–'+hm(j.saida)+' ('+PC.hhmm(j.carga)+')':'';}
+function proximoCodigo(){var n=0;state.colabs.forEach(function(c){var m=/^C(\d+)$/.exec(c.codigo||'');if(m)n=Math.max(n,Number(m[1]));});return 'C'+('00'+(n+1)).slice(-3);}
+function erroMsg(r){return r&&r.error?(r.error.message||'Erro ao gravar'):'';}
+
+async function carregarUsuarios(){
+  var r=await _sb.from('usuarios').select('id,nome_completo,email,ativo').eq('ativo',true).order('nome_completo');
+  state.usuarios=r.data||[];
+}
+async function renderCadastro(){
+  var tb=document.getElementById('tbCadColab');
+  tb.innerHTML=state.colabs.map(function(c){
+    var livre=regimeDe(c).livre,deslig=c.demissao&&c.demissao<state.hoje;
+    var sit=deslig?'Desligado em '+dataBR(c.demissao):(c.demissao?'Sai em '+dataBR(c.demissao):'Ativo');
+    return '<tr><td>'+esc(c.codigo||'')+'</td><td><div class="cli">'+esc(c.nome)+'</div><div class="sub">'+esc(c.email||'')+'</div></td><td>'+esc(c.regime)+'</td><td>'+esc(c.cargo||'')+'</td>'+
+      '<td>'+(livre?'<span class="sub">Livre</span>':(esc(jornadaVigente(c))||'<span class="neg">Sem horário</span>'))+'</td><td>'+dataBR(c.admissao)+'</td><td>'+sit+'</td>'+
+      '<td style="white-space:nowrap"><button class="lnk" data-edcolab="'+c.id+'" type="button">Editar</button>'+(livre?'':'<button class="lnk" data-jornada="'+c.id+'" type="button">Horário</button>')+'</td></tr>';
+  }).join('')||'<tr><td colspan="8" class="vazio">Ninguém no ponto ainda.</td></tr>';
+  tb.querySelectorAll('[data-edcolab]').forEach(function(b){b.addEventListener('click',function(){abrirCadColab(b.dataset.edcolab);});});
+  tb.querySelectorAll('[data-jornada]').forEach(function(b){b.addEventListener('click',function(){abrirJornadas(b.dataset.jornada);});});
+  renderFeriados();renderConfig();
+}
+
+// Colaborador: incluir (escolhendo um usuario do SAGA) ou editar
+async function abrirCadColab(id){
+  state.ccId=id||null;
+  var c=id?state.colabs.find(function(x){return x.id===id;}):null;
+  if(!id){
+    await carregarUsuarios();
+    var usados={};state.colabs.forEach(function(x){if(x.usuario_id)usados[x.usuario_id]=1;});
+    var livres=state.usuarios.filter(function(u){return !usados[u.id];});
+    if(!livres.length){showToast('Todos os usuários do SAGA já estão no ponto. Para incluir alguém novo, convide a pessoa em Colaboradores.','info');return;}
+    document.getElementById('ccUsuario').innerHTML=livres.map(function(u){return '<option value="'+u.id+'">'+esc(u.nome_completo)+' · '+esc(u.email||'')+'</option>';}).join('');
+  }
+  document.getElementById('ccTitulo').textContent=id?'Editar '+c.nome:'Incluir colaborador';
+  document.getElementById('ccSub').textContent=id?'Código '+(c.codigo||'')+' · '+(c.email||''):'Escolha a pessoa entre os usuários do SAGA.';
+  document.getElementById('ccUsuarioCampo').style.display=id?'none':'';
+  document.getElementById('ccDemissaoCampo').style.display=id?'':'none';
+  document.getElementById('ccHorario').style.display=id?'none':'';
+  document.getElementById('ccRegime').innerHTML=Object.keys(state.regimes).sort(function(a,b){return (state.regimes[a].ordem||0)-(state.regimes[b].ordem||0);}).map(function(n){return '<option>'+esc(n)+'</option>';}).join('');
+  document.getElementById('ccRegime').value=c?c.regime:'Estágio';
+  document.getElementById('ccCargo').value=c?(c.cargo||''):'';
+  document.getElementById('ccAdmissao').value=c?(c.admissao||''):state.hoje;
+  document.getElementById('ccDemissao').value=c?(c.demissao||''):'';
+  document.getElementById('ccRelatorio').checked=c?c.relatorio_diario!==false:true;
+  ['ccEntrada','ccSaida','ccCarga'].forEach(function(k){document.getElementById(k).value='';});
+  atualizarCampoHorario();
+  abrirModal('modalCadColab');
+}
+function atualizarCampoHorario(){
+  var livre=(state.regimes[document.getElementById('ccRegime').value]||{}).livre;
+  document.getElementById('ccHorario').style.display=state.ccId||livre?'none':'';
+}
+// Carga sugerida: saida - entrada - almoco do regime (pode ser ajustada)
+function sugerirCarga(idEnt,idSai,idCarga,regime){
+  var e=minDeHora(document.getElementById(idEnt).value),s=minDeHora(document.getElementById(idSai).value),c=document.getElementById(idCarga);
+  if(e===null||s===null||s<=e)return;
+  var alm=(state.regimes[regime]||{}).almoco||0;c.value=hm(s-e-alm);
+}
+async function salvarCadColab(){
+  var btn=document.getElementById('ccSalvar');
+  var regime=document.getElementById('ccRegime').value,livre=(state.regimes[regime]||{}).livre;
+  var dados={regime:regime,cargo:document.getElementById('ccCargo').value.trim()||null,admissao:document.getElementById('ccAdmissao').value||null,relatorio_diario:document.getElementById('ccRelatorio').checked};
+  btn.disabled=true;
+  try{
+    if(state.ccId){
+      dados.demissao=document.getElementById('ccDemissao').value||null;
+      var r=await _sb.from('ponto_colaboradores').update(dados).eq('id',state.ccId);
+      if(r.error)throw new Error(erroMsg(r));
+    }else{
+      var u=state.usuarios.find(function(x){return x.id===document.getElementById('ccUsuario').value;});
+      if(!u)throw new Error('Escolha o usuário.');
+      var ent=minDeHora(document.getElementById('ccEntrada').value),sai=minDeHora(document.getElementById('ccSaida').value),carga=minDeHora(document.getElementById('ccCarga').value);
+      if(!livre&&(ent===null||sai===null||!carga))throw new Error('Informe entrada, saída e carga do dia.');
+      if(!livre&&sai<=ent)throw new Error('A saída precisa ser depois da entrada.');
+      dados.usuario_id=u.id;dados.nome=u.nome_completo;dados.email=u.email;dados.codigo=proximoCodigo();
+      var ins=await _sb.from('ponto_colaboradores').insert(dados).select('id').single();
+      if(ins.error)throw new Error(erroMsg(ins));
+      if(!livre){
+        var j=await _sb.from('ponto_jornadas').insert({colaborador_id:ins.data.id,vigente_desde:null,entrada_min:ent,saida_min:sai,carga_min:carga});
+        if(j.error)throw new Error('Colaborador incluído, mas o horário não foi gravado: '+erroMsg(j));
+      }
+    }
+    fecharModal('modalCadColab');showToast(state.ccId?'Cadastro atualizado.':'Colaborador incluído no ponto.','success');
+    await carregarBase();renderCadastro();
+  }catch(e){showToast(esc(e.message),'error');}
+  btn.disabled=false;
+}
+
+// Horarios com data de vigencia
+function abrirJornadas(id){
+  state.jnId=id;var c=state.colabs.find(function(x){return x.id===id;});
+  document.getElementById('jnTitulo').textContent='Horário de '+c.nome;
+  var lista=jornadasDe(id).slice().sort(function(a,b){return (a.vigente_desde||'').localeCompare(b.vigente_desde||'');});
+  document.getElementById('tbJornadas').innerHTML=lista.map(function(j,i){
+    return '<tr><td>'+(j.vigente_desde?dataBR(j.vigente_desde):'Desde a admissão')+'</td><td>'+hm(j.entrada_min)+'</td><td>'+hm(j.saida_min)+'</td><td>'+PC.hhmm(j.carga_min)+'</td><td>'+(lista.length>1?'<button class="lnk perigo" data-rmjorn="'+j.id+'" type="button">Remover</button>':'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="5" class="vazio">Sem horário cadastrado. Informe o primeiro horário abaixo.</td></tr>';
+  document.querySelectorAll('[data-rmjorn]').forEach(function(b){b.addEventListener('click',function(){removerJornada(b.dataset.rmjorn);});});
+  document.getElementById('jnDesde').value=lista.length?state.hoje:'';
+  ['jnEntrada','jnSaida','jnCarga'].forEach(function(k){document.getElementById(k).value='';});
+  abrirModal('modalJornada');
+}
+async function salvarJornada(){
+  var c=state.colabs.find(function(x){return x.id===state.jnId;});
+  var ent=minDeHora(document.getElementById('jnEntrada').value),sai=minDeHora(document.getElementById('jnSaida').value),carga=minDeHora(document.getElementById('jnCarga').value);
+  var desde=document.getElementById('jnDesde').value||null;
+  if(ent===null||sai===null||!carga){showToast('Informe entrada, saída e carga do dia.','error');return;}
+  if(sai<=ent){showToast('A saída precisa ser depois da entrada.','error');return;}
+  if(jornadasDe(c.id).some(function(j){return (j.vigente_desde||null)===desde;})){showToast('Já existe um horário com essa data. Remova o antigo ou escolha outra data.','error');return;}
+  if(!desde&&jornadasDe(c.id).length){showToast('Informe a data a partir da qual o novo horário vale.','error');return;}
+  var r=await _sb.from('ponto_jornadas').insert({colaborador_id:c.id,vigente_desde:desde,entrada_min:ent,saida_min:sai,carga_min:carga});
+  if(r.error){showToast(esc(erroMsg(r)),'error');return;}
+  showToast('Novo horário gravado'+(desde?' a partir de '+dataBR(desde):'')+'.','success');
+  await carregarBase();abrirJornadas(c.id);renderCadastro();
+}
+async function removerJornada(id){
+  if(!await confirmar('Remover horário','Remover este horário? Os dias que usavam esse horário passam a usar o horário anterior.','Remover'))return;
+  var r=await _sb.from('ponto_jornadas').delete().eq('id',id);
+  if(r.error){showToast(esc(erroMsg(r)),'error');return;}
+  await carregarBase();abrirJornadas(state.jnId);renderCadastro();
+}
+
+// Feriados por ano
+function renderFeriados(){
+  var ano=state.ferAno;document.getElementById('ferAno').textContent=ano;
+  var lista=Object.keys(state.feriados).filter(function(k){return k.slice(0,4)===String(ano);}).sort();
+  document.getElementById('tbFeriados').innerHTML=lista.map(function(k){var f=state.feriados[k];
+    return '<tr><td>'+dataBR(k)+'</td><td>'+PC.NOMES_DIA[PC.diaSemana(k)]+'</td><td>'+esc(f.desc)+'</td><td>'+esc(f.abr||'')+'</td><td>'+(f.liberado?'Fechado':'<span class="sub">Normal</span>')+'</td>'+
+      '<td style="white-space:nowrap"><button class="lnk" data-ferlib="'+k+'" type="button">'+(f.liberado?'Marcar expediente normal':'Marcar fechado')+'</button><button class="lnk perigo" data-ferrm="'+k+'" type="button">Remover</button></td></tr>';
+  }).join('')||'<tr><td colspan="6" class="vazio">Nenhum feriado em '+ano+'.</td></tr>';
+  document.querySelectorAll('[data-ferlib]').forEach(function(b){b.addEventListener('click',async function(){
+    var k=b.dataset.ferlib,r=await _sb.from('ponto_feriados').update({liberado:!state.feriados[k].liberado}).eq('data',k);
+    if(r.error){showToast(esc(erroMsg(r)),'error');return;}await carregarBase();renderFeriados();});});
+  document.querySelectorAll('[data-ferrm]').forEach(function(b){b.addEventListener('click',async function(){
+    var k=b.dataset.ferrm;if(!await confirmar('Remover feriado','Remover '+state.feriados[k].desc+' ('+dataBR(k)+')? O dia volta a ser dia útil.','Remover'))return;
+    var r=await _sb.from('ponto_feriados').delete().eq('data',k);if(r.error){showToast(esc(erroMsg(r)),'error');return;}await carregarBase();renderFeriados();});});
+}
+async function salvarFeriado(){
+  var data=document.getElementById('frData').value,desc=document.getElementById('frDesc').value.trim();
+  if(!data||!desc){showToast('Informe a data e a descrição.','error');return;}
+  if(state.feriados[data]){showToast('Já existe feriado nessa data.','error');return;}
+  var r=await _sb.from('ponto_feriados').insert({data:data,descricao:desc,abrangencia:document.getElementById('frAbr').value,liberado:document.getElementById('frLiberado').checked});
+  if(r.error){showToast(esc(erroMsg(r)),'error');return;}
+  fecharModal('modalFeriado');showToast('Feriado incluído.','success');state.ferAno=Number(data.slice(0,4));await carregarBase();renderFeriados();
+}
+
+// Configuracoes e local do escritorio
+async function renderConfig(){
+  var c=state.cfg;
+  document.getElementById('cfInicio').value=c.inicio_contagem||'';
+  document.getElementById('cfTol').value=c.tolerancia_min;document.getElementById('cfLimite').value=c.limite_alerta;
+  document.getElementById('cfFech').value=c.dia_fechamento||25;document.getElementById('cfHora').value=c.hora_relatorio==null?19:c.hora_relatorio;
+  document.getElementById('cfSemanal').value=String(c.dia_semanal||5);
+  document.getElementById('cfEmails').value=(c.emails_gestor||[]).join(', ');document.getElementById('cfExtras').value=(c.emails_extras||[]).join(', ');
+  document.getElementById('cfLocal').checked=c.exigir_local!==false;
+  var r=await _sb.from('localizacoes_permitidas').select('*').eq('ativo',true).order('criado_em').limit(1);
+  state.local=(r.data||[])[0]||null;
+  document.getElementById('cfLat').value=state.local?state.local.latitude:'';document.getElementById('cfLng').value=state.local?state.local.longitude:'';
+  document.getElementById('cfRaio').value=state.local?state.local.raio_metros:50;
+  document.getElementById('cfLocalInfo').textContent=state.local?state.local.nome:'Nenhum local cadastrado';
+}
+function listaEmails(v){return v.split(/[,;\s]+/).map(function(x){return x.trim().toLowerCase();}).filter(Boolean);}
+async function salvarConfig(){
+  var num=function(id){return Number(document.getElementById(id).value);};
+  var em=listaEmails(document.getElementById('cfEmails').value),ex=listaEmails(document.getElementById('cfExtras').value);
+  var ruim=em.concat(ex).filter(function(e){return !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);});
+  if(ruim.length){showToast('E-mail inválido: '+esc(ruim.join(', ')),'error');return;}
+  if(!(num('cfFech')>=1&&num('cfFech')<=31)){showToast('Dia do fechamento entre 1 e 31.','error');return;}
+  var dados={inicio_contagem:document.getElementById('cfInicio').value||null,tolerancia_min:num('cfTol')||0,limite_alerta:num('cfLimite')||1,dia_fechamento:num('cfFech'),
+    hora_relatorio:num('cfHora'),dia_semanal:num('cfSemanal'),emails_gestor:em,emails_extras:ex,exigir_local:document.getElementById('cfLocal').checked,atualizado_em:new Date().toISOString()};
+  var btn=document.getElementById('cfSalvar');btn.disabled=true;
+  try{
+    var r=await _sb.from('ponto_config').update(dados).eq('id',true);if(r.error)throw new Error(erroMsg(r));
+    var lat=parseFloat(document.getElementById('cfLat').value),lng=parseFloat(document.getElementById('cfLng').value),raio=num('cfRaio')||50;
+    if(!isNaN(lat)&&!isNaN(lng)){
+      var loc={latitude:lat,longitude:lng,raio_metros:raio};
+      var r2=state.local?await _sb.from('localizacoes_permitidas').update(loc).eq('id',state.local.id):await _sb.from('localizacoes_permitidas').insert(Object.assign({nome:'Escritório VMMADV',tipo:'escritorio',ativo:true},loc));
+      if(r2.error)throw new Error('Configurações salvas, mas o local não: '+erroMsg(r2));
+    }
+    showToast('Configurações salvas.','success');await carregarBase();renderConfig();
+  }catch(e){showToast(esc(e.message),'error');}
+  btn.disabled=false;
+}
+function usarLocalAtual(){
+  if(!navigator.geolocation){showToast('Este navegador não informa a localização.','error');return;}
+  document.getElementById('cfLocalInfo').textContent='Obtendo localização…';
+  navigator.geolocation.getCurrentPosition(function(p){
+    document.getElementById('cfLat').value=p.coords.latitude.toFixed(6);document.getElementById('cfLng').value=p.coords.longitude.toFixed(6);
+    document.getElementById('cfLocalInfo').textContent='Localização atual (precisão de '+Math.round(p.coords.accuracy)+' m). Clique em Salvar.';
+  },function(){document.getElementById('cfLocalInfo').textContent='Não foi possível obter a localização. Permita o acesso no navegador.';},{enableHighAccuracy:true,timeout:15000});
+}
+
 function trocarAba(aba){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='banco')renderBancoTela();if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();
+  if(aba==='banco')renderBancoTela();if(aba==='cadastro')renderCadastro();if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
@@ -772,7 +1066,7 @@ async function carregarBase(){
   ]);
   state.cfg=r[0].data||{tolerancia_min:10,limite_alerta:3,inicio_contagem:null};
   state.regimes={};(r[1].data||[]).forEach(function(x){state.regimes[x.nome]=x;});
-  state.feriados={};(r[2].data||[]).forEach(function(f){state.feriados[f.data]={desc:f.descricao,facultativo:/facultativo/i.test(f.abrangencia||''),liberado:f.liberado};});
+  state.feriados={};(r[2].data||[]).forEach(function(f){state.feriados[f.data]={desc:f.descricao,abr:f.abrangencia,facultativo:/facultativo/i.test(f.abrangencia||''),liberado:f.liberado};});
   state.colabs=r[3].data||[];state.jornadas=r[4].data||[];
   state.meuColab=state.colabs.find(function(c){return c.id===r[5].data;})||null;
 }
@@ -791,6 +1085,18 @@ function ligarEventos(){
   document.getElementById('bhAnt').addEventListener('click',function(){mudarMes(-1,state.bh);renderBancoTela();});
   document.getElementById('bhProx').addEventListener('click',function(){mudarMes(1,state.bh);renderBancoTela();});
   document.getElementById('bhFechar').addEventListener('click',fecharBancoAgora);
+  document.getElementById('cadIncluir').addEventListener('click',function(){abrirCadColab(null);});
+  document.getElementById('ccSalvar').addEventListener('click',salvarCadColab);
+  document.getElementById('ccRegime').addEventListener('change',atualizarCampoHorario);
+  ['ccEntrada','ccSaida'].forEach(function(k){document.getElementById(k).addEventListener('change',function(){sugerirCarga('ccEntrada','ccSaida','ccCarga',document.getElementById('ccRegime').value);});});
+  ['jnEntrada','jnSaida'].forEach(function(k){document.getElementById(k).addEventListener('change',function(){var c=state.colabs.find(function(x){return x.id===state.jnId;});sugerirCarga('jnEntrada','jnSaida','jnCarga',c&&c.regime);});});
+  document.getElementById('jnSalvar').addEventListener('click',salvarJornada);
+  document.getElementById('ferAnt').addEventListener('click',function(){state.ferAno--;renderFeriados();});
+  document.getElementById('ferProx').addEventListener('click',function(){state.ferAno++;renderFeriados();});
+  document.getElementById('ferIncluir').addEventListener('click',function(){document.getElementById('frData').value='';document.getElementById('frDesc').value='';document.getElementById('frLiberado').checked=true;abrirModal('modalFeriado');});
+  document.getElementById('frSalvar').addEventListener('click',salvarFeriado);
+  document.getElementById('cfSalvar').addEventListener('click',salvarConfig);
+  document.getElementById('cfAqui').addEventListener('click',usarLocalAtual);
   document.addEventListener('saga-atualizar',atualizarTudo);
 }
 async function atualizarTudo(){await carregarBase();await carregarBanco();await rotinaBanco();await carregarMeuMes();var a=document.querySelector('#abas .tab-btn.active');if(a)trocarAba(a.dataset.aba);}
@@ -809,6 +1115,8 @@ async function init(){
   var mesAtual=state.hoje.slice(0,7),mesBh=state.hoje>=fechKeyDe(mesAtual)?mesAtual:mesAnterior(mesAtual);
   state.bh=partesMes(mesBh);state.bh={ano:state.bh.a,mes:state.bh.m};
   if(state.pode.equipe||state.pode.gerencia)document.getElementById('abaBancoBtn').style.display='';
+  if(state.pode.gerencia)document.getElementById('abaCadastroBtn').style.display='';
+  state.ferAno=Number(state.hoje.slice(0,4));
   rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});
   if(state.pode.equipe||state.pode.aprova){document.getElementById('abaEquipeBtn').style.display='';document.getElementById('eqData').value=state.hoje;carregarPendencias();}
   prepararFormJust();document.getElementById('hoData').min=state.hoje;
