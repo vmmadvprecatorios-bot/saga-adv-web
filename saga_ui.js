@@ -1090,7 +1090,7 @@
     var sb=document.getElementById('sidebarSaga');
     var esq=(sb&&window.innerWidth>760)?Math.max(0,sb.getBoundingClientRect().right):0;
     var primeira=document.querySelector('#sidebarSaga .nav-item[data-tela]:not(.sem-permissao)');
-    var destino=primeira?(primeira.getAttribute('onclick')||'').replace(/^.*href='([^']+)'.*$/,'$1'):'';
+    var destino=primeira?(primeira.getAttribute('onclick')||'').replace(/^.*\('([^']+)'\).*$/,'$1'):'';
     var d=document.createElement('div');d.id='sagaSemAcesso';
     d.style.cssText='position:fixed;top:64px;right:0;bottom:0;left:'+esq+'px;z-index:1300;background:var(--navy-1,#e8ecf1);display:flex;align-items:center;justify-content:center;padding:24px;';
     d.innerHTML='<div style="max-width:420px;text-align:center;background:var(--panel,#fff);border:1px solid var(--border,#d5dbe4);border-radius:16px;padding:32px 28px;box-shadow:0 10px 30px rgba(0,0,0,.12)">'
@@ -1123,6 +1123,8 @@
       var alvo=document.querySelector('#sidebarSaga [data-tela="'+telaAtiva+'"]');
       if(alvo)alvo.classList.add('active');
     }
+    // Permissoes guardadas permitem esta tela: ja pode aparecer (o restante carrega por tras)
+    if(_minhasPermissoes&&(!telaAtiva||podeVerTela(telaAtiva)))document.dispatchEvent(new CustomEvent('saga-ui-visivel'));
     ligarTema();
     ligarPrivacidade();
     ligarHamburger();

@@ -25,8 +25,8 @@
   estilo.id='sagaGuardEstilo';
   estilo.textContent=
     'html.saga-entrando body{opacity:0 !important;}'+
-    'body{transition:opacity .28s ease;}'+
-    'html.saga-saindo body{opacity:0 !important;transition:opacity .16s ease;}'+
+    'body{transition:opacity .14s ease;}'+
+    'html.saga-saindo body{opacity:0 !important;transition:opacity .08s ease;}'+
     '@media (prefers-reduced-motion:reduce){body,html.saga-saindo body{transition:none !important;}}';
   (document.head||html).appendChild(estilo);
   html.classList.add('saga-entrando');
@@ -37,7 +37,8 @@
   }
 
   function mostrar(){html.classList.remove('saga-entrando');}
-  document.addEventListener('saga-ui-pronto',function(){requestAnimationFrame(mostrar);});
+  document.addEventListener('saga-ui-visivel',mostrar);
+  document.addEventListener('saga-ui-pronto',mostrar);
   // Rede de seguranca: se algo travar, a tela aparece mesmo assim
   setTimeout(mostrar,6000);
 
@@ -52,6 +53,6 @@
     var reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
     if(reduz){location.href=url;return;}
     html.classList.add('saga-saindo');
-    setTimeout(function(){location.href=url;},160);
+    setTimeout(function(){location.href=url;},80);
   };
 })();
