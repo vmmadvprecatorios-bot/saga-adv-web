@@ -3,6 +3,8 @@
 // Chamar (apos criar o cliente _sb do Supabase): SagaUI.carregar('nome-tela');
 // A sidebar e a topbar sao embutidas neste arquivo (nao dependem de fetch).
 (function(global){
+  // Troca de tela pelo menu; com saga_guard.js ha uma saida suave
+  if(!global.sagaIrPara)global.sagaIrPara=function(url){if(url)window.location.href=url;};
   var _temaSalvo=localStorage.getItem('saga-tema')||'dark';
   if(document.body)document.body.setAttribute('data-theme',_temaSalvo);
   else document.addEventListener('DOMContentLoaded',function(){document.body.setAttribute('data-theme',_temaSalvo);});
@@ -293,46 +295,46 @@
 
   var SIDEBAR_HTML=''
     +'<div class="nav-section">Operacao</div>'
-    +'<div class="nav-item" data-tela="processos" onclick="window.location.href=\'lista_processos_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="processos" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Processos em Andamento</div>'
-    +'<div class="nav-item" data-tela="agenda" onclick="window.location.href=\'calendario_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
-    +'<div class="nav-item" data-tela="tarefas" onclick="window.location.href=\'minhas_tarefas.html\'">'
+    +'<div class="nav-item" data-tela="tarefas" onclick="sagaIrPara(\'minhas_tarefas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
     +'<div class="nav-section">Comunicacao</div>'
-    +'<div class="nav-item" data-tela="chat" onclick="window.location.href=\'chat_interno_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Chat Interno<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
-    +'<div class="nav-item" data-tela="ponto" onclick="window.location.href=\'ponto_eletronico_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Ponto Eletronico</div>'
     +'<div class="nav-section">Gestao</div>'
-    +'<div class="nav-item" data-tela="colaboradores" onclick="window.location.href=\'gestao_colaboradores_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="colaboradores" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Colaboradores</div>'
-    +'<div class="nav-item" data-tela="dashboard" onclick="window.location.href=\'dashboard_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="dashboard" onclick="sagaIrPara(\'dashboard_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Dashboard</div>'
-    +'<div class="nav-item" data-tela="biblioteca" onclick="window.location.href=\'biblioteca_padrao_metalico_FINAL.html\'">'
+    +'<div class="nav-item" data-tela="biblioteca" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 4v16a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v16" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Biblioteca de Modelos</div>'
-    +'<div class="nav-item" data-tela="financeiro" onclick="window.location.href=\'financeiro.html\'">'
+    +'<div class="nav-item" data-tela="financeiro" onclick="sagaIrPara(\'financeiro.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Financeiro</div>'
-    +'<div class="nav-item" data-tela="marketing" onclick="window.location.href=\'marketing_campanhas_padrao_metalico.html\'">'
+    +'<div class="nav-item" data-tela="marketing" onclick="sagaIrPara(\'marketing_campanhas_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8v18l-18-8v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 15v4a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Marketing</div>'
-    +'<div class="nav-item sem-permissao" data-tela="permissoes" onclick="window.location.href=\'painel_admin_permissoes.html\'">'
+    +'<div class="nav-item sem-permissao" data-tela="permissoes" onclick="sagaIrPara(\'painel_admin_permissoes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Permissões</div>';
 
   var TOPBAR_HTML=''
     +'<div class="top-left">'
     +'<button class="hamburger" id="hamburger" aria-label="Abrir navegacao" type="button"><span></span><span></span><span></span></button>'
-    +'<div class="brand" onclick="window.location.href=\'dashboard_padrao_metalico.html\'" style="cursor:pointer">'
+    +'<div class="brand">'
     +'<svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="crestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6fa2ff"/><stop offset="38%" stop-color="#4b8af5"/><stop offset="60%" stop-color="#2f6cd6"/><stop offset="100%" stop-color="#cfe0ff"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#crestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#crestGold)">VM</text></g></svg>'
     +'<div class="brand-name">VMM<b>ADV</b></div>'
     +'</div>'
@@ -1102,6 +1104,13 @@
 
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
+    // Sem login valido: vai para o login sem mostrar nada da tela (saga_guard.js a mantem escondida)
+    if(global._sb){
+      try{
+        var ses=await global._sb.auth.getSession();
+        if(!ses.data||!ses.data.session){window.location.replace('login_padrao_metalico.html');return;}
+      }catch(e){}
+    }
     // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
     if(await verificarInatividade())return;
     registrarAtividade();

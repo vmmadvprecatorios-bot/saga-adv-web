@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script>
+// Ja logado: esconde o formulario enquanto confere a sessao (evita piscar o login)
+(function(){try{var t=localStorage.getItem('saga-tema')||'dark';document.documentElement.style.background=t==='light'?'#f3f5f8':'#172234';
+if(localStorage.getItem('sb-fmoskdxgjulagedzjxxk-auth-token')){document.documentElement.classList.add('saga-entrando');
+document.write('<style id="loginOculto">html.saga-entrando body{opacity:0}body{transition:opacity .25s ease}</style>');
+setTimeout(function(){document.documentElement.classList.remove('saga-entrando');},4000);}}catch(e){}})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Login</title>
@@ -426,11 +433,13 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
   try {
     var r = await _sb.auth.getSession();
     if (r.data && r.data.session) {
-      window.location.href = TELA_POS_LOGIN;
+      window.location.replace(TELA_POS_LOGIN);
+      return;
     }
   } catch (e) {
     // Silencioso: falha aqui nao bloqueia o login
   }
+  document.documentElement.classList.remove('saga-entrando');
 })();
 
 // ================================================================
