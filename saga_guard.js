@@ -26,15 +26,19 @@
   estilo.textContent=
     // Ate o login ser confirmado e os menus montados, nada aparece
     'html.saga-entrando body{opacity:0 !important;}'+
+    // Espaco da barra de rolagem sempre reservado: o menu superior nao pula entre telas
+    'html{scrollbar-gutter:stable;}'+
     // Menus superior e lateral ficam parados; so o conteudo da tela faz a transicao
     '@keyframes sagaEntra{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}'+
     '@keyframes sagaSai{from{opacity:1;}to{opacity:0;transform:translateY(-4px);}}'+
     'html.saga-carregando .saga-conteudo{opacity:0 !important;}'+
     'html.saga-entrou .saga-conteudo{animation:sagaEntra .16s ease-out backwards;}'+
     'html.saga-saindo .saga-conteudo{animation:sagaSai .09s ease-in forwards;}'+
+    // Enquanto a tela monta, os menus nao animam nada (evita a tremida do menu lateral)
+    'html.saga-fixando #sidebarSaga,html.saga-fixando #sidebarSaga *,html.saga-fixando #topbarSaga,html.saga-fixando #topbarSaga *{transition:none !important;animation:none !important;}'+
     '@media (prefers-reduced-motion:reduce){html.saga-entrou .saga-conteudo,html.saga-saindo .saga-conteudo{animation:none !important;}}';
   (document.head||html).appendChild(estilo);
-  html.classList.add('saga-entrando','saga-carregando');
+  html.classList.add('saga-entrando','saga-carregando','saga-fixando');
 
   if(!temSessao){
     location.replace(LOGIN);
@@ -52,9 +56,12 @@
   }
   document.addEventListener('saga-ui-moldura',mostrarMoldura);
   document.addEventListener('saga-ui-visivel',mostrar);
-  document.addEventListener('saga-ui-pronto',mostrar);
+  document.addEventListener('saga-ui-pronto',function(){
+    mostrar();
+    setTimeout(function(){html.classList.remove('saga-fixando');},400);
+  });
   // Rede de seguranca: se algo travar, a tela aparece mesmo assim
-  setTimeout(mostrar,6000);
+  setTimeout(function(){mostrar();html.classList.remove('saga-fixando');},6000);
 
   // Volta pelo botao do navegador (pagina guardada em cache): nao fica apagada
   window.addEventListener('pageshow',function(ev){

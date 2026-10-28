@@ -295,7 +295,7 @@ var MARCAS_LIVRE=['Início 1','Fim 1','Início 2','Fim 2','Início 3','Fim 3','I
 var TIPOS_JUST=['Esqueci de bater o ponto','Sem internet ou sistema fora','Bati o ponto errado','Atraso justificado','Saída antecipada justificada','Atestado médico (dia inteiro)','Falta justificada (sem abono)','Folga compensatória','Outro'];
 var CORES_STATUS={'Falta':'#e5484d','Horas negativas':'#e5484d','Marcação incompleta':'#f97316','Falta justificada':'#f97316','Carga cumprida':'#2fae7a',
   'Horas positivas':'#16a34a','Trabalho fora do expediente':'#16a34a','Registrado':'#2fae7a','Abonado':'#0ea5e9','Folga compensatória':'#0ea5e9',
-  'Em andamento':'#1f3e6d','Aguardando entrada':'#e0a93b'};
+  'Em andamento':'#4f7de0','Aguardando entrada':'#e0a93b'};
 var state={meuId:null,meuColab:null,cfg:null,regimes:{},feriados:{},colabs:[],jornadas:[],ano:0,mes:0,hoje:'',
   pode:{equipe:false,aprova:false,gerencia:false},mesCalc:null,relData:null,mc:{colab:null,ano:0,mes:0},usuarios:[]};
 
@@ -309,7 +309,7 @@ function hojeKey(){return new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'num
 function minutosLocal(iso){var p=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date(iso));
   var g={};p.forEach(function(x){g[x.type]=Number(x.value);});return g.hour*60+g.minute+g.second/60;}
 function minDeHora(t){if(!t)return null;var p=String(t).split(':').map(Number);return p[0]*60+(p[1]||0);}
-function etqStatus(s){if(!s)return '';var c=CORES_STATUS[s]||'#8a94a8';return '<span class="st" style="background:color-mix(in srgb,'+c+' 18%,transparent);color:'+c+'">'+esc(s)+'</span>';}
+function etqStatus(s){if(!s)return '';var c=CORES_STATUS[s]||'#8a94a8';return '<span class="etq" style="--c:'+c+'">'+esc(s)+'</span>';}
 function saldoTxt(v){if(v===null||v===undefined)return '';var c=v<0?'neg':(v>0?'pos':'');return '<b class="'+c+'">'+(v>0?'+':'')+PC.hhmm(v)+'</b>';}
 function regimeDe(c){var r=state.regimes[c.regime]||{pausas:0,duracao_pausa:0,almoco:0,livre:false};return {pausas:r.pausas,duracao:r.duracao_pausa,almoco:r.almoco,livre:r.livre};}
 function cfgCalc(){return {tol:state.cfg.tolerancia_min,limite:state.cfg.limite_alerta,inicio:state.cfg.inicio_contagem};}
