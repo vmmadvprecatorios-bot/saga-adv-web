@@ -181,8 +181,47 @@
     return { dias: lista, resumo: t };
   }
 
+  // ---------- Banco de horas (fechamentoMensal_ e transportarSaldos_ da planilha) ----------
+  // Dia do fechamento no mes (padrao 25; em mes mais curto, o ultimo dia).
+  function diaFechamento(a, m, dia) { return Math.min(dia || 25, diasNoMes(a, m)); }
+
+  // Soma um periodo (chaves yyyy-MM-dd, inclusive) a partir dos dias de calcularMes.
+  function somarPeriodo(dias, ini, fim) {
+    var s = { carga: 0, trab: 0, abono: 0, saldo: 0, atrasos: 0, antec: 0, pausas: 0, faltas: 0, incompletas: 0, diasTrab: 0 };
+    dias.forEach(function (x) {
+      if (x.key < ini || x.key > fim) return;
+      var d = x.d;
+      if (d.carga) s.carga += d.carga;
+      if (d.trab) { s.trab += d.trab; s.diasTrab++; }
+      if (d.saldo !== null) { s.saldo += d.saldo; s.abono += d.abono; }
+      if (d.fAtraso) s.atrasos++;
+      if (d.fAntec) s.antec++;
+      if (d.fPausa) s.pausas++;
+      if (d.falta) s.faltas++;
+      if (d.incompleta) s.incompletas++;
+    });
+    return s;
+  }
+
+  // Fechamento: saldo do dia 1o ao fechamento + saldo transportado do mes anterior.
+  // Negativo vai para desconto; positivo ate 1 dia de carga e compensado ate o fim do mes; o resto e desconsiderado.
+  function fechamento(dias, ini, fim, anterior, cargaDia) {
+    var s = somarPeriodo(dias, ini, fim);
+    var ant = anterior || 0, total = ant + s.saldo, desc = 0, comp = 0, exc = 0;
+    if (total < 0) desc = -total;
+    else { comp = Math.min(total, cargaDia || 0); exc = total - comp; }
+    return { anterior: ant, periodo: s.saldo, total: total, descontar: desc, compensar: comp, excedente: exc, soma: s };
+  }
+
+  // Transporte: saldo do dia seguinte ao fechamento ate o fim do mes + o que ficou para compensar.
+  function transporte(dias, ini, fim, compensar) {
+    var s = somarPeriodo(dias, ini, fim);
+    return { pos: s.saldo, transportar: s.saldo + (compensar || 0) };
+  }
+
   var api = { SIT_MANUAL: SIT_MANUAL, NOMES_DIA: NOMES_DIA, hhmm: hhmm, hhmmRelogio: hhmmRelogio, diaSemana: diaSemana, diasNoMes: diasNoMes,
-    jornadaDoDia: jornadaDoDia, situacaoDoDia: situacaoDoDia, calcularDia: calcularDia, calcularMes: calcularMes };
+    jornadaDoDia: jornadaDoDia, situacaoDoDia: situacaoDoDia, calcularDia: calcularDia, calcularMes: calcularMes,
+    diaFechamento: diaFechamento, somarPeriodo: somarPeriodo, fechamento: fechamento, transporte: transporte };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   raiz.PontoCalculo = api;
 })(typeof window !== 'undefined' ? window : globalThis);

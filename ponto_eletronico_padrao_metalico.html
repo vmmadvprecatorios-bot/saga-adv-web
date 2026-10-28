@@ -154,6 +154,13 @@ tr.apagado td{color:var(--muted)}
 .dia-gestor select,.dia-gestor input{height:28px;border:1px solid var(--border);border-radius:7px;background:var(--panel-2);font-size:11px;padding:0 5px}
 @media(max-width:900px){.hoje-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:760px){.botoes-ponto{grid-template-columns:repeat(2,minmax(0,1fr))}.relogio{font-size:36px}.resumo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .banco-meu{margin-top:14px}
+  table.banco td,table.banco th{padding:10px 10px}
+  table.banco th{white-space:nowrap}
+  #tbBanco td.num,table.banco th.num{text-align:right;white-space:nowrap}
+  #tbBanco td:nth-child(2){white-space:nowrap}
+  #tbBanco .desc{color:#e5484d;font-weight:700}
+  #tbBanco .comp{color:#16a34a;font-weight:700}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -173,6 +180,7 @@ tr.apagado td{color:var(--muted)}
     <button class="tab-btn" data-aba="just">Justificativas</button>
     <button class="tab-btn" data-aba="ho">Home office</button>
     <button class="tab-btn" data-aba="equipe" id="abaEquipeBtn" style="display:none">Equipe <span class="qtd" id="qtdPend" style="display:none">0</span></button>
+    <button class="tab-btn" data-aba="banco" id="abaBancoBtn" style="display:none">Banco de horas</button>
   </div>
 
   <!-- MEU PONTO -->
@@ -194,6 +202,11 @@ tr.apagado td{color:var(--muted)}
           <div class="resumo-grid" id="resumoMes" style="margin-top:10px"></div>
           <div class="perfil" id="perfilMes" style="display:none"></div>
         </div>
+      </div>
+      <div class="panel banco-meu" id="bancoMeu" style="display:none">
+        <div class="panel-title">Banco de horas</div>
+        <div class="panel-sub" id="bancoMeuSub"></div>
+        <div class="resumo-grid" id="bancoMeuGrid" style="margin-top:10px"></div>
       </div>
       <div class="toolbar">
         <div class="nav-mes"><button class="btn-secondary btn-sm" id="mesAnt" type="button">‹</button><b id="mesTitulo"></b><button class="btn-secondary btn-sm" id="mesProx" type="button">›</button></div>
@@ -250,6 +263,17 @@ tr.apagado td{color:var(--muted)}
     <div class="secao-titulo">Pedidos de home office</div>
     <div class="lista-cards" id="listaPendHo"></div>
   </section>
+
+  <!-- BANCO DE HORAS (gestor) -->
+  <section class="tab-pane" id="aba-banco">
+    <div class="toolbar">
+      <div class="nav-mes"><button class="btn-secondary btn-sm" id="bhAnt" type="button">‹</button><b id="bhMes"></b><button class="btn-secondary btn-sm" id="bhProx" type="button">›</button></div>
+      <span class="sub" id="bhInfo"></span>
+      <button class="btn-secondary btn-sm" id="bhFechar" type="button" style="display:none;margin-left:auto">Fechar este mês agora</button>
+    </div>
+    <div class="tabela-wrap"><table class="banco"><thead><tr><th>Colaborador</th><th>Regime</th><th class="num" title="Saldo transportado do mês anterior">Anterior</th><th class="num" id="bhColPeriodo" title="Saldo do dia 1º até o fechamento">1º a 25</th><th class="num" title="Saldo anterior + saldo do período">Total</th><th class="num" title="Descontar na folha">Descontar</th><th class="num" title="Compensar até o fim do mês (até 1 dia de carga)">Compensar</th><th class="num" title="Excedente desconsiderado (acima de 1 dia de carga)">Excedente</th><th class="num" id="bhColPos" title="Saldo do dia seguinte ao fechamento até o fim do mês">26 ao fim</th><th class="num" title="Saldo levado para o próximo mês">Transportar</th><th>Situação</th></tr></thead><tbody id="tbBanco"></tbody></table></div>
+    <p class="sub" style="margin-top:12px;max-width:900px">Regras da planilha: no dia do fechamento (dia 25) soma-se o saldo do dia 1º até o fechamento com o saldo transportado do mês anterior. Saldo negativo é descontado na folha. Saldo positivo, até 1 dia de carga, deve ser compensado até o fim do mês (saída mais cedo ou folga); o que passar de 1 dia é desconsiderado. No dia 1º do mês seguinte o sistema apura do dia 26 ao fim do mês e transporta o resultado. O fechamento e o transporte acontecem sozinhos quando o gestor abre o Ponto; o botão serve para fechar antes do dia 25 ou refazer.</p>
+  </section>
 </main>
 </div>
 
@@ -268,6 +292,13 @@ tr.apagado td{color:var(--muted)}
     <div class="tabela-wrap"><table class="mes"><thead id="mcThead"></thead><tbody id="mcTb"></tbody></table></div>
   </div>
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalColab" type="button">Fechar</button></div>
+</div></div>
+
+<!-- Confirmacao -->
+<div class="modal-overlay" id="modalConfirma"><div class="modal" style="max-width:480px">
+  <div class="modal-head"><div><h2 id="cfTitulo">Confirmar</h2></div><button class="modal-close" data-fechar="modalConfirma" type="button">✕</button></div>
+  <div class="modal-body"><p id="cfTexto" style="margin:0;line-height:1.55"></p></div>
+  <div class="modal-foot"><button class="btn-secondary" id="cfNao" type="button">Cancelar</button><button class="btn-primary" id="cfSim" type="button">Confirmar</button></div>
 </div></div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -297,12 +328,22 @@ var CORES_STATUS={'Falta':'#e5484d','Horas negativas':'#e5484d','Marcação inco
   'Horas positivas':'#16a34a','Trabalho fora do expediente':'#16a34a','Registrado':'#2fae7a','Abonado':'#0ea5e9','Folga compensatória':'#0ea5e9',
   'Em andamento':'#4f7de0','Aguardando entrada':'#e0a93b'};
 var state={meuId:null,meuColab:null,cfg:null,regimes:{},feriados:{},colabs:[],jornadas:[],ano:0,mes:0,hoje:'',
-  pode:{equipe:false,aprova:false,gerencia:false},mesCalc:null,relData:null,mc:{colab:null,ano:0,mes:0},usuarios:[]};
+  pode:{equipe:false,aprova:false,gerencia:false},banco:{},bh:{ano:0,mes:0},mesCalc:null,relData:null,mc:{colab:null,ano:0,mes:0},usuarios:[]};
 
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},5000);}
 function abrirModal(id){document.getElementById(id).classList.add('open');}
 function fecharModal(id){document.getElementById(id).classList.remove('open');}
+function confirmar(titulo,texto,botao){
+  return new Promise(function(ok){
+    document.getElementById('cfTitulo').textContent=titulo;document.getElementById('cfTexto').textContent=texto;
+    var sim=document.getElementById('cfSim'),nao=document.getElementById('cfNao'),x=document.querySelector('#modalConfirma .modal-close');
+    sim.textContent=botao||'Confirmar';
+    function fim(r){sim.onclick=nao.onclick=x.onclick=null;fecharModal('modalConfirma');ok(r);}
+    sim.onclick=function(){fim(true);};nao.onclick=function(){fim(false);};x.onclick=function(){fim(false);};
+    abrirModal('modalConfirma');
+  });
+}
 function dois(n){return ('0'+n).slice(-2);}
 function dataBR(k){if(!k)return '';var p=String(k).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 function hojeKey(){return new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
@@ -374,6 +415,7 @@ async function carregarMeuMes(){
   tb.innerHTML=linhasMes(calc,livre,{podeEscrever:true});
   tb.querySelectorAll('[data-rel]').forEach(function(b){b.addEventListener('click',function(){abrirRelatorio(b.dataset.rel,state.meuColab,true);});});
   renderResumo(calc.resumo,livre);
+  renderBancoMeu();
   if(state.ano+'-'+dois(state.mes)===state.hoje.slice(0,7))renderHoje(calc);
 }
 function renderResumo(t,livre){
@@ -590,10 +632,131 @@ async function gravarDiaGestor(c,key,campos){
 }
 
 /* ----- Abas e inicio ----- */
+/* ----- Banco de horas (fechamento do dia 25 e transporte no dia 1o) ----- */
+function mesK(a,m){return a+'-'+dois(m);}
+function partesMes(k){var p=k.split('-').map(Number);return {a:p[0],m:p[1]};}
+function mesSeguinte(k){var p=partesMes(k);return p.m===12?mesK(p.a+1,1):mesK(p.a,p.m+1);}
+function mesAnterior(k){var p=partesMes(k);return p.m===1?mesK(p.a-1,12):mesK(p.a,p.m-1);}
+function fechKeyDe(k){var p=partesMes(k);return k+'-'+dois(PC.diaFechamento(p.a,p.m,state.cfg.dia_fechamento));}
+function fimKeyDe(k){var p=partesMes(k);return k+'-'+dois(PC.diasNoMes(p.a,p.m));}
+function diaSeguinte(key){var d=new Date(key+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);}
+function dataLocalDe(ts){return ts?new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(ts)):'';}
+function nomeMes(k){var p=partesMes(k);return NOMES_MES[p.m-1]+' de '+p.a;}
+function bancoDe(id,k){return state.banco[id+'|'+k]||null;}
+function colabComBanco(c){return !regimeDe(c).livre;}
+function mesConta(k){return !state.cfg.inicio_contagem||fimKeyDe(k)>=state.cfg.inicio_contagem;}
+
+async function carregarBanco(){
+  var r=await _sb.from('ponto_banco_horas').select('*');
+  state.banco={};(r.data||[]).forEach(function(x){state.banco[x.colaborador_id+'|'+x.mes]=x;});
+}
+
+// Fecha e/ou transporta um mes de um colaborador. opc.forcar refaz o fechamento;
+// opc.ate fecha antes do dia 25 (fechamento manual, como o "fechamentoAgora" da planilha).
+async function processarMesBanco(c,k,opc){
+  opc=opc||{};
+  if(!colabComBanco(c)||!mesConta(k))return false;
+  var hoje=state.hoje,fechKey=fechKeyDe(k),fimKey=fimKeyDe(k),p=partesMes(k),calc=null,mudou=false;
+  var row=bancoDe(c.id,k);
+  var fecharAuto=hoje>=fechKey&&(!row||!row.fechado_em||dataLocalDe(row.fechado_em)<fechKey);
+  if(opc.forcar||fecharAuto){
+    var ate=opc.ate&&opc.ate<fechKey?opc.ate:fechKey;
+    calc=await dadosMes(c,p.a,p.m);
+    var ant=bancoDe(c.id,mesAnterior(k));
+    var carga=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),ate).carga||0;
+    var f=PC.fechamento(calc.dias,k+'-01',ate,ant&&ant.transportar!==null?ant.transportar:0,carga);
+    var g=await _sb.rpc('ponto_gravar_fechamento',{p_colab:c.id,p_mes:k,p_anterior:f.anterior,p_periodo:f.periodo,p_total:f.total,p_descontar:f.descontar,p_compensar:f.compensar,p_excedente:f.excedente});
+    if(g.error||!g.data||!g.data.ok)throw new Error((g.data&&g.data.mensagem)||(g.error&&g.error.message)||'Falha no fechamento');
+    row={colaborador_id:c.id,mes:k,saldo_anterior:f.anterior,saldo_periodo:f.periodo,saldo_total:f.total,descontar:f.descontar,compensar:f.compensar,excedente:f.excedente,saldo_pos_fechamento:null,transportar:null,fechado_em:new Date().toISOString(),transportado_em:null,_ate:ate};
+    state.banco[c.id+'|'+k]=row;mudou=true;
+  }
+  // Transporte: so depois que o mes acabou e se o fechamento cobriu ate o dia 25 (na planilha, sem transporte quando o fechamento e no ultimo dia)
+  if(row&&row.fechado_em&&!row.transportado_em&&hoje>fimKey&&fechKey<fimKey&&dataLocalDe(row.fechado_em)>=fechKey){
+    calc=calc||await dadosMes(c,p.a,p.m);
+    var t=PC.transporte(calc.dias,diaSeguinte(fechKey),fimKey,row.compensar);
+    var g2=await _sb.rpc('ponto_gravar_transporte',{p_colab:c.id,p_mes:k,p_pos:t.pos,p_transportar:t.transportar});
+    if(g2.error||!g2.data||!g2.data.ok)throw new Error((g2.data&&g2.data.mensagem)||(g2.error&&g2.error.message)||'Falha no transporte');
+    row.saldo_pos_fechamento=t.pos;row.transportar=t.transportar;row.transportado_em=new Date().toISOString();mudou=true;
+  }
+  return mudou;
+}
+// Ao abrir o Ponto, o gestor faz sozinho o que estiver pendente (dois meses para tras ate o atual).
+async function rotinaBanco(){
+  if(!state.pode.gerencia||!state.cfg)return;
+  var atual=state.hoje.slice(0,7),meses=[mesAnterior(mesAnterior(atual)),mesAnterior(atual),atual],feitos=0;
+  for(var i=0;i<state.colabs.length;i++){
+    var c=state.colabs[i];
+    for(var j=0;j<meses.length;j++){
+      try{if(await processarMesBanco(c,meses[j]))feitos++;}catch(e){showToast('Banco de horas de '+esc(c.nome)+': '+esc(e.message),'error');break;}
+    }
+  }
+  if(feitos)showToast('Banco de horas atualizado (fechamento/transporte).','success');
+}
+// Refaz um mes e atualiza em cadeia os meses seguintes ja fechados (o saldo anterior muda).
+async function refazerBanco(k,ate){
+  var atual=state.hoje.slice(0,7);
+  for(var i=0;i<state.colabs.length;i++){
+    var c=state.colabs[i];if(!colabComBanco(c))continue;
+    await processarMesBanco(c,k,{forcar:true,ate:ate});
+    for(var m=mesSeguinte(k);m<=atual;m=mesSeguinte(m)){if(bancoDe(c.id,m))await processarMesBanco(c,m,{forcar:true});}
+  }
+}
+
+function linhaBanco(c,k){
+  var b=bancoDe(c.id,k),livre=!colabComBanco(c);
+  var cel=function(v,cls){return '<td class="num'+(cls?' '+cls:'')+'">'+v+'</td>';};
+  if(livre)return '<tr><td><div class="cli">'+esc(c.nome)+'</div></td><td>'+esc(c.regime)+'</td><td colspan="9" class="sub">Horário livre: sem banco de horas</td></tr>';
+  if(!b)return '<tr><td><div class="cli">'+esc(c.nome)+'</div></td><td>'+esc(c.regime)+'</td>'+cel('—')+cel('—')+cel('—')+cel('—')+cel('—')+cel('—')+cel('—')+cel('—')+'<td class="sub">'+(mesConta(k)?'Fecha em '+dataBR(fechKeyDe(k)):'Antes do início da contagem')+'</td></tr>';
+  var fechData=dataLocalDe(b.fechado_em),parcial=fechData<fechKeyDe(k);
+  var sit=parcial?'Fechado antes do dia '+fechKeyDe(k).slice(8)+' ('+dataBR(fechData)+')':'Fechado em '+dataBR(fechData);
+  sit+=b.transportado_em?'<br>Transportado em '+dataBR(dataLocalDe(b.transportado_em)):'';
+  return '<tr><td><div class="cli">'+esc(c.nome)+'</div></td><td>'+esc(c.regime)+'</td>'+cel(saldoTxt(b.saldo_anterior))+cel(saldoTxt(b.saldo_periodo))+cel(saldoTxt(b.saldo_total))+
+    cel(b.descontar?PC.hhmm(b.descontar):'—',b.descontar?'desc':'')+cel(b.compensar?PC.hhmm(b.compensar):'—',b.compensar?'comp':'')+cel(b.excedente?PC.hhmm(b.excedente):'—')+
+    cel(b.saldo_pos_fechamento===null?'—':saldoTxt(b.saldo_pos_fechamento))+cel(b.transportar===null?'—':saldoTxt(b.transportar))+'<td class="sub">'+sit+'</td></tr>';
+}
+function renderBancoTela(){
+  var k=mesK(state.bh.ano,state.bh.mes);
+  document.getElementById('bhMes').textContent=nomeMes(k);
+  document.getElementById('bhColPeriodo').textContent='1º a '+fechKeyDe(k).slice(8);
+  document.getElementById('bhColPos').textContent=fechKeyDe(k)<fimKeyDe(k)?diaSeguinte(fechKeyDe(k)).slice(8)+' ao fim':'Após';
+  document.getElementById('bhInfo').textContent='Fechamento em '+dataBR(fechKeyDe(k))+' · transporte a partir de '+dataBR(diaSeguinte(fimKeyDe(k)));
+  var btn=document.getElementById('bhFechar');
+  btn.style.display=state.pode.gerencia&&mesConta(k)&&k<=state.hoje.slice(0,7)?'':'none';
+  btn.textContent=state.hoje<fechKeyDe(k)?'Fechar este mês agora (até hoje)':'Refazer o fechamento';
+  document.getElementById('tbBanco').innerHTML=state.colabs.map(function(c){return linhaBanco(c,k);}).join('')||'<tr><td colspan="11" class="vazio">Nenhum colaborador no ponto.</td></tr>';
+}
+async function fecharBancoAgora(){
+  var k=mesK(state.bh.ano,state.bh.mes),antes=state.hoje<fechKeyDe(k);
+  var msg=antes?'Fechar '+nomeMes(k)+' agora, do dia 1º até hoje? No dia '+fechKeyDe(k).slice(8)+' o sistema refaz o fechamento completo.':'Refazer o fechamento de '+nomeMes(k)+'? Os meses seguintes já fechados também são recalculados.';
+  if(!await confirmar(antes?'Fechar o mês agora':'Refazer o fechamento',msg,antes?'Fechar agora':'Refazer'))return;
+  var btn=document.getElementById('bhFechar');btn.disabled=true;
+  try{await refazerBanco(k,antes?state.hoje:null);showToast('Fechamento de '+nomeMes(k)+' gravado.','success');}
+  catch(e){showToast(esc(e.message),'error');}
+  btn.disabled=false;renderBancoTela();renderBancoMeu();
+}
+function renderBancoMeu(){
+  var el=document.getElementById('bancoMeu'),c=state.meuColab;
+  if(!c||!colabComBanco(c)||!state.mesCalc){el.style.display='none';return;}
+  el.style.display='';
+  var k=state.hoje.slice(0,7),fechKey=fechKeyDe(k),b=bancoDe(c.id,k),ant=bancoDe(c.id,mesAnterior(k));
+  var antV=ant&&ant.transportar!==null?ant.transportar:0,itens;
+  if(b&&dataLocalDe(b.fechado_em)>=fechKey){
+    itens=[['Saldo trazido do mês anterior',saldoTxt(b.saldo_anterior)],['Saldo de 1º a '+fechKey.slice(8),saldoTxt(b.saldo_periodo)],['Saldo total no fechamento',saldoTxt(b.saldo_total)],
+      ['Descontar na folha',b.descontar?'<b class="neg">'+PC.hhmm(b.descontar)+'</b>':'—'],['Compensar até o fim do mês',b.compensar?'<b class="pos">'+PC.hhmm(b.compensar)+'</b>':'—'],['Excedente desconsiderado',b.excedente?PC.hhmm(b.excedente):'—']];
+    document.getElementById('bancoMeuSub').textContent='Fechamento de '+nomeMes(k)+' feito em '+dataBR(dataLocalDe(b.fechado_em))+'. O que acontecer de '+dataBR(diaSeguinte(fechKey))+' até o fim do mês vai para o próximo mês.';
+  }else{
+    var parcial=k===mesK(state.ano,state.mes)?PC.somarPeriodo(state.mesCalc.dias,k+'-01',state.hoje<fechKey?state.hoje:fechKey).saldo:null;
+    itens=[['Saldo trazido do mês anterior',saldoTxt(antV)]];
+    if(parcial!==null)itens.push(['Saldo de 1º até hoje',saldoTxt(parcial)],['Previsão no fechamento',saldoTxt(antV+parcial)]);
+    document.getElementById('bancoMeuSub').textContent='O fechamento de '+nomeMes(k)+' acontece no dia '+dataBR(fechKey)+'. Negativo é descontado na folha; positivo, até 1 dia de carga, é compensado até o fim do mês.';
+  }
+  document.getElementById('bancoMeuGrid').innerHTML=itens.map(function(i){return '<div><span>'+esc(i[0])+'</span><b>'+i[1]+'</b></div>';}).join('');
+}
+
 function trocarAba(aba){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();
+  if(aba==='banco')renderBancoTela();if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
@@ -625,9 +788,12 @@ function ligarEventos(){
   document.getElementById('hoEnviar').addEventListener('click',pedirHo);
   document.getElementById('eqData').addEventListener('change',carregarEquipe);
   document.getElementById('btnAtualizar').addEventListener('click',atualizarTudo);
+  document.getElementById('bhAnt').addEventListener('click',function(){mudarMes(-1,state.bh);renderBancoTela();});
+  document.getElementById('bhProx').addEventListener('click',function(){mudarMes(1,state.bh);renderBancoTela();});
+  document.getElementById('bhFechar').addEventListener('click',fecharBancoAgora);
   document.addEventListener('saga-atualizar',atualizarTudo);
 }
-async function atualizarTudo(){await carregarBase();await carregarMeuMes();var a=document.querySelector('#abas .tab-btn.active');if(a)trocarAba(a.dataset.aba);}
+async function atualizarTudo(){await carregarBase();await carregarBanco();await rotinaBanco();await carregarMeuMes();var a=document.querySelector('#abas .tab-btn.active');if(a)trocarAba(a.dataset.aba);}
 async function init(){
   ligarEventos();
   await SagaUI.carregar('ponto');
@@ -639,6 +805,11 @@ async function init(){
   var perms=await Promise.all([_sb.rpc('ponto_ve_equipe'),_sb.rpc('ponto_aprova'),_sb.rpc('ponto_gerencia')]);
   state.pode={equipe:perms[0].data===true,aprova:perms[1].data===true,gerencia:perms[2].data===true};
   await carregarBase();
+  await carregarBanco();
+  var mesAtual=state.hoje.slice(0,7),mesBh=state.hoje>=fechKeyDe(mesAtual)?mesAtual:mesAnterior(mesAtual);
+  state.bh=partesMes(mesBh);state.bh={ano:state.bh.a,mes:state.bh.m};
+  if(state.pode.equipe||state.pode.gerencia)document.getElementById('abaBancoBtn').style.display='';
+  rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});
   if(state.pode.equipe||state.pode.aprova){document.getElementById('abaEquipeBtn').style.display='';document.getElementById('eqData').value=state.hoje;carregarPendencias();}
   prepararFormJust();document.getElementById('hoData').min=state.hoje;
   if(state.meuColab){
