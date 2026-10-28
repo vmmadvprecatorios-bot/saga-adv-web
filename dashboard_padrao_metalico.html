@@ -911,7 +911,7 @@ function atualizarTextoFiltro() {
 async function carregarEquipe() {
   try {
     var r = await _sb.from('usuarios')
-      .select('id, nome_completo, usuarios_papeis(papeis(nome))')
+      .select('id, nome_completo, usuarios_papeis!usuarios_papeis_usuario_id_fkey(papeis(nome))')
       .eq('ativo', true)
       .order('nome_completo');
 

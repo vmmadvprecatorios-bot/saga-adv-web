@@ -395,7 +395,7 @@ async function loadData(){
     _sb.from('papeis').select('id,nome,descricao,cor,editavel,eh_papel_padrao').order('nome'),
     _sb.from('permissoes').select('id,modulo,acao'),
     _sb.from('papeis_permissoes').select('papel_id,permissao_id'),
-    _sb.from('usuarios').select('id,nome_completo,cargo_titulo,ativo,auth_user_id,eh_administrador,usuarios_papeis(papel_id)').eq('ativo',true).order('nome_completo'),
+    _sb.from('usuarios').select('id,nome_completo,cargo_titulo,ativo,auth_user_id,eh_administrador,usuarios_papeis!usuarios_papeis_usuario_id_fkey(papel_id)').eq('ativo',true).order('nome_completo'),
     _sb.from('usuarios_permissoes_extra').select('usuario_id,permissao_id,concedida,motivo')
   ]);
   for(const r of[papRes,permRes,ppRes,usrRes,extRes]){if(r.error)throw new Error(r.error.message)}
