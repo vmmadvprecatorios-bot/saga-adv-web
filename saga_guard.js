@@ -37,6 +37,17 @@
     '#sagaCarregando.ativo{opacity:1;}'+
     '#sagaCarregando::after{content:"";position:absolute;top:0;bottom:0;width:38%;left:-38%;border-radius:2px;background:linear-gradient(90deg,transparent,var(--gold,#c9a96e),transparent);animation:sagaFio 1s ease-in-out infinite;}'+
     '@keyframes sagaFio{to{left:100%;}}'+
+    // Todas as telas com o menu padrao: mesmo fundo (sem quadriculado nem brilhos proprios)
+    // e mesma barra de rolagem, para nada mudar de lugar ou de cor na troca de tela
+    'html.saga-padrao body{background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3)) fixed !important;}'+
+    'html.saga-padrao body::before,html.saga-padrao body::after{content:none !important;display:none !important;}'+
+    'html.saga-padrao ::-webkit-scrollbar{width:8px;height:8px;}'+
+    'html.saga-padrao ::-webkit-scrollbar-track{background:transparent;}'+
+    'html.saga-padrao ::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--gold) 32%,transparent);border-radius:8px;}'+
+    // Troca de tela sem piscar: o navegador mantem a tela anterior ate a nova ter os menus prontos
+    '@view-transition{navigation:auto;}'+
+    '::view-transition-group(root){animation-duration:.12s;}'+
+    '#sidebarSaga,#topbarSaga{font-family:Montserrat,Arial,sans-serif;}'+
     // Enquanto a tela monta, os menus nao animam nada (evita a tremida do menu lateral)
     'html.saga-fixando #sidebarSaga,html.saga-fixando #sidebarSaga *,html.saga-fixando #topbarSaga,html.saga-fixando #topbarSaga *{transition:none !important;animation:none !important;}';
   (document.head||html).appendChild(estilo);
@@ -47,7 +58,16 @@
     return;
   }
 
-  function mostrarMoldura(){html.classList.remove('saga-entrando');}
+  // Menus aparecem so com as letras ja carregadas (sem trocar de fonte na frente do usuario)
+  var molduraPedida=false;
+  function mostrarMoldura(){
+    if(molduraPedida)return;molduraPedida=true;
+    function ok(){html.classList.remove('saga-entrando');}
+    if(document.fonts&&document.fonts.status==='loading'){
+      var feito=false;function uma(){if(!feito){feito=true;ok();}}
+      document.fonts.ready.then(uma);setTimeout(uma,250);
+    }else ok();
+  }
   // Telas antigas sem o menu padrao (data-simples): basta ter login salvo; aparecem quando a pagina termina de carregar
   if(document.currentScript&&document.currentScript.dataset.simples){
     html.classList.remove('saga-carregando','saga-fixando');
@@ -112,6 +132,9 @@
     fio.classList.add('ativo');
   }
 
+  html.classList.add('saga-padrao');
+  // A primeira imagem da tela so e desenhada depois de montados os menus (fim da leitura da pagina)
+  try{document.write('<link rel="expect" href="#sagaFimDaTela" blocking="render">');}catch(e){}
   var jaMostrou=false;
   function mostrar(){
     mostrarMoldura();

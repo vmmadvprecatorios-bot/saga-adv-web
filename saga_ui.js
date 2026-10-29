@@ -1156,6 +1156,46 @@
     })(document.body);
   }
 
+  // Menus superior e lateral montados assim que a tela abre (sem esperar o banco):
+  // a troca de tela nao pisca os menus. O carregar() so completa o que depende do banco.
+  var _molduraMontada=false;
+  function telaDoEndereco(){
+    var arq=(location.pathname.split('/').pop()||'').toLowerCase(),achou='';
+    document.querySelectorAll('#sidebarSaga .nav-item[data-tela]').forEach(function(el){
+      var m=(el.getAttribute('onclick')||'').match(/'([^']+\.html)'/);
+      if(m&&m[1].toLowerCase()===arq)achou=el.getAttribute('data-tela');
+    });
+    return achou;
+  }
+  function montarMoldura(telaAtiva){
+    var sb=document.getElementById('sidebarSaga'),tb=document.getElementById('topbarSaga');
+    if(!sb&&!tb)return;
+    if(!_molduraMontada){
+      _molduraMontada=true;
+      if(sb){sb.innerHTML=SIDEBAR_HTML;prepararMenuPermissoes();}
+      if(tb)tb.innerHTML=TOPBAR_HTML;
+      try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;}catch(e){}
+      ligarTema();
+      ligarPrivacidade();
+      ligarHamburger();
+    }
+    var tela=telaAtiva||telaDoEndereco();
+    if(tela){
+      document.querySelectorAll('#sidebarSaga .nav-item.active').forEach(function(el){el.classList.remove('active');});
+      var alvo=document.querySelector('#sidebarSaga [data-tela="'+tela+'"]');
+      if(alvo)alvo.classList.add('active');
+    }
+    marcarConteudo();
+    document.dispatchEvent(new CustomEvent('saga-ui-moldura'));
+  }
+  function montarMolduraCedo(){
+    // So com login salvo neste navegador (sem login o saga_guard ja mandou para o login)
+    if(!idSessaoLocal())return;
+    try{montarMoldura('');}catch(e){}
+  }
+  if(document.getElementById('sidebarSaga')||document.getElementById('topbarSaga'))montarMolduraCedo();
+  else document.addEventListener('DOMContentLoaded',montarMolduraCedo);
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sem login valido: vai para o login sem mostrar nada da tela (saga_guard.js a mantem escondida)
@@ -1171,23 +1211,10 @@
     if(!(await verificarAcesso(false)))return;
     registrarAtividade();
     ligarControleInatividade();
-    var sb=document.getElementById('sidebarSaga');
-    if(sb){sb.innerHTML=SIDEBAR_HTML;prepararMenuPermissoes();}
-    var tb=document.getElementById('topbarSaga');
-    if(tb)tb.innerHTML=TOPBAR_HTML;
-    if(telaAtiva){
-      var alvo=document.querySelector('#sidebarSaga [data-tela="'+telaAtiva+'"]');
-      if(alvo)alvo.classList.add('active');
-    }
-    try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;}catch(e){}
-    ligarTema();
-    ligarPrivacidade();
-    ligarHamburger();
+    montarMoldura(telaAtiva);
     ligarPresencaESino();
     ligarBuscaGlobal();
-    // Menus prontos: aparecem parados; so o conteudo da tela entra com transicao (saga_guard.js)
     marcarConteudo();
-    document.dispatchEvent(new CustomEvent('saga-ui-moldura'));
     await carregarPerfil();
     await aplicarPermissoes(telaAtiva);
     // Presenca e contador do sino carregam em paralelo e nao seguram a tela
