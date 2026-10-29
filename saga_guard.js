@@ -166,6 +166,14 @@
   // Rede de seguranca: se algo travar, a tela aparece mesmo assim
   setTimeout(function(){mostrar();html.classList.remove('saga-fixando');},8000);
 
+  // Transicao entre paginas: quando a outra pagina nao participa (ex.: login), o navegador cancela sem erro aparente
+  function calarTransicao(ev){
+    var vt=ev&&ev.viewTransition;if(!vt)return;
+    ['ready','finished','updateCallbackDone'].forEach(function(k){if(vt[k]&&vt[k].catch)vt[k].catch(function(){});});
+  }
+  window.addEventListener('pageswap',calarTransicao);
+  window.addEventListener('pagereveal',calarTransicao);
+
   // Volta pelo botao do navegador (pagina guardada em cache): nao fica apagada
   window.addEventListener('pageshow',function(ev){
     if(ev.persisted){
