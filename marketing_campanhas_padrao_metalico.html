@@ -24,6 +24,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .btn-primary,.btn-secondary,.btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 16px;border-radius:10px;font-size:12px;font-weight:700;white-space:nowrap}
 .btn-secondary{border:1px solid var(--border);background:var(--panel);color:var(--text)}
 .btn-secondary:hover{border-color:var(--gold)}
+.lnk{border:0;background:none;padding:0;color:var(--gold);font:inherit;font-size:10.5px;font-weight:700;text-decoration:underline;cursor:pointer}
 .btn-danger{border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)}
 .btn-sm{height:30px;padding:0 11px;font-size:11px}
 a.btn-secondary{text-decoration:none}
@@ -135,6 +136,42 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 .mat-card{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:6px}
 .mat-card .nome{font-weight:700;font-size:12.5px;word-break:break-word}
 .mat-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+/* Materiais: Kanban, Lista, miniaturas e janela do material */
+.mat-barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.mat-barra select{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:9px;background:var(--panel);font-size:11.5px}
+.mat-barra .direita{margin-left:auto;display:flex;gap:5px}
+.mat-kanban{display:grid;grid-template-columns:repeat(var(--cols,5),minmax(190px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.mat-kanban .coluna{min-height:120px}
+.mat-kcard{background:var(--panel-2);border:1px solid var(--border-soft);border-radius:12px;overflow:hidden;margin-bottom:10px;cursor:pointer;transition:border-color .15s,transform .15s}
+.mat-kcard:hover{border-color:var(--gold);transform:translateY(-1px)}
+.mat-kcard .corpo{padding:9px 11px}
+.mat-kcard .nome{font-weight:700;font-size:12px;word-break:break-word}
+.mat-kcard .ultimo{font-size:10.5px;margin-top:6px;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--c,#e0a93b) 12%,transparent);color:var(--text);border-left:3px solid var(--c,#e0a93b)}
+.mat-mini{display:block;width:100%;height:120px;border-radius:0;max-width:none;object-fit:cover;background:color-mix(in srgb,var(--text) 6%,transparent)}
+.mini-ico{display:flex;align-items:center;justify-content:center;width:100%;height:120px;background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+.mini-tab{width:54px;height:40px;border-radius:7px;object-fit:cover;display:block;background:color-mix(in srgb,var(--text) 6%,transparent)}
+.mini-tab.ico{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--muted)}
+.versao{font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 9%,transparent);color:var(--muted);margin-left:4px}
+.modal.grande{max-width:1080px}
+.mv-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:18px}
+.mv-preview{border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 5%,transparent);min-height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.mv-preview img,.mv-preview video{max-width:100%;max-height:62vh;display:block}
+.mv-preview .vazio{padding:40px}
+.mv-hist{max-height:42vh;overflow:auto;display:flex;flex-direction:column;gap:8px;margin:8px 0 10px}
+.mv-item{border-left:3px solid var(--c,#8a94a8);padding:7px 10px;border-radius:8px;background:color-mix(in srgb,var(--c,#8a94a8) 9%,transparent);font-size:12px}
+.mv-item .quem{font-size:10.5px;color:var(--muted);margin-bottom:2px}
+.mv-item .txt{white-space:pre-wrap;word-break:break-word}
+.mv-acoes{display:flex;gap:6px;flex-wrap:wrap}
+.mv-acoes .btn-sm{flex:0 0 auto}
+.drop{border:1.5px dashed var(--border);border-radius:12px;padding:20px;text-align:center;color:var(--muted);font-size:12px;cursor:pointer;transition:border-color .15s,background .15s}
+.drop.sobre,.drop:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 6%,transparent)}
+.arqs{display:flex;flex-direction:column;gap:6px;margin:10px 0 12px;max-height:34vh;overflow:auto}
+.arq{display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--border-soft);border-radius:9px;font-size:11.5px}
+.arq .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arq .st{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.arq .st.ok{color:var(--success)}.arq .st.erro{color:var(--danger)}
+.arq button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px}
+@media(max-width:820px){.mv-grid{grid-template-columns:1fr}.mat-kanban{grid-template-columns:repeat(var(--cols,5),minmax(220px,82vw))}}
 @media(max-width:760px){
   .kanban{grid-template-columns:repeat(4,minmax(230px,82vw))}
   .gasto-novo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
@@ -178,8 +215,12 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
     <div class="tabela-wrap"><table><thead><tr><th>Campanha</th><th>Status</th><th>Responsável</th><th>Período</th><th class="num">Orçamento</th><th class="num">Investido</th><th class="num">Saldo</th></tr></thead><tbody id="tbLista"></tbody></table></div>
   </section>
   <section class="tab-pane" id="aba-materiais">
-    <div class="toolbar"><div class="pills" id="pillsMateriais"></div></div>
-    <div class="mat-grid" id="gradeMateriais"></div>
+    <div class="mat-barra">
+      <div class="pills" id="pillsVisao"></div>
+      <select id="filtroMatCampanha" title="Campanha"></select>
+      <div class="pills" id="pillsMateriais"></div>
+    </div>
+    <div id="gradeMateriais"></div>
   </section>
 </main>
 </div>
@@ -220,16 +261,44 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 </div></div>
 
 <!-- Material -->
-<div class="modal-overlay" id="modalMaterial"><div class="modal small">
-  <div class="modal-head"><div><h2>Enviar material</h2><p>Arte, vídeo ou carrossel para aprovação.</p></div><button class="modal-close" data-fechar="modalMaterial" type="button">✕</button></div>
+<div class="modal-overlay" id="modalMaterial"><div class="modal">
+  <div class="modal-head"><div><h2>Enviar materiais</h2><p>Artes, vídeos ou carrossel para aprovação. Pode escolher vários arquivos de uma vez: cada um vira um material, com aprovação e comentários próprios.</p></div><button class="modal-close" data-fechar="modalMaterial" type="button">✕</button></div>
   <div class="modal-body">
-    <div class="campo"><label>Arquivo</label><input id="mmArquivo" type="file" style="padding:7px 10px"></div>
+    <div class="drop" id="mmDrop">Arraste os arquivos para cá ou <b>clique para escolher</b><div class="sub" style="margin-top:4px">Imagens, vídeos ou PDF, até 50 MB cada</div></div>
+    <input id="mmArquivo" type="file" multiple accept="image/*,video/*,application/pdf" style="display:none">
+    <div class="arqs" id="mmLista"></div>
     <div class="grid2">
       <div class="campo"><label>Tipo</label><select id="mmTipo"><option value="arte">Arte</option><option value="video">Vídeo</option><option value="carrossel">Carrossel</option><option value="capa">Capa</option><option value="outro">Outro</option></select></div>
       <div class="campo"><label>Campanha</label><select id="mmCampanha"></select></div>
     </div>
   </div>
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalMaterial" type="button">Cancelar</button><button class="btn-primary" id="mmEnviar" type="button">Enviar para aprovação</button></div>
+</div></div>
+
+<!-- Ver material: imagem grande, historico, comentarios e decisao -->
+<div class="modal-overlay" id="modalVerMaterial"><div class="modal grande">
+  <div class="modal-head"><div><h2 id="mvTitulo">Material</h2><p id="mvSub"></p></div><button class="modal-close" data-fechar="modalVerMaterial" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="mv-grid">
+      <div>
+        <div class="mv-preview" id="mvPreview"></div>
+        <div class="mv-acoes" style="margin-top:10px">
+          <button class="btn-secondary btn-sm" id="mvAbrir" type="button">Abrir em tamanho real</button>
+          <button class="btn-secondary btn-sm" id="mvVersao" type="button" style="display:none">Enviar nova versão</button>
+          <button class="btn-secondary btn-sm" id="mvExcluir" type="button" style="display:none">Excluir</button>
+          <input id="mvArquivoVersao" type="file" accept="image/*,video/*,application/pdf" style="display:none">
+        </div>
+      </div>
+      <div>
+        <div class="secao" style="margin-top:0">Situação</div>
+        <div id="mvSituacao"></div>
+        <div class="secao">Histórico e comentários</div>
+        <div class="mv-hist" id="mvHist"></div>
+        <div class="campo"><label for="mvTexto" id="mvTextoLabel">Comentário</label><textarea id="mvTexto" placeholder="Escreva o que achou desta imagem. Para pedir ajuste ou reprovar, diga o que não gostou."></textarea></div>
+        <div class="mv-acoes" id="mvAcoes"></div>
+      </div>
+    </div>
+  </div>
 </div></div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -256,9 +325,11 @@ var STATUS=[
   {id:'pausada',nome:'Pausada',cor:'#e0a93b'},
   {id:'finalizada',nome:'Finalizada',cor:'#8a94a8'}
 ];
-var FLUXO={rascunho:{nome:'Rascunho',cor:'#8a94a8'},em_revisao:{nome:'Em revisão',cor:'#e0a93b'},aprovado:{nome:'Aprovado',cor:'#2fae7a'},publicado:{nome:'Publicado',cor:'#4b8af5'},reprovado:{nome:'Reprovado',cor:'#e5484d'}};
+var FLUXO={em_revisao:{nome:'Em revisão',cor:'#e0a93b'},ajuste:{nome:'Ajustar',cor:'#f97316'},aprovado:{nome:'Aprovado',cor:'#2fae7a'},publicado:{nome:'Publicado',cor:'#4b8af5'},reprovado:{nome:'Reprovado',cor:'#e5484d'},rascunho:{nome:'Rascunho',cor:'#8a94a8'}};
+var ACOES_HIST={comentario:{nome:'comentou',cor:'#8a94a8'},aprovado:{nome:'aprovou',cor:'#2fae7a'},ajuste:{nome:'pediu ajuste',cor:'#f97316'},reprovado:{nome:'reprovou',cor:'#e5484d'},publicado:{nome:'marcou como publicado',cor:'#4b8af5'},nova_versao:{nome:'enviou nova versão',cor:'#e0a93b'}};
 var TIPOS_MAT={arte:'Arte',video:'Vídeo',carrossel:'Carrossel',capa:'Capa',outro:'Outro'};
 var state={campanhas:[],gastos:[],materiais:[],usuarios:[],meuId:null,periodo:'ano',busca:'',filtroMat:'todos',
+  visaoMat:'kanban',filtroMatCamp:'',comentarios:[],urls:{},arquivos:[],matAberto:null,
   pode:{criar:false,editar:false,matCriar:false,matAprovar:false},editando:null,gastosModal:[],gastosRemovidos:[]};
 
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
@@ -293,8 +364,10 @@ async function carregarTudo(){
     _sb.from('campanhas').select('*').order('criado_em',{ascending:false}),
     _sb.from('campanhas_lancamentos').select('*').order('data_lancamento',{ascending:false}),
     _sb.from('materiais_marketing').select('*').order('criado_em',{ascending:false}),
-    _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo')
+    _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo'),
+    _sb.from('materiais_marketing_comentarios').select('*').order('criado_em')
   ]);
+  state.comentarios=r[4].data||[];
   if(r[0].error){showToast('Erro ao carregar campanhas: '+esc(r[0].error.message),'error');return;}
   state.campanhas=r[0].data||[];state.gastos=r[1].data||[];state.materiais=r[2].data||[];state.usuarios=r[3].data||[];
   renderTudo();
@@ -442,66 +515,231 @@ async function excluirCampanha(){
 }
 
 /* ----- Materiais ----- */
-function renderMateriais(){
-  var opcoes=[['todos','Todos']].concat(Object.keys(FLUXO).map(function(k){return [k,FLUXO[k].nome];}));
+function extensao(nome){var m=/\.([a-z0-9]+)$/i.exec(nome||'');return m?m[1].toLowerCase():'';}
+function tipoArquivo(m){
+  var t=m.tipo_arquivo||'',e=extensao(m.caminho_storage||m.nome_arquivo);
+  if(/^image\//.test(t)||/^(png|jpe?g|gif|webp|bmp|svg|heic|avif)$/.test(e))return 'imagem';
+  if(/^video\//.test(t)||/^(mp4|mov|webm|m4v|avi|mkv)$/.test(e))return 'video';
+  if(t==='application/pdf'||e==='pdf')return 'pdf';
+  return 'arquivo';
+}
+// Links temporarios das imagens (1 hora), pedidos de uma vez so
+async function garantirUrls(caminhos){
+  var faltam=caminhos.filter(function(c){var u=state.urls[c];return c&&!(u&&u.ate>Date.now());});
+  if(!faltam.length)return;
+  var r=await _sb.storage.from('marketing-materiais').createSignedUrls(faltam,3600);
+  (r.data||[]).forEach(function(x){if(x.signedUrl)state.urls[x.path]={url:x.signedUrl,ate:Date.now()+50*60*1000};});
+}
+function urlDe(c){var u=state.urls[c];return u?u.url:'';}
+function histDe(id){return state.comentarios.filter(function(c){return c.material_id===id;});}
+function ultimaObs(m){ // ultimo pedido de ajuste/reprovacao (o que nao gostou)
+  var h=histDe(m.id).filter(function(c){return c.texto&&(c.acao==='ajuste'||c.acao==='reprovado'||c.acao==='comentario');});
+  return h.length?h[h.length-1]:null;
+}
+function materiaisFiltrados(){
+  return state.materiais.filter(function(m){
+    if(state.filtroMatCamp==='sem'?m.campanha_id:state.filtroMatCamp&&m.campanha_id!==state.filtroMatCamp)return false;
+    return true;
+  });
+}
+function miniatura(m,classe){
+  var t=tipoArquivo(m),u=urlDe(m.caminho_storage);
+  if(t==='imagem'&&u)return '<img class="'+classe+'" src="'+esc(u)+'" alt="">';
+  var rot=t==='video'?'Vídeo':t==='pdf'?'PDF':(extensao(m.nome_arquivo)||'Arquivo');
+  return classe==='mat-mini'?'<div class="mini-ico">'+esc(rot)+'</div>':'<div class="mini-tab ico">'+esc(rot)+'</div>';
+}
+async function renderMateriais(){
+  // Visao (Kanban ou Lista) e filtro por campanha
+  var pv=document.getElementById('pillsVisao');
+  pv.innerHTML=[['kanban','Kanban'],['lista','Lista']].map(function(o){return '<button class="pill'+(o[0]===state.visaoMat?' active':'')+'" data-visao="'+o[0]+'" type="button">'+o[1]+'</button>';}).join('');
+  pv.querySelectorAll('[data-visao]').forEach(function(b){b.addEventListener('click',function(){state.visaoMat=b.dataset.visao;try{localStorage.setItem('saga-mkt-visao',state.visaoMat);}catch(e){}renderMateriais();});});
+  var fc=document.getElementById('filtroMatCampanha');
+  fc.innerHTML='<option value="">Todas as campanhas</option><option value="sem">Sem campanha</option>'+state.campanhas.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.nome)+'</option>';}).join('');
+  fc.value=state.filtroMatCamp;
+  var base=materiaisFiltrados();
   var el=document.getElementById('pillsMateriais');
-  el.innerHTML=opcoes.map(function(o){var n=o[0]==='todos'?state.materiais.length:state.materiais.filter(function(m){return m.status_fluxo===o[0];}).length;return '<button class="pill'+(o[0]===state.filtroMat?' active':'')+'" data-v="'+o[0]+'">'+esc(o[1])+' ('+n+')</button>';}).join('');
+  el.style.display=state.visaoMat==='lista'?'':'none';
+  var opcoes=[['todos','Todos']].concat(Object.keys(FLUXO).filter(function(k){return k!=='rascunho'||base.some(function(m){return m.status_fluxo==='rascunho';});}).map(function(k){return [k,FLUXO[k].nome];}));
+  el.innerHTML=opcoes.map(function(o){var n=o[0]==='todos'?base.length:base.filter(function(m){return m.status_fluxo===o[0];}).length;return '<button class="pill'+(o[0]===state.filtroMat?' active':'')+'" data-v="'+o[0]+'" type="button">'+esc(o[1])+' ('+n+')</button>';}).join('');
   el.querySelectorAll('[data-v]').forEach(function(b){b.addEventListener('click',function(){state.filtroMat=b.dataset.v;renderMateriais();});});
-  var lista=state.materiais.filter(function(m){return state.filtroMat==='todos'||m.status_fluxo===state.filtroMat;});
   var g=document.getElementById('gradeMateriais');
-  if(!lista.length){g.innerHTML='<div class="panel vazio" style="grid-column:1/-1">'+(state.materiais.length?'Nenhum material nesta situação.':'Nenhum material enviado ainda. Use "Enviar material" para mandar artes e vídeos para aprovação.')+'</div>';return;}
-  g.innerHTML=lista.map(function(m){
-    var f=FLUXO[m.status_fluxo]||FLUXO.rascunho,camp=state.campanhas.find(function(c){return c.id===m.campanha_id;});
-    var acoes='<button class="btn-secondary btn-sm" data-abrir="'+esc(m.id)+'" type="button">Abrir</button>';
-    if(state.pode.matAprovar&&m.status_fluxo==='em_revisao')acoes+='<button class="btn-primary btn-sm" data-fluxo="aprovado" data-mat="'+esc(m.id)+'" type="button">Aprovar</button><button class="btn-danger btn-sm" data-fluxo="reprovado" data-mat="'+esc(m.id)+'" type="button">Reprovar</button>';
-    if(state.pode.matAprovar&&m.status_fluxo==='aprovado')acoes+='<button class="btn-secondary btn-sm" data-fluxo="publicado" data-mat="'+esc(m.id)+'" type="button">Marcar publicado</button>';
-    if(state.pode.matAprovar||m.usuario_id===state.meuId)acoes+='<button class="btn-secondary btn-sm" data-excluir-mat="'+esc(m.id)+'" type="button">Excluir</button>';
-    return '<div class="mat-card"><div>'+etq(f.nome,f.cor)+' <span class="sub">'+esc(TIPOS_MAT[m.tipo_material]||'Material')+'</span></div><div class="nome">'+esc(m.nome_arquivo)+'</div>'+
-      '<div class="sub">'+(camp?esc(camp.nome):'Sem campanha')+' · '+esc((nomeUsuario(m.usuario_id)||'').split(' ')[0])+' · '+dataBR(m.criado_em)+'</div><div class="mat-acoes">'+acoes+'</div></div>';
-  }).join('');
-  g.querySelectorAll('[data-abrir]').forEach(function(b){b.addEventListener('click',function(){abrirMaterial(b.dataset.abrir);});});
-  g.querySelectorAll('[data-fluxo]').forEach(function(b){b.addEventListener('click',function(){mudarFluxo(b.dataset.mat,b.dataset.fluxo);});});
-  g.querySelectorAll('[data-excluir-mat]').forEach(function(b){b.addEventListener('click',function(){excluirMaterial(b.dataset.excluirMat);});});
+  if(!state.materiais.length){g.innerHTML='<div class="panel vazio">Nenhum material enviado ainda. Use "Enviar material" para mandar artes e vídeos para aprovação.</div>';return;}
+  await garantirUrls(base.filter(function(m){return tipoArquivo(m)==='imagem';}).map(function(m){return m.caminho_storage;}));
+  if(state.visaoMat==='lista')renderMatLista(g,base);else renderMatKanban(g,base);
 }
+function renderMatKanban(g,base){
+  var cols=Object.keys(FLUXO).filter(function(k){return k!=='rascunho'||base.some(function(m){return m.status_fluxo==='rascunho';});});
+  g.innerHTML='<div class="mat-kanban" style="--cols:'+cols.length+'">'+cols.map(function(k){
+    var f=FLUXO[k],ms=base.filter(function(m){return m.status_fluxo===k;});
+    return '<div class="coluna"><div class="coluna-head" style="--c:'+f.cor+'"><span class="ponto"></span>'+esc(f.nome)+'<span class="qtd">'+ms.length+'</span></div>'+
+      (ms.length?ms.map(cartaoMaterial).join(''):'<div class="sub" style="padding:14px 4px;text-align:center">Nada aqui.</div>')+'</div>';
+  }).join('')+'</div>';
+  g.querySelectorAll('[data-mat]').forEach(function(c){c.addEventListener('click',function(){abrirMaterial(c.dataset.mat);});});
+}
+function cartaoMaterial(m){
+  var camp=state.campanhas.find(function(c){return c.id===m.campanha_id;}),ob=(m.status_fluxo==='ajuste'||m.status_fluxo==='reprovado')?ultimaObs(m):null;
+  var nCom=histDe(m.id).filter(function(c){return c.acao==='comentario';}).length;
+  return '<div class="mat-kcard" data-mat="'+esc(m.id)+'">'+miniatura(m,'mat-mini')+'<div class="corpo"><div class="nome">'+esc(m.nome_arquivo)+(m.versao>1?'<span class="versao">v'+m.versao+'</span>':'')+'</div>'+
+    '<div class="sub">'+esc(TIPOS_MAT[m.tipo_material]||'Material')+' · '+(camp?esc(camp.nome):'Sem campanha')+'</div>'+
+    '<div class="sub">'+esc((nomeUsuario(m.usuario_id)||'').split(' ')[0])+' · '+dataBR(m.atualizado_em||m.criado_em)+(nCom?' · '+nCom+' comentário'+(nCom>1?'s':''):'')+'</div>'+
+    (ob?'<div class="ultimo" style="--c:'+FLUXO[m.status_fluxo].cor+'">'+esc(ob.texto.length>140?ob.texto.slice(0,140)+'…':ob.texto)+'</div>':'')+'</div></div>';
+}
+function renderMatLista(g,base){
+  var lista=base.filter(function(m){return state.filtroMat==='todos'||m.status_fluxo===state.filtroMat;});
+  g.innerHTML='<div class="tabela-wrap"><table><thead><tr><th></th><th>Material</th><th>Situação</th><th>Tipo</th><th>Campanha</th><th>Enviado por</th><th>Atualizado</th><th>Última observação</th></tr></thead><tbody>'+
+    (lista.length?lista.map(function(m){
+      var f=FLUXO[m.status_fluxo]||FLUXO.rascunho,camp=state.campanhas.find(function(c){return c.id===m.campanha_id;}),ob=ultimaObs(m);
+      return '<tr data-mat="'+esc(m.id)+'"><td style="width:66px">'+miniatura(m,'mini-tab')+'</td><td><div class="cli">'+esc(m.nome_arquivo)+(m.versao>1?'<span class="versao">v'+m.versao+'</span>':'')+'</div></td>'+
+        '<td>'+etq(f.nome,f.cor)+'</td><td>'+esc(TIPOS_MAT[m.tipo_material]||'Material')+'</td><td>'+(camp?esc(camp.nome):'<span class="sub">Sem campanha</span>')+'</td>'+
+        '<td>'+esc(nomeUsuario(m.usuario_id)||'—')+'</td><td>'+dataBR(m.atualizado_em||m.criado_em)+'</td>'+
+        '<td style="max-width:300px"><div class="sub" style="margin:0">'+(ob?esc(ob.texto.length>110?ob.texto.slice(0,110)+'…':ob.texto):'—')+'</div></td></tr>';
+    }).join(''):'<tr><td colspan="8" class="vazio">Nenhum material nesta situação.</td></tr>')+'</tbody></table></div>';
+  g.querySelectorAll('[data-mat]').forEach(function(tr){tr.addEventListener('click',function(){abrirMaterial(tr.dataset.mat);});});
+}
+
+// Janela do material: imagem grande, historico, comentario e decisao
 async function abrirMaterial(id){
-  var m=state.materiais.find(function(x){return x.id===id;});if(!m)return;
-  var r=await _sb.storage.from('marketing-materiais').createSignedUrl(m.caminho_storage,600);
-  if(r.error||!r.data){showToast('Não foi possível abrir o arquivo.','error');return;}
-  window.open(r.data.signedUrl,'_blank','noopener');
+  var m=state.materiais.find(function(x){return x.id===id;});
+  if(!m){showToast('Material não encontrado.','error');return;}
+  state.matAberto=id;
+  var f=FLUXO[m.status_fluxo]||FLUXO.rascunho,camp=state.campanhas.find(function(c){return c.id===m.campanha_id;});
+  document.getElementById('mvTitulo').textContent=m.nome_arquivo;
+  document.getElementById('mvSub').textContent=(TIPOS_MAT[m.tipo_material]||'Material')+' · '+(camp?camp.nome:'Sem campanha')+' · enviado por '+(nomeUsuario(m.usuario_id)||'—')+' em '+dataBR(m.criado_em)+(m.versao>1?' · versão '+m.versao:'');
+  document.getElementById('mvSituacao').innerHTML=etq(f.nome,f.cor);
+  document.getElementById('mvTexto').value='';
+  var pv=document.getElementById('mvPreview');pv.innerHTML='<div class="vazio">Carregando…</div>';
+  // historico
+  var hist=histDe(m.id);
+  document.getElementById('mvHist').innerHTML=hist.length?hist.slice().reverse().map(function(c){
+    var a=ACOES_HIST[c.acao]||ACOES_HIST.comentario;
+    var antes=c.acao==='nova_versao'&&c.caminho_anterior?' <button class="lnk" data-anterior="'+esc(c.caminho_anterior)+'" type="button">ver versão '+(c.versao-1)+'</button>':'';
+    return '<div class="mv-item" style="--c:'+a.cor+'"><div class="quem"><b>'+esc(nomeUsuario(c.usuario_id)||'Alguém')+'</b> '+a.nome+(c.versao?' (v'+c.versao+')':'')+' · '+dataHoraBR(c.criado_em)+antes+'</div>'+(c.texto?'<div class="txt">'+esc(c.texto)+'</div>':'')+'</div>';
+  }).join(''):'<div class="sub">Nenhum comentário ainda.</div>';
+  document.querySelectorAll('#mvHist [data-anterior]').forEach(function(b){b.addEventListener('click',async function(){
+    var r=await _sb.storage.from('marketing-materiais').createSignedUrl(b.dataset.anterior,600);
+    if(r.data)window.open(r.data.signedUrl,'_blank','noopener');else showToast('Não foi possível abrir a versão anterior.','error');
+  });});
+  // acoes
+  var podeDecidir=state.pode.matAprovar,dono=m.usuario_id===state.meuId,ac=[];
+  if(podeDecidir&&['em_revisao','ajuste','reprovado','rascunho'].indexOf(m.status_fluxo)>=0)ac.push('<button class="btn-primary btn-sm" data-decidir="aprovado" type="button">Aprovar</button>');
+  if(podeDecidir&&['em_revisao','aprovado','rascunho'].indexOf(m.status_fluxo)>=0)ac.push('<button class="btn-secondary btn-sm" data-decidir="ajuste" type="button" style="border-color:#f97316;color:#f97316">Pedir ajuste</button>');
+  if(podeDecidir&&['em_revisao','ajuste','aprovado','rascunho'].indexOf(m.status_fluxo)>=0)ac.push('<button class="btn-danger btn-sm" data-decidir="reprovado" type="button">Reprovar</button>');
+  if(podeDecidir&&m.status_fluxo==='aprovado')ac.push('<button class="btn-secondary btn-sm" data-decidir="publicado" type="button">Marcar publicado</button>');
+  ac.push('<button class="btn-secondary btn-sm" id="mvComentar" type="button">Comentar</button>');
+  document.getElementById('mvAcoes').innerHTML=ac.join('');
+  document.querySelectorAll('#mvAcoes [data-decidir]').forEach(function(b){b.addEventListener('click',function(){decidirMaterial(b.dataset.decidir,b);});});
+  document.getElementById('mvComentar').addEventListener('click',function(){comentarMaterial(this);});
+  document.getElementById('mvVersao').style.display=(dono||podeDecidir)&&m.status_fluxo!=='publicado'?'':'none';
+  document.getElementById('mvExcluir').style.display=(podeDecidir||dono)?'':'none';
+  abrirModal('modalVerMaterial');
+  // previa grande
+  await garantirUrls([m.caminho_storage]);
+  var u=urlDe(m.caminho_storage),t=tipoArquivo(m);
+  if(state.matAberto!==id)return;
+  if(!u)pv.innerHTML='<div class="vazio">Não foi possível carregar o arquivo.</div>';
+  else if(t==='imagem')pv.innerHTML='<img src="'+esc(u)+'" alt="'+esc(m.nome_arquivo)+'">';
+  else if(t==='video')pv.innerHTML='<video src="'+esc(u)+'" controls preload="metadata"></video>';
+  else pv.innerHTML='<div class="vazio">Pré-visualização indisponível para este arquivo.<br>Use "Abrir em tamanho real".</div>';
 }
-async function mudarFluxo(id,novo){
-  var r=await _sb.from('materiais_marketing').update({status_fluxo:novo}).eq('id',id).select('id');
-  if(r.error||!r.data||!r.data.length){showToast('Não foi possível atualizar o material.','error');return;}
-  showToast('Material: '+FLUXO[novo].nome.toLowerCase()+'.','success');await carregarTudo();
+function dataHoraBR(ts){if(!ts)return '';var d=new Date(ts);return d.toLocaleDateString('pt-BR',{timeZone:'America/Maceio'})+' '+d.toLocaleTimeString('pt-BR',{timeZone:'America/Maceio',hour:'2-digit',minute:'2-digit'});}
+function erroTexto(e){var t=(e&&e.message)||'';return t.replace(/^.*?:\s*/,'')||'Não foi possível concluir.';}
+async function decidirMaterial(acao,btn){
+  var txt=document.getElementById('mvTexto').value.trim();
+  if((acao==='ajuste'||acao==='reprovado')&&!txt){
+    showToast('Escreva no campo de comentário o que não gostou nesta imagem.','error');
+    var ta=document.getElementById('mvTexto');ta.focus();ta.style.borderColor='var(--danger)';setTimeout(function(){ta.style.borderColor='';},1800);return;
+  }
+  btn.disabled=true;
+  var r=await _sb.rpc('material_decidir',{p_material:state.matAberto,p_acao:acao,p_texto:txt||null});
+  btn.disabled=false;
+  if(r.error){showToast(esc(erroTexto(r.error)),'error');return;}
+  showToast({aprovado:'Material aprovado.',ajuste:'Ajuste pedido. Quem enviou foi avisado.',reprovado:'Material reprovado. Quem enviou foi avisado.',publicado:'Marcado como publicado.'}[acao],'success');
+  await carregarTudo();abrirMaterial(state.matAberto);
 }
-async function excluirMaterial(id){
-  var m=state.materiais.find(function(x){return x.id===id;});if(!m||!confirm('Excluir o material "'+m.nome_arquivo+'"?'))return;
-  var r=await _sb.from('materiais_marketing').delete().eq('id',id).select('id');
-  if(r.error||!r.data||!r.data.length){showToast('Não foi possível excluir.','error');return;}
-  await _sb.storage.from('marketing-materiais').remove([m.caminho_storage]);
-  showToast('Material excluído.','success');await carregarTudo();
+async function comentarMaterial(btn){
+  var txt=document.getElementById('mvTexto').value.trim();
+  if(!txt){showToast('Escreva o comentário.','error');document.getElementById('mvTexto').focus();return;}
+  btn.disabled=true;
+  var r=await _sb.rpc('material_comentar',{p_material:state.matAberto,p_texto:txt});
+  btn.disabled=false;
+  if(r.error){showToast(esc(erroTexto(r.error)),'error');return;}
+  showToast('Comentário registrado.','success');await carregarTudo();abrirMaterial(state.matAberto);
 }
-function abrirEnvioMaterial(){
-  document.getElementById('mmArquivo').value='';
-  document.getElementById('mmCampanha').innerHTML='<option value="">Sem campanha</option>'+state.campanhas.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.nome)+'</option>';}).join('');
-  abrirModal('modalMaterial');
+function caminhoNovo(nome){
+  var limpo=nome.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9._-]+/g,'_');
+  return (state.meuId||'anon')+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'_'+limpo;
 }
-async function enviarMaterial(){
-  var arq=document.getElementById('mmArquivo').files[0];
-  if(!arq){showToast('Escolha o arquivo.','error');return;}
+async function enviarNovaVersao(arq){
+  var m=state.materiais.find(function(x){return x.id===state.matAberto;});if(!m||!arq)return;
   if(arq.size>50*1024*1024){showToast('O arquivo passa de 50 MB.','error');return;}
-  var btn=document.getElementById('mmEnviar');btn.disabled=true;
+  var b=document.getElementById('mvVersao');b.disabled=true;b.textContent='Enviando…';
   try{
-    var limpo=arq.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9._-]+/g,'_');
-    var caminho=(state.meuId||'anon')+'/'+Date.now()+'_'+limpo;
+    var caminho=caminhoNovo(arq.name);
     var up=await _sb.storage.from('marketing-materiais').upload(caminho,arq,{contentType:arq.type||undefined});
     if(up.error)throw up.error;
-    var ri=await _sb.from('materiais_marketing').insert({nome_arquivo:arq.name,caminho_storage:caminho,tipo_material:document.getElementById('mmTipo').value,
-      campanha_id:document.getElementById('mmCampanha').value||null,usuario_id:state.meuId,status_fluxo:'em_revisao'});
-    if(ri.error){await _sb.storage.from('marketing-materiais').remove([caminho]);throw ri.error;}
-    fecharModal('modalMaterial');showToast('Material enviado para aprovação.','success');trocarAba('materiais');await carregarTudo();
-  }catch(e){showToast('Não foi possível enviar: '+esc(e.message||''),'error');}
-  finally{btn.disabled=false;}
+    var r=await _sb.rpc('material_nova_versao',{p_material:m.id,p_caminho:caminho,p_nome:arq.name,p_tipo_arquivo:arq.type||null,p_texto:document.getElementById('mvTexto').value.trim()||null});
+    if(r.error){await _sb.storage.from('marketing-materiais').remove([caminho]);throw r.error;}
+    showToast('Versão '+r.data+' enviada para aprovação.','success');await carregarTudo();abrirMaterial(m.id);
+  }catch(e){showToast('Não foi possível enviar: '+esc(erroTexto(e)),'error');}
+  finally{b.disabled=false;b.textContent='Enviar nova versão';document.getElementById('mvArquivoVersao').value='';}
+}
+async function excluirMaterial(id){
+  var m=state.materiais.find(function(x){return x.id===id;});if(!m||!confirm('Excluir o material "'+m.nome_arquivo+'" e o histórico dele?'))return;
+  var antigos=histDe(id).map(function(c){return c.caminho_anterior;}).filter(Boolean);
+  var r=await _sb.from('materiais_marketing').delete().eq('id',id).select('id');
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível excluir.','error');return;}
+  await _sb.storage.from('marketing-materiais').remove([m.caminho_storage].concat(antigos));
+  fecharModal('modalVerMaterial');showToast('Material excluído.','success');await carregarTudo();
+}
+
+// Envio de varios arquivos de uma vez: cada arquivo vira um material
+function abrirEnvioMaterial(){
+  state.arquivos=[];renderArquivos();
+  document.getElementById('mmArquivo').value='';
+  document.getElementById('mmCampanha').innerHTML='<option value="">Sem campanha</option>'+state.campanhas.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.nome)+'</option>';}).join('');
+  if(state.filtroMatCamp&&state.filtroMatCamp!=='sem')document.getElementById('mmCampanha').value=state.filtroMatCamp;
+  abrirModal('modalMaterial');
+}
+function adicionarArquivos(lista){
+  Array.prototype.forEach.call(lista||[],function(a){
+    if(state.arquivos.some(function(x){return x.arq.name===a.name&&x.arq.size===a.size;}))return;
+    state.arquivos.push({arq:a,st:a.size>50*1024*1024?'erro':'',msg:a.size>50*1024*1024?'passa de 50 MB':''});
+  });
+  renderArquivos();
+}
+function tamanho(b){return b>1048576?(b/1048576).toFixed(1).replace('.',',')+' MB':Math.max(1,Math.round(b/1024))+' KB';}
+function renderArquivos(){
+  var el=document.getElementById('mmLista');
+  el.innerHTML=state.arquivos.map(function(x,i){
+    var st=x.st==='ok'?'<span class="st ok">Enviado</span>':x.st==='enviando'?'<span class="st">Enviando…</span>':x.st==='erro'?'<span class="st erro">'+esc(x.msg||'Erro')+'</span>':'<span class="st">'+tamanho(x.arq.size)+'</span>';
+    return '<div class="arq"><span class="n" title="'+esc(x.arq.name)+'">'+esc(x.arq.name)+'</span>'+st+(x.st===''||x.st==='erro'?'<button type="button" data-tirar="'+i+'" title="Tirar da lista">✕</button>':'')+'</div>';
+  }).join('');
+  el.querySelectorAll('[data-tirar]').forEach(function(b){b.addEventListener('click',function(){state.arquivos.splice(Number(b.dataset.tirar),1);renderArquivos();});});
+  var n=state.arquivos.filter(function(x){return x.st==='';}).length,btn=document.getElementById('mmEnviar');
+  btn.textContent=n>1?'Enviar '+n+' arquivos para aprovação':'Enviar para aprovação';
+}
+async function enviarMaterial(){
+  var fila=state.arquivos.filter(function(x){return x.st==='';});
+  if(!fila.length){showToast('Escolha ao menos um arquivo.','error');return;}
+  var btn=document.getElementById('mmEnviar');btn.disabled=true;
+  var tipo=document.getElementById('mmTipo').value,camp=document.getElementById('mmCampanha').value||null,ok=0;
+  for(var i=0;i<fila.length;i++){
+    var x=fila[i],caminho=caminhoNovo(x.arq.name);x.st='enviando';renderArquivos();
+    try{
+      var up=await _sb.storage.from('marketing-materiais').upload(caminho,x.arq,{contentType:x.arq.type||undefined});
+      if(up.error)throw up.error;
+      var ri=await _sb.from('materiais_marketing').insert({nome_arquivo:x.arq.name,caminho_storage:caminho,tipo_material:tipo,tipo_arquivo:x.arq.type||null,
+        campanha_id:camp,usuario_id:state.meuId,status_fluxo:'em_revisao'});
+      if(ri.error){await _sb.storage.from('marketing-materiais').remove([caminho]);throw ri.error;}
+      x.st='ok';ok++;
+    }catch(e){x.st='erro';x.msg=erroTexto(e);}
+    renderArquivos();
+  }
+  btn.disabled=false;
+  var falhas=fila.length-ok;
+  if(ok){trocarAba('materiais');await carregarTudo();}
+  if(!falhas){fecharModal('modalMaterial');showToast(ok>1?ok+' materiais enviados para aprovação.':'Material enviado para aprovação.','success');}
+  else showToast(ok+' enviado(s), '+falhas+' com erro. Veja a lista.','error');
 }
 
 /* ----- Abas, filtros e inicio ----- */
@@ -525,6 +763,23 @@ function ligarEventos(){
   document.getElementById('mcExcluir').addEventListener('click',excluirCampanha);
   document.getElementById('gnAdicionar').addEventListener('click',adicionarGasto);
   document.getElementById('mmEnviar').addEventListener('click',enviarMaterial);
+  var drop=document.getElementById('mmDrop'),inp=document.getElementById('mmArquivo');
+  drop.addEventListener('click',function(){inp.click();});
+  inp.addEventListener('change',function(){adicionarArquivos(inp.files);inp.value='';});
+  ['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('sobre');});});
+  ['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('sobre');});});
+  drop.addEventListener('drop',function(e){adicionarArquivos(e.dataTransfer&&e.dataTransfer.files);});
+  document.getElementById('filtroMatCampanha').addEventListener('change',function(){state.filtroMatCamp=this.value;renderMateriais();});
+  document.getElementById('mvAbrir').addEventListener('click',async function(){
+    var m=state.materiais.find(function(x){return x.id===state.matAberto;});if(!m)return;
+    var r=await _sb.storage.from('marketing-materiais').createSignedUrl(m.caminho_storage,600);
+    if(r.error||!r.data){showToast('Não foi possível abrir o arquivo.','error');return;}
+    window.open(r.data.signedUrl,'_blank','noopener');
+  });
+  document.getElementById('mvVersao').addEventListener('click',function(){document.getElementById('mvArquivoVersao').click();});
+  document.getElementById('mvArquivoVersao').addEventListener('change',function(){enviarNovaVersao(this.files[0]);});
+  document.getElementById('mvExcluir').addEventListener('click',function(){excluirMaterial(state.matAberto);});
+  try{var v=localStorage.getItem('saga-mkt-visao');if(v==='lista'||v==='kanban')state.visaoMat=v;}catch(e){}
   aplicarMascaraMoeda(document.getElementById('mcOrcamento'));aplicarMascaraMoeda(document.getElementById('gnValor'));
   document.getElementById('mcOrcamento').addEventListener('input',renderGastosModal);
   document.addEventListener('saga-atualizar',carregarTudo);
@@ -545,6 +800,9 @@ async function init(){
   document.getElementById('btnNovaCampanha').style.display=state.pode.criar?'':'none';
   document.getElementById('btnNovoMaterial').style.display=state.pode.matCriar?'':'none';
   await carregarTudo();
+  var qs=new URLSearchParams(location.search),alvo=qs.get('material');
+  if(alvo||qs.get('aba')==='materiais')trocarAba('materiais');
+  if(alvo)abrirMaterial(alvo);
 }
 init().catch(function(e){showToast('Erro ao abrir o marketing: '+esc(e.message||''),'error');});
 </script>

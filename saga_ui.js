@@ -701,6 +701,7 @@
     {chave:'tarefas',titulo:'Tarefas',tipos:['tarefa_prazo','tarefa_repasse','tarefa_hoje','tarefa_atrasada'],tela:'minhas_tarefas.html',um:'aviso de tarefa',varios:'avisos de tarefas',cor:'#f59e0b'},
     {chave:'agenda',titulo:'Agenda',tipos:['compromisso_hoje'],tela:'calendario_padrao_metalico.html',um:'compromisso hoje',varios:'compromissos hoje',cor:'#3b82f6'},
     {chave:'mencao',titulo:'Menções',tipos:['mencao'],tela:null,um:'menção em comentário',varios:'menções em comentários',cor:'#8b5cf6'},
+    {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   function grupoDoTipo(tipo){
