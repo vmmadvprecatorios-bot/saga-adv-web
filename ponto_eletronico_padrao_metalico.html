@@ -664,7 +664,7 @@ async function carregarEquipe(){
   (r[0].data||[]).forEach(function(x){(mkPor[x.colaborador_id]=mkPor[x.colaborador_id]||[null,null,null,null,null,null,null,null])[x.slot]=minutosLocal(x.momento);});
   (r[1].data||[]).forEach(function(x){diaPor[x.colaborador_id]=x;});
   var presentes=0,previstos=0,faltas=0;
-  var linhas=state.colabs.filter(function(c){return (!c.admissao||c.admissao<=data)&&(!c.demissao||c.demissao>=data);}).map(function(c){
+  var linhas=state.colabsPonto.filter(function(c){return (!c.admissao||c.admissao<=data)&&(!c.demissao||c.demissao>=data);}).map(function(c){
     var cj=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),data),reg=regimeDe(c),dia=diaPor[c.id]||{};
     var sit=PC.situacaoDoDia(data,cj,cfgCalc(),state.feriados,dia.situacao||'');
     var mk=mkPor[c.id]||[null,null,null,null,null,null,null,null];
@@ -795,8 +795,8 @@ async function processarMesBanco(c,k,opc){
 async function rotinaBanco(){
   if(!state.pode.gerencia||!state.cfg)return;
   var atual=state.hoje.slice(0,7),meses=[mesAnterior(mesAnterior(atual)),mesAnterior(atual),atual],feitos=0;
-  for(var i=0;i<state.colabs.length;i++){
-    var c=state.colabs[i];
+  for(var i=0;i<state.colabsPonto.length;i++){
+    var c=state.colabsPonto[i];
     for(var j=0;j<meses.length;j++){
       try{if(await processarMesBanco(c,meses[j]))feitos++;}catch(e){showToast('Banco de horas de '+esc(c.nome)+': '+esc(e.message),'error');break;}
     }
@@ -806,8 +806,8 @@ async function rotinaBanco(){
 // Refaz um mes e atualiza em cadeia os meses seguintes ja fechados (o saldo anterior muda).
 async function refazerBanco(k,ate){
   var atual=state.hoje.slice(0,7);
-  for(var i=0;i<state.colabs.length;i++){
-    var c=state.colabs[i];if(!colabComBanco(c))continue;
+  for(var i=0;i<state.colabsPonto.length;i++){
+    var c=state.colabsPonto[i];if(!colabComBanco(c))continue;
     await processarMesBanco(c,k,{forcar:true,ate:ate});
     for(var m=mesSeguinte(k);m<=atual;m=mesSeguinte(m)){if(bancoDe(c.id,m))await processarMesBanco(c,m,{forcar:true});}
   }
@@ -834,7 +834,7 @@ function renderBancoTela(){
   var btn=document.getElementById('bhFechar');
   btn.style.display=state.pode.gerencia&&mesConta(k)&&k<=state.hoje.slice(0,7)?'':'none';
   btn.textContent=state.hoje<fechKeyDe(k)?'Fechar este mês agora (até hoje)':'Refazer o fechamento';
-  document.getElementById('tbBanco').innerHTML=state.colabs.map(function(c){return linhaBanco(c,k);}).join('')||'<tr><td colspan="11" class="vazio">Nenhum colaborador no ponto.</td></tr>';
+  document.getElementById('tbBanco').innerHTML=state.colabsPonto.map(function(c){return linhaBanco(c,k);}).join('')||'<tr><td colspan="11" class="vazio">Nenhum colaborador no ponto.</td></tr>';
 }
 async function fecharBancoAgora(){
   var k=mesK(state.bh.ano,state.bh.mes),antes=state.hoje<fechKeyDe(k);
@@ -878,7 +878,7 @@ async function renderCadastro(){
   var tb=document.getElementById('tbCadColab');
   tb.innerHTML=state.colabs.map(function(c){
     var livre=regimeDe(c).livre,deslig=c.demissao&&c.demissao<state.hoje;
-    var sit=deslig?'Desligado em '+dataBR(c.demissao):(c.demissao?'Sai em '+dataBR(c.demissao):'Ativo');
+    var sit=!c.temConta?'<span class="sub">Aguardando conta (convite)</span>':deslig?'Desligado em '+dataBR(c.demissao):(c.demissao?'Sai em '+dataBR(c.demissao):'Ativo');
     return '<tr><td>'+esc(c.codigo||'')+'</td><td><div class="cli">'+esc(c.nome)+'</div><div class="sub">'+esc(c.email||'')+'</div></td><td>'+esc(c.regime)+'</td><td>'+esc(c.cargo||'')+'</td>'+
       '<td>'+(livre?'<span class="sub">Livre</span>':(esc(jornadaVigente(c))||'<span class="neg">Sem horário</span>'))+'</td><td>'+dataBR(c.admissao)+'</td><td>'+sit+'</td>'+
       '<td style="white-space:nowrap"><button class="lnk" data-edcolab="'+c.id+'" type="button">Editar</button>'+(livre?'':'<button class="lnk" data-jornada="'+c.id+'" type="button">Horário</button>')+'</td></tr>';
@@ -1090,7 +1090,7 @@ async function carregarBase(){
     _sb.from('ponto_config').select('*').maybeSingle(),
     _sb.from('ponto_regimes').select('*'),
     _sb.from('ponto_feriados').select('*'),
-    _sb.from('ponto_colaboradores').select('*').order('codigo'),
+    _sb.from('ponto_colaboradores').select('*,usuarios(auth_user_id)').order('codigo'),
     _sb.from('ponto_jornadas').select('*'),
     _sb.rpc('ponto_meu_colaborador')
   ]);
@@ -1098,6 +1098,9 @@ async function carregarBase(){
   state.regimes={};(r[1].data||[]).forEach(function(x){state.regimes[x.nome]=x;});
   state.feriados={};(r[2].data||[]).forEach(function(f){state.feriados[f.data]={desc:f.descricao,abr:f.abrangencia,facultativo:/facultativo/i.test(f.abrangencia||''),liberado:f.liberado};});
   state.colabs=r[3].data||[];state.jornadas=r[4].data||[];
+  // No calculo do ponto so entra quem ja criou a conta no SAGA (pre-cadastro aguardando convite fica de fora)
+  state.colabs.forEach(function(c){c.temConta=!!(c.usuarios&&c.usuarios.auth_user_id);});
+  state.colabsPonto=state.colabs.filter(function(c){return c.temConta;});
   state.meuColab=state.colabs.find(function(c){return c.id===r[5].data;})||null;
 }
 function ligarEventos(){

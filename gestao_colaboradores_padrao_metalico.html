@@ -102,12 +102,26 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
         <button class="btn-primary" id="btnConvidarColaborador"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Convidar Colaborador</button>
         <div class="security-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.7"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Senhas são protegidas por segurança. Esta interface permite apenas resetar, nunca visualizar credenciais.</span></div>
       </section>
-      <section class="kpi-grid" id="kpiGrid"></section>
-      <section class="toolbar panel">
+      <div class="status-filter abas-col" id="abasColab" style="display:none;width:max-content;margin-bottom:14px"><button class="filter-pill active" data-aba-col="acessos" type="button">Acessos</button><button class="filter-pill" data-aba-col="equipe" type="button">Equipe e convites</button></div>
+      <section class="kpi-grid aba-acessos" id="kpiGrid"></section>
+      <section class="toolbar panel aba-acessos">
         <div class="toolbar-left"><div class="status-filter" id="statusFilter"><button class="filter-pill active" data-status-filter="all">Todos</button><button class="filter-pill" data-status-filter="ativo">Ativo</button><button class="filter-pill" data-status-filter="inativo">Inativo</button></div><input class="field employee-search" id="employeeSearch" placeholder="Buscar por nome ou e-mail..."></div>
         <div class="toolbar-right"><span class="counter" id="employeeCounter"></span></div>
       </section>
-      <section class="panel" style="padding:0 14px 14px"><div class="employee-wrap" id="employeeTableWrap"></div><div class="pagination" id="pagination"></div></section>
+      <section class="panel aba-acessos" style="padding:0 14px 14px"><div class="employee-wrap" id="employeeTableWrap"></div><div class="pagination" id="pagination"></div></section>
+
+      <!-- EQUIPE E CONVITES (so o administrador geral) -->
+      <section id="painelEquipe" style="display:none">
+        <section class="toolbar panel">
+          <div class="toolbar-left"><span class="counter" id="eqContador"></span></div>
+          <div class="toolbar-right">
+            <button class="btn-secondary" id="eqConvidarTodos" type="button">Convidar todos os pendentes</button>
+            <button class="btn-primary" id="eqIncluir" type="button">+ Incluir pessoa</button>
+          </div>
+        </section>
+        <p class="date-small" style="margin:-4px 2px 12px;line-height:1.6">Visão geral da equipe. Inclua as pessoas com cargo, perfil, horário e salário; o convite só é enviado quando você clicar em Convidar (um por um) ou em Convidar todos. O convite sai pelo e-mail do administrador geral, com o link para a pessoa criar a senha. Quem ainda não criou a conta não entra no cálculo do ponto.</p>
+        <section class="panel" style="padding:0 14px 14px"><div class="employee-wrap" id="equipeWrap"></div></section>
+      </section>
     </main>
   </div>
 </div>
@@ -162,6 +176,28 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="equipeModal"><div class="modal">
+  <div class="modal-head"><div class="modal-title-stack"><h2 id="eqmTitulo">Incluir pessoa na equipe</h2><p id="eqmSub">Cadastro completo. O convite é enviado depois, quando você quiser.</p></div><button class="modal-close" data-close="equipeModal" type="button">&#10005;</button></div>
+  <div class="modal-body"><div class="field-grid">
+    <div class="field-group"><label>Nome completo</label><input class="field" id="eqmNome"></div>
+    <div class="field-group"><label>E-mail funcional</label><input class="field" id="eqmEmail" type="email" placeholder="nome@exemplo.com"></div>
+    <div class="field-group"><label>Cargo / função</label><input class="field" id="eqmCargo" placeholder="Ex.: Localizadora"></div>
+    <div class="field-group"><label>Perfil de acesso</label><select id="eqmPerfil"></select></div>
+    <div class="field-group"><label>Regime</label><select id="eqmRegime"></select></div>
+    <div class="field-group"><label>Salário (R$)</label><input class="field" id="eqmSalario" inputmode="decimal" placeholder="0,00"></div>
+    <div class="field-group"><label>Admissão</label><input class="field" id="eqmAdmissao" type="date"></div>
+    <div class="field-group" id="eqmDemissaoCampo"><label>Desligamento (vazio se ativo)</label><input class="field" id="eqmDemissao" type="date"></div>
+    <div class="field-group" id="eqmEntradaCampo"><label>Entrada</label><input class="field" id="eqmEntrada" type="time"></div>
+    <div class="field-group" id="eqmSaidaCampo"><label>Saída</label><input class="field" id="eqmSaida" type="time"></div>
+    <div class="field-group" id="eqmCargaCampo"><label>Carga do dia</label><input class="field" id="eqmCarga" type="time"></div>
+    <div class="field-group full" id="eqmHorarioNota" style="display:none"><span class="date-small">Para mudar o horário de quem já está cadastrado, use Ponto Eletrônico &gt; Cadastro &gt; Horário (guarda a data a partir da qual vale).</span></div>
+  </div></div>
+  <div class="modal-foot"><button class="btn-secondary" data-close="equipeModal" type="button">Cancelar</button><button class="btn-primary" id="eqmSalvar" type="button">Salvar</button></div>
+</div></div>
+<div class="modal-overlay" id="eqConfirmaModal"><div class="modal small">
+  <div class="modal-head"><div class="modal-title-stack"><h2 id="eqcTitulo">Confirmar</h2><p id="eqcTexto"></p></div><button class="modal-close" data-close="eqConfirmaModal" type="button">&#10005;</button></div>
+  <div class="modal-foot"><button class="btn-secondary" data-close="eqConfirmaModal" type="button">Cancelar</button><button class="btn-primary" id="eqcSim" type="button">Confirmar</button></div>
+</div></div>
 <div class="toast-area" id="toastArea"></div>
 <div class="action-menu" id="actionMenuPortal"></div>
 <div class="status-menu" id="statusMenuPortal"></div>
@@ -743,7 +779,7 @@ function switchPrototype(target){
 // ── Convite de colaborador ────────────────────────────────────
 async function loadPapeis(){
   if(state.papeis.length) return;
-  var r = await _sb.from('papeis').select('id,nome').order('nome');
+  var r = await _sb.from('papeis').select('id,nome,editavel').order('nome');
   if(!r.error && r.data) state.papeis = r.data;
 }
 
@@ -836,6 +872,191 @@ async function sendInvite(){
 }
 
 // ── Inicialização ─────────────────────────────────────────────
+// ============================================================
+// EQUIPE E CONVITES (so o administrador geral)
+// Cadastro completo da equipe (cargo, perfil, regime, horario, salario) e convites
+// individuais ou em lote, enviados pela funcao enviar-convite (Gmail do administrador).
+// ============================================================
+var equipe={lista:[],regimes:[],confirmar:null};
+function eqHm(min){return min==null?'':('0'+Math.floor(min/60)).slice(-2)+':'+('0'+(min%60)).slice(-2);}
+function eqMin(v){if(!v)return null;var p=String(v).split(':').map(Number);return p[0]*60+(p[1]||0);}
+function eqDataBR(d){if(!d)return '';var p=String(d).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function eqDinheiro(v){return v==null||v===''?'':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function eqJornadaVigente(js){
+  var hoje=new Date().toISOString().slice(0,10),vale=null;
+  js.slice().sort(function(a,b){return (a.vigente_desde||'')<(b.vigente_desde||'')?-1:1;}).forEach(function(j){if(!j.vigente_desde||j.vigente_desde<=hoje)vale=j;});
+  return vale||js[0]||null;
+}
+function eqSituacao(x){
+  if(x.u.auth_user_id)return x.u.ativo===false||(x.pc&&x.pc.demissao&&x.pc.demissao<new Date().toISOString().slice(0,10))?['Desligado','status-inativo']:['Ativo','status-ativo'];
+  if(x.convite&&x.convite.status==='pendente'&&new Date(x.convite.expira_em)>new Date())return ['Convidado em '+eqDataBR(x.convite.criado_em),'status-afastado'];
+  return ['Pré-cadastrado','sem-acesso'];
+}
+function eqPendente(x){return !x.u.auth_user_id&&x.u.ativo!==false;}
+
+async function carregarEquipe(){
+  var r=await Promise.all([
+    _sb.from('usuarios').select('id,nome_completo,email,cargo_titulo,ativo,auth_user_id,eh_administrador,usuarios_papeis!usuario_id(papeis(id,nome))').order('nome_completo'),
+    _sb.from('ponto_colaboradores').select('*'),
+    _sb.from('ponto_jornadas').select('*'),
+    _sb.from('convites').select('id,email,status,criado_em,expira_em').order('criado_em',{ascending:false}),
+    _sb.from('ponto_regimes').select('*').order('ordem')
+  ]);
+  var erro=r.find(function(x){return x.error;});if(erro)throw erro.error;
+  equipe.regimes=r[4].data||[];
+  var pcPor={},jPor={},cvPor={};
+  (r[1].data||[]).forEach(function(p){if(p.usuario_id)pcPor[p.usuario_id]=p;});
+  (r[2].data||[]).forEach(function(j){(jPor[j.colaborador_id]=jPor[j.colaborador_id]||[]).push(j);});
+  (r[3].data||[]).forEach(function(c){var k=String(c.email||'').toLowerCase();if(!cvPor[k])cvPor[k]=c;});
+  equipe.lista=(r[0].data||[]).map(function(u){
+    var pc=pcPor[u.id]||null,papel=u.usuarios_papeis&&u.usuarios_papeis[0]&&u.usuarios_papeis[0].papeis;
+    return {u:u,pc:pc,papel:papel||null,jornadas:pc?(jPor[pc.id]||[]):[],convite:cvPor[String(u.email||'').toLowerCase()]||null};
+  });
+}
+function renderEquipe(){
+  var lista=equipe.lista,pend=lista.filter(eqPendente).length;
+  document.getElementById('eqContador').innerHTML='<b>'+lista.length+'</b> pessoas · <b>'+pend+'</b> sem conta ainda';
+  var bt=document.getElementById('eqConvidarTodos');bt.textContent='Convidar todos os pendentes ('+pend+')';bt.disabled=!pend;
+  var rows=lista.map(function(x){
+    var sit=eqSituacao(x),j=eqJornadaVigente(x.jornadas),reg=x.pc?x.pc.regime:'',livre=(equipe.regimes.find(function(g){return g.nome===reg;})||{}).livre;
+    var horario=!x.pc?'<span class="date-small">Fora do ponto</span>':livre?'<span class="date-small">Livre</span>':j?eqHm(j.entrada_min)+'–'+eqHm(j.saida_min)+'<div class="date-small">'+eqHm(j.carga_min)+' por dia</div>':'<span class="date-small">Sem horário</span>';
+    var acoes='';
+    if(eqPendente(x))acoes+='<button class="btn-secondary" style="height:30px" data-eq-convidar="'+x.u.id+'" type="button">'+(x.convite&&x.convite.status==='pendente'?'Reenviar convite':'Convidar')+'</button>';
+    if(!x.u.eh_administrador)acoes+='<button class="btn-secondary" style="height:30px" data-eq-editar="'+x.u.id+'" type="button">Editar</button>';
+    if(eqPendente(x)&&!x.u.eh_administrador)acoes+='<button class="btn-danger" style="height:30px" data-eq-remover="'+x.u.id+'" type="button">Remover</button>';
+    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" style="background:'+avatarColor(x.papel&&x.papel.nome||'')+'">'+initials(x.u.nome_completo||x.u.email)+'</span><span><b>'+esc(x.u.nome_completo||'')+'</b><small>'+esc(x.u.email||'')+'</small></span></div></td>'+
+      '<td data-label="Cargo / perfil">'+esc(x.u.cargo_titulo||(x.pc&&x.pc.cargo)||'')+'<div class="date-small">'+esc(x.papel?x.papel.nome:'Sem perfil')+'</div></td>'+
+      '<td data-label="Regime">'+esc(reg||'—')+'</td><td data-label="Horário">'+horario+'</td>'+
+      '<td data-label="Salário">'+(x.pc&&x.pc.salario!=null?eqDinheiro(x.pc.salario):'<span class="date-small">—</span>')+'</td>'+
+      '<td data-label="Admissão">'+(x.pc&&x.pc.admissao?eqDataBR(x.pc.admissao):'<span class="date-small">—</span>')+'</td>'+
+      '<td data-label="Situação"><span class="badge '+sit[1]+'">'+esc(sit[0])+'</span></td>'+
+      '<td data-label="Ações"><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+acoes+'</div></td></tr>';
+  }).join('');
+  document.getElementById('equipeWrap').innerHTML='<table class="employee-table"><thead><tr><th>Pessoa</th><th>Cargo / perfil</th><th>Regime</th><th>Horário</th><th>Salário</th><th>Admissão</th><th>Situação</th><th style="text-align:right">Ações</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="date-small" style="padding:30px;text-align:center">Ninguém na equipe ainda.</td></tr>')+'</tbody></table>';
+  document.querySelectorAll('[data-eq-convidar]').forEach(function(b){b.addEventListener('click',function(){convidarPessoa(b.dataset.eqConvidar,b);});});
+  document.querySelectorAll('[data-eq-editar]').forEach(function(b){b.addEventListener('click',function(){abrirPessoa(b.dataset.eqEditar);});});
+  document.querySelectorAll('[data-eq-remover]').forEach(function(b){b.addEventListener('click',function(){removerPessoa(b.dataset.eqRemover);});});
+}
+async function atualizarEquipe(){
+  try{await carregarEquipe();}catch(e){showToast('Erro ao carregar a equipe: '+esc(e.message||''),'error');}
+  renderEquipe();
+}
+function eqConfirmar(titulo,texto,botao){
+  return new Promise(function(ok){
+    document.getElementById('eqcTitulo').textContent=titulo;document.getElementById('eqcTexto').textContent=texto;
+    var sim=document.getElementById('eqcSim');sim.textContent=botao||'Confirmar';
+    equipe.confirmar=ok;sim.onclick=function(){equipe.confirmar=null;closeModal('eqConfirmaModal');ok(true);};
+    openModal('eqConfirmaModal');
+  });
+}
+async function abrirPessoa(id){
+  await loadPapeis();
+  var x=id?equipe.lista.find(function(y){return y.u.id===id;}):null;
+  state.eqId=id||null;
+  document.getElementById('eqmTitulo').textContent=x?'Editar '+(x.u.nome_completo||''):'Incluir pessoa na equipe';
+  document.getElementById('eqmPerfil').innerHTML='<option value="">Escolha o perfil</option>'+state.papeis.filter(function(p){return p.editavel!==false;}).map(function(p){return '<option value="'+p.id+'">'+esc(p.nome)+'</option>';}).join('');
+  document.getElementById('eqmRegime').innerHTML=equipe.regimes.map(function(g){return '<option>'+esc(g.nome)+'</option>';}).join('');
+  document.getElementById('eqmNome').value=x?(x.u.nome_completo||''):'';
+  var em=document.getElementById('eqmEmail');em.value=x?(x.u.email||''):'';em.disabled=!!(x&&x.u.auth_user_id);
+  document.getElementById('eqmCargo').value=x?(x.u.cargo_titulo||(x.pc&&x.pc.cargo)||''):'';
+  document.getElementById('eqmPerfil').value=x&&x.papel?x.papel.id:'';
+  document.getElementById('eqmRegime').value=x&&x.pc?x.pc.regime:'Estágio';
+  document.getElementById('eqmSalario').value=x&&x.pc&&x.pc.salario!=null?String(x.pc.salario).replace('.',','):'';
+  document.getElementById('eqmAdmissao').value=x&&x.pc?(x.pc.admissao||''):'';
+  document.getElementById('eqmDemissao').value=x&&x.pc?(x.pc.demissao||''):'';
+  document.getElementById('eqmDemissaoCampo').style.display=x&&x.pc?'':'none';
+  var temHorario=!!(x&&x.jornadas.length);
+  ['eqmEntradaCampo','eqmSaidaCampo','eqmCargaCampo'].forEach(function(k){document.getElementById(k).style.display=temHorario?'none':'';});
+  document.getElementById('eqmHorarioNota').style.display=temHorario?'':'none';
+  ['eqmEntrada','eqmSaida','eqmCarga'].forEach(function(k){document.getElementById(k).value='';});
+  eqAtualizarHorario();
+  openModal('equipeModal');
+}
+function eqAtualizarHorario(){
+  var livre=(equipe.regimes.find(function(g){return g.nome===document.getElementById('eqmRegime').value;})||{}).livre;
+  var x=state.eqId?equipe.lista.find(function(y){return y.u.id===state.eqId;}):null;
+  var mostrar=!livre&&!(x&&x.jornadas.length);
+  ['eqmEntradaCampo','eqmSaidaCampo','eqmCargaCampo'].forEach(function(k){document.getElementById(k).style.display=mostrar?'':'none';});
+}
+function eqSugerirCarga(){
+  var e=eqMin(document.getElementById('eqmEntrada').value),s2=eqMin(document.getElementById('eqmSaida').value);
+  if(e==null||s2==null||s2<=e)return;
+  var reg=equipe.regimes.find(function(g){return g.nome===document.getElementById('eqmRegime').value;})||{};
+  document.getElementById('eqmCarga').value=eqHm(s2-e-(reg.almoco||0));
+}
+async function salvarPessoa(){
+  var reg=document.getElementById('eqmRegime').value,livre=(equipe.regimes.find(function(g){return g.nome===reg;})||{}).livre;
+  var sal=document.getElementById('eqmSalario').value.trim().replace(/\./g,'').replace(',','.');
+  if(sal&&isNaN(Number(sal))){showToast('Salário inválido.','error');return;}
+  if(!document.getElementById('eqmPerfil').value){showToast('Escolha o perfil de acesso.','error');return;}
+  var p={usuario_id:state.eqId||'',nome:document.getElementById('eqmNome').value,email:document.getElementById('eqmEmail').value,cargo:document.getElementById('eqmCargo').value,
+    papel_id:document.getElementById('eqmPerfil').value,regime:reg,salario:sal,admissao:document.getElementById('eqmAdmissao').value};
+  if(state.eqId)p.demissao=document.getElementById('eqmDemissao').value;
+  var ent=eqMin(document.getElementById('eqmEntrada').value),sai=eqMin(document.getElementById('eqmSaida').value),carga=eqMin(document.getElementById('eqmCarga').value);
+  if(document.getElementById('eqmEntradaCampo').style.display!=='none'&&!livre){
+    if(ent==null||sai==null||!carga){showToast('Informe entrada, saída e carga do dia.','error');return;}
+    if(sai<=ent){showToast('A saída precisa ser depois da entrada.','error');return;}
+    p.entrada_min=ent;p.saida_min=sai;p.carga_min=carga;
+  }
+  var btn=document.getElementById('eqmSalvar');btn.disabled=true;
+  var r=await _sb.rpc('equipe_salvar',{p:p});
+  btn.disabled=false;
+  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&r.error.message)||'Erro ao salvar.'),'error');return;}
+  closeModal('equipeModal');showToast(state.eqId?'Cadastro atualizado.':'Pessoa incluída. O convite ainda não foi enviado.','success');
+  await atualizarEquipe();await loadEmployees();renderEmployees();
+}
+// Envia (ou reenvia) o convite de uma pessoa. silencioso: usado no envio em lote
+async function convidarPessoa(id,btn,silencioso){
+  var x=equipe.lista.find(function(y){return y.u.id===id;});if(!x)return false;
+  if(btn){btn.disabled=true;btn.textContent='Enviando…';}
+  try{
+    var conviteId=null;
+    if(x.convite&&['pendente','aguardando_envio'].indexOf(x.convite.status)>=0&&new Date(x.convite.expira_em)>new Date())conviteId=x.convite.id;
+    else{
+      var ins=await _sb.from('convites').insert({email:String(x.u.email).toLowerCase(),nome_sugerido:x.u.nome_completo,papel_sugerido_id:x.papel?x.papel.id:null,convidado_por_id:state.meuInternoId,status:'aguardando_envio'}).select('id').single();
+      if(ins.error)throw new Error(ins.error.message);
+      conviteId=ins.data.id;
+    }
+    var r=await _sb.functions.invoke('enviar-convite',{body:{convite_id:conviteId}});
+    var d=r.data||{};
+    if(r.error&&!d.erro){try{var ctx=r.error.context;d=ctx&&ctx.json?await ctx.json():d;}catch(e){}}
+    if(!d.ok)throw new Error(d.erro||d.mensagem||(r.error&&r.error.message)||'Falha no envio.');
+    if(!silencioso)showToast(esc(d.mensagem||'Convite enviado.'),'success');
+    return true;
+  }catch(e){
+    if(!silencioso)showToast(esc((x.u.nome_completo||x.u.email)+': '+e.message),'error');
+    x.erroEnvio=e.message;return false;
+  }finally{
+    if(!silencioso)await atualizarEquipe();
+  }
+}
+async function convidarTodos(){
+  var pend=equipe.lista.filter(eqPendente);
+  if(!pend.length)return;
+  if(!await eqConfirmar('Convidar todos','Enviar o convite para '+pend.length+' pessoa(s) sem conta: '+pend.map(function(x){return x.u.nome_completo;}).join(', ')+'?','Enviar convites'))return;
+  var bt=document.getElementById('eqConvidarTodos');bt.disabled=true;
+  var ok=0,falhas=[];
+  for(var i=0;i<pend.length;i++){
+    bt.textContent='Enviando '+(i+1)+' de '+pend.length+'…';
+    if(await convidarPessoa(pend[i].u.id,null,true))ok++;else falhas.push((pend[i].u.nome_completo||pend[i].u.email)+' ('+pend[i].erroEnvio+')');
+  }
+  showToast(ok+' convite(s) enviado(s)'+(falhas.length?'. Falharam: '+esc(falhas.join('; ')):'.'),falhas.length?'error':'success');
+  await atualizarEquipe();
+}
+async function removerPessoa(id){
+  var x=equipe.lista.find(function(y){return y.u.id===id;});if(!x)return;
+  if(!await eqConfirmar('Remover da equipe','Remover '+(x.u.nome_completo||x.u.email)+' do pré-cadastro? O convite pendente é cancelado. Se depois quiser incluir de novo, é só cadastrar outra vez.','Remover'))return;
+  var r=await _sb.rpc('equipe_remover',{p_usuario:id});
+  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&r.error.message)||'Erro ao remover.'),'error');return;}
+  showToast('Removido(a) da equipe.','success');await atualizarEquipe();await loadEmployees();renderEmployees();
+}
+function trocarAbaColab(aba){
+  document.querySelectorAll('[data-aba-col]').forEach(function(b){b.classList.toggle('active',b.dataset.abaCol===aba);});
+  document.querySelectorAll('.aba-acessos').forEach(function(el){el.style.display=aba==='acessos'?'':'none';});
+  document.getElementById('painelEquipe').style.display=aba==='equipe'?'':'none';
+  if(aba==='equipe')atualizarEquipe();
+}
+
 async function init(){
   await SagaUI.carregar('colaboradores');
   ligarDropdownPerfil();
@@ -858,6 +1079,18 @@ async function init(){
   }
 
   renderEmployees();
+
+  // Aba Equipe e convites: so o administrador geral
+  if(state.souAdmin){
+    document.getElementById('abasColab').style.display='flex';
+    document.querySelectorAll('[data-aba-col]').forEach(function(b){b.addEventListener('click',function(){trocarAbaColab(b.dataset.abaCol);});});
+    document.getElementById('eqIncluir').addEventListener('click',function(){abrirPessoa(null);});
+    document.getElementById('eqConvidarTodos').addEventListener('click',convidarTodos);
+    document.getElementById('eqmSalvar').addEventListener('click',salvarPessoa);
+    document.getElementById('eqmRegime').addEventListener('change',eqAtualizarHorario);
+    ['eqmEntrada','eqmSaida'].forEach(function(k){document.getElementById(k).addEventListener('change',eqSugerirCarga);});
+    if(new URLSearchParams(location.search).get('aba')==='equipe')trocarAbaColab('equipe');
+  }
 
   // Filtros e buscas
   document.querySelectorAll('[data-status-filter]').forEach(function(btn){

@@ -55,7 +55,8 @@ async function carregarBase(): Promise<Base> {
     admin.from("ponto_config").select("*").maybeSingle(),
     admin.from("ponto_regimes").select("*"),
     admin.from("ponto_feriados").select("*"),
-    admin.from("ponto_colaboradores").select("*").order("codigo"),
+    // So entra no calculo quem ja tem conta no SAGA (pre-cadastros aguardando o convite ficam de fora)
+    admin.from("ponto_colaboradores").select("*, usuarios!inner(auth_user_id)").not("usuarios.auth_user_id", "is", null).order("codigo"),
     admin.from("ponto_jornadas").select("*"),
     admin.from("configuracoes_sistema").select("nome_escritorio,extra").maybeSingle(),
   ]);
