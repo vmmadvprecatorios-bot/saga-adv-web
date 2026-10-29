@@ -297,6 +297,7 @@ async function fechamentoMensal(b: Base, k: string, hoje: string) {
     const s = PC.somarPeriodo(x.calc.dias, `${k}-01`, fechKey);
     if (s.trab) diretoria.push([esc(x.c.nome), String(s.diasTrab), hmEmail(s.trab)]);
   }
+  if (b.cfg.email_fechamento === false) return { enviado: false, msg: `Fechamento de ${NOMES_MES[p.m - 1]} gravado (e-mail desligado).` };
   const fim = fimKeyDe(k);
   let corpo = `<p>Fechamento do período de <b>${br(`${k}-01`)}</b> a <b>${br(fechKey)}</b> para a folha de pagamento. ` +
     `O que acontecer de ${br(fechKey < fim ? somaDias(fechKey, 1) : fim)} até o fim do mês entra no saldo do mês seguinte.</p>`;
@@ -327,8 +328,9 @@ async function rotina() {
   if (n) log.push(`transporte de ${mesAnterior(atual)}: ${n}`);
   const H = Number(b.cfg.hora_relatorio ?? 19), dia = Number(hoje.slice(8)), fechDia = PC.diaFechamento(p.a, p.m, b.cfg.dia_fechamento);
   const tarefas: [string, string, () => Promise<{ enviado: boolean; msg: string }>][] = [];
-  if (hora === H && diaUtil(b, hoje)) tarefas.push(["D", hoje, () => relatorioDiario(b, hoje, hoje)]);
-  if (hora === H && PC.diaSemana(hoje) === Number(b.cfg.dia_semanal ?? 5)) tarefas.push(["S", hoje, () => relatorioSemanal(b, hoje, hoje)]);
+  // diario e semanal so se estiverem ligados no Cadastro (os relatorios ficam na aba Relatorios do Ponto)
+  if (b.cfg.email_diario === true && hora === H && diaUtil(b, hoje)) tarefas.push(["D", hoje, () => relatorioDiario(b, hoje, hoje)]);
+  if (b.cfg.email_semanal === true && hora === H && PC.diaSemana(hoje) === Number(b.cfg.dia_semanal ?? 5)) tarefas.push(["S", hoje, () => relatorioSemanal(b, hoje, hoje)]);
   // Fechamento: no dia de fechamento a partir do horario; se falhar, tenta de novo nas horas seguintes do mes
   if ((dia === fechDia && hora >= H) || dia > fechDia) tarefas.push(["M", atual, () => fechamentoMensal(b, atual, hoje)]);
   for (const [tipo, chave, f] of tarefas) {

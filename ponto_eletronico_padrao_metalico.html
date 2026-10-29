@@ -326,7 +326,7 @@ tr.apagado td{color:var(--muted)}
   <section class="tab-pane" id="aba-rel">
     <div class="toolbar">
       <div class="pills" id="relModo"><button class="pill" data-modo="dia" type="button">Dia</button><button class="pill" data-modo="semana" type="button">Semana</button><button class="pill" data-modo="mes" type="button">Mês</button></div>
-      <div class="nav-mes"><button class="btn-secondary btn-sm" id="relAnt" type="button">‹</button><b id="relTitulo"></b><button class="btn-secondary btn-sm" id="relProx" type="button">›</button></div>
+      <div class="nav-mes"><button class="btn-secondary btn-sm" id="relAnt" type="button">‹</button><b id="rlTitulo"></b><button class="btn-secondary btn-sm" id="relProx" type="button">›</button></div>
       <div class="campo" style="margin:0;min-width:220px"><select id="relPessoa"></select></div>
       <button class="btn-secondary btn-sm" id="relImprimir" type="button" style="margin-left:auto">Imprimir / salvar PDF</button>
     </div>
@@ -372,7 +372,11 @@ tr.apagado td{color:var(--muted)}
 
     <div class="secao-titulo" style="margin-top:22px">E-mails automáticos</div>
     <div class="panel" style="max-width:900px">
-      <p class="sub" style="margin:0 0 10px">Os relatórios saem sozinhos pelo Gmail do administrador geral: diário no horário acima (dias úteis), semanal no dia escolhido e o fechamento do banco de horas no dia do fechamento. A senha do Gmail fica guardada só no cofre do Supabase.</p>
+      <p class="sub" style="margin:0 0 10px">Os relatórios diário, semanal e mensal ficam na aba <b>Relatórios</b>, dentro do SAGA. Por e-mail (Gmail do administrador geral) sai só o que estiver ligado abaixo. O fechamento do banco de horas acontece sozinho no dia do fechamento, com ou sem e-mail. A senha do Gmail fica guardada só no cofre do Supabase.</p>
+      <label class="chk"><input type="checkbox" id="cfEmDiario"> Enviar o relatório diário por e-mail (no horário acima, dias úteis)</label>
+      <label class="chk"><input type="checkbox" id="cfEmSemanal"> Enviar o relatório semanal por e-mail (no dia escolhido)</label>
+      <label class="chk"><input type="checkbox" id="cfEmFech"> Enviar o fechamento do mês por e-mail (para a folha; vai também para os e-mails extras)</label>
+      <p class="sub" style="margin:0 0 10px">As chaves são gravadas no botão Salvar das configurações, acima.</p>
       <div class="toolbar" style="margin:0"><button class="btn-secondary btn-sm" id="emTeste" type="button">Enviar e-mail de teste</button><button class="btn-secondary btn-sm" id="emDiario" type="button">Enviar o relatório de hoje agora</button><span class="sub" id="emInfo"></span></div>
       <div class="tabela-wrap" style="margin-top:10px"><table class="banco"><thead><tr><th>Quando</th><th>Tipo</th><th>Resultado</th></tr></thead><tbody id="tbEnvios"></tbody></table></div>
     </div>
@@ -1080,6 +1084,7 @@ async function renderConfig(){
   document.getElementById('cfInicio').value=c.inicio_contagem||'';
   document.getElementById('cfTol').value=c.tolerancia_min;document.getElementById('cfLimite').value=c.limite_alerta;
   document.getElementById('cfIntervalo').value=c.intervalo_alerta_min||30;
+  document.getElementById('cfEmDiario').checked=c.email_diario===true;document.getElementById('cfEmSemanal').checked=c.email_semanal===true;document.getElementById('cfEmFech').checked=c.email_fechamento!==false;
   document.getElementById('cfFech').value=c.dia_fechamento||25;document.getElementById('cfHora').value=c.hora_relatorio==null?19:c.hora_relatorio;
   document.getElementById('cfSemanal').value=String(c.dia_semanal||5);
   document.getElementById('cfEmails').value=(c.emails_gestor||[]).join(', ');document.getElementById('cfExtras').value=(c.emails_extras||[]).join(', ');
@@ -1098,7 +1103,8 @@ async function salvarConfig(){
   if(ruim.length){showToast('E-mail inválido: '+esc(ruim.join(', ')),'error');return;}
   if(!(num('cfFech')>=1&&num('cfFech')<=31)){showToast('Dia do fechamento entre 1 e 31.','error');return;}
   var dados={inicio_contagem:document.getElementById('cfInicio').value||null,tolerancia_min:num('cfTol')||0,limite_alerta:num('cfLimite')||1,intervalo_alerta_min:Math.min(240,Math.max(5,num('cfIntervalo')||30)),dia_fechamento:num('cfFech'),
-    hora_relatorio:num('cfHora'),dia_semanal:num('cfSemanal'),emails_gestor:em,emails_extras:ex,exigir_local:document.getElementById('cfLocal').checked,atualizado_em:new Date().toISOString()};
+    hora_relatorio:num('cfHora'),dia_semanal:num('cfSemanal'),emails_gestor:em,emails_extras:ex,exigir_local:document.getElementById('cfLocal').checked,
+    email_diario:document.getElementById('cfEmDiario').checked,email_semanal:document.getElementById('cfEmSemanal').checked,email_fechamento:document.getElementById('cfEmFech').checked,atualizado_em:new Date().toISOString()};
   var btn=document.getElementById('cfSalvar');btn.disabled=true;
   try{
     var r=await _sb.from('ponto_config').update(dados).eq('id',true);if(r.error)throw new Error(erroMsg(r));
@@ -1263,7 +1269,7 @@ function diasDoPeriodo(ini,fim){var l=[],d=ini;while(d<=fim){l.push(d);d=addDias
 async function renderRelatorios(){
   var per=periodoRel(),limite=state.cfg.intervalo_alerta_min||30,alvo=document.getElementById('relConteudo');
   document.querySelectorAll('#relModo .pill').forEach(function(b){var a=b.dataset.modo===state.rel.modo;b.classList.toggle('active',a);b.style.background=a?'var(--gold)':'';b.style.borderColor=a?'var(--gold)':'';});
-  document.getElementById('relTitulo').textContent=per.titulo;
+  document.getElementById('rlTitulo').textContent=per.titulo;
   var pessoas=state.colabsPonto.filter(function(c){return c.usuario_id&&(!c.demissao||c.demissao>=per.ini);});
   var sel=document.getElementById('relPessoa');
   sel.innerHTML='<option value="">Toda a equipe</option>'+pessoas.map(function(c){return '<option value="'+c.usuario_id+'">'+esc(c.nome)+'</option>';}).join('');
