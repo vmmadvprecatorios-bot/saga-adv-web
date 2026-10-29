@@ -17,7 +17,7 @@ const NOMES_MES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "
 const CORES_STATUS_EMAIL: Record<string, string> = {
   "Falta": "#EBC4C4", "Horas negativas": "#F4D6D6", "Marcação incompleta": "#FBE3D6", "Falta justificada": "#FBE3D6",
   "Carga cumprida": "#DCEFD9", "Horas positivas": "#C3E3BE", "Trabalho fora do expediente": "#C3E3BE", "Registrado": "#DCEFD9",
-  "Abonado": "#D5EEF2", "Folga compensatória": "#D5EEF2", "Em andamento": "#F7EDC4", "Aguardando entrada": "#F7EDC4",
+  "Abonado": "#D5EEF2", "Folga compensatória": "#D5EEF2", "Folga concedida": "#E7DEFB", "Em andamento": "#F7EDC4", "Aguardando entrada": "#F7EDC4",
 };
 const CORS = {
   "Access-Control-Allow-Origin": "*",

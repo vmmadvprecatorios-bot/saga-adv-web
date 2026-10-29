@@ -342,8 +342,16 @@ tr.apagado td{color:var(--muted)}
 
     <div class="toolbar" style="margin-top:22px"><div class="secao-titulo" style="margin:0">Feriados</div>
       <div class="nav-mes" style="margin-left:12px"><button class="btn-secondary btn-sm" id="ferAnt" type="button">‹</button><b id="ferAno"></b><button class="btn-secondary btn-sm" id="ferProx" type="button">›</button></div>
-      <button class="btn-secondary btn-sm" id="ferIncluir" type="button" style="margin-left:auto">+ Incluir feriado</button></div>
+      <button class="btn-primary btn-sm so-admin" id="ferGerar" type="button" style="margin-left:auto;display:none">Gerar feriados do ano</button>
+      <button class="btn-secondary btn-sm" id="ferIncluir" type="button">+ Incluir feriado</button></div>
     <div class="tabela-wrap"><table class="banco"><thead><tr><th>Data</th><th>Dia</th><th>Descrição</th><th>Abrangência</th><th>Expediente</th><th></th></tr></thead><tbody id="tbFeriados"></tbody></table></div>
+
+    <div class="so-admin" style="display:none">
+      <div class="toolbar" style="margin-top:22px"><div class="secao-titulo" style="margin:0">Folgas da equipe</div>
+        <button class="btn-primary btn-sm" id="folgaNova" type="button" style="margin-left:auto">+ Dar folga</button></div>
+      <p class="sub" style="margin:0 0 10px">Dia livre dado pelo administrador (bonificação, emenda de feriado, feriado adiantado) para toda a equipe ou para pessoas escolhidas. O dia aparece no ponto como "Folga concedida", sem carga, e não conta falta. Dias que já têm outra situação (férias, atestado...) não são alterados. Para adiantar um feriado, dê a folga no dia novo e marque o feriado original como "expediente normal".</p>
+      <div class="tabela-wrap"><table class="banco"><thead><tr><th>Data</th><th>Dia</th><th>Motivo</th><th>Para quem</th><th></th></tr></thead><tbody id="tbFolgas"></tbody></table></div>
+    </div>
 
     <div class="secao-titulo" style="margin-top:22px">Configurações do ponto</div>
     <div class="panel" style="max-width:900px">
@@ -459,6 +467,38 @@ tr.apagado td{color:var(--muted)}
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalFeriado" type="button">Cancelar</button><button class="btn-primary" id="frSalvar" type="button">Incluir</button></div>
 </div></div>
 
+<!-- Gerar feriados do ano (administrador geral) -->
+<div class="modal-overlay" id="modalGerarFer"><div class="modal" style="max-width:820px">
+  <div class="modal-head"><div><h2>Gerar feriados do ano</h2><p class="sub" style="margin:4px 0 0">O sistema calcula os feriados nacionais e os pontos facultativos (inclusive Carnaval, Sexta-feira Santa e Corpus Christi, que mudam de data), traz os estaduais do estado escolhido e repete os municipais da cidade já cadastrados em outros anos. Confira a lista e desmarque o que não vale para o escritório.</p></div><button class="modal-close" data-fechar="modalGerarFer" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="grid3">
+      <div class="campo"><label>Ano</label><input id="gfAno" type="number" min="2024" max="2100"></div>
+      <div class="campo"><label>Estado</label><select id="gfUf"></select></div>
+      <div class="campo"><label>Cidade</label><input id="gfCidade" placeholder="Ex.: Maceió"></div>
+    </div>
+    <div class="tabela-wrap" style="max-height:46vh;overflow:auto;margin-top:10px"><table class="banco"><thead><tr><th><input type="checkbox" id="gfTodos" checked title="Marcar todos"></th><th>Data</th><th>Dia</th><th>Descrição</th><th>Abrangência</th><th>Fechado</th></tr></thead><tbody id="tbGerarFer"></tbody></table></div>
+    <p class="sub" id="gfAviso" style="margin:10px 0 0"></p>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalGerarFer" type="button">Cancelar</button><button class="btn-primary" id="gfSalvar" type="button">Incluir selecionados</button></div>
+</div></div>
+
+<!-- Dar folga (administrador geral) -->
+<div class="modal-overlay" id="modalFolga"><div class="modal" style="max-width:560px">
+  <div class="modal-head"><div><h2>Dar folga</h2></div><button class="modal-close" data-fechar="modalFolga" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="grid2">
+      <div class="campo"><label>De</label><input id="fgIni" type="date"></div>
+      <div class="campo"><label>Até (opcional)</label><input id="fgFim" type="date"></div>
+    </div>
+    <div class="campo"><label>Motivo</label><input id="fgMotivo" placeholder="Ex.: Bonificação pela meta do mês"></div>
+    <label class="chk"><input type="radio" name="fgPara" value="todos" checked> Toda a equipe</label>
+    <label class="chk"><input type="radio" name="fgPara" value="escolher"> Pessoas escolhidas</label>
+    <div id="fgPessoas" style="display:none;margin:4px 0 0 24px"></div>
+    <p class="sub" style="margin:8px 0 0">Sábados, domingos e feriados do período ficam de fora.</p>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalFolga" type="button">Cancelar</button><button class="btn-primary" id="fgSalvar" type="button">Dar folga</button></div>
+</div></div>
+
 <!-- Confirmacao -->
 <div class="modal-overlay" id="modalConfirma"><div class="modal" style="max-width:480px">
   <div class="modal-head"><div><h2 id="cfTitulo">Confirmar</h2></div><button class="modal-close" data-fechar="modalConfirma" type="button">✕</button></div>
@@ -490,7 +530,7 @@ var MARCAS_NORMAL=['Entrada','Início pausa 1','Fim pausa 1','Início pausa 2','
 var MARCAS_LIVRE=['Início 1','Fim 1','Início 2','Fim 2','Início 3','Fim 3','Início 4','Fim 4'];
 var TIPOS_JUST=['Esqueci de bater o ponto','Sem internet ou sistema fora','Bati o ponto errado','Atraso justificado','Saída antecipada justificada','Atestado médico (dia inteiro)','Falta justificada (sem abono)','Folga compensatória','Outro'];
 var CORES_STATUS={'Falta':'#e5484d','Horas negativas':'#e5484d','Marcação incompleta':'#f97316','Falta justificada':'#f97316','Carga cumprida':'#2fae7a',
-  'Horas positivas':'#16a34a','Trabalho fora do expediente':'#16a34a','Registrado':'#2fae7a','Abonado':'#0ea5e9','Folga compensatória':'#0ea5e9',
+  'Horas positivas':'#16a34a','Trabalho fora do expediente':'#16a34a','Registrado':'#2fae7a','Abonado':'#0ea5e9','Folga compensatória':'#0ea5e9','Folga concedida':'#8b5cf6',
   'Em andamento':'#4f7de0','Aguardando entrada':'#e0a93b'};
 var state={meuId:null,meuColab:null,cfg:null,regimes:{},feriados:{},colabs:[],jornadas:[],ano:0,mes:0,hoje:'',
   pode:{equipe:false,aprova:false,gerencia:false},banco:{},bh:{ano:0,mes:0},mesCalc:null,relData:null,mc:{colab:null,ano:0,mes:0},usuarios:[]};
@@ -545,7 +585,7 @@ function cabecalhoMes(livre,gestor){
 function linhasMes(calc,livre,opcoes){
   return calc.dias.map(function(x){
     var d=x.d,cls=[];
-    if(x.key===state.hoje)cls.push('hoje');else if(x.sit==='Sábado'||x.sit==='Domingo')cls.push('fds');else if(x.sit==='Feriado'||x.sit==='Ponto facultativo')cls.push('feriado');
+    if(x.key===state.hoje)cls.push('hoje');else if(x.sit==='Sábado'||x.sit==='Domingo')cls.push('fds');else if(x.sit==='Feriado'||x.sit==='Ponto facultativo'||x.sit==='Folga concedida')cls.push('feriado');
     if(['Não admitido','Desligado','Sem controle'].indexOf(x.sit)>=0)cls.push('apagado');
     var mk=x.mk,cel;
     if(livre){cel=[0,1,2,3,4,5].map(function(i){return '<td>'+PC.hhmmRelogio(mk[i])+'</td>';}).join('');}
@@ -1062,6 +1102,7 @@ function renderFeriados(){
     return '<tr><td>'+dataBR(k)+'</td><td>'+PC.NOMES_DIA[PC.diaSemana(k)]+'</td><td>'+esc(f.desc)+'</td><td>'+esc(f.abr||'')+'</td><td>'+(f.liberado?'Fechado':'<span class="sub">Normal</span>')+'</td>'+
       '<td style="white-space:nowrap"><button class="lnk" data-ferlib="'+k+'" type="button">'+(f.liberado?'Marcar expediente normal':'Marcar fechado')+'</button><button class="lnk perigo" data-ferrm="'+k+'" type="button">Remover</button></td></tr>';
   }).join('')||'<tr><td colspan="6" class="vazio">Nenhum feriado em '+ano+'.</td></tr>';
+  carregarFolgas();
   document.querySelectorAll('[data-ferlib]').forEach(function(b){b.addEventListener('click',async function(){
     var k=b.dataset.ferlib,r=await _sb.from('ponto_feriados').update({liberado:!state.feriados[k].liberado}).eq('data',k);
     if(r.error){showToast(esc(erroMsg(r)),'error');return;}await carregarBase();renderFeriados();});});
@@ -1076,6 +1117,185 @@ async function salvarFeriado(){
   var r=await _sb.from('ponto_feriados').insert({data:data,descricao:desc,abrangencia:document.getElementById('frAbr').value,liberado:document.getElementById('frLiberado').checked});
   if(r.error){showToast(esc(erroMsg(r)),'error');return;}
   fecharModal('modalFeriado');showToast('Feriado incluído.','success');state.ferAno=Number(data.slice(0,4));await carregarBase();renderFeriados();
+}
+
+/* ----- Feriados automaticos (administrador geral) ----- */
+var UFS={AC:'Acre',AL:'Alagoas',AP:'Amapá',AM:'Amazonas',BA:'Bahia',CE:'Ceará',DF:'Distrito Federal',ES:'Espírito Santo',GO:'Goiás',MA:'Maranhão',MT:'Mato Grosso',MS:'Mato Grosso do Sul',MG:'Minas Gerais',PA:'Pará',PB:'Paraíba',PR:'Paraná',PE:'Pernambuco',PI:'Piauí',RJ:'Rio de Janeiro',RN:'Rio Grande do Norte',RS:'Rio Grande do Sul',RO:'Rondônia',RR:'Roraima',SC:'Santa Catarina',SP:'São Paulo',SE:'Sergipe',TO:'Tocantins'};
+// Feriados estaduais de data fixa (mes-dia). Confira sempre a lista antes de incluir.
+var FER_ESTADUAIS={
+  AC:[['01-23','Dia do Evangélico'],['06-15','Aniversário do Acre'],['08-06','Início da Revolução Acreana'],['09-05','Dia da Amazônia'],['11-17','Assinatura do Tratado de Petrópolis']],
+  AL:[['06-24','São João'],['06-29','São Pedro'],['09-16','Emancipação Política de Alagoas']],
+  AP:[['03-19','Dia de São José'],['09-13','Criação do Território Federal do Amapá']],
+  AM:[['09-05','Elevação do Amazonas à categoria de província']],
+  BA:[['07-02','Independência da Bahia']],
+  CE:[['03-19','Dia de São José'],['03-25','Data Magna do Ceará']],
+  DF:[['11-30','Dia do Evangélico']],
+  MA:[['07-28','Adesão do Maranhão à Independência']],
+  MS:[['10-11','Criação do Estado de Mato Grosso do Sul']],
+  PA:[['08-15','Adesão do Grão-Pará à Independência']],
+  PB:[['08-05','Fundação do Estado da Paraíba']],
+  PR:[['12-19','Emancipação Política do Paraná']],
+  PE:[['03-06','Data Magna de Pernambuco']],
+  PI:[['03-13','Dia da Batalha do Jenipapo'],['10-19','Dia do Piauí']],
+  RJ:[['04-23','Dia de São Jorge']],
+  RN:[['10-03','Mártires de Cunhaú e Uruaçu']],
+  RS:[['09-20','Revolução Farroupilha']],
+  RO:[['01-04','Criação do Estado de Rondônia'],['06-18','Dia do Evangélico']],
+  RR:[['10-05','Criação do Estado de Roraima']],
+  SP:[['07-09','Revolução Constitucionalista']],
+  SE:[['07-08','Emancipação Política de Sergipe']],
+  TO:[['03-18','Autonomia do Estado do Tocantins'],['09-08','Nossa Senhora da Natividade'],['10-05','Criação do Estado do Tocantins']]
+};
+// Municipais conhecidos (os demais vem do que ja foi cadastrado em outros anos para a mesma cidade)
+var FER_MUNICIPAIS={'maceio':[['08-27','Nossa Senhora dos Prazeres (padroeira)'],['12-08','Nossa Senhora da Conceição']]};
+function semAcento(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();}
+function pascoa(ano){ // algoritmo de Meeus
+  var a=ano%19,b=Math.floor(ano/100),c=ano%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+    h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+    mes=Math.floor((h+l-7*m+114)/31),dia=((h+l-7*m+114)%31)+1;
+  return new Date(Date.UTC(ano,mes-1,dia));
+}
+function somaDias(dt,n){var x=new Date(dt.getTime());x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10);}
+function gerarFeriados(ano,uf,cidade){
+  var L=[],p=pascoa(ano);
+  function add(data,desc,abr,lib){L.push({data:data,descricao:desc,abrangencia:abr,liberado:lib});}
+  add(ano+'-01-01','Confraternização Universal','Nacional',true);
+  add(somaDias(p,-48),'Carnaval','Ponto facultativo',true);
+  add(somaDias(p,-47),'Carnaval','Ponto facultativo',true);
+  add(somaDias(p,-46),'Quarta-feira de Cinzas (até 14h)','Ponto facultativo',false);
+  add(somaDias(p,-2),'Sexta-feira Santa','Nacional',true);
+  add(ano+'-04-21','Tiradentes','Nacional',true);
+  add(ano+'-05-01','Dia do Trabalho','Nacional',true);
+  add(somaDias(p,60),'Corpus Christi','Ponto facultativo',true);
+  add(ano+'-09-07','Independência do Brasil','Nacional',true);
+  add(ano+'-10-12','Nossa Senhora Aparecida','Nacional',true);
+  add(ano+'-10-28','Dia do Servidor Público','Ponto facultativo',false);
+  add(ano+'-11-02','Finados','Nacional',true);
+  add(ano+'-11-15','Proclamação da República','Nacional',true);
+  add(ano+'-11-20','Dia Nacional de Zumbi e da Consciência Negra','Nacional',true);
+  add(ano+'-12-24','Véspera de Natal','Ponto facultativo',false);
+  add(ano+'-12-25','Natal','Nacional',true);
+  add(ano+'-12-31','Véspera de Ano-Novo','Ponto facultativo',false);
+  var nomeUf=UFS[uf]||uf,abrE='Estadual ('+nomeUf+')',abrM='Municipal ('+cidade+')';
+  (FER_ESTADUAIS[uf]||[]).forEach(function(x){add(ano+'-'+x[0],x[1],abrE,true);});
+  (FER_MUNICIPAIS[semAcento(cidade)]||[]).forEach(function(x){add(ano+'-'+x[0],x[1],abrM,true);});
+  // Repete os estaduais e municipais desta cidade/estado ja cadastrados em outros anos (mesmo dia e mes)
+  var chaveCid=semAcento(cidade),chaveUf=semAcento(nomeUf);
+  Object.keys(state.feriados).forEach(function(k){
+    var f=state.feriados[k],a=semAcento(f.abr);
+    if(k.slice(0,4)===String(ano))return;
+    var mun=/^municipal/.test(a)&&chaveCid&&a.indexOf(chaveCid)>=0,est=/^estadual/.test(a)&&a.indexOf(chaveUf)>=0;
+    if(!mun&&!est)return;
+    if(k.slice(5)==='02-29')return;
+    add(ano+'-'+k.slice(5),f.desc,mun?abrM:abrE,f.liberado);
+  });
+  // Uma linha por data (a primeira vale: nacional antes de estadual, estadual antes de municipal)
+  var vistos={},out=[];
+  L.sort(function(a,b){return a.data<b.data?-1:a.data>b.data?1:0;}).forEach(function(x){if(!vistos[x.data]){vistos[x.data]=1;out.push(x);}});
+  return out;
+}
+function abrirGerarFeriados(){
+  var sel=document.getElementById('gfUf');
+  if(!sel.options.length)sel.innerHTML=Object.keys(UFS).map(function(u){return '<option value="'+u+'">'+u+' · '+esc(UFS[u])+'</option>';}).join('');
+  document.getElementById('gfAno').value=state.ferAno;
+  sel.value=(state.cfg&&state.cfg.feriados_uf)||'AL';
+  document.getElementById('gfCidade').value=(state.cfg&&state.cfg.feriados_cidade)||'';
+  montarGerarFeriados();abrirModal('modalGerarFer');
+}
+function montarGerarFeriados(){
+  var ano=Number(document.getElementById('gfAno').value),uf=document.getElementById('gfUf').value,cid=document.getElementById('gfCidade').value.trim();
+  if(!(ano>=2000&&ano<=2100)){document.getElementById('tbGerarFer').innerHTML='';return;}
+  state.gerarFer=gerarFeriados(ano,uf,cid);
+  var novos=0;
+  document.getElementById('tbGerarFer').innerHTML=state.gerarFer.map(function(f,i){
+    var existe=!!state.feriados[f.data];if(!existe)novos++;
+    return '<tr'+(existe?' class="apagado"':'')+'><td>'+(existe?'':'<input type="checkbox" data-gf="'+i+'" checked>')+'</td><td>'+dataBR(f.data)+'</td><td>'+esc(PC.NOMES_DIA[PC.diaSemana(f.data)])+'</td>'+
+      '<td>'+esc(f.descricao)+(existe?' <span class="sub">(já cadastrado)</span>':'')+'</td><td>'+esc(f.abrangencia)+'</td>'+
+      '<td>'+(existe?(state.feriados[f.data].liberado?'Sim':'Não'):'<input type="checkbox" data-gflib="'+i+'"'+(f.liberado?' checked':'')+'>')+'</td></tr>';
+  }).join('');
+  document.getElementById('gfTodos').checked=true;
+  document.getElementById('gfAviso').textContent=novos?novos+' data(s) nova(s) para incluir. As que já existem ficam como estão.':'Todas as datas deste ano já estão cadastradas.';
+}
+async function salvarGerarFeriados(){
+  var ano=Number(document.getElementById('gfAno').value),uf=document.getElementById('gfUf').value,cid=document.getElementById('gfCidade').value.trim();
+  var linhas=[];
+  document.querySelectorAll('#tbGerarFer [data-gf]').forEach(function(c){
+    if(!c.checked)return;var i=Number(c.dataset.gf),f=state.gerarFer[i],lib=document.querySelector('#tbGerarFer [data-gflib="'+i+'"]');
+    linhas.push({data:f.data,descricao:f.descricao,abrangencia:f.abrangencia,liberado:lib?lib.checked:f.liberado});
+  });
+  var bt=document.getElementById('gfSalvar');bt.disabled=true;
+  try{
+    // Guarda estado e cidade para os proximos anos
+    if(state.cfg&&(state.cfg.feriados_uf!==uf||(state.cfg.feriados_cidade||'')!==cid)){
+      var rc=await _sb.from('ponto_config').update({feriados_uf:uf,feriados_cidade:cid||null}).eq('id',true);
+      if(rc.error){showToast(esc(erroMsg(rc)),'error');return;}
+    }
+    if(linhas.length){
+      var r=await _sb.from('ponto_feriados').upsert(linhas,{onConflict:'data',ignoreDuplicates:true});
+      if(r.error){showToast(esc(erroMsg(r)),'error');return;}
+    }
+    fecharModal('modalGerarFer');
+    showToast(linhas.length?linhas.length+' feriado(s) incluído(s) em '+ano+'.':'Nada novo para incluir.','success');
+    state.ferAno=ano;await carregarBase();renderFeriados();
+  }finally{bt.disabled=false;}
+}
+
+/* ----- Folgas da equipe (administrador geral) ----- */
+async function carregarFolgas(){
+  var tb=document.getElementById('tbFolgas');if(!tb||!state.pode.admin)return;
+  var ano=state.ferAno;
+  var r=await _sb.from('ponto_dias').select('colaborador_id,data,observacao').eq('situacao','Folga concedida').gte('data',ano+'-01-01').lte('data',ano+'-12-31').order('data');
+  var grupos={};
+  (r.data||[]).forEach(function(d){
+    var motivo=String(d.observacao||'').replace(/^Folga concedida:\s*/,''),k=d.data+'|'+motivo;
+    (grupos[k]=grupos[k]||{data:d.data,motivo:motivo,ids:[]}).ids.push(d.colaborador_id);
+  });
+  var total=state.colabsPonto.length;
+  state.folgas=Object.keys(grupos).map(function(k){return grupos[k];});
+  tb.innerHTML=state.folgas.map(function(g,i){
+    var nomes=g.ids.map(function(id){var c=state.colabs.find(function(x){return x.id===id;});return c?c.nome:'';}).filter(Boolean);
+    var quem=g.ids.length>=total&&total>1?'Toda a equipe':nomes.join(', ');
+    return '<tr><td>'+dataBR(g.data)+'</td><td>'+esc(PC.NOMES_DIA[PC.diaSemana(g.data)])+'</td><td>'+esc(g.motivo)+'</td><td>'+esc(quem)+'</td>'+
+      '<td><button class="lnk perigo" data-folgarm="'+i+'" type="button">Desfazer</button></td></tr>';
+  }).join('')||'<tr><td colspan="5" class="vazio">Nenhuma folga concedida em '+ano+'.</td></tr>';
+  tb.querySelectorAll('[data-folgarm]').forEach(function(b){b.addEventListener('click',async function(){
+    var g=state.folgas[Number(b.dataset.folgarm)];
+    if(!await confirmar('Desfazer folga','Desfazer a folga de '+dataBR(g.data)+' ('+g.motivo+')? O dia volta a ser dia normal para essas pessoas.','Desfazer'))return;
+    var rr=await _sb.rpc('ponto_folga_lote',{p_datas:[g.data],p_colabs:g.ids,p_motivo:null,p_remover:true});
+    if(rr.error){showToast(esc(erroMsg(rr)),'error');return;}
+    showToast('Folga desfeita.','success');await atualizarTudo();renderFeriados();
+  });});
+}
+function abrirFolga(){
+  document.getElementById('fgIni').value='';document.getElementById('fgFim').value='';document.getElementById('fgMotivo').value='';
+  document.querySelector('input[name="fgPara"][value="todos"]').checked=true;
+  document.getElementById('fgPessoas').style.display='none';
+  document.getElementById('fgPessoas').innerHTML=state.colabsPonto.map(function(c){return '<label class="chk"><input type="checkbox" data-fgp="'+c.id+'"> '+esc(c.nome)+'</label>';}).join('')||'<p class="sub">Ninguém no ponto.</p>';
+  abrirModal('modalFolga');
+}
+async function salvarFolga(){
+  var ini=document.getElementById('fgIni').value,fim=document.getElementById('fgFim').value||ini,motivo=document.getElementById('fgMotivo').value.trim();
+  if(!ini){showToast('Informe o dia da folga.','error');return;}
+  if(fim<ini){showToast('A data final é anterior à inicial.','error');return;}
+  if(!motivo){showToast('Informe o motivo da folga.','error');return;}
+  var datas=[],d=new Date(ini+'T12:00:00Z'),ate=new Date(fim+'T12:00:00Z');
+  while(d<=ate){var k=d.toISOString().slice(0,10),w=d.getUTCDay(),f=state.feriados[k];
+    if(w!==0&&w!==6&&!(f&&f.liberado))datas.push(k);d.setUTCDate(d.getUTCDate()+1);}
+  if(!datas.length){showToast('No período só há fim de semana ou feriado.','error');return;}
+  if(datas.length>31){showToast('No máximo 31 dias por vez.','error');return;}
+  var colabs=null;
+  if(document.querySelector('input[name="fgPara"]:checked').value==='escolher'){
+    colabs=[];document.querySelectorAll('#fgPessoas [data-fgp]').forEach(function(c){if(c.checked)colabs.push(c.dataset.fgp);});
+    if(!colabs.length){showToast('Escolha ao menos uma pessoa.','error');return;}
+  }
+  var bt=document.getElementById('fgSalvar');bt.disabled=true;
+  try{
+    var r=await _sb.rpc('ponto_folga_lote',{p_datas:datas,p_colabs:colabs,p_motivo:motivo,p_remover:false});
+    if(r.error){showToast(esc(erroMsg(r)),'error');return;}
+    fecharModal('modalFolga');
+    showToast(r.data?'Folga concedida ('+r.data+' dia(s) lançados).':'Nenhum dia lançado: as pessoas já tinham outra situação nesses dias.',r.data?'success':'error');
+    state.ferAno=Number(ini.slice(0,4));await atualizarTudo();renderFeriados();
+  }finally{bt.disabled=false;}
 }
 
 // Configuracoes e local do escritorio
@@ -1374,6 +1594,14 @@ function ligarEventos(){
   document.getElementById('ferProx').addEventListener('click',function(){state.ferAno++;renderFeriados();});
   document.getElementById('ferIncluir').addEventListener('click',function(){document.getElementById('frData').value='';document.getElementById('frDesc').value='';document.getElementById('frLiberado').checked=true;abrirModal('modalFeriado');});
   document.getElementById('frSalvar').addEventListener('click',salvarFeriado);
+  document.getElementById('ferGerar').addEventListener('click',abrirGerarFeriados);
+  ['gfAno','gfUf'].forEach(function(id){document.getElementById(id).addEventListener('change',montarGerarFeriados);});
+  document.getElementById('gfCidade').addEventListener('change',montarGerarFeriados);
+  document.getElementById('gfTodos').addEventListener('change',function(){var v=this.checked;document.querySelectorAll('#tbGerarFer [data-gf]').forEach(function(c){c.checked=v;});});
+  document.getElementById('gfSalvar').addEventListener('click',salvarGerarFeriados);
+  document.getElementById('folgaNova').addEventListener('click',abrirFolga);
+  document.querySelectorAll('input[name="fgPara"]').forEach(function(r){r.addEventListener('change',function(){document.getElementById('fgPessoas').style.display=this.value==='escolher'&&this.checked?'':'none';});});
+  document.getElementById('fgSalvar').addEventListener('click',salvarFolga);
   document.getElementById('cfSalvar').addEventListener('click',salvarConfig);
   document.getElementById('cfAqui').addEventListener('click',usarLocalAtual);
   document.getElementById('emTeste').addEventListener('click',function(){enviarEmailPonto('teste',this);});
@@ -1399,7 +1627,7 @@ async function init(){
   state.bh=partesMes(mesBh);state.bh={ano:state.bh.a,mes:state.bh.m};
   if(state.pode.equipe||state.pode.gerencia)document.getElementById('abaBancoBtn').style.display='';
   if(state.pode.gerencia)document.getElementById('abaCadastroBtn').style.display='';
-  if(state.pode.admin){document.getElementById('abaRelBtn').style.display='';prepararRelatorios();}
+  if(state.pode.admin){document.getElementById('abaRelBtn').style.display='';prepararRelatorios();document.querySelectorAll('.so-admin').forEach(function(el){el.style.display='';});}
   state.ferAno=Number(state.hoje.slice(0,4));
   rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});
   if(state.pode.equipe||state.pode.aprova){document.getElementById('abaEquipeBtn').style.display='';document.getElementById('eqData').value=state.hoje;carregarPendencias();}

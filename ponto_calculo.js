@@ -5,8 +5,9 @@
    Usado pela tela do ponto (navegador) e pelos relatorios automaticos.
    ===================================================================== */
 (function (raiz) {
-  var SIT_MANUAL = ['Home office', 'Atestado médico', 'Falta abonada', 'Falta justificada', 'Folga compensatória', 'Férias', 'Licença'];
-  var SIT_SEM_CARGA = ['Sábado', 'Domingo', 'Feriado', 'Ponto facultativo', 'Não admitido', 'Desligado', 'Sem controle', 'Férias', 'Licença'];
+  // 'Folga concedida' (acrescimo do SAGA, fora da planilha): dia livre dado pelo administrador, sem carga, como um feriado da pessoa
+  var SIT_MANUAL = ['Home office', 'Atestado médico', 'Falta abonada', 'Falta justificada', 'Folga compensatória', 'Férias', 'Licença', 'Folga concedida'];
+  var SIT_SEM_CARGA = ['Sábado', 'Domingo', 'Feriado', 'Ponto facultativo', 'Não admitido', 'Desligado', 'Sem controle', 'Férias', 'Licença', 'Folga concedida'];
   var SIT_ABONA = ['Atestado médico', 'Falta abonada'];
   var NOMES_DIA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 
@@ -80,7 +81,7 @@
     var pa = pausaAberta(mk);
 
     if (ent === null) {
-      if (carga === 0) return r;
+      if (carga === 0) { if (sit === 'Folga concedida') r.status = 'Folga concedida'; return r; }
       r.carga = carga;
       if (abono >= carga) { r.trab = 0; r.saldo = 0; r.status = 'Abonado'; return r; }
       if (ehHoje) { r.status = 'Aguardando entrada'; return r; }
