@@ -674,6 +674,8 @@
       document.addEventListener(ev,registrarAtividade,{passive:true,capture:true});
     });
     setInterval(verificarInatividade,60000);
+    // Revalida o acesso em segundo plano quando passam os 30 minutos
+    setInterval(function(){verificarAcesso(false);},60000);
   }
 
   // Tipos gravados pelos gatilhos do banco (notificar_nova_tarefa, notificar_mencao etc.)
@@ -862,13 +864,51 @@
     }
   }
 
+  // ===== Controle de acesso por horario e local (T29) =====
+  // O banco decide (acesso_verificar) e registra cada verificacao. A localizacao so e pedida
+  // quando a regra exige; o administrador nunca e bloqueado. Revalida a cada 30 minutos.
+  var CHAVE_ACESSO='saga-acesso',VALIDADE_ACESSO_MS=30*60000,_acessoVerificando=null;
+  function lerLocalizacao(){
+    return new Promise(function(ok){
+      if(!navigator.geolocation)return ok(null);
+      navigator.geolocation.getCurrentPosition(function(p){ok({lat:p.coords.latitude,lng:p.coords.longitude,precisao:p.coords.accuracy});},
+        function(){ok(null);},{enableHighAccuracy:true,timeout:12000,maximumAge:120000});
+    });
+  }
+  async function consultarAcesso(loc){
+    var r=await global._sb.rpc('acesso_verificar',{p_lat:loc?loc.lat:null,p_lng:loc?loc.lng:null,p_precisao:loc?loc.precisao:null,p_navegador:(navigator.userAgent||'').slice(0,200)});
+    if(r.error)throw r.error;
+    return r.data||{};
+  }
+  async function verificarAcesso(forcar){
+    if(!global._sb)return true;
+    var uid=idSessaoLocal(),guardado=null;
+    try{guardado=JSON.parse(sessionStorage.getItem(CHAVE_ACESSO)||'null');}catch(e){}
+    if(!forcar&&guardado&&guardado.uid===uid&&guardado.ate>Date.now())return true;
+    if(_acessoVerificando)return _acessoVerificando;
+    _acessoVerificando=(async function(){
+      try{
+        var d=await consultarAcesso(null);
+        if(!d.ok&&d.motivo==='sem localização'){var loc=await lerLocalizacao();d=await consultarAcesso(loc);}
+        if(d.ok){try{sessionStorage.setItem(CHAVE_ACESSO,JSON.stringify({uid:uid,ate:Date.now()+VALIDADE_ACESSO_MS}));}catch(e){}return true;}
+        try{sessionStorage.setItem('saga-acesso-msg',d.mensagem||'Acesso não permitido agora.');}catch(e){}
+        await global.sagaLogout('acesso');
+        return false;
+      }catch(e){
+        // Falha de rede: nao tranca quem ja estava dentro; tenta de novo na proxima verificacao
+        return true;
+      }finally{_acessoVerificando=null;}
+    })();
+    return _acessoVerificando;
+  }
+
   global.sagaLogout=async function(motivo){
     if(!global._sb)return;
     try{if(_canalPresenca)await _canalPresenca.untrack();}catch(e){}
     try{await global._sb.auth.signOut();}catch(e){}
     try{localStorage.removeItem(CHAVE_ATIVIDADE);}catch(e){}
-    try{localStorage.removeItem('saga-permissoes');}catch(e){}
-    window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'?'?motivo='+motivo:'');
+    try{localStorage.removeItem('saga-permissoes');sessionStorage.removeItem(CHAVE_ACESSO);}catch(e){}
+    window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'||motivo==='acesso'?'?motivo='+motivo:'');
   };
 
 
@@ -1127,6 +1167,8 @@
     }
     // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
     if(await verificarInatividade())return;
+    // Horario e local de acesso (a tela continua escondida enquanto confere)
+    if(!(await verificarAcesso(false)))return;
     registrarAtividade();
     ligarControleInatividade();
     var sb=document.getElementById('sidebarSaga');

@@ -102,7 +102,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
         <button class="btn-primary" id="btnConvidarColaborador"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Convidar Colaborador</button>
         <div class="security-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.7"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Senhas são protegidas por segurança. Esta interface permite apenas resetar, nunca visualizar credenciais.</span></div>
       </section>
-      <div class="status-filter abas-col" id="abasColab" style="display:none;width:max-content;margin-bottom:14px"><button class="filter-pill active" data-aba-col="acessos" type="button">Acessos</button><button class="filter-pill" data-aba-col="equipe" type="button">Equipe e convites</button></div>
+      <div class="status-filter abas-col" id="abasColab" style="display:none;width:max-content;margin-bottom:14px"><button class="filter-pill active" data-aba-col="acessos" type="button">Acessos</button><button class="filter-pill" data-aba-col="equipe" type="button">Equipe e convites</button><button class="filter-pill" data-aba-col="acesso" type="button">Controle de acesso</button></div>
       <section class="kpi-grid aba-acessos" id="kpiGrid"></section>
       <section class="toolbar panel aba-acessos">
         <div class="toolbar-left"><div class="status-filter" id="statusFilter"><button class="filter-pill active" data-status-filter="all">Todos</button><button class="filter-pill" data-status-filter="ativo">Ativo</button><button class="filter-pill" data-status-filter="inativo">Inativo</button></div><input class="field employee-search" id="employeeSearch" placeholder="Buscar por nome ou e-mail..."></div>
@@ -121,6 +121,25 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
         </section>
         <p class="date-small" style="margin:-4px 2px 12px;line-height:1.6">Visão geral da equipe. Inclua as pessoas com cargo, perfil, horário e salário; o convite só é enviado quando você clicar em Convidar (um por um) ou em Convidar todos. O convite sai pelo e-mail do administrador geral, com o link para a pessoa criar a senha. Quem ainda não criou a conta não entra no cálculo do ponto.</p>
         <section class="panel" style="padding:0 14px 14px"><div class="employee-wrap" id="equipeWrap"></div></section>
+      </section>
+
+      <!-- CONTROLE DE ACESSO (so o administrador geral) -->
+      <section id="painelAcesso" style="display:none">
+        <section class="panel" style="padding:16px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div><b style="font-size:13px">Controle de acesso por horário e local</b><div class="date-small" style="margin-top:4px;line-height:1.55">Quando ligado, a equipe só entra no sistema em dias úteis, no horário abaixo, e do escritório (no mesmo raio do ponto). Home office aprovado libera o local naquele dia. Você nunca é bloqueado.</div></div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;cursor:pointer"><input type="checkbox" id="acAtivo" style="width:18px;height:18px"> Controle ligado</label>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:14px">
+            <div class="field-group"><label>Entrada liberada a partir de</label><input class="field" id="acInicio" type="time" style="width:150px"></div>
+            <div class="field-group"><label>Até</label><input class="field" id="acFim" type="time" style="width:150px"></div>
+            <label style="display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;height:38px"><input type="checkbox" id="acLocal"> Exigir que esteja no escritório</label>
+            <button class="btn-primary" id="acSalvar" type="button" style="margin-left:auto">Salvar</button>
+          </div>
+        </section>
+        <section class="panel" style="padding:0 14px 14px;margin-bottom:14px"><div class="employee-wrap" id="acPessoasWrap"></div></section>
+        <div class="kpi-label" style="margin:4px 2px 8px">Últimos acessos</div>
+        <section class="panel" style="padding:0 14px 14px"><div class="employee-wrap" id="acLogWrap"></div></section>
       </section>
     </main>
   </div>
@@ -1050,11 +1069,94 @@ async function removerPessoa(id){
   if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&r.error.message)||'Erro ao remover.'),'error');return;}
   showToast('Removido(a) da equipe.','success');await atualizarEquipe();await loadEmployees();renderEmployees();
 }
+// ============================================================
+// CONTROLE DE ACESSO (T29): horario e local de entrada da equipe
+// O banco decide em acesso_verificar; aqui o administrador liga, ajusta e libera.
+// ============================================================
+var acesso={cfg:null,regras:{},libs:{},ultimo:{},pessoas:[]};
+function acHm(m){return m==null?'':('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2);}
+function acHojeKey(){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Maceio',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function acQuando(ts){var d=new Date(ts);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(d);}
+async function carregarAcesso(){
+  var hoje=acHojeKey();
+  var r=await Promise.all([
+    _sb.from('ponto_config').select('id,acesso_ativo,acesso_inicio_min,acesso_fim_min,acesso_exigir_local').maybeSingle(),
+    _sb.from('usuarios').select('id,nome_completo,email,ativo,auth_user_id,eh_administrador').not('auth_user_id','is',null).eq('ativo',true).order('nome_completo'),
+    _sb.from('acesso_regras').select('*'),
+    _sb.from('acesso_liberacoes').select('*').eq('data',hoje),
+    _sb.from('acessos_log').select('*').order('momento',{ascending:false}).limit(40)
+  ]);
+  var erro=r.find(function(x){return x.error;});if(erro)throw erro.error;
+  acesso.cfg=r[0].data||{};
+  acesso.pessoas=(r[1].data||[]).filter(function(u){return !u.eh_administrador;});
+  acesso.regras={};(r[2].data||[]).forEach(function(x){acesso.regras[x.usuario_id]=x;});
+  acesso.libs={};(r[3].data||[]).forEach(function(x){acesso.libs[x.usuario_id]=x;});
+  acesso.log=r[4].data||[];acesso.ultimo={};acesso.log.forEach(function(x){if(!acesso.ultimo[x.usuario_id])acesso.ultimo[x.usuario_id]=x;});
+  acesso.nomes={};(r[1].data||[]).forEach(function(u){acesso.nomes[u.id]=u.nome_completo;});
+}
+function acMapa(x){return x&&x.latitude!=null?' <a href="https://www.google.com/maps?q='+x.latitude+','+x.longitude+'" target="_blank" rel="noopener" style="color:var(--gold)">ver no mapa</a>':'';}
+function acResultado(x){if(!x)return '<span class="date-small">Nenhum acesso ainda</span>';return '<span class="badge '+(x.permitido?'status-ativo':'status-inativo')+'">'+(x.permitido?'Entrou':'Bloqueado')+'</span> <span class="date-small">'+acQuando(x.momento)+' · '+esc(x.motivo||'')+(x.distancia_m!=null&&!x.permitido?' · '+x.distancia_m+' m além':'')+'</span>'+acMapa(x);}
+function renderAcesso(){
+  var c=acesso.cfg||{};
+  document.getElementById('acAtivo').checked=!!c.acesso_ativo;
+  document.getElementById('acInicio').value=acHm(c.acesso_inicio_min==null?300:c.acesso_inicio_min);
+  document.getElementById('acFim').value=acHm(c.acesso_fim_min==null?1200:c.acesso_fim_min);
+  document.getElementById('acLocal').checked=c.acesso_exigir_local!==false;
+  var rows=acesso.pessoas.map(function(u){
+    var rg=acesso.regras[u.id]||{},lib=acesso.libs[u.id],modo=rg.livre?'livre':(rg.inicio_min!=null||rg.fim_min!=null?'proprio':'padrao');
+    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" style="background:'+avatarColor('')+'">'+initials(u.nome_completo)+'</span><span><b>'+esc(u.nome_completo)+'</b><small>'+esc(u.email)+'</small></span></div></td>'+
+      '<td data-label="Regra"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select class="field" style="width:auto;min-width:150px" data-ac-modo="'+u.id+'"><option value="padrao"'+(modo==='padrao'?' selected':'')+'>Horário padrão</option><option value="proprio"'+(modo==='proprio'?' selected':'')+'>Horário próprio</option><option value="livre"'+(modo==='livre'?' selected':'')+'>Livre (sem trava)</option></select>'+
+      '<span data-ac-horas="'+u.id+'" style="display:'+(modo==='proprio'?'inline-flex':'none')+';gap:4px;align-items:center"><input class="field" type="time" style="width:110px" data-ac-ini="'+u.id+'" value="'+acHm(rg.inicio_min)+'"> às <input class="field" type="time" style="width:110px" data-ac-fim="'+u.id+'" value="'+acHm(rg.fim_min)+'"></span>'+
+      '<button class="btn-secondary" style="height:32px" data-ac-salvar="'+u.id+'" type="button">Salvar</button></div></td>'+
+      '<td data-label="Último acesso">'+acResultado(acesso.ultimo[u.id])+'</td>'+
+      '<td data-label="Hoje">'+(lib?'<span class="badge status-afastado">Liberado hoje</span> <button class="btn-secondary" style="height:30px" data-ac-cancelar="'+lib.id+'" type="button">Cancelar</button>':'<button class="btn-secondary" style="height:30px" data-ac-liberar="'+u.id+'" type="button">Liberar hoje</button>')+'</td></tr>';
+  }).join('');
+  document.getElementById('acPessoasWrap').innerHTML='<table class="employee-table"><thead><tr><th>Pessoa</th><th>Regra de acesso</th><th>Último acesso</th><th>Hoje</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" class="date-small" style="padding:30px;text-align:center">Ninguém da equipe com conta ainda. Quem aceitar o convite aparece aqui.</td></tr>')+'</tbody></table>';
+  var logs=acesso.log.map(function(x){return '<tr><td data-label="Quando">'+acQuando(x.momento)+'</td><td data-label="Pessoa">'+esc(acesso.nomes[x.usuario_id]||'—')+'</td><td data-label="Resultado">'+acResultado(x).replace(/<span class="date-small">[^<]*<\/span>/,'')+'</td><td data-label="Motivo">'+esc(x.motivo||'')+(x.distancia_m!=null&&!x.permitido?' · '+x.distancia_m+' m além do limite':'')+'</td></tr>';}).join('');
+  document.getElementById('acLogWrap').innerHTML='<table class="employee-table"><thead><tr><th>Quando</th><th>Pessoa</th><th>Resultado</th><th>Motivo</th></tr></thead><tbody>'+(logs||'<tr><td colspan="4" class="date-small" style="padding:30px;text-align:center">Nenhum acesso registrado ainda.</td></tr>')+'</tbody></table>';
+  document.querySelectorAll('[data-ac-modo]').forEach(function(sel){sel.addEventListener('change',function(){document.querySelector('[data-ac-horas="'+sel.dataset.acModo+'"]').style.display=sel.value==='proprio'?'inline-flex':'none';});});
+  document.querySelectorAll('[data-ac-salvar]').forEach(function(b){b.addEventListener('click',function(){salvarRegraAcesso(b.dataset.acSalvar);});});
+  document.querySelectorAll('[data-ac-liberar]').forEach(function(b){b.addEventListener('click',function(){liberarHoje(b.dataset.acLiberar);});});
+  document.querySelectorAll('[data-ac-cancelar]').forEach(function(b){b.addEventListener('click',function(){cancelarLiberacao(b.dataset.acCancelar);});});
+}
+async function atualizarAcesso(){try{await carregarAcesso();}catch(e){showToast('Erro ao carregar o controle de acesso: '+esc(e.message||''),'error');return;}renderAcesso();}
+async function salvarConfigAcesso(){
+  var ini=eqMin(document.getElementById('acInicio').value),fim=eqMin(document.getElementById('acFim').value),ligar=document.getElementById('acAtivo').checked;
+  if(ini==null||fim==null||fim<=ini){showToast('Informe um horário de início e fim válido.','error');return;}
+  if(ligar&&!acesso.cfg.acesso_ativo&&!await eqConfirmar('Ligar o controle de acesso','A partir de agora, a equipe só entra no sistema em dias úteis, das '+acHm(ini)+' às '+acHm(fim)+(document.getElementById('acLocal').checked?', e do escritório (ou em home office aprovado)':'')+'. Quem estiver fora disso sai do sistema em até 30 minutos. Você não é afetado. Ligar?','Ligar'))return;
+  var r=await _sb.from('ponto_config').update({acesso_ativo:ligar,acesso_inicio_min:ini,acesso_fim_min:fim,acesso_exigir_local:document.getElementById('acLocal').checked}).eq('id',true);
+  if(r.error){showToast('Erro ao salvar: '+esc(r.error.message),'error');return;}
+  showToast(ligar?'Controle de acesso ligado.':'Configuração salva (controle desligado).','success');atualizarAcesso();
+}
+async function salvarRegraAcesso(id){
+  var modo=document.querySelector('[data-ac-modo="'+id+'"]').value,linha={usuario_id:id,livre:modo==='livre',inicio_min:null,fim_min:null,atualizado_em:new Date().toISOString()};
+  if(modo==='proprio'){
+    linha.inicio_min=eqMin(document.querySelector('[data-ac-ini="'+id+'"]').value);linha.fim_min=eqMin(document.querySelector('[data-ac-fim="'+id+'"]').value);
+    if(linha.inicio_min==null||linha.fim_min==null||linha.fim_min<=linha.inicio_min){showToast('Informe o horário próprio (início e fim).','error');return;}
+  }
+  var r=modo==='padrao'?await _sb.from('acesso_regras').delete().eq('usuario_id',id):await _sb.from('acesso_regras').upsert(linha,{onConflict:'usuario_id'});
+  if(r.error){showToast('Erro ao salvar: '+esc(r.error.message),'error');return;}
+  showToast('Regra de acesso salva.','success');atualizarAcesso();
+}
+async function liberarHoje(id){
+  if(!await eqConfirmar('Liberar hoje','Liberar '+(acesso.nomes[id]||'esta pessoa')+' para entrar hoje fora do horário e fora do escritório? Amanhã volta a valer a regra normal.','Liberar hoje'))return;
+  var r=await _sb.from('acesso_liberacoes').insert({usuario_id:id,data:acHojeKey(),qualquer_horario:true,qualquer_local:true,motivo:'Liberado pelo administrador'});
+  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  showToast('Liberado para hoje.','success');atualizarAcesso();
+}
+async function cancelarLiberacao(libId){
+  var r=await _sb.from('acesso_liberacoes').delete().eq('id',libId);
+  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  showToast('Liberação cancelada.','success');atualizarAcesso();
+}
+
 function trocarAbaColab(aba){
   document.querySelectorAll('[data-aba-col]').forEach(function(b){b.classList.toggle('active',b.dataset.abaCol===aba);});
   document.querySelectorAll('.aba-acessos').forEach(function(el){el.style.display=aba==='acessos'?'':'none';});
   document.getElementById('painelEquipe').style.display=aba==='equipe'?'':'none';
+  document.getElementById('painelAcesso').style.display=aba==='acesso'?'':'none';
   if(aba==='equipe')atualizarEquipe();
+  if(aba==='acesso')atualizarAcesso();
 }
 
 async function init(){
@@ -1087,9 +1189,10 @@ async function init(){
     document.getElementById('eqIncluir').addEventListener('click',function(){abrirPessoa(null);});
     document.getElementById('eqConvidarTodos').addEventListener('click',convidarTodos);
     document.getElementById('eqmSalvar').addEventListener('click',salvarPessoa);
+    document.getElementById('acSalvar').addEventListener('click',salvarConfigAcesso);
     document.getElementById('eqmRegime').addEventListener('change',eqAtualizarHorario);
     ['eqmEntrada','eqmSaida'].forEach(function(k){document.getElementById(k).addEventListener('change',eqSugerirCarga);});
-    if(new URLSearchParams(location.search).get('aba')==='equipe')trocarAbaColab('equipe');
+    var abaUrl=new URLSearchParams(location.search).get('aba');if(abaUrl==='equipe'||abaUrl==='acesso')trocarAbaColab(abaUrl);
   }
 
   // Filtros e buscas

@@ -429,6 +429,9 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
     showToast('Sua sessão foi encerrada após 2 horas sem uso fora do horário de expediente. Entre novamente.', 'info');
   } else if (motivo === 'desligado') {
     showToast(MSG_ACESSO_DESATIVADO, 'erro');
+  } else if (motivo === 'acesso') {
+    var msgAcesso = ''; try { msgAcesso = sessionStorage.getItem('saga-acesso-msg') || ''; sessionStorage.removeItem('saga-acesso-msg'); } catch (e) {}
+    showToast(msgAcesso || 'Acesso ao sistema não permitido neste horário ou local.', 'erro');
   }
   try {
     var r = await _sb.auth.getSession();
