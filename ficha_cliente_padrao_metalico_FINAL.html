@@ -962,7 +962,7 @@ function renderTasks(){
   root.innerHTML=process.tarefas.map(task=>{
     const podeConcluir=task.concluida!==true&&perms.tarefasEditar===true;
     const podeEditar=task.concluida!==true&&perms.tarefasEditar===true;
-    return '<div class="item-tarefa-mini '+(task.concluida?'concluida':'')+'"><button class="checkbox-tarefa-mini" '+(podeConcluir?'':'disabled')+' data-task-toggle="'+esc(task.id)+'">'+(task.concluida?checkboxIcon():'')+'</button><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo">'+esc(task.titulo)+'</div><div class="item-tarefa-mini-prazo '+(task.urgente?'urgente':'normal')+'">'+esc(task.prazo)+'</div>'+(task.responsavelNome?'<div class="item-tarefa-mini-prazo normal">Responsável: '+esc(task.responsavelNome)+'</div>':'')+'</div>'+(podeEditar?'<button class="timeline-action" data-task-edit="'+esc(task.id)+'" type="button">Editar</button>':'')+'</div>';
+    return '<div class="item-tarefa-mini '+(task.concluida?'concluida':'')+'"><button class="checkbox-tarefa-mini" '+(podeConcluir?'':'disabled')+' data-task-toggle="'+esc(task.id)+'">'+(task.concluida?checkboxIcon():'')+'</button><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo">'+esc(task.titulo)+'</div><div class="item-tarefa-mini-prazo '+(task.urgente?'urgente':'normal')+'">'+esc(task.prazo)+'</div>'+(task.responsavelNome?'<div class="item-tarefa-mini-prazo normal">Responsável: '+esc(task.responsavelNome)+(task.criadoPorNome&&task.criadoPorId!==task.responsavelId?' · criada por '+esc(task.criadoPorNome):'')+'</div>':'')+'</div>'+(podeEditar?'<button class="timeline-action" data-task-edit="'+esc(task.id)+'" type="button">Editar</button>':'')+'</div>';
   }).join('');
   root.querySelectorAll('[data-task-toggle]').forEach(button=>button.addEventListener('click',async()=>{
     await concluirTarefa(button.dataset.taskToggle);
@@ -1150,7 +1150,8 @@ async function saveTask(){
   const title=document.getElementById('taskTitleInput').value.trim();
   const deadline=document.getElementById('taskDeadlineInput').value||null;
   const responsavelInput=document.getElementById('taskResponsavel');
-  const responsavelId=responsavelInput&&responsavelInput.value?responsavelInput.value:null;
+  // Sem responsavel escolhido, a tarefa fica com quem criou (aparece em Minhas Tarefas)
+  const responsavelId=responsavelInput&&responsavelInput.value?responsavelInput.value:state.usuario.internoId;
   const tarefaExistente=state.tarefaEmEdicaoId?process.tarefas.find(item=>item.id===state.tarefaEmEdicaoId):null;
   if(!title){showToast('Informe o título da tarefa.','warning');return false;}
 
@@ -2054,7 +2055,7 @@ async function carregarTarefas(processoId){
     const r=await _sb.from('tarefas').select('id,processo_id,responsavel_id,criado_por_id,titulo,descricao,tipo,origem,data_prazo,data_prazo_original,concluida,concluida_em,concluida_por_id,criado_em,atualizado_em').eq('processo_id',processoId).order('concluida',{ascending:true}).order('data_prazo',{ascending:true});
     if(r.error)throw r.error;
     const linhas=r.data||[];
-    const responsaveisIds=[...new Set(linhas.map(item=>item.responsavel_id).filter(Boolean))];
+    const responsaveisIds=[...new Set(linhas.flatMap(item=>[item.responsavel_id,item.criado_por_id]).filter(Boolean))];
     let responsaveisPorId={};
     if(responsaveisIds.length){
       const usuarios=await _sb.from('usuarios').select('id,nome_completo').in('id',responsaveisIds);
@@ -2076,6 +2077,7 @@ async function carregarTarefas(processoId){
         responsavelId:tarefa.responsavel_id||null,
         responsavelNome:responsavel&&responsavel.nome_completo?responsavel.nome_completo:'',
         criadoPorId:tarefa.criado_por_id||null,
+        criadoPorNome:(responsaveisPorId[tarefa.criado_por_id]||{}).nome_completo||'',
         dataPrazo:prazo,
         dataPrazoOriginal:tarefa.data_prazo_original||null,
         prazo:prazo?'Prazo: '+fmtData(prazo):'Sem prazo definido',

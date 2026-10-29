@@ -394,6 +394,12 @@
   }
   .chip-filtro-remover{ cursor:pointer; font-weight:700; }
   .contador-resultados-filtro{ font-size:11px; color:var(--muted); margin-bottom:14px; }
+  .visao-tarefas{ display:inline-flex; gap:4px; padding:4px; border-radius:11px; border:1px solid var(--border-soft); margin:0 0 10px; flex-wrap:wrap; }
+  .visao-btn{ padding:6px 11px; border-radius:8px; font-size:11px; font-weight:600; color:var(--muted); background:none; border:0; cursor:pointer; }
+  .visao-btn:hover{ color:var(--text); }
+  .visao-btn.ativo{ background:var(--gold); color:#fff; }
+  .de-para-card{ font-size:10.5px; color:var(--muted); margin:-3px 0 7px; display:flex; align-items:center; gap:5px; }
+  .de-para-card b{ color:var(--text); font-weight:600; }
   .contador-resultados-filtro strong{ color:var(--text); }
 
   /* ===================================================================
@@ -1747,6 +1753,12 @@
       </div>
 
       <div class="chips-filtros-ativos" id="chipsFiltrosAtivos"></div>
+      <div class="visao-tarefas" id="visaoTarefas" role="group" aria-label="Quais tarefas mostrar">
+        <button type="button" class="visao-btn ativo" data-visao="Todas">Todas</button>
+        <button type="button" class="visao-btn" data-visao="Minhas">Minhas</button>
+        <button type="button" class="visao-btn" data-visao="Recebidas">Recebidas de outros</button>
+        <button type="button" class="visao-btn" data-visao="Atribuidas">Que eu atribuí</button>
+      </div>
       <div class="contador-resultados-filtro" id="contadorResultadosFiltro"></div>
     </div>
 
@@ -2103,6 +2115,7 @@ function montarProcessoVinculado(p){
   };
 }
 
+var nomesUsuarios = {};
 var SELECT_PROCESSO = 'id,numero_processo_cnj,pessoa:pessoas(nome_completo),status:status_funil(nome),tese:teses(nome)';
 
 // Linha do banco -> formato usado pela tela
@@ -2133,6 +2146,16 @@ function tarefaDoBanco(r){
   };
 }
 
+// Quem atribuiu a quem: "De Fulano" para quem recebeu, "Para Fulano" para quem atribuiu
+function nomeUsuario(id){ var c = getColaborador(id); return c ? c.nome : (nomesUsuarios[id] || 'colega'); }
+function htmlDeParaTarefa(t){
+  if(!t.criadoPorId || !t.responsavelId || t.criadoPorId === t.responsavelId) return '';
+  var seta = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  if(t.responsavelId === usuarioLogadoId) return '<div class="de-para-card">' + seta + 'De <b>' + escaparHtml(nomeUsuario(t.criadoPorId)) + '</b></div>';
+  if(t.criadoPorId === usuarioLogadoId) return '<div class="de-para-card">' + seta + 'Para <b>' + escaparHtml(nomeUsuario(t.responsavelId)) + '</b></div>';
+  return '<div class="de-para-card">De <b>' + escaparHtml(nomeUsuario(t.criadoPorId)) + '</b> ' + seta + ' <b>' + escaparHtml(nomeUsuario(t.responsavelId)) + '</b></div>';
+}
+
 // Dono da tarefa: quem criou, o responsavel ou o administrador. Marcados so veem e comentam.
 function souDonoDaTarefa(t){
   return !!t && (isAdmin || t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId);
@@ -2159,6 +2182,7 @@ async function carregarDadosTarefas(){
   isAdmin = !!eu.data.eh_administrador;
 
   var us = await _sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id').order('nome_completo');
+  nomesUsuarios = {}; (us.data || []).forEach(function(u){ nomesUsuarios[u.id] = u.nome_completo; });
   // So quem ja tem conta (pre-cadastros aguardando convite ficam de fora)
   dadosColaboradores = (us.data || []).filter(function(u){ return (u.ativo && u.auth_user_id) || u.id === usuarioLogadoId; }).map(function(u, i){
     return { id:u.id, nome:u.nome_completo, iniciais:iniciaisNome(u.nome_completo), cor:CORES_COLABORADORES[i % CORES_COLABORADORES.length], permissaoGerenciarColunas:false };
@@ -2427,7 +2451,7 @@ var mapaChaveFiltroSimples = { dropFiltroTipo:'tipo', dropFiltroStatus:'status',
 });
 
 /* ===== Filtros multi-select: Tribunal, Fase, Responsavel ===== */
-var filtrosAtivos = { tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], busca:'' };
+var filtrosAtivos = { visao:'Todas', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], busca:'' };
 
 function montarListaMultiResponsavel(){
   var container = document.getElementById('listaMultiResponsavel');
@@ -2482,6 +2506,14 @@ document.querySelectorAll('.btn-aplicar-multi-filtro').forEach(function(btn){
   });
 });
 
+// Visao: todas, minhas, recebidas de outros, que eu atribui
+document.querySelectorAll('#visaoTarefas [data-visao]').forEach(function(b){
+  b.addEventListener('click', function(){
+    filtrosAtivos.visao = b.dataset.visao;
+    document.querySelectorAll('#visaoTarefas [data-visao]').forEach(function(x){ x.classList.toggle('ativo', x === b); });
+    aplicarFiltrosERenderizar();
+  });
+});
 document.getElementById('campoBuscaTextual').addEventListener('input', function(){
   filtrosAtivos.busca = this.value.trim().toLowerCase();
   paginaAtualLista = 1;
@@ -2561,6 +2593,11 @@ function desmarcarOpcaoMulti(idLista, valor){
 ===================================================================== */
 
 function tarefaPassaFiltros(t){
+  // Visao: minhas (sou o responsavel), recebidas de outros, ou que eu atribui a outros
+  var outroCriou = t.criadoPorId && t.criadoPorId !== usuarioLogadoId;
+  if(filtrosAtivos.visao === 'Minhas' && t.responsavelId !== usuarioLogadoId) return false;
+  if(filtrosAtivos.visao === 'Recebidas' && !(t.responsavelId === usuarioLogadoId && outroCriou)) return false;
+  if(filtrosAtivos.visao === 'Atribuidas' && !(t.criadoPorId === usuarioLogadoId && t.responsavelId && t.responsavelId !== usuarioLogadoId)) return false;
   if(filtrosAtivos.tipo === 'Pessoal' && t.tipo !== 'pessoal') return false;
   if(filtrosAtivos.tipo === 'Vinculada a Processo' && t.tipo !== 'processo') return false;
 
@@ -2914,6 +2951,7 @@ function criarCardTarefaEl(tarefa){
       etiquetaHtml +
     '</div>' +
     '<div class="titulo-card-tarefa">' + escaparHtml(tarefa.titulo) + '</div>' +
+    htmlDeParaTarefa(tarefa) +
     (!podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '')) +
     (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
     numeroProcessoHtml +
@@ -3619,13 +3657,8 @@ function popularSelectResponsavel(){
   });
   // tarefa nova comeca com quem esta criando como responsavel
   select.value = usuarioLogadoId;
-  // colaborador comum so pode atribuir a si mesmo
-  if(!isAdmin){
-    select.value = usuarioLogadoId;
-    select.disabled = true;
-  } else {
-    select.disabled = false;
-  }
+  // Qualquer pessoa pode atribuir a tarefa a um colega (quem recebe e notificado e ve "De" quem veio)
+  select.disabled = false;
   renderizarSelectCustomTarefa('selectResponsavelTarefa');
 }
 
