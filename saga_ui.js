@@ -1188,8 +1188,6 @@
     // Menus prontos: aparecem parados; so o conteudo da tela entra com transicao (saga_guard.js)
     marcarConteudo();
     document.dispatchEvent(new CustomEvent('saga-ui-moldura'));
-    // Permissoes guardadas permitem esta tela: o conteudo ja pode aparecer (o restante carrega por tras)
-    if(_minhasPermissoes&&(!telaAtiva||podeVerTela(telaAtiva)))document.dispatchEvent(new CustomEvent('saga-ui-visivel'));
     await carregarPerfil();
     await aplicarPermissoes(telaAtiva);
     // Presenca e contador do sino carregam em paralelo e nao seguram a tela
