@@ -167,6 +167,34 @@ tr.apagado td{color:var(--muted)}
   #tbBanco td:nth-child(2){white-space:nowrap}
   #tbBanco .desc{color:#e5484d;font-weight:700}
   #tbBanco .comp{color:#16a34a;font-weight:700}
+  .ativ-panel{margin-top:14px}
+  .ativ-form{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:0 12px;margin-top:12px}
+  @media (max-width:760px){.ativ-form{grid-template-columns:minmax(0,1fr)}}
+  .cli-busca{position:relative}
+  .sugestoes{position:absolute;top:100%;left:0;right:0;z-index:30;background:var(--panel);border:1px solid var(--border);border-radius:9px;margin-top:2px;max-height:220px;overflow:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  .sugestoes button{display:block;width:100%;text-align:left;padding:8px 11px;font-size:12px;background:none;border:0;color:inherit;cursor:pointer}
+  .sugestoes button:hover{background:var(--panel-2)}
+  .cli-escolhido{display:flex;align-items:center;gap:6px;height:38px;font-size:12.5px;font-weight:600}
+  .linha-tempo{margin-top:14px;border-left:2px solid var(--border);padding-left:14px;display:grid;gap:8px}
+  .lt-item{position:relative;font-size:12.5px;line-height:1.4}
+  .lt-item::before{content:'';position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--c,var(--gold));border:2px solid var(--panel)}
+  .lt-hora{font-weight:700;font-variant-numeric:tabular-nums;margin-right:8px}
+  .lt-orig{font-size:10.5px;font-weight:700;color:var(--c,var(--gold));margin-right:6px;text-transform:uppercase;letter-spacing:.4px}
+  .lt-cli{color:var(--muted)}
+  .lt-gap{font-size:11.5px;font-weight:700;color:#e5484d;background:color-mix(in srgb,#e5484d 10%,transparent);border-radius:8px;padding:5px 9px}
+  .lt-gap::before{display:none}
+  .rel-doc{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:18px 20px;margin-top:14px}
+  .rel-doc h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+  .rel-doc .cab{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;border-bottom:1px solid var(--border-soft);padding-bottom:10px;margin-bottom:12px}
+  #relCorpo tr[data-rel-ir]{cursor:pointer}
+  #relCorpo tr[data-rel-ir]:hover td{background:var(--panel-2)}
+  td.alerta{color:#e5484d;font-weight:700}
+  @media print{
+    #topbarSaga,#sidebarSaga,.page-head,#abas,.toolbar,.no-print,.tab-pane:not(.ativo){display:none!important}
+    .content{padding:0!important;margin:0!important}
+    body{background:#fff!important;color:#111!important}
+    .rel-doc,.tabela-wrap,.resumo-grid div{border-color:#ccc!important;background:#fff!important}
+  }
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -187,6 +215,7 @@ tr.apagado td{color:var(--muted)}
     <button class="tab-btn" data-aba="ho">Home office</button>
     <button class="tab-btn" data-aba="equipe" id="abaEquipeBtn" style="display:none">Equipe <span class="qtd" id="qtdPend" style="display:none">0</span></button>
     <button class="tab-btn" data-aba="banco" id="abaBancoBtn" style="display:none">Banco de horas</button>
+    <button class="tab-btn" data-aba="rel" id="abaRelBtn" style="display:none">Relatórios</button>
     <button class="tab-btn" data-aba="cadastro" id="abaCadastroBtn" style="display:none">Cadastro</button>
   </div>
 
@@ -215,6 +244,17 @@ tr.apagado td{color:var(--muted)}
         <div class="panel-sub" id="bancoMeuSub"></div>
         <div class="resumo-grid" id="bancoMeuGrid" style="margin-top:10px"></div>
       </div>
+      <div class="panel ativ-panel" id="ativPanel">
+        <div class="panel-title">Atividades de hoje</div>
+        <div class="panel-sub">Registre o que você fez fora do sistema (WhatsApp, ligação, e-mail, carta…). O horário é gravado sozinho. O que você faz dentro do SAGA e as batidas do ponto já entram automaticamente.</div>
+        <div class="ativ-form">
+          <div class="campo"><label>Canal</label><select id="atCanal"></select></div>
+          <div class="campo cli-busca"><label>Cliente (opcional)</label><input id="atCliente" placeholder="Digite o nome ou CPF" autocomplete="off"><div class="cli-escolhido" id="atClienteSel" style="display:none"></div><div class="sugestoes" id="atSug"></div></div>
+          <div class="campo" style="grid-column:1/-1"><label>O que foi feito</label><textarea id="atDesc" placeholder="Ex.: Retornei o cliente sobre o andamento do precatório"></textarea></div>
+        </div>
+        <button class="btn-primary" id="atRegistrar" type="button">Registrar atividade</button>
+        <div class="linha-tempo" id="atLista"></div>
+      </div>
       <div class="toolbar">
         <div class="nav-mes"><button class="btn-secondary btn-sm" id="mesAnt" type="button">‹</button><b id="mesTitulo"></b><button class="btn-secondary btn-sm" id="mesProx" type="button">›</button></div>
       </div>
@@ -237,7 +277,7 @@ tr.apagado td{color:var(--muted)}
       </div>
       <div class="grid2">
         <div class="campo"><label>Horas a abonar (opcional)</label><input id="jHoras" type="time"></div>
-        <div class="campo"><label>Atestado / documento (link)</label><input id="jDoc" placeholder="Cole o link do arquivo no Drive"></div>
+        <div class="campo"><label>Atestado / documento (opcional)</label><input id="jArq" type="file" accept=".pdf,image/*" style="padding:7px 11px"><input id="jDoc" placeholder="ou cole um link" style="margin-top:6px"><span class="ajuda">PDF ou foto, até 10 MB. Só você, quem aprova o ponto e o administrador veem.</span></div>
       </div>
       <div class="campo"><label>Descrição</label><textarea id="jDesc" placeholder="Explique o que aconteceu"></textarea></div>
       <button class="btn-primary" id="jEnviar" type="button">Enviar justificativa</button>
@@ -282,6 +322,18 @@ tr.apagado td{color:var(--muted)}
     <p class="sub" style="margin-top:12px;max-width:900px">Regras da planilha: no dia do fechamento (dia 25) soma-se o saldo do dia 1º até o fechamento com o saldo transportado do mês anterior. Saldo negativo é descontado na folha. Saldo positivo, até 1 dia de carga, deve ser compensado até o fim do mês (saída mais cedo ou folga); o que passar de 1 dia é desconsiderado. No dia 1º do mês seguinte o sistema apura do dia 26 ao fim do mês e transporta o resultado. O fechamento e o transporte acontecem sozinhos quando o gestor abre o Ponto; o botão serve para fechar antes do dia 25 ou refazer.</p>
   </section>
 
+  <!-- RELATORIOS (administrador geral) -->
+  <section class="tab-pane" id="aba-rel">
+    <div class="toolbar">
+      <div class="pills" id="relModo"><button class="pill" data-modo="dia" type="button">Dia</button><button class="pill" data-modo="semana" type="button">Semana</button><button class="pill" data-modo="mes" type="button">Mês</button></div>
+      <div class="nav-mes"><button class="btn-secondary btn-sm" id="relAnt" type="button">‹</button><b id="relTitulo"></b><button class="btn-secondary btn-sm" id="relProx" type="button">›</button></div>
+      <div class="campo" style="margin:0;min-width:220px"><select id="relPessoa"></select></div>
+      <button class="btn-secondary btn-sm" id="relImprimir" type="button" style="margin-left:auto">Imprimir / salvar PDF</button>
+    </div>
+    <div id="relConteudo"></div>
+    <p class="sub no-print" style="margin-top:12px;max-width:900px">Conta como atividade tudo o que a pessoa fez: batidas do ponto, atividades registradas à mão (WhatsApp, ligação, e-mail…) e o que ela fez dentro do SAGA (tarefas, comentários, agenda, clientes, documentos, processos, financeiro, marketing e mensagens do chat, só a quantidade). Intervalo sem atividade é o tempo entre duas atividades dentro do expediente (as pausas do ponto não contam); acima do limite definido em Cadastro aparece em vermelho. Clientes atendidos são os clientes diferentes ligados às atividades do período. Só o administrador geral vê esta aba.</p>
+  </section>
+
   <!-- CADASTRO (gestor) -->
   <section class="tab-pane" id="aba-cadastro">
     <div class="toolbar"><div class="secao-titulo" style="margin:0">Colaboradores no ponto</div><button class="btn-primary btn-sm" id="cadIncluir" type="button" style="margin-left:auto">+ Incluir colaborador</button></div>
@@ -299,6 +351,7 @@ tr.apagado td{color:var(--muted)}
         <div class="campo"><label>Início da contagem</label><input id="cfInicio" type="date"></div>
         <div class="campo"><label>Tolerância de atraso (min)</label><input id="cfTol" type="number" min="0" max="60"></div>
         <div class="campo"><label>Ocorrências para alerta no mês</label><input id="cfLimite" type="number" min="1" max="31"></div>
+        <div class="campo"><label>Alerta de intervalo sem atividade (min)</label><input id="cfIntervalo" type="number" min="5" max="240"></div>
         <div class="campo"><label>Dia do fechamento</label><input id="cfFech" type="number" min="1" max="31"></div>
         <div class="campo"><label>Hora do relatório diário</label><input id="cfHora" type="number" min="0" max="23"></div>
         <div class="campo"><label>Relatório semanal</label><select id="cfSemanal"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div>
@@ -576,7 +629,7 @@ async function bater(botao,btn){
     var r=await _sb.rpc('bater_ponto',{p_botao:botao,p_lat:loc?loc.lat:null,p_lng:loc?loc.lng:null,p_precisao:loc?Math.round(loc.prec):null});
     if(r.error)throw r.error;
     msg.className='msg-ponto '+(r.data.ok?'ok':'erro');msg.textContent=r.data.mensagem;
-    if(r.data.ok)await carregarMeuMes();
+    if(r.data.ok){await carregarMeuMes();carregarMinhasAtividades();}
   }catch(e){msg.className='msg-ponto erro';msg.textContent='Não foi possível registrar: '+(e.message||'tente de novo');}
   finally{document.querySelectorAll('[data-botao]').forEach(function(b){b.disabled=false;});}
 }
@@ -610,14 +663,24 @@ function prepararFormJust(){
 }
 async function enviarJust(){
   var slot=document.getElementById('jSlot').value,hora=document.getElementById('jHora').value,horas=document.getElementById('jHoras').value;
-  var btn=document.getElementById('jEnviar');btn.disabled=true;
+  var btn=document.getElementById('jEnviar'),arq=document.getElementById('jArq').files[0],doc=document.getElementById('jDoc').value.trim();
+  if(arq&&arq.size>10485760){showToast('O arquivo passa de 10 MB.','error');return;}
+  btn.disabled=true;
+  if(arq){
+    // atestado vai para a pasta privada do proprio colaborador
+    var nomeArq=arq.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9._-]+/g,'_').slice(-80);
+    var caminho=state.meuId+'/'+Date.now()+'-'+nomeArq;
+    var up=await _sb.storage.from('atestados').upload(caminho,arq,{contentType:arq.type||undefined});
+    if(up.error){btn.disabled=false;showToast('Não foi possível enviar o arquivo: '+esc(up.error.message),'error');return;}
+    doc='atestados/'+caminho;
+  }
   var r=await _sb.rpc('enviar_justificativa',{p_data:document.getElementById('jData').value||null,p_tipo:document.getElementById('jTipo').value,
     p_slot:slot===''?null:Number(slot),p_horario_min:hora?minDeHora(hora):null,p_horas_min:horas?minDeHora(horas):null,
-    p_descricao:document.getElementById('jDesc').value,p_documento:document.getElementById('jDoc').value});
+    p_descricao:document.getElementById('jDesc').value,p_documento:doc});
   btn.disabled=false;
   if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
   showToast(esc(r.data.mensagem),r.data.ok?'success':'error');
-  if(r.data.ok){['jData','jHora','jHoras','jDoc','jDesc'].forEach(function(i){document.getElementById(i).value='';});document.getElementById('jTipo').value='';document.getElementById('jSlot').value='';carregarMinhasJust();}
+  if(r.data.ok){['jData','jHora','jHoras','jDoc','jDesc','jArq'].forEach(function(i){document.getElementById(i).value='';});document.getElementById('jTipo').value='';document.getElementById('jSlot').value='';carregarMinhasJust();}
 }
 function cardJust(j,nomes,gestor){
   var cor={pendente:'#e0a93b',aprovada:'#2fae7a',recusada:'#e5484d'}[j.status];
@@ -625,7 +688,7 @@ function cardJust(j,nomes,gestor){
   var marc=j.slot!==null&&j.slot!==undefined?(nomes[j.slot]||'Marcação')+' → '+PC.hhmm(j.horario_min):'';
   var h='<div class="card-linha"><div class="topo"><div><b>'+(gestor&&colab?esc(colab.nome)+' · ':'')+dataBR(j.data)+'</b> · '+esc(j.tipo)+'</div><span class="st" style="background:color-mix(in srgb,'+cor+' 18%,transparent);color:'+cor+'">'+esc(j.status)+'</span></div>'+
     '<div class="sub" style="margin-top:6px">'+esc(j.descricao)+'</div>'+
-    '<div class="sub">'+[marc,j.horas_abonar_min?'Abonar '+PC.hhmm(j.horas_abonar_min):'',j.documento?'<a href="'+esc(j.documento)+'" target="_blank" rel="noopener">documento</a>':'','Protocolo '+esc(j.protocolo)].filter(Boolean).join(' · ')+'</div>';
+    '<div class="sub">'+[marc,j.horas_abonar_min?'Abonar '+PC.hhmm(j.horas_abonar_min):'',j.documento?(/^atestados\//.test(j.documento)?'<button class="lnk" type="button" data-atestado="'+esc(j.documento.slice(10))+'">ver atestado</button>':/^https?:\/\//i.test(j.documento)?'<a href="'+esc(j.documento)+'" target="_blank" rel="noopener">documento</a>':esc(j.documento)):'','Protocolo '+esc(j.protocolo)].filter(Boolean).join(' · ')+'</div>';
   if(j.status!=='pendente')h+='<div class="sub" style="margin-top:4px">'+(j.resposta?'Resposta: '+esc(j.resposta)+' · ':'')+(j.aplicado?'Aplicado: '+esc(j.aplicado):'')+'</div>';
   if(gestor&&j.status==='pendente')h+='<textarea data-resp="'+j.id+'" placeholder="Resposta ao colaborador (opcional)"></textarea><div class="acoes"><button class="btn-primary btn-sm" data-decidir="aprovar" data-j="'+j.id+'" type="button">Aprovar</button><button class="btn-danger btn-sm" data-decidir="recusar" data-j="'+j.id+'" type="button">Recusar</button></div>';
   return h+'</div>';
@@ -1016,6 +1079,7 @@ async function renderConfig(){
   var c=state.cfg;
   document.getElementById('cfInicio').value=c.inicio_contagem||'';
   document.getElementById('cfTol').value=c.tolerancia_min;document.getElementById('cfLimite').value=c.limite_alerta;
+  document.getElementById('cfIntervalo').value=c.intervalo_alerta_min||30;
   document.getElementById('cfFech').value=c.dia_fechamento||25;document.getElementById('cfHora').value=c.hora_relatorio==null?19:c.hora_relatorio;
   document.getElementById('cfSemanal').value=String(c.dia_semanal||5);
   document.getElementById('cfEmails').value=(c.emails_gestor||[]).join(', ');document.getElementById('cfExtras').value=(c.emails_extras||[]).join(', ');
@@ -1033,7 +1097,7 @@ async function salvarConfig(){
   var ruim=em.concat(ex).filter(function(e){return !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);});
   if(ruim.length){showToast('E-mail inválido: '+esc(ruim.join(', ')),'error');return;}
   if(!(num('cfFech')>=1&&num('cfFech')<=31)){showToast('Dia do fechamento entre 1 e 31.','error');return;}
-  var dados={inicio_contagem:document.getElementById('cfInicio').value||null,tolerancia_min:num('cfTol')||0,limite_alerta:num('cfLimite')||1,dia_fechamento:num('cfFech'),
+  var dados={inicio_contagem:document.getElementById('cfInicio').value||null,tolerancia_min:num('cfTol')||0,limite_alerta:num('cfLimite')||1,intervalo_alerta_min:Math.min(240,Math.max(5,num('cfIntervalo')||30)),dia_fechamento:num('cfFech'),
     hora_relatorio:num('cfHora'),dia_semanal:num('cfSemanal'),emails_gestor:em,emails_extras:ex,exigir_local:document.getElementById('cfLocal').checked,atualizado_em:new Date().toISOString()};
   var btn=document.getElementById('cfSalvar');btn.disabled=true;
   try{
@@ -1077,10 +1141,186 @@ async function carregarEnvios(){
   }).join('')||'<tr><td colspan="3" class="vazio">Nenhum envio automático ainda.</td></tr>';
 }
 
+// ===== Atividades (T13) =====
+var CANAIS=['WhatsApp','Ligação','E-mail','Carta','Atendimento presencial','Campanha de marketing','Reunião','Pesquisa','Outro'];
+var CORES_ORIGEM={'Ponto':'#4f7de0','Chat':'#8b5cf6','Tarefa':'#2fae7a','Agenda':'#e0a93b','Cliente':'#14b8a6','Documento':'#64748b','Processo':'#0ea5e9','Financeiro':'#16a34a','Marketing':'#ec4899','Comentário no processo':'#0ea5e9','Relatório do dia':'#a16207'};
+var ROTULOS_PONTO=[['Entrada','Início pausa 1','Fim pausa 1','Início pausa 2','Fim pausa 2','Início pausa 3','Fim pausa 3','Saída'],['Início 1','Fim 1','Início 2','Fim 2','Início 3','Fim 3','Início 4','Fim 4']];
+function horaDe(ts){return new Intl.DateTimeFormat('pt-BR',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date(ts));}
+function minutosEntre(a,b){return Math.round((new Date(b)-new Date(a))/60000);}
+function duracaoTxt(m){m=Math.max(0,Math.round(m));var h=Math.floor(m/60),r=m%60;return h?h+'h'+(r?dois(r):''):r+' min';}
+function corOrigem(o){return CORES_ORIGEM[o]||'#f59e0b';}
+function slotDoEvento(e){
+  if(e.origem!=='Ponto')return null;var t=String(e.descricao||'').replace(/ \(home office\)$/,'');
+  for(var k=0;k<2;k++){var i=ROTULOS_PONTO[k].indexOf(t);if(i>=0)return i;}return null;
+}
+// Analisa um dia: expediente pelas batidas (slot par abre, impar fecha), atividades, clientes e intervalos sem atividade
+function analisarDia(eventos,dia,limite){
+  var batidas=[],ativ=[],clientes={};
+  eventos.forEach(function(e){var s=slotDoEvento(e);if(s!==null)batidas.push({slot:s,t:e.momento});else{ativ.push(e);if(e.pessoa_id)clientes[e.pessoa_id]=e.cliente||'Cliente';}});
+  batidas.sort(function(a,b){return a.slot-b.slot;});
+  var periodos=[],trab=0,agora=new Date().toISOString(),ehHoje=dia===hojeKey();
+  for(var i=0;i<batidas.length;i++){
+    if(batidas[i].slot%2!==0)continue;
+    // fecha com a proxima batida impar (pausas nao usadas pulam slots: Entrada 0 -> Saida 7)
+    var prox=batidas[i+1],fim=prox&&prox.slot%2===1?prox.t:(!prox&&ehHoje?agora:null);
+    if(fim&&fim>batidas[i].t){periodos.push([batidas[i].t,fim]);trab+=minutosEntre(batidas[i].t,fim);}
+  }
+  var gaps=[],maior=0;
+  periodos.forEach(function(p){
+    var pts=[p[0]].concat(ativ.filter(function(e){return e.momento>p[0]&&e.momento<p[1];}).map(function(e){return e.momento;})).concat([p[1]]);
+    pts.sort();
+    for(var j=1;j<pts.length;j++){var d=minutosEntre(pts[j-1],pts[j]);if(d>maior)maior=d;if(d>limite)gaps.push({de:pts[j-1],ate:pts[j],min:d});}
+  });
+  return {entrada:batidas.length?batidas[0].t:null,saida:batidas.length>1&&batidas[batidas.length-1].slot%2===1?batidas[batidas.length-1].t:null,
+    trab:trab,nAtiv:ativ.length,clientes:clientes,nCli:Object.keys(clientes).length,gaps:gaps,maior:maior,temPonto:batidas.length>0};
+}
+function htmlLinhaTempo(eventos,gaps){
+  var itens=eventos.map(function(e){return {t:e.momento,e:e};}).concat((gaps||[]).map(function(g){return {t:g.de,g:g,depois:true};}));
+  itens.sort(function(a,b){return a.t<b.t?-1:a.t>b.t?1:(a.depois?1:0)-(b.depois?1:0);});
+  if(!itens.length)return '<div class="sub">Nenhuma atividade ainda.</div>';
+  return itens.map(function(it){
+    if(it.g)return '<div class="lt-item lt-gap">'+horaDe(it.g.de)+' às '+horaDe(it.g.ate)+' · '+duracaoTxt(it.g.min)+' sem atividade</div>';
+    var e=it.e;
+    return '<div class="lt-item" style="--c:'+corOrigem(e.origem)+'"><span class="lt-hora">'+horaDe(e.momento)+'</span><span class="lt-orig">'+esc(e.origem)+'</span>'+esc(e.descricao||'')+(e.cliente?' <span class="lt-cli">· '+esc(e.cliente)+'</span>':'')+'</div>';
+  }).join('');
+}
+function prepararAtividades(){
+  document.getElementById('atCanal').innerHTML=CANAIS.map(function(c){return '<option>'+esc(c)+'</option>';}).join('');
+  var inp=document.getElementById('atCliente'),sug=document.getElementById('atSug'),tm=null;
+  inp.addEventListener('input',function(){
+    clearTimeout(tm);var q=inp.value.trim();
+    if(q.length<2){sug.style.display='none';return;}
+    tm=setTimeout(async function(){
+      var dig=q.replace(/\D/g,''),f='nome_completo.ilike.%'+q.replace(/[,%()]/g,' ')+'%'+(dig.length>=3?',cpf.ilike.%'+dig+'%':'');
+      var r=await _sb.from('pessoas').select('id,nome_completo,cpf').or(f).order('nome_completo').limit(8);
+      var l=r.data||[];
+      sug.innerHTML=l.length?l.map(function(p){return '<button type="button" data-pessoa="'+p.id+'" data-nome="'+esc(p.nome_completo)+'">'+esc(p.nome_completo)+(p.cpf?' <span class="sub">'+esc(p.cpf)+'</span>':'')+'</button>';}).join(''):'<div class="sub" style="padding:8px 11px">Nenhum cliente encontrado.</div>';
+      sug.style.display='block';
+    },250);
+  });
+  sug.addEventListener('click',function(ev){
+    var b=ev.target.closest('[data-pessoa]');if(!b)return;
+    state.atPessoa={id:b.dataset.pessoa,nome:b.dataset.nome};sug.style.display='none';inp.style.display='none';inp.value='';
+    var sel=document.getElementById('atClienteSel');sel.style.display='';
+    sel.innerHTML=esc(state.atPessoa.nome)+' <button class="lnk" type="button" id="atClienteTirar">trocar</button>';
+  });
+  document.getElementById('atClienteSel').addEventListener('click',function(ev){
+    if(ev.target.id!=='atClienteTirar')return;state.atPessoa=null;this.style.display='none';inp.style.display='';inp.focus();
+  });
+  document.addEventListener('click',function(ev){if(!ev.target.closest('.cli-busca'))sug.style.display='none';});
+  document.getElementById('atRegistrar').addEventListener('click',registrarAtividade);
+}
+async function registrarAtividade(){
+  var desc=document.getElementById('atDesc').value.trim();
+  if(!desc){showToast('Descreva o que foi feito.','error');return;}
+  var btn=document.getElementById('atRegistrar');btn.disabled=true;
+  var r=await _sb.from('atividades').insert({canal:document.getElementById('atCanal').value,descricao:desc,pessoa_id:state.atPessoa?state.atPessoa.id:null});
+  btn.disabled=false;
+  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  showToast('Atividade registrada às '+horaDe(new Date().toISOString())+'.','success');
+  document.getElementById('atDesc').value='';state.atPessoa=null;
+  document.getElementById('atClienteSel').style.display='none';document.getElementById('atCliente').style.display='';
+  carregarMinhasAtividades();
+}
+async function carregarMinhasAtividades(){
+  if(!state.meuId)return;
+  var r=await _sb.rpc('relatorio_atividades',{p_usuario:state.meuId,p_ini:state.hoje,p_fim:state.hoje});
+  var ev=r.data||[];
+  document.getElementById('atLista').innerHTML=r.error?'<div class="sub">Erro ao carregar: '+esc(r.error.message)+'</div>':htmlLinhaTempo(ev,[]).replace('Nenhuma atividade ainda.','Nenhuma atividade hoje ainda.');
+}
+
+// ===== Relatorios (administrador geral) =====
+function addDias(k,n){var p=k.split('-').map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]+n));return d.toISOString().slice(0,10);}
+function periodoRel(){
+  var d=state.rel.data,p=d.split('-').map(Number);
+  if(state.rel.modo==='dia')return {ini:d,fim:d,titulo:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(Date.UTC(p[0],p[1]-1,p[2])).getUTCDay()]+', '+dataBR(d)};
+  if(state.rel.modo==='semana'){var w=new Date(Date.UTC(p[0],p[1]-1,p[2])).getUTCDay(),ini=addDias(d,-((w+6)%7)),fim=addDias(ini,6);return {ini:ini,fim:fim,titulo:dataBR(ini).slice(0,5)+' a '+dataBR(fim)};}
+  var ini2=d.slice(0,8)+'01',fim2=new Date(Date.UTC(p[0],p[1],0)).toISOString().slice(0,10);
+  return {ini:ini2,fim:fim2,titulo:['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'][p[1]-1]+' de '+p[0]};
+}
+function moverRel(delta){
+  var d=state.rel.data;
+  if(state.rel.modo==='dia')state.rel.data=addDias(d,delta);
+  else if(state.rel.modo==='semana')state.rel.data=addDias(d,7*delta);
+  else{var p=d.split('-').map(Number),m=p[1]+delta,a=p[0];if(m<1){m=12;a--;}if(m>12){m=1;a++;}state.rel.data=a+'-'+dois(m)+'-01';}
+  renderRelatorios();
+}
+function prepararRelatorios(){
+  state.rel={modo:'dia',data:state.hoje,pessoa:''};
+  document.querySelectorAll('#relModo .pill').forEach(function(b){b.addEventListener('click',function(){state.rel.modo=b.dataset.modo;renderRelatorios();});});
+  document.getElementById('relAnt').addEventListener('click',function(){moverRel(-1);});
+  document.getElementById('relProx').addEventListener('click',function(){moverRel(1);});
+  document.getElementById('relPessoa').addEventListener('change',function(){state.rel.pessoa=this.value;renderRelatorios();});
+  document.getElementById('relImprimir').addEventListener('click',function(){window.print();});
+  document.getElementById('relConteudo').addEventListener('click',function(ev){
+    var tr=ev.target.closest('[data-rel-ir]');if(!tr)return;
+    if(tr.dataset.relPessoa)state.rel.pessoa=tr.dataset.relPessoa;
+    if(tr.dataset.relData){state.rel.data=tr.dataset.relData;state.rel.modo='dia';}
+    renderRelatorios();
+  });
+}
+function diasDoPeriodo(ini,fim){var l=[],d=ini;while(d<=fim){l.push(d);d=addDias(d,1);}return l;}
+async function renderRelatorios(){
+  var per=periodoRel(),limite=state.cfg.intervalo_alerta_min||30,alvo=document.getElementById('relConteudo');
+  document.querySelectorAll('#relModo .pill').forEach(function(b){var a=b.dataset.modo===state.rel.modo;b.classList.toggle('active',a);b.style.background=a?'var(--gold)':'';b.style.borderColor=a?'var(--gold)':'';});
+  document.getElementById('relTitulo').textContent=per.titulo;
+  var pessoas=state.colabsPonto.filter(function(c){return c.usuario_id&&(!c.demissao||c.demissao>=per.ini);});
+  var sel=document.getElementById('relPessoa');
+  sel.innerHTML='<option value="">Toda a equipe</option>'+pessoas.map(function(c){return '<option value="'+c.usuario_id+'">'+esc(c.nome)+'</option>';}).join('');
+  sel.value=state.rel.pessoa;if(sel.value!==state.rel.pessoa){state.rel.pessoa='';sel.value='';}
+  alvo.innerHTML='<div class="vazio">Carregando…</div>';
+  var lista=state.rel.pessoa?pessoas.filter(function(c){return c.usuario_id===state.rel.pessoa;}):pessoas;
+  var res=await Promise.all(lista.map(function(c){return _sb.rpc('relatorio_atividades',{p_usuario:c.usuario_id,p_ini:per.ini,p_fim:per.fim});}));
+  var erro=res.find(function(r){return r.error;});
+  if(erro){alvo.innerHTML='<div class="vazio">Erro ao gerar o relatório: '+esc(erro.error.message)+'</div>';return;}
+  var dias=diasDoPeriodo(per.ini,per.fim);
+  var dados=lista.map(function(c,i){
+    var porDia={};(res[i].data||[]).forEach(function(e){var k=dataLocalDe(e.momento);(porDia[k]=porDia[k]||[]).push(e);});
+    var an={};dias.forEach(function(d){an[d]=analisarDia(porDia[d]||[],d,limite);});
+    return {c:c,porDia:porDia,an:an};
+  });
+  var gerado='Gerado em '+dataBR(state.hoje)+' às '+horaDe(new Date().toISOString())+' · limite de intervalo: '+limite+' min';
+  var hh=function(m){return m?PC.hhmm(m):'—';};
+  var tot=function(d){var t={dias:0,trab:0,nAtiv:0,gaps:0,maior:0,cli:{}};dias.forEach(function(k){var a=d.an[k];if(a.temPonto)t.dias++;t.trab+=a.trab;t.nAtiv+=a.nAtiv;t.gaps+=a.gaps.length;if(a.maior>t.maior)t.maior=a.maior;Object.keys(a.clientes).forEach(function(x){t.cli[x]=1;});});t.nCli=Object.keys(t.cli).length;return t;};
+  var h='';
+  if(state.rel.modo==='dia'&&state.rel.pessoa){
+    var d=dados[0],a=d.an[per.ini];
+    h='<div class="rel-doc"><div class="cab"><div><h2>Relatório de atividades · '+esc(d.c.nome)+'</h2><div class="sub">'+esc(per.titulo)+(d.c.cargo?' · '+esc(d.c.cargo):'')+'</div></div><div class="sub">'+gerado+'</div></div>'+
+      '<div class="resumo-grid" style="margin-bottom:14px"><div><span>Entrada</span><b>'+(a.entrada?horaDe(a.entrada):'—')+'</b></div><div><span>Saída</span><b>'+(a.saida?horaDe(a.saida):'—')+'</b></div><div><span>Trabalhadas</span><b>'+hh(a.trab)+'</b></div>'+
+      '<div><span>Atividades</span><b>'+a.nAtiv+'</b></div><div><span>Clientes atendidos</span><b>'+a.nCli+'</b></div><div><span>Maior intervalo</span><b'+(a.maior>limite?' style="color:#e5484d"':'')+'>'+(a.maior?duracaoTxt(a.maior):'—')+'</b></div></div>'+
+      (a.nCli?'<div class="sub" style="margin-bottom:10px">Clientes: '+Object.keys(a.clientes).map(function(k){return esc(a.clientes[k]);}).join(', ')+'</div>':'')+
+      '<div class="linha-tempo">'+htmlLinhaTempo(d.porDia[per.ini]||[],a.gaps)+'</div></div>';
+  }else if(state.rel.modo==='dia'){
+    h='<div class="tabela-wrap"><table class="banco"><thead><tr><th>Colaborador</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima de '+limite+' min</th></tr></thead><tbody id="relCorpo">'+
+      dados.map(function(d){var a=d.an[per.ini];return '<tr data-rel-ir="1" data-rel-pessoa="'+d.c.usuario_id+'" title="Ver a linha do tempo"><td><b>'+esc(d.c.nome)+'</b></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>limite?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+
+      '</tbody></table></div><div class="sub" style="margin-top:8px">'+gerado+'. Clique em um colaborador para ver a linha do tempo do dia.</div>';
+  }else if(state.rel.pessoa){
+    var d2=dados[0],t2=tot(d2);
+    h='<div class="rel-doc"><div class="cab"><div><h2>Relatório de atividades · '+esc(d2.c.nome)+'</h2><div class="sub">'+esc(per.titulo)+'</div></div><div class="sub">'+gerado+'</div></div>'+
+      '<div class="resumo-grid" style="margin-bottom:14px"><div><span>Dias com ponto</span><b>'+t2.dias+'</b></div><div><span>Trabalhadas</span><b>'+hh(t2.trab)+'</b></div><div><span>Atividades</span><b>'+t2.nAtiv+'</b></div>'+
+      '<div><span>Média por dia</span><b>'+(t2.dias?(t2.nAtiv/t2.dias).toFixed(1).replace('.',','):'—')+'</b></div><div><span>Clientes atendidos</span><b>'+t2.nCli+'</b></div><div><span>Intervalos acima de '+limite+' min</span><b'+(t2.gaps?' style="color:#e5484d"':'')+'>'+t2.gaps+'</b></div></div>'+
+      '<div class="tabela-wrap"><table class="banco"><thead><tr><th>Dia</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima</th></tr></thead><tbody id="relCorpo">'+
+      dias.map(function(k){var a=d2.an[k];if(!a.temPonto&&!a.nAtiv)return '';return '<tr data-rel-ir="1" data-rel-data="'+k+'" title="Ver a linha do tempo"><td><b>'+dataBR(k)+'</b></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>limite?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+
+      '</tbody></table></div></div>';
+  }else{
+    h='<div class="tabela-wrap"><table class="banco"><thead><tr><th>Colaborador</th><th class="num">Dias com ponto</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Média por dia</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima de '+limite+' min</th></tr></thead><tbody id="relCorpo">'+
+      dados.map(function(d){var t=tot(d);return '<tr data-rel-ir="1" data-rel-pessoa="'+d.c.usuario_id+'" title="Ver os dias"><td><b>'+esc(d.c.nome)+'</b></td><td class="num">'+t.dias+'</td><td class="num">'+hh(t.trab)+'</td><td class="num">'+t.nAtiv+'</td><td class="num">'+(t.dias?(t.nAtiv/t.dias).toFixed(1).replace('.',','):'—')+'</td><td class="num">'+t.nCli+'</td><td class="num'+(t.maior>limite?' alerta':'')+'">'+(t.maior?duracaoTxt(t.maior):'—')+'</td><td class="num'+(t.gaps?' alerta':'')+'">'+t.gaps+'</td></tr>';}).join('')+
+      '</tbody></table></div><div class="sub" style="margin-top:8px">'+gerado+'. Clique em um colaborador para ver dia a dia.</div>';
+  }
+  if(!lista.length)h='<div class="vazio">Nenhum colaborador com conta no ponto.</div>';
+  alvo.innerHTML=h;
+}
+async function abrirAtestado(caminho){
+  var w=window.open('','_blank');
+  var r=await _sb.storage.from('atestados').createSignedUrl(caminho,300);
+  if(r.error||!r.data){if(w)w.close();showToast('Não foi possível abrir o atestado: '+esc(r.error?r.error.message:''),'error');return;}
+  if(w)w.location.href=r.data.signedUrl;else window.location.href=r.data.signedUrl;
+}
+
 function trocarAba(aba){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();
+  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='rel')renderRelatorios();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
@@ -1133,8 +1373,10 @@ function ligarEventos(){
   document.getElementById('emTeste').addEventListener('click',function(){enviarEmailPonto('teste',this);});
   document.getElementById('emDiario').addEventListener('click',function(){enviarEmailPonto('diario',this);});
   document.addEventListener('saga-atualizar',atualizarTudo);
+  document.addEventListener('click',function(ev){var b=ev.target.closest('[data-atestado]');if(b)abrirAtestado(b.dataset.atestado);});
+  prepararAtividades();
 }
-async function atualizarTudo(){await carregarBase();await carregarBanco();await rotinaBanco();await carregarMeuMes();var a=document.querySelector('#abas .tab-btn.active');if(a)trocarAba(a.dataset.aba);}
+async function atualizarTudo(){await carregarBase();await carregarBanco();await rotinaBanco();await carregarMeuMes();carregarMinhasAtividades();var a=document.querySelector('#abas .tab-btn.active');if(a)trocarAba(a.dataset.aba);}
 async function init(){
   ligarEventos();
   await SagaUI.carregar('ponto');
@@ -1143,14 +1385,15 @@ async function init(){
   var eu=await _sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle();
   state.meuId=eu.data&&eu.data.id;
   state.hoje=hojeKey();var p=state.hoje.split('-').map(Number);state.ano=p[0];state.mes=p[1];
-  var perms=await Promise.all([_sb.rpc('ponto_ve_equipe'),_sb.rpc('ponto_aprova'),_sb.rpc('ponto_gerencia')]);
-  state.pode={equipe:perms[0].data===true,aprova:perms[1].data===true,gerencia:perms[2].data===true};
+  var perms=await Promise.all([_sb.rpc('ponto_ve_equipe'),_sb.rpc('ponto_aprova'),_sb.rpc('ponto_gerencia'),_sb.rpc('eh_admin_sistema')]);
+  state.pode={equipe:perms[0].data===true,aprova:perms[1].data===true,gerencia:perms[2].data===true,admin:perms[3].data===true};
   await carregarBase();
   await carregarBanco();
   var mesAtual=state.hoje.slice(0,7),mesBh=state.hoje>=fechKeyDe(mesAtual)?mesAtual:mesAnterior(mesAtual);
   state.bh=partesMes(mesBh);state.bh={ano:state.bh.a,mes:state.bh.m};
   if(state.pode.equipe||state.pode.gerencia)document.getElementById('abaBancoBtn').style.display='';
   if(state.pode.gerencia)document.getElementById('abaCadastroBtn').style.display='';
+  if(state.pode.admin){document.getElementById('abaRelBtn').style.display='';prepararRelatorios();}
   state.ferAno=Number(state.hoje.slice(0,4));
   rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});
   if(state.pode.equipe||state.pode.aprova){document.getElementById('abaEquipeBtn').style.display='';document.getElementById('eqData').value=state.hoje;carregarPendencias();}
@@ -1160,6 +1403,7 @@ async function init(){
     document.getElementById('subtitulo').textContent=c.nome+' · '+c.regime+(c.cargo?' · '+c.cargo:'');
     document.getElementById('meuConteudo').style.display='';
     await carregarMeuMes();
+    carregarMinhasAtividades();
   }else{
     document.getElementById('subtitulo').textContent='Controle de jornada da equipe.';
     document.getElementById('semCadastro').style.display='';
