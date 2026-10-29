@@ -612,7 +612,7 @@
     if(!global._sb)return;
     try{
       if(!_colaboradoresAtivos){
-        var q=await global._sb.from('usuarios').select('id,nome_completo').eq('ativo',true).order('nome_completo');
+        var q=await global._sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');
         _colaboradoresAtivos=q.data||[];
       }
       iniciarPresenca();

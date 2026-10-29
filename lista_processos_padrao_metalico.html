@@ -1121,7 +1121,7 @@ async function carregarPerfil(){
 async function carregarOpcoesFiltros(){
   var t=await _sb.from('teses').select('id,nome,cor').eq('ativo',true).order('nome');state.teses=t.data||[];
   var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem').eq('ativo',true).order('ordem');state.statusList=s.data||[];
-  var u=await _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).order('nome_completo');state.responsaveis=u.data||[];
+  var u=await _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');state.responsaveis=u.data||[];
   renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();
 }
 

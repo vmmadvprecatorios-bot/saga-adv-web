@@ -1732,7 +1732,7 @@ async function carregarPermissoes(){
 async function carregarListas(){
   const resultados=await Promise.all([
     _sb.from('teses').select('id,nome,descricao,ativo,criado_por_id,criado_em').eq('ativo',true).order('nome'),
-    _sb.from('usuarios').select('id,nome_completo').order('nome_completo')
+    _sb.from('usuarios').select('id,nome_completo').not('auth_user_id','is',null).order('nome_completo')
   ]);
   const tesesResposta=resultados[0];
   const usuariosResposta=resultados[1];

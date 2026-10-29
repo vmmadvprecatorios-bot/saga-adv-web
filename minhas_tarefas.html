@@ -2158,8 +2158,9 @@ async function carregarDadosTarefas(){
   usuarioLogadoId = eu.data.id;
   isAdmin = !!eu.data.eh_administrador;
 
-  var us = await _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo');
-  dadosColaboradores = (us.data || []).filter(function(u){ return u.ativo || u.id === usuarioLogadoId; }).map(function(u, i){
+  var us = await _sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id').order('nome_completo');
+  // So quem ja tem conta (pre-cadastros aguardando convite ficam de fora)
+  dadosColaboradores = (us.data || []).filter(function(u){ return (u.ativo && u.auth_user_id) || u.id === usuarioLogadoId; }).map(function(u, i){
     return { id:u.id, nome:u.nome_completo, iniciais:iniciaisNome(u.nome_completo), cor:CORES_COLABORADORES[i % CORES_COLABORADORES.length], permissaoGerenciarColunas:false };
   });
   var meuCadastro = getColaborador(usuarioLogadoId);

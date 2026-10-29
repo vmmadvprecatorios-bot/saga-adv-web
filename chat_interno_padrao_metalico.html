@@ -1411,7 +1411,7 @@ function buscarUsuariosModal(termo) {
   var el = document.getElementById('resultadosBuscaUsuario');
   if (!termo || termo.length < 2) { el.style.display = 'none'; el.innerHTML = ''; return; }
   _buscaTimeout = setTimeout(async function(){
-    var res = await _sb.from('usuarios').select('id,nome_completo').eq('ativo', true)
+    var res = await _sb.from('usuarios').select('id,nome_completo').eq('ativo', true).not('auth_user_id', 'is', null)
       .neq('id', state.meuInternoId).ilike('nome_completo', '%' + termo + '%').limit(10);
     if (!res.data || !res.data.length) {
       el.style.display = 'block';
