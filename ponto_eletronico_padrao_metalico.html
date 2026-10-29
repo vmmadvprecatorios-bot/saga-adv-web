@@ -316,6 +316,13 @@ tr.apagado td{color:var(--muted)}
       </div>
       <div class="toolbar" style="margin:6px 0 0"><button class="btn-secondary btn-sm" id="cfAqui" type="button">Usar a minha localização atual</button><span class="sub" id="cfLocalInfo"></span><button class="btn-primary" id="cfSalvar" type="button" style="margin-left:auto">Salvar configurações</button></div>
     </div>
+
+    <div class="secao-titulo" style="margin-top:22px">E-mails automáticos</div>
+    <div class="panel" style="max-width:900px">
+      <p class="sub" style="margin:0 0 10px">Os relatórios saem sozinhos pelo Gmail do administrador geral: diário no horário acima (dias úteis), semanal no dia escolhido e o fechamento do banco de horas no dia do fechamento. A senha do Gmail fica guardada só no cofre do Supabase.</p>
+      <div class="toolbar" style="margin:0"><button class="btn-secondary btn-sm" id="emTeste" type="button">Enviar e-mail de teste</button><button class="btn-secondary btn-sm" id="emDiario" type="button">Enviar o relatório de hoje agora</button><span class="sub" id="emInfo"></span></div>
+      <div class="tabela-wrap" style="margin-top:10px"><table class="banco"><thead><tr><th>Quando</th><th>Tipo</th><th>Resultado</th></tr></thead><tbody id="tbEnvios"></tbody></table></div>
+    </div>
   </section>
 </main>
 </div>
@@ -759,7 +766,10 @@ async function processarMesBanco(c,k,opc){
   if(!colabComBanco(c)||!mesConta(k))return false;
   var hoje=state.hoje,fechKey=fechKeyDe(k),fimKey=fimKeyDe(k),p=partesMes(k),calc=null,mudou=false;
   var row=bancoDe(c.id,k);
-  var fecharAuto=hoje>=fechKey&&(!row||!row.fechado_em||dataLocalDe(row.fechado_em)<fechKey);
+  // No dia do fechamento, so depois do horario do relatorio (o dia 25 entra completo), como o servidor
+  var horaAgora=Number(new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',hourCycle:'h23'}).format(new Date()));
+  var passou=hoje>fechKey||(hoje===fechKey&&horaAgora>=Number(state.cfg.hora_relatorio==null?19:state.cfg.hora_relatorio));
+  var fecharAuto=passou&&(!row||!row.fechado_em||dataLocalDe(row.fechado_em)<fechKey);
   if(opc.forcar||fecharAuto){
     var ate=opc.ate&&opc.ate<fechKey?opc.ate:fechKey;
     calc=await dadosMes(c,p.a,p.m);
@@ -1047,10 +1057,30 @@ function usarLocalAtual(){
   },function(){document.getElementById('cfLocalInfo').textContent='Não foi possível obter a localização. Permita o acesso no navegador.';},{enableHighAccuracy:true,timeout:15000});
 }
 
+// E-mails automaticos: envio manual e historico
+async function enviarEmailPonto(acao,btn){
+  btn.disabled=true;var info=document.getElementById('emInfo');info.textContent='Enviando…';
+  try{
+    var r=await _sb.functions.invoke('ponto-relatorios',{body:{acao:acao}});
+    var d=r.data||{};
+    if(r.error&&!d.mensagem&&!d.msg){var ctx=r.error.context;try{d=ctx&&ctx.json?await ctx.json():d;}catch(e){}}
+    var msg=d.mensagem||d.msg||(r.error&&r.error.message)||'Pronto.';
+    info.textContent=msg;showToast(esc(msg),d.ok?'success':'error');
+  }catch(e){info.textContent='';showToast(esc(e.message),'error');}
+  btn.disabled=false;carregarEnvios();
+}
+async function carregarEnvios(){
+  var r=await _sb.from('ponto_envios').select('*').order('enviado_em',{ascending:false}).limit(8);
+  var nomes={D:'Diário',S:'Semanal',M:'Fechamento do mês'};
+  document.getElementById('tbEnvios').innerHTML=(r.data||[]).map(function(x){
+    var dt=new Date(x.enviado_em);return '<tr><td>'+dataBR(dataLocalDe(x.enviado_em))+' '+dois(dt.getHours())+':'+dois(dt.getMinutes())+'</td><td>'+(nomes[x.tipo]||esc(x.tipo))+' · '+esc(x.chave)+'</td><td class="sub">'+esc(x.detalhe||'')+'</td></tr>';
+  }).join('')||'<tr><td colspan="3" class="vazio">Nenhum envio automático ainda.</td></tr>';
+}
+
 function trocarAba(aba){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='banco')renderBancoTela();if(aba==='cadastro')renderCadastro();if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();
+  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
@@ -1097,6 +1127,8 @@ function ligarEventos(){
   document.getElementById('frSalvar').addEventListener('click',salvarFeriado);
   document.getElementById('cfSalvar').addEventListener('click',salvarConfig);
   document.getElementById('cfAqui').addEventListener('click',usarLocalAtual);
+  document.getElementById('emTeste').addEventListener('click',function(){enviarEmailPonto('teste',this);});
+  document.getElementById('emDiario').addEventListener('click',function(){enviarEmailPonto('diario',this);});
   document.addEventListener('saga-atualizar',atualizarTudo);
 }
 async function atualizarTudo(){await carregarBase();await carregarBanco();await rotinaBanco();await carregarMeuMes();var a=document.querySelector('#abas .tab-btn.active');if(a)trocarAba(a.dataset.aba);}
