@@ -3,6 +3,12 @@
 // Chamar (apos criar o cliente _sb do Supabase): SagaUI.carregar('nome-tela');
 // A sidebar e a topbar sao embutidas neste arquivo (nao dependem de fetch).
 (function(global){
+  // Telas que sabem se atualizar sozinhas (escutam 'saga-atualizar'); as outras sao recarregadas pelo botao de atualizar
+  var _telaSeAtualiza=false;
+  (function(){
+    var orig=document.addEventListener;
+    document.addEventListener=function(tipo){if(tipo==='saga-atualizar')_telaSeAtualiza=true;return orig.apply(this,arguments);};
+  })();
   // Troca de tela pelo menu; com saga_guard.js ha uma saida suave
   if(!global.sagaIrPara)global.sagaIrPara=function(url){if(url)window.location.href=url;};
   var _temaSalvo=localStorage.getItem('saga-tema')||'dark';
@@ -17,6 +23,7 @@
     var style=document.createElement('style');
     style.id='sagaUiEstiloBase';
     style.textContent=
+      '#sidebarSaga a.nav-item,#sidebarSaga a.nav-item:hover,#sidebarSaga a.nav-item:visited{text-decoration:none !important;}'+
       /* ===== Troca de tema com a luz saindo do botao ===== */
       'html.saga-tema-trocando *:not(#themeToggle):not(#themeToggle *),html.saga-tema-trocando *::before,html.saga-tema-trocando *::after{transition:none !important;}'+
       'html.saga-tema-trocando::view-transition-old(root),html.saga-tema-trocando::view-transition-new(root){animation:none !important;mix-blend-mode:normal;}'+
@@ -572,6 +579,7 @@
       btnRefresh.addEventListener('click',function(){
         btnRefresh.classList.add('girando');
         setTimeout(function(){btnRefresh.classList.remove('girando');},700);
+        if(!_telaSeAtualiza){global.sagaIrPara(location.href);return;}
         document.dispatchEvent(new CustomEvent('saga-atualizar'));
         carregarPresenca();
         contarNaoLidas();
@@ -1167,7 +1175,7 @@
     var sb=document.getElementById('sidebarSaga');
     var esq=(sb&&window.innerWidth>760)?Math.max(0,sb.getBoundingClientRect().right):0;
     var primeira=document.querySelector('#sidebarSaga .nav-item[data-tela]:not(.sem-permissao)');
-    var destino=primeira?(primeira.getAttribute('onclick')||'').replace(/^.*\('([^']+)'\).*$/,'$1'):'';
+    var destino=primeira?(primeira.getAttribute('href')||(primeira.getAttribute('onclick')||'').replace(/^.*\('([^']+)'\).*$/,'$1')):'';
     var d=document.createElement('div');d.id='sagaSemAcesso';
     d.style.cssText='position:fixed;top:64px;right:0;bottom:0;left:'+esq+'px;z-index:1300;background:var(--navy-1,#e8ecf1);display:flex;align-items:center;justify-content:center;padding:24px;';
     d.innerHTML='<div style="max-width:420px;text-align:center;background:var(--panel,#fff);border:1px solid var(--border,#d5dbe4);border-radius:16px;padding:32px 28px;box-shadow:0 10px 30px rgba(0,0,0,.12)">'
@@ -1199,17 +1207,34 @@
   function telaDoEndereco(){
     var arq=(location.pathname.split('/').pop()||'').toLowerCase(),achou='';
     document.querySelectorAll('#sidebarSaga .nav-item[data-tela]').forEach(function(el){
-      var m=(el.getAttribute('onclick')||'').match(/'([^']+\.html)'/);
+      var m=(el.getAttribute('href')||el.getAttribute('onclick')||'').match(/([^'\/]+\.html)/);
       if(m&&m[1].toLowerCase()===arq)achou=el.getAttribute('data-tela');
     });
     return achou;
+  }
+  // Cada item do menu vira um link (<a href>): clique normal troca de tela com a transicao;
+  // Ctrl/Cmd+clique, clique do meio ou "Abrir em nova aba" abrem o sistema em outra aba do navegador
+  function linksDoMenu(sb){
+    sb.querySelectorAll('.nav-item[onclick]').forEach(function(el){
+      var m=(el.getAttribute('onclick')||'').match(/sagaIrPara\('([^']+)'\)/);if(!m)return;
+      var a=document.createElement('a');
+      Array.prototype.forEach.call(el.attributes,function(at){if(at.name!=='onclick')a.setAttribute(at.name,at.value);});
+      a.setAttribute('href',m[1]);a.innerHTML=el.innerHTML;
+      el.parentNode.replaceChild(a,el);
+    });
+    if(sb.dataset.linksLigados)return;sb.dataset.linksLigados='1';
+    sb.addEventListener('click',function(ev){
+      var a=ev.target.closest('a.nav-item[href]');if(!a)return;
+      if(ev.ctrlKey||ev.metaKey||ev.shiftKey||ev.altKey||ev.button!==0)return; // deixa o navegador abrir em outra aba
+      ev.preventDefault();global.sagaIrPara(a.getAttribute('href'));
+    });
   }
   function montarMoldura(telaAtiva){
     var sb=document.getElementById('sidebarSaga'),tb=document.getElementById('topbarSaga');
     if(!sb&&!tb)return;
     if(!_molduraMontada){
       _molduraMontada=true;
-      if(sb){sb.innerHTML=SIDEBAR_HTML;prepararMenuPermissoes();}
+      if(sb){sb.innerHTML=SIDEBAR_HTML;linksDoMenu(sb);prepararMenuPermissoes();}
       if(tb)tb.innerHTML=TOPBAR_HTML;
       try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;}catch(e){}
       ligarTema();

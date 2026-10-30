@@ -277,8 +277,49 @@
     var r=el.getBoundingClientRect();
     return r.width>=60&&r.height>=36&&r.bottom>0&&r.top<innerHeight;
   }
+  var displayAberto=new WeakMap();
   function registrarJanelas(){
-    document.querySelectorAll('body *').forEach(function(el){if(ehJanela(el))visivelAntes.set(el,estaVisivel(el));});
+    document.querySelectorAll('body *').forEach(function(el){if(ehJanela(el)){var v=estaVisivel(el);visivelAntes.set(el,v);if(v)displayAberto.set(el,getComputedStyle(el).display);}});
+  }
+  // Ao fechar: uma copia da janela, no mesmo lugar, encolhe e some (a janela de verdade ja fechou)
+  function fecharJanela(el){
+    if(reduz||!el.parentNode)return;
+    var disp=displayAberto.get(el)||'block';
+    var antes=[el.style.getPropertyValue('display'),el.style.getPropertyPriority('display')];
+    el.style.setProperty('display',disp,'important');
+    var r=el.getBoundingClientRect(),copia=null;
+    if(r.width>=60&&r.height>=36)copia=el.cloneNode(true);
+    if(antes[0])el.style.setProperty('display',antes[0],antes[1]);else el.style.removeProperty('display');
+    if(!copia||!copia.animate)return;
+    copia.removeAttribute('id');copia.querySelectorAll('[id]').forEach(function(n){n.removeAttribute('id');});
+    copia.setAttribute('aria-hidden','true');
+    copia.style.setProperty('display',disp,'important');
+    copia.style.setProperty('pointer-events','none','important');
+    el.parentNode.insertBefore(copia,el.nextSibling);
+    var telaToda=r.width>=innerWidth*0.9&&r.height>=innerHeight*0.85,anim;
+    if(telaToda){
+      anim=copia.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'});
+      var maior=null,area=0;
+      Array.prototype.forEach.call(copia.children,function(c){var b=c.getBoundingClientRect(),a=b.width*b.height;if(a>area&&a<r.width*r.height*0.98){area=a;maior=c;}});
+      if(maior){var bm=getComputedStyle(maior).transform;bm=bm==='none'?'':bm+' ';
+        maior.animate([{transform:bm+'scale(1)'},{transform:bm+'translateY(10px) scale(.95)'}],{duration:200,easing:'ease-in',fill:'forwards'});}
+    }else{
+      var base=getComputedStyle(copia).transform;base=base==='none'?'':base+' ';
+      var origem=(r.left+r.width/2>innerWidth/2?'top right':'top left');
+      if(r.top>innerHeight*0.6)origem=origem.replace('top','bottom');
+      anim=copia.animate([{opacity:1,transform:base+'scale(1)',transformOrigin:origem},{opacity:0,transform:base+'scale(.92)',transformOrigin:origem}],{duration:170,easing:'ease-in',fill:'forwards'});
+    }
+    anim.onfinish=function(){copia.remove();};
+    setTimeout(function(){if(copia.isConnected)copia.remove();},600);
+  }
+  // Chamado na hora da mudanca (antes de a tela ser desenhada), para a janela nao sumir de uma vez
+  function verFechamentos(lista){
+    lista.forEach(function(m){
+      if(m.type!=='attributes')return;
+      var el=m.target;
+      if(visivelAntes.get(el)!==true||!ehJanela(el))return;
+      try{if(!estaVisivel(el)){visivelAntes.set(el,false);fecharJanela(el);}}catch(e){}
+    });
   }
   function animarJanela(el){
     if(reduz||!el.animate)return;
@@ -310,6 +351,7 @@
       if(!el.isConnected||!ehJanela(el))return;
       var antes=visivelAntes.get(el),agora=estaVisivel(el);
       visivelAntes.set(el,agora);
+      if(agora)displayAberto.set(el,getComputedStyle(el).display);
       if(agora&&antes!==true)animarJanela(el);
     }catch(e){}});
   }
@@ -340,7 +382,7 @@
     html.classList.remove('saga-carregando');
     try{
       conferirGrupos();registrarJanelas();
-      new MutationObserver(function(lista){anotarMudancas(lista);agendarConferencia();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open']});
+      new MutationObserver(function(lista){try{verFechamentos(lista);}catch(e){}anotarMudancas(lista);agendarConferencia();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open']});
     }catch(e){}
   }
   // Menus prontos: espera a tela terminar de buscar os dados (sem buscas por um instante) e mostra tudo de uma vez
@@ -398,7 +440,7 @@
   function deslizarMenu(url){
     var sb=document.getElementById('sidebarSaga');if(!sb||!sb.animate)return 0;
     var atual=sb.querySelector('.nav-item.active'),alvo=null;
-    sb.querySelectorAll('.nav-item[onclick]').forEach(function(el){if((el.getAttribute('onclick')||'').indexOf("'"+url+"'")>=0)alvo=el;});
+    sb.querySelectorAll('.nav-item[href],.nav-item[onclick]').forEach(function(el){if(el.getAttribute('href')===url||(el.getAttribute('onclick')||'').indexOf("'"+url+"'")>=0)alvo=el;});
     if(!atual||!alvo||atual===alvo)return 0;
     var cs=getComputedStyle(atual),s=sb.getBoundingClientRect(),a=atual.getBoundingClientRect(),b=alvo.getBoundingClientRect();
     var fantasma=document.createElement('div');
