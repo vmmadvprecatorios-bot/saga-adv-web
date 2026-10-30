@@ -192,7 +192,7 @@
   }
 
   // Abas e botoes de escolha: o destaque desliza do botao antigo para o novo (como no iPhone)
-  var ATIVO=/(^|\s)(active|ativo|selected|selecionado)(\s|$)/;
+  var ATIVO=/(^|\s)(active|ativo|ativa|selected|selecionado|selecionada)(\s|$)/;
   function botaoDeGrupo(el){
     if(!el||el.nodeType!==1||!el.parentElement)return false;
     if(el.closest('#sidebarSaga,#topbarSaga,.modal-overlay:not(.open)'))return false;
@@ -206,37 +206,52 @@
   }
   function deslizar(grupo,de,para){
     if(reduz||!grupo.animate)return;
+    // Le a cor final do botao (sem a transicao propria dele, que ainda estaria no meio do caminho)
+    var transAntes=[para.style.getPropertyValue('transition'),para.style.getPropertyPriority('transition')];
+    para.style.setProperty('transition','none','important');
     var cs=getComputedStyle(para),fundo=cs.backgroundImage!=='none'?cs.backgroundImage:'',cor=cs.backgroundColor;
-    if(!fundo&&(!cor||/rgba\(0, 0, 0, 0\)|transparent/.test(cor)))return; // ativo sem fundo: nada a deslizar
+    var raio=cs.borderRadius,sombra=cs.boxShadow;
+    if(!fundo&&(!cor||/rgba\(0, 0, 0, 0\)|transparent/.test(cor))){ // ativo sem fundo: nada a deslizar
+      if(transAntes[0])para.style.setProperty('transition',transAntes[0],transAntes[1]);else para.style.removeProperty('transition');
+      return;
+    }
     var g=grupo.getBoundingClientRect(),r=para.getBoundingClientRect();
     var fim={x:r.left-g.left+grupo.scrollLeft,y:r.top-g.top+grupo.scrollTop,w:r.width,h:r.height};
-    if(Math.abs(fim.x-de.x)<2&&Math.abs(fim.y-de.y)<2)return;
-    if(Math.abs(fim.y-de.y)>de.h*1.5)return; // em outra linha: sem deslizar
+    if((Math.abs(fim.x-de.x)<2&&Math.abs(fim.y-de.y)<2)||Math.abs(fim.y-de.y)>de.h*1.5){ // mesmo lugar ou outra linha: sem deslizar
+      if(transAntes[0])para.style.setProperty('transition',transAntes[0],transAntes[1]);else para.style.removeProperty('transition');
+      return;
+    }
     if(getComputedStyle(grupo).position==='static')grupo.style.position='relative';
     grupo.style.isolation='isolate';
     var fantasma=document.createElement('div');
     fantasma.setAttribute('aria-hidden','true');
     fantasma.style.cssText='position:absolute;z-index:-1;pointer-events:none;margin:0;left:0;top:0;'+
-      'border-radius:'+cs.borderRadius+';box-shadow:'+cs.boxShadow+';background-color:'+cor+';'+(fundo?'background-image:'+fundo+';':'');
+      'border-radius:'+raio+';box-shadow:'+sombra+';background-color:'+cor+';'+(fundo?'background-image:'+fundo+';':'');
     grupo.appendChild(fantasma);
-    var props=['background-color','background-image','box-shadow','border-color'],antes={};
+    var props=['background-color','background-image','box-shadow','border-color','transition'],antes={};
     props.forEach(function(p){antes[p]=[para.style.getPropertyValue(p),para.style.getPropertyPriority(p)];});
+    antes.transition=transAntes;
     para.style.setProperty('background-color','transparent','important');
     para.style.setProperty('background-image','none','important');
     para.style.setProperty('box-shadow','none','important');
     para.style.setProperty('border-color','transparent','important');
+    para.style.setProperty('transition','color .2s ease','important');
     var anim=fantasma.animate([
       {transform:'translate('+de.x+'px,'+de.y+'px)',width:de.w+'px',height:de.h+'px'},
       {transform:'translate('+fim.x+'px,'+fim.y+'px)',width:fim.w+'px',height:fim.h+'px'}
     ],{duration:380,easing:'cubic-bezier(.3,1.18,.55,1)',fill:'forwards'});
+    function volta(p){if(antes[p][0])para.style.setProperty(p,antes[p][0],antes[p][1]);else para.style.removeProperty(p);}
     function pronto(){
-      props.forEach(function(p){if(antes[p][0])para.style.setProperty(p,antes[p][0],antes[p][1]);else para.style.removeProperty(p);});
+      // devolve a cor do botao ainda sem transicao (para nao piscar) e so depois a transicao dele
+      props.forEach(function(p){if(p!=='transition')volta(p);});
+      void para.offsetWidth;
       fantasma.remove();
+      requestAnimationFrame(function(){volta('transition');});
     }
     anim.onfinish=pronto;anim.oncancel=pronto;
   }
   function conferirGrupos(){
-    document.querySelectorAll('.active,.ativo,.selected,.selecionado').forEach(function(el){
+    document.querySelectorAll('.active,.ativo,.ativa,.selected,.selecionado,.selecionada').forEach(function(el){try{
       if(typeof el.className!=='string'||!botaoDeGrupo(el))return;
       var grupo=el.parentElement,irmaos=Array.prototype.filter.call(grupo.children,function(x){return x!==el&&x.tagName===el.tagName;});
       if(!irmaos.length)return;
@@ -244,7 +259,7 @@
       // O destaque mudou de botao (troca de classe ou botoes redesenhados): desliza do antigo para o novo
       if(antes&&antes.el!==el&&!(antes.el.isConnected&&ATIVO.test(antes.el.className))&&!(!antes.el.isConnected&&antes.txt===el.textContent))deslizar(grupo,antes,el);
       lembrar(grupo,el);
-    });
+    }catch(e){if(window.SAGA_DEBUG)console.warn('[saga] abas',e);}});
   }
   var agendado=false;
   function agendarConferencia(){
@@ -321,8 +336,60 @@
     if(!url||saindo)return;
     if(reduz||!jaMostrou){location.href=url;return;}
     saindo=true;
-    var total=0;
+    var total=0,menu=0;
     try{total=cascata(blocosCascata(),false);}catch(e){}
-    setTimeout(function(){location.href=url;},Math.min(total,200));
+    try{menu=deslizarMenu(url);}catch(e){}
+    setTimeout(function(){location.href=url;},Math.max(Math.min(total,200),menu));
   };
+
+  // Menu lateral: o destaque desliza do item atual ate o item clicado antes de trocar de tela
+  function deslizarMenu(url){
+    var sb=document.getElementById('sidebarSaga');if(!sb||!sb.animate)return 0;
+    var atual=sb.querySelector('.nav-item.active'),alvo=null;
+    sb.querySelectorAll('.nav-item[onclick]').forEach(function(el){if((el.getAttribute('onclick')||'').indexOf("'"+url+"'")>=0)alvo=el;});
+    if(!atual||!alvo||atual===alvo)return 0;
+    var cs=getComputedStyle(atual),s=sb.getBoundingClientRect(),a=atual.getBoundingClientRect(),b=alvo.getBoundingClientRect();
+    var fantasma=document.createElement('div');
+    fantasma.setAttribute('aria-hidden','true');
+    fantasma.style.cssText='position:absolute;z-index:-1;pointer-events:none;left:0;top:0;width:'+a.width+'px;height:'+a.height+'px;'+
+      'background:'+cs.backgroundColor+';border-left:'+cs.borderLeftWidth+' solid '+cs.borderLeftColor+';border-radius:'+cs.borderRadius+';';
+    sb.style.isolation='isolate';
+    sb.appendChild(fantasma);
+    // os dois itens ficam sem fundo; o texto ja assume o destaque no item novo
+    [atual,alvo].forEach(function(el){
+      el.style.setProperty('background','transparent','important');
+      el.style.setProperty('border-left-color','transparent','important');
+      el.style.setProperty('transition','color .2s ease','important');
+    });
+    atual.classList.remove('active');alvo.classList.add('active');
+    var y0=a.top-s.top+sb.scrollTop,y1=b.top-s.top+sb.scrollTop,x=a.left-s.left;
+    fantasma.animate([
+      {transform:'translate('+x+'px,'+y0+'px)',height:a.height+'px'},
+      {transform:'translate('+x+'px,'+y1+'px)',height:b.height+'px'}
+    ],{duration:300,easing:'cubic-bezier(.3,1.18,.55,1)',fill:'forwards'});
+    return 280;
+  }
+
+  // Todo botao responde ao toque: afunda um pouquinho ao apertar e volta com mola (como no iPhone)
+  var SEL_BOTAO='button,[role="button"],.btn-primary,.btn-secondary,.btn-danger,.nav-item,.pill,.tab-btn,.btn-view,.filter-pill,.segment,.mat-kcard,a.btn,.icon-btn,.theme-toggle';
+  var apertado=null;
+  function soltar(){
+    var el=apertado;apertado=null;
+    if(!el||!el._sagaAperto)return;
+    var a=el._sagaAperto;el._sagaAperto=null;
+    a.cancel();
+    el.animate([{transform:'scale(.95)'},{transform:'scale(1)'}],{duration:380,easing:'cubic-bezier(.34,1.56,.64,1)'});
+  }
+  if(!reduz){
+    document.addEventListener('pointerdown',function(ev){
+      if(ev.button!==0)return;
+      var el=ev.target.closest&&ev.target.closest(SEL_BOTAO);
+      if(!el||!el.animate||el.disabled||el.closest('[draggable="true"]'))return;
+      var r=el.getBoundingClientRect();if(r.width>420||r.height>260)return;
+      soltar();apertado=el;
+      el._sagaAperto=el.animate([{transform:'scale(1)'},{transform:'scale(.95)'}],{duration:110,easing:'ease-out',fill:'forwards'});
+    },true);
+    ['pointerup','pointercancel','dragstart'].forEach(function(t){document.addEventListener(t,soltar,true);});
+    window.addEventListener('blur',soltar);
+  }
 })();
