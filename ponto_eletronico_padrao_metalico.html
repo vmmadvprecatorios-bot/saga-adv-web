@@ -175,6 +175,10 @@ tr.apagado td{color:var(--muted)}
   .sugestoes button{display:block;width:100%;text-align:left;padding:8px 11px;font-size:12px;background:none;border:0;color:inherit;cursor:pointer}
   .sugestoes button:hover{background:var(--panel-2)}
   .cli-escolhido{display:flex;align-items:center;gap:6px;height:38px;font-size:12.5px;font-weight:600}
+  .rel-resumo{display:flex;flex-wrap:wrap;gap:8px}
+  .rel-resumo .chip{padding:7px 11px;border-radius:10px;background:var(--panel-2);border:1px solid var(--border-soft);font-size:11.5px;color:var(--muted)}
+  .rel-resumo .chip b{color:var(--text);font-size:13px;margin-left:4px}
+  .rel-resumo .chip.alerta b{color:var(--danger)}
   .linha-tempo{margin-top:14px;border-left:2px solid var(--border);padding-left:14px;display:grid;gap:8px}
   .lt-item{position:relative;font-size:12.5px;line-height:1.4}
   .lt-item::before{content:'';position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--c,var(--gold));border:2px solid var(--panel)}
@@ -393,10 +397,19 @@ tr.apagado td{color:var(--muted)}
 </div>
 
 <!-- Relatorio do dia -->
-<div class="modal-overlay" id="modalRel"><div class="modal">
-  <div class="modal-head"><div><h2 id="relTitulo">Relatório do dia</h2><p id="relSub">O que você fez neste dia.</p></div><button class="modal-close" data-fechar="modalRel" type="button">✕</button></div>
-  <div class="modal-body"><div class="campo"><textarea id="relTexto" style="min-height:220px" placeholder="Atividades do dia, clientes atendidos, pendências..."></textarea></div></div>
-  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalRel" type="button">Fechar</button><button class="btn-primary" id="relSalvar" type="button">Salvar relatório</button></div>
+<div class="modal-overlay" id="modalRel"><div class="modal" style="max-width:760px">
+  <div class="modal-head"><div><h2 id="relTitulo">Relatório do dia</h2><p id="relSub">Tudo o que foi feito no dia, em ordem de horário.</p></div><button class="modal-close" data-fechar="modalRel" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="rel-resumo" id="relResumo"></div>
+    <div class="secao-titulo" style="margin:14px 0 0">Linha do tempo</div>
+    <div class="linha-tempo" id="relLinha"></div>
+    <div id="relNovaWrap" style="display:none;margin-top:12px"><button class="btn-secondary btn-sm" id="relNova" type="button">+ Registrar nova atividade</button></div>
+    <div id="relObsWrap">
+      <div class="secao-titulo" style="margin:18px 0 6px">Observações do dia <span class="sub" style="font-weight:500;text-transform:none;letter-spacing:0">(opcional: pendências, recados, algo que não cabe numa atividade)</span></div>
+      <div class="campo"><textarea id="relTexto" style="min-height:90px" placeholder="Ex.: Cliente X pediu retorno amanhã cedo."></textarea></div>
+    </div>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalRel" type="button">Fechar</button><button class="btn-primary" id="relSalvar" type="button">Salvar observações</button></div>
 </div></div>
 
 <!-- Mes de um colaborador (gestor) -->
@@ -596,7 +609,10 @@ function linhasMes(calc,livre,opcoes){
     var num=livre?'<td class="num">'+PC.hhmm(d.trab)+'</td>':
       '<td class="num">'+PC.hhmm(d.carga)+'</td><td class="num">'+PC.hhmm(d.trab)+'</td><td class="num">'+saldoTxt(d.saldo)+'</td><td class="num">'+(d.atraso||'')+'</td><td class="num">'+(d.antec||'')+'</td>';
     var ocorr=d.ocorr.slice();if(x.observacao)ocorr.push(x.observacao);
-    var rel=x.relatorio?'<button class="btn-rel" data-rel="'+x.key+'" type="button">Ver</button>':(opcoes.podeEscrever&&x.key<=state.hoje&&(x.d.carga||x.mk.some(function(v){return v!==null;})||x.sit==='Home office'||(regimeLivreAtual()&&['Dia útil','Ponto facultativo'].indexOf(x.sit)>=0))?'<button class="btn-rel" data-rel="'+x.key+'" type="button">Escrever</button>':'');
+    // Relatorio do dia = linha do tempo das atividades (+ observacoes); o botao mostra quantas atividades houve
+    var nAt=opcoes.ativ&&opcoes.ativ[x.key]?opcoes.ativ[x.key].filter(function(e){return e.origem!=='Ponto';}).length:0;
+    var podeVer=x.key<=state.hoje&&(nAt||x.relatorio||x.d.carga||x.mk.some(function(v){return v!==null;})||x.sit==='Home office'||(regimeLivreAtual()&&['Dia útil','Ponto facultativo'].indexOf(x.sit)>=0));
+    var rel=podeVer?'<button class="btn-rel" data-rel="'+x.key+'" type="button">'+(nAt?nAt+' atividade'+(nAt>1?'s':''):(x.relatorio?'Ver':'Abrir'))+(x.relatorio?' ✎':'')+'</button>':'';
     var gest='';
     if(opcoes.gestor){
       var sitAtual=SIT_MANUAL_DE(x);
@@ -612,12 +628,14 @@ function SIT_MANUAL_DE(x){return PC.SIT_MANUAL.indexOf(x.sit)>=0?x.sit:'';}
 /* ----- Meu ponto ----- */
 async function carregarMeuMes(){
   var c=state.meuColab;if(!c)return;
-  var calc=await dadosMes(c,state.ano,state.mes);state.mesCalc=calc;
+  var ini=state.ano+'-'+dois(state.mes)+'-01',fim=state.ano+'-'+dois(state.mes)+'-'+dois(PC.diasNoMes(state.ano,state.mes));
+  var res=await Promise.all([dadosMes(c,state.ano,state.mes),atividadesPorDia(state.meuId,ini,fim)]);
+  var calc=res[0];state.mesCalc=calc;state.ativMes=res[1];
   var livre=regimeDe(c).livre;
   document.getElementById('mesTitulo').textContent=NOMES_MES[state.mes-1]+' de '+state.ano;
   document.getElementById('theadMes').innerHTML=cabecalhoMes(livre,false);
   var tb=document.getElementById('tbMes');
-  tb.innerHTML=linhasMes(calc,livre,{podeEscrever:true});
+  tb.innerHTML=linhasMes(calc,livre,{podeEscrever:true,ativ:state.ativMes});
   tb.querySelectorAll('[data-rel]').forEach(function(b){b.addEventListener('click',function(){abrirRelatorio(b.dataset.rel,state.meuColab,true);});});
   renderResumo(calc.resumo,livre);
   renderBancoMeu();
@@ -683,19 +701,48 @@ function tickRelogio(){
 }
 
 /* ----- Relatorio do dia ----- */
+// Atividades de um periodo agrupadas por dia (chave AAAA-MM-DD no horario de Maceio)
+async function atividadesPorDia(usuarioId,ini,fim){
+  var por={};if(!usuarioId)return por;
+  var r=await _sb.rpc('relatorio_atividades',{p_usuario:usuarioId,p_ini:ini,p_fim:fim});
+  (r.data||[]).forEach(function(e){var k=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(e.momento));(por[k]=por[k]||[]).push(e);});
+  return por;
+}
+// Relatorio do dia: resumo, linha do tempo organizada por horario e observacoes (texto livre opcional)
 async function abrirRelatorio(key,colab,podeEditar){
   state.relData=key;
-  var r=await _sb.from('ponto_dias').select('relatorio,relatorio_em').eq('colaborador_id',colab.id).eq('data',key).maybeSingle();
-  document.getElementById('relTitulo').textContent='Relatório de '+dataBR(key)+(podeEditar?'':' · '+colab.nome);
-  document.getElementById('relSub').textContent=r.data&&r.data.relatorio_em?'Atualizado em '+new Date(r.data.relatorio_em).toLocaleString('pt-BR'):'O que foi feito neste dia.';
-  var t=document.getElementById('relTexto');t.value=r.data&&r.data.relatorio||'';t.readOnly=!podeEditar;
+  var proprio=colab&&state.meuColab&&colab.id===state.meuColab.id;
+  document.getElementById('relTitulo').textContent='Relatório de '+dataBR(key)+(proprio?'':' · '+colab.nome);
+  document.getElementById('relSub').textContent=PC.NOMES_DIA[PC.diaSemana(key)]+' · tudo o que foi feito no dia, em ordem de horário.';
+  document.getElementById('relLinha').innerHTML='<div class="sub">Carregando…</div>';
+  document.getElementById('relResumo').innerHTML='';
+  var t=document.getElementById('relTexto');t.value='';t.readOnly=!podeEditar;
   document.getElementById('relSalvar').style.display=podeEditar?'':'none';
+  document.getElementById('relNovaWrap').style.display=podeEditar&&key===state.hoje?'':'none';
   abrirModal('modalRel');
+  var verTudo=proprio||state.pode.admin;
+  var res=await Promise.all([
+    _sb.from('ponto_dias').select('relatorio,relatorio_em').eq('colaborador_id',colab.id).eq('data',key).maybeSingle(),
+    verTudo&&colab.usuario_id?_sb.rpc('relatorio_atividades',{p_usuario:colab.usuario_id,p_ini:key,p_fim:key}):Promise.resolve({data:null})
+  ]);
+  if(state.relData!==key)return;
+  var dia=res[0].data||{},ev=res[1].data;
+  t.value=dia.relatorio||'';
+  document.getElementById('relObsWrap').style.display=podeEditar||dia.relatorio?'':'none';
+  if(!ev){
+    document.getElementById('relLinha').innerHTML='<div class="sub">A linha do tempo de atividades só aparece para a própria pessoa e para o administrador geral.</div>';
+    return;
+  }
+  var limite=(state.cfg&&state.cfg.intervalo_alerta_min)||30,a=analisarDia(ev,key,limite);
+  var chips=[['Entrada',a.entrada?horaDe(a.entrada):'—'],['Saída',a.saida?horaDe(a.saida):'—'],['Trabalhadas',a.trab?duracaoTxt(a.trab):'—'],
+    ['Atividades',String(a.nAtiv)],['Clientes atendidos',String(a.nCli)],['Maior intervalo',a.maior?duracaoTxt(a.maior):'—',a.maior>limite]];
+  document.getElementById('relResumo').innerHTML=chips.map(function(c){return '<span class="chip'+(c[2]?' alerta':'')+'">'+esc(c[0])+'<b>'+esc(c[1])+'</b></span>';}).join('');
+  document.getElementById('relLinha').innerHTML=htmlLinhaTempo(ev,a.gaps).replace('Nenhuma atividade ainda.','Nenhuma atividade registrada neste dia.');
 }
 async function salvarRelatorio(){
   var r=await _sb.rpc('salvar_relatorio_dia',{p_data:state.relData,p_texto:document.getElementById('relTexto').value});
   if(r.error||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||r.error.message),'error');return;}
-  fecharModal('modalRel');showToast(esc(r.data.mensagem),'success');carregarMeuMes();
+  fecharModal('modalRel');showToast('Observações do dia '+dataBR(state.relData).slice(0,5)+' salvas.','success');carregarMeuMes();
 }
 
 /* ----- Justificativas ----- */
@@ -781,7 +828,7 @@ async function carregarEquipe(){
     var ent=reg.livre?PC.hhmmRelogio(mk[0]):PC.hhmmRelogio(mk[0]),sai=reg.livre?'':PC.hhmmRelogio(mk[7]);
     return '<tr data-colab="'+c.id+'"><td><div class="cli">'+esc(c.nome)+'</div><div class="sub">'+esc(c.cargo||'')+'</div></td><td>'+esc(c.regime)+'</td><td>'+(reg.livre?'Livre':PC.hhmm(cj.entrada)+'–'+PC.hhmm(cj.saida))+'</td>'+
       '<td>'+(ent||'-')+'</td><td>'+(sai||'-')+'</td><td>'+(pausas.join('<br>')||'-')+'</td><td class="num">'+PC.hhmm(d.trab)+'</td><td class="num">'+saldoTxt(d.saldo)+'</td>'+
-      '<td>'+(etqStatus(d.status)||esc(sit))+'</td><td class="ocorr">'+esc(d.ocorr.join('; '))+'</td><td>'+(dia.relatorio?'<button class="btn-rel" data-relc="'+c.id+'" type="button">Ver</button>':'<span class="sub">—</span>')+'</td></tr>';
+      '<td>'+(etqStatus(d.status)||esc(sit))+'</td><td class="ocorr">'+esc(d.ocorr.join('; '))+'</td><td>'+(dia.relatorio||state.pode.admin?'<button class="btn-rel" data-relc="'+c.id+'" type="button">'+(dia.relatorio?'Ver ✎':'Abrir')+'</button>':'<span class="sub">—</span>')+'</td></tr>';
   });
   var tb=document.getElementById('tbEquipe');
   tb.innerHTML=linhas.join('')||'<tr><td colspan="11" class="vazio">Nenhum colaborador ativo nesta data.</td></tr>';
@@ -824,7 +871,9 @@ async function abrirMesColab(id){
 }
 async function renderMesColab(){
   var c=state.mc.colab,livre=regimeDe(c).livre;
-  var calc=await dadosMes(c,state.mc.ano,state.mc.mes);
+  var mIni=state.mc.ano+'-'+dois(state.mc.mes)+'-01',mFim=state.mc.ano+'-'+dois(state.mc.mes)+'-'+dois(PC.diasNoMes(state.mc.ano,state.mc.mes));
+  var res=await Promise.all([dadosMes(c,state.mc.ano,state.mc.mes),state.pode.admin&&c.usuario_id?atividadesPorDia(c.usuario_id,mIni,mFim):Promise.resolve({})]);
+  var calc=res[0];state.mc.ativ=res[1];
   document.getElementById('mcNome').textContent=c.nome;
   var cj=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),state.hoje);
   document.getElementById('mcSub').textContent=c.regime+' · '+(livre?'horário livre':PC.hhmm(cj.entrada)+' às '+PC.hhmm(cj.saida)+', carga '+PC.hhmm(cj.carga))+(c.cargo?' · '+c.cargo:'');
@@ -834,7 +883,7 @@ async function renderMesColab(){
     'Trabalhadas '+PC.hhmm(t.trab)+' de '+PC.hhmm(t.carga)+' · saldo '+saldoTxt(t.saldo)+' · faltas '+t.faltas+' · '+esc(t.perfil);
   document.getElementById('mcThead').innerHTML=cabecalhoMes(livre,state.pode.gerencia);
   var tb=document.getElementById('mcTb');
-  tb.innerHTML=linhasMes(calc,livre,{gestor:state.pode.gerencia});
+  tb.innerHTML=linhasMes(calc,livre,{gestor:state.pode.gerencia,ativ:state.mc.ativ});
   tb.querySelectorAll('[data-rel]').forEach(function(b){b.addEventListener('click',function(){abrirRelatorio(b.dataset.rel,c,false);});});
   tb.querySelectorAll('[data-sit]').forEach(function(s){s.addEventListener('change',function(){gravarDiaGestor(c,s.dataset.sit,{situacao:s.value||null});});});
   tb.querySelectorAll('[data-abono]').forEach(function(i){i.addEventListener('change',function(){gravarDiaGestor(c,i.dataset.abono,{abono_min:i.value?minDeHora(i.value):0});});});
@@ -1577,6 +1626,10 @@ function ligarEventos(){
   document.getElementById('mcAnt').addEventListener('click',function(){mudarMes(-1,state.mc);renderMesColab();});
   document.getElementById('mcProx').addEventListener('click',function(){mudarMes(1,state.mc);renderMesColab();});
   document.getElementById('relSalvar').addEventListener('click',salvarRelatorio);
+  document.getElementById('relNova').addEventListener('click',function(){
+    fecharModal('modalRel');var d=document.getElementById('atDesc');
+    if(d){d.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){d.focus();},350);}
+  });
   document.getElementById('jEnviar').addEventListener('click',enviarJust);
   document.getElementById('hoEnviar').addEventListener('click',pedirHo);
   document.getElementById('eqData').addEventListener('change',carregarEquipe);
