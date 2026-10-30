@@ -195,7 +195,7 @@
   var ATIVO=/(^|\s)(active|ativo|ativa|selected|selecionado|selecionada)(\s|$)/;
   function botaoDeGrupo(el){
     if(!el||el.nodeType!==1||!el.parentElement)return false;
-    if(el.closest('#sidebarSaga,#topbarSaga,.modal-overlay:not(.open)'))return false;
+    if(el.closest('#sidebarSaga,#topbarSaga,.modal-overlay:not(.open),.leaflet-container'))return false;
     var r=el.getBoundingClientRect();
     return r.height>0&&r.height<=60&&r.width<=360&&(el.tagName==='BUTTON'||el.getAttribute('role')==='tab'||getComputedStyle(el).cursor==='pointer');
   }
@@ -266,7 +266,7 @@
   function ehJanela(el){
     if(!el||el.nodeType!==1||el.id==='sagaCarregando'||el.getAttribute('aria-hidden')==='true')return false;
     if(/^(SCRIPT|STYLE|LINK|svg|path|INPUT|SELECT|OPTION|TEXTAREA|IMG|BR)$/i.test(el.tagName))return false;
-    if(el.closest('#sidebarSaga'))return false;
+    if(el.closest('#sidebarSaga,.leaflet-container'))return false;
     var cs=getComputedStyle(el),p=cs.position;
     // absoluto so conta se estiver por cima do resto (menus e popovers), nao blocos posicionados da pagina
     return p==='fixed'||(p==='absolute'&&(parseInt(cs.zIndex,10)||0)>=10);
@@ -478,7 +478,7 @@
     document.addEventListener('pointerdown',function(ev){
       if(ev.button!==0)return;
       var el=ev.target.closest&&ev.target.closest(SEL_BOTAO);
-      if(!el||!el.animate||el.disabled||el.closest('[draggable="true"]'))return;
+      if(!el||!el.animate||el.disabled||el.closest('[draggable="true"],.leaflet-container'))return;
       var r=el.getBoundingClientRect();if(r.width>420||r.height>260)return;
       soltar();apertado=el;
       el._sagaAperto=el.animate([{transform:'scale(1)'},{transform:'scale(.95)'}],{duration:110,easing:'ease-out',fill:'forwards'});

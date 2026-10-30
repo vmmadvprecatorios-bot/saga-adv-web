@@ -391,8 +391,9 @@ tr.apagado td{color:var(--muted)}
       </div>
       <div class="mapa-busca"><input id="cfEndereco" placeholder="Buscar endereço (ex.: Rua do Comércio, 100, Maceió)"><button class="btn-secondary btn-sm" id="cfBuscar" type="button">Buscar</button></div>
       <div id="cfMapa" class="mapa-local"><div class="vazio">Carregando o mapa…</div></div>
-      <div class="sub" id="cfMapaInfo" style="margin-top:6px">Clique no mapa ou arraste o marcador para marcar o escritório. O círculo é a área onde o ponto e o acesso são aceitos.</div>
-      <div class="toolbar" style="margin:6px 0 0"><button class="btn-secondary btn-sm" id="cfOnde" type="button">Ver onde estou agora</button><button class="btn-secondary btn-sm" id="cfAqui" type="button">Marcar o escritório onde estou</button><span class="sub" id="cfLocalInfo"></span><button class="btn-primary" id="cfSalvar" type="button" style="margin-left:auto">Salvar configurações</button></div>
+      <div class="sub" id="cfEnderecoAtual" style="margin-top:6px"></div>
+      <div class="sub" id="cfMapaInfo" style="margin-top:4px">Clique no mapa ou arraste o marcador para marcar o escritório. O círculo é a área onde o ponto e o acesso são aceitos.</div>
+      <div class="toolbar" style="margin:6px 0 0"><button class="btn-secondary btn-sm" id="cfOnde" type="button">Ver onde estou agora</button><button class="btn-secondary btn-sm" id="cfAqui" type="button">Marcar o escritório onde estou</button><button class="btn-secondary btn-sm" id="cfVoltar" type="button" style="display:none">Voltar ao local salvo</button><span class="sub" id="cfLocalInfo"></span><button class="btn-primary" id="cfSalvar" type="button" style="margin-left:auto">Salvar configurações</button></div>
     </div>
 
     <div class="secao-titulo" style="margin-top:22px">E-mails automáticos</div>
@@ -1419,7 +1420,7 @@ async function montarMapa(){
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAPA.mapa);
     MAPA.mapa.on('click',function(ev){marcarEscritorio(ev.latlng.lat,ev.latlng.lng);});
   }else MAPA.mapa.setView(centro,p?17:13);
-  desenharEscritorio();
+  desenharEscritorio();enderecoDoPonto();
   setTimeout(function(){MAPA.mapa.invalidateSize();},60);
 }
 function desenharEscritorio(){
@@ -1436,7 +1437,29 @@ function desenharEscritorio(){
 function marcarEscritorio(lat,lng){
   document.getElementById('cfLat').value=lat.toFixed(6);document.getElementById('cfLng').value=lng.toFixed(6);
   desenharEscritorio();
-  document.getElementById('cfLocalInfo').textContent='Local alterado no mapa. Clique em Salvar configurações.';
+  document.getElementById('cfLocalInfo').textContent='Local alterado no mapa (ainda não salvo). Clique em Salvar configurações.';
+  document.getElementById('cfVoltar').style.display=state.local?'':'none';
+  enderecoDoPonto();
+}
+// Mostra o endereco aproximado do ponto marcado, para conferir se e o escritorio
+var tmEnd=null;
+function enderecoDoPonto(){
+  clearTimeout(tmEnd);var el=document.getElementById('cfEnderecoAtual'),p=pontoDosCampos();
+  if(!p){el.textContent='';return;}
+  tmEnd=setTimeout(async function(){
+    try{
+      var r=await fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&accept-language=pt-BR&lat='+p[0]+'&lon='+p[1]);
+      var j=await r.json();el.innerHTML=j&&j.display_name?'📍 Endereço do ponto marcado: <b>'+esc(j.display_name.split(', ').slice(0,5).join(', '))+'</b>':'';
+    }catch(e){el.textContent='';}
+  },500);
+}
+function voltarAoSalvo(){
+  if(!state.local)return;
+  document.getElementById('cfLat').value=state.local.latitude;document.getElementById('cfLng').value=state.local.longitude;
+  document.getElementById('cfRaio').value=state.local.raio_metros;
+  desenharEscritorio();if(MAPA.mapa)MAPA.mapa.setView(pontoDosCampos(),17);
+  document.getElementById('cfLocalInfo').textContent=state.local.nome+' (local salvo)';
+  document.getElementById('cfVoltar').style.display='none';enderecoDoPonto();
 }
 function distanciaM(a,b){var R=6371000,r=Math.PI/180,dLat=(b[0]-a[0])*r,dLng=(b[1]-a[1])*r;
   var h=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin(dLng/2)*Math.sin(dLng/2);return 2*R*Math.asin(Math.sqrt(h));}
@@ -1444,7 +1467,7 @@ function infoDistancia(){
   var info=document.getElementById('cfMapaInfo'),p=pontoDosCampos();if(!info)return;
   if(MAPA.euPos&&p){var d=Math.round(distanciaM(MAPA.euPos,p)),raio=raioDoCampo();
     info.innerHTML='Você está a <b>'+(d>=1000?(d/1000).toFixed(1).replace('.',',')+' km':d+' m')+'</b> do escritório: <b style="color:'+(d<=raio?'var(--success,#2fae7a)':'var(--danger,#e5484d)')+'">'+(d<=raio?'dentro':'fora')+' da área permitida</b> (raio de '+raio+' m). Ponto azul = você agora.';}
-  else info.textContent=p?'Clique no mapa ou arraste o marcador para ajustar. O círculo é a área onde o ponto e o acesso são aceitos.':'Nenhum local marcado ainda: clique no mapa, busque o endereço ou use a sua localização atual.';
+  else info.textContent=p?'Para mudar o local: arraste o marcador azul, clique no ponto certo do mapa ou busque o endereço acima. O círculo é a área onde o ponto e o acesso são aceitos.':'Nenhum local marcado ainda: clique no mapa, busque o endereço ou use a sua localização atual.';
 }
 function mostrarVoce(lat,lng,precisao){
   if(!MAPA.mapa)return;var L=window.L;MAPA.euPos=[lat,lng];
@@ -1502,11 +1525,17 @@ async function salvarConfig(){
 function usarLocalAtual(){
   if(!navigator.geolocation){showToast('Este navegador não informa a localização.','error');return;}
   document.getElementById('cfLocalInfo').textContent='Obtendo localização…';
-  navigator.geolocation.getCurrentPosition(function(p){
-    document.getElementById('cfLat').value=p.coords.latitude.toFixed(6);document.getElementById('cfLng').value=p.coords.longitude.toFixed(6);
-    document.getElementById('cfLocalInfo').textContent='Localização atual (precisão de '+Math.round(p.coords.accuracy)+' m). Clique em Salvar.';
-    desenharEscritorio();mostrarVoce(p.coords.latitude,p.coords.longitude,p.coords.accuracy);if(MAPA.mapa)MAPA.mapa.setView([p.coords.latitude,p.coords.longitude],18);
-  },function(){document.getElementById('cfLocalInfo').textContent='Não foi possível obter a localização. Permita o acesso no navegador.';},{enableHighAccuracy:true,timeout:15000});
+  navigator.geolocation.getCurrentPosition(async function(p){
+    var lat=p.coords.latitude,lng=p.coords.longitude,prec=Math.round(p.coords.accuracy||0);
+    mostrarVoce(lat,lng,prec);if(MAPA.mapa)MAPA.mapa.setView([lat,lng],17);
+    // Computador sem GPS da so uma posicao aproximada (pela internet): confirma antes de usar
+    if(prec>60){
+      var ok=await confirmar('Localização imprecisa','O navegador informou sua posição com margem de erro de cerca de '+(prec>=1000?(prec/1000).toFixed(1).replace('.',',')+' km':prec+' m')+' (computadores sem GPS dão uma posição aproximada). O ponto azul no mapa pode não ser o escritório. Para marcar com precisão, busque o endereço ou arraste o marcador. Usar esta posição mesmo assim?','Usar mesmo assim');
+      if(!ok){document.getElementById('cfLocalInfo').textContent='Posição não usada. Busque o endereço ou arraste o marcador.';return;}
+    }
+    marcarEscritorio(lat,lng);
+    document.getElementById('cfLocalInfo').textContent='Escritório marcado na sua posição (margem de '+prec+' m). Confira no mapa e clique em Salvar configurações.';
+  },function(){document.getElementById('cfLocalInfo').textContent='Não foi possível obter a localização. Permita o acesso no navegador.';},{enableHighAccuracy:true,timeout:15000,maximumAge:0});
 }
 
 // E-mails automaticos: envio manual e historico
@@ -1784,6 +1813,7 @@ function ligarEventos(){
   document.getElementById('cfAqui').addEventListener('click',usarLocalAtual);
   document.getElementById('cfBuscar').addEventListener('click',buscarEndereco);
   document.getElementById('cfOnde').addEventListener('click',verOndeEstou);
+  document.getElementById('cfVoltar').addEventListener('click',voltarAoSalvo);
   document.getElementById('cfEndereco').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();buscarEndereco();}});
   ['cfLat','cfLng','cfRaio'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){desenharEscritorio();var p=pontoDosCampos();if(p&&MAPA.mapa&&id!=='cfRaio')MAPA.mapa.panTo(p);});});
   document.getElementById('emTeste').addEventListener('click',function(){enviarEmailPonto('teste',this);});
