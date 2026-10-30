@@ -50,7 +50,15 @@
       'html.saga-tema-trocando *:not(#themeToggle):not(#themeToggle *),html.saga-tema-trocando *::before,html.saga-tema-trocando *::after{transition:none !important;}'+
       'html.saga-tema-trocando::view-transition-old(root),html.saga-tema-trocando::view-transition-new(root){animation:none !important;mix-blend-mode:normal;}'+
       'html.saga-tema-trocando::view-transition-group(root){animation:none !important;}'+
-      'html.saga-tema-escurecendo::view-transition-old(root){z-index:2;}'+
+      // Escurecendo: o escuro (por cima, como sempre) entra pelas bordas e fecha no botao = a luz se recolhe para o botao
+      'html.saga-tema-escurecendo::view-transition-new(root){-webkit-mask-image:radial-gradient(circle at var(--saga-tema-x) var(--saga-tema-y),transparent var(--saga-tema-r),#000 calc(var(--saga-tema-r) + 1px));mask-image:radial-gradient(circle at var(--saga-tema-x) var(--saga-tema-y),transparent var(--saga-tema-r),#000 calc(var(--saga-tema-r) + 1px));}'+
+      // Ja comeca no ponto certo (sem o instante de tela toda escura antes da onda)
+      'html.saga-tema-clareando::view-transition-new(root){clip-path:circle(0px at var(--saga-tema-x) var(--saga-tema-y));}'+
+      // Menus superior e lateral ficam parados: nao entram na onda de luz
+      'html.saga-tema-trocando #topbarSaga{view-transition-name:saga-tema-topo;}'+
+      'html.saga-tema-trocando #sidebarSaga{view-transition-name:saga-tema-lateral;}'+
+      'html.saga-tema-trocando::view-transition-old(saga-tema-topo),html.saga-tema-trocando::view-transition-old(saga-tema-lateral){display:none;}'+
+      'html.saga-tema-trocando::view-transition-group(saga-tema-topo),html.saga-tema-trocando::view-transition-group(saga-tema-lateral),html.saga-tema-trocando::view-transition-new(saga-tema-topo),html.saga-tema-trocando::view-transition-new(saga-tema-lateral){animation:none !important;}'+
       '#themeToggle{view-transition-name:saga-tema-botao;}'+
       'html.saga-tema-trocando::view-transition-old(saga-tema-botao){display:none;}'+
       'html.saga-tema-trocando::view-transition-new(saga-tema-botao),html.saga-tema-trocando::view-transition-group(saga-tema-botao){animation:none !important;}'+
@@ -506,6 +514,12 @@
   // Modo claro: a luz sai do botao do sol e se espalha em circulo pela tela.
   // Modo escuro: a luz volta e se recolhe para dentro do botao.
   var _temaTrocando=false;
+  // Raio da luz como medida animavel (para o escuro fechar no botao)
+  var _raioRegistrado=false;
+  function registrarRaioTema(){
+    if(_raioRegistrado)return;_raioRegistrado=true;
+    try{if(window.CSS&&CSS.registerProperty)CSS.registerProperty({name:'--saga-tema-r',syntax:'<length>',inherits:true,initialValue:'0px'});}catch(e){}
+  }
   function trocarTemaComLuz(btn,novo,aplicar){
     var html=document.documentElement;
     var reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -514,16 +528,22 @@
     var r=btn.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
     var raio=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
     var clarear=novo==='light';
+    registrarRaioTema();
+    html.style.setProperty('--saga-tema-x',x+'px');html.style.setProperty('--saga-tema-y',y+'px');html.style.setProperty('--saga-tema-r',raio+'px');
     html.classList.add('saga-tema-trocando');
     html.classList.toggle('saga-tema-escurecendo',!clarear);
-    var vt;
+    html.classList.toggle('saga-tema-clareando',clarear);
+    var vt,anim=null;
     try{vt=document.startViewTransition(aplicar);}catch(e){aplicar();fim();return;}
-    function fim(){_temaTrocando=false;html.classList.remove('saga-tema-trocando','saga-tema-escurecendo');}
+    function fim(){_temaTrocando=false;if(anim){try{anim.cancel();}catch(e){}anim=null;}html.classList.remove('saga-tema-trocando','saga-tema-escurecendo','saga-tema-clareando');}
     vt.ready.then(function(){
-      var circulos=['circle(0px at '+x+'px '+y+'px)','circle('+raio+'px at '+x+'px '+y+'px)'];
-      html.animate({clipPath:clarear?circulos:circulos.slice().reverse()},
-        {duration:clarear?650:560,easing:clarear?'cubic-bezier(.4,0,.2,1)':'cubic-bezier(.55,0,.6,1)',fill:'forwards',
-         pseudoElement:clarear?'::view-transition-new(root)':'::view-transition-old(root)'});
+      if(clarear){
+        anim=html.animate({clipPath:['circle(0px at '+x+'px '+y+'px)','circle('+raio+'px at '+x+'px '+y+'px)']},
+          {duration:650,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards',pseudoElement:'::view-transition-new(root)'});
+      }else{
+        anim=html.animate({'--saga-tema-r':[raio+'px','0px']},
+          {duration:560,easing:'cubic-bezier(.55,0,.6,1)',fill:'forwards',pseudoElement:'::view-transition-new(root)'});
+      }
     }).catch(function(){});
     vt.finished.then(fim,fim);
   }
