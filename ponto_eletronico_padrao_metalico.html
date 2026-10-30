@@ -175,6 +175,9 @@ tr.apagado td{color:var(--muted)}
   .sugestoes button{display:block;width:100%;text-align:left;padding:8px 11px;font-size:12px;background:none;border:0;color:inherit;cursor:pointer}
   .sugestoes button:hover{background:var(--panel-2)}
   .cli-escolhido{display:flex;align-items:center;gap:6px;height:38px;font-size:12.5px;font-weight:600}
+  .obs-hoje{margin-top:14px;padding:11px 13px;border:1px dashed var(--border);border-radius:10px;font-size:12.5px}
+  .obs-hoje .t{white-space:pre-wrap;word-break:break-word;margin-top:4px}
+  .rel-obs{margin-top:14px;padding:11px 13px;border-left:3px solid var(--gold);border-radius:8px;background:var(--panel-2);font-size:12.5px;white-space:pre-wrap;word-break:break-word}
   .rel-resumo{display:flex;flex-wrap:wrap;gap:8px}
   .rel-resumo .chip{padding:7px 11px;border-radius:10px;background:var(--panel-2);border:1px solid var(--border-soft);font-size:11.5px;color:var(--muted)}
   .rel-resumo .chip b{color:var(--text);font-size:13px;margin-left:4px}
@@ -258,6 +261,7 @@ tr.apagado td{color:var(--muted)}
         </div>
         <button class="btn-primary" id="atRegistrar" type="button">Registrar atividade</button>
         <div class="linha-tempo" id="atLista"></div>
+        <div class="obs-hoje" id="atObs"></div>
       </div>
       <div class="toolbar">
         <div class="nav-mes"><button class="btn-secondary btn-sm" id="mesAnt" type="button">‹</button><b id="mesTitulo"></b><button class="btn-secondary btn-sm" id="mesProx" type="button">›</button></div>
@@ -407,6 +411,7 @@ tr.apagado td{color:var(--muted)}
     <div id="relObsWrap">
       <div class="secao-titulo" style="margin:18px 0 6px">Observações do dia <span class="sub" style="font-weight:500;text-transform:none;letter-spacing:0">(opcional: pendências, recados, algo que não cabe numa atividade)</span></div>
       <div class="campo"><textarea id="relTexto" style="min-height:90px" placeholder="Ex.: Cliente X pediu retorno amanhã cedo."></textarea></div>
+      <div class="sub" id="relObsInfo" style="margin-top:-4px"></div>
     </div>
   </div>
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalRel" type="button">Fechar</button><button class="btn-primary" id="relSalvar" type="button">Salvar observações</button></div>
@@ -729,6 +734,7 @@ async function abrirRelatorio(key,colab,podeEditar){
   var dia=res[0].data||{},ev=res[1].data;
   t.value=dia.relatorio||'';
   document.getElementById('relObsWrap').style.display=podeEditar||dia.relatorio?'':'none';
+  infoObs(dia.relatorio_em,podeEditar);
   if(!ev){
     document.getElementById('relLinha').innerHTML='<div class="sub">A linha do tempo de atividades só aparece para a própria pessoa e para o administrador geral.</div>';
     return;
@@ -739,10 +745,21 @@ async function abrirRelatorio(key,colab,podeEditar){
   document.getElementById('relResumo').innerHTML=chips.map(function(c){return '<span class="chip'+(c[2]?' alerta':'')+'">'+esc(c[0])+'<b>'+esc(c[1])+'</b></span>';}).join('');
   document.getElementById('relLinha').innerHTML=htmlLinhaTempo(ev,a.gaps).replace('Nenhuma atividade ainda.','Nenhuma atividade registrada neste dia.');
 }
+function infoObs(quando,podeEditar){
+  var txt=quando?'Salva em '+dataBR(dataLocalDe(quando))+' às '+horaDe(quando)+'. ':'';
+  txt+=podeEditar?'Fica guardada neste relatório do dia (✎ na linha da data), aparece em "Observações de hoje" no Meu ponto e para o administrador na aba Relatórios.':'';
+  document.getElementById('relObsInfo').textContent=txt;
+}
 async function salvarRelatorio(){
+  var btn=document.getElementById('relSalvar');btn.disabled=true;
   var r=await _sb.rpc('salvar_relatorio_dia',{p_data:state.relData,p_texto:document.getElementById('relTexto').value});
+  btn.disabled=false;
   if(r.error||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||r.error.message),'error');return;}
-  fecharModal('modalRel');showToast('Observações do dia '+dataBR(state.relData).slice(0,5)+' salvas.','success');carregarMeuMes();
+  // a janela continua aberta, mostrando que ficou salva
+  infoObs(new Date().toISOString(),true);
+  var info=document.getElementById('relObsInfo');info.style.color='var(--success,#2fae7a)';setTimeout(function(){info.style.color='';},2500);
+  showToast('Observações do dia '+dataBR(state.relData).slice(0,5)+' salvas.','success');
+  carregarMeuMes();if(state.relData===state.hoje)carregarMinhasAtividades();
 }
 
 /* ----- Justificativas ----- */
@@ -1502,6 +1519,15 @@ async function carregarMinhasAtividades(){
   var r=await _sb.rpc('relatorio_atividades',{p_usuario:state.meuId,p_ini:state.hoje,p_fim:state.hoje});
   var ev=r.data||[];
   document.getElementById('atLista').innerHTML=r.error?'<div class="sub">Erro ao carregar: '+esc(r.error.message)+'</div>':htmlLinhaTempo(ev,[]).replace('Nenhuma atividade ainda.','Nenhuma atividade hoje ainda.');
+  // Observacoes de hoje (texto livre do relatorio do dia)
+  var ob=document.getElementById('atObs');
+  if(ob&&state.meuColab){
+    var d=await _sb.from('ponto_dias').select('relatorio,relatorio_em').eq('colaborador_id',state.meuColab.id).eq('data',state.hoje).maybeSingle();
+    var rel=d.data&&d.data.relatorio;
+    ob.innerHTML='<b>Observações de hoje</b> <button class="lnk" type="button" id="atObsEditar">'+(rel?'editar':'escrever')+'</button>'+
+      (rel?'<div class="t">'+esc(rel)+'</div><div class="sub" style="margin-top:4px">Salva às '+horaDe(d.data.relatorio_em)+'</div>':'<div class="sub" style="margin-top:4px">Pendências ou recados do dia que não cabem numa atividade (opcional).</div>');
+    document.getElementById('atObsEditar').addEventListener('click',function(){abrirRelatorio(state.hoje,state.meuColab,true);});
+  }
 }
 
 // ===== Relatorios (administrador geral) =====
@@ -1546,6 +1572,8 @@ async function renderRelatorios(){
   alvo.innerHTML='<div class="vazio">Carregando…</div>';
   var lista=state.rel.pessoa?pessoas.filter(function(c){return c.usuario_id===state.rel.pessoa;}):pessoas;
   var res=await Promise.all(lista.map(function(c){return _sb.rpc('relatorio_atividades',{p_usuario:c.usuario_id,p_ini:per.ini,p_fim:per.fim});}));
+  var ro=await _sb.from('ponto_dias').select('colaborador_id,data,relatorio').gte('data',per.ini).lte('data',per.fim).not('relatorio','is',null);
+  var obs={};(ro.data||[]).forEach(function(o){obs[o.colaborador_id+'|'+o.data]=o.relatorio;});
   var erro=res.find(function(r){return r.error;});
   if(erro){alvo.innerHTML='<div class="vazio">Erro ao gerar o relatório: '+esc(erro.error.message)+'</div>';return;}
   var dias=diasDoPeriodo(per.ini,per.fim);
@@ -1564,7 +1592,8 @@ async function renderRelatorios(){
       '<div class="resumo-grid" style="margin-bottom:14px"><div><span>Entrada</span><b>'+(a.entrada?horaDe(a.entrada):'—')+'</b></div><div><span>Saída</span><b>'+(a.saida?horaDe(a.saida):'—')+'</b></div><div><span>Trabalhadas</span><b>'+hh(a.trab)+'</b></div>'+
       '<div><span>Atividades</span><b>'+a.nAtiv+'</b></div><div><span>Clientes atendidos</span><b>'+a.nCli+'</b></div><div><span>Maior intervalo</span><b'+(a.maior>limite?' style="color:#e5484d"':'')+'>'+(a.maior?duracaoTxt(a.maior):'—')+'</b></div></div>'+
       (a.nCli?'<div class="sub" style="margin-bottom:10px">Clientes: '+Object.keys(a.clientes).map(function(k){return esc(a.clientes[k]);}).join(', ')+'</div>':'')+
-      '<div class="linha-tempo">'+htmlLinhaTempo(d.porDia[per.ini]||[],a.gaps)+'</div></div>';
+      '<div class="linha-tempo">'+htmlLinhaTempo(d.porDia[per.ini]||[],a.gaps)+'</div>'+
+      (obs[d.c.id+'|'+per.ini]?'<div class="rel-obs"><b>Observações do dia</b>\n'+esc(obs[d.c.id+'|'+per.ini])+'</div>':'')+'</div>';
   }else if(state.rel.modo==='dia'){
     h='<div class="tabela-wrap"><table class="banco"><thead><tr><th>Colaborador</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima de '+limite+' min</th></tr></thead><tbody id="relCorpo">'+
       dados.map(function(d){var a=d.an[per.ini];return '<tr data-rel-ir="1" data-rel-pessoa="'+d.c.usuario_id+'" title="Ver a linha do tempo"><td><b>'+esc(d.c.nome)+'</b></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>limite?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+
