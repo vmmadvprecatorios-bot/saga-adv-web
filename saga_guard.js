@@ -128,7 +128,7 @@
   // Mola: passa um pouquinho do ponto e assenta (como no iPhone)
   var MOLA='cubic-bezier(.34,1.45,.64,1)';
   function cascata(itens,entrada){
-    var max=entrada?11:6,passo=entrada?38:16,dur=entrada?440:130,total=0;
+    var max=entrada?9:6,passo=entrada?28:14,dur=entrada?360:110,total=0;
     itens.forEach(function(el,i){
       if(!el.animate)return;
       var atraso=Math.min(i,max)*passo;total=Math.max(total,atraso+dur);
@@ -136,7 +136,7 @@
         ?[{opacity:0,transform:'translateY(10px) scale(.93)'},{opacity:1,offset:.6},{opacity:1,transform:'none'}]
         :[{opacity:1,transform:'none'},{opacity:0,transform:'scale(.97)'}],
         {duration:dur,delay:atraso,easing:entrada?MOLA:'ease-in',fill:entrada?'backwards':'forwards'});
-      if(entrada)animarDetalhes(el,atraso+120);
+      if(entrada)animarDetalhes(el,atraso+80);
     });
     return total;
   }
@@ -261,10 +261,62 @@
       lembrar(grupo,el);
     }catch(e){if(window.SAGA_DEBUG)console.warn('[saga] abas',e);}});
   }
+  // Janelas que aparecem (online agora, notificacoes, cadastros, menus suspensos, avisos): surgem com mola
+  var visivelAntes=new WeakMap();
+  function ehJanela(el){
+    if(!el||el.nodeType!==1||el.id==='sagaCarregando'||el.getAttribute('aria-hidden')==='true')return false;
+    if(/^(SCRIPT|STYLE|LINK|svg|path|INPUT|SELECT|OPTION|TEXTAREA|IMG|BR)$/i.test(el.tagName))return false;
+    if(el.closest('#sidebarSaga'))return false;
+    var cs=getComputedStyle(el),p=cs.position;
+    // absoluto so conta se estiver por cima do resto (menus e popovers), nao blocos posicionados da pagina
+    return p==='fixed'||(p==='absolute'&&(parseInt(cs.zIndex,10)||0)>=10);
+  }
+  function estaVisivel(el){
+    var cs=getComputedStyle(el);
+    if(cs.display==='none'||cs.visibility==='hidden'||parseFloat(cs.opacity)<0.05)return false;
+    var r=el.getBoundingClientRect();
+    return r.width>=60&&r.height>=36&&r.bottom>0&&r.top<innerHeight;
+  }
+  function registrarJanelas(){
+    document.querySelectorAll('body *').forEach(function(el){if(ehJanela(el))visivelAntes.set(el,estaVisivel(el));});
+  }
+  function animarJanela(el){
+    if(reduz||!el.animate)return;
+    var r=el.getBoundingClientRect(),base=getComputedStyle(el).transform;base=base==='none'?'':base+' ';
+    var telaToda=r.width>=innerWidth*0.9&&r.height>=innerHeight*0.85;
+    if(telaToda){
+      // fundo escurece suave e a janela de dentro cresce com mola
+      el.animate([{opacity:0},{opacity:1}],{duration:180,easing:'ease-out'});
+      var maior=null,area=0;
+      Array.prototype.forEach.call(el.children,function(c){var b=c.getBoundingClientRect(),a=b.width*b.height;if(a>area&&a<r.width*r.height*0.98){area=a;maior=c;}});
+      if(maior){var bm=getComputedStyle(maior).transform;bm=bm==='none'?'':bm+' ';
+        maior.animate([{opacity:0,transform:bm+'translateY(16px) scale(.94)'},{opacity:1,offset:.5},{opacity:1,transform:bm+'translateY(0) scale(1)'}],{duration:380,easing:MOLA});}
+      return;
+    }
+    var origem=(r.left+r.width/2>innerWidth/2?'top right':'top left');
+    if(r.top>innerHeight*0.6)origem=origem.replace('top','bottom');
+    el.animate([{opacity:0,transform:base+'scale(.9)',transformOrigin:origem},{opacity:1,offset:.45,transformOrigin:origem},{opacity:1,transform:base+'scale(1)',transformOrigin:origem}],{duration:320,easing:MOLA});
+  }
+  var paraConferir=new Set();
+  function anotarMudancas(lista){
+    lista.forEach(function(m){
+      if(m.type==='attributes')paraConferir.add(m.target);
+      else m.addedNodes.forEach(function(n){if(n.nodeType===1){paraConferir.add(n);}});
+    });
+  }
+  function conferirJanelas(){
+    var itens=Array.from(paraConferir);paraConferir.clear();
+    itens.forEach(function(el){try{
+      if(!el.isConnected||!ehJanela(el))return;
+      var antes=visivelAntes.get(el),agora=estaVisivel(el);
+      visivelAntes.set(el,agora);
+      if(agora&&antes!==true)animarJanela(el);
+    }catch(e){}});
+  }
   var agendado=false;
   function agendarConferencia(){
     if(agendado)return;agendado=true;
-    requestAnimationFrame(function(){agendado=false;try{conferirGrupos();}catch(e){}});
+    requestAnimationFrame(function(){agendado=false;try{conferirJanelas();}catch(e){}try{conferirGrupos();}catch(e){}});
   }
 
   var fio=null,fioTimer=null;
@@ -287,8 +339,8 @@
     if(!reduz){try{cascata(blocosCascata(),true);}catch(e){}}
     html.classList.remove('saga-carregando');
     try{
-      conferirGrupos();
-      new MutationObserver(agendarConferencia).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+      conferirGrupos();registrarJanelas();
+      new MutationObserver(function(lista){anotarMudancas(lista);agendarConferencia();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open']});
     }catch(e){}
   }
   // Menus prontos: espera a tela terminar de buscar os dados (sem buscas por um instante) e mostra tudo de uma vez
@@ -298,9 +350,9 @@
     fioTimer=setTimeout(mostrarFio,260);
     (function conferir(){
       if(jaMostrou)return;
-      var quieto=pendentes===0&&Date.now()-ultimaBusca>=140;
+      var quieto=pendentes===0&&Date.now()-ultimaBusca>=90;
       if(quieto||Date.now()-inicio>2800){mostrar();return;}
-      setTimeout(conferir,40);
+      setTimeout(conferir,25);
     })();
   }
   document.addEventListener('saga-ui-moldura',mostrarMoldura);
@@ -339,7 +391,7 @@
     var total=0,menu=0;
     try{total=cascata(blocosCascata(),false);}catch(e){}
     try{menu=deslizarMenu(url);}catch(e){}
-    setTimeout(function(){location.href=url;},Math.max(Math.min(total,200),menu));
+    setTimeout(function(){location.href=url;},Math.max(Math.min(total,150),menu));
   };
 
   // Menu lateral: o destaque desliza do item atual ate o item clicado antes de trocar de tela
@@ -366,8 +418,8 @@
     fantasma.animate([
       {transform:'translate('+x+'px,'+y0+'px)',height:a.height+'px'},
       {transform:'translate('+x+'px,'+y1+'px)',height:b.height+'px'}
-    ],{duration:300,easing:'cubic-bezier(.3,1.18,.55,1)',fill:'forwards'});
-    return 280;
+    ],{duration:240,easing:'cubic-bezier(.3,1.18,.55,1)',fill:'forwards'});
+    return 210;
   }
 
   // Todo botao responde ao toque: afunda um pouquinho ao apertar e volta com mola (como no iPhone)

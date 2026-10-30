@@ -17,6 +17,14 @@
     var style=document.createElement('style');
     style.id='sagaUiEstiloBase';
     style.textContent=
+      /* ===== Troca de tema com a luz saindo do botao ===== */
+      'html.saga-tema-trocando *:not(#themeToggle):not(#themeToggle *),html.saga-tema-trocando *::before,html.saga-tema-trocando *::after{transition:none !important;}'+
+      'html.saga-tema-trocando::view-transition-old(root),html.saga-tema-trocando::view-transition-new(root){animation:none !important;mix-blend-mode:normal;}'+
+      'html.saga-tema-trocando::view-transition-group(root){animation:none !important;}'+
+      'html.saga-tema-escurecendo::view-transition-old(root){z-index:2;}'+
+      '#themeToggle{view-transition-name:saga-tema-botao;}'+
+      'html.saga-tema-trocando::view-transition-old(saga-tema-botao){display:none;}'+
+      'html.saga-tema-trocando::view-transition-new(saga-tema-botao),html.saga-tema-trocando::view-transition-group(saga-tema-botao){animation:none !important;}'+
       /* ===== TOPBAR: aparencia fixa, nao depende de variaveis de cada tela ===== */
       '#topbarSaga{height:64px !important;position:sticky !important;top:0 !important;z-index:200 !important;display:flex !important;align-items:center !important;padding:0 24px !important;border-bottom:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;background:linear-gradient(135deg,rgba(20,28,48,.94),rgba(10,14,26,.98)) !important;gap:16px !important;}'+
       '[data-theme="light"] #topbarSaga{background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(243,245,248,.985)) !important;border-bottom-color:rgba(19,38,66,.18) !important;}'+
@@ -446,9 +454,37 @@
     btn.addEventListener('click',function(){
       var atual=document.body.getAttribute('data-theme');
       var novo=atual==='dark'?'light':'dark';
-      document.body.setAttribute('data-theme',novo);
-      localStorage.setItem('saga-tema',novo);
+      function aplicar(){
+        document.body.setAttribute('data-theme',novo);
+        try{localStorage.setItem('saga-tema',novo);}catch(e){}
+      }
+      trocarTemaComLuz(btn,novo,aplicar);
     });
+  }
+
+  // Modo claro: a luz sai do botao do sol e se espalha em circulo pela tela.
+  // Modo escuro: a luz volta e se recolhe para dentro do botao.
+  var _temaTrocando=false;
+  function trocarTemaComLuz(btn,novo,aplicar){
+    var html=document.documentElement;
+    var reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!document.startViewTransition||reduz||_temaTrocando){aplicar();return;}
+    _temaTrocando=true;
+    var r=btn.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+    var raio=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
+    var clarear=novo==='light';
+    html.classList.add('saga-tema-trocando');
+    html.classList.toggle('saga-tema-escurecendo',!clarear);
+    var vt;
+    try{vt=document.startViewTransition(aplicar);}catch(e){aplicar();fim();return;}
+    function fim(){_temaTrocando=false;html.classList.remove('saga-tema-trocando','saga-tema-escurecendo');}
+    vt.ready.then(function(){
+      var circulos=['circle(0px at '+x+'px '+y+'px)','circle('+raio+'px at '+x+'px '+y+'px)'];
+      html.animate({clipPath:clarear?circulos:circulos.slice().reverse()},
+        {duration:clarear?650:560,easing:clarear?'cubic-bezier(.4,0,.2,1)':'cubic-bezier(.55,0,.6,1)',fill:'forwards',
+         pseudoElement:clarear?'::view-transition-new(root)':'::view-transition-old(root)'});
+    }).catch(function(){});
+    vt.finished.then(fim,fim);
   }
 
   function ligarHamburger(){
