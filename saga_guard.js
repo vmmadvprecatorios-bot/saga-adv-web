@@ -373,6 +373,30 @@
   html.classList.add('saga-padrao');
   // A primeira imagem da tela so e desenhada depois de montados os menus (fim da leitura da pagina)
   try{document.write('<link rel="expect" href="#sagaFimDaTela" blocking="render">');}catch(e){}
+  // Aba aberta dentro da tela: lembrada nesta aba do navegador; ao recarregar (F5), volta para ela
+  var ATRIBS_ABA=['data-aba','data-aba-col','data-view','data-visao'];
+  var CHAVE_ABA='saga-abas:'+location.pathname;
+  function lerAbas(){try{return JSON.parse(sessionStorage.getItem(CHAVE_ABA)||'{}')||{};}catch(e){return {};}}
+  document.addEventListener('click',function(ev){
+    var el=ev.target&&ev.target.closest&&ev.target.closest('[data-aba],[data-aba-col],[data-view],[data-visao]');
+    if(!el||el.closest('.modal-overlay,#sidebarSaga,#topbarSaga'))return;
+    var at=ATRIBS_ABA.find(function(a){return el.hasAttribute(a);});if(!at)return;
+    var m=lerAbas();m[at]=el.getAttribute(at);
+    try{sessionStorage.setItem(CHAVE_ABA,JSON.stringify(m));}catch(e){}
+  },true);
+  var abasRestauradas=false;
+  function restaurarAbas(){
+    abasRestauradas=true;
+    var m=lerAbas(),clicou=false;
+    ATRIBS_ABA.forEach(function(at){
+      if(!m[at])return;
+      var el=Array.prototype.find.call(document.querySelectorAll('['+at+'="'+String(m[at]).replace(/"/g,'')+'"]'),function(x){return !x.closest('.modal-overlay')&&x.getClientRects().length;});
+      if(!el||/(^|\s)(active|ativo|ativa|selected)(\s|$)/.test(el.className||''))return;
+      try{el.click();clicou=true;}catch(e){}
+    });
+    return clicou;
+  }
+
   var jaMostrou=false;
   function mostrar(){
     mostrarMoldura();
@@ -393,7 +417,9 @@
     (function conferir(){
       if(jaMostrou)return;
       var quieto=pendentes===0&&Date.now()-ultimaBusca>=90;
-      if(quieto||Date.now()-inicio>2800){mostrar();return;}
+      // Antes de mostrar, volta para a aba em que a pessoa estava (e espera os dados dessa aba)
+      if(quieto&&!abasRestauradas){var mudou=false;try{mudou=restaurarAbas();}catch(e){}if(mudou){ultimaBusca=Date.now();setTimeout(conferir,25);return;}}
+      if(quieto||Date.now()-inicio>2800){if(!abasRestauradas){try{restaurarAbas();}catch(e){}}mostrar();return;}
       setTimeout(conferir,25);
     })();
   }
