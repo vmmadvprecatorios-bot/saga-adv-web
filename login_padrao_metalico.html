@@ -460,7 +460,7 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
     if (r.data && r.data.session) {
       if (await contaLiberada()) {
         try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
-        window.location.replace(TELA_POS_LOGIN);
+        window.location.replace(await telaInicial());
         return;
       }
     }
@@ -470,6 +470,20 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
   document.documentElement.classList.remove('saga-entrando');
   mostrarBotaoGoogle();
 })();
+
+// Tela que a pessoa escolheu para abrir depois de entrar (Configuracoes > Preferencias)
+async function telaInicial() {
+  try {
+    var s = await _sb.auth.getSession();
+    var id = s.data && s.data.session && s.data.session.user.id;
+    if (!id) return TELA_POS_LOGIN;
+    var r = await _sb.from('usuarios').select('preferencias,tema_preferido').eq('auth_user_id', id).maybeSingle();
+    var t = r.data && r.data.preferencias && r.data.preferencias.tela_inicial;
+    var letra = r.data && r.data.preferencias && r.data.preferencias.letra;
+    try { if (letra) localStorage.setItem('saga-letra', String(letra)); } catch (e) {}
+    return (t && /^[a-z_]+\.html$/i.test(t)) ? t : TELA_POS_LOGIN;
+  } catch (e) { return TELA_POS_LOGIN; }
+}
 
 // Confere se a conta logada pertence a alguem da equipe e esta ativa
 // (liga a conta ao pre-cadastro pelo e-mail no primeiro acesso pelo Google)
@@ -551,8 +565,9 @@ document.getElementById('formLogin').addEventListener('submit', async function (
     // Marca a entrada como atividade, para a contagem de inatividade do saga_ui.js
     try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
     showToast('Acesso autorizado. Redirecionando...', 'sucesso');
+    var destino = await telaInicial();
     setTimeout(function () {
-      window.location.href = TELA_POS_LOGIN;
+      window.location.href = destino;
     }, 800);
 
   } catch (ex) {

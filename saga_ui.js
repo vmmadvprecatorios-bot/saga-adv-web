@@ -106,6 +106,9 @@
       '#topbarSaga .avatar-pop-email{color:#8b93a8 !important;}[data-theme="light"] #topbarSaga .avatar-pop-email{color:#4a586e !important;}'+
       '#topbarSaga .pop-divisor{background:color-mix(in srgb,var(--gold) 12%,transparent) !important;}'+
       '#topbarSaga .pop-row-sair{color:#e85d5d !important;}'+
+      '#topbarSaga a.pop-row-link{display:flex !important;align-items:center !important;gap:9px !important;text-decoration:none !important;color:inherit !important;cursor:pointer !important;}'+
+      '#topbarSaga .avatar{position:relative !important;overflow:hidden !important;cursor:pointer !important;}'+
+      '#topbarSaga .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;}'+
       /* ===== SIDEBAR: aparencia fixa, retratil, sticky ===== */
       '#sidebarSaga{width:208px !important;background:var(--navy-2) !important;border-right:1px solid var(--border) !important;padding:22px 0 !important;position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;flex-grow:0 !important;flex-shrink:0 !important;flex-basis:208px !important;transition:width .22s ease,min-width .22s ease,flex-basis .22s ease,padding .22s ease,opacity .18s ease !important;}'+
       '[data-theme="light"] #sidebarSaga{background:#ffffff !important;border-right-color:var(--border) !important;}'+
@@ -403,6 +406,13 @@
     +'<div class="avatar-pop-email" id="avatarPopEmail">--</div>'
     +'</div>'
     +'<div class="pop-divisor"></div>'
+    +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=perfil" data-ir="configuracoes_padrao_metalico.html?aba=perfil">'
+    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+    +'Meu perfil</a>'
+    +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=preferencias" data-ir="configuracoes_padrao_metalico.html?aba=preferencias">'
+    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Configurações</a>'
+    +'<div class="pop-divisor"></div>'
     +'<div class="pop-row pop-row-sair" data-acao="sair">'
     +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Sair do sistema'
@@ -587,6 +597,13 @@
         if(!aberto)p.classList.add('open');
       });
     }
+    document.querySelectorAll('#avatarPop [data-ir]').forEach(function(a){
+      if(a.dataset.ligado)return;a.dataset.ligado='true';
+      a.addEventListener('click',function(e){
+        if(e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0)return;
+        e.preventDefault();e.stopPropagation();fecharTodosPopovers();global.sagaIrPara(a.getAttribute('href'));
+      });
+    });
     var btnSair=document.querySelector('[data-acao="sair"]');
     if(btnSair&&!btnSair.dataset.ligado){
       btnSair.dataset.ligado='true';
@@ -621,12 +638,17 @@
       var s=await global._sb.auth.getSession();
       if(!s.data||!s.data.session)return;
       var authId=s.data.session.user.id;
-      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo').eq('auth_user_id',authId).single();
+      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo,foto_url,preferencias,preferencias_notificacao').eq('auth_user_id',authId).single();
       if(r.error||!r.data)return;
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
       _perfilAtual=r.data;
       var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo);try{localStorage.setItem('saga-iniciais',iniciais(r.data.nome_completo));}catch(e){}
+      mostrarFotoAvatar(r.data.foto_url);
+      // tamanho da letra escolhido nas Configuracoes vale em qualquer aparelho
+      var letra=String((r.data.preferencias||{}).letra||'1');
+      try{if(localStorage.getItem('saga-letra')!==letra){localStorage.setItem('saga-letra',letra);document.documentElement.style.zoom=letra==='1'?'':letra;}}catch(e){}
+      _avisosDesligados=((r.data.preferencias_notificacao||{}).desligados)||[];
       var nm=document.getElementById('avatarPopNome');if(nm)nm.textContent=r.data.nome_completo||'';
       var em=document.getElementById('avatarPopEmail');if(em)em.textContent=r.data.email||'';
     }catch(e){}
@@ -635,7 +657,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={processos:'Processos',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente'};
   var _canalPresenca=null;
   var _telaAtual='';
   var _colaboradoresAtivos=null;
@@ -774,9 +796,18 @@
     for(var i=0;i<GRUPOS_NOTIF.length-1;i++){if(GRUPOS_NOTIF[i].tipos.indexOf(tipo)!==-1)return GRUPOS_NOTIF[i];}
     return GRUPOS_NOTIF[GRUPOS_NOTIF.length-1];
   }
+  // Avisos que a pessoa desligou nas Configuracoes nao entram no sino
+  var _avisosDesligados=[];
+  function mostrarFotoAvatar(url){
+    var av=document.getElementById('avatarTop');if(!av)return;
+    try{if(url)localStorage.setItem('saga-foto',url);else localStorage.removeItem('saga-foto');}catch(e){}
+    var img=av.querySelector('img');
+    if(url){if(!img){img=document.createElement('img');img.alt='';av.appendChild(img);}img.src=url;}
+    else if(img)img.remove();
+  }
   function agruparNotif(lista){
     var mapa={};
-    lista.forEach(function(n){var g=grupoDoTipo(n.tipo);(mapa[g.chave]=mapa[g.chave]||{grupo:g,itens:[]}).itens.push(n);});
+    lista.forEach(function(n){var g=grupoDoTipo(n.tipo);if(_avisosDesligados.indexOf(g.chave)>=0)return;(mapa[g.chave]=mapa[g.chave]||{grupo:g,itens:[]}).itens.push(n);});
     return GRUPOS_NOTIF.filter(function(g){return mapa[g.chave];}).map(function(g){return mapa[g.chave];});
   }
   async function marcarLidas(ids){
@@ -855,7 +886,7 @@
     try{
       var r=await global._sb.from('notificacoes').select('tipo').eq('usuario_id',_perfilAtual.id).eq('lida',false).limit(1000);
       if(r.error)return;
-      var g={};(r.data||[]).forEach(function(n){g[grupoDoTipo(n.tipo).chave]=1;});
+      var g={};(r.data||[]).forEach(function(n){var k=grupoDoTipo(n.tipo).chave;if(_avisosDesligados.indexOf(k)<0)g[k]=1;});
       atualizarBadgeNotif(Object.keys(g).length);
     }catch(e){}
   }
@@ -1258,7 +1289,7 @@
       _molduraMontada=true;
       if(sb){sb.innerHTML=SIDEBAR_HTML;linksDoMenu(sb);prepararMenuPermissoes();}
       if(tb)tb.innerHTML=TOPBAR_HTML;
-      try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;}catch(e){}
+      try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);}catch(e){}
       ligarTema();
       ligarPrivacidade();
       ligarHamburger();
@@ -1308,5 +1339,5 @@
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
 
-  global.SagaUI={carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);

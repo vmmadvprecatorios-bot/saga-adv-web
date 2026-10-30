@@ -9,6 +9,9 @@
   var CHAVE='sb-fmoskdxgjulagedzjxxk-auth-token';
   var html=document.documentElement;
 
+  // Tamanho da letra escolhido nas Configuracoes (antes da primeira imagem da tela)
+  try{var letra=localStorage.getItem('saga-letra');if(letra&&letra!=='1')html.style.zoom=letra;}catch(e){}
+
   var tema='dark';
   try{tema=localStorage.getItem('saga-tema')||'dark';}catch(e){}
   html.style.background=tema==='light'?'#f3f5f8':'#172234';
