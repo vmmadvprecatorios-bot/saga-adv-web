@@ -282,7 +282,7 @@ async function enviarFoto(arq){
   try{
     var blob=await quadradoDaImagem(arq,400);
     var caminho=state.authId+'/foto_'+Date.now()+'.jpg';
-    var up=await _sb.storage.from('avatares').upload(caminho,blob,{contentType:'image/jpeg',upsert:true});
+    var up=await _sb.storage.from('avatares').upload(caminho,blob,{contentType:'image/jpeg'});
     if(up.error)throw up.error;
     var url=_sb.storage.from('avatares').getPublicUrl(caminho).data.publicUrl;
     var antiga=caminhoDaUrl(state.eu.foto_url);
@@ -417,7 +417,7 @@ async function enviarLogo(arq){
   var b=document.getElementById('esTrocarLogo');b.disabled=true;
   try{
     var ext=(arq.type.split('/')[1]||'png').replace('jpeg','jpg'),caminho='escritorio/logo_'+Date.now()+'.'+ext;
-    var up=await _sb.storage.from('avatares').upload(caminho,arq,{contentType:arq.type,upsert:true});
+    var up=await _sb.storage.from('avatares').upload(caminho,arq,{contentType:arq.type});
     if(up.error)throw up.error;
     var url=_sb.storage.from('avatares').getPublicUrl(caminho).data.publicUrl,antiga=caminhoDaUrl(state.escritorio.logo_url);
     var r=await _sb.from('configuracoes_sistema').update({logo_url:url}).eq('id',state.escritorio.id).select('id');
