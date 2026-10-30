@@ -60,7 +60,11 @@ a.btn-secondary{text-decoration:none}
 .int-card .topo{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted);font-weight:600}
 .int-card .topo .trib{padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 9%,transparent);color:var(--text)}
 .int-card .topo .data{margin-left:auto}
-.int-card .proc{font-size:11.5px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.int-card .proc{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;margin-top:6px;font-variant-numeric:tabular-nums}
+.int-card .proc span,.int-card .cli,.int-card .res,.int-card .doc,td b,td .cli{user-select:text;-webkit-user-select:text;cursor:text}
+.copiar{width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);border:1px solid transparent;flex:0 0 auto}
+.copiar:hover{color:var(--gold);border-color:var(--border)}
+.copiar.ok{color:var(--success)}
 .int-card .cli{font-size:12px;font-weight:600;margin-top:2px}
 .int-card .doc{font-size:10.5px;color:var(--muted);margin-top:4px}
 .int-card .res{font-size:11px;margin-top:6px;color:var(--text);opacity:.85;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
@@ -164,6 +168,7 @@ tbody tr:hover td{background:color-mix(in srgb,var(--gold) 5%,transparent)}
       <button class="pill" data-visao="lista" type="button">Lista</button>
     </div>
     <select id="fAdvogado" title="Advogado"></select>
+    <select id="fOab" title="OAB ou origem"></select>
     <select id="fPeriodo" title="Período">
       <option value="hoje">Disponibilizadas hoje</option>
       <option value="7" selected>Últimos 7 dias</option>
@@ -266,7 +271,7 @@ var SITUACOES=[
 var UFS=['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
 var POR_COLUNA=40;
 var state={itens:[],oabs:[],usuarios:[],processos:{},meuId:null,ehAdmin:false,pode:{gerenciar:false},
-  visao:'kanban',advogado:'',periodo:'7',tribunal:'',busca:'',processoFiltro:null,limite:{},aberta:null,horas:[7,13]};
+  visao:'kanban',advogado:'',oab:'',periodo:'7',tribunal:'',busca:'',processoFiltro:null,limite:{},aberta:null,horas:[7,13]};
 
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function dataBR(d){if(!d)return '—';var p=String(d).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
@@ -310,6 +315,10 @@ function montarFiltros(){
   var sa=document.getElementById('fAdvogado');
   sa.innerHTML='<option value="">Todos os advogados</option>'+Object.keys(advs).map(function(id){return '<option value="'+esc(id)+'">'+esc(nomeUsuario(id)||'Advogado')+'</option>';}).join('');
   sa.value=advs[state.advogado]?state.advogado:'';state.advogado=sa.value;
+  var so=document.getElementById('fOab'),opc=['<option value="">Todas as OABs e origens</option>'];
+  state.oabs.forEach(function(o){opc.push('<option value="oab:'+esc(o.numero_oab+'/'+o.uf_oab)+'">OAB '+esc(o.numero_oab+'/'+o.uf_oab)+(o.usuario_vinculado_id?' · '+esc((nomeUsuario(o.usuario_vinculado_id)||'').split(' ')[0]):'')+'</option>');});
+  opc.push('<option value="fonte:djen">Origem: CNJ (Diário Eletrônico)</option>','<option value="fonte:email">Origem: e-mail (radar)</option>');
+  so.innerHTML=opc.join('');so.value=state.oab;if(so.value!==state.oab){state.oab='';so.value='';}
   var tribs=[...new Set(state.itens.map(function(i){return i.tribunal;}).filter(Boolean))].sort();
   var st=document.getElementById('fTribunal');
   st.innerHTML='<option value="">Todos os tribunais</option>'+tribs.map(function(t){return '<option>'+esc(t)+'</option>';}).join('');
@@ -323,6 +332,10 @@ function filtrados(ignorarPeriodo){
     if(state.processoFiltro&&i.processo_id!==state.processoFiltro)return false;
     if(state.advogado&&(i.advogados_ids||[]).indexOf(state.advogado)===-1&&i.responsavel_id!==state.advogado)return false;
     if(state.tribunal&&i.tribunal!==state.tribunal)return false;
+    if(state.oab){
+      if(state.oab.indexOf('fonte:')===0){if(i.fonte!==state.oab.slice(6))return false;}
+      else{var alvoOab=state.oab.slice(4);if(!(i.advogados||[]).some(function(a){return String(a.numero_oab||'').replace(/\D/g,'')+'/'+String(a.uf_oab||'').toUpperCase()===alvoOab;}))return false;}
+    }
     if(!ignorarPeriodo&&desde&&!state.processoFiltro&&String(i.data_disponibilizacao||'')<desde)return false;
     if(b){
       var alvo=[cnj(i),partesAtivas(i),clienteDe(i),i.tribunal,i.orgao,i.tipo_documento,i.classe,i.resumo,i.observacao].join(' ').toLowerCase();
@@ -357,7 +370,7 @@ function cartao(i){
   var s=situacao(i.situacao),cli=clienteDe(i),partes=partesAtivas(i),resp=nomeUsuario(i.responsavel_id);
   return '<div class="int-card" draggable="true" data-int="'+esc(i.id)+'" style="--c:'+s.cor+'">'+
     '<div class="topo"><span class="trib">'+esc(i.tribunal||'—')+'</span><span>'+esc(i.tipo_comunicacao||'')+'</span><span class="data">'+dataBR(i.data_disponibilizacao)+'</span></div>'+
-    '<div class="proc">'+esc(cnj(i))+'</div>'+
+    '<div class="proc"><span>'+esc(cnj(i))+'</span><button class="copiar" type="button" data-copiar="'+esc(cnj(i))+'" title="Copiar o número do processo">'+'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.7"/></svg>'+'</button></div>'+
     '<div class="cli">'+esc(cli||partes||'Parte não identificada')+'</div>'+
     '<div class="doc">'+esc([i.tipo_documento,i.orgao].filter(Boolean).join(' · '))+'</div>'+
     (i.resumo?'<div class="res">'+esc(i.resumo)+'</div>':'')+
@@ -382,7 +395,7 @@ function renderLista(){
   document.getElementById('tbLista').innerHTML=lista.length?lista.slice(0,500).map(function(i){
     var s=situacao(i.situacao),cli=clienteDe(i),resp=nomeUsuario(i.responsavel_id);
     return '<tr data-int="'+esc(i.id)+'"><td class="nowrap">'+dataBR(i.data_disponibilizacao)+'</td>'+
-      '<td class="nowrap"><b>'+esc(cnj(i))+'</b><div class="sub">'+esc(i.classe||'')+'</div></td>'+
+      '<td class="nowrap"><b>'+esc(cnj(i))+'</b> <button class="copiar" type="button" data-copiar="'+esc(cnj(i))+'" title="Copiar o número do processo">'+'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.7"/></svg>'+'</button><div class="sub">'+esc(i.classe||'')+'</div></td>'+
       '<td><div class="cli">'+esc(cli||partesAtivas(i)||'—')+'</div>'+(cli?'<div class="sub">Cliente do SAGA</div>':'')+'</td>'+
       '<td><b>'+esc(i.tribunal||'')+'</b><div class="sub">'+esc(i.orgao||'')+'</div></td>'+
       '<td>'+esc(i.tipo_documento||i.tipo_comunicacao||'')+'</td>'+
@@ -549,6 +562,14 @@ async function buscarAgora(configId){
 }
 
 /* ---------- eventos ---------- */
+function textoSelecionado(){var s=window.getSelection&&window.getSelection();return !!(s&&String(s).trim().length);}
+function copiarDe(e){
+  var b=e.target.closest('[data-copiar]');if(!b)return false;
+  e.stopPropagation();var txt=b.dataset.copiar;
+  function ok(){b.classList.add('ok');showToast('Número copiado: '+esc(txt),'success');setTimeout(function(){b.classList.remove('ok');},1500);}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,function(){showToast(esc(txt));});else showToast(esc(txt));
+  return true;
+}
 function trocarVisao(v){state.visao=v;try{localStorage.setItem('saga-mon-visao',v);}catch(e){}
   document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.classList.toggle('active',b.dataset.visao===v);});renderTudo();}
 function ligarEventos(){
@@ -557,6 +578,7 @@ function ligarEventos(){
   document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.addEventListener('click',function(){trocarVisao(b.dataset.visao);});});
   document.getElementById('fAdvogado').addEventListener('change',function(){state.advogado=this.value;try{localStorage.setItem('saga-mon-adv',this.value);}catch(e){}renderTudo();});
   document.getElementById('fPeriodo').addEventListener('change',function(){state.periodo=this.value;state.limite={};renderTudo();});
+  document.getElementById('fOab').addEventListener('change',function(){state.oab=this.value;renderTudo();});
   document.getElementById('fTribunal').addEventListener('change',function(){state.tribunal=this.value;renderTudo();});
   var bt=null;document.getElementById('busca').addEventListener('input',function(){var v=this.value;clearTimeout(bt);bt=setTimeout(function(){state.busca=v;renderTudo();},180);});
   document.getElementById('kpis').addEventListener('click',function(e){
@@ -569,13 +591,18 @@ function ligarEventos(){
   var k=document.getElementById('kanban');
   k.addEventListener('click',function(e){
     var m=e.target.closest('[data-mais]');if(m){state.limite[m.dataset.mais]=(state.limite[m.dataset.mais]||POR_COLUNA)+POR_COLUNA;renderKanban();return;}
+    if(copiarDe(e))return;
+    if(textoSelecionado())return;
     var c=e.target.closest('[data-int]');if(c)abrirIntimacao(c.dataset.int);
   });
+  // Selecionar o texto do cartão com o mouse: enquanto o mouse está sobre um texto, o cartão não é arrastado
+  k.addEventListener('mousedown',function(e){var t=e.target.closest('.proc span,.cli,.res,.doc'),c=e.target.closest('.int-card');if(t&&c)c.setAttribute('draggable','false');});
+  document.addEventListener('mouseup',function(){k.querySelectorAll('.int-card[draggable="false"]').forEach(function(c){c.setAttribute('draggable','true');});});
   k.addEventListener('dragstart',function(e){var c=e.target.closest('[data-int]');if(!c)return;e.dataTransfer.setData('text/plain',c.dataset.int);e.dataTransfer.effectAllowed='move';c.classList.add('arrastando');});
   k.addEventListener('dragend',function(e){var c=e.target.closest('[data-int]');if(c)c.classList.remove('arrastando');k.querySelectorAll('.sobre').forEach(function(x){x.classList.remove('sobre');});});
   k.addEventListener('dragover',function(e){var col=e.target.closest('[data-col]');if(!col)return;e.preventDefault();k.querySelectorAll('.sobre').forEach(function(x){if(x!==col)x.classList.remove('sobre');});col.classList.add('sobre');});
   k.addEventListener('drop',function(e){var col=e.target.closest('[data-col]');if(!col)return;e.preventDefault();col.classList.remove('sobre');var id=e.dataTransfer.getData('text/plain');if(id)mudarSituacao(id,col.dataset.col);});
-  document.getElementById('tbLista').addEventListener('click',function(e){var r=e.target.closest('[data-int]');if(r)abrirIntimacao(r.dataset.int);});
+  document.getElementById('tbLista').addEventListener('click',function(e){if(copiarDe(e)||textoSelecionado())return;var r=e.target.closest('[data-int]');if(r)abrirIntimacao(r.dataset.int);});
   document.getElementById('viSituacoes').addEventListener('click',function(e){var b=e.target.closest('[data-sit]');if(b&&state.aberta)mudarSituacao(state.aberta,b.dataset.sit);});
   document.getElementById('viSalvarObs').addEventListener('click',salvarObs);
   document.getElementById('viCopiar').addEventListener('click',function(){var i=state.itens.find(function(x){return x.id===state.aberta;});if(!i)return;

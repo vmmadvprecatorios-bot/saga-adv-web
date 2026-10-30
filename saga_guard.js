@@ -515,4 +515,62 @@
     ['pointerup','pointercancel','dragstart'].forEach(function(t){document.addEventListener(t,soltar,true);});
     window.addEventListener('blur',soltar);
   }
+
+  // Janela aberta (cadastro, cartão, aviso, menu do celular): a rodinha do mouse e o dedo rolam só a janela.
+  // Ao chegar ao fim da janela, a tela de trás não rola junto. Vale para todas as telas.
+  var SEL_CAMADA='[class*="modal"],[class*="overlay"],[class*="backdrop"],[class*="dialog"],[class*="drawer"],dialog[open]';
+  function camadaAberta(){
+    var lista=document.querySelectorAll(SEL_CAMADA),melhor=null,zMelhor=-1;
+    for(var i=0;i<lista.length;i++){
+      var el=lista[i],cs=getComputedStyle(el);
+      if(cs.position!=='fixed'||cs.display==='none'||cs.visibility==='hidden'||Number(cs.opacity)<0.05||cs.pointerEvents==='none')continue;
+      var r=el.getBoundingClientRect();
+      if(r.width<innerWidth*0.9||r.height<innerHeight*0.9)continue;
+      var z=parseInt(cs.zIndex,10)||0;
+      if(z>=zMelhor){zMelhor=z;melhor=el;}
+    }
+    return melhor;
+  }
+  function podeRolar(el,dy,dx){
+    var cs=getComputedStyle(el);
+    if(dy){
+      if(!/(auto|scroll|overlay)/.test(cs.overflowY)||el.scrollHeight<=el.clientHeight+1)return false;
+      return dy<0?el.scrollTop>0:el.scrollTop+el.clientHeight<el.scrollHeight-1;
+    }
+    if(!/(auto|scroll|overlay)/.test(cs.overflowX)||el.scrollWidth<=el.clientWidth+1)return false;
+    return dx<0?el.scrollLeft>0:el.scrollLeft+el.clientWidth<el.scrollWidth-1;
+  }
+  function travarRolagem(ev,dy,dx){
+    if(!dy&&!dx)return;
+    var camada=camadaAberta();if(!camada)return;
+    var t=ev.target&&ev.target.nodeType===1?ev.target:(ev.target&&ev.target.parentElement);
+    // fora da janela (ex.: menu do celular aberto por cima da tela): deixa rolar o que estiver por cima da camada
+    var raiz=t&&camada.contains(t)?camada:null;
+    if(!raiz){
+      var dono=t;
+      while(dono&&dono!==document.body){var z=parseInt(getComputedStyle(dono).zIndex,10);if(getComputedStyle(dono).position==='fixed'&&z>(parseInt(getComputedStyle(camada).zIndex,10)||0))break;dono=dono.parentElement;}
+      if(!dono||dono===document.body){ev.preventDefault();return;}
+      raiz=dono;
+    }
+    for(var el=t;el;el=el.parentElement){
+      if(podeRolar(el,dy,dx))return;
+      if(el===raiz)break;
+    }
+    ev.preventDefault();
+  }
+  document.addEventListener('wheel',function(ev){
+    if(ev.ctrlKey)return; // zoom do navegador
+    var dy=Math.abs(ev.deltaY)>=Math.abs(ev.deltaX)?ev.deltaY:0,dx=dy?0:(ev.shiftKey?ev.deltaY:ev.deltaX);
+    travarRolagem(ev,dy,dx);
+  },{passive:false,capture:true});
+  var toque=null;
+  document.addEventListener('touchstart',function(ev){var p=ev.touches[0];toque=p?{x:p.clientX,y:p.clientY}:null;},{passive:true,capture:true});
+  document.addEventListener('touchmove',function(ev){
+    if(!toque||ev.touches.length!==1)return;
+    var p=ev.touches[0],dy=toque.y-p.clientY,dx=toque.x-p.clientX;
+    if(Math.abs(dy)>=Math.abs(dx))travarRolagem(ev,dy,0);else travarRolagem(ev,0,dx);
+  },{passive:false,capture:true});
+  // Listas dentro de janelas e menus suspensos: ao chegar ao fim, não passam a rolagem para a tela
+  (document.head||html).appendChild(Object.assign(document.createElement('style'),{textContent:
+    '[class*="modal"],[class*="modal"] *,[class*="popover"],[class*="popover"] *,[class*="dropdown"],[class*="dropdown"] *,[class*="pop-"],dialog,dialog *{overscroll-behavior:contain;}'}));
 })();
