@@ -96,31 +96,160 @@
     var r=el.getBoundingClientRect();return r.width>0&&r.height>0;
   }
   function filhosVisiveis(el){return Array.prototype.filter.call(el.children,visivel);}
+  // Grupo de cartoes lado a lado (grade ou linha): cada cartao entra na sua vez
+  function ehGrupoDeCartoes(el){
+    var cs=getComputedStyle(el),f=filhosVisiveis(el);
+    if(f.length<2||f.length>12)return null;
+    if(!/grid|flex/.test(cs.display))return null;
+    if(/flex/.test(cs.display)&&/column/.test(cs.flexDirection))return null;
+    // so cartoes de verdade (nao botoes pequenos de uma barra)
+    var grandes=f.filter(function(x){var r=x.getBoundingClientRect();return r.height>=56&&r.width>=110;});
+    return grandes.length>=2?f:null;
+  }
   function blocosCascata(){
     var itens=[],altura=window.innerHeight||800;
+    function juntar(el,nivel){
+      var r=el.getBoundingClientRect();
+      if(r.top>altura)return; // abaixo da dobra: aparece junto com o ultimo
+      var cartoes=ehGrupoDeCartoes(el);
+      if(cartoes){cartoes.forEach(function(x){itens.push(x);});return;}
+      var filhos=nivel<2&&r.height>altura*0.45?filhosVisiveis(el):[];
+      if(filhos.length>1){filhos.forEach(function(x){juntar(x,nivel+1);});return;}
+      itens.push(el);
+    }
     Array.prototype.forEach.call(document.querySelectorAll('.saga-conteudo'),function(c){
       var nivel=filhosVisiveis(c);
       while(nivel.length===1&&nivel[0].children.length)nivel=filhosVisiveis(nivel[0]);
       if(!nivel.length)nivel=[c];
-      nivel.forEach(function(el){
-        var filhos=el.getBoundingClientRect().height>altura*0.45?filhosVisiveis(el):[];
-        if(filhos.length>1)itens.push.apply(itens,filhos);else itens.push(el);
-      });
+      nivel.forEach(function(el){juntar(el,0);});
     });
-    // So o que esta na tela anima; o que esta abaixo da dobra aparece junto com o ultimo
-    return itens.filter(function(el){return el.getBoundingClientRect().top<altura;});
+    return itens.slice(0,24);
   }
+  // Mola: passa um pouquinho do ponto e assenta (como no iPhone)
+  var MOLA='cubic-bezier(.34,1.45,.64,1)';
   function cascata(itens,entrada){
-    var max=7,passo=entrada?42:20,dur=entrada?240:110,total=0;
+    var max=entrada?11:6,passo=entrada?38:16,dur=entrada?440:130,total=0;
     itens.forEach(function(el,i){
       if(!el.animate)return;
       var atraso=Math.min(i,max)*passo;total=Math.max(total,atraso+dur);
       el.animate(entrada
-        ?[{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}]
-        :[{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-5px)'}],
-        {duration:dur,delay:atraso,easing:entrada?'cubic-bezier(.2,.7,.25,1)':'ease-in',fill:entrada?'backwards':'forwards'});
+        ?[{opacity:0,transform:'translateY(10px) scale(.93)'},{opacity:1,offset:.6},{opacity:1,transform:'none'}]
+        :[{opacity:1,transform:'none'},{opacity:0,transform:'scale(.97)'}],
+        {duration:dur,delay:atraso,easing:entrada?MOLA:'ease-in',fill:entrada?'backwards':'forwards'});
+      if(entrada)animarDetalhes(el,atraso+120);
     });
     return total;
+  }
+  // Numeros sobem contando e barras dos graficos crescem, cada um no tempo do seu cartao
+  var RE_NUM=/^(\D{0,4}?)(-?)(\d{1,3}(?:\.\d{3})+|\d+)(,\d+)?(\s?(?:%|h|min|dias?)?)$/;
+  function animarDetalhes(raiz,atraso){
+    var andou=0;
+    raiz.querySelectorAll('*').forEach(function(el){
+      if(andou>40)return;
+      // numero grande sozinho no elemento
+      if(!el.children.length){
+        var t=(el.textContent||'').trim(),m=RE_NUM.exec(t);
+        if(m&&parseFloat(getComputedStyle(el).fontSize)>=19){contar(el,m,atraso);andou++;}
+        return;
+      }
+    });
+    raiz.querySelectorAll('[style*="width"],[style*="height"],circle[stroke-dasharray],circle[style*="dash"]').forEach(function(el){
+      if(andou>60||!el.animate)return;andou++;
+      if(el.tagName.toLowerCase()==='circle'){
+        var tot=parseFloat(getComputedStyle(el).strokeDasharray)||0,fim=getComputedStyle(el).strokeDashoffset;
+        if(tot>0)el.animate([{strokeDashoffset:String(tot)},{strokeDashoffset:fim}],{duration:900,delay:atraso,easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'});
+        return;
+      }
+      var st=el.getAttribute('style')||'',r=el.getBoundingClientRect();
+      if(/(^|;)\s*width\s*:\s*[\d.]+%/.test(st)&&r.height>0&&r.height<=18&&r.width>0)
+        el.animate([{transform:'scaleX(0)',transformOrigin:'left center'},{transform:'scaleX(1)',transformOrigin:'left center'}],{duration:800,delay:atraso,easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'});
+      else if(/(^|;)\s*height\s*:\s*[\d.]+%/.test(st)&&r.width>0&&r.width<=48&&r.height>0)
+        el.animate([{transform:'scaleY(0)',transformOrigin:'center bottom'},{transform:'scaleY(1)',transformOrigin:'center bottom'}],{duration:800,delay:atraso,easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'});
+    });
+  }
+  function contar(el,m,atraso){
+    var pre=m[1],neg=m[2],inteiro=m[3].replace(/\./g,''),dec=m[4]?m[4].slice(1):'',suf=m[5]||'';
+    var alvo=parseFloat(inteiro+(dec?'.'+dec:''));
+    if(!(alvo>0))return;
+    var casas=dec.length,milhar=m[3].indexOf('.')>=0||alvo>=1000,dur=Math.min(1100,600+Math.log10(alvo+1)*120);
+    function fmt(v){
+      var p=v.toFixed(casas).split('.'),i=p[0];
+      if(milhar)i=i.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+      return pre+neg+i+(casas?','+p[1]:'')+suf;
+    }
+    var original=el.textContent,ultimo=fmt(0),ini=null;
+    el.textContent=ultimo;
+    setTimeout(function(){
+      function passo(ts){
+        if(el.textContent!==ultimo)return; // a tela mudou o valor: para de contar
+        if(ini===null)ini=ts;
+        var k=Math.min(1,(ts-ini)/dur),e=1-Math.pow(1-k,3);
+        ultimo=k<1?fmt(alvo*e):original;el.textContent=ultimo;
+        if(k<1)requestAnimationFrame(passo);
+      }
+      requestAnimationFrame(passo);
+    },atraso);
+  }
+
+  // Abas e botoes de escolha: o destaque desliza do botao antigo para o novo (como no iPhone)
+  var ATIVO=/(^|\s)(active|ativo|selected|selecionado)(\s|$)/;
+  function botaoDeGrupo(el){
+    if(!el||el.nodeType!==1||!el.parentElement)return false;
+    if(el.closest('#sidebarSaga,#topbarSaga,.modal-overlay:not(.open)'))return false;
+    var r=el.getBoundingClientRect();
+    return r.height>0&&r.height<=60&&r.width<=360&&(el.tagName==='BUTTON'||el.getAttribute('role')==='tab'||getComputedStyle(el).cursor==='pointer');
+  }
+  var ultimoAtivo=new WeakMap();
+  function lembrar(grupo,ativo){
+    var g=grupo.getBoundingClientRect(),r=ativo.getBoundingClientRect();
+    ultimoAtivo.set(grupo,{el:ativo,txt:ativo.textContent,x:r.left-g.left+grupo.scrollLeft,y:r.top-g.top+grupo.scrollTop,w:r.width,h:r.height});
+  }
+  function deslizar(grupo,de,para){
+    if(reduz||!grupo.animate)return;
+    var cs=getComputedStyle(para),fundo=cs.backgroundImage!=='none'?cs.backgroundImage:'',cor=cs.backgroundColor;
+    if(!fundo&&(!cor||/rgba\(0, 0, 0, 0\)|transparent/.test(cor)))return; // ativo sem fundo: nada a deslizar
+    var g=grupo.getBoundingClientRect(),r=para.getBoundingClientRect();
+    var fim={x:r.left-g.left+grupo.scrollLeft,y:r.top-g.top+grupo.scrollTop,w:r.width,h:r.height};
+    if(Math.abs(fim.x-de.x)<2&&Math.abs(fim.y-de.y)<2)return;
+    if(Math.abs(fim.y-de.y)>de.h*1.5)return; // em outra linha: sem deslizar
+    if(getComputedStyle(grupo).position==='static')grupo.style.position='relative';
+    grupo.style.isolation='isolate';
+    var fantasma=document.createElement('div');
+    fantasma.setAttribute('aria-hidden','true');
+    fantasma.style.cssText='position:absolute;z-index:-1;pointer-events:none;margin:0;left:0;top:0;'+
+      'border-radius:'+cs.borderRadius+';box-shadow:'+cs.boxShadow+';background-color:'+cor+';'+(fundo?'background-image:'+fundo+';':'');
+    grupo.appendChild(fantasma);
+    var props=['background-color','background-image','box-shadow','border-color'],antes={};
+    props.forEach(function(p){antes[p]=[para.style.getPropertyValue(p),para.style.getPropertyPriority(p)];});
+    para.style.setProperty('background-color','transparent','important');
+    para.style.setProperty('background-image','none','important');
+    para.style.setProperty('box-shadow','none','important');
+    para.style.setProperty('border-color','transparent','important');
+    var anim=fantasma.animate([
+      {transform:'translate('+de.x+'px,'+de.y+'px)',width:de.w+'px',height:de.h+'px'},
+      {transform:'translate('+fim.x+'px,'+fim.y+'px)',width:fim.w+'px',height:fim.h+'px'}
+    ],{duration:380,easing:'cubic-bezier(.3,1.18,.55,1)',fill:'forwards'});
+    function pronto(){
+      props.forEach(function(p){if(antes[p][0])para.style.setProperty(p,antes[p][0],antes[p][1]);else para.style.removeProperty(p);});
+      fantasma.remove();
+    }
+    anim.onfinish=pronto;anim.oncancel=pronto;
+  }
+  function conferirGrupos(){
+    document.querySelectorAll('.active,.ativo,.selected,.selecionado').forEach(function(el){
+      if(typeof el.className!=='string'||!botaoDeGrupo(el))return;
+      var grupo=el.parentElement,irmaos=Array.prototype.filter.call(grupo.children,function(x){return x!==el&&x.tagName===el.tagName;});
+      if(!irmaos.length)return;
+      var antes=ultimoAtivo.get(grupo);
+      // O destaque mudou de botao (troca de classe ou botoes redesenhados): desliza do antigo para o novo
+      if(antes&&antes.el!==el&&!(antes.el.isConnected&&ATIVO.test(antes.el.className))&&!(!antes.el.isConnected&&antes.txt===el.textContent))deslizar(grupo,antes,el);
+      lembrar(grupo,el);
+    });
+  }
+  var agendado=false;
+  function agendarConferencia(){
+    if(agendado)return;agendado=true;
+    requestAnimationFrame(function(){agendado=false;try{conferirGrupos();}catch(e){}});
   }
 
   var fio=null,fioTimer=null;
@@ -142,6 +271,10 @@
     clearTimeout(fioTimer);if(fio)fio.classList.remove('ativo');
     if(!reduz){try{cascata(blocosCascata(),true);}catch(e){}}
     html.classList.remove('saga-carregando');
+    try{
+      conferirGrupos();
+      new MutationObserver(agendarConferencia).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+    }catch(e){}
   }
   // Menus prontos: espera a tela terminar de buscar os dados (sem buscas por um instante) e mostra tudo de uma vez
   function esperarDados(){
