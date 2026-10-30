@@ -60,6 +60,8 @@
       '#topbarSaga .top-left,#topbarSaga .top-right{display:flex !important;align-items:center !important;gap:14px !important;}'+
       '#topbarSaga .top-center{flex:1 !important;display:flex !important;justify-content:center !important;min-width:0 !important;}'+
       '#topbarSaga .brand{display:flex !important;align-items:center !important;gap:10px !important;}'+
+      '#topbarSaga .brand-logo{height:36px !important;max-width:180px !important;width:auto !important;object-fit:contain !important;display:block !important;}'+
+      '#topbarSaga .brand.com-logo .crest,#topbarSaga .brand.com-logo .brand-name{display:none !important;}'+
       '#topbarSaga .crest{width:32px !important;height:32px !important;flex:0 0 auto !important;}'+
       '#topbarSaga .brand-name{font-family:"Cormorant Garamond",serif !important;font-size:19px !important;font-weight:600 !important;color:#e8eaf0 !important;letter-spacing:.5px !important;}'+
       '[data-theme="light"] #topbarSaga .brand-name{color:#13233a !important;}'+
@@ -407,9 +409,6 @@
     +'</div>'
     +'<div class="pop-divisor"></div>'
     +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=perfil" data-ir="configuracoes_padrao_metalico.html?aba=perfil">'
-    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
-    +'Meu perfil</a>'
-    +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=preferencias" data-ir="configuracoes_padrao_metalico.html?aba=preferencias">'
     +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Configurações</a>'
     +'<div class="pop-divisor"></div>'
@@ -798,6 +797,21 @@
   }
   // Avisos que a pessoa desligou nas Configuracoes nao entram no sino
   var _avisosDesligados=[];
+  // Logo do escritorio (Configuracoes > Escritorio) no lugar do escudo e do nome na barra do alto
+  function aplicarMarca(logo,nome){
+    try{if(logo)localStorage.setItem('saga-logo',logo);else localStorage.removeItem('saga-logo');if(nome)localStorage.setItem('saga-escritorio',nome);}catch(e){}
+    var br=document.querySelector('#topbarSaga .brand');if(!br)return;
+    var img=br.querySelector('.brand-logo');
+    if(logo){
+      if(!img){img=document.createElement('img');img.className='brand-logo';br.appendChild(img);}
+      img.alt=nome||'Logo do escritório';if(img.getAttribute('src')!==logo)img.src=logo;
+      br.classList.add('com-logo');
+    }else{if(img)img.remove();br.classList.remove('com-logo');}
+  }
+  async function carregarMarca(){
+    if(!global._sb)return;
+    try{var r=await global._sb.rpc('escritorio_publico');if(!r.error&&r.data)aplicarMarca(r.data.logo||null,r.data.nome||'');}catch(e){}
+  }
   function mostrarFotoAvatar(url){
     var av=document.getElementById('avatarTop');if(!av)return;
     try{if(url)localStorage.setItem('saga-foto',url);else localStorage.removeItem('saga-foto');}catch(e){}
@@ -1289,7 +1303,7 @@
       _molduraMontada=true;
       if(sb){sb.innerHTML=SIDEBAR_HTML;linksDoMenu(sb);prepararMenuPermissoes();}
       if(tb)tb.innerHTML=TOPBAR_HTML;
-      try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);}catch(e){}
+      try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);var lg=localStorage.getItem('saga-logo');if(lg)aplicarMarca(lg,localStorage.getItem('saga-escritorio'));}catch(e){}
       ligarTema();
       ligarPrivacidade();
       ligarHamburger();
@@ -1331,6 +1345,7 @@
     ligarBuscaGlobal();
     marcarConteudo();
     await carregarPerfil();
+    carregarMarca();
     await aplicarPermissoes(telaAtiva);
     // Presenca e contador do sino carregam em paralelo e nao seguram a tela
     carregarPresenca();
@@ -1339,5 +1354,5 @@
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
 
-  global.SagaUI={atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);

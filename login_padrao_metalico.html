@@ -471,6 +471,23 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
   mostrarBotaoGoogle();
 })();
 
+// Logo do escritorio (guardado no navegador desde o ultimo acesso) no lugar do escudo
+(function () {
+  var logo = null; try { logo = localStorage.getItem('saga-logo'); } catch (e) {}
+  if (!logo) return;
+  var topo = document.querySelector('.marca-topo');
+  if (topo) topo.innerHTML = '<img src="' + logo.replace(/"/g, '') + '" alt="Logo do escritório" style="height:34px;max-width:200px;object-fit:contain;display:block">';
+  var wrap = document.querySelector('.crest-svg-wrap svg');
+  if (wrap) {
+    var img = document.createElement('img');
+    img.src = logo; img.alt = '';
+    img.style.cssText = 'position:relative;z-index:1;max-width:70%;max-height:70%;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))';
+    var caixa = wrap.parentNode;
+    caixa.style.display = 'flex'; caixa.style.alignItems = 'center'; caixa.style.justifyContent = 'center';
+    wrap.replaceWith(img);
+  }
+})();
+
 // Tela que a pessoa escolheu para abrir depois de entrar (Configuracoes > Preferencias)
 async function telaInicial() {
   try {

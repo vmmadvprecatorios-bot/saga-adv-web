@@ -177,7 +177,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
             <button class="btn-secondary btn-sm" id="esTrocarLogo" type="button">Enviar logo</button>
             <button class="btn-secondary btn-sm" id="esTirarLogo" type="button" style="display:none">Remover logo</button>
           </div>
-          <div style="font-size:10.5px;color:var(--muted);margin-top:6px">PNG com fundo transparente fica melhor.</div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:6px">Aparece na barra do alto de todas as telas e na tela de login. PNG com fundo transparente fica melhor.</div>
           <input id="esArquivo" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">
         </div>
       </div>
@@ -423,7 +423,9 @@ async function enviarLogo(arq){
     var r=await _sb.from('configuracoes_sistema').update({logo_url:url}).eq('id',state.escritorio.id).select('id');
     if(r.error||!r.data||!r.data.length){await _sb.storage.from('avatares').remove([caminho]);throw r.error||new Error('Sem permissão.');}
     if(antiga)_sb.storage.from('avatares').remove([antiga]);
-    state.escritorio.logo_url=url;mostrarLogo(url);showToast('Logo atualizado.','success');
+    state.escritorio.logo_url=url;mostrarLogo(url);
+    if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+    showToast('Logo atualizado: já aparece na barra do alto e na tela de login.','success');
   }catch(e){showToast('Não foi possível enviar o logo: '+esc(erroTexto(e)),'error');}
   finally{b.disabled=false;document.getElementById('esArquivo').value='';}
 }
@@ -433,7 +435,9 @@ async function removerLogo(){
   var r=await _sb.from('configuracoes_sistema').update({logo_url:null}).eq('id',state.escritorio.id).select('id');
   if(r.error){showToast('Não foi possível remover: '+esc(erroTexto(r.error)),'error');return;}
   if(antiga)_sb.storage.from('avatares').remove([antiga]);
-  state.escritorio.logo_url=null;mostrarLogo(null);showToast('Logo removido.','success');
+  state.escritorio.logo_url=null;mostrarLogo(null);
+  if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+  showToast('Logo removido.','success');
 }
 
 /* ----- Inicio ----- */
