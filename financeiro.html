@@ -566,7 +566,7 @@ async function salvarLancamento(){
 }
 async function excluirLancamento(){
   var l=state.lancEditando;if(!l||!state.podeEditar)return;
-  if(!confirm('Excluir o lançamento "'+l.descricao+'"?'))return;
+  if(!(await sagaConfirmar('Excluir lançamento','Excluir o lançamento "'+l.descricao+'"? Isso não pode ser desfeito.','Excluir')))return;
   var r=await _sb.from('financeiro_lancamentos').delete().eq('id',l.id).select('id');
   if(r.error||!r.data||!r.data.length){showToast('Não foi possível excluir.','error');return;}
   fecharModal('modalLancamento');showToast('Lançamento excluído.','success');await carregarTudo();

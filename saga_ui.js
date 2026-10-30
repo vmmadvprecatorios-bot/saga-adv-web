@@ -3,6 +3,28 @@
 // Chamar (apos criar o cliente _sb do Supabase): SagaUI.carregar('nome-tela');
 // A sidebar e a topbar sao embutidas neste arquivo (nao dependem de fetch).
 (function(global){
+  // Confirmacao no padrao do SAGA (no lugar do confirm() do navegador). Devolve uma Promise<boolean>.
+  global.sagaConfirmar=function(titulo,texto,botao,perigo){
+    return new Promise(function(ok){
+      var antigo=document.getElementById('sagaConfirma');if(antigo)antigo.remove();
+      var d=document.createElement('div');d.id='sagaConfirma';
+      d.style.cssText='position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(4,7,14,.55);backdrop-filter:blur(4px)';
+      var cor=perigo===false?'var(--gold,#2f6cd6)':'var(--danger,#e5484d)';
+      d.innerHTML='<div role="dialog" aria-modal="true" style="width:100%;max-width:420px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:16px;background:var(--panel-solid,#1c2638);color:var(--text,#e8edf5);box-shadow:0 24px 50px rgba(0,0,0,.45);padding:20px 22px">'+
+        '<div style="font-family:\'Cormorant Garamond\',serif;font-size:21px;font-weight:700;margin-bottom:8px"></div>'+
+        '<div style="font-size:12.5px;line-height:1.55;color:var(--muted,#a3afc2);margin-bottom:18px;white-space:pre-wrap"></div>'+
+        '<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" data-r="0" style="height:36px;padding:0 16px;border-radius:10px;border:1px solid var(--border,rgba(255,255,255,.16));background:transparent;color:var(--text,#e8edf5);font:inherit;font-size:12px;font-weight:700;cursor:pointer">Cancelar</button>'+
+        '<button type="button" data-r="1" style="height:36px;padding:0 16px;border-radius:10px;border:1px solid '+cor+';background:'+cor+';color:#fff;font:inherit;font-size:12px;font-weight:700;cursor:pointer"></button></div></div>';
+      var caixa=d.firstChild;caixa.children[0].textContent=titulo||'Confirmar';caixa.children[1].textContent=texto||'';
+      caixa.querySelector('[data-r="1"]').textContent=botao||'Confirmar';
+      function fim(v){document.removeEventListener('keydown',tecla,true);d.remove();ok(v);}
+      function tecla(e){if(e.key==='Escape'){e.preventDefault();fim(false);}else if(e.key==='Enter'){e.preventDefault();fim(true);}}
+      d.addEventListener('click',function(e){var b=e.target.closest('[data-r]');if(b)fim(b.dataset.r==='1');else if(e.target===d)fim(false);});
+      document.addEventListener('keydown',tecla,true);
+      document.body.appendChild(d);
+      setTimeout(function(){var b=caixa.querySelector('[data-r="0"]');if(b)b.focus();},30);
+    });
+  };
   // Telas que sabem se atualizar sozinhas (escutam 'saga-atualizar'); as outras sao recarregadas pelo botao de atualizar
   var _telaSeAtualiza=false;
   (function(){

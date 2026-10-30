@@ -689,16 +689,6 @@
   </div><!-- /conteudo -->
 </div><!-- /app -->
 
-<!-- MODALS -->
-<div class="modal-overlay-dash" id="modalCriarFiltro">
-  <div class="modal-dash">
-    <h3>Criar Filtro Personalizado</h3>
-    <div class="modal-sub">Funcionalidade em desenvolvimento. Em breve disponivel.</div>
-    <div class="modal-botoes-dash">
-      <button class="btn-cancelar-dash" id="btnCancelarFiltro">Fechar</button>
-    </div>
-  </div>
-</div>
 
 <div id="toast-container"></div>
 
@@ -1541,15 +1531,6 @@ document.getElementById('dropFiltroEquipe').querySelector('.dropdown-custom-valo
   var aberto = document.getElementById('dropFiltroEquipe').classList.toggle('aberto');
 });
 
-// ================================================================
-// MODAL CRIAR FILTRO
-// ================================================================
-document.getElementById('btnCancelarFiltro').addEventListener('click', function() {
-  document.getElementById('modalCriarFiltro').classList.remove('aberto');
-});
-document.getElementById('modalCriarFiltro').addEventListener('click', function(e) {
-  if (e.target === this) this.classList.remove('aberto');
-});
 </script>
 
 </body>

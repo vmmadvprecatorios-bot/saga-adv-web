@@ -508,7 +508,7 @@ async function salvarCampanha(){
 }
 async function excluirCampanha(){
   var c=state.editando;if(!c)return;
-  if(!confirm('Excluir a campanha "'+c.nome+'" e todos os gastos dela? Os materiais continuam, sem campanha.'))return;
+  if(!(await sagaConfirmar('Excluir campanha','Excluir a campanha "'+c.nome+'" e todos os gastos dela? Os materiais continuam, sem campanha.','Excluir')))return;
   var r=await _sb.from('campanhas').delete().eq('id',c.id).select('id');
   if(r.error||!r.data||!r.data.length){showToast('Não foi possível excluir.','error');return;}
   fecharModal('modalCampanha');showToast('Campanha excluída.','success');await carregarTudo();
@@ -684,7 +684,7 @@ async function enviarNovaVersao(arq){
   finally{b.disabled=false;b.textContent='Enviar nova versão';document.getElementById('mvArquivoVersao').value='';}
 }
 async function excluirMaterial(id){
-  var m=state.materiais.find(function(x){return x.id===id;});if(!m||!confirm('Excluir o material "'+m.nome_arquivo+'" e o histórico dele?'))return;
+  var m=state.materiais.find(function(x){return x.id===id;});if(!m||!(await sagaConfirmar('Excluir material','Excluir o material "'+m.nome_arquivo+'" e o histórico dele? Isso não pode ser desfeito.','Excluir')))return;
   var antigos=histDe(id).map(function(c){return c.caminho_anterior;}).filter(Boolean);
   var r=await _sb.from('materiais_marketing').delete().eq('id',id).select('id');
   if(r.error||!r.data||!r.data.length){showToast('Não foi possível excluir.','error');return;}
