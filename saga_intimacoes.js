@@ -30,8 +30,8 @@
     ['MG','RS','SP'].forEach(function(uf){l.push({sigla:'TJM'+uf,ramo:'militar',ufs:[uf]});});
     return l;
   })();
-  // Consulta processual de cada tribunal (o Dr. Victor envia os links do PJe de cada justiça)
-  var LINKS_TRIBUNAIS={};
+  // Consulta processual de cada tribunal: tabela tribunais_links, editável em "Links dos tribunais"
+  var SISTEMAS=['PJe','PJe 2º grau','eproc','e-SAJ','Projudi','PJe-JT','Creta','Outro'];
 
   function chaveTrib(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
   function ufDoTexto(t){
@@ -68,7 +68,7 @@
   function corEtiqueta(nome){var e=ETIQUETAS.filter(function(x){return x[0]===nome;})[0];return e?e[1]:'#c9a96e';}
 
   /* ---------- estado ---------- */
-  var S={sb:null,meuId:null,ehAdmin:false,toast:null,aoMudar:null,itens:[],colunas:[],oabs:[],usuarios:[],processos:{},teses:[],
+  var S={links:[],sb:null,meuId:null,ehAdmin:false,toast:null,aoMudar:null,itens:[],colunas:[],oabs:[],usuarios:[],processos:{},teses:[],
     pode:{gerenciar:false,criarProc:false},horas:[7,13],aberta:null,carregado:false,
     f:{organizar:'colunas',situacao:'abertas',periodo:'tudo',busca:'',ramo:'',tribunal:'',regiao:'',orgao:'',advogado:'',oab:'',processo:null},
     limite:{},concluidasAbertas:{}};
@@ -87,6 +87,7 @@
   function cnj(i){return i.numero_processo_mascara||i.numero_processo||'Sem número';}
   function partesAtivas(i){var a=(i.partes||[]).filter(function(p){return p.polo==='A';}).map(function(p){return p.nome;});if(!a.length)a=(i.partes||[]).map(function(p){return p.nome;});return a.join(', ');}
   function clienteDe(i){var p=i.processo_id&&S.processos[i.processo_id];return p&&p.pessoa?p.pessoa.nome_completo:'';}
+  function linksDe(chave){return S.links.filter(function(l){return l.tribunal_chave===chave;});}
   function coluna(id){return S.colunas.filter(function(c){return c.id===id;})[0];}
   function advogadosDe(i){var ids=(i.advogados_ids||[]).slice();if(!ids.length&&i.responsavel_id)ids=[i.responsavel_id];return ids.filter(function(x,k){return ids.indexOf(x)===k;});}
   function urgencia(i){
@@ -130,7 +131,7 @@
   '.si-card:hover{border-color:var(--gold);transform:translateY(-1px)}.si-card.arrastando{opacity:.45}'+
   '.si-card.concluida{opacity:.6}.si-card.concluida .si-proc span,.si-card.concluida .si-cli{text-decoration:line-through}'+
   '.si-topo{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--muted);font-weight:700}'+
-  '.si-topo .data{margin-left:auto;font-weight:600}'+
+  '.si-topo .data{margin-left:auto;font-weight:600}.si-topo .data+.si-mover{margin-left:2px}'+
   '.si-chk{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--border);background:none;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;padding:0}'+
   '.si-chk.on{background:var(--success);border-color:var(--success);color:#fff}'+
   '.si-tag{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--c,#8a94a8) 15%,transparent);color:var(--c,#8a94a8);white-space:nowrap}'+
@@ -201,6 +202,15 @@
   '.si-menu{position:fixed;z-index:1900;min-width:170px;background:var(--panel-solid,var(--panel));border:1px solid var(--border);border-radius:10px;padding:5px;box-shadow:0 14px 34px rgba(0,0,0,.35)}'+
   '.si-menu button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:7px;font:inherit;font-size:11.5px;border:0;background:none;color:var(--text);cursor:pointer}'+
   '.si-menu button:hover{background:color-mix(in srgb,var(--gold) 9%,transparent)}.si-menu button.perigo{color:var(--danger)}'+
+  '.si-mover{width:21px;height:21px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);border:1px solid transparent;background:none;cursor:pointer;padding:0;font-size:12px;margin-left:auto}'+
+  '.si-mover:hover{color:var(--gold);border-color:var(--border)}'+
+  '.si-menu .tit{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);padding:6px 10px 3px}'+
+  '.si-menu button.atual{color:var(--gold);font-weight:700}'+
+  '.si-link{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.1fr) minmax(0,.8fr) minmax(0,2fr) auto;gap:7px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-soft)}'+
+  '.si-link input,.si-link select{height:32px;padding:0 8px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px;min-width:0}'+
+  '.si-link.falta{background:color-mix(in srgb,var(--warning) 7%,transparent);border-radius:8px;padding:6px}'+
+  '@media(max-width:860px){.si-link{grid-template-columns:1fr 1fr}'+
+  '}'+
   '@media(max-width:860px){.si-grid{grid-template-columns:1fr}.si-col{width:84vw;max-height:calc(100vh - 210px)}.si-linha select{max-width:none;flex:1}.si-g2,.si-oab-nova{grid-template-columns:1fr 1fr}.si-oab{grid-template-columns:minmax(0,1fr) auto}}';
   function injetarCss(){if(document.getElementById('siEstilo'))return;var st=document.createElement('style');st.id='siEstilo';st.textContent=CSS;document.head.appendChild(st);}
 
@@ -211,7 +221,9 @@
       sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
       sb.from('intimacoes_colunas').select('*').order('ordem').order('criado_em'),
       sb.from('monitoramento_config').select('*').eq('tipo_alvo','oab').order('criado_em'),
-      sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab').order('nome_completo')]);
+      sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab').order('nome_completo'),
+      sb.from('tribunais_links').select('*').order('tribunal_chave').order('ordem').order('nome')]);
+    S.links=r[4].data||[];
     if(r[0].error){toast('Erro ao carregar as intimações: '+esc(r[0].error.message),'error');return false;}
     S.itens=r[0].data||[];S.colunas=r[1].data||[];S.oabs=r[2].data||[];S.usuarios=r[3].data||[];
     var ids=[...new Set(S.itens.map(function(i){return i.processo_id;}).filter(Boolean))];
@@ -280,7 +292,7 @@
         '<div class="si-seg" data-seg="situacao"><button type="button" data-v="abertas" class="'+(f.situacao==='abertas'?'active':'')+'">Abertas</button><button type="button" data-v="concluidas" class="'+(f.situacao==='concluidas'?'active':'')+'">Concluídas</button><button type="button" data-v="todas" class="'+(f.situacao==='todas'?'active':'')+'">Todas</button></div>'+
         '<select data-f="periodo" title="Período">'+[['hoje','Disponibilizadas hoje'],['7','Últimos 7 dias'],['30','Últimos 30 dias'],['tudo','Todo o período']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===f.periodo?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
         '<input data-f="busca" placeholder="Processo, parte, vara, etiqueta ou texto..." value="'+esc(f.busca)+'">'+
-        (S.pode.gerenciar?'<button class="si-btn" type="button" data-acao="oabs">OABs monitoradas</button><button class="si-btn pri" type="button" data-acao="buscar">Buscar agora</button>':'')+
+        (S.pode.gerenciar?'<button class="si-btn" type="button" data-acao="links">Links dos tribunais</button><button class="si-btn" type="button" data-acao="oabs">OABs monitoradas</button><button class="si-btn pri" type="button" data-acao="buscar">Buscar agora</button>':'')+
       '</div>'+
       '<div class="si-linha">'+
         '<select data-f="ramo" title="Justiça">'+opts(ramos,f.ramo,'Toda a justiça')+'</select>'+
@@ -303,6 +315,7 @@
     el.addEventListener('click',function(e){
       var a=e.target.closest('[data-acao]');if(!a)return;
       if(a.dataset.acao==='oabs')abrirOabs();
+      else if(a.dataset.acao==='links')abrirLinks();
       else if(a.dataset.acao==='buscar')buscarAgora(null,a);
       else if(a.dataset.acao==='limpar'){['ramo','tribunal','regiao','orgao','advogado','oab','busca'].forEach(function(k){S.f[k]='';});S.f.processo=null;guardarFiltros();mudou();}
       else if(a.dataset.acao==='tirar-processo'){S.f.processo=null;mudou();}
@@ -327,7 +340,8 @@
     el.dataset.int=i.id;
     if(opc.arrastar&&!i.concluida)el.setAttribute('draggable','true');
     el.innerHTML='<div class="si-topo"><button class="si-chk'+(i.concluida?' on':'')+'" type="button" data-chk title="'+(i.concluida?'Reabrir':'Concluir')+'">'+(i.concluida?'✓':'')+'</button>'+
-        '<span class="si-trib">'+esc(j.sigla)+'</span><span>'+esc(i.fonte==='email'?'E-mail':'Intimação')+'</span><span class="data">'+dataBR(i.data_disponibilizacao)+'</span></div>'+
+        '<span class="si-trib">'+esc(j.sigla)+'</span><span>'+esc(i.fonte==='email'?'E-mail':'Intimação')+'</span><span class="data">'+dataBR(i.data_disponibilizacao)+'</span>'+
+        '<button class="si-mover" type="button" data-mover title="Mover para outra coluna">⇄</button></div>'+
       '<div class="si-just">'+esc(j.rotulo)+'</div>'+
       htmlAdvogados(i)+
       '<div class="si-proc"><span>'+esc(cnj(i))+'</span><button class="si-copiar" type="button" data-copiar="'+esc(cnj(i))+'" title="Copiar o número do processo">'+ICO_COPIAR+'</button></div>'+
@@ -344,6 +358,7 @@
   function ligarCartoes(raiz){
     raiz.addEventListener('click',function(e){
       var cp=e.target.closest('[data-copiar]');if(cp){e.stopPropagation();copiar(cp.dataset.copiar);return;}
+      var mv=e.target.closest('[data-mover]');if(mv){e.stopPropagation();var cm=mv.closest('[data-int]');if(cm)menuMover(mv,cm.dataset.int);return;}
       var ck=e.target.closest('[data-chk]');if(ck){e.stopPropagation();var c=ck.closest('[data-int]');if(c)alternarConcluida(c.dataset.int);return;}
       var s=window.getSelection&&String(window.getSelection()).trim();if(s)return;
       var card=e.target.closest('[data-int]');if(card&&raiz.contains(card)){e.stopPropagation();abrir(card.dataset.int);}
@@ -496,7 +511,7 @@
           '<div class="si-sec">Comentários e histórico</div>'+
           '<div class="si-hist" id="siHist"></div>'+
           '<div class="si-campo"><textarea id="siComent" placeholder="Ex.: Analisada, fazer réplica · Réplica protocolada"></textarea></div>'+
-          '<div class="si-acoes"><button class="si-btn pri" type="button" id="siComentar">Comentar</button></div>'+
+          '<div class="si-acoes" style="align-items:center"><button class="si-btn pri" type="button" id="siComentar">Comentar</button><span class="si-sub" style="margin:0">e mover para</span><select id="siMoverCom" style="height:34px;padding:0 9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px"></select></div>'+
         '</div>'+
         '<div>'+
           '<div class="si-acoes" style="margin-bottom:6px"><button class="si-btn" type="button" id="siConcluir">Concluir</button></div>'+
@@ -518,13 +533,25 @@
         '<div id="siHorasWrap" style="display:none"><div class="si-sec">Horários da busca automática (dias úteis)</div><div class="si-horas" id="siHoras"></div></div>'+
       '</div><div class="si-mf"><button class="si-btn" type="button" data-fechar>Fechar</button></div>'+
     '</div></div>';
+    w.insertAdjacentHTML('beforeend','<div class="si-ov" id="siLinks"><div class="si-modal">'+
+      '<div class="si-mh"><div><h2>Links dos tribunais</h2><p>Consulta processual de cada justiça (PJe, eproc, e-SAJ...). O botão "Abrir processo no tribunal" da intimação copia o número e abre este link. Um tribunal pode ter vários (1º grau, 2º grau, Juizado).</p></div><button class="si-x" type="button" data-fechar>✕</button></div>'+
+      '<div class="si-mb"><div id="siLinksSem"></div><div id="siLinksLista"></div>'+
+        '<div class="si-sec">Colar da planilha</div><div class="si-campo"><textarea id="siLinksColar" placeholder="Uma linha por link: TRIBUNAL ; NOME ; SISTEMA ; LINK  (pode colar direto do Excel ou do Google Planilhas)"></textarea></div>'+
+        '<div class="si-acoes"><button class="si-btn pri" type="button" id="siLinksImportar">Importar</button></div>'+
+      '</div><div class="si-mf"><button class="si-btn" type="button" data-fechar>Fechar</button></div></div></div>');
     while(w.firstChild)document.body.appendChild(w.firstChild);
     document.querySelectorAll('.si-ov').forEach(function(o){
       o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-fechar]')){o.classList.remove('open');if(o.id==='siJanela')S.aberta=null;}});
     });
     document.addEventListener('keydown',function(e){if(e.key==='Escape'){var o=document.querySelector('.si-ov.open');if(o){o.classList.remove('open');if(o.id==='siJanela')S.aberta=null;}}});
     document.getElementById('siCopiarNum').addEventListener('click',function(){var i=aberta();if(i)copiar(cnj(i));});
-    document.getElementById('siTribunal').addEventListener('click',function(){var i=aberta();if(!i)return;var l=LINKS_TRIBUNAIS[justicaDe(i).chave];if(!l)return;copiar(cnj(i));window.open(l,'_blank','noopener');});
+    document.getElementById('siTribunal').addEventListener('click',function(e){e.stopPropagation();abrirNoTribunal(this);});
+    document.getElementById('siLinksImportar').addEventListener('click',importarLinks);
+    document.getElementById('siLinks').addEventListener('click',async function(e){
+      var sv=e.target.closest('[data-salvar]'),ex=e.target.closest('[data-excluir]');
+      if(sv)salvarLink(sv.closest('.si-link'));
+      if(ex){var row=ex.closest('.si-link');if(!(await confirmar('Excluir link','Excluir este link do tribunal?','Excluir')))return;var r=await S.sb.from('tribunais_links').delete().eq('id',row.dataset.id);if(r.error){toast('Não foi possível excluir: '+esc(r.error.message),'error');return;}await recarregarLinks();}
+    });
     document.getElementById('siConcluir').addEventListener('click',function(){var i=aberta();if(i)alternarConcluida(i.id);});
     document.getElementById('siColuna').addEventListener('change',function(){var i=aberta();if(i)atualizar(i.id,{coluna_id:this.value});});
     document.getElementById('siEtiqueta').addEventListener('input',function(){var e=ETIQUETAS.filter(function(x){return x[0].toLowerCase()===this.value.trim().toLowerCase();},this)[0];if(e)document.getElementById('siCor').value=e[1];});
@@ -538,7 +565,10 @@
       var i=aberta(),t=document.getElementById('siComent');if(!i||!t.value.trim())return;
       var r=await S.sb.rpc('intimacao_comentar',{p_id:i.id,p_texto:t.value});
       if(r.error){toast('Não foi possível comentar: '+esc(r.error.message),'error');return;}
-      t.value='';carregarHistorico(i.id);
+      t.value='';
+      var mv=document.getElementById('siMoverCom').value;
+      if(mv&&mv!==i.coluna_id){if(await atualizar(i.id,{coluna_id:mv},true)){var c=coluna(mv);toast('Comentado e movido para "'+esc(c?c.nome:'')+'".','sucesso');preencherJanela(i);}}
+      carregarHistorico(i.id);
     });
     document.getElementById('siOnAdd').addEventListener('click',incluirOab);
     document.getElementById('siOnAdv').addEventListener('change',function(){var u=usuario(this.value);if(u&&u.numero_oab){document.getElementById('siOnNum').value=String(u.numero_oab).replace(/\D/g,'');if(u.uf_oab)document.getElementById('siOnUf').value=String(u.uf_oab).toUpperCase();}});
@@ -569,10 +599,12 @@
     document.getElementById('siTitulo').textContent=(i.tipo_documento||i.tipo_comunicacao||'Intimação')+' · '+cnj(i);
     document.getElementById('siSub').textContent=[j.sigla+' · '+j.rotulo,i.orgao,'disponibilizada em '+dataBR(i.data_disponibilizacao)].filter(Boolean).join(' · ');
     var lk=document.getElementById('siDoc');if(i.link){lk.href=i.link;lk.style.display='inline-flex';}else lk.style.display='none';
-    var bt=document.getElementById('siTribunal'),l=LINKS_TRIBUNAIS[j.chave];
-    bt.disabled=!l;bt.title=l?'Copia o número e abre a consulta do '+j.sigla:'Link do '+j.sigla+' ainda não cadastrado (o Dr. Victor vai enviar os links do PJe de cada justiça)';
+    var bt=document.getElementById('siTribunal'),l=linksDe(j.chave);
+    bt.disabled=!l.length;bt.textContent=l.length>1?'Abrir processo no tribunal ▾':'Abrir processo no tribunal';
+    bt.title=l.length?'Copia o número e abre a consulta do '+j.sigla:'Link do '+j.sigla+' ainda não cadastrado ('+(S.pode.gerenciar?'cadastre em "Links dos tribunais"':'peça ao administrador')+')';
     document.getElementById('siConcluir').textContent=i.concluida?'Reabrir':'Concluir';
     document.getElementById('siConcluir').className='si-btn'+(i.concluida?'':' pri');
+    document.getElementById('siMoverCom').innerHTML='<option value="">mesma coluna</option>'+S.colunas.filter(function(c){return c.id!==i.coluna_id;}).map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.nome)+'</option>';}).join('');
     document.getElementById('siColuna').innerHTML=S.colunas.map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===i.coluna_id?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('');
     document.getElementById('siPrazo').value=i.prazo||'';
     document.getElementById('siEtiqueta').value=i.etiqueta||'';
@@ -651,6 +683,73 @@
       if(r.error){toast('Não foi possível ligar: '+esc(r.error.message),'error');return;}
       toast('Intimação ligada ao processo.','sucesso');await carregar();mudou();var n=S.itens.filter(function(x){return x.id===i.id;})[0];if(n)preencherJanela(n);
     });
+  }
+
+  /* ---------- mover de coluna pelo menu (funciona em todas as visões e no celular) ---------- */
+  function menuMover(btn,id){
+    fecharMenus();var i=S.itens.filter(function(x){return x.id===id;})[0];if(!i)return;
+    var m=document.createElement('div');m.className='si-menu';
+    m.innerHTML='<div class="tit">Mover para</div>'+S.colunas.map(function(c){return '<button type="button" data-c="'+esc(c.id)+'" class="'+(c.id===i.coluna_id?'atual':'')+'">'+(c.id===i.coluna_id?'✓ ':'')+esc(c.nome)+'</button>';}).join('')+
+      '<div class="tit">Situação</div><button type="button" data-k>'+(i.concluida?'Reabrir':'Concluir')+'</button>';
+    abrirMenuEm(m,btn);
+    m.addEventListener('click',function(e){
+      var b=e.target.closest('[data-c]'),k=e.target.closest('[data-k]');if(!b&&!k)return;fecharMenus();
+      if(k){alternarConcluida(id);return;}
+      if(b.dataset.c===i.coluna_id)return;
+      var c=coluna(b.dataset.c);atualizar(id,{coluna_id:b.dataset.c}).then(function(ok){if(ok)toast('Movida para "'+esc(c?c.nome:'')+'".','sucesso');});
+    });
+  }
+  function abrirMenuEm(m,btn){
+    document.body.appendChild(m);var r=btn.getBoundingClientRect(),h=m.offsetHeight,w=m.offsetWidth||180;
+    m.style.left=Math.max(8,Math.min(r.right-w,innerWidth-w-8))+'px';
+    m.style.top=(r.bottom+4+h>innerHeight-8?Math.max(8,r.top-h-4):r.bottom+4)+'px';
+  }
+
+  /* ---------- links da consulta de cada tribunal (T53) ---------- */
+  function abrirNoTribunal(btn){
+    var i=aberta();if(!i)return;var l=linksDe(justicaDe(i).chave);if(!l.length)return;
+    if(l.length===1){copiar(cnj(i));window.open(l[0].link,'_blank','noopener');return;}
+    fecharMenus();var m=document.createElement('div');m.className='si-menu';
+    m.innerHTML='<div class="tit">Abrir no '+esc(justicaDe(i).sigla)+'</div>'+l.map(function(x,k){return '<button type="button" data-l="'+k+'">'+esc(x.nome)+(x.sistema?' · '+esc(x.sistema):'')+'</button>';}).join('');
+    abrirMenuEm(m,btn);
+    m.addEventListener('click',function(e){var b=e.target.closest('[data-l]');if(!b)return;fecharMenus();copiar(cnj(i));window.open(l[Number(b.dataset.l)].link,'_blank','noopener');});
+  }
+  function abrirLinks(){renderLinks();document.getElementById('siLinks').classList.add('open');}
+  function renderLinks(){
+    var vistos={};S.itens.forEach(function(i){var j=justicaDe(i);if(j.chave&&j.chave!=='—')vistos[j.chave]=j.sigla;});
+    var semLink=Object.keys(vistos).filter(function(k){return !linksDe(k).length;}).sort();
+    var opSist=function(v){return '<option value="">Sistema</option>'+SISTEMAS.map(function(x){return '<option'+(x===v?' selected':'')+'>'+x+'</option>';}).join('');};
+    var linha=function(l,falta){return '<div class="si-link'+(falta?' falta':'')+'" data-id="'+esc(l.id||'')+'">'+
+      '<input data-k="tribunal_chave" value="'+esc(l.tribunal_chave||'')+'" placeholder="Tribunal (ex.: TRF5)">'+
+      '<input data-k="nome" value="'+esc(l.nome||'')+'" placeholder="Nome (ex.: PJe 1º grau, JEF)">'+
+      '<select data-k="sistema">'+opSist(l.sistema||'')+'</select>'+
+      '<input data-k="link" value="'+esc(l.link||'')+'" placeholder="https://... (link da consulta processual)">'+
+      '<span style="display:flex;gap:4px"><button class="si-btn sm" type="button" data-salvar>Salvar</button>'+(l.id?'<button class="si-btn sm" type="button" data-excluir title="Excluir">✕</button>':'')+'</span></div>';};
+    document.getElementById('siLinksSem').innerHTML=semLink.length?'<div class="si-sec" style="margin-top:0">Tribunais que já mandaram intimação e ainda não têm link</div>'+semLink.map(function(k){return linha({tribunal_chave:k,nome:'Consulta processual'},true);}).join(''):'';
+    document.getElementById('siLinksLista').innerHTML='<div class="si-sec">Links cadastrados ('+S.links.length+')</div>'+(S.links.length?S.links.map(function(l){return linha(l);}).join(''):'<div class="si-vazio">Nenhum link cadastrado ainda.</div>')+
+      '<div class="si-sec">Incluir link</div>'+linha({nome:'Consulta processual'});
+  }
+  async function salvarLink(row){
+    var d={};row.querySelectorAll('[data-k]').forEach(function(el){d[el.dataset.k]=el.value.trim();});
+    d.tribunal_chave=chaveTrib(d.tribunal_chave);
+    if(!d.tribunal_chave||!/^https?:\/\//i.test(d.link)){toast('Informe o tribunal e um link que comece com https://','error');return;}
+    d.nome=d.nome||'Consulta processual';d.sistema=d.sistema||null;d.atualizado_em=new Date().toISOString();
+    var id=row.dataset.id,r=id?await S.sb.from('tribunais_links').update(d).eq('id',id):await S.sb.from('tribunais_links').insert(d);
+    if(r.error){toast('Não foi possível salvar: '+esc(r.error.message),'error');return;}
+    toast('Link salvo.','sucesso');await recarregarLinks();
+  }
+  async function recarregarLinks(){var r=await S.sb.from('tribunais_links').select('*').order('tribunal_chave').order('ordem').order('nome');S.links=r.data||[];renderLinks();if(S.aberta){var i=aberta();if(i)preencherJanela(i);}}
+  async function importarLinks(){
+    var t=document.getElementById('siLinksColar').value.trim();if(!t)return;
+    var linhas=t.split(/\r?\n/).map(function(l){return l.split(/\t|;/).map(function(x){return x.trim();});}).filter(function(c){return c.some(function(x){return /^https?:\/\//i.test(x);});});
+    var novos=linhas.map(function(c){var link=c.filter(function(x){return /^https?:\/\//i.test(x);})[0];var resto=c.filter(function(x){return x&&x!==link;});
+      var sist=resto.filter(function(x){return SISTEMAS.some(function(s){return s.toLowerCase()===x.toLowerCase();});})[0]||null;
+      var outros=resto.filter(function(x){return x!==sist;});
+      return {tribunal_chave:chaveTrib(outros[0]||''),nome:outros[1]||'Consulta processual',sistema:sist,link:link};}).filter(function(x){return x.tribunal_chave;});
+    if(!novos.length){toast('Não achei linhas com tribunal e link. Formato: TRIBUNAL ; NOME ; SISTEMA ; LINK (uma por linha).','error');return;}
+    var r=await S.sb.from('tribunais_links').insert(novos);
+    if(r.error){toast('Não foi possível importar: '+esc(r.error.message),'error');return;}
+    document.getElementById('siLinksColar').value='';toast(novos.length+' link(s) importado(s).','sucesso');await recarregarLinks();
   }
 
   /* ---------- colunas ---------- */

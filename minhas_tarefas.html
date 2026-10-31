@@ -1981,6 +1981,7 @@
       <div class="lista-comentarios-tarefa" id="listaComentariosTarefa"></div>
       <div class="novo-comentario-wrap">
         <textarea id="textareaNovoComentario" placeholder="Escreva um comentario..."></textarea>
+        <select id="selectMoverAoComentar" title="Ao comentar, mover a tarefa para esta coluna" style="height:38px;max-width:150px;padding:0 8px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:11px;align-self:flex-end"></select>
         <button class="btn-enviar-comentario" id="btnEnviarComentario">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12l16-8-6 16-3-7-7-1z" fill="#0a0e1a"/></svg>
         </button>
@@ -3774,6 +3775,7 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     document.getElementById('inputTituloTarefa').value = tarefa.titulo;
     document.getElementById('textareaDescricaoTarefa').value = tarefa.descricao || '';
     selecionarValorSelectCustomTarefa('selectColunaTarefa', tarefa.colunaId);
+    preencherMoverAoComentar(tarefa);
     selecionarValorSelectCustomTarefa('selectResponsavelTarefa', tarefa.responsavelId);
     document.getElementById('inputDataPrazoTarefa').value = tarefa.dataPrazo || '';
     document.getElementById('inputHoraPrazoTarefa').value = tarefa.horaPrazo || '';
@@ -4105,7 +4107,24 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async f
   }
   textarea.value = '';
   renderizarComentariosModal();
+  // Comentar e mover: leva a tarefa para a coluna escolhida ao lado do comentario
+  var selMover = document.getElementById('selectMoverAoComentar');
+  var destino = selMover.value;
+  var tarefaMover = window.SAGA_TASKS.filter(function(t){ return t.id === tarefaEmEdicaoId; })[0];
+  if(destino && tarefaMover && destino !== tarefaMover.colunaId){
+    if(!souDonoDaTarefa(tarefaMover)){ mostrarToast('Comentário salvo. Só quem é dono da tarefa pode mudar a coluna.', 'aviso'); return; }
+    moverTarefaKanban(tarefaMover.id, destino, null, false);
+    selecionarValorSelectCustomTarefa('selectColunaTarefa', destino);
+    var col = dadosColunas.filter(function(c){ return c.id === destino; })[0];
+    mostrarToast('Comentado e movido para <strong>' + escaparHtml(col ? col.nome : '') + '</strong>.', 'sucesso');
+    preencherMoverAoComentar(tarefaMover);
+  }
 });
+function preencherMoverAoComentar(tarefa){
+  var sel = document.getElementById('selectMoverAoComentar');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">e mover para...</option>' + dadosColunas.filter(function(c){ return !tarefa || c.id !== tarefa.colunaId; }).map(function(c){ return '<option value="' + escaparHtml(c.id) + '">' + escaparHtml(c.nome) + '</option>'; }).join('');
+}
 
 /* ===== Salvar tarefa (criar ou editar) ===== */
 // As notificacoes de atribuicao e repasse sao geradas pelo banco
