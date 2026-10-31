@@ -956,14 +956,14 @@ function renderTasks(){
     return;
   }
   if(!process.tarefas.length){
-    root.innerHTML='<div class="tarefa-empty">'+emptyState('Nenhuma tarefa vinculada','Inclua uma tarefa específica para este processo.')+'</div>';
+    root.innerHTML=htmlIntimacoesProcesso(process)||'<div class="tarefa-empty">'+emptyState('Nenhuma tarefa vinculada','Inclua uma tarefa específica para este processo.')+'</div>';
     return;
   }
   root.innerHTML=process.tarefas.map(task=>{
     const podeConcluir=task.concluida!==true&&perms.tarefasEditar===true;
     const podeEditar=task.concluida!==true&&perms.tarefasEditar===true;
     return '<div class="item-tarefa-mini '+(task.concluida?'concluida':'')+'"><button class="checkbox-tarefa-mini" '+(podeConcluir?'':'disabled')+' data-task-toggle="'+esc(task.id)+'">'+(task.concluida?checkboxIcon():'')+'</button><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo">'+esc(task.titulo)+'</div><div class="item-tarefa-mini-prazo '+(task.urgente?'urgente':'normal')+'">'+esc(task.prazo)+'</div>'+(task.responsavelNome?'<div class="item-tarefa-mini-prazo normal">Responsável: '+esc(task.responsavelNome)+(task.criadoPorNome&&task.criadoPorId!==task.responsavelId?' · criada por '+esc(task.criadoPorNome):'')+'</div>':'')+'</div>'+(podeEditar?'<button class="timeline-action" data-task-edit="'+esc(task.id)+'" type="button">Editar</button>':'')+'</div>';
-  }).join('');
+  }).join('')+htmlIntimacoesProcesso(process);
   root.querySelectorAll('[data-task-toggle]').forEach(button=>button.addEventListener('click',async()=>{
     await concluirTarefa(button.dataset.taskToggle);
   }));
@@ -1278,7 +1278,7 @@ function voltarTelaAnterior(){
   if(veioDoSistema&&history.length>1)history.back();
   else window.location.href='lista_processos_padrao_metalico.html';
 }
-function setupInteractions(){document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.querySelectorAll('[data-checklist-template]').forEach(button=>button.addEventListener('click',()=>addChecklistFromTemplate(button.dataset.checklistTemplate)));document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('documentInput').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;await enviarDocumento(file);event.target.value='';});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirModalTarefa(null));document.getElementById('btnVerDocumentos').addEventListener('click',()=>document.getElementById('secaoDocumentos').scrollIntoView({behavior:'smooth',block:'start'}));document.getElementById('btnVerFinanceiro').addEventListener('click',()=>showToast('A visualização financeira será aberta no módulo Financeiro.','info'));document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
+function setupInteractions(){document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.querySelectorAll('[data-checklist-template]').forEach(button=>button.addEventListener('click',()=>addChecklistFromTemplate(button.dataset.checklistTemplate)));document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('documentInput').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;await enviarDocumento(file);event.target.value='';});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirModalTarefa(null));document.getElementById('btnVerDocumentos').addEventListener('click',()=>document.getElementById('secaoDocumentos').scrollIntoView({behavior:'smooth',block:'start'}));document.getElementById('btnVerFinanceiro').addEventListener('click',()=>showToast('A visualização financeira será aberta no módulo Financeiro.','info'));document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('minhas_tarefas.html?modo=intimacoes&processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
 
 
 /* Localização, importação externa e teses globais */
@@ -2095,6 +2095,24 @@ async function carregarTarefas(processoId){
   }
 }
 
+// Intimações do processo (Tarefas / Intimações): a etiqueta e o prazo marcados na intimação aparecem aqui
+async function carregarIntimacoesProcesso(processoId){
+  if(!processoId)return [];
+  const r=await _sb.from('intimacoes').select('id,tribunal,tipo_documento,data_disponibilizacao,prazo,etiqueta,etiqueta_cor,concluida').eq('processo_id',processoId).order('concluida',{ascending:true}).order('prazo',{ascending:true,nullsFirst:false}).order('data_disponibilizacao',{ascending:false}).limit(30);
+  return r.error?[]:(r.data||[]);
+}
+function htmlIntimacoesProcesso(process){
+  const lista=(process.intimacoes||[]).filter(i=>!i.concluida||i.etiqueta||i.prazo);
+  if(!lista.length)return '';
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  return '<div class="item-tarefa-mini-prazo normal" style="margin:4px 0 2px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">Intimações</div>'+lista.map(i=>{
+    const dias=i.prazo?Math.ceil((new Date(i.prazo+'T00:00:00')-hoje)/86400000):null;
+    const titulo=(i.etiqueta?i.etiqueta+' · ':'')+(i.tipo_documento||'Intimação')+(i.tribunal?' ('+i.tribunal+')':'');
+    const prazo=i.prazo?'Prazo: '+fmtData(i.prazo):'Disponibilizada em '+fmtData(i.data_disponibilizacao);
+    return '<a class="item-tarefa-mini '+(i.concluida?'concluida':'')+'" style="text-decoration:none;color:inherit;border-left:3px solid '+esc(i.etiqueta_cor||'#4b8af5')+'" href="minhas_tarefas.html?modo=intimacoes&intimacao='+encodeURIComponent(i.id)+'" title="Abrir a intimação"><span class="checkbox-tarefa-mini">'+(i.concluida?checkboxIcon():'')+'</span><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo" style="'+(i.concluida?'text-decoration:line-through':'')+'">'+esc(titulo)+'</div><div class="item-tarefa-mini-prazo '+(!i.concluida&&dias!==null&&dias<=3?'urgente':'normal')+'">'+esc(prazo)+'</div></div></a>';
+  }).join('');
+}
+
 async function carregarCompromissos(processoId){
   const padrao={tone:'tranquilo',label:'Sem retorno agendado',data:'Defina um retorno para este processo',contagem:'Nenhum acompanhamento pendente',dateInput:'',timeInput:'09:00',compromissoId:null,criadoPorId:null,podeEditar:false,podeExcluir:false};
   if(!processoId||!perms.compromissosVisualizar)return {lista:[],retorno:padrao};
@@ -2204,8 +2222,10 @@ async function carregarDetalhesProcesso(pid){
       carregarComentarios(pid),
       carregarDocumentos(pid),
       carregarTarefas(pid),
-      carregarCompromissos(pid)
+      carregarCompromissos(pid),
+      carregarIntimacoesProcesso(pid)
     ]);
+    processo.intimacoes=dados[4];
     processo.timeline=dados[0];
     processo.documentos=dados[1];
     processo.tarefas=dados[2];
