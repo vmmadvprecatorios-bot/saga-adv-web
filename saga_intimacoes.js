@@ -209,6 +209,8 @@
   '.si-link{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.1fr) minmax(0,.8fr) minmax(0,2fr) auto;gap:7px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border-soft)}'+
   '.si-link input,.si-link select{height:32px;padding:0 8px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px;min-width:0}'+
   '.si-link.falta{background:color-mix(in srgb,var(--warning) 7%,transparent);border-radius:8px;padding:6px}'+
+  'body.si-so-leitura .si-chk,body.si-so-leitura .si-mover,body.si-so-leitura #siConcluir,body.si-so-leitura #siSalvarPrazo,body.si-so-leitura #siComentar,body.si-so-leitura #siComent,body.si-so-leitura #siMoverCom,body.si-so-leitura #siMoverCom+span{display:none !important}'+
+  'body.si-so-leitura #siColuna,body.si-so-leitura #siPrazo,body.si-so-leitura #siEtiqueta,body.si-so-leitura #siCor{pointer-events:none;opacity:.7}'+
   '@media(max-width:860px){.si-link{grid-template-columns:1fr 1fr}'+
   '}'+
   '@media(max-width:860px){.si-grid{grid-template-columns:1fr}.si-col{width:84vw;max-height:calc(100vh - 210px)}.si-linha select{max-width:none;flex:1}.si-g2,.si-oab-nova{grid-template-columns:1fr 1fr}.si-oab{grid-template-columns:minmax(0,1fr) auto}}';
@@ -237,8 +239,10 @@
     S.sb=o.sb;S.meuId=o.meuId;S.ehAdmin=!!o.ehAdmin;S.toast=o.toast;S.aoMudar=o.aoMudar;
     var p=await Promise.all([
       S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'monitoramento_oab',p_acao:'gerenciar'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'criar'})]);
-    S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;
+      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'criar'}),
+      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'editar'})]);
+    S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.editar=p[2].data===true||S.ehAdmin;
+    if(!S.pode.editar)document.body.classList.add('si-so-leitura');
     if(S.ehAdmin){var c=await S.sb.from('configuracoes_sistema').select('extra').limit(1).maybeSingle();if(c.data&&c.data.extra&&Array.isArray(c.data.extra.monitoramento_horas))S.horas=c.data.extra.monitoramento_horas.map(Number);}
     montarJanelas();
     return carregar();
@@ -281,8 +285,22 @@
     base.forEach(function(i){var j=justicaDe(i);if((!f.ramo||j.ramo===f.ramo)&&!tribs.some(function(t){return t.chave===j.chave;}))tribs.push({chave:j.chave,sigla:j.sigla});});
     tribs.sort(function(a,b){return (cont['t:'+b.chave]?1:0)-(cont['t:'+a.chave]?1:0)||a.sigla.localeCompare(b.sigla,'pt-BR',{numeric:true});});
     var tribOpts=tribs.map(function(t){return [t.chave,t.sigla+(cont['t:'+t.chave]?' ('+cont['t:'+t.chave]+')':'')];});
-    var regOpts=Object.keys(REGIAO).map(function(r){return [r,'Região '+r];}).concat(Object.keys(UF_NOME).map(function(uf){return ['uf:'+uf,uf+' · '+UF_NOME[uf]];}));
-    var orgaos=[...new Set(base.filter(function(i){var j=justicaDe(i);return (!f.tribunal||j.chave===f.tribunal)&&(!f.ramo||j.ramo===f.ramo);}).map(function(i){return i.orgao;}).filter(Boolean))].sort();
+    // Cascata: cada filtro só mostra o que cabe dentro do anterior (justiça > tribunal > região/estado > órgão)
+    if(f.tribunal&&!tribs.some(function(t){return t.chave===f.tribunal;}))f.tribunal='';
+    var ufsPermitidas={},catTrib=CATALOGO.filter(function(c){return chaveTrib(c.sigla)===f.tribunal;})[0];
+    if(f.tribunal&&catTrib&&catTrib.ufs)catTrib.ufs.forEach(function(u){ufsPermitidas[u]=1;});
+    else if(!f.tribunal)CATALOGO.filter(function(c){return !f.ramo||c.ramo===f.ramo;}).forEach(function(c){(c.ufs||[]).forEach(function(u){ufsPermitidas[u]=1;});});
+    base.forEach(function(i){var j=justicaDe(i);if(j.uf&&(!f.ramo||j.ramo===f.ramo)&&(!f.tribunal||j.chave===f.tribunal))ufsPermitidas[j.uf]=1;});
+    if(!f.ramo&&!f.tribunal)Object.keys(UF_NOME).forEach(function(u){ufsPermitidas[u]=1;});
+    var ufsLista=Object.keys(ufsPermitidas).sort();
+    var regioes=Object.keys(REGIAO).filter(function(r){return REGIAO[r].some(function(u){return ufsPermitidas[u];});});
+    var regOpts=(ufsLista.length>1&&regioes.length>1?regioes.map(function(r){return [r,'Região '+r];}):[]).concat(ufsLista.map(function(uf){return ['uf:'+uf,uf+' · '+UF_NOME[uf]];}));
+    if(f.regiao&&!regOpts.some(function(o){return o[0]===f.regiao;}))f.regiao='';
+    var orgaos=[...new Set(base.filter(function(i){var j=justicaDe(i);
+      if(f.ramo&&j.ramo!==f.ramo)return false;if(f.tribunal&&j.chave!==f.tribunal)return false;
+      if(f.regiao){if(f.regiao.indexOf('uf:')===0){if(j.uf!==f.regiao.slice(3))return false;}else if(j.regiao!==f.regiao)return false;}
+      return true;}).map(function(i){return i.orgao;}).filter(Boolean))].sort();
+    if(f.orgao&&orgaos.indexOf(f.orgao)===-1)f.orgao='';
     var advs={};S.oabs.forEach(function(o){if(o.usuario_vinculado_id)advs[o.usuario_vinculado_id]=1;});base.forEach(function(i){advogadosDe(i).forEach(function(a){advs[a]=1;});});
     var oabOpts=S.oabs.map(function(o){return ['oab:'+o.numero_oab+'/'+o.uf_oab,'OAB '+o.numero_oab+'/'+o.uf_oab+(o.usuario_vinculado_id?' · '+primeiroNome(o.usuario_vinculado_id):'')];})
       .concat([['fonte:djen','Origem: CNJ (Diário Eletrônico)'],['fonte:email','Origem: e-mail (radar)']]);
@@ -308,8 +326,9 @@
     el.querySelectorAll('[data-seg]').forEach(function(g){g.addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;S.f[g.dataset.seg]=b.dataset.v;guardarFiltros();mudou();});});
     el.querySelectorAll('select[data-f]').forEach(function(s){s.addEventListener('change',function(){
       S.f[s.dataset.f]=s.value;
-      if(s.dataset.f==='ramo'){S.f.tribunal='';S.f.orgao='';}
-      if(s.dataset.f==='tribunal')S.f.orgao='';
+      if(s.dataset.f==='ramo'){S.f.tribunal='';S.f.regiao='';S.f.orgao='';}
+      if(s.dataset.f==='tribunal'){S.f.regiao='';S.f.orgao='';}
+      if(s.dataset.f==='regiao')S.f.orgao='';
       guardarFiltros();mudou();});});
     var bt=null;el.querySelector('input[data-f="busca"]').addEventListener('input',function(){var v=this.value;clearTimeout(bt);bt=setTimeout(function(){S.f.busca=v;mudou();var i=el.querySelector('input[data-f="busca"]');if(i){i.focus();i.setSelectionRange(v.length,v.length);}},220);});
     el.addEventListener('click',function(e){
@@ -338,7 +357,7 @@
     el.className='si-card'+(i.concluida?' concluida':'');
     el.style.setProperty('--c',i.concluida?'#8a94a8':cor);
     el.dataset.int=i.id;
-    if(opc.arrastar&&!i.concluida)el.setAttribute('draggable','true');
+    if(opc.arrastar&&!i.concluida&&S.pode.editar)el.setAttribute('draggable','true');
     el.innerHTML='<div class="si-topo"><button class="si-chk'+(i.concluida?' on':'')+'" type="button" data-chk title="'+(i.concluida?'Reabrir':'Concluir')+'">'+(i.concluida?'✓':'')+'</button>'+
         '<span class="si-trib">'+esc(j.sigla)+'</span><span>'+esc(i.fonte==='email'?'E-mail':'Intimação')+'</span><span class="data">'+dataBR(i.data_disponibilizacao)+'</span>'+
         '<button class="si-mover" type="button" data-mover title="Mover para outra coluna">⇄</button></div>'+
@@ -364,7 +383,7 @@
       var card=e.target.closest('[data-int]');if(card&&raiz.contains(card)){e.stopPropagation();abrir(card.dataset.int);}
     });
     raiz.addEventListener('mousedown',function(e){var t=e.target.closest('.si-proc span,.si-cli,.si-res,.si-doc'),c=e.target.closest('.si-card[draggable]');if(t&&c)c.setAttribute('draggable','false');});
-    document.addEventListener('mouseup',function(){raiz.querySelectorAll('.si-card[draggable="false"]:not(.concluida)').forEach(function(c){c.setAttribute('draggable','true');});});
+    document.addEventListener('mouseup',function(){if(S.pode.editar)raiz.querySelectorAll('.si-card[draggable="false"]:not(.concluida)').forEach(function(c){c.setAttribute('draggable','true');});});
   }
   function copiar(txt){
     function ok(){toast('Número copiado: '+esc(txt),'sucesso');}

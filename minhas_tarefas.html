@@ -322,10 +322,6 @@
      FILTROS AVANCADOS
   =================================================================== */
   .barra-filtros-tarefas{ margin-bottom:14px; }
-  .modo-ti{ display:inline-flex; gap:3px; padding:3px; margin-top:9px; border:1px solid var(--border-soft); border-radius:11px; background:var(--panel); }
-  .modo-ti button{ height:30px; padding:0 13px; border-radius:8px; border:0; background:none; color:var(--muted); font:inherit; font-size:11.5px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
-  .modo-ti button.active{ background:var(--gold); color:#fff; }
-  .modo-ti .qtd-ti{ font-size:9.5px; padding:1px 6px; border-radius:7px; background:color-mix(in srgb,currentColor 18%,transparent); }
   .barra-filtros-topo{ display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:10px; }
 
   .dropdown-custom{ position:relative; }
@@ -1605,13 +1601,8 @@
 
     <div class="header-pagina-tarefas">
       <div>
-        <h1>Tarefas / Intimações</h1>
+        <h1>Minhas Tarefas</h1>
         <div class="subtitulo-pagina">Quadro pessoal e coletivo - <strong id="textoResumoVisao">visualizando como Dr. Victor (Admin)</strong></div>
-        <div class="modo-ti" id="modoTI" role="group" aria-label="O que mostrar">
-          <button type="button" data-modo="tarefas" class="active">Tarefas</button>
-          <button type="button" data-modo="intimacoes">Intimações <span class="qtd-ti" id="qtdIntimAbertas"></span></button>
-          <button type="button" data-modo="tudo">Tudo junto</button>
-        </div>
       </div>
       <div class="acoes-header-tarefas">
         <div class="toggle-visoes-tarefas">
@@ -1771,16 +1762,13 @@
       <div class="contador-resultados-filtro" id="contadorResultadosFiltro"></div>
     </div>
 
-    <div id="intimFiltros" style="display:none"></div>
     <!-- ===== VISAO KANBAN ===== -->
     <div id="visaoKanban">
       <div class="kanban-wrapper" id="kanbanWrapper"></div>
-      <div id="intimQuadro" style="display:none"></div>
     </div>
 
     <!-- ===== VISAO LISTA ===== -->
     <div id="visaoLista" style="display:none;">
-      <div id="intimLista" style="display:none"></div>
       <div class="painel-lista-tarefas">
         <div class="sub-toggle-lista">
           <div class="sub-toggle-item ativo" data-modolista="tabela">Tabela</div>
@@ -2059,7 +2047,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
-<script src="saga_intimacoes.js"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2670,48 +2657,8 @@ function aplicarFiltrosERenderizar(){
   renderizarListaAgrupada(filtradas);
   atualizarKpisTarefas();
   renderizarMiniCalendario();
-  renderizarIntimacoesNoModo();
 }
 
-/* =====================================================================
-   SECAO: TAREFAS E INTIMACOES NA MESMA ABA (T52)
-   Modo "tarefas" (como antes), "intimacoes" (quadro e lista das intimacoes, saga_intimacoes.js)
-   ou "tudo" (intimacoes dentro das colunas de tribunal das tarefas, e as duas listas).
-===================================================================== */
-var modoTI = 'tarefas';
-try{ var mSalvo = localStorage.getItem('saga-modo-ti'); if(mSalvo === 'intimacoes' || mSalvo === 'tudo') modoTI = mSalvo; }catch(e){}
-function renderizarIntimacoesNoModo(){
-  var intimPronto = window.SagaIntimacoes && SagaIntimacoes.pronto();
-  var comIntim = intimPronto && modoTI !== 'tarefas', soIntim = modoTI === 'intimacoes';
-  document.querySelectorAll('#modoTI [data-modo]').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-modo') === modoTI); });
-  document.querySelector('.barra-filtros-tarefas').style.display = soIntim ? 'none' : '';
-  document.querySelector('.grid-kpis-tarefas').style.display = soIntim ? 'none' : '';
-  document.getElementById('kanbanWrapper').style.display = soIntim ? 'none' : '';
-  document.querySelector('.painel-lista-tarefas').style.display = soIntim ? 'none' : '';
-  ['intimFiltros','intimQuadro','intimLista'].forEach(function(id){ document.getElementById(id).style.display = 'none'; });
-  if(intimPronto){
-    var c = SagaIntimacoes.contagens();
-    document.getElementById('qtdIntimAbertas').textContent = c.abertas || '';
-  }
-  if(!comIntim) return;
-  var filtros = document.getElementById('intimFiltros');
-  filtros.style.display = '';
-  SagaIntimacoes.montarFiltros(filtros);
-  if(soIntim){
-    var q = document.getElementById('intimQuadro'); q.style.display = ''; SagaIntimacoes.renderQuadro(q);
-    var l = document.getElementById('intimLista'); l.style.display = ''; SagaIntimacoes.renderLista(l, false);
-  } else {
-    SagaIntimacoes.injetarNoKanbanTarefas(document.getElementById('kanbanWrapper'));
-    var l2 = document.getElementById('intimLista'); l2.style.display = ''; SagaIntimacoes.renderLista(l2, true);
-  }
-}
-document.querySelectorAll('#modoTI [data-modo]').forEach(function(b){
-  b.addEventListener('click', function(){
-    modoTI = b.getAttribute('data-modo');
-    try{ localStorage.setItem('saga-modo-ti', modoTI); }catch(e){}
-    aplicarFiltrosERenderizar();
-  });
-});
 
 /* =====================================================================
    SECAO: SINCRONIZACAO UNICA DE CONCLUSAO
@@ -4379,18 +4326,9 @@ async function iniciarMinhasTarefas(){
   popularSelectColunas();
   popularSelectResponsavel();
   var qsTI = new URLSearchParams(location.search);
-  if(qsTI.get('modo') === 'intimacoes' || qsTI.get('modo') === 'tudo') modoTI = qsTI.get('modo');
+  // Endereço antigo das intimações (quando ficavam junto das tarefas): vai para a tela própria
+  if(qsTI.get('modo') === 'intimacoes' || qsTI.get('intimacao')){ location.replace('monitoramento_multi_oab.html' + location.search); return; }
   aplicarFiltrosERenderizar();
-  // Intimacoes (carregam em seguida, sem atrasar as tarefas)
-  if(window.SagaIntimacoes){
-    SagaIntimacoes.iniciar({ sb:_sb, meuId:usuarioLogadoId, ehAdmin:isAdmin, toast:mostrarToast, aoMudar:aplicarFiltrosERenderizar }).then(function(ok){
-      if(!ok) return;
-      if(qsTI.get('processo_id')){ SagaIntimacoes.filtrarProcesso(qsTI.get('processo_id')); modoTI = 'intimacoes'; }
-      aplicarFiltrosERenderizar();
-      if(qsTI.get('intimacao')) SagaIntimacoes.abrir(qsTI.get('intimacao'));
-      if(qsTI.get('modo') || qsTI.get('intimacao') || qsTI.get('processo_id')) history.replaceState(null,'',location.pathname);
-    });
-  }
   // Veio de uma notificacao: abre a tarefa direto
   var idTarefaUrl = qsTI.get('tarefa');
   if(idTarefaUrl){
@@ -4402,7 +4340,6 @@ async function iniciarMinhasTarefas(){
 
 // Botao de atualizar da barra superior
 document.addEventListener('saga-atualizar', async function(){
-  if(window.SagaIntimacoes && SagaIntimacoes.pronto()) await SagaIntimacoes.carregar();
   if(await carregarDadosTarefas()){ atualizarListasDeFiltro(); aplicarFiltrosERenderizar(); }
 });
 
