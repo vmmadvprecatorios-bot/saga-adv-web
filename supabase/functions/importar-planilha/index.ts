@@ -32,6 +32,11 @@ Deno.serve(async (req) => {
         // deno-lint-ignore no-explicit-any
         r = await admin.from("import_pastas").upsert((corpo.pastas || []).map((p: any) => ({ pasta_id: p.pasta_id, nome: p.nome || null, arquivos: p.arquivos || [], total_arquivos: p.total_arquivos || 0, total_bytes: p.total_bytes || 0, erro: p.erro || null, recebido_em: agora })));
         break;
+      case "docs_pendentes": {
+        const d = await admin.rpc("import_docs_pendentes", { p_limite: Number(corpo.limite) || 40 });
+        if (d.error) return json({ ok: false, mensagem: d.error.message }, 500);
+        return json({ ok: true, ids: d.data || [] });
+      }
       case "situacao": {
         const [l, d, p] = await Promise.all([
           admin.from("import_linhas").select("linha", { count: "exact", head: true }),
