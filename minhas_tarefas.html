@@ -1590,6 +1590,39 @@
   [data-theme="light"] .item-menu-coluna.item-ordenacao.ordenacao-ativa{
     background:color-mix(in srgb,var(--gold) 15%,transparent); color:color-mix(in srgb,var(--gold) 75%,black);
   }
+
+  /* Cores de prazo: dias do calendário local, sem relação com a prioridade. */
+  :root, [data-theme="dark"]{
+    --prazo-azul:#2068d5; --prazo-amarelo:#ffd21c; --prazo-laranja:#ff851b;
+    --prazo-vermelho:#dc2038; --prazo-vermelho-escuro:#8f102d;
+    --prazo-texto-claro:#ffffff; --prazo-texto-escuro:#171b24; --prazo-muito-contorno:#ff6578;
+  }
+  [data-theme="light"]{
+    --prazo-azul:#155bc0; --prazo-amarelo:#f2c400; --prazo-laranja:#c24100;
+    --prazo-vermelho:#c91c30; --prazo-vermelho-escuro:#780d22;
+    --prazo-texto-claro:#ffffff; --prazo-texto-escuro:#171b24; --prazo-muito-contorno:#780d22;
+  }
+  [data-situacao-prazo="distante"]{ --prazo-cor:var(--prazo-azul); --prazo-texto:var(--prazo-texto-claro); }
+  [data-situacao-prazo="proximo"]{ --prazo-cor:var(--prazo-amarelo); --prazo-texto:var(--prazo-texto-escuro); }
+  [data-situacao-prazo="hoje"]{ --prazo-cor:var(--prazo-laranja); --prazo-texto:var(--prazo-texto-claro); }
+  [data-theme="dark"] [data-situacao-prazo="hoje"]{ --prazo-texto:var(--prazo-texto-escuro); }
+  [data-situacao-prazo="atrasada"]{ --prazo-cor:var(--prazo-vermelho); --prazo-texto:var(--prazo-texto-claro); }
+  [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
+  .card-tarefa[data-situacao-prazo]{ border-left:5px solid var(--prazo-cor); }
+  .card-tarefa[data-situacao-prazo="muito-atrasada"]{ border-color:var(--prazo-muito-contorno); border-left-color:var(--prazo-cor); border-left-width:8px; }
+  .linha-tarefa-lista[data-situacao-prazo] > td:first-child{ box-shadow:inset 5px 0 var(--prazo-cor); }
+  .linha-tarefa-lista[data-situacao-prazo="muito-atrasada"] > td:first-child{ box-shadow:inset 8px 0 var(--prazo-cor); }
+  .prazo-info{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; min-width:0; }
+  .card-tarefa .prazo-info{ align-items:flex-end; max-width:100%; }
+  .tabela-tarefas .prazo-info{ min-width:160px; }
+  .tabela-tarefas .prazo-data-neutra{ white-space:nowrap; }
+  .situacao-prazo{ display:inline-block; padding:4px 7px; border-radius:6px; background:var(--prazo-cor); color:var(--prazo-texto); font-size:10px; font-weight:700; line-height:1.35; overflow-wrap:anywhere; }
+  [data-situacao-prazo="muito-atrasada"] .situacao-prazo{ outline:2px solid var(--prazo-muito-contorno); outline-offset:1px; font-weight:800; }
+  .prazo-data-neutra{ color:var(--muted); font-size:10px; font-variant-numeric:tabular-nums; }
+  .legenda-prazos{ display:flex; flex-wrap:wrap; gap:7px 14px; margin:0 0 12px; color:var(--muted); font-size:10px; line-height:1.5; }
+  .legenda-prazos span{ display:inline-flex; align-items:center; gap:5px; }
+  .legenda-prazos [data-situacao-prazo]::before{ content:''; width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--prazo-cor); }
+  .legenda-prazos [data-situacao-prazo="muito-atrasada"]::before{ outline:1px solid var(--prazo-muito-contorno); outline-offset:1px; }
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -1760,6 +1793,14 @@
         </div>
       </div>
 
+      <div class="legenda-prazos" aria-label="Legenda das cores dos prazos">
+        <span>Prazo:</span>
+        <span data-situacao-prazo="distante">Mais de 3 dias</span>
+        <span data-situacao-prazo="proximo">De 1 a 3 dias</span>
+        <span data-situacao-prazo="hoje">Vence hoje</span>
+        <span data-situacao-prazo="atrasada">Atraso de 1 a 7 dias</span>
+        <span data-situacao-prazo="muito-atrasada">Atraso maior que 7 dias</span>
+      </div>
       <div class="chips-filtros-ativos" id="chipsFiltrosAtivos"></div>
       <div class="visao-tarefas" id="visaoTarefas" role="group" aria-label="Quais tarefas mostrar">
         <button type="button" class="visao-btn ativo" data-visao="Todas">Todas</button>
@@ -2304,6 +2345,29 @@ function statusUrgenciaPrazo(tarefa){
   if(horas < 0) return 'vermelho';
   if(horas <= 48) return 'amarelo';
   return 'verde';
+}
+
+// Apenas apresentação: usa ano, mês e dia locais, sem horário ou efeito do horário de verão.
+function situacaoPrazoTarefa(tarefa){
+  if(!tarefa.dataPrazo || tarefa.status === 'concluida') return null;
+  var partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tarefa.dataPrazo);
+  if(!partes) return null;
+  var hoje = new Date();
+  var prazo = Date.UTC(Number(partes[1]), Number(partes[2]) - 1, Number(partes[3]));
+  var diaHoje = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  var dias = Math.round((prazo - diaHoje) / 86400000);
+  if(dias > 3) return { classe:'distante', texto:'Prazo distante' };
+  if(dias > 0) return { classe:'proximo', texto:'Vence em ' + dias + (dias === 1 ? ' dia' : ' dias') };
+  if(dias === 0) return { classe:'hoje', texto:'Vence hoje' };
+  var atraso = -dias;
+  return { classe:atraso > 7 ? 'muito-atrasada' : 'atrasada',
+    texto:(atraso > 7 ? 'Muito atrasada: há ' : 'Atrasada há ') + atraso + (atraso === 1 ? ' dia' : ' dias') };
+}
+
+function htmlPrazoTarefa(tarefa, situacao){
+  var data = '<span class="prazo-data-neutra">' + escaparHtml(textoPrazoFormatado(tarefa)) + '</span>';
+  if(!situacao) return data;
+  return '<span class="prazo-info"><span class="situacao-prazo">' + escaparHtml(situacao.texto) + '</span>' + data + '</span>';
 }
 
 function textoPrazoFormatado(tarefa){
@@ -2920,14 +2984,14 @@ function criarCheckboxConclusaoCard(tarefa){
 
 function criarCardTarefaEl(tarefa){
   var resp = getColaborador(tarefa.responsavelId);
-  var urgencia = statusUrgenciaPrazo(tarefa);
+  var situacao = situacaoPrazoTarefa(tarefa);
   var totalSub = tarefa.subtarefas.length;
   var concluidasSub = tarefa.subtarefas.filter(function(s){ return s.concluida; }).length;
   var percentualSub = totalSub > 0 ? Math.round((concluidasSub/totalSub)*100) : 0;
 
   var card = document.createElement('div');
-  var cardEstaAtrasado = tarefa.status !== 'concluida' && tarefaEstaAtrasada(tarefa);
-  card.className = 'card-tarefa' + (tarefa.status === 'concluida' ? ' concluida' : '') + (cardEstaAtrasado ? ' atrasada' : '');
+  card.className = 'card-tarefa' + (tarefa.status === 'concluida' ? ' concluida' : '');
+  if(situacao) card.setAttribute('data-situacao-prazo', situacao.classe);
   var podeMexer = souDonoDaTarefa(tarefa);
   card.setAttribute('draggable', tarefa.status === 'concluida' || !podeMexer ? 'false' : 'true');
   card.setAttribute('data-tarefa-id', tarefa.id);
@@ -2957,12 +3021,7 @@ function criarCardTarefaEl(tarefa){
     ? '<div class="barra-progresso-subtarefas"><div class="barra-progresso-subtarefas-fill" style="width:' + percentualSub + '%;"></div></div>'
     : '';
 
-  var badgePrazoHtml = '';
-  if(tarefa.dataPrazo){
-    var classeUrg = urgencia === 'vermelho' ? 'prazo-vermelho' : (urgencia === 'amarelo' ? 'prazo-amarelo' : 'prazo-verde');
-    var iconePulsante = urgencia === 'vermelho' ? ' icone-pulsante' : '';
-    badgePrazoHtml = '<div class="badge-prazo-card ' + classeUrg + '"><svg class="' + iconePulsante.trim() + '" width="9" height="9" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.8"/></svg>' + textoPrazoFormatado(tarefa) + '</div>';
-  }
+  var badgePrazoHtml = tarefa.dataPrazo ? htmlPrazoTarefa(tarefa, situacao) : '';
 
   card.innerHTML =
     '<div class="topo-card-tarefa">' +
@@ -3382,13 +3441,12 @@ function ordenarTarefas(lista){
 
 function criarLinhaTabela(tarefa){
   var resp = getColaborador(tarefa.responsavelId);
-  var urgencia = statusUrgenciaPrazo(tarefa);
+  var situacao = situacaoPrazoTarefa(tarefa);
   var tr = document.createElement('tr');
-  tr.className = 'linha-tarefa-lista' + (tarefaEstaAtrasada(tarefa) ? ' linha-atrasada' : '') + (tarefa.status === 'concluida' ? ' linha-concluida' : '');
+  tr.className = 'linha-tarefa-lista' + (tarefa.status === 'concluida' ? ' linha-concluida' : '');
+  if(situacao) tr.setAttribute('data-situacao-prazo', situacao.classe);
 
-  var badgePrazoHtml = tarefa.dataPrazo
-    ? '<span class="badge-prazo-card ' + (urgencia === 'vermelho' ? 'prazo-vermelho' : urgencia === 'amarelo' ? 'prazo-amarelo' : 'prazo-verde') + '">' + textoPrazoFormatado(tarefa) + '</span>'
-    : '<span style="color:var(--muted); font-size:11px;">Sem prazo</span>';
+  var badgePrazoHtml = htmlPrazoTarefa(tarefa, situacao);
 
   tr.innerHTML =
     '<td><div class="checkbox-conclusao' + (tarefa.status === 'concluida' ? ' marcado' : '') + '" data-id-check="' + tarefa.id + '">' +
