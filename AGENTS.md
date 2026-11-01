@@ -29,6 +29,7 @@ Quem coordena e revisa o seu trabalho é o Claude. Ele confere o PR, testa e pub
 - Azul-marinho, cinza e branco, modo claro e escuro, funcionando no celular.
 - Toda tela ou janela nova segue o padrão de movimento do sistema (telas montam em ondas, janelas abrem com mola, botões afundam ao apertar). O `saga_guard.js` cobre a maior parte automaticamente: reaproveite, não reinvente.
 - Trocar de tela mexe só no conteúdo; menus superior e lateral ficam parados. Nada pode "piscar" nem mostrar sujeira de outra tela.
+- Menus e listas suspensas dentro de janelas (modais) não podem ser cortados pela janela: confira no celular e com a janela baixa; prefira que o menu empurre o conteúdo (posição normal) e role até aparecer inteiro.
 - Respeite as permissões: o menu e as telas mostram só o que o perfil do usuário pode ver.
 
 ## Antes de abrir o PR
