@@ -443,7 +443,7 @@
   .chip-compartilhar:focus-visible, .btn-compartilhar-tarefa:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .compartilhar-tarefa{ position:relative; }
   .btn-compartilhar-tarefa{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border:1px solid var(--border); border-radius:9px; background:var(--panel); color:var(--text); font:inherit; font-size:12px; cursor:pointer; text-align:left; }
-  .menu-compartilhar-tarefa{ display:none; position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:90; padding:8px; border:1px solid var(--border); border-radius:11px; background:var(--panel-2); color:var(--text); box-shadow:var(--shadow); }
+  .menu-compartilhar-tarefa{ display:none; position:static; margin-top:6px; padding:8px; border:1px solid var(--border); border-radius:11px; background:var(--panel-2); color:var(--text); box-shadow:var(--shadow); }
   .menu-compartilhar-tarefa.aberto{ display:block; }
   .lista-compartilhar-tarefa{ max-height:min(220px,30dvh); overflow-y:auto; margin-top:6px; overscroll-behavior:contain; }
   #campoCompartilharTarefa .opcao-compartilhar-tarefa{ display:flex; align-items:center; gap:10px; min-height:40px; padding:8px; margin:0; border-radius:7px; font-size:12px; font-weight:400; text-transform:none; letter-spacing:normal; color:var(--text); cursor:pointer; overflow-wrap:anywhere; }
@@ -3781,6 +3781,8 @@ document.getElementById('btnCompartilharTarefa').addEventListener('click', funct
   seletor.classList.add('aberto');
   this.setAttribute('aria-expanded', 'true');
   document.getElementById('buscaCompartilharTarefa').focus({ preventScroll:true });
+  // espera a animacao de abertura terminar para medir o tamanho real do menu
+  setTimeout(function(){ if(seletor.classList.contains('aberto')) seletor.scrollIntoView({ block:'nearest', behavior:'smooth' }); }, 350);
 });
 document.getElementById('buscaCompartilharTarefa').addEventListener('input', renderizarChipsCompartilhar);
 document.addEventListener('pointerdown', function(e){
