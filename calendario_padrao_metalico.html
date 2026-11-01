@@ -161,6 +161,11 @@
   /* CALENDÁRIO WRAP */
   .calendario-wrap{flex:1;background:var(--panel);backdrop-filter:blur(14px);border:1px solid var(--border-soft);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-height:500px;}
 
+  /* Apenas o conteúdo participa da troca; navegação e legenda ficam paradas. */
+  #calendarioWrap{position:relative;}
+  .calendario-conteudo{display:flex;flex-direction:column;flex:1;min-width:0;}
+  .calendario-copia{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;background:var(--panel-solid);}
+
   /* VIEW MES */
   .dias-semana-header{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border-soft);}
   .dia-semana-label{text-align:center;padding:11px 0;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600;}
@@ -751,7 +756,11 @@ async function salvarPreferencias() {
 // ================================================================
 // CARREGAR EVENTOS
 // ================================================================
-async function carregarEventos() {
+var versaoCarregamentoCalendario = 0;
+var calendarioJaRenderizado = false;
+
+async function carregarEventos(transicao) {
+  var versao = ++versaoCarregamentoCalendario;
   var inicio, fim;
   if (viewAtual === 'mes') {
     // pegar a grade completa do mes (inclui dias do mes anterior/seguinte visíveis)
@@ -766,7 +775,7 @@ async function carregarEventos() {
     fim    = fimDia(dataAtual);
   }
 
-  mostrarSkeletonCalendario();
+  if (!calendarioJaRenderizado) mostrarSkeletonCalendario();
 
   try {
     var rComp = await _sb.from('compromissos')
@@ -776,15 +785,8 @@ async function carregarEventos() {
       .order('data_hora_inicio');
 
     if (rComp.error) throw rComp.error;
-    compromissos = rComp.data || [];
-
-    // Atualizar mapa de tipos com novos tipos encontrados no banco
-    compromissos.forEach(function(c) {
-      if (c.tipo && !categoriasMap[c.tipo]) {
-        var idx = Object.keys(categoriasMap).length;
-        categoriasMap[c.tipo] = { nome: c.tipo, cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
-      }
-    });
+    if (versao !== versaoCarregamentoCalendario) return;
+    var novosCompromissos = rComp.data || [];
 
     var rTar = await _sb.from('tarefas')
       .select('id, titulo, tipo, data_prazo, responsavel_id, concluida')
@@ -794,15 +796,26 @@ async function carregarEventos() {
       .lte('data_prazo', iso(fim));
 
     if (rTar.error) throw rTar.error;
+    if (versao !== versaoCarregamentoCalendario) return;
+    compromissos = novosCompromissos;
     tarefas = rTar.data || [];
 
+    // Atualizar mapa de tipos com novos tipos encontrados no banco
+    novosCompromissos.forEach(function(c) {
+      if (c.tipo && !categoriasMap[c.tipo]) {
+        var idx = Object.keys(categoriasMap).length;
+        categoriasMap[c.tipo] = { nome: c.tipo, cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
+      }
+    });
+
   } catch(e) {
+    if (versao !== versaoCarregamentoCalendario) return;
     showToast('Erro ao carregar eventos do periodo.', 'erro');
     compromissos = []; tarefas = [];
   }
 
   renderizarLegenda();
-  renderizarView();
+  renderizarView(transicao);
   atualizarContagem();
 }
 
@@ -824,7 +837,7 @@ function ativarViewButtons() {
   Object.keys(mapa).forEach(function(v) {
     var btn = document.getElementById(mapa[v]);
     btn.className = 'btn-view' + (v === viewAtual ? ' ativo' : '');
-    btn.addEventListener('click', function() { viewAtual = v; atualizarPeriodoTexto(); carregarEventos(); ativarViewButtons(); });
+    btn.onclick = function() { var mudou = viewAtual !== v; viewAtual = v; atualizarPeriodoTexto(); carregarEventos(mudou ? 'visao' : null); ativarViewButtons(); };
   });
 }
 
@@ -851,16 +864,17 @@ document.getElementById('btnPeriodoAnterior').addEventListener('click', function
   if (viewAtual === 'mes')    { dataAtual.setMonth(dataAtual.getMonth() - 1); }
   else if (viewAtual === 'semana') { dataAtual.setDate(dataAtual.getDate() - 7); }
   else { dataAtual.setDate(dataAtual.getDate() - 1); }
-  carregarEventos(); atualizarPeriodoTexto();
+  carregarEventos(-1); atualizarPeriodoTexto();
 });
 document.getElementById('btnPeriodoSeguinte').addEventListener('click', function() {
   if (viewAtual === 'mes')    { dataAtual.setMonth(dataAtual.getMonth() + 1); }
   else if (viewAtual === 'semana') { dataAtual.setDate(dataAtual.getDate() + 7); }
   else { dataAtual.setDate(dataAtual.getDate() + 1); }
-  carregarEventos(); atualizarPeriodoTexto();
+  carregarEventos(1); atualizarPeriodoTexto();
 });
 document.getElementById('btnHoje').addEventListener('click', function() {
-  dataAtual = new Date(); atualizarPeriodoTexto(); carregarEventos();
+  var anterior = inicioDia(dataAtual);
+  dataAtual = new Date(); atualizarPeriodoTexto(); carregarEventos(Math.sign(inicioDia(dataAtual) - anterior));
 });
 
 // ================================================================
@@ -886,9 +900,10 @@ function renderizarGradeMesesRapida() {
     item.className = 'mes-rapido-item' + (idx === dataAtual.getMonth() && anoSeletorRapido === dataAtual.getFullYear() ? ' selecionado' : '');
     item.textContent = nome.substring(0,3);
     item.addEventListener('click', function() {
+      var anterior = inicioDia(dataAtual);
       dataAtual.setFullYear(anoSeletorRapido); dataAtual.setMonth(idx);
       viewAtual = 'mes'; ativarViewButtons(); atualizarPeriodoTexto();
-      carregarEventos();
+      carregarEventos(Math.sign(inicioDia(dataAtual) - anterior));
       document.getElementById('seletorRapidoOverlay').classList.remove('aberto');
     });
     grade.appendChild(item);
@@ -898,11 +913,65 @@ function renderizarGradeMesesRapida() {
 // ================================================================
 // RENDERIZAR VIEW
 // ================================================================
-function renderizarView() {
+var transicaoCalendarioAtiva = null;
+var movimentoCalendarioReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+function encerrarTransicaoCalendario() {
+  var ativa = transicaoCalendarioAtiva;
+  if (!ativa) return;
+  transicaoCalendarioAtiva = null;
+  ativa.animacoes.forEach(function(animacao) { animacao.cancel(); });
+  ativa.copia.remove();
+}
+movimentoCalendarioReduzido.addEventListener('change', function(e) {
+  if (e.matches) encerrarTransicaoCalendario();
+});
+
+function renderizarView(transicao) {
+  encerrarTransicaoCalendario();
+  var wrap = document.getElementById('calendarioWrap');
+  var conteudo = wrap.querySelector('.calendario-conteudo');
+  var animar = transicao && conteudo && !movimentoCalendarioReduzido.matches && conteudo.animate;
+  var copia = animar ? conteudo.cloneNode(true) : null;
+  var rolagens = animar ? Array.from(conteudo.querySelectorAll('*')).map(function(el) {
+    return { top:el.scrollTop, left:el.scrollLeft };
+  }) : [];
+  if (!conteudo) {
+    conteudo = document.createElement('div');
+    conteudo.className = 'calendario-conteudo';
+    wrap.replaceChildren(conteudo);
+  }
   atualizarPeriodoTexto();
   if      (viewAtual === 'mes')    renderizarMes();
   else if (viewAtual === 'semana') renderizarSemana();
   else                              renderizarDia();
+  calendarioJaRenderizado = true;
+  if (!animar) return;
+
+  // A cópia é só visual e nunca recebe cliques, foco ou leitura assistiva.
+  copia.classList.add('calendario-copia');
+  copia.setAttribute('aria-hidden', 'true');
+  copia.inert = true;
+  copia.querySelectorAll('[id]').forEach(function(el) { el.removeAttribute('id'); });
+  wrap.appendChild(copia);
+  copia.querySelectorAll('*').forEach(function(el, i) {
+    el.scrollTop = rolagens[i].top; el.scrollLeft = rolagens[i].left;
+  });
+  var trocaVisao = transicao === 'visao';
+  var distancia = transicao === 1 ? 28 : -28;
+  var entrada = conteudo.animate([
+    { opacity:.45, transform:trocaVisao ? 'scale(.97)' : 'translateX(' + (-distancia) + 'px)' },
+    { opacity:1, transform:trocaVisao ? 'scale(1)' : 'translateX(0)' }
+  ], { duration:250, easing:'cubic-bezier(.34,1.45,.64,1)' });
+  var saida = copia.animate([
+    { opacity:1, transform:trocaVisao ? 'scale(1)' : 'translateX(0)' },
+    { opacity:0, transform:trocaVisao ? 'scale(1.025)' : 'translateX(' + distancia + 'px)' }
+  ], { duration:250, easing:'ease-out' });
+  var ativa = { copia:copia, animacoes:[entrada, saida] };
+  transicaoCalendarioAtiva = ativa;
+  Promise.allSettled([entrada.finished, saida.finished]).then(function() {
+    if (transicaoCalendarioAtiva === ativa) encerrarTransicaoCalendario();
+  });
 }
 
 // --- eventos de um dia especifico ---
@@ -920,7 +989,7 @@ function eventosNoDia(date) {
 // VIEW: MES
 // ================================================================
 function renderizarMes() {
-  var wrap = document.getElementById('calendarioWrap');
+  var wrap = document.querySelector('#calendarioWrap > .calendario-conteudo');
   wrap.innerHTML = '';
 
   // Header dias da semana
@@ -1020,7 +1089,7 @@ function renderizarMes() {
 // VIEW: SEMANA
 // ================================================================
 function renderizarSemana() {
-  var wrap = document.getElementById('calendarioWrap');
+  var wrap = document.querySelector('#calendarioWrap > .calendario-conteudo');
   wrap.innerHTML = '';
   renderizarGradeTemporal(wrap, 7, inicioSemana(dataAtual));
 }
@@ -1029,7 +1098,7 @@ function renderizarSemana() {
 // VIEW: DIA
 // ================================================================
 function renderizarDia() {
-  var wrap = document.getElementById('calendarioWrap');
+  var wrap = document.querySelector('#calendarioWrap > .calendario-conteudo');
   wrap.innerHTML = '';
   renderizarGradeTemporal(wrap, 1, inicioDia(dataAtual));
 }
