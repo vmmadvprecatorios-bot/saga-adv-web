@@ -350,7 +350,7 @@ function statusBadgeHtml(employee){
   if(employee.protected){
     return '<span class="badge '+cls+'">'+label+'</span> <span class="badge protected-badge" title="Sócio/Admin não pode ter o próprio acesso alterado por aqui.">Protegido</span>';
   }
-  var extra = !employee.authLinked ? ' <span class="badge sem-acesso" style="margin-left:3px">Sem acesso</span>' : '';
+  var extra = (!employee.authLinked && status !== 'pendente') ? ' <span class="badge sem-acesso" style="margin-left:3px">Sem acesso</span>' : '';
   return '<button class="badge status-badge '+cls+'" data-status-toggle="'+employee.id+'">'+label+'</button>'+extra;
 }
 
