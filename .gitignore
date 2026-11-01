@@ -13,6 +13,8 @@ node_modules/
 *.md
 # Excecao: instrucoes para o Claude (sem dados sensiveis; aponta para a continuidade privada)
 !CLAUDE.md
+# Excecao: instrucoes para o Codex/agentes de codigo (sem dados sensiveis)
+!AGENTS.md
 *.mermaid
 
 # Ferramenta administrativa com credenciais
