@@ -120,6 +120,11 @@
   .layout-biblioteca{flex:1;display:flex;min-width:0;}
   .coluna-categorias{width:220px;flex:0 0 auto;padding:24px 14px;border-right:1px solid var(--border-soft);}
   .titulo-categorias{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;color:var(--text);margin-bottom:16px;padding:0 8px;}
+  .coluna-categorias{position:relative;isolation:isolate;}
+  .destaque-pasta{position:absolute;z-index:-1;pointer-events:none;border-radius:10px;background:color-mix(in srgb,var(--gold) 10%,transparent);}
+  .coluna-categorias.com-destaque .item-categoria-lateral.ativa{background:transparent;}
+  .titulo-com-voltar{display:flex;align-items:center;gap:12px;}
+  .btn-voltar-biblioteca{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border:1px solid var(--border-soft);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:12px;cursor:pointer;}
   .item-categoria-lateral{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:10px;cursor:pointer;margin-bottom:3px;transition:background .15s;font-size:12px;color:var(--muted);font-weight:500;}
   .item-categoria-lateral:hover{background:color-mix(in srgb,var(--text) 4%,transparent);}
   .item-categoria-lateral.ativa{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold);font-weight:700;}
@@ -185,6 +190,12 @@
   .grid-itens.modo-lista .btn-mais-item{position:static;grid-column:5;grid-row:1;opacity:1;}
   .grid-itens.modo-lista .popover-item-acoes{top:calc(100% + 3px);right:10px;z-index:80;}
   @media (prefers-reduced-motion:reduce){.grid-itens,.item-card.entrada-suave,.breadcrumb-wrap.atualizando,.item-categoria-lateral.em-transicao{animation:none;transition:none;transform:none;filter:none;}}
+
+  @media (prefers-reduced-motion:reduce){
+    .grid-itens.trocando-saida,.grid-itens.trocando-entrada{animation:none;opacity:1;transform:none;filter:none;}
+    .item-card.entrada-suave{opacity:1;}
+    .cabecalho-lista.visivel,.coluna-categorias .item-categoria-lateral{animation:none;transition:none;}
+  }
 
   .destino-pasta-atual{max-height:0;opacity:0;overflow:hidden;display:flex;align-items:center;gap:10px;margin:0;border:1px dashed transparent;border-radius:11px;padding:0 14px;color:var(--muted);font-size:11.5px;pointer-events:none;transition:max-height .24s ease,opacity .2s ease,margin .24s ease,padding .24s ease,border-color .2s ease,background .2s ease;}
   .destino-pasta-atual svg{color:var(--gold);flex:0 0 auto;}
@@ -401,7 +412,10 @@
     <div class="conteudo-biblioteca">
 
     <div class="header-pagina">
-      <div>
+      <div class="titulo-com-voltar">
+        <button class="btn-voltar-biblioteca" id="btnVoltarBiblioteca" type="button" aria-label="Voltar">
+          <span aria-hidden="true">←</span> Voltar
+        </button>
         <h1>Biblioteca</h1>
       </div>
       <div class="botoes-view" aria-label="Modo de visualizacao">
@@ -724,8 +738,9 @@ function confirmarExclusao(mensagem, callback){
 
   function normalizarCaminhoAtual(){
     var idAtual = caminhoAtual[caminhoAtual.length - 1];
-    var novoCaminho = obterCaminhoAtePasta(idAtual);
-    caminhoAtual = novoCaminho || ['raiz'];
+    caminhoAtual = idAtual && idAtual !== 'raiz' && buscarCategoriaPorId(idAtual)
+      ? ['raiz'].concat(montarBreadcrumbCategoria(idAtual).map(function(c){ return c.id; }))
+      : ['raiz'];
   }
 
   function nomeCaminhoPasta(id){
@@ -1251,6 +1266,84 @@ function configurarMenuItem(card, tipo, id, nomeAtual, pastaPaiId, arqRef){
   window.addEventListener('resize', fecharMenuAcoes);
   window.addEventListener('scroll', fecharMenuAcoes, true);
 
+  var navegacaoBibliotecaPendente = null;
+  var historicoBibliotecaPronto = false;
+  var movimentoBibliotecaReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var animacaoDestaquePasta = null;
+
+  function entradaHistoricoBiblioteca(caminho, substituir){
+    var anterior = history.state && history.state.bibliotecaPastas;
+    var dados = Object.assign({}, history.state, { bibliotecaPastas:{
+      caminho:caminho.slice(),
+      anterior:substituir ? (anterior && anterior.anterior) : (anterior && anterior.caminho),
+      indice:substituir ? (anterior && anterior.indice || 0) : (anterior && anterior.indice || 0) + 1
+    }});
+    history[substituir ? 'replaceState' : 'pushState'](dados, '');
+  }
+
+  function registrarCaminhoBiblioteca(caminho){
+    var entrada = history.state && history.state.bibliotecaPastas;
+    var antes = entrada && entrada.caminho || ['raiz'];
+    if(JSON.stringify(antes) === JSON.stringify(caminho)) return;
+    var comum = 0;
+    while(comum < antes.length && comum < caminho.length && antes[comum] === caminho[comum]) comum++;
+    if(comum === caminho.length){ entradaHistoricoBiblioteca(caminho, false); return; }
+    // Abrir uma pasta profunda pela lateral também registra suas pastas intermediárias.
+    if(comum < antes.length) entradaHistoricoBiblioteca(caminho.slice(0, comum), false);
+    for(var i = comum + 1; i <= caminho.length; i++) entradaHistoricoBiblioteca(caminho.slice(0, i), false);
+  }
+
+  document.getElementById('btnVoltarBiblioteca').addEventListener('click', function(){
+    if(!historicoBibliotecaPronto) return;
+    var entrada = history.state && history.state.bibliotecaPastas;
+    caminhoAtual = entrada && Array.isArray(entrada.caminho) ? entrada.caminho.slice() : caminhoAtual;
+    normalizarCaminhoAtual();
+    if(caminhoAtual.length === 1){
+      // Na raiz, sair da Biblioteca, inclusive depois de saltos pelo breadcrumb.
+      var passos = entrada && Number.isSafeInteger(entrada.indice) && entrada.indice >= 0 ? entrada.indice + 1 : 1;
+      history.go(-Math.min(passos, Math.max(1, history.length - 1)));
+      return;
+    }
+    var pai = caminhoAtual.slice(0, -1);
+    if(entrada && JSON.stringify(entrada.anterior) === JSON.stringify(pai)) history.back();
+    else navegarParaCaminho(pai, 'voltar');
+  });
+
+  window.addEventListener('popstate', function(e){
+    if(!historicoBibliotecaPronto) return;
+    var entrada = e.state && e.state.bibliotecaPastas;
+    navegarParaCaminho(entrada && Array.isArray(entrada.caminho) ? entrada.caminho : ['raiz'], 'historico', true);
+  });
+
+  function atualizarDestaquePasta(antes){
+    var coluna = document.querySelector('.coluna-categorias');
+    var destaque = coluna.querySelector('.destaque-pasta');
+    if(!antes && destaque){
+      var d = destaque.getBoundingClientRect(), c = coluna.getBoundingClientRect();
+      if(d.width && d.height) antes = { x:d.left-c.left+coluna.scrollLeft, y:d.top-c.top+coluna.scrollTop, w:d.width, h:d.height };
+    }
+    if(animacaoDestaquePasta){ animacaoDestaquePasta.cancel(); animacaoDestaquePasta = null; }
+    var ativa = coluna.querySelector('.item-categoria-lateral.ativa');
+    if(!ativa){ if(destaque) destaque.remove(); coluna.classList.remove('com-destaque'); return; }
+    var r = ativa.getBoundingClientRect(), g = coluna.getBoundingClientRect();
+    var x = r.left-g.left+coluna.scrollLeft, y = r.top-g.top+coluna.scrollTop;
+    destaque = destaque || document.createElement('div');
+    destaque.className = 'destaque-pasta'; destaque.setAttribute('aria-hidden', 'true');
+    destaque.style.cssText = 'left:'+x+'px;top:'+y+'px;width:'+r.width+'px;height:'+r.height+'px;';
+    coluna.appendChild(destaque); coluna.classList.add('com-destaque');
+    if(antes && r.width && r.height && !movimentoBibliotecaReduzido.matches && destaque.animate &&
+        (Math.abs(antes.x-x)>1 || Math.abs(antes.y-y)>1)){
+      animacaoDestaquePasta = destaque.animate([
+        { transform:'translate('+(antes.x-x)+'px,'+(antes.y-y)+'px)', width:antes.w+'px', height:antes.h+'px' },
+        { transform:'translate(0,0)', width:r.width+'px', height:r.height+'px' }
+      ], { duration:320, easing:'cubic-bezier(.34,1.45,.64,1)' });
+    }
+  }
+  movimentoBibliotecaReduzido.addEventListener('change', function(e){
+    if(e.matches && animacaoDestaquePasta){ animacaoDestaquePasta.cancel(); animacaoDestaquePasta = null; }
+  });
+  window.addEventListener('resize', function(){ atualizarDestaquePasta(); });
+
   var transicaoBibliotecaEmAndamento = false;
 
   function animarEntradaBiblioteca(){
@@ -1269,18 +1362,29 @@ function configurarMenuItem(card, tipo, id, nomeAtual, pastaPaiId, arqRef){
     });
   }
 
-  async function navegarParaCaminho(novoCaminho, origem){
-    if(transicaoBibliotecaEmAndamento) return;
+  async function navegarParaCaminho(novoCaminho, origem, historicoRegistrado){
     if(!novoCaminho || !novoCaminho.length) novoCaminho = ['raiz'];
 
     var idDestino = novoCaminho[novoCaminho.length - 1];
     var categoriaDestinoId = idDestino === 'raiz' ? null : idDestino;
     var destino = categoriaDestinoId || 'raiz';
     var destinoAtual = state.categoriaAtualId || 'raiz';
+    if(categoriaDestinoId && !buscarCategoriaPorId(categoriaDestinoId)){
+      if(origem !== 'historico') return;
+      novoCaminho = ['raiz']; categoriaDestinoId = null; destino = 'raiz';
+      entradaHistoricoBiblioteca(novoCaminho, true);
+    }
+    novoCaminho = categoriaDestinoId
+      ? ['raiz'].concat(montarBreadcrumbCategoria(categoriaDestinoId).map(function(c){ return c.id; })) : ['raiz'];
+    if(historicoBibliotecaPronto && !historicoRegistrado) registrarCaminhoBiblioteca(novoCaminho);
+    if(transicaoBibliotecaEmAndamento){
+      navegacaoBibliotecaPendente = { caminho:novoCaminho.slice(), origem:origem };
+      return;
+    }
     if(destino === destinoAtual) return;
-    if(categoriaDestinoId && !buscarCategoriaPorId(categoriaDestinoId)) return;
 
     transicaoBibliotecaEmAndamento = true;
+    try {
     var grid = document.getElementById('gridItens');
     var categoria = origem === 'categoria'
       ? document.querySelector('.item-categoria-lateral[data-categoria-id="' + (categoriaDestinoId || 'raiz') + '"]')
@@ -1310,6 +1414,7 @@ function configurarMenuItem(card, tipo, id, nomeAtual, pastaPaiId, arqRef){
     var carregamentoArquivos = carregarArquivosDaPasta(categoriaDestinoId);
 
     await carregamentoArquivos;
+    if(navegacaoBibliotecaPendente && navegacaoBibliotecaPendente.caminho.slice(-1)[0] !== destino) return;
 
     caminhoAtual = categoriaDestinoId
       ? ['raiz'].concat(montarBreadcrumbCategoria(categoriaDestinoId).map(function(item){ return item.id; }))
@@ -1317,7 +1422,13 @@ function configurarMenuItem(card, tipo, id, nomeAtual, pastaPaiId, arqRef){
 
     renderizarTudo();
     animarEntradaBiblioteca();
-    transicaoBibliotecaEmAndamento = false;
+    } finally {
+      transicaoBibliotecaEmAndamento = false;
+      var pendente = navegacaoBibliotecaPendente;
+      navegacaoBibliotecaPendente = null;
+      if(pendente) navegarParaCaminho(pendente.caminho, pendente.origem, true);
+      else if(document.getElementById('gridItens').classList.contains('trocando-saida')) animarEntradaBiblioteca();
+    }
   }
 
 function renderizarTudo(){
@@ -1354,6 +1465,7 @@ function renderizarTudo(){
     document.querySelectorAll('.item-categoria-lateral[data-categoria-id]').forEach(function(item){
       item.classList.toggle('ativa', item.getAttribute('data-categoria-id') === categoriaAtual);
     });
+    atualizarDestaquePasta();
   }
 
   document.getElementById('btnNovaCategoriaTopo').addEventListener('click', function(){
@@ -1947,7 +2059,15 @@ async function inicializarBibliotecaReal(){
     caminhoAtual = ['raiz'];
 
     await carregarCategorias();
-    await carregarArquivosDaPasta(null);
+    var entrada = history.state && history.state.bibliotecaPastas;
+    caminhoAtual = entrada && Array.isArray(entrada.caminho) ? entrada.caminho.slice() : ['raiz'];
+    normalizarCaminhoAtual();
+    state.categoriaAtualId = caminhoAtual.length > 1 ? caminhoAtual[caminhoAtual.length - 1] : null;
+    expandirCaminhoCategoria(state.categoriaAtualId);
+    if(state.categoriaAtualId) expandidosCategorias.add(state.categoriaAtualId);
+    entradaHistoricoBiblioteca(caminhoAtual, true);
+    historicoBibliotecaPronto = true;
+    await carregarArquivosDaPasta(state.categoriaAtualId);
 
     renderizarTudo();
     animarEntradaBiblioteca();
