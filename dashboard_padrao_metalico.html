@@ -492,6 +492,8 @@
   [data-theme="light"] .dropdown-multi-lista,
   [data-theme="light"] .modal-dash,
   [data-theme="light"] .toast{ background:linear-gradient(145deg,var(--panel-solid),var(--navy-2)); }
+  .dashboard-grafico-atualizado{transition:stroke-dashoffset .45s cubic-bezier(.22,1,.36,1);}
+  @media(prefers-reduced-motion:reduce){.barra-tese-fill,.linha-uf-fill,.dashboard-grafico-atualizado{transition:none;}}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -772,16 +774,134 @@ function labelUrgencia(u) {
   return m[u] || u;
 }
 
+// Atualizações preservam a primeira montagem, que continua a cargo do saga_guard.js.
+var versaoDashboard = 0, execucaoDashboard = null, recargaDashboardPendente = false;
+var versoesWidgetsDashboard = {};
+var valoresDashboard = new Map(), listasDashboard = new WeakSet(), graficosDashboard = new WeakSet();
+var animacoesDashboard = new Map();
+var movimentoDashboardReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+function iniciarCargaDashboard(nome) {
+  versoesWidgetsDashboard[nome] = (versoesWidgetsDashboard[nome] || 0) + 1;
+  return { nome:nome, widget:versoesWidgetsDashboard[nome], geral:versaoDashboard };
+}
+function cargaDashboardAtual(carga) {
+  return carga.geral === versaoDashboard && carga.widget === versoesWidgetsDashboard[carga.nome];
+}
+function contarNumeroDashboard(id, valor, texto, formatar) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  formatar = formatar || function(n) { return numBR(Math.round(n)); };
+  var anterior = valoresDashboard.get(el);
+  if (anterior && anterior.alvo === valor && anterior.texto === texto) return;
+  if (anterior) cancelAnimationFrame(anterior.quadro);
+  var atual = { valor:anterior ? anterior.valor : valor, alvo:valor, texto:texto, quadro:0 };
+  valoresDashboard.set(el, atual);
+  if (!anterior || movimentoDashboardReduzido.matches || !Number.isFinite(valor) || !Number.isFinite(atual.valor)) {
+    atual.valor = valor; el.textContent = texto; return;
+  }
+  // Mesmo ritmo da contagem do sistema, partindo do número que já estava na tela.
+  var inicio = null, de = atual.valor;
+  function passo(ts) {
+    if (valoresDashboard.get(el) !== atual) return;
+    if (inicio === null) inicio = ts;
+    var k = Math.min(1, (ts - inicio) / 420), progresso = 1 - Math.pow(1 - k, 3);
+    atual.valor = de + (valor - de) * progresso;
+    el.textContent = k < 1 ? formatar(atual.valor) : texto;
+    if (k < 1) atual.quadro = requestAnimationFrame(passo);
+  }
+  atual.quadro = requestAnimationFrame(passo);
+}
+function cancelarAnimacaoDashboard(el) {
+  var registro = animacoesDashboard.get(el);
+  if (!registro) return;
+  animacoesDashboard.delete(el); registro.animacao.cancel(); el.inert = false;
+  delete el.dataset.dashboardSaindo;
+}
+function animarItemDashboard(el, saida, finalizar) {
+  cancelarAnimacaoDashboard(el);
+  if (movimentoDashboardReduzido.matches || !el.animate) { if (finalizar) finalizar(); return; }
+  var estilo = getComputedStyle(el), altura = el.getBoundingClientRect().height;
+  var quadros = saida ? [
+    { opacity:1, height:altura+'px', paddingTop:estilo.paddingTop, paddingBottom:estilo.paddingBottom, marginTop:estilo.marginTop, marginBottom:estilo.marginBottom, overflow:'hidden' },
+    { opacity:0, height:'0px', minHeight:'0px', paddingTop:'0px', paddingBottom:'0px', marginTop:'0px', marginBottom:'0px', borderTopWidth:'0px', borderBottomWidth:'0px', transform:'scale(.97)', overflow:'hidden' }
+  ] : [{ opacity:0, transform:'translateY(8px) scale(.97)' }, { opacity:1, transform:'translateY(0) scale(1)' }];
+  if (saida) { el.inert = true; el.dataset.dashboardSaindo = 'true'; }
+  var animacao = el.animate(quadros, { duration:saida ? 220 : 280, easing:saida ? 'ease-in' : 'cubic-bezier(.34,1.45,.64,1)', fill:saida ? 'forwards' : 'none' });
+  var registro = { animacao:animacao, finalizar:finalizar };
+  animacoesDashboard.set(el, registro);
+  animacao.finished.then(function() {
+    if (animacoesDashboard.get(el) !== registro) return;
+    animacoesDashboard.delete(el);
+    if (finalizar) finalizar();
+    animacao.cancel(); el.inert = false; delete el.dataset.dashboardSaindo;
+  }, function() {});
+}
+function sincronizarNoDashboard(atual, novo) {
+  if (atual.nodeType !== novo.nodeType || atual.nodeName !== novo.nodeName) { atual.replaceWith(novo.cloneNode(true)); return; }
+  if (atual.nodeType === Node.TEXT_NODE) { if (atual.nodeValue !== novo.nodeValue) atual.nodeValue = novo.nodeValue; return; }
+  if (atual.nodeType !== Node.ELEMENT_NODE) return;
+  Array.from(atual.attributes).forEach(function(a) { if (!novo.hasAttribute(a.name)) atual.removeAttribute(a.name); });
+  Array.from(novo.attributes).forEach(function(a) { if (atual.getAttribute(a.name) !== a.value) atual.setAttribute(a.name, a.value); });
+  var filhos = Array.from(atual.childNodes);
+  Array.from(novo.childNodes).forEach(function(filho, i) {
+    if (filhos[i]) sincronizarNoDashboard(filhos[i], filho); else atual.appendChild(filho.cloneNode(true));
+  });
+  filhos.slice(novo.childNodes.length).forEach(function(filho) { filho.remove(); });
+}
+function chaveItemDashboard(el, i) { return el.dataset.dashboardId || el.dataset.id || 'estado-'+i; }
+function atualizarListaDashboard(container, html) {
+  if (!listasDashboard.has(container)) { container.innerHTML = html; listasDashboard.add(container); return; }
+  var modelo = document.createElement('template'); modelo.innerHTML = html;
+  var novos = Array.from(modelo.content.children), antigos = new Map();
+  Array.from(container.children).forEach(function(el, i) { antigos.set(chaveItemDashboard(el, i), el); });
+  var chaves = new Set(novos.map(chaveItemDashboard));
+  antigos.forEach(function(el, chave) {
+    if (!chaves.has(chave) && !el.dataset.dashboardSaindo) animarItemDashboard(el, true, function() { el.remove(); });
+  });
+  var cursor = Array.from(container.children).find(function(el) { return !el.dataset.dashboardSaindo; }) || null;
+  novos.forEach(function(novo, i) {
+    var el = antigos.get(chaveItemDashboard(novo, i)), entrou = !el;
+    if (el) { cancelarAnimacaoDashboard(el); sincronizarNoDashboard(el, novo); }
+    else el = novo.cloneNode(true);
+    if (el !== cursor) container.insertBefore(el, cursor);
+    cursor = el.nextElementSibling;
+    while (cursor && cursor.dataset.dashboardSaindo) cursor = cursor.nextElementSibling;
+    if (entrou) animarItemDashboard(el, false);
+  });
+}
+function atualizarCirculoDashboard(el, offset) {
+  if (!el) return;
+  if (graficosDashboard.has(el)) el.classList.add('dashboard-grafico-atualizado');
+  graficosDashboard.add(el); el.setAttribute('stroke-dashoffset', offset);
+}
+function mostrarCardDashboard(el, mostrar) {
+  if (!graficosDashboard.has(el)) { graficosDashboard.add(el); el.style.display = mostrar ? '' : 'none'; return; }
+  if (mostrar) {
+    var oculto = el.style.display === 'none'; cancelarAnimacaoDashboard(el); el.style.display = '';
+    if (oculto) animarItemDashboard(el, false);
+  } else if (el.style.display !== 'none' && !el.dataset.dashboardSaindo) {
+    animarItemDashboard(el, true, function() { el.style.display = 'none'; });
+  }
+}
+movimentoDashboardReduzido.addEventListener('change', function(e) {
+  if (!e.matches) return;
+  valoresDashboard.forEach(function(v, el) { cancelAnimationFrame(v.quadro); v.valor = v.alvo; el.textContent = v.texto; });
+  Array.from(animacoesDashboard).forEach(function(par) {
+    cancelarAnimacaoDashboard(par[0]); if (par[1].finalizar) par[1].finalizar();
+  });
+});
+
 function ativarSkeleton(id) {
   var el = document.getElementById(id);
-  if (el) el.classList.add('skeleton-anim');
+  if (el && !valoresDashboard.has(el)) el.classList.add('skeleton-anim');
 }
 
 function resolverSkeleton(id, val) {
   var el = document.getElementById(id);
   if (!el) return;
   el.classList.remove('skeleton-anim');
-  el.textContent = val !== undefined ? val : el.textContent;
+  if (val !== undefined) contarNumeroDashboard(id, /^\d[\d.]*$/.test(String(val)) ? Number(String(val).replace(/\./g, '')) : NaN, String(val), function(n) { return numBR(Math.round(n)); });
 }
 
 // ================================================================
@@ -986,32 +1106,38 @@ async function carregarPresenca() { /* obsoleto: saga_ui.js cuida da presenca */
 // ================================================================
 // CARREGAR TUDO
 // ================================================================
-async function carregarTudo() {
+function carregarTudo() {
+  versaoDashboard++;
+  recargaDashboardPendente = true;
+  if (execucaoDashboard) return execucaoDashboard;
   var btn = document.getElementById('refreshBtn');
   if (btn) btn.classList.add('girando');
-  try {
-    await Promise.allSettled([
-      carregarKPIs(),
-      carregarStatusDistribuicao(),
-      carregarSemMovimentacao(),
-      carregarUF(),
-      carregarTarefas(),
-      carregarNotificacoes(),
-      carregarSLA(),
-      carregarCNJ()
-    ]);
-  } finally {
-    if (btn) btn.classList.remove('girando');
-  }
+  execucaoDashboard = (async function() {
+    try {
+      // No máximo uma carga em andamento e uma solicitação mais recente aguardando.
+      while (recargaDashboardPendente) {
+        recargaDashboardPendente = false;
+        await Promise.allSettled([
+          carregarKPIs(), carregarStatusDistribuicao(), carregarSemMovimentacao(), carregarUF(),
+          carregarTarefas(), carregarNotificacoes(), carregarSLA(), carregarCNJ()
+        ]);
+      }
+    } finally {
+      if (btn) btn.classList.remove('girando');
+      execucaoDashboard = null;
+    }
+  })();
+  return execucaoDashboard;
 }
 
 // ================================================================
 // KPIs
 // ================================================================
 async function carregarKPIs() {
+  var carga = iniciarCargaDashboard('carregarKPIs');
   // Reiniciar skeletons
   ['kpi1valor','kpi2valor','kpi3valor','kpi4valor'].forEach(ativarSkeleton);
-  ['kpi1badge','kpi2badge','kpi3badge','kpi4badge'].forEach(function(id) {
+  if (!valoresDashboard.has(document.getElementById('kpi1valor'))) ['kpi1badge','kpi2badge','kpi3badge','kpi4badge'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) { el.className = 'kpi-variacao neutro'; el.textContent = '...'; }
   });
@@ -1040,6 +1166,8 @@ async function carregarKPIs() {
 
     var results = await Promise.all([qBase, qVencidos, qTarefas, qNotif]);
 
+    if (!cargaDashboardAtual(carga)) return;
+
     var totalAtivos   = results[0].count || 0;
     var totalVencidos = results[1].count || 0;
     var totalTarefas  = results[2].count || 0;
@@ -1067,6 +1195,7 @@ async function carregarKPIs() {
     b4.textContent = totalNotif > 0 ? 'nova(s)' : 'sem novas';
 
   } catch(e) {
+    if (!cargaDashboardAtual(carga)) return;
     ['kpi1valor','kpi2valor','kpi3valor','kpi4valor'].forEach(function(id) { resolverSkeleton(id, '--'); });
     showToast('Erro ao carregar KPIs. Verifique a conexao.', 'erro');
   }
@@ -1076,12 +1205,14 @@ async function carregarKPIs() {
 // WIDGET 1: STATUS DISTRIBUICAO
 // ================================================================
 async function carregarStatusDistribuicao() {
+  var carga = iniciarCargaDashboard('carregarStatusDistribuicao');
   var container = document.getElementById('barsStatus');
   try {
     // Buscar todos os status
     var rStatus = await _sb.from('status_funil').select('id, nome, cor').order('nome');
+    if (!cargaDashboardAtual(carga)) return;
     if (rStatus.error || !rStatus.data || rStatus.data.length === 0) {
-      container.innerHTML = '<div class="estado-vazio">Nenhum status cadastrado.</div>';
+      atualizarListaDashboard(container, '<div class="estado-vazio">Nenhum status cadastrado.</div>');
       return;
     }
 
@@ -1100,12 +1231,13 @@ async function carregarStatusDistribuicao() {
 
     var resultados = await Promise.all(queries);
 
+    if (!cargaDashboardAtual(carga)) return;
     var dados = statuses.map(function(s, i) {
-      return { nome: s.nome, cor: s.cor || null, total: resultados[i].count || 0 };
+      return { id:s.id, nome: s.nome, cor: s.cor || null, total: resultados[i].count || 0 };
     }).filter(function(d) { return d.total > 0; }).sort(function(a, b) { return b.total - a.total; });
 
     if (dados.length === 0) {
-      container.innerHTML = '<div class="estado-vazio">Nenhum processo encontrado para os filtros selecionados.</div>';
+      atualizarListaDashboard(container, '<div class="estado-vazio">Nenhum processo encontrado para os filtros selecionados.</div>');
       return;
     }
 
@@ -1123,7 +1255,7 @@ async function carregarStatusDistribuicao() {
             : idx % 4 === 2
               ? 'background:linear-gradient(90deg,var(--success),color-mix(in srgb,var(--success) 72%,var(--navy-1)));'
               : 'background:linear-gradient(90deg,var(--warning),var(--gold-deep));');
-      html += '<div class="barra-tese">';
+      html += '<div class="barra-tese" data-dashboard-id="status-' + encodeURIComponent(d.id) + '">';
       html += '<div class="barra-tese-label">';
       html += '<span class="barra-tese-nome">' + d.nome + '</span>';
       html += '<span><span class="barra-tese-pct">' + pct + '%</span> &nbsp;<span class="barra-tese-valor">' + numBR(d.total) + '</span></span>';
@@ -1131,10 +1263,11 @@ async function carregarStatusDistribuicao() {
       html += '<div class="barra-tese-trilho"><div class="barra-tese-fill" style="width:' + barra + '%;' + gradiente + '"></div></div>';
       html += '</div>';
     });
-    container.innerHTML = html;
+    atualizarListaDashboard(container, html);
 
   } catch(e) {
-    container.innerHTML = '<div class="estado-vazio">Erro ao carregar distribuicao por status.</div>';
+    if (!cargaDashboardAtual(carga)) return;
+    atualizarListaDashboard(container, '<div class="estado-vazio">Erro ao carregar distribuicao por status.</div>');
   }
 }
 
@@ -1142,8 +1275,10 @@ async function carregarStatusDistribuicao() {
 // WIDGET 2: SEM MOVIMENTACAO
 // ================================================================
 async function carregarSemMovimentacao() {
+  var carga = iniciarCargaDashboard('carregarSemMovimentacao');
   try {
     var r = await _sb.from('vw_dashboard_processos_sem_movimentacao').select('faixa_dias, total_processos');
+    if (!cargaDashboardAtual(carga)) return;
     if (r.error || !r.data) throw r.error;
 
     var mapa = { 30: '--', 60: '--', 90: '--', 120: '--' };
@@ -1159,6 +1294,7 @@ async function carregarSemMovimentacao() {
     resolverSkeleton('semMov120', mapa[120]);
 
   } catch(e) {
+    if (!cargaDashboardAtual(carga)) return;
     ['semMov30','semMov60','semMov90','semMov120'].forEach(function(id) { resolverSkeleton(id, '--'); });
   }
 }
@@ -1167,6 +1303,7 @@ async function carregarSemMovimentacao() {
 // WIDGET 3: UF
 // ================================================================
 async function carregarUF() {
+  var carga = iniciarCargaDashboard('carregarUF');
   var container = document.getElementById('listaUF');
   try {
     var r = await _sb.from('vw_dashboard_mapa_uf')
@@ -1174,8 +1311,9 @@ async function carregarUF() {
       .order('total_processos', { ascending: false })
       .limit(10);
 
+    if (!cargaDashboardAtual(carga)) return;
     if (r.error || !r.data || r.data.length === 0) {
-      container.innerHTML = '<div class="estado-vazio">Nenhum dado de UF disponivel.</div>';
+      atualizarListaDashboard(container, '<div class="estado-vazio">Nenhum dado de UF disponivel.</div>');
       return;
     }
 
@@ -1183,17 +1321,18 @@ async function carregarUF() {
     r.data.forEach(function(row, idx) {
       var classBadge = idx === 0 ? 'badge-sigla-uf uf-primeiro' : (idx <= 2 ? 'badge-sigla-uf uf-destaque' : 'badge-sigla-uf');
       var pct = Math.round(row.pct_relativo_ao_maior || 0);
-      html += '<div class="linha-uf">';
+      html += '<div class="linha-uf" data-dashboard-id="uf-' + encodeURIComponent(row.uf) + '">';
       html += '<div class="' + classBadge + '">' + (row.uf || 'N/D').substring(0, 2).toUpperCase() + '</div>';
       html += '<div class="corpo-linha-uf">';
       html += '<div class="linha-uf-topo"><span class="linha-uf-nome">' + (row.uf || 'Indefinido') + '</span><span class="linha-uf-valor">' + numBR(row.total_processos) + '</span></div>';
       html += '<div class="linha-uf-trilho"><div class="linha-uf-fill" style="width:' + pct + '%;"></div></div>';
       html += '</div></div>';
     });
-    container.innerHTML = html;
+    atualizarListaDashboard(container, html);
 
   } catch(e) {
-    container.innerHTML = '<div class="estado-vazio">Erro ao carregar distribuicao por UF.</div>';
+    if (!cargaDashboardAtual(carga)) return;
+    atualizarListaDashboard(container, '<div class="estado-vazio">Erro ao carregar distribuicao por UF.</div>');
   }
 }
 
@@ -1201,6 +1340,7 @@ async function carregarUF() {
 // WIDGET 4: MINHAS TAREFAS
 // ================================================================
 async function carregarTarefas() {
+  var carga = iniciarCargaDashboard('carregarTarefas');
   var container = document.getElementById('listaTarefas');
   try {
     var r = await _sb.from('tarefas')
@@ -1210,10 +1350,11 @@ async function carregarTarefas() {
       .order('data_prazo', { ascending: true })
       .limit(10);
 
+    if (!cargaDashboardAtual(carga)) return;
     if (r.error) throw r.error;
 
     if (!r.data || r.data.length === 0) {
-      container.innerHTML = '<div class="estado-vazio">Sem tarefas pendentes. Bom trabalho!</div>';
+      atualizarListaDashboard(container, '<div class="estado-vazio">Sem tarefas pendentes. Bom trabalho!</div>');
       return;
     }
 
@@ -1234,18 +1375,19 @@ async function carregarTarefas() {
       html += '</button>';
       html += '</div>';
     });
-    container.innerHTML = html;
+    atualizarListaDashboard(container, html);
 
     // Eventos de conclusao
     container.querySelectorAll('.btn-concluir-tarefa').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
+      btn.onclick = function(e) {
         e.stopPropagation();
         concluirTarefa(btn.getAttribute('data-tarefa-id'), btn);
-      });
+      };
     });
 
   } catch(e) {
-    container.innerHTML = '<div class="estado-vazio">Erro ao carregar tarefas.</div>';
+    if (!cargaDashboardAtual(carga)) return;
+    atualizarListaDashboard(container, '<div class="estado-vazio">Erro ao carregar tarefas.</div>');
   }
 }
 
@@ -1260,25 +1402,7 @@ async function concluirTarefa(idTarefa, btn) {
 
     if (r.error) throw r.error;
 
-    // Remover o item da lista com animacao
-    var item = btn.closest('.item-tarefa');
-    if (item) {
-      item.style.opacity = '0'; item.style.transition = 'opacity .3s';
-      setTimeout(function() {
-        item.remove();
-        // Atualizar KPI
-        var kpi = document.getElementById('kpi3valor');
-        if (kpi) {
-          var atual = parseInt(kpi.textContent.replace(/\D/g, '')) || 0;
-          kpi.textContent = numBR(Math.max(0, atual - 1));
-        }
-        // Verificar se a lista ficou vazia
-        var lista = document.getElementById('listaTarefas');
-        if (lista && lista.querySelectorAll('.item-tarefa').length === 0) {
-          lista.innerHTML = '<div class="estado-vazio">Sem tarefas pendentes. Bom trabalho!</div>';
-        }
-      }, 300);
-    }
+    await Promise.all([carregarKPIs(), carregarTarefas()]);
 
     showToast('Tarefa marcada como concluida.', 'sucesso');
   } catch(e) {
@@ -1291,6 +1415,7 @@ async function concluirTarefa(idTarefa, btn) {
 // WIDGET 5: NOTIFICACOES
 // ================================================================
 async function carregarNotificacoes() {
+  var carga = iniciarCargaDashboard('carregarNotificacoes');
   var container = document.getElementById('listaNotificacoes');
   try {
     var r = await _sb.from('notificacoes')
@@ -1299,10 +1424,11 @@ async function carregarNotificacoes() {
       .order('criado_em', { ascending: false })
       .limit(8);
 
+    if (!cargaDashboardAtual(carga)) return;
     if (r.error) throw r.error;
 
     if (!r.data || r.data.length === 0) {
-      container.innerHTML = '<div class="estado-vazio">Sem notificacoes recentes.</div>';
+      atualizarListaDashboard(container, '<div class="estado-vazio">Sem notificacoes recentes.</div>');
       return;
     }
 
@@ -1318,19 +1444,20 @@ async function carregarNotificacoes() {
       html += '<span class="tempo-notif">' + tempo + '</span>';
       html += '</div>';
     });
-    container.innerHTML = html;
+    atualizarListaDashboard(container, html);
 
     // Click marca como lida
     container.querySelectorAll('.item-notificacao').forEach(function(item) {
-      item.addEventListener('click', function() {
+      item.onclick = function() {
         if (item.getAttribute('data-lida') === 'false') {
           marcarNotificacaoLida(item.getAttribute('data-id'), item);
         }
-      });
+      };
     });
 
   } catch(e) {
-    container.innerHTML = '<div class="estado-vazio">Erro ao carregar notificacoes.</div>';
+    if (!cargaDashboardAtual(carga)) return;
+    atualizarListaDashboard(container, '<div class="estado-vazio">Erro ao carregar notificacoes.</div>');
   }
 }
 
@@ -1340,12 +1467,7 @@ async function marcarNotificacaoLida(idNotif, itemEl) {
     if (r.error) return;
     itemEl.classList.remove('nao-lida');
     itemEl.setAttribute('data-lida', 'true');
-    // Decrementar KPI
-    var kpi = document.getElementById('kpi4valor');
-    if (kpi) {
-      var atual = parseInt(kpi.textContent.replace(/\D/g, '')) || 0;
-      kpi.textContent = numBR(Math.max(0, atual - 1));
-    }
+    await Promise.all([carregarKPIs(), carregarNotificacoes()]);
   } catch(e) {
     // Silencioso
   }
@@ -1364,7 +1486,7 @@ document.getElementById('btnMarcarTodasLidas').addEventListener('click', async f
       el.classList.remove('nao-lida');
       el.setAttribute('data-lida', 'true');
     });
-    resolverSkeleton('kpi4valor', '0');
+    await Promise.all([carregarKPIs(), carregarNotificacoes()]);
     var b4 = document.getElementById('kpi4badge');
     if (b4) { b4.className = 'kpi-variacao ok'; b4.textContent = 'sem novas'; }
     showToast('Todas as notificacoes foram marcadas como lidas.', 'sucesso');
@@ -1377,8 +1499,10 @@ document.getElementById('btnMarcarTodasLidas').addEventListener('click', async f
 // WIDGET 6: SLA
 // ================================================================
 async function carregarSLA() {
+  var carga = iniciarCargaDashboard('carregarSLA');
   try {
     var r = await _sb.from('vw_dashboard_sla_resposta').select('*').single();
+    if (!cargaDashboardAtual(carga)) return;
     if (r.error || !r.data) throw r.error;
 
     var d = r.data;
@@ -1391,7 +1515,7 @@ async function carregarSLA() {
       var mm  = Math.round((media - hh) * 60);
       mediaStr = hh + 'h' + (mm > 0 ? mm : '');
     }
-    document.getElementById('slaMediaHoras').textContent = mediaStr;
+    contarNumeroDashboard('slaMediaHoras', media === null ? NaN : media * 60, mediaStr, function(n) { var h = Math.floor(n / 60), m = Math.round(n - h * 60); return h + 'h' + (m > 0 ? m : ''); });
 
     // Badge de status
     var badge = document.getElementById('slaBadge');
@@ -1419,7 +1543,7 @@ async function carregarSLA() {
     var circunf  = 2 * Math.PI * 36; // 226.2
     var offset   = circunf - (circunf * dentroPct / 100);
     var circulo  = document.getElementById('slaCirculo');
-    if (circulo) { circulo.setAttribute('stroke-dashoffset', offset.toFixed(1)); }
+    atualizarCirculoDashboard(circulo, offset.toFixed(1));
 
     // Lista de pendencias
     var lista = document.getElementById('slaLista');
@@ -1429,14 +1553,15 @@ async function carregarSLA() {
     if (d.pendentes_atrasados   > 0) itensSla.push({ label: numBR(d.pendentes_atrasados)   + ' em atraso',      cls: 'atrasado' });
 
     if (itensSla.length === 0) {
-      lista.innerHTML = '<div class="estado-vazio" style="padding:10px 0;">Sem pendencias no momento.</div>';
+      atualizarListaDashboard(lista, '<div class="estado-vazio" style="padding:10px 0;">Sem pendencias no momento.</div>');
     } else {
-      lista.innerHTML = itensSla.map(function(i) {
-        return '<div class="sla-item"><span class="sla-item-nome">Pendentes</span><span class="sla-item-badge ' + i.cls + '">' + i.label + '</span></div>';
-      }).join('');
+      atualizarListaDashboard(lista, itensSla.map(function(i) {
+        return '<div class="sla-item" data-dashboard-id="sla-' + i.cls + '"><span class="sla-item-nome">Pendentes</span><span class="sla-item-badge ' + i.cls + '">' + i.label + '</span></div>';
+      }).join(''));
     }
 
   } catch(e) {
+    if (!cargaDashboardAtual(carga)) return;
     document.getElementById('slaMeta').textContent = 'Dados nao disponiveis.';
   }
 }
@@ -1445,16 +1570,18 @@ async function carregarSLA() {
 // CARD CNJ
 // ================================================================
 async function carregarCNJ() {
+  var carga = iniciarCargaDashboard('carregarCNJ');
   try {
     var r = await _sb.from('vw_dashboard_cnj_nao_lidas').select('*').single();
+    if (!cargaDashboardAtual(carga)) return;
     if (r.error || !r.data) throw r.error;
 
     var d = r.data;
     var total = d.total_nao_lidas || 0;
 
     var cardCNJ = document.getElementById('cardCNJ');
-    document.getElementById('contadorCNJ').textContent    = numBR(total);
-    document.getElementById('textoCNJPrincipal').textContent = numBR(total);
+    contarNumeroDashboard('contadorCNJ', total, numBR(total));
+    contarNumeroDashboard('textoCNJPrincipal', total, numBR(total));
 
     var sub = '';
     if (d.nao_lidas_ultimas_24h) sub += numBR(d.nao_lidas_ultimas_24h) + ' nas ultimas 24h';
@@ -1464,14 +1591,11 @@ async function carregarCNJ() {
     }
     document.getElementById('textoCNJSub').textContent = sub || 'Clique para visualizar';
 
-    if (total === 0) {
-      cardCNJ.style.display = 'none';
-    } else {
-      cardCNJ.style.display = '';
-    }
+    mostrarCardDashboard(cardCNJ, total !== 0);
 
   } catch(e) {
-    document.getElementById('cardCNJ').style.display = 'none';
+    if (!cargaDashboardAtual(carga)) return;
+    mostrarCardDashboard(document.getElementById('cardCNJ'), false);
   }
 }
 
