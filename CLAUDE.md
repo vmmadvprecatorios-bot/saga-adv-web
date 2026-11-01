@@ -13,6 +13,12 @@ Sistema do escritório Victor Morais Advocacia. O usuário é o Dr. Victor; escr
 - Atualize a página de continuidade (republique no mesmo link, passando `url`): estado atual, próximo passo, pendências e uma linha no registro de sessões.
 - Anexe à página os novos blocos SQL criados na sessão (`files`, caminho `sql/...`, `contentType: text/plain`).
 
+## Duas conversas em paralelo (desde 01/11/2026)
+- **Operador-chefe** (Opus): dono do código e do banco; escreve, testa e publica na `main`.
+- **Orquestrador do Codex** (Sonnet): escreve tarefas para o Codex (ChatGPT), confere os PRs dele (branches `codex/...`) e registra tudo. Não mexe no banco; o merge na `main` fica com o Operador-chefe, salvo autorização do Dr. Victor.
+- As duas só se entendem pela página de continuidade (seção "Duas conversas, um só registro" e tabela "Trabalho com o Codex"). Ao fim de cada etapa: **ler a versão no ar antes de republicar**, juntar o que a outra conversa mudou e nunca sobrescrever.
+- Regras do Codex ficam no `AGENTS.md`. Mudou uma regra do projeto? Atualize `CLAUDE.md` e `AGENTS.md`.
+
 ## Regras do projeto
 - O site no ar é a branch `main` (GitHub Pages). Trabalhe na branch indicada pela sessão e publique na `main` quando o trabalho estiver testado.
 - O repositório é público: arquivos `.sql` e `.md` (exceto este) não vão para o GitHub. Nunca coloque senhas, chaves secretas ou dados de clientes no código.
