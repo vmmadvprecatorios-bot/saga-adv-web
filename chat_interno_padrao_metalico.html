@@ -123,6 +123,11 @@
   .aba-chat{flex:1;text-align:center;padding:7px;border-radius:7px;font-size:11px;color:var(--muted);cursor:pointer;}
   .aba-chat.ativa{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold-light);font-weight:600;}
   .conversas-scroll{flex:1;overflow-y:auto;padding:10px;}
+  .conversas-scroll{position:relative;isolation:isolate;}
+  .destaque-conversa{position:absolute;z-index:-1;pointer-events:none;border-radius:11px;background:color-mix(in srgb,var(--gold) 9%,transparent);}
+  .conversas-scroll.com-destaque .item-conversa.ativa{background:transparent;}
+  .conversa-identidade{display:flex;align-items:center;gap:12px;min-width:0;}
+  @media (prefers-reduced-motion:reduce){#mensagensScroll .sk{animation:none;}#conversasScroll .item-conversa{transition:none;}}
   .item-conversa{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:11px;cursor:pointer;transition:background 0.15s;margin-bottom:3px;}
   .item-conversa:hover{background:color-mix(in srgb,var(--gold) 5%,transparent);}
   .item-conversa.ativa{background:color-mix(in srgb,var(--gold) 9%,transparent);}
@@ -454,10 +459,12 @@
       <div class="conversa-header" id="conversaHeader" style="display:none">
         <div class="conversa-header-info">
           <svg class="btn-voltar-conversas" id="btnVoltarConversas" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <div class="avatar-conversa" id="avatarHeaderConversa" style="width:38px;height:38px;font-size:11px;"></div>
-          <div>
-            <div class="conversa-header-nome" id="conversaHeaderNome"></div>
-            <div class="conversa-header-status" id="conversaHeaderStatus"></div>
+          <div class="conversa-identidade" id="conversaIdentidade">
+            <div class="avatar-conversa" id="avatarHeaderConversa" style="width:38px;height:38px;font-size:11px;"></div>
+            <div>
+              <div class="conversa-header-nome" id="conversaHeaderNome"></div>
+              <div class="conversa-header-status" id="conversaHeaderStatus"></div>
+            </div>
           </div>
         </div>
         <div class="conversa-header-acoes">
@@ -735,8 +742,61 @@ function filtrarConversas(v) {
   renderConversas();
 }
 
+var versaoAberturaConversa = 0;
+var movimentoChatReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+var animacoesTrocaConversa = [];
+var animacaoDestaqueConversa = null;
+
+function encerrarMovimentoConversa() {
+  animacoesTrocaConversa.forEach(function(a){ a.cancel(); });
+  animacoesTrocaConversa = [];
+  document.getElementById('mensagensScroll').inert = false;
+}
+
+function animarConteudoConversa(el, saida) {
+  if (movimentoChatReduzido.matches || !el.animate) return null;
+  var animacao = el.animate(saida
+    ? [{ opacity:1 }, { opacity:0 }]
+    : [{ opacity:.4, transform:'translateY(6px)' }, { opacity:1, transform:'translateY(0)' }],
+    { duration:saida ? 70 : 180, easing:saida ? 'ease-out' : 'cubic-bezier(.34,1.45,.64,1)' });
+  animacoesTrocaConversa.push(animacao);
+  return animacao;
+}
+
+movimentoChatReduzido.addEventListener('change', function(e){
+  if (!e.matches) return;
+  encerrarMovimentoConversa();
+  if (animacaoDestaqueConversa) { animacaoDestaqueConversa.cancel(); animacaoDestaqueConversa = null; }
+});
+
+function posicionarDestaqueConversa(scroll, destaque, antes) {
+  var ativa = scroll.querySelector('.item-conversa.ativa');
+  if (!ativa) { scroll.classList.remove('com-destaque'); return; }
+  var r = ativa.getBoundingClientRect(), g = scroll.getBoundingClientRect();
+  var x = r.left - g.left + scroll.scrollLeft, y = r.top - g.top + scroll.scrollTop;
+  destaque.className = 'destaque-conversa';
+  destaque.setAttribute('aria-hidden', 'true');
+  destaque.style.cssText = 'left:' + x + 'px;top:' + y + 'px;width:' + r.width + 'px;height:' + r.height + 'px;';
+  scroll.appendChild(destaque);
+  scroll.classList.add('com-destaque');
+  if (antes && r.width && r.height && !movimentoChatReduzido.matches && destaque.animate &&
+      (Math.abs(antes.x - x) > 1 || Math.abs(antes.y - y) > 1)) {
+    animacaoDestaqueConversa = destaque.animate([
+      { transform:'translate(' + (antes.x - x) + 'px,' + (antes.y - y) + 'px)', width:antes.w + 'px', height:antes.h + 'px' },
+      { transform:'translate(0,0)', width:r.width + 'px', height:r.height + 'px' }
+    ], { duration:320, easing:'cubic-bezier(.34,1.45,.64,1)' });
+  }
+}
+
 function renderConversas() {
   var scroll = document.getElementById('conversasScroll');
+  var destaque = scroll.querySelector('.destaque-conversa');
+  var antes = null;
+  if (destaque) {
+    var r = destaque.getBoundingClientRect(), g = scroll.getBoundingClientRect();
+    if (r.width && r.height) antes = { x:r.left - g.left + scroll.scrollLeft, y:r.top - g.top + scroll.scrollTop, w:r.width, h:r.height };
+  }
+  if (animacaoDestaqueConversa) { animacaoDestaqueConversa.cancel(); animacaoDestaqueConversa = null; }
   var busca = state.buscaTexto.toLowerCase();
 
   var lista = state.conversas.filter(function(c){
@@ -770,40 +830,58 @@ function renderConversas() {
         '<div class="ultima-mensagem">' + esc(preview) + '</div>' +
       '</div>' + badge + '</div>';
   }).join('');
+  posicionarDestaqueConversa(scroll, destaque || document.createElement('div'), antes);
 }
 
 // ===== ABRIR CONVERSA =====
 async function abrirConversa(id) {
+  var tinhaConversa = document.getElementById('conversaHeader').style.display !== 'none';
   unsubscribeConversa();
+  var versao = versaoAberturaConversa;
   var conv = state.conversas.find(function(c){ return c.id === id; }) || { id: id, tipo: 'direto', participantes: [] };
   if (!state.conversaAtiva || state.conversaAtiva.id !== id) {
     limparAnexosPendentes();
     state.mencoesPendentes = [];
   }
   state.conversaAtiva = conv;
-
+  state.mensagens = [];
   renderConversas();
+  var carregamento = carregarMensagens(id, versao);
+  var scroll = document.getElementById('mensagensScroll');
+  var identidade = document.getElementById('conversaIdentidade');
+  if (tinhaConversa && !movimentoChatReduzido.matches) {
+    scroll.inert = true;
+    var saidas = [animarConteudoConversa(identidade, true), animarConteudoConversa(scroll, true)].filter(Boolean);
+    await Promise.allSettled(saidas.map(function(a){ return a.finished; }));
+    if (versao !== versaoAberturaConversa) return;
+  }
+  encerrarMovimentoConversa();
   atualizarHeader(conv);
-
   document.getElementById('estadoVazioChat').style.display = 'none';
   document.getElementById('conversaHeader').style.display = 'flex';
-  document.getElementById('mensagensScroll').style.display = 'flex';
+  scroll.style.display = 'flex';
   document.getElementById('barraEnvio').style.display = 'flex';
-
   mostrarSkeletonMensagens();
+  animarConteudoConversa(identidade, false);
+  var entradaSkeleton = animarConteudoConversa(scroll, false);
 
-  var ok = await carregarMensagens(id);
+  var ok = await carregamento;
+  if (versao !== versaoAberturaConversa) return;
   if (ok) {
+    if (entradaSkeleton) entradaSkeleton.cancel();
     renderMensagens();
-    scrollBaixo();
+    // Posicionar antes da primeira imagem desenhada, sem o atraso de scrollBaixo().
+    scroll.scrollTop = scroll.scrollHeight;
+    animarConteudoConversa(scroll, false);
     await marcarComoLida(id);
+    if (versao !== versaoAberturaConversa) return;
     subscribeConversa(id);
   }
 
   if (window.innerWidth <= 760) {
     document.getElementById('listaConversas').classList.add('escondida');
   }
-  if (possoEscrever(conv)) document.getElementById('campoMensagem').focus();
+  if (possoEscrever(conv)) document.getElementById('campoMensagem').focus({ preventScroll:true });
 }
 
 function atualizarHeader(conv) {
@@ -856,16 +934,22 @@ function ajustarBarraEnvio(conv) {
 }
 
 // ===== MENSAGENS =====
-async function carregarMensagens(conversaId) {
-  var q = _sb.from('chat_mensagens')
-    .select('id,conteudo,editada,criado_em,autor_id,conversa_id,autor:usuarios!autor_id(id,nome_completo),anexos:chat_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime)')
-    .eq('conversa_id', conversaId);
-  var conv = state.conversas.find(function(c){ return c.id === conversaId; });
-  if (conv && conv.ocultaEm) q = q.gt('criado_em', conv.ocultaEm);
-  var res = await q.order('criado_em', { ascending: false }).limit(200);
-  if (res.error) { showToast('Erro ao carregar mensagens: ' + res.error.message, 'erro'); return false; }
-  state.mensagens = (res.data || []).reverse();
-  return true;
+async function carregarMensagens(conversaId, versao) {
+  try {
+    var q = _sb.from('chat_mensagens')
+      .select('id,conteudo,editada,criado_em,autor_id,conversa_id,autor:usuarios!autor_id(id,nome_completo),anexos:chat_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime)')
+      .eq('conversa_id', conversaId);
+    var conv = state.conversas.find(function(c){ return c.id === conversaId; });
+    if (conv && conv.ocultaEm) q = q.gt('criado_em', conv.ocultaEm);
+    var res = await q.order('criado_em', { ascending: false }).limit(200);
+    if (versao !== versaoAberturaConversa || !state.conversaAtiva || state.conversaAtiva.id !== conversaId) return false;
+    if (res.error) { showToast('Erro ao carregar mensagens: ' + res.error.message, 'erro'); return false; }
+    state.mensagens = (res.data || []).reverse();
+    return true;
+  } catch(e) {
+    if (versao === versaoAberturaConversa) showToast('Erro ao carregar mensagens: ' + (e.message || e), 'erro');
+    return false;
+  }
 }
 
 // Anexos de uma mensagem que chegou em tempo real (sao gravados logo depois dela)
@@ -1123,8 +1207,10 @@ async function enviarMensagem() {
   var msg = state.mensagens.find(function(m){ return m.id === res.data.id; });
   if (!msg) {
     msg = Object.assign({}, res.data, { autor: { id: state.meuInternoId, nome_completo: state.meuNome }, anexos: [] });
-    state.mensagens.push(msg);
-    appendMensagem(msg);
+    if (state.conversaAtiva && state.conversaAtiva.id === conversaId) {
+      state.mensagens.push(msg);
+      appendMensagem(msg);
+    }
   }
   atualizarPreviewConversa(res.data);
 
@@ -1313,17 +1399,21 @@ async function marcarComoLida(conversaId) {
 
 // ===== REALTIME =====
 function subscribeConversa(id) {
+  var versao = versaoAberturaConversa;
+  function atual(){ return versao === versaoAberturaConversa && state.conversaAtiva && state.conversaAtiva.id === id; }
   state.realtimeChannel = _sb.channel('chat-' + id)
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_mensagens', filter: 'conversa_id=eq.' + id },
-      function(payload){ handleInsert(payload); })
+      function(payload){ if (atual()) handleInsert(payload); })
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_mensagens', filter: 'conversa_id=eq.' + id },
-      function(payload){ handleUpdate(payload); })
+      function(payload){ if (atual()) handleUpdate(payload); })
     .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_mensagens', filter: 'conversa_id=eq.' + id },
-      function(payload){ handleDelete(payload); })
+      function(payload){ if (atual()) handleDelete(payload); })
     .subscribe();
 }
 
 function unsubscribeConversa() {
+  versaoAberturaConversa++;
+  encerrarMovimentoConversa();
   if (state.realtimeChannel) { _sb.removeChannel(state.realtimeChannel); state.realtimeChannel = null; }
 }
 
