@@ -53,6 +53,7 @@ body.si-so-leitura .aviso-leitura{display:block}
   </div>
   <div class="aviso-leitura">Você pode ver as intimações, mas não alterá-las. Para mover, comentar ou concluir, peça a permissão "Editar intimações" ao administrador.</div>
   <div class="kpis" id="kpis"></div>
+  <div id="intimGraficos"></div>
   <div id="intimFiltros"></div>
   <div id="intimQuadro"></div>
   <div id="intimLista" style="display:none"></div>
@@ -85,6 +86,7 @@ function renderTudo(){
   var cards=[['Disponibilizadas hoje',c.hoje,'#4b8af5'],['Abertas',c.abertas,'#e5484d'],['Prazos vencidos',c.atrasadas,'#f97316'],['Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']];
   document.getElementById('kpis').innerHTML=cards.map(function(k){return '<div class="kpi-card" style="--c:'+k[2]+'"><span class="faixa"></span><div class="rotulo">'+esc(k[0])+'</div><div class="kpi-value">'+k[1]+'</div></div>';}).join('');
   SagaIntimacoes.montarFiltros(document.getElementById('intimFiltros'));
+  SagaIntimacoes.renderGraficos(document.getElementById('intimGraficos'));
   var q=document.getElementById('intimQuadro'),l=document.getElementById('intimLista');
   q.style.display=visao==='kanban'?'':'none';l.style.display=visao==='lista'?'':'none';
   if(visao==='kanban')SagaIntimacoes.renderQuadro(q);else SagaIntimacoes.renderLista(l,false);
