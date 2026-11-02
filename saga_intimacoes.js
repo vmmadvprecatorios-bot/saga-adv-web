@@ -409,6 +409,10 @@
   function renderQuadro(el){
     var lista=filtradas(true),f=S.f;
     var mostrarAbertas=f.situacao!=='concluidas',mostrarConcl=true;
+    // Guarda onde a pessoa estava (cada coluna, o lado do quadro e a página) para não jogá-la ao topo ao redesenhar
+    var rol={y:window.scrollY,x:0,cols:{}},qAntigo=el.querySelector('.si-quadro');
+    if(qAntigo)rol.x=qAntigo.scrollLeft;
+    el.querySelectorAll('.si-col').forEach(function(cc){var cs=cc.querySelector('.si-cards');if(cs)rol.cols[cc.dataset.col]=cs.scrollTop;});
     el.innerHTML='';
     var q=document.createElement('div');q.className='si-quadro';el.appendChild(q);
     var gs=grupos(lista);
@@ -431,7 +435,7 @@
           var arq=document.createElement('div');arq.className='si-arquivo'+(S.concluidasAbertas[g.id]?' aberto':'');
           arq.innerHTML='<button type="button">'+(S.concluidasAbertas[g.id]?'Ocultar':'Ver')+' concluídas ('+concl.length+')</button><div class="lista"></div>';
           concl.forEach(function(i){arq.querySelector('.lista').appendChild(cartao(i));});
-          arq.firstChild.addEventListener('click',function(e){e.stopPropagation();S.concluidasAbertas[g.id]=!S.concluidasAbertas[g.id];renderQuadro(el);});
+          arq.firstChild.addEventListener('click',function(e){e.stopPropagation();S.concluidasAbertas[g.id]=!S.concluidasAbertas[g.id];S.foco=S.concluidasAbertas[g.id]?g.id:null;renderQuadro(el);});
           cards.appendChild(arq);
         }
       }
@@ -442,6 +446,19 @@
       nova.addEventListener('click',novaColuna);q.appendChild(nova);
     }
     ligarCartoes(q);
+    // Devolve a rolagem de cada coluna, do quadro e da página
+    q.scrollLeft=rol.x;
+    q.querySelectorAll('.si-col').forEach(function(cc){
+      var cs=cc.querySelector('.si-cards');if(!cs)return;
+      if(rol.cols[cc.dataset.col]!=null)cs.scrollTop=rol.cols[cc.dataset.col];
+      // Se acabou de abrir o bloco "concluídas" pelo botão, rola um pouco (no máximo 60% da altura) para mostrar o começo dele
+      if(S.foco&&cc.dataset.col===S.foco){
+        var arq=cc.querySelector('.si-arquivo.aberto'),cr=cs.getBoundingClientRect();
+        if(arq){var r=arq.getBoundingClientRect();if(r.bottom>cr.bottom)cs.scrollTop+=Math.min(r.bottom-cr.bottom,Math.round(cr.height*0.6));}
+      }
+    });
+    S.foco=null;
+    if(Math.abs(window.scrollY-rol.y)>1)window.scrollTo(window.scrollX,rol.y);
     // arrastar entre colunas (só em "Minhas colunas")
     var arrastando=null;
     q.addEventListener('dragstart',function(e){var c=e.target.closest('.si-card');if(!c)return;arrastando=c.dataset.int;c.classList.add('arrastando');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','intimacao:'+arrastando);});
