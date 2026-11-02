@@ -26,7 +26,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .btn-secondary:hover{border-color:var(--gold)}
 .btn-danger{border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)}
 .btn-sm{height:32px;padding:0 12px;font-size:11.5px}
-.tabs{display:flex;gap:6px;padding:5px;border-radius:13px;margin-bottom:18px;background:var(--panel);border:1px solid var(--border-soft);max-width:max-content;overflow-x:auto}
+.tabs{display:flex;gap:6px;padding:5px;border-radius:13px;margin-bottom:18px;background:var(--panel);border:1px solid var(--border-soft);max-width:100%;width:max-content;box-sizing:border-box;overflow-x:auto}
 .tab-btn{padding:9px 14px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
 .tab-btn.active{background:var(--gold);color:#fff}
 .tab-pane{display:none}.tab-pane.ativo{display:block}
@@ -105,6 +105,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
     <button class="tab-btn active" data-aba="perfil" type="button">Meu perfil</button>
     <button class="tab-btn" data-aba="seguranca" type="button">Segurança</button>
     <button class="tab-btn" data-aba="preferencias" type="button">Preferências</button>
+    <button class="tab-btn" data-aba="areas-teses" type="button" id="abaAreasTesesBtn" style="display:none">Áreas e teses</button>
     <button class="tab-btn" data-aba="escritorio" type="button" id="abaEscritorioBtn" style="display:none">Escritório</button>
   </div>
 
@@ -183,6 +184,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
   </section>
 
   <!-- ESCRITORIO (administrador geral) -->
+  <section class="tab-pane" id="aba-areas-teses"><div class="panel"><h2>Áreas e teses</h2><p>Organize as teses por área do direito. Desativar mantém os nomes nos processos já cadastrados.</p><div id="catalogoAreasTeses"></div></div></section>
   <section class="tab-pane" id="aba-escritorio">
     <div class="panel">
       <div class="panel-title">Dados do escritório</div>
@@ -238,6 +240,7 @@ var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
+<script src="saga_teses.js"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)
@@ -251,6 +254,7 @@ var TELAS=[['dashboard_padrao_metalico.html','Dashboard','dashboard'],['lista_pr
   ['ponto_eletronico_padrao_metalico.html','Ponto Eletrônico','ponto'],['financeiro.html','Financeiro','financeiro'],['marketing_campanhas_padrao_metalico.html','Marketing','marketing']];
 var AVISOS=[['chat','Chat','mensagens novas'],['tarefas','Tarefas','tarefas atribuídas, do dia e atrasadas'],['agenda','Agenda','compromissos do dia'],
   ['mencao','Menções','quando alguém marca você num comentário'],['marketing','Marketing','materiais para aprovar, ajustes e decisões'],['outros','Outros avisos','demais avisos do sistema']];
+var catalogoTeses=null;
 var state={eu:null,authId:null,escritorio:null,admin:false};
 
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
@@ -258,6 +262,7 @@ function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=do
 function iniciais(n){return String(n||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase()||'--';}
 function erroTexto(e){return (e&&(e.message||e.error_description))||'Não foi possível concluir.';}
 function trocarAba(aba){
+  if(aba==='areas-teses'&&!state.adminGeral)aba='perfil';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
 }
@@ -567,6 +572,15 @@ async function carregar(){
   var r=await _sb.from('usuarios').select('id,nome_completo,email,cargo_titulo,telefone,numero_oab,uf_oab,foto_url,eh_administrador,preferencias,preferencias_notificacao,tema_preferido').eq('auth_user_id',state.authId).maybeSingle();
   if(r.error||!r.data){showToast('Não foi possível carregar o seu perfil.','error');return;}
   state.eu=r.data;
+  state.adminGeral=r.data.eh_administrador===true;
+  document.getElementById('abaAreasTesesBtn').style.display=state.adminGeral?'':'none';
+  if(state.adminGeral){
+    if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:true,erro:function(msg){showToast(esc(msg),'error');}});
+    await catalogoTeses.carregar();catalogoTeses.gerenciar(document.getElementById('catalogoAreasTeses'));
+  }else{
+    document.getElementById('catalogoAreasTeses').replaceChildren();
+    if(document.getElementById('aba-areas-teses').classList.contains('ativo'))trocarAba('perfil');
+  }
   var adm=await _sb.rpc('eh_admin_sistema');state.admin=adm.data===true;
   if(state.admin){
     var c=await _sb.from('configuracoes_sistema').select('*').limit(1).maybeSingle();

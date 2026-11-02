@@ -287,6 +287,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<script src="saga_teses.js"></script>
 <script src="saga_etiquetas.js"></script>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -410,7 +411,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 <!-- Modal: excluir telefone -->
 <div class="modal-overlay" id="excluirTelefoneModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir telefone</h3><p>O número será marcado como excluído e não aparecerá mais na ficha.</p></div><button class="modal-close" data-close-modal="excluirTelefoneModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja excluir o telefone <strong id="excluirTelLabel" style="color:var(--text)"></strong>?</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="excluirTelefoneModal">Cancelar</button><button class="btn-danger" id="confirmarExcluirTelButton">Excluir telefone</button></div></div></div>
 
-<div class="modal-overlay" id="newProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Novo processo</h3><p>O processo será vinculado a esta cliente, preservando os dados pessoais já cadastrados.</p></div><button class="modal-close" data-close-modal="newProcessModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="newProcessTese">Tese</label><div id="newProcessTeseSelect"></div></div><div class="form-field"><label for="newProcessCnj">Número do Processo, CNJ</label><input id="newProcessCnj" type="text" placeholder="Ex.: 0000000-00.2026.4.05.8000"></div><div class="form-field"><label for="newProcessDataInicio">Data de início</label><input id="newProcessDataInicio" type="date"></div><div class="form-field"><label for="newProcessResponsavel">Responsável</label><div id="newProcessResponsavelSelect"></div></div><div class="form-field"><label for="newProcessValor">Valor da causa, opcional</label><input id="newProcessValor" type="text" placeholder="Ex.: R$ 9.100,00"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newProcessModal">Cancelar</button><button class="btn-primary" id="saveNewProcessButton">Criar processo</button></div></div></div>
+<div class="modal-overlay" id="newProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Novo processo</h3><p>O processo será vinculado a esta cliente, preservando os dados pessoais já cadastrados.</p></div><button class="modal-close" data-close-modal="newProcessModal">✕</button></div><div class="modal-body"><div class="form-field"><div id="newProcessTeseSelect"></div></div><div class="form-field"><label for="newProcessCnj">Número do Processo, CNJ</label><input id="newProcessCnj" type="text" placeholder="Ex.: 0000000-00.2026.4.05.8000"></div><div class="form-field"><label for="newProcessDataInicio">Data de início</label><input id="newProcessDataInicio" type="date"></div><div class="form-field"><label for="newProcessResponsavel">Responsável</label><div id="newProcessResponsavelSelect"></div></div><div class="form-field"><label for="newProcessValor">Valor da causa, opcional</label><input id="newProcessValor" type="text" placeholder="Ex.: R$ 9.100,00"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newProcessModal">Cancelar</button><button class="btn-primary" id="saveNewProcessButton">Criar processo</button></div></div></div>
 
 <div class="modal-overlay" id="locationImportModal">
   <div class="modal large">
@@ -483,6 +484,7 @@ const perms=state.permissoes.acoes;
 
 let currentUser={id:null,nome:'',iniciais:'',perfil:'',permissoesExtra:[]};
 function podeEditarDadosProcesso(user){if(user.perfil==='socio_admin')return true;return Array.isArray(user.permissoesExtra)&&user.permissoesExtra.includes('processos.editar_dados');}
+let catalogoTeses=null;
 const teseOptions=['PSS','PASEP','28,86%','GDASS','Habilitação de Herdeiros','IR/RRA','Outro'];
 const responsavelOptions=[['Tuany Martiniano|Captação|TM','Tuany Martiniano'],['Hevelyn|Assistente Jurídica|HV','Hevelyn'],['Dr. Victor|Sócio/Admin|DV','Dr. Victor']];
 
@@ -630,7 +632,7 @@ async function mudarFaseProcesso(fase){
   if(typeof renderProcessTabs==='function')renderProcessTabs();
   showToast('Processo levado para '+rot+'.','success');
 }
-function renderProcessHeader(){const process=getActiveProcess();const root=document.getElementById('processStatusTags');const podeEditarTags=perms.processosEditar===true;root.innerHTML='<div class="process-summary-copy"><strong>Processo de '+esc(process.tese)+'</strong><span>Os dados abaixo pertencem exclusivamente a este processo.</span></div><div class="process-summary-tags">'+chaveFaseHtml(process)+'<span class="badge-status-grande status-'+process.statusTone+'">'+esc(process.status)+'</span>'+process.tags.map((tag,indice)=>{const texto=typeof tag==='string'?tag:(tag&&tag.texto?tag.texto:'');const cor=tag&&typeof tag==='object'&&tag.cor?tag.cor:'';const estilo=cor?' style="border:1px solid color-mix(in srgb,'+esc(cor)+' 45%,transparent);background:color-mix(in srgb,'+esc(cor)+' 16%,transparent);color:'+esc(cor)+'"':'';const remover=podeEditarTags?'<button data-tag-remove="'+indice+'" type="button" aria-label="Remover etiqueta" title="Remover etiqueta" style="margin-left:5px;font-weight:700;color:inherit;opacity:.65;line-height:1">×</button>':'';return '<span class="ficha-mini-tag"'+estilo+'>'+esc(texto)+remover+'</span>';}).join('')+(podeEditarTags?'<button class="btn-add-tag" id="btnAddTag">+ etiqueta</button>':'')+'</div>';const btnAddTag=document.getElementById('btnAddTag');if(btnAddTag)btnAddTag.addEventListener('click',abrirModalNovaEtiqueta);root.querySelectorAll('[data-fase]').forEach(b=>b.addEventListener('click',()=>mudarFaseProcesso(b.dataset.fase)));root.querySelectorAll('[data-tag-remove]').forEach(button=>button.addEventListener('click',async()=>{const processoAtual=getActiveProcess();if(!processoAtual)return;processoAtual.tags.splice(Number(button.dataset.tagRemove),1);const salvo=await salvarEtiquetasDaPessoa();renderProcessHeader();if(salvo)showToast('Etiqueta removida do processo.','info');}));}
+function renderProcessHeader(){const process=getActiveProcess();const root=document.getElementById('processStatusTags');const podeEditarTags=perms.processosEditar===true;root.innerHTML='<div class="process-summary-copy"><strong>Processo de '+esc(catalogoTeses?catalogoTeses.texto(process.teseId,process.areaDireitoId):process.tese)+'</strong><span>Os dados abaixo pertencem exclusivamente a este processo.</span></div><div class="process-summary-tags">'+chaveFaseHtml(process)+'<span class="badge-status-grande status-'+process.statusTone+'">'+esc(process.status)+'</span>'+process.tags.map((tag,indice)=>{const texto=typeof tag==='string'?tag:(tag&&tag.texto?tag.texto:'');const cor=tag&&typeof tag==='object'&&tag.cor?tag.cor:'';const estilo=cor?' style="border:1px solid color-mix(in srgb,'+esc(cor)+' 45%,transparent);background:color-mix(in srgb,'+esc(cor)+' 16%,transparent);color:'+esc(cor)+'"':'';const remover=podeEditarTags?'<button data-tag-remove="'+indice+'" type="button" aria-label="Remover etiqueta" title="Remover etiqueta" style="margin-left:5px;font-weight:700;color:inherit;opacity:.65;line-height:1">×</button>':'';return '<span class="ficha-mini-tag"'+estilo+'>'+esc(texto)+remover+'</span>';}).join('')+(podeEditarTags?'<button class="btn-add-tag" id="btnAddTag">+ etiqueta</button>':'')+'</div>';const btnAddTag=document.getElementById('btnAddTag');if(btnAddTag)btnAddTag.addEventListener('click',abrirModalNovaEtiqueta);root.querySelectorAll('[data-fase]').forEach(b=>b.addEventListener('click',()=>mudarFaseProcesso(b.dataset.fase)));root.querySelectorAll('[data-tag-remove]').forEach(button=>button.addEventListener('click',async()=>{const processoAtual=getActiveProcess();if(!processoAtual)return;processoAtual.tags.splice(Number(button.dataset.tagRemove),1);const salvo=await salvarEtiquetasDaPessoa();renderProcessHeader();if(salvo)showToast('Etiqueta removida do processo.','info');}));}
 function customSelectMarkup(inputId,value,options){const selected=options.find(option=>option[0]===value)||options[0];return '<input class="custom-select-hidden" id="'+inputId+'" value="'+esc(value)+'"><div class="custom-select" data-select-input="'+inputId+'"><button class="custom-select-trigger" type="button"><span>'+esc(selected[1])+'</span><i class="select-caret"></i></button><div class="custom-select-menu">'+options.map(option=>'<button class="custom-select-option '+(option[0]===value?'selected':'')+'" type="button" data-select-value="'+esc(option[0])+'" data-select-label="'+esc(option[1])+'">'+esc(option[1])+'</button>').join('')+'</div></div>'}
 function renderClientContacts(){
   const client=state.cliente;
@@ -808,16 +810,16 @@ function renderProcessData(){
   const canEditSensitive=perms.processosEditarDados===true;
   const headingBase='<div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Dados do Processo</div>';
   if(state.isEditingProcess&&canEdit){
-    const opcoesTese=(state.teses||[]).map(item=>[item.id,item.nome]).concat([['__add_tese__','+ Adicionar nova tese']]);
     const opcoesResponsavel=(state.responsaveis||[]).map(item=>[item.id,item.nome_completo]);
-    const campoTese=canEditSensitive&&opcoesTese.length>1?customSelectMarkup('editProcessTese',process.teseId,opcoesTese):'<div class="campo-dado-valor">'+esc(process.tese)+'</div>';
+    const campoTese=canEditSensitive?'<div id="editProcessTeseSelect"></div>':'<div class="campo-dado-valor">'+esc(process.tese)+'</div>';
     const campoResponsavel=canEditSensitive&&opcoesResponsavel.length?customSelectMarkup('editProcessResponsavel',process.responsavelId,opcoesResponsavel):'<div class="campo-dado-valor">'+esc(process.responsavel.nome)+'</div>';
     const campoPrecatorio=canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessPrecatório" value="'+esc(process.precatório==='Não informado'?'':process.precatório)+'">':'<div class="campo-dado-valor">'+esc(process.precatório)+'</div>';
     const campoValorCausa=canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessValorCausa" value="'+esc(process.valorCausa==='Não informado'?'':process.valorCausa)+'">':'<div class="campo-dado-valor dourado">'+esc(process.valorCausa)+'</div>';
     heading.innerHTML=headingBase+'<div class="process-edit-actions"><button class="btn-inline-cancel" id="cancelProcessEdit" type="button">Cancelar</button><button class="btn-inline-save" id="saveProcessEdit" type="button">Salvar</button></div>';
     grid.classList.add('process-data-editing');
-    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Tese</div>'+campoTese+'</div><div class="campo-dado"><div class="campo-dado-label">Responsável</div>'+campoResponsavel+'</div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div>'+campoPrecatorio+'</div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div>'+campoValorCausa+'</div><div class="campo-dado"><div class="campo-dado-label">Honorários (%)</div>'+(canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessHonorarios" inputmode="decimal" placeholder="Ex.: 20" value="'+esc(process.honorariosPct==null?'':String(process.honorariosPct).replace('.',','))+'">':'<div class="campo-dado-valor">'+esc(textoHonorarios(process))+'</div>')+'</div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><input class="campo-dado-edit-input" id="editProcessCnj" value="'+esc(process.cnj==='Não informado'?'':process.cnj)+'"></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><input class="campo-dado-edit-input" id="editProcessProtocolo" type="date" value="'+esc(process.dataInicio||'')+'"></div>';
+    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Área e tese</div>'+campoTese+'</div><div class="campo-dado"><div class="campo-dado-label">Responsável</div>'+campoResponsavel+'</div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div>'+campoPrecatorio+'</div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div>'+campoValorCausa+'</div><div class="campo-dado"><div class="campo-dado-label">Honorários (%)</div>'+(canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessHonorarios" inputmode="decimal" placeholder="Ex.: 20" value="'+esc(process.honorariosPct==null?'':String(process.honorariosPct).replace('.',','))+'">':'<div class="campo-dado-valor">'+esc(textoHonorarios(process))+'</div>')+'</div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><input class="campo-dado-edit-input" id="editProcessCnj" value="'+esc(process.cnj==='Não informado'?'':process.cnj)+'"></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><input class="campo-dado-edit-input" id="editProcessProtocolo" type="date" value="'+esc(process.dataInicio||'')+'"></div>';
     if(canEditSensitive){
+      catalogoTeses.montar(document.getElementById('editProcessTeseSelect'),{teseId:process.teseId,areaId:process.areaDireitoId,teseInputId:'editProcessTese',areaInputId:'editProcessArea',permitirAreaAvulsa:true});
       bindCustomSelects(grid);
       attachCurrencyMask(document.getElementById('editProcessPrecatório'));
       attachCurrencyMask(document.getElementById('editProcessValorCausa'));
@@ -1429,7 +1431,7 @@ async function createNewProcess(){
   if(!dataInicio){showToast('Informe a data de início do processo.','warning');return;}
   const statusInicialId=await obterStatusInicialFunil();
   if(!statusInicialId){showToast('Não foi possível identificar o status inicial do funil. Verifique o cadastro de status.','error');return;}
-  const payload={pessoa_id:pessoaId,tese_id:teseId,status_id:statusInicialId,responsavel_id:responsavelId,numero_processo_cnj:cnjBruto?maskCnjProcessNumber(cnjBruto):null,valor_causa:valorBruto?currencyValueToNumber(valorBruto):null,data_inicio:dataInicio,criado_por_id:state.usuario.internoId};
+  const payload={pessoa_id:pessoaId,tese_id:teseId,area_direito_id:document.getElementById('newProcessArea').value||null,status_id:statusInicialId,responsavel_id:responsavelId,numero_processo_cnj:cnjBruto?maskCnjProcessNumber(cnjBruto):null,valor_causa:valorBruto?currencyValueToNumber(valorBruto):null,data_inicio:dataInicio,criado_por_id:state.usuario.internoId};
   const r=await _sb.from('processos').insert(payload).select('id').single();
   if(r.error){
     if(String(r.error.code)==='23505'){showToast('Esta pessoa já possui um processo com esta tese.','warning');return;}
@@ -1503,8 +1505,7 @@ function renderProcessTabs(){
   root.querySelectorAll('[data-process-tab]').forEach(button=>button.addEventListener('click',()=>activateProcess(button.dataset.processTab)));
   const btnNovo=document.getElementById('btnNewProcess');
   if(btnNovo)btnNovo.addEventListener('click',()=>{
-    if(!state.teses.length){showToast('Não há teses ativas disponíveis para criar um processo.','warning');return;}
-    state.newProcessDraft={tese:state.teses[0].id,responsavel:state.responsaveis[0]?state.responsaveis[0].id:''};
+    state.newProcessDraft={tese:'',responsavel:state.responsaveis[0]?state.responsaveis[0].id:''};
     document.getElementById('newProcessCnj').value='';
     document.getElementById('newProcessValor').value='';
     document.getElementById('newProcessDataInicio').value=new Date().toISOString().slice(0,10);
@@ -1516,46 +1517,17 @@ function renderProcessTabs(){
 }
 function bindCustomSelects(scope){scope.querySelectorAll('.custom-select').forEach(select=>{if(select.dataset.bound==='true')return;select.dataset.bound='true';const trigger=select.querySelector('.custom-select-trigger');trigger.addEventListener('click',event=>{event.stopPropagation();const isOpen=select.classList.contains('open');document.querySelectorAll('.custom-select.open').forEach(item=>item.classList.remove('open'));if(!isOpen)select.classList.add('open');});select.querySelectorAll('[data-select-value]').forEach(option=>option.addEventListener('click',()=>{const value=option.dataset.selectValue;const input=document.getElementById(select.dataset.selectInput);if(value==='__add_tese__'){state.locationImport.pendingTarget=select.dataset.selectInput;select.classList.remove('open');document.getElementById('newThesisName').value='';openModal('newThesisModal');return;}if(!input)return;input.value=value;trigger.querySelector('span').textContent=option.dataset.selectLabel;select.querySelectorAll('[data-select-value]').forEach(item=>item.classList.toggle('selected',item===option));select.classList.remove('open');}));});}
 async function saveNewThesis(){
-  const value=document.getElementById('newThesisName').value.trim();
-  if(!value){showToast('Informe o nome da nova tese.','warning');return;}
-  const permitido=await checkPerm('processos','criar');
-  if(!permitido){showToast('Você não possui permissão para criar uma tese neste fluxo.','warning');return;}
-  const existente=(state.teses||[]).find(item=>normalizeTextValue(item.nome)===normalizeTextValue(value));
-  let tese=existente;
-  if(!tese){
-    const r=await _sb.from('teses').insert({nome:value,descricao:null,ativo:true,criado_por_id:state.usuario.internoId}).select('id,nome,descricao,ativo,criado_por_id,criado_em').single();
-    if(r.error){showToast('Não foi possível cadastrar a nova tese.','error');return;}
-    tese=r.data;
-    state.teses.push(tese);
-    teseOptions.push(tese.nome);
-  }
-  const targetId=state.locationImport&&state.locationImport.pendingTarget;
-  const target=targetId?document.getElementById(targetId):null;
-  if(target){
-    target.value=tese.id;
-    const select=target.parentElement&&target.parentElement.querySelector('.custom-select');
-    if(select){
-      select.querySelector('.custom-select-trigger span').textContent=tese.nome;
-      select.querySelectorAll('[data-select-value]').forEach(option=>option.classList.toggle('selected',option.dataset.selectValue===tese.id));
-    }
-  }
-  state.newProcessDraft.tese=tese.id;
-  state.locationImport.pendingTarget=null;
-  closeModal('newThesisModal');
-  showToast('Tese '+esc(tese.nome)+' adicionada.','success');
+  if(!state.ehAdmin)return;
+  const nome=document.getElementById('newThesisName').value.trim();
+  if(!nome){showToast('Informe o nome.','warning');return;}
+  try{await catalogoTeses.salvar('tese',{nome,ativo:true,area_direito_id:state.newProcessDraft.area||null});closeModal('newThesisModal');}
+  catch(e){showToast(esc(e.message),'error');}
 }
 function renderNewProcessCustomSelects(){
   const teseRoot=document.getElementById('newProcessTeseSelect');
   const responsavelRoot=document.getElementById('newProcessResponsavelSelect');
-  const opcoesTese=(state.teses||[]).map(item=>[item.id,item.nome]).concat([['__add_tese__','+ Adicionar nova tese']]);
   const opcoesResponsavel=(state.responsaveis||[]).map(item=>[item.id,item.nome_completo]);
-  if(!opcoesTese.length||opcoesTese.length===1){
-    teseRoot.innerHTML='<div class="campo-dado-valor">Nenhuma tese ativa disponível</div>';
-  }else{
-    const teseSelecionada=state.newProcessDraft.tese||opcoesTese[0][0];
-    state.newProcessDraft.tese=teseSelecionada;
-    teseRoot.innerHTML=customSelectMarkup('newProcessTese',teseSelecionada,opcoesTese);
-  }
+  catalogoTeses.montar(teseRoot,{teseId:state.newProcessDraft.tese,areaId:state.newProcessDraft.area,teseInputId:'newProcessTese',areaInputId:'newProcessArea',permitirAreaAvulsa:true,mudou:v=>{state.newProcessDraft.tese=v.teseId;state.newProcessDraft.area=v.areaId;}});
   if(opcoesResponsavel.length){
     const responsavelSelecionado=state.newProcessDraft.responsavel||opcoesResponsavel[0][0];
     state.newProcessDraft.responsavel=responsavelSelecionado;
@@ -1906,15 +1878,19 @@ async function carregarPermissoes(){
 }
 
 async function carregarListas(){
+  if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:state.ehAdmin,erro:msg=>showToast(esc(msg),'error'),mudou:()=>{
+    state.teses=catalogoTeses.todasTeses();
+    state.processos.forEach(p=>{const t=catalogoTeses.tese(p.teseId);if(t){p.tese=t.nome;if(t.area_direito_id)p.areaDireitoId=t.area_direito_id;}});
+    if(getActiveProcess())renderProcessHeader();
+  }});
   const resultados=await Promise.all([
-    _sb.from('teses').select('id,nome,descricao,ativo,criado_por_id,criado_em').eq('ativo',true).order('nome'),
+    catalogoTeses.carregar(),
     _sb.from('usuarios').select('id,nome_completo').not('auth_user_id','is',null).order('nome_completo'),
     _sb.from('status_funil').select('id,nome,fase,cor,ordem')
   ]);
   state.statusFunil=resultados[2].error?[]:(resultados[2].data||[]);
-  const tesesResposta=resultados[0];
   const usuariosResposta=resultados[1];
-  state.teses=tesesResposta.error?[]:(tesesResposta.data||[]);
+  state.teses=catalogoTeses.todasTeses();
   state.responsaveis=usuariosResposta.error?[]:(usuariosResposta.data||[]);
   teseOptions.length=0;
   state.teses.forEach(item=>teseOptions.push(item.nome));
@@ -2484,20 +2460,23 @@ async function salvarEdicaoProcesso(){
   const cnjInput=document.getElementById('editProcessCnj');
   const dataInicioInput=document.getElementById('editProcessProtocolo');
   const novaTeseId=teseInput?teseInput.value:proc.teseId;
+  const novaAreaId=document.getElementById('editProcessArea')?document.getElementById('editProcessArea').value||null:proc.areaDireitoId;
   const novoResponsavelId=responsavelInput?responsavelInput.value||null:proc.responsavelId||null;
   const novoValorPrecatorio=valorPrecatorioInput?(valorPrecatorioInput.value.trim()?currencyValueToNumber(valorPrecatorioInput.value):null):proc.valorPrecatorioNum;
   const novoValorCausa=valorCausaInput?(valorCausaInput.value.trim()?currencyValueToNumber(valorCausaInput.value):null):proc.valorCausaNum;
-  const mudouCampoSensivel=novaTeseId!==proc.teseId||novoResponsavelId!==(proc.responsavelId||null)||novoValorPrecatorio!==proc.valorPrecatorioNum||novoValorCausa!==proc.valorCausaNum;
+  const mudouCampoSensivel=novaTeseId!==proc.teseId||novaAreaId!==proc.areaDireitoId||novoResponsavelId!==(proc.responsavelId||null)||novoValorPrecatorio!==proc.valorPrecatorioNum||novoValorCausa!==proc.valorCausaNum;
   if(mudouCampoSensivel){
     const podeEditarDados=await checkPerm('processos','editar_dados');
     if(!podeEditarDados){showToast('Você não possui permissão para editar tese, responsável ou valores deste processo.','warning');return false;}
   }
+  if(!novaTeseId){showToast('Selecione uma tese.','warning');return false;}
   const dataInicio=dataInicioInput?dataInicioInput.value:'';
   if(!dataInicio){showToast('Informe a data de início do processo.','warning');return false;}
   const cnjBruto=cnjInput?cnjInput.value.trim():'';
   const payload={numero_processo_cnj:cnjBruto?maskCnjProcessNumber(cnjBruto):null,data_inicio:dataInicio,atualizado_em:new Date().toISOString()};
   if(mudouCampoSensivel){
     payload.tese_id=novaTeseId;
+    payload.area_direito_id=novaAreaId;
     payload.responsavel_id=novoResponsavelId;
     payload.valor_precatorio_origem=novoValorPrecatorio;
     payload.valor_causa=novoValorCausa;

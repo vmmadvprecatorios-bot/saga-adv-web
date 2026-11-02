@@ -72,7 +72,7 @@
 
   var ETIQUETAS=[['Réplica','#e5484d'],['Contestação','#f97316'],['Agravo','#8b5cf6'],['Apelação','#6366f1'],['Embargos','#ec4899'],['Recurso','#7c3aed'],
     ['Manifestação','#0ea5e9'],['Impugnação','#f59e0b'],['Cumprimento','#14b8a6'],['Ciência','#64748b'],['Audiência','#2563eb'],['Pagamento','#16a34a']];
-  var catalogoEtiquetas=null,menuEtiqueta=null;
+  var catalogoEtiquetas=null,menuEtiqueta=null,catalogoTeses=null,menuTesesIncorporar=null;
   function corEtiqueta(nome){var e=catalogoEtiquetas&&catalogoEtiquetas.todas().find(function(x){return x.nome===nome;});return e?e.cor:'#c9a96e';}
 
   var SITUACOES=[
@@ -304,7 +304,7 @@
     return true;
   }
   async function iniciar(o){
-    await import('./saga_etiquetas.js');
+    await Promise.all([import('./saga_etiquetas.js'),import('./saga_teses.js')]);
     injetarCss();
     S.sb=o.sb;S.meuId=o.meuId;S.ehAdmin=!!o.ehAdmin;S.toast=o.toast;S.aoMudar=o.aoMudar;
     var p=await Promise.all([
@@ -318,6 +318,7 @@
       reserva:ETIQUETAS.map(function(e,k){return {id:'reserva-'+k,nome:e[0],cor:e[1],ativo:true,reserva:true};}),
       erro:function(){toast('Não foi possível carregar o catálogo. A lista de reserva está em uso.','error');}
     });
+    catalogoTeses=SagaTeses.criar({sb:S.sb,admin:S.ehAdmin,erro:function(msg){toast(esc(msg),'error');}});
     montarJanelas();
     return carregar();
   }
@@ -934,12 +935,14 @@
   }
   async function formIncorporar(i){
     var f=document.getElementById('siProcForm');
-    if(!S.teses.length){var t=await S.sb.from('teses').select('id,nome').order('nome');S.teses=t.data||[];}
+    if(!(await catalogoTeses.carregar()))return;
     var nome=((i.partes||[]).filter(function(p){return p.polo==='A';})[0]||(i.partes||[])[0]||{}).nome||'';
     f.innerHTML='<div class="si-campo" style="margin-top:10px"><label>Cliente</label><input id="siIncCli" value="'+esc(nome)+'" placeholder="Nome do cliente"><div class="si-res-list" id="siIncSug"></div></div>'+
-      '<div class="si-g2"><div class="si-campo"><label>Tese</label><select id="siIncTese"><option value="">Escolha...</option>'+S.teses.map(function(t){return '<option value="'+esc(t.id)+'">'+esc(t.nome)+'</option>';}).join('')+'</select></div>'+
-      '<div class="si-campo"><label>Responsável</label><select id="siIncResp">'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===(i.responsavel_id||S.meuId)?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('')+'</select></div></div>'+
+      '<div id="siIncAreasTeses" style="margin:10px 0"></div>'+
+      '<div class="si-campo"><label>Responsável</label><select id="siIncResp">'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===(i.responsavel_id||S.meuId)?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('')+'</select></div>'+
       '<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siIncOk">Incorporar</button></div>';
+    if(menuTesesIncorporar)menuTesesIncorporar.destruir();
+    menuTesesIncorporar=catalogoTeses.montar(document.getElementById('siIncAreasTeses'),{teseInputId:'siIncTese'});
     var escolhida=null,tm=null;
     async function sugerir(){
       var v=document.getElementById('siIncCli').value.trim();escolhida=null;var s=document.getElementById('siIncSug');

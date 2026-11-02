@@ -451,7 +451,7 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
       </div>
       <div class="form-field">
         <label>Tese</label>
-        <div class="dropdown-custom" id="dropdownNovaTese"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovaTese')"><span id="labelNovaTese">Selecione a tese...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovaTese"></div></div>
+        <div id="novoAreasTeses"></div><div class="dropdown-custom" id="dropdownNovaTese" style="display:none"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovaTese')"><span id="labelNovaTese">Selecione a tese...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovaTese"></div></div>
       </div>
       <div class="form-field">
         <label>Status inicial</label>
@@ -493,7 +493,7 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 
 <div class="modal-overlay" id="modalGerenciarCatalogos" style="display:none">
   <div class="modal-box" style="max-width:520px">
-    <div class="modal-head"><div><h3>Gerenciar catalogos</h3><p>Crie, renomeie, escolha cores ou desative teses e status.</p></div><button class="modal-close" onclick="closeModal('modalGerenciarCatalogos')">&#x2715;</button></div>
+    <div class="modal-head"><div><h3>Gerenciar catalogos</h3><p>Organize áreas e teses ou gerencie os status.</p></div><button class="modal-close" onclick="closeModal('modalGerenciarCatalogos')">&#x2715;</button></div>
     <div class="modal-body">
       <div class="cat-tabs">
         <button type="button" class="cat-tab" id="tabCatTeses" onclick="trocarTabCatalogo('teses')">Teses <span class="cat-tab-qtd" id="qtdCatTeses">0</span></button>
@@ -574,7 +574,8 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
         <input type="text" id="inputBusca" placeholder="Buscar por nome, CPF ou numero do processo...">
       </div>
       <div class="filtros-scroll">
-        <div class="dropdown-custom" id="dropdownTese">
+        <div id="filtroAreasTeses" style="min-width:240px;flex:1"></div>
+        <div class="dropdown-custom" id="dropdownTese" style="display:none">
           <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownTese')"><span id="labelFiltroTese">Tese</span><div class="chevron-dd"></div></div>
           <div class="dropdown-custom-lista" id="listaTeses"><div class="dropdown-custom-opcao" style="color:var(--muted)">Carregando...</div></div>
         </div>
@@ -655,6 +656,7 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<script src="saga_teses.js"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -663,11 +665,12 @@ var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
 var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
+var catalogoTeses=null,menuFiltroTeses=null,menuNovoTeses=null;
 var state={
   session:null,meuInternoId:null,
   permissoes:{visualizar:false,criar:false,editar:false,excluir:false,atribuir:false,editar_dados:false},
   view:'lista',processos:[],totalProcessos:0,loading:false,
-  busca:'',filtroTese:null,filtroStatus:null,filtroResponsavel:null,
+  busca:'',filtroArea:'*',filtroTese:null,filtroStatus:null,filtroResponsavel:null,
   filtroPeriodoDe:null,filtroPeriodoAte:null,page:1,pageSize:20,
   teses:[],statusList:[],responsaveis:[],
   processoParaExcluir:null,processoParaAtribuir:null,responsavelAtribuirSelecionado:null,
@@ -856,29 +859,30 @@ function prepararCorNova(inputId,swatchId,lista){
 }
 
 async function abrirGerenciarCatalogos(){
+  document.getElementById('tabCatTeses').style.display=state.admin?'':'none';
   await Promise.all([carregarTodasTeses(),carregarTodosStatus()]);
   trocarTabCatalogo('teses');
   openModal('modalGerenciarCatalogos');
-  var r=await Promise.all([colorirSemCor('teses',state.todasTeses),colorirSemCor('status_funil',state.todosStatus)]);
+  var r=[false,await colorirSemCor('status_funil',state.todosStatus)];
   if(r[0])renderCatalogoTeses();
   if(r[1])renderCatalogoStatus();
   if(r[0]||r[1])await carregarOpcoesFiltros();
 }
 function trocarTabCatalogo(tab){
+  if(tab==='teses'&&!state.admin)tab='status';
   state.catalogoTab=tab;
   fecharPaleta();
   document.getElementById('tabCatTeses').classList.toggle('ativo',tab==='teses');
   document.getElementById('tabCatStatus').classList.toggle('ativo',tab==='status');
   document.getElementById('listaCatalogoTeses').style.display=tab==='teses'?'':'none';
   document.getElementById('listaCatalogoStatus').style.display=tab==='status'?'':'none';
-  document.getElementById('formNovaTeseCat').style.display=tab==='teses'?'':'none';
+  document.getElementById('formNovaTeseCat').style.display='none';
   document.getElementById('formNovoStatusCat').style.display=tab==='status'?'':'none';
   if(tab==='status')renderNovaFaseCatOptions();
 }
 async function carregarTodasTeses(){
-  var t=await _sb.from('teses').select('id,nome,cor,ativo').eq('ativo',true).order('nome');
-  state.todasTeses=t.data||[];
-  renderCatalogoTeses();
+  if(!catalogoTeses)return;
+  await catalogoTeses.carregar();state.todasTeses=catalogoTeses.todasTeses();renderCatalogoTeses();
 }
 async function carregarTodosStatus(){
   var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem,ativo').eq('ativo',true).order('ordem');
@@ -920,13 +924,10 @@ function ligarItensCatalogo(l,prefixo,lista,salvarCor,salvarNome,tipo){
   });
 }
 function renderCatalogoTeses(){
-  var l=document.getElementById('listaCatalogoTeses');
-  document.getElementById('qtdCatTeses').textContent=state.todasTeses.length;
-  prepararCorNova('novaTeseCatCor','swatchNovaTese',state.todasTeses);
-  if(!state.todasTeses.length){l.innerHTML='<div style="font-size:11px;color:var(--muted)">Nenhuma tese cadastrada.</div>';return;}
-  l.innerHTML=state.todasTeses.map(function(t){return itemCatalogoHtml('tese',t);}).join('');
-  ligarItensCatalogo(l,'tese',state.todasTeses,salvarCorTese,salvarNomeTese,'tese');
+  document.getElementById('qtdCatTeses').textContent=catalogoTeses?catalogoTeses.todasTeses().length:0;
+  if(catalogoTeses)catalogoTeses.gerenciar(document.getElementById('listaCatalogoTeses'));
 }
+
 function renderCatalogoStatus(){
   var l=document.getElementById('listaCatalogoStatus');
   document.getElementById('qtdCatStatus').textContent=state.todosStatus.length;
@@ -958,16 +959,7 @@ async function salvarCorItem(tabela,lista,id,cor,btn){
   showToast('Cor atualizada.','success');
   await carregarOpcoesFiltros();
 }
-async function salvarCorTese(id,cor,btn){await salvarCorItem('teses',state.todasTeses,id,cor,btn);}
 async function salvarCorStatus(id,cor,btn){await salvarCorItem('status_funil',state.todosStatus,id,cor,btn);}
-async function salvarNomeTese(id,nome){
-  nome=(nome||'').trim();
-  if(!nome){showToast('O nome da tese nao pode ficar em branco.','warning');await carregarTodasTeses();return;}
-  var res=await atualizarCatalogo('teses',id,{nome:nome});
-  if(!res.ok){avisarFalhaCatalogo(res,'a mudanca de nome');await carregarTodasTeses();return;}
-  var t=state.todasTeses.find(function(x){return String(x.id)===String(id);});if(t)t.nome=nome;
-  showToast('Tese renomeada.','success');await carregarOpcoesFiltros();
-}
 async function salvarNomeStatus(id,nome){
   nome=(nome||'').trim();
   if(!nome){showToast('O nome do status nao pode ficar em branco.','warning');await carregarTodosStatus();return;}
@@ -996,16 +988,7 @@ function renderNovaFaseCatOptions(){
     });
   });
 }
-async function criarTeseCatalogo(){
-  var nome=(document.getElementById('novaTeseCatNome').value||'').trim();
-  var cor=document.getElementById('novaTeseCatCor').value;
-  if(!nome){showToast('Informe o nome da tese.','warning');return;}
-  var r=await _sb.from('teses').insert({nome:nome,cor:cor,ativo:true}).select('id');
-  if(r.error||!r.data||!r.data.length){showToast('Nao foi possivel criar a tese. Verifique suas permissoes.','error');return;}
-  document.getElementById('novaTeseCatNome').value='';
-  showToast('Tese criada.','success');
-  await carregarTodasTeses();await carregarOpcoesFiltros();
-}
+function criarTeseCatalogo(){if(state.admin)catalogoTeses.editor(document.getElementById('listaCatalogoTeses'),'tese',null,null);}
 async function criarStatusCatalogo(){
   var nome=(document.getElementById('novoStatusCatNome').value||'').trim();
   var cor=document.getElementById('novoStatusCatCor').value;
@@ -1021,6 +1004,7 @@ async function criarStatusCatalogo(){
   await carregarTodosStatus();await carregarOpcoesFiltros();
 }
 async function pedirDesativarCatalogo(tipo,id,nome){
+  if(tipo==='tese'){if(state.admin)catalogoTeses.editor(document.getElementById('listaCatalogoTeses'),'tese',id,null);return;}
   var coluna=tipo==='tese'?'tese_id':'status_id';
   var r=await _sb.from('processos').select('id',{count:'exact',head:true}).eq(coluna,id).eq('excluido_logico',false);
   var afetados=r.count||0;
@@ -1057,8 +1041,9 @@ function renderOpcoesRealocar(){
 }
 async function confirmarRealocarEDesativar(){
   var origem=state.realocar;
+  if(origem.tipo==='tese')return;
   if(origem.afetados>0&&!origem.destinoId){showToast('Escolha para onde os processos afetados vao antes de desativar.','warning');return;}
-  var rpc=origem.tipo==='tese'?'realocar_e_desativar_tese':'realocar_e_desativar_status';
+  var rpc='realocar_e_desativar_status';
   var params=origem.tipo==='tese'?{p_tese_id:origem.id,p_tese_destino_id:origem.destinoId}:{p_status_id:origem.id,p_status_destino_id:origem.destinoId};
   var r=await _sb.rpc(rpc,params);
   if(r.error){showToast('Nao foi possivel desativar: '+(r.error.message||'tente novamente.'),'error');return;}
@@ -1113,13 +1098,20 @@ async function carregarPermissoes(){
 // Perfil
 async function carregarPerfil(){
   if(!state.session)return;
-  var r=await _sb.from('usuarios').select('id,nome_completo,email').eq('auth_user_id',state.session.user.id).maybeSingle();
-  if(r.data){state.meuInternoId=r.data.id;var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo||r.data.email);}
+  var r=await _sb.from('usuarios').select('id,nome_completo,email,eh_administrador').eq('auth_user_id',state.session.user.id).maybeSingle();
+  if(r.data){state.admin=r.data.eh_administrador===true;state.meuInternoId=r.data.id;var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo||r.data.email);}
 }
 
 // Opcoes de filtros
 async function carregarOpcoesFiltros(){
-  var t=await _sb.from('teses').select('id,nome,cor').eq('ativo',true).order('nome');state.teses=t.data||[];
+  if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:state.admin,erro:function(msg){showToast(esc(msg),'error');},mudou:function(){
+    state.teses=catalogoTeses.todasTeses();state.todasTeses=state.teses;
+    document.getElementById('qtdCatTeses').textContent=state.teses.length;
+    state.processos.forEach(function(p){var t=catalogoTeses.tese(p.tese_id);if(t)p.tese=t;});
+    if(state.filtroTese)state.filtroTese=catalogoTeses.tese(state.filtroTese.id)||state.filtroTese;
+    if(state.processos.length&&!state.loading){if(state.view==='lista')renderLista();else renderKanban();}
+  }});
+  await catalogoTeses.carregar();state.teses=catalogoTeses.todasTeses();
   var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem').eq('ativo',true).order('ordem');state.statusList=s.data||[];
   var u=await _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');state.responsaveis=u.data||[];
   renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();
@@ -1130,7 +1122,7 @@ async function salvarPreferencias(){
   if(!state.meuInternoId)return;
   await _sb.from('preferencias_filtros_usuario').upsert({
     usuario_id:state.meuInternoId,tela:'lista_processos',
-    filtros:{busca:state.busca,filtroTese:state.filtroTese,filtroStatus:state.filtroStatus,filtroResponsavel:state.filtroResponsavel,filtroPeriodoDe:state.filtroPeriodoDe,filtroPeriodoAte:state.filtroPeriodoAte,pageSize:state.pageSize},
+    filtros:{busca:state.busca,filtroArea:state.filtroArea,filtroTese:state.filtroTese,filtroStatus:state.filtroStatus,filtroResponsavel:state.filtroResponsavel,filtroPeriodoDe:state.filtroPeriodoDe,filtroPeriodoAte:state.filtroPeriodoAte,pageSize:state.pageSize},
     atualizado_em:new Date().toISOString()
   },{onConflict:'usuario_id,tela'});
 }
@@ -1139,7 +1131,7 @@ async function restaurarPreferencias(){
   var r=await _sb.from('preferencias_filtros_usuario').select('filtros').eq('usuario_id',state.meuInternoId).eq('tela','lista_processos').maybeSingle();
   if(r.data&&r.data.filtros){
     var f=r.data.filtros;
-    state.busca=f.busca||'';state.filtroTese=f.filtroTese||null;state.filtroStatus=f.filtroStatus||null;
+    state.filtroArea=f.filtroArea===undefined?'*':f.filtroArea;state.busca=f.busca||'';state.filtroTese=f.filtroTese||null;state.filtroStatus=f.filtroStatus||null;
     state.filtroResponsavel=f.filtroResponsavel||null;state.filtroPeriodoDe=f.filtroPeriodoDe||null;
     state.filtroPeriodoAte=f.filtroPeriodoAte||null;state.pageSize=f.pageSize||20;
     sincronizarUI();
@@ -1164,6 +1156,7 @@ function atualizarLabelPeriodo(){
 }
 function renderTagsAtivas(){
   var tags=[];
+  if(state.filtroArea!=='*')tags.push({label:'Área: '+(catalogoTeses.area(state.filtroArea)?.nome||'Sem área'),fn:function(){state.filtroArea='*';state.filtroTese=null;renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroTese)tags.push({label:'Tese: '+state.filtroTese.nome,fn:function(){state.filtroTese=null;document.getElementById('labelFiltroTese').textContent='Tese';renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroStatus)tags.push({label:'Status: '+state.filtroStatus.nome,fn:function(){state.filtroStatus=null;document.getElementById('labelFiltroStatus').textContent='Status';renderDropdownsStatus();aplicarFiltros();}});
   if(state.filtroResponsavel)tags.push({label:'Resp.: '+state.filtroResponsavel.nome_completo.split(' ')[0],fn:function(){state.filtroResponsavel=null;document.getElementById('labelFiltroResponsavel').textContent='Responsavel';renderDropdownsResponsavel();aplicarFiltros();}});
@@ -1185,12 +1178,13 @@ async function carregarProcessos(){
       var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+busca+'%,cpf.ilike.%'+busca+'%').limit(500);
       pessoaIds=(rp.data||[]).map(function(p){return p.id;});
     }
-    var SELECT='id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,'+
+    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,'+
       'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp),'+
       'tese:teses!tese_id(id,nome,cor),'+
       'status:status_funil!status_id(id,nome,cor,fase,ordem),'+
       'responsavel:usuarios!responsavel_id(id,nome_completo)';
     var query=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
+    if(state.filtroArea!=='*')query=state.filtroArea?query.eq('area_direito_id',state.filtroArea):query.is('area_direito_id',null);
     if(state.filtroTese)query=query.eq('tese_id',state.filtroTese.id);
     if(state.filtroStatus)query=query.eq('status_id',state.filtroStatus.id);
     if(state.filtroResponsavel)query=query.eq('responsavel_id',state.filtroResponsavel.id);
@@ -1219,7 +1213,7 @@ function aplicarFiltroPeriodo(){
   atualizarLabelPeriodo();fecharTodosDropdowns();aplicarFiltros();
 }
 function limparFiltros(){
-  state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
+  state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
   document.getElementById('inputBusca').value='';
   document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';
@@ -1246,7 +1240,7 @@ function renderSemPermissao(){
 function renderEstadoVazio(){
   document.getElementById('tbodyPrincipal').innerHTML='';
   var ev=document.getElementById('estadoVazio');ev.style.display='flex';
-  var tem=state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
+  var tem=state.filtroArea!=='*'||state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
   if(tem)ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.3"/><line x1="20" y1="20" x2="16" y2="16" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum resultado</b><p>Nenhum processo encontrado. <button onclick="limparFiltros()" style="color:var(--gold-light);text-decoration:underline;background:none;border:none;cursor:pointer;font:inherit;padding:0">Limpar filtros</button></p>';
   else ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum processo cadastrado</b><p>Clique em "Novo Processo" para comecar.</p>';
 }
@@ -1673,17 +1667,14 @@ function aplicarQtdCustom(){var v=parseInt(document.getElementById('qtdCustom').
 
 // Dropdowns de filtro
 function renderDropdownsTeses(){
-  var l=document.getElementById('listaTeses');if(!l)return;
-  l.innerHTML='<div class="dropdown-custom-opcao '+(state.filtroTese===null?'selecionada':'')+'" data-tese-id="">Todas as teses</div>'+
-    state.teses.map(function(t){return '<div class="dropdown-custom-opcao '+(state.filtroTese&&state.filtroTese.id===t.id?'selecionada':'')+'" data-tese-id="'+esc(t.id)+'">'+esc(t.nome)+'</div>';}).join('');
-  l.querySelectorAll('[data-tese-id]').forEach(function(op){
-    op.addEventListener('click',function(){
-      var id=op.getAttribute('data-tese-id');
-      var t=id?state.teses.find(function(x){return String(x.id)===id;}):null;
-      selTese(t||null);
-    });
-  });
+  if(!catalogoTeses)return;
+  if(!menuFiltroTeses)menuFiltroTeses=catalogoTeses.montar(document.getElementById('filtroAreasTeses'),{filtro:true,mudou:function(v){
+    state.filtroArea=v.areaId;state.filtroTese=catalogoTeses.tese(v.teseId);aplicarFiltros();
+  }});
+  menuFiltroTeses.definir({areaId:state.filtroArea,teseId:state.filtroTese&&state.filtroTese.id});
+  state.filtroArea=menuFiltroTeses.valor().areaId;
 }
+
 function renderDropdownsStatus(){
   var l=document.getElementById('listaStatus');if(!l)return;
   l.innerHTML='<div class="dropdown-custom-opcao '+(state.filtroStatus===null?'selecionada':'')+'" data-status-id="">Todos os status</div>'+
@@ -1793,7 +1784,7 @@ async function executarAtribuicao(){
 
 // Novo Processo
 function abrirNovoProcesso(){
-  state.novoPessoa=null;state.novoTese=null;state.novoStatus=null;state.novoTipo=null;
+  state.novoArea=null;state.novoPessoa=null;state.novoTese=null;state.novoStatus=null;state.novoTipo=null;
   document.getElementById('inputNovoPessoa').value='';
   document.getElementById('pessoaSelecionadaInfo').style.display='none';
   document.getElementById('novoPessoaResultados').style.display='none';
@@ -1816,16 +1807,10 @@ function abrirNovoProcesso(){
   renderNovoProcessoTese();renderNovoProcessoStatus();renderNovoProcessoResponsavel();openModal('modalNovoProcesso');
 }
 function renderNovoProcessoTese(){
-  var l=document.getElementById('listaNovaTese');
-  l.innerHTML=state.teses.map(function(t){return '<div class="dropdown-custom-opcao" data-nova-tese-id="'+esc(t.id)+'">'+esc(t.nome)+'</div>';}).join('')||'<div class="dropdown-custom-opcao" style="color:var(--muted)">Nenhuma tese ativa</div>';
-  l.querySelectorAll('[data-nova-tese-id]').forEach(function(op){
-    op.addEventListener('click',function(){
-      var id=op.getAttribute('data-nova-tese-id');
-      var t=state.teses.find(function(x){return String(x.id)===id;});
-      if(t)selNovaTese(t);
-    });
-  });
+  if(menuNovoTeses)menuNovoTeses.destruir();
+  menuNovoTeses=catalogoTeses.montar(document.getElementById('novoAreasTeses'),{permitirAreaAvulsa:true,mudou:function(v){state.novoTese=catalogoTeses.tese(v.teseId);state.novoArea=v.areaId==='*'?null:v.areaId;}});
 }
+
 function renderNovoProcessoStatus(){
   var l=document.getElementById('listaNovoStatus');
   l.innerHTML=state.statusList.map(function(s){var cor=s.cor||'#9aa8c2';return '<div class="dropdown-custom-opcao" data-novo-status-id="'+esc(s.id)+'"><span style="width:7px;height:7px;border-radius:50%;background:'+cor+';flex:0 0 auto;display:inline-block"></span>'+esc(s.nome)+'</div>';}).join('')||'<div class="dropdown-custom-opcao" style="color:var(--muted)">Nenhum status</div>';
@@ -1886,7 +1871,7 @@ async function salvarNovoProcesso(){
     if(!tipoAcaoDetalhe){showToast('Especifique o tipo de acao no campo de texto.','warning');return;}
   }
   var dados={
-    pessoa_id:state.novoPessoa.id,tese_id:state.novoTese.id,status_id:state.novoStatus.id,
+    pessoa_id:state.novoPessoa.id,tese_id:state.novoTese.id,area_direito_id:state.novoArea||null,status_id:state.novoStatus.id,
     data_inicio:document.getElementById('inputNovoDataInicio').value||new Date().toISOString().slice(0,10),
     data_prazo:document.getElementById('inputNovoDataPrazo').value||null,
     valor_causa:valorMoedaParaNumero(document.getElementById('inputNovoValorCausa').value),
@@ -1961,7 +1946,7 @@ async function init(){
   await carregarPermissoes();
   var btnNovo=document.getElementById('btnNovoProcesso');
   if(btnNovo)btnNovo.style.display=state.permissoes.criar?'flex':'none';
-  var podeGerenciarCatalogos=await verificarPermissao('teses','gerenciar')||await verificarPermissao('status_funil','gerenciar');
+  var podeGerenciarCatalogos=state.admin||await verificarPermissao('status_funil','gerenciar');
   state.podeGerenciarColunas=await verificarPermissao('status_funil','gerenciar');
   var btnCat=document.getElementById('btnGerenciarCatalogos');
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';
