@@ -901,7 +901,7 @@
       var r=await S.sb.rpc('intimacao_incorporar',{p_id:i.id,p_pessoa_id:escolhida,p_cliente_nome:document.getElementById('siIncCli').value,p_tese_id:tese,p_responsavel_id:document.getElementById('siIncResp').value||null});
       this.disabled=false;
       if(r.error){toast('Não foi possível incorporar: '+esc(r.error.message),'error');return;}
-      toast('Processo incorporado ao SAGA. A intimação já está na ficha do cliente.','sucesso');
+      toast('Processo incorporado ao SAGA, já no Jurídico. A intimação está na ficha do cliente.','sucesso');
       await carregar();mudou();var n=S.itens.filter(function(x){return x.id===i.id;})[0];if(n){preencherJanela(n);carregarHistorico(n.id);}
     });
   }
