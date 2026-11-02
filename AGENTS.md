@@ -31,6 +31,7 @@ Quem coordena e revisa o seu trabalho é o Claude. Ele confere o PR, testa e pub
 - Trocar de tela mexe só no conteúdo; menus superior e lateral ficam parados. Nada pode "piscar" nem mostrar sujeira de outra tela.
 - Menus e listas suspensas dentro de janelas (modais) não podem ser cortados pela janela: confira no celular e com a janela baixa; prefira que o menu empurre o conteúdo (posição normal) e role até aparecer inteiro.
 - Respeite as permissões: o menu e as telas mostram só o que o perfil do usuário pode ver.
+- Toda lista de opções do sistema (menus suspensos, checklists, etiquetas, status, categorias, tipos) deve deixar o administrador geral **criar, renomear, reordenar e remover** opções na própria tela. Remover nunca apaga histórico: o item some da lista (ativo = falso) e continua aparecendo onde já foi usado. Itens que a própria pessoa criou (ex.: checklist da ficha) ela mesma pode remover.
 
 ## Antes de abrir o PR
 - Abra a tela alterada no navegador (Playwright, com o Supabase simulado) e confira: modo claro e escuro, largura de celular, sem erro no console.

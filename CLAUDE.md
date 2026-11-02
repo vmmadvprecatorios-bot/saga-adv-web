@@ -24,4 +24,5 @@ Sistema do escritório Victor Morais Advocacia. O usuário é o Dr. Victor; escr
 - O repositório é público: arquivos `.sql` e `.md` (exceto este) não vão para o GitHub. Nunca coloque senhas, chaves secretas ou dados de clientes no código.
 - Banco: Supabase, projeto "Sistema SAGA ADV´2" (id `fmoskdxgjulagedzjxxk`). Comandos que apagam ou trocam regras podem pedir aprovação que expira em 60 s; se expirar, entregue o bloco para o Dr. Victor rodar no SQL Editor.
 - Teste antes de publicar: no banco, simule o usuário e desfaça tudo no fim; na tela, use o navegador (Playwright) com o Supabase simulado.
+- Regra de 03/11: em toda lista de opções do sistema (menus, checklists, etiquetas, status, categorias) o administrador geral cria, renomeia, reordena e remove opções na própria tela; remover só desativa (o histórico fica).
 - Telas: cada tela é um `.html`; `saga_ui.js` monta a barra superior, o menu lateral, permissões e notificações; `saga_tema.css` é o tema; `ponto_calculo.js` é o cálculo do ponto (cópia fiel do Apps Script da planilha).
