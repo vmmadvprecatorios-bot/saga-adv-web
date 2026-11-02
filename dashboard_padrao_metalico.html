@@ -493,6 +493,8 @@
   [data-theme="light"] .modal-dash,
   [data-theme="light"] .toast{ background:linear-gradient(145deg,var(--panel-solid),var(--navy-2)); }
   .dashboard-grafico-atualizado{transition:stroke-dashoffset .45s cubic-bezier(.22,1,.36,1);}
+  #roscasDashboard{--prazo-azul:#2068d5;--prazo-amarelo:#ffd21c;--prazo-laranja:#ff851b;--prazo-vermelho:#dc2038;--prazo-vermelho-escuro:#8f102d;}
+  [data-theme="light"] #roscasDashboard{--prazo-azul:#155bc0;--prazo-amarelo:#f2c400;--prazo-laranja:#c24100;--prazo-vermelho:#c91c30;--prazo-vermelho-escuro:#780d22;}
   @media(prefers-reduced-motion:reduce){.barra-tese-fill,.linha-uf-fill,.dashboard-grafico-atualizado{transition:none;}}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
@@ -581,6 +583,9 @@
         <div class="kpi-label">Notificacoes nao lidas</div>
       </div>
     </div>
+
+    <section id="roscasDashboard" hidden aria-label="Gráficos do Dashboard"></section>
+    <div id="erroRoscasDashboard" class="estado-vazio" role="status" hidden></div>
 
     <!-- ===== GRID PRINCIPAL ===== -->
     <div class="grid-dashboard">
@@ -697,6 +702,7 @@
 <!-- SUPABASE SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<script src="saga_roscas.js"></script>
 
 <script>
 // ================================================================
@@ -714,6 +720,7 @@ var meuPerfilId  = null;
 var meuNome      = '';
 var filtros      = { dataInicio: '', dataFim: '', responsaveisIds: [] };
 var dadosEquipe  = []; // cache da lista de colaboradores
+var permissoesRoscasDashboard = null, roscasDashboard = null;
 
 // ================================================================
 // TOAST
@@ -934,6 +941,7 @@ async function inicializar() {
 
     meuPerfilId = pr.data.id;
     meuNome     = pr.data.nome_completo;
+    await carregarPermissoesRoscasDashboard();
 
     var elNomeHeader = document.getElementById('nomeUsuarioHeader');
     if (elNomeHeader) elNomeHeader.textContent = meuNome.split(' ')[0];
@@ -1106,6 +1114,135 @@ async function carregarPresenca() { /* obsoleto: saga_ui.js cuida da presenca */
 // ================================================================
 // CARREGAR TUDO
 // ================================================================
+async function carregarPermissoesRoscasDashboard() {
+  permissoesRoscasDashboard = { processos:false, tarefas:false, intimacoes:false, financeiro:false };
+  try {
+    var r = await _sb.rpc('minhas_permissoes');
+    if (r.error || !Array.isArray(r.data) || r.data.indexOf('dashboard.visualizar') === -1) return;
+    function tem(p) { return r.data.indexOf(p) !== -1; }
+    permissoesRoscasDashboard = {
+      processos:tem('processos.visualizar'), tarefas:tem('tarefas.visualizar'), financeiro:tem('financeiro.visualizar'),
+      intimacoes:tem('movimentacoes_cnj.visualizar') || tem('monitoramento_oab.visualizar')
+    };
+  } catch(e) { /* Sem confirmação de acesso, as roscas permanecem ocultas. */ }
+}
+function filtrarConsultaRoscaDashboard(q, f, campoData, equipe) {
+  if (equipe && f.responsaveisIds.length) q = q.in('responsavel_id', f.responsaveisIds);
+  var dataSimples = campoData === 'data_disponibilizacao';
+  if (f.dataInicio) q = q.gte(campoData, f.dataInicio + (dataSimples ? '' : 'T00:00:00'));
+  if (f.dataFim) q = q.lte(campoData, f.dataFim + (dataSimples ? '' : 'T23:59:59'));
+  return q;
+}
+// Conta todos os registros visíveis, inclusive quando o servidor limita cada resposta.
+async function lerPaginasRoscaDashboard(consulta, carga, chave) {
+  var lista = [], inicio = 0;
+  while (cargaDashboardAtual(carga)) {
+    var r = await consulta().order(chave || 'id').range(inicio, inicio + 499);
+    if (r.error || !Array.isArray(r.data)) throw r.error || new Error('Leitura indisponível.');
+    if (!r.data.length) return lista;
+    lista = lista.concat(r.data); inicio += r.data.length;
+  }
+  return [];
+}
+function prazoRoscaDashboard(data) {
+  var partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(data || '');
+  if (!partes) return 'sem';
+  var hoje = new Date(), prazo = Date.UTC(+partes[1], +partes[2] - 1, +partes[3]);
+  var dias = Math.round((prazo - Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())) / 86400000);
+  return dias > 3 ? 'distante' : dias > 0 ? 'proximo' : dias === 0 ? 'hoje' : dias >= -7 ? 'atrasada' : 'muito-atrasada';
+}
+function tribunalRoscaDashboard(i) {
+  var sigla = String(i.tribunal || '').trim().toUpperCase();
+  if (!sigla) {
+    var n = String(i.numero_processo || '').replace(/\D/g, ''), ramo = n.length === 20 ? n.charAt(13) : '';
+    var tr = Number(n.slice(14,16)), ufs = ['','AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SE','SP','TO'];
+    if (ramo === '4') sigla = 'TRF' + tr;
+    else if (ramo === '5') sigla = tr ? 'TRT' + tr : 'TST';
+    else if (ramo === '6') sigla = tr ? 'TRE-' + (ufs[tr] || '') : 'TSE';
+    else if (ramo === '8' || ramo === '9') sigla = (ramo === '8' ? 'TJ' : 'TJM') + (ufs[tr] || '');
+    else sigla = {1:'STF',2:'CNJ',3:'STJ',7:'STM'}[ramo] || 'Não identificado';
+  }
+  var chave = sigla.replace(/[^A-Z0-9]/g, ''), numero = /^([A-Z]+)(\d+)$/.exec(chave);
+  if (numero) return numero[1] + '-' + numero[2];
+  if (/^TJ(?:AC|AL|AP|AM|BA|CE|DF|DFT|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/.test(chave)) return 'TJ-' + chave.slice(2);
+  return sigla;
+}
+function agruparRoscaDashboard(lista, item) {
+  var grupos = new Map();
+  lista.forEach(function(linha) {
+    var x = item(linha), atual = grupos.get(x.id);
+    if (atual) atual.valor += x.valor; else grupos.set(x.id, x);
+  });
+  return Array.from(grupos.values()).sort(function(a,b) { return b.valor - a.valor || a.nome.localeCompare(b.nome, 'pt-BR'); });
+}
+async function carregarRoscasDashboard() {
+  if (!meuPerfilId || !permissoesRoscasDashboard) return;
+  var carga = iniciarCargaDashboard('roscas'), p = permissoesRoscasDashboard;
+  var f = { dataInicio:filtros.dataInicio, dataFim:filtros.dataFim, responsaveisIds:filtros.responsaveisIds.slice() };
+  var temFiltro = !!(f.dataInicio || f.dataFim || f.responsaveisIds.length);
+  var resultados = await Promise.allSettled([
+    p.processos || (p.financeiro && temFiltro) ? lerPaginasRoscaDashboard(function() {
+      return filtrarConsultaRoscaDashboard(_sb.from('processos').select(p.processos ? 'id,area_direito_id,status:status_funil!status_id(fase)' : 'id').eq('excluido_logico', false), f, 'criado_em', true);
+    }, carga) : null,
+    p.processos ? lerPaginasRoscaDashboard(function() { return _sb.from('areas_direito').select('id,nome,ativo,ordem'); }, carga) : null,
+    p.tarefas ? lerPaginasRoscaDashboard(function() {
+      return filtrarConsultaRoscaDashboard(_sb.from('tarefas').select('id,data_prazo').eq('concluida', false), f, 'criado_em', true);
+    }, carga) : null,
+    p.intimacoes ? lerPaginasRoscaDashboard(function() {
+      return filtrarConsultaRoscaDashboard(_sb.from('intimacoes').select('id,tribunal,numero_processo,responsavel_id,advogados_ids').eq('concluida', false), f, 'data_disponibilizacao', false);
+    }, carga) : null,
+    p.financeiro ? lerPaginasRoscaDashboard(function() {
+      return _sb.from('vw_financeiro_processos').select('processo_id,tese,tese_cor,valor_expectativa').eq('etapa', 'expectativa');
+    }, carga, 'processo_id') : null
+  ]);
+  if (!cargaDashboardAtual(carga)) return;
+  function dados(i) { return resultados[i].status === 'fulfilled' ? resultados[i].value : null; }
+  function grafico(id, titulo, itens, destino, dica, moeda) {
+    return { id:id, titulo:titulo, itens:itens, moeda:!!moeda, dica:dica + ' Clique para abrir a tela.', escolher:function() { sagaIrPara(destino); } };
+  }
+  var grupos = [], processos = dados(0), areas = dados(1), tarefas = dados(2), intimacoes = dados(3), financeiro = dados(4);
+  if (p.processos && processos) {
+    var fases = [{id:'captacao',nome:'Captação',valor:0,cor:'var(--g1)'},{id:'juridico',nome:'Jurídico',valor:0,cor:'var(--g2)'}];
+    var semFase = 0;
+    processos.forEach(function(proc) {
+      var fase = proc.status && proc.status.fase, g = fases.find(function(x) { return x.id === fase; });
+      if (g) g.valor++; else semFase++;
+    });
+    if (semFase) fases.push({id:'outras',nome:'Outras fases',valor:semFase,cor:'var(--g-sem)'});
+    grupos.push(grafico('fase', 'Processos por fase', fases, 'lista_processos_padrao_metalico.html', 'Processos criados no período e equipe selecionados.'));
+    if (areas) {
+      var nomes = new Map(areas.map(function(a) { return [a.id,a.nome]; }));
+      var porArea = agruparRoscaDashboard(processos, function(proc) {
+        return {id:proc.area_direito_id || '',nome:proc.area_direito_id ? nomes.get(proc.area_direito_id) || 'Área não identificada' : 'Sem área',valor:1,cor:proc.area_direito_id ? null : 'var(--g-sem)'};
+      });
+      grupos.push(grafico('area', 'Processos por área do direito', porArea, 'lista_processos_padrao_metalico.html', 'Processos criados no período e equipe selecionados.'));
+    }
+  }
+  if (tarefas) {
+    var faixas = [['distante','Mais de 3 dias','azul'],['proximo','De 1 a 3 dias','amarelo'],['hoje','Vence hoje','laranja'],['atrasada','Atraso de 1 a 7 dias','vermelho'],['muito-atrasada','Atraso maior que 7 dias','vermelho-escuro'],['sem','Sem prazo',null]];
+    grupos.push(grafico('prazo', 'Tarefas abertas por prazo', faixas.map(function(x) {
+      return {id:x[0],nome:x[1],cor:x[2] ? 'var(--prazo-' + x[2] + ')' : 'var(--g-sem)',valor:tarefas.filter(function(t) { return prazoRoscaDashboard(t.data_prazo) === x[0]; }).length};
+    }), 'minhas_tarefas.html', 'Tarefas abertas criadas no período e equipe selecionados.'));
+  }
+  if (intimacoes) {
+    var daEquipe = intimacoes.filter(function(i) { return !f.responsaveisIds.length || f.responsaveisIds.indexOf(i.responsavel_id) !== -1 || (i.advogados_ids || []).some(function(id) { return f.responsaveisIds.indexOf(id) !== -1; }); });
+    var tribunais = agruparRoscaDashboard(daEquipe, function(i) { var nome = tribunalRoscaDashboard(i); return {id:nome.replace(/[^A-Z0-9]/g,''),nome:nome,valor:1}; });
+    grupos.push(grafico('tribunal', 'Intimações abertas por tribunal', tribunais, 'monitoramento_multi_oab.html', 'Intimações disponibilizadas no período e equipe selecionados.'));
+  }
+  if (financeiro && (!temFiltro || processos)) {
+    var ids = new Set((processos || []).map(function(proc) { return proc.id; }));
+    var valores = agruparRoscaDashboard(financeiro.filter(function(row) { return !temFiltro || ids.has(row.processo_id); }), function(row) {
+      return {id:row.tese || '',nome:row.tese || 'Sem tese',valor:Number(row.valor_expectativa || 0),cor:row.tese_cor};
+    });
+    grupos.push(grafico('honorarios', 'Honorários esperados por tese', SagaRoscas.topo(valores,6,'Outras'), 'financeiro.html', 'Expectativa dos processos criados no período e equipe selecionados.', true));
+  }
+  if (!roscasDashboard) roscasDashboard = SagaRoscas.criar(document.getElementById('roscasDashboard'), {chave:'saga-dashboard-roscas-ocultas',rotulo:'Gráficos do Dashboard'});
+  roscasDashboard.atualizar(grupos);
+  var erro = document.getElementById('erroRoscasDashboard');
+  erro.hidden = !resultados.some(function(r) { return r.status === 'rejected'; });
+  erro.textContent = erro.hidden ? '' : 'Alguns gráficos não puderam ser carregados. Use Atualizar para tentar novamente.';
+}
+
 function carregarTudo() {
   versaoDashboard++;
   recargaDashboardPendente = true;
@@ -1119,7 +1256,7 @@ function carregarTudo() {
         recargaDashboardPendente = false;
         await Promise.allSettled([
           carregarKPIs(), carregarStatusDistribuicao(), carregarSemMovimentacao(), carregarUF(),
-          carregarTarefas(), carregarNotificacoes(), carregarSLA(), carregarCNJ()
+          carregarTarefas(), carregarNotificacoes(), carregarSLA(), carregarCNJ(), carregarRoscasDashboard()
         ]);
       }
     } finally {
@@ -1402,7 +1539,7 @@ async function concluirTarefa(idTarefa, btn) {
 
     if (r.error) throw r.error;
 
-    await Promise.all([carregarKPIs(), carregarTarefas()]);
+    await Promise.all([carregarKPIs(), carregarTarefas(), carregarRoscasDashboard()]);
 
     showToast('Tarefa marcada como concluida.', 'sucesso');
   } catch(e) {
@@ -1467,7 +1604,7 @@ async function marcarNotificacaoLida(idNotif, itemEl) {
     if (r.error) return;
     itemEl.classList.remove('nao-lida');
     itemEl.setAttribute('data-lida', 'true');
-    await Promise.all([carregarKPIs(), carregarNotificacoes()]);
+    await Promise.all([carregarKPIs(), carregarNotificacoes(), carregarRoscasDashboard()]);
   } catch(e) {
     // Silencioso
   }
@@ -1486,7 +1623,7 @@ document.getElementById('btnMarcarTodasLidas').addEventListener('click', async f
       el.classList.remove('nao-lida');
       el.setAttribute('data-lida', 'true');
     });
-    await Promise.all([carregarKPIs(), carregarNotificacoes()]);
+    await Promise.all([carregarKPIs(), carregarNotificacoes(), carregarRoscasDashboard()]);
     var b4 = document.getElementById('kpi4badge');
     if (b4) { b4.className = 'kpi-variacao ok'; b4.textContent = 'sem novas'; }
     showToast('Todas as notificacoes foram marcadas como lidas.', 'sucesso');
