@@ -2138,6 +2138,7 @@ var catalogoEtiquetas = null, menuEtiquetaTarefa = null;
 function seloEtiquetaTarefa(t){ return SagaEtiquetas.selo(catalogoEtiquetas && catalogoEtiquetas.porId(t.etiquetaId)); }
 var usuarioLogadoId = null;
 var dadosColaboradores = [];
+var idsQueVeemTarefas = null;
 var colaboradoresOnlineIds = [];
 var dadosColunas = [];
 var dadosNotificacoes = [];
@@ -2263,6 +2264,9 @@ async function carregarDadosTarefas(){
   });
 
   var us = await _sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id').order('nome_completo');
+  // T72: compartilhar so com quem tem permissao de ver tarefas (o banco tambem confere)
+  var podemVer = await _sb.rpc('usuarios_que_veem_tarefas');
+  idsQueVeemTarefas = podemVer.error ? null : (podemVer.data || []).map(function(x){ return typeof x === 'string' ? x : (x && x.usuarios_que_veem_tarefas); });
   nomesUsuarios = {}; (us.data || []).forEach(function(u){ nomesUsuarios[u.id] = u.nome_completo; });
   // So quem ja tem conta (pre-cadastros aguardando convite ficam de fora)
   dadosColaboradores = (us.data || []).filter(function(u){ return (u.ativo && u.auth_user_id) || u.id === usuarioLogadoId; }).map(function(u, i){
@@ -3812,7 +3816,7 @@ function renderizarChipsCompartilhar(){
   var wrap = document.getElementById('chipsCompartilharTarefa');
   var lista = document.getElementById('listaCompartilharTarefa');
   var responsavel = document.getElementById('selectResponsavelTarefa').value || usuarioLogadoId;
-  var pessoas = dadosColaboradores.filter(function(c){ return c.id !== usuarioLogadoId && c.id !== responsavel; });
+  var pessoas = dadosColaboradores.filter(function(c){ return c.id !== usuarioLogadoId && c.id !== responsavel && (!idsQueVeemTarefas || idsQueVeemTarefas.indexOf(c.id) !== -1 || estadoModalTarefa.compartilhar.indexOf(c.id) !== -1); });
   var focoId = lista.contains(document.activeElement) ? document.activeElement.getAttribute('data-id') : null;
   var busca = document.getElementById('buscaCompartilharTarefa').value;
   function normalizarNome(nome){ return nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim(); }
