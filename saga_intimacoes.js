@@ -72,8 +72,8 @@
 
   var ETIQUETAS=[['Réplica','#e5484d'],['Contestação','#f97316'],['Agravo','#8b5cf6'],['Apelação','#6366f1'],['Embargos','#ec4899'],['Recurso','#7c3aed'],
     ['Manifestação','#0ea5e9'],['Impugnação','#f59e0b'],['Cumprimento','#14b8a6'],['Ciência','#64748b'],['Audiência','#2563eb'],['Pagamento','#16a34a']];
-  function obterEtiquetas(){return ETIQUETAS;} // depois (T71) vem da lista do administrador geral
-  function corEtiqueta(nome){var e=ETIQUETAS.filter(function(x){return x[0]===nome;})[0];return e?e[1]:'#c9a96e';}
+  var catalogoEtiquetas=null,menuEtiqueta=null;
+  function corEtiqueta(nome){var e=catalogoEtiquetas&&catalogoEtiquetas.todas().find(function(x){return x.nome===nome;});return e?e.cor:'#c9a96e';}
 
   var SITUACOES=[
     {chave:'nova',nome:'Nova',plural:'Novas',cor:'var(--info)'},
@@ -248,7 +248,7 @@
   '.si-etq-previa{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px}'+
   '.si-campo textarea{height:auto;min-height:62px;padding:8px 10px;resize:vertical}'+
   '.si-campo input:focus,.si-campo select:focus,.si-campo textarea:focus{border-color:var(--gold)}'+
-  '.si-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}'+
+  '.si-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.si-etiqueta-linha{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}@media(max-width:600px){.si-g2.si-etiqueta-linha{grid-template-columns:minmax(0,1fr)}}'+
   '.si-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
   '.si-dados{display:flex;flex-direction:column;gap:7px;font-size:11.5px}.si-dados .l{font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}'+
   '.si-hist{display:flex;flex-direction:column;gap:7px;max-height:30vh;overflow:auto;margin-bottom:9px;overscroll-behavior:contain}'+
@@ -278,7 +278,7 @@
   '.si-link input,.si-link select{height:32px;padding:0 8px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px;min-width:0}'+
   '.si-link.falta{background:color-mix(in srgb,var(--warning) 7%,transparent);border-radius:8px;padding:6px}'+
   'body.si-so-leitura .si-chk,body.si-so-leitura .si-mover,body.si-so-leitura #siConcluir,body.si-so-leitura #siSalvarPrazo,body.si-so-leitura #siComentar,body.si-so-leitura #siComent,body.si-so-leitura #siMoverCom,body.si-so-leitura #siMoverCom+span{display:none !important}'+
-  'body.si-so-leitura #siColuna,body.si-so-leitura #siPrazo,body.si-so-leitura #siEtiquetaBtn,body.si-so-leitura #siCor{pointer-events:none;opacity:.7}'+
+  'body.si-so-leitura #siColuna,body.si-so-leitura #siPrazo,body.si-so-leitura #siEtiquetaCampo .se-botao,body.si-so-leitura #siCor{pointer-events:none;opacity:.7}'+
   '@media(max-width:860px){.si-link{grid-template-columns:1fr 1fr}'+
   '}'+
   '@media(max-width:860px){.si-grid{grid-template-columns:1fr}.si-col{width:84vw;max-height:calc(100vh - 210px)}.si-linha select{max-width:none;flex:1}.si-g2,.si-oab-nova{grid-template-columns:1fr 1fr}.si-oab{grid-template-columns:minmax(0,1fr) auto}}';
@@ -292,7 +292,8 @@
       sb.from('intimacoes_colunas').select('*').order('ordem').order('criado_em'),
       sb.from('monitoramento_config').select('*').eq('tipo_alvo','oab').order('criado_em'),
       sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab').order('nome_completo'),
-      sb.from('tribunais_links').select('*').order('tribunal_chave').order('ordem').order('nome')]);
+      sb.from('tribunais_links').select('*').order('tribunal_chave').order('ordem').order('nome'),
+      catalogoEtiquetas.carregar()]);
     S.links=r[4].data||[];
     if(r[0].error){toast('Erro ao carregar as intimações: '+esc(r[0].error.message),'error');return false;}
     S.itens=r[0].data||[];S.colunas=r[1].data||[];S.oabs=r[2].data||[];S.usuarios=r[3].data||[];
@@ -303,6 +304,7 @@
     return true;
   }
   async function iniciar(o){
+    await import('./saga_etiquetas.js');
     injetarCss();
     S.sb=o.sb;S.meuId=o.meuId;S.ehAdmin=!!o.ehAdmin;S.toast=o.toast;S.aoMudar=o.aoMudar;
     var p=await Promise.all([
@@ -312,6 +314,10 @@
     S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.editar=p[2].data===true||S.ehAdmin;
     if(!S.pode.editar)document.body.classList.add('si-so-leitura');
     if(S.ehAdmin){var c=await S.sb.from('configuracoes_sistema').select('extra').limit(1).maybeSingle();if(c.data&&c.data.extra&&Array.isArray(c.data.extra.monitoramento_horas))S.horas=c.data.extra.monitoramento_horas.map(Number);}
+    catalogoEtiquetas=SagaEtiquetas.criar({sb:S.sb,admin:S.ehAdmin,
+      reserva:ETIQUETAS.map(function(e,k){return {id:'reserva-'+k,nome:e[0],cor:e[1],ativo:true,reserva:true};}),
+      erro:function(){toast('Não foi possível carregar o catálogo. A lista de reserva está em uso.','error');}
+    });
     montarJanelas();
     return carregar();
   }
@@ -689,43 +695,26 @@
   }
 
   /* ---------- etiqueta: menu suspenso (clicar abre as opções; escolher troca sem apagar nada) ---------- */
-  function pintarEtiqueta(){
-    var nome=document.getElementById('siEtiqueta').value,cor=nome?document.getElementById('siCor').value:'#8a94a8';
-    document.getElementById('siEtiquetaBola').style.setProperty('--c',cor);
-    document.getElementById('siEtiquetaTxt').textContent=nome||'Sem etiqueta';
-    var pv=document.getElementById('siEtiquetaPrevia');pv.textContent=nome||'Sem etiqueta';pv.style.setProperty('--c',cor);
-  }
+  function pintarEtiqueta(){if(menuEtiqueta)menuEtiqueta.atualizar();}
   function definirEtiqueta(nome,cor){
     document.getElementById('siEtiqueta').value=nome||'';
-    if(cor)document.getElementById('siCor').value=cor;
-    pintarEtiqueta();fecharMenuEtiqueta();
-  }
-  function fecharMenuEtiqueta(){
-    var m=document.getElementById('siEtiquetaMenu'),b=document.getElementById('siEtiquetaBtn');
-    if(m)m.classList.remove('aberto');if(b)b.setAttribute('aria-expanded','false');
-  }
-  function abrirMenuEtiqueta(){
-    var atual=document.getElementById('siEtiqueta').value,lista=obterEtiquetas().slice();
-    if(atual&&!lista.some(function(x){return x[0]===atual;}))lista.unshift([atual,document.getElementById('siCor').value]);
-    var m=document.getElementById('siEtiquetaMenu');
-    m.innerHTML='<button type="button" class="si-etq-opc'+(!atual?' atual':'')+'" role="option" data-nome=""><span class="si-etq-bola"></span>Sem etiqueta</button>'+
-      lista.map(function(e){return '<button type="button" class="si-etq-opc'+(e[0]===atual?' atual':'')+'" role="option" data-nome="'+esc(e[0])+'" data-cor="'+esc(e[1])+'"><span class="si-etq-bola" style="--c:'+esc(e[1])+'"></span>'+esc(e[0])+'</button>';}).join('');
-    m.classList.add('aberto');document.getElementById('siEtiquetaBtn').setAttribute('aria-expanded','true');
-    var f=m.querySelector('.atual')||m.querySelector('.si-etq-opc');if(f)f.focus({preventScroll:true});
+    if(cor)document.getElementById('siCor').value=SagaEtiquetas.cor(cor);
+    pintarEtiqueta();if(menuEtiqueta)menuEtiqueta.fechar();
   }
   function ligarEtiqueta(){
-    var btn=document.getElementById('siEtiquetaBtn'),m=document.getElementById('siEtiquetaMenu');
-    btn.addEventListener('click',function(){if(!S.pode.editar)return;if(m.classList.contains('aberto'))fecharMenuEtiqueta();else abrirMenuEtiqueta();});
-    btn.addEventListener('keydown',function(e){if((e.key==='ArrowDown'||e.key==='ArrowUp')&&S.pode.editar&&!m.classList.contains('aberto')){e.preventDefault();abrirMenuEtiqueta();}});
-    m.addEventListener('click',function(e){var o=e.target.closest('.si-etq-opc');if(!o)return;definirEtiqueta(o.dataset.nome,o.dataset.cor);btn.focus({preventScroll:true});});
-    m.addEventListener('keydown',function(e){
-      var ops=Array.from(m.querySelectorAll('.si-etq-opc')),k=ops.indexOf(document.activeElement);
-      if(e.key==='ArrowDown'){e.preventDefault();ops[Math.min(ops.length-1,k+1)].focus();}
-      else if(e.key==='ArrowUp'){e.preventDefault();ops[Math.max(0,k-1)].focus();}
-      else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fecharMenuEtiqueta();btn.focus({preventScroll:true});}
+    menuEtiqueta=catalogoEtiquetas.montar(document.getElementById('siEtiquetaCampo'),{
+      valor:function(){
+        var nome=document.getElementById('siEtiqueta').value;
+        var e=catalogoEtiquetas.todas().find(function(x){return x.nome===nome;});
+        return nome?{id:e&&e.id,nome:nome,cor:document.getElementById('siCor').value}:null;
+      },
+      podeEditar:function(){return S.pode.editar;},
+      escolher:function(e){definirEtiqueta(e?e.nome:'',e?e.cor:null);},
+      alterou:function(anterior,p){
+        if(anterior&&document.getElementById('siEtiqueta').value===anterior.nome)definirEtiqueta(p.p_nome,p.p_cor);
+      }
     });
     document.getElementById('siCor').addEventListener('input',pintarEtiqueta);
-    document.addEventListener('pointerdown',function(e){if(m.classList.contains('aberto')&&!e.target.closest('#siEtiquetaBtn,#siEtiquetaMenu'))fecharMenuEtiqueta();});
   }
   /* ---------- janela aberta: a rolagem fica só nela (o fundo não rola) ---------- */
   function ligarTravaDoFundo(){
@@ -760,11 +749,9 @@
           '<div class="si-acoes" style="margin-bottom:6px"><button class="si-btn" type="button" id="siConcluir">Concluir</button></div>'+
           '<div class="si-g2"><div class="si-campo"><label for="siColuna">Situação</label><select id="siColuna"></select></div>'+
           '<div class="si-campo"><label for="siPrazo">Prazo</label><input id="siPrazo" type="date"></div></div>'+
-          '<div class="si-g2"><div class="si-campo"><label id="siEtiquetaRot">Etiqueta (o que fazer)</label><input id="siEtiqueta" type="hidden">'+
-          '<button type="button" class="si-etq-btn" id="siEtiquetaBtn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="siEtiquetaRot"><span class="si-etq-bola" id="siEtiquetaBola"></span><span id="siEtiquetaTxt">Sem etiqueta</span><span class="si-etq-seta" aria-hidden="true">▾</span></button>'+
-          '<div class="si-etq-menu" id="siEtiquetaMenu" role="listbox" aria-label="Etiquetas"></div></div>'+
+          '<div class="si-g2 si-etiqueta-linha"><div class="si-campo"><label>Etiqueta (o que fazer)</label><input id="siEtiqueta" type="hidden"><div id="siEtiquetaCampo"></div></div>'+
           '<div class="si-campo"><label for="siCor">Cor da etiqueta</label><input id="siCor" type="color" style="padding:3px">'+
-          '<div class="si-etq-previa"><span class="si-tag" id="siEtiquetaPrevia">Sem etiqueta</span><span class="si-sub">A cor aparece no selo da etiqueta no cartão.</span></div></div></div>'+
+          '<div class="si-sub">A cor aparece no selo da etiqueta no cartão.</div></div></div>'+
           '<div class="si-acoes"><button class="si-btn" type="button" id="siSalvarPrazo">Salvar prazo e etiqueta</button></div>'+
           '<div class="si-sec">Processo no SAGA</div><div id="siProcesso"></div>'+
           '<div class="si-sec">Dados</div><div class="si-dados" id="siDados"></div>'+

@@ -1788,6 +1788,13 @@
         </div>
 
         <div class="grupo-filtro-expandido">
+          <span class="grupo-filtro-expandido-label">Etiqueta</span>
+          <div class="dropdown-custom multi-check" id="dropFiltroEtiqueta">
+            <div class="dropdown-custom-valor"><span id="textoFiltroEtiqueta">Todas as etiquetas</span><div class="seta-dropdown"></div></div>
+            <div class="dropdown-custom-lista dropdown-multi-lista" id="listaMultiEtiqueta"><button class="btn-aplicar-multi-filtro" data-aplicar="etiqueta">Aplicar</button></div>
+          </div>
+        </div>
+        <div class="grupo-filtro-expandido">
           <span class="grupo-filtro-expandido-label">Buscar</span>
           <input type="text" class="campo-busca-filtro" id="campoBuscaTextual" placeholder="Titulo, descricao ou numero do processo...">
         </div>
@@ -1837,6 +1844,7 @@
                   <th data-coluna="fase">Fase<span class="seta-ordenacao"></span></th>
                   <th data-coluna="responsavel">Responsável<span class="seta-ordenacao"></span></th>
                   <th data-coluna="prioridade">Prioridade<span class="seta-ordenacao"></span></th>
+                  <th>Etiqueta</th>
                   <th data-coluna="prazo">Prazo<span class="seta-ordenacao"></span></th>
                   <th style="width:70px;">Acoes</th>
                 </tr>
@@ -1999,12 +2007,8 @@
     </div>
 
     <div class="campo-tf">
-      <label>Cor de etiqueta (opcional)</label>
-      <div class="linha-cor-etiqueta">
-        <div class="preview-cor-etiqueta" id="previewCorEtiqueta" style="background:transparent;"></div>
-        <input type="color" class="input-color-picker" id="inputCorEtiqueta" value="#4b8af5">
-        <span class="btn-limpar-cor-etiqueta" id="btnLimparCorEtiqueta">Remover cor</span>
-      </div>
+      <label>Etiqueta</label>
+      <div id="campoEtiquetaTarefa"></div>
     </div>
 
     <div class="campo-tf">
@@ -2106,6 +2110,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<script src="saga_etiquetas.js"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2129,6 +2134,8 @@ var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Preenchidos em carregarDadosTarefas() a partir do banco
 var isAdmin = false;
+var catalogoEtiquetas = null, menuEtiquetaTarefa = null;
+function seloEtiquetaTarefa(t){ return SagaEtiquetas.selo(catalogoEtiquetas && catalogoEtiquetas.porId(t.etiquetaId)); }
 var usuarioLogadoId = null;
 var dadosColaboradores = [];
 var colaboradoresOnlineIds = [];
@@ -2197,6 +2204,7 @@ function tarefaDoBanco(r){
     nivelHierarquico: null,
     status: r.status || (r.concluida ? 'concluida' : 'pendente'),
     dataConclusao: r.concluida_em ? diaLocal(r.concluida_em) : null,
+    etiquetaId: r.etiqueta_id || null,
     corEtiqueta: r.cor_etiqueta || '',
     subtarefas: Array.isArray(r.subtarefas) ? r.subtarefas : [],
     anexos: (r.anexos || []).map(function(a){ return { id:a.id, nome:a.nome_arquivo, caminho:a.caminho_storage, tamanho:a.tamanho_bytes, tipo:a.tipo_mime, enviadoPorId:a.enviado_por_id }; }),
@@ -2226,7 +2234,7 @@ function diaLocal(ts){
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-var SELECT_TAREFA = 'id,titulo,descricao,tipo,processo_id,responsavel_id,criado_por_id,delegado_por_id,data_prazo,hora_prazo,prioridade,status,concluida,concluida_em,cor_etiqueta,subtarefas,coluna_id,ordem_kanban,criado_em,' +
+var SELECT_TAREFA = 'id,titulo,descricao,tipo,processo_id,responsavel_id,criado_por_id,delegado_por_id,data_prazo,hora_prazo,prioridade,status,concluida,concluida_em,etiqueta_id,cor_etiqueta,subtarefas,coluna_id,ordem_kanban,criado_em,' +
   'processo:processos(' + SELECT_PROCESSO + '),' +
   'anexos:tarefas_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime,enviado_por_id),' +
   'comentarios:tarefas_comentarios(id,autor_id,texto,criado_em),' +
@@ -2240,6 +2248,19 @@ async function carregarDadosTarefas(){
   if(eu.error || !eu.data){ mostrarToast('Não foi possível identificar seu usuário.', 'erro'); return false; }
   usuarioLogadoId = eu.data.id;
   isAdmin = !!eu.data.eh_administrador;
+  if(!catalogoEtiquetas) catalogoEtiquetas = SagaEtiquetas.criar({sb:_sb, admin:isAdmin,
+    erro:function(msg){ mostrarToast(msg, 'erro'); },
+    alterou:function(){
+      var atual = catalogoEtiquetas.porId(estadoModalTarefa.etiquetaId);
+      if(atual) estadoModalTarefa.corEtiqueta = atual.cor;
+      atualizarListasDeFiltro(); aplicarFiltrosERenderizar();
+    }});
+  await catalogoEtiquetas.carregar();
+  if(!menuEtiquetaTarefa) menuEtiquetaTarefa = catalogoEtiquetas.montar(document.getElementById('campoEtiquetaTarefa'), {
+    valor:function(){ return catalogoEtiquetas.porId(estadoModalTarefa.etiquetaId); },
+    podeEditar:function(){ return !estadoModalTarefa.somenteLeitura; },
+    escolher:function(e){ estadoModalTarefa.etiquetaId=e?e.id:null; estadoModalTarefa.corEtiqueta=e?e.cor:''; }
+  });
 
   var us = await _sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id').order('nome_completo');
   nomesUsuarios = {}; (us.data || []).forEach(function(u){ nomesUsuarios[u.id] = u.nome_completo; });
@@ -2277,6 +2298,7 @@ function tarefaParaBanco(t){
     hora_prazo: t.dataPrazo && t.horaPrazo ? t.horaPrazo : null,
     prioridade: t.prioridade || 'media',
     status: t.status || 'pendente',
+    etiqueta_id: t.etiquetaId || null,
     cor_etiqueta: t.corEtiqueta || null,
     subtarefas: t.subtarefas || []
   };
@@ -2534,7 +2556,7 @@ var mapaChaveFiltroSimples = { dropFiltroTipo:'tipo', dropFiltroStatus:'status',
 });
 
 /* ===== Filtros multi-select: Tribunal, Fase, Responsavel ===== */
-var filtrosAtivos = { visao:'Todas', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], busca:'' };
+var filtrosAtivos = { visao:'Todas', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
 
 function montarListaMultiResponsavel(){
   var container = document.getElementById('listaMultiResponsavel');
@@ -2573,7 +2595,10 @@ document.querySelectorAll('.btn-aplicar-multi-filtro').forEach(function(btn){
     var container = btn.parentElement;
     var marcados = Array.prototype.map.call(container.querySelectorAll('.opcao-multi-check.marcada'), function(o){ return o.getAttribute('data-valor'); });
 
-    if(tipoFiltro === 'tribunal'){
+    if(tipoFiltro === 'etiqueta'){
+      filtrosAtivos.etiquetas = marcados;
+      document.getElementById('textoFiltroEtiqueta').textContent = marcados.length ? marcados.length + ' etiqueta(s) selecionada(s)' : 'Todas as etiquetas';
+    } else if(tipoFiltro === 'tribunal'){
       filtrosAtivos.tribunais = marcados;
       document.getElementById('textoFiltroTribunal').textContent = marcados.length === 0 ? 'Todos os tribunais' : marcados.length + ' tribunal(is) selecionado(s)';
     } else if(tipoFiltro === 'fase'){
@@ -2610,8 +2635,9 @@ document.getElementById('btnTogglePainelFiltros').addEventListener('click', func
 });
 
 document.getElementById('btnLimparFiltrosTarefas').addEventListener('click', function(){
-  filtrosAtivos = { tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], busca:'' };
+  filtrosAtivos = { tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
   document.querySelectorAll('.painel-filtros-expandido .opcao-multi-check').forEach(function(o){ o.classList.remove('marcada'); });
+  document.getElementById('textoFiltroEtiqueta').textContent = 'Todas as etiquetas';
   document.getElementById('textoFiltroTribunal').textContent = 'Todos os tribunais';
   document.getElementById('textoFiltroFase').textContent = 'Todas as fases';
   document.getElementById('textoFiltroResponsavel').textContent = 'Todos os responsaveis';
@@ -2640,6 +2666,14 @@ function renderizarChipsFiltros(){
   filtrosAtivos.tribunais.forEach(function(t){ chips.push({ label:'Tribunal: ' + t, limpar:function(){ filtrosAtivos.tribunais = filtrosAtivos.tribunais.filter(function(x){ return x!==t; }); desmarcarOpcaoMulti('listaMultiTribunal', t); document.getElementById('textoFiltroTribunal').textContent = filtrosAtivos.tribunais.length === 0 ? 'Todos os tribunais' : filtrosAtivos.tribunais.length + ' tribunal(is) selecionado(s)'; } }); });
   filtrosAtivos.fases.forEach(function(f){ chips.push({ label:'Fase: ' + f, limpar:function(){ filtrosAtivos.fases = filtrosAtivos.fases.filter(function(x){ return x!==f; }); desmarcarOpcaoMulti('listaMultiFase', f); document.getElementById('textoFiltroFase').textContent = filtrosAtivos.fases.length === 0 ? 'Todas as fases' : filtrosAtivos.fases.length + ' fase(s) selecionada(s)'; } }); });
   filtrosAtivos.responsaveis.forEach(function(r){ chips.push({ label:'Responsavel: ' + r, limpar:function(){ filtrosAtivos.responsaveis = filtrosAtivos.responsaveis.filter(function(x){ return x!==r; }); desmarcarOpcaoMulti('listaMultiResponsavel', r); document.getElementById('textoFiltroResponsavel').textContent = filtrosAtivos.responsaveis.length === 0 ? 'Todos os responsaveis' : filtrosAtivos.responsaveis.length + ' selecionado(s)'; } }); });
+  filtrosAtivos.etiquetas.forEach(function(id){
+    var e = catalogoEtiquetas && catalogoEtiquetas.porId(id);
+    chips.push({label:'Etiqueta: ' + (e?e.nome:'Sem etiqueta'), limpar:function(){
+      filtrosAtivos.etiquetas = filtrosAtivos.etiquetas.filter(function(x){return x!==id;});
+      desmarcarOpcaoMulti('listaMultiEtiqueta', id);
+      document.getElementById('textoFiltroEtiqueta').textContent = filtrosAtivos.etiquetas.length ? filtrosAtivos.etiquetas.length + ' etiqueta(s) selecionada(s)' : 'Todas as etiquetas';
+    }});
+  });
   if(filtrosAtivos.busca) chips.push({ label:'Busca: ' + filtrosAtivos.busca, limpar:function(){ filtrosAtivos.busca=''; document.getElementById('campoBuscaTextual').value=''; } });
 
   document.getElementById('btnTogglePainelFiltros').querySelector('.badge-contagem-filtros').style.display = chips.length > 0 ? 'inline-block' : 'none';
@@ -2711,6 +2745,7 @@ function tarefaPassaFiltros(t){
     var nomeResp = getColaborador(t.responsavelId) ? getColaborador(t.responsavelId).nome : '';
     if(filtrosAtivos.responsaveis.indexOf(nomeResp) === -1) return false;
   }
+  if(filtrosAtivos.etiquetas.length && filtrosAtivos.etiquetas.indexOf(t.etiquetaId || '') === -1) return false;
   if(filtrosAtivos.busca){
     var alvo = (t.titulo + ' ' + (t.descricao||'') + ' ' + (t.processoVinculado ? t.processoVinculado.numero + ' ' + t.processoVinculado.cliente : '')).toLowerCase();
     if(alvo.indexOf(filtrosAtivos.busca) === -1) return false;
@@ -3001,7 +3036,7 @@ function criarCardTarefaEl(tarefa){
     ? '<div class="badge-tipo-tarefa tipo-pessoal"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" stroke="currentColor" stroke-width="1.8"/></svg>Pessoal</div>'
     : '<div class="badge-tipo-tarefa tipo-processo"><svg width="9" height="9" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>Processo</div>';
 
-  var etiquetaHtml = tarefa.corEtiqueta ? '<div class="etiqueta-cor-card" style="background:' + tarefa.corEtiqueta + ';"></div>' : '';
+  var etiquetaHtml = seloEtiquetaTarefa(tarefa) || (tarefa.corEtiqueta ? '<div class="etiqueta-cor-card" style="background:' + SagaEtiquetas.cor(tarefa.corEtiqueta) + ';"></div>' : '');
 
   var numeroProcessoHtml = '';
   var metaProcessoHtml = '';
@@ -3460,6 +3495,7 @@ function criarLinhaTabela(tarefa){
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.fase : '-') + '</td>' +
     '<td>' + escaparHtml(resp ? resp.nome : '-') + '</td>' +
     '<td><span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span></td>' +
+    '<td>' + seloEtiquetaTarefa(tarefa) + '</td>' +
     '<td>' + badgePrazoHtml + '</td>' +
     '<td><div class="acoes-linha-tarefa">' +
       '<button class="btn-acao-linha acao-editar" title="Editar" data-id-editar="' + tarefa.id + '"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 20l1-4 12-12 3 3-12 12-4 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>' +
@@ -3489,7 +3525,7 @@ function renderizarListaTabela(tarefasFiltradas){
   var corpo = document.getElementById('corpoTabelaTarefas');
   corpo.innerHTML = '';
   if(itensPagina.length === 0){
-    corpo.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:24px; color:var(--muted);">Nenhuma tarefa encontrada para os filtros aplicados.</td></tr>';
+    corpo.innerHTML = '<tr><td colspan="11" style="text-align:center; padding:24px; color:var(--muted);">Nenhuma tarefa encontrada para os filtros aplicados.</td></tr>';
   }
   itensPagina.forEach(function(t){ corpo.appendChild(criarLinhaTabela(t)); });
 
@@ -3607,6 +3643,7 @@ var estadoModalTarefa = {
   tipo:'pessoal',
   processoVinculado:null,
   prioridade:'media',
+  etiquetaId:null,
   corEtiqueta:'',
   subtarefas:[],
   anexos:[],
@@ -3743,7 +3780,7 @@ function popularSelectResponsavel(){
 function resetarFormularioTarefa(){
   fecharMenuCompartilharTarefa();
   document.getElementById('buscaCompartilharTarefa').value = '';
-  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], somenteLeitura:false };
+  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', etiquetaId:null, corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], somenteLeitura:false };
   document.querySelector('#modalTarefa .modal-tf').classList.remove('somente-leitura');
   document.getElementById('avisoSomenteLeituraTarefa').style.display = 'none';
   document.getElementById('avisoOrigemIntimacao').style.display = 'none';
@@ -3758,8 +3795,7 @@ function resetarFormularioTarefa(){
   document.getElementById('subsecaoProcessoVinculado').classList.remove('visivel');
   document.querySelectorAll('.opcao-tipo-tarefa').forEach(function(o){ o.classList.toggle('ativa', o.getAttribute('data-tipo') === 'pessoal'); });
   document.querySelectorAll('.pill-prioridade-opcao').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === 'media'); });
-  document.getElementById('previewCorEtiqueta').style.background = 'transparent';
-  document.getElementById('inputCorEtiqueta').value = '#4b8af5';
+  if(menuEtiquetaTarefa){ menuEtiquetaTarefa.fechar(); menuEtiquetaTarefa.atualizar(); }
   document.getElementById('btnExcluirTarefaModal').style.display = 'none';
   document.getElementById('secaoComentariosTarefa').style.display = 'none';
   renderizarSubtarefasModal();
@@ -3901,11 +3937,8 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     estadoModalTarefa.prioridade = tarefa.prioridade;
     document.querySelectorAll('.pill-prioridade-opcao').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === tarefa.prioridade); });
 
+    estadoModalTarefa.etiquetaId = tarefa.etiquetaId || null;
     estadoModalTarefa.corEtiqueta = tarefa.corEtiqueta || '';
-    if(tarefa.corEtiqueta){
-      document.getElementById('previewCorEtiqueta').style.background = tarefa.corEtiqueta;
-      document.getElementById('inputCorEtiqueta').value = tarefa.corEtiqueta;
-    }
 
     estadoModalTarefa.subtarefas = tarefa.subtarefas.map(function(s){ return { texto:s.texto, concluida:s.concluida }; });
     estadoModalTarefa.anexos = tarefa.anexos.map(function(a){ return Object.assign({}, a); });
@@ -3936,6 +3969,7 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     if(colunaPreSelecionada) selecionarValorSelectCustomTarefa('selectColunaTarefa', colunaPreSelecionada);
   }
 
+  if(menuEtiquetaTarefa) menuEtiquetaTarefa.atualizar();
   modalTarefaEl.classList.add('aberto');
   if(!estadoModalTarefa.somenteLeitura) document.getElementById('inputTituloTarefa').focus();
 }
@@ -4047,16 +4081,6 @@ document.querySelectorAll('.pill-prioridade-opcao').forEach(function(pill){
     pill.classList.add('selecionada');
     estadoModalTarefa.prioridade = pill.getAttribute('data-prioridade');
   });
-});
-
-/* ===== Color picker livre para etiqueta ===== */
-document.getElementById('inputCorEtiqueta').addEventListener('input', function(){
-  estadoModalTarefa.corEtiqueta = this.value;
-  document.getElementById('previewCorEtiqueta').style.background = this.value;
-});
-document.getElementById('btnLimparCorEtiqueta').addEventListener('click', function(){
-  estadoModalTarefa.corEtiqueta = '';
-  document.getElementById('previewCorEtiqueta').style.background = 'transparent';
 });
 
 /* ===== Subtarefas / Checklist dinamico ===== */
@@ -4269,7 +4293,7 @@ document.getElementById('btnSalvarTarefa').addEventListener('click', async funct
     titulo:titulo, descricao:descricao, tipo:estadoModalTarefa.tipo,
     processoVinculado:estadoModalTarefa.tipo === 'processo' ? estadoModalTarefa.processoVinculado : null,
     colunaId:colunaId, responsavelId:responsavelId, dataPrazo:dataPrazo, horaPrazo:horaPrazo,
-    prioridade:estadoModalTarefa.prioridade, corEtiqueta:estadoModalTarefa.corEtiqueta,
+    prioridade:estadoModalTarefa.prioridade, etiquetaId:estadoModalTarefa.etiquetaId, corEtiqueta:estadoModalTarefa.corEtiqueta,
     subtarefas:estadoModalTarefa.subtarefas.map(function(s){ return { texto:s.texto, concluida:!!s.concluida }; }),
     status:tarefaExistente ? tarefaExistente.status : 'pendente',
     ordemKanban:tarefaExistente && tarefaExistente.colunaId === colunaId ? tarefaExistente.ordemKanban : proximaOrdemColuna(colunaId)
@@ -4468,6 +4492,18 @@ function reconstruirOpcoesMulti(idLista, itens){
 }
 
 function atualizarListasDeFiltro(){
+  if(catalogoEtiquetas){
+    var listaEt = document.getElementById('listaMultiEtiqueta');
+    listaEt.querySelectorAll('.opcao-multi-check').forEach(function(el){el.remove();});
+    [{id:'',nome:'Sem etiqueta',cor:'#64748b'}].concat(catalogoEtiquetas.todas().filter(function(e){return e.ativo===true;})).forEach(function(e){
+      var el=document.createElement('div');
+      el.className='opcao-multi-check'+(filtrosAtivos.etiquetas.indexOf(e.id)!==-1?' marcada':'');
+      el.dataset.valor=e.id;
+      el.innerHTML='<div class="caixa-check-multi"></div>'+SagaEtiquetas.selo(e);
+      listaEt.insertBefore(el,listaEt.querySelector('button'));
+    });
+    ativarOpcoesMultiCheck(listaEt);
+  }
   reconstruirOpcoesMulti('listaMultiResponsavel', dadosColaboradores.map(function(c){
     return { valor:c.nome, prefixoHtml:'<div class="mini-avatar-filtro" style="background:' + c.cor + ';">' + escaparHtml(c.iniciais) + '</div>' };
   }));

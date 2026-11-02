@@ -277,6 +277,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<script src="saga_etiquetas.js"></script>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
 <body data-theme="dark">
@@ -981,7 +982,7 @@ function renderTasks(){
   root.innerHTML=process.tarefas.map(task=>{
     const podeConcluir=task.concluida!==true&&perms.tarefasEditar===true;
     const podeEditar=task.concluida!==true&&perms.tarefasEditar===true;
-    return '<div class="item-tarefa-mini '+(task.concluida?'concluida':'')+'"><button class="checkbox-tarefa-mini" '+(podeConcluir?'':'disabled')+' data-task-toggle="'+esc(task.id)+'">'+(task.concluida?checkboxIcon():'')+'</button><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo">'+esc(task.titulo)+'</div><div class="item-tarefa-mini-prazo '+(task.urgente?'urgente':'normal')+'">'+esc(task.prazo)+'</div>'+(task.responsavelNome?'<div class="item-tarefa-mini-prazo normal">Responsável: '+esc(task.responsavelNome)+(task.criadoPorNome&&task.criadoPorId!==task.responsavelId?' · criada por '+esc(task.criadoPorNome):'')+'</div>':'')+'</div>'+(podeEditar?'<button class="timeline-action" data-task-edit="'+esc(task.id)+'" type="button">Editar</button>':'')+'</div>';
+    return '<div class="item-tarefa-mini '+(task.concluida?'concluida':'')+'"><button class="checkbox-tarefa-mini" '+(podeConcluir?'':'disabled')+' data-task-toggle="'+esc(task.id)+'">'+(task.concluida?checkboxIcon():'')+'</button><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo">'+esc(task.titulo)+'</div>'+SagaEtiquetas.selo(task.etiqueta)+'<div class="item-tarefa-mini-prazo '+(task.urgente?'urgente':'normal')+'">'+esc(task.prazo)+'</div>'+(task.responsavelNome?'<div class="item-tarefa-mini-prazo normal">Responsável: '+esc(task.responsavelNome)+(task.criadoPorNome&&task.criadoPorId!==task.responsavelId?' · criada por '+esc(task.criadoPorNome):'')+'</div>':'')+'</div>'+(podeEditar?'<button class="timeline-action" data-task-edit="'+esc(task.id)+'" type="button">Editar</button>':'')+'</div>';
   }).join('')+htmlIntimacoesProcesso(process);
   root.querySelectorAll('[data-task-toggle]').forEach(button=>button.addEventListener('click',async()=>{
     await concluirTarefa(button.dataset.taskToggle);
@@ -2088,9 +2089,13 @@ async function carregarDocumentos(processoId){
 async function carregarTarefas(processoId){
   if(!processoId||!perms.tarefasVisualizar)return [];
   try{
-    const r=await _sb.from('tarefas').select('id,processo_id,responsavel_id,criado_por_id,titulo,descricao,tipo,origem,data_prazo,data_prazo_original,concluida,concluida_em,concluida_por_id,criado_em,atualizado_em').eq('processo_id',processoId).order('concluida',{ascending:true}).order('data_prazo',{ascending:true});
+    const r=await _sb.from('tarefas').select('id,processo_id,responsavel_id,criado_por_id,titulo,descricao,tipo,origem,data_prazo,data_prazo_original,concluida,concluida_em,concluida_por_id,criado_em,atualizado_em,etiqueta_id').eq('processo_id',processoId).order('concluida',{ascending:true}).order('data_prazo',{ascending:true});
     if(r.error)throw r.error;
     const linhas=r.data||[];
+    const etiquetas=await _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem').eq('categoria','tarefa').order('ordem').order('nome');
+    if(etiquetas.error)showToast('Não foi possível carregar as etiquetas das tarefas.','error');
+    const etiquetasPorId={};
+    (etiquetas.data||[]).forEach(e=>{etiquetasPorId[e.id]=e;});
     const responsaveisIds=[...new Set(linhas.flatMap(item=>[item.responsavel_id,item.criado_por_id]).filter(Boolean))];
     let responsaveisPorId={};
     if(responsaveisIds.length){
@@ -2107,6 +2112,7 @@ async function carregarTarefas(processoId){
       return {
         id:tarefa.id,
         titulo:tarefa.titulo,
+        etiqueta:etiquetasPorId[tarefa.etiqueta_id]||null,
         descricao:tarefa.descricao||'',
         tipo:tarefa.tipo,
         origem:tarefa.origem,
