@@ -117,6 +117,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 /* Documentos */
 .documento-list{display:flex;flex-direction:column;gap:8px}.documento-group{display:flex;flex-direction:column;gap:6px}.documento-item{display:flex;align-items:center;gap:10px;padding:10px 11px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:11px;background:color-mix(in srgb,var(--text) 2.4%,transparent);transition:.18s}.documento-item:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 4%,transparent)}.icone-documento{width:33px;height:33px;display:grid;place-items:center;flex:0 0 auto;border-radius:9px;background:color-mix(in srgb,var(--info) 13%,transparent);color:var(--info)}.documento-info{min-width:0;flex:1}.documento-nome{overflow:hidden;color:var(--text);font-size:11.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.documento-meta{margin-top:3px;color:var(--muted);font-size:9px}.documento-acoes{display:flex;gap:5px}.doc-action{width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--border-soft);border-radius:8px;color:var(--muted)}.doc-action:hover{border-color:var(--gold);color:var(--gold)}.doc-comentarios-wrap{display:none;margin-left:42px;padding:5px 10px;border-left:2px solid color-mix(in srgb,var(--info) 40%,transparent)}.doc-comentarios-wrap.aberto{display:block}.doc-comentario-mini{padding:7px 0;border-bottom:1px solid color-mix(in srgb,var(--text) 5%,transparent);color:var(--muted);font-size:10px;line-height:1.45}.doc-comentario-mini:last-child{border-bottom:0}.doc-comentario-mini strong{color:var(--text)}.selo-documento{padding:1px 5px;border-radius:5px;background:color-mix(in srgb,var(--info) 13%,transparent);color:var(--info);font-size:9.5px;font-weight:700}.doc-comentario-envio{display:flex;gap:6px;margin-top:8px;padding-bottom:5px}.doc-comentario-envio input{flex:1;min-width:0;padding:7px 9px;border:1px solid var(--border-soft);border-radius:8px;background:color-mix(in srgb,var(--text) 2.4%,transparent);color:var(--text);font-family:inherit;font-size:10px}.doc-comentario-envio input:focus{outline:none;border-color:var(--gold)}.doc-comentario-envio input::placeholder{color:var(--muted)}.btn-doc-comentario{flex:0 0 auto;padding:7px 11px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);border-radius:8px;background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold);font-size:9.5px;font-weight:700;cursor:pointer}.btn-doc-comentario:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 16%,transparent)}.btn-anexar-documento{width:100%;margin-top:7px;padding:10px;border:1px dashed color-mix(in srgb,var(--info) 40%,transparent);border-radius:11px;background:color-mix(in srgb,var(--info) 6%,transparent);color:var(--info);font-size:11px;font-weight:700;text-align:center}.btn-anexar-documento:hover{border-color:var(--info)}
 
+/* Ações de checklist */
+.checklist-cabecalho .checklist-titulo-grupo{flex:1;min-width:0}.checklist-nome,.checklist-texto{overflow-wrap:anywhere;min-width:0}.checklist-texto{flex:1}.checklist-item.concluido{text-decoration:none}.checklist-item.concluido>.checklist-texto:not(:has(input)){text-decoration:line-through}
+.checklist-menu{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;padding:6px;border:1px solid var(--border-soft);border-radius:9px;background:var(--panel-solid);animation:checklistMola .25s cubic-bezier(.2,1.4,.4,1)}.checklist-menu[hidden]{display:none}
+.checklist-menu button,.checklist-mais,.checklist-item-acoes button,.checklist-editor button{padding:5px 7px;border:1px solid var(--border-soft);border-radius:7px;color:var(--muted);background:var(--panel);font:inherit;font-size:11px;cursor:pointer;transition:transform .15s,color .15s}.checklist-menu button:hover,.checklist-item-acoes button:hover{color:var(--gold)}.checklist-menu button:active,.checklist-mais:active,.checklist-item-acoes button:active,.checklist-editor button:active{transform:scale(.92)}
+.checklist-menu button:disabled,.checklist-item-acoes button:disabled{opacity:.35;cursor:default}.checklist-item-acoes{display:flex;gap:3px;opacity:0;flex:0 0 auto;transition:opacity .15s}.checklist-item:hover .checklist-item-acoes,.checklist-item:focus-within .checklist-item-acoes{opacity:1}.checklist-editor{display:flex;gap:4px;min-width:0;align-items:center;text-decoration:none}.checklist-editor input{width:100%;min-width:0;border:1px solid var(--gold);border-radius:7px;padding:6px;background:var(--panel-solid);color:var(--text);font:inherit;box-sizing:border-box}.checklist-editor button{flex:0 0 auto}
+.checklist-item{min-width:0;box-sizing:border-box}#checklistDesfazerArea{position:fixed;z-index:2100;bottom:22px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:7px;max-width:calc(100vw - 32px)}.checklist-desfazer{display:flex;gap:14px;align-items:center;max-width:calc(100vw - 32px);box-sizing:border-box;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--panel-solid);color:var(--text);box-shadow:var(--shadow);font-size:12px}.checklist-desfazer button{color:var(--gold);font:inherit;font-weight:700;cursor:pointer;flex:0 0 auto}.checklist-desfazer button:active{scale:.95}
+@keyframes checklistMola{from{opacity:0;transform:translateY(-4px) scale(.97)}to{opacity:1;transform:none}}
+@media(hover:none),(max-width:600px){.checklist-item-acoes{opacity:1}.checklist-item{flex-wrap:wrap}.checklist-item-acoes{margin-left:auto}.checklist-texto{flex-basis:calc(100% - 30px)}.checklist-item-acoes button{min-width:28px;min-height:28px}}
+@media(prefers-reduced-motion:reduce){.checklist-menu{animation:none}}
+
 /* Comentários e histórico */
 .caixa-novo-comentario{display:flex;gap:10px;margin-bottom:22px}.mini-avatar-comentario{width:33px;height:33px;display:grid;place-items:center;flex:0 0 auto;border:1px solid var(--border-soft);border-radius:50%;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 22%,transparent),color-mix(in srgb,var(--gold) 7%,transparent));color:var(--gold-light);font-size:10px;font-weight:700}.input-comentario-wrap{min-width:0;flex:1}.input-comentario{width:100%;min-height:76px;padding:11px 13px;resize:vertical;outline:0;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);font:inherit;font-size:11.5px;line-height:1.55}.input-comentario:focus{border-color:var(--gold)}.input-comentario::placeholder{color:var(--muted)}.acoes-comentario{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}.btn-mencionar{position:relative;display:inline-flex;align-items:center;gap:5px;color:var(--info);font-size:10.5px;font-weight:700}.mention-menu{display:none;position:absolute;z-index:310;left:0;top:calc(100% + 7px);min-width:205px;padding:6px;border:1px solid var(--border);border-radius:11px;background:linear-gradient(145deg,var(--panel-solid),var(--navy-2));box-shadow:var(--shadow)}.mention-menu.aberto{display:block}.mention-option{display:block;width:100%;padding:8px;border-radius:7px;color:var(--text);font-size:10px;text-align:left}.mention-option:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold)}.btn-enviar-comentario,.btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 13px;border-radius:9px;background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold-deep));background-size:200% 100%;color:var(--navy-1);font-size:10.5px;font-weight:700;transition:background-position .35s ease,transform .15s}.btn-enviar-comentario:hover,.btn-primary:hover{background-position:100% 0;transform:translateY(-1px)}
 .linha-tempo{display:flex;flex-direction:column;gap:15px}.item-timeline{display:flex;gap:10px}.item-timeline-corpo{min-width:0;flex:1}.item-timeline-cabecalho{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}.item-timeline-autor{font-size:11.5px;font-weight:700}.item-timeline-data{color:var(--muted);font-size:9.5px}.item-timeline-editado{color:var(--muted);font-size:9px;font-style:italic}.item-timeline-conteudo{padding:10px 12px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:10px;background:color-mix(in srgb,var(--text) 2.5%,transparent);color:var(--text);font-size:11.2px;line-height:1.55}.mencao{padding:1px 5px;border-radius:5px;background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold-light);font-weight:700}.item-timeline.evento-sistema .mini-avatar-comentario{background:color-mix(in srgb,var(--info) 12%,transparent);color:var(--info)}.item-timeline.evento-sistema .item-timeline-conteudo{display:flex;align-items:center;gap:8px;border-color:color-mix(in srgb,var(--info) 23%,transparent);background:color-mix(in srgb,var(--info) 6%,transparent);color:var(--muted);font-size:10.5px;font-style:italic}.acoes-item-timeline{display:flex;gap:11px;margin-top:6px}.timeline-action{color:var(--muted);font-size:9.5px;font-weight:600}.timeline-action:hover{color:var(--gold)}
@@ -545,6 +555,10 @@ function systemIcon(type){return type==='relogio'?'<svg width="14" height="14" v
 function renderPresence(){/* obsoleto: saga_ui.js cuida da presença */}
 function setupTopbar(){
   document.addEventListener('click',event=>{
+    if(!event.target.closest('.checklist-bloco')){
+      document.querySelectorAll('.checklist-menu').forEach(m=>{m.hidden=true;});
+      document.querySelectorAll('.checklist-mais').forEach(b=>b.setAttribute('aria-expanded','false'));
+    }
     if(!event.target.closest('.menu-modelos-checklist')){var m=document.getElementById('dropdownModelos');if(m)m.classList.remove('aberto');}
     if(!event.target.closest('.btn-mencionar')){var mn=document.getElementById('mentionMenu');if(mn)mn.classList.remove('aberto');}
     if(!event.target.closest('.custom-select'))document.querySelectorAll('.custom-select.open').forEach(select=>select.classList.remove('open'));
@@ -825,33 +839,174 @@ function renderProcessData(){
   const contexto=document.querySelector('.page-context small');
   if(contexto)contexto.textContent='Processo selecionado: '+process.tese;
 }
+let checklistsSalvando=false;
+function podeEditarChecklists(){return perms.pessoasEditar===true&&!checklistsSalvando;}
+function contextoChecklist(){return {pessoaId:state.pessoaRow?.id,processoId:state.activeProcessId};}
+function processoDoChecklist(ctx){return state.pessoaRow?.id===ctx.pessoaId?state.processos.find(p=>p.id===ctx.processoId):null;}
+function elementoChecklist(listId,itemId){
+  const blocos=Array.from(document.querySelectorAll('#checklistList [data-checklist-id]'));
+  const bloco=blocos.find(el=>el.dataset.checklistId===listId);
+  return itemId?Array.from(bloco?.querySelectorAll('[data-checklist-item-id]')||[]).find(el=>el.dataset.checklistItemId===itemId):bloco;
+}
+function animarEntradaChecklist(listId,itemId){
+  const el=elementoChecklist(listId,itemId);
+  if(el&&!matchMedia('(prefers-reduced-motion: reduce)').matches)el.animate([{opacity:0,transform:'translateY(-6px) scale(.96)'},{opacity:1,transform:'none'}],{duration:300,easing:'cubic-bezier(.2,1.4,.4,1)'});
+}
+async function alterarChecklists(ctx,alterar){
+  const processo=processoDoChecklist(ctx);
+  if(!processo||!podeEditarChecklists())return false;
+  const antes=JSON.parse(JSON.stringify(processo.checklists));
+  checklistsSalvando=true;
+  try{
+    alterar(processo);
+    renderChecklists();
+    const salvo=await salvarChecklistsDaPessoa(processo);
+    if(!salvo)processo.checklists=antes;
+    return salvo;
+  }catch(erro){
+    processo.checklists=antes;
+    showToast('Não foi possível salvar os checklists desta pessoa.','error');
+    return false;
+  }finally{
+    checklistsSalvando=false;
+    renderChecklists();
+  }
+}
+function avisoDesfazerChecklist(ctx,listId,itemId,removido,posicao){
+  const aviso=document.createElement('div');
+  aviso.className='checklist-desfazer';aviso.setAttribute('role','status');
+  const texto=document.createElement('span');texto.textContent=itemId?'Item excluído.':'Checklist excluído.';
+  const botao=document.createElement('button');botao.type='button';botao.textContent='Desfazer';
+  let area=document.getElementById('checklistDesfazerArea');
+  if(!area){area=document.createElement('div');area.id='checklistDesfazerArea';document.body.appendChild(area);}
+  aviso.append(texto,botao);area.appendChild(aviso);
+  const timer=setTimeout(()=>aviso.remove(),8000);
+  botao.onclick=async()=>{
+    const processo=processoDoChecklist(ctx);
+    if(!processo){showToast('Volte à ficha de origem para desfazer.','warning');return;}
+    if(!podeEditarChecklists())return;
+    const lista=itemId?processo.checklists.find(l=>l.id===listId):null;
+    if(itemId&&!lista){showToast('Restaure o checklist antes de desfazer a exclusão do item.','warning');return;}
+    botao.disabled=true;clearTimeout(timer);
+    const salvo=await alterarChecklists(ctx,p=>{
+      const itens=itemId?p.checklists.find(l=>l.id===listId).itens:p.checklists;
+      if(!itens.some(i=>i.id===removido.id))itens.splice(Math.min(posicao,itens.length),0,JSON.parse(JSON.stringify(removido)));
+    });
+    if(salvo){aviso.remove();if(state.activeProcessId===ctx.processoId)animarEntradaChecklist(listId,itemId);}
+    else{botao.disabled=false;setTimeout(()=>aviso.remove(),8000);}
+  };
+}
+async function excluirChecklist(listId,itemId){
+  if(!podeEditarChecklists())return;
+  const ctx=contextoChecklist(),processo=processoDoChecklist(ctx);
+  const lista=processo?.checklists.find(l=>l.id===listId);
+  const itens=itemId?lista?.itens:processo?.checklists;
+  const posicao=itens?.findIndex(i=>i.id===(itemId||listId));
+  if(posicao==null||posicao<0)return;
+  const removido=JSON.parse(JSON.stringify(itens[posicao]));
+  const mensagem=itemId?'Excluir este item do checklist?':'Excluir o checklist "'+lista.nome+'"? Serão removidos '+lista.itens.length+' '+(lista.itens.length===1?'item.':'itens.');
+  if(!(await sagaConfirmar(itemId?'Excluir item':'Excluir checklist',mensagem,'Excluir')))return;
+  if(!podeEditarChecklists()||!processoDoChecklist(ctx)||state.activeProcessId!==ctx.processoId)return;
+  const el=elementoChecklist(listId,itemId);
+  // Bloqueia novos comandos durante a saída, antes de iniciar a gravação.
+  checklistsSalvando=true;renderControlesChecklist();
+  if(el&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+    const altura=el.getBoundingClientRect().height;el.style.overflow='hidden';
+    await el.animate([{height:altura+'px',opacity:1,transform:'scale(1)'},{height:'0px',paddingTop:0,paddingBottom:0,marginTop:0,marginBottom:0,opacity:0,transform:'scale(.95)'}],{duration:180,easing:'ease-in',fill:'forwards'}).finished.catch(()=>{});
+  }
+  checklistsSalvando=false;
+  const salvo=await alterarChecklists(ctx,p=>{
+    const alvo=itemId?p.checklists.find(l=>l.id===listId).itens:p.checklists;
+    const indice=alvo.findIndex(i=>i.id===(itemId||listId));
+    if(indice>=0)alvo.splice(indice,1);
+  });
+  if(salvo)avisoDesfazerChecklist(ctx,listId,itemId,removido,posicao);
+}
+function editarTextoChecklist(listId,itemId){
+  if(!podeEditarChecklists())return;
+  const ctx=contextoChecklist(),lista=getChecklist(listId);
+  const item=itemId?lista?.itens.find(i=>i.id===itemId):lista;
+  const el=elementoChecklist(listId,itemId)?.querySelector(itemId?'.checklist-texto':'.checklist-nome');
+  if(!item||!el||el.querySelector('input'))return;
+  const campo=itemId?'texto':'nome';
+  const editor=document.createElement('span');editor.className='checklist-editor';
+  const input=document.createElement('input');input.type='text';input.value=item[campo];input.setAttribute('aria-label',itemId?'Texto do item':'Nome do checklist');
+  const salvar=document.createElement('button');salvar.type='button';salvar.textContent='✓';salvar.setAttribute('aria-label','Salvar texto');
+  const cancelar=document.createElement('button');cancelar.type='button';cancelar.textContent='✕';cancelar.setAttribute('aria-label','Cancelar edição');
+  const cancelarEdicao=()=>{el.textContent=item[campo];};
+  salvar.onclick=async()=>{
+    const texto=input.value.trim();
+    if(!texto){input.setCustomValidity('Informe um texto.');input.reportValidity();input.focus();return;}
+    await alterarChecklists(ctx,p=>{
+      const l=p.checklists.find(l=>l.id===listId),alvo=itemId?l?.itens.find(i=>i.id===itemId):l;
+      if(alvo)alvo[campo]=texto;
+    });
+  };
+  cancelar.onclick=cancelarEdicao;
+  input.oninput=()=>input.setCustomValidity('');
+  input.onkeydown=e=>{
+    if(e.key==='Enter'){e.preventDefault();e.stopPropagation();salvar.click();}
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();cancelarEdicao();}
+  };
+  editor.append(input,salvar,cancelar);el.replaceChildren(editor);input.focus({preventScroll:true});input.select();
+  editor.scrollIntoView({block:'center',behavior:'instant'});
+}
+function renderControlesChecklist(){
+  const criar=document.getElementById('btnAddChecklist');
+  if(criar){criar.hidden=!perms.pessoasEditar||!getActiveProcess();criar.disabled=checklistsSalvando;}
+  if(!perms.pessoasEditar)document.getElementById('dropdownModelos')?.classList.remove('aberto');
+  document.querySelectorAll('#checklistList button').forEach(b=>{if(checklistsSalvando)b.disabled=true;});
+}
 function renderChecklists(){
   const process=getActiveProcess();
   const root=document.getElementById('checklistList');
+  renderControlesChecklist();
   if(!process||!root)return;
+  const editar=perms.pessoasEditar===true;
+  const botao=(acao,texto,titulo,desativado=false)=>'<button type="button" data-cl-acao="'+acao+'" aria-label="'+titulo+'" title="'+titulo+'"'+(desativado||checklistsSalvando?' disabled':'')+'>'+texto+'</button>';
   if(!process.checklists.length){
-    root.innerHTML=emptyState('Nenhum checklist criado','Adicione um modelo ou crie um checklist específico para este processo.');
-    return;
-  }
-  root.innerHTML=process.checklists.map(list=>{
-    const total=list.itens.length;
-    const done=list.itens.filter(item=>item.feito).length;
-    const pct=total?Math.round(done/total*100):0;
-    return '<div class="checklist-bloco" data-checklist-id="'+list.id+'"><div class="checklist-cabecalho"><div class="checklist-titulo-grupo"><span class="checklist-nome">'+esc(list.nome)+'</span></div><span class="checklist-progresso-texto">'+done+'/'+total+'</span></div><div class="barra-progresso-wrap"><div class="barra-progresso-fill" style="width:'+pct+'%"></div></div>'+list.itens.map(item=>'<div class="checklist-item '+(item.feito?'concluido':'')+'"><button class="checklist-checkbox '+(item.feito?'marcado':'')+'" data-checklist-toggle="'+list.id+'" data-checklist-item="'+item.id+'">'+(item.feito?checkboxIcon():'')+'</button><span>'+esc(item.texto)+'</span></div>').join('')+'<button class="btn-add-item-checklist" data-add-checklist-item="'+list.id+'">+ Adicionar item</button></div>';
+    root.innerHTML=emptyState('Nenhum checklist criado',editar?'Adicione um modelo ou crie um checklist específico para este processo.':'Este processo ainda não tem checklists.');
+  }else root.innerHTML=process.checklists.map((list,li)=>{
+    const total=list.itens.length,done=list.itens.filter(item=>item.feito).length,pct=total?Math.round(done/total*100):0;
+    return '<div class="checklist-bloco" data-checklist-id="'+esc(list.id)+'"><div class="checklist-cabecalho"><div class="checklist-titulo-grupo"><span class="checklist-nome">'+esc(list.nome)+'</span></div><span class="checklist-progresso-texto">'+done+'/'+total+'</span>'+
+      (editar?'<button type="button" class="checklist-mais" data-cl-acao="menu" aria-label="Opções do checklist" aria-expanded="false">⋯</button>':'')+'</div>'+
+      (editar?'<div class="checklist-menu" role="group" aria-label="Opções do checklist" hidden>'+botao('editar','Renomear','Renomear checklist')+botao('subir','↑ Subir','Subir checklist',li===0)+botao('descer','↓ Descer','Descer checklist',li===process.checklists.length-1)+botao('excluir','Excluir checklist','Excluir checklist')+'</div>':'')+
+      '<div class="barra-progresso-wrap"><div class="barra-progresso-fill" style="width:'+pct+'%"></div></div>'+list.itens.map((item,i)=>
+        '<div class="checklist-item '+(item.feito?'concluido':'')+'" data-checklist-item-id="'+esc(item.id)+'"><button type="button" class="checklist-checkbox '+(item.feito?'marcado':'')+'" data-cl-acao="marcar" aria-label="'+(item.feito?'Desmarcar item':'Concluir item')+'"'+(!editar||checklistsSalvando?' disabled':'')+'>'+(item.feito?checkboxIcon():'')+'</button><span class="checklist-texto">'+esc(item.texto)+'</span>'+
+        (editar?'<div class="checklist-item-acoes">'+botao('editar','✎','Editar texto')+botao('subir','↑','Subir item',i===0)+botao('descer','↓','Descer item',i===total-1)+botao('excluir','✕','Excluir item')+'</div>':'')+'</div>').join('')+
+      (editar?'<button type="button" class="btn-add-item-checklist" data-cl-acao="adicionar"'+(checklistsSalvando?' disabled':'')+'>+ Adicionar item</button>':'')+'</div>';
   }).join('');
-  root.querySelectorAll('[data-checklist-toggle]').forEach(button=>button.addEventListener('click',async()=>{
-    const list=getChecklist(button.dataset.checklistToggle);
-    const item=list?.itens.find(current=>current.id===button.dataset.checklistItem);
-    if(!item)return;
-    item.feito=!item.feito;
-    renderChecklists();
-    await salvarChecklistsDaPessoa();
-  }));
-  root.querySelectorAll('[data-add-checklist-item]').forEach(button=>button.addEventListener('click',()=>{
-    state.activeChecklistId=button.dataset.addChecklistItem;
-    document.getElementById('checklistItemInput').value='';
-    openModal('checklistItemModal');
-  }));
+  root.onkeydown=event=>{
+    if(event.key!=='Escape'||event.target.closest('.checklist-editor'))return;
+    const bloco=event.target.closest('[data-checklist-id]'),menu=bloco?.querySelector('.checklist-menu');
+    if(menu&&!menu.hidden){event.preventDefault();event.stopPropagation();menu.hidden=true;const b=bloco.querySelector('.checklist-mais');b.setAttribute('aria-expanded','false');b.focus();}
+  };
+  root.onclick=async event=>{
+    const b=event.target.closest('[data-cl-acao]');if(!b||b.disabled||!podeEditarChecklists())return;
+    const bloco=b.closest('[data-checklist-id]'),listId=bloco?.dataset.checklistId;
+    const itemId=b.closest('[data-checklist-item-id]')?.dataset.checklistItemId,acao=b.dataset.clAcao;
+    if(acao==='menu'){
+      const menu=bloco.querySelector('.checklist-menu'),abrir=menu.hidden;
+      root.querySelectorAll('.checklist-menu').forEach(m=>{m.hidden=true;});
+      root.querySelectorAll('.checklist-mais').forEach(b=>b.setAttribute('aria-expanded','false'));
+      menu.hidden=!abrir;b.setAttribute('aria-expanded',String(abrir));return;
+    }
+    if(acao==='adicionar'){
+      state.activeChecklistId=listId;document.getElementById('checklistItemInput').value='';openModal('checklistItemModal');return;
+    }
+    if(acao==='excluir'){await excluirChecklist(listId,itemId);return;}
+    if(acao==='editar'){
+      bloco.querySelector('.checklist-menu')?.setAttribute('hidden','');
+      bloco.querySelector('.checklist-mais')?.setAttribute('aria-expanded','false');
+      editarTextoChecklist(listId,itemId);return;
+    }
+    await alterarChecklists(contextoChecklist(),p=>{
+      const lista=p.checklists.find(l=>l.id===listId),item=lista?.itens.find(i=>i.id===itemId);
+      if(acao==='marcar'){if(item)item.feito=!item.feito;return;}
+      const itens=itemId?lista.itens:p.checklists,indice=itens.findIndex(i=>i.id===(itemId||listId)),destino=indice+(acao==='subir'?-1:1);
+      if(indice>=0&&destino>=0&&destino<itens.length)[itens[indice],itens[destino]]=[itens[destino],itens[indice]];
+    });
+  };
 }
 function renderDocuments(){
   const process=getActiveProcess();
@@ -992,6 +1147,7 @@ function renderTasks(){
 function renderActiveProcess(){renderProcessTabs();renderProcessHeader();renderProcessData();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();}
 
 async function addChecklistFromTemplate(templateId){
+  if(!podeEditarChecklists())return false;
   const process=getActiveProcess();
   if(templateId==='personalizado'){
     document.getElementById('customChecklistName').value='';
@@ -1001,15 +1157,14 @@ async function addChecklistFromTemplate(templateId){
   }
   const template=checklistTemplates[templateId];
   if(!template||!process)return;
-  process.checklists.push({
+  const novaLista={
     id:'cl-'+Date.now(),
     nome:template.nome,
     itens:template.itens.map((texto,index)=>({id:'i-'+Date.now()+'-'+index,texto,feito:false}))
-  });
+  };
   document.getElementById('dropdownModelos').classList.remove('aberto');
-  renderChecklists();
-  const salvo=await salvarChecklistsDaPessoa();
-  if(salvo)showToast('Checklist '+esc(template.nome)+' adicionado a este processo.','success');
+  const salvo=await alterarChecklists(contextoChecklist(),p=>p.checklists.push(novaLista));
+  if(salvo){animarEntradaChecklist(novaLista.id);showToast('Checklist '+esc(template.nome)+' adicionado a este processo.','success');}
 }
 async function submitComment(){
   const process=getActiveProcess();
@@ -1087,6 +1242,7 @@ async function saveTag(){
   }
 }
 async function saveChecklistItem(){
+  if(!podeEditarChecklists())return false;
   const input=document.getElementById('checklistItemInput');
   const value=input.value.trim();
   const list=getChecklist(state.activeChecklistId);
@@ -1094,14 +1250,13 @@ async function saveChecklistItem(){
     showToast('Informe o item do checklist.','warning');
     return false;
   }
-  list.itens.push({id:'item-'+Date.now(),texto:value,feito:false});
-  closeModal('checklistItemModal');
-  renderChecklists();
-  const salvo=await salvarChecklistsDaPessoa();
-  if(salvo)showToast('Item adicionado ao checklist.','success');
+  const novoItem={id:'item-'+Date.now(),texto:value,feito:false};
+  const salvo=await alterarChecklists(contextoChecklist(),p=>p.checklists.find(l=>l.id===list.id).itens.push(novoItem));
+  if(salvo){closeModal('checklistItemModal');animarEntradaChecklist(list.id,novoItem.id);showToast('Item adicionado ao checklist.','success');}
   return salvo;
 }
 async function saveCustomChecklist(){
+  if(!podeEditarChecklists())return false;
   const name=document.getElementById('customChecklistName').value.trim();
   const first=document.getElementById('customChecklistFirstItem').value.trim();
   const process=getActiveProcess();
@@ -1109,12 +1264,12 @@ async function saveCustomChecklist(){
     showToast('Informe o nome e o primeiro item do checklist.','warning');
     return false;
   }
-  process.checklists.push({id:'custom-'+Date.now(),nome:name,itens:[{id:'first-'+Date.now(),texto:first,feito:false}]});
-  closeModal('customChecklistModal');
-  document.getElementById('dropdownModelos').classList.remove('aberto');
-  renderChecklists();
-  const salvo=await salvarChecklistsDaPessoa();
-  if(salvo)showToast('Checklist '+esc(name)+' adicionado a este processo.','success');
+  const novaLista={id:'custom-'+Date.now(),nome:name,itens:[{id:'first-'+Date.now(),texto:first,feito:false}]};
+  const salvo=await alterarChecklists(contextoChecklist(),p=>p.checklists.push(novaLista));
+  if(salvo){
+    closeModal('customChecklistModal');document.getElementById('dropdownModelos').classList.remove('aberto');
+    animarEntradaChecklist(novaLista.id);showToast('Checklist '+esc(name)+' adicionado a este processo.','success');
+  }
   return salvo;
 }
 async function saveReturn(){
@@ -2396,8 +2551,7 @@ async function recarregarProcessoAtivo(){
   renderActiveProcess();
   return getActiveProcess()||null;
 }
-async function salvarChecklistsDaPessoa(){
-  const processo=getActiveProcess();
+async function salvarChecklistsDaPessoa(processo=getActiveProcess()){
   const pessoaId=state.pessoaRow&&state.pessoaRow.id;
   if(!processo||!pessoaId)return false;
   const permitido=await checkPerm('pessoas','editar');
