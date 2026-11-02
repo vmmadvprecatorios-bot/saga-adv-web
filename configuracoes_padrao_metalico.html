@@ -85,6 +85,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .corte-zoom span{font-size:12px;color:var(--muted);min-width:44px;text-align:right}
 .corte-dicas{font-size:11px;color:var(--muted);margin-top:8px;text-align:center}
 @media(max-width:760px){.content{padding:20px 16px 34px}.grid2,.grid3{grid-template-columns:1fr}}
+.situacao-editor{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-soft)}.situacao-editor input[type=text]{flex:1 1 220px;min-width:0;padding:9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);color:var(--text)}.situacao-editor label{display:flex;align-items:center;gap:5px;font-size:11px}.situacao-editor input[type=color]{width:38px;height:32px;border:1px solid var(--border);background:var(--panel);border-radius:6px}.situacao-editor button{white-space:normal}.situacao-editor button:active{transform:scale(.98)}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -184,7 +185,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
   </section>
 
   <!-- ESCRITORIO (administrador geral) -->
-  <section class="tab-pane" id="aba-areas-teses"><div class="panel"><h2>Áreas e teses</h2><p>Organize as teses por área do direito. Desativar mantém os nomes nos processos já cadastrados.</p><div id="catalogoAreasTeses"></div></div></section>
+  <section class="tab-pane" id="aba-areas-teses"><div class="panel"><h2>Áreas e teses</h2><p>Organize as teses por área do direito. Desativar mantém os nomes nos processos já cadastrados.</p><div id="catalogoAreasTeses"></div></div><div class="panel"><h2>Situações da ação</h2><p>Desativar retira a opção dos novos registros e preserva o histórico. Marque as situações que contam como protocoladas.</p><div id="catalogoSituacoes"></div></div></section>
   <section class="tab-pane" id="aba-escritorio">
     <div class="panel">
       <div class="panel-title">Dados do escritório</div>
@@ -265,6 +266,49 @@ function trocarAba(aba){
   if(aba==='areas-teses'&&!state.adminGeral)aba='perfil';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
+}
+
+/* Situações das ações, somente administrador geral. */
+var situacoesAcao=[];
+var salvandoSituacao=false;
+async function carregarSituacoesAcao(){
+  if(!state.adminGeral)return;
+  var r=await _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada').eq('categoria','situacao_acao').order('ordem');
+  if(r.error){showToast('Não foi possível carregar as situações. '+esc(erroTexto(r.error)),'error');return false;}
+  situacoesAcao=r.data||[];renderSituacoesAcao();return true;
+}
+function renderSituacoesAcao(){
+  var root=document.getElementById('catalogoSituacoes');root.replaceChildren();if(!state.adminGeral)return;
+  situacoesAcao.concat([{id:null,nome:'',cor:'#4b8af5',ativo:true,conta_protocolada:false}]).forEach(function(item,index){
+    var row=document.createElement('div');row.className='situacao-editor';
+    var nome=document.createElement('input');nome.type='text';nome.value=item.nome;nome.maxLength=120;nome.placeholder='Nova situação';nome.setAttribute('aria-label',item.id?'Nome da situação':'Nome da nova situação');
+    var cor=document.createElement('input');cor.type='color';cor.value=/^#[0-9a-f]{6}$/i.test(item.cor)?item.cor:'#4b8af5';cor.setAttribute('aria-label','Cor da situação');
+    var label=document.createElement('label'),conta=document.createElement('input');conta.type='checkbox';conta.checked=item.conta_protocolada===true;label.append(conta,document.createTextNode('Conta como protocolada'));
+    var ativoLabel=document.createElement('label'),ativo=document.createElement('input');ativo.type='checkbox';ativo.checked=item.ativo!==false;ativoLabel.append(ativo,document.createTextNode('Ativa'));
+    var salvar=document.createElement('button');salvar.type='button';salvar.className='btn-secondary btn-sm';salvar.textContent=item.id?'Salvar':'Criar situação';
+    salvar.onclick=function(){var n=nome.value.trim();if(!n){showToast('Informe o nome da situação.','error');nome.focus();return;}gravarSituacaoAcao({id:item.id,nome:n,cor:cor.value,ativo:ativo.checked,conta_protocolada:conta.checked});};
+    row.append(nome,cor,label,ativoLabel,salvar);
+    if(item.id){[-1,1].forEach(function(delta){var b=document.createElement('button');b.type='button';b.className='btn-secondary btn-sm';b.textContent=delta<0?'Subir':'Descer';b.disabled=index+delta<0||index+delta>=situacoesAcao.length;b.onclick=function(){reordenarSituacaoAcao(index,delta);};row.appendChild(b);});}
+    root.appendChild(row);
+  });
+}
+function parametrosSituacao(item){return {p_categoria:'situacao_acao',p_id:item.id||null,p_nome:item.nome,p_cor:item.cor,p_ativo:item.ativo!==false,p_conta_protocolada:item.conta_protocolada===true};}
+async function gravarSituacaoAcao(item){
+  if(!state.adminGeral||salvandoSituacao)return;
+  salvandoSituacao=true;document.querySelectorAll('#catalogoSituacoes button').forEach(b=>b.disabled=true);
+  try{var r=await _sb.rpc('catalogo_salvar',parametrosSituacao(item));if(r.error)throw r.error;if(await carregarSituacoesAcao())showToast('Situação salva.','success');else showToast('Situação salva, mas a lista não foi atualizada. Recarregue a tela.','error');}
+  catch(e){showToast('Não foi possível salvar: '+esc(erroTexto(e)),'error');renderSituacoesAcao();}
+  finally{salvandoSituacao=false;renderSituacoesAcao();}
+}
+async function reordenarSituacaoAcao(index,delta){
+  if(!state.adminGeral||salvandoSituacao)return;
+  var lista=situacoesAcao.slice();[lista[index],lista[index+delta]]=[lista[index+delta],lista[index]];
+  salvandoSituacao=true;document.querySelectorAll('#catalogoSituacoes button').forEach(b=>b.disabled=true);
+  try{
+    for(var i=0;i<lista.length;i++){var r=await _sb.rpc('catalogo_salvar',Object.assign(parametrosSituacao(lista[i]),{p_ordem:i+1}));if(r.error)throw r.error;}
+    if(await carregarSituacoesAcao())showToast('Ordem das situações salva.','success');else showToast('Ordem salva, mas a lista não foi atualizada. Recarregue a tela.','error');
+  }catch(e){showToast('Não foi possível salvar a ordem: '+esc(erroTexto(e)),'error');await carregarSituacoesAcao();}
+  finally{salvandoSituacao=false;renderSituacoesAcao();}
 }
 
 /* ----- Meu perfil ----- */
@@ -576,9 +620,11 @@ async function carregar(){
   document.getElementById('abaAreasTesesBtn').style.display=state.adminGeral?'':'none';
   if(state.adminGeral){
     if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:true,erro:function(msg){showToast(esc(msg),'error');}});
+    await carregarSituacoesAcao();
     await catalogoTeses.carregar();catalogoTeses.gerenciar(document.getElementById('catalogoAreasTeses'));
   }else{
     document.getElementById('catalogoAreasTeses').replaceChildren();
+    document.getElementById('catalogoSituacoes').replaceChildren();
     if(document.getElementById('aba-areas-teses').classList.contains('ativo'))trocarAba('perfil');
   }
   var adm=await _sb.rpc('eh_admin_sistema');state.admin=adm.data===true;
