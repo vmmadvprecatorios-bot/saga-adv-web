@@ -1591,6 +1591,19 @@
     background:color-mix(in srgb,var(--gold) 15%,transparent); color:color-mix(in srgb,var(--gold) 75%,black);
   }
 
+.tr-graficos{--g1:#5483B3;--g2:#2E8B8B;--g3:#7DA0CA;--g4:#477C8B;--g5:#91B3B9;--g6:#3F6FB0;--g7:#6FB7B0;--g8:#A9C7E8;--g-venc:#f08a4b;--g-hoje:#f5b84c;--g-ok:#5483B3;--g-sem:#8a94a8;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+[data-theme="light"] .tr-graficos{--g1:#052659;--g2:#245568;--g3:#5483B3;--g4:#2E8B8B;--g5:#123747;--g6:#477C8B;--g7:#3F6FB0;--g8:#7DA0CA;--g-venc:#d6452d;--g-hoje:#e08a00;--g-ok:#2563EB}
+.tr-graf{background:var(--panel);border:1px solid var(--border-soft);border-radius:15px;padding:13px 14px;min-width:0}.tr-graf h4{margin:0 0 8px;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.tr-graf-corpo{display:flex;align-items:center;gap:12px;min-width:0}.tr-rosca{position:relative;width:104px;height:104px;flex:0 0 auto}.tr-rosca svg{width:100%;height:100%;display:block}
+.tr-rosca .trilho{fill:none;stroke:color-mix(in srgb,var(--text) 9%,transparent);stroke-width:14}.tr-rosca .tr-fatia{fill:none;stroke-width:14;cursor:pointer;transition:opacity .2s,stroke-width .2s}.tr-rosca .tr-fatia.sem-clique{cursor:default}.tr-rosca .tr-fatia:hover{stroke-width:16}.tr-rosca.filtrada .tr-fatia:not(.ativa){opacity:.3}
+.tr-rosca .centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-size:20px;font-weight:700;line-height:1;color:var(--text)}.tr-rosca .centro small{font-size:8.5px;font-weight:600;letter-spacing:.4px;color:var(--muted);margin-top:3px;text-transform:uppercase}
+.tr-leg-lista{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.tr-leg{display:flex;align-items:center;gap:7px;width:100%;padding:3px 5px;border:0;border-radius:7px;background:none;color:var(--text);font:inherit;font-size:11px;text-align:left;min-width:0}
+button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{background:color-mix(in srgb,var(--text) 7%,transparent);outline:0}.tr-leg.ativa{background:color-mix(in srgb,var(--gold) 14%,transparent);font-weight:700}
+.tr-leg i{width:9px;height:9px;border-radius:3px;flex:0 0 auto;background:var(--c)}.tr-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tr-leg b{font-variant-numeric:tabular-nums;color:var(--muted);font-size:10.5px}
+@media(max-width:1180px){.tr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.tr-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.tr-graf{flex:0 0 86%;scroll-snap-align:start}}
+.tr-graficos{--tr-prio-baixa:color-mix(in srgb,var(--info) 70%,var(--text));--tr-prio-media:color-mix(in srgb,var(--warning) 72%,var(--text));--tr-prio-alta:color-mix(in srgb,var(--priority-high) 72%,var(--text));--tr-prio-urgente:color-mix(in srgb,var(--danger) 72%,var(--text))}[data-theme="light"] .tr-graficos{--tr-prio-baixa:color-mix(in srgb,var(--info) 75%,black);--tr-prio-media:color-mix(in srgb,var(--gold) 75%,black);--tr-prio-alta:color-mix(in srgb,var(--priority-high) 72%,black);--tr-prio-urgente:color-mix(in srgb,var(--danger) 70%,black)}.tr-graficos-secao{container-type:inline-size}@container(max-width:1050px){.tr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}@container(max-width:600px){.tr-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.tr-graf{flex:0 0 86%;scroll-snap-align:start}}.tr-graficos[hidden]{display:none}.tr-graficos-barra{display:flex;justify-content:flex-end;margin:-7px 0 7px}.tr-toggle{font:inherit;font-size:10.5px;color:var(--muted);padding:5px 8px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);cursor:pointer}.tr-toggle:active{transform:scale(.96)}.tr-rosca .tr-fatia{transition:opacity .2s,stroke-width .2s,stroke-dasharray .6s,stroke-dashoffset .6s}.tr-rosca .tr-fatia{transform-box:fill-box;transform-origin:center}.tr-rosca .tr-fatia:focus-visible{stroke-width:16;outline:none}.tr-leg-lista{max-height:190px;overflow-y:auto}.tr-leg:active{transform:scale(.97)}.tr-rosca .centro .n{font-variant-numeric:tabular-nums}@media(prefers-reduced-motion:reduce){.tr-rosca .tr-fatia{transition:none}}
+
   /* Cores de prazo: dias do calendário local, sem relação com a prioridade. */
   :root, [data-theme="dark"]{
     --prazo-azul:#2068d5; --prazo-amarelo:#ffd21c; --prazo-laranja:#ff851b;
@@ -1691,6 +1704,9 @@
       </div>
     </div>
 
+    <section class="tr-graficos-secao"><div class="tr-graficos-barra"><button type="button" class="tr-toggle" id="btnGraficosTarefas" aria-controls="graficosTarefas" aria-expanded="true">Ocultar gráficos</button></div>
+    <div class="tr-graficos" id="graficosTarefas" aria-label="Distribuição das tarefas abertas"></div></section>
+
     <!-- ===== FILTROS AVANCADOS ===== -->
     <div class="barra-filtros-tarefas">
       <div class="barra-filtros-topo">
@@ -1732,6 +1748,11 @@
             <div class="dropdown-custom-opcao">Hoje</div>
             <div class="dropdown-custom-opcao">Esta Semana</div>
             <div class="dropdown-custom-opcao">Sem Prazo</div>
+            <div class="dropdown-custom-opcao">Mais de 3 dias</div>
+            <div class="dropdown-custom-opcao">De 1 a 3 dias</div>
+            <div class="dropdown-custom-opcao">Atraso de 1 a 7 dias</div>
+            <div class="dropdown-custom-opcao">Atraso maior que 7 dias</div>
+
           </div>
         </div>
 
@@ -2669,7 +2690,7 @@ function renderizarChipsFiltros(){
   if(filtrosAtivos.prazo !== 'Todos') chips.push({ label:'Prazo: ' + filtrosAtivos.prazo, limpar:function(){ resetarDropdownSimples('dropFiltroPrazo','Prazo'); filtrosAtivos.prazo='Todos'; } });
   filtrosAtivos.tribunais.forEach(function(t){ chips.push({ label:'Tribunal: ' + t, limpar:function(){ filtrosAtivos.tribunais = filtrosAtivos.tribunais.filter(function(x){ return x!==t; }); desmarcarOpcaoMulti('listaMultiTribunal', t); document.getElementById('textoFiltroTribunal').textContent = filtrosAtivos.tribunais.length === 0 ? 'Todos os tribunais' : filtrosAtivos.tribunais.length + ' tribunal(is) selecionado(s)'; } }); });
   filtrosAtivos.fases.forEach(function(f){ chips.push({ label:'Fase: ' + f, limpar:function(){ filtrosAtivos.fases = filtrosAtivos.fases.filter(function(x){ return x!==f; }); desmarcarOpcaoMulti('listaMultiFase', f); document.getElementById('textoFiltroFase').textContent = filtrosAtivos.fases.length === 0 ? 'Todas as fases' : filtrosAtivos.fases.length + ' fase(s) selecionada(s)'; } }); });
-  filtrosAtivos.responsaveis.forEach(function(r){ chips.push({ label:'Responsavel: ' + r, limpar:function(){ filtrosAtivos.responsaveis = filtrosAtivos.responsaveis.filter(function(x){ return x!==r; }); desmarcarOpcaoMulti('listaMultiResponsavel', r); document.getElementById('textoFiltroResponsavel').textContent = filtrosAtivos.responsaveis.length === 0 ? 'Todos os responsaveis' : filtrosAtivos.responsaveis.length + ' selecionado(s)'; } }); });
+  filtrosAtivos.responsaveis.forEach(function(r){ chips.push({ label:'Responsavel: ' + (r || 'Sem responsável'), limpar:function(){ filtrosAtivos.responsaveis = filtrosAtivos.responsaveis.filter(function(x){ return x!==r; }); desmarcarOpcaoMulti('listaMultiResponsavel', r); document.getElementById('textoFiltroResponsavel').textContent = filtrosAtivos.responsaveis.length === 0 ? 'Todos os responsaveis' : filtrosAtivos.responsaveis.length + ' selecionado(s)'; } }); });
   filtrosAtivos.etiquetas.forEach(function(id){
     var e = catalogoEtiquetas && catalogoEtiquetas.porId(id);
     chips.push({label:'Etiqueta: ' + (e?e.nome:'Sem etiqueta'), limpar:function(){
@@ -2705,7 +2726,7 @@ function resetarDropdownSimples(idDrop, prefixo){
 }
 
 function desmarcarOpcaoMulti(idLista, valor){
-  var el = document.querySelector('#' + idLista + ' .opcao-multi-check[data-valor="' + valor + '"]');
+  var el = Array.from(document.querySelectorAll('#' + idLista + ' .opcao-multi-check')).find(function(o){return o.dataset.valor===valor;});
   if(el) el.classList.remove('marcada');
 }
 
@@ -2713,7 +2734,7 @@ function desmarcarOpcaoMulti(idLista, valor){
    SECAO: LOGICA CENTRAL DE FILTRAGEM E KPIs
 ===================================================================== */
 
-function tarefaPassaFiltros(t){
+function tarefaPassaFiltros(t, ignorar){
   // Visao: minhas (sou o responsavel), recebidas de outros, ou que eu atribui a outros
   var outroCriou = t.criadoPorId && t.criadoPorId !== usuarioLogadoId;
   if(filtrosAtivos.visao === 'Minhas' && t.responsavelId !== usuarioLogadoId) return false;
@@ -2733,8 +2754,9 @@ function tarefaPassaFiltros(t){
   }
 
   if(filtrosAtivos.prazo !== 'Todos'){
+    var faixa=PRAZOS_GRAFICOS_TAREFAS.find(function(x){return x.filtro===filtrosAtivos.prazo;});
+    if(faixa&&classePrazoRoscaTarefa(t)!==faixa.v)return false;
     if(filtrosAtivos.prazo === 'Atrasadas' && !tarefaEstaAtrasada(t)) return false;
-    if(filtrosAtivos.prazo === 'Hoje' && !tarefaEhHoje(t)) return false;
     if(filtrosAtivos.prazo === 'Esta Semana' && !tarefaEhEstaSemana(t)) return false;
     if(filtrosAtivos.prazo === 'Sem Prazo' && t.dataPrazo) return false;
   }
@@ -2745,11 +2767,11 @@ function tarefaPassaFiltros(t){
   if(filtrosAtivos.fases.length > 0){
     if(!t.processoVinculado || filtrosAtivos.fases.indexOf(t.processoVinculado.fase) === -1) return false;
   }
-  if(filtrosAtivos.responsaveis.length > 0){
-    var nomeResp = getColaborador(t.responsavelId) ? getColaborador(t.responsavelId).nome : '';
+  if(ignorar!=='responsaveis' && filtrosAtivos.responsaveis.length > 0){
+    var nomeResp = nomeResponsavelFiltroTarefa(t);
     if(filtrosAtivos.responsaveis.indexOf(nomeResp) === -1) return false;
   }
-  if(filtrosAtivos.etiquetas.length && filtrosAtivos.etiquetas.indexOf(t.etiquetaId || '') === -1) return false;
+  if(ignorar!=='etiquetas' && filtrosAtivos.etiquetas.length && filtrosAtivos.etiquetas.indexOf(t.etiquetaId || '') === -1) return false;
   if(filtrosAtivos.busca){
     var alvo = (t.titulo + ' ' + (t.descricao||'') + ' ' + (t.processoVinculado ? t.processoVinculado.numero + ' ' + t.processoVinculado.cliente : '')).toLowerCase();
     if(alvo.indexOf(filtrosAtivos.busca) === -1) return false;
@@ -2760,6 +2782,118 @@ function tarefaPassaFiltros(t){
 function obterTarefasFiltradas(){
   return window.SAGA_TASKS.filter(tarefaPassaFiltros);
 }
+
+/* Roscas de tarefas (mesmo desenho da T81, com atualização dos elementos existentes). */
+var PRAZOS_GRAFICOS_TAREFAS=[
+  {v:'distante',nome:'Mais de 3 dias',filtro:'Mais de 3 dias',cor:'var(--prazo-azul)'},
+  {v:'proximo',nome:'De 1 a 3 dias',filtro:'De 1 a 3 dias',cor:'var(--prazo-amarelo)'},
+  {v:'hoje',nome:'Vence hoje',filtro:'Hoje',cor:'var(--prazo-laranja)'},
+  {v:'atrasada',nome:'Atraso de 1 a 7 dias',filtro:'Atraso de 1 a 7 dias',cor:'var(--prazo-vermelho)'},
+  {v:'muito-atrasada',nome:'Atraso maior que 7 dias',filtro:'Atraso maior que 7 dias',cor:'var(--prazo-vermelho-escuro)'},
+  {v:'sem',nome:'Sem prazo',filtro:'Sem Prazo',cor:'var(--g-sem)'}
+];
+var PRIORIDADES_GRAFICOS_TAREFAS=[
+  {v:'baixa',nome:'Baixa',filtro:'Baixa',cor:'var(--tr-prio-baixa)'},
+  {v:'media',nome:'Média',filtro:'Media',cor:'var(--tr-prio-media)'},
+  {v:'alta',nome:'Alta',filtro:'Alta',cor:'var(--tr-prio-alta)'},
+  {v:'urgente',nome:'Urgente',filtro:'Urgente',cor:'var(--tr-prio-urgente)'}
+];
+var graficosTarefasOcultos=false,gruposRoscasTarefas={};
+try{graficosTarefasOcultos=localStorage.getItem('saga-tarefas-graficos-ocultos')==='1';}catch(e){}
+function nomeResponsavelFiltroTarefa(t){var c=getColaborador(t.responsavelId);return c?c.nome:(nomesUsuarios[t.responsavelId]||'');}
+function nomeCurtoRoscaTarefa(nome){var partes=nome.trim().split(/\s+/);return partes.length>1?partes[0]+' '+partes[partes.length-1]:nome;}
+function classePrazoRoscaTarefa(t){var s=situacaoPrazoTarefa(t.status==='concluida'?Object.assign({},t,{status:'pendente'}):t);return s?s.classe:'sem';}
+function dadosGraficosTarefas(){
+  var abertas=obterTarefasFiltradas().filter(function(t){return t.status!=='concluida';});
+  function contar(chave,valor){return abertas.filter(function(t){return chave(t)===valor;}).length;}
+  var prazos=PRAZOS_GRAFICOS_TAREFAS.map(function(x){return Object.assign({},x,{n:contar(classePrazoRoscaTarefa,x.v),ativa:filtrosAtivos.prazo===x.filtro||(filtrosAtivos.prazo==='Atrasadas'&&['atrasada','muito-atrasada'].indexOf(x.v)!==-1)});});
+  // A distribuição e os totais usam todos os filtros. A lista de categorias ignora
+  // só o seu próprio filtro, para manter "Outros" estável e permitir desmarcá-lo.
+  var baseResp=window.SAGA_TASKS.filter(function(t){return t.status!=='concluida'&&tarefaPassaFiltros(t,'responsaveis');});
+  var mapaResp=new Map();
+  baseResp.forEach(function(t){var nome=nomeResponsavelFiltroTarefa(t);mapaResp.set(nome,(mapaResp.get(nome)||0)+1);});
+  filtrosAtivos.responsaveis.forEach(function(nome){if(!mapaResp.has(nome))mapaResp.set(nome,0);});
+  var nomes=Array.from(mapaResp.keys()).sort(function(a,b){return mapaResp.get(b)-mapaResp.get(a)||a.localeCompare(b,'pt-BR');});
+  var paleta=Array.from(new Set(window.SAGA_TASKS.map(nomeResponsavelFiltroTarefa))).sort();
+  var responsaveis=nomes.slice(0,6).map(function(nome){return {v:nome,nome:nome?nomeCurtoRoscaTarefa(nome):'Sem responsável',dica:nome||'Sem responsável',valores:[nome],cor:nome?'var(--g'+(paleta.indexOf(nome)%8+1)+')':'var(--g-sem)'};});
+  if(nomes.length>6)responsaveis.push({v:'__outros__',nome:'Outros',valores:nomes.slice(6),cor:'var(--g-sem)'});
+  responsaveis.forEach(function(x){x.n=abertas.filter(function(t){return x.valores.indexOf(nomeResponsavelFiltroTarefa(t))!==-1;}).length;x.ativa=x.valores.some(function(v){return filtrosAtivos.responsaveis.indexOf(v)!==-1;});});
+  var baseEt=window.SAGA_TASKS.filter(function(t){return t.status!=='concluida'&&tarefaPassaFiltros(t,'etiquetas');});
+  var ids=Array.from(new Set(baseEt.map(function(t){return t.etiquetaId||'';}).concat(filtrosAtivos.etiquetas)));
+  var etiquetas=ids.map(function(id){var e=catalogoEtiquetas&&catalogoEtiquetas.porId(id);return {v:id,nome:e?e.nome:id?'Etiqueta indisponível':'Sem etiqueta',cor:e?SagaEtiquetas.cor(e.cor):'var(--g-sem)',valores:[id],n:contar(function(t){return t.etiquetaId||'';},id),ativa:filtrosAtivos.etiquetas.indexOf(id)!==-1};}).sort(function(a,b){return b.n-a.n||a.nome.localeCompare(b.nome,'pt-BR');});
+  var prioridades=PRIORIDADES_GRAFICOS_TAREFAS.map(function(x){return Object.assign({},x,{n:contar(function(t){return t.prioridade;},x.v),ativa:filtrosAtivos.prioridade===x.filtro});});
+  return [{k:'prazo',titulo:'Por prazo',itens:prazos},{k:'responsaveis',titulo:'Por responsável',itens:responsaveis},{k:'etiquetas',titulo:'Por etiqueta',itens:etiquetas},{k:'prioridade',titulo:'Por prioridade',itens:prioridades}];
+}
+function contarRoscaTarefa(el,alvo){
+  if(el._alvo===alvo)return;
+  if(el._quadro)cancelAnimationFrame(el._quadro);
+  var de=Number(el.textContent)||0;el._alvo=alvo;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches||de===alvo){el.textContent=alvo;return;}
+  var inicio=null;
+  function passo(ts){if(inicio===null)inicio=ts;var k=Math.min(1,(ts-inicio)/600);el.textContent=Math.round(de+(alvo-de)*(1-Math.pow(1-k,3)));if(k<1)el._quadro=requestAnimationFrame(passo);else el._quadro=null;}
+  el._quadro=requestAnimationFrame(passo);
+}
+function renderGraficosTarefas(){
+  var root=document.getElementById('graficosTarefas');
+  var btn=document.getElementById('btnGraficosTarefas');
+  btn.textContent=graficosTarefasOcultos?'Mostrar gráficos':'Ocultar gráficos';btn.setAttribute('aria-expanded',String(!graficosTarefasOcultos));root.hidden=graficosTarefasOcultos;
+  if(graficosTarefasOcultos)return;
+  var circ=2*Math.PI*40;
+  dadosGraficosTarefas().forEach(function(g){
+    gruposRoscasTarefas[g.k]=g.itens;
+    var card=root.querySelector('[data-g="'+g.k+'"]');
+    if(!card){
+      card=document.createElement('div');card.className='tr-graf';card.dataset.g=g.k;
+      card.innerHTML='<h4>'+g.titulo+'</h4><div class="tr-graf-corpo"><div class="tr-rosca"><svg viewBox="0 0 100 100" role="group"><circle class="trilho" cx="50" cy="50" r="40"></circle><g class="tr-arcos" transform="rotate(-90 50 50)"></g></svg><div class="centro"><span class="n">0</span><small>abertas</small></div></div><div class="tr-leg-lista"></div></div>';
+      card._fatias=new Map();card._legendas=new Map();root.appendChild(card);
+    }
+    var total=g.itens.reduce(function(s,x){return s+x.n;},0),acc=0,positivas=g.itens.filter(function(x){return x.n>0;}).length;
+    card.dataset.total=total;card.querySelector('svg').setAttribute('aria-label',g.titulo+': '+total+' abertas');
+    card.querySelector('.tr-rosca').classList.toggle('filtrada',g.itens.some(function(x){return x.ativa;}));
+    contarRoscaTarefa(card.querySelector('.n'),total);
+    var chaves=new Set();
+    g.itens.forEach(function(x,indice){
+      chaves.add(x.v);
+      var c=card._fatias.get(x.v),novo=!c;
+      if(!c){c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','tr-fatia');c.setAttribute('cx','50');c.setAttribute('cy','50');c.setAttribute('r','40');c.setAttribute('role','button');c.setAttribute('tabindex','0');c.dataset.graf=g.k;c.dataset.v=x.v;c.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title'));card._fatias.set(x.v,c);card.querySelector('.tr-arcos').appendChild(c);}
+      var len=total?x.n/total*circ:0,vis=Math.max(0,len-(positivas>1&&total>positivas?2.2:0));
+      c.style.stroke=x.cor;c.style.display=x.n?'':'none';c.classList.toggle('ativa',!!x.ativa);c.setAttribute('aria-pressed',String(!!x.ativa));c.setAttribute('aria-label',x.nome+': '+x.n);c.querySelector('title').textContent=(x.dica||x.nome)+': '+x.n;
+      var arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2),offset=(-acc).toFixed(2);
+      if(c.getAttribute('stroke-dasharray')!==arco)c.setAttribute('stroke-dasharray',arco);
+      if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);
+      if(novo&&x.n&&!matchMedia('(prefers-reduced-motion: reduce)').matches)c.animate([{strokeDasharray:'0 '+circ},{strokeDasharray:arco}],{duration:650,easing:'cubic-bezier(.22,1,.36,1)'});
+      acc+=len;
+      var b=card._legendas.get(x.v);
+      if(!b){b=document.createElement('button');b.type='button';b.className='tr-leg';b.dataset.graf=g.k;b.dataset.v=x.v;b.innerHTML='<i></i><span></span><b></b>';card._legendas.set(x.v,b);}
+      b.classList.toggle('ativa',!!x.ativa);b.setAttribute('aria-pressed',String(!!x.ativa));b.querySelector('i').style.setProperty('--c',x.cor);b.querySelector('span').textContent=x.nome;b.title=x.dica||x.nome;b.querySelector('b').textContent=x.n;var lista=card.querySelector('.tr-leg-lista');if(lista.children[indice]!==b)lista.insertBefore(b,lista.children[indice]||null);
+    });
+    [card._fatias,card._legendas].forEach(function(m){m.forEach(function(el,v){if(!chaves.has(v)){el.remove();m.delete(v);}});});
+    var vazio=card.querySelector('.tr-vazio');
+    if(!g.itens.length&&!vazio){vazio=document.createElement('div');vazio.className='tr-leg tr-vazio';vazio.textContent='Nada aberto';card.querySelector('.tr-leg-lista').appendChild(vazio);}
+    if(g.itens.length&&vazio)vazio.remove();
+  });
+}
+function selecionarFiltroRoscaTarefa(id,valor,prefixo){
+  var d=document.getElementById(id);d.dataset.valor=valor;d.querySelector('.dropdown-custom-valor span').textContent=prefixo+': '+valor;
+  d.querySelectorAll('.dropdown-custom-opcao').forEach(function(o){o.classList.toggle('selecionada',o.textContent.trim()===valor);});
+}
+function aplicarFatiaTarefa(chave,valor){
+  var x=(gruposRoscasTarefas[chave]||[]).find(function(i){return i.v===valor;});if(!x)return;
+  if(chave==='prazo'||chave==='prioridade'){
+    var padrao=chave==='prazo'?'Todos':'Todas';filtrosAtivos[chave]=filtrosAtivos[chave]===x.filtro?padrao:x.filtro;
+    selecionarFiltroRoscaTarefa(chave==='prazo'?'dropFiltroPrazo':'dropFiltroPrioridade',filtrosAtivos[chave],chave==='prazo'?'Prazo':'Prioridade');
+  }else{
+    var lista=filtrosAtivos[chave],todos=x.valores.every(function(v){return lista.indexOf(v)!==-1;});
+    filtrosAtivos[chave]=todos?lista.filter(function(v){return x.valores.indexOf(v)===-1;}):Array.from(new Set(lista.concat(x.valores)));
+    var resp=chave==='responsaveis',id=resp?'listaMultiResponsavel':'listaMultiEtiqueta';
+    document.querySelectorAll('#'+id+' .opcao-multi-check').forEach(function(o){o.classList.toggle('marcada',filtrosAtivos[chave].indexOf(o.dataset.valor)!==-1);});
+    document.getElementById(resp?'textoFiltroResponsavel':'textoFiltroEtiqueta').textContent=filtrosAtivos[chave].length?filtrosAtivos[chave].length+' selecionado(s)':resp?'Todos os responsaveis':'Todas as etiquetas';
+  }
+  paginaAtualLista=1;aplicarFiltrosERenderizar();
+}
+document.getElementById('btnGraficosTarefas').addEventListener('click',function(){graficosTarefasOcultos=!graficosTarefasOcultos;try{localStorage.setItem('saga-tarefas-graficos-ocultos',graficosTarefasOcultos?'1':'0');}catch(e){}renderGraficosTarefas();});
+document.getElementById('graficosTarefas').addEventListener('click',function(e){var b=e.target.closest('[data-graf]');if(b)aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);});
+document.getElementById('graficosTarefas').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);}});
 
 function atualizarKpisTarefas(){
   var todas = window.SAGA_TASKS;
@@ -2777,6 +2911,7 @@ function aplicarFiltrosERenderizar(){
   renderizarListaTabela(filtradas);
   renderizarListaAgrupada(filtradas);
   atualizarKpisTarefas();
+  renderGraficosTarefas();
   renderizarMiniCalendario();
 }
 
@@ -4508,8 +4643,10 @@ function atualizarListasDeFiltro(){
     });
     ativarOpcoesMultiCheck(listaEt);
   }
-  reconstruirOpcoesMulti('listaMultiResponsavel', dadosColaboradores.map(function(c){
-    return { valor:c.nome, prefixoHtml:'<div class="mini-avatar-filtro" style="background:' + c.cor + ';">' + escaparHtml(c.iniciais) + '</div>' };
+  var nomesResponsaveis=Array.from(new Set(dadosColaboradores.map(function(c){return c.nome;}).concat(window.SAGA_TASKS.map(nomeResponsavelFiltroTarefa))));
+  reconstruirOpcoesMulti('listaMultiResponsavel', nomesResponsaveis.map(function(nome){
+    var c=dadosColaboradores.find(function(c){return c.nome===nome;});
+    return {valor:nome,prefixoHtml:'<div class="mini-avatar-filtro" style="background:'+(c?c.cor:'var(--muted)')+';">'+escaparHtml(c?c.iniciais:'?')+'</div>'+(nome?'':'Sem responsável')};
   }));
   var fases = {};
   window.SAGA_TASKS.forEach(function(t){ if(t.processoVinculado) fases[t.processoVinculado.fase] = true; });
