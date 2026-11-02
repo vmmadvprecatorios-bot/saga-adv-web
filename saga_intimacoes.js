@@ -84,19 +84,19 @@
   /* ---------- estado ---------- */
   var S={links:[],sb:null,meuId:null,ehAdmin:false,toast:null,aoMudar:null,itens:[],colunas:[],oabs:[],usuarios:[],processos:{},teses:[],
     pode:{gerenciar:false,criarProc:false},horas:[7,13],aberta:null,carregado:false,
-    f:{organizar:'tribunal',conclusao:'abertas',situacao:'',periodo:'tudo',busca:'',ramo:'',tribunal:'',regiao:'',orgao:'',advogado:'',oab:'',processo:null},
+    f:{organizar:'tribunal',conclusao:'abertas',situacao:'',periodo:'tudo',busca:'',ramo:'',tribunal:'',regiao:'',orgao:'',advogado:'',oab:'',triagem:'',processo:null},
     limite:{},concluidasAbertas:{},novasTribunais:{}};
   try{
     var salvo=JSON.parse(localStorage.getItem('saga-intim-filtros')||'null');
     if(salvo){
-      ['periodo','advogado'].forEach(function(k){if(salvo[k]!=null)S.f[k]=salvo[k];});
+      ['periodo','advogado','triagem'].forEach(function(k){if(salvo[k]!=null)S.f[k]=salvo[k];});
       // Antes, "situacao" guardava abertas/concluídas e "organizar" podia ser colunas.
       var conclusao=salvo.conclusao||salvo.situacao;
       if(['abertas','concluidas','todas'].indexOf(conclusao)!==-1)S.f.conclusao=conclusao;
       if(SITUACOES.some(function(c){return c.chave===salvo.situacao;}))S.f.situacao=salvo.situacao;
     }
   }catch(e){}
-  function guardarFiltros(){try{localStorage.setItem('saga-intim-filtros',JSON.stringify({organizar:'tribunal',conclusao:S.f.conclusao,situacao:S.f.situacao,periodo:S.f.periodo,advogado:S.f.advogado}));}catch(e){}}
+  function guardarFiltros(){try{localStorage.setItem('saga-intim-filtros',JSON.stringify({organizar:'tribunal',conclusao:S.f.conclusao,situacao:S.f.situacao,periodo:S.f.periodo,advogado:S.f.advogado,triagem:S.f.triagem}));}catch(e){}}
   guardarFiltros();
 
   function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
@@ -288,7 +288,7 @@
   async function carregar(){
     var sb=S.sb;
     var r=await Promise.all([
-      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
+      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
       sb.from('intimacoes_colunas').select('*').order('ordem').order('criado_em'),
       sb.from('monitoramento_config').select('*').eq('tipo_alvo','oab').order('criado_em'),
       sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab').order('nome_completo'),
@@ -298,7 +298,7 @@
     S.itens=r[0].data||[];S.colunas=r[1].data||[];S.oabs=r[2].data||[];S.usuarios=r[3].data||[];
     var ids=[...new Set(S.itens.map(function(i){return i.processo_id;}).filter(Boolean))];
     S.processos={};
-    if(ids.length){var p=await sb.from('processos').select('id,numero_processo_cnj,pessoa_id,pessoa:pessoas(nome_completo)').in('id',ids);(p.data||[]).forEach(function(x){S.processos[x.id]=x;});}
+    if(ids.length){var p=await sb.from('processos').select('id,numero_processo_cnj,pessoa_id,responsavel_id,pessoa:pessoas(nome_completo)').in('id',ids);(p.data||[]).forEach(function(x){S.processos[x.id]=x;});}
     S.carregado=true;
     return true;
   }
@@ -327,6 +327,7 @@
       if(!semConclusao&&f.conclusao==='abertas'&&i.concluida)return false;
       if(!semConclusao&&f.conclusao==='concluidas'&&!i.concluida)return false;
       if(f.situacao&&situacaoDe(i).chave!==f.situacao)return false;
+      if(f.triagem&&(f.triagem==='sem'?!!i.triagem:i.triagem!==f.triagem))return false;
       if(!semNovasTribunal&&S.novasTribunais[j.chave]&&situacaoDe(i).chave!=='nova')return false;
       if(desde&&!f.processo&&String(i.data_disponibilizacao||'')<desde)return false;
       if(f.ramo&&j.ramo!==f.ramo)return false;
@@ -391,6 +392,7 @@
         '<select data-f="orgao" title="Órgão (vara, turma)">'+opts(orgaos.map(function(o){return [o,o];}),f.orgao,'Todos os órgãos')+'</select>'+
         '<select data-f="advogado" title="Advogado">'+opts(Object.keys(advs).map(function(id){return [id,nomeUsuario(id)||'Advogado'];}),f.advogado,'Todos os advogados')+'</select>'+
         '<select data-f="oab" title="OAB ou origem">'+opts(oabOpts,f.oab,'Todas as OABs e origens')+'</select>'+
+        '<select data-f="triagem" title="Triagem">'+opts([['sem','Sem triagem'],['tarefa','Viraram tarefa'],['vista','Vistas (nada a fazer)']],f.triagem,'Triagem: todas')+'</select>'+
         '<button class="si-btn sm" type="button" data-acao="limpar">Limpar filtros</button>'+
       '</div>'+
       (f.processo?'<div class="si-linha" style="font-size:11.5px">Mostrando só as intimações deste processo · <button class="si-btn sm" type="button" data-acao="tirar-processo">Ver todas</button></div>':'')+
@@ -410,7 +412,7 @@
       else if(a.dataset.acao==='buscar')buscarAgora(null,a);
       else if(a.dataset.acao==='ordem-padrao'){try{localStorage.removeItem(chaveOrdem());}catch(x){}mudou();toast('Ordem padrão dos tribunais restaurada.','sucesso');}
       else if(a.dataset.acao==='so-novas'){S.f.situacao=S.f.situacao==='nova'?'':'nova';guardarFiltros();mudou();}
-      else if(a.dataset.acao==='limpar'){S.f.situacao='';S.novasTribunais={};['ramo','tribunal','regiao','orgao','advogado','oab','busca'].forEach(function(k){S.f[k]='';});S.f.processo=null;guardarFiltros();mudou();}
+      else if(a.dataset.acao==='limpar'){S.f.situacao='';S.novasTribunais={};['ramo','tribunal','regiao','orgao','advogado','oab','busca','triagem'].forEach(function(k){S.f[k]='';});S.f.processo=null;guardarFiltros();mudou();}
       else if(a.dataset.acao==='tirar-processo'){S.f.processo=null;mudou();}
     };
   }
@@ -441,6 +443,7 @@
       '<div class="si-doc">'+esc([i.tipo_documento,i.orgao].filter(Boolean).join(' · '))+'</div>'+
       (i.resumo&&!opc.compacto?'<div class="si-res">'+esc(i.resumo)+'</div>':'')+
       '<div class="si-rod">'+etiquetaSituacao(i)+
+        (i.triagem==='tarefa'?'<span class="si-tag" style="--c:#4b8af5">Virou tarefa</span>':i.triagem==='vista'?'<span class="si-tag" style="--c:#8a94a8">Vista</span>':'')+
         (i.etiqueta?'<span class="si-tag" style="--c:'+esc(i.etiqueta_cor||corEtiqueta(i.etiqueta))+'">'+esc(i.etiqueta)+'</span>':'')+
         (u?'<span class="si-prazo '+u.cls+'">'+esc(u.txt)+'</span>':'')+
         (i.processo_id?'<span class="si-tag" style="--c:#2fae7a">Na ficha do cliente</span>':'<span class="si-tag" style="--c:#8b5cf6">Fora do SAGA</span>')+
@@ -659,6 +662,7 @@
     Object.keys(campos).forEach(function(k){i[k]=campos[k];});
     if(campos.coluna_id){var c=coluna(campos.coluna_id);if(c&&c.chave)i.situacao=c.chave;}
     if('concluida' in campos)i.concluida_em=campos.concluida?new Date().toISOString():null;
+    if(campos.concluida===false){i.triagem=null;i.triagem_nota=null;i.triagem_em=null;i.triagem_por_id=null;}
     mudou();
     var r=await S.sb.rpc('intimacao_atualizar',{p_id:id,p_campos:campos});
     if(r.error){Object.assign(i,antes);mudou();toast('Não foi possível salvar: '+esc(r.error.message),'error');return false;}
@@ -752,6 +756,7 @@
           '<div class="si-acoes" style="align-items:center"><button class="si-btn pri" type="button" id="siComentar">Comentar</button><span class="si-sub" style="margin:0">e marcar como</span><select id="siMoverCom" style="height:34px;padding:0 9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px"></select></div>'+
         '</div>'+
         '<div>'+
+          '<div class="si-sec" style="margin-top:0">Triagem</div><div id="siTriagem"></div>'+
           '<div class="si-acoes" style="margin-bottom:6px"><button class="si-btn" type="button" id="siConcluir">Concluir</button></div>'+
           '<div class="si-g2"><div class="si-campo"><label for="siColuna">Situação</label><select id="siColuna"></select></div>'+
           '<div class="si-campo"><label for="siPrazo">Prazo</label><input id="siPrazo" type="date"></div></div>'+
@@ -856,13 +861,76 @@
     var dados=[['Justiça',esc(j.sigla+' · '+j.rotulo)],['Classe',esc(i.classe||'—')],['Partes intimadas',partes||'—'],['Advogados',advs||'—'],['Do escritório',esc(advogadosDe(i).map(nomeUsuario).join(', ')||'—')],['Origem',i.fonte==='email'?'E-mail (radar)':'CNJ · Diário de Justiça Eletrônico Nacional']];
     document.getElementById('siDados').innerHTML=dados.map(function(d){return '<div><div class="l">'+d[0]+'</div><div>'+d[1]+'</div></div>';}).join('');
     renderProcesso(i);
+    renderTriagem(i);
   }
   async function carregarHistorico(id){
     var r=await S.sb.from('intimacoes_comentarios').select('*').eq('intimacao_id',id).order('criado_em',{ascending:false});
     if(S.aberta!==id)return;
-    var cores={comentario:'#4b8af5',coluna:'#8a94a8',prazo:'#e0a93b',etiqueta:'#ec4899',concluida:'#2fae7a',reaberta:'#f97316',processo:'#8b5cf6'};
+    var cores={comentario:'#4b8af5',coluna:'#8a94a8',prazo:'#e0a93b',etiqueta:'#ec4899',concluida:'#2fae7a',reaberta:'#f97316',processo:'#8b5cf6',tarefa:'#4b8af5',vista:'#8a94a8'};
     var h=document.getElementById('siHist'),l=r.data||[];
     h.innerHTML=l.length?l.map(function(c){return '<div class="si-hi" style="--c:'+(cores[c.tipo]||'#8a94a8')+'"><div class="q">'+esc(nomeUsuario(c.usuario_id)||'Sistema')+' · '+new Date(c.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div><div class="t">'+esc(c.texto||'')+'</div></div>';}).join(''):'<div class="si-sub">Nenhum comentário ainda.</div>';
+  }
+
+  /* ---------- triagem (T70): virar tarefa ou dar por vista ---------- */
+  function renderTriagem(i){
+    var w=document.getElementById('siTriagem');if(!w)return;
+    if(i.triagem==='tarefa'){
+      w.innerHTML='<div class="si-proc-box ok"><b>✓ Virou tarefa</b><div class="si-sub">Triada por '+esc(primeiroNome(i.triagem_por_id)||'—')+(i.triagem_em?' em '+esc(new Date(i.triagem_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})):'')+'. Quando a tarefa for concluída, a ficha do cliente registra sozinha.</div>'+
+        (i.tarefa_id?'<div class="si-acoes" style="margin-top:8px"><a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="minhas_tarefas.html?tarefa='+esc(i.tarefa_id)+'">Abrir a tarefa</a></div>':'')+'</div>';
+      return;
+    }
+    if(i.triagem==='vista'){
+      w.innerHTML='<div class="si-proc-box ok"><b>✓ Vista: nada a fazer</b><div style="margin-top:4px">'+esc(i.triagem_nota||'')+'</div><div class="si-sub">Por '+esc(primeiroNome(i.triagem_por_id)||'—')+'. Para triar de novo, clique em Reabrir.</div></div>';
+      return;
+    }
+    if(!S.pode.editar){w.innerHTML='<div class="si-sub">Ainda não triada.</div>';return;}
+    w.innerHTML='<div class="si-proc-box falta"><b>O que fazer com esta intimação?</b><div class="si-sub">Tem algo a fazer (ex.: réplica)? Crie a tarefa. Não exige nada do escritório? Dê por vista. As duas saem das abertas e ficam registradas'+(i.processo_id?' na ficha do cliente':'')+'.</div>'+
+      '<div class="si-acoes" style="margin-top:8px"><button class="si-btn pri sm" type="button" data-tri="tarefa">Criar tarefa</button><button class="si-btn sm" type="button" data-tri="vista">Vista (nada a fazer)</button></div><div id="siTriForm"></div></div>';
+    w.onclick=function(e){var b=e.target.closest('[data-tri]');if(!b)return;if(b.dataset.tri==='tarefa')formTarefa(i);else formVista(i);};
+  }
+  function formTarefa(i){
+    var f=document.getElementById('siTriForm'),p=i.processo_id&&S.processos[i.processo_id];
+    var padrao=(p&&p.responsavel_id)||i.responsavel_id||advogadosDe(i)[0]||S.meuId;
+    var titulo=(i.etiqueta?i.etiqueta:'Providenciar')+' · '+cnj(i);
+    f.innerHTML='<div class="si-campo" style="margin-top:10px"><label for="siTrTit">O que fazer</label><input id="siTrTit" maxlength="200" value="'+esc(titulo)+'"></div>'+
+      '<div class="si-g2"><div class="si-campo"><label for="siTrPrazo">Prazo</label><input id="siTrPrazo" type="date" value="'+esc(i.prazo||'')+'"></div>'+
+      '<div class="si-campo"><label for="siTrResp">Responsável</label><select id="siTrResp">'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===padrao?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('')+'</select></div></div>'+
+      '<div class="si-campo"><label for="siTrDesc">Detalhes (opcional)</label><textarea id="siTrDesc" placeholder="Ex.: réplica à contestação; ver documento juntado em 30/10"></textarea></div>'+
+      '<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siTrOk">Criar a tarefa</button><button class="si-btn sm" type="button" id="siTrCancela">Cancelar</button></div>';
+    document.getElementById('siTrTit').focus();
+    document.getElementById('siTrCancela').onclick=function(){f.innerHTML='';};
+    document.getElementById('siTrOk').onclick=async function(){
+      var t=document.getElementById('siTrTit').value.trim();if(!t){toast('Escreva o que precisa ser feito.','error');return;}
+      var prazo=document.getElementById('siTrPrazo').value||null,resp=document.getElementById('siTrResp').value||null;
+      var desc=document.getElementById('siTrDesc').value.trim();
+      desc=(desc?desc+'\n\n':'')+'Intimação: '+[(i.tipo_documento||i.tipo_comunicacao||'Intimação'),cnj(i),justicaDe(i).sigla,'disponibilizada em '+dataBR(i.data_disponibilizacao)].join(' · ');
+      this.disabled=true;
+      var r=await S.sb.rpc('intimacao_criar_tarefa',{p_id:i.id,p_titulo:t,p_descricao:desc,p_prazo:prazo,p_responsavel_id:resp});
+      this.disabled=false;
+      if(r.error){toast('Não foi possível criar a tarefa: '+esc(r.error.message),'error');return;}
+      Object.assign(i,{triagem:'tarefa',tarefa_id:r.data,triagem_por_id:S.meuId,triagem_em:new Date().toISOString(),concluida:true,concluida_em:new Date().toISOString(),situacao:'providenciada',prazo:prazo||i.prazo});
+      var col=colunaDaSituacao('providenciada');if(col)i.coluna_id=col.id;
+      toast('Tarefa criada'+(resp&&resp!==S.meuId?' e enviada para '+esc(primeiroNome(resp)):'')+'. A intimação saiu das abertas'+(i.processo_id?' e ficou registrada na ficha do cliente.':'.'),'sucesso');
+      preencherJanela(i);carregarHistorico(i.id);mudou();
+    };
+  }
+  function formVista(i){
+    var f=document.getElementById('siTriForm');
+    f.innerHTML='<div class="si-campo" style="margin-top:10px"><label for="siViNota">O que foi o ato (curto)</label><textarea id="siViNota" maxlength="1000" placeholder="Ex.: despacho de mero expediente; intimação da parte contrária; pauta de julgamento"></textarea></div>'+
+      '<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siViOk">Dar por vista</button><button class="si-btn sm" type="button" id="siViCancela">Cancelar</button></div>';
+    document.getElementById('siViNota').focus();
+    document.getElementById('siViCancela').onclick=function(){f.innerHTML='';};
+    document.getElementById('siViOk').onclick=async function(){
+      var n=document.getElementById('siViNota').value.trim();if(!n){toast('Explique em poucas palavras o que foi o ato.','error');return;}
+      this.disabled=true;
+      var r=await S.sb.rpc('intimacao_dar_vista',{p_id:i.id,p_nota:n});
+      this.disabled=false;
+      if(r.error){toast('Não foi possível dar por vista: '+esc(r.error.message),'error');return;}
+      Object.assign(i,{triagem:'vista',triagem_nota:n,triagem_por_id:S.meuId,triagem_em:new Date().toISOString(),concluida:true,concluida_em:new Date().toISOString(),situacao:'arquivada'});
+      var col=colunaDaSituacao('arquivada');if(col)i.coluna_id=col.id;
+      toast('Intimação dada por vista e arquivada'+(i.processo_id?'; registrada na ficha do cliente.':'.'),'sucesso');
+      preencherJanela(i);carregarHistorico(i.id);mudou();
+    };
   }
 
   /* ---------- processo: já cadastrado, incorporar ou ligar ---------- */

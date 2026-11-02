@@ -1901,6 +1901,7 @@
     </div>
 
     <div class="aviso-somente-leitura" id="avisoSomenteLeituraTarefa" style="display:none"></div>
+    <div class="aviso-somente-leitura" id="avisoOrigemIntimacao" style="display:none"></div>
 
     <div class="campo-tf">
       <label for="inputTituloTarefa">Titulo</label>
@@ -3745,6 +3746,7 @@ function resetarFormularioTarefa(){
   estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], somenteLeitura:false };
   document.querySelector('#modalTarefa .modal-tf').classList.remove('somente-leitura');
   document.getElementById('avisoSomenteLeituraTarefa').style.display = 'none';
+  document.getElementById('avisoOrigemIntimacao').style.display = 'none';
   document.getElementById('btnCancelarModalTarefa').textContent = 'Cancelar';
   document.getElementById('inputTituloTarefa').value = '';
   document.getElementById('textareaDescricaoTarefa').value = '';
@@ -3855,6 +3857,21 @@ document.addEventListener('keydown', function(e){
   }
 }, true);
 
+// Tarefa criada a partir de uma intimação (triagem): mostra de onde veio, com link de volta
+async function mostrarOrigemIntimacao(idTarefa){
+  var el = document.getElementById('avisoOrigemIntimacao');
+  el.style.display = 'none'; el.innerHTML = '';
+  try{
+    var r = await _sb.from('intimacoes').select('id,tipo_documento,tipo_comunicacao,data_disponibilizacao,tribunal').eq('tarefa_id', idTarefa).limit(1);
+    var i = r.data && r.data[0];
+    if(!i || tarefaEmEdicaoId !== idTarefa) return;
+    var d = String(i.data_disponibilizacao || '').slice(0,10).split('-');
+    el.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>' +
+      '<span>Veio da intimação <b>' + escaparHtml((i.tipo_documento || i.tipo_comunicacao || 'Intimação') + (d.length === 3 ? ' de ' + d[2] + '/' + d[1] + '/' + d[0] : '') + (i.tribunal ? ' (' + i.tribunal + ')' : '')) + '</b>. ' +
+      '<a href="monitoramento_multi_oab.html?intimacao=' + encodeURIComponent(i.id) + '" style="color:inherit;font-weight:700;text-decoration:underline">Abrir a intimação</a></span>';
+    el.style.display = 'flex';
+  }catch(e){}
+}
 function abrirModalTarefa(idTarefa, colunaPreSelecionada){
   popularSelectColunas();
   popularSelectResponsavel();
@@ -3909,6 +3926,7 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
       document.getElementById('btnCancelarModalTarefa').textContent = 'Fechar';
     }
 
+    mostrarOrigemIntimacao(idTarefa);
     document.getElementById('btnExcluirTarefaModal').style.display = 'flex';
     document.getElementById('secaoComentariosTarefa').style.display = 'block';
     renderizarComentariosModal();
