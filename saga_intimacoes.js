@@ -129,6 +129,10 @@
   '.si-arquivo .lista{display:none;flex-direction:column;gap:8px;margin-top:6px}.si-arquivo.aberto .lista{display:flex}'+
   '.si-card{position:relative;border:1px solid var(--border-soft);border-left:3px solid var(--c,#8a94a8);border-radius:12px;padding:10px 11px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer;transition:border-color .15s,transform .15s}'+
   '.si-card:hover{border-color:var(--gold);transform:translateY(-1px)}.si-card.arrastando{opacity:.45}'+
+  '.si-desfazer{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:3000;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--panel-solid,var(--panel));color:var(--text);box-shadow:0 14px 40px rgba(0,0,0,.35);font-size:12.5px;animation:siDesfazerIn .28s cubic-bezier(.34,1.45,.64,1)}'+
+  '.si-desfazer button{flex:0 0 auto;border:0;background:transparent;color:var(--gold);font:inherit;font-weight:700;cursor:pointer;padding:4px 6px}'+
+  '@keyframes siDesfazerIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}'+
+  '@media (prefers-reduced-motion:reduce){.si-desfazer{animation:none}}'+
   '.si-card.concluida{opacity:.6}.si-card.concluida .si-proc span,.si-card.concluida .si-cli{text-decoration:line-through}'+
   '.si-topo{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--muted);font-weight:700}'+
   '.si-topo .data{margin-left:auto;font-weight:600}.si-topo .data+.si-mover{margin-left:2px}'+
@@ -404,7 +408,7 @@
     return String(b.data_disponibilizacao||'').localeCompare(String(a.data_disponibilizacao||''));});}
   function renderQuadro(el){
     var lista=filtradas(true),f=S.f;
-    var mostrarAbertas=f.situacao!=='concluidas',mostrarConcl=f.situacao!=='abertas';
+    var mostrarAbertas=f.situacao!=='concluidas',mostrarConcl=true;
     el.innerHTML='';
     var q=document.createElement('div');q.className='si-quadro';el.appendChild(q);
     var gs=grupos(lista);
@@ -512,8 +516,20 @@
   async function alternarConcluida(id){
     var i=S.itens.filter(function(x){return x.id===id;})[0];if(!i)return;
     var ok=await atualizar(id,{concluida:!i.concluida});
-    if(ok)toast(i.concluida?'Intimação concluída.':'Intimação reaberta.','sucesso');
+    if(ok&&i.concluida){
+      // A concluída fica no fim da própria coluna: abre o bloco "concluídas" dela para a pessoa ver onde foi parar
+      grupos(filtradas(true)).forEach(function(g){if(g.itens.some(function(x){return x.id===id;}))S.concluidasAbertas[g.id]=true;});
+      mudou();avisoDesfazer(id);
+    }else if(ok)toast('Intimação reaberta.','sucesso');
     if(S.aberta===id)preencherJanela(i);
+  }
+  function avisoDesfazer(id){
+    var velho=document.getElementById('siDesfazer');if(velho)velho.remove();
+    var d=document.createElement('div');d.id='siDesfazer';d.className='si-desfazer';d.setAttribute('role','status');
+    d.innerHTML='<span>Intimação concluída. Ela ficou no fim da coluna, em "concluídas".</span><button type="button">Desfazer</button>';
+    d.querySelector('button').onclick=function(){d.remove();alternarConcluida(id);};
+    document.body.appendChild(d);
+    setTimeout(function(){if(d.parentNode)d.remove();},8000);
   }
 
   /* ---------- janelas ---------- */
