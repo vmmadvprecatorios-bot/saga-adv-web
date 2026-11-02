@@ -388,6 +388,22 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 .paleta-cor.selecionada{border-color:var(--text);box-shadow:0 0 0 2px var(--gold);}
 .paleta-personalizada{display:flex;align-items:center;gap:8px;margin-top:11px;padding-top:10px;border-top:1px solid var(--border-soft);font-size:11px;color:var(--muted);cursor:pointer;}
 .paleta-personalizada input{width:26px;height:26px;padding:0;border:none;border-radius:6px;background:none;cursor:pointer;}
+.pr-graficos{--g1:#5483B3;--g2:#2E8B8B;--g3:#7DA0CA;--g4:#477C8B;--g5:#91B3B9;--g6:#3F6FB0;--g7:#6FB7B0;--g8:#A9C7E8;--g-venc:#f08a4b;--g-hoje:#f5b84c;--g-ok:#5483B3;--g-sem:#8a94a8;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+[data-theme="light"] .pr-graficos{--g1:#052659;--g2:#245568;--g3:#5483B3;--g4:#2E8B8B;--g5:#123747;--g6:#477C8B;--g7:#3F6FB0;--g8:#7DA0CA;--g-venc:#d6452d;--g-hoje:#e08a00;--g-ok:#2563EB}
+.pr-graf{background:var(--panel);border:1px solid var(--border-soft);border-radius:15px;padding:13px 14px;min-width:0}.pr-graf h4{margin:0 0 8px;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.pr-graf-corpo{display:flex;align-items:center;gap:12px;min-width:0}.pr-rosca{position:relative;width:104px;height:104px;flex:0 0 auto}.pr-rosca svg{width:100%;height:100%;display:block}
+.pr-rosca .trilho{fill:none;stroke:color-mix(in srgb,var(--text) 9%,transparent);stroke-width:14}.pr-rosca .pr-fatia{fill:none;stroke-width:14;cursor:pointer;transition:opacity .2s,stroke-width .2s}.pr-rosca .pr-fatia.sem-clique{cursor:default}.pr-rosca .pr-fatia:hover{stroke-width:16}.pr-rosca.filtrada .pr-fatia:not(.ativa){opacity:.3}
+.pr-rosca .centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-size:20px;font-weight:700;line-height:1;color:var(--text)}.pr-rosca .centro small{font-size:8.5px;font-weight:600;letter-spacing:.4px;color:var(--muted);margin-top:3px;text-transform:uppercase}
+.pr-leg-lista{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.pr-leg{display:flex;align-items:center;gap:7px;width:100%;padding:3px 5px;border:0;border-radius:7px;background:none;color:var(--text);font:inherit;font-size:11px;text-align:left;min-width:0}
+button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{background:color-mix(in srgb,var(--text) 7%,transparent);outline:0}.pr-leg.ativa{background:color-mix(in srgb,var(--gold) 14%,transparent);font-weight:700}
+.pr-leg i{width:9px;height:9px;border-radius:3px;flex:0 0 auto;background:var(--c)}.pr-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pr-leg b{font-variant-numeric:tabular-nums;color:var(--muted);font-size:10.5px}
+@media(max-width:1180px){.pr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.pr-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.pr-graf{flex:0 0 86%;scroll-snap-align:start}}
+.pr-graficos-secao{container-type:inline-size}@container(max-width:1050px){.pr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}@container(max-width:600px){.pr-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.pr-graf{flex:0 0 86%;scroll-snap-align:start}}.pr-graficos[hidden]{display:none}.pr-graficos-barra{display:flex;justify-content:flex-end;margin:-7px 0 7px}.pr-toggle{font:inherit;font-size:10.5px;color:var(--muted);padding:5px 8px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);cursor:pointer}.pr-toggle:active{transform:scale(.96)}.pr-rosca .pr-fatia{transition:opacity .2s,stroke-width .2s,stroke-dasharray .6s,stroke-dashoffset .6s}.pr-rosca .pr-fatia{transform-box:fill-box;transform-origin:center}.pr-rosca .pr-fatia:focus-visible{stroke-width:16;outline:none}.pr-leg-lista{max-height:190px;overflow-y:auto}.pr-leg:active{transform:scale(.97)}.pr-rosca .centro .n{font-variant-numeric:tabular-nums}@media(prefers-reduced-motion:reduce){.pr-rosca .pr-fatia{transition:none}}
+
+
+.pr-erro{padding:12px;margin-bottom:14px;border:1px solid var(--border-soft);border-radius:12px;color:var(--muted);font-size:12px}.pr-erro[hidden]{display:none}.pr-erro button{font:inherit;color:var(--gold);margin-left:8px}
+
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -567,6 +583,12 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
         </button>
       </div>
     </div>
+
+    <section class="pr-graficos-secao">
+      <div class="pr-graficos-barra"><button type="button" class="pr-toggle" id="btnGraficosProcessos" aria-controls="graficosProcessos" aria-expanded="true">Ocultar gráficos</button></div>
+      <div class="pr-graficos" id="graficosProcessos" aria-label="Distribuição dos processos filtrados"></div>
+      <div class="pr-erro" id="erroGraficosProcessos" role="status" hidden>Não foi possível carregar os gráficos.<button type="button" onclick="invalidarBaseProcessos();carregarProcessos()">Atualizar</button></div>
+    </section>
 
     <div class="barra-filtros">
       <div class="busca">
@@ -1104,6 +1126,7 @@ async function carregarPerfil(){
 
 // Opcoes de filtros
 async function carregarOpcoesFiltros(){
+  invalidarBaseProcessos();
   if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:state.admin,erro:function(msg){showToast(esc(msg),'error');},mudou:function(){
     state.teses=catalogoTeses.todasTeses();state.todasTeses=state.teses;
     document.getElementById('qtdCatTeses').textContent=state.teses.length;
@@ -1142,7 +1165,7 @@ function sincronizarUI(){
   document.querySelectorAll('.pill-quantidade').forEach(function(p){p.classList.toggle('ativo',p.getAttribute('data-qtd')==state.pageSize||(p.getAttribute('data-qtd')==='todos'&&state.pageSize==='todos'));});
   document.getElementById('labelFiltroTese').textContent=state.filtroTese?state.filtroTese.nome:'Tese';
   document.getElementById('labelFiltroStatus').textContent=state.filtroStatus?state.filtroStatus.nome:'Status';
-  document.getElementById('labelFiltroResponsavel').textContent=state.filtroResponsavel?(state.filtroResponsavel.nome_completo.split(' ')[0]||'Responsavel'):'Responsavel';
+  document.getElementById('labelFiltroResponsavel').textContent=state.filtroResponsavel?((state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0])||'Responsavel'):'Responsavel';
   if(state.filtroPeriodoDe)document.getElementById('inputPeriodoDe').value=state.filtroPeriodoDe;
   if(state.filtroPeriodoAte)document.getElementById('inputPeriodoAte').value=state.filtroPeriodoAte;
   atualizarLabelPeriodo();renderTagsAtivas();renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();
@@ -1156,10 +1179,11 @@ function atualizarLabelPeriodo(){
 }
 function renderTagsAtivas(){
   var tags=[];
+  if(faseAtualProcessos()!==FASE_TODAS)tags.push({label:'Fase: '+rotuloFaseProcessos(faseAtualProcessos()),fn:function(){state.faseLista=state.faseKanbanAtiva=FASE_TODAS;aplicarFiltros();}});
   if(state.filtroArea!=='*')tags.push({label:'Área: '+(catalogoTeses.area(state.filtroArea)?.nome||'Sem área'),fn:function(){state.filtroArea='*';state.filtroTese=null;renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroTese)tags.push({label:'Tese: '+state.filtroTese.nome,fn:function(){state.filtroTese=null;document.getElementById('labelFiltroTese').textContent='Tese';renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroStatus)tags.push({label:'Status: '+state.filtroStatus.nome,fn:function(){state.filtroStatus=null;document.getElementById('labelFiltroStatus').textContent='Status';renderDropdownsStatus();aplicarFiltros();}});
-  if(state.filtroResponsavel)tags.push({label:'Resp.: '+state.filtroResponsavel.nome_completo.split(' ')[0],fn:function(){state.filtroResponsavel=null;document.getElementById('labelFiltroResponsavel').textContent='Responsavel';renderDropdownsResponsavel();aplicarFiltros();}});
+  if(state.filtroResponsavel)tags.push({label:'Resp.: '+(state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0]),fn:function(){state.filtroResponsavel=null;document.getElementById('labelFiltroResponsavel').textContent='Responsavel';renderDropdownsResponsavel();aplicarFiltros();}});
   if(state.filtroPeriodoDe||state.filtroPeriodoAte)tags.push({label:'Periodo',fn:function(){state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';atualizarLabelPeriodo();aplicarFiltros();}});
   var c=document.getElementById('tagsAtivas');
   if(!tags.length){c.style.display='none';return;}
@@ -1168,41 +1192,181 @@ function renderTagsAtivas(){
   c.querySelectorAll('.btn-remover-tag').forEach(function(btn){var i=parseInt(btn.getAttribute('data-i'));btn.onclick=function(e){e.stopPropagation();tags[i].fn();};});
 }
 
+/* Roscas: mesmo desenho e atualização sem recriar os cartões da T40 em Tarefas. */
+var graficosProcessosOcultos=false,gruposRoscasProcessos={};
+try{graficosProcessosOcultos=localStorage.getItem('saga-processos-graficos-ocultos')==='1';}catch(e){}
+function nomeCurtoRoscaProcesso(nome){var p=nome.trim().split(/\s+/);return p.length>1?p[0]+' '+p[p.length-1]:nome;}
+function agruparRoscaProcessos(base,tipo,max,filtro){
+  var campo=tipo==='status'?'status_id':'responsavel_id';
+  var mapa=new Map();
+  function item(id,p){
+    var s=tipo==='status'?statusDoProcesso(p||{status_id:id}):null;
+    var r=tipo==='responsavel'?state.responsaveis.find(function(r){return r.id===id;})||(p&&p.responsavel)||{}:null;
+    var nome=tipo==='status'?s.nome||'Sem status':id?r.nome_completo||'Responsável indisponível':'Sem responsável';
+    var cor=tipo==='status'&&s.cor&&CSS.supports('color',s.cor)?s.cor:null;
+    return {v:id,nome:tipo==='responsavel'?nomeCurtoRoscaProcesso(nome):nome,dica:nome,cor:!id?'var(--g-sem)':cor,n:0,valores:[id]};
+  }
+  base.forEach(function(p){var id=p[campo]||'';if(!mapa.has(id))mapa.set(id,item(id,p));mapa.get(id).n++;});
+  var selecionados=filtro?(filtro.ids||[filtro.id||'']):[];
+  selecionados.forEach(function(id){if(!mapa.has(id))mapa.set(id,item(id));});
+  var todos=Array.from(mapa.values()).sort(function(a,b){return b.n-a.n||a.dica.localeCompare(b.dica,'pt-BR');});
+  var nomesOrdenados=Array.from(mapa.keys()).sort();
+  todos.forEach(function(x){if(!x.cor)x.cor='var(--g'+(nomesOrdenados.indexOf(x.v)%8+1)+')';});
+  var nomeados=todos.filter(function(x){return !filtro||!filtro.ids||selecionados.indexOf(x.v)===-1;}).slice(0,max);
+  // Sem responsável fica visível, em cinza, mesmo quando há muitos nomes.
+  if(mapa.has('')&&!nomeados.some(function(x){return x.v==='';})){
+    if(nomeados.length===max)nomeados.pop();nomeados.push(mapa.get(''));
+  }
+  if(filtro&&!filtro.ids&&!nomeados.some(function(x){return x.v===(filtro.id||'');})){
+    if(nomeados.length===max){var remover=nomeados.length-1;while(remover>0&&nomeados[remover].v==='')remover--;nomeados.splice(remover,1);}
+    nomeados.push(mapa.get(filtro.id||''));
+  }
+  var resto=todos.filter(function(x){return !nomeados.some(function(n){return n.v===x.v;});});
+  if(resto.length)nomeados.push({v:'__outros__',nome:'Outros',dica:resto.map(function(x){return x.dica;}).join(', '),valores:resto.map(function(x){return x.v;}),cor:'var(--g-sem)'});
+  return nomeados;
+}
+function dadosGraficosProcessos(){
+  var base=state.baseProcessos||[],filtrados=base.filter(function(p){return processoNoEscopo(p);});
+  var fases=Array.from(new Set(statusDisponiveisProcessos().map(function(s){return s.fase||'Sem fase';})));
+  var porFase=fases.map(function(f,k){return {v:f,nome:rotuloFaseProcessos(f),cor:'var(--g'+(k%8+1)+')',n:filtrados.filter(function(p){return (statusDoProcesso(p).fase||'Sem fase')===f;}).length,ativa:faseAtualProcessos()===f};});
+  var status=agruparRoscaProcessos(base.filter(function(p){return processoNoEscopo(p,'status');}),'status',7,state.filtroStatus);
+  var resp=agruparRoscaProcessos(base.filter(function(p){return processoNoEscopo(p,'responsavel');}),'responsavel',6,state.filtroResponsavel);
+  [[status,'status_id',state.filtroStatus],[resp,'responsavel_id',state.filtroResponsavel]].forEach(function(g){g[0].forEach(function(x){x.n=filtrados.filter(function(p){return x.valores.indexOf(p[g[1]]||'')!==-1;}).length;x.ativa=!!g[2]&&x.valores.some(function(id){return filtroProcessoContem(g[2],id);});});});
+  var ids=Array.from(new Set(base.map(function(p){return p.area_direito_id||'';}).concat(state.filtroArea!=='*'?[state.filtroArea||'']:[])));
+  var areas=ids.map(function(id,k){var a=catalogoTeses&&catalogoTeses.area(id);return {v:id,nome:a?a.nome:id?'Área indisponível':'Sem área',cor:id?'var(--g'+(k%8+1)+')':'var(--g-sem)',n:filtrados.filter(function(p){return (p.area_direito_id||'')===id;}).length,ativa:state.filtroArea!=='*'&&(state.filtroArea||'')===id};});
+  return [{k:'fase',titulo:'Por fase',itens:porFase},{k:'status',titulo:'Por status',itens:status},{k:'area',titulo:'Por área do direito',itens:areas},{k:'responsavel',titulo:'Por responsável',itens:resp}];
+}
+
+function contarRoscaProcesso(el,alvo){
+  if(el._alvo===alvo)return;
+  if(el._quadro)cancelAnimationFrame(el._quadro);
+  var de=Number(el.textContent)||0;el._alvo=alvo;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches||de===alvo){el.textContent=alvo;return;}
+  var inicio=null;
+  function passo(ts){if(inicio===null)inicio=ts;var k=Math.min(1,(ts-inicio)/600);el.textContent=Math.round(de+(alvo-de)*(1-Math.pow(1-k,3)));if(k<1)el._quadro=requestAnimationFrame(passo);else el._quadro=null;}
+  el._quadro=requestAnimationFrame(passo);
+}
+function renderGraficosProcessos(){
+  var secao=document.querySelector('.pr-graficos-secao');secao.hidden=!state.permissoes.visualizar;if(secao.hidden)return;
+  var root=document.getElementById('graficosProcessos');
+  var btn=document.getElementById('btnGraficosProcessos');
+  btn.textContent=graficosProcessosOcultos?'Mostrar gráficos':'Ocultar gráficos';btn.setAttribute('aria-expanded',String(!graficosProcessosOcultos));root.hidden=graficosProcessosOcultos||!!state.erroGraficos;
+  document.getElementById('erroGraficosProcessos').hidden=graficosProcessosOcultos||!state.erroGraficos;
+  if(root.hidden)return;
+  var circ=2*Math.PI*40;
+  dadosGraficosProcessos().forEach(function(g){
+    gruposRoscasProcessos[g.k]=g.itens;
+    var card=root.querySelector('[data-g="'+g.k+'"]');
+    if(!card){
+      card=document.createElement('div');card.className='pr-graf';card.dataset.g=g.k;
+      card.innerHTML='<h4>'+g.titulo+'</h4><div class="pr-graf-corpo"><div class="pr-rosca"><svg viewBox="0 0 100 100" role="group"><circle class="trilho" cx="50" cy="50" r="40"></circle><g class="pr-arcos" transform="rotate(-90 50 50)"></g></svg><div class="centro"><span class="n">0</span><small>processos</small></div></div><div class="pr-leg-lista"></div></div>';
+      card._fatias=new Map();card._legendas=new Map();root.appendChild(card);
+    }
+    var total=g.itens.reduce(function(s,x){return s+x.n;},0),acc=0,positivas=g.itens.filter(function(x){return x.n>0;}).length;
+    card.dataset.total=total;card.querySelector('svg').setAttribute('aria-label',g.titulo+': '+total+' processos');
+    card.querySelector('.pr-rosca').classList.toggle('filtrada',g.itens.some(function(x){return x.ativa;}));
+    contarRoscaProcesso(card.querySelector('.n'),total);
+    var chaves=new Set();
+    g.itens.forEach(function(x,indice){
+      chaves.add(x.v);
+      var c=card._fatias.get(x.v),novo=!c;
+      if(!c){c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','pr-fatia');c.setAttribute('cx','50');c.setAttribute('cy','50');c.setAttribute('r','40');c.setAttribute('role','button');c.setAttribute('tabindex','0');c.dataset.graf=g.k;c.dataset.v=x.v;c.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title'));card._fatias.set(x.v,c);card.querySelector('.pr-arcos').appendChild(c);}
+      var len=total?x.n/total*circ:0,vis=Math.max(0,len-(positivas>1&&total>positivas?2.2:0));
+      c.style.stroke=x.cor;c.style.display=x.n?'':'none';c.classList.toggle('ativa',!!x.ativa);c.setAttribute('aria-pressed',String(!!x.ativa));c.setAttribute('aria-label',x.nome+': '+x.n);c.querySelector('title').textContent=(x.dica||x.nome)+': '+x.n;
+      var arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2),offset=(-acc).toFixed(2);
+      if(c.getAttribute('stroke-dasharray')!==arco)c.setAttribute('stroke-dasharray',arco);
+      if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);
+      if(novo&&x.n&&!matchMedia('(prefers-reduced-motion: reduce)').matches)c.animate([{strokeDasharray:'0 '+circ},{strokeDasharray:arco}],{duration:650,easing:'cubic-bezier(.22,1,.36,1)'});
+      acc+=len;
+      var b=card._legendas.get(x.v);
+      if(!b){b=document.createElement('button');b.type='button';b.className='pr-leg';b.dataset.graf=g.k;b.dataset.v=x.v;b.innerHTML='<i></i><span></span><b></b>';card._legendas.set(x.v,b);}
+      b.classList.toggle('ativa',!!x.ativa);b.setAttribute('aria-pressed',String(!!x.ativa));b.querySelector('i').style.setProperty('--c',x.cor);b.querySelector('span').textContent=x.nome;b.title=x.dica||x.nome;b.querySelector('b').textContent=x.n;var lista=card.querySelector('.pr-leg-lista');if(lista.children[indice]!==b)lista.insertBefore(b,lista.children[indice]||null);
+    });
+    [card._fatias,card._legendas].forEach(function(m){m.forEach(function(el,v){if(!chaves.has(v)){el.remove();m.delete(v);}});});
+    var vazio=card.querySelector('.pr-vazio');
+    if(!g.itens.length&&!vazio){vazio=document.createElement('div');vazio.className='pr-leg pr-vazio';vazio.textContent='Nenhum processo';card.querySelector('.pr-leg-lista').appendChild(vazio);}
+    if(g.itens.length&&vazio)vazio.remove();
+  });
+}
+function aplicarFatiaProcesso(chave,valor){
+  var x=(gruposRoscasProcessos[chave]||[]).find(function(i){return i.v===valor;});if(!x)return;
+  if(chave==='fase')state.faseLista=state.faseKanbanAtiva=faseAtualProcessos()===valor?FASE_TODAS:valor;
+  else if(chave==='area'){state.filtroArea=state.filtroArea!=='*'&&(state.filtroArea||'')===valor?'*':valor||null;state.filtroTese=null;}
+  else{
+    var campo=chave==='status'?'filtroStatus':'filtroResponsavel',atual=state[campo];
+    var igual=atual&&(x.v==='__outros__'?Array.isArray(atual.ids):!atual.ids&&(atual.id||'')===valor);
+    state[campo]=igual?null:x.v==='__outros__'?{ids:x.valores.slice(),nome:'Outros',nome_completo:'Outros'}:{id:valor||null,sem:!valor,nome:x.dica||x.nome,nome_completo:x.dica||x.nome};
+  }
+  aplicarFiltros();
+}
+document.getElementById('btnGraficosProcessos').addEventListener('click',function(){graficosProcessosOcultos=!graficosProcessosOcultos;try{localStorage.setItem('saga-processos-graficos-ocultos',graficosProcessosOcultos?'1':'0');}catch(e){}renderGraficosProcessos();});
+document.getElementById('graficosProcessos').addEventListener('click',function(e){var b=e.target.closest('[data-graf]');if(b)aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);});
+document.getElementById('graficosProcessos').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);}});
+
 // Query principal
-async function carregarProcessos(){
-  if(!state.permissoes.visualizar){renderSemPermissao();return;}
-  state.loading=true;renderSkeleton();
-  try{
-    var busca=state.busca.trim();var pessoaIds=null;
-    if(busca){
-      var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+busca+'%,cpf.ilike.%'+busca+'%').limit(500);
-      pessoaIds=(rp.data||[]).map(function(p){return p.id;});
-    }
+/* Base compartilhada pela Lista, Kanban e gráficos, sem o limite da página. */
+function faseAtualProcessos(){return (state.view==='lista'?state.faseLista:state.faseKanbanAtiva)||FASE_TODAS;}
+function rotuloFaseProcessos(f){var n=String(f).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return n==='captacao'?'Captação':n==='juridico'?'Jurídico':f;}
+function statusDoProcesso(p){return state.statusList.find(function(s){return s.id===p.status_id;})||p.status||{id:p.status_id,nome:'Sem status',fase:'Sem fase'};}
+function statusDisponiveisProcessos(){
+  var mapa=new Map(state.statusList.map(function(s){return [s.id,s];}));
+  (state.baseProcessos||[]).forEach(function(p){var s=statusDoProcesso(p);if(s.id&&!mapa.has(s.id))mapa.set(s.id,s);});
+  return Array.from(mapa.values());
+}
+function filtroProcessoContem(f,id){return !f||(f.ids?f.ids.indexOf(id||'')!==-1:f.sem?!id:f.id===id);}
+function processoNoEscopo(p,ignorar){
+  if(ignorar!=='fase'&&faseAtualProcessos()!==FASE_TODAS&&(statusDoProcesso(p).fase||'Sem fase')!==faseAtualProcessos())return false;
+  if(ignorar!=='status'&&!filtroProcessoContem(state.filtroStatus,p.status_id))return false;
+  if(ignorar!=='responsavel'&&!filtroProcessoContem(state.filtroResponsavel,p.responsavel_id))return false;
+  if(state.view==='kanban'&&state.buscaKanban){var b=state.buscaKanban.trim().toLowerCase(),pe=p.pessoa||{};if(String(pe.nome_completo||'').toLowerCase().indexOf(b)===-1&&String(pe.cpf||'').toLowerCase().indexOf(b)===-1)return false;}
+  return true;
+}
+function prepararVisaoProcessos(){
+  var todos=(state.baseProcessos||[]).filter(function(p){return processoNoEscopo(p);});
+  state.totalProcessos=todos.length;
+  if(state.pageSize!=='todos')state.page=Math.max(1,Math.min(state.page,Math.ceil(todos.length/state.pageSize)||1));
+  state.processos=state.view==='kanban'||state.pageSize==='todos'?todos:todos.slice((state.page-1)*state.pageSize,state.page*state.pageSize);
+}
+function invalidarBaseProcessos(){state.cacheProcessos=null;}
+async function lerBaseProcessos(f){
+  var chave=JSON.stringify(f);
+  if(state.cacheProcessos&&state.cacheProcessos.chave===chave)return state.cacheProcessos.promessa;
+  var cache={chave:chave};state.cacheProcessos=cache;
+  cache.promessa=(async function(){
+    var pessoaIds=null;
+    if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
     var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,'+
-      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp),'+
-      'tese:teses!tese_id(id,nome,cor),'+
-      'status:status_funil!status_id(id,nome,cor,fase,ordem),'+
-      'responsavel:usuarios!responsavel_id(id,nome_completo)';
-    var query=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
-    if(state.filtroArea!=='*')query=state.filtroArea?query.eq('area_direito_id',state.filtroArea):query.is('area_direito_id',null);
-    if(state.filtroTese)query=query.eq('tese_id',state.filtroTese.id);
-    if(state.filtroStatus)query=query.eq('status_id',state.filtroStatus.id);
-    if(state.filtroResponsavel)query=query.eq('responsavel_id',state.filtroResponsavel.id);
-    var idsFase=statusIdsDaFaseLista();
-    if(idsFase)query=idsFase.length?query.in('status_id',idsFase):query.eq('status_id','00000000-0000-0000-0000-000000000000');
-    if(state.filtroPeriodoDe)query=query.gte('data_inicio',state.filtroPeriodoDe);
-    if(state.filtroPeriodoAte)query=query.lte('data_inicio',state.filtroPeriodoAte);
-    if(busca){
-      if(pessoaIds&&pessoaIds.length>0)query=query.or('pessoa_id.in.('+pessoaIds.join(',')+')'+(busca?',numero_processo_cnj.ilike.%'+busca+'%':''));
-      else query=query.ilike('numero_processo_cnj','%'+busca+'%');
+      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem),responsavel:usuarios!responsavel_id(id,nome_completo)';
+    var linhas=[],inicio=0;
+    while(true){
+      var q=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
+      if(f.area!=='*')q=f.area?q.eq('area_direito_id',f.area):q.is('area_direito_id',null);
+      if(f.tese)q=q.eq('tese_id',f.tese);
+      if(f.de)q=q.gte('data_inicio',f.de);if(f.ate)q=q.lte('data_inicio',f.ate);
+      if(f.busca){if(pessoaIds&&pessoaIds.length)q=q.or('pessoa_id.in.('+pessoaIds.join(',')+'),numero_processo_cnj.ilike.%'+f.busca+'%');else q=q.ilike('numero_processo_cnj','%'+f.busca+'%');}
+      var r=await q.order('criado_em',{ascending:false}).order('id').range(inicio,inicio+999);
+      if(r.error)throw r.error;
+      var lote=r.data||[];linhas=linhas.concat(lote);inicio+=lote.length;
+      if(typeof r.count==='number'&&inicio>=r.count)break;
+      if(!lote.length){if(r.count>inicio)throw new Error('A leitura dos processos ficou incompleta.');break;}
     }
-    query=query.order('criado_em',{ascending:false});
-    if(state.pageSize!=='todos'){var from=(state.page-1)*state.pageSize;query=query.range(from,from+state.pageSize-1);}
-    var res=await query;
-    if(res.error)throw res.error;
-    state.processos=res.data||[];state.totalProcessos=res.count||0;
-  }catch(e){showToast('Erro ao carregar: '+(e.message||'verifique a conexao.'),'danger');state.processos=[];state.totalProcessos=0;}
-  state.loading=false;
+    return linhas;
+  })().catch(function(e){if(state.cacheProcessos===cache)state.cacheProcessos=null;throw e;});
+  return cache.promessa;
+}
+async function carregarProcessos(){
+  var pedido=state.pedidoProcessos=(state.pedidoProcessos||0)+1;
+  if(!state.permissoes.visualizar){state.baseProcessos=[];renderSemPermissao();renderGraficosProcessos();return;}
+  state.loading=true;renderSkeleton();
+  var filtros={busca:state.busca.trim(),area:state.filtroArea,tese:state.filtroTese&&state.filtroTese.id,de:state.filtroPeriodoDe,ate:state.filtroPeriodoAte};
+  try{
+    var linhas=await lerBaseProcessos(filtros);if(pedido!==state.pedidoProcessos)return;
+    state.baseProcessos=linhas;state.erroGraficos=false;
+  }catch(e){
+    if(pedido!==state.pedidoProcessos)return;
+    showToast('Erro ao carregar: '+esc(e.message||'verifique a conexão.'),'danger');state.baseProcessos=[];state.erroGraficos=true;
+  }
+  state.loading=false;renderSeletorFaseKanban();
   if(state.view==='lista')renderLista();else renderKanban();
   atualizarContagem();
 }
@@ -1213,6 +1377,7 @@ function aplicarFiltroPeriodo(){
   atualizarLabelPeriodo();fecharTodosDropdowns();aplicarFiltros();
 }
 function limparFiltros(){
+  state.faseLista=state.faseKanbanAtiva=FASE_TODAS;state.buscaKanban='';document.getElementById('buscaKanban').value='';
   state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
   document.getElementById('inputBusca').value='';
@@ -1240,7 +1405,7 @@ function renderSemPermissao(){
 function renderEstadoVazio(){
   document.getElementById('tbodyPrincipal').innerHTML='';
   var ev=document.getElementById('estadoVazio');ev.style.display='flex';
-  var tem=state.filtroArea!=='*'||state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
+  var tem=faseAtualProcessos()!==FASE_TODAS||state.filtroArea!=='*'||state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
   if(tem)ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.3"/><line x1="20" y1="20" x2="16" y2="16" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum resultado</b><p>Nenhum processo encontrado. <button onclick="limparFiltros()" style="color:var(--gold-light);text-decoration:underline;background:none;border:none;cursor:pointer;font:inherit;padding:0">Limpar filtros</button></p>';
   else ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum processo cadastrado</b><p>Clique em "Novo Processo" para comecar.</p>';
 }
@@ -1276,6 +1441,7 @@ function sigiloIcone(sig){
 
 // Render lista
 function renderLista(){
+  prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
   document.getElementById('estadoVazio').style.display='none';
   if(!state.processos.length){renderEstadoVazio();renderPaginacao();document.getElementById('cartoesMobile').innerHTML='';return;}
   var html=state.processos.map(function(p){
@@ -1322,26 +1488,25 @@ function prazoKanbanHtml(d){
 var FASE_TODAS='__todas__';
 function renderSeletorFaseKanban(){
   var el=document.getElementById('seletorFaseKanban');
-  var fases=Array.from(new Set(state.statusList.map(function(s){return s.fase||'Sem fase';})));
+  var fases=Array.from(new Set(statusDisponiveisProcessos().map(function(s){return s.fase||'Sem fase';})));
   if(!fases.length){el.innerHTML='';el.style.display='none';return;}
   el.style.display='flex';
   var lista=state.view==='lista';
-  var opcoes=lista?[FASE_TODAS].concat(fases):fases;
+  var opcoes=[FASE_TODAS].concat(fases);
   if(lista){if(!state.faseLista||opcoes.indexOf(state.faseLista)===-1)state.faseLista=FASE_TODAS;}
-  else if(!state.faseKanbanAtiva||fases.indexOf(state.faseKanbanAtiva)===-1)state.faseKanbanAtiva=fases[0];
+  else if(!state.faseKanbanAtiva||opcoes.indexOf(state.faseKanbanAtiva)===-1)state.faseKanbanAtiva=FASE_TODAS;
   var ativa=lista?state.faseLista:state.faseKanbanAtiva;
-  el.innerHTML=opcoes.map(function(f){return '<div class="pill-fase '+(f===ativa?'ativo':'')+'" data-fase="'+esc(f)+'">'+(f===FASE_TODAS?'Todas':esc(f))+'</div>';}).join('');
+  el.innerHTML=opcoes.map(function(f){return '<div class="pill-fase '+(f===ativa?'ativo':'')+'" data-fase="'+esc(f)+'">'+(f===FASE_TODAS?'Todas':esc(rotuloFaseProcessos(f)))+'</div>';}).join('');
   el.querySelectorAll('[data-fase]').forEach(function(pill){
     pill.addEventListener('click',function(){
       var f=pill.getAttribute('data-fase');
-      if(state.view==='lista'){state.faseLista=f;state.page=1;renderSeletorFaseKanban();carregarProcessos();}
-      else{state.faseKanbanAtiva=f;renderSeletorFaseKanban();renderKanban();}
+      state.faseLista=state.faseKanbanAtiva=f;aplicarFiltros();
     });
   });
 }
 function statusIdsDaFaseLista(){
-  if(state.view!=='lista'||!state.faseLista||state.faseLista===FASE_TODAS)return null;
-  return state.statusList.filter(function(s){return (s.fase||'Sem fase')===state.faseLista;}).map(function(s){return s.id;});
+  if(faseAtualProcessos()===FASE_TODAS)return null;
+  return statusDisponiveisProcessos().filter(function(s){return (s.fase||'Sem fase')===faseAtualProcessos();}).map(function(s){return s.id;});
 }
 function ordenarCardsColuna(cards,criterio,direcao){
   if(criterio==='padrao')return cards;
@@ -1357,13 +1522,14 @@ function ordenarCardsColuna(cards,criterio,direcao){
   });
 }
 function renderKanban(){
+  prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
   var kv=document.getElementById('kanbanView');
   document.querySelectorAll('body > .menu-ordenar').forEach(function(m){m.remove();});
   if(!state.processos.length){kv.innerHTML='<div class="estado-vazio-kanban"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="opacity:.3"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum processo</b><p>Ajuste os filtros ou cadastre novos processos.</p></div>';return;}
   var podeArrastar=state.permissoes.editar===true;
   var termoBusca=(state.buscaKanban||'').trim().toLowerCase();
   var faseAtiva=state.faseKanbanAtiva;
-  var statusVisiveis=state.statusList.filter(function(s){return !faseAtiva||(s.fase||'Sem fase')===faseAtiva;});
+  var statusVisiveis=statusDisponiveisProcessos().filter(function(s){return !faseAtiva||faseAtiva===FASE_TODAS||(s.fase||'Sem fase')===faseAtiva;});
   var grupos={};statusVisiveis.forEach(function(s){grupos[s.id]={status:s,processos:[]};});
   state.processos.forEach(function(p){
     if(!grupos[p.status_id])return;
@@ -1630,6 +1796,10 @@ async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proxi
       return;
     }
     var novoStatus=state.statusList.find(function(s){return String(s.id)===String(novoStatusId);});
+    if(novoStatus)p.status=novoStatus;
+    var atualBase=(state.baseProcessos||[]).find(function(x){return x.id===p.id;});
+    if(atualBase){atualBase.status_id=novoStatusId;if(novoStatus)atualBase.status=novoStatus;}
+    invalidarBaseProcessos();if(state.loading)carregarProcessos();else renderKanban();
     showToast('Processo movido para "'+(novoStatus?novoStatus.nome:'novo status')+'".','success');
   }
 }
@@ -1637,8 +1807,8 @@ async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proxi
 // Contagem / Paginacao
 function atualizarContagem(){
   var total=state.totalProcessos,ps=state.pageSize,pg=state.page;
-  var from=ps==='todos'?1:Math.min((pg-1)*ps+1,total||0);
-  var to=ps==='todos'?total:Math.min(pg*ps,total||0);
+  var from=state.view==='kanban'||ps==='todos'?Math.min(1,total):Math.min((pg-1)*ps+1,total||0);
+  var to=state.view==='kanban'||ps==='todos'?total:Math.min(pg*ps,total||0);
   var extra='';
   if(state.filtroTese)extra+=' &middot; '+esc(state.filtroTese.nome);
   if(state.filtroStatus)extra+=' &middot; '+esc(state.filtroStatus.nome);
@@ -1678,7 +1848,7 @@ function renderDropdownsTeses(){
 function renderDropdownsStatus(){
   var l=document.getElementById('listaStatus');if(!l)return;
   l.innerHTML='<div class="dropdown-custom-opcao '+(state.filtroStatus===null?'selecionada':'')+'" data-status-id="">Todos os status</div>'+
-    state.statusList.map(function(s){var cor=s.cor||'#9aa8c2';return '<div class="dropdown-custom-opcao '+(state.filtroStatus&&state.filtroStatus.id===s.id?'selecionada':'')+'" data-status-id="'+esc(s.id)+'"><span style="width:7px;height:7px;border-radius:50%;background:'+cor+';flex:0 0 auto;display:inline-block"></span>'+esc(s.nome)+'</div>';}).join('');
+    state.statusList.map(function(s){var cor=s.cor||'#9aa8c2';return '<div class="dropdown-custom-opcao '+(state.filtroStatus&&filtroProcessoContem(state.filtroStatus,s.id)?'selecionada':'')+'" data-status-id="'+esc(s.id)+'"><span style="width:7px;height:7px;border-radius:50%;background:'+cor+';flex:0 0 auto;display:inline-block"></span>'+esc(s.nome)+'</div>';}).join('');
   l.querySelectorAll('[data-status-id]').forEach(function(op){
     op.addEventListener('click',function(){
       var id=op.getAttribute('data-status-id');
@@ -1690,18 +1860,19 @@ function renderDropdownsStatus(){
 function renderDropdownsResponsavel(){
   var l=document.getElementById('listaResponsaveis');if(!l)return;
   l.innerHTML='<div class="dropdown-custom-opcao '+(state.filtroResponsavel===null?'selecionada':'')+'" data-resp-id="">Todos</div>'+
-    state.responsaveis.map(function(u){return '<div class="dropdown-custom-opcao '+(state.filtroResponsavel&&state.filtroResponsavel.id===u.id?'selecionada':'')+'" data-resp-id="'+esc(u.id)+'">'+esc(u.nome_completo)+'</div>';}).join('');
+    '<div class="dropdown-custom-opcao '+(state.filtroResponsavel&&state.filtroResponsavel.sem?'selecionada':'')+'" data-resp-id="__sem__">Sem responsável</div>'+
+    state.responsaveis.map(function(u){return '<div class="dropdown-custom-opcao '+(state.filtroResponsavel&&filtroProcessoContem(state.filtroResponsavel,u.id)?'selecionada':'')+'" data-resp-id="'+esc(u.id)+'">'+esc(u.nome_completo)+'</div>';}).join('');
   l.querySelectorAll('[data-resp-id]').forEach(function(op){
     op.addEventListener('click',function(){
       var id=op.getAttribute('data-resp-id');
-      var u=id?state.responsaveis.find(function(x){return String(x.id)===id;}):null;
+      var u=id==='__sem__'?{id:null,sem:true,nome_completo:'Sem responsável'}:id?state.responsaveis.find(function(x){return String(x.id)===id;}):null;
       selResp(u||null);
     });
   });
 }
 function selTese(t){state.filtroTese=t;document.getElementById('labelFiltroTese').textContent=t?t.nome:'Tese';fecharTodosDropdowns();renderDropdownsTeses();aplicarFiltros();}
 function selStatus(s){state.filtroStatus=s;document.getElementById('labelFiltroStatus').textContent=s?s.nome:'Status';fecharTodosDropdowns();renderDropdownsStatus();aplicarFiltros();}
-function selResp(u){state.filtroResponsavel=u;document.getElementById('labelFiltroResponsavel').textContent=u?(u.nome_completo.split(' ')[0]||'Responsavel'):'Responsavel';fecharTodosDropdowns();renderDropdownsResponsavel();aplicarFiltros();}
+function selResp(u){state.filtroResponsavel=u;document.getElementById('labelFiltroResponsavel').textContent=u?(u.sem?'Sem responsável':u.nome_completo.split(' ')[0]||'Responsavel'):'Responsavel';fecharTodosDropdowns();renderDropdownsResponsavel();aplicarFiltros();}
 
 // Acoes por linha
 // Posicao da tela (aba de fase, pagina, rolagem): guardada ao sair e restaurada ao voltar da ficha ou de outra tela
@@ -1740,7 +1911,7 @@ async function executarExclusao(){
   var r=await _sb.rpc('excluir_processo',{p_processo_id:state.processoParaExcluir});
   if(r.error)showToast('Erro ao excluir: '+(r.error.message||'tente novamente.'),'danger');
   else if(r.data!==true)showToast('Este processo ja tinha sido excluido.','warning');
-  else{showToast('Processo movido para a lixeira.','success');state.processoParaExcluir=null;carregarProcessos();}
+  else{showToast('Processo movido para a lixeira.','success');state.processoParaExcluir=null;invalidarBaseProcessos();carregarProcessos();}
 }
 function abrirAtribuir(id){
   state.processoParaAtribuir=id;
@@ -1779,7 +1950,7 @@ async function executarAtribuicao(){
   var respId=state.responsavelAtribuirSelecionado?state.responsavelAtribuirSelecionado.id:null;
   var r=await _sb.from('processos').update({responsavel_id:respId}).eq('id',state.processoParaAtribuir);
   if(r.error)showToast('Erro ao atribuir: '+(r.error.message||'tente novamente.'),'danger');
-  else{showToast('Responsavel atualizado.','success');state.processoParaAtribuir=null;closeModal('modalAtribuir');carregarProcessos();}
+  else{showToast('Responsavel atualizado.','success');state.processoParaAtribuir=null;closeModal('modalAtribuir');invalidarBaseProcessos();carregarProcessos();}
 }
 
 // Novo Processo
@@ -1890,7 +2061,7 @@ async function salvarNovoProcesso(){
       var rf=await _sb.from('financeiro_processo').upsert({processo_id:r.data.id,percentual_honorarios:pctHonorarios},{onConflict:'processo_id'});
       if(rf.error)showToast('Processo criado, mas o percentual de honorarios nao foi salvo: '+(rf.error.message||''),'warning');
     }
-    showToast('Processo criado com sucesso.','success');closeModal('modalNovoProcesso');carregarProcessos();
+    showToast('Processo criado com sucesso.','success');closeModal('modalNovoProcesso');invalidarBaseProcessos();carregarProcessos();
   }
 }
 
@@ -1970,7 +2141,7 @@ function ligarInteracoesSagaUI(){
 }
 init().catch(function(e){showToast('Erro ao inicializar: '+(e.message||'recarregue a pagina.'),'danger');});
 document.addEventListener('saga-atualizar',function(){
-  carregarProcessos();
+  invalidarBaseProcessos();carregarProcessos();
   showToast('Informacoes atualizadas.','success');
 });
 </script>
