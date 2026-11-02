@@ -61,7 +61,7 @@ button.sr-leg{cursor:pointer}button.sr-leg:hover,button.sr-leg:focus-visible{bac
         card.classList.toggle('sr-moeda',!!g.moeda);
         var total=g.total==null?g.itens.reduce(function(s,x){return s+valor(x.valor);},0):valor(g.total);
         var peso=g.itens.reduce(function(s,x){return s+Math.abs(valor(x.valor));},0),acc=0,positivas=g.itens.filter(function(x){return valor(x.valor)!==0;}).length;
-        var formatar=g.moeda?dinheiro:numero,extenso=g.moeda?function(n){return moeda.format(n);}:numero;
+        var formatar=g.formatar||(g.moeda?dinheiro:numero),extenso=g.formatarCompleto||g.formatar||(g.moeda?function(n){return moeda.format(n);}:numero);
         card.dataset.total=String(total);card.title=g.dica||'';card.querySelector('h4').textContent=g.titulo;
         card.querySelector('.centro').classList.toggle('sr-dinheiro',!!g.moeda);card.querySelector('.centro').title=extenso(total);
         card.querySelector('small').textContent=g.rotulo||(g.moeda?'total':'itens');

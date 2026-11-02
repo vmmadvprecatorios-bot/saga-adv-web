@@ -208,6 +208,7 @@ tr.apagado td{color:var(--muted)}
     body{background:#fff!important;color:#111!important}
     .rel-doc,.tabela-wrap,.resumo-grid div{border-color:#ccc!important;background:#fff!important}
   }
+  #roscasMeuPonto .centro .n{font-size:15px}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -252,6 +253,7 @@ tr.apagado td{color:var(--muted)}
           <div class="perfil" id="perfilMes" style="display:none"></div>
         </div>
       </div>
+      <section id="roscasMeuPonto" hidden aria-label="Gráfico das horas do mês"></section>
       <div class="panel banco-meu" id="bancoMeu" style="display:none">
         <div class="panel-title">Banco de horas</div>
         <div class="panel-sub" id="bancoMeuSub"></div>
@@ -318,6 +320,7 @@ tr.apagado td{color:var(--muted)}
   <!-- EQUIPE -->
   <section class="tab-pane" id="aba-equipe">
     <div class="toolbar"><div class="campo" style="margin:0"><input id="eqData" type="date"></div><span class="sub" id="eqResumo"></span></div>
+    <section id="roscasPontoEquipe" hidden aria-label="Gráfico mensal do ponto da equipe"></section>
     <div class="tabela-wrap"><table><thead><tr><th>Colaborador</th><th>Regime</th><th>Horário</th><th>Entrada</th><th>Saída</th><th>Pausas</th><th class="num">Trabalhadas</th><th class="num">Saldo</th><th>Status</th><th>Ocorrências</th><th>Relatório</th></tr></thead><tbody id="tbEquipe"></tbody></table></div>
     <div class="secao-titulo">Justificativas para decidir</div>
     <div class="lista-cards" id="listaPendJust"></div>
@@ -545,6 +548,7 @@ window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
 <script src="ponto_calculo.js"></script>
+<script src="saga_roscas.js"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -643,8 +647,10 @@ function SIT_MANUAL_DE(x){return PC.SIT_MANUAL.indexOf(x.sit)>=0?x.sit:'';}
 /* ----- Meu ponto ----- */
 async function carregarMeuMes(){
   var c=state.meuColab;if(!c)return;
+  var versao=++versaoMeuMesPonto;
   var ini=state.ano+'-'+dois(state.mes)+'-01',fim=state.ano+'-'+dois(state.mes)+'-'+dois(PC.diasNoMes(state.ano,state.mes));
   var res=await Promise.all([dadosMes(c,state.ano,state.mes),atividadesPorDia(state.meuId,ini,fim)]);
+  if(versao!==versaoMeuMesPonto)return;
   var calc=res[0];state.mesCalc=calc;state.ativMes=res[1];
   var livre=regimeDe(c).livre;
   document.getElementById('mesTitulo').textContent=NOMES_MES[state.mes-1]+' de '+state.ano;
@@ -657,6 +663,7 @@ async function carregarMeuMes(){
   if(state.ano+'-'+dois(state.mes)===state.hoje.slice(0,7))renderHoje(calc);
 }
 function renderResumo(t,livre){
+  renderRoscaHorasPonto(t,livre);
   var itens=livre?[['Horas no mês',PC.hhmm(t.trab)],['Dias com registro',t.dias],['Média por dia',t.dias?PC.hhmm(t.trab/t.dias):'—']]:
     [['Carga do mês',PC.hhmm(t.carga)],['Trabalhadas',PC.hhmm(t.trab)],['Abonadas',PC.hhmm(t.abono)],['Saldo do mês',saldoTxt(t.saldo)],['Saldo válido (até 1 dia)',saldoTxt(t.valido)],['Excedente não computado',PC.hhmm(t.excedente)],
      ['Atrasos acima da tolerância',t.atrasos],['Saídas antecipadas',t.antec],['Pausas excedidas',t.pausas],['Faltas',t.faltas],['Marcações incompletas',t.incompletas]];
@@ -664,6 +671,57 @@ function renderResumo(t,livre){
   var p=document.getElementById('perfilMes');
   if(livre){p.style.display='none';}else{p.style.display='';p.className='perfil '+(t.alerta?'alerta':'ok');p.textContent='Perfil do mês: '+t.perfil;}
   document.getElementById('resumoSub').textContent=NOMES_MES[state.mes-1]+' de '+state.ano+(livre?' · horário livre: o sistema só soma as horas':' · tolerância de '+state.cfg.tolerancia_min+' min');
+}
+var roscaHorasPonto, roscaEquipePonto, versaoRoscaEquipePonto=0, versaoMeuMesPonto=0;
+function formatarHorasRoscaPonto(minutos){
+  var n=Math.max(0,Math.round(minutos));return Math.floor(n/60)+'h'+dois(n%60);
+}
+function renderRoscaHorasPonto(t,livre){
+  if(!state.meuColab)return;
+  var extra=livre?0:Math.max(0,t.saldo),faltando=livre?0:Math.max(0,-t.saldo);
+  if(!roscaHorasPonto)roscaHorasPonto=SagaRoscas.criar(document.getElementById('roscasMeuPonto'),{chave:'saga-ponto-horas-roscas-ocultas',rotulo:'Horas do mês'});
+  roscaHorasPonto.atualizar([{id:'horas',titulo:'Horas de '+NOMES_MES[state.mes-1]+' de '+state.ano,rotulo:'horas',formatar:formatarHorasRoscaPonto,
+    dica:livre?'Horário livre: horas registradas, sem meta ou saldo extra. Clique para destacar.':'Cumpridas: horas trabalhadas sem o saldo extra. Faltando e extra seguem o saldo do resumo, com os mesmos abonos e tolerância. Clique para destacar.',
+    itens:[{id:'cumpridas',nome:'Cumpridas',valor:Math.max(0,t.trab-extra),cor:'var(--g2)'},{id:'faltando',nome:'Faltando',valor:faltando,cor:'var(--g-venc)'},{id:'extra',nome:'Extra',valor:extra,cor:'var(--g1)'}]}]);
+}
+async function lerMesRoscaPonto(tabela,campos,ini,fim,versao){
+  var lista=[],inicio=0;
+  while(versao===versaoRoscaEquipePonto){
+    var q=_sb.from(tabela).select(campos).gte('data',ini).lte('data',fim).order('colaborador_id').order('data');
+    if(tabela==='ponto_marcacoes')q=q.order('slot');
+    var r=await q.range(inicio,inicio+499);
+    if(r.error||!Array.isArray(r.data))throw r.error||new Error('Leitura indisponível.');
+    if(!r.data.length)return lista;
+    lista=lista.concat(r.data);inicio+=r.data.length;
+  }
+  return [];
+}
+async function carregarRoscaEquipePonto(){
+  if(!state.pode.equipe&&!state.pode.aprova)return;
+  var versao=++versaoRoscaEquipePonto,mes=(document.getElementById('eqData').value||state.hoje).slice(0,7),p=mes.split('-').map(Number);
+  var ini=mes+'-01',fim=mes+'-'+dois(PC.diasNoMes(p[0],p[1]));
+  try{
+    var r=await Promise.all([lerMesRoscaPonto('ponto_marcacoes','colaborador_id,data,slot,momento',ini,fim,versao),lerMesRoscaPonto('ponto_dias','colaborador_id,data,situacao,abono_min',ini,fim,versao)]);
+    if(versao!==versaoRoscaEquipePonto)return;
+    var marcas={},dias={},contagem=new Map();
+    r[0].forEach(function(x){var m=marcas[x.colaborador_id]=marcas[x.colaborador_id]||{};(m[x.data]=m[x.data]||[null,null,null,null,null,null,null,null])[x.slot]=minutosLocal(x.momento);});
+    r[1].forEach(function(x){(dias[x.colaborador_id]=dias[x.colaborador_id]||{})[x.data]=x;});
+    state.colabsPonto.forEach(function(c){
+      var calc=PC.calcularMes(p[0],p[1],state.hoje,{colab:colabCalc(c),jornadas:jornadasDe(c.id),regime:regimeDe(c),cfg:cfgCalc(),feriados:state.feriados,marcacoes:marcas[c.id]||{},dias:dias[c.id]||{}});
+      calc.dias.forEach(function(x){
+        if(x.key>state.hoje||['Não admitido','Desligado','Sem controle'].indexOf(x.sit)>=0)return;
+        var nome=PC.SIT_MANUAL.indexOf(x.sit)>=0?x.sit:x.d.falta?'Falta':x.d.incompleta?'Marcação incompleta':x.d.status==='Em andamento'?'Em andamento':x.d.trab>0?'Trabalhado':x.d.status==='Aguardando entrada'?'Aguardando entrada':null;
+        if(nome)contagem.set(nome,(contagem.get(nome)||0)+1);
+      });
+    });
+    var itens=Array.from(contagem,function(x){return {id:x[0],nome:x[0],valor:x[1],cor:CORES_STATUS[x[0]]||(x[0]==='Trabalhado'?'var(--g2)':null)};}).sort(function(a,b){return b.valor-a.valor||a.nome.localeCompare(b.nome,'pt-BR');});
+    if(!roscaEquipePonto)roscaEquipePonto=SagaRoscas.criar(document.getElementById('roscasPontoEquipe'),{chave:'saga-ponto-equipe-roscas-ocultas',rotulo:'Situação dos dias da equipe'});
+    roscaEquipePonto.atualizar([{id:'dias',titulo:'Dias da equipe em '+NOMES_MES[p[1]-1]+' de '+p[0],rotulo:'dias',dica:'Dias até hoje no mês selecionado, de pessoas com conta. Clique para destacar.',itens:itens}]);
+  }catch(e){
+    if(versao!==versaoRoscaEquipePonto)return;
+    if(roscaEquipePonto)roscaEquipePonto.atualizar([]);
+    showToast('Não foi possível carregar o gráfico mensal da equipe. Use Atualizar para tentar de novo.','error');
+  }
 }
 function renderHoje(calc){
   var c=state.meuColab,livre=regimeDe(c).livre;
@@ -836,6 +894,7 @@ async function carregarMeusHo(){
 
 /* ----- Equipe (gestor) ----- */
 async function carregarEquipe(){
+  if(!state.pode.equipe&&!state.pode.aprova)return;
   var data=document.getElementById('eqData').value||state.hoje;
   var r=await Promise.all([
     _sb.from('ponto_marcacoes').select('colaborador_id,slot,momento').eq('data',data),
@@ -862,7 +921,7 @@ async function carregarEquipe(){
   document.getElementById('eqResumo').textContent=dataBR(data)+' · presentes '+presentes+' de '+previstos+(faltas?' · '+faltas+' falta(s)':'')+' · clique em uma pessoa para ver o mês';
   tb.querySelectorAll('[data-colab]').forEach(function(tr){tr.addEventListener('click',function(e){if(e.target.closest('[data-relc]'))return;abrirMesColab(tr.dataset.colab);});});
   tb.querySelectorAll('[data-relc]').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();var c=state.colabs.find(function(x){return x.id===b.dataset.relc;});abrirRelatorio(data,c,false);});});
-  await carregarPendencias();
+  await Promise.all([carregarPendencias(),carregarRoscaEquipePonto()]);
 }
 async function carregarPendencias(){
   var pend=0;
@@ -890,7 +949,7 @@ async function decidir(id,decisao){
 async function decidirHo(id,status){
   var r=await _sb.from('solicitacoes_home_office').update({status:status,decidido_por_id:state.meuId,decidido_em:new Date().toISOString()}).eq('id',id).select('id');
   if(r.error||!r.data||!r.data.length){showToast('Não foi possível decidir o pedido.','error');return;}
-  showToast('Home office '+(status==='aprovado'?'aprovado':'recusado')+'.','success');carregarPendencias();
+  showToast('Home office '+(status==='aprovado'?'aprovado':'recusado')+'.','success');carregarPendencias();carregarRoscaEquipePonto();
 }
 async function abrirMesColab(id){
   var c=state.colabs.find(function(x){return x.id===id;});if(!c)return;
@@ -919,7 +978,7 @@ async function gravarDiaGestor(c,key,campos){
   var linha=Object.assign({colaborador_id:c.id,data:key,atualizado_em:new Date().toISOString()},campos);
   var r=await _sb.from('ponto_dias').upsert(linha,{onConflict:'colaborador_id,data'}).select('data');
   if(r.error||!r.data||!r.data.length){showToast('Não foi possível ajustar o dia.','error');return;}
-  showToast('Dia '+dataBR(key)+' ajustado.','success');renderMesColab();
+  showToast('Dia '+dataBR(key)+' ajustado.','success');renderMesColab();carregarRoscaEquipePonto();
 }
 
 /* ----- Abas e inicio ----- */

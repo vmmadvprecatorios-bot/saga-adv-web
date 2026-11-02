@@ -382,6 +382,7 @@
     </div>
 
     <div class="legenda-calendario" id="legendaCalendario"></div>
+    <section id="roscasAgenda" hidden aria-label="Gráficos da Agenda"></section>
 
     <div class="calendario-wrap" id="calendarioWrap"></div>
 
@@ -524,6 +525,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<script src="saga_roscas.js"></script>
 <script>
 // ================================================================
 // VMMADV - Calendario Conectado ao Supabase
@@ -548,6 +550,7 @@ var hoje           = new Date();
 var compromissos   = []; // array de objetos do banco
 var tarefas        = []; // array de objetos do banco
 var categoriasMap  = {}; // tipo -> { nome, cor }
+var nomesRoscasAgenda = new Map(), roscasAgenda;
 var editandoId     = null; // id do compromisso em edicao
 var tipoSelecionado = null;
 var processoIdSelecionado = null;
@@ -695,6 +698,9 @@ async function inicializar() {
     document.getElementById('nomeUsuarioHeader').textContent   = meuNome.split(' ')[0];
 
     await carregarPreferencias();
+    var pessoas = await _sb.from('usuarios').select('id,nome_completo');
+    (pessoas.data || []).forEach(function(u) { nomesRoscasAgenda.set(u.id,u.nome_completo); });
+    nomesRoscasAgenda.set(meuPerfilId,meuNome);
     // Veio de uma notificacao: abre o dia do compromisso e o compromisso
     var paramsUrl = new URLSearchParams(location.search);
     var dataUrl = paramsUrl.get('data'), compUrl = paramsUrl.get('compromisso');
@@ -758,6 +764,7 @@ async function salvarPreferencias() {
 // ================================================================
 var versaoCarregamentoCalendario = 0;
 var calendarioJaRenderizado = false;
+document.addEventListener('saga-atualizar',function() { if (meuPerfilId) carregarEventos(); });
 
 async function carregarEventos(transicao) {
   var versao = ++versaoCarregamentoCalendario;
@@ -928,6 +935,7 @@ movimentoCalendarioReduzido.addEventListener('change', function(e) {
 });
 
 function renderizarView(transicao) {
+  renderRoscasAgenda();
   encerrarTransicaoCalendario();
   var wrap = document.getElementById('calendarioWrap');
   var conteudo = wrap.querySelector('.calendario-conteudo');
@@ -972,6 +980,25 @@ function renderizarView(transicao) {
   Promise.allSettled([entrada.finished, saida.finished]).then(function() {
     if (transicaoCalendarioAtiva === ativa) encerrarTransicaoCalendario();
   });
+}
+
+function renderRoscasAgenda() {
+  if (!meuPerfilId || document.getElementById('sagaSemAcesso')) return;
+  function agrupar(chave, nome, cor) {
+    var grupos = new Map();
+    compromissos.forEach(function(c) {
+      var id = chave(c) || '', g = grupos.get(id);
+      if (g) g.valor++; else grupos.set(id,{id:id,nome:nome(id),cor:cor ? cor(id) : null,valor:1});
+    });
+    return Array.from(grupos.values()).sort(function(a,b) { return b.valor-a.valor || a.nome.localeCompare(b.nome,'pt-BR'); });
+  }
+  if (!roscasAgenda) roscasAgenda = SagaRoscas.criar(document.getElementById('roscasAgenda'),{chave:'saga-agenda-roscas-ocultas',rotulo:'Gráficos da Agenda'});
+  roscasAgenda.atualizar([
+    {id:'tipo',titulo:'Compromissos por categoria',rotulo:'eventos',dica:'Compromissos do período visível. Clique para destacar.',
+      itens:agrupar(function(c) { return c.tipo; },function(id) { return nomeDoTipo(id) || 'Sem categoria'; },corDoTipo)},
+    {id:'responsavel',titulo:'Responsável pelo cadastro',rotulo:'eventos',dica:'Responsável pelo cadastro do compromisso. Clique para destacar.',
+      itens:agrupar(function(c) { return c.criado_por_id; },function(id) { return id ? nomesRoscasAgenda.get(id) || 'Pessoa não identificada' : 'Sem responsável'; },function(id) { return id ? null : 'var(--g-sem)'; })}
+  ]);
 }
 
 // --- eventos de um dia especifico ---

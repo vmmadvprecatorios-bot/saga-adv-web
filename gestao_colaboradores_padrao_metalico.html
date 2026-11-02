@@ -104,6 +104,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
       </section>
       <div class="status-filter abas-col" id="abasColab" style="display:none;width:max-content;margin-bottom:14px"><button class="filter-pill active" data-aba-col="acessos" type="button">Acessos</button><button class="filter-pill" data-aba-col="equipe" type="button">Equipe e convites</button><button class="filter-pill" data-aba-col="acesso" type="button">Controle de acesso</button></div>
       <section class="kpi-grid aba-acessos" id="kpiGrid"></section>
+      <section id="roscasColaboradores" hidden aria-label="Gráficos dos colaboradores"></section>
       <section class="toolbar panel aba-acessos">
         <div class="toolbar-left"><div class="status-filter" id="statusFilter"><button class="filter-pill active" data-status-filter="all">Todos</button><button class="filter-pill" data-status-filter="ativo">Ativos</button><button class="filter-pill" data-status-filter="pendente">Pendentes</button><button class="filter-pill" data-status-filter="inativo">Inativos</button></div><input class="field employee-search" id="employeeSearch" placeholder="Buscar por nome ou e-mail..."></div>
         <div class="toolbar-right"><span class="counter" id="employeeCounter"></span></div>
@@ -224,6 +225,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 <!-- Supabase JS SDK v2 (UMD) — apenas Anon Key (Publishable Key) no frontend -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
+<script src="saga_roscas.js"></script>
 
 <script>
 // ============================================================
@@ -281,6 +283,11 @@ async function loadEmployees(){
       .select('id, nome_completo, email, cargo_titulo, ativo, auth_user_id, eh_administrador, criado_em, usuarios_papeis!usuario_id(papeis(id,nome))')
       .order('nome_completo');
     if(r.error) throw r.error;
+    state.regimesRosca = null;
+    if(state.souAdmin){
+      var rr = await _sb.from('ponto_colaboradores').select('usuario_id,regime');
+      if(!rr.error) state.regimesRosca = new Map((rr.data||[]).map(function(c){return [c.usuario_id,c.regime];}));
+    }
     state.employees = (r.data||[]).map(function(u){
       var papel = null;
       if(u.usuarios_papeis && u.usuarios_papeis.length){
@@ -324,6 +331,7 @@ function employeeStatus(employee){
 }
 
 function renderKpis(){
+  renderRoscasColaboradores();
   var active = state.employees.filter(function(e){return employeeStatus(e)==='ativo';}).length;
   var inactive = state.employees.filter(function(e){return employeeStatus(e)==='inativo';}).length;
   var pending = state.employees.filter(function(e){return employeeStatus(e)==='pendente';}).length;
@@ -331,6 +339,26 @@ function renderKpis(){
     '<article class="panel kpi-card"><div class="kpi-label">Ativos</div><div class="kpi-number">'+active+'</div><div class="kpi-meta"><span class="dot online"></span>Acesso liberado ao sistema</div><svg class="kpi-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.3" stroke="currentColor" stroke-width="1.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" stroke="currentColor" stroke-width="1.5"/></svg></article>' +
     '<article class="panel kpi-card"><div class="kpi-label">Pendentes</div><div class="kpi-number">'+pending+'</div><div class="kpi-meta"><span style="color:var(--info)">●</span>Ainda sem conta</div><svg class="kpi-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.5"/></svg></article>' +
     '<article class="panel kpi-card"><div class="kpi-label">Inativos</div><div class="kpi-number">'+inactive+'</div><div class="kpi-meta"><span style="color:var(--muted)">●</span>Acesso suspenso</div><svg class="kpi-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg></article>';
+}
+
+var roscasColaboradores;
+function renderRoscasColaboradores(){
+  if(!state.session || state.loading || document.getElementById('sagaSemAcesso'))return;
+  var termo=state.search.trim().toLowerCase();
+  var base=state.employees.filter(function(e){return !termo||[e.nome,e.email,e.papelNome,e.cargo].join(' ').toLowerCase().indexOf(termo)>=0;});
+  function agrupar(lista,chave){
+    var grupos=new Map();
+    lista.forEach(function(e){var nome=chave(e),g=grupos.get(nome);if(g)g.valor++;else grupos.set(nome,{id:nome,nome:nome,valor:1});});
+    return Array.from(grupos.values()).sort(function(a,b){return b.valor-a.valor||a.nome.localeCompare(b.nome,'pt-BR');});
+  }
+  var grupos=[{id:'situacao',titulo:'Colaboradores por situação',rotulo:'pessoas',
+    itens:[['ativo','Ativo','var(--success)'],['pendente','Pendente','var(--info)'],['inativo','Inativo','var(--muted)']].map(function(x){return {id:x[0],nome:x[1],cor:x[2],valor:base.filter(function(e){return employeeStatus(e)===x[0];}).length,ativa:state.activeStatus===x[0]};}),
+    escolher:function(item){trocarAbaColab('acessos');document.querySelector('[data-status-filter="'+(state.activeStatus===item.id?'all':item.id)+'"]').click();}}];
+  var filtrados=base.filter(function(e){return state.activeStatus==='all'||employeeStatus(e)===state.activeStatus;});
+  grupos.push({id:'perfil',titulo:'Colaboradores por perfil / cargo',rotulo:'pessoas',dica:'Clique para destacar.',itens:agrupar(filtrados,function(e){return e.papelNome||e.cargo||'Sem perfil';})});
+  if(state.souAdmin&&state.regimesRosca)grupos.push({id:'regime',titulo:'Colaboradores por regime',rotulo:'pessoas',dica:'Clique para destacar.',itens:agrupar(filtrados,function(e){return state.regimesRosca.get(e.id)||'Sem regime informado';})});
+  if(!roscasColaboradores)roscasColaboradores=SagaRoscas.criar(document.getElementById('roscasColaboradores'),{chave:'saga-colaboradores-roscas-ocultas',rotulo:'Gráficos dos colaboradores'});
+  roscasColaboradores.atualizar(grupos);
 }
 
 // ── Tabela ────────────────────────────────────────────────────
@@ -1238,6 +1266,10 @@ async function init(){
   document.getElementById('sendInviteBtn').addEventListener('click', sendInvite);
 }
 
+document.addEventListener('saga-atualizar',async function(){
+  if(!state.session)return;
+  await loadEmployees();renderEmployees();
+});
 init();
 </script>
 </body>
