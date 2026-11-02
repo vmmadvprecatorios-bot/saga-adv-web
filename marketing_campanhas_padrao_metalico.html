@@ -203,6 +203,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
   </div>
 
   <div class="kpis" id="kpis"></div>
+  <section id="graficosMarketing" hidden aria-label="Gráficos do marketing"></section>
 
   <div class="tabs" id="abas">
     <button class="tab-btn active" data-aba="campanhas">Campanhas <span class="qtd" id="qtdCampanhas">0</span></button>
@@ -311,6 +312,7 @@ var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
+<script src="saga_roscas.js"></script>
 <script>
 /* =====================================================================
    MARKETING (dados reais do banco)
@@ -330,7 +332,7 @@ var ACOES_HIST={comentario:{nome:'comentou',cor:'#8a94a8'},aprovado:{nome:'aprov
 var TIPOS_MAT={arte:'Arte',video:'Vídeo',carrossel:'Carrossel',capa:'Capa',outro:'Outro'};
 var state={campanhas:[],gastos:[],materiais:[],usuarios:[],meuId:null,periodo:'ano',busca:'',filtroMat:'todos',
   visaoMat:'kanban',filtroMatCamp:'',comentarios:[],urls:{},arquivos:[],matAberto:null,
-  pode:{criar:false,editar:false,matCriar:false,matAprovar:false},editando:null,gastosModal:[],gastosRemovidos:[]};
+  pode:{verCampanhas:false,verMateriais:false,criar:false,editar:false,matCriar:false,matAprovar:false},fontesRoscas:{},editando:null,gastosModal:[],gastosRemovidos:[]};
 
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function moeda(n){return n==null||isNaN(n)?'—':Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
@@ -359,17 +361,52 @@ function campanhasFiltradas(){
   return state.campanhas.filter(function(c){return !b||(c.nome+' '+nomeUsuario(c.responsavel_id)).toLowerCase().indexOf(b)!==-1;});
 }
 
+/* Roscas: investimento calculado por investido(), situações iguais às listas. */
+var roscasMarketing;
+function dadosGraficosMarketing(){
+  var grupos=[],campanhas=campanhasFiltradas(),fontes=state.fontesRoscas;
+  if(state.pode.verCampanhas&&fontes.campanhas){
+    if(fontes.gastos)grupos.push({id:'gastos',titulo:'Gasto por campanha',moeda:true,
+      dica:'Gastos realizados ou em curso no período e na busca atuais. Clique para destacar.',
+      itens:SagaRoscas.topo(campanhas.map(function(c){return {id:c.id,nome:c.nome,valor:investido(c.id,true)};}),6,'Outras')});
+    grupos.push({id:'campanhas',titulo:'Campanhas por situação',rotulo:'campanhas',
+      dica:'Campanhas na busca atual. Clique para destacar.',
+      itens:STATUS.map(function(s){return {id:s.id,nome:s.nome,cor:s.cor,valor:campanhas.filter(function(c){return c.status===s.id;}).length};})});
+  }
+  if(state.pode.verMateriais&&fontes.materiais){
+    var materiais=materiaisFiltrados();
+    grupos.splice(Math.min(1,grupos.length),0,{id:'materiais',titulo:'Materiais por situação',rotulo:'materiais',
+      dica:'Materiais da campanha selecionada. Clique para filtrar a lista por situação.',
+      itens:Object.keys(FLUXO).filter(function(k){return k!=='rascunho'||materiais.some(function(m){return m.status_fluxo===k;});}).map(function(k){
+        return {id:k,nome:FLUXO[k].nome,cor:FLUXO[k].cor,valor:materiais.filter(function(m){return m.status_fluxo===k;}).length,ativa:state.visaoMat==='lista'&&state.filtroMat===k};
+      }),escolher:function(item){
+        state.filtroMat=state.visaoMat==='lista'&&state.filtroMat===item.id?'todos':item.id;
+        state.visaoMat='lista';try{localStorage.setItem('saga-mkt-visao',state.visaoMat);}catch(e){}
+        trocarAba('materiais');renderMateriais();
+      }});
+  }
+  return grupos;
+}
+function renderGraficosMarketing(){
+  if(!state.pode.verCampanhas&&!state.pode.verMateriais)return;
+  if(!roscasMarketing)roscasMarketing=SagaRoscas.criar(document.getElementById('graficosMarketing'),{chave:'saga-marketing-roscas-ocultas',rotulo:'Gráficos do marketing'});
+  roscasMarketing.atualizar(dadosGraficosMarketing());
+}
+
 async function carregarTudo(){
+  if(!state.pode.verCampanhas&&!state.pode.verMateriais)return;
+  var vazio={data:[],error:null};
   var r=await Promise.all([
-    _sb.from('campanhas').select('*').order('criado_em',{ascending:false}),
-    _sb.from('campanhas_lancamentos').select('*').order('data_lancamento',{ascending:false}),
-    _sb.from('materiais_marketing').select('*').order('criado_em',{ascending:false}),
+    state.pode.verCampanhas?_sb.from('campanhas').select('*').order('criado_em',{ascending:false}):vazio,
+    state.pode.verCampanhas?_sb.from('campanhas_lancamentos').select('*').order('data_lancamento',{ascending:false}):vazio,
+    state.pode.verMateriais?_sb.from('materiais_marketing').select('*').order('criado_em',{ascending:false}):vazio,
     _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo'),
-    _sb.from('materiais_marketing_comentarios').select('*').order('criado_em')
+    state.pode.verMateriais?_sb.from('materiais_marketing_comentarios').select('*').order('criado_em'):vazio
   ]);
   state.comentarios=r[4].data||[];
   if(r[0].error){showToast('Erro ao carregar campanhas: '+esc(r[0].error.message),'error');return;}
   state.campanhas=r[0].data||[];state.gastos=r[1].data||[];state.materiais=r[2].data||[];state.usuarios=r[3].data||[];
+  state.fontesRoscas={campanhas:!r[0].error,gastos:!r[1].error,materiais:!r[2].error};
   renderTudo();
 }
 function renderTudo(){renderKpis();renderKanban();renderLista();renderMateriais();
@@ -377,6 +414,7 @@ function renderTudo(){renderKpis();renderKanban();renderLista();renderMateriais(
   document.getElementById('qtdMateriais').textContent=state.materiais.length;}
 
 function renderKpis(){
+  renderGraficosMarketing();
   var ativas=state.campanhas.filter(function(c){return c.status==='em_andamento';});
   var invPer=state.gastos.filter(function(g){return g.status_pagamento!=='previsto'&&dentroDoPeriodo(g.data_lancamento);}).reduce(function(s,g){return s+Number(g.valor||0);},0);
   var orcAtivas=ativas.reduce(function(s,c){return s+Number(c.orcamento_previsto||0);},0);
@@ -398,6 +436,7 @@ function cartaoCampanha(c){
     '<div class="resp">'+(resp?'<span class="mini">'+esc(iniciais(resp))+'</span>'+esc(resp.split(' ')[0]):'Sem responsável')+'</div></div>';
 }
 function renderKanban(){
+  renderGraficosMarketing();
   var lista=campanhasFiltradas();
   var el=document.getElementById('kanban');
   el.innerHTML=STATUS.map(function(s){
@@ -549,6 +588,7 @@ function miniatura(m,classe){
   return classe==='mat-mini'?'<div class="mini-ico">'+esc(rot)+'</div>':'<div class="mini-tab ico">'+esc(rot)+'</div>';
 }
 async function renderMateriais(){
+  renderGraficosMarketing();
   // Visao (Kanban ou Lista) e filtro por campanha
   var pv=document.getElementById('pillsVisao');
   pv.innerHTML=[['kanban','Kanban'],['lista','Lista']].map(function(o){return '<button class="pill'+(o[0]===state.visaoMat?' active':'')+'" data-visao="'+o[0]+'" type="button">'+o[1]+'</button>';}).join('');
@@ -796,7 +836,7 @@ async function init(){
   if(p[0].data!==true&&p[5].data!==true){
     document.querySelector('.content').innerHTML='<div class="page-head"><div><h1>Marketing</h1><p>Você não tem permissão para ver o marketing. Fale com o administrador.</p></div></div>';return;
   }
-  state.pode={criar:p[1].data===true,editar:p[2].data===true,matCriar:p[3].data===true,matAprovar:p[4].data===true};
+  state.pode={verCampanhas:p[0].data===true,verMateriais:p[5].data===true,criar:p[1].data===true,editar:p[2].data===true,matCriar:p[3].data===true,matAprovar:p[4].data===true};
   document.getElementById('btnNovaCampanha').style.display=state.pode.criar?'':'none';
   document.getElementById('btnNovoMaterial').style.display=state.pode.matCriar?'':'none';
   await carregarTudo();

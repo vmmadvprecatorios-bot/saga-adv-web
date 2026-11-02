@@ -132,6 +132,8 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
     </div>
   </div>
 
+  <section id="graficosFinanceiro" hidden aria-label="Gráficos do financeiro"></section>
+
   <div class="tabs" id="abas">
     <button class="tab-btn active" data-aba="visao">Visão geral</button>
     <button class="tab-btn" data-aba="processos">Honorários por processo <span class="qtd" id="qtdProcessos">0</span></button>
@@ -253,6 +255,7 @@ var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
+<script src="saga_roscas.js"></script>
 <script>
 /* =====================================================================
    FINANCEIRO (dados reais do banco)
@@ -267,7 +270,7 @@ var ETAPAS={
   recebido:{nome:'Recebido',cor:'#2fae7a'},
   sem_percentual:{nome:'Sem percentual',cor:'#8a94a8'}
 };
-var state={aba:'visao',processos:[],lancamentos:[],rateios:[],usuarios:[],podeEditar:false,
+var state={aba:'visao',processos:[],lancamentos:[],rateios:[],usuarios:[],podeVer:false,podeEditar:false,fontesRoscas:{},
   periodoVisao:'ano',periodoLanc:'mes',filtroEtapa:'todas',filtroTipo:'todos',buscaP:'',buscaL:'',
   procAberto:null,rateioModal:[],lancEditando:null};
 
@@ -321,8 +324,63 @@ function nomeBeneficiario(r){
   return r.beneficiario_externo||'Externo';
 }
 
+/* Roscas: usam os mesmos valores da visão geral e da distribuição. */
+var roscasFinanceiro;
+function dadosGraficosFinanceiro(){
+  var grupos=[],fontes=state.fontesRoscas;
+  if(fontes.processos){
+    var teses=new Map();
+    state.processos.filter(function(p){return p.etapa==='expectativa';}).forEach(function(p){
+      var nome=p.tese||'Sem tese',g=teses.get(nome);
+      if(!g){g={id:nome,nome:nome,valor:0,cor:p.tese_cor};teses.set(nome,g);}
+      g.valor+=Number(p.valor_expectativa||0);
+    });
+    grupos.push({id:'teses',titulo:'Honorários esperados por tese',moeda:true,
+      dica:'Expectativa dos processos que aguardam sentença. Clique para destacar.',
+      itens:SagaRoscas.topo(Array.from(teses.values()),6,'Outras')});
+    var recebido=0,receber=0;
+    state.processos.forEach(function(p){
+      if(p.etapa==='recebido'&&dentroDoPeriodo(p.data_recebimento,state.periodoVisao))recebido+=Number(p.valor_recebido||0);
+      if(p.etapa==='sentenca')receber+=Number(p.valor_honorarios_sentenca||0);
+    });
+    grupos.push({id:'recebimentos',titulo:'Recebido e a receber',moeda:true,
+      dica:'Recebido no período da Visão geral e a receber após sentença. Clique para filtrar os processos por etapa.',
+      itens:[{id:'recebido',nome:'Recebido',valor:recebido,cor:'var(--g2)',ativa:state.filtroEtapa==='recebido'},
+        {id:'sentenca',nome:'A receber',valor:receber,cor:'var(--g-hoje)',ativa:state.filtroEtapa==='sentenca'}],
+      escolher:function(item){state.filtroEtapa=state.filtroEtapa===item.id?'todas':item.id;trocarAba('processos');}});
+  }
+  if(fontes.lancamentos){
+    var b=state.buscaL.trim().toLowerCase();
+    var lancamentos=state.lancamentos.filter(function(l){return dentroDoPeriodo(l.data_lancamento,state.periodoLanc)&&(!b||[l.descricao,l.categoria].join(' ').toLowerCase().indexOf(b)>-1);});
+    grupos.push({id:'lancamentos',titulo:'Lançamentos por tipo',moeda:true,rotulo:'movimentado',
+      dica:'Valores dos lançamentos no período e busca da aba Lançamentos, incluindo previstos. Clique para filtrar o tipo.',
+      itens:[{id:'receita',nome:'Entradas',cor:'var(--g2)'},{id:'despesa',nome:'Saídas',cor:'var(--g-venc)'}].map(function(x){
+        return Object.assign(x,{valor:lancamentos.filter(function(l){return l.tipo===x.id;}).reduce(function(s,l){return s+Number(l.valor||0);},0),ativa:state.filtroTipo===x.id});
+      }),escolher:function(item){state.filtroTipo=state.filtroTipo===item.id?'todos':item.id;trocarAba('lancamentos');renderLancamentos();}});
+  }
+  if(fontes.processos&&fontes.rateios){
+    var beneficiarios=new Map();
+    state.rateios.forEach(function(r){
+      var p=state.processos.find(function(x){return x.processo_id===r.processo_id;});if(!p)return;
+      var id=r.usuario_id||'ext:'+r.beneficiario_externo,g=beneficiarios.get(id);
+      if(!g){g={id:id,nome:nomeBeneficiario(r),valor:0};beneficiarios.set(id,g);}
+      g.valor+=valorRateio(r,p.base_rateio,p.percentual_honorarios);
+    });
+    grupos.push({id:'beneficiarios',titulo:'Honorários por beneficiário',moeda:true,
+      dica:'Distribuição prevista em todas as etapas, como na aba Distribuição. Clique para destacar.',
+      itens:Array.from(beneficiarios.values()).sort(function(a,b){return b.valor-a.valor||a.nome.localeCompare(b.nome,'pt-BR');})});
+  }
+  return grupos;
+}
+function renderGraficosFinanceiro(){
+  if(!state.podeVer)return;
+  if(!roscasFinanceiro)roscasFinanceiro=SagaRoscas.criar(document.getElementById('graficosFinanceiro'),{chave:'saga-financeiro-roscas-ocultas',rotulo:'Gráficos do financeiro'});
+  roscasFinanceiro.atualizar(dadosGraficosFinanceiro());
+}
+
 /* ------------------------- CARREGAMENTO ------------------------- */
 async function carregarTudo(){
+  if(!state.podeVer)return;
   var r=await Promise.all([
     _sb.from('vw_financeiro_processos').select('*').order('cliente'),
     _sb.from('financeiro_lancamentos').select('*').order('data_lancamento',{ascending:false}),
@@ -334,6 +392,7 @@ async function carregarTudo(){
   state.lancamentos=r[1].data||[];
   state.rateios=r[2].data||[];
   state.usuarios=r[3].data||[];
+  state.fontesRoscas={processos:!r[0].error,lancamentos:!r[1].error,rateios:!r[2].error};
   renderTudo();
 }
 function renderTudo(){
@@ -344,6 +403,7 @@ function renderTudo(){
 
 /* ------------------------- VISAO GERAL ------------------------- */
 function renderVisao(){
+  renderGraficosFinanceiro();
   renderPills('periodoVisao',PERIODOS,state.periodoVisao,function(v){state.periodoVisao=v;renderVisao();});
   var P=state.processos,per=state.periodoVisao;
   var soma=function(lista,campo){return lista.reduce(function(s,x){return s+Number(x[campo]||0);},0);};
@@ -381,6 +441,7 @@ function renderVisao(){
 
 /* ------------------------- HONORARIOS POR PROCESSO ------------------------- */
 function renderProcessos(){
+  renderGraficosFinanceiro();
   renderPills('filtroEtapa',[['todas','Todas']].concat(Object.keys(ETAPAS).map(function(k){return [k,ETAPAS[k].nome];})),state.filtroEtapa,function(v){state.filtroEtapa=v;renderProcessos();});
   var b=state.buscaP.trim().toLowerCase(),bd=b.replace(/\D/g,'');
   var lista=state.processos.filter(function(p){
@@ -506,6 +567,7 @@ async function salvarProcesso(){
 
 /* ------------------------- LANCAMENTOS AVULSOS ------------------------- */
 function renderLancamentos(){
+  renderGraficosFinanceiro();
   renderPills('filtroTipo',[['todos','Todos'],['receita','Receitas'],['despesa','Despesas']],state.filtroTipo,function(v){state.filtroTipo=v;renderLancamentos();});
   renderPills('periodoLanc',PERIODOS,state.periodoLanc,function(v){state.periodoLanc=v;renderLancamentos();});
   var b=state.buscaL.trim().toLowerCase();
@@ -633,7 +695,7 @@ async function init(){
     document.querySelector('.content').innerHTML='<div class="page-head"><div><h1>Financeiro</h1><p>Você não tem permissão para ver o financeiro. Fale com o administrador.</p></div></div>';
     return;
   }
-  state.podeEditar=perms[1].data===true;
+  state.podeVer=true;state.podeEditar=perms[1].data===true;
   document.getElementById('btnNovoLancamento').style.display=state.podeEditar?'':'none';
   await carregarTudo();
 }
