@@ -167,6 +167,17 @@
   '.si-mov-col{display:none;gap:2px;flex:0 0 auto}.si-mov-col button{width:24px;height:24px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--text);font-size:14px;line-height:1;cursor:pointer}'+
   '@media (max-width:860px),(pointer:coarse){.si-mov-col{display:inline-flex}}'+
   '.si-col.arrastando-col{opacity:.45}.si-col.alvo-antes{box-shadow:-4px 0 0 0 var(--gold)}.si-col.alvo-depois{box-shadow:4px 0 0 0 var(--gold)}'+
+  '.si-graficos{--g1:#5483B3;--g2:#2E8B8B;--g3:#7DA0CA;--g4:#477C8B;--g5:#91B3B9;--g6:#3F6FB0;--g7:#6FB7B0;--g8:#A9C7E8;--g-venc:#f08a4b;--g-hoje:#f5b84c;--g-ok:#5483B3;--g-sem:#8a94a8;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}'+
+  '[data-theme="light"] .si-graficos{--g1:#052659;--g2:#245568;--g3:#5483B3;--g4:#2E8B8B;--g5:#123747;--g6:#477C8B;--g7:#3F6FB0;--g8:#7DA0CA;--g-venc:#d6452d;--g-hoje:#e08a00;--g-ok:#2563EB}'+
+  '.si-graf{background:var(--panel);border:1px solid var(--border-soft);border-radius:15px;padding:13px 14px;min-width:0}.si-graf h4{margin:0 0 8px;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700}'+
+  '.si-graf-corpo{display:flex;align-items:center;gap:12px;min-width:0}.si-rosca{position:relative;width:104px;height:104px;flex:0 0 auto}.si-rosca svg{width:100%;height:100%;display:block}'+
+  '.si-rosca .trilho{fill:none;stroke:color-mix(in srgb,var(--text) 9%,transparent);stroke-width:14}.si-rosca .si-fatia{fill:none;stroke-width:14;cursor:pointer;transition:opacity .2s,stroke-width .2s}.si-rosca .si-fatia.sem-clique{cursor:default}.si-rosca .si-fatia:hover{stroke-width:16}.si-rosca.filtrada .si-fatia:not(.ativa){opacity:.3}'+
+  '.si-rosca .centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-size:20px;font-weight:700;line-height:1;color:var(--text)}.si-rosca .centro small{font-size:8.5px;font-weight:600;letter-spacing:.4px;color:var(--muted);margin-top:3px;text-transform:uppercase}'+
+  '.si-leg-lista{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.si-leg{display:flex;align-items:center;gap:7px;width:100%;padding:3px 5px;border:0;border-radius:7px;background:none;color:var(--text);font:inherit;font-size:11px;text-align:left;min-width:0}'+
+  'button.si-leg{cursor:pointer}button.si-leg:hover,button.si-leg:focus-visible{background:color-mix(in srgb,var(--text) 7%,transparent);outline:0}.si-leg.ativa{background:color-mix(in srgb,var(--gold) 14%,transparent);font-weight:700}'+
+  '.si-leg i{width:9px;height:9px;border-radius:3px;flex:0 0 auto;background:var(--c)}.si-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.si-leg b{font-variant-numeric:tabular-nums;color:var(--muted);font-size:10.5px}'+
+  '@media(max-width:1180px){.si-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}'+
+  '@media(max-width:640px){.si-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.si-graf{flex:0 0 86%;scroll-snap-align:start}}'+
   '.si-col-sub{font-size:10px;color:var(--muted);margin-top:-5px}'+
   '.si-cards{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:9px;min-height:40px;overscroll-behavior:contain;padding-right:2px}'+
   '.si-mais{font-size:11px;font-weight:600;color:var(--gold);padding:6px;text-decoration:underline;border:0;background:none;cursor:pointer}'+
@@ -1052,13 +1063,81 @@
     }finally{if(btn){btn.disabled=false;btn.textContent=txt;}}
   }
 
+  /* ---------- gráficos de rosca (T81) ---------- */
+  var RAIO=40,CIRC=2*Math.PI*RAIO;
+  function listaSem(chave){var s=S.f[chave];S.f[chave]='';var l=filtradas(true,true).filter(function(i){return !i.concluida;});S.f[chave]=s;return l;}
+  function topo(mapa,max){
+    var arr=Object.keys(mapa).map(function(k){return mapa[k];}).sort(function(a,b){return b.n-a.n||a.nome.localeCompare(b.nome,'pt-BR');});
+    if(arr.length>max){var resto=arr.slice(max-1).reduce(function(s,x){return s+x.n;},0);arr=arr.slice(0,max-1);arr.push({nome:'Outros',n:resto,sem:true});}
+    arr.forEach(function(x,k){if(!x.cor)x.cor='var(--g'+(k+1)+')';});
+    return arr;
+  }
+  function dadosGraficos(){
+    var h=hojeISO(),m;
+    m={};listaSem('tribunal').forEach(function(i){var j=justicaDe(i);(m[j.chave]=m[j.chave]||{nome:j.sigla,v:j.chave,n:0}).n++;});
+    var porTrib=topo(m,7);
+    m={};SITUACOES.forEach(function(s){m[s.chave]={nome:s.plural,v:s.chave,n:0,cor:corSituacao(s)};});
+    listaSem('situacao').forEach(function(i){m[situacaoDe(i).chave].n++;});
+    var porSit=Object.keys(m).map(function(k){return m[k];}).filter(function(x){return x.n>0;});
+    var lAdv=listaSem('advogado');
+    m={};lAdv.forEach(function(i){var ids=advogadosDe(i);if(!ids.length){(m['-']=m['-']||{nome:'Sem advogado',n:0,sem:true}).n++;return;}ids.forEach(function(id){(m[id]=m[id]||{nome:primeiroNome(id)||'—',v:id,n:0}).n++;});});
+    var porAdv=topo(m,7);
+    var l=filtradas(true,true).filter(function(i){return !i.concluida;}),pz={venc:0,hoje:0,vir:0,sem:0};
+    l.forEach(function(i){if(!i.prazo)pz.sem++;else if(i.prazo<h)pz.venc++;else if(i.prazo===h)pz.hoje++;else pz.vir++;});
+    var prazos=[{nome:'Vencidos',n:pz.venc,cor:'var(--g-venc)',sem:true},{nome:'Vencem hoje',n:pz.hoje,cor:'var(--g-hoje)',sem:true},{nome:'A vencer',n:pz.vir,cor:'var(--g-ok)',sem:true},{nome:'Sem prazo',n:pz.sem,cor:'var(--g-sem)',sem:true}].filter(function(x){return x.n>0;});
+    return [{k:'tribunal',titulo:'Por tribunal',itens:porTrib,atual:S.f.tribunal},{k:'situacao',titulo:'Por situação',itens:porSit,atual:S.f.situacao},{k:'advogado',titulo:'Por advogado',itens:porAdv,atual:S.f.advogado,total:lAdv.length,dica:'Intimação com mais de um advogado conta para cada um'},{k:'prazos',titulo:'Prazos',itens:prazos,atual:''}];
+  }
+  function htmlRosca(g){
+    var soma=g.itens.reduce(function(s,x){return s+x.n;},0),total=g.total!=null?g.total:soma,acc=0,folga=total>g.itens.length?2.2:0;
+    var arcos=g.itens.map(function(x){
+      var len=soma?x.n/soma*CIRC:0,vis=Math.max(0,len-(g.itens.length>1?folga:0)),clic=g.k!=='prazos'&&!x.sem&&x.v!=null;
+      var s='<circle class="si-fatia'+(clic?'':' sem-clique')+(clic&&g.atual===x.v?' ativa':'')+'" cx="50" cy="50" r="'+RAIO+'" transform="rotate(-90 50 50)" style="stroke:'+esc(x.cor)+'" stroke-dasharray="'+vis.toFixed(2)+' '+(CIRC-vis).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'"'+(clic?' data-graf="'+g.k+'" data-v="'+esc(x.v)+'"':'')+'><title>'+esc(x.nome)+': '+x.n+'</title></circle>';
+      acc+=len;return s;
+    }).join('');
+    var legenda=g.itens.map(function(x){
+      var clic=g.k!=='prazos'&&!x.sem&&x.v!=null,cont='<i style="--c:'+esc(x.cor)+'"></i><span title="'+esc(x.nome)+'">'+esc(x.nome)+'</span><b>'+x.n+'</b>';
+      return clic?'<button type="button" class="si-leg'+(g.atual===x.v?' ativa':'')+'" data-graf="'+g.k+'" data-v="'+esc(x.v)+'" aria-pressed="'+(g.atual===x.v)+'">'+cont+'</button>':'<div class="si-leg">'+cont+'</div>';
+    }).join('')||'<div class="si-leg"><span style="color:var(--muted)">Nada aberto</span></div>';
+    return '<div class="si-graf" data-g="'+g.k+'"'+(g.dica?' title="'+esc(g.dica)+'"':'')+'><h4>'+esc(g.titulo)+'</h4><div class="si-graf-corpo"><div class="si-rosca'+(g.atual?' filtrada':'')+'"><svg viewBox="0 0 100 100" role="img" aria-label="'+esc(g.titulo)+': '+total+' abertas"><circle class="trilho" cx="50" cy="50" r="'+RAIO+'"></circle>'+arcos+'</svg><div class="centro"><span class="n">'+total+'</span><small>abertas</small></div></div><div class="si-leg-lista">'+legenda+'</div></div></div>';
+  }
+  function contarRosca(el,alvo){
+    if(!alvo||(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){el.textContent=alvo;return;}
+    var ini=null;el.textContent='0';
+    function passo(ts){if(ini===null)ini=ts;var k=Math.min(1,(ts-ini)/600),e=1-Math.pow(1-k,3);el.textContent=Math.round(alvo*e);if(k<1)requestAnimationFrame(passo);}
+    requestAnimationFrame(passo);
+  }
+  function renderGraficos(el){
+    if(!el)return;
+    var gs=dadosGraficos();
+    el.className='si-graficos';
+    el.innerHTML=gs.map(htmlRosca).join('');
+    S.sigGraf=S.sigGraf||{};
+    var reduz=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    gs.forEach(function(g){
+      var card=el.querySelector('[data-g="'+g.k+'"]'),sig=JSON.stringify(g.itens.map(function(x){return [x.nome,x.n];}));
+      if(S.sigGraf[g.k]===sig)return;          // só anima quando os números mudaram
+      S.sigGraf[g.k]=sig;
+      var n=card.querySelector('.centro .n');if(n)contarRosca(n,Number(n.textContent));
+      if(reduz)return;
+      card.querySelectorAll('.si-fatia').forEach(function(c,k){
+        if(!c.animate)return;var d=c.getAttribute('stroke-dasharray').split(' ');
+        c.animate([{strokeDasharray:'0 '+CIRC},{strokeDasharray:d[0]+' '+d[1]}],{duration:650,delay:k*60,easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'});
+      });
+    });
+    el.onclick=function(e){
+      var a=e.target.closest('[data-graf]');if(!a)return;
+      var k=a.dataset.graf,v=a.dataset.v;S.f[k]=S.f[k]===v?'':v;
+      if(k==='tribunal'){S.f.regiao='';S.f.orgao='';}
+      guardarFiltros();mudou();
+    };
+  }
   function contagens(){
     var l=S.itens.filter(function(i){return !i.concluida;}),h=hojeISO();
     return {abertas:l.length,hoje:S.itens.filter(function(i){return i.data_disponibilizacao===h;}).length,
       atrasadas:l.filter(function(i){return i.prazo&&i.prazo<h;}).length,semProcesso:l.filter(function(i){return !i.processo_id;}).length};
   }
 
-  global.SagaIntimacoes={iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,
+  global.SagaIntimacoes={iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,renderGraficos:renderGraficos,
     injetarNoKanbanTarefas:injetarNoKanbanTarefas,abrir:abrir,contagens:contagens,justicaDe:justicaDe,
     filtrarProcesso:function(id){S.f.processo=id||null;},pronto:function(){return S.carregado;}};
 })(window);
