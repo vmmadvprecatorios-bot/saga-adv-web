@@ -295,7 +295,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
         <div id="mvSituacao"></div>
         <div class="secao">Histórico e comentários</div>
         <div class="mv-hist" id="mvHist"></div>
-        <div class="campo"><label for="mvTexto" id="mvTextoLabel">Comentário</label><textarea id="mvTexto" placeholder="Escreva o que achou desta imagem. Para pedir ajuste ou reprovar, diga o que não gostou."></textarea></div>
+        <div class="campo"><label for="mvTexto" id="mvTextoLabel">Comentário</label><textarea id="mvTexto" placeholder="Escreva um comentário... use @ para marcar um colega"></textarea></div>
         <div class="mv-acoes" id="mvAcoes"></div>
       </div>
     </div>
@@ -313,6 +313,7 @@ window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
 <script src="saga_roscas.js"></script>
+<script src="saga_mencoes.js"></script>
 <script>
 /* =====================================================================
    MARKETING (dados reais do banco)
@@ -647,13 +648,14 @@ async function abrirMaterial(id){
   document.getElementById('mvSub').textContent=(TIPOS_MAT[m.tipo_material]||'Material')+' · '+(camp?camp.nome:'Sem campanha')+' · enviado por '+(nomeUsuario(m.usuario_id)||'—')+' em '+dataBR(m.criado_em)+(m.versao>1?' · versão '+m.versao:'');
   document.getElementById('mvSituacao').innerHTML=etq(f.nome,f.cor);
   document.getElementById('mvTexto').value='';
+  SagaMencoes.limpar(document.getElementById('mvTexto'));SagaMencoes.anexar(document.getElementById('mvTexto'),{sb:_sb,tabela:'materiais_marketing',registroId:id});
   var pv=document.getElementById('mvPreview');pv.innerHTML='<div class="vazio">Carregando…</div>';
   // historico
   var hist=histDe(m.id);
   document.getElementById('mvHist').innerHTML=hist.length?hist.slice().reverse().map(function(c){
     var a=ACOES_HIST[c.acao]||ACOES_HIST.comentario;
     var antes=c.acao==='nova_versao'&&c.caminho_anterior?' <button class="lnk" data-anterior="'+esc(c.caminho_anterior)+'" type="button">ver versão '+(c.versao-1)+'</button>':'';
-    return '<div class="mv-item" style="--c:'+a.cor+'"><div class="quem"><b>'+esc(nomeUsuario(c.usuario_id)||'Alguém')+'</b> '+a.nome+(c.versao?' (v'+c.versao+')':'')+' · '+dataHoraBR(c.criado_em)+antes+'</div>'+(c.texto?'<div class="txt">'+esc(c.texto)+'</div>':'')+'</div>';
+    return '<div class="mv-item" style="--c:'+a.cor+'"><div class="quem"><b>'+esc(nomeUsuario(c.usuario_id)||'Alguém')+'</b> '+a.nome+(c.versao?' (v'+c.versao+')':'')+' · '+dataHoraBR(c.criado_em)+antes+'</div>'+(c.texto?'<div class="txt">'+SagaMencoes.destacar(c.texto)+'</div>':'')+'</div>';
   }).join(''):'<div class="sub">Nenhum comentário ainda.</div>';
   document.querySelectorAll('#mvHist [data-anterior]').forEach(function(b){b.addEventListener('click',async function(){
     var r=await _sb.storage.from('marketing-materiais').createSignedUrl(b.dataset.anterior,600);
@@ -697,13 +699,18 @@ async function decidirMaterial(acao,btn){
   await carregarTudo();abrirMaterial(state.matAberto);
 }
 async function comentarMaterial(btn){
-  var txt=document.getElementById('mvTexto').value.trim();
-  if(!txt){showToast('Escreva o comentário.','error');document.getElementById('mvTexto').focus();return;}
-  btn.disabled=true;
-  var r=await _sb.rpc('material_comentar',{p_material:state.matAberto,p_texto:txt});
-  btn.disabled=false;
-  if(r.error){showToast(esc(erroTexto(r.error)),'error');return;}
-  showToast('Comentário registrado.','success');await carregarTudo();abrirMaterial(state.matAberto);
+  var campo=document.getElementById('mvTexto'),txt=campo.value.trim(),id=state.matAberto,ids=SagaMencoes.marcados(campo);
+  if(!txt){showToast('Escreva o comentário.','error');campo.focus();return;}
+  if(btn.disabled)return;btn.disabled=true;campo.readOnly=true;
+  try{
+    var r=await _sb.rpc('material_comentar',{p_material:id,p_texto:txt});if(r.error)throw r.error;
+    var avisou=true;
+    if(ids.length){try{var aviso=await _sb.rpc('marcar_colegas',{p_tabela:'materiais_marketing',p_registro_id:id,p_usuarios:ids,p_trecho:txt});if(aviso.error)throw aviso.error;}catch(e){avisou=false;}}
+    showToast(avisou?'Comentário registrado.':'Comentário salvo, mas não foi possível avisar os colegas.',avisou?'success':'error');
+    if(state.matAberto===id){campo.value='';SagaMencoes.limpar(campo);}
+    await carregarTudo();if(state.matAberto===id)abrirMaterial(id);
+  }catch(e){showToast(esc(erroTexto(e)),'error');}
+  finally{btn.disabled=false;campo.readOnly=false;}
 }
 function caminhoNovo(nome){
   var limpo=nome.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9._-]+/g,'_');
