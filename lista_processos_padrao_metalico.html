@@ -404,6 +404,24 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 
 .pr-erro{padding:12px;margin-bottom:14px;border:1px solid var(--border-soft);border-radius:12px;color:var(--muted);font-size:12px}.pr-erro[hidden]{display:none}.pr-erro button{font:inherit;color:var(--gold);margin-left:8px}
 
+  /* Cores de prazo: dias do calendário local, sem relação com a prioridade. */
+  :root, [data-theme="dark"]{
+    --prazo-azul:#2068d5; --prazo-amarelo:#ffd21c; --prazo-laranja:#ff851b;
+    --prazo-vermelho:#dc2038; --prazo-vermelho-escuro:#8f102d;
+    --prazo-texto-claro:#ffffff; --prazo-texto-escuro:#171b24; --prazo-muito-contorno:#ff6578;
+  }
+  [data-theme="light"]{
+    --prazo-azul:#155bc0; --prazo-amarelo:#f2c400; --prazo-laranja:#c24100;
+    --prazo-vermelho:#c91c30; --prazo-vermelho-escuro:#780d22;
+    --prazo-texto-claro:#ffffff; --prazo-texto-escuro:#171b24; --prazo-muito-contorno:#780d22;
+  }
+  [data-situacao-prazo="distante"]{ --prazo-cor:var(--prazo-azul); --prazo-texto:var(--prazo-texto-claro); }
+  [data-situacao-prazo="proximo"]{ --prazo-cor:var(--prazo-amarelo); --prazo-texto:var(--prazo-texto-escuro); }
+  [data-situacao-prazo="hoje"]{ --prazo-cor:var(--prazo-laranja); --prazo-texto:var(--prazo-texto-claro); }
+  [data-theme="dark"] [data-situacao-prazo="hoje"]{ --prazo-texto:var(--prazo-texto-escuro); }
+  [data-situacao-prazo="atrasada"]{ --prazo-cor:var(--prazo-vermelho); --prazo-texto:var(--prazo-texto-claro); }
+  [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
+.proxima-providencia{margin-top:6px;min-width:0;max-width:100%}.providencia-link{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;max-width:100%;border:1px solid var(--border-soft);border-left:4px solid var(--prazo-cor,var(--muted));border-radius:7px;padding:5px 7px;background:var(--panel);color:var(--text);font-size:10px;line-height:1.5;text-decoration:none;overflow-wrap:anywhere}.providencia-link:active{transform:scale(.98)}.providencia-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.providencia-prazo{background:var(--prazo-cor,var(--panel-2));color:var(--prazo-texto,var(--muted));border-radius:4px;padding:1px 4px}.providencia-link[data-situacao-prazo="muito-atrasada"]{outline:1px solid var(--prazo-muito-contorno)}.providencia-concluida{color:var(--muted);border-left-width:1px}.providencia-mais{color:var(--muted);font-weight:700}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -679,6 +697,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
 <script src="saga_teses.js"></script>
+<script src="saga_etiquetas.js"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -1327,7 +1346,7 @@ function prepararVisaoProcessos(){
   if(state.pageSize!=='todos')state.page=Math.max(1,Math.min(state.page,Math.ceil(todos.length/state.pageSize)||1));
   state.processos=state.view==='kanban'||state.pageSize==='todos'?todos:todos.slice((state.page-1)*state.pageSize,state.page*state.pageSize);
 }
-function invalidarBaseProcessos(){state.cacheProcessos=null;}
+function invalidarBaseProcessos(){state.cacheProcessos=null;cacheProvidencias=null;pedidoProvidencias++;}
 async function lerBaseProcessos(f){
   var chave=JSON.stringify(f);
   if(state.cacheProcessos&&state.cacheProcessos.chave===chave)return state.cacheProcessos.promessa;
@@ -1353,6 +1372,35 @@ async function lerBaseProcessos(f){
     return linhas;
   })().catch(function(e){if(state.cacheProcessos===cache)state.cacheProcessos=null;throw e;});
   return cache.promessa;
+}
+// Próxima providência: uma leitura de tarefas para o conjunto de processos exibidos.
+var cacheProvidencias=null,pedidoProvidencias=0,catalogoProvidencias=null;
+function seloProvidencia(pid){
+  var lista=cacheProvidencias&&cacheProvidencias.tarefas||[];
+  var tarefas=lista.filter(function(t){return t.processo_id===pid;}),abertas=tarefas.filter(function(t){return t.concluida!==true;});
+  abertas.sort(function(a,b){return (a.data_prazo||'9999-12-31').localeCompare(b.data_prazo||'9999-12-31')||String(a.id).localeCompare(String(b.id));});
+  var t=abertas[0],concluida=false;
+  if(!t){var agora=Date.now(),limite=agora-7*86400000;t=tarefas.filter(function(x){var ts=Date.parse(x.concluida_em);return x.concluida===true&&ts>=limite&&ts<=agora;}).sort(function(a,b){return Date.parse(b.concluida_em)-Date.parse(a.concluida_em);})[0];concluida=true;}
+  if(!t)return '';
+  var etiqueta=catalogoProvidencias&&catalogoProvidencias.porId(t.etiqueta_id),nome=etiqueta?etiqueta.nome:t.titulo||'Tarefa';
+  var curto=Array.from(nome).slice(0,65).join('')+(Array.from(nome).length>65?'…':'');
+  var dias=diasRestantes(t.data_prazo),classe=dias===null?'':dias>3?'distante':dias>0?'proximo':dias===0?'hoje':dias>=-7?'atrasada':'muito-atrasada';
+  var conteudo=concluida?'✓ '+esc(curto)+' feita em '+esc(new Date(t.concluida_em).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})):(etiqueta?SagaEtiquetas.selo(etiqueta):esc(curto))+'<span class="providencia-prazo">'+(t.data_prazo?'até '+esc(fmtData(t.data_prazo).slice(0,5)):'Sem prazo')+'</span>';
+  return '<a class="providencia-link'+(concluida?' providencia-concluida':'')+'" '+(!concluida&&classe?'data-situacao-prazo="'+classe+'" ':'')+'href="minhas_tarefas.html?tarefa='+encodeURIComponent(t.id)+'" title="'+esc(t.titulo||nome).replace(/"/g,'&quot;')+'" onclick="event.stopPropagation()" draggable="false">'+conteudo+(!concluida&&abertas.length>1?'<span class="providencia-mais">+'+(abertas.length-1)+'</span>':'')+'</a>';
+}
+function providenciaHtml(p){return '<div class="proxima-providencia" data-providencia-processo="'+esc(p.id)+'">'+seloProvidencia(p.id)+'</div>';}
+async function carregarProvidenciasVisiveis(){
+  var ids=state.processos.map(function(p){return p.id;}).sort(),chave=JSON.stringify(ids);
+  if(!ids.length)return;
+  if(cacheProvidencias&&cacheProvidencias.chave===chave)return;
+  var pedido=++pedidoProvidencias;cacheProvidencias={chave:chave,tarefas:[]};
+  try{
+    if(!catalogoProvidencias)catalogoProvidencias=SagaEtiquetas.criar({sb:_sb,admin:false});
+    var r=await Promise.all([_sb.from('tarefas').select('id,processo_id,titulo,data_prazo,concluida,concluida_em,etiqueta_id,prioridade').in('processo_id',ids),catalogoProvidencias.carregar()]);
+    if(pedido!==pedidoProvidencias)return;
+    cacheProvidencias.tarefas=r[0].error?[]:r[0].data||[];
+  }catch(e){if(pedido!==pedidoProvidencias)return;cacheProvidencias.tarefas=[];}
+  document.querySelectorAll('[data-providencia-processo]').forEach(function(el){el.innerHTML=seloProvidencia(el.dataset.providenciaProcesso);});
 }
 async function carregarProcessos(){
   var pedido=state.pedidoProcessos=(state.pedidoProcessos||0)+1;
@@ -1450,7 +1498,7 @@ function renderLista(){
     return '<tr onclick="verFicha(\''+p.id+'\')">'
       +'<td onclick="event.stopPropagation()"><input type="checkbox" class="chk-linha" value="'+p.id+'"></td>'
       +'<td><div style="display:flex;align-items:center;gap:5px">'+sigiloIcone(sig)+'<div><span class="nome-cliente">'+borrar(pe.nome_completo||'N/D',sig)+'</span><span class="cpf-pequeno">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</span></div></div></td>'
-      +'<td>'+teseTag(te)+'</td>'
+      +'<td>'+teseTag(te)+providenciaHtml(p)+'</td>'
       +'<td>'+statusBadge(st)+'</td>'
       +'<td>'+respHtml+'</td>'
       +'<td style="font-size:11.5px">'+esc(fmtData(p.data_inicio))+'</td>'
@@ -1467,10 +1515,11 @@ function renderLista(){
       +'<div class="cartao-topo"><div><div class="cartao-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div><div class="cartao-cpf">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</div></div>'+statusBadge(st)+'</div>'
       +'<div class="cartao-linha"><span class="cartao-label">Tese</span>'+teseTag(te)+'</div>'
       +'<div class="cartao-linha"><span class="cartao-label">Responsavel</span>'+(re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted)">N/A</span>')+'</div>'
-      +'<div class="cartao-rodape">'+prazoHtml(p.data_prazo)+acoesBtns(p)+'</div>'
+      +providenciaHtml(p)+'<div class="cartao-rodape">'+prazoHtml(p.data_prazo)+acoesBtns(p)+'</div>'
       +'</div>';
   }).join('');
   document.getElementById('cartoesMobile').innerHTML=cards;
+  carregarProvidenciasVisiveis();
 }
 
 // Render Kanban
@@ -1553,7 +1602,7 @@ function renderKanban(){
         +(sig?'<div class="card-sigilo">'+lockSvg()+' Sigiloso</div>':'')
         +'<div class="card-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div>'
         +'<div class="card-cpf">'+(pe.cpf?'CPF '+mascaraCpf(pe.cpf):'CPF nao informado')+'</div>'
-        +'<div class="card-tags">'+(te.nome?teseTag(te):'')+'</div>'
+        +'<div class="card-tags">'+(te.nome?teseTag(te):'')+'</div>'+providenciaHtml(p)
         +'<div class="card-rodape">'
         +'<div style="display:flex;align-items:center;gap:6px">'
         +(re.nome_completo?'<div class="card-avatar" title="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>':'')
@@ -1586,6 +1635,7 @@ function renderKanban(){
   }).join('');
   kv.innerHTML='<div class="quadro-kanban">'+colunas+'</div>';
   if(podeArrastar)ativarArrasteKanban(kv);
+  carregarProvidenciasVisiveis();
 }
 // ---- Editar colunas do Kanban (cada coluna e um status do catalogo) ----
 function fecharMenusOrdenar(){document.querySelectorAll('.menu-ordenar').forEach(function(m){m.classList.remove('aberto');});}
