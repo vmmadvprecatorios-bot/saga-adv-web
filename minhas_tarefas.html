@@ -828,6 +828,7 @@
   .texto-comentario-tarefa{ font-size:11.5px; color:var(--text); margin-top:3px; line-height:1.5; }
 
   .novo-comentario-wrap{ display:flex; gap:9px; align-items:flex-end; }
+  @media(max-width:600px){.novo-comentario-wrap{flex-wrap:wrap}.novo-comentario-wrap>.sm-campo{flex-basis:100%}}
   .novo-comentario-wrap textarea{
     flex:1; background:color-mix(in srgb,var(--text) 4%,transparent); border:1px solid color-mix(in srgb,var(--text) 8%,transparent); border-radius:9px;
     padding:8px 11px; color:var(--text); font-size:11.5px; outline:none; resize:none; min-height:38px;
@@ -2052,7 +2053,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
       <div class="secao-comentarios-titulo">Comentários</div>
       <div class="lista-comentarios-tarefa" id="listaComentariosTarefa"></div>
       <div class="novo-comentario-wrap">
-        <textarea id="textareaNovoComentario" placeholder="Escreva um comentario..."></textarea>
+        <textarea id="textareaNovoComentario" placeholder="Escreva um comentário... use @ para marcar um colega"></textarea>
         <select id="selectMoverAoComentar" title="Ao comentar, mover a tarefa para esta coluna" style="height:38px;max-width:150px;padding:0 8px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:11px;align-self:flex-end"></select>
         <button class="btn-enviar-comentario" id="btnEnviarComentario">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12l16-8-6 16-3-7-7-1z" fill="#0a0e1a"/></svg>
@@ -2132,6 +2133,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="saga_ui.js"></script>
 <script src="saga_etiquetas.js"></script>
+<script src="saga_mencoes.js"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -3917,6 +3919,7 @@ function popularSelectResponsavel(){
 }
 
 function resetarFormularioTarefa(){
+  var campoComentario=document.getElementById('textareaNovoComentario');campoComentario.value='';SagaMencoes.limpar(campoComentario);
   fecharMenuCompartilharTarefa();
   document.getElementById('buscaCompartilharTarefa').value = '';
   estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', etiquetaId:null, corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], somenteLeitura:false };
@@ -4056,6 +4059,7 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     var tarefa = window.SAGA_TASKS.filter(function(t){ return t.id === idTarefa; })[0];
     if(!tarefa) return;
     tarefaEmEdicaoId = idTarefa;
+    SagaMencoes.anexar(document.getElementById('textareaNovoComentario'),{sb:_sb,tabela:'tarefas',registroId:idTarefa});
     document.getElementById('tituloModalTarefa').textContent = 'Editar Tarefa';
     document.getElementById('inputTituloTarefa').value = tarefa.titulo;
     document.getElementById('textareaDescricaoTarefa').value = tarefa.descricao || '';
@@ -4363,36 +4367,34 @@ function renderizarComentariosModal(){
       '<div class="mini-avatar-resp" style="background:' + (autor ? autor.cor : '#8b93a8') + ';">' + (autor ? autor.iniciais : '?') + '</div>' +
       '<div class="corpo-comentario-tarefa">' +
         '<div class="topo-comentario-tarefa"><span class="autor-comentario-tarefa">' + escaparHtml(autor ? autor.nome : 'Colaborador inativo') + '</span><span class="tempo-comentario-tarefa">' + tempoRelativo(c.timestamp) + '</span></div>' +
-        '<div class="texto-comentario-tarefa">' + escaparHtml(c.texto) + '</div>' +
+        '<div class="texto-comentario-tarefa">' + SagaMencoes.destacar(c.texto) + '</div>' +
       '</div>';
     container.appendChild(item);
   });
 }
+var salvandoComentarioTarefa=false;
 document.getElementById('btnEnviarComentario').addEventListener('click', async function(){
-  var textarea = document.getElementById('textareaNovoComentario');
-  var texto = textarea.value.trim();
-  if(!texto || !tarefaEmEdicaoId) return;
-  var r = await _sb.from('tarefas_comentarios').insert({ tarefa_id: tarefaEmEdicaoId, autor_id: usuarioLogadoId, texto: texto }).select('id,criado_em').single();
-  if(r.error){ mostrarToast('Erro ao comentar: ' + escaparHtml(r.error.message), 'erro'); return; }
-  estadoModalTarefa.comentarios.push({ id:r.data.id, autorId:usuarioLogadoId, texto:texto, timestamp:r.data.criado_em });
-  if(tarefaEmEdicaoId){
-    var tarefa = window.SAGA_TASKS.filter(function(t){ return t.id === tarefaEmEdicaoId; })[0];
-    if(tarefa) tarefa.comentarios = estadoModalTarefa.comentarios.slice();
-  }
-  textarea.value = '';
-  renderizarComentariosModal();
-  // Comentar e mover: leva a tarefa para a coluna escolhida ao lado do comentario
-  var selMover = document.getElementById('selectMoverAoComentar');
-  var destino = selMover.value;
-  var tarefaMover = window.SAGA_TASKS.filter(function(t){ return t.id === tarefaEmEdicaoId; })[0];
-  if(destino && tarefaMover && destino !== tarefaMover.colunaId){
-    if(!souDonoDaTarefa(tarefaMover)){ mostrarToast('Comentário salvo. Só quem é dono da tarefa pode mudar a coluna.', 'aviso'); return; }
-    moverTarefaKanban(tarefaMover.id, destino, null, false);
-    selecionarValorSelectCustomTarefa('selectColunaTarefa', destino);
-    var col = dadosColunas.filter(function(c){ return c.id === destino; })[0];
-    mostrarToast('Comentado e movido para <strong>' + escaparHtml(col ? col.nome : '') + '</strong>.', 'sucesso');
-    preencherMoverAoComentar(tarefaMover);
-  }
+  var textarea=document.getElementById('textareaNovoComentario'),texto=textarea.value.trim(),id=tarefaEmEdicaoId;
+  if(!texto||!id||salvandoComentarioTarefa)return;
+  var ids=SagaMencoes.marcados(textarea),destino=document.getElementById('selectMoverAoComentar').value,button=this;
+  salvandoComentarioTarefa=true;button.disabled=true;textarea.readOnly=true;
+  try{
+    var r=await _sb.from('tarefas_comentarios').insert({tarefa_id:id,autor_id:usuarioLogadoId,texto:texto}).select('id,criado_em').single();
+    if(r.error)throw r.error;
+    if(ids.length){try{var avisos=await _sb.rpc('marcar_colegas',{p_tabela:'tarefas',p_registro_id:id,p_usuarios:ids,p_trecho:texto});if(avisos.error)throw avisos.error;}catch(e){mostrarToast('Comentário salvo, mas não foi possível avisar os colegas.','aviso');}}
+    var comentario={id:r.data.id,autorId:usuarioLogadoId,texto:texto,timestamp:r.data.criado_em};
+    var tarefa=window.SAGA_TASKS.find(function(t){return t.id===id;});
+    if(tarefa)tarefa.comentarios=(tarefa.comentarios||[]).concat([comentario]);
+    if(tarefaEmEdicaoId!==id)return;
+    estadoModalTarefa.comentarios.push(comentario);
+    textarea.value='';SagaMencoes.limpar(textarea);renderizarComentariosModal();
+    if(destino&&tarefa&&destino!==tarefa.colunaId){
+      if(!souDonoDaTarefa(tarefa)){mostrarToast('Comentário salvo. Só quem é dono da tarefa pode mudar a coluna.','aviso');return;}
+      moverTarefaKanban(tarefa.id,destino,null,false);selecionarValorSelectCustomTarefa('selectColunaTarefa',destino);
+      var col=dadosColunas.find(function(c){return c.id===destino;});mostrarToast('Comentado e movido para <strong>'+escaparHtml(col?col.nome:'')+'</strong>.','sucesso');preencherMoverAoComentar(tarefa);
+    }
+  }catch(e){mostrarToast('Erro ao comentar: '+escaparHtml(e.message||'Tente novamente.'),'erro');}
+  finally{salvandoComentarioTarefa=false;button.disabled=false;textarea.readOnly=false;}
 });
 function preencherMoverAoComentar(tarefa){
   var sel = document.getElementById('selectMoverAoComentar');

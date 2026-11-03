@@ -305,7 +305,7 @@
     return true;
   }
   async function iniciar(o){
-    await Promise.all([import('./saga_etiquetas.js'),import('./saga_teses.js')]);
+    await Promise.all([import('./saga_etiquetas.js'),import('./saga_teses.js'),import('./saga_mencoes.js')]);
     injetarCss();
     S.sb=o.sb;S.meuId=o.meuId;S.ehAdmin=!!o.ehAdmin;S.toast=o.toast;S.aoMudar=o.aoMudar;
     var p=await Promise.all([
@@ -745,7 +745,7 @@
           '<div class="si-texto" id="siTexto"></div>'+
           '<div class="si-sec">Comentários e histórico</div>'+
           '<div class="si-hist" id="siHist"></div>'+
-          '<div class="si-campo"><textarea id="siComent" placeholder="Ex.: Analisada, fazer réplica · Réplica protocolada"></textarea></div>'+
+          '<div class="si-campo"><textarea id="siComent" placeholder="Escreva um comentário... use @ para marcar um colega"></textarea></div>'+
           '<div class="si-acoes" style="align-items:center"><button class="si-btn pri" type="button" id="siComentar">Comentar</button><span class="si-sub" style="margin:0">e marcar como</span><select id="siMoverCom" style="height:34px;padding:0 9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px"></select></div>'+
         '</div>'+
         '<div>'+
@@ -804,13 +804,18 @@
       if(ok)toast('Prazo e etiqueta salvos'+(i.processo_id?'; aparecem também na ficha do cliente.':'.'),'sucesso');
     });
     document.getElementById('siComentar').addEventListener('click',async function(){
-      var i=aberta(),t=document.getElementById('siComent');if(!i||!t.value.trim())return;
-      var r=await S.sb.rpc('intimacao_comentar',{p_id:i.id,p_texto:t.value});
-      if(r.error){toast('Não foi possível comentar: '+esc(r.error.message),'error');return;}
-      t.value='';
-      var mv=document.getElementById('siMoverCom').value;
-      if(mv&&mv!==situacaoDe(i).chave){if(await marcarSituacao(i.id,mv,true))toast('Comentário e situação salvos.','sucesso');}
-      carregarHistorico(i.id);
+      var i=aberta(),t=document.getElementById('siComent');if(!i||!t.value.trim()||this.disabled)return;
+      var texto=t.value,ids=SagaMencoes.marcados(t),mv=document.getElementById('siMoverCom').value,button=this;
+      button.disabled=true;t.readOnly=true;
+      try{
+        var r=await S.sb.rpc('intimacao_comentar',{p_id:i.id,p_texto:texto});if(r.error)throw r.error;
+        if(ids.length){try{var aviso=await S.sb.rpc('marcar_colegas',{p_tabela:'intimacoes',p_registro_id:i.id,p_usuarios:ids,p_trecho:texto});if(aviso.error)throw aviso.error;}catch(e){toast('Comentário salvo, mas não foi possível avisar os colegas.','error');}}
+        if(S.aberta!==i.id)return;
+        t.value='';SagaMencoes.limpar(t);
+        if(mv&&mv!==situacaoDe(i).chave){if(await marcarSituacao(i.id,mv,true))toast('Comentário e situação salvos.','sucesso');}
+        carregarHistorico(i.id);
+      }catch(e){toast('Não foi possível comentar: '+esc(e.message||'Tente novamente.'),'error');}
+      finally{button.disabled=false;t.readOnly=false;}
     });
     document.getElementById('siOnAdd').addEventListener('click',incluirOab);
     document.getElementById('siOnAdv').addEventListener('change',function(){var u=usuario(this.value);if(u&&u.numero_oab){document.getElementById('siOnNum').value=String(u.numero_oab).replace(/\D/g,'');if(u.uf_oab)document.getElementById('siOnUf').value=String(u.uf_oab).toUpperCase();}});
@@ -828,6 +833,7 @@
   async function abrir(id){
     var i=S.itens.filter(function(x){return x.id===id;})[0];
     if(!i){var r=await S.sb.from('intimacoes').select('*').eq('id',id).maybeSingle();if(!r.data){toast('Intimação não encontrada (ou sem permissão).','error');return;}i=r.data;S.itens.push(i);}
+    if(S.aberta!==i.id){var campo=document.getElementById('siComent');campo.value='';SagaMencoes.limpar(campo);}
     S.aberta=i.id;
     preencherJanela(i);
     document.getElementById('siJanela').classList.add('open');
@@ -837,6 +843,7 @@
     carregarHistorico(i.id);
   }
   function preencherJanela(i){
+    SagaMencoes.anexar(document.getElementById('siComent'),{sb:S.sb,tabela:'intimacoes',registroId:i.id});
     var j=justicaDe(i);
     document.getElementById('siTitulo').textContent=(i.tipo_documento||i.tipo_comunicacao||'Intimação')+' · '+cnj(i);
     document.getElementById('siSub').textContent=[j.sigla+' · '+j.rotulo,i.orgao,'disponibilizada em '+dataBR(i.data_disponibilizacao)].filter(Boolean).join(' · ');
@@ -863,7 +870,7 @@
     if(S.aberta!==id)return;
     var cores={comentario:'#4b8af5',coluna:'#8a94a8',prazo:'#e0a93b',etiqueta:'#ec4899',concluida:'#2fae7a',reaberta:'#f97316',processo:'#8b5cf6',tarefa:'#4b8af5',vista:'#8a94a8'};
     var h=document.getElementById('siHist'),l=r.data||[];
-    h.innerHTML=l.length?l.map(function(c){return '<div class="si-hi" style="--c:'+(cores[c.tipo]||'#8a94a8')+'"><div class="q">'+esc(nomeUsuario(c.usuario_id)||'Sistema')+' · '+new Date(c.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div><div class="t">'+esc(c.texto||'')+'</div></div>';}).join(''):'<div class="si-sub">Nenhum comentário ainda.</div>';
+    h.innerHTML=l.length?l.map(function(c){return '<div class="si-hi" style="--c:'+(cores[c.tipo]||'#8a94a8')+'"><div class="q">'+esc(nomeUsuario(c.usuario_id)||'Sistema')+' · '+new Date(c.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div><div class="t">'+SagaMencoes.destacar(c.texto||'')+'</div></div>';}).join(''):'<div class="si-sub">Nenhum comentário ainda.</div>';
   }
 
   /* Incorporação em lote: um item e uma chamada por número completo. */
