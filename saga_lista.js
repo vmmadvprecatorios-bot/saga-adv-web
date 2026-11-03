@@ -90,17 +90,23 @@ window.SagaLista = (function () {
       } else {
         const data=await rpc('lista_buscar',args); if(token!==serial)return;
         total=Number(data.total)||0;rows=append?rows.concat(data.linhas||[]):data.linhas||[];
-        while(retained&&rows.length<Math.min(retained.loaded,total)){
+        const all=config.por_pagina==='todos';
+        while(rows.length<(all?total:retained?Math.min(retained.loaded,total):0)){
           const next=await rpc('lista_buscar',parametros({p_inicio:rows.length}));if(token!==serial)return;
-          if(!(next.linhas||[]).length)break;rows=rows.concat(next.linhas);total=Number(next.total)||0;
+          if(!(next.linhas||[]).length)throw new Error('A leitura da lista ficou incompleta. Tente novamente.');rows=rows.concat(next.linhas);total=Number(next.total)||0;
+          $('lxStatus').textContent='Carregando '+rows.length+' de '+total+'...';
         }
         if(state.view==='resumido'&&rows.length){
-          const dates=await query(_sb.from('processos').select('id,data_inicio,data_prazo').in('id',(data.linhas||[]).map(r=>r.id)));
-          if(token!==serial)return;
-          dates.forEach(d=>{const r=rows.find(r=>r.id===d.id);if(r)Object.assign(r,d);});
+          const ids=(append?data.linhas||[]:rows).map(r=>r.id),map=new Map(rows.map(r=>[r.id,r]));
+          for(let start=0;start<ids.length;start+=50){
+            const dates=await query(_sb.from('processos').select('id,data_inicio,data_prazo').in('id',ids.slice(start,start+50)));
+            if(token!==serial)return;
+            dates.forEach(d=>{const r=map.get(d.id);if(r)Object.assign(r,d);});
+          }
         }
         if(append)shown=Math.min(rows.length,shown+50);
         if(retained)shown=Math.min(retained.shown,rows.length);
+        if(all)shown=rows.length;
         render();
         if(retained){$('lxGrid').scrollTop=retained.top;$('lxGrid').scrollLeft=retained.left;}
       }
@@ -476,10 +482,10 @@ window.SagaLista = (function () {
     root.innerHTML='<div class="lx-toolbar"><label>Área da Lista <select id="lxTela"><option value="juridico">Jurídico</option><option value="captacao">Captação</option></select></label><button class="btn-secondary" id="lxView">Minha visão</button><button class="btn-secondary" id="lxManage" hidden>Gerenciar colunas</button><label id="lxGroupWrap" hidden>Organizar por: <select id="lxGroup"></select></label></div><div id="lxChips"></div><div id="lxStatus" role="status"></div><button id="lxRetry" class="btn-secondary" hidden>Tentar novamente</button><div id="lxGrid"></div>';
     $('listaView').before(root);
     document.querySelector('.header-pagina').after(root.querySelector('.lx-toolbar'));
-    const footer=document.createElement('div');footer.className='lx-footer';footer.innerHTML='<span id="lxCount"></span><button class="btn-secondary" id="lxMore">+50</button><label>Mostrar <select id="lxSize"><option>5</option><option>10</option><option>20</option><option selected>50</option><option value="todos">todos</option></select></label><small>“Todos” mostra os lotes já carregados. Use +50 para continuar.</small>';$('kanbanView').after(footer);
+    const footer=document.createElement('div');footer.className='lx-footer';footer.innerHTML='<span id="lxCount"></span><button class="btn-secondary" id="lxMore">+50</button><label>Mostrar <select id="lxSize"><option>5</option><option>10</option><option>20</option><option selected>50</option><option value="todos">todos</option></select></label>';$('kanbanView').after(footer);
     const resumo=document.createElement('button');resumo.id='btnViewResumido';resumo.className='btn-view';resumo.textContent='Resumido';resumo.onclick=()=>setView('resumido');$('btnViewLista').after(resumo);
     $('lxTela').onchange=e=>scope(e.target.value).catch(erro);$('lxView').onclick=viewDialog;$('lxManage').hidden=!gerenciar;$('lxManage').onclick=manageDialog;$('lxMore').onclick=more;
-    $('lxSize').onchange=e=>{config.por_pagina=e.target.value==='todos'?'todos':Number(e.target.value);shown=config.por_pagina==='todos'?rows.length:config.por_pagina;render();};
+    $('lxSize').onchange=e=>{config.por_pagina=e.target.value==='todos'?'todos':Number(e.target.value);if(config.por_pagina==='todos'&&state.view!=='kanban'){load(false,true);return;}shown=config.por_pagina==='todos'?rows.length:config.por_pagina;render();};
     $('lxGroup').onchange=e=>{config.kanban_coluna=e.target.value;load();};$('lxRetry').onclick=()=>load();
     $('inputBusca').placeholder='Buscar em todas as colunas...';
     document.querySelectorAll('#dropdownPeriodo label').forEach(l=>l.textContent=l.textContent.replace('Data de inicio','Data de criação'));
