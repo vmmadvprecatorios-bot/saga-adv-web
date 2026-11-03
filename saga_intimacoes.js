@@ -228,6 +228,7 @@
   '.si-ov.open{display:flex}'+
   '.si-modal{width:100%;max-width:1040px;border:1px solid var(--border);border-radius:18px;background:var(--panel-solid,var(--panel));box-shadow:var(--shadow);color:var(--text)}'+
   '.si-modal.peq{max-width:640px}'+
+  '.si-lote-modal{max-width:1320px;max-height:calc(100dvh - 52px);display:flex;flex-direction:column}.si-lote-modal .si-mh{flex-shrink:0}.si-lote-modal .si-mb{overflow-y:auto;min-height:0;overscroll-behavior:contain}.si-lote-andamento{padding:0 16px;flex-shrink:0}.si-lote-campos{border:0;padding:0;margin:0;min-width:0}.si-lote-comum{display:grid;grid-template-columns:minmax(0,2fr) minmax(180px,1fr);gap:12px;padding:12px;border:1px solid var(--border-soft);border-radius:10px;margin:12px 0}.si-lote-lista{display:grid;gap:12px}.si-lote-item{display:grid;grid-template-columns:minmax(170px,1fr) minmax(180px,1fr) minmax(220px,1.4fr) minmax(150px,.8fr);gap:12px;align-items:start;padding:14px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel)}.si-lote-item>div{min-width:0;overflow-wrap:anywhere}.si-lote-identidade label{display:flex;gap:6px;align-items:flex-start;font-size:12px}.si-lote-item .si-campo{margin:0}.si-lote-sugestoes{display:grid;gap:5px;font-size:11px;margin-top:5px}.si-lote-sugestoes button{height:auto;white-space:normal;text-align:left;overflow-wrap:anywhere}.si-lote-status{font-size:11px;margin-top:6px}.si-lote-erro{color:var(--danger)}.si-lote-resultado{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:9px 0;border-bottom:1px solid var(--border-soft);font-size:12px;overflow-wrap:anywhere}.si-lote-relatorio h3{margin:15px 0 8px}.si-lote-relatorio p{font-size:12px;color:var(--muted);margin-bottom:10px}.si-lote-progresso{width:100%;height:16px;accent-color:var(--info)}.si-lote-mensagem{font-size:12px;line-height:1.6;margin:12px 0;overflow-wrap:anywhere}.si-lote-selecao{display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-size:12px;margin:12px 0}.si-lote-modal .si-mf{flex-shrink:0;background:var(--panel-solid,var(--panel));border-radius:0 0 18px 18px;z-index:2}.si-lote-modal input[type=checkbox]{width:16px;height:16px;flex:0 0 auto}.si-lote-modal button:active{transform:scale(.98)}@media(max-width:1000px){.si-lote-item{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}@media(max-width:600px){.si-lote-item,.si-lote-comum{grid-template-columns:minmax(0,1fr)}.si-lote-modal .si-mb{padding:12px}.si-lote-modal .si-mf{padding:10px}.si-lote-modal .si-mf button{white-space:normal;height:auto;min-height:34px}}'+
   '.si-mh{display:flex;justify-content:space-between;gap:12px;padding:16px 20px 11px;border-bottom:1px solid var(--border-soft)}'+
   '.si-mh h2{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:600;margin:0}.si-mh p{font-size:11px;color:var(--muted);margin:3px 0 0}'+
   '.si-x{width:30px;height:30px;border:1px solid var(--border-soft);border-radius:9px;color:var(--muted);background:none;cursor:pointer;flex:0 0 auto}'+
@@ -390,6 +391,7 @@
         '<div class="si-seg" data-seg="conclusao" aria-label="Conclusão"><button type="button" data-v="abertas" class="'+(f.conclusao==='abertas'?'active':'')+'">Abertas</button><button type="button" data-v="concluidas" class="'+(f.conclusao==='concluidas'?'active':'')+'">Concluídas</button><button type="button" data-v="todas" class="'+(f.conclusao==='todas'?'active':'')+'">Todas</button></div>'+
         '<select data-f="periodo" title="Período">'+[['hoje','Disponibilizadas hoje'],['7','Últimos 7 dias'],['30','Últimos 30 dias'],['tudo','Todo o período']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===f.periodo?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
         '<input data-f="busca" placeholder="Processo, parte, vara, etiqueta ou texto..." value="'+esc(f.busca)+'">'+
+        (S.pode.criarProc?'<button class="si-btn pri" type="button" data-acao="lote">Trazer para o SAGA em lote</button>':'')+
         (S.pode.gerenciar?'<button class="si-btn" type="button" data-acao="links">Links dos tribunais</button><button class="si-btn" type="button" data-acao="oabs">OABs monitoradas</button><button class="si-btn pri" type="button" data-acao="buscar">Buscar agora</button>':'')+
       '</div>'+
       '<div class="si-linha">'+
@@ -414,7 +416,8 @@
     var bt=null;el.querySelector('input[data-f="busca"]').addEventListener('input',function(){var v=this.value;clearTimeout(bt);bt=setTimeout(function(){S.f.busca=v;mudou();var i=el.querySelector('input[data-f="busca"]');if(i){i.focus();i.setSelectionRange(v.length,v.length);}},220);});
     el.onclick=function(e){
       var a=e.target.closest('[data-acao]');if(!a)return;
-      if(a.dataset.acao==='oabs')abrirOabs();
+      if(a.dataset.acao==='lote')abrirLote();
+      else if(a.dataset.acao==='oabs')abrirOabs();
       else if(a.dataset.acao==='links')abrirLinks();
       else if(a.dataset.acao==='buscar')buscarAgora(null,a);
       else if(a.dataset.acao==='ordem-padrao'){try{localStorage.removeItem(chaveOrdem());}catch(x){}mudou();toast('Ordem padrão dos tribunais restaurada.','sucesso');}
@@ -773,12 +776,16 @@
         '<div class="si-sec">Colar da planilha</div><div class="si-campo"><textarea id="siLinksColar" placeholder="Uma linha por link: TRIBUNAL ; NOME ; SISTEMA ; LINK  (pode colar direto do Excel ou do Google Planilhas)"></textarea></div>'+
         '<div class="si-acoes"><button class="si-btn pri" type="button" id="siLinksImportar">Importar</button></div>'+
       '</div><div class="si-mf"><button class="si-btn" type="button" data-fechar>Fechar</button></div></div></div>');
+    w.insertAdjacentHTML('beforeend','<div class="si-ov" id="siLote"><div class="si-modal si-lote-modal" role="dialog" aria-modal="true" aria-labelledby="siLoteTitulo">'+
+      '<div class="si-mh"><div><h2 id="siLoteTitulo">Trazer para o SAGA em lote</h2><p>Um item por número de processo. Todas as intimações do mesmo número serão ligadas juntas.</p></div><button class="si-x" type="button" data-fechar aria-label="Fechar lote">✕</button></div>'+
+      '<div class="si-lote-andamento"><p class="si-lote-mensagem" id="siLoteMensagem" role="status" aria-live="polite"></p><progress class="si-lote-progresso" id="siLoteProgresso" aria-label="Progresso do lote" hidden></progress></div><div class="si-mb"><p class="si-sub" id="siLoteAviso"></p><fieldset class="si-lote-campos" id="siLoteCampos"><div class="si-lote-comum"><div id="siLoteTeseTodos"></div><div class="si-campo"><label for="siLoteRespTodos">Responsável dos marcados</label><select id="siLoteRespTodos"></select></div><button class="si-btn" type="button" id="siLoteAplicar">Aplicar a todos os marcados</button></div><div class="si-lote-selecao"><label><input type="checkbox" id="siLoteTodos"> Marcar todas / Desmarcar</label><span id="siLoteSelecionados"></span></div><div class="si-lote-lista" id="siLoteLista"></div></fieldset><div class="si-lote-relatorio" id="siLoteRelatorio"></div></div>'+
+      '<div class="si-mf"><button class="si-btn" type="button" id="siLoteAtualizar">Atualizar intimações</button><button class="si-btn" type="button" data-fechar>Fechar</button><button class="si-btn" type="button" id="siLoteParar" hidden>Parar após processo atual</button><button class="si-btn pri" type="button" id="siLoteCriar">Conferir e criar</button></div></div></div>');
     while(w.firstChild)document.body.appendChild(w.firstChild);
     document.querySelectorAll('.si-ov').forEach(function(o){
-      o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-fechar]')){o.classList.remove('open');if(o.id==='siJanela')S.aberta=null;}});
+      o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-fechar]')){if(o.id==='siLote'&&lote&&lote.ocupado){loteMensagem('Aguarde a conferência ou pare após o processo atual antes de fechar.');return;}o.classList.remove('open');if(o.id==='siJanela')S.aberta=null;}});
     });
     ligarTravaDoFundo();
-    document.addEventListener('keydown',function(e){if(e.key==='Escape'){var o=document.querySelector('.si-ov.open');if(o){o.classList.remove('open');if(o.id==='siJanela')S.aberta=null;}}});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'){var o=document.querySelector('.si-ov.open');if(o){if(o.id==='siLote'&&lote&&lote.ocupado)return;o.classList.remove('open');if(o.id==='siJanela')S.aberta=null;}}});
     document.getElementById('siCopiarNum').addEventListener('click',function(){var i=aberta();if(i)copiar(cnj(i));});
     document.getElementById('siTribunal').addEventListener('click',function(e){e.stopPropagation();abrirNoTribunal(this);});
     document.getElementById('siLinksImportar').addEventListener('click',importarLinks);
@@ -857,6 +864,150 @@
     var cores={comentario:'#4b8af5',coluna:'#8a94a8',prazo:'#e0a93b',etiqueta:'#ec4899',concluida:'#2fae7a',reaberta:'#f97316',processo:'#8b5cf6',tarefa:'#4b8af5',vista:'#8a94a8'};
     var h=document.getElementById('siHist'),l=r.data||[];
     h.innerHTML=l.length?l.map(function(c){return '<div class="si-hi" style="--c:'+(cores[c.tipo]||'#8a94a8')+'"><div class="q">'+esc(nomeUsuario(c.usuario_id)||'Sistema')+' · '+new Date(c.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div><div class="t">'+esc(c.texto||'')+'</div></div>';}).join(''):'<div class="si-sub">Nenhum comentário ainda.</div>';
+  }
+
+  /* Incorporação em lote: um item e uma chamada por número completo. */
+  var lote=null,loteTentados=new Map();
+  function numeroLote(i){
+    var n=String(i.numero_processo||'').replace(/\D/g,'');
+    if(n.length===20)return n;
+    n=String(i.numero_processo_mascara||'').replace(/\D/g,'');return n.length===20?n:'';
+  }
+  function mascaraLote(n){return n.slice(0,7)+'-'+n.slice(7,9)+'.'+n.slice(9,13)+'.'+n[13]+'.'+n.slice(14,16)+'.'+n.slice(16);}
+  function responsaveisLote(atual,comManter){
+    return (comManter?'<option value="__manter__">Não alterar responsável</option>':'')+'<option value="">Sem responsável</option>'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===atual?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('');
+  }
+  function loteMensagem(texto){document.getElementById('siLoteMensagem').textContent=texto;}
+  function selecionadosLote(){return lote.grupos.filter(function(g){return g.marcado&&!loteTentados.has(g.numero);});}
+  function atualizarSelecaoLote(){
+    var disponiveis=lote.grupos.filter(function(g){return !loteTentados.has(g.numero);}),n=selecionadosLote().length;
+    var todos=document.getElementById('siLoteTodos');todos.checked=!!disponiveis.length&&n===disponiveis.length; todos.indeterminate=n>0&&n<disponiveis.length;
+    document.getElementById('siLoteSelecionados').textContent=n+' de '+disponiveis.length+' processos disponíveis marcados';
+    document.getElementById('siLoteCriar').disabled=lote.ocupado||!n;
+  }
+  async function sugerirClienteLote(g,estado){
+    if(lote!==estado||estado.ocupado||g.pessoaId||loteTentados.has(g.numero))return;
+    var nome=g.nome.trim(),pedido=++g.busca;
+    if(nome.length<3){g.sugestoes.replaceChildren();return;}
+    try{
+      var r=await S.sb.from('pessoas').select('id,nome_completo,cpf').ilike('nome_completo','%'+nome+'%').limit(6);
+      if(lote!==estado||pedido!==g.busca||estado.ocupado||g.pessoaId||!g.sugestoes.isConnected)return;
+      g.sugestoes.replaceChildren();
+      if(r.error){g.sugestoes.textContent='Não foi possível buscar clientes. Tente novamente no campo.';return;}
+      (r.data||[]).forEach(function(p){
+        var b=document.createElement('button');b.type='button';b.className='si-btn sm';b.textContent='Usar cliente existente: '+p.nome_completo+(p.cpf?' · CPF '+p.cpf:'');
+        b.onclick=function(){g.busca++;clearTimeout(g.timer);g.pessoaId=p.id;g.nome=p.nome_completo;g.input.value=g.nome;g.sugestoes.textContent='✓ Usando cliente já cadastrado. Edite o nome para desfazer.';};g.sugestoes.appendChild(b);
+      });
+      if(!(r.data||[]).length)g.sugestoes.textContent='Nenhum cliente parecido encontrado. Será usado um novo cadastro se o processo não existir.';
+    }catch(e){if(lote===estado&&pedido===g.busca)g.sugestoes.textContent='Não foi possível buscar clientes. Tente novamente no campo.';}
+  }
+  function renderRelatorioLote(){
+    var root=document.getElementById('siLoteRelatorio'),resultados=Array.from(loteTentados.values());root.replaceChildren();
+    if(!resultados.length)return;
+    var titulo=document.createElement('h3');titulo.textContent='Relatório desta sessão';root.appendChild(titulo);
+    var ligados=resultados.filter(function(r){return r.tipo==='ligado';}).length,novos=resultados.filter(function(r){return r.tipo==='novo';}).length,falhas=resultados.filter(function(r){return r.tipo==='erro';}).length;
+    var resumo=document.createElement('p');resumo.textContent=novos+' criados ou localizados pelo banco · '+ligados+' ligados a existentes confirmados · '+falhas+' falharam';root.appendChild(resumo);
+    resultados.forEach(function(r){
+      var linha=document.createElement('div');linha.className='si-lote-resultado';
+      var texto=document.createElement('span');texto.textContent=mascaraLote(r.numero)+': '+r.mensagem;linha.appendChild(texto);
+      if(r.processoId){var a=document.createElement('a');a.className='si-btn sm';a.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+encodeURIComponent(r.processoId);a.target='_blank';a.rel='noopener';a.textContent='Abrir ficha';linha.appendChild(a);}
+      root.appendChild(linha);
+    });
+  }
+  function travarLote(ocupado){
+    lote.ocupado=ocupado;document.getElementById('siLoteCampos').disabled=ocupado;document.getElementById('siLoteAtualizar').disabled=ocupado;
+    document.querySelectorAll('#siLote [data-fechar]').forEach(function(b){b.disabled=ocupado;});atualizarSelecaoLote();
+  }
+  async function recarregarDepoisDoLote(){
+    try{var ok=await carregar();mudou();if(!ok)throw new Error();}
+    catch(e){loteMensagem('O relatório foi preservado, mas as intimações não foram atualizadas. Use Atualizar intimações.');}
+  }
+  async function conferirLote(){
+    if(!S.pode.criarProc||!lote||lote.ocupado)return;
+    var marcados=selecionadosLote();if(!marcados.length)return;
+    var incompleto=marcados.find(function(g){return !g.nome.trim()||!g.teseId;});
+    if(incompleto){loteMensagem('Preencha cliente, área e tese dos processos marcados antes de conferir.');incompleto.row.scrollIntoView({block:'center',behavior:'smooth'});return;}
+    travarLote(true);loteMensagem('Conferindo processos já cadastrados...');
+    try{
+      var numeros=marcados.flatMap(function(g){return [g.numero,mascaraLote(g.numero)];});
+      var r=await S.sb.from('processos').select('id,numero_processo_cnj').in('numero_processo_cnj',numeros);
+      var encontrados=new Map();(r.error?[]:r.data||[]).forEach(function(p){var n=String(p.numero_processo_cnj||'').replace(/\D/g,'');if(n.length===20)encontrados.set(n,p.id);});
+      S.itens.forEach(function(i){if(i.processo_id&&numeroLote(i))encontrados.set(numeroLote(i),i.processo_id);});
+      marcados.forEach(function(g){g.existente=encontrados.get(g.numero)||null;});
+      var ligados=marcados.filter(function(g){return g.existente;}).length,novos=marcados.length-ligados,clientes=marcados.filter(function(g){return !g.existente&&!g.pessoaId;}).length;
+      var resumo=marcados.length+' processos selecionados. Previsão: '+novos+' processos novos, '+clientes+' clientes novos e '+ligados+' apenas ligados a existentes.';
+      resumo+=' O banco também pode localizar um processo que não esteja visível nesta conferência; nesse caso, apenas ligará as intimações.';
+      if(r.error)resumo+=' A consulta de processos existentes não ficou disponível; as quantidades de novos são estimadas.';
+      loteMensagem(resumo);
+      if(!(await confirmar('Conferir e criar',resumo+' Continuar?','Confirmar lote')))return;
+      await executarLote(marcados);
+    }catch(e){loteMensagem('O lote não pôde continuar. Confira o relatório antes de prosseguir. '+(e.message||''));}
+    finally{travarLote(false);}
+  }
+  async function executarLote(marcados){
+    lote.parar=false;var feitos=0,total=marcados.length;
+    var progress=document.getElementById('siLoteProgresso'),stop=document.getElementById('siLoteParar');progress.max=total;progress.value=0;progress.hidden=false;stop.hidden=false;stop.disabled=false;
+    try{
+      for(var g of marcados){
+        if(lote.parar)break;
+        if(loteTentados.has(g.numero))continue;
+        var registro={numero:g.numero,tipo:'executando',mensagem:'Em andamento'};loteTentados.set(g.numero,registro);
+        g.status.textContent='Em andamento...';loteMensagem('Processando '+(feitos+1)+' de '+total+'. É possível parar após o processo atual.');
+        try{
+          var r=await S.sb.rpc('intimacao_incorporar',{p_id:g.itens[0].id,p_pessoa_id:g.pessoaId||null,p_cliente_nome:g.nome.trim(),p_tese_id:g.teseId,p_responsavel_id:g.responsavel||null});
+          if(r.error)throw r.error;if(!r.data)throw new Error('O banco não devolveu o processo. Confira antes de tentar em outra sessão.');
+          registro.processoId=r.data;registro.tipo=g.existente===r.data?'ligado':'novo';registro.mensagem=registro.tipo==='ligado'?'Ligado a processo existente':'Processo criado ou localizado pelo banco';
+          S.itens.forEach(function(i){if(numeroLote(i)===g.numero)i.processo_id=r.data;});g.marcado=false;g.checkbox.checked=false;
+        }catch(e){registro.tipo='erro';registro.mensagem='Falhou: '+(e.message||'Não foi possível confirmar a operação. Confira o processo antes de tentar em outra sessão.');g.marcado=true;g.checkbox.checked=true;}
+        g.row.querySelectorAll('input,button,select').forEach(function(el){el.disabled=true;});g.status.textContent=registro.mensagem;g.status.classList.toggle('si-lote-erro',registro.tipo==='erro');
+        feitos++;progress.value=feitos;renderRelatorioLote();
+      }
+      loteMensagem((lote.parar?'Lote parado. ':'Lote concluído. ')+feitos+' de '+total+' processados. Os não iniciados continuam disponíveis. Cada número é chamado uma única vez nesta sessão.');
+    }finally{stop.hidden=true;await recarregarDepoisDoLote();document.getElementById('siLoteRelatorio').scrollIntoView({block:'nearest',behavior:'smooth'});}
+  }
+  async function abrirLote(){
+    if(!S.pode.criarProc||(lote&&lote.ocupado))return;
+    if(!(await catalogoTeses.carregar()))return;
+    if(lote){lote.grupos.forEach(function(g){clearTimeout(g.timer);g.menu.destruir();});if(lote.menuTodos)lote.menuTodos.destruir();}
+    var visiveis=new Set(filtradas().map(function(i){return i.id;})),grupos=new Map(),semNumero=0;
+    S.itens.filter(function(i){return !i.processo_id;}).forEach(function(i){
+      var numero=numeroLote(i);if(!numero){semNumero++;return;}
+      if(!grupos.has(numero))grupos.set(numero,{numero:numero,itens:[],marcado:false,pessoaId:null,teseId:null,busca:0});
+      var g=grupos.get(numero);g.itens.push(i);if(visiveis.has(i.id))g.marcado=true;
+    });
+    lote={grupos:Array.from(grupos.values()),ocupado:false,parar:false};var estado=lote;
+    var root=document.getElementById('siLoteLista');root.replaceChildren();
+    document.getElementById('siLoteAviso').textContent=lote.grupos.length+' processos diferentes fora do SAGA. '+semNumero+' intimação(ões) fora da lista: sem número completo. Os filtros atuais definem a marcação inicial.';
+    lote.menuTodos=catalogoTeses.montar(document.getElementById('siLoteTeseTodos'),{});
+    document.getElementById('siLoteRespTodos').innerHTML=responsaveisLote(null,true);
+    lote.grupos.forEach(function(g,index){
+      g.itens.sort(function(a,b){return String(b.data_disponibilizacao||'').localeCompare(String(a.data_disponibilizacao||''));});
+      var i=g.itens[0],ativo=(i.partes||[]).find(function(p){return p.polo==='A';})||(i.partes||[])[0];
+      g.nome=ativo&&ativo.nome||'';g.responsavel=i.responsavel_id||S.meuId;
+      var row=document.createElement('article');row.className='si-lote-item';row.dataset.numero=g.numero;g.row=row;
+      row.innerHTML='<div class="si-lote-identidade"><label><input type="checkbox" class="si-lote-marcar"> <b>'+mascaraLote(g.numero)+'</b></label><div class="si-sub">'+g.itens.length+' intimações · '+esc(i.tribunal||'Tribunal não informado')+' · '+esc(dataBR(i.data_disponibilizacao))+'</div><div class="si-sub">Polo ativo: '+esc(g.nome||'Não informado')+'</div><p class="si-lote-status" role="status"></p></div><div class="si-lote-cliente si-campo"><label for="siLoteCliente'+index+'">Cliente</label><input id="siLoteCliente'+index+'" type="text" maxlength="200"><div class="si-lote-sugestoes"></div></div><div class="si-lote-tese"></div><div class="si-campo"><label for="siLoteResp'+index+'">Responsável</label><select id="siLoteResp'+index+'">'+responsaveisLote(g.responsavel,false)+'</select></div>';
+      root.appendChild(row);g.status=row.querySelector('.si-lote-status');g.checkbox=row.querySelector('.si-lote-marcar');g.input=row.querySelector('input[type=text]');g.input.value=g.nome;g.sugestoes=row.querySelector('.si-lote-sugestoes');
+      var anterior=loteTentados.get(g.numero);if(anterior){g.marcado=anterior.tipo==='erro';g.checkbox.disabled=true;g.status.textContent=anterior.mensagem;g.status.classList.toggle('si-lote-erro',anterior.tipo==='erro');}
+      g.checkbox.checked=g.marcado;g.checkbox.onchange=function(){g.marcado=this.checked;atualizarSelecaoLote();};
+      g.menu=catalogoTeses.montar(row.querySelector('.si-lote-tese'),{mudou:function(v){g.teseId=v.teseId;}});
+      row.querySelector('select').onchange=function(){g.responsavel=this.value;};
+      g.input.oninput=function(){g.nome=this.value;g.pessoaId=null;g.busca++;g.sugestoes.replaceChildren();clearTimeout(g.timer);g.timer=setTimeout(function(){sugerirClienteLote(g,estado);},250);};
+      g.input.onfocus=function(){sugerirClienteLote(g,estado);};
+      if(anterior)row.querySelectorAll('input,button,select').forEach(function(el){el.disabled=true;});
+    });
+    document.getElementById('siLoteTodos').onchange=function(){var valor=this.checked;lote.grupos.forEach(function(g){if(!loteTentados.has(g.numero)){g.marcado=valor;g.checkbox.checked=valor;}});atualizarSelecaoLote();};
+    document.getElementById('siLoteAplicar').onclick=function(){
+      var v=lote.menuTodos.valor(),resp=document.getElementById('siLoteRespTodos').value;
+      selecionadosLote().forEach(function(g){if(v.teseId||v.areaId!=='*'){g.menu.definir(v);g.teseId=v.teseId;}if(resp!=='__manter__'){g.responsavel=resp;g.row.querySelector('select').value=resp;}});loteMensagem('Área, tese e responsável aplicados somente aos marcados.');
+    };
+    document.getElementById('siLoteCriar').onclick=conferirLote;
+    document.getElementById('siLoteParar').onclick=function(){lote.parar=true;this.disabled=true;loteMensagem('Parada solicitada. Aguardando o processo atual terminar.');};
+    document.getElementById('siLoteAtualizar').onclick=async function(){if(lote.ocupado)return;travarLote(true);try{await recarregarDepoisDoLote();}finally{travarLote(false);}};
+    document.getElementById('siLoteProgresso').hidden=true;document.getElementById('siLoteParar').hidden=true;
+    loteMensagem('Confira os clientes para evitar novos cadastros desnecessários.');renderRelatorioLote();travarLote(false);
+    document.getElementById('siLote').classList.add('open');
+    // Três buscas simultâneas, sem disparar uma consulta para cada intimação repetida.
+    var fila=lote.grupos.slice();Array.from({length:Math.min(3,fila.length)},async function(){while(fila.length&&lote===estado){await sugerirClienteLote(fila.shift(),estado);}});
   }
 
   /* ---------- triagem (T70): virar tarefa ou dar por vista ---------- */
