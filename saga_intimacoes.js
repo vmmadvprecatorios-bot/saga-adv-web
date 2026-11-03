@@ -876,30 +876,49 @@
       '<div class="si-acoes" style="margin-top:8px"><button class="si-btn pri sm" type="button" data-tri="tarefa">Criar tarefa</button><button class="si-btn sm" type="button" data-tri="vista">Vista (nada a fazer)</button></div><div id="siTriForm"></div></div>';
     w.onclick=function(e){var b=e.target.closest('[data-tri]');if(!b)return;if(b.dataset.tri==='tarefa')formTarefa(i);else formVista(i);};
   }
-  function formTarefa(i){
-    var f=document.getElementById('siTriForm'),p=i.processo_id&&S.processos[i.processo_id];
-    var padrao=(p&&p.responsavel_id)||i.responsavel_id||advogadosDe(i)[0]||S.meuId;
-    var titulo=(i.etiqueta?i.etiqueta:'Providenciar')+' · '+cnj(i);
-    f.innerHTML='<div class="si-campo" style="margin-top:10px"><label for="siTrTit">O que fazer</label><input id="siTrTit" maxlength="200" value="'+esc(titulo)+'"></div>'+
+  function camposTarefa(i,comResponsavel){
+    var p=i.processo_id&&S.processos[i.processo_id],padrao=(p&&p.responsavel_id)||i.responsavel_id||advogadosDe(i)[0]||S.meuId;
+    var titulo=(i.etiqueta||'Providenciar')+' · '+cnj(i);
+    return '<div class="si-campo" style="margin-top:10px"><label for="siTrTit">O que fazer</label><input id="siTrTit" maxlength="200" value="'+esc(titulo)+'"></div>'+
       '<div class="si-g2"><div class="si-campo"><label for="siTrPrazo">Prazo</label><input id="siTrPrazo" type="date" value="'+esc(i.prazo||'')+'"></div>'+
-      '<div class="si-campo"><label for="siTrResp">Responsável</label><select id="siTrResp">'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===padrao?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('')+'</select></div></div>'+
-      '<div class="si-campo"><label for="siTrDesc">Detalhes (opcional)</label><textarea id="siTrDesc" placeholder="Ex.: réplica à contestação; ver documento juntado em 30/10"></textarea></div>'+
-      '<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siTrOk">Criar a tarefa</button><button class="si-btn sm" type="button" id="siTrCancela">Cancelar</button></div>';
+      (comResponsavel?'<div class="si-campo"><label for="siTrResp">Responsável</label><select id="siTrResp">'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===padrao?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('')+'</select></div>':'')+'</div>'+
+      '<div class="si-campo"><label>Etiqueta da tarefa</label><div id="siTrEtiqueta"></div></div>'+
+      '<div class="si-campo"><label for="siTrDesc">Detalhes (opcional)</label><textarea id="siTrDesc" placeholder="Descreva a providência necessária"></textarea></div>';
+  }
+  function montarEtiquetaTarefa(i,rascunho){
+    var selecionada=rascunho?rascunho.etiqueta:catalogoEtiquetas.todas().find(function(e){return e.ativo===true&&!e.reserva&&e.nome.trim().toLocaleLowerCase('pt-BR')===String(i.etiqueta||'').trim().toLocaleLowerCase('pt-BR');})||null;
+    catalogoEtiquetas.montar(document.getElementById('siTrEtiqueta'),{valor:function(){return selecionada;},escolher:function(e){selecionada=e;}});
+    return function(){return selecionada;};
+  }
+  function dadosTarefa(resp){return {titulo:document.getElementById('siTrTit').value.trim(),prazo:document.getElementById('siTrPrazo').value||null,responsavel:document.getElementById(resp).value||null,descricao:document.getElementById('siTrDesc').value.trim()};}
+  async function criarTarefaDaIntimacao(i,dados,etiqueta){
+    if(etiqueta&&etiqueta.reserva)throw new Error('Recarregue o catálogo e escolha uma etiqueta cadastrada ou Sem etiqueta.');
+    var desc=(dados.descricao?dados.descricao+'\n\n':'')+'Intimação: '+[(i.tipo_documento||i.tipo_comunicacao||'Intimação'),cnj(i),justicaDe(i).sigla,'disponibilizada em '+dataBR(i.data_disponibilizacao)].join(' · ');
+    var r=await S.sb.rpc('intimacao_criar_tarefa',{p_id:i.id,p_titulo:dados.titulo,p_descricao:desc,p_prazo:dados.prazo,p_responsavel_id:dados.responsavel});
+    if(r.error)throw r.error;
+    Object.assign(i,{triagem:'tarefa',tarefa_id:r.data,triagem_por_id:S.meuId,triagem_em:new Date().toISOString(),concluida:true,concluida_em:new Date().toISOString(),situacao:'providenciada',prazo:dados.prazo||i.prazo});
+    var col=colunaDaSituacao('providenciada');if(col)i.coluna_id=col.id;
+    if(etiqueta){
+      try{var e=await S.sb.from('tarefas').update({etiqueta_id:etiqueta.id,cor_etiqueta:SagaEtiquetas.cor(etiqueta.cor)}).eq('id',r.data);if(e.error)throw e.error;}
+      catch(err){toast('A tarefa foi criada, mas não foi possível salvar a etiqueta. Abra a tarefa para ajustar.','error');}
+    }
+    return r.data;
+  }
+  function formTarefa(i,rascunho){
+    if(!S.pode.editar||i.triagem)return;
+    var processoForm=document.getElementById('siProcForm');if(processoForm)processoForm.replaceChildren();
+    var f=document.getElementById('siTriForm');
+    f.innerHTML=camposTarefa(i,true)+'<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siTrOk">Criar a tarefa</button><button class="si-btn sm" type="button" id="siTrCancela">Cancelar</button></div>';
+    var etiqueta=montarEtiquetaTarefa(i,rascunho);
+    if(rascunho){document.getElementById('siTrTit').value=rascunho.titulo;document.getElementById('siTrPrazo').value=rascunho.prazo||'';document.getElementById('siTrResp').value=rascunho.responsavel||'';document.getElementById('siTrDesc').value=rascunho.descricao;}
     document.getElementById('siTrTit').focus();
     document.getElementById('siTrCancela').onclick=function(){f.innerHTML='';};
     document.getElementById('siTrOk').onclick=async function(){
-      var t=document.getElementById('siTrTit').value.trim();if(!t){toast('Escreva o que precisa ser feito.','error');return;}
-      var prazo=document.getElementById('siTrPrazo').value||null,resp=document.getElementById('siTrResp').value||null;
-      var desc=document.getElementById('siTrDesc').value.trim();
-      desc=(desc?desc+'\n\n':'')+'Intimação: '+[(i.tipo_documento||i.tipo_comunicacao||'Intimação'),cnj(i),justicaDe(i).sigla,'disponibilizada em '+dataBR(i.data_disponibilizacao)].join(' · ');
-      this.disabled=true;
-      var r=await S.sb.rpc('intimacao_criar_tarefa',{p_id:i.id,p_titulo:t,p_descricao:desc,p_prazo:prazo,p_responsavel_id:resp});
-      this.disabled=false;
-      if(r.error){toast('Não foi possível criar a tarefa: '+esc(r.error.message),'error');return;}
-      Object.assign(i,{triagem:'tarefa',tarefa_id:r.data,triagem_por_id:S.meuId,triagem_em:new Date().toISOString(),concluida:true,concluida_em:new Date().toISOString(),situacao:'providenciada',prazo:prazo||i.prazo});
-      var col=colunaDaSituacao('providenciada');if(col)i.coluna_id=col.id;
-      toast('Tarefa criada'+(resp&&resp!==S.meuId?' e enviada para '+esc(primeiroNome(resp)):'')+'. A intimação saiu das abertas'+(i.processo_id?' e ficou registrada na ficha do cliente.':'.'),'sucesso');
-      preencherJanela(i);carregarHistorico(i.id);mudou();
+      var dados=dadosTarefa('siTrResp');if(!dados.titulo){toast('Escreva o que precisa ser feito.','error');return;}
+      var button=this;button.disabled=true;
+      try{await criarTarefaDaIntimacao(i,dados,etiqueta());toast('Tarefa criada. A intimação saiu das abertas'+(i.processo_id?' e ficou registrada na ficha do cliente.':'.'),'sucesso');preencherJanela(i);carregarHistorico(i.id);mudou();}
+      catch(e){toast('Não foi possível criar a tarefa: '+esc(e.message||'Tente novamente.'),'error');}
+      finally{button.disabled=false;}
     };
   }
   function formVista(i){
@@ -930,39 +949,58 @@
       return;
     }
     w.innerHTML='<div class="si-proc-box falta"><b>Este processo não está no sistema.</b><div class="si-sub">Deseja incorporar? O SAGA cria o processo (e o cliente, se ainda não existir) com o número e o tribunal desta intimação.</div>'+
-      '<div class="si-acoes" style="margin-top:8px">'+(S.pode.criarProc?'<button class="si-btn pri sm" type="button" data-p="incorporar">Incorporar ao SAGA</button>':'')+(S.pode.gerenciar?'<button class="si-btn sm" type="button" data-p="ligar">Ligar a um processo existente</button>':'')+'</div><div id="siProcForm"></div></div>';
-    w.onclick=function(e){var b=e.target.closest('[data-p]');if(!b)return;if(b.dataset.p==='incorporar')formIncorporar(i);else if(b.dataset.p==='ligar')formLigar(i);};
+      '<div class="si-acoes" style="margin-top:8px">'+(S.pode.criarProc?'<button class="si-btn pri sm" type="button" data-p="incorporar">Incorporar ao SAGA</button>':'')+(S.pode.criarProc&&S.pode.editar&&!i.triagem?'<button class="si-btn pri sm" type="button" data-p="incorporar-tarefa">Incorporar e criar tarefa</button>':'')+(S.pode.gerenciar?'<button class="si-btn sm" type="button" data-p="ligar">Ligar a um processo existente</button>':'')+'</div><div id="siProcForm"></div></div>';
+    w.onclick=function(e){var b=e.target.closest('[data-p]');if(!b)return;if(b.dataset.p==='incorporar'||b.dataset.p==='incorporar-tarefa')formIncorporar(i,b.dataset.p==='incorporar-tarefa');else if(b.dataset.p==='ligar')formLigar(i);};
   }
-  async function formIncorporar(i){
+  async function formIncorporar(i,comTarefa){
+    if(!S.pode.criarProc||i.processo_id||(comTarefa&&(!S.pode.editar||i.triagem)))return;
+    var triagemForm=document.getElementById('siTriForm');if(triagemForm)triagemForm.replaceChildren();
     var f=document.getElementById('siProcForm');
     if(!(await catalogoTeses.carregar()))return;
     var nome=((i.partes||[]).filter(function(p){return p.polo==='A';})[0]||(i.partes||[])[0]||{}).nome||'';
     f.innerHTML='<div class="si-campo" style="margin-top:10px"><label>Cliente</label><input id="siIncCli" value="'+esc(nome)+'" placeholder="Nome do cliente"><div class="si-res-list" id="siIncSug"></div></div>'+
       '<div id="siIncAreasTeses" style="margin:10px 0"></div>'+
       '<div class="si-campo"><label>Responsável</label><select id="siIncResp">'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===(i.responsavel_id||S.meuId)?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('')+'</select></div>'+
-      '<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siIncOk">Incorporar</button></div>';
+      (comTarefa?camposTarefa(i,false):'')+'<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siIncOk">'+(comTarefa?'Incorporar e criar tarefa':'Incorporar')+'</button></div>';
     if(menuTesesIncorporar)menuTesesIncorporar.destruir();
     menuTesesIncorporar=catalogoTeses.montar(document.getElementById('siIncAreasTeses'),{teseInputId:'siIncTese'});
-    var escolhida=null,tm=null;
+    var etiqueta=comTarefa?montarEtiquetaTarefa(i):null;
+    var escolhida=null,tm=null,buscaCliente=0;
     async function sugerir(){
-      var v=document.getElementById('siIncCli').value.trim();escolhida=null;var s=document.getElementById('siIncSug');
+      var campo=document.getElementById('siIncCli');if(!campo)return;var v=campo.value.trim(),pedido=++buscaCliente;var s=document.getElementById('siIncSug');
       if(v.length<3){s.innerHTML='';return;}
       var r=await S.sb.from('pessoas').select('id,nome_completo,cpf').ilike('nome_completo','%'+v+'%').limit(6);
+      if(pedido!==buscaCliente||!s.isConnected)return;
       s.innerHTML=(r.data||[]).length?'<div class="si-sub">Já existe no SAGA? Clique para usar o cliente cadastrado:</div>'+(r.data||[]).map(function(p){return '<button type="button" data-pes="'+esc(p.id)+'">'+esc(p.nome_completo)+(p.cpf?' · CPF '+esc(p.cpf):'')+'</button>';}).join(''):'<div class="si-sub">Cliente novo: será cadastrado com este nome.</div>';
     }
-    document.getElementById('siIncCli').addEventListener('input',function(){clearTimeout(tm);tm=setTimeout(sugerir,250);});
-    document.getElementById('siIncSug').addEventListener('click',function(e){var b=e.target.closest('[data-pes]');if(!b)return;escolhida=b.dataset.pes;document.getElementById('siIncCli').value=b.textContent.split(' · ')[0];this.innerHTML='<div class="si-sub">✓ Usando o cliente já cadastrado.</div>';});
+    document.getElementById('siIncCli').addEventListener('input',function(){escolhida=null;buscaCliente++;clearTimeout(tm);tm=setTimeout(sugerir,250);});
+    document.getElementById('siIncSug').addEventListener('click',function(e){var b=e.target.closest('[data-pes]');if(!b)return;buscaCliente++;clearTimeout(tm);escolhida=b.dataset.pes;document.getElementById('siIncCli').value=b.textContent.split(' · ')[0];this.innerHTML='<div class="si-sub">✓ Usando o cliente já cadastrado.</div>';});
     sugerir();
     document.getElementById('siIncOk').addEventListener('click',async function(){
-      var tese=document.getElementById('siIncTese').value;if(!tese){toast('Escolha a tese.','error');return;}
-      this.disabled=true;
-      var r=await S.sb.rpc('intimacao_incorporar',{p_id:i.id,p_pessoa_id:escolhida,p_cliente_nome:document.getElementById('siIncCli').value,p_tese_id:tese,p_responsavel_id:document.getElementById('siIncResp').value||null});
-      this.disabled=false;
-      if(r.error){toast('Não foi possível incorporar: '+esc(r.error.message),'error');return;}
-      toast('Processo incorporado ao SAGA, já no Jurídico. A intimação está na ficha do cliente.','sucesso');
-      await carregar();mudou();var n=S.itens.filter(function(x){return x.id===i.id;})[0];if(n){preencherJanela(n);carregarHistorico(n.id);}
+      var tese=document.getElementById('siIncTese').value,cliente=document.getElementById('siIncCli').value.trim();
+      if(!tese){toast('Escolha a tese.','error');return;}
+      if(!cliente){toast('Informe o cliente.','error');return;}
+      var dados=comTarefa?dadosTarefa('siIncResp'):null,et=comTarefa?etiqueta():null;
+      if(comTarefa&&!dados.titulo){toast('Escreva o que precisa ser feito.','error');return;}
+      if(et&&et.reserva){toast('Escolha uma etiqueta cadastrada ou Sem etiqueta antes de salvar.','error');return;}
+      var button=this,incorporado=false;button.disabled=true;
+      try{
+        var responsavel=document.getElementById('siIncResp').value||null;
+        var r=await S.sb.rpc('intimacao_incorporar',{p_id:i.id,p_pessoa_id:escolhida,p_cliente_nome:cliente,p_tese_id:tese,p_responsavel_id:responsavel});
+        if(r.error)throw r.error;
+        incorporado=true;i.processo_id=r.data;i.responsavel_id=responsavel;
+        S.processos[r.data]={id:r.data,pessoa_id:escolhida,responsavel_id:responsavel,pessoa:{nome_completo:cliente}};
+        if(comTarefa){await criarTarefaDaIntimacao(i,dados,et);toast('Processo incorporado e tarefa criada. Tudo ficou registrado na ficha do cliente.','sucesso');preencherJanela(i);carregarHistorico(i.id);mudou();}
+        else{toast('Processo incorporado ao SAGA, já no Jurídico. A intimação está na ficha do cliente.','sucesso');preencherJanela(i);carregarHistorico(i.id);mudou();}
+      }catch(e){
+        if(incorporado){
+          toast('O processo foi criado, mas a tarefa não foi criada. Use Criar tarefa para tentar novamente. '+esc(e.message||''),'error');
+          renderProcesso(i);renderTriagem(i);formTarefa(i,Object.assign({},dados,{etiqueta:et}));carregarHistorico(i.id);mudou();
+        }else toast('Não foi possível incorporar: '+esc(e.message||'Tente novamente.'),'error');
+      }finally{button.disabled=false;}
     });
   }
+
   function formLigar(i){
     var f=document.getElementById('siProcForm');
     f.innerHTML='<div class="si-campo" style="margin-top:10px"><label>Número do processo ou nome do cliente</label><input id="siLigBusca" placeholder="Digite ao menos 3 letras ou números"></div><div class="si-res-list" id="siLigRes"></div>';
