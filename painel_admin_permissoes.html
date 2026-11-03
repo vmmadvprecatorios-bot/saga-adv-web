@@ -522,6 +522,28 @@ function renderCollaborators(){
   root.querySelectorAll('[data-collab-card]').forEach(b=>b.addEventListener('click',()=>openCollaborator(b.dataset.collabCard)));
 }
 
+// Autorizações individuais da Lista, independentes dos níveis dos módulos.
+const listaAutorizacoes=[
+  ['gerenciar_colunas','Pode criar e remover colunas da Lista'],
+  ['distribuir','Pode distribuir fichas da Captação']
+];
+function listaConcedida(c,acao){
+  if(c.eh_administrador)return true;
+  const id=permId('processos',acao),extra=(c.excecoes||[]).find(ex=>ex.permissao_id===id);
+  return extra?extra.concedida:(_papPermMap[c.papel_id]||new Set()).has(id);
+}
+function listaChavinhas(c,canEdit){
+  return '<div style="margin-top:16px">'+listaAutorizacoes.map(([acao,nome])=>{
+    const id=permId('processos',acao);
+    return `<label style="display:flex;align-items:center;gap:10px;margin:12px 0"><input type="checkbox" role="switch" data-lista-acao="${acao}" ${listaConcedida(c,acao)?'checked':''} ${canEdit&&id?'':'disabled'}><span>${nome}${id?'':' (indisponível)'}</span></label>`;
+  }).join('')+'</div>';
+}
+async function salvarListaAutorizacao(c,acao,concedida){
+  if(!canManageFor(c))throw new Error('Sem autoridade para alterar esta permissão.');
+  const id=permId('processos',acao);if(!id)throw new Error('Permissão indisponível no cadastro.');
+  const {error}=await _sb.from('usuarios_permissoes_extra').upsert({usuario_id:c.id,permissao_id:id,concedida,definido_por_id:_currentUser.id},{onConflict:'usuario_id,permissao_id'});
+  if(error)throw error;
+}
 async function openCollaborator(id){
   activeCollaboratorId=id;
   const c=getCollab(id);if(!c)return;
@@ -536,11 +558,17 @@ async function openCollaborator(id){
       <div class="profile-change"><label for="changeProfile">Trocar perfil</label><select class="field" id="changeProfile"${canEdit?'':' disabled'}>${papelOptions}</select></div>
     </div>
     ${protectedNote}
+    ${listaChavinhas(c,canEdit)}
     <div class="perm-wrap" style="margin-top:14px">
       <table class="permission-table"><thead><tr><th>Módulo</th><th>Nível final</th><th>Origem</th><th>Alterar</th></tr></thead>
       <tbody>${moduleList.map(m=>{const f=finalLevel(c,m.key),s=sourceFor(c,m.key);return`<tr><td class="module-cell">${esc(m.name)}</td><td><span class="${levelClass(f)}">${levelLabels[f]}</span></td><td><span class="badge ${s.type}">${s.label}</span></td><td><select class="permission-select" data-perm-c="${c.id}" data-perm-m="${m.key}"${canEdit?'':' disabled'}>${levelOptions(f,c.eh_administrador)}</select></td></tr>`}).join('')}</tbody></table>
     </div>`;
 
+  document.querySelectorAll('[data-lista-acao]').forEach(input=>input.addEventListener('change',async()=>{
+    const previous=!input.checked;input.disabled=true;
+    try{await salvarListaAutorizacao(c,input.dataset.listaAcao,input.checked);await loadData();openCollaborator(c.id);showToast('Permissão da Lista atualizada.','success')}
+    catch(err){input.checked=previous;input.disabled=!canEdit;showToast('Erro: '+esc(err.message),'error')}
+  }));
   document.getElementById('changeProfile').addEventListener('change',async e=>{
     if(!canEdit){showToast('Sem autoridade para alterar este perfil.','error');return}
     try{await dbChangeProfile(c.id,e.target.value);await loadData();openCollaborator(c.id);showToast('Perfil de <b>'+esc(c.nome_completo)+'</b> atualizado.','success')}
