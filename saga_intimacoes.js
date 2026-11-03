@@ -106,7 +106,16 @@
   function diasAtras(n){var d=new Date();d.setDate(d.getDate()-n);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
   function iniciais(n){return String(n||'?').split(' ').filter(Boolean).slice(0,2).map(function(p){return p[0];}).join('').toUpperCase();}
   function usuario(id){return S.usuarios.filter(function(u){return u.id===id;})[0];}
-  function nomeUsuario(id){var u=usuario(id);return u?u.nome_completo:'';}
+  function nomeUsuario(id){if(typeof id==='string'&&id.indexOf('ext:')===0){var e=externos()[id];return e?e.nome:'';}var u=usuario(id);return u?u.nome_completo:'';}
+  /* Advogados de fora (parceiros sem acesso ao SAGA): OAB cadastrada sem usuário ligado, identificada pelo nome. */
+  function chaveOab(num,uf){return String(num||'').replace(/\D/g,'')+'/'+String(uf||'').toUpperCase();}
+  function chaveExterno(nome){return 'ext:'+String(nome||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ');}
+  function externos(){
+    if(S._extCache&&S._extCache.base===S.oabs)return S._extCache.mapa;
+    var m={},porOab={};(S.oabs||[]).forEach(function(o){if(o.usuario_vinculado_id||!o.nome_advogado)return;var k=chaveExterno(o.nome_advogado);(m[k]=m[k]||{nome:o.nome_advogado,oabs:[]}).oabs.push(chaveOab(o.numero_oab,o.uf_oab));porOab[chaveOab(o.numero_oab,o.uf_oab)]=k;});
+    S._extCache={base:S.oabs,mapa:m,porOab:porOab};return m;
+  }
+  function ehAdvogado(u){return !!(u&&u.ativo&&u.auth_user_id&&(u.possui_registro_oab||u.numero_oab));}
   function primeiroNome(id){return (nomeUsuario(id)||'').split(' ')[0];}
   function cnj(i){return i.numero_processo_mascara||i.numero_processo||'Sem número';}
   function partesAtivas(i){var a=(i.partes||[]).filter(function(p){return p.polo==='A';}).map(function(p){return p.nome;});if(!a.length)a=(i.partes||[]).map(function(p){return p.nome;});return a.join(', ');}
@@ -132,7 +141,7 @@
     var i=aberta();if(i&&i.id===id)preencherJanela(i);
     return ok;
   }
-  function advogadosDe(i){var ids=(i.advogados_ids||[]).slice();if(!ids.length&&i.responsavel_id)ids=[i.responsavel_id];return ids.filter(function(x,k){return ids.indexOf(x)===k;});}
+  function advogadosDe(i){var ids=(i.advogados_ids||[]).slice();if(!ids.length&&i.responsavel_id)ids=[i.responsavel_id];externos();var po=S._extCache.porOab;(i.advogados||[]).forEach(function(a){var k=po[chaveOab(a.numero_oab,a.uf_oab)];if(k)ids.push(k);});return ids.filter(function(x,k){return ids.indexOf(x)===k;});}
   function urgencia(i){
     if(!i.prazo||i.concluida)return null;var h=hojeISO();
     if(i.prazo<h)return {cls:'atrasado',txt:'Atrasado · '+dataBR(i.prazo)};
@@ -292,7 +301,7 @@
       sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
       sb.from('intimacoes_colunas').select('*').order('ordem').order('criado_em'),
       sb.from('monitoramento_config').select('*').eq('tipo_alvo','oab').order('criado_em'),
-      sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab').order('nome_completo'),
+      sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab,possui_registro_oab').order('nome_completo'),
       sb.from('tribunais_links').select('*').order('tribunal_chave').order('ordem').order('nome'),
       catalogoEtiquetas.carregar()]);
     S.links=r[4].data||[];
@@ -380,7 +389,7 @@
       if(f.regiao){if(f.regiao.indexOf('uf:')===0){if(j.uf!==f.regiao.slice(3))return false;}else if(j.regiao!==f.regiao)return false;}
       return true;}).map(function(i){return i.orgao;}).filter(Boolean))].sort();
     if(f.orgao&&orgaos.indexOf(f.orgao)===-1)f.orgao='';
-    var advs={};S.oabs.forEach(function(o){if(o.usuario_vinculado_id)advs[o.usuario_vinculado_id]=1;});base.forEach(function(i){advogadosDe(i).forEach(function(a){advs[a]=1;});});
+    var advs={};S.oabs.forEach(function(o){if(o.usuario_vinculado_id)advs[o.usuario_vinculado_id]=1;else if(o.nome_advogado)advs[chaveExterno(o.nome_advogado)]=1;});base.forEach(function(i){advogadosDe(i).forEach(function(a){advs[a]=1;});});
     var oabOpts=S.oabs.map(function(o){return ['oab:'+o.numero_oab+'/'+o.uf_oab,'OAB '+o.numero_oab+'/'+o.uf_oab+(o.usuario_vinculado_id?' · '+primeiroNome(o.usuario_vinculado_id):'')];})
       .concat([['fonte:djen','Origem: CNJ (Diário Eletrônico)'],['fonte:email','Origem: e-mail (radar)']]);
     el.innerHTML='<div class="si-barra">'+
@@ -763,9 +772,9 @@
       '</div></div>'+
     '</div></div>'+
     '<div class="si-ov" id="siOabs"><div class="si-modal peq">'+
-      '<div class="si-mh"><div><h2>OABs monitoradas</h2><p>Cada OAB fica ligada a um advogado do escritório. Advogado novo com OAB entra sozinho nos filtros.</p></div><button class="si-x" type="button" data-fechar>✕</button></div>'+
+      '<div class="si-mh"><div><h2>OABs monitoradas</h2><p>Cada OAB fica ligada a um advogado. Para as OABs suplementares, inclua o mesmo advogado de novo com o número e a UF da suplementar. Advogado parceiro sem acesso ao SAGA: escolha "Outro advogado" e escreva o nome.</p></div><button class="si-x" type="button" data-fechar>✕</button></div>'+
       '<div class="si-mb"><div id="siOabLista"></div>'+
-        '<div class="si-oab-nova"><div class="si-campo"><label for="siOnAdv">Advogado</label><select id="siOnAdv"></select></div><div class="si-campo"><label for="siOnNum">Número da OAB</label><input id="siOnNum" inputmode="numeric" placeholder="Ex.: 15318"></div><div class="si-campo"><label for="siOnUf">UF</label><select id="siOnUf">'+Object.keys(UF_NOME).map(function(u){return '<option'+(u==='AL'?' selected':'')+'>'+u+'</option>';}).join('')+'</select></div><button class="si-btn pri" type="button" id="siOnAdd" style="height:36px">Incluir</button></div>'+
+        '<div class="si-oab-nova"><div class="si-campo"><label for="siOnAdv">Advogado</label><select id="siOnAdv"></select><input id="siOnNome" placeholder="Nome do advogado parceiro" style="display:none;margin-top:6px"></div><div class="si-campo"><label for="siOnNum">Número da OAB</label><input id="siOnNum" inputmode="numeric" placeholder="Ex.: 15318"></div><div class="si-campo"><label for="siOnUf">UF</label><select id="siOnUf">'+Object.keys(UF_NOME).map(function(u){return '<option'+(u==='AL'?' selected':'')+'>'+u+'</option>';}).join('')+'</select></div><button class="si-btn pri" type="button" id="siOnAdd" style="height:36px">Incluir</button></div>'+
         '<div class="si-sub" style="margin-top:8px">Ao incluir, o sistema busca as intimações dos últimos 30 dias dessa OAB.</div>'+
         '<div id="siHorasWrap" style="display:none"><div class="si-sec">Horários da busca automática (dias úteis)</div><div class="si-horas" id="siHoras"></div></div>'+
       '</div><div class="si-mf"><button class="si-btn" type="button" data-fechar>Fechar</button></div>'+
@@ -818,7 +827,7 @@
       finally{button.disabled=false;t.readOnly=false;}
     });
     document.getElementById('siOnAdd').addEventListener('click',incluirOab);
-    document.getElementById('siOnAdv').addEventListener('change',function(){var u=usuario(this.value);if(u&&u.numero_oab){document.getElementById('siOnNum').value=String(u.numero_oab).replace(/\D/g,'');if(u.uf_oab)document.getElementById('siOnUf').value=String(u.uf_oab).toUpperCase();}});
+    document.getElementById('siOnAdv').addEventListener('change',function(){var outro=this.value==='__outro',n=document.getElementById('siOnNome');n.style.display=outro?'':'none';if(outro)n.focus();var u=usuario(this.value);if(u&&u.numero_oab){document.getElementById('siOnNum').value=String(u.numero_oab).replace(/\D/g,'');if(u.uf_oab)document.getElementById('siOnUf').value=String(u.uf_oab).toUpperCase();}});
     document.getElementById('siOabLista').addEventListener('click',function(e){
       var a=e.target.closest('[data-oab-ativo]'),b=e.target.closest('[data-oab-buscar]'),c=e.target.closest('[data-oab-remover]');
       if(a)alternarOab(a.dataset.oabAtivo);else if(b)buscarAgora(b.dataset.oabBuscar,b);else if(c)removerOab(c.dataset.oabRemover);
@@ -1259,26 +1268,32 @@
   function abrirOabs(){renderOabs();document.getElementById('siOabs').classList.add('open');}
   function renderOabs(){
     var w=document.getElementById('siOabLista');
-    w.innerHTML=S.oabs.length?S.oabs.map(function(o){
-      var adv=nomeUsuario(o.usuario_vinculado_id);
-      return '<div class="si-oab"><div><b>OAB '+esc(o.numero_oab)+'/'+esc(o.uf_oab)+'</b> · '+(adv?esc(adv):'<span style="color:var(--danger)">sem advogado ligado</span>')+
+    var nomeDe=function(o){return o.usuario_vinculado_id?nomeUsuario(o.usuario_vinculado_id):(o.nome_advogado||'');};
+    var lista=S.oabs.slice().sort(function(a,b){return (nomeDe(a)||'~').localeCompare(nomeDe(b)||'~','pt-BR')||String(a.criado_em).localeCompare(String(b.criado_em));});
+    w.innerHTML=lista.length?lista.map(function(o){
+      var adv=nomeDe(o),ext=!o.usuario_vinculado_id&&!!o.nome_advogado;
+      return '<div class="si-oab"><div><b>OAB '+esc(o.numero_oab)+'/'+esc(o.uf_oab)+'</b> · '+(adv?esc(adv)+(ext?' <span class="si-sub" style="display:inline">(parceiro, sem acesso)</span>':''):'<span style="color:var(--danger)">sem advogado ligado</span>')+
         '<div class="si-sub">'+(o.ultima_verificacao_em?'Última busca: '+new Date(o.ultima_verificacao_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'Ainda não buscada')+'</div>'+
         (o.ultimo_erro?'<div class="si-sub" style="color:var(--danger)">Erro: '+esc(o.ultimo_erro)+'</div>':'')+'</div>'+
         '<button class="si-chave'+(o.ativo?' on':'')+'" type="button" data-oab-ativo="'+esc(o.id)+'" title="'+(o.ativo?'Monitorando: clique para pausar':'Pausada: clique para monitorar')+'"></button>'+
         '<button class="si-btn sm" type="button" data-oab-buscar="'+esc(o.id)+'">Buscar</button>'+
         '<button class="si-btn sm" type="button" data-oab-remover="'+esc(o.id)+'" title="Parar de monitorar">✕</button></div>';
     }).join(''):'<div class="si-vazio">Nenhuma OAB cadastrada.</div>';
-    document.getElementById('siOnAdv').innerHTML='<option value="">Escolha...</option>'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'">'+esc(u.nome_completo)+'</option>';}).join('');
+    var selAdv=document.getElementById('siOnAdv'),antes=selAdv.value;
+    selAdv.innerHTML='<option value="">Escolha...</option>'+S.usuarios.filter(ehAdvogado).map(function(u){return '<option value="'+esc(u.id)+'">'+esc(u.nome_completo)+'</option>';}).join('')+'<option value="__outro">Outro advogado (parceiro, sem acesso ao SAGA)</option>';
+    if(antes&&selAdv.querySelector('option[value="'+antes+'"]'))selAdv.value=antes;
     document.getElementById('siHorasWrap').style.display=S.ehAdmin?'':'none';
     document.getElementById('siHoras').innerHTML=[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(h){return '<button type="button" data-hora="'+h+'" class="'+(S.horas.indexOf(h)!==-1?'on':'')+'">'+h+'h</button>';}).join('');
   }
   async function incluirOab(){
     var adv=document.getElementById('siOnAdv').value,num=document.getElementById('siOnNum').value.replace(/\D/g,''),uf=document.getElementById('siOnUf').value;
+    var outro=adv==='__outro',nomeExt=document.getElementById('siOnNome').value.replace(/\s+/g,' ').trim();
     if(!adv||!num||!uf){toast('Escolha o advogado e informe o número e a UF da OAB.','error');return;}
+    if(outro&&nomeExt.length<3){toast('Escreva o nome do advogado parceiro.','error');document.getElementById('siOnNome').focus();return;}
     if(S.oabs.some(function(o){return o.numero_oab===num&&o.uf_oab===uf;})){toast('Essa OAB já está na lista.','error');return;}
-    var r=await S.sb.from('monitoramento_config').insert({tipo_alvo:'oab',numero_oab:num,uf_oab:uf,usuario_vinculado_id:adv,nome_advogado:nomeUsuario(adv),criado_por_id:S.meuId,ativo:true,frequencia_horas:12}).select('id').single();
+    var r=await S.sb.from('monitoramento_config').insert({tipo_alvo:'oab',numero_oab:num,uf_oab:uf,usuario_vinculado_id:outro?null:adv,nome_advogado:outro?nomeExt.slice(0,120):nomeUsuario(adv),criado_por_id:S.meuId,ativo:true,frequencia_horas:12}).select('id').single();
     if(r.error){toast('Não foi possível incluir: '+esc(r.error.message),'error');return;}
-    document.getElementById('siOnNum').value='';
+    document.getElementById('siOnNum').value='';if(outro)document.getElementById('siOnNome').value='';
     toast('OAB incluída. Buscando as intimações dos últimos 30 dias...','sucesso');
     await carregar();renderOabs();mudou();buscarAgora(r.data.id);
   }
