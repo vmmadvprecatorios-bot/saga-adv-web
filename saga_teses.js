@@ -153,7 +153,7 @@
       };
     }
     function gerenciar(root){if(!paineis.includes(root))paineis.push(root);renderGestao(root);}
-    function texto(teseId,areaId){const t=tese(teseId),a=area(t?.area_direito_id||areaId);return (a?.nome||'Sem área')+' · '+(t?.nome||'Tese indisponível');}
+    function texto(teseId,areaId){const t=tese(teseId),a=area(t?.area_direito_id||areaId);return (a?a.nome+' · ':'')+(t?.nome||'Tese indisponível');}
     estilos();return {carregar,montar,gerenciar,editor,salvar,mover,area,tese,todasAreas,todasTeses,texto};
   }
   global.SagaTeses={criar};
