@@ -759,7 +759,7 @@
         '</div>'+
         '<div>'+
           '<div class="si-sec" style="margin-top:0">Triagem</div><div id="siTriagem"></div>'+
-          '<div class="si-acoes" style="margin-bottom:6px"><button class="si-btn" type="button" id="siConcluir">Concluir</button></div>'+
+          '<div class="si-acoes" style="margin:12px 0 14px;justify-content:flex-end"><button class="si-btn sm" type="button" id="siConcluir">Concluir</button></div>'+
           '<div class="si-g2"><div class="si-campo"><label for="siColuna">Situação</label><select id="siColuna"></select></div>'+
           '<div class="si-campo"><label for="siPrazo">Prazo</label><input id="siPrazo" type="date"></div></div>'+
           '<div class="si-g2 si-etiqueta-linha"><div class="si-campo"><label>Etiqueta (o que fazer)</label><input id="siEtiqueta" type="hidden"><div id="siEtiquetaCampo"></div></div>'+
@@ -861,7 +861,7 @@
     bt.disabled=!l.length;bt.textContent=l.length>1?'Abrir processo no tribunal ▾':'Abrir processo no tribunal';
     bt.title=l.length?'Copia o número e abre a consulta do '+j.sigla:'Link do '+j.sigla+' ainda não cadastrado ('+(S.pode.gerenciar?'cadastre em "Links dos tribunais"':'peça ao administrador')+')';
     document.getElementById('siConcluir').textContent=i.concluida?'Reabrir':'Concluir';
-    document.getElementById('siConcluir').className='si-btn'+(i.concluida?'':' pri');
+    document.getElementById('siConcluir').className='si-btn sm';
     document.getElementById('siMoverCom').innerHTML='<option value="">mesma situação</option>'+opcoesSituacao(situacaoDe(i).chave,true);
     document.getElementById('siColuna').innerHTML=opcoesSituacao(situacaoDe(i).chave);
     document.getElementById('siColuna').disabled=!S.pode.editar;
