@@ -790,6 +790,7 @@
 
   // Tipos gravados pelos gatilhos do banco (notificar_nova_tarefa, notificar_mencao etc.)
   var TIPOS_NOTIF={
+    distribuicao:{titulo:'Fichas da Captação',tela:'lista_processos_padrao_metalico.html?tela=captacao'},
     tarefa_prazo:{titulo:'Tarefa',tela:'minhas_tarefas.html'},
     tarefa_repasse:{titulo:'Tarefa repassada',tela:'minhas_tarefas.html'},
     chat_mensagem:{titulo:'Chat',tela:'chat_interno_padrao_metalico.html'},
@@ -814,6 +815,7 @@
     {chave:'mencao',titulo:'Menções',tipos:['mencao'],tela:null,um:'menção em comentário',varios:'menções em comentários',cor:'#8b5cf6'},
     {chave:'intimacoes',titulo:'Intimações',tipos:['movimentacao_cnj'],tela:'monitoramento_multi_oab.html',um:'intimação nova',varios:'intimações novas',cor:'#14b8a6'},
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
+    {chave:'captacao',titulo:'Captação',tipos:['distribuicao'],tela:'lista_processos_padrao_metalico.html?tela=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   function grupoDoTipo(tipo){
@@ -865,6 +867,7 @@
 
   async function abrirNotificacao(n,idsParaMarcar){
     await marcarLidas(idsParaMarcar||(n.lida?[]:[n.id]));
+    if(n.tipo==='distribuicao'){window.location.href='lista_processos_padrao_metalico.html?tela=captacao';return;}
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{
       var d=await global._sb.rpc('destino_notificacao',{p_id:n.id});

@@ -698,6 +698,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_ui.js"></script>
 <script src="saga_teses.js"></script>
 <script src="saga_etiquetas.js"></script>
+<script src="saga_lista.js"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -1151,7 +1152,7 @@ async function carregarOpcoesFiltros(){
     document.getElementById('qtdCatTeses').textContent=state.teses.length;
     state.processos.forEach(function(p){var t=catalogoTeses.tese(p.tese_id);if(t)p.tese=t;});
     if(state.filtroTese)state.filtroTese=catalogoTeses.tese(state.filtroTese.id)||state.filtroTese;
-    if(state.processos.length&&!state.loading){if(state.view==='lista')renderLista();else renderKanban();}
+    if(SagaLista.ready)SagaLista.load();
   }});
   await catalogoTeses.carregar();state.teses=catalogoTeses.todasTeses();
   var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem').eq('ativo',true).order('ordem');state.statusList=s.data||[];
@@ -1245,6 +1246,7 @@ function agruparRoscaProcessos(base,tipo,max,filtro){
   return nomeados;
 }
 function dadosGraficosProcessos(){
+  if(SagaLista.ready)return SagaLista.charts;
   var base=state.baseProcessos||[],filtrados=base.filter(function(p){return processoNoEscopo(p);});
   var fases=Array.from(new Set(statusDisponiveisProcessos().map(function(s){return s.fase||'Sem fase';})));
   var porFase=fases.map(function(f,k){return {v:f,nome:rotuloFaseProcessos(f),cor:'var(--g'+(k%8+1)+')',n:filtrados.filter(function(p){return (statusDoProcesso(p).fase||'Sem fase')===f;}).length,ativa:faseAtualProcessos()===f};});
@@ -1308,6 +1310,7 @@ function renderGraficosProcessos(){
   });
 }
 function aplicarFatiaProcesso(chave,valor){
+  if(SagaLista.ready){SagaLista.chartClick(chave,valor);return;}
   var x=(gruposRoscasProcessos[chave]||[]).find(function(i){return i.v===valor;});if(!x)return;
   if(chave==='fase')state.faseLista=state.faseKanbanAtiva=faseAtualProcessos()===valor?FASE_TODAS:valor;
   else if(chave==='area'){state.filtroArea=state.filtroArea!=='*'&&(state.filtroArea||'')===valor?'*':valor||null;state.filtroTese=null;}
@@ -1347,32 +1350,6 @@ function prepararVisaoProcessos(){
   state.processos=state.view==='kanban'||state.pageSize==='todos'?todos:todos.slice((state.page-1)*state.pageSize,state.page*state.pageSize);
 }
 function invalidarBaseProcessos(){state.cacheProcessos=null;cacheProvidencias=null;pedidoProvidencias++;}
-async function lerBaseProcessos(f){
-  var chave=JSON.stringify(f);
-  if(state.cacheProcessos&&state.cacheProcessos.chave===chave)return state.cacheProcessos.promessa;
-  var cache={chave:chave};state.cacheProcessos=cache;
-  cache.promessa=(async function(){
-    var pessoaIds=null;
-    if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
-    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,'+
-      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem),responsavel:usuarios!responsavel_id(id,nome_completo)';
-    var linhas=[],inicio=0;
-    while(true){
-      var q=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
-      if(f.area!=='*')q=f.area?q.eq('area_direito_id',f.area):q.is('area_direito_id',null);
-      if(f.tese)q=q.eq('tese_id',f.tese);
-      if(f.de)q=q.gte('data_inicio',f.de);if(f.ate)q=q.lte('data_inicio',f.ate);
-      if(f.busca){if(pessoaIds&&pessoaIds.length)q=q.or('pessoa_id.in.('+pessoaIds.join(',')+'),numero_processo_cnj.ilike.%'+f.busca+'%');else q=q.ilike('numero_processo_cnj','%'+f.busca+'%');}
-      var r=await q.order('criado_em',{ascending:false}).order('id').range(inicio,inicio+999);
-      if(r.error)throw r.error;
-      var lote=r.data||[];linhas=linhas.concat(lote);inicio+=lote.length;
-      if(typeof r.count==='number'&&inicio>=r.count)break;
-      if(!lote.length){if(r.count>inicio)throw new Error('A leitura dos processos ficou incompleta.');break;}
-    }
-    return linhas;
-  })().catch(function(e){if(state.cacheProcessos===cache)state.cacheProcessos=null;throw e;});
-  return cache.promessa;
-}
 // Próxima providência: uma leitura de tarefas para o conjunto de processos exibidos.
 var cacheProvidencias=null,pedidoProvidencias=0,catalogoProvidencias=null;
 function seloProvidencia(pid){
@@ -1403,28 +1380,16 @@ async function carregarProvidenciasVisiveis(){
   document.querySelectorAll('[data-providencia-processo]').forEach(function(el){el.innerHTML=seloProvidencia(el.dataset.providenciaProcesso);});
 }
 async function carregarProcessos(){
-  var pedido=state.pedidoProcessos=(state.pedidoProcessos||0)+1;
-  if(!state.permissoes.visualizar){state.baseProcessos=[];renderSemPermissao();renderGraficosProcessos();return;}
-  state.loading=true;renderSkeleton();
-  var filtros={busca:state.busca.trim(),area:state.filtroArea,tese:state.filtroTese&&state.filtroTese.id,de:state.filtroPeriodoDe,ate:state.filtroPeriodoAte};
-  try{
-    var linhas=await lerBaseProcessos(filtros);if(pedido!==state.pedidoProcessos)return;
-    state.baseProcessos=linhas;state.erroGraficos=false;
-  }catch(e){
-    if(pedido!==state.pedidoProcessos)return;
-    showToast('Erro ao carregar: '+esc(e.message||'verifique a conexão.'),'danger');state.baseProcessos=[];state.erroGraficos=true;
-  }
-  state.loading=false;renderSeletorFaseKanban();
-  if(state.view==='lista')renderLista();else renderKanban();
-  atualizarContagem();
+  if(SagaLista.ready)return SagaLista.load();
 }
-function aplicarFiltros(){state.page=1;sincronizarUI();salvarPreferencias();carregarProcessos();}
+function aplicarFiltros(){if(SagaLista.ready){sincronizarUI();SagaLista.load();return;}state.page=1;sincronizarUI();salvarPreferencias();carregarProcessos();}
 function aplicarFiltroPeriodo(){
   state.filtroPeriodoDe=document.getElementById('inputPeriodoDe').value||null;
   state.filtroPeriodoAte=document.getElementById('inputPeriodoAte').value||null;
   atualizarLabelPeriodo();fecharTodosDropdowns();aplicarFiltros();
 }
 function limparFiltros(){
+  if(SagaLista.ready){SagaLista.clear();return;}
   state.faseLista=state.faseKanbanAtiva=FASE_TODAS;state.buscaKanban='';document.getElementById('buscaKanban').value='';
   state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
@@ -1489,7 +1454,7 @@ function sigiloIcone(sig){
 
 // Render lista
 function renderLista(){
-  prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
+  if(!SagaLista.ready){prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();}
   document.getElementById('estadoVazio').style.display='none';
   if(!state.processos.length){renderEstadoVazio();renderPaginacao();document.getElementById('cartoesMobile').innerHTML='';return;}
   var html=state.processos.map(function(p){
@@ -1736,7 +1701,10 @@ document.addEventListener('click',function(){
   document.querySelectorAll('.menu-ordenar').forEach(function(m){m.classList.remove('aberto');});
 });
 function ativarArrasteKanban(kv){
+  if(kv._limparArraste)kv._limparArraste();
+  var controle=new AbortController(),sinal={signal:controle.signal};
   var fantasma=null;
+  kv._limparArraste=function(){controle.abort();if(fantasma)fantasma.remove();indicador.remove();};
   var indicador=document.createElement('div');
   indicador.className='indicador-drop';
   var indicadorAncora={corpo:null,proximoIrmao:null};
@@ -1751,8 +1719,8 @@ function ativarArrasteKanban(kv){
     if(proximo)corpo.insertBefore(indicador,proximo);else corpo.appendChild(indicador);
     indicadorAncora.corpo=corpo;indicadorAncora.proximoIrmao=proximo;
   }
-  kv.querySelectorAll('.card-kanban[draggable="true"]').forEach(function(card){
-    card.addEventListener('dragstart',function(e){
+  function iniciarCard(e){
+      var card=e.target.closest('.card-kanban[draggable="true"]');if(!card)return;
       state.kanbanArrastandoId=card.getAttribute('data-processo-id');
       card.classList.add('arrastando');
       e.dataTransfer.effectAllowed='move';
@@ -1765,18 +1733,17 @@ function ativarArrasteKanban(kv){
       document.body.appendChild(fantasma);
       requestAnimationFrame(function(){if(fantasma)fantasma.classList.add('visivel');});
       moverFantasma(e.clientX,e.clientY);
-    });
-    card.addEventListener('drag',function(e){if(e.clientX||e.clientY)moverFantasma(e.clientX,e.clientY);});
-    card.addEventListener('dragend',function(){
-      card.classList.remove('arrastando');
+  }
+  kv.addEventListener('dragstart',iniciarCard,sinal);
+  kv.addEventListener('drag',function(e){if(e.clientX||e.clientY)moverFantasma(e.clientX,e.clientY);},sinal);
+  kv.addEventListener('dragend',function(){
+      kv.querySelectorAll('.arrastando').forEach(function(card){card.classList.remove('arrastando');});
       if(fantasma&&fantasma.parentNode)fantasma.parentNode.removeChild(fantasma);
       fantasma=null;
       document.querySelectorAll('.coluna-kanban').forEach(function(c){c.classList.remove('zona-drop-ativa');});
       removerIndicador();
       state.kanbanArrastandoId=null;
-    });
-  });
-  document.addEventListener('dragover',function(e){if(fantasma)moverFantasma(e.clientX,e.clientY);});
+  },sinal);
   kv.querySelectorAll('.coluna-corpo').forEach(function(corpo){
     corpo.addEventListener('dragover',function(e){
       e.preventDefault();
@@ -1797,7 +1764,7 @@ function ativarArrasteKanban(kv){
       var processoId=state.kanbanArrastandoId;
       var novoStatusId=corpo.getAttribute('data-status-id');
       state.kanbanArrastandoId=null;
-      if(!processoId||!novoStatusId)return;
+      if(!processoId||novoStatusId===null)return;
       moverProcessoKanban(processoId,novoStatusId,coluna,indProximo);
     });
   });
@@ -1812,6 +1779,7 @@ function getCardAposDoDrop(container,y){
   },{offset:Number.NEGATIVE_INFINITY,element:null}).element;
 }
 async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proximoIrmao){
+  if(SagaLista.ready)return SagaLista.move(processoId,novoStatusId,colunaDestinoEl,proximoIrmao);
   var p=state.processos.find(function(x){return String(x.id)===String(processoId);});
   if(!p)return;
   var mudouColuna=String(p.status_id)!==String(novoStatusId);
@@ -2130,6 +2098,7 @@ document.getElementById('inputNovoHonorarios').addEventListener('input',atualiza
 // Toggle Lista/Kanban
 var CHAVE_VIEW_PROCESSOS='saga-processos-view';
 function toggleView(view,semCarregar){
+  if(SagaLista.ready)return SagaLista.setView(view);
   state.view=view;
   try{localStorage.setItem(CHAVE_VIEW_PROCESSOS,view);}catch(e){}
   document.getElementById('btnViewLista').classList.toggle('ativo',view==='lista');
@@ -2151,7 +2120,7 @@ document.getElementById('buscaKanban').addEventListener('input',function(e){
 var _buscaTimeout=null;
 document.getElementById('inputBusca').addEventListener('input',function(){
   var v=this.value;clearTimeout(_buscaTimeout);
-  _buscaTimeout=setTimeout(function(){state.busca=v;aplicarFiltros();},420);
+  _buscaTimeout=setTimeout(function(){state.busca=v;aplicarFiltros();},300);
 });
 document.getElementById('inputBusca').addEventListener('keydown',function(e){if(e.key==='Enter'){clearTimeout(_buscaTimeout);state.busca=this.value;aplicarFiltros();}});
 document.getElementById('qtdCustom').addEventListener('keydown',function(e){if(e.key==='Enter')aplicarQtdCustom();});
@@ -2172,19 +2141,7 @@ async function init(){
   var btnCat=document.getElementById('btnGerenciarCatalogos');
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';
   await carregarOpcoesFiltros();
-  await restaurarPreferencias();
-  var pos=lerPosicao();
-  if(pos){
-    if(pos.faseLista)state.faseLista=pos.faseLista;
-    if(pos.faseKanbanAtiva)state.faseKanbanAtiva=pos.faseKanbanAtiva;
-    if(pos.page)state.page=pos.page;
-    if(pos.buscaKanban){state.buscaKanban=pos.buscaKanban;var bk=document.getElementById('buscaKanban');if(bk)bk.value=pos.buscaKanban;}
-  }
-  var viewSalva=null;
-  try{viewSalva=localStorage.getItem(CHAVE_VIEW_PROCESSOS);}catch(e){}
-  toggleView(viewSalva==='kanban'?'kanban':'lista',true);
-  await carregarProcessos();
-  restaurarRolagem(pos);
+  await SagaLista.init();
 }
 function ligarInteracoesSagaUI(){
   // Todas as interacoes da topbar sao ligadas dentro do saga_ui.js
