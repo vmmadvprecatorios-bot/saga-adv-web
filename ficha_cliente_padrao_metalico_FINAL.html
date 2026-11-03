@@ -1109,7 +1109,7 @@ function renderTimeline(){
       const docRef=(process.documentos||[]).find(doc=>doc.id===entry.documentoId);
       seloDocumento='<span class="selo-documento">'+(docRef?'Documento: '+esc(docRef.nome):'Documento')+'</span>';
     }
-    const acoes='<div class="acoes-item-timeline"><button class="timeline-action" data-reply-comment="'+esc(entry.id)+'">Responder</button>'+(podeGerenciar?'<button class="timeline-action" data-edit-comment="'+esc(entry.id)+'">Editar</button><button class="timeline-action" data-delete-comment="'+esc(entry.id)+'">Excluir</button>':'')+'</div>';
+    const acoes='<div class="acoes-item-timeline"><button class="timeline-action" data-reply-comment="'+esc(entry.id)+'">Responder</button>'+(podeGerenciar?'<button class="timeline-action" data-edit-comment="'+esc(entry.id)+'">Editar</button>':'')+'</div>';
     return '<div class="item-timeline"><div class="mini-avatar-comentario">'+esc(entry.avatar)+'</div><div class="item-timeline-corpo"><div class="item-timeline-cabecalho"><span class="item-timeline-autor">'+esc(entry.autor)+'</span><span class="item-timeline-data">'+esc(entry.data)+'</span>'+(entry.editado?'<span class="item-timeline-editado">(editado)</span>':'')+seloDocumento+'</div><div class="item-timeline-conteudo">'+entry.texto+'</div>'+acoes+'</div></div>';
   }).join('');
   root.querySelectorAll('[data-reply-comment]').forEach(button=>button.addEventListener('click',()=>{
