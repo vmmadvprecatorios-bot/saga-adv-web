@@ -24,6 +24,7 @@ Quem coordena e revisa o seu trabalho é o Claude. Ele confere o PR, testa e pub
 - `ponto_calculo.js`: cálculo do ponto, cópia fiel do Apps Script da planilha. **Não altere** sem pedido explícito.
 - `saga_intimacoes.js`: tela de intimações.
 - Banco: Supabase. A tela só lê e grava pelo cliente já configurado nas telas; as regras de acesso ficam no banco.
+- Biblioteca do Supabase: `vendor/supabase-js-2.118.0.js` (versão fixa, guardada no repositório). Não use CDN com versão solta (ex.: `@2`). Script de fora só com versão exata; atualizar versão é tarefa do Claude.
 
 ## Padrão visual e de movimento
 - Azul-marinho, cinza e branco, modo claro e escuro, funcionando no celular.
