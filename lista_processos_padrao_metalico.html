@@ -927,7 +927,7 @@ async function carregarTodasTeses(){
   await catalogoTeses.carregar();state.todasTeses=catalogoTeses.todasTeses();renderCatalogoTeses();
 }
 async function carregarTodosStatus(){
-  var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem,ativo').eq('ativo',true).order('ordem');
+  var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem,ativo,etapa').eq('ativo',true).order('ordem');
   state.todosStatus=s.data||[];
   renderCatalogoStatus();
 }
@@ -1155,7 +1155,7 @@ async function carregarOpcoesFiltros(){
     if(state.processos.length&&!state.loading){if(state.view==='lista')renderLista();else renderKanban();}
   }});
   await catalogoTeses.carregar();state.teses=catalogoTeses.todasTeses();
-  var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem').eq('ativo',true).order('ordem');state.statusList=s.data||[];
+  var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem,etapa').eq('ativo',true).order('ordem');state.statusList=s.data||[];
   var u=await _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');state.responsaveis=u.data||[];
   renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();
 }
@@ -1357,7 +1357,7 @@ async function lerBaseProcessos(f){
     var pessoaIds=null;
     if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
     var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+
-      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem),responsavel:usuarios!responsavel_id(id,nome_completo)';
+      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem,etapa),responsavel:usuarios!responsavel_id(id,nome_completo)';
     var linhas=[],inicio=0;
     while(true){
       var q=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
@@ -1585,6 +1585,8 @@ function ordenarCardsColuna(cards,criterio,direcao){
 function renderKanban(){
   prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
   var kv=document.getElementById('kanbanView');
+  // Captação: Kanban como funil (colunas = etapas que agrupam os status)
+  if(FASE_FIXA==='captacao'&&window.SagaPlanilha&&SagaPlanilha.renderFunil&&SagaPlanilha.renderFunil(kv))return;
   document.querySelectorAll('body > .menu-ordenar').forEach(function(m){m.remove();});
   if(!state.processos.length){kv.innerHTML='<div class="estado-vazio-kanban"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" style="opacity:.3"><rect x="3" y="5" width="5" height="14" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="9.5" y="5" width="5" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="16" y="5" width="5" height="11" rx="1" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum processo</b><p>Ajuste os filtros ou cadastre novos processos.</p></div>';return;}
   var podeArrastar=state.permissoes.editar===true;
@@ -1824,6 +1826,7 @@ function getCardAposDoDrop(container,y){
   },{offset:Number.NEGATIVE_INFINITY,element:null}).element;
 }
 async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proximoIrmao){
+  if(window.SagaPlanilha&&SagaPlanilha.mesmaEtapa&&SagaPlanilha.mesmaEtapa(processoId,novoStatusId)){renderKanban();return;}
   var p=state.processos.find(function(x){return String(x.id)===String(processoId);});
   if(!p)return;
   var mudouColuna=String(p.status_id)!==String(novoStatusId);

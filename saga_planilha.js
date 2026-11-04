@@ -398,7 +398,7 @@ window.SagaPlanilha=(function(){
     w.innerHTML='<div class="sp-abas" role="tablist" aria-label="Área do direito">'+
       [{id:'*',nome:'Todas as áreas'}].concat(areas).concat([{id:null,nome:'Sem área'}]).map(function(a){var at=(a.id===atual)||(a.id===null&&atual===null);return '<button type="button" role="tab" aria-selected="'+at+'" class="sp-aba'+(at?' ativo':'')+'" data-area="'+(a.id===null?'__sem':h(a.id))+'">'+h(a.nome)+'</button>';}).join('')+'</div>'+
       '<div class="sp-sub">'+(atual!=='*'&&teses.length?'<div class="sp-pills sp-teses" role="group" aria-label="Tese"><button type="button" class="sp-pill'+(!teseAtual?' ativo':'')+'" data-tese="">Todas as teses</button>'+teses.map(function(t){return '<button type="button" class="sp-pill'+(teseAtual===t.id?' ativo':'')+'" data-tese="'+h(t.id)+'">'+h(t.nome)+'</button>';}).join('')+'</div>':'')+
-      (tipo?'<label class="sp-tipo">Tipo de ação <select data-tipo><option value="">Todos</option>'+opcoesDaColuna(tipo).map(function(o){return '<option value="'+h(o.id)+'"'+(String(o.id)===String(tipoSel)?' selected':'')+'>'+h(o.nome)+'</option>';}).join('')+'</select></label>':'')+'</div>';
+      (tipo?'<label class="sp-tipo">Tipo de ação <select data-tipo><option value="">Todos</option>'+opcoesDaColuna(tipo).map(function(o){return '<option value="'+h(o.id)+'"'+(String(o.id)===String(tipoSel)?' selected':'')+'>'+h(o.nome)+'</option>';}).join('')+'</select></label>':'')+(state.admin?'<a class="sp-org" href="configuracoes_padrao_metalico.html?aba=areas-teses">Organizar áreas e teses</a>':'')+'</div>';
     w.querySelectorAll('[data-area]').forEach(function(b){b.onclick=function(){var v=b.dataset.area;state.filtroArea=v==='*'?'*':v==='__sem'?null:v;state.filtroTese=null;
       try{localStorage.setItem('saga-planilha-area-'+FASE_FIXA,JSON.stringify(state.filtroArea));}catch(e){}
       if(typeof renderDropdownsTeses==='function')renderDropdownsTeses();renderAbas();aplicarFiltros();};});
@@ -430,10 +430,13 @@ window.SagaPlanilha=(function(){
       '.sp-imp-tab{overflow:auto;max-height:240px;border:1px solid var(--border-soft);border-radius:9px;margin-top:6px}.sp-imp-tab table{min-width:0;width:max-content}.sp-imp-tab th,.sp-imp-tab td{padding:6px 9px;font-size:11.5px;text-transform:none;letter-spacing:0}.sp-imp-orig{color:var(--muted);font-size:10.5px;margin-bottom:4px}'+
       '.sp-imp-resumo{margin-top:10px;font-size:12.5px}.sp-erro{color:var(--danger,#e5484d)}.sp-alerta{color:var(--warning,#e0a93b)}.sp-imp-erros{font-size:11.5px;color:var(--muted);margin:6px 0 0 18px}.sp-arquivo{cursor:pointer;display:inline-flex;align-items:center}'+
       '.sp-dist-bloco{margin-bottom:12px}.sp-dist-tit{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}.sp-dist-pessoas{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px;max-height:180px;overflow:auto}.sp-bloco{width:64px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:3px 6px;font:inherit}.sp-dist-previa{font-size:12.5px;padding:8px 0}'+
+      '.sp-funil .coluna-kanban{flex:0 0 280px}.sp-pct{font-size:10.5px;color:var(--muted);margin-left:4px}.sp-funil-barra{height:3px;margin:0 14px 8px;background:var(--border-soft);border-radius:2px;overflow:hidden}.sp-funil-barra i{display:block;height:100%;border-radius:2px;transition:width .6s cubic-bezier(.2,1,.3,1)}'+
+      '.sp-card-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin:4px 0}.sp-card-status i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}.sp-card-linha{font-size:11.5px;margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
+      '.sp-ret{font-weight:600}.sp-ret.atrasado{color:var(--danger,#e5484d)}.sp-ret.hoje{color:var(--warning,#e0a93b)}.sp-card-valor{font-size:12px;font-weight:700;color:var(--gold-light);margin:4px 0}.sp-card-cap{font-size:11px;color:var(--muted)}'+
       '.sp-pill-solta{border:1px solid var(--border-soft);background:var(--panel)}'+
       '#spAbas{margin:0 0 12px}.sp-abas{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border-soft);scrollbar-width:thin}.sp-aba{border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .25s}'+
       '.sp-aba:hover{color:var(--text)}.sp-aba.ativo{color:var(--gold-light);border-bottom-color:var(--gold)}.sp-aba:active{transform:scale(.97)}'+
-      '.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
+      '.sp-org{margin-left:auto;font-size:11.5px;color:var(--gold-light);text-decoration:underline}.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
       '.sp-modal{max-width:520px;width:94vw}.sp-col-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;max-height:52vh;overflow:auto;margin-top:8px}.sp-ajuda{font-size:11.5px;color:var(--muted);margin:0 0 8px}.sp-col-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
       '#listaView .tabela-scroll{max-height:70vh;overflow:auto}'+
       '.sp-selo{display:inline-flex;align-items:center;gap:6px;font-size:12px}.sp-selo i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}.sp-rapidos{display:flex;gap:2px;flex-wrap:wrap}'+
@@ -650,6 +653,53 @@ window.SagaPlanilha=(function(){
     };
   }
 
+  // ---------- Kanban da Captação como funil de vendas ----------
+  function statusDe(p){var id=p.status_id;return (state.statusList||[]).find(function(s){return String(s.id)===String(id);})||p.status||{};}
+  function etapasFunil(){
+    var sts=(state.statusList||[]).filter(function(s){return s.fase==='captacao'&&s.etapa;}).sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+    var lista=[];sts.forEach(function(s){var e=lista.find(function(x){return x.nome===s.etapa;});if(!e){e={nome:s.etapa,status:[],cor:s.cor||'#5483B3'};lista.push(e);}e.status.push(s);});
+    return lista;
+  }
+  function mesmaEtapa(pid,statusId){
+    if(FASE_FIXA!=='captacao')return false;
+    var p=(state.baseProcessos||[]).find(function(x){return String(x.id)===String(pid);});if(!p)return false;
+    var atual=statusDe(p).etapa,novo=((state.statusList||[]).find(function(s){return String(s.id)===String(statusId);})||{}).etapa;
+    return !!atual&&atual===novo;
+  }
+  function renderFunil(kv){
+    var etapas=etapasFunil();if(!etapas.length)return false;
+    var cRet=colPorChave('captacao.data_retorno'),cTipo=cols.find(function(c){return c.nome==='Tipo de ação'&&!c.campo_sistema;}),cTrf=cols.find(function(c){return c.nome==='Competência'&&!c.campo_sistema;});
+    var hoje=hojeISO(),total=state.processos.length,pode=state.permissoes.editar===true;
+    var grupos=etapas.map(function(e){return {e:e,itens:[]};}),fora=[];
+    state.processos.forEach(function(p){var et=statusDe(p).etapa;var g=grupos.find(function(x){return x.e.nome===et;});if(g)g.itens.push(p);else fora.push(p);});
+    var ret=function(p){return cRet&&(p.campos||{})[cRet.id]?String(p.campos[cRet.id]).slice(0,10):'';};
+    var cartao=function(p){
+      var sig=!!p.sigilo&&!state.permissoes.editar_dados,pe=p.pessoa||{},st=statusDe(p),r=ret(p);
+      var whats=String(pe.telefone_whatsapp||'').replace(/\D/g,'');
+      var tipo=cTipo?texto(p,cTipo):'',trf=cTrf?texto(p,cTrf):'',cap=nomeUsuario(p.captador_id);
+      var classeRet=!r?'':r<hoje?'atrasado':r===hoje?'hoje':'';
+      return '<div class="card-kanban sp-card" data-processo-id="'+h(p.id)+'" draggable="'+(pode?'true':'false')+'" onclick="verFicha(\''+h(p.id)+'\')">'+
+        '<div class="card-nome">'+h(sig?'••••':(pe.nome_completo||'N/D'))+'</div>'+
+        '<div class="sp-card-status"><i style="background:'+h(st.cor||'#8a94a8')+'"></i>'+h(st.nome||'')+'</div>'+
+        ((tipo||trf)?'<div class="sp-card-linha">'+h([tipo,trf].filter(Boolean).join(' · '))+'</div>':'')+
+        '<div class="sp-card-linha">'+(r?'<span class="sp-ret '+classeRet+'">Retorno '+h(r.split('-').reverse().join('/'))+(classeRet==='atrasado'?' · atrasado':classeRet==='hoje'?' · hoje':'')+'</span>':'<span class="sp-vazio">Sem data de retorno</span>')+'</div>'+
+        (p.valor_precatorio_origem&&!sig?'<div class="sp-card-valor">'+h(new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(p.valor_precatorio_origem)))+'</div>':'')+
+        '<div class="card-rodape"><div style="display:flex;align-items:center;gap:6px">'+(cap?'<div class="card-avatar" title="Jovem Talento: '+h(cap)+'">'+h(cap.split(' ').map(function(x){return x[0];}).slice(0,2).join(''))+'</div><span class="sp-card-cap">'+h(cap.split(' ')[0])+'</span>':'<span class="sp-vazio">Sem Jovem Talento</span>')+'</div>'+
+        (whats.length>=10&&!sig?'<a class="card-whats-mini" href="https://wa.me/55'+h(whats)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir WhatsApp">WhatsApp</a>':'')+'</div></div>';
+    };
+    var ordenar=function(a,b){var ra=ret(a),rb=ret(b);if(ra&&rb&&ra!==rb)return ra<rb?-1:1;if(ra&&!rb)return -1;if(rb&&!ra)return 1;return String((a.pessoa||{}).nome_completo||'').localeCompare(String((b.pessoa||{}).nome_completo||''),'pt-BR');};
+    kv.innerHTML='<div class="quadro-kanban sp-funil">'+grupos.map(function(g,i){
+      var pct=total?Math.round(g.itens.length*100/total):0;
+      return '<div class="coluna-kanban" data-coluna-id="'+h(g.e.status[0].id)+'">'+
+        '<div class="coluna-cabecalho"><span class="coluna-cor-dot" style="background:'+h(g.e.cor)+'"></span><div class="coluna-titulo">'+h(g.e.nome)+'</div><span class="coluna-contagem">'+g.itens.length+'</span><span class="sp-pct" title="do total">'+pct+'%</span></div>'+
+        '<div class="sp-funil-barra"><i style="width:'+pct+'%;background:'+h(g.e.cor)+'"></i></div>'+
+        '<div class="coluna-corpo" data-status-id="'+h(g.e.status[0].id)+'">'+g.itens.sort(ordenar).map(cartao).join('')+'</div></div>';
+    }).join('')+(fora.length?'<div class="coluna-kanban"><div class="coluna-cabecalho"><div class="coluna-titulo">Sem etapa</div><span class="coluna-contagem">'+fora.length+'</span></div><div class="coluna-corpo" data-status-id="'+h(etapas[0].status[0].id)+'">'+fora.map(cartao).join('')+'</div></div>':'')+'</div>';
+    if(pode&&typeof ativarArrasteKanban==='function')ativarArrasteKanban(kv);
+    if(!matchMedia('(prefers-reduced-motion: reduce)').matches)kv.querySelectorAll('.coluna-kanban').forEach(function(c,i){c.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:i*45,easing:'cubic-bezier(.2,1.2,.4,1)',fill:'backwards'});});
+    return true;
+  }
+
   // ---------- ficha do cliente: "Dados do Processo" na ordem da planilha, editável ----------
   var catFicha=null;
   async function catalogosFicha(){
@@ -757,5 +807,5 @@ window.SagaPlanilha=(function(){
   }
   function formatarCampo(tipo,v){return formatar(tipo,v);}
 
-  return {fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
+  return {renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
 })();
