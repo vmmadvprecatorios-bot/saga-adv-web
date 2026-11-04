@@ -345,9 +345,12 @@
 
   var SIDEBAR_HTML=''
     +'<div class="nav-section">Operacao</div>'
-    +'<div class="nav-item" data-tela="processos" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Processos em Andamento</div>'
+    +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Jurídico</div>'
+    +'<div class="nav-item" data-tela="processos_captacao" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=captacao\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 8v6M14 11h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Captação</div>'
     +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
@@ -679,7 +682,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações'};
   var _canalPresenca=null;
   var _telaAtual='';
   var _colaboradoresAtivos=null;
@@ -790,7 +793,7 @@
 
   // Tipos gravados pelos gatilhos do banco (notificar_nova_tarefa, notificar_mencao etc.)
   var TIPOS_NOTIF={
-    distribuicao:{titulo:'Fichas da Captação',tela:'lista_processos_padrao_metalico.html?tela=captacao'},
+    distribuicao:{titulo:'Fichas da Captação',tela:'lista_processos_padrao_metalico.html?fase=captacao'},
     tarefa_prazo:{titulo:'Tarefa',tela:'minhas_tarefas.html'},
     tarefa_repasse:{titulo:'Tarefa repassada',tela:'minhas_tarefas.html'},
     chat_mensagem:{titulo:'Chat',tela:'chat_interno_padrao_metalico.html'},
@@ -815,7 +818,7 @@
     {chave:'mencao',titulo:'Menções',tipos:['mencao'],tela:null,um:'menção em comentário',varios:'menções em comentários',cor:'#8b5cf6'},
     {chave:'intimacoes',titulo:'Intimações',tipos:['movimentacao_cnj'],tela:'monitoramento_multi_oab.html',um:'intimação nova',varios:'intimações novas',cor:'#14b8a6'},
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
-    {chave:'captacao',titulo:'Captação',tipos:['distribuicao'],tela:'lista_processos_padrao_metalico.html?tela=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
+    {chave:'captacao',titulo:'Captação',tipos:['distribuicao'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   function grupoDoTipo(tipo){
@@ -867,7 +870,7 @@
 
   async function abrirNotificacao(n,idsParaMarcar){
     await marcarLidas(idsParaMarcar||(n.lida?[]:[n.id]));
-    if(n.tipo==='distribuicao'){window.location.href='lista_processos_padrao_metalico.html?tela=captacao';return;}
+    if(n.tipo==='distribuicao'){window.location.href='lista_processos_padrao_metalico.html?fase=captacao';return;}
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{
       var d=await global._sb.rpc('destino_notificacao',{p_id:n.id});
@@ -1187,7 +1190,7 @@
   // Permissoes aplicadas no menu e nas telas (a mesma regra do banco: perfil + excecoes individuais).
   // Basta ter UMA das permissoes da lista para ver a tela. Telas sem lista ficam liberadas.
   var PERMS_TELA={
-    processos:['processos.visualizar'],
+    processos:['processos.visualizar'],processos_juridico:['processos.visualizar'],processos_captacao:['processos.visualizar'],
     agenda:['compromissos.visualizar'],
     tarefas:['tarefas.visualizar'],
     chat:['chat.usar'],
@@ -1241,7 +1244,7 @@
     document.querySelectorAll('#sidebarSaga .nav-item[data-tela],#sidebarSaga .nav-section').forEach(function(el){
       var tela=el.getAttribute('data-tela');
       // Telas basicas (Processos, Agenda, Tarefas, Chat, Ponto) aparecem; as restritas esperam
-      if(!tela||['processos','agenda','tarefas','chat','ponto'].indexOf(tela)===-1)el.classList.add('perm-pendente');
+      if(!tela||['processos','processos_juridico','processos_captacao','agenda','tarefas','chat','ponto'].indexOf(tela)===-1)el.classList.add('perm-pendente');
     });
     document.querySelectorAll('#sidebarSaga .nav-section').forEach(function(sec){
       if(/operac|comunic/i.test(sec.textContent))sec.classList.remove('perm-pendente');
@@ -1301,11 +1304,14 @@
   // a troca de tela nao pisca os menus. O carregar() so completa o que depende do banco.
   var _molduraMontada=false;
   function telaDoEndereco(){
-    var arq=(location.pathname.split('/').pop()||'').toLowerCase(),achou='';
+    var arq=(location.pathname.split('/').pop()||'').toLowerCase(),busca=location.search,achou='',exato='';
     document.querySelectorAll('#sidebarSaga .nav-item[data-tela]').forEach(function(el){
-      var m=(el.getAttribute('href')||el.getAttribute('onclick')||'').match(/([^'\/]+\.html)/);
-      if(m&&m[1].toLowerCase()===arq)achou=el.getAttribute('data-tela');
+      var m=(el.getAttribute('href')||el.getAttribute('onclick')||'').match(/([^'\/?]+\.html)(\?[^']*)?/);
+      if(!m||m[1].toLowerCase()!==arq)return;
+      if(!achou)achou=el.getAttribute('data-tela');
+      if(m[2]&&new URLSearchParams(busca).get('fase')===new URLSearchParams(m[2]).get('fase'))exato=el.getAttribute('data-tela');
     });
+    if(exato)return exato;
     return achou;
   }
   // Cada item do menu vira um link (<a href>): clique normal troca de tela com a transicao;

@@ -581,7 +581,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
   <div class="conteudo">
     <div class="header-pagina">
       <div>
-        <h1>Processos em Andamento</h1>
+        <h1 id="tituloProcessos">Processos em Andamento</h1>
         <div class="contagem" id="contagem">Carregando...</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -698,7 +698,6 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_ui.js"></script>
 <script src="saga_teses.js"></script>
 <script src="saga_etiquetas.js"></script>
-<script src="saga_lista.js"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -1152,7 +1151,7 @@ async function carregarOpcoesFiltros(){
     document.getElementById('qtdCatTeses').textContent=state.teses.length;
     state.processos.forEach(function(p){var t=catalogoTeses.tese(p.tese_id);if(t)p.tese=t;});
     if(state.filtroTese)state.filtroTese=catalogoTeses.tese(state.filtroTese.id)||state.filtroTese;
-    if(SagaLista.ready)SagaLista.load();
+    if(state.processos.length&&!state.loading){if(state.view==='lista')renderLista();else renderKanban();}
   }});
   await catalogoTeses.carregar();state.teses=catalogoTeses.todasTeses();
   var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem').eq('ativo',true).order('ordem');state.statusList=s.data||[];
@@ -1199,7 +1198,6 @@ function atualizarLabelPeriodo(){
 }
 function renderTagsAtivas(){
   var tags=[];
-  if(faseAtualProcessos()!==FASE_TODAS)tags.push({label:'Fase: '+rotuloFaseProcessos(faseAtualProcessos()),fn:function(){state.faseLista=state.faseKanbanAtiva=FASE_TODAS;aplicarFiltros();}});
   if(state.filtroArea!=='*')tags.push({label:'Área: '+(catalogoTeses.area(state.filtroArea)?.nome||'Sem área'),fn:function(){state.filtroArea='*';state.filtroTese=null;renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroTese)tags.push({label:'Tese: '+state.filtroTese.nome,fn:function(){state.filtroTese=null;document.getElementById('labelFiltroTese').textContent='Tese';renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroStatus)tags.push({label:'Status: '+state.filtroStatus.nome,fn:function(){state.filtroStatus=null;document.getElementById('labelFiltroStatus').textContent='Status';renderDropdownsStatus();aplicarFiltros();}});
@@ -1246,7 +1244,6 @@ function agruparRoscaProcessos(base,tipo,max,filtro){
   return nomeados;
 }
 function dadosGraficosProcessos(){
-  if(SagaLista.ready)return SagaLista.charts;
   var base=state.baseProcessos||[],filtrados=base.filter(function(p){return processoNoEscopo(p);});
   var fases=Array.from(new Set(statusDisponiveisProcessos().map(function(s){return s.fase||'Sem fase';})));
   var porFase=fases.map(function(f,k){return {v:f,nome:rotuloFaseProcessos(f),cor:'var(--g'+(k%8+1)+')',n:filtrados.filter(function(p){return (statusDoProcesso(p).fase||'Sem fase')===f;}).length,ativa:faseAtualProcessos()===f};});
@@ -1310,9 +1307,8 @@ function renderGraficosProcessos(){
   });
 }
 function aplicarFatiaProcesso(chave,valor){
-  if(SagaLista.ready){SagaLista.chartClick(chave,valor);return;}
   var x=(gruposRoscasProcessos[chave]||[]).find(function(i){return i.v===valor;});if(!x)return;
-  if(chave==='fase')state.faseLista=state.faseKanbanAtiva=faseAtualProcessos()===valor?FASE_TODAS:valor;
+  if(chave==='fase')return;
   else if(chave==='area'){state.filtroArea=state.filtroArea!=='*'&&(state.filtroArea||'')===valor?'*':valor||null;state.filtroTese=null;}
   else{
     var campo=chave==='status'?'filtroStatus':'filtroResponsavel',atual=state[campo];
@@ -1327,7 +1323,7 @@ document.getElementById('graficosProcessos').addEventListener('keydown',function
 
 // Query principal
 /* Base compartilhada pela Lista, Kanban e gráficos, sem o limite da página. */
-function faseAtualProcessos(){return (state.view==='lista'?state.faseLista:state.faseKanbanAtiva)||FASE_TODAS;}
+function faseAtualProcessos(){return FASE_FIXA;}
 function rotuloFaseProcessos(f){var n=String(f).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();return n==='captacao'?'Captação':n==='juridico'?'Jurídico':f;}
 function statusDoProcesso(p){return state.statusList.find(function(s){return s.id===p.status_id;})||p.status||{id:p.status_id,nome:'Sem status',fase:'Sem fase'};}
 function statusDisponiveisProcessos(){
@@ -1350,6 +1346,32 @@ function prepararVisaoProcessos(){
   state.processos=state.view==='kanban'||state.pageSize==='todos'?todos:todos.slice((state.page-1)*state.pageSize,state.page*state.pageSize);
 }
 function invalidarBaseProcessos(){state.cacheProcessos=null;cacheProvidencias=null;pedidoProvidencias++;}
+async function lerBaseProcessos(f){
+  var chave=JSON.stringify(f);
+  if(state.cacheProcessos&&state.cacheProcessos.chave===chave)return state.cacheProcessos.promessa;
+  var cache={chave:chave};state.cacheProcessos=cache;
+  cache.promessa=(async function(){
+    var pessoaIds=null;
+    if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
+    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,'+
+      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem),responsavel:usuarios!responsavel_id(id,nome_completo)';
+    var linhas=[],inicio=0;
+    while(true){
+      var q=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
+      if(f.area!=='*')q=f.area?q.eq('area_direito_id',f.area):q.is('area_direito_id',null);
+      if(f.tese)q=q.eq('tese_id',f.tese);
+      if(f.de)q=q.gte('data_inicio',f.de);if(f.ate)q=q.lte('data_inicio',f.ate);
+      if(f.busca){if(pessoaIds&&pessoaIds.length)q=q.or('pessoa_id.in.('+pessoaIds.join(',')+'),numero_processo_cnj.ilike.%'+f.busca+'%');else q=q.ilike('numero_processo_cnj','%'+f.busca+'%');}
+      var r=await q.order('criado_em',{ascending:false}).order('id').range(inicio,inicio+999);
+      if(r.error)throw r.error;
+      var lote=r.data||[];linhas=linhas.concat(lote);inicio+=lote.length;
+      if(typeof r.count==='number'&&inicio>=r.count)break;
+      if(!lote.length){if(r.count>inicio)throw new Error('A leitura dos processos ficou incompleta.');break;}
+    }
+    return linhas;
+  })().catch(function(e){if(state.cacheProcessos===cache)state.cacheProcessos=null;throw e;});
+  return cache.promessa;
+}
 // Próxima providência: uma leitura de tarefas para o conjunto de processos exibidos.
 var cacheProvidencias=null,pedidoProvidencias=0,catalogoProvidencias=null;
 function seloProvidencia(pid){
@@ -1380,16 +1402,28 @@ async function carregarProvidenciasVisiveis(){
   document.querySelectorAll('[data-providencia-processo]').forEach(function(el){el.innerHTML=seloProvidencia(el.dataset.providenciaProcesso);});
 }
 async function carregarProcessos(){
-  if(SagaLista.ready)return SagaLista.load();
+  var pedido=state.pedidoProcessos=(state.pedidoProcessos||0)+1;
+  if(!state.permissoes.visualizar){state.baseProcessos=[];renderSemPermissao();renderGraficosProcessos();return;}
+  state.loading=true;renderSkeleton();
+  var filtros={busca:state.busca.trim(),area:state.filtroArea,tese:state.filtroTese&&state.filtroTese.id,de:state.filtroPeriodoDe,ate:state.filtroPeriodoAte};
+  try{
+    var linhas=await lerBaseProcessos(filtros);if(pedido!==state.pedidoProcessos)return;
+    state.baseProcessos=linhas;state.erroGraficos=false;
+  }catch(e){
+    if(pedido!==state.pedidoProcessos)return;
+    showToast('Erro ao carregar: '+esc(e.message||'verifique a conexão.'),'danger');state.baseProcessos=[];state.erroGraficos=true;
+  }
+  state.loading=false;renderSeletorFaseKanban();
+  if(state.view==='lista')renderLista();else renderKanban();
+  atualizarContagem();
 }
-function aplicarFiltros(){if(SagaLista.ready){sincronizarUI();SagaLista.load();return;}state.page=1;sincronizarUI();salvarPreferencias();carregarProcessos();}
+function aplicarFiltros(){state.page=1;sincronizarUI();salvarPreferencias();carregarProcessos();}
 function aplicarFiltroPeriodo(){
   state.filtroPeriodoDe=document.getElementById('inputPeriodoDe').value||null;
   state.filtroPeriodoAte=document.getElementById('inputPeriodoAte').value||null;
   atualizarLabelPeriodo();fecharTodosDropdowns();aplicarFiltros();
 }
 function limparFiltros(){
-  if(SagaLista.ready){SagaLista.clear();return;}
   state.faseLista=state.faseKanbanAtiva=FASE_TODAS;state.buscaKanban='';document.getElementById('buscaKanban').value='';
   state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
@@ -1418,7 +1452,7 @@ function renderSemPermissao(){
 function renderEstadoVazio(){
   document.getElementById('tbodyPrincipal').innerHTML='';
   var ev=document.getElementById('estadoVazio');ev.style.display='flex';
-  var tem=faseAtualProcessos()!==FASE_TODAS||state.filtroArea!=='*'||state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
+  var tem=state.filtroArea!=='*'||state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
   if(tem)ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.3"/><line x1="20" y1="20" x2="16" y2="16" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum resultado</b><p>Nenhum processo encontrado. <button onclick="limparFiltros()" style="color:var(--gold-light);text-decoration:underline;background:none;border:none;cursor:pointer;font:inherit;padding:0">Limpar filtros</button></p>';
   else ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum processo cadastrado</b><p>Clique em "Novo Processo" para comecar.</p>';
 }
@@ -1454,7 +1488,7 @@ function sigiloIcone(sig){
 
 // Render lista
 function renderLista(){
-  if(!SagaLista.ready){prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();}
+  prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
   document.getElementById('estadoVazio').style.display='none';
   if(!state.processos.length){renderEstadoVazio();renderPaginacao();document.getElementById('cartoesMobile').innerHTML='';return;}
   var html=state.processos.map(function(p){
@@ -1500,8 +1534,17 @@ function prazoKanbanHtml(d){
 // Fases (captacao, juridico...): no Kanban escolhem as colunas; na Lista filtram
 // os processos pelos status da fase, com a opcao Todas (padrao).
 var FASE_TODAS='__todas__';
+// Menus separados no lateral: Jurídico e Captação (?fase=juridico|captacao). Sem o parâmetro, abre a última usada.
+var FASE_FIXA=(function(){
+  var q=new URLSearchParams(location.search),f=q.get('fase')||q.get('tela');
+  if(f!=='juridico'&&f!=='captacao'){try{f=localStorage.getItem('saga-processos-fase');}catch(e){}}
+  if(f!=='juridico'&&f!=='captacao')f='juridico';
+  try{localStorage.setItem('saga-processos-fase',f);}catch(e){}
+  return f;
+})();
 function renderSeletorFaseKanban(){
   var el=document.getElementById('seletorFaseKanban');
+  state.faseLista=state.faseKanbanAtiva=FASE_FIXA;if(el){el.innerHTML='';el.style.display='none';}return;
   var fases=Array.from(new Set(statusDisponiveisProcessos().map(function(s){return s.fase||'Sem fase';})));
   if(!fases.length){el.innerHTML='';el.style.display='none';return;}
   el.style.display='flex';
@@ -1701,10 +1744,7 @@ document.addEventListener('click',function(){
   document.querySelectorAll('.menu-ordenar').forEach(function(m){m.classList.remove('aberto');});
 });
 function ativarArrasteKanban(kv){
-  if(kv._limparArraste)kv._limparArraste();
-  var controle=new AbortController(),sinal={signal:controle.signal};
   var fantasma=null;
-  kv._limparArraste=function(){controle.abort();if(fantasma)fantasma.remove();indicador.remove();};
   var indicador=document.createElement('div');
   indicador.className='indicador-drop';
   var indicadorAncora={corpo:null,proximoIrmao:null};
@@ -1719,8 +1759,8 @@ function ativarArrasteKanban(kv){
     if(proximo)corpo.insertBefore(indicador,proximo);else corpo.appendChild(indicador);
     indicadorAncora.corpo=corpo;indicadorAncora.proximoIrmao=proximo;
   }
-  function iniciarCard(e){
-      var card=e.target.closest('.card-kanban[draggable="true"]');if(!card)return;
+  kv.querySelectorAll('.card-kanban[draggable="true"]').forEach(function(card){
+    card.addEventListener('dragstart',function(e){
       state.kanbanArrastandoId=card.getAttribute('data-processo-id');
       card.classList.add('arrastando');
       e.dataTransfer.effectAllowed='move';
@@ -1733,17 +1773,18 @@ function ativarArrasteKanban(kv){
       document.body.appendChild(fantasma);
       requestAnimationFrame(function(){if(fantasma)fantasma.classList.add('visivel');});
       moverFantasma(e.clientX,e.clientY);
-  }
-  kv.addEventListener('dragstart',iniciarCard,sinal);
-  kv.addEventListener('drag',function(e){if(e.clientX||e.clientY)moverFantasma(e.clientX,e.clientY);},sinal);
-  kv.addEventListener('dragend',function(){
-      kv.querySelectorAll('.arrastando').forEach(function(card){card.classList.remove('arrastando');});
+    });
+    card.addEventListener('drag',function(e){if(e.clientX||e.clientY)moverFantasma(e.clientX,e.clientY);});
+    card.addEventListener('dragend',function(){
+      card.classList.remove('arrastando');
       if(fantasma&&fantasma.parentNode)fantasma.parentNode.removeChild(fantasma);
       fantasma=null;
       document.querySelectorAll('.coluna-kanban').forEach(function(c){c.classList.remove('zona-drop-ativa');});
       removerIndicador();
       state.kanbanArrastandoId=null;
-  },sinal);
+    });
+  });
+  document.addEventListener('dragover',function(e){if(fantasma)moverFantasma(e.clientX,e.clientY);});
   kv.querySelectorAll('.coluna-corpo').forEach(function(corpo){
     corpo.addEventListener('dragover',function(e){
       e.preventDefault();
@@ -1764,7 +1805,7 @@ function ativarArrasteKanban(kv){
       var processoId=state.kanbanArrastandoId;
       var novoStatusId=corpo.getAttribute('data-status-id');
       state.kanbanArrastandoId=null;
-      if(!processoId||novoStatusId===null)return;
+      if(!processoId||!novoStatusId)return;
       moverProcessoKanban(processoId,novoStatusId,coluna,indProximo);
     });
   });
@@ -1779,7 +1820,6 @@ function getCardAposDoDrop(container,y){
   },{offset:Number.NEGATIVE_INFINITY,element:null}).element;
 }
 async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proximoIrmao){
-  if(SagaLista.ready)return SagaLista.move(processoId,novoStatusId,colunaDestinoEl,proximoIrmao);
   var p=state.processos.find(function(x){return String(x.id)===String(processoId);});
   if(!p)return;
   var mudouColuna=String(p.status_id)!==String(novoStatusId);
@@ -1866,7 +1906,7 @@ function renderDropdownsTeses(){
 function renderDropdownsStatus(){
   var l=document.getElementById('listaStatus');if(!l)return;
   l.innerHTML='<div class="dropdown-custom-opcao '+(state.filtroStatus===null?'selecionada':'')+'" data-status-id="">Todos os status</div>'+
-    state.statusList.map(function(s){var cor=s.cor||'#9aa8c2';return '<div class="dropdown-custom-opcao '+(state.filtroStatus&&filtroProcessoContem(state.filtroStatus,s.id)?'selecionada':'')+'" data-status-id="'+esc(s.id)+'"><span style="width:7px;height:7px;border-radius:50%;background:'+cor+';flex:0 0 auto;display:inline-block"></span>'+esc(s.nome)+'</div>';}).join('');
+    state.statusList.filter(function(s){return (s.fase||'')===FASE_FIXA;}).map(function(s){var cor=s.cor||'#9aa8c2';return '<div class="dropdown-custom-opcao '+(state.filtroStatus&&filtroProcessoContem(state.filtroStatus,s.id)?'selecionada':'')+'" data-status-id="'+esc(s.id)+'"><span style="width:7px;height:7px;border-radius:50%;background:'+cor+';flex:0 0 auto;display:inline-block"></span>'+esc(s.nome)+'</div>';}).join('');
   l.querySelectorAll('[data-status-id]').forEach(function(op){
     op.addEventListener('click',function(){
       var id=op.getAttribute('data-status-id');
@@ -2002,7 +2042,7 @@ function renderNovoProcessoTese(){
 
 function renderNovoProcessoStatus(){
   var l=document.getElementById('listaNovoStatus');
-  l.innerHTML=state.statusList.map(function(s){var cor=s.cor||'#9aa8c2';return '<div class="dropdown-custom-opcao" data-novo-status-id="'+esc(s.id)+'"><span style="width:7px;height:7px;border-radius:50%;background:'+cor+';flex:0 0 auto;display:inline-block"></span>'+esc(s.nome)+'</div>';}).join('')||'<div class="dropdown-custom-opcao" style="color:var(--muted)">Nenhum status</div>';
+  l.innerHTML=state.statusList.filter(function(s){return (s.fase||'')===FASE_FIXA;}).map(function(s){var cor=s.cor||'#9aa8c2';return '<div class="dropdown-custom-opcao" data-novo-status-id="'+esc(s.id)+'"><span style="width:7px;height:7px;border-radius:50%;background:'+cor+';flex:0 0 auto;display:inline-block"></span>'+esc(s.nome)+'</div>';}).join('')||'<div class="dropdown-custom-opcao" style="color:var(--muted)">Nenhum status</div>';
   l.querySelectorAll('[data-novo-status-id]').forEach(function(op){
     op.addEventListener('click',function(){
       var id=op.getAttribute('data-novo-status-id');
@@ -2098,7 +2138,6 @@ document.getElementById('inputNovoHonorarios').addEventListener('input',atualiza
 // Toggle Lista/Kanban
 var CHAVE_VIEW_PROCESSOS='saga-processos-view';
 function toggleView(view,semCarregar){
-  if(SagaLista.ready)return SagaLista.setView(view);
   state.view=view;
   try{localStorage.setItem(CHAVE_VIEW_PROCESSOS,view);}catch(e){}
   document.getElementById('btnViewLista').classList.toggle('ativo',view==='lista');
@@ -2120,14 +2159,17 @@ document.getElementById('buscaKanban').addEventListener('input',function(e){
 var _buscaTimeout=null;
 document.getElementById('inputBusca').addEventListener('input',function(){
   var v=this.value;clearTimeout(_buscaTimeout);
-  _buscaTimeout=setTimeout(function(){state.busca=v;aplicarFiltros();},300);
+  _buscaTimeout=setTimeout(function(){state.busca=v;aplicarFiltros();},420);
 });
 document.getElementById('inputBusca').addEventListener('keydown',function(e){if(e.key==='Enter'){clearTimeout(_buscaTimeout);state.busca=this.value;aplicarFiltros();}});
 document.getElementById('qtdCustom').addEventListener('keydown',function(e){if(e.key==='Enter')aplicarQtdCustom();});
 
 // Init
 async function init(){
-  await SagaUI.carregar('processos');
+  var tituloFase=FASE_FIXA==='captacao'?'Captação':'Jurídico';
+  document.getElementById('tituloProcessos').textContent=tituloFase;document.title=tituloFase+' · SAGA';
+  try{var u=new URL(location.href);if(u.searchParams.get('fase')!==FASE_FIXA){u.searchParams.delete('tela');u.searchParams.set('fase',FASE_FIXA);history.replaceState(history.state,'',u);}}catch(e){}
+  await SagaUI.carregar('processos_'+FASE_FIXA);
   ligarInteracoesSagaUI();
   var r=await _sb.auth.getSession();
   if(!r.data||!r.data.session){window.location.href='login_padrao_metalico.html';return;}
@@ -2141,7 +2183,19 @@ async function init(){
   var btnCat=document.getElementById('btnGerenciarCatalogos');
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';
   await carregarOpcoesFiltros();
-  await SagaLista.init();
+  await restaurarPreferencias();
+  var pos=lerPosicao();
+  if(pos){
+    if(pos.faseLista)state.faseLista=pos.faseLista;
+    if(pos.faseKanbanAtiva)state.faseKanbanAtiva=pos.faseKanbanAtiva;
+    if(pos.page)state.page=pos.page;
+    if(pos.buscaKanban){state.buscaKanban=pos.buscaKanban;var bk=document.getElementById('buscaKanban');if(bk)bk.value=pos.buscaKanban;}
+  }
+  var viewSalva=null;
+  try{viewSalva=localStorage.getItem(CHAVE_VIEW_PROCESSOS);}catch(e){}
+  toggleView(viewSalva==='kanban'?'kanban':'lista',true);
+  await carregarProcessos();
+  restaurarRolagem(pos);
 }
 function ligarInteracoesSagaUI(){
   // Todas as interacoes da topbar sao ligadas dentro do saga_ui.js
