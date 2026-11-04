@@ -229,6 +229,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .processing-spinner{width:44px;height:44px;border:4px solid color-mix(in srgb,var(--gold) 18%,transparent);border-top-color:var(--gold);border-radius:50%;animation:locationSpin .8s linear infinite}
 @keyframes locationSpin{to{transform:rotate(360deg)}}
 .action-summary{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px;font-size:12px;overflow-wrap:anywhere}.action-badge{display:inline-flex;align-items:center;gap:6px;max-width:100%;white-space:normal;text-align:left;padding:6px 9px;border:1px solid var(--border-soft);border-radius:9px;background:var(--panel);color:var(--text);font-size:11px;overflow-wrap:anywhere}.action-dot{display:inline-block;width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--action-color,var(--muted))}.action-field{display:flex;flex-direction:column;gap:5px;min-width:0;max-width:100%;font-size:11px}.action-field select,.action-field textarea{width:100%;max-width:100%;padding:9px;border:1px solid var(--border-soft);border-radius:9px;background:var(--panel);color:var(--text);font:inherit}.action-field select{min-width:0}.process-summary-tags>.action-field{flex:1 1 210px}.process-summary-tags>.action-badge{flex-shrink:1}.action-contact{white-space:normal;height:auto;min-height:34px}.action-summary button:active{transform:scale(.98)}
+.tag-escolha{display:flex;align-items:center;gap:8px}.tag-escolha select{flex:1}.tag-escolha-cor{width:12px;height:12px;border-radius:50%;border:1px solid var(--border);flex:0 0 auto}
+#tagModal select{width:100%;height:40px;padding:0 10px;border:1px solid var(--border-soft);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:12px}
+.tag-gerenciar-btn{margin-top:12px;border:0;background:none;color:var(--gold-light);font:inherit;font-size:11px;font-weight:600;text-decoration:underline;cursor:pointer;padding:0}
+#tagGerenciar{margin-top:10px;max-height:46vh;overflow:auto;overscroll-behavior:contain}.tag-ger-grupo{margin-bottom:12px}.tag-ger-tit{font-size:9px;font-weight:700;letter-spacing:.65px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.tag-ger-linha{display:flex;align-items:center;gap:6px;margin-bottom:5px}.tag-ger-linha input[type=color]{width:28px;height:28px;padding:2px;border:1px solid var(--border-soft);border-radius:7px;background:none;cursor:pointer;flex:0 0 auto}.tag-ger-linha input[type=text]{flex:1;min-width:0;height:30px;padding:0 9px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:11.5px}
+.tag-ger-linha button{height:28px;min-width:28px;border:1px solid var(--border-soft);border-radius:7px;background:var(--panel);color:var(--text);cursor:pointer;font-size:11px}.tag-ger-linha button:disabled{opacity:.35;cursor:default}.tag-ger-nova{border:1px dashed var(--border);background:none;color:var(--gold-light);border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
 </style>
 
 <style id="location-contact-workflow-styles">
@@ -381,7 +387,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 </div>
 
 <div class="modal-overlay" id="clienteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="tituloClienteModal">Editar dados do cliente</h3><p id="subClienteModal">Atualize os dados cadastrais desta pessoa.</p></div><button class="modal-close" data-close-modal="clienteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="ecNome">Nome completo</label><input id="ecNome" type="text" placeholder="Nome completo"></div><div class="form-field"><label for="ecCpf">CPF</label><input id="ecCpf" type="text" placeholder="000.000.000-00"></div><div class="form-field"><label>Situação vital</label><div id="ecSituacaoSelect"></div></div><div class="form-field" id="ecDataFalecimentoWrap" style="display:none"><label for="ecDataFalecimento">Data de falecimento</label><input id="ecDataFalecimento" type="date"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="clienteModal">Cancelar</button><button class="btn-primary" id="saveClienteButton">Salvar dados</button></div></div></div>
-<div class="modal-overlay" id="tagModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Nova etiqueta</h3><p>Adicione uma etiqueta de organização à ficha da cliente.</p></div><button class="modal-close" data-close-modal="tagModal">✕</button></div><div class="modal-body"><div id="tagCatalogoSugestoes" style="display:none;margin-bottom:13px"></div><div style="margin:0 0 8px;color:var(--muted);font-size:9.5px;line-height:1.45">Ou digite uma etiqueta personalizada:</div><div class="form-field"><label for="tagInput">Etiqueta</label><input id="tagInput" type="text" placeholder="Ex.: Prioridade de análise"></div><div class="form-field"><label for="tagColorInput">Cor da etiqueta</label><input id="tagColorInput" type="color" value="#4b8af5" style="width:100%;height:40px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer"></div><div id="tagSalvarCatalogoWrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;font-weight:500"><input type="checkbox" id="tagSalvarCatalogo" style="accent-color:var(--gold)"> Salvar esta etiqueta no catálogo para reutilizar depois</label></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="tagModal">Cancelar</button><button class="btn-primary" id="saveTagButton">Adicionar etiqueta</button></div></div></div>
+<div class="modal-overlay" id="tagModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Nova etiqueta</h3><p>Adicione uma etiqueta de organização à ficha da cliente.</p></div><button class="modal-close" data-close-modal="tagModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="tagSelect">Etiqueta</label><div class="tag-escolha"><span class="tag-escolha-cor" id="tagCorPreview"></span><select id="tagSelect"></select></div></div><div id="tagOutraWrap" hidden><div class="form-field"><label for="tagInput">Nome da etiqueta</label><input id="tagInput" type="text" placeholder="Ex.: Prioridade de análise"></div><div class="form-field"><label for="tagGrupoNova">Grupo</label><select id="tagGrupoNova"><option value="captacao">Captação</option><option value="processual" selected>Processual</option><option value="financeiro">Financeiro</option><option value="urgencia">Urgência</option></select></div><div class="form-field"><label for="tagColorInput">Cor da etiqueta</label><input id="tagColorInput" type="color" value="#4b8af5" style="width:100%;height:40px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer"></div><div id="tagSalvarCatalogoWrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;font-weight:500"><input type="checkbox" id="tagSalvarCatalogo" style="accent-color:var(--gold)"> Guardar no menu para usar de novo</label></div></div><div id="tagGerenciarWrap" hidden><button type="button" class="tag-gerenciar-btn" id="tagGerenciarBtn">Gerenciar etiquetas (criar, renomear, cor, ordem, remover)</button><div id="tagGerenciar" hidden></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="tagModal">Cancelar</button><button class="btn-primary" id="saveTagButton">Adicionar etiqueta</button></div></div></div>
 <div class="modal-overlay" id="deleteProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir processo</h3><p>O processo será removido do sistema e deixará de aparecer nesta ficha.</p></div><button class="modal-close" data-close-modal="deleteProcessModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja realmente excluir o processo <strong id="deleteProcessLabel" style="color:var(--text)"></strong>? Os comentários, documentos e tarefas vinculados deixarão de ser exibidos.</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="deleteProcessModal">Cancelar</button><button class="btn-danger" id="deleteProcessButton">Excluir processo</button></div></div></div>
 <div class="modal-overlay" id="checklistItemModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Adicionar item ao checklist</h3><p>Inclua uma nova atividade de acompanhamento.</p></div><button class="modal-close" data-close-modal="checklistItemModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="checklistItemInput">Descrição do item</label><input id="checklistItemInput" type="text" placeholder="Ex.: Conferir documento complementar"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="checklistItemModal">Cancelar</button><button class="btn-primary" id="saveChecklistItemButton">Adicionar item</button></div></div></div>
 <div class="modal-overlay" id="customChecklistModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Criar checklist personalizado</h3><p>Defina o título e o primeiro item deste checklist.</p></div><button class="modal-close" data-close-modal="customChecklistModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="customChecklistName">Nome do checklist</label><input id="customChecklistName" type="text" placeholder="Ex.: Conferência de documentos"></div><div class="form-field"><label for="customChecklistFirstItem">Primeiro item</label><input id="customChecklistFirstItem" type="text" placeholder="Ex.: Revisar todos os anexos"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="customChecklistModal">Cancelar</button><button class="btn-primary" id="saveCustomChecklistButton">Criar checklist</button></div></div></div>
@@ -573,38 +579,62 @@ function setupTopbar(){
   });
 }
 
+// Etiquetas da ficha: só os grupos da ficha (sem listas internas de tarefas, papéis e situações),
+// num menu suspenso organizado por grupo; quem pode gerenciar cria, renomeia, muda cor e ordem e remove (desativa).
+const GRUPOS_ETIQUETA=[['captacao','Captação'],['processual','Processual'],['financeiro','Financeiro'],['urgencia','Urgência']];
+function etiquetasAtivas(){return (state.catalogoEtiquetas||[]).filter(e=>e.ativo!==false).sort((a,b)=>(a.ordem||0)-(b.ordem||0)||String(a.nome).localeCompare(String(b.nome),'pt-BR'));}
 function renderSugestoesCatalogoEtiquetas(){
-  const root=document.getElementById('tagCatalogoSugestoes');
-  if(!root)return;
-  const catalogo=Array.isArray(state.catalogoEtiquetas)?state.catalogoEtiquetas:[];
-  if(!catalogo.length){
-    root.innerHTML='';
-    root.style.display='none';
-    return;
-  }
-  const rotulosCategoria={processual:'Processual',captacao:'Captação',financeiro:'Financeiro',urgencia:'Urgência'};
-  const grupos=[];
-  catalogo.forEach(item=>{
-    const categoria=String(item.categoria||'');
-    let grupo=grupos.find(atual=>atual.categoria===categoria);
-    if(!grupo){grupo={categoria:categoria,itens:[]};grupos.push(grupo);}
-    grupo.itens.push(item);
-  });
-  root.style.display='';
-  root.innerHTML=grupos.map(grupo=>{
-    const rotulo=rotulosCategoria[grupo.categoria]||grupo.categoria;
-    const chips=grupo.itens.map(item=>{
-      const nome=String(item.nome||'');
-      const cor=String(item.cor||'#4b8af5');
-      return '<button type="button" class="ficha-mini-tag" data-tag-catalogo-nome="'+esc(nome)+'" data-tag-catalogo-cor="'+esc(cor)+'" style="border:1px solid color-mix(in srgb,'+esc(cor)+' 45%,transparent);background:color-mix(in srgb,'+esc(cor)+' 16%,transparent);color:'+esc(cor)+';border-radius:50px;font-size:9px;cursor:pointer">'+esc(nome)+'</button>';
-    }).join('');
-    return '<div style="margin-bottom:10px"><div style="margin-bottom:5px;color:var(--muted);font-size:8.5px;font-weight:700;letter-spacing:.65px;text-transform:uppercase">'+esc(rotulo)+'</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+chips+'</div></div>';
+  const sel=document.getElementById('tagSelect');if(!sel)return;
+  const ativas=etiquetasAtivas(),vistos=new Set();
+  sel.innerHTML='<option value="">Escolha a etiqueta...</option>'+GRUPOS_ETIQUETA.map(([cat,rot])=>{
+    const itens=ativas.filter(e=>e.categoria===cat&&!vistos.has(cat+'|'+String(e.nome).toLowerCase())&&vistos.add(cat+'|'+String(e.nome).toLowerCase()));
+    return itens.length?'<optgroup label="'+esc(rot)+'">'+itens.map(e=>'<option value="'+esc(e.id)+'">'+esc(e.nome)+'</option>').join('')+'</optgroup>':'';
+  }).join('')+'<option value="__outra">+ Outra etiqueta...</option>';
+  atualizarEscolhaEtiqueta();
+  sel.onchange=atualizarEscolhaEtiqueta;
+  const ger=document.getElementById('tagGerenciarWrap');if(ger)ger.hidden=perms.pessoasEtiquetasGerenciar!==true;
+  const btn=document.getElementById('tagGerenciarBtn');if(btn)btn.onclick=()=>{const box=document.getElementById('tagGerenciar');box.hidden=!box.hidden;if(!box.hidden)renderGerenciarEtiquetas();};
+}
+function atualizarEscolhaEtiqueta(){
+  const sel=document.getElementById('tagSelect'),outra=document.getElementById('tagOutraWrap'),prev=document.getElementById('tagCorPreview');
+  const input=document.getElementById('tagInput'),cor=document.getElementById('tagColorInput');
+  const e=etiquetasAtivas().find(x=>String(x.id)===sel.value);
+  if(outra)outra.hidden=sel.value!=='__outra';
+  if(e){input.value=e.nome;cor.value=/^#[0-9a-f]{6}$/i.test(e.cor||'')?e.cor:'#4b8af5';}
+  else if(sel.value!=='__outra'){input.value='';}
+  if(sel.value==='__outra'){input.value='';setTimeout(()=>input.focus(),0);}
+  if(prev)prev.style.background=e?(e.cor||'#4b8af5'):'transparent';
+}
+function renderGerenciarEtiquetas(){
+  const box=document.getElementById('tagGerenciar');if(!box)return;
+  const todas=state.catalogoEtiquetas||[];
+  box.innerHTML=GRUPOS_ETIQUETA.map(([cat,rot])=>{
+    const itens=etiquetasAtivas().filter(e=>e.categoria===cat);
+    return '<div class="tag-ger-grupo"><div class="tag-ger-tit">'+esc(rot)+'</div>'+itens.map((e,k)=>'<div class="tag-ger-linha" data-id="'+esc(e.id)+'"><input type="color" value="'+esc(/^#[0-9a-f]{6}$/i.test(e.cor||'')?e.cor:'#4b8af5')+'" data-campo="cor" title="Cor"><input type="text" value="'+esc(e.nome)+'" data-campo="nome" maxlength="60" aria-label="Nome da etiqueta"><button type="button" data-mover="-1" title="Subir"'+(k===0?' disabled':'')+'>↑</button><button type="button" data-mover="1" title="Descer"'+(k===itens.length-1?' disabled':'')+'>↓</button><button type="button" data-remover title="Remover do menu (o que já foi usado continua)">✕</button></div>').join('')+
+      '<button type="button" class="tag-ger-nova" data-nova="'+cat+'">+ Nova etiqueta em '+esc(rot)+'</button></div>';
   }).join('');
-  root.querySelectorAll('[data-tag-catalogo-nome]').forEach(button=>button.addEventListener('click',()=>{
-    const input=document.getElementById('tagInput');
-    const corInput=document.getElementById('tagColorInput');
-    if(input)input.value=button.dataset.tagCatalogoNome||'';
-    if(corInput&&button.dataset.tagCatalogoCor)corInput.value=button.dataset.tagCatalogoCor;
+  const salvar=async(id,dados,msg)=>{const r=await _sb.from('etiquetas_catalogo').update(dados).eq('id',id);if(r.error){showToast('Não foi possível salvar: '+esc(r.error.message),'error');return false;}await carregarCatalogoEtiquetas();renderSugestoesCatalogoEtiquetas();renderGerenciarEtiquetas();if(msg)showToast(msg,'success');return true;};
+  box.querySelectorAll('.tag-ger-linha').forEach(l=>{
+    const id=l.dataset.id;
+    l.querySelector('[data-campo="nome"]').addEventListener('change',ev=>{const v=ev.target.value.trim();if(!v){ev.target.value=(todas.find(x=>x.id===id)||{}).nome||'';return;}salvar(id,{nome:v},'Etiqueta renomeada.');});
+    l.querySelector('[data-campo="cor"]').addEventListener('change',ev=>salvar(id,{cor:ev.target.value},'Cor atualizada.'));
+    l.querySelector('[data-remover]').addEventListener('click',async()=>{const e=todas.find(x=>x.id===id);const ok=window.sagaConfirmar?await sagaConfirmar('Remover etiqueta','Tirar "'+(e?e.nome:'')+'" do menu? As fichas que já usam continuam com ela.','Remover'):true;if(ok)salvar(id,{ativo:false},'Etiqueta removida do menu.');});
+    l.querySelectorAll('[data-mover]').forEach(b=>b.addEventListener('click',async()=>{
+      const e=todas.find(x=>x.id===id);const irmas=etiquetasAtivas().filter(x=>x.categoria===e.categoria);const k=irmas.indexOf(e),alvo=irmas[k+Number(b.dataset.mover)];if(!alvo)return;
+      const nova=irmas.slice();nova.splice(k,1);nova.splice(k+Number(b.dataset.mover),0,e);
+      for(let n=0;n<nova.length;n++){if(nova[n].ordem!==n+1){const r=await _sb.from('etiquetas_catalogo').update({ordem:n+1}).eq('id',nova[n].id);if(r.error){showToast('Não foi possível reordenar.','error');return;}}}
+      await carregarCatalogoEtiquetas();renderSugestoesCatalogoEtiquetas();renderGerenciarEtiquetas();
+    }));
+  });
+  box.querySelectorAll('[data-nova]').forEach(b=>b.addEventListener('click',async()=>{
+    const cat=b.dataset.nova,linha=document.createElement('div');linha.className='tag-ger-linha';
+    linha.innerHTML='<input type="color" value="#4b8af5"><input type="text" placeholder="Nome da nova etiqueta" maxlength="60"><button type="button">Criar</button>';
+    b.before(linha);const nome=linha.querySelector('input[type="text"]');nome.focus();
+    const criar=async()=>{const v=nome.value.trim();if(!v)return;const irmas=todas.filter(x=>x.categoria===cat);
+      const r=await _sb.from('etiquetas_catalogo').insert({nome:v,cor:linha.querySelector('input[type="color"]').value,categoria:cat,ativo:true,ordem:irmas.length+1,criado_por_id:state.usuario.internoId});
+      if(r.error){showToast('Não foi possível criar: '+esc(r.error.message),'error');return;}
+      await carregarCatalogoEtiquetas();renderSugestoesCatalogoEtiquetas();renderGerenciarEtiquetas();showToast('Etiqueta criada.','success');};
+    linha.querySelector('button').onclick=criar;nome.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();criar();}});
   }));
 }
 function abrirModalNovaEtiqueta(){
@@ -616,6 +646,8 @@ function abrirModalNovaEtiqueta(){
   if(corInput)corInput.value='#4b8af5';
   if(catalogoWrap)catalogoWrap.style.display=perms.pessoasEtiquetasGerenciar===true?'':'none';
   if(salvarCatalogo)salvarCatalogo.checked=false;
+  const selTag=document.getElementById('tagSelect');if(selTag)selTag.value='';
+  const boxGer=document.getElementById('tagGerenciar');if(boxGer)boxGer.hidden=true;
   renderSugestoesCatalogoEtiquetas();
   openModal('tagModal');
 }
@@ -1284,7 +1316,8 @@ async function saveTag(){
     const resposta=await _sb.from('etiquetas_catalogo').insert({
       nome:value,
       cor:cor,
-      categoria:'processual',
+      categoria:(document.getElementById('tagGrupoNova')||{}).value||'processual',
+      ativo:true,
       criado_por_id:state.usuario.internoId
     });
     if(resposta.error)throw resposta.error;
@@ -1959,9 +1992,9 @@ async function carregarListas(){
 async function carregarCatalogoEtiquetas(){
   try{
     const resposta=await _sb.from('etiquetas_catalogo')
-      .select('id,nome,cor,categoria,ativo,criado_por_id,criado_em')
-      .eq('ativo',true)
-      .order('categoria',{ascending:true})
+      .select('id,nome,cor,categoria,ativo,ordem,criado_por_id,criado_em')
+      .in('categoria',GRUPOS_ETIQUETA.map(g=>g[0]))
+      .order('ordem',{ascending:true})
       .order('nome',{ascending:true});
     if(resposta.error)throw resposta.error;
     state.catalogoEtiquetas=resposta.data||[];
