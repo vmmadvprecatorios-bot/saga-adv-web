@@ -698,6 +698,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_ui.js"></script>
 <script src="saga_teses.js"></script>
 <script src="saga_etiquetas.js"></script>
+<script src="saga_planilha.js"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -1336,11 +1337,13 @@ function processoNoEscopo(p,ignorar){
   if(ignorar!=='fase'&&faseAtualProcessos()!==FASE_TODAS&&(statusDoProcesso(p).fase||'Sem fase')!==faseAtualProcessos())return false;
   if(ignorar!=='status'&&!filtroProcessoContem(state.filtroStatus,p.status_id))return false;
   if(ignorar!=='responsavel'&&!filtroProcessoContem(state.filtroResponsavel,p.responsavel_id))return false;
+  if(window.SagaPlanilha&&!SagaPlanilha.passa(p))return false;
   if(state.view==='kanban'&&state.buscaKanban){var b=state.buscaKanban.trim().toLowerCase(),pe=p.pessoa||{};if(String(pe.nome_completo||'').toLowerCase().indexOf(b)===-1&&String(pe.cpf||'').toLowerCase().indexOf(b)===-1)return false;}
   return true;
 }
 function prepararVisaoProcessos(){
   var todos=(state.baseProcessos||[]).filter(function(p){return processoNoEscopo(p);});
+  if(window.SagaPlanilha)todos=SagaPlanilha.ordenar(todos);
   state.totalProcessos=todos.length;
   if(state.pageSize!=='todos')state.page=Math.max(1,Math.min(state.page,Math.ceil(todos.length/state.pageSize)||1));
   state.processos=state.view==='kanban'||state.pageSize==='todos'?todos:todos.slice((state.page-1)*state.pageSize,state.page*state.pageSize);
@@ -1353,8 +1356,8 @@ async function lerBaseProcessos(f){
   cache.promessa=(async function(){
     var pessoaIds=null;
     if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
-    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,'+
-      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem),responsavel:usuarios!responsavel_id(id,nome_completo)';
+    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+
+      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem),responsavel:usuarios!responsavel_id(id,nome_completo)';
     var linhas=[],inicio=0;
     while(true){
       var q=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
@@ -1424,6 +1427,7 @@ function aplicarFiltroPeriodo(){
   atualizarLabelPeriodo();fecharTodosDropdowns();aplicarFiltros();
 }
 function limparFiltros(){
+  if(window.SagaPlanilha)SagaPlanilha.limpar();
   state.faseLista=state.faseKanbanAtiva=FASE_TODAS;state.buscaKanban='';document.getElementById('buscaKanban').value='';
   state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
@@ -1491,7 +1495,7 @@ function renderLista(){
   prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
   document.getElementById('estadoVazio').style.display='none';
   if(!state.processos.length){renderEstadoVazio();renderPaginacao();document.getElementById('cartoesMobile').innerHTML='';return;}
-  var html=state.processos.map(function(p){
+  var html=window.SagaPlanilha&&SagaPlanilha.pronta()?null:state.processos.map(function(p){
     var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var st=p.status||{};var re=p.responsavel||{};
     var respHtml=re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted);font-size:11px">N/A</span>';
     return '<tr onclick="verFicha(\''+p.id+'\')">'
@@ -1506,7 +1510,7 @@ function renderLista(){
       +'<td>'+acoesBtns(p)+'</td>'
       +'</tr>';
   }).join('');
-  document.getElementById('tbodyPrincipal').innerHTML=html;
+  if(html===null)SagaPlanilha.renderTabela(state.processos);else document.getElementById('tbodyPrincipal').innerHTML=html;
   renderPaginacao();
   var cards=state.processos.map(function(p){
     var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var st=p.status||{};var re=p.responsavel||{};
@@ -2183,6 +2187,7 @@ async function init(){
   var btnCat=document.getElementById('btnGerenciarCatalogos');
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';
   await carregarOpcoesFiltros();
+  try{await SagaPlanilha.iniciar();}catch(e){console.warn(e);}
   await restaurarPreferencias();
   var pos=lerPosicao();
   if(pos){
