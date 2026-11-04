@@ -281,6 +281,9 @@
         /* janelas da barra superior (notificacoes, online, busca, perfil): largura da tela, logo abaixo da barra */
         '#topbarSaga .popover{position:fixed !important;top:68px !important;left:8px !important;right:8px !important;width:auto !important;max-width:none !important;max-height:calc(100dvh - 84px) !important;overflow-y:auto !important;overscroll-behavior:contain !important;}'+
         'html.saga-menu-aberto,html.saga-menu-aberto body{overflow:hidden !important;overscroll-behavior:none !important;}'+
+        /* menu aberto com a pagina rolada: a barra de cima fica presa no topo (antes subia junto e sobrava uma faixa em branco) */
+        'html.saga-menu-aberto #topbarSaga{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;width:100% !important;}'+
+        'html.saga-menu-aberto body{padding-top:64px !important;}'+
         '#overlay{touch-action:none !important;}#overlay:not(.aberto){display:none !important;}#overlay.aberto{display:block !important;}'+
         '#overlay{position:fixed !important;top:64px !important;bottom:0 !important;right:0 !important;left:min(290px,84vw) !important;width:auto !important;height:auto !important;z-index:1400 !important;background:rgba(5,10,20,.45) !important;}'+
       '}';
@@ -288,6 +291,32 @@
   }
   if(document.head)_injetarEstiloBase();
   else document.addEventListener('DOMContentLoaded',_injetarEstiloBase);
+  // Janelas da busca, das notificacoes e de quem esta online: no computador abrem logo abaixo do campo de busca (antes iam para o canto direito)
+  var _POPS_TOPO=['globalSearchPop','notifPop','presencePop'];
+  function _posicionarPopsTopo(){
+    var campo=document.querySelector('#topbarSaga .quick-search');
+    var r=campo?campo.getBoundingClientRect():null;
+    var computador=window.innerWidth>760&&r&&r.width>0;
+    _POPS_TOPO.forEach(function(id){
+      var p=document.getElementById(id);if(!p)return;
+      var props=['position','top','left','right','width','transform'];
+      if(!computador||!p.classList.contains('open')){props.forEach(function(k){p.style.removeProperty(k);});return;}
+      var w=id==='globalSearchPop'?r.width:Math.min(Math.max(r.width,340),460);
+      var left=Math.max(8,Math.min(r.left,window.innerWidth-w-8));
+      p.style.setProperty('position','fixed','important');
+      p.style.setProperty('top',(r.bottom+8)+'px','important');
+      p.style.setProperty('left',left+'px','important');
+      p.style.setProperty('right','auto','important');
+      p.style.setProperty('width',w+'px','important');
+      p.style.setProperty('transform','none','important');
+    });
+  }
+  if(window.MutationObserver){
+    new MutationObserver(function(lista){
+      for(var i=0;i<lista.length;i++){if(_POPS_TOPO.indexOf(lista[i].target.id)>=0){_posicionarPopsTopo();return;}}
+    }).observe(document.documentElement,{attributes:true,attributeFilter:['class'],subtree:true});
+  }
+  window.addEventListener('resize',_posicionarPopsTopo);
 
   var _sidebarColapsada=localStorage.getItem('saga-sidebar-colapsada')==='true';
 
