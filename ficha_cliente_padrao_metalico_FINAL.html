@@ -132,6 +132,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .linha-tempo{display:flex;flex-direction:column;gap:15px}.item-timeline{display:flex;gap:10px}.item-timeline-corpo{min-width:0;flex:1}.item-timeline-cabecalho{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}.item-timeline-autor{font-size:11.5px;font-weight:700}.item-timeline-data{color:var(--muted);font-size:9.5px}.item-timeline-editado{color:var(--muted);font-size:9px;font-style:italic}.item-timeline-conteudo{padding:10px 12px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:10px;background:color-mix(in srgb,var(--text) 2.5%,transparent);color:var(--text);font-size:11.2px;line-height:1.55}.mencao{padding:1px 5px;border-radius:5px;background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold-light);font-weight:700}.item-timeline.evento-sistema .mini-avatar-comentario{background:color-mix(in srgb,var(--info) 12%,transparent);color:var(--info)}.item-timeline.evento-sistema .item-timeline-conteudo{display:flex;align-items:center;gap:8px;border-color:color-mix(in srgb,var(--info) 23%,transparent);background:color-mix(in srgb,var(--info) 6%,transparent);color:var(--muted);font-size:10.5px;font-style:italic}.acoes-item-timeline{display:flex;gap:11px;margin-top:6px}.timeline-action{color:var(--muted);font-size:9.5px;font-weight:600}.timeline-action:hover{color:var(--gold)}
 
 /* Lateral */
+.pastas-titulo{align-items:center}.pastas-titulo>span{flex:1}.pasta-topo-btn{margin-left:auto;padding:4px 9px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:8px;background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0;text-transform:none}.pasta-topo-btn:hover{border-color:var(--gold)}.arvore-pastas{display:flex;flex-direction:column;gap:2px}.pasta-raiz{display:flex;flex-direction:column;gap:2px;min-height:24px;border-radius:10px}.pasta-linha{display:flex;align-items:center;gap:7px;padding:7px 6px 7px 4px;border:1px solid transparent;border-radius:9px;cursor:pointer;user-select:none;transition:background .15s,border-color .15s}.pasta-linha:hover{background:color-mix(in srgb,var(--text) 4%,transparent)}.pasta-seta{width:14px;display:grid;place-items:center;color:var(--muted);transition:transform .22s cubic-bezier(.3,1.4,.5,1)}.pasta-no.aberta>.pasta-linha .pasta-seta{transform:rotate(90deg)}.pasta-icone{display:grid;place-items:center;color:var(--gold)}.pasta-nome{flex:1;min-width:0;overflow:hidden;color:var(--text);font-size:11.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.pasta-qtd{min-width:18px;padding:1px 6px;border-radius:7px;background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--muted);font-size:9.5px;font-weight:700;text-align:center}.pasta-menu-btn{width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;opacity:.55}.pasta-linha:hover .pasta-menu-btn,.pasta-menu-btn:focus-visible{opacity:1}.pasta-menu-btn:hover{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text)}.pasta-filhos{display:none;flex-direction:column;gap:4px;margin-left:9px;padding:3px 0 6px 7px;border-left:1px solid color-mix(in srgb,var(--text) 9%,transparent)}.pasta-no.aberta>.pasta-filhos{display:flex;animation:pastaAbre .26s cubic-bezier(.2,1.2,.4,1)}@keyframes pastaAbre{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}.pasta-vazia{padding:5px 4px;color:var(--muted);font-size:10px;font-style:italic}.pasta-soltos-rotulo{margin:8px 0 2px;color:var(--muted);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.arvore-pastas .documento-item{padding:7px 8px;gap:8px}.arvore-pastas .documento-nome{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;line-height:1.3}.arvore-pastas .icone-documento{width:26px;height:26px;border-radius:7px}.arvore-pastas .documento-acoes{gap:3px}.arvore-pastas .doc-action{width:24px;height:24px;border-radius:7px}.arvore-pastas .doc-comentarios-wrap{margin-left:10px}.arvore-pastas [draggable="true"]{cursor:grab}.arrastando{opacity:.45}.pasta-linha.alvo,.pasta-raiz.alvo{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent)}.pasta-solta-zona{display:none;margin-top:6px;padding:10px;border:1px dashed color-mix(in srgb,var(--text) 22%,transparent);border-radius:10px;color:var(--muted);font-size:10px;text-align:center}.em-arrasto .pasta-solta-zona{display:block}.pasta-solta-zona.alvo{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}.pasta-sugeridas{width:100%;margin-top:6px;padding:9px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:10px;background:color-mix(in srgb,var(--gold) 7%,transparent);color:var(--gold);font-size:10.5px;font-weight:700;cursor:pointer}.pasta-menu-pop{position:fixed;z-index:4000;min-width:190px;padding:5px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--bg));box-shadow:0 16px 36px rgba(0,0,0,.28);animation:pastaMenu .2s cubic-bezier(.2,1.3,.4,1)}@keyframes pastaMenu{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}.pasta-menu-pop button{display:block;width:100%;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:11px;text-align:left;cursor:pointer}.pasta-menu-pop button:hover{background:color-mix(in srgb,var(--text) 6%,transparent)}.pasta-menu-pop button.perigo{color:var(--danger)}.pasta-select{width:100%;outline:0;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text);font:inherit;font-size:11px;padding:10px}.pasta-select:focus{border-color:var(--gold)}.pasta-select option{background:var(--panel-solid,#1c2638);color:var(--text)}@media(max-width:1120px){#secaoDocumentos{grid-column:1/-1}}
 .bloco-lateral{margin-bottom:24px}.bloco-retorno-destaque{margin-bottom:24px;padding:14px;border:1px solid color-mix(in srgb,var(--danger) 33%,transparent);border-radius:13px;background:color-mix(in srgb,var(--danger) 8%,transparent)}.bloco-retorno-destaque.atencao{border-color:color-mix(in srgb,var(--warning) 32%,transparent);background:color-mix(in srgb,var(--warning) 8%,transparent)}.bloco-retorno-destaque.tranquilo{border-color:color-mix(in srgb,var(--success) 28%,transparent);background:color-mix(in srgb,var(--success) 7%,transparent)}.retorno-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.retorno-label{display:flex;align-items:center;gap:6px;color:var(--danger);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.atencao .retorno-label{color:var(--warning)}.tranquilo .retorno-label{color:var(--success)}.retorno-data-hora{margin-bottom:3px;color:var(--text);font-size:14px;font-weight:700}.retorno-contagem{color:var(--muted);font-size:10px;line-height:1.45}.btn-editar-retorno{color:var(--gold);font-size:9.5px;font-weight:700;text-decoration:underline dotted}.responsavel-bloco{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:11px;background:color-mix(in srgb,var(--text) 2.4%,transparent)}.responsavel-info{display:flex;flex-direction:column;gap:3px}.responsavel-nome{font-size:11.5px;font-weight:700}.responsavel-cargo{color:var(--muted);font-size:9.5px}
 .tarefa-list{display:flex;flex-direction:column;gap:8px}.item-tarefa-mini{display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:10px;background:color-mix(in srgb,var(--text) 2.4%,transparent);transition:opacity .2s}.item-tarefa-mini.concluida{opacity:.48}.checkbox-tarefa-mini{width:16px;height:16px;display:grid;place-items:center;flex:0 0 auto;margin-top:1px;border:1.5px solid var(--border-soft);border-radius:5px;color:var(--navy-1)}.item-tarefa-mini.concluida .checkbox-tarefa-mini{border-color:var(--success);background:var(--success)}.item-tarefa-mini-texto{flex:1}.item-tarefa-mini-titulo{font-size:11px;font-weight:600;line-height:1.45}.item-tarefa-mini-prazo{margin-top:3px;font-size:9.5px}.item-tarefa-mini-prazo.urgente{color:var(--danger);font-weight:700}.item-tarefa-mini-prazo.normal{color:var(--muted)}.btn-nova-tarefa-mini{display:inline-flex;align-items:center;gap:5px;margin-top:9px;color:var(--gold);font-size:10.5px;font-weight:700}.botoes-acao-lateral{display:flex;flex-direction:column;gap:8px}.btn-acao-lateral{display:flex;align-items:center;gap:9px;padding:10px 11px;border:1px solid var(--border-soft);border-radius:10px;background:color-mix(in srgb,var(--text) 2.4%,transparent);color:var(--muted);font-size:11px;font-weight:600;transition:.18s}.btn-acao-lateral:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 6%,transparent);color:var(--text)}.btn-acao-lateral.whats{border-color:color-mix(in srgb,var(--success) 28%,transparent);color:var(--success)}
 
@@ -348,13 +349,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
             </div>
           </section>
 
-          <section class="secao" id="secaoDocumentos">
-            <div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>Documentos</div>
-            <div class="documento-list" id="documentList"></div>
-            <button class="btn-anexar-documento" id="btnAnexarDocumento">+ Anexar Documento</button>
-            <input class="hidden" id="documentInput" type="file" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
-          </section>
-
           <section class="secao" id="secaoHistorico">
             <div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>Comentários e Histórico</div>
             <div class="caixa-novo-comentario">
@@ -374,6 +368,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
         <aside class="coluna-lateral">
           <section class="bloco-retorno-destaque atencao" id="blocoRetorno"></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>Responsável</div><div class="responsavel-bloco" id="processResponsible"></div></section>
+          <section class="bloco-lateral" id="secaoDocumentos"><div class="secao-titulo pastas-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Pastas do cliente</span><button type="button" class="pasta-topo-btn" id="btnNovaPasta" title="Criar pasta">+ Pasta</button></div><div class="arvore-pastas" id="documentList"></div><button class="btn-anexar-documento" id="btnAnexarDocumento">+ Anexar documento</button><input class="hidden" id="documentInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt"></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Tarefas</div><div class="tarefa-list" id="taskList"></div><button class="btn-nova-tarefa-mini" id="btnAddTask">+ Adicionar tarefa</button></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Ações</div><div class="botoes-acao-lateral"><button class="btn-acao-lateral" id="btnVerDocumentos"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg>Ver documentos</button><button class="btn-acao-lateral" id="btnVerFinanceiro"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 18V9l9-6 9 6v9" stroke="currentColor" stroke-width="1.5"/></svg>Ver financeiro</button><button class="btn-acao-lateral" id="btnVerMovimentacoes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Intimações do processo</button></div></section>
         </aside>
@@ -388,6 +383,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 <div class="modal-overlay" id="clienteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="tituloClienteModal">Editar dados do cliente</h3><p id="subClienteModal">Atualize os dados cadastrais desta pessoa.</p></div><button class="modal-close" data-close-modal="clienteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="ecNome">Nome completo</label><input id="ecNome" type="text" placeholder="Nome completo"></div><div class="form-field"><label for="ecCpf">CPF</label><input id="ecCpf" type="text" placeholder="000.000.000-00"></div><div class="form-field"><label>Situação vital</label><div id="ecSituacaoSelect"></div></div><div class="form-field" id="ecDataFalecimentoWrap" style="display:none"><label for="ecDataFalecimento">Data de falecimento</label><input id="ecDataFalecimento" type="date"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="clienteModal">Cancelar</button><button class="btn-primary" id="saveClienteButton">Salvar dados</button></div></div></div>
 <div class="modal-overlay" id="tagModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Nova etiqueta</h3><p>Adicione uma etiqueta de organização à ficha da cliente.</p></div><button class="modal-close" data-close-modal="tagModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="tagSelect">Etiqueta</label><div class="tag-escolha"><span class="tag-escolha-cor" id="tagCorPreview"></span><select id="tagSelect"></select></div></div><div id="tagOutraWrap" hidden><div class="form-field"><label for="tagInput">Nome da etiqueta</label><input id="tagInput" type="text" placeholder="Ex.: Prioridade de análise"></div><div class="form-field"><label for="tagGrupoNova">Grupo</label><select id="tagGrupoNova"><option value="captacao">Captação</option><option value="processual" selected>Processual</option><option value="financeiro">Financeiro</option><option value="urgencia">Urgência</option></select></div><div class="form-field"><label for="tagColorInput">Cor da etiqueta</label><input id="tagColorInput" type="color" value="#4b8af5" style="width:100%;height:40px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer"></div><div id="tagSalvarCatalogoWrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;font-weight:500"><input type="checkbox" id="tagSalvarCatalogo" style="accent-color:var(--gold)"> Guardar no menu para usar de novo</label></div></div><div id="tagGerenciarWrap" hidden><button type="button" class="tag-gerenciar-btn" id="tagGerenciarBtn">Gerenciar etiquetas (criar, renomear, cor, ordem, remover)</button><div id="tagGerenciar" hidden></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="tagModal">Cancelar</button><button class="btn-primary" id="saveTagButton">Adicionar etiqueta</button></div></div></div>
+<div class="modal-overlay" id="pastaModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="pastaModalTitulo">Nova pasta</h3><p id="pastaModalSub">Organize os documentos do cliente.</p></div><button class="modal-close" data-close-modal="pastaModal">✕</button></div><div class="modal-body"><div class="form-field" id="pastaCampoNome"><label for="pastaNome">Nome da pasta</label><input id="pastaNome" type="text" maxlength="120" placeholder="Ex.: Documentos pessoais" autocomplete="off"></div><div class="form-field" id="pastaCampoDestino"><label for="pastaDestino" id="pastaDestinoRotulo">Colocar dentro de</label><select id="pastaDestino" class="pasta-select"></select></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="pastaModal">Cancelar</button><button class="btn-primary" id="pastaSalvar">Salvar</button></div></div></div>
 <div class="modal-overlay" id="deleteProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir processo</h3><p>O processo será removido do sistema e deixará de aparecer nesta ficha.</p></div><button class="modal-close" data-close-modal="deleteProcessModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja realmente excluir o processo <strong id="deleteProcessLabel" style="color:var(--text)"></strong>? Os comentários, documentos e tarefas vinculados deixarão de ser exibidos.</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="deleteProcessModal">Cancelar</button><button class="btn-danger" id="deleteProcessButton">Excluir processo</button></div></div></div>
 <div class="modal-overlay" id="checklistItemModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Adicionar item ao checklist</h3><p>Inclua uma nova atividade de acompanhamento.</p></div><button class="modal-close" data-close-modal="checklistItemModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="checklistItemInput">Descrição do item</label><input id="checklistItemInput" type="text" placeholder="Ex.: Conferir documento complementar"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="checklistItemModal">Cancelar</button><button class="btn-primary" id="saveChecklistItemButton">Adicionar item</button></div></div></div>
 <div class="modal-overlay" id="customChecklistModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Criar checklist personalizado</h3><p>Defina o título e o primeiro item deste checklist.</p></div><button class="modal-close" data-close-modal="customChecklistModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="customChecklistName">Nome do checklist</label><input id="customChecklistName" type="text" placeholder="Ex.: Conferência de documentos"></div><div class="form-field"><label for="customChecklistFirstItem">Primeiro item</label><input id="customChecklistFirstItem" type="text" placeholder="Ex.: Revisar todos os anexos"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="customChecklistModal">Cancelar</button><button class="btn-primary" id="saveCustomChecklistButton">Criar checklist</button></div></div></div>
@@ -485,6 +481,7 @@ const state={
   activeChecklistId:null,
   activeCommentId:null,
   docThreadsAbertos:new Set(),
+  pastas:[],pastasAbertas:null,pastaAlvoUpload:null,pastaModal:null,
   tarefaEmEdicaoId:null,
   isEditingProcess:false,
   newProcessDraft:{tese:'',responsavel:''},
@@ -1093,29 +1090,270 @@ function renderChecklists(){
     });
   };
 }
+/* ---------- T55: pastas do cliente (árvore na lateral direita) ---------- */
+const PASTAS_SUGERIDAS=['Documentos pessoais','Documentos processuais','Requisitório','Atividades'];
+const SVG_SETA='<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const SVG_PASTA='<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+function chavePastasAbertas(){return 'saga-pastas-abertas-'+((state.pessoaRow&&state.pessoaRow.id)||'');}
+function pastasAbertas(){
+  if(!state.pastasAbertas||state.pastasAbertas._dono!==chavePastasAbertas()){
+    let lista=[];
+    try{lista=JSON.parse(localStorage.getItem(chavePastasAbertas())||'[]');}catch(e){lista=[];}
+    state.pastasAbertas=new Set(Array.isArray(lista)?lista:[]);
+    state.pastasAbertas._dono=chavePastasAbertas();
+  }
+  return state.pastasAbertas;
+}
+function guardarPastasAbertas(){try{localStorage.setItem(chavePastasAbertas(),JSON.stringify(Array.from(pastasAbertas())));}catch(e){}}
+function abrirPastaComPais(id){
+  const abertas=pastasAbertas();let atual=id,guarda=0;
+  while(atual&&guarda++<200){abertas.add(atual);const p=(state.pastas||[]).find(x=>x.id===atual);atual=p?p.pai_id:null;}
+  guardarPastasAbertas();
+}
+async function carregarPastas(){
+  if(!perms.documentosVisualizar||!state.pessoaRow)return [];
+  try{
+    const r=await _sb.from('pastas_cliente').select('id,pai_id,nome,ordem').eq('pessoa_id',state.pessoaRow.id).eq('ativo',true).order('ordem',{ascending:true}).order('nome',{ascending:true});
+    if(r.error)throw r.error;
+    return r.data||[];
+  }catch(erro){
+    if(!/pastas_cliente/.test(String(erro&&erro.message)))showToast('Não foi possível carregar as pastas do cliente.','error');
+    return [];
+  }
+}
+async function recarregarPastasDocs(){
+  const proc=getActiveProcess();
+  const r=await Promise.all([carregarPastas(),proc?carregarDocumentos(proc.id):Promise.resolve([])]);
+  state.pastas=r[0];
+  if(proc){
+    /* os documentos são do cliente: vale para todos os processos dele */
+    (state.processos||[]).forEach(p=>{if(p.carregado)p.documentos=r[1];});
+    proc.documentos=r[1];
+  }
+  renderDocuments();
+}
+function caminhoPasta(id){
+  const nomes=[];let atual=id,guarda=0;
+  while(atual&&guarda++<200){const p=(state.pastas||[]).find(x=>x.id===atual);if(!p)break;nomes.unshift(p.nome);atual=p.pai_id;}
+  return nomes.join(' / ');
+}
+function opcoesDestinoPasta(excluirId,selecionado,rotuloRaiz){
+  const pastas=state.pastas||[];
+  const filhos={};pastas.forEach(p=>{const k=p.pai_id||'';(filhos[k]=filhos[k]||[]).push(p);});
+  let html='<option value="">'+esc(rotuloRaiz||'(nenhuma: fica solta, no primeiro nível)')+'</option>';
+  (function andar(pai,nivel){
+    (filhos[pai]||[]).forEach(p=>{
+      if(p.id===excluirId)return;
+      html+='<option value="'+esc(p.id)+'"'+(p.id===selecionado?' selected':'')+'>'+'   '.repeat(nivel)+(nivel?'└ ':'')+esc(p.nome)+'</option>';
+      andar(p.id,nivel+1);
+    });
+  })('',0);
+  return html;
+}
+function abrirModalPasta(modo,dados){
+  if(!perms.documentosCriar){showToast('Você não possui permissão para organizar pastas.','warning');return;}
+  state.pastaModal={modo:modo,dados:dados||{}};
+  const titulo=document.getElementById('pastaModalTitulo'),sub=document.getElementById('pastaModalSub');
+  const campoNome=document.getElementById('pastaCampoNome'),campoDestino=document.getElementById('pastaCampoDestino');
+  const nome=document.getElementById('pastaNome'),destino=document.getElementById('pastaDestino'),rotulo=document.getElementById('pastaDestinoRotulo');
+  campoNome.style.display=(modo==='nova'||modo==='renomear')?'':'none';
+  campoDestino.style.display=(modo==='nova'||modo==='moverPasta'||modo==='moverDoc')?'':'none';
+  if(modo==='nova'){
+    titulo.textContent=dados.paiId?'Nova subpasta':'Nova pasta';
+    sub.textContent=dados.paiId?'Dentro de: '+caminhoPasta(dados.paiId):'Pasta do cliente. Dentro dela você pode criar outras, sem limite.';
+    nome.value='';rotulo.textContent='Colocar dentro de';
+    destino.innerHTML=opcoesDestinoPasta(null,dados.paiId||'');
+  }else if(modo==='renomear'){
+    const p=(state.pastas||[]).find(x=>x.id===dados.pastaId);
+    titulo.textContent='Renomear pasta';sub.textContent=caminhoPasta(dados.pastaId);nome.value=p?p.nome:'';
+  }else if(modo==='moverPasta'){
+    const p=(state.pastas||[]).find(x=>x.id===dados.pastaId);
+    titulo.textContent='Mover pasta';sub.textContent=p?p.nome:'';rotulo.textContent='Levar para dentro de';
+    destino.innerHTML=opcoesDestinoPasta(dados.pastaId,p?p.pai_id||'':'');
+  }else if(modo==='moverDoc'){
+    const proc=getActiveProcess();const d=proc&&(proc.documentos||[]).find(x=>x.id===dados.docId);
+    titulo.textContent='Mover documento';sub.textContent=d?d.nome:'';rotulo.textContent='Levar para a pasta';
+    destino.innerHTML=opcoesDestinoPasta(null,d?d.pastaId||'':'','(fora das pastas)');
+  }
+  openModal('pastaModal');
+  setTimeout(()=>{(campoNome.style.display===''?nome:destino).focus();},60);
+}
+async function salvarModalPasta(){
+  const cfg=state.pastaModal;if(!cfg)return;
+  const botao=document.getElementById('pastaSalvar');
+  const nome=document.getElementById('pastaNome').value.trim();
+  const destino=document.getElementById('pastaDestino').value||null;
+  if((cfg.modo==='nova'||cfg.modo==='renomear')&&!nome){showToast('Digite o nome da pasta.','warning');document.getElementById('pastaNome').focus();return;}
+  botao.disabled=true;
+  let ok=false;
+  if(cfg.modo==='nova')ok=await criarPasta(nome,destino);
+  else if(cfg.modo==='renomear')ok=await alterarPasta(cfg.dados.pastaId,{nome:nome},'Pasta renomeada.');
+  else if(cfg.modo==='moverPasta')ok=await moverPasta(cfg.dados.pastaId,destino);
+  else if(cfg.modo==='moverDoc')ok=await moverDocumento(cfg.dados.docId,destino);
+  botao.disabled=false;
+  if(ok){closeModal('pastaModal');state.pastaModal=null;}
+}
+async function criarPasta(nome,paiId,silencioso){
+  if(!state.pessoaRow){showToast('Cliente não identificado.','error');return false;}
+  const irmas=(state.pastas||[]).filter(p=>(p.pai_id||null)===(paiId||null));
+  const ordem=irmas.reduce((m,p)=>Math.max(m,Number(p.ordem)||0),0)+1;
+  const r=await _sb.from('pastas_cliente').insert({pessoa_id:state.pessoaRow.id,pai_id:paiId||null,nome:nome,ordem:ordem});
+  if(r.error){showToast('Não foi possível criar a pasta: '+(r.error.message||'tente novamente.'),'error');return false;}
+  if(paiId)abrirPastaComPais(paiId);
+  if(!silencioso){await recarregarPastasDocs();showToast('Pasta criada.','success');}
+  return true;
+}
+async function alterarPasta(id,campos,mensagem){
+  const r=await _sb.from('pastas_cliente').update(campos).eq('id',id);
+  if(r.error){showToast('Não foi possível alterar a pasta: '+(r.error.message||'tente novamente.'),'error');return false;}
+  await recarregarPastasDocs();
+  if(mensagem)showToast(mensagem,'success');
+  return true;
+}
+async function moverPasta(id,paiId){
+  if(id===paiId)return false;
+  const p=(state.pastas||[]).find(x=>x.id===id);
+  if(p&&(p.pai_id||null)===(paiId||null))return true;
+  if(paiId)abrirPastaComPais(paiId);
+  return alterarPasta(id,{pai_id:paiId||null},'Pasta movida.');
+}
+async function moverDocumento(docId,pastaId){
+  const proc=getActiveProcess();const d=proc&&(proc.documentos||[]).find(x=>x.id===docId);
+  if(d&&(d.pastaId||null)===(pastaId||null))return true;
+  const r=await _sb.rpc('documento_mover',{p_documento:docId,p_pasta:pastaId||null});
+  if(r.error){showToast('Não foi possível mover o documento: '+(r.error.message||'tente novamente.'),'error');return false;}
+  if(pastaId)abrirPastaComPais(pastaId);
+  await recarregarPastasDocs();
+  showToast(pastaId?'Documento movido para '+caminhoPasta(pastaId)+'.':'Documento tirado das pastas.','success');
+  return true;
+}
+async function removerPasta(id){
+  const p=(state.pastas||[]).find(x=>x.id===id);if(!p)return;
+  const sim=await sagaConfirmar('Remover pasta','A pasta "'+p.nome+'" sai da lista. O que estiver dentro dela (subpastas e documentos) não é apagado: sobe para '+(p.pai_id?'"'+caminhoPasta(p.pai_id)+'"':'o primeiro nível')+'.','Remover pasta');
+  if(!sim)return;
+  const r=await _sb.rpc('pasta_cliente_remover',{p_pasta:id});
+  if(r.error){showToast('Não foi possível remover a pasta: '+(r.error.message||'tente novamente.'),'error');return;}
+  await recarregarPastasDocs();
+  showToast('Pasta removida.','success');
+}
+async function reordenarPasta(id,passo){
+  const p=(state.pastas||[]).find(x=>x.id===id);if(!p)return;
+  const irmas=(state.pastas||[]).filter(x=>(x.pai_id||null)===(p.pai_id||null));
+  const i=irmas.findIndex(x=>x.id===id),j=i+passo;
+  if(j<0||j>=irmas.length)return;
+  const lista=irmas.slice();lista.splice(i,1);lista.splice(j,0,p);
+  const resultados=await Promise.all(lista.map((x,k)=>Number(x.ordem)===k+1?null:_sb.from('pastas_cliente').update({ordem:k+1}).eq('id',x.id)));
+  const erro=resultados.find(x=>x&&x.error);
+  if(erro)showToast('Não foi possível reordenar: '+(erro.error.message||''),'error');
+  await recarregarPastasDocs();
+}
+async function criarPastasSugeridas(){
+  for(const nome of PASTAS_SUGERIDAS){if(!await criarPasta(nome,null,true))break;}
+  await recarregarPastasDocs();
+  showToast('Pastas criadas. Renomeie, remova ou crie outras como quiser.','success');
+}
+function fecharMenuPasta(){const m=document.getElementById('pastaMenuPop');if(m)m.remove();}
+function abrirMenuPasta(botao,id){
+  fecharMenuPasta();
+  const p=(state.pastas||[]).find(x=>x.id===id);if(!p)return;
+  const irmas=(state.pastas||[]).filter(x=>(x.pai_id||null)===(p.pai_id||null));
+  const pos=irmas.findIndex(x=>x.id===id);
+  const itens=[];
+  if(perms.documentosCriar){
+    itens.push(['anexar','Anexar documento aqui']);
+    itens.push(['sub','Nova subpasta']);
+    itens.push(['renomear','Renomear']);
+    itens.push(['mover','Mover para...']);
+    if(pos>0)itens.push(['subir','Subir na ordem']);
+    if(pos<irmas.length-1)itens.push(['descer','Descer na ordem']);
+    itens.push(['remover','Remover pasta','perigo']);
+  }
+  if(!itens.length)return;
+  const menu=document.createElement('div');
+  menu.id='pastaMenuPop';menu.className='pasta-menu-pop';menu.setAttribute('role','menu');
+  menu.innerHTML=itens.map(i=>'<button type="button" role="menuitem" data-acao="'+i[0]+'"'+(i[2]?' class="'+i[2]+'"':'')+'>'+esc(i[1])+'</button>').join('');
+  document.body.appendChild(menu);
+  const r=botao.getBoundingClientRect();
+  const largura=menu.offsetWidth,altura=menu.offsetHeight;
+  menu.style.left=Math.max(8,Math.min(window.innerWidth-largura-8,r.right-largura))+'px';
+  menu.style.top=(r.bottom+altura+8>window.innerHeight?Math.max(8,r.top-altura-4):r.bottom+4)+'px';
+  menu.addEventListener('click',ev=>{
+    const b=ev.target.closest('[data-acao]');if(!b)return;
+    fecharMenuPasta();
+    const acao=b.dataset.acao;
+    if(acao==='anexar'){state.pastaAlvoUpload=id;document.getElementById('documentInput').click();}
+    else if(acao==='sub')abrirModalPasta('nova',{paiId:id});
+    else if(acao==='renomear')abrirModalPasta('renomear',{pastaId:id});
+    else if(acao==='mover')abrirModalPasta('moverPasta',{pastaId:id});
+    else if(acao==='subir')reordenarPasta(id,-1);
+    else if(acao==='descer')reordenarPasta(id,1);
+    else if(acao==='remover')removerPasta(id);
+  });
+  setTimeout(()=>document.addEventListener('click',fecharMenuPasta,{once:true}),0);
+}
+function htmlDocumentoArvore(doc,process){
+  const versao=doc.versao&&Number(doc.versao)>1?' , versão '+doc.versao:'';
+  const outroProcesso=doc.processoId&&doc.processoId!==process.id?(state.processos||[]).find(p=>p.id===doc.processoId):null;
+  const meta=doc.meta+versao+(outroProcesso?' · outro processo'+(outroProcesso.numero?' ('+outroProcesso.numero+')':''):'');
+  const botaoBaixar=perms.documentosVisualizar?'<button class="doc-action" data-doc-download="'+esc(doc.id)+'" aria-label="Baixar documento" title="Baixar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>':'';
+  const botaoMover=perms.documentosCriar?'<button class="doc-action" data-doc-mover="'+esc(doc.id)+'" aria-label="Mover para outra pasta" title="Mover para outra pasta"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5"/><path d="M10 14h6m-2-2l2 2-2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>':'';
+  const botaoExcluir=perms.documentosExcluir?'<button class="doc-action" data-doc-remove="'+esc(doc.id)+'" aria-label="Remover documento" title="Remover"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>':'';
+  const comentariosDoc=(process.timeline||[]).filter(entry=>entry.tipo==='comentario'&&entry.documentoId===doc.id).slice().sort((a,b)=>new Date(a.ts)-new Date(b.ts));
+  const listaComentarios=comentariosDoc.length?comentariosDoc.map(comment=>'<div class="doc-comentario-mini"><strong>'+esc(comment.autor)+':</strong> '+highlightMencoes(comment.textoPuro)+'</div>').join(''):'<div class="doc-comentario-mini">Nenhum comentário neste documento.</div>';
+  const caixaEnvio=perms.comentariosCriar?'<div class="doc-comentario-envio"><input type="text" id="docCommentInput-'+esc(doc.id)+'" data-doc-comment-input="'+esc(doc.id)+'" placeholder="Comentar neste documento..." autocomplete="off"><button type="button" class="btn-doc-comentario" data-doc-comment-send="'+esc(doc.id)+'">Enviar</button></div>':'';
+  const threadAberta=state.docThreadsAbertos.has(doc.id)?' aberto':'';
+  return '<div class="documento-group"><div class="documento-item"'+(perms.documentosCriar?' draggable="true" data-doc-drag="'+esc(doc.id)+'"':'')+'><div class="icone-documento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg></div><div class="documento-info"><div class="documento-nome" title="'+esc(doc.nome)+'">'+esc(doc.nome)+'</div><div class="documento-meta">'+esc(meta)+'</div></div><div class="documento-acoes"><button class="doc-action" data-doc-thread="'+esc(doc.id)+'" aria-label="Abrir comentários do documento" title="Comentários"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg></button>'+botaoBaixar+botaoMover+botaoExcluir+'</div></div><div class="doc-comentarios-wrap'+threadAberta+'" id="docThread-'+esc(doc.id)+'">'+listaComentarios+caixaEnvio+'</div></div>';
+}
 function renderDocuments(){
   const process=getActiveProcess();
   const root=document.getElementById('documentList');
   const botaoAnexar=document.getElementById('btnAnexarDocumento');
+  const botaoPasta=document.getElementById('btnNovaPasta');
   if(botaoAnexar){
     botaoAnexar.style.display=perms.documentosCriar?'':'none';
     botaoAnexar.disabled=!perms.documentosCriar;
   }
+  if(botaoPasta)botaoPasta.style.display=perms.documentosCriar?'':'none';
   if(!process||!root)return;
-  if(!process.documentos.length){
-    root.innerHTML=emptyState('Nenhum documento neste processo','Anexe documentos específicos deste processo para iniciar o histórico.');
+  const docs=process.documentos||[];
+  const pastas=state.pastas||[];
+  const ids=new Set(pastas.map(p=>p.id));
+  const filhos={},docsPor={};
+  pastas.forEach(p=>{const k=p.pai_id&&ids.has(p.pai_id)?p.pai_id:'';(filhos[k]=filhos[k]||[]).push(p);});
+  docs.forEach(d=>{const k=d.pastaId&&ids.has(d.pastaId)?d.pastaId:'';(docsPor[k]=docsPor[k]||[]).push(d);});
+  const totais={};
+  const total=id=>{if(totais[id]!=null)return totais[id];return totais[id]=(docsPor[id]||[]).length+(filhos[id]||[]).reduce((s,f)=>s+total(f.id),0);};
+  const abertas=pastasAbertas();
+  const podeOrganizar=perms.documentosCriar;
+  const htmlPasta=p=>{
+    const aberta=abertas.has(p.id);
+    const dentro=(filhos[p.id]||[]).map(htmlPasta).join('')+(docsPor[p.id]||[]).map(d=>htmlDocumentoArvore(d,process)).join('');
+    return '<div class="pasta-no'+(aberta?' aberta':'')+'" data-pasta-no="'+esc(p.id)+'">'
+      +'<div class="pasta-linha" role="button" tabindex="0" aria-expanded="'+aberta+'" data-pasta-toggle="'+esc(p.id)+'" data-drop-pasta="'+esc(p.id)+'"'+(podeOrganizar?' draggable="true" data-pasta-drag="'+esc(p.id)+'"':'')+'>'
+      +'<span class="pasta-seta">'+SVG_SETA+'</span><span class="pasta-icone">'+SVG_PASTA+'</span><span class="pasta-nome" title="'+esc(p.nome)+'">'+esc(p.nome)+'</span><span class="pasta-qtd" title="Documentos dentro">'+total(p.id)+'</span>'
+      +(podeOrganizar?'<button type="button" class="pasta-menu-btn" data-pasta-menu="'+esc(p.id)+'" aria-label="Opções da pasta" title="Opções da pasta">⋯</button>':'')
+      +'</div><div class="pasta-filhos">'+(dentro||'<div class="pasta-vazia">Pasta vazia'+(podeOrganizar?': arraste documentos para cá ou use ⋯ › Anexar documento aqui.':'.')+'</div>')+'</div></div>';
+  };
+  if(!pastas.length&&!docs.length){
+    root.innerHTML=emptyState('Nenhuma pasta ou documento','Crie pastas para organizar os documentos do cliente.')+(podeOrganizar?'<button type="button" class="pasta-sugeridas" id="btnPastasSugeridas">Criar pastas sugeridas ('+esc(PASTAS_SUGERIDAS.join(', '))+')</button>':'');
+    const b=document.getElementById('btnPastasSugeridas');if(b)b.addEventListener('click',()=>{b.disabled=true;criarPastasSugeridas();});
     return;
   }
-  root.innerHTML=process.documentos.map(doc=>{
-    const versao=doc.versao&&Number(doc.versao)>1?' , versão '+doc.versao:'';
-    const botaoBaixar=perms.documentosVisualizar?'<button class="doc-action" data-doc-download="'+esc(doc.id)+'" aria-label="Baixar documento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>':'';
-    const botaoExcluir=perms.documentosExcluir?'<button class="doc-action" data-doc-remove="'+esc(doc.id)+'" aria-label="Remover documento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>':'';
-    const comentariosDoc=(process.timeline||[]).filter(entry=>entry.tipo==='comentario'&&entry.documentoId===doc.id).slice().sort((a,b)=>new Date(a.ts)-new Date(b.ts));
-    const listaComentarios=comentariosDoc.length?comentariosDoc.map(comment=>'<div class="doc-comentario-mini"><strong>'+esc(comment.autor)+':</strong> '+highlightMencoes(comment.textoPuro)+'</div>').join(''):'<div class="doc-comentario-mini">Nenhum comentário neste documento.</div>';
-    const caixaEnvio=perms.comentariosCriar?'<div class="doc-comentario-envio"><input type="text" id="docCommentInput-'+esc(doc.id)+'" data-doc-comment-input="'+esc(doc.id)+'" placeholder="Comentar neste documento..." autocomplete="off"><button type="button" class="btn-doc-comentario" data-doc-comment-send="'+esc(doc.id)+'">Enviar</button></div>':'';
-    const threadAberta=state.docThreadsAbertos.has(doc.id)?' aberto':'';
-    return '<div class="documento-group"><div class="documento-item"><div class="icone-documento" style="color:var(--'+(doc.cor==='success'?'success':'info')+')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg></div><div class="documento-info"><div class="documento-nome">'+esc(doc.nome)+'</div><div class="documento-meta">'+esc(doc.meta)+versao+'</div></div><div class="documento-acoes"><button class="doc-action" data-doc-thread="'+esc(doc.id)+'" aria-label="Abrir comentários do documento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012 2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg></button>'+botaoBaixar+botaoExcluir+'</div></div><div class="doc-comentarios-wrap'+threadAberta+'" id="docThread-'+esc(doc.id)+'">'+listaComentarios+caixaEnvio+'</div></div>';
-  }).join('');
+  const soltos=docsPor['']||[];
+  root.innerHTML='<div class="pasta-raiz" data-drop-pasta="">'+(filhos['']||[]).map(htmlPasta).join('')
+    +(soltos.length?'<div class="pasta-soltos-rotulo">'+(pastas.length?'Fora das pastas':'Documentos')+'</div>'+soltos.map(d=>htmlDocumentoArvore(d,process)).join(''):'')+(podeOrganizar&&pastas.length?'<div class="pasta-solta-zona" data-drop-pasta="">Solte aqui para deixar fora das pastas</div>':'')+'</div>';
+  root.querySelectorAll('[data-pasta-toggle]').forEach(linha=>{
+    const alternar=()=>{
+      const no=linha.parentElement;const id=linha.dataset.pastaToggle;
+      const abrir=!no.classList.contains('aberta');
+      no.classList.toggle('aberta',abrir);linha.setAttribute('aria-expanded',String(abrir));
+      if(abrir)abertas.add(id);else abertas.delete(id);
+      guardarPastasAbertas();
+    };
+    linha.addEventListener('click',ev=>{if(ev.target.closest('[data-pasta-menu]'))return;alternar();});
+    linha.addEventListener('keydown',ev=>{if(ev.target!==linha)return;if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();alternar();}});
+  });
+  root.querySelectorAll('[data-pasta-menu]').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();abrirMenuPasta(b,b.dataset.pastaMenu);}));
   root.querySelectorAll('[data-doc-thread]').forEach(button=>button.addEventListener('click',()=>{
     const docId=button.dataset.docThread;
     const thread=document.getElementById('docThread-'+docId);
@@ -1129,6 +1367,41 @@ function renderDocuments(){
   }));
   root.querySelectorAll('[data-doc-download]').forEach(button=>button.addEventListener('click',()=>baixarDocumento(button.dataset.docDownload)));
   root.querySelectorAll('[data-doc-remove]').forEach(button=>button.addEventListener('click',()=>removerDocumento(button.dataset.docRemove)));
+  root.querySelectorAll('[data-doc-mover]').forEach(button=>button.addEventListener('click',()=>abrirModalPasta('moverDoc',{docId:button.dataset.docMover})));
+  if(!podeOrganizar)return;
+  /* arrastar: documento ou pasta para dentro de outra pasta (ou para fora, no fundo da lista); arquivos do computador também */
+  root.querySelectorAll('[data-doc-drag],[data-pasta-drag]').forEach(el=>{
+    el.addEventListener('dragstart',ev=>{
+      ev.stopPropagation();
+      const valor=el.dataset.docDrag?'doc:'+el.dataset.docDrag:'pasta:'+el.dataset.pastaDrag;
+      ev.dataTransfer.setData('text/plain',valor);ev.dataTransfer.effectAllowed='move';
+      state.arrastoPasta=valor;
+      el.classList.add('arrastando');
+      setTimeout(()=>root.classList.add('em-arrasto'),0);
+    });
+    el.addEventListener('dragend',()=>{el.classList.remove('arrastando');root.classList.remove('em-arrasto');state.arrastoPasta=null;root.querySelectorAll('.alvo').forEach(x=>x.classList.remove('alvo'));});
+  });
+  root.querySelectorAll('[data-drop-pasta]').forEach(alvo=>{
+    alvo.addEventListener('dragover',ev=>{
+      const temArquivo=ev.dataTransfer&&Array.from(ev.dataTransfer.types||[]).includes('Files');
+      if(!state.arrastoPasta&&!temArquivo)return;
+      ev.preventDefault();ev.stopPropagation();
+      root.querySelectorAll('.alvo').forEach(x=>{if(x!==alvo)x.classList.remove('alvo');});
+      alvo.classList.add('alvo');
+    });
+    alvo.addEventListener('dragleave',ev=>{if(!alvo.contains(ev.relatedTarget))alvo.classList.remove('alvo');});
+    alvo.addEventListener('drop',async ev=>{
+      ev.preventDefault();ev.stopPropagation();
+      alvo.classList.remove('alvo');
+      const destino=alvo.dataset.dropPasta||null;
+      const arquivos=Array.from((ev.dataTransfer&&ev.dataTransfer.files)||[]);
+      if(arquivos.length){state.pastaAlvoUpload=destino;for(const f of arquivos)await enviarDocumento(f);state.pastaAlvoUpload=null;return;}
+      const valor=(ev.dataTransfer&&ev.dataTransfer.getData('text/plain'))||state.arrastoPasta||'';
+      state.arrastoPasta=null;
+      if(valor.indexOf('doc:')===0)await moverDocumento(valor.slice(4),destino);
+      else if(valor.indexOf('pasta:')===0){const id=valor.slice(6);if(id!==destino)await moverPasta(id,destino);}
+    });
+  });
 }
 function renderTimeline(){
   const process=getActiveProcess();
@@ -1541,7 +1814,7 @@ function voltarTelaAnterior(){
   if(veioDoSistema&&history.length>1)history.back();
   else window.location.href='lista_processos_padrao_metalico.html';
 }
-function setupInteractions(){document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.querySelectorAll('[data-checklist-template]').forEach(button=>button.addEventListener('click',()=>addChecklistFromTemplate(button.dataset.checklistTemplate)));document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('documentInput').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;await enviarDocumento(file);event.target.value='';});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirModalTarefa(null));document.getElementById('btnVerDocumentos').addEventListener('click',()=>document.getElementById('secaoDocumentos').scrollIntoView({behavior:'smooth',block:'start'}));document.getElementById('btnVerFinanceiro').addEventListener('click',()=>showToast('A visualização financeira será aberta no módulo Financeiro.','info'));document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
+function setupInteractions(){document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.querySelectorAll('[data-checklist-template]').forEach(button=>button.addEventListener('click',()=>addChecklistFromTemplate(button.dataset.checklistTemplate)));document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('btnAnexarDocumento').addEventListener('click',()=>{state.pastaAlvoUpload=null;},true);document.getElementById('documentInput').addEventListener('change',async event=>{const arquivos=Array.from(event.target.files||[]);for(const file of arquivos)await enviarDocumento(file);event.target.value='';state.pastaAlvoUpload=null;});document.getElementById('btnNovaPasta').addEventListener('click',()=>abrirModalPasta('nova',{paiId:null}));document.getElementById('pastaSalvar').addEventListener('click',salvarModalPasta);document.getElementById('pastaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();salvarModalPasta();}});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirModalTarefa(null));document.getElementById('btnVerDocumentos').addEventListener('click',()=>document.getElementById('secaoDocumentos').scrollIntoView({behavior:'smooth',block:'start'}));document.getElementById('btnVerFinanceiro').addEventListener('click',()=>showToast('A visualização financeira será aberta no módulo Financeiro.','info'));document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
 
 
 /* Localização, importação externa e teses globais */
@@ -2278,8 +2551,8 @@ async function carregarDocumentos(processoId){
   if(!processoId||!perms.documentosVisualizar)return [];
   try{
     const r=await _sb.from('documentos')
-      .select('id,processo_id,pessoa_id,usuario_id,nome_arquivo,caminho_storage,tipo_documento,tamanho_bytes,versao,documento_anterior_id,visivel_portal_cliente,excluido_logico,excluido_por_id,excluido_em,criado_em')
-      .eq('processo_id',processoId)
+      .select('id,processo_id,pessoa_id,pasta_id,usuario_id,nome_arquivo,caminho_storage,tipo_documento,tamanho_bytes,versao,documento_anterior_id,visivel_portal_cliente,excluido_logico,excluido_por_id,excluido_em,criado_em')
+      .eq(state.pessoaRow?'pessoa_id':'processo_id',state.pessoaRow?state.pessoaRow.id:processoId)
       .eq('excluido_logico',false)
       .order('criado_em',{ascending:false});
     if(r.error)throw r.error;
@@ -2300,6 +2573,8 @@ async function carregarDocumentos(processoId){
       tamanhoBytes:documento.tamanho_bytes||null,
       versao:documento.versao||1,
       documentoAnteriorId:documento.documento_anterior_id||null,
+      pastaId:documento.pasta_id||null,
+      processoId:documento.processo_id||null,
       criadoEm:documento.criado_em
     }));
   }catch(erro){
@@ -2494,6 +2769,7 @@ async function carregarDetalhesProcesso(pid){
     processo.intimacoes=dados[4];
     processo.timeline=dados[0].concat(dados[5]).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
     processo.documentos=dados[1];
+    state.pastas=await carregarPastas();
     processo.tarefas=dados[2];
     processo.compromissos=dados[3].lista;
     processo.retorno=dados[3].retorno;
@@ -2762,6 +3038,7 @@ async function enviarDocumento(file){
       caminho_storage:caminhoStorage,
       tipo_documento:tipoDocumento,
       tamanho_bytes:file.size,
+      pasta_id:state.pastaAlvoUpload||null,
       visivel_portal_cliente:false,
       excluido_logico:false
     });
@@ -2769,9 +3046,9 @@ async function enviarDocumento(file){
       await _sb.storage.from(BUCKET_DOCUMENTOS_CLIENTES).remove([caminhoStorage]);
       throw insercao.error;
     }
-    proc.documentos=await carregarDocumentos(proc.id);
-    renderDocuments();
-    showToast('Documento anexado a este processo.','success');
+    if(state.pastaAlvoUpload)abrirPastaComPais(state.pastaAlvoUpload);
+    await recarregarPastasDocs();
+    showToast('Documento anexado'+(state.pastaAlvoUpload?' na pasta.':'.'),'success');
     return true;
   }catch(erro){
     showToast('Não foi possível anexar o documento: '+(erro.message||'erro desconhecido'),'error');
@@ -2816,11 +3093,10 @@ async function removerDocumento(docId){
       excluido_logico:true,
       excluido_por_id:state.usuario.internoId,
       excluido_em:new Date().toISOString()
-    }).eq('id',docId).eq('processo_id',proc.id);
+    }).eq('id',docId).eq(state.pessoaRow?'pessoa_id':'processo_id',state.pessoaRow?state.pessoaRow.id:proc.id);
     if(r.error)throw r.error;
-    proc.documentos=await carregarDocumentos(proc.id);
-    renderDocuments();
-    showToast('Documento removido deste processo.','success');
+    await recarregarPastasDocs();
+    showToast('Documento removido.','success');
     return true;
   }catch(erro){
     showToast('Não foi possível remover o documento: '+(erro.message||'erro desconhecido'),'error');
