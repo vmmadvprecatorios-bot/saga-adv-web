@@ -129,6 +129,7 @@ window.SagaPlanilha=(function(){
 
   // ---------- tabela ----------
   function renderTabela(lista){
+    renderAbas();
     var cs=visiveis(),thead=document.querySelector('#listaView table thead'),tb=document.getElementById('tbodyPrincipal');
     if(!thead||!tb)return;
     var tabela=thead.parentNode;tabela.classList.add('sp-tabela');
@@ -368,6 +369,7 @@ window.SagaPlanilha=(function(){
 
   // ---------- barra (protocolados, colunas, filtros ativos) ----------
   function renderBarra(){
+    renderAbas();
     var b=document.getElementById('spBarra');if(!b)return;
     var n=Object.keys(filtros).length+(ordem?1:0);
     var capt=FASE_FIXA==='captacao';
@@ -384,6 +386,24 @@ window.SagaPlanilha=(function(){
     var bi=b.querySelector('[data-importar]');if(bi)bi.onclick=abrirImportar;
     var bd=b.querySelector('[data-distribuir]');if(bd)bd.onclick=abrirDistribuir;
     var l=b.querySelector('[data-limpar]');if(l)l.onclick=function(){filtros={};ordem=null;aplicar();};
+  }
+  // ---------- abas por área do direito, botões das teses da área e menu de tipo de ação ----------
+  function renderAbas(){
+    var w=document.getElementById('spAbas');if(!w||typeof catalogoTeses==='undefined')return;
+    var areas=[];try{areas=(catalogoTeses.todasAreas()||[]).filter(function(a){return a.ativo!==false;});}catch(e){}
+    var atual=state.filtroArea,teses=[];
+    try{teses=(catalogoTeses.todasTeses()||[]).filter(function(t){return t.ativo!==false&&(atual==='*'?false:(t.area_direito_id||null)===(atual||null));});}catch(e){}
+    var teseAtual=state.filtroTese&&state.filtroTese.id;
+    var tipo=cols.find(function(c){return c.nome==='Tipo de ação'&&!c.campo_sistema;}),tipoSel=tipo&&filtros[tipo.id]&&filtros[tipo.id].size===1?Array.from(filtros[tipo.id])[0]:'';
+    w.innerHTML='<div class="sp-abas" role="tablist" aria-label="Área do direito">'+
+      [{id:'*',nome:'Todas as áreas'}].concat(areas).concat([{id:null,nome:'Sem área'}]).map(function(a){var at=(a.id===atual)||(a.id===null&&atual===null);return '<button type="button" role="tab" aria-selected="'+at+'" class="sp-aba'+(at?' ativo':'')+'" data-area="'+(a.id===null?'__sem':h(a.id))+'">'+h(a.nome)+'</button>';}).join('')+'</div>'+
+      '<div class="sp-sub">'+(atual!=='*'&&teses.length?'<div class="sp-pills sp-teses" role="group" aria-label="Tese"><button type="button" class="sp-pill'+(!teseAtual?' ativo':'')+'" data-tese="">Todas as teses</button>'+teses.map(function(t){return '<button type="button" class="sp-pill'+(teseAtual===t.id?' ativo':'')+'" data-tese="'+h(t.id)+'">'+h(t.nome)+'</button>';}).join('')+'</div>':'')+
+      (tipo?'<label class="sp-tipo">Tipo de ação <select data-tipo><option value="">Todos</option>'+opcoesDaColuna(tipo).map(function(o){return '<option value="'+h(o.id)+'"'+(String(o.id)===String(tipoSel)?' selected':'')+'>'+h(o.nome)+'</option>';}).join('')+'</select></label>':'')+'</div>';
+    w.querySelectorAll('[data-area]').forEach(function(b){b.onclick=function(){var v=b.dataset.area;state.filtroArea=v==='*'?'*':v==='__sem'?null:v;state.filtroTese=null;
+      try{localStorage.setItem('saga-planilha-area-'+FASE_FIXA,JSON.stringify(state.filtroArea));}catch(e){}
+      if(typeof renderDropdownsTeses==='function')renderDropdownsTeses();renderAbas();aplicarFiltros();};});
+    w.querySelectorAll('[data-tese]').forEach(function(b){b.onclick=function(){state.filtroTese=b.dataset.tese?catalogoTeses.tese(b.dataset.tese):null;if(typeof renderDropdownsTeses==='function')renderDropdownsTeses();renderAbas();aplicarFiltros();};});
+    var st=w.querySelector('[data-tipo]');if(st)st.onchange=function(){if(st.value)filtros[tipo.id]=new Set([st.value]);else delete filtros[tipo.id];aplicar();};
   }
   function limpar(){filtros={};ordem=null;protocolo='';retorno='';minhas=false;guardar();renderBarra();}
 
@@ -411,6 +431,9 @@ window.SagaPlanilha=(function(){
       '.sp-imp-resumo{margin-top:10px;font-size:12.5px}.sp-erro{color:var(--danger,#e5484d)}.sp-alerta{color:var(--warning,#e0a93b)}.sp-imp-erros{font-size:11.5px;color:var(--muted);margin:6px 0 0 18px}.sp-arquivo{cursor:pointer;display:inline-flex;align-items:center}'+
       '.sp-dist-bloco{margin-bottom:12px}.sp-dist-tit{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}.sp-dist-pessoas{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px;max-height:180px;overflow:auto}.sp-bloco{width:64px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:3px 6px;font:inherit}.sp-dist-previa{font-size:12.5px;padding:8px 0}'+
       '.sp-pill-solta{border:1px solid var(--border-soft);background:var(--panel)}'+
+      '#spAbas{margin:0 0 12px}.sp-abas{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border-soft);scrollbar-width:thin}.sp-aba{border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .25s}'+
+      '.sp-aba:hover{color:var(--text)}.sp-aba.ativo{color:var(--gold-light);border-bottom-color:var(--gold)}.sp-aba:active{transform:scale(.97)}'+
+      '.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
       '.sp-modal{max-width:520px;width:94vw}.sp-col-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;max-height:52vh;overflow:auto;margin-top:8px}.sp-ajuda{font-size:11.5px;color:var(--muted);margin:0 0 8px}.sp-col-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
       '#listaView .tabela-scroll{max-height:70vh;overflow:auto}'+
       '.sp-selo{display:inline-flex;align-items:center;gap:6px;font-size:12px}.sp-selo i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}.sp-rapidos{display:flex;gap:2px;flex-wrap:wrap}'+
@@ -440,6 +463,7 @@ window.SagaPlanilha=(function(){
     }catch(e){console.warn('Planilha: sem colunas do banco',e);return false;}
     if(!cols.length)return false;
     lerPreferencias();
+    var abas=document.createElement('div');abas.id='spAbas';var cab=document.querySelector('.barra-filtros');(cab||document.getElementById('listaView')).parentNode.insertBefore(abas,cab||document.getElementById('listaView'));
     var barra=document.createElement('div');barra.id='spBarra';
     var lv=document.getElementById('listaView');lv.parentNode.insertBefore(barra,lv);
     pronta=true;renderBarra();
