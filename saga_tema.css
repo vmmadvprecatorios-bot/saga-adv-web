@@ -223,3 +223,16 @@ th{color:var(--muted)!important;font-weight:600!important}
   /* Topo das telas sem o menu padrao */
   .top-right{gap:6px!important;min-width:0}
 }
+
+/* Celular em pé (06/11): a bolinha "online" ficava por cima do nome VMMADV */
+@media (max-width:520px){
+  #topbarSaga .presence-wrap{display:none!important}
+  #topbarSaga .top-left{flex:0 0 auto!important;min-width:auto!important}
+  #topbarSaga .top-right{flex:1 1 auto;justify-content:flex-end}
+}
+@media (max-width:370px){
+  #topbarSaga .brand-name{font-size:15px!important}
+  #topbarSaga .icon-btn{width:32px!important;height:32px!important}
+  #topbarSaga .brand .crest{display:none!important}
+  #topbarSaga .theme-toggle{width:50px!important}
+}

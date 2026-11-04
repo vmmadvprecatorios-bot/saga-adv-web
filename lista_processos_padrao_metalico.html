@@ -356,6 +356,9 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
   .btn-novo{flex:1 1 100%;order:3;justify-content:center;margin-top:4px;}
   .tabela-scroll table{display:none;}
   .cartoes-mobile{display:flex;}
+  body.sp-planilha .tabela-scroll table{display:table;}
+  body.sp-planilha .cartoes-mobile{display:none;}
+  body.sp-planilha .tabela-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .presenca span{display:none;}
   .presenca{padding:6px;}
   .rodape-tabela{flex-direction:column;align-items:stretch;}
@@ -1495,6 +1498,7 @@ function renderLista(){
   prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
   document.getElementById('estadoVazio').style.display='none';
   if(!state.processos.length){renderEstadoVazio();renderPaginacao();document.getElementById('cartoesMobile').innerHTML='';return;}
+  document.body.classList.toggle('sp-planilha',!!(window.SagaPlanilha&&SagaPlanilha.pronta()));
   var html=window.SagaPlanilha&&SagaPlanilha.pronta()?null:state.processos.map(function(p){
     var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var st=p.status||{};var re=p.responsavel||{};
     var respHtml=re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted);font-size:11px">N/A</span>';
