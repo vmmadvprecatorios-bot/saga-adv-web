@@ -884,7 +884,7 @@ function renderProcessData(){
     if(window.SagaPlanilha){
       const extras=Array.from(grid.querySelectorAll('.campo-dado')).filter(el=>/Honorários|Data de início/.test(el.querySelector('.campo-dado-label')?.textContent||'')).map(el=>el.outerHTML);
       const pid=process.id;
-      SagaPlanilha.fichaDados(grid,pid,{podeEditar:canEdit,podeEditarDados:canEditSensitive,extras:extras,ativo:()=>state.activeProcessId===pid&&!state.isEditingProcess,aoMudarSistema:()=>{if(state.activeProcessId===pid)recarregarProcessoAtivo();}});
+      SagaPlanilha.fichaDados(grid,pid,{podeEditar:canEdit,podeEditarDados:canEditSensitive,extras:extras,usuarioId:currentUser.id,ativo:()=>state.activeProcessId===pid&&!state.isEditingProcess,aoMudarSistema:()=>{if(state.activeProcessId===pid)recarregarProcessoAtivo();}});
     }
     if(canEdit)document.getElementById('btnEditProcess').addEventListener('click',()=>{state.isEditingProcess=true;renderProcessData();});
     if(canDelete)document.getElementById('btnDeleteProcess').addEventListener('click',()=>{const processoAtual=getActiveProcess();if(!processoAtual)return;document.getElementById('deleteProcessLabel').textContent=processoAtual.tese+(processoAtual.cnj&&processoAtual.cnj!=='Não informado'?', CNJ '+processoAtual.cnj:'');openModal('deleteProcessModal');});
