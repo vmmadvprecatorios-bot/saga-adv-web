@@ -132,7 +132,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .linha-tempo{display:flex;flex-direction:column;gap:15px}.item-timeline{display:flex;gap:10px}.item-timeline-corpo{min-width:0;flex:1}.item-timeline-cabecalho{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}.item-timeline-autor{font-size:11.5px;font-weight:700}.item-timeline-data{color:var(--muted);font-size:9.5px}.item-timeline-editado{color:var(--muted);font-size:9px;font-style:italic}.item-timeline-conteudo{padding:10px 12px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:10px;background:color-mix(in srgb,var(--text) 2.5%,transparent);color:var(--text);font-size:11.2px;line-height:1.55}.mencao{padding:1px 5px;border-radius:5px;background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--gold-light);font-weight:700}.item-timeline.evento-sistema .mini-avatar-comentario{background:color-mix(in srgb,var(--info) 12%,transparent);color:var(--info)}.item-timeline.evento-sistema .item-timeline-conteudo{display:flex;align-items:center;gap:8px;border-color:color-mix(in srgb,var(--info) 23%,transparent);background:color-mix(in srgb,var(--info) 6%,transparent);color:var(--muted);font-size:10.5px;font-style:italic}.acoes-item-timeline{display:flex;gap:11px;margin-top:6px}.timeline-action{color:var(--muted);font-size:9.5px;font-weight:600}.timeline-action:hover{color:var(--gold)}
 
 /* Lateral */
-.pastas-titulo{align-items:center}.pastas-titulo>span{flex:1}.pasta-topo-btn{margin-left:auto;padding:4px 9px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:8px;background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0;text-transform:none}.pasta-topo-btn:hover{border-color:var(--gold)}.arvore-pastas{display:flex;flex-direction:column;gap:2px}.pasta-raiz{display:flex;flex-direction:column;gap:2px;min-height:24px;border-radius:10px}.pasta-linha{display:flex;align-items:center;gap:7px;padding:7px 6px 7px 4px;border:1px solid transparent;border-radius:9px;cursor:pointer;user-select:none;transition:background .15s,border-color .15s}.pasta-linha:hover{background:color-mix(in srgb,var(--text) 4%,transparent)}.pasta-seta{width:14px;display:grid;place-items:center;color:var(--muted);transition:transform .22s cubic-bezier(.3,1.4,.5,1)}.pasta-no.aberta>.pasta-linha .pasta-seta{transform:rotate(90deg)}.pasta-icone{display:grid;place-items:center;color:var(--gold)}.pasta-nome{flex:1;min-width:0;overflow:hidden;color:var(--text);font-size:11.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.pasta-qtd{min-width:18px;padding:1px 6px;border-radius:7px;background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--muted);font-size:9.5px;font-weight:700;text-align:center}.pasta-menu-btn{width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;opacity:.55}.pasta-linha:hover .pasta-menu-btn,.pasta-menu-btn:focus-visible{opacity:1}.pasta-menu-btn:hover{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text)}.pasta-filhos{display:none;flex-direction:column;gap:4px;margin-left:9px;padding:3px 0 6px 7px;border-left:1px solid color-mix(in srgb,var(--text) 9%,transparent)}.pasta-no.aberta>.pasta-filhos{display:flex;animation:pastaAbre .26s cubic-bezier(.2,1.2,.4,1)}@keyframes pastaAbre{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}.pasta-vazia{padding:5px 4px;color:var(--muted);font-size:10px;font-style:italic}.pasta-soltos-rotulo{margin:8px 0 2px;color:var(--muted);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.arvore-pastas .documento-item{padding:7px 8px;gap:8px}.arvore-pastas .documento-nome{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;line-height:1.3}.arvore-pastas .icone-documento{width:26px;height:26px;border-radius:7px}.arvore-pastas .documento-acoes{gap:3px}.arvore-pastas .doc-action{width:24px;height:24px;border-radius:7px}.arvore-pastas .doc-comentarios-wrap{margin-left:10px}.arvore-pastas [draggable="true"]{cursor:grab}.arrastando{opacity:.45}.pasta-linha.alvo,.pasta-raiz.alvo{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent)}.pasta-solta-zona{display:none;margin-top:6px;padding:10px;border:1px dashed color-mix(in srgb,var(--text) 22%,transparent);border-radius:10px;color:var(--muted);font-size:10px;text-align:center}.em-arrasto .pasta-solta-zona{display:block}.pasta-solta-zona.alvo{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}.pasta-sugeridas{width:100%;margin-top:6px;padding:9px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:10px;background:color-mix(in srgb,var(--gold) 7%,transparent);color:var(--gold);font-size:10.5px;font-weight:700;cursor:pointer}.pasta-menu-pop{position:fixed;z-index:4000;min-width:190px;padding:5px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--bg));box-shadow:0 16px 36px rgba(0,0,0,.28);animation:pastaMenu .2s cubic-bezier(.2,1.3,.4,1)}@keyframes pastaMenu{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}.pasta-menu-pop button{display:block;width:100%;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:11px;text-align:left;cursor:pointer}.pasta-menu-pop button:hover{background:color-mix(in srgb,var(--text) 6%,transparent)}.pasta-menu-pop button.perigo{color:var(--danger)}.pasta-select{width:100%;outline:0;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text);font:inherit;font-size:11px;padding:10px}.pasta-select:focus{border-color:var(--gold)}.pasta-select option{background:var(--panel-solid,#1c2638);color:var(--text)}@media(max-width:1120px){#secaoDocumentos{grid-column:1/-1}}
+.pastas-titulo{align-items:center}.pastas-titulo>span{flex:1}.pasta-topo-btn{margin-left:auto;padding:4px 9px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:8px;background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--gold);font-size:10px;font-weight:700;cursor:pointer;letter-spacing:0;text-transform:none}.pasta-topo-btn:hover{border-color:var(--gold)}.arvore-pastas{display:flex;flex-direction:column;gap:2px}.pasta-raiz{display:flex;flex-direction:column;gap:2px;min-height:24px;border-radius:10px}.pasta-linha{display:flex;align-items:center;gap:7px;padding:7px 6px 7px 4px;border:1px solid transparent;border-radius:9px;cursor:pointer;user-select:none;transition:background .15s,border-color .15s}.pasta-linha:hover{background:color-mix(in srgb,var(--text) 4%,transparent)}.pasta-seta{width:14px;display:grid;place-items:center;color:var(--muted);transition:transform .22s cubic-bezier(.3,1.4,.5,1)}.pasta-no.aberta>.pasta-linha .pasta-seta{transform:rotate(90deg)}.pasta-icone{display:grid;place-items:center;color:var(--gold)}.pasta-nome{flex:1;min-width:0;overflow:hidden;color:var(--text);font-size:11.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}.pasta-qtd{min-width:18px;padding:1px 6px;border-radius:7px;background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--muted);font-size:9.5px;font-weight:700;text-align:center}.pasta-menu-btn{width:24px;height:24px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:14px;line-height:1;cursor:pointer;opacity:.55}.pasta-linha:hover .pasta-menu-btn,.pasta-menu-btn:focus-visible{opacity:1}.pasta-menu-btn:hover{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text)}.pasta-filhos{display:none;flex-direction:column;gap:4px;margin-left:9px;padding:3px 0 6px 7px;border-left:1px solid color-mix(in srgb,var(--text) 9%,transparent)}.pasta-no.aberta>.pasta-filhos{display:flex;animation:pastaAbre .26s cubic-bezier(.2,1.2,.4,1)}@keyframes pastaAbre{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}.pasta-vazia{padding:5px 4px;color:var(--muted);font-size:10px;font-style:italic}.pasta-soltos-rotulo{margin:8px 0 2px;color:var(--muted);font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.arvore-pastas .documento-item{padding:7px 8px;gap:8px}.arvore-pastas .documento-nome{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;line-height:1.3}.arvore-pastas .icone-documento{width:26px;height:26px;border-radius:7px}.arvore-pastas .documento-acoes{gap:3px}.arvore-pastas .doc-action{width:24px;height:24px;border-radius:7px}.arvore-pastas .doc-comentarios-wrap{margin-left:10px}.arvore-pastas [draggable="true"]{cursor:grab}.arrastando{opacity:.45}.pasta-linha.alvo,.pasta-raiz.alvo{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent)}.pasta-solta-zona{display:none;margin-top:6px;padding:10px;border:1px dashed color-mix(in srgb,var(--text) 22%,transparent);border-radius:10px;color:var(--muted);font-size:10px;text-align:center}.em-arrasto .pasta-solta-zona{display:block}.pasta-solta-zona.alvo{border-color:var(--gold);color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}.arvore-pastas .documento-info[data-doc-ver]{cursor:pointer;border-radius:6px}.arvore-pastas .documento-info[data-doc-ver]:hover .documento-nome{color:var(--gold);text-decoration:underline;text-underline-offset:2px}.doc-visor{position:fixed;inset:0;z-index:4500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(4,7,14,.62);backdrop-filter:blur(5px);opacity:0;transition:opacity .2s}.doc-visor.aberto{opacity:1}.doc-visor-caixa{width:min(1100px,100%);height:min(94vh,100%);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border-soft);border-radius:16px;background:var(--panel-solid,var(--bg));box-shadow:0 30px 70px rgba(0,0,0,.45);transform:scale(.94) translateY(10px);transition:transform .32s cubic-bezier(.2,1.3,.4,1)}.doc-visor.aberto .doc-visor-caixa{transform:none}.doc-visor-topo{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border-soft)}.doc-visor-titulo{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.doc-visor-titulo b{overflow:hidden;color:var(--text);font-size:13px;text-overflow:ellipsis;white-space:nowrap}.doc-visor-titulo span{color:var(--muted);font-size:10.5px}.doc-visor-botoes{display:flex;align-items:center;gap:5px;flex:0 0 auto}.doc-visor-botoes button{height:32px;min-width:32px;display:grid;place-items:center;padding:0 7px;border:1px solid var(--border-soft);border-radius:9px;background:transparent;color:var(--muted);font:inherit;font-size:11px;font-weight:700;cursor:pointer}.doc-visor-botoes button:hover{border-color:var(--gold);color:var(--gold)}.doc-visor-botoes button:active{transform:scale(.94)}.doc-visor-botoes button.fechar:hover{border-color:var(--danger);color:var(--danger)}.doc-visor-sep{width:1px;height:20px;margin:0 3px;background:var(--border-soft)}.doc-visor-corpo{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;background:color-mix(in srgb,var(--text) 6%,transparent)}.doc-visor-paginas{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px;min-width:min-content}.doc-visor-pagina{position:relative;flex:0 0 auto;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.25)}.doc-visor-pagina canvas{display:block}.doc-visor-num{position:absolute;inset:0;display:grid;place-items:center;color:#9aa3b2;font-size:12px}.doc-visor-pagina.pronta .doc-visor-num{display:none}.doc-visor-imagem{min-height:100%;display:grid;place-items:center;padding:12px}.doc-visor-imagem img{max-width:100%;max-height:calc(94vh - 90px);cursor:zoom-in;border-radius:6px;box-shadow:0 2px 12px rgba(0,0,0,.25)}.doc-visor-imagem img.zoom{max-width:none;max-height:none;cursor:zoom-out}.doc-visor-texto{margin:0;padding:16px;color:var(--text);font-size:12px;line-height:1.5;white-space:pre-wrap;word-break:break-word}.doc-visor-msg{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;color:var(--muted);font-size:12.5px;text-align:center;line-height:1.5}.doc-visor-giro{width:26px;height:26px;border:3px solid color-mix(in srgb,var(--gold) 25%,transparent);border-top-color:var(--gold);border-radius:50%;animation:visorGiro .8s linear infinite}@keyframes visorGiro{to{transform:rotate(360deg)}}@media(max-width:760px){.doc-visor{padding:0}.doc-visor-caixa{width:100%;height:100%;border:0;border-radius:0}.doc-visor-topo{flex-wrap:wrap;padding:10px 10px calc(10px) 12px;padding-top:max(10px,env(safe-area-inset-top))}.doc-visor-titulo{flex-basis:100%}.doc-visor-botoes{width:100%;justify-content:flex-end}}
+.pasta-sugeridas{width:100%;margin-top:6px;padding:9px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:10px;background:color-mix(in srgb,var(--gold) 7%,transparent);color:var(--gold);font-size:10.5px;font-weight:700;cursor:pointer}.pasta-menu-pop{position:fixed;z-index:4000;min-width:190px;padding:5px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--bg));box-shadow:0 16px 36px rgba(0,0,0,.28);animation:pastaMenu .2s cubic-bezier(.2,1.3,.4,1)}@keyframes pastaMenu{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}.pasta-menu-pop button{display:block;width:100%;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:11px;text-align:left;cursor:pointer}.pasta-menu-pop button:hover{background:color-mix(in srgb,var(--text) 6%,transparent)}.pasta-menu-pop button.perigo{color:var(--danger)}.pasta-select{width:100%;outline:0;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text);font:inherit;font-size:11px;padding:10px}.pasta-select:focus{border-color:var(--gold)}.pasta-select option{background:var(--panel-solid,#1c2638);color:var(--text)}@media(max-width:1120px){#secaoDocumentos{grid-column:1/-1}}
 .bloco-lateral{margin-bottom:24px}.bloco-retorno-destaque{margin-bottom:24px;padding:14px;border:1px solid color-mix(in srgb,var(--danger) 33%,transparent);border-radius:13px;background:color-mix(in srgb,var(--danger) 8%,transparent)}.bloco-retorno-destaque.atencao{border-color:color-mix(in srgb,var(--warning) 32%,transparent);background:color-mix(in srgb,var(--warning) 8%,transparent)}.bloco-retorno-destaque.tranquilo{border-color:color-mix(in srgb,var(--success) 28%,transparent);background:color-mix(in srgb,var(--success) 7%,transparent)}.retorno-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.retorno-label{display:flex;align-items:center;gap:6px;color:var(--danger);font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase}.atencao .retorno-label{color:var(--warning)}.tranquilo .retorno-label{color:var(--success)}.retorno-data-hora{margin-bottom:3px;color:var(--text);font-size:14px;font-weight:700}.retorno-contagem{color:var(--muted);font-size:10px;line-height:1.45}.btn-editar-retorno{color:var(--gold);font-size:9.5px;font-weight:700;text-decoration:underline dotted}.responsavel-bloco{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:11px;background:color-mix(in srgb,var(--text) 2.4%,transparent)}.responsavel-info{display:flex;flex-direction:column;gap:3px}.responsavel-nome{font-size:11.5px;font-weight:700}.responsavel-cargo{color:var(--muted);font-size:9.5px}
 .tarefa-list{display:flex;flex-direction:column;gap:8px}.item-tarefa-mini{display:flex;align-items:flex-start;gap:9px;padding:10px;border:1px solid color-mix(in srgb,var(--text) 5%,transparent);border-radius:10px;background:color-mix(in srgb,var(--text) 2.4%,transparent);transition:opacity .2s}.item-tarefa-mini.concluida{opacity:.48}.checkbox-tarefa-mini{width:16px;height:16px;display:grid;place-items:center;flex:0 0 auto;margin-top:1px;border:1.5px solid var(--border-soft);border-radius:5px;color:var(--navy-1)}.item-tarefa-mini.concluida .checkbox-tarefa-mini{border-color:var(--success);background:var(--success)}.item-tarefa-mini-texto{flex:1}.item-tarefa-mini-titulo{font-size:11px;font-weight:600;line-height:1.45}.item-tarefa-mini-prazo{margin-top:3px;font-size:9.5px}.item-tarefa-mini-prazo.urgente{color:var(--danger);font-weight:700}.item-tarefa-mini-prazo.normal{color:var(--muted)}.btn-nova-tarefa-mini{display:inline-flex;align-items:center;gap:5px;margin-top:9px;color:var(--gold);font-size:10.5px;font-weight:700}.botoes-acao-lateral{display:flex;flex-direction:column;gap:8px}.btn-acao-lateral{display:flex;align-items:center;gap:9px;padding:10px 11px;border:1px solid var(--border-soft);border-radius:10px;background:color-mix(in srgb,var(--text) 2.4%,transparent);color:var(--muted);font-size:11px;font-weight:600;transition:.18s}.btn-acao-lateral:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 6%,transparent);color:var(--text)}.btn-acao-lateral.whats{border-color:color-mix(in srgb,var(--success) 28%,transparent);color:var(--success)}
 
@@ -1295,6 +1296,7 @@ function htmlDocumentoArvore(doc,process){
   const versao=doc.versao&&Number(doc.versao)>1?' , versão '+doc.versao:'';
   const outroProcesso=doc.processoId&&doc.processoId!==process.id?(state.processos||[]).find(p=>p.id===doc.processoId):null;
   const meta=doc.meta+versao+(outroProcesso?' · outro processo'+(outroProcesso.numero?' ('+outroProcesso.numero+')':''):'');
+  const botaoVer=perms.documentosVisualizar?'<button class="doc-action" data-doc-ver="'+esc(doc.id)+'" aria-label="Ver documento" title="Ver aqui, sem baixar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg></button>':'';
   const botaoBaixar=perms.documentosVisualizar?'<button class="doc-action" data-doc-download="'+esc(doc.id)+'" aria-label="Baixar documento" title="Baixar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>':'';
   const botaoMover=perms.documentosCriar?'<button class="doc-action" data-doc-mover="'+esc(doc.id)+'" aria-label="Mover para outra pasta" title="Mover para outra pasta"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5"/><path d="M10 14h6m-2-2l2 2-2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>':'';
   const botaoExcluir=perms.documentosExcluir?'<button class="doc-action" data-doc-remove="'+esc(doc.id)+'" aria-label="Remover documento" title="Remover"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>':'';
@@ -1302,7 +1304,173 @@ function htmlDocumentoArvore(doc,process){
   const listaComentarios=comentariosDoc.length?comentariosDoc.map(comment=>'<div class="doc-comentario-mini"><strong>'+esc(comment.autor)+':</strong> '+highlightMencoes(comment.textoPuro)+'</div>').join(''):'<div class="doc-comentario-mini">Nenhum comentário neste documento.</div>';
   const caixaEnvio=perms.comentariosCriar?'<div class="doc-comentario-envio"><input type="text" id="docCommentInput-'+esc(doc.id)+'" data-doc-comment-input="'+esc(doc.id)+'" placeholder="Comentar neste documento..." autocomplete="off"><button type="button" class="btn-doc-comentario" data-doc-comment-send="'+esc(doc.id)+'">Enviar</button></div>':'';
   const threadAberta=state.docThreadsAbertos.has(doc.id)?' aberto':'';
-  return '<div class="documento-group"><div class="documento-item"'+(perms.documentosCriar?' draggable="true" data-doc-drag="'+esc(doc.id)+'"':'')+'><div class="icone-documento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg></div><div class="documento-info"><div class="documento-nome" title="'+esc(doc.nome)+'">'+esc(doc.nome)+'</div><div class="documento-meta">'+esc(meta)+'</div></div><div class="documento-acoes"><button class="doc-action" data-doc-thread="'+esc(doc.id)+'" aria-label="Abrir comentários do documento" title="Comentários"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg></button>'+botaoBaixar+botaoMover+botaoExcluir+'</div></div><div class="doc-comentarios-wrap'+threadAberta+'" id="docThread-'+esc(doc.id)+'">'+listaComentarios+caixaEnvio+'</div></div>';
+  return '<div class="documento-group"><div class="documento-item"'+(perms.documentosCriar?' draggable="true" data-doc-drag="'+esc(doc.id)+'"':'')+'><div class="icone-documento"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h9l5 5v11H5z" stroke="currentColor" stroke-width="1.5"/></svg></div><div class="documento-info"'+(perms.documentosVisualizar?' data-doc-ver="'+esc(doc.id)+'" role="button" tabindex="0" title="Clique para ver o documento"':'')+'><div class="documento-nome">'+esc(doc.nome)+'</div><div class="documento-meta">'+esc(meta)+'</div></div><div class="documento-acoes"><button class="doc-action" data-doc-thread="'+esc(doc.id)+'" aria-label="Abrir comentários do documento" title="Comentários"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg></button>'+botaoVer+botaoBaixar+botaoMover+botaoExcluir+'</div></div><div class="doc-comentarios-wrap'+threadAberta+'" id="docThread-'+esc(doc.id)+'">'+listaComentarios+caixaEnvio+'</div></div>';
+}
+/* ---------- T101: ver o documento dentro do sistema (PDF e imagens), sem baixar ---------- */
+const PDFJS_DIR='vendor/pdfjs-4.10.38/';
+let _pdfjsPromessa=null;
+function carregarPdfjs(){
+  if(!_pdfjsPromessa){
+    _pdfjsPromessa=import('./'+PDFJS_DIR+'pdf.min.mjs').then(m=>{
+      m.GlobalWorkerOptions.workerSrc=new URL(PDFJS_DIR+'pdf.worker.min.mjs',location.href).href;
+      return m;
+    }).catch(e=>{_pdfjsPromessa=null;throw e;});
+  }
+  return _pdfjsPromessa;
+}
+function tipoVisualizacao(doc){
+  const ext=String(doc.tipoDocumento||String(doc.nome||'').split('.').pop()||'').toLowerCase();
+  if(ext==='pdf')return 'pdf';
+  if(['jpg','jpeg','png','gif','webp','bmp'].includes(ext))return 'imagem';
+  if(['txt','csv'].includes(ext))return 'texto';
+  return 'outro';
+}
+const visor={doc:null,pdf:null,zoom:1,observador:null,urlImagem:null,gen:0};
+function fecharVisualizador(){
+  const el=document.getElementById('docVisor');if(!el)return;
+  visor.gen++;
+  if(visor.observador){visor.observador.disconnect();visor.observador=null;}
+  if(visor.pdf){try{visor.pdf.destroy();}catch(e){}visor.pdf=null;}
+  el.classList.remove('aberto');
+  document.removeEventListener('keydown',teclaVisualizador);
+  setTimeout(()=>{if(!el.classList.contains('aberto'))el.remove();},220);
+  document.body.style.overflow='';
+}
+function teclaVisualizador(ev){
+  if(ev.key==='Escape')fecharVisualizador();
+  else if(visor.pdf&&(ev.key==='+'||ev.key==='='))mudarZoomVisor(1.25);
+  else if(visor.pdf&&ev.key==='-')mudarZoomVisor(0.8);
+}
+async function urlAssinadaDoc(doc){
+  const r=await _sb.storage.from(BUCKET_DOCUMENTOS_CLIENTES).createSignedUrl(doc.caminhoStorage,300);
+  if(r.error||!r.data||!r.data.signedUrl)throw (r.error||new Error('Não foi possível abrir o arquivo.'));
+  return r.data.signedUrl;
+}
+async function abrirVisualizador(docId){
+  const proc=getActiveProcess();
+  const doc=proc&&(proc.documentos||[]).find(d=>d.id===docId);
+  if(!doc||!doc.caminhoStorage){showToast('Documento não encontrado.','error');return;}
+  if(!perms.documentosVisualizar){showToast('Você não possui permissão para ver documentos.','warning');return;}
+  fecharMenuPasta();
+  const antigo=document.getElementById('docVisor');if(antigo)antigo.remove();
+  visor.doc=doc;visor.zoom=1;visor.gen++;
+  const gen=visor.gen;
+  const tipo=tipoVisualizacao(doc);
+  const ic=(d)=>'<svg width="15" height="15" viewBox="0 0 24 24" fill="none">'+d+'</svg>';
+  const el=document.createElement('div');
+  el.id='docVisor';el.className='doc-visor';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Ver documento');
+  el.innerHTML='<div class="doc-visor-caixa"><div class="doc-visor-topo">'
+    +'<div class="doc-visor-titulo"><b title="'+esc(doc.nome)+'">'+esc(doc.nome)+'</b><span id="docVisorInfo">'+esc(doc.pastaId?caminhoPasta(doc.pastaId):'Fora das pastas')+'</span></div>'
+    +'<div class="doc-visor-botoes">'
+    +(tipo==='pdf'?'<button type="button" data-visor="menos" title="Diminuir">'+ic('<path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')+'</button><button type="button" data-visor="ajustar" class="texto" title="Ajustar à largura" id="docVisorZoom">100%</button><button type="button" data-visor="mais" title="Aumentar">'+ic('<path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')+'</button><span class="doc-visor-sep"></span>':'')
+    +'<button type="button" data-visor="baixar" title="Baixar">'+ic('<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>')+'</button>'
+    +(perms.documentosCriar?'<button type="button" data-visor="mover" title="Mover para outra pasta">'+ic('<path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5"/>')+'</button>':'')
+    +'<button type="button" data-visor="comentar" title="Comentários do documento">'+ic('<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/>')+'</button>'
+    +'<button type="button" data-visor="fechar" class="fechar" title="Fechar (Esc)">'+ic('<path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')+'</button>'
+    +'</div></div><div class="doc-visor-corpo" id="docVisorCorpo"><div class="doc-visor-msg"><span class="doc-visor-giro"></span>Abrindo o documento...</div></div></div>';
+  document.body.appendChild(el);
+  document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>el.classList.add('aberto'));
+  document.addEventListener('keydown',teclaVisualizador);
+  el.addEventListener('click',ev=>{
+    if(ev.target===el){fecharVisualizador();return;}
+    const b=ev.target.closest('[data-visor]');if(!b)return;
+    const a=b.dataset.visor;
+    if(a==='fechar')fecharVisualizador();
+    else if(a==='baixar')baixarDocumento(doc.id);
+    else if(a==='mover'){fecharVisualizador();abrirModalPasta('moverDoc',{docId:doc.id});}
+    else if(a==='comentar'){
+      fecharVisualizador();
+      if(doc.pastaId)abrirPastaComPais(doc.pastaId);
+      state.docThreadsAbertos.add(doc.id);renderDocuments();
+      setTimeout(()=>{const t=document.getElementById('docThread-'+doc.id);if(t){t.scrollIntoView({behavior:'smooth',block:'center'});const i=t.querySelector('input');if(i)i.focus({preventScroll:true});}},260);
+    }
+    else if(a==='mais')mudarZoomVisor(1.25);
+    else if(a==='menos')mudarZoomVisor(0.8);
+    else if(a==='ajustar'){visor.zoom=1;desenharPdfVisor();}
+  });
+  const corpo=document.getElementById('docVisorCorpo');
+  const mensagem=(txt,comBaixar)=>{corpo.innerHTML='<div class="doc-visor-msg">'+esc(txt)+(comBaixar?'<button type="button" class="btn-primary" data-visor="baixar">Baixar o documento</button>':'')+'</div>';};
+  try{
+    if(tipo==='outro'){mensagem('Este tipo de arquivo ('+(doc.tipoDocumento||'sem extensão').toUpperCase()+') não abre dentro do navegador. Baixe para ver no programa do computador ou do celular.',true);return;}
+    const url=await urlAssinadaDoc(doc);
+    if(gen!==visor.gen)return;
+    if(tipo==='imagem'){
+      corpo.innerHTML='<div class="doc-visor-imagem"><img alt="'+esc(doc.nome)+'"></div>';
+      const img=corpo.querySelector('img');
+      img.onerror=()=>mensagem('Não foi possível mostrar esta imagem.',true);
+      img.src=url;
+      img.addEventListener('click',()=>img.classList.toggle('zoom'));
+      return;
+    }
+    const resp=await fetch(url);
+    if(!resp.ok)throw new Error('Não foi possível abrir o arquivo.');
+    if(tipo==='texto'){
+      const txt=await resp.text();if(gen!==visor.gen)return;
+      corpo.innerHTML='<pre class="doc-visor-texto"></pre>';corpo.firstChild.textContent=txt;return;
+    }
+    const dados=new Uint8Array(await resp.arrayBuffer());
+    const pdfjs=await carregarPdfjs();
+    if(gen!==visor.gen)return;
+    const pdf=await pdfjs.getDocument({data:dados,isEvalSupported:false}).promise;
+    if(gen!==visor.gen){pdf.destroy();return;}
+    visor.pdf=pdf;
+    const info=document.getElementById('docVisorInfo');
+    if(info)info.textContent=(doc.pastaId?caminhoPasta(doc.pastaId)+' · ':'')+pdf.numPages+(pdf.numPages===1?' página':' páginas');
+    await desenharPdfVisor();
+  }catch(erro){
+    if(gen!==visor.gen)return;
+    mensagem('Não foi possível abrir o documento aqui'+(erro&&erro.message?' ('+erro.message+')':'')+'. Você ainda pode baixar.',true);
+  }
+}
+function mudarZoomVisor(fator){
+  if(!visor.pdf)return;
+  visor.zoom=Math.max(0.5,Math.min(4,visor.zoom*fator));
+  desenharPdfVisor();
+}
+async function desenharPdfVisor(){
+  const pdf=visor.pdf;const corpo=document.getElementById('docVisorCorpo');
+  if(!pdf||!corpo)return;
+  const gen=++visor.gen;
+  const rotulo=document.getElementById('docVisorZoom');if(rotulo)rotulo.textContent=Math.round(visor.zoom*100)+'%';
+  if(visor.observador){visor.observador.disconnect();visor.observador=null;}
+  const largura=Math.max(240,Math.min(corpo.clientWidth-24,1000));
+  const primeira=await pdf.getPage(1);
+  if(gen!==visor.gen)return;
+  const base=primeira.getViewport({scale:1});
+  const escala=largura/base.width*visor.zoom;
+  const scrollRel=corpo.scrollHeight?corpo.scrollTop/corpo.scrollHeight:0;
+  corpo.innerHTML='<div class="doc-visor-paginas"></div>';
+  const lista=corpo.firstChild;
+  const dpr=Math.min(window.devicePixelRatio||1,2.5);
+  for(let n=1;n<=pdf.numPages;n++){
+    const folha=document.createElement('div');
+    folha.className='doc-visor-pagina';folha.dataset.pagina=n;
+    folha.style.width=Math.round(base.width*escala)+'px';folha.style.height=Math.round(base.height*escala)+'px';
+    folha.innerHTML='<span class="doc-visor-num">'+n+'</span>';
+    lista.appendChild(folha);
+  }
+  corpo.scrollTop=scrollRel*corpo.scrollHeight;
+  const desenhar=async folha=>{
+    if(folha.dataset.feito)return;folha.dataset.feito='1';
+    try{
+      const pagina=await pdf.getPage(Number(folha.dataset.pagina));
+      if(gen!==visor.gen)return;
+      const vp=pagina.getViewport({scale:escala});
+      folha.style.width=Math.round(vp.width)+'px';folha.style.height=Math.round(vp.height)+'px';
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.floor(vp.width*dpr);canvas.height=Math.floor(vp.height*dpr);
+      canvas.style.width=Math.round(vp.width)+'px';canvas.style.height=Math.round(vp.height)+'px';
+      await pagina.render({canvasContext:canvas.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
+      if(gen!==visor.gen)return;
+      folha.appendChild(canvas);folha.classList.add('pronta');
+    }catch(e){folha.dataset.feito='';}
+  };
+  const folhas=Array.from(lista.children);
+  if('IntersectionObserver' in window){
+    visor.observador=new IntersectionObserver(entradas=>entradas.forEach(e=>{if(e.isIntersecting)desenhar(e.target);}),{root:corpo,rootMargin:'600px 0px'});
+    folhas.forEach(f=>visor.observador.observe(f));
+  }else{for(const f of folhas)await desenhar(f);}
 }
 function renderDocuments(){
   const process=getActiveProcess();
@@ -1367,6 +1535,10 @@ function renderDocuments(){
   }));
   root.querySelectorAll('[data-doc-download]').forEach(button=>button.addEventListener('click',()=>baixarDocumento(button.dataset.docDownload)));
   root.querySelectorAll('[data-doc-remove]').forEach(button=>button.addEventListener('click',()=>removerDocumento(button.dataset.docRemove)));
+  root.querySelectorAll('[data-doc-ver]').forEach(el=>{
+    el.addEventListener('click',()=>abrirVisualizador(el.dataset.docVer));
+    if(el.classList.contains('documento-info'))el.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();abrirVisualizador(el.dataset.docVer);}});
+  });
   root.querySelectorAll('[data-doc-mover]').forEach(button=>button.addEventListener('click',()=>abrirModalPasta('moverDoc',{docId:button.dataset.docMover})));
   if(!podeOrganizar)return;
   /* arrastar: documento ou pasta para dentro de outra pasta (ou para fora, no fundo da lista); arquivos do computador também */
