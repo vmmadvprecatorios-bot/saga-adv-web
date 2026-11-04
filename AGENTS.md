@@ -26,6 +26,8 @@ Quem coordena e revisa o seu trabalho é o Claude. Ele confere o PR, testa e pub
 - Banco: Supabase. A tela só lê e grava pelo cliente já configurado nas telas; as regras de acesso ficam no banco.
 - Biblioteca do Supabase: `vendor/supabase-js-2.118.0.js` (versão fixa, guardada no repositório). Não use CDN com versão solta (ex.: `@2`). Script de fora só com versão exata; atualizar versão é tarefa do Claude.
 
+- Todo dado com formato (CPF/CNPJ, número do processo, telefone, CEP, valores em R$, %, datas) é formatado sozinho enquanto a pessoa digita. Tudo o que classifica processo ou cliente (UF, etiquetas, status, situações, competência, tipos) é menu suspenso organizado, com criar/alterar dentro do menu para quem pode. Reaproveite `SagaPlanilha.formatar` e `SagaPlanilha.UFS` (saga_planilha.js).
+
 ## Padrão visual e de movimento
 - Azul-marinho, cinza e branco, modo claro e escuro, funcionando no celular.
 - Toda tela ou janela nova segue o padrão de movimento do sistema (telas montam em ondas, janelas abrem com mola, botões afundam ao apertar). O `saga_guard.js` cobre a maior parte automaticamente: reaproveite, não reinvente.
