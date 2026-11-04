@@ -1637,6 +1637,26 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   .legenda-prazos span{ display:inline-flex; align-items:center; gap:5px; }
   .legenda-prazos [data-situacao-prazo]::before{ content:''; width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--prazo-cor); }
   .legenda-prazos [data-situacao-prazo="muito-atrasada"]::before{ outline:1px solid var(--prazo-muito-contorno); outline-offset:1px; }
+
+  /* Calendário ao lado dos gráficos (pedido de 06/11): o quadro de tarefas usa a largura toda */
+  .layout-tarefas-grid,.layout-tarefas-grid.calendario-oculto{grid-template-columns:minmax(0,1fr)!important;column-gap:0!important}
+  .tr-linha-graficos{display:grid;grid-template-columns:minmax(0,1fr) 280px;column-gap:14px;align-items:start;margin-bottom:14px;transition:grid-template-columns 360ms cubic-bezier(.22,.78,.25,1),column-gap 360ms cubic-bezier(.22,.78,.25,1)}
+  .layout-tarefas-grid.calendario-oculto .tr-linha-graficos{grid-template-columns:minmax(0,1fr) 0px;column-gap:0}
+  .tr-linha-graficos .tr-graficos-secao{min-width:0}
+  .tr-linha-graficos .tr-graficos{margin-bottom:0;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .tr-linha-graficos .painel-lateral-tarefas{margin-top:26px}
+  .tr-linha-graficos .mini-calendario-lateral{position:static;max-width:none}
+  .layout-tarefas-grid.calendario-oculto .tr-linha-graficos .painel-lateral-tarefas{max-height:0;margin-top:0;overflow:hidden}
+  @media (min-width:641px){.tr-linha-graficos .tr-graficos{display:grid;overflow:visible;padding-bottom:0}.tr-linha-graficos .tr-graf{flex:none}}
+  @media (min-width:1024px) and (max-width:1250px){.tr-linha-graficos .tr-rosca{width:84px;height:84px}.tr-linha-graficos .tr-graf-corpo{gap:9px}}
+  @media (max-width:1180px){.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:1023px){
+    .tr-linha-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos{grid-template-columns:minmax(0,1fr);column-gap:0}
+    .tr-linha-graficos .painel-lateral-tarefas{margin-top:12px}
+    .layout-tarefas-grid.calendario-oculto .tr-linha-graficos .painel-lateral-tarefas{margin-top:0}
+  }
+  @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -1705,8 +1725,28 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
       </div>
     </div>
 
+    <div class="tr-linha-graficos">
     <section class="tr-graficos-secao"><div class="tr-graficos-barra"><button type="button" class="tr-toggle" id="btnGraficosTarefas" aria-controls="graficosTarefas" aria-expanded="true">Ocultar gráficos</button></div>
     <div class="tr-graficos" id="graficosTarefas" aria-label="Distribuição das tarefas abertas"></div></section>
+      <aside class="painel-lateral-tarefas" aria-hidden="false">
+    <!-- ===== MINI CALENDARIO INTERATIVO ===== -->
+    <div class="mini-calendario-lateral" id="miniCalendarioLateral">
+      <div class="mini-calendario-header">
+        <button type="button" class="btn-navegar-mini-calendario" id="btnMesAnteriorMiniCalendario" aria-label="Ver mes anterior">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14.5 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <span class="mini-calendario-titulo" id="tituloMiniCalendario">Junho 2026</span>
+        <button type="button" class="btn-navegar-mini-calendario" id="btnMesProximoMiniCalendario" aria-label="Ver proximo mes">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9.5 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="mini-calendario-grid" id="miniCalendarioGrid"></div>
+      <div class="nota-integracao-calendario">
+        Clique em uma data para ver as tarefas daquele dia. Os pontos azuis indicam que existem tarefas programadas.
+      </div>
+    </div>
+      </aside>
+    </div>
 
     <!-- ===== FILTROS AVANCADOS ===== -->
     <div class="barra-filtros-tarefas">
@@ -1894,24 +1934,6 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
 
       </main>
 
-      <aside class="painel-lateral-tarefas" aria-hidden="false">
-    <!-- ===== MINI CALENDARIO INTERATIVO ===== -->
-    <div class="mini-calendario-lateral" id="miniCalendarioLateral">
-      <div class="mini-calendario-header">
-        <button type="button" class="btn-navegar-mini-calendario" id="btnMesAnteriorMiniCalendario" aria-label="Ver mes anterior">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14.5 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <span class="mini-calendario-titulo" id="tituloMiniCalendario">Junho 2026</span>
-        <button type="button" class="btn-navegar-mini-calendario" id="btnMesProximoMiniCalendario" aria-label="Ver proximo mes">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9.5 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
-      <div class="mini-calendario-grid" id="miniCalendarioGrid"></div>
-      <div class="nota-integracao-calendario">
-        Clique em uma data para ver as tarefas daquele dia. Os pontos azuis indicam que existem tarefas programadas.
-      </div>
-    </div>
-      </aside>
     </div>
 
   </div>
@@ -2475,6 +2497,7 @@ var layoutTarefasGrid = document.querySelector('.layout-tarefas-grid');
 var painelLateralTarefas = document.querySelector('.painel-lateral-tarefas');
 var textoBtnToggleCalendario = document.getElementById('textoBtnToggleCalendario');
 var calendarioLateralOculto = false;
+try{ calendarioLateralOculto = localStorage.getItem('saga-tarefas-calendario-oculto') === '1'; }catch(e){}
 
 function atualizarVisibilidadeCalendario(){
   layoutTarefasGrid.classList.toggle('calendario-oculto', calendarioLateralOculto);
@@ -2488,8 +2511,10 @@ function atualizarVisibilidadeCalendario(){
 
 btnToggleCalendario.addEventListener('click', function(){
   calendarioLateralOculto = !calendarioLateralOculto;
+  try{ localStorage.setItem('saga-tarefas-calendario-oculto', calendarioLateralOculto ? '1' : '0'); }catch(e){}
   atualizarVisibilidadeCalendario();
 });
+atualizarVisibilidadeCalendario();
 
 function tempoRelativo(timestamp){
   var diffMs = new Date() - new Date(timestamp);
@@ -4395,6 +4420,16 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async f
     }
   }catch(e){mostrarToast('Erro ao comentar: '+escaparHtml(e.message||'Tente novamente.'),'erro');}
   finally{salvandoComentarioTarefa=false;button.disabled=false;textarea.readOnly=false;}
+});
+document.getElementById('selectColunaTarefa').addEventListener('change', function(){
+  var destino = this.value, id = tarefaEmEdicaoId;
+  if(!id || !destino) return;
+  var tarefa = window.SAGA_TASKS.find(function(t){ return t.id === id; });
+  if(!tarefa || destino === tarefa.colunaId) return;
+  if(tarefa.status === 'concluida'){ mostrarToast('Tarefa concluída: reabra para mudar de coluna.', 'aviso'); selecionarValorSelectCustomTarefa('selectColunaTarefa', tarefa.colunaId); return; }
+  if(!souDonoDaTarefa(tarefa)){ mostrarToast('Só quem é dono da tarefa pode mudar a coluna.', 'aviso'); selecionarValorSelectCustomTarefa('selectColunaTarefa', tarefa.colunaId); return; }
+  moverTarefaKanban(tarefa.id, destino, null, false);
+  preencherMoverAoComentar(tarefa);
 });
 function preencherMoverAoComentar(tarefa){
   var sel = document.getElementById('selectMoverAoComentar');
