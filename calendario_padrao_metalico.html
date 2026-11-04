@@ -325,6 +325,28 @@
     .presence-btn span:not(.dot){display:none;}
   }
 
+  /* Mês no celular (06/11): colunas iguais sempre (o texto do evento alargava uma coluna e empurrava as outras para fora);
+     no celular em pé cada dia mostra o número e bolinhas coloridas dos eventos; tocar no dia abre a lista do dia */
+  .dias-semana-header,.grade-mes{grid-template-columns:repeat(7,minmax(0,1fr));}
+  .celula-dia,.dia-semana-label{min-width:0;}
+  @media (max-width:760px){
+    .dia-semana-label{font-size:9px;letter-spacing:.3px;padding:8px 0;}
+    .grade-mes{grid-auto-rows:minmax(58px,auto);}
+    .celula-dia{min-height:58px;padding:4px 2px 6px;align-items:center;}
+    .numero-dia{width:24px;height:24px;font-size:11.5px;margin-bottom:4px;}
+    .eventos-dia{flex-direction:row;flex-wrap:wrap;justify-content:center;align-content:flex-start;gap:3px;overflow:visible;}
+    .evento-mini{font-size:0!important;padding:0!important;width:7px;height:7px;border-radius:50%;background:transparent!important;pointer-events:none;}
+    .evento-mini .dot-mini{width:7px;height:7px;}
+    .mais-mini{width:100%;padding:0;font-size:8.5px;text-align:center;pointer-events:none;}
+    .coluna-dia-temporal{min-width:0;}
+    .header-dia-temporal{padding:6px 1px;}
+    .header-dia-num{font-size:12px;}
+    .header-dia-nome{font-size:9px;}
+    .evento-temporal{left:1px;right:1px;padding:2px 3px;font-size:8.5px;border-radius:4px;}
+    .evento-temporal .hora-ev{font-size:8px;}
+    .coluna-horas{width:40px;flex-basis:40px;}
+    .hora-label{padding:4px 4px 0;font-size:8.5px;}
+  }
   [data-theme="light"] .topbar{background:linear-gradient(135deg,var(--panel-solid),var(--navy-1));}
   [data-theme="light"] .popover-legenda,
   [data-theme="light"] .seletor-rapido-caixa,
