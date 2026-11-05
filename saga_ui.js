@@ -475,6 +475,9 @@
     +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=perfil" data-ir="configuracoes_padrao_metalico.html?aba=perfil">'
     +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Configurações</a>'
+    +'<div class="pop-row pop-row-link" data-acao="movimento" role="button" tabindex="0" title="Animações e transições do sistema">'
+    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12h3l2-6 4 12 2-6h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'<span id="sagaMovimentoTxt">Efeitos de movimento: ligados</span></div>'
     +'<div class="pop-divisor"></div>'
     +'<div class="pop-row pop-row-sair" data-acao="sair">'
     +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -575,7 +578,7 @@
   }
   function trocarTemaComLuz(btn,novo,aplicar){
     var html=document.documentElement;
-    var reduz=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduz=window.matchMedia&&(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches;
     if(!document.startViewTransition||reduz||_temaTrocando){aplicar();return;}
     _temaTrocando=true;
     var r=btn.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
@@ -679,6 +682,16 @@
         e.preventDefault();e.stopPropagation();fecharTodosPopovers();global.sagaIrPara(a.getAttribute('href'));
       });
     });
+    var btnMov=document.querySelector('[data-acao="movimento"]');
+    if(btnMov&&!btnMov.dataset.ligado){
+      btnMov.dataset.ligado='1';
+      var txtMov=document.getElementById('sagaMovimentoTxt');
+      var reduzido=function(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}};
+      if(txtMov)txtMov.textContent='Efeitos de movimento: '+(reduzido()?'desligados':'ligados');
+      var alternarMov=function(){try{localStorage.setItem('saga-movimento',reduzido()?'normal':'reduzido');}catch(e){}location.reload();};
+      btnMov.addEventListener('click',alternarMov);
+      btnMov.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();alternarMov();}});
+    }
     var btnSair=document.querySelector('[data-acao="sair"]');
     if(btnSair&&!btnSair.dataset.ligado){
       btnSair.dataset.ligado='true';

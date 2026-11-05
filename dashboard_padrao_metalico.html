@@ -495,7 +495,7 @@
   .dashboard-grafico-atualizado{transition:stroke-dashoffset .45s cubic-bezier(.22,1,.36,1);}
   #roscasDashboard{--prazo-azul:#2068d5;--prazo-amarelo:#ffd21c;--prazo-laranja:#ff851b;--prazo-vermelho:#dc2038;--prazo-vermelho-escuro:#8f102d;}
   [data-theme="light"] #roscasDashboard{--prazo-azul:#155bc0;--prazo-amarelo:#f2c400;--prazo-laranja:#c24100;--prazo-vermelho:#c91c30;--prazo-vermelho-escuro:#780d22;}
-  @media(prefers-reduced-motion:reduce){.barra-tese-fill,.linha-uf-fill,.dashboard-grafico-atualizado{transition:none;}}
+  @media (min-resolution:100000dppx){.barra-tese-fill,.linha-uf-fill,.dashboard-grafico-atualizado{transition:none;}}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -786,7 +786,7 @@ var versaoDashboard = 0, execucaoDashboard = null, recargaDashboardPendente = fa
 var versoesWidgetsDashboard = {};
 var valoresDashboard = new Map(), listasDashboard = new WeakSet(), graficosDashboard = new WeakSet();
 var animacoesDashboard = new Map();
-var movimentoDashboardReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+var movimentoDashboardReduzido = (window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}});
 
 function iniciarCargaDashboard(nome) {
   versoesWidgetsDashboard[nome] = (versoesWidgetsDashboard[nome] || 0) + 1;

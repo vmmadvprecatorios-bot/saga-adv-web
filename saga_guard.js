@@ -9,6 +9,15 @@
   var CHAVE='sb-fmoskdxgjulagedzjxxk-auth-token';
   var html=document.documentElement;
 
+  // Efeitos de movimento: ligados para TODOS os perfis e aparelhos (antes o SAGA desligava sozinho quando o
+  // computador ou celular estava com 'reduzir movimento' / 'mostrar animacoes' desligado). So desliga se a pessoa
+  // escolher no SAGA (menu do perfil > Efeitos de movimento).
+  window.sagaMq=function(){var r=false;try{r=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}var nada=function(){};return {matches:r,addEventListener:nada,removeEventListener:nada,addListener:nada,removeListener:nada};};
+  if(window.sagaMq().matches){
+    html.classList.add('saga-sem-movimento');
+    try{document.write('<style id="sagaSemMovimento">html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}</style>');}catch(e){}
+  }
+
   // Tamanho da letra escolhido nas Configuracoes (antes da primeira imagem da tela)
   try{var letra=localStorage.getItem('saga-letra');if(letra&&letra!=='1')html.style.zoom=letra;}catch(e){}
 
@@ -83,7 +92,7 @@
     document.addEventListener('DOMContentLoaded',mostrarMoldura);
     return;
   }
-  var reduz=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var reduz=!!(window.matchMedia&&(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches);
 
   // Conta as buscas ao banco em andamento: a tela so aparece quando todas terminam
   var pendentes=0,ultimaBusca=0;

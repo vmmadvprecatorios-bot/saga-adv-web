@@ -198,7 +198,7 @@
   '.si-desfazer{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:3000;display:flex;align-items:center;gap:14px;max-width:calc(100vw - 32px);padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:var(--panel-solid,var(--panel));color:var(--text);box-shadow:0 14px 40px rgba(0,0,0,.35);font-size:12.5px;animation:siDesfazerIn .28s cubic-bezier(.34,1.45,.64,1)}'+
   '.si-desfazer button{flex:0 0 auto;border:0;background:transparent;color:var(--gold);font:inherit;font-weight:700;cursor:pointer;padding:4px 6px}'+
   '@keyframes siDesfazerIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}'+
-  '@media (prefers-reduced-motion:reduce){.si-desfazer{animation:none}}'+
+  '@media (min-resolution:100000dppx){.si-desfazer{animation:none}}'+
   '.si-card.concluida{opacity:.6}.si-card.concluida .si-proc span,.si-card.concluida .si-cli{text-decoration:line-through}'+
   '.si-topo{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--muted);font-weight:700}'+
   '.si-topo .data{margin-left:auto;font-weight:600}.si-topo .data+.si-mover{margin-left:2px}'+
@@ -615,7 +615,7 @@
     S.foco=null;
     if(Math.abs(window.scrollY-rol.y)>1)window.scrollTo(window.scrollX,rol.y);
     // as colunas que mudaram de lugar deslizam do lugar antigo para o novo
-    if(!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
+    if(!(window.matchMedia&&(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)){
       q.querySelectorAll('.si-col').forEach(function(cc){
         var antes=rol.pos[cc.dataset.col];if(antes==null||!cc.animate)return;
         var d=antes-cc.getBoundingClientRect().left;
@@ -1370,7 +1370,7 @@
     return '<div class="si-graf" data-g="'+g.k+'"'+(g.dica?' title="'+esc(g.dica)+'"':'')+'><h4>'+esc(g.titulo)+'</h4><div class="si-graf-corpo"><div class="si-rosca'+(g.atual?' filtrada':'')+'"><svg viewBox="0 0 100 100" role="img" aria-label="'+esc(g.titulo)+': '+total+' abertas"><circle class="trilho" cx="50" cy="50" r="'+RAIO+'"></circle>'+arcos+'</svg><div class="centro"><span class="n">'+total+'</span><small>abertas</small></div></div><div class="si-leg-lista">'+legenda+'</div></div></div>';
   }
   function contarRosca(el,alvo){
-    if(!alvo||(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches)){el.textContent=alvo;return;}
+    if(!alvo||(window.matchMedia&&(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)){el.textContent=alvo;return;}
     var ini=null;el.textContent='0';
     function passo(ts){if(ini===null)ini=ts;var k=Math.min(1,(ts-ini)/600),e=1-Math.pow(1-k,3);el.textContent=Math.round(alvo*e);if(k<1)requestAnimationFrame(passo);}
     requestAnimationFrame(passo);
@@ -1381,7 +1381,7 @@
     el.className='si-graficos';
     el.innerHTML=gs.map(htmlRosca).join('');
     S.sigGraf=S.sigGraf||{};
-    var reduz=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var reduz=window.matchMedia&&(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches;
     gs.forEach(function(g){
       var card=el.querySelector('[data-g="'+g.k+'"]'),sig=JSON.stringify(g.itens.map(function(x){return [x.nome,x.n];}));
       if(S.sigGraf[g.k]===sig)return;          // só anima quando os números mudaram

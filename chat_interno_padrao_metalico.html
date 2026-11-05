@@ -127,7 +127,7 @@
   .destaque-conversa{position:absolute;z-index:-1;pointer-events:none;border-radius:11px;background:color-mix(in srgb,var(--gold) 9%,transparent);}
   .conversas-scroll.com-destaque .item-conversa.ativa{background:transparent;}
   .conversa-identidade{display:flex;align-items:center;gap:12px;min-width:0;}
-  @media (prefers-reduced-motion:reduce){#mensagensScroll .sk{animation:none;}#conversasScroll .item-conversa{transition:none;}}
+  @media (min-resolution:100000dppx){#mensagensScroll .sk{animation:none;}#conversasScroll .item-conversa{transition:none;}}
   .item-conversa{display:flex;align-items:center;gap:11px;padding:11px 10px;border-radius:11px;cursor:pointer;transition:background 0.15s;margin-bottom:3px;}
   .item-conversa:hover{background:color-mix(in srgb,var(--gold) 5%,transparent);}
   .item-conversa.ativa{background:color-mix(in srgb,var(--gold) 9%,transparent);}
@@ -743,7 +743,7 @@ function filtrarConversas(v) {
 }
 
 var versaoAberturaConversa = 0;
-var movimentoChatReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+var movimentoChatReduzido = (window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}});
 var animacoesTrocaConversa = [];
 var animacaoDestaqueConversa = null;
 

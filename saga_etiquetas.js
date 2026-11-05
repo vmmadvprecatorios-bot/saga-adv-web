@@ -24,7 +24,7 @@
       .se-editor label.se-ativo{display:flex;align-items:center;gap:6px}.se-editor .se-ativo input{width:auto}.se-acoes{display:flex;gap:6px;flex-wrap:wrap}.se-acoes button{border:1px solid var(--border-soft);border-radius:7px;padding:7px 10px;background:var(--panel)}
       .se-erro{color:var(--danger);font-size:11px;overflow-wrap:anywhere}.se-previa{margin-top:6px}.se-campo button:disabled{cursor:default;opacity:.65}
       @keyframes seAbrir{from{opacity:0;transform:translateY(-5px) scale(.98)}to{opacity:1;transform:none}}
-      @media(prefers-reduced-motion:reduce){.se-menu{animation:none}}
+      @media (min-resolution:100000dppx){.se-menu{animation:none}}
     `;
     document.head.appendChild(s);
   }

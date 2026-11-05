@@ -943,7 +943,7 @@ function renderizarGradeMesesRapida() {
 // RENDERIZAR VIEW
 // ================================================================
 var transicaoCalendarioAtiva = null;
-var movimentoCalendarioReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+var movimentoCalendarioReduzido = (window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}});
 
 function encerrarTransicaoCalendario() {
   var ativa = transicaoCalendarioAtiva;

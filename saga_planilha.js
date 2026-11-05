@@ -202,7 +202,7 @@ window.SagaPlanilha=(function(){
       fecharMenu();aplicar();
     };
     m.querySelector('.sp-busca').focus();
-    if(!matchMedia('(prefers-reduced-motion: reduce)').matches)m.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.2,1.4,.4,1)'});
+    if(!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)m.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.2,1.4,.4,1)'});
   }
   function ocultavel(c){return c.campo_sistema!=='pessoa.nome';}
   function processoNoEscopoSemPlanilha(p){var antes=pronta;pronta=false;try{return processoNoEscopo(p);}finally{pronta=antes;}}
@@ -493,7 +493,7 @@ window.SagaPlanilha=(function(){
     var fechar=function(){ov.remove();};
     ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('[data-fechar]'))fechar();});
     ov.addEventListener('keydown',function(e){if(e.key==='Escape')fechar();});
-    var m=ov.querySelector('.modal');if(!matchMedia('(prefers-reduced-motion: reduce)').matches)m.animate([{opacity:0,transform:'translateY(14px) scale(.97)'},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.2,1.3,.4,1)'});
+    var m=ov.querySelector('.modal');if(!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)m.animate([{opacity:0,transform:'translateY(14px) scale(.97)'},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.2,1.3,.4,1)'});
     return {ov:ov,fechar:fechar,q:function(sel){return ov.querySelector(sel);}};
   }
   function lerTabela(txt){
@@ -696,7 +696,7 @@ window.SagaPlanilha=(function(){
         '<div class="coluna-corpo" data-status-id="'+h(g.e.status[0].id)+'">'+g.itens.sort(ordenar).map(cartao).join('')+'</div></div>';
     }).join('')+(fora.length?'<div class="coluna-kanban"><div class="coluna-cabecalho"><div class="coluna-titulo">Sem etapa</div><span class="coluna-contagem">'+fora.length+'</span></div><div class="coluna-corpo" data-status-id="'+h(etapas[0].status[0].id)+'">'+fora.map(cartao).join('')+'</div></div>':'')+'</div>';
     if(pode&&typeof ativarArrasteKanban==='function')ativarArrasteKanban(kv);
-    if(!matchMedia('(prefers-reduced-motion: reduce)').matches)kv.querySelectorAll('.coluna-kanban').forEach(function(c,i){c.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:i*45,easing:'cubic-bezier(.2,1.2,.4,1)',fill:'backwards'});});
+    if(!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)kv.querySelectorAll('.coluna-kanban').forEach(function(c,i){c.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:i*45,easing:'cubic-bezier(.2,1.2,.4,1)',fill:'backwards'});});
     return true;
   }
 
@@ -780,7 +780,7 @@ window.SagaPlanilha=(function(){
         (resto.some(function(c){return !daPlanilha(c);})||restoExtras.length?'<div class="sp-ficha-tit">Outros dados do processo</div>'+resto.filter(function(c){return !daPlanilha(c);}).map(campoHtml).join('')+restoExtras.map(function(x){return x.html;}).join(''):'')+'</div>';
     var salvarFixos=function(){try{localStorage.setItem(chaveFixos,JSON.stringify(Array.from(fixos)));}catch(e){}};
     el.querySelector('.sp-ficha-toggle').onclick=function(){var box=el.querySelector('.sp-ficha-todos'),abrir=box.hidden;box.hidden=!abrir;this.setAttribute('aria-expanded',abrir);this.textContent=(abrir?'▾':'▸')+this.textContent.slice(1);try{localStorage.setItem(chaveAberto,abrir?'1':'0');}catch(e){}
-      if(abrir&&!matchMedia('(prefers-reduced-motion: reduce)').matches)box.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:240,easing:'cubic-bezier(.2,1.2,.4,1)'});};
+      if(abrir&&!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)box.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:240,easing:'cubic-bezier(.2,1.2,.4,1)'});};
     el.querySelector('.sp-ficha-padrao').onclick=function(){try{localStorage.removeItem(chaveFixos);}catch(e){}fichaDados(el,processoId,opts);};
     el.querySelectorAll('[data-sp-fixar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.spFixar;if(fixos.has(id))fixos.delete(id);else fixos.add(id);salvarFixos();fichaDados(el,processoId,opts);};});
     var opcoesFicha=function(c){

@@ -189,9 +189,9 @@
   .grid-itens.modo-lista .rodape-item-card{grid-column:4;grid-row:1;margin-top:0;justify-content:flex-end;gap:7px;}
   .grid-itens.modo-lista .btn-mais-item{position:static;grid-column:5;grid-row:1;opacity:1;}
   .grid-itens.modo-lista .popover-item-acoes{top:calc(100% + 3px);right:10px;z-index:80;}
-  @media (prefers-reduced-motion:reduce){.grid-itens,.item-card.entrada-suave,.breadcrumb-wrap.atualizando,.item-categoria-lateral.em-transicao{animation:none;transition:none;transform:none;filter:none;}}
+  @media (min-resolution:100000dppx){.grid-itens,.item-card.entrada-suave,.breadcrumb-wrap.atualizando,.item-categoria-lateral.em-transicao{animation:none;transition:none;transform:none;filter:none;}}
 
-  @media (prefers-reduced-motion:reduce){
+  @media (min-resolution:100000dppx){
     .grid-itens.trocando-saida,.grid-itens.trocando-entrada{animation:none;opacity:1;transform:none;filter:none;}
     .item-card.entrada-suave{opacity:1;}
     .cabecalho-lista.visivel,.coluna-categorias .item-categoria-lateral{animation:none;transition:none;}
@@ -1268,7 +1268,7 @@ function configurarMenuItem(card, tipo, id, nomeAtual, pastaPaiId, arqRef){
 
   var navegacaoBibliotecaPendente = null;
   var historicoBibliotecaPronto = false;
-  var movimentoBibliotecaReduzido = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var movimentoBibliotecaReduzido = (window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}});
   var animacaoDestaquePasta = null;
 
   function entradaHistoricoBiblioteca(caminho, substituir){
