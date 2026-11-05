@@ -1660,15 +1660,26 @@ function renderTasks(){
     root.innerHTML=emptyState('Tarefas indisponíveis','Você não possui permissão para visualizar as tarefas deste processo.');
     return;
   }
-  if(!process.tarefas.length){
-    root.innerHTML=htmlIntimacoesProcesso(process)||'<div class="tarefa-empty">'+emptyState('Nenhuma tarefa vinculada','Inclua uma tarefa específica para este processo.')+'</div>';
-    return;
-  }
-  root.innerHTML=process.tarefas.map(task=>{
+  const htmlTarefa=task=>{
     const podeConcluir=task.concluida!==true&&perms.tarefasEditar===true;
     const podeEditar=task.concluida!==true&&perms.tarefasEditar===true;
-    return '<div class="item-tarefa-mini '+(task.concluida?'concluida':'')+'"><button class="checkbox-tarefa-mini" '+(podeConcluir?'':'disabled')+' data-task-toggle="'+esc(task.id)+'">'+(task.concluida?checkboxIcon():'')+'</button><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo">'+esc(task.titulo)+'</div>'+SagaEtiquetas.selo(task.etiqueta)+'<div class="item-tarefa-mini-prazo '+(task.urgente?'urgente':'normal')+'">'+esc(task.prazo)+'</div>'+(task.responsavelNome?'<div class="item-tarefa-mini-prazo normal">Responsável: '+esc(task.responsavelNome)+(task.criadoPorNome&&task.criadoPorId!==task.responsavelId?' · criada por '+esc(task.criadoPorNome):'')+'</div>':'')+'</div>'+(podeEditar?'<button class="timeline-action" data-task-edit="'+esc(task.id)+'" type="button">Editar</button>':'')+'</div>';
-  }).join('')+htmlIntimacoesProcesso(process);
+    return '<div class="item-tarefa-mini '+(task.concluida?'concluida':'')+'" data-fa-abrir="tarefa:'+esc(task.id)+'" title="Ver a tarefa e os comentários"><button class="checkbox-tarefa-mini" '+(podeConcluir?'':'disabled')+' data-task-toggle="'+esc(task.id)+'">'+(task.concluida?checkboxIcon():'')+'</button><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo">'+esc(task.titulo)+'</div>'+SagaEtiquetas.selo(task.etiqueta)+'<div class="item-tarefa-mini-prazo '+(task.urgente?'urgente':'normal')+'">'+esc(task.prazo)+'</div>'+(task.responsavelNome?'<div class="item-tarefa-mini-prazo normal">Responsável: '+esc(task.responsavelNome)+(task.criadoPorNome&&task.criadoPorId!==task.responsavelId?' · criada por '+esc(task.criadoPorNome):'')+'</div>':'')+'</div>'+(podeEditar?'<button class="timeline-action" data-task-edit="'+esc(task.id)+'" type="button">Editar</button>':'')+'</div>';
+  };
+  const abertas=process.tarefas.filter(t=>!t.concluida),resolvidas=process.tarefas.filter(t=>t.concluida);
+  const htmlAbertas=abertas.map(htmlTarefa).join('')+htmlIntimacoesProcesso(process,'abertas');
+  const intimResolvidas=(process.intimacoes||[]).filter(i=>i.concluida).length;
+  const totalResolvidas=resolvidas.length+intimResolvidas;
+  const htmlResolvidas=totalResolvidas?'<details class="fa-resolvidas"'+(state.faResolvidasAbertas?' open':'')+'><summary>Resolvidas ('+totalResolvidas+')</summary>'+resolvidas.map(htmlTarefa).join('')+htmlIntimacoesProcesso(process,'resolvidas')+'</details>':'';
+  root.innerHTML=(htmlAbertas||'<div class="tarefa-empty">'+emptyState('Nada em aberto','Nenhuma tarefa ou intimação pendente neste processo.')+'</div>')+htmlResolvidas;
+  const det=root.querySelector('.fa-resolvidas');if(det)det.addEventListener('toggle',()=>{state.faResolvidasAbertas=det.open;});
+  root.querySelectorAll('[data-fa-abrir]').forEach(el=>el.addEventListener('click',ev=>{
+    if(ev.target.closest('[data-task-toggle],[data-task-edit]'))return;
+    if(el.tagName==='A'&&(ev.ctrlKey||ev.metaKey||ev.shiftKey||ev.button===1))return;
+    if(!window.SagaFichaAtividades)return;
+    ev.preventDefault();
+    const [tipo,id]=el.dataset.faAbrir.split(':');
+    if(tipo==='tarefa')SagaFichaAtividades.abrirTarefa(id);else SagaFichaAtividades.abrirIntimacao(id);
+  }));
   root.querySelectorAll('[data-task-toggle]').forEach(button=>button.addEventListener('click',async()=>{
     await concluirTarefa(button.dataset.taskToggle);
   }));
@@ -2813,15 +2824,15 @@ async function carregarIntimacoesProcesso(processoId){
   const r=await _sb.from('intimacoes').select('id,tribunal,tipo_documento,data_disponibilizacao,prazo,etiqueta,etiqueta_cor,concluida').eq('processo_id',processoId).order('concluida',{ascending:true}).order('prazo',{ascending:true,nullsFirst:false}).order('data_disponibilizacao',{ascending:false}).limit(30);
   return r.error?[]:(r.data||[]);
 }
-function htmlIntimacoesProcesso(process){
-  const lista=(process.intimacoes||[]).filter(i=>!i.concluida||i.etiqueta||i.prazo);
+function htmlIntimacoesProcesso(process,quais){
+  const lista=(process.intimacoes||[]).filter(i=>quais==='resolvidas'?!!i.concluida:!i.concluida);
   if(!lista.length)return '';
   const hoje=new Date();hoje.setHours(0,0,0,0);
   return '<div class="item-tarefa-mini-prazo normal" style="margin:4px 0 2px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">Intimações</div>'+lista.map(i=>{
     const dias=i.prazo?Math.ceil((new Date(i.prazo+'T00:00:00')-hoje)/86400000):null;
     const titulo=(i.etiqueta?i.etiqueta+' · ':'')+(i.tipo_documento||'Intimação')+(i.tribunal?' ('+i.tribunal+')':'');
     const prazo=i.prazo?'Prazo: '+fmtData(i.prazo):'Disponibilizada em '+fmtData(i.data_disponibilizacao);
-    return '<a class="item-tarefa-mini '+(i.concluida?'concluida':'')+'" style="text-decoration:none;color:inherit;border-left:3px solid '+esc(i.etiqueta_cor||'#4b8af5')+'" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(i.id)+'" title="Abrir a intimação"><span class="checkbox-tarefa-mini">'+(i.concluida?checkboxIcon():'')+'</span><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo" style="'+(i.concluida?'text-decoration:line-through':'')+'">'+esc(titulo)+'</div><div class="item-tarefa-mini-prazo '+(!i.concluida&&dias!==null&&dias<=3?'urgente':'normal')+'">'+esc(prazo)+'</div></div></a>';
+    return '<a class="item-tarefa-mini '+(i.concluida?'concluida':'')+'" style="text-decoration:none;color:inherit;border-left:3px solid '+esc(i.etiqueta_cor||'#4b8af5')+'" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(i.id)+'" data-fa-abrir="intim:'+esc(i.id)+'" title="Ver a intimação e os comentários"><span class="checkbox-tarefa-mini">'+(i.concluida?checkboxIcon():'')+'</span><div class="item-tarefa-mini-texto"><div class="item-tarefa-mini-titulo" style="'+(i.concluida?'text-decoration:line-through':'')+'">'+esc(titulo)+'</div><div class="item-tarefa-mini-prazo '+(!i.concluida&&dias!==null&&dias<=3?'urgente':'normal')+'">'+esc(prazo)+'</div></div></a>';
   }).join('');
 }
 
@@ -4206,5 +4217,6 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 </script>
 
 <script src="saga_localizacao.js"></script>
+<script src="saga_ficha_atividades.js"></script>
 </body>
 </html>
