@@ -289,7 +289,8 @@
         'html.saga-menu-aberto #topbarSaga{position:fixed !important;top:0 !important;left:0 !important;right:0 !important;width:100% !important;}'+
         'html.saga-menu-aberto body{padding-top:64px !important;}'+
         '#overlay{touch-action:none !important;}#overlay:not(.aberto){display:none !important;}#overlay.aberto{display:block !important;}'+
-        '#overlay{position:fixed !important;top:64px !important;bottom:0 !important;right:0 !important;left:min(290px,84vw) !important;width:auto !important;height:auto !important;z-index:1400 !important;background:rgba(5,10,20,.45) !important;}'+
+        '#overlay{position:fixed !important;top:64px !important;bottom:0 !important;right:0 !important;left:min(290px,84vw) !important;width:auto !important;height:auto !important;z-index:1400 !important;background:rgba(8,14,28,.55) !important;-webkit-backdrop-filter:blur(7px) saturate(.7) !important;backdrop-filter:blur(7px) saturate(.7) !important;}'+
+        '[data-theme="light"] #overlay{background:rgba(22,34,58,.38) !important;}'+
       '}';
     (document.head||document.documentElement).appendChild(style);
   }
@@ -370,7 +371,10 @@
       if(!html.classList.contains('saga-menu-aberto'))return;
       html.classList.remove('saga-menu-aberto');
       b.style.position='';b.style.top='';b.style.left='';b.style.right='';b.style.width='';
-      window.scrollTo(0,_rolagemTravada);
+      // volta direto ao ponto onde estava (telas com rolagem suave subiam e desciam de novo)
+      var antes=html.style.scrollBehavior;html.style.scrollBehavior='auto';
+      try{window.scrollTo({top:_rolagemTravada,left:0,behavior:'instant'});}catch(e){window.scrollTo(0,_rolagemTravada);}
+      html.style.scrollBehavior=antes;
     }
   }
   function fecharMenuCelular(){
