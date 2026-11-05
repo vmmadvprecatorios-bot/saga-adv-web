@@ -2620,7 +2620,7 @@ function montarListaMultiResponsavel(){
     var item = document.createElement('div');
     item.className = 'opcao-multi-check';
     item.setAttribute('data-valor', col.nome);
-    item.innerHTML = '<div class="caixa-check-multi"></div><div class="mini-avatar-filtro" style="background:' + col.cor + ';">' + escaparHtml(col.iniciais) + '</div>' + escaparHtml(col.nome);
+    item.innerHTML = '<div class="caixa-check-multi"></div><div class="mini-avatar-filtro" data-saga-nome="' + escaparHtml(col.nome) + '" style="background:' + col.cor + ';">' + escaparHtml(col.iniciais) + '</div>' + escaparHtml(col.nome);
     container.appendChild(item);
   });
   var btnAplicar = document.createElement('button');
@@ -3241,7 +3241,7 @@ function criarCardTarefaEl(tarefa){
     metaProcessoHtml +
     barraSubHtml +
     '<div class="rodape-card-tarefa">' +
-      '<div class="mini-avatar-resp" style="background:' + (resp ? resp.cor : '#8b93a8') + ';" title="' + escaparHtml(resp ? resp.nome : '') + '">' + escaparHtml(resp ? resp.iniciais : '?') + '</div>' +
+      '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(resp ? resp.nome : '') + '" style="background:' + (resp ? resp.cor : '#8b93a8') + ';" title="' + escaparHtml(resp ? resp.nome : '') + '">' + escaparHtml(resp ? resp.iniciais : '?') + '</div>' +
       '<div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">' +
         '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' +
         badgePrazoHtml +
@@ -4392,7 +4392,7 @@ function renderizarComentariosModal(){
     var item = document.createElement('div');
     item.className = 'item-comentario-tarefa';
     item.innerHTML =
-      '<div class="mini-avatar-resp" style="background:' + (autor ? autor.cor : '#8b93a8') + ';">' + (autor ? autor.iniciais : '?') + '</div>' +
+      '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(autor ? autor.nome : '') + '" style="background:' + (autor ? autor.cor : '#8b93a8') + ';">' + (autor ? autor.iniciais : '?') + '</div>' +
       '<div class="corpo-comentario-tarefa">' +
         '<div class="topo-comentario-tarefa"><span class="autor-comentario-tarefa">' + escaparHtml(autor ? autor.nome : 'Colaborador inativo') + '</span><span class="tempo-comentario-tarefa">' + tempoRelativo(c.timestamp) + '</span></div>' +
         '<div class="texto-comentario-tarefa">' + SagaMencoes.destacar(c.texto) + '</div>' +

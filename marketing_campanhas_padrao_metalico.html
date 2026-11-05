@@ -434,7 +434,7 @@ function cartaoCampanha(c){
   return '<div class="camp-card" data-camp="'+esc(c.id)+'"><h4>'+esc(c.nome)+'</h4><div class="sub">'+(c.data_inicio||c.data_fim?dataBR(c.data_inicio)+' a '+dataBR(c.data_fim):'Sem período definido')+'</div>'+
     '<div class="linha-orc"><span>Investido / orçamento</span><b>'+moeda(inv)+' / '+(orc?moeda(orc):'—')+'</b></div>'+
     (orc?'<div class="barra"><i class="'+cls+'" style="width:'+pct.toFixed(0)+'%"></i></div>':'')+
-    '<div class="resp">'+(resp?'<span class="mini">'+esc(iniciais(resp))+'</span>'+esc(resp.split(' ')[0]):'Sem responsável')+'</div></div>';
+    '<div class="resp">'+(resp?'<span class="mini" data-saga-nome="'+esc(resp)+'">'+esc(iniciais(resp))+'</span>'+esc(resp.split(' ')[0]):'Sem responsável')+'</div></div>';
 }
 function renderKanban(){
   renderGraficosMarketing();

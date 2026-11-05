@@ -824,7 +824,7 @@ function renderConversas() {
     var qtd = c.qtdNaoLidas || (c.temNaoLida ? 1 : 0);
     var badge = qtd ? '<div class="badge-nao-lida">' + (qtd > 99 ? '99+' : qtd) + '</div>' : '';
     return '<div class="item-conversa ' + ativa + (qtd ? ' nao-lida' : '') + '" onclick="abrirConversa(\'' + c.id + '\')">' +
-      '<div class="avatar-conversa ' + (isGrupo ? 'grupo' : '') + '">' + esc(iniciais(nome)) + '</div>' +
+      '<div class="avatar-conversa ' + (isGrupo ? 'grupo' : '') + '"' + (isGrupo ? '' : ' data-saga-nome="' + esc(nome) + '"') + '>' + esc(iniciais(nome)) + '</div>' +
       '<div class="info-conversa">' +
         '<div class="info-conversa-topo"><span class="nome-conversa">' + esc(nome) + (c.souMembro ? '' : '<span class="tag-gestao">gestão</span>') + '</span><span class="hora-conversa">' + esc(hora) + '</span></div>' +
         '<div class="ultima-mensagem">' + esc(preview) + '</div>' +
@@ -891,6 +891,8 @@ function atualizarHeader(conv) {
   el.textContent = ini;
   el.className = 'avatar-conversa' + (conv.tipo === 'grupo' ? ' grupo' : '');
   el.style.cssText = 'width:38px;height:38px;font-size:11px;';
+  el.dataset.sagaFoto = '';
+  if (conv.tipo === 'grupo') el.removeAttribute('data-saga-nome'); else el.setAttribute('data-saga-nome', nome);
   document.getElementById('conversaHeaderNome').textContent = nome;
 
   if (conv.tipo === 'grupo') {
@@ -1059,7 +1061,7 @@ function htmlMensagem(m) {
       '</div>'
     : '';
   return '<div class="bloco-mensagem ' + (ehMinha ? 'minha' : '') + '" data-msg-id="' + m.id + '">' +
-    '<div class="avatar-mensagem">' + esc(iniciais(nomeAutor)) + '</div>' +
+    '<div class="avatar-mensagem" data-saga-nome="' + esc(nomeAutor) + '">' + esc(iniciais(nomeAutor)) + '</div>' +
     '<div class="conteudo-mensagem-wrap">' +
       autorLabel +
       '<div class="bolha-mensagem" id="bolha-' + m.id + '">' + renderConteudo(m.conteudo || '') + '</div>' +
@@ -1512,7 +1514,7 @@ function buscarUsuariosModal(termo) {
     _resultadosBusca = res.data;
     el.innerHTML = res.data.map(function(u, i){
       return '<div class="item-busca-modal" onclick="selecionarUsuarioDireto(_resultadosBusca[' + i + '])">' +
-        '<div class="av-mini">' + esc(iniciais(u.nome_completo)) + '</div>' +
+        '<div class="av-mini" data-saga-nome="' + esc(u.nome_completo) + '">' + esc(iniciais(u.nome_completo)) + '</div>' +
         '<span>' + esc(u.nome_completo) + '</span></div>';
     }).join('');
   }, 300);
@@ -1543,7 +1545,7 @@ function carregarListaUsuariosGrupo() {
   lista.innerHTML = todos.map(function(u){
     var sel = state.novaConversa.membrosGrupo.indexOf(u.id) !== -1;
     return '<div class="item-membro-modal ' + (sel ? 'selecionado' : '') + '" onclick="toggleMembro(\'' + u.id + '\')">' +
-      '<div class="av-mini">' + esc(iniciais(u.nome_completo)) + '</div>' +
+      '<div class="av-mini" data-saga-nome="' + esc(u.nome_completo) + '">' + esc(iniciais(u.nome_completo)) + '</div>' +
       '<span>' + esc(u.nome_completo) + '</span>' +
       '<svg class="check-membro" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</div>';
@@ -1746,7 +1748,7 @@ function renderGerenciarGrupo() {
     var remover = gerencia && !ehEu
       ? '<button class="btn-remover-membro" title="Remover do grupo" onclick="pedirRemoverMembro(\'' + p.usuario_id + '\')">&#10005;</button>'
       : '';
-    return '<div class="membro-grupo"><div class="av-mini">' + esc(iniciais(nome)) + '</div>' +
+    return '<div class="membro-grupo"><div class="av-mini" data-saga-nome="' + esc(nome) + '">' + esc(iniciais(nome)) + '</div>' +
       '<div class="nome-membro">' + esc(nome) + (ehEu ? ' <small>(você)</small>' : '') + '</div>' + controle + remover + '</div>';
   }).join('');
 

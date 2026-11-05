@@ -440,7 +440,7 @@
   function htmlAdvogados(i){
     var ids=advogadosDe(i);if(!ids.length)return '';
     var cores=['#3b6fd8','#c2185b','#2fae7a','#e0a93b','#7c3aed','#0ea5e9'];
-    var av=ids.slice(0,4).map(function(id){var k=S.usuarios.map(function(u){return u.id;}).indexOf(id);return '<i style="--c:'+cores[(k<0?0:k)%cores.length]+'" title="'+esc(nomeUsuario(id))+'">'+esc(iniciais(nomeUsuario(id)))+'</i>';}).join('');
+    var av=ids.slice(0,4).map(function(id){var k=S.usuarios.map(function(u){return u.id;}).indexOf(id);return '<i data-saga-usuario="'+esc(id)+'" style="--c:'+cores[(k<0?0:k)%cores.length]+'" title="'+esc(nomeUsuario(id))+'">'+esc(iniciais(nomeUsuario(id)))+'</i>';}).join('');
     var nomes=ids.map(primeiroNome).filter(Boolean);
     var txt=nomes.length<=2?nomes.join(' + '):nomes.slice(0,2).join(' + ')+' + '+(nomes.length-2);
     return '<div class="si-advs"><span class="si-av">'+av+'</span><span title="'+esc(ids.map(nomeUsuario).join(', '))+'">'+esc(txt)+'</span></div>';

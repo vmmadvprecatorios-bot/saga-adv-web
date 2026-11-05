@@ -1594,7 +1594,7 @@ function renderTimeline(){
       seloDocumento='<span class="selo-documento">'+(docRef?'Documento: '+esc(docRef.nome):'Documento')+'</span>';
     }
     const acoes='<div class="acoes-item-timeline"><button class="timeline-action" data-reply-comment="'+esc(entry.id)+'">Responder</button>'+(podeGerenciar?'<button class="timeline-action" data-edit-comment="'+esc(entry.id)+'">Editar</button>':'')+'</div>';
-    return '<div class="item-timeline"><div class="mini-avatar-comentario">'+esc(entry.avatar)+'</div><div class="item-timeline-corpo"><div class="item-timeline-cabecalho"><span class="item-timeline-autor">'+esc(entry.autor)+'</span><span class="item-timeline-data">'+esc(entry.data)+'</span>'+(entry.editado?'<span class="item-timeline-editado">(editado)</span>':'')+seloDocumento+'</div><div class="item-timeline-conteudo">'+entry.texto+'</div>'+acoes+'</div></div>';
+    return '<div class="item-timeline"><div class="mini-avatar-comentario" data-saga-nome="'+esc(entry.autor)+'">'+esc(entry.avatar)+'</div><div class="item-timeline-corpo"><div class="item-timeline-cabecalho"><span class="item-timeline-autor">'+esc(entry.autor)+'</span><span class="item-timeline-data">'+esc(entry.data)+'</span>'+(entry.editado?'<span class="item-timeline-editado">(editado)</span>':'')+seloDocumento+'</div><div class="item-timeline-conteudo">'+entry.texto+'</div>'+acoes+'</div></div>';
   }).join('');
   root.querySelectorAll('[data-reply-comment]').forEach(button=>button.addEventListener('click',()=>{
     const entry=getTimelineItem(button.dataset.replyComment);
@@ -1649,7 +1649,7 @@ function renderReturn(){
   const botaoExcluir=document.getElementById('btnExcluirRetorno');
   if(botaoExcluir)botaoExcluir.addEventListener('click',removerRetorno);
 }
-function renderResponsible(){const p=getActiveProcess();document.getElementById('processResponsible').innerHTML='<div class="mini-avatar-comentario">'+esc(p.responsavel.avatar)+'</div><div class="responsavel-info"><div class="responsavel-nome">'+esc(p.responsavel.nome)+'</div><div class="responsavel-cargo">'+esc(p.responsavel.cargo)+'</div></div>';}
+function renderResponsible(){const p=getActiveProcess();document.getElementById('processResponsible').innerHTML='<div class="mini-avatar-comentario" data-saga-nome="'+esc(p.responsavel.nome)+'">'+esc(p.responsavel.avatar)+'</div><div class="responsavel-info"><div class="responsavel-nome">'+esc(p.responsavel.nome)+'</div><div class="responsavel-cargo">'+esc(p.responsavel.cargo)+'</div></div>';}
 function renderTasks(){
   const process=getActiveProcess();
   const root=document.getElementById('taskList');
@@ -2250,7 +2250,7 @@ if(false){setup();}
   function renderContactHistory(){
     const familyPills=(state.localizacao.familiares||[]).map(family=>'<button class="contact-history-pill '+(state.locationHistoryFilter==='familia:'+family.id?'active':'')+'" type="button" data-contact-history-filter="familia:'+esc(family.id)+'">'+esc(family.nome)+'</button>').join('');
     const history=(state.localizacao.contatoHistorico||[]).filter(entry=>state.locationHistoryFilter==='todos'||entry.ownerKey===state.locationHistoryFilter);
-    const items=history.length?'<div class="contact-history-list">'+history.map(entry=>'<article class="contact-history-item"><div class="contact-history-avatar">'+esc(entry.authorInitials)+'</div><div class="contact-history-copy"><div class="contact-history-meta"><b>'+esc(entry.authorName)+'</b><span>'+esc(entry.date)+'</span></div><p>'+esc(formatContactHistoryText(entry))+'</p>'+(entry.observation?'<div class="contact-history-note">“'+esc(entry.observation)+'”</div>':'')+'</div></article>').join('')+'</div>':'<div class="contact-history-empty">Nenhuma tentativa de contato registrada ainda.</div>';
+    const items=history.length?'<div class="contact-history-list">'+history.map(entry=>'<article class="contact-history-item"><div class="contact-history-avatar" data-saga-nome="'+esc(entry.authorName)+'">'+esc(entry.authorInitials)+'</div><div class="contact-history-copy"><div class="contact-history-meta"><b>'+esc(entry.authorName)+'</b><span>'+esc(entry.date)+'</span></div><p>'+esc(formatContactHistoryText(entry))+'</p>'+(entry.observation?'<div class="contact-history-note">“'+esc(entry.observation)+'”</div>':'')+'</div></article>').join('')+'</div>':'<div class="contact-history-empty">Nenhuma tentativa de contato registrada ainda.</div>';
     return '<section class="contact-history-section"><div class="contact-history-head"><div class="contact-history-title"><h3>Histórico de Tentativas de Contato</h3><p>Registro unificado das atualizações feitas para a cliente e seus vínculos familiares.</p></div></div><div class="contact-history-pills"><button class="contact-history-pill '+(state.locationHistoryFilter==='todos'?'active':'')+'" type="button" data-contact-history-filter="todos">Todos</button><button class="contact-history-pill '+(state.locationHistoryFilter==='cliente-principal'?'active':'')+'" type="button" data-contact-history-filter="cliente-principal">Cliente Principal</button>'+familyPills+'</div>'+items+'</section>';
   }
   function bindLocationContactInteractions(root){
@@ -2369,7 +2369,7 @@ async function carregarPerfil(){
     const av=document.getElementById('avatarTop');
     if(av){av.textContent=currentUser.iniciais;av.title=esc(currentUser.nome||'Meu perfil');}
     const avc=document.getElementById('avatarComentario');
-    if(avc)avc.textContent=currentUser.iniciais;
+    if(avc){avc.textContent=currentUser.iniciais;avc.setAttribute('data-saga-nome',currentUser.nome||'');}
     return true;
   }catch(erro){
     state.usuario.internoId=null;

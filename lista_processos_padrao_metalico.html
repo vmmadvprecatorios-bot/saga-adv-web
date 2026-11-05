@@ -1501,7 +1501,7 @@ function renderLista(){
   document.body.classList.toggle('sp-planilha',!!(window.SagaPlanilha&&SagaPlanilha.pronta()));
   var html=window.SagaPlanilha&&SagaPlanilha.pronta()?null:state.processos.map(function(p){
     var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var st=p.status||{};var re=p.responsavel||{};
-    var respHtml=re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted);font-size:11px">N/A</span>';
+    var respHtml=re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar" data-saga-nome="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted);font-size:11px">N/A</span>';
     return '<tr onclick="verFicha(\''+p.id+'\')">'
       +'<td onclick="event.stopPropagation()"><input type="checkbox" class="chk-linha" value="'+p.id+'"></td>'
       +'<td><div style="display:flex;align-items:center;gap:5px">'+sigiloIcone(sig)+'<div><span class="nome-cliente">'+borrar(pe.nome_completo||'N/D',sig)+'</span><span class="cpf-pequeno">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</span></div></div></td>'
@@ -1521,7 +1521,7 @@ function renderLista(){
     return '<div class="cartao-cliente" onclick="verFicha(\''+p.id+'\')">'
       +'<div class="cartao-topo"><div><div class="cartao-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div><div class="cartao-cpf">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</div></div>'+statusBadge(st)+'</div>'
       +'<div class="cartao-linha"><span class="cartao-label">Tese</span>'+teseTag(te)+'</div>'
-      +'<div class="cartao-linha"><span class="cartao-label">Responsavel</span>'+(re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted)">N/A</span>')+'</div>'
+      +'<div class="cartao-linha"><span class="cartao-label">Responsavel</span>'+(re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar" data-saga-nome="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted)">N/A</span>')+'</div>'
       +providenciaHtml(p)+'<div class="cartao-rodape">'+prazoHtml(p.data_prazo)+acoesBtns(p)+'</div>'
       +'</div>';
   }).join('');
@@ -1623,7 +1623,7 @@ function renderKanban(){
         +'<div class="card-tags">'+(te.nome?teseTag(te):'')+'</div>'+providenciaHtml(p)
         +'<div class="card-rodape">'
         +'<div style="display:flex;align-items:center;gap:6px">'
-        +(re.nome_completo?'<div class="card-avatar" title="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>':'')
+        +(re.nome_completo?'<div class="card-avatar" data-saga-nome="'+esc(re.nome_completo)+'" title="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>':'')
         +whatsHtml
         +'</div>'
         +prazoKanbanHtml(p.data_prazo)+'</div></div>';
@@ -1997,7 +1997,7 @@ function renderOpcoesAtribuir(respAtualId){
   l.innerHTML=ops.map(function(u){
     var sel=u.id===respAtualId||(!u.id&&!respAtualId);
     return '<div class="dropdown-custom-opcao '+(sel?'selecionada':'')+'" data-atribuir-id="'+esc(u.id||'')+'">'
-      +(u.id?'<div class="mini-avatar" style="width:22px;height:22px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin-right:4px">'+iniciais(u.nome_completo)+'</div>':'')
+      +(u.id?'<div class="mini-avatar" data-saga-nome="'+esc(u.nome_completo)+'" style="width:22px;height:22px;font-size:9px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;margin-right:4px">'+iniciais(u.nome_completo)+'</div>':'')
       +esc(u.nome_completo)+'</div>';
   }).join('');
   l.querySelectorAll('[data-atribuir-id]').forEach(function(op){

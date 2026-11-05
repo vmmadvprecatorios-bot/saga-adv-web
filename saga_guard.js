@@ -50,6 +50,12 @@
     // Troca de tela sem piscar: o navegador mantem a tela anterior ate a nova ter os menus prontos
     '@view-transition{navigation:auto;}'+
     '::view-transition-group(root){animation-duration:.12s;}'+
+    // Menus: a imagem da tela anterior fica parada ate a tela nova ter desenhado os dela (nada pisca)
+    '@media(min-width:761px){#sidebarSaga{view-transition-name:saga-lateral;}#topbarSaga{view-transition-name:saga-topo;}}'+
+    '@keyframes sagaMenuVelho{0%,99%{opacity:1;}100%{opacity:0;}}@keyframes sagaMenuNovo{0%,99%{opacity:0;}100%{opacity:1;}}'+
+    '::view-transition-group(saga-lateral),::view-transition-group(saga-topo){animation:none;}'+
+    '::view-transition-old(saga-lateral),::view-transition-old(saga-topo){animation:sagaMenuVelho .35s linear both;mix-blend-mode:normal;}'+
+    '::view-transition-new(saga-lateral),::view-transition-new(saga-topo){animation:sagaMenuNovo .35s linear both;mix-blend-mode:normal;}'+
     '#sidebarSaga,#topbarSaga{font-family:Montserrat,Arial,sans-serif;}'+
     // Enquanto a tela monta, os menus nao animam nada (evita a tremida do menu lateral)
     'html.saga-fixando #sidebarSaga,html.saga-fixando #sidebarSaga *,html.saga-fixando #topbarSaga,html.saga-fixando #topbarSaga *{transition:none !important;animation:none !important;}';
@@ -465,36 +471,18 @@
     setTimeout(function(){location.href=url;},Math.max(Math.min(total,150),menu));
   };
 
-  // Menu lateral: o destaque desliza do item atual ate o item clicado antes de trocar de tela
+  // Menu lateral parado: ao clicar, so o destaque muda de item, sem movimento
   function deslizarMenu(url){
-    var sb=document.getElementById('sidebarSaga');if(!sb||!sb.animate)return 0;
+    var sb=document.getElementById('sidebarSaga');if(!sb)return 0;
     var atual=sb.querySelector('.nav-item.active'),alvo=null;
     sb.querySelectorAll('.nav-item[href],.nav-item[onclick]').forEach(function(el){if(el.getAttribute('href')===url||(el.getAttribute('onclick')||'').indexOf("'"+url+"'")>=0)alvo=el;});
     if(!atual||!alvo||atual===alvo)return 0;
-    var cs=getComputedStyle(atual),s=sb.getBoundingClientRect(),a=atual.getBoundingClientRect(),b=alvo.getBoundingClientRect();
-    var fantasma=document.createElement('div');
-    fantasma.setAttribute('aria-hidden','true');
-    fantasma.style.cssText='position:absolute;z-index:-1;pointer-events:none;left:0;top:0;width:'+a.width+'px;height:'+a.height+'px;'+
-      'background:'+cs.backgroundColor+';border-left:'+cs.borderLeftWidth+' solid '+cs.borderLeftColor+';border-radius:'+cs.borderRadius+';';
-    sb.style.isolation='isolate';
-    sb.appendChild(fantasma);
-    // os dois itens ficam sem fundo; o texto ja assume o destaque no item novo
-    [atual,alvo].forEach(function(el){
-      el.style.setProperty('background','transparent','important');
-      el.style.setProperty('border-left-color','transparent','important');
-      el.style.setProperty('transition','color .2s ease','important');
-    });
     atual.classList.remove('active');alvo.classList.add('active');
-    var y0=a.top-s.top+sb.scrollTop,y1=b.top-s.top+sb.scrollTop,x=a.left-s.left;
-    fantasma.animate([
-      {transform:'translate('+x+'px,'+y0+'px)',height:a.height+'px'},
-      {transform:'translate('+x+'px,'+y1+'px)',height:b.height+'px'}
-    ],{duration:240,easing:'cubic-bezier(.3,1.18,.55,1)',fill:'forwards'});
-    return 210;
+    return 0;
   }
 
   // Todo botao responde ao toque: afunda um pouquinho ao apertar e volta com mola (como no iPhone)
-  var SEL_BOTAO='button,[role="button"],.btn-primary,.btn-secondary,.btn-danger,.nav-item,.pill,.tab-btn,.btn-view,.filter-pill,.segment,.mat-kcard,a.btn,.icon-btn,.theme-toggle';
+  var SEL_BOTAO='button,[role="button"],.btn-primary,.btn-secondary,.btn-danger,.pill,.tab-btn,.btn-view,.filter-pill,.segment,.mat-kcard,a.btn,.icon-btn,.theme-toggle';
   var apertado=null;
   function soltar(){
     var el=apertado;apertado=null;

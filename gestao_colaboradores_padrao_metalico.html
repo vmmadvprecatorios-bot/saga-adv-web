@@ -406,7 +406,7 @@ function renderEmployees(){
     var disableBtn = emp.protected ? ' disabled title="'+protectedText+'"' : ' data-actions-toggle="'+emp.id+'"';
     var perfilClass = emp.papelNome ? 'profile-'+emp.papelNome.toLowerCase().replace(/[^a-z]/g,'').replace('juridico','advogado') : '';
     return '<tr>' +
-      '<td data-label="Colaborador"><div class="person-cell"><span class="person-avatar" style="background:'+emp.cor+'">'+initials(emp.nome)+'</span><span><b>'+esc(emp.nome)+'</b><small>'+esc(emp.email)+'</small></span></div></td>' +
+      '<td data-label="Colaborador"><div class="person-cell"><span class="person-avatar" data-saga-nome="'+esc(emp.nome)+'" style="background:'+emp.cor+'">'+initials(emp.nome)+'</span><span><b>'+esc(emp.nome)+'</b><small>'+esc(emp.email)+'</small></span></div></td>' +
       '<td data-label="Perfil / cargo"><span class="badge '+perfilClass+'">'+esc(emp.papelNome||'Sem perfil')+'</span><div class="date-small" style="margin-top:4px">'+esc(emp.cargo)+'</div></td>' +
       '<td data-label="Status">'+statusBadgeHtml(emp)+'</td>' +
       '<td data-label="Último acesso ao sistema"><span class="date-small">'+(emp.authLinked?'Cadastro completo':'Aguardando onboarding')+'</span></td>' +
@@ -977,7 +977,7 @@ function renderEquipe(){
     if(eqPendente(x))acoes+='<button class="btn-secondary" style="height:30px" data-eq-convidar="'+x.u.id+'" type="button">'+(x.convite&&x.convite.status==='pendente'?'Reenviar convite':'Convidar')+'</button>';
     if(!x.u.eh_administrador)acoes+='<button class="btn-secondary" style="height:30px" data-eq-editar="'+x.u.id+'" type="button">Editar</button>';
     if(eqPendente(x)&&!x.u.eh_administrador)acoes+='<button class="btn-danger" style="height:30px" data-eq-remover="'+x.u.id+'" type="button">Remover</button>';
-    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" style="background:'+avatarColor(x.papel&&x.papel.nome||'')+'">'+initials(x.u.nome_completo||x.u.email)+'</span><span><b>'+esc(x.u.nome_completo||'')+'</b><small>'+esc(x.u.email||'')+'</small></span></div></td>'+
+    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" data-saga-nome="'+esc(x.u.nome_completo||'')+'" style="background:'+avatarColor(x.papel&&x.papel.nome||'')+'">'+initials(x.u.nome_completo||x.u.email)+'</span><span><b>'+esc(x.u.nome_completo||'')+'</b><small>'+esc(x.u.email||'')+'</small></span></div></td>'+
       '<td data-label="Cargo / perfil">'+esc(x.u.cargo_titulo||(x.pc&&x.pc.cargo)||'')+'<div class="date-small">'+esc(x.papel?x.papel.nome:'Sem perfil')+'</div></td>'+
       '<td data-label="Regime">'+esc(reg||'—')+'</td><td data-label="Horário">'+horario+'</td>'+
       '<td data-label="Salário">'+(x.pc&&x.pc.salario!=null?eqDinheiro(x.pc.salario):'<span class="date-small">—</span>')+'</td>'+
@@ -1138,7 +1138,7 @@ function renderAcesso(){
   document.getElementById('acLocal').checked=c.acesso_exigir_local!==false;
   var rows=acesso.pessoas.map(function(u){
     var rg=acesso.regras[u.id]||{},lib=acesso.libs[u.id],modo=rg.livre?'livre':(rg.inicio_min!=null||rg.fim_min!=null?'proprio':'padrao');
-    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" style="background:'+avatarColor('')+'">'+initials(u.nome_completo)+'</span><span><b>'+esc(u.nome_completo)+'</b><small>'+esc(u.email)+'</small></span></div></td>'+
+    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" data-saga-nome="'+esc(u.nome_completo)+'" style="background:'+avatarColor('')+'">'+initials(u.nome_completo)+'</span><span><b>'+esc(u.nome_completo)+'</b><small>'+esc(u.email)+'</small></span></div></td>'+
       '<td data-label="Regra"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select class="field" style="width:auto;min-width:150px" data-ac-modo="'+u.id+'"><option value="padrao"'+(modo==='padrao'?' selected':'')+'>Horário padrão</option><option value="proprio"'+(modo==='proprio'?' selected':'')+'>Horário próprio</option><option value="livre"'+(modo==='livre'?' selected':'')+'>Livre (sem trava)</option></select>'+
       '<span data-ac-horas="'+u.id+'" style="display:'+(modo==='proprio'?'inline-flex':'none')+';gap:4px;align-items:center"><input class="field" type="time" style="width:110px" data-ac-ini="'+u.id+'" value="'+acHm(rg.inicio_min)+'"> às <input class="field" type="time" style="width:110px" data-ac-fim="'+u.id+'" value="'+acHm(rg.fim_min)+'"></span>'+
       '<button class="btn-secondary" style="height:32px" data-ac-salvar="'+u.id+'" type="button">Salvar</button></div></td>'+

@@ -321,7 +321,7 @@ function exceptionModuleCount(c){
 
 function avatarHtml(c,cl='avatar-lg'){
   const bg=c.papel_cor||'#8b93a8';
-  return`<div class="${cl}" style="background:${bg}">${initials(c.nome_completo)}</div>`;
+  return`<div class="${cl}" data-saga-nome="${esc(c.nome_completo)}" style="background:${bg}">${initials(c.nome_completo)}</div>`;
 }
 
 function canManageFor(c){return _currentUser&&_currentUser.eh_administrador&&!c.eh_administrador}
