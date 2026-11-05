@@ -3241,7 +3241,7 @@ function criarCardTarefaEl(tarefa){
     metaProcessoHtml +
     barraSubHtml +
     '<div class="rodape-card-tarefa">' +
-      '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(resp ? resp.nome : '') + '" style="background:' + (resp ? resp.cor : '#8b93a8') + ';" title="' + escaparHtml(resp ? resp.nome : '') + '">' + escaparHtml(resp ? resp.iniciais : '?') + '</div>' +
+      '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(resp ? resp.nome : '') + '"' + (resp ? ' data-saga-usuario="' + escaparHtml(resp.id) + '"' : '') + ' style="background:' + (resp ? resp.cor : '#8b93a8') + ';" title="' + escaparHtml(resp ? resp.nome : '') + '">' + escaparHtml(resp ? resp.iniciais : '?') + '</div>' +
       '<div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">' +
         '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' +
         badgePrazoHtml +
@@ -4392,7 +4392,7 @@ function renderizarComentariosModal(){
     var item = document.createElement('div');
     item.className = 'item-comentario-tarefa';
     item.innerHTML =
-      '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(autor ? autor.nome : '') + '" style="background:' + (autor ? autor.cor : '#8b93a8') + ';">' + (autor ? autor.iniciais : '?') + '</div>' +
+      '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(autor ? autor.nome : '') + '"' + (autor ? ' data-saga-usuario="' + escaparHtml(autor.id) + '"' : '') + ' style="background:' + (autor ? autor.cor : '#8b93a8') + ';">' + (autor ? autor.iniciais : '?') + '</div>' +
       '<div class="corpo-comentario-tarefa">' +
         '<div class="topo-comentario-tarefa"><span class="autor-comentario-tarefa">' + escaparHtml(autor ? autor.nome : 'Colaborador inativo') + '</span><span class="tempo-comentario-tarefa">' + tempoRelativo(c.timestamp) + '</span></div>' +
         '<div class="texto-comentario-tarefa">' + SagaMencoes.destacar(c.texto) + '</div>' +

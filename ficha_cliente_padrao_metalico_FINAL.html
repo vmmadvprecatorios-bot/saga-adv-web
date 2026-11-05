@@ -1594,7 +1594,7 @@ function renderTimeline(){
       seloDocumento='<span class="selo-documento">'+(docRef?'Documento: '+esc(docRef.nome):'Documento')+'</span>';
     }
     const acoes='<div class="acoes-item-timeline"><button class="timeline-action" data-reply-comment="'+esc(entry.id)+'">Responder</button>'+(podeGerenciar?'<button class="timeline-action" data-edit-comment="'+esc(entry.id)+'">Editar</button>':'')+'</div>';
-    return '<div class="item-timeline"><div class="mini-avatar-comentario" data-saga-nome="'+esc(entry.autor)+'">'+esc(entry.avatar)+'</div><div class="item-timeline-corpo"><div class="item-timeline-cabecalho"><span class="item-timeline-autor">'+esc(entry.autor)+'</span><span class="item-timeline-data">'+esc(entry.data)+'</span>'+(entry.editado?'<span class="item-timeline-editado">(editado)</span>':'')+seloDocumento+'</div><div class="item-timeline-conteudo">'+entry.texto+'</div>'+acoes+'</div></div>';
+    return '<div class="item-timeline"><div class="mini-avatar-comentario" data-saga-nome="'+esc(entry.autor)+'"'+(entry.autorId?' data-saga-usuario="'+esc(entry.autorId)+'"':'')+'>'+esc(entry.avatar)+'</div><div class="item-timeline-corpo"><div class="item-timeline-cabecalho"><span class="item-timeline-autor">'+esc(entry.autor)+'</span><span class="item-timeline-data">'+esc(entry.data)+'</span>'+(entry.editado?'<span class="item-timeline-editado">(editado)</span>':'')+seloDocumento+'</div><div class="item-timeline-conteudo">'+entry.texto+'</div>'+acoes+'</div></div>';
   }).join('');
   root.querySelectorAll('[data-reply-comment]').forEach(button=>button.addEventListener('click',()=>{
     const entry=getTimelineItem(button.dataset.replyComment);

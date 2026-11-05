@@ -1623,7 +1623,7 @@ function renderKanban(){
         +'<div class="card-tags">'+(te.nome?teseTag(te):'')+'</div>'+providenciaHtml(p)
         +'<div class="card-rodape">'
         +'<div style="display:flex;align-items:center;gap:6px">'
-        +(re.nome_completo?'<div class="card-avatar" data-saga-nome="'+esc(re.nome_completo)+'" title="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>':'')
+        +(re.nome_completo?'<div class="card-avatar" data-saga-nome="'+esc(re.nome_completo)+'"'+(re.id?' data-saga-usuario="'+esc(re.id)+'"':'')+' title="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>':'')
         +whatsHtml
         +'</div>'
         +prazoKanbanHtml(p.data_prazo)+'</div></div>';

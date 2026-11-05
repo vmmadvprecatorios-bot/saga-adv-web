@@ -1065,15 +1065,21 @@
       var like='%'+limpo+'%';
       var termoDigitos=termo.replace(/\D/g,'');
       var promessas=[
-        global._sb.from('pessoas').select('id,nome_completo,cpf').or('nome_completo.ilike.'+like+(termoDigitos?',cpf.ilike.%'+termoDigitos+'%':'')).order('nome_completo').limit(50),
-        global._sb.from('processos').select('id,numero_processo_cnj,pessoa:pessoas!pessoa_id(nome_completo)').or('numero_processo_cnj.ilike.'+like).eq('excluido_logico',false).limit(10),
-        global._sb.from('usuarios').select('id,nome_completo,email').or('nome_completo.ilike.'+like+',email.ilike.'+like).eq('ativo',true).limit(5),
+        function(){return global._sb.from('pessoas').select('id,nome_completo,cpf').or('nome_completo.ilike.'+like+(termoDigitos?',cpf.ilike.%'+termoDigitos+'%':'')).order('nome_completo').limit(50);},
+        function(){return global._sb.from('processos').select('id,numero_processo_cnj,pessoa:pessoas!pessoa_id(nome_completo)').or('numero_processo_cnj.ilike.'+like).eq('excluido_logico',false).limit(10);},
+        function(){return global._sb.from('usuarios').select('id,nome_completo,email').or('nome_completo.ilike.'+like+',email.ilike.'+like).eq('ativo',true).limit(5);}
       ];
-      var res=await Promise.all(promessas);
+      // Banco (bloco 83): sem acento ("Graca" acha "Graça") e, com 1-2 letras, pelo começo de cada palavra; se faltar, usa a busca antiga
+      var pessoas,processos,colaboradores;
+      var rb=await global._sb.rpc('busca_global',{p_termo:termo});
       if(minhaBusca!==_buscaAtual)return;
-      var pessoas=(res[0].data||[]);
-      var processos=(res[1].data||[]);
-      var colaboradores=(res[2].data||[]);
+      if(!rb.error&&rb.data){
+        pessoas=rb.data.pessoas||[];processos=rb.data.processos||[];colaboradores=rb.data.usuarios||[];
+      }else{
+        var res=await Promise.all(promessas.map(function(f){return f();}));
+        if(minhaBusca!==_buscaAtual)return;
+        pessoas=(res[0].data||[]);processos=(res[1].data||[]);colaboradores=(res[2].data||[]);
+      }
       var html='';
       if(pessoas.length){
         html+='<div class="pop-title">Pessoas</div>';
