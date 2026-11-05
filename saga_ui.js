@@ -129,7 +129,7 @@
       '#sidebarSaga.collapsed{width:0 !important;min-width:0 !important;flex-basis:0 !important;padding:0 !important;opacity:0 !important;overflow:hidden !important;border:none !important;}'+
       '#sidebarSaga .nav-section,#sidebarSaga .nav-secao{font-size:10px !important;letter-spacing:1.6px !important;color:#9aa6b8 !important;text-transform:uppercase !important;font-weight:600 !important;padding:17px 22px 7px !important;opacity:1 !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-section,[data-theme="light"] #sidebarSaga .nav-secao{color:#5b6880 !important;}'+
-      '#sidebarSaga .nav-item{display:flex !important;align-items:center !important;gap:11px !important;padding:11px 22px !important;font-size:13px !important;color:#d5dbe4 !important;font-weight:500 !important;cursor:pointer !important;border-left:2px solid transparent !important;background:transparent !important;transition:all .2s !important;}'+
+      '#sidebarSaga .nav-item{display:flex !important;align-items:center !important;gap:11px !important;padding:11px 22px !important;font-size:13px !important;color:#d5dbe4 !important;font-weight:500 !important;cursor:pointer !important;border-left:3px solid transparent !important;background:transparent !important;transition:all .2s !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-item{color:#22324a !important;}'+
       '#sidebarSaga .nav-item:hover{color:#ffffff !important;background:rgba(255,255,255,.06) !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-item:hover{color:#13233a !important;background:rgba(19,38,66,.06) !important;}'+
@@ -295,6 +295,17 @@
   }
   if(document.head)_injetarEstiloBase();
   else document.addEventListener('DOMContentLoaded',_injetarEstiloBase);
+  // Visual dos numeros do menu lateral: entra junto com a pagina (antes vinha depois e o numero nascia colado no nome e pulava)
+  function _estiloNumerosMenu(){
+    if(!document.getElementById('sagaChatEstilo')){
+      var st=document.createElement('style');st.id='sagaChatEstilo';
+      st.textContent='#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:16px;height:16px;padding:0 4px;border-radius:5px;background:rgba(229,72,77,.2) !important;color:#ff9b9e !important;font-size:9.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;line-height:1;}'
+        +'#sidebarSaga .nav-badge-dia{background:rgba(96,150,240,.2) !important;color:#a9c8ff !important}#sidebarSaga .nav-badge-dia.atrasada{background:rgba(229,72,77,.2) !important;color:#ff9b9e !important}'
+        +'';
+      document.head.appendChild(st);
+    }
+  }
+  if(document.head)_estiloNumerosMenu();else document.addEventListener('DOMContentLoaded',_estiloNumerosMenu);
   // Janelas da busca, das notificacoes e de quem esta online: no computador abrem logo abaixo do campo de busca (antes iam para o canto direito)
   var _POPS_TOPO=['globalSearchPop','notifPop','presencePop'];
   function _posicionarPopsTopo(){
@@ -1261,13 +1272,7 @@
   }
   function agendarContagemChat(){clearTimeout(_chatTimer);_chatTimer=setTimeout(contarChat,400);}
   function ligarContadorChat(){
-    if(!document.getElementById('sagaChatEstilo')){
-      var st=document.createElement('style');st.id='sagaChatEstilo';
-      st.textContent='#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:16px;height:16px;padding:0 4px;border-radius:5px;background:rgba(229,72,77,.2) !important;color:#ff9b9e !important;font-size:9.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;line-height:1;}'
-        +'#sidebarSaga .nav-badge-dia{background:rgba(96,150,240,.2) !important;color:#a9c8ff !important}#sidebarSaga .nav-badge-dia.atrasada{background:rgba(229,72,77,.2) !important;color:#ff9b9e !important}'
-        +'';
-      document.head.appendChild(st);
-    }
+    _estiloNumerosMenu();
     contarChat();
     if(global._sb&&!_chatCanal){
       _chatCanal=global._sb.channel('saga-chat-contador')
