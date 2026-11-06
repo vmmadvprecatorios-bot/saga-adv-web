@@ -599,6 +599,8 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
       <div class="pr-erro" id="erroGraficosProcessos" role="status" hidden>Não foi possível carregar os gráficos.<button type="button" onclick="invalidarBaseProcessos();carregarProcessos()">Atualizar</button></div>
     </section>
 
+    <section id="painelAcompanhamento" hidden aria-label="Painel de acompanhamento"></section>
+
     <div class="barra-filtros">
       <div class="busca">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#5f6f8c" stroke-width="2"/><line x1="20" y1="20" x2="16.5" y2="16.5" stroke="#5f6f8c" stroke-width="2"/></svg>
@@ -690,6 +692,8 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_teses.js"></script>
 <script src="saga_etiquetas.js"></script>
 <script src="saga_partes.js"></script>
+<script src="saga_roscas.js"></script>
+<script src="saga_paineis.js"></script>
 <script src="saga_planilha.js"></script>
 <script>
 // ============================================================
@@ -1257,7 +1261,18 @@ function contarRoscaProcesso(el,alvo){
   function passo(ts){if(inicio===null)inicio=ts;var k=Math.min(1,(ts-inicio)/600);el.textContent=Math.round(de+(alvo-de)*(1-Math.pow(1-k,3)));if(k<1)el._quadro=requestAnimationFrame(passo);else el._quadro=null;}
   el._quadro=requestAnimationFrame(passo);
 }
+function nomeUsuarioPainel(id){var u=(state.responsaveis||[]).find(function(r){return r.id===id;});return u?u.nome_completo:'';}
+function renderPainelAcomp(){
+  var raiz=document.getElementById('painelAcompanhamento');if(!raiz||!window.SagaPaineis)return;
+  if(!state.permissoes.visualizar||(FASE_FIXA!=='juridico'&&FASE_FIXA!=='captacao')){raiz.hidden=true;return;}
+  var base=(state.baseProcessos||[]).filter(function(p){return processoNoEscopo(p,'painel');});
+  SagaPaineis.render(raiz,{fase:FASE_FIXA,base:base,statusDe:statusDoProcesso,
+    pessoaDe:function(p){return FASE_FIXA==='captacao'?p.captador_id:p.responsavel_id;},nomeDe:nomeUsuarioPainel,
+    abrir:function(id){verFicha(id);},
+    aoMudar:function(){state.page=1;if(state.view==='kanban')renderKanban();else renderLista();}});
+}
 function renderGraficosProcessos(){
+  renderPainelAcomp();
   var secao=document.querySelector('.pr-graficos-secao');secao.hidden=!state.permissoes.visualizar;if(secao.hidden)return;
   var root=document.getElementById('graficosProcessos');
   var btn=document.getElementById('btnGraficosProcessos');
@@ -1326,6 +1341,7 @@ function statusDisponiveisProcessos(){
 }
 function filtroProcessoContem(f,id){return !f||(f.ids?f.ids.indexOf(id||'')!==-1:f.sem?!id:f.id===id);}
 function processoNoEscopo(p,ignorar){
+  if(ignorar!=='painel'&&window.SagaPaineis&&!SagaPaineis.passa(p))return false;
   if(ignorar!=='fase'&&faseAtualProcessos()!==FASE_TODAS&&(statusDoProcesso(p).fase||'Sem fase')!==faseAtualProcessos())return false;
   if(ignorar!=='status'&&!filtroProcessoContem(state.filtroStatus,p.status_id))return false;
   if(ignorar!=='responsavel'&&!filtroProcessoContem(state.filtroResponsavel,p.responsavel_id))return false;
@@ -1421,7 +1437,7 @@ function aplicarFiltroPeriodo(){
 function limparFiltros(){
   if(window.SagaPlanilha)SagaPlanilha.limpar();
   state.faseLista=state.faseKanbanAtiva=FASE_TODAS;state.buscaKanban='';document.getElementById('buscaKanban').value='';
-  state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
+  state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;if(window.SagaPaineis)SagaPaineis.limpar();
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
   document.getElementById('inputBusca').value='';
   document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';

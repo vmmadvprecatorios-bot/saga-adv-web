@@ -43,6 +43,7 @@ button.sr-leg{cursor:pointer}button.sr-leg:hover,button.sr-leg:focus-visible{bac
     root.classList.add('sr-secao');
     root.innerHTML='<div class="sr-graficos-barra"><button type="button" class="sr-toggle" aria-expanded="true"></button></div><div class="sr-graficos"></div>';
     var btn=root.querySelector('.sr-toggle'),painel=root.querySelector('.sr-graficos');
+    if(op.semBarra){ocultos=false;root.querySelector('.sr-graficos-barra').style.display='none';}
     painel.id=root.id+'-painel';painel.setAttribute('aria-label',op.rotulo||'Gráficos');btn.setAttribute('aria-controls',painel.id);
     function atualizar(lista,animar){
       grupos=lista;root.hidden=!grupos.length;btn.textContent=ocultos?'Mostrar gráficos':'Ocultar gráficos';btn.setAttribute('aria-expanded',String(!ocultos));
