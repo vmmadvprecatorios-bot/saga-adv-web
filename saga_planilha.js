@@ -72,7 +72,12 @@ window.SagaPlanilha=(function(){
     if(c.tipo==='usuario')return nomeUsuario(v)||'';
     if(c.tipo==='opcao'){var o=(c.opcoes||[]).find(function(o){return String(o.id)===String(v);});return o?o.nome:String(v);}
     if(c.tipo==='moeda')return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v));
-    if(c.tipo==='porcentagem')return Number(v).toLocaleString('pt-BR')+'%';
+    if(c.tipo==='porcentagem'){
+      var pc=Number(v).toLocaleString('pt-BR')+'%';
+      // Honorários sucumbenciais: % do valor da causa; mostra também quanto dá em reais
+      if(/sucumb/i.test(c.nome||'')&&p&&Number(p.valor_causa)>0)pc+=' ('+new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(p.valor_causa)*Number(v)/100)+')';
+      return pc;
+    }
     if(c.tipo==='numero')return Number(v).toLocaleString('pt-BR');
     if(c.tipo==='data')return String(v).slice(0,10).split('-').reverse().join('/');
     if(c.tipo==='link')return (Array.isArray(v)?v:[]).map(function(l){return l.texto||l.url;}).join(' · ');
@@ -734,7 +739,7 @@ window.SagaPlanilha=(function(){
     if(ROTULO_LINHA[c.campo_sistema])return row[ROTULO_LINHA[c.campo_sistema]]||'';
     if(c.campo_sistema==='processo.fase')return v==='juridico'?'Jurídico':'Captação';
     if(c.campo_sistema==='pessoa.situacao_vital')return v==='vivo'?'Vivo':'Falecido';
-    return exibir(c,texto({},c,v));
+    return exibir(c,texto({valor_causa:row.valor_causa},c,v));
   }
   // ---------- caixas de edição da ficha (modo "lápis": editar vários campos e salvar de uma vez) ----------
   function mesmoValor(a,b){return JSON.stringify(a==null||a===''?null:a)===JSON.stringify(b==null||b===''?null:b);}
