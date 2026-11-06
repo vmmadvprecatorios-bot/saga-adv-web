@@ -11,6 +11,19 @@
   'use strict';
   var PERMITIDAS={B:'b',STRONG:'b',I:'i',EM:'i',U:'u',MARK:'mark',BR:'br',P:'p',DIV:'p',UL:'ul',OL:'ol',LI:'li'};
   var BLOCOS={p:1,ul:1,ol:1};
+  // cores do marca-texto (como no Word): amarelo é a padrão
+  var PALETA=[['amarelo','#f5c542','Amarelo'],['verde','#6fcf7f','Verde'],['azul','#5bc0eb','Azul'],['rosa','#f78fb3','Rosa'],['laranja','#f59e42','Laranja'],['roxo','#b69cf0','Roxo'],['vermelho','#f2706b','Vermelho'],['cinza','#b0b7c3','Cinza']];
+  function rgbDe(txt){
+    var m=/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(txt);if(m)return [+m[1],+m[2],+m[3]];
+    m=/#([0-9a-f]{6}|[0-9a-f]{3})\b/i.exec(txt);if(!m)return null;var h=m[1];if(h.length===3)h=h.replace(/./g,'$&$&');
+    return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];
+  }
+  function nomeDaCor(txt){
+    var c=rgbDe(txt);if(!c)return 'amarelo';var melhor='amarelo',dist=1e9;
+    PALETA.forEach(function(p){var q=rgbDe(p[1]),d=Math.pow(c[0]-q[0],2)+Math.pow(c[1]-q[1],2)+Math.pow(c[2]-q[2],2);if(d<dist){dist=d;melhor=p[0];}});
+    return melhor;
+  }
+  function corValida(n){return PALETA.some(function(p){return p[0]===n;});}
   function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
   // ---------- limpeza: só as marcas permitidas, sem atributos ----------
@@ -26,12 +39,13 @@
         else if(/font-weight\s*:\s*(bold|[6-9]00)/.test(st))env='b';
         else if(/font-style\s*:\s*italic/.test(st))env='i';
         else if(/text-decoration[^;]*underline/.test(st))env='u';
-        if(env){var n=document.createElement(env);limparNo(f,n);if(n.childNodes.length)saida.appendChild(n);}
+        if(env){var n=document.createElement(env);if(env==='mark')n.setAttribute('data-c',nomeDaCor(st));limparNo(f,n);if(n.childNodes.length)saida.appendChild(n);}
         else limparNo(f,saida);
         return;
       }
       if(!alvo){ if(!/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|NOSCRIPT|TEMPLATE)$/.test(tag))limparNo(f,saida); return; }
       var novo=document.createElement(alvo);
+      if(alvo==='mark'&&corValida(f.getAttribute('data-c')))novo.setAttribute('data-c',f.getAttribute('data-c'));
       if(alvo!=='br')limparNo(f,novo);
       saida.appendChild(novo);
     });
@@ -85,6 +99,9 @@
       '.saga-texto p{margin:0 0 .6em}.saga-texto p:last-child{margin-bottom:0}',
       '.saga-texto ul,.saga-texto ol{margin:0 0 .6em;padding-left:1.4em}.saga-texto li{margin:.1em 0}',
       '.saga-texto mark,.saga-editor-area mark{background:color-mix(in srgb,#f5c542 55%,transparent);color:inherit;padding:0 2px;border-radius:3px}',
+      PALETA.map(function(p){return '.saga-texto mark[data-c="'+p[0]+'"],.saga-editor-area mark[data-c="'+p[0]+'"]{background:color-mix(in srgb,'+p[1]+' 55%,transparent)}';}).join('\n'),
+      '.saga-cores{display:none;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}.saga-cores.aberto{display:flex}',
+      '.saga-cores button{width:20px;height:20px;min-width:20px;padding:0;border-radius:50%;border:2px solid transparent;cursor:pointer}.saga-cores button:hover{border-color:var(--text)}.saga-cores .sem{width:auto;border-radius:7px;padding:0 8px;font:inherit;font-size:10.5px;background:transparent;color:var(--muted);border:1px solid var(--border-soft)}',
       '.saga-editor{width:100%;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 4%,transparent);overflow:hidden}',
       '.saga-editor:focus-within{border-color:var(--gold)}',
       '.saga-editor-barra{display:flex;flex-wrap:wrap;gap:3px;padding:5px 6px;border-bottom:1px solid var(--border-soft);background:color-mix(in srgb,var(--text) 3%,transparent)}',
@@ -115,10 +132,21 @@
       if(b==='|'){var s=document.createElement('span');s.className='sep';barra.appendChild(s);return;}
       var btn=document.createElement('button');btn.type='button';btn.innerHTML=b[1];btn.title=b[2];btn.setAttribute('aria-label',b[2]);btn.dataset.cmd=b[0];
       btn.addEventListener('mousedown',function(e){e.preventDefault();}); // não tira o cursor do texto
-      btn.addEventListener('click',function(){comando(b[0]);area.focus();estado();});
+      btn.addEventListener('click',function(){if(b[0]==='destaque'){faixa.classList.toggle('aberto');return;}comando(b[0]);area.focus();estado();});
       barra.appendChild(btn);
     });
-    cx.appendChild(barra);cx.appendChild(area);
+    var faixa=document.createElement('div');faixa.className='saga-cores';faixa.setAttribute('role','group');faixa.setAttribute('aria-label','Cores do marca-texto');
+    PALETA.forEach(function(p){
+      var c=document.createElement('button');c.type='button';c.style.background=p[1];c.title=p[2];c.setAttribute('aria-label','Marca-texto '+p[2]);
+      c.addEventListener('mousedown',function(e){e.preventDefault();});
+      c.addEventListener('click',function(){try{document.execCommand('hiliteColor',false,p[1]);}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
+      faixa.appendChild(c);
+    });
+    var sem=document.createElement('button');sem.type='button';sem.className='sem';sem.textContent='Sem cor';
+    sem.addEventListener('mousedown',function(e){e.preventDefault();});
+    sem.addEventListener('click',function(){try{document.execCommand('hiliteColor',false,'transparent');}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
+    faixa.appendChild(sem);
+    cx.appendChild(barra);cx.appendChild(faixa);cx.appendChild(area);
     campo.style.display='none';campo.parentNode.insertBefore(cx,campo.nextSibling);
     function comando(c){
       try{
@@ -147,7 +175,7 @@
     // o campo original passa a refletir o editor (código antigo continua lendo e gravando .value)
     Object.defineProperty(campo,'value',{configurable:true,get:ler,set:definir});
     campo.focus=function(){area.focus();};
-    campo._sagaTexto={leitura:function(b){area.contentEditable=b?'false':'true';barra.style.display=b?'none':'';},area:area,caixa:cx,inserir:function(txt){area.focus();document.execCommand('insertText',false,txt);},foco:function(){area.focus();}};
+    campo._sagaTexto={leitura:function(b){area.contentEditable=b?'false':'true';barra.style.display=b?'none':'';if(b)faixa.classList.remove('aberto');},area:area,caixa:cx,inserir:function(txt){area.focus();document.execCommand('insertText',false,txt);},foco:function(){area.focus();}};
     area.addEventListener('keyup',estado);area.addEventListener('mouseup',estado);area.addEventListener('focus',estado);
     area.addEventListener('input',function(){campo.dispatchEvent(new Event('input',{bubbles:true}));});
     area.addEventListener('paste',function(e){
