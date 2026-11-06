@@ -89,6 +89,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .etq-ed{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .etq-ed .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;border-radius:10px;padding:2px 4px 2px 10px;background:color-mix(in srgb,var(--text) 9%,transparent)}.etq-ed .chip button{width:18px;height:18px;color:var(--muted)}
 .etq-ed input{flex:1;min-width:130px;height:30px;border:0;border-bottom:1px solid var(--border-soft);background:transparent;font-size:12px;outline:0}
+.sug-etq{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10.5px;color:var(--muted)}.etq-ed .mini{height:30px}
 .aviso-senha{font-size:11px;color:var(--muted);border-radius:9px;padding:8px 10px;background:color-mix(in srgb,var(--warning) 10%,transparent);border:1px solid color-mix(in srgb,var(--warning) 30%,transparent)}
 .md-rod{display:flex;gap:8px;align-items:center;padding:10px 16px 14px;flex-wrap:wrap}
 .md-rod .esq{display:flex;gap:6px;flex-wrap:wrap}.md-rod .dir{margin-left:auto;display:flex;gap:8px}
@@ -328,7 +329,7 @@ function abrirNota(n,tipo){
     '<div class="md-rod"><div class="esq">'+(dono&&!novo?'<button class="btn" type="button" id="btComp">👥 Compartilhar</button><button class="btn" type="button" id="btArq">'+(n.arquivada?'Desarquivar':'Arquivar')+'</button><button class="btn perigo" type="button" id="btDel">Apagar</button>':'')+(!dono?'<button class="btn" type="button" id="btSair">Parar de ver</button>':'')+'</div>'+
     '<div class="dir"><button class="btn" type="button" id="btFechar">'+(pode?'Cancelar':'Fechar')+'</button>'+(pode?'<button class="btn prim" type="button" id="btSalvar">Salvar</button>':'')+'</div></div>';
   $('edTitulo').value=e.titulo;
-  var ta=$('edTexto');if(ta){ta.value=e.conteudo;if(window.SagaTexto){var ed=SagaTexto.ligar(ta);if(!pode&&ed)ed.leitura(true);}}
+  var ta=$('edTexto');if(ta){if(window.SagaTexto){var ed=SagaTexto.ligar(ta);if(!pode&&ed)ed.leitura(true);}ta.value=e.conteudo;}
   if(e.tipo==='lista')desenharItens();
   if(e.tipo==='senha'){$('edLogin').value=e.login;$('edLink').value=e.link;if(!pode){$('edLogin').readOnly=true;$('edLink').readOnly=true;$('edSenha').readOnly=true;}}
   if(dono)desenharEtqEd();
@@ -345,7 +346,14 @@ function desenharEtqEd(){
   var e=S.ed,box=$('edEtq');if(!box)return;
   var sug=todasEtiquetas().filter(function(x){return e.etiquetas.indexOf(x)<0;});
   box.innerHTML=e.etiquetas.map(function(x,i){return '<span class="chip">'+esc(x)+'<button type="button" data-rmetq="'+i+'" aria-label="Tirar etiqueta">✕</button></span>';}).join('')+
-    '<input type="text" id="edNovaEtq" list="listaEtqSug" placeholder="+ etiqueta (Enter)" maxlength="40" autocomplete="off"><datalist id="listaEtqSug">'+sug.map(function(x){return '<option value="'+esc(x)+'">';}).join('')+'</datalist>';
+    '<input type="text" id="edNovaEtq" placeholder="Nova etiqueta (ex.: trabalho)" maxlength="40" autocomplete="off"><button type="button" class="mini" id="edAddEtq">Adicionar</button>'+
+    (sug.length?'<div class="sug-etq" style="flex-basis:100%"><span>Já usadas:</span>'+sug.map(function(x){return '<button type="button" class="etq" data-sugetq="'+esc(x)+'">'+esc(x)+'</button>';}).join('')+'</div>':'');
+}
+function juntarEtiqueta(v){
+  var e=S.ed;if(!e)return;v=String(v||'').trim();if(!v)return;
+  if(e.etiquetas.some(function(x){return x.toLowerCase()===v.toLowerCase();}))return;
+  if(e.etiquetas.length>=12){toast('No máximo 12 etiquetas por nota.','erro');return;}
+  e.etiquetas.push(v);e.sujo=true;desenharEtqEd();
 }
 function ligarJanela(){
   var e=S.ed,m=$('mdNota');
@@ -380,10 +388,13 @@ function ligarJanela(){
   if(cores)cores.addEventListener('click',function(ev){var b=ev.target.closest('button[data-cor]');if(!b)return;e.cor=b.dataset.cor;e.sujo=true;m.dataset.cor=e.cor;cores.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});});
   var etq=$('edEtq');
   if(etq){
-    etq.addEventListener('click',function(ev){var b=ev.target.closest('[data-rmetq]');if(b){e.etiquetas.splice(+b.dataset.rmetq,1);e.sujo=true;desenharEtqEd();}});
+    etq.addEventListener('click',function(ev){
+      var b=ev.target.closest('[data-rmetq]');if(b){e.etiquetas.splice(+b.dataset.rmetq,1);e.sujo=true;desenharEtqEd();return;}
+      var sg=ev.target.closest('[data-sugetq]');if(sg){juntarEtiqueta(sg.dataset.sugetq);return;}
+      if(ev.target.closest('#edAddEtq')){juntarEtiqueta($('edNovaEtq').value);}
+    });
     etq.addEventListener('keydown',function(ev){
-      if(ev.key!=='Enter'&&ev.key!==',')return;var t=ev.target;if(t.id!=='edNovaEtq')return;ev.preventDefault();
-      var v=t.value.trim();if(!v)return;if(e.etiquetas.indexOf(v)<0&&e.etiquetas.length<12)e.etiquetas.push(v);e.sujo=true;desenharEtqEd();var nn=$('edNovaEtq');if(nn)nn.focus();
+      if(ev.key!=='Enter'&&ev.key!==',')return;var t=ev.target;if(t.id!=='edNovaEtq')return;ev.preventDefault();juntarEtiqueta(t.value);var nn=$('edNovaEtq');if(nn)nn.focus();
     });
   }
   $('btFechar').onclick=function(){fecharNota();};
@@ -396,6 +407,7 @@ function ligarJanela(){
 }
 async function salvarNota(){
   var e=S.ed,btn=$('btSalvar');if(!e||!e.pode||btn.disabled)return;
+  if($('edNovaEtq'))juntarEtiqueta($('edNovaEtq').value);
   var conteudo=$('edTexto')?$('edTexto').value:'';
   var itens=e.itens.map(function(i){return {texto:String(i.texto||'').trim(),ok:!!i.ok};}).filter(function(i){return i.texto;});
   var vazio=!e.titulo.trim()&&!(puro(conteudo))&&!itens.length&&!(e.login||e.link||e.senha||e.tem_senha);
