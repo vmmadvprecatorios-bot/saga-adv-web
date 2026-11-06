@@ -123,6 +123,9 @@
       '#topbarSaga a.pop-row-link{display:flex !important;align-items:center !important;gap:9px !important;text-decoration:none !important;color:inherit !important;cursor:pointer !important;}'+
       '#topbarSaga .avatar{position:relative !important;overflow:hidden !important;cursor:pointer !important;}'+
       '#topbarSaga .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;}'+
+      '#topbarSaga .sg-chave{margin-left:auto;flex:0 0 auto;width:30px;height:17px;border-radius:999px;background:color-mix(in srgb,var(--muted) 45%,transparent);position:relative;transition:background .18s ease;}'+
+      '#topbarSaga .sg-chave i{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .18s ease;}'+
+      '#topbarSaga .sg-ligada .sg-chave{background:var(--gold) !important;}#topbarSaga .sg-ligada .sg-chave i{transform:translateX(13px);}'+
       /* ===== SIDEBAR: aparencia fixa, retratil, sticky ===== */
       '#sidebarSaga{width:208px !important;background:var(--navy-2) !important;border-right:1px solid var(--border) !important;padding:22px 0 !important;position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;flex-grow:0 !important;flex-shrink:0 !important;flex-basis:208px !important;transition:width .22s ease,min-width .22s ease,flex-basis .22s ease,padding .22s ease,opacity .18s ease !important;}'+
       '[data-theme="light"] #sidebarSaga{background:#ffffff !important;border-right-color:var(--border) !important;}'+
@@ -477,7 +480,7 @@
     +'Configurações</a>'
     +'<div class="pop-row pop-row-link" data-acao="movimento" role="button" tabindex="0" title="Animações e transições do sistema">'
     +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12h3l2-6 4 12 2-6h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'<span id="sagaMovimentoTxt">Efeitos de movimento: ligados</span></div>'
+    +'<span id="sagaMovimentoTxt">Efeitos de movimento</span><span class="sg-chave" id="sagaMovimentoChave" aria-hidden="true"><i></i></span></div>'
     +'<div class="pop-divisor"></div>'
     +'<div class="pop-row pop-row-sair" data-acao="sair">'
     +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -685,10 +688,19 @@
     var btnMov=document.querySelector('[data-acao="movimento"]');
     if(btnMov&&!btnMov.dataset.ligado){
       btnMov.dataset.ligado='1';
-      var txtMov=document.getElementById('sagaMovimentoTxt');
       var reduzido=function(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}};
-      if(txtMov)txtMov.textContent='Efeitos de movimento: '+(reduzido()?'desligados':'ligados');
-      var alternarMov=function(){try{localStorage.setItem('saga-movimento',reduzido()?'normal':'reduzido');}catch(e){}location.reload();};
+      // chavinha: ligada = efeitos de movimento ligados. Vale na hora, sem recarregar a tela
+      var desenharChave=function(){var lig=!reduzido();btnMov.setAttribute('role','switch');btnMov.setAttribute('aria-checked',lig?'true':'false');btnMov.classList.toggle('sg-ligada',lig);};
+      desenharChave();
+      var alternarMov=function(){
+        var novoReduzido=!reduzido();
+        try{localStorage.setItem('saga-movimento',novoReduzido?'reduzido':'normal');}catch(e){}
+        var h=document.documentElement,est=document.getElementById('sagaSemMovimento');
+        h.classList.toggle('saga-sem-movimento',novoReduzido);
+        if(novoReduzido&&!est){est=document.createElement('style');est.id='sagaSemMovimento';est.textContent='html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}';document.head.appendChild(est);}
+        else if(!novoReduzido&&est)est.remove();
+        desenharChave();
+      };
       btnMov.addEventListener('click',alternarMov);
       btnMov.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();alternarMov();}});
     }
@@ -729,7 +741,7 @@
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
       _perfilAtual=r.data;
-      var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo);try{localStorage.setItem('saga-iniciais',iniciais(r.data.nome_completo));}catch(e){}
+      var av=document.getElementById('avatarTop');if(av)definirIniciaisAvatar(av,iniciais(r.data.nome_completo));try{localStorage.setItem('saga-iniciais',iniciais(r.data.nome_completo));}catch(e){}
       mostrarFotoAvatar(r.data.foto_url);
       // tamanho da letra escolhido nas Configuracoes vale em qualquer aparelho
       var letra=String((r.data.preferencias||{}).letra||'1');
@@ -902,11 +914,20 @@
     if(!global._sb)return;
     try{var r=await global._sb.rpc('escritorio_publico');if(!r.error&&r.data)aplicarMarca(r.data.logo||null,r.data.nome||'');}catch(e){}
   }
+  // Troca só o texto das iniciais; mexer em textContent apagaria a foto (e ela reapareceria piscando)
+  function definirIniciaisAvatar(av,ini){
+    var no=null;for(var i=0;i<av.childNodes.length;i++){if(av.childNodes[i].nodeType===3){no=av.childNodes[i];break;}}
+    if(no){if(no.nodeValue!==ini)no.nodeValue=ini;}else av.insertBefore(document.createTextNode(ini),av.firstChild);
+  }
   function mostrarFotoAvatar(url){
     var av=document.getElementById('avatarTop');if(!av)return;
     try{if(url)localStorage.setItem('saga-foto',url);else localStorage.removeItem('saga-foto');}catch(e){}
     var img=av.querySelector('img');
-    if(url){if(!img){img=document.createElement('img');img.alt='';av.appendChild(img);}img.src=url;}
+    if(url){
+      if(!img){img=document.createElement('img');img.alt='';img.decoding='async';av.appendChild(img);}
+      // só troca o endereço se mudou: reatribuir o mesmo endereço recarrega a imagem e ela pisca
+      if(img.getAttribute('src')!==url)img.src=url;
+    }
     else if(img)img.remove();
   }
   // Fotos da equipe em toda a tela: qualquer bolinha com data-saga-nome (ou data-saga-usuario)
@@ -1470,7 +1491,7 @@
       if(sb){sb.innerHTML=SIDEBAR_HTML;linksDoMenu(sb);prepararMenuPermissoes();}
       if(tb)tb.innerHTML=TOPBAR_HTML;
       restaurarNumerosMoldura();
-      try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)avt.textContent=ini;var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);var lg=localStorage.getItem('saga-logo');if(lg)aplicarMarca(lg,localStorage.getItem('saga-escritorio'));}catch(e){}
+      try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)definirIniciaisAvatar(avt,ini);var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);var lg=localStorage.getItem('saga-logo');if(lg)aplicarMarca(lg,localStorage.getItem('saga-escritorio'));}catch(e){}
       ligarTema();
       ligarPrivacidade();
       ligarHamburger();
