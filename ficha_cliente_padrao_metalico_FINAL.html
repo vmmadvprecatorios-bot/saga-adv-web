@@ -308,6 +308,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 <script src="vendor/supabase-js-2.118.0.js"></script>
 <script src="saga_ui.js"></script>
 <script src="saga_teses.js"></script>
+<script src="saga_mencoes.js"></script>
 <script src="saga_texto.js"></script>
 <script src="saga_partes.js"></script>
 <script src="saga_etiquetas.js"></script>
@@ -1731,7 +1732,8 @@ function renderPartes(){
     podeEditar:perms.processosEditar===true,podeEditarDados:perms.processosEditarDados===true,
     aoMudar:()=>{recarregarProcessoAtivo();}});
 }
-function renderActiveProcess(){renderProcessTabs();renderProcessHeader();renderProcessData();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
+function prepararMencoes(){const proc=getActiveProcess(),campo=document.getElementById('commentInput');if(proc&&campo&&campo._sagaTexto&&window.SagaMencoes)SagaMencoes.anexar(campo,{sb:_sb,tabela:'processos',registroId:proc.id});}
+function renderActiveProcess(){prepararMencoes();renderProcessTabs();renderProcessHeader();renderProcessData();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
 
 async function addChecklistFromTemplate(templateId){
   if(!podeEditarChecklists())return false;
@@ -1762,12 +1764,17 @@ async function submitComment(){
   if(!state.usuario.internoId){showToast('Não foi possível identificar seu perfil interno.','error');return false;}
   const permitido=await checkPerm('comentarios','criar');
   if(!permitido){showToast('Você não possui permissão para criar comentários.','warning');return false;}
+  const marcados=window.SagaMencoes?SagaMencoes.marcados(input):[];
   const r=await _sb.from('comentarios').insert({
     processo_id:process.id,
     autor_id:state.usuario.internoId,
     conteudo:text
   });
   if(r.error){showToast('Não foi possível registrar o comentário.','error');return false;}
+  if(marcados.length){
+    const av=await _sb.rpc('marcar_colegas',{p_tabela:'processos',p_registro_id:process.id,p_usuarios:marcados,p_trecho:text});
+    if(av.error)showToast('Comentário salvo, mas não foi possível avisar os colegas.','warning');
+  }
   input.value='';
   await carregarDetalhesProcesso(process.id);
   renderActiveProcess();
@@ -3336,6 +3343,9 @@ function renderMentionMenu(){
   const menu=document.getElementById('mentionMenu');
   if(!menu)return;
   menu.innerHTML=state.responsaveis.map(u=>'<button class="mention-option" data-mention="@'+esc(u.nome_completo)+'">@'+esc(u.nome_completo)+'</button>').join('')||'<button class="mention-option" disabled>Nenhum colaborador ativo</button>';
+  menu.hidden=true;
+  const btnM=document.getElementById('btnMention');
+  if(btnM&&!btnM.dataset.arroba){btnM.dataset.arroba='1';btnM.addEventListener('click',e=>{e.stopImmediatePropagation();const inp=document.getElementById('commentInput');if(inp&&inp._sagaTexto)inp._sagaTexto.inserir('@');},true);}
   menu.querySelectorAll('[data-mention]').forEach(botao=>botao.addEventListener('click',()=>{
     const input=document.getElementById('commentInput');
     if(input._sagaTexto)input._sagaTexto.inserir(botao.dataset.mention+' ');
