@@ -1506,22 +1506,22 @@
   }
   [data-theme="light"] .pill-prioridade-opcao[data-prioridade="baixa"]{
     background:color-mix(in srgb,var(--prio-baixa) 20%,transparent);
-    color:color-mix(in srgb,var(--prio-baixa) 75%,black);
+    color:color-mix(in srgb,var(--prio-baixa) 90%,black);
     border-color:color-mix(in srgb,var(--prio-baixa) 55%,transparent);
   }
   [data-theme="light"] .pill-prioridade-opcao[data-prioridade="media"]{
     background:color-mix(in srgb,var(--prio-media) 20%,transparent);
-    color:color-mix(in srgb,var(--prio-media) 75%,black);
+    color:color-mix(in srgb,var(--prio-media) 90%,black);
     border-color:color-mix(in srgb,var(--prio-media) 55%,transparent);
   }
   [data-theme="light"] .pill-prioridade-opcao[data-prioridade="alta"]{
     background:color-mix(in srgb,var(--priority-high) 22%,transparent);
-    color:color-mix(in srgb,var(--priority-high) 72%,black);
+    color:color-mix(in srgb,var(--priority-high) 90%,black);
     border-color:color-mix(in srgb,var(--priority-high) 60%,transparent);
   }
   [data-theme="light"] .pill-prioridade-opcao[data-prioridade="urgente"]{
     background:color-mix(in srgb,var(--prio-urgente) 20%,transparent);
-    color:color-mix(in srgb,var(--prio-urgente) 70%,black);
+    color:color-mix(in srgb,var(--prio-urgente) 90%,black);
     border-color:color-mix(in srgb,var(--prio-urgente) 55%,transparent);
   }
   [data-theme="light"] .pill-prioridade-opcao:hover{
@@ -1669,6 +1669,7 @@ try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList
 html.saga-embed, html.saga-embed body{background:transparent !important}
 html.saga-embed body > *:not(#modalTarefa):not(#sagaConfirma):not(#toastContainer):not(script):not(style){display:none !important}
 #secaoComentariosTarefa{display:none !important}
+[data-theme="light"]{ --prio-baixa:#5f7089; --prio-media:#2f6cd6; --prio-alta:#6a4fd6; --prio-urgente:#d63f66; --priority-high:var(--prio-alta); }
 html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
 </style>
 </head>
