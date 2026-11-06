@@ -526,7 +526,8 @@ function renderCollaborators(){
 const listaAutorizacoes=[
   ['processos','gerenciar_colunas','Pode criar e remover colunas da Lista'],
   ['processos','distribuir','Pode distribuir fichas da Captação'],
-  ['tarefas','ver_todas_processo','Vê todas as tarefas ligadas a processo e intimação (mesmo as criadas por outras pessoas)']
+  ['tarefas','ver_todas_processo','Vê todas as tarefas ligadas a processo e intimação (mesmo as criadas por outras pessoas)'],
+  ['compromissos','atende_clientes','Atende clientes: aparece na agenda para os colegas marcarem atendimento nos horários dele']
 ];
 function listaConcedida(c,modulo,acao){
   if(c.eh_administrador)return true;

@@ -873,6 +873,9 @@
     tarefa_hoje:{titulo:'Tarefa para hoje',tela:'minhas_tarefas.html'},
     tarefa_atrasada:{titulo:'Tarefa atrasada',tela:'minhas_tarefas.html'},
     compromisso_hoje:{titulo:'Compromisso hoje',tela:'calendario_padrao_metalico.html'},
+    agenda_atribuida:{titulo:'Compromisso atribuído a você',tela:'calendario_padrao_metalico.html'},
+    agenda_solicitacao:{titulo:'Pedido de atendimento',tela:'calendario_padrao_metalico.html'},
+    agenda_resposta:{titulo:'Resposta da agenda',tela:'calendario_padrao_metalico.html'},
     movimentacao_cnj:{titulo:'Intimação',tela:'monitoramento_multi_oab.html'}
   };
   function infoNotif(n){
@@ -886,7 +889,7 @@
   var GRUPOS_NOTIF=[
     {chave:'chat',titulo:'Chat',tipos:['chat_mensagem'],tela:'chat_interno_padrao_metalico.html',um:'mensagem nova',varios:'mensagens novas',cor:'#e5484d'},
     {chave:'tarefas',titulo:'Tarefas',tipos:['tarefa_prazo','tarefa_repasse','tarefa_hoje','tarefa_atrasada'],tela:'minhas_tarefas.html',um:'aviso de tarefa',varios:'avisos de tarefas',cor:'#f59e0b'},
-    {chave:'agenda',titulo:'Agenda',tipos:['compromisso_hoje'],tela:'calendario_padrao_metalico.html',um:'compromisso hoje',varios:'compromissos hoje',cor:'#3b82f6'},
+    {chave:'agenda',titulo:'Agenda',tipos:['compromisso_hoje','agenda_atribuida','agenda_solicitacao','agenda_resposta'],tela:'calendario_padrao_metalico.html',um:'aviso da agenda',varios:'avisos da agenda',cor:'#3b82f6'},
     {chave:'mencao',titulo:'Menções',tipos:['mencao'],tela:null,um:'menção em comentário',varios:'menções em comentários',cor:'#8b5cf6'},
     {chave:'intimacoes',titulo:'Intimações',tipos:['movimentacao_cnj'],tela:'monitoramento_multi_oab.html',um:'intimação nova',varios:'intimações novas',cor:'#14b8a6'},
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
