@@ -1639,6 +1639,12 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
      4) processo e cliente; 5) responsável à esquerda, prazo e data à direita, na mesma linha */
   .card-tarefa .topo-card-tarefa{ justify-content:space-between; align-items:center; flex-wrap:nowrap; }
   .card-tarefa .topo-card-tarefa .badge-prioridade-pill{ flex:0 0 auto; margin-left:auto; }
+  /* tarefa que eu compartilhei: azul claro discreto */
+  .card-tarefa.compartilhei{ background:color-mix(in srgb,#4b8af5 13%,var(--panel-solid)); border-color:color-mix(in srgb,#4b8af5 38%,transparent); }
+  .card-tarefa.compartilhei:hover{ border-color:color-mix(in srgb,#4b8af5 65%,transparent); }
+  .linha-tarefa-lista.compartilhei > td{ background:color-mix(in srgb,#4b8af5 11%,transparent); }
+  [data-theme="light"] .card-tarefa.compartilhei{ background:color-mix(in srgb,#4b8af5 11%,#ffffff); border-color:color-mix(in srgb,#2f6cd6 32%,transparent); }
+  [data-theme="light"] .linha-tarefa-lista.compartilhei > td{ background:color-mix(in srgb,#4b8af5 10%,#ffffff); }
   .pilha-avatares-resp{ display:flex; align-items:center; flex:0 0 auto; }
   .pilha-avatares-resp .mini-avatar-resp + .mini-avatar-resp{ margin-left:-7px; }
   .pilha-avatares-resp .mini-avatar-resp{ box-shadow:0 0 0 2px var(--panel-solid); }
@@ -3260,6 +3266,9 @@ function criarCheckboxConclusaoCard(tarefa){
   '</button>';
 }
 
+// Tarefa minha que eu compartilhei com alguém: ganha um azul claro discreto no cartão e na linha
+function euCompartilhei(t){ return (t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId) && (t.compartilhadaCom || []).length > 0; }
+
 function criarCardTarefaEl(tarefa){
   var resp = getColaborador(tarefa.responsavelId);
   var situacao = situacaoPrazoTarefa(tarefa);
@@ -3268,7 +3277,8 @@ function criarCardTarefaEl(tarefa){
   var percentualSub = totalSub > 0 ? Math.round((concluidasSub/totalSub)*100) : 0;
 
   var card = document.createElement('div');
-  card.className = 'card-tarefa' + (tarefa.status === 'concluida' ? ' concluida' : '');
+  card.className = 'card-tarefa' + (tarefa.status === 'concluida' ? ' concluida' : '') + (euCompartilhei(tarefa) ? ' compartilhei' : '');
+  if(euCompartilhei(tarefa)) card.title = 'Você compartilhou esta tarefa com ' + tarefa.compartilhadaCom.length + (tarefa.compartilhadaCom.length === 1 ? ' pessoa' : ' pessoas');
   if(situacao) card.setAttribute('data-situacao-prazo', situacao.classe);
   var podeMexer = souDonoDaTarefa(tarefa);
   card.setAttribute('draggable', tarefa.status === 'concluida' || !podeMexer ? 'false' : 'true');
@@ -3719,7 +3729,8 @@ function criarLinhaTabela(tarefa){
   var resp = getColaborador(tarefa.responsavelId);
   var situacao = situacaoPrazoTarefa(tarefa);
   var tr = document.createElement('tr');
-  tr.className = 'linha-tarefa-lista' + (tarefa.status === 'concluida' ? ' linha-concluida' : '');
+  tr.className = 'linha-tarefa-lista' + (tarefa.status === 'concluida' ? ' linha-concluida' : '') + (euCompartilhei(tarefa) ? ' compartilhei' : '');
+  if(euCompartilhei(tarefa)) tr.title = 'Você compartilhou esta tarefa com ' + tarefa.compartilhadaCom.length + (tarefa.compartilhadaCom.length === 1 ? ' pessoa' : ' pessoas');
   if(situacao) tr.setAttribute('data-situacao-prazo', situacao.classe);
 
   var badgePrazoHtml = htmlPrazoTarefa(tarefa, situacao);
