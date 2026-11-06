@@ -1662,6 +1662,13 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
+<script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
+try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
+<style>
+html.saga-embed, html.saga-embed body{background:transparent !important}
+html.saga-embed body > *:not(#modalTarefa):not(#sagaConfirma):not(#toastContainer):not(script):not(style){display:none !important}
+html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
+</style>
 </head>
 <body data-theme="dark">
 
@@ -4716,6 +4723,22 @@ async function iniciarMinhasTarefas(){
     history.replaceState(null,'',location.pathname);
     if(window.SAGA_TASKS.some(function(t){ return t.id === idTarefaUrl; })) abrirModalTarefa(idTarefaUrl);
     else mostrarToast('Essa tarefa não existe mais ou não está com você.', 'erro');
+  }
+  // Veio da ficha do cliente (janela embutida): abre "Nova Tarefa" já ligada ao processo
+  if(document.documentElement.classList.contains('saga-embed')){
+    var pidEmbed = qsTI.get('processo');
+    var avisarFicha = function(aberto){ try{ parent.postMessage({ saga:'tarefa-embed', aberto:aberto }, location.origin); }catch(e){} };
+    new MutationObserver(function(){ if(!modalTarefaEl.classList.contains('aberto')) avisarFicha(false); }).observe(modalTarefaEl, { attributes:true, attributeFilter:['class'] });
+    abrirModalTarefa(null);
+    if(pidEmbed){
+      var rp = await _sb.from('processos').select(SELECT_PROCESSO).eq('id', pidEmbed).maybeSingle();
+      var proc = rp && rp.data ? montarProcessoVinculado(rp.data) : null;
+      if(proc){
+        var optProc = document.querySelector('.opcao-tipo-tarefa[data-tipo="processo"]');
+        if(optProc) optProc.click();
+        selecionarProcessoNoModal(proc);
+      }
+    }
   }
 }
 
