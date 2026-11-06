@@ -312,6 +312,7 @@ var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
+<script src="saga_texto.js"></script>
 <script src="saga_roscas.js"></script>
 <script src="saga_mencoes.js"></script>
 <script>
@@ -477,6 +478,7 @@ function abrirCampanha(id){
   document.getElementById('mcInicio').value=c&&c.data_inicio||'';
   document.getElementById('mcFim').value=c&&c.data_fim||'';
   document.getElementById('mcOrcamento').value=c?numeroParaMoedaCampo(c.orcamento_previsto):'';
+  if(window.SagaTexto)SagaTexto.ligar(document.getElementById('mcObs'));
   document.getElementById('mcObs').value=c&&c.observacao||'';
   document.getElementById('gnData').value=hojeISO();
   var podeSalvar=c?state.pode.editar:state.pode.criar;

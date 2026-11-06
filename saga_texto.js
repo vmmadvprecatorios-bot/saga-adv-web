@@ -146,7 +146,7 @@
     // o campo original passa a refletir o editor (código antigo continua lendo e gravando .value)
     Object.defineProperty(campo,'value',{configurable:true,get:ler,set:definir});
     campo.focus=function(){area.focus();};
-    campo._sagaTexto={area:area,caixa:cx,inserir:function(txt){area.focus();document.execCommand('insertText',false,txt);},foco:function(){area.focus();}};
+    campo._sagaTexto={leitura:function(b){area.contentEditable=b?'false':'true';barra.style.display=b?'none':'';},area:area,caixa:cx,inserir:function(txt){area.focus();document.execCommand('insertText',false,txt);},foco:function(){area.focus();}};
     area.addEventListener('keyup',estado);area.addEventListener('mouseup',estado);area.addEventListener('focus',estado);
     area.addEventListener('input',function(){campo.dispatchEvent(new Event('input',{bubbles:true}));});
     area.addEventListener('paste',function(e){

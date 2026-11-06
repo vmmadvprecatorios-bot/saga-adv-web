@@ -547,6 +547,8 @@ var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
+<script src="saga_texto.js"></script>
+<script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
 <script src="ponto_calculo.js"></script>
 <script src="saga_roscas.js"></script>
 <script>
@@ -789,7 +791,7 @@ async function abrirRelatorio(key,colab,podeEditar){
   document.getElementById('relSub').textContent=PC.NOMES_DIA[PC.diaSemana(key)]+' · tudo o que foi feito no dia, em ordem de horário.';
   document.getElementById('relLinha').innerHTML='<div class="sub">Carregando…</div>';
   document.getElementById('relResumo').innerHTML='';
-  var t=document.getElementById('relTexto');t.value='';t.readOnly=!podeEditar;
+  var t=document.getElementById('relTexto');var tx=window.SagaTexto?SagaTexto.ligar(t):null;t.value='';t.readOnly=!podeEditar;if(tx)tx.leitura(!podeEditar);
   document.getElementById('relSalvar').style.display=podeEditar?'':'none';
   document.getElementById('relNovaWrap').style.display=podeEditar&&key===state.hoje?'':'none';
   abrirModal('modalRel');
@@ -858,12 +860,13 @@ async function enviarJust(){
   showToast(esc(r.data.mensagem),r.data.ok?'success':'error');
   if(r.data.ok){['jData','jHora','jHoras','jDoc','jDesc','jArq'].forEach(function(i){document.getElementById(i).value='';});document.getElementById('jTipo').value='';document.getElementById('jSlot').value='';carregarMinhasJust();}
 }
+function textoRico(v){return window.SagaTexto&&/^\s*<(p|ul|ol)[\s>]/i.test(String(v||''))?SagaTexto.html(v):esc(v);}
 function cardJust(j,nomes,gestor){
   var cor={pendente:'#e0a93b',aprovada:'#2fae7a',recusada:'#e5484d'}[j.status];
   var colab=state.colabs.find(function(c){return c.id===j.colaborador_id;});
   var marc=j.slot!==null&&j.slot!==undefined?(nomes[j.slot]||'Marcação')+' → '+PC.hhmm(j.horario_min):'';
   var h='<div class="card-linha"><div class="topo"><div><b>'+(gestor&&colab?esc(colab.nome)+' · ':'')+dataBR(j.data)+'</b> · '+esc(j.tipo)+'</div><span class="st" style="background:color-mix(in srgb,'+cor+' 18%,transparent);color:'+cor+'">'+esc(j.status)+'</span></div>'+
-    '<div class="sub" style="margin-top:6px">'+esc(j.descricao)+'</div>'+
+    '<div class="sub" style="margin-top:6px">'+textoRico(j.descricao)+'</div>'+
     '<div class="sub">'+[marc,j.horas_abonar_min?'Abonar '+PC.hhmm(j.horas_abonar_min):'',j.documento?(/^atestados\//.test(j.documento)?'<button class="lnk" type="button" data-atestado="'+esc(j.documento.slice(10))+'">ver atestado</button>':/^https?:\/\//i.test(j.documento)?'<a href="'+esc(j.documento)+'" target="_blank" rel="noopener">documento</a>':esc(j.documento)):'','Protocolo '+esc(j.protocolo)].filter(Boolean).join(' · ')+'</div>';
   if(j.status!=='pendente')h+='<div class="sub" style="margin-top:4px">'+(j.resposta?'Resposta: '+esc(j.resposta)+' · ':'')+(j.aplicado?'Aplicado: '+esc(j.aplicado):'')+'</div>';
   if(gestor&&j.status==='pendente')h+='<textarea data-resp="'+j.id+'" placeholder="Resposta ao colaborador (opcional)"></textarea><div class="acoes"><button class="btn-primary btn-sm" data-decidir="aprovar" data-j="'+j.id+'" type="button">Aprovar</button><button class="btn-danger btn-sm" data-decidir="recusar" data-j="'+j.id+'" type="button">Recusar</button></div>';
@@ -1657,7 +1660,7 @@ function htmlLinhaTempo(eventos,gaps){
   return itens.map(function(it){
     if(it.g)return '<div class="lt-item lt-gap">'+horaDe(it.g.de)+' às '+horaDe(it.g.ate)+' · '+duracaoTxt(it.g.min)+' sem atividade</div>';
     var e=it.e;
-    return '<div class="lt-item" style="--c:'+corOrigem(e.origem)+'"><span class="lt-hora">'+horaDe(e.momento)+'</span><span class="lt-orig">'+esc(e.origem)+'</span>'+esc(e.descricao||'')+(e.cliente?' <span class="lt-cli">· '+esc(e.cliente)+'</span>':'')+'</div>';
+    return '<div class="lt-item" style="--c:'+corOrigem(e.origem)+'"><span class="lt-hora">'+horaDe(e.momento)+'</span><span class="lt-orig">'+esc(e.origem)+'</span>'+textoRico(e.descricao||'')+(e.cliente?' <span class="lt-cli">· '+esc(e.cliente)+'</span>':'')+'</div>';
   }).join('');
 }
 function prepararAtividades(){
@@ -1709,7 +1712,7 @@ async function carregarMinhasAtividades(){
     var d=await _sb.from('ponto_dias').select('relatorio,relatorio_em').eq('colaborador_id',state.meuColab.id).eq('data',state.hoje).maybeSingle();
     var rel=d.data&&d.data.relatorio;
     ob.innerHTML='<b>Observações de hoje</b> <button class="lnk" type="button" id="atObsEditar">'+(rel?'editar':'escrever')+'</button>'+
-      (rel?'<div class="t">'+esc(rel)+'</div><div class="sub" style="margin-top:4px">Salva às '+horaDe(d.data.relatorio_em)+'</div>':'<div class="sub" style="margin-top:4px">Pendências ou recados do dia que não cabem numa atividade (opcional).</div>');
+      (rel?'<div class="t">'+textoRico(rel)+'</div><div class="sub" style="margin-top:4px">Salva às '+horaDe(d.data.relatorio_em)+'</div>':'<div class="sub" style="margin-top:4px">Pendências ou recados do dia que não cabem numa atividade (opcional).</div>');
     document.getElementById('atObsEditar').addEventListener('click',function(){abrirRelatorio(state.hoje,state.meuColab,true);});
   }
 }
@@ -1777,7 +1780,7 @@ async function renderRelatorios(){
       '<div><span>Atividades</span><b>'+a.nAtiv+'</b></div><div><span>Clientes atendidos</span><b>'+a.nCli+'</b></div><div><span>Maior intervalo</span><b'+(a.maior>limite?' style="color:#e5484d"':'')+'>'+(a.maior?duracaoTxt(a.maior):'—')+'</b></div></div>'+
       (a.nCli?'<div class="sub" style="margin-bottom:10px">Clientes: '+Object.keys(a.clientes).map(function(k){return esc(a.clientes[k]);}).join(', ')+'</div>':'')+
       '<div class="linha-tempo">'+htmlLinhaTempo(d.porDia[per.ini]||[],a.gaps)+'</div>'+
-      (obs[d.c.id+'|'+per.ini]?'<div class="rel-obs"><b>Observações do dia</b>\n'+esc(obs[d.c.id+'|'+per.ini])+'</div>':'')+'</div>';
+      (obs[d.c.id+'|'+per.ini]?'<div class="rel-obs"><b>Observações do dia</b>\n'+textoRico(obs[d.c.id+'|'+per.ini])+'</div>':'')+'</div>';
   }else if(state.rel.modo==='dia'){
     h='<div class="tabela-wrap"><table class="banco"><thead><tr><th>Colaborador</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima de '+limite+' min</th></tr></thead><tbody id="relCorpo">'+
       dados.map(function(d){var a=d.an[per.ini];return '<tr data-rel-ir="1" data-rel-pessoa="'+d.c.usuario_id+'" title="Ver a linha do tempo"><td><b>'+esc(d.c.nome)+'</b></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>limite?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+

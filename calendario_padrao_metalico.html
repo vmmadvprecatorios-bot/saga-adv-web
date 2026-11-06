@@ -1880,7 +1880,7 @@ atualizarPeriodoTexto();
   abrirModalNovoComDataHora = function(d){ _novoDH(d); prepararBlocos(null); };
   $('btnNovoCompromisso').removeEventListener('click', _novo);
   $('btnNovoCompromisso').addEventListener('click', function(){ abrirModalNovoCompromisso(); });
-  if (window.SagaTexto) SagaTexto.ligar($('compConclusaoTexto'));
+  if (window.SagaTexto) { SagaTexto.ligar($('compConclusaoTexto')); SagaTexto.ligar($('compObservacao')); }
 
   $('btnSalvarConclusao').addEventListener('click', async function(){
     if (!compAtual) return;
@@ -1930,6 +1930,7 @@ atualizarPeriodoTexto();
       A.ov.querySelector('#agdAnt').addEventListener('click', function(){ if (A.semana > 0) { A.semana--; A.slot = null; carregarSlots(); } });
       A.ov.querySelector('#agdProx').addEventListener('click', function(){ A.semana++; A.slot = null; carregarSlots(); });
       A.ov.querySelector('#agdSolicitar').addEventListener('click', solicitar);
+      if (window.SagaTexto) SagaTexto.ligar(A.ov.querySelector('#agdObs'));
     }
     A.ov.classList.add('aberto');
     var r = await _sb.rpc('agenda_atendentes');
@@ -2010,7 +2011,7 @@ atualizarPeriodoTexto();
     if (!box) return;
     if (!lista.length) { box.innerHTML = '<div class="sub-conclusao">Nenhum pedido pendente.</div>'; return; }
     box.innerHTML = lista.map(function(p){
-      return '<div class="agd-ped" data-id="' + esc(p.id) + '"><b>' + esc(diaTxt(p.data_hora_inicio)) + ' às ' + esc(hora(p.data_hora_inicio)) + '</b> · de ' + esc(nomeDe(p.criado_por_id)) + '<br>' + esc(p.titulo) + (p.observacao ? '<br><span class="sub-conclusao">' + esc(p.observacao) + '</span>' : '') +
+      return '<div class="agd-ped" data-id="' + esc(p.id) + '"><b>' + esc(diaTxt(p.data_hora_inicio)) + ' às ' + esc(hora(p.data_hora_inicio)) + '</b> · de ' + esc(nomeDe(p.criado_por_id)) + '<br>' + esc(p.titulo) + (p.observacao ? '<br><span class="sub-conclusao">' + (window.SagaTexto ? SagaTexto.html(p.observacao) : esc(p.observacao)) + '</span>' : '') +
         '<input type="text" class="mhMotivo" placeholder="Motivo, se for recusar (opcional)" style="width:100%;margin-top:6px"><div class="linha-acoes"><button type="button" class="btn-salvar-modal" data-ac="1">Confirmar</button><button type="button" class="btn-excluir-modal" data-ac="0">Recusar</button></div></div>';
     }).join('');
     box.querySelectorAll('.agd-ped').forEach(function(card){

@@ -255,6 +255,7 @@ var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
 <script src="saga_ui.js"></script>
+<script src="saga_texto.js"></script>
 <script src="saga_roscas.js"></script>
 <script>
 /* =====================================================================
@@ -583,7 +584,7 @@ function renderLancamentos(){
     var v=Number(l.valor)*(l.tipo==='despesa'?-1:1);if(l.situacao==='confirmado')total+=v;
     var p=state.processos.find(function(x){return x.processo_id===l.processo_id;});
     return '<tr data-lanc="'+esc(l.id)+'"><td>'+dataBR(l.data_lancamento)+'</td><td>'+etq(l.tipo==='receita'?'Receita':'Despesa',l.tipo==='receita'?'#2fae7a':'#e5636a')+'</td>'+
-      '<td><div class="cli">'+esc(l.descricao)+'</div>'+(l.observacao?'<div class="sub">'+esc(l.observacao)+'</div>':'')+'</td><td>'+esc(l.categoria||'—')+'</td>'+
+      '<td><div class="cli">'+esc(l.descricao)+'</div>'+(l.observacao?'<div class="sub">'+(window.SagaTexto?SagaTexto.html(l.observacao):esc(l.observacao))+'</div>':'')+'</td><td>'+esc(l.categoria||'—')+'</td>'+
       '<td>'+(p?esc(p.cliente)+'<div class="sub">'+esc(p.tese||'')+'</div>':'—')+'</td><td>'+(l.situacao==='previsto'?etq('Previsto','#e0a93b'):etq('Confirmado','#4b8af5'))+'</td>'+
       '<td class="num '+(l.tipo==='receita'?'pos':'neg')+'">'+(l.tipo==='despesa'?'− ':'')+moeda(l.valor)+'</td></tr>';
   }).join('')+'<tr><td colspan="6" style="text-align:right;font-weight:700">Saldo confirmado no filtro</td><td class="num '+(total<0?'neg':'pos')+'" style="font-weight:700">'+moeda(total)+'</td></tr>';
@@ -607,6 +608,7 @@ function abrirLancamento(id){
   document.getElementById('mlData').value=l?l.data_lancamento:hojeISO();
   document.getElementById('mlCategoria').value=l?(l.categoria||''):'';
   document.getElementById('mlProcesso').value=l?(l.processo_id||''):'';
+  if(window.SagaTexto)SagaTexto.ligar(document.getElementById('mlObservacao'));
   document.getElementById('mlObservacao').value=l?(l.observacao||''):'';
   document.getElementById('mlExcluir').style.display=l&&state.podeEditar?'':'none';
   ['mlTipo','mlSituacao','mlDescricao','mlValor','mlData','mlCategoria','mlProcesso','mlObservacao','mlSalvar'].forEach(function(i){document.getElementById(i).disabled=!state.podeEditar;});
