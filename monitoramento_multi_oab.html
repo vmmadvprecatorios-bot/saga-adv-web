@@ -25,6 +25,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .kpi-card{background:var(--panel);border:1px solid var(--border-soft);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden}
 .kpi-card .rotulo{font-size:11px;color:var(--muted);font-weight:600}
 .kpi-card .kpi-value{font-size:24px;margin-top:6px}
+.kpi-filtro{font:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}.kpi-filtro:hover{border-color:var(--c)}.kpi-filtro:active{transform:scale(.97)}.kpi-filtro.ativo{border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 40%,transparent)}.kpi-filtro:focus-visible{outline:2px solid var(--c);outline-offset:2px}
 .kpi-card .faixa{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--gold))}
 .toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
 .toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
@@ -84,14 +85,15 @@ function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=docume
 function renderTudo(){
   document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.classList.toggle('active',b.dataset.visao===visao);});
   var c=SagaIntimacoes.contagens();
-  var cards=[['Disponibilizadas hoje',c.hoje,'#4b8af5'],['Abertas',c.abertas,'#e5484d'],['Prazos vencidos',c.atrasadas,'#f97316'],['Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']];
-  document.getElementById('kpis').innerHTML=cards.map(function(k){return '<div class="kpi-card" style="--c:'+k[2]+'"><span class="faixa"></span><div class="rotulo">'+esc(k[0])+'</div><div class="kpi-value">'+k[1]+'</div></div>';}).join('');
+  var cards=[['hoje','Disponibilizadas hoje',c.hoje,'#4b8af5'],['abertas','Abertas',c.abertas,'#e5484d'],['vencidas','Prazos vencidos',c.atrasadas,'#f97316'],['fora','Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']],fx=SagaIntimacoes.faixa();
+  document.getElementById('kpis').innerHTML=cards.map(function(k){return '<button type="button" class="kpi-card kpi-filtro'+(fx===k[0]?' ativo':'')+'" data-faixa="'+k[0]+'" aria-pressed="'+(fx===k[0])+'" title="'+(fx===k[0]?'Clique para tirar o filtro':'Clique para filtrar')+'" style="--c:'+k[3]+'"><span class="faixa"></span><div class="rotulo">'+esc(k[1])+'</div><div class="kpi-value">'+k[2]+'</div></button>';}).join('');
   SagaIntimacoes.montarFiltros(document.getElementById('intimFiltros'));
   SagaIntimacoes.renderGraficos(document.getElementById('intimGraficos'));
   var q=document.getElementById('intimQuadro'),l=document.getElementById('intimLista');
   q.style.display=visao==='kanban'?'':'none';l.style.display=visao==='lista'?'':'none';
   if(visao==='kanban')SagaIntimacoes.renderQuadro(q);else SagaIntimacoes.renderLista(l,false);
 }
+document.getElementById('kpis').addEventListener('click',function(e){var b=e.target.closest('[data-faixa]');if(b)SagaIntimacoes.definirFaixa(b.dataset.faixa);});
 document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.addEventListener('click',function(){
   visao=b.dataset.visao;try{localStorage.setItem('saga-mon-visao',visao);}catch(e){}renderTudo();});});
 document.addEventListener('saga-atualizar',async function(){await SagaIntimacoes.carregar();renderTudo();});

@@ -84,7 +84,7 @@
   /* ---------- estado ---------- */
   var S={links:[],sb:null,meuId:null,ehAdmin:false,toast:null,aoMudar:null,itens:[],colunas:[],oabs:[],usuarios:[],processos:{},teses:[],
     pode:{gerenciar:false,criarProc:false},horas:[7,13],aberta:null,carregado:false,
-    f:{organizar:'tribunal',conclusao:'abertas',situacao:'',periodo:'tudo',busca:'',ramo:'',tribunal:'',regiao:'',orgao:'',advogado:'',oab:'',triagem:'',processo:null},
+    f:{faixa:'',organizar:'tribunal',conclusao:'abertas',situacao:'',periodo:'tudo',busca:'',ramo:'',tribunal:'',regiao:'',orgao:'',advogado:'',oab:'',triagem:'',processo:null},
     limite:{},concluidasAbertas:{},novasTribunais:{}};
   try{
     var salvo=JSON.parse(localStorage.getItem('saga-intim-filtros')||'null');
@@ -338,11 +338,20 @@
   function filtradas(semConclusao,semNovasTribunal){
     var f=S.f,b=f.busca.trim().toLowerCase(),bd=b.replace(/\D/g,'');
     var desde=f.periodo==='hoje'?hojeISO():f.periodo==='tudo'?null:diasAtras(Number(f.periodo));
+    var hoje=hojeISO(),faixa=f.faixa||'';
+    if(faixa)desde=null; // a faixa de números do topo manda no período e na conclusão
     return S.itens.filter(function(i){
       var j=justicaDe(i);
       if(f.processo&&i.processo_id!==f.processo)return false;
-      if(!semConclusao&&f.conclusao==='abertas'&&i.concluida)return false;
-      if(!semConclusao&&f.conclusao==='concluidas'&&!i.concluida)return false;
+      if(faixa){
+        if(faixa==='hoje'&&i.data_disponibilizacao!==hoje)return false;           // todas de hoje, inclusive as concluídas (riscadas)
+        if(faixa==='abertas'&&i.concluida)return false;
+        if(faixa==='vencidas'&&(i.concluida||!i.prazo||i.prazo>=hoje))return false;
+        if(faixa==='fora'&&(i.concluida||i.processo_id))return false;
+      }else{
+        if(!semConclusao&&f.conclusao==='abertas'&&i.concluida)return false;
+        if(!semConclusao&&f.conclusao==='concluidas'&&!i.concluida)return false;
+      }
       if(f.situacao&&situacaoDe(i).chave!==f.situacao)return false;
       if(f.triagem&&(f.triagem==='sem'?!!i.triagem:i.triagem!==f.triagem))return false;
       if(!semNovasTribunal&&S.novasTribunais[j.chave]&&situacaoDe(i).chave!=='nova')return false;
@@ -431,7 +440,7 @@
       else if(a.dataset.acao==='buscar')buscarAgora(null,a);
       else if(a.dataset.acao==='ordem-padrao'){try{localStorage.removeItem(chaveOrdem());}catch(x){}mudou();toast('Ordem padrão dos tribunais restaurada.','sucesso');}
       else if(a.dataset.acao==='so-novas'){S.f.situacao=S.f.situacao==='nova'?'':'nova';guardarFiltros();mudou();}
-      else if(a.dataset.acao==='limpar'){S.f.situacao='';S.novasTribunais={};['ramo','tribunal','regiao','orgao','advogado','oab','busca','triagem'].forEach(function(k){S.f[k]='';});S.f.processo=null;guardarFiltros();mudou();}
+      else if(a.dataset.acao==='limpar'){S.f.faixa='';S.f.situacao='';S.novasTribunais={};['ramo','tribunal','regiao','orgao','advogado','oab','busca','triagem'].forEach(function(k){S.f[k]='';});S.f.processo=null;guardarFiltros();mudou();}
       else if(a.dataset.acao==='tirar-processo'){S.f.processo=null;mudou();}
     };
   }
@@ -567,7 +576,7 @@
     return String(b.data_disponibilizacao||'').localeCompare(String(a.data_disponibilizacao||''));});}
   function renderQuadro(el){
     var lista=filtradas(true,true),f=S.f;
-    var mostrarAbertas=f.conclusao!=='concluidas',mostrarConcl=true;
+    var mostrarAbertas=f.faixa?f.faixa!=='' :f.conclusao!=='concluidas',mostrarConcl=true,abreConcl=function(id){return !!S.concluidasAbertas[id]||f.faixa==='hoje';};
     // Guarda onde a pessoa estava (cada coluna, o lado do quadro e a página) para não jogá-la ao topo ao redesenhar
     var rol={y:window.scrollY,x:0,cols:{},pos:{}},qAntigo=el.querySelector('.si-quadro');
     if(qAntigo)rol.x=qAntigo.scrollLeft;
@@ -591,8 +600,8 @@
       if(abertas.length>lim){var m=document.createElement('button');m.type='button';m.className='si-mais';m.textContent='Mostrar mais '+Math.min(POR_COL,abertas.length-lim)+' de '+(abertas.length-lim);m.addEventListener('click',function(e){e.stopPropagation();S.limite[g.id]=lim+POR_COL;renderQuadro(el);});cards.appendChild(m);}
       if(!abertas.length&&!concl.length)cards.innerHTML='<div class="si-vazio">Nenhuma intimação</div>';
       if(concl.length){
-        var arq=document.createElement('div');arq.className='si-arquivo'+(S.concluidasAbertas[g.id]?' aberto':'');
-        arq.innerHTML='<button type="button">'+(S.concluidasAbertas[g.id]?'Ocultar':'Ver')+' concluídas ('+concl.length+')</button><div class="lista"></div>';
+        var arq=document.createElement('div');arq.className='si-arquivo'+(abreConcl(g.id)?' aberto':'');
+        arq.innerHTML='<button type="button">'+(abreConcl(g.id)?'Ocultar':'Ver')+' concluídas ('+concl.length+')</button><div class="lista"></div>';
         concl.forEach(function(i){arq.querySelector('.lista').appendChild(cartao(i));});
         arq.firstChild.addEventListener('click',function(e){e.stopPropagation();S.concluidasAbertas[g.id]=!S.concluidasAbertas[g.id];S.foco=S.concluidasAbertas[g.id]?g.id:null;renderQuadro(el);});
         cards.appendChild(arq);
@@ -1408,5 +1417,6 @@
 
   global.SagaIntimacoes={iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,renderGraficos:renderGraficos,
     injetarNoKanbanTarefas:injetarNoKanbanTarefas,abrir:abrir,contagens:contagens,justicaDe:justicaDe,
+    faixa:function(){return S.f.faixa||'';},definirFaixa:function(k){S.f.faixa=S.f.faixa===k?'':(k||'');mudou();},
     filtrarProcesso:function(id){S.f.processo=id||null;},pronto:function(){return S.carregado;}};
 })(window);
