@@ -410,6 +410,9 @@
     +'<div class="nav-item" data-tela="tarefas" onclick="sagaIrPara(\'minhas_tarefas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
+    +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Notas</div>'
     +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Intimações</div>'
@@ -755,7 +758,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas'};
   var _canalPresenca=null;
   var _telaAtual='';
   var _colaboradoresAtivos=null;
@@ -870,6 +873,7 @@
     tarefa_repasse:{titulo:'Tarefa repassada',tela:'minhas_tarefas.html'},
     chat_mensagem:{titulo:'Chat',tela:'chat_interno_padrao_metalico.html'},
     mencao:{titulo:'Menção'},
+    nota_compartilhada:{titulo:'Nota compartilhada',tela:'notas.html'},
     tarefa_hoje:{titulo:'Tarefa para hoje',tela:'minhas_tarefas.html'},
     tarefa_atrasada:{titulo:'Tarefa atrasada',tela:'minhas_tarefas.html'},
     compromisso_hoje:{titulo:'Compromisso hoje',tela:'calendario_padrao_metalico.html'},
@@ -894,6 +898,7 @@
     {chave:'intimacoes',titulo:'Intimações',tipos:['movimentacao_cnj'],tela:'monitoramento_multi_oab.html',um:'intimação nova',varios:'intimações novas',cor:'#14b8a6'},
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
     {chave:'captacao',titulo:'Captação',tipos:['distribuicao'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
+    {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   function grupoDoTipo(tipo){

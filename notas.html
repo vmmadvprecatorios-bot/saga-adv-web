@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Notas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:72ch}
+.novas{display:flex;gap:8px;flex-wrap:wrap}
+.btn-nova{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:11px;font-size:12px;font-weight:700;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
+.btn-nova:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}.btn-nova:active{transform:scale(.96)}
+.btn-nova.principal{background:var(--gold);border-color:var(--gold);color:#fff}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.busca{flex:1 1 240px;min-width:200px;height:38px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel);padding:0 13px;font-size:12.5px;outline:0}
+.busca:focus{border-color:var(--gold)}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);flex-wrap:wrap}
+.pill{height:30px;padding:0 13px;border-radius:8px;font-size:11.5px;font-weight:700;color:var(--muted)}
+.pill.active{background:var(--gold);color:#fff}
+.etqs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.etq{height:26px;padding:0 11px;border-radius:13px;font-size:11px;font-weight:600;border:1px solid var(--border-soft);color:var(--muted);background:transparent;transition:border-color .15s,color .15s}
+.etq:hover{border-color:var(--gold);color:var(--text)}.etq.ativa{border-color:var(--gold);color:var(--gold-light);background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.sec-titulo{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;font-weight:700;color:var(--muted);margin:16px 2px 8px}
+.grade{columns:260px;column-gap:14px}
+.nota{--nc:#8b93a8;break-inside:avoid;display:block;width:100%;margin:0 0 14px;text-align:left;position:relative;border-radius:15px;padding:13px 14px 10px;background:color-mix(in srgb,var(--nc) 9%,var(--panel-solid));border:1px solid color-mix(in srgb,var(--nc) 38%,transparent);cursor:pointer;transition:transform .22s cubic-bezier(.22,.78,.25,1),box-shadow .22s,border-color .2s;animation:notaEntra .35s cubic-bezier(.22,.78,.25,1) both}
+.nota:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.28);border-color:color-mix(in srgb,var(--nc) 70%,transparent)}
+@keyframes notaEntra{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.nota[data-cor=amarelo]{--nc:#f5c542}.nota[data-cor=verde]{--nc:#6fcf7f}.nota[data-cor=azul]{--nc:#5bc0eb}.nota[data-cor=rosa]{--nc:#f78fb3}
+.nota[data-cor=laranja]{--nc:#f59e42}.nota[data-cor=roxo]{--nc:#b69cf0}.nota[data-cor=cinza]{--nc:#b0b7c3}
+.nota .topo{display:flex;align-items:flex-start;gap:8px}
+.nota .tit{flex:1;font-weight:700;font-size:13.5px;line-height:1.3;overflow-wrap:anywhere}
+.nota .tit.vazio{color:var(--muted);font-weight:500;font-style:italic}
+.nota .tipo{flex:0 0 auto;font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--nc);border:1px solid color-mix(in srgb,var(--nc) 45%,transparent);border-radius:7px;padding:1px 6px}
+.nota .corpo{margin-top:8px;font-size:12px;line-height:1.5;color:var(--text);max-height:210px;overflow:hidden;position:relative}
+.nota .corpo.corta::after{content:'';position:absolute;left:0;right:0;bottom:0;height:34px;background:linear-gradient(transparent,color-mix(in srgb,var(--nc) 9%,var(--panel-solid)))}
+.nota .it{display:flex;gap:8px;align-items:flex-start;margin:3px 0;font-size:12px}.nota .it span{overflow-wrap:anywhere}.nota .it.ok span{text-decoration:line-through;color:var(--muted)}
+.nota .it input{width:15px;height:15px;margin-top:1px;accent-color:var(--gold);flex:0 0 auto}
+.nota .senha-lin{display:flex;align-items:center;gap:6px;margin:4px 0;font-size:11.5px}.nota .senha-lin b{flex:0 0 52px;color:var(--muted);font-weight:600;font-size:10.5px}
+.nota .senha-lin span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nota .senha-lin a{color:var(--info);text-decoration:none}.nota .senha-lin a:hover{text-decoration:underline}
+.mini{height:24px;min-width:24px;padding:0 7px;border-radius:7px;border:1px solid var(--border-soft);font-size:10.5px;font-weight:700;color:var(--muted);background:transparent;transition:border-color .15s,color .15s}
+.mini:hover{border-color:var(--gold);color:var(--gold-light)}
+.nota .rod{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:9px}
+.nota .chip{font-size:10px;border-radius:9px;padding:1px 8px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--muted)}
+.nota .chip.comp{background:color-mix(in srgb,var(--info) 16%,transparent);color:var(--info)}
+.nota .acoes{display:flex;gap:2px;margin-left:auto;opacity:0;transition:opacity .15s}
+.nota:hover .acoes,.nota:focus-within .acoes{opacity:1}
+.acoes button{width:26px;height:26px;border-radius:8px;font-size:13px;color:var(--muted)}.acoes button:hover{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--gold-light)}
+.vazio-geral{text-align:center;color:var(--muted);font-size:13px;padding:60px 10px}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.toast.erro{border-color:var(--danger)}.toast.sucesso{border-color:var(--success)}
+/* janelas */
+.mo{position:fixed;inset:0;z-index:2500;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px)}
+.mo.aberto{display:flex;animation:moEntra .2s ease both}
+@keyframes moEntra{from{opacity:0}to{opacity:1}}
+.md{--nc:#8b93a8;width:100%;max-width:560px;max-height:calc(100vh - 36px);display:flex;flex-direction:column;border-radius:18px;background:color-mix(in srgb,var(--nc) 8%,var(--panel-solid));border:1px solid color-mix(in srgb,var(--nc) 45%,transparent);box-shadow:var(--shadow);animation:mdEntra .3s cubic-bezier(.22,.78,.25,1) both}
+@keyframes mdEntra{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.md[data-cor=amarelo]{--nc:#f5c542}.md[data-cor=verde]{--nc:#6fcf7f}.md[data-cor=azul]{--nc:#5bc0eb}.md[data-cor=rosa]{--nc:#f78fb3}.md[data-cor=laranja]{--nc:#f59e42}.md[data-cor=roxo]{--nc:#b69cf0}.md[data-cor=cinza]{--nc:#b0b7c3}
+.md-cab{display:flex;align-items:center;gap:10px;padding:14px 16px 4px}
+.md-cab input{flex:1;background:transparent;border:0;outline:0;font-size:17px;font-weight:700;min-width:0}
+.md-cab input::placeholder{color:var(--muted);font-weight:500}
+.md-corpo{padding:8px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.campo label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.campo input[type=text],.campo input[type=url],.campo input[type=password],.campo textarea{width:100%;height:var(--altura-controle,38px);border-radius:10px;border:1px solid var(--border-soft);background:color-mix(in srgb,var(--text) 4%,transparent);padding:0 12px;font-size:12.5px;outline:0}
+.campo textarea{height:auto;min-height:80px;padding:10px 12px;resize:vertical}
+.campo input:focus,.campo textarea:focus{border-color:var(--gold)}
+.linha{display:flex;gap:6px;align-items:center}.linha>input{flex:1}
+.linha .mini{height:var(--altura-controle,38px);min-width:38px}
+.itens{display:flex;flex-direction:column;gap:5px}
+.item-ed{display:flex;align-items:center;gap:8px}.item-ed input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold)}
+.item-ed input[type=text]{flex:1;height:34px;border:0;border-bottom:1px solid var(--border-soft);border-radius:0;background:transparent;padding:0 4px;font-size:12.5px;outline:0}
+.item-ed input[type=text]:focus{border-bottom-color:var(--gold)}.item-ed.ok input[type=text]{text-decoration:line-through;color:var(--muted)}
+.item-ed button{color:var(--muted);width:24px;height:24px}
+.cores{display:flex;gap:7px;flex-wrap:wrap}
+.cores button{width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:var(--c);transition:transform .15s}.cores button:hover{transform:scale(1.15)}.cores button.on{border-color:var(--text)}
+.cores button[data-cor=padrao]{background:var(--panel-solid);border:2px solid var(--border-soft)}.cores button[data-cor=padrao].on{border-color:var(--text)}
+.etq-ed{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.etq-ed .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;border-radius:10px;padding:2px 4px 2px 10px;background:color-mix(in srgb,var(--text) 9%,transparent)}.etq-ed .chip button{width:18px;height:18px;color:var(--muted)}
+.etq-ed input{flex:1;min-width:130px;height:30px;border:0;border-bottom:1px solid var(--border-soft);background:transparent;font-size:12px;outline:0}
+.aviso-senha{font-size:11px;color:var(--muted);border-radius:9px;padding:8px 10px;background:color-mix(in srgb,var(--warning) 10%,transparent);border:1px solid color-mix(in srgb,var(--warning) 30%,transparent)}
+.md-rod{display:flex;gap:8px;align-items:center;padding:10px 16px 14px;flex-wrap:wrap}
+.md-rod .esq{display:flex;gap:6px;flex-wrap:wrap}.md-rod .dir{margin-left:auto;display:flex;gap:8px}
+.btn{height:36px;padding:0 16px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid var(--border-soft)}.btn:hover{border-color:var(--gold)}
+.btn.prim{background:var(--gold);border-color:var(--gold);color:#fff}.btn.perigo{color:var(--danger)}.btn[disabled]{opacity:.55;cursor:default}
+.comp-lista{display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto}
+.comp-lin{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:9px}.comp-lin:hover{background:color-mix(in srgb,var(--gold) 8%,transparent)}
+.comp-lin label{flex:1;display:flex;align-items:center;gap:9px;font-size:12.5px;cursor:pointer}.comp-lin input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold)}
+.comp-lin select{height:28px;border-radius:8px;border:1px solid var(--border-soft);background:var(--panel-solid);font-size:11px;padding:0 6px}
+.somente-leitura-aviso{font-size:11px;color:var(--muted)}
+@media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.grade{columns:1}.acoes{opacity:1}}
+</style>
+<link rel="stylesheet" href="saga_tema.css">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Notas</h1>
+      <p>Suas anotações pessoais, listas e senhas. Só você vê o que criou; você pode compartilhar uma nota com colegas (só ver ou também editar).</p>
+    </div>
+    <div class="novas">
+      <button class="btn-nova principal" type="button" data-nova="texto">+ Nota</button>
+      <button class="btn-nova" type="button" data-nova="lista">+ Lista</button>
+      <button class="btn-nova" type="button" data-nova="senha">🔑 Senha / link</button>
+    </div>
+  </div>
+  <div class="barra">
+    <input class="busca" id="busca" type="search" placeholder="Buscar nas notas (título, texto, itens, login, link, etiquetas)..." autocomplete="off">
+    <div class="pills" id="pillsFiltro">
+      <button class="pill active" data-f="todas" type="button">Todas</button>
+      <button class="pill" data-f="minhas" type="button">Minhas</button>
+      <button class="pill" data-f="comp" type="button">Compartilhadas comigo</button>
+      <button class="pill" data-f="arq" type="button">Arquivadas</button>
+    </div>
+  </div>
+  <div class="etqs" id="etqs"></div>
+  <div id="quadro"></div>
+</main>
+</div>
+
+<div class="mo" id="moNota" role="dialog" aria-modal="true" aria-label="Nota"><div class="md" id="mdNota"></div></div>
+<div class="mo" id="moComp" role="dialog" aria-modal="true" aria-label="Compartilhar nota"><div class="md" id="mdComp"></div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js"></script>
+<script src="saga_texto.js"></script>
+<script>
+/* =====================================================================
+   NOTAS (T105) · pessoais, com cores, fixar, arquivar, etiquetas, compartilhar com colegas
+   Tipos: texto, lista (checklist) e senha (nome, login, senha, link, o que é).
+   A senha fica criptografada no banco: só sai pela função nota_ver_senha (dono ou quem recebeu a nota).
+   ===================================================================== */
+var COLUNAS='id,dono_id,tipo,titulo,conteudo,itens,login,link,tem_senha,cor,fixada,arquivada,etiquetas,criado_em,atualizado_em';
+var CORES=[['padrao','Sem cor'],['amarelo','Amarelo'],['verde','Verde'],['azul','Azul'],['rosa','Rosa'],['laranja','Laranja'],['roxo','Roxo'],['cinza','Cinza']];
+var CORHEX={amarelo:'#f5c542',verde:'#6fcf7f',azul:'#5bc0eb',rosa:'#f78fb3',laranja:'#f59e42',roxo:'#b69cf0',cinza:'#b0b7c3'};
+var TIPO_NOME={texto:'Nota',lista:'Lista',senha:'Senha'};
+var S={eu:null,notas:[],comp:{},pessoas:{},filtro:'todas',etq:'',busca:'',aberta:null,ed:null};
+
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
+function $(id){return document.getElementById(id);}
+function puro(v){return window.SagaTexto?SagaTexto.puro(v||''):String(v||'').replace(/<[^>]*>/g,' ');}
+function nomeDe(id){return (S.pessoas[id]||{}).nome_completo||'Colega';}
+function primeiro(id){return String(nomeDe(id)).split(' ')[0];}
+function ehMinha(n){return n.dono_id===S.eu;}
+function podeEditar(n){return ehMinha(n)||((S.comp[n.id]||[]).some(function(c){return c.usuario_id===S.eu&&c.pode_editar;}));}
+function compCom(n){return (S.comp[n.id]||[]).filter(function(c){return c.usuario_id!==S.eu;});}
+function urlSegura(u){u=String(u||'').trim();if(!u)return '';if(!/^[a-z][a-z0-9+.-]*:/i.test(u))u='https://'+u;return /^https?:\/\//i.test(u)?u:'';}
+function copiar(texto,rotulo){
+  var ok=function(){toast((rotulo||'Texto')+' copiado.','sucesso');};
+  var antigo=function(){var t=document.createElement('textarea');t.value=texto;t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();var deu=false;try{deu=document.execCommand('copy');}catch(e){}t.remove();if(deu)ok();else toast('Não foi possível copiar. Selecione e copie manualmente.','erro');};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(texto).then(ok,antigo);}else antigo();
+}
+async function pegarSenha(n){
+  var r=await _sb.rpc('nota_ver_senha',{p_nota:n.id});
+  if(r.error){toast('Não foi possível ler a senha: '+esc(r.error.message||''),'erro');return null;}
+  return r.data||'';
+}
+
+/* ---------- carregar ---------- */
+async function carregar(){
+  var r=await Promise.all([
+    _sb.from('notas').select(COLUNAS).order('atualizado_em',{ascending:false}).limit(1000),
+    _sb.from('notas_compartilhadas').select('nota_id,usuario_id,pode_editar')
+  ]);
+  if(r[0].error){toast('Não foi possível carregar as notas: '+esc(r[0].error.message||''),'erro');return false;}
+  S.notas=r[0].data||[];
+  S.comp={};(r[1].data||[]).forEach(function(c){(S.comp[c.nota_id]=S.comp[c.nota_id]||[]).push(c);});
+  return true;
+}
+
+/* ---------- filtros e lista ---------- */
+function todasEtiquetas(){var m={};S.notas.filter(ehMinha).forEach(function(n){(n.etiquetas||[]).forEach(function(e){m[e]=(m[e]||0)+1;});});return Object.keys(m).sort(function(a,b){return a.localeCompare(b,'pt-BR');});}
+function passa(n){
+  var f=S.filtro;
+  if(f==='arq'){if(!n.arquivada)return false;}
+  else{if(n.arquivada)return false;if(f==='minhas'&&!ehMinha(n))return false;if(f==='comp'&&ehMinha(n))return false;}
+  if(S.etq&&(n.etiquetas||[]).indexOf(S.etq)<0)return false;
+  var q=S.busca.trim().toLowerCase();
+  if(q){
+    var alvo=[n.titulo,puro(n.conteudo),n.login,n.link,(n.etiquetas||[]).join(' '),(n.itens||[]).map(function(i){return i.texto;}).join(' ')].join(' ').toLowerCase();
+    if(alvo.indexOf(q)<0)return false;
+  }
+  return true;
+}
+function desenharEtiquetas(){
+  var l=todasEtiquetas(),box=$('etqs');
+  if(S.etq&&l.indexOf(S.etq)<0)S.etq='';
+  box.innerHTML=l.map(function(e){return '<button type="button" class="etq'+(S.etq===e?' ativa':'')+'" data-e="'+esc(e)+'">'+esc(e)+'</button>';}).join('');
+}
+function cartao(n){
+  var corpo='';
+  if(n.tipo==='texto'){corpo=n.conteudo?'<div class="corpo'+(puro(n.conteudo).length>260?' corta':'')+'">'+SagaTexto.html(n.conteudo)+'</div>':'';}
+  else if(n.tipo==='lista'){
+    var it=(n.itens||[]),abertos=it.filter(function(i){return !i.ok;}),feitos=it.filter(function(i){return i.ok;});
+    var ordem=abertos.concat(feitos).slice(0,9);
+    corpo='<div class="corpo'+(it.length>9?' corta':'')+'">'+ordem.map(function(i){var idx=it.indexOf(i);return '<label class="it'+(i.ok?' ok':'')+'"><input type="checkbox" data-it="'+idx+'"'+(i.ok?' checked':'')+(podeEditar(n)?'':' disabled')+'><span>'+esc(i.texto)+'</span></label>';}).join('')+(it.length>9?'<div class="it"><span style="color:var(--muted)">+ '+(it.length-9)+' itens</span></div>':'')+'</div>';
+  }else{
+    var u=urlSegura(n.link);
+    corpo='<div class="corpo">'+
+      (n.login?'<div class="senha-lin"><b>Login</b><span>'+esc(n.login)+'</span><button class="mini" type="button" data-cp="login" title="Copiar o login">Copiar</button></div>':'')+
+      '<div class="senha-lin"><b>Senha</b><span>'+(n.tem_senha?'••••••••••':'<i style="color:var(--muted)">sem senha</i>')+'</span>'+(n.tem_senha?'<button class="mini" type="button" data-cp="senha" title="Copiar a senha">Copiar</button>':'')+'</div>'+
+      (u?'<div class="senha-lin"><b>Link</b><span><a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(n.link)+'</a></span></div>':(n.link?'<div class="senha-lin"><b>Link</b><span>'+esc(n.link)+'</span></div>':''))+
+      (n.conteudo?'<div style="margin-top:6px;color:var(--muted)">'+SagaTexto.html(n.conteudo)+'</div>':'')+'</div>';
+  }
+  var dono=ehMinha(n),comp=compCom(n);
+  var chips=(n.etiquetas||[]).map(function(e){return '<span class="chip">'+esc(e)+'</span>';}).join('');
+  if(!dono)chips+='<span class="chip comp">de '+esc(primeiro(n.dono_id))+(podeEditar(n)?' · pode editar':' · só ver')+'</span>';
+  else if(comp.length)chips+='<span class="chip comp">com '+comp.length+(comp.length>1?' pessoas':' pessoa')+'</span>';
+  var acoes=dono?
+    '<button type="button" data-a="fixar" title="'+(n.fixada?'Desafixar':'Fixar no topo')+'">'+(n.fixada?'📌':'📍')+'</button><button type="button" data-a="comp" title="Compartilhar">👥</button><button type="button" data-a="arq" title="'+(n.arquivada?'Desarquivar':'Arquivar')+'">🗂</button><button type="button" data-a="del" title="Apagar">🗑</button>':
+    '<button type="button" data-a="sair" title="Parar de ver esta nota">🚪</button>';
+  return '<article class="nota" data-id="'+esc(n.id)+'" data-cor="'+esc(n.cor)+'" tabindex="0">'+
+    '<div class="topo"><div class="tit'+(n.titulo?'':' vazio')+'">'+(n.fixada?'📌 ':'')+esc(n.titulo||'Sem título')+'</div><span class="tipo">'+TIPO_NOME[n.tipo]+'</span></div>'+corpo+
+    '<div class="rod">'+chips+'<div class="acoes">'+acoes+'</div></div></article>';
+}
+function desenhar(){
+  desenharEtiquetas();
+  var lista=S.notas.filter(passa).sort(function(a,b){return (b.fixada-a.fixada)||(a.atualizado_em<b.atualizado_em?1:-1);});
+  var q=$('quadro');
+  if(!lista.length){
+    q.innerHTML='<div class="vazio-geral">'+(S.notas.length?'Nenhuma nota com esse filtro.':'Você ainda não tem notas. Use os botões acima para criar a primeira.')+'</div>';return;
+  }
+  var fix=lista.filter(function(n){return n.fixada&&S.filtro!=='arq';}),resto=lista.filter(function(n){return !(n.fixada&&S.filtro!=='arq');});
+  q.innerHTML=(fix.length?'<div class="sec-titulo">Fixadas</div><div class="grade">'+fix.map(cartao).join('')+'</div>'+(resto.length?'<div class="sec-titulo">Outras</div>':''):'')+(resto.length?'<div class="grade">'+resto.map(cartao).join('')+'</div>':'');
+}
+
+/* ---------- ações no cartão ---------- */
+async function atualizarNota(id,campos,msg){
+  var r=await _sb.from('notas').update(campos).eq('id',id).select(COLUNAS).single();
+  if(r.error){toast('Não foi possível salvar: '+esc(r.error.message||''),'erro');return null;}
+  var i=S.notas.findIndex(function(n){return n.id===id;});if(i>=0)S.notas[i]=r.data;
+  if(msg)toast(msg,'sucesso');
+  return r.data;
+}
+async function apagarNota(n){
+  var ok=window.sagaConfirmar?await sagaConfirmar('Apagar nota','Apagar "'+(n.titulo||'esta nota')+'" de vez? Isso não pode ser desfeito'+(compCom(n).length?' e ela some também para quem recebeu.':'.'),'Apagar',true):confirm('Apagar esta nota?');
+  if(!ok)return;
+  var r=await _sb.from('notas').delete().eq('id',n.id);
+  if(r.error){toast('Não foi possível apagar: '+esc(r.error.message||''),'erro');return;}
+  S.notas=S.notas.filter(function(x){return x.id!==n.id;});delete S.comp[n.id];fecharNota(true);desenhar();toast('Nota apagada.','sucesso');
+}
+async function sairDaNota(n){
+  var ok=window.sagaConfirmar?await sagaConfirmar('Parar de ver','Você deixará de ver esta nota (quem criou continua com ela).','Parar de ver',true):confirm('Parar de ver esta nota?');
+  if(!ok)return;
+  var r=await _sb.rpc('nota_sair',{p_nota:n.id});
+  if(r.error){toast('Não foi possível sair da nota.','erro');return;}
+  S.notas=S.notas.filter(function(x){return x.id!==n.id;});fecharNota(true);desenhar();toast('Você saiu da nota.','sucesso');
+}
+$('quadro').addEventListener('click',async function(e){
+  var card=e.target.closest('.nota');if(!card)return;
+  var n=S.notas.find(function(x){return x.id===card.dataset.id;});if(!n)return;
+  var ac=e.target.closest('[data-a]');
+  if(ac){e.stopPropagation();var a=ac.dataset.a;
+    if(a==='fixar'){await atualizarNota(n.id,{fixada:!n.fixada});desenhar();}
+    else if(a==='arq'){await atualizarNota(n.id,{arquivada:!n.arquivada,fixada:false},n.arquivada?'Nota desarquivada.':'Nota arquivada.');desenhar();}
+    else if(a==='del')apagarNota(n);
+    else if(a==='sair')sairDaNota(n);
+    else if(a==='comp')abrirCompartilhar(n);
+    return;}
+  var cp=e.target.closest('[data-cp]');
+  if(cp){e.stopPropagation();
+    if(cp.dataset.cp==='login')copiar(n.login,'Login');
+    else{var s=await pegarSenha(n);if(s!=null)copiar(s,'Senha');}
+    return;}
+  if(e.target.closest('a'))return;
+  var chk=e.target.closest('input[data-it]');
+  if(chk){e.stopPropagation();
+    if(!podeEditar(n)){e.preventDefault();return;}
+    var it=(n.itens||[]).map(function(x){return {texto:x.texto,ok:!!x.ok};});it[+chk.dataset.it].ok=chk.checked;
+    await atualizarNota(n.id,{itens:it});desenhar();return;}
+  if(e.target.closest('label.it'))return;
+  abrirNota(n);
+});
+$('quadro').addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.classList.contains('nota')){e.target.click();}});
+document.querySelectorAll('[data-nova]').forEach(function(b){b.addEventListener('click',function(){abrirNota(null,b.dataset.nova);});});
+$('pillsFiltro').addEventListener('click',function(e){var b=e.target.closest('.pill');if(!b)return;S.filtro=b.dataset.f;document.querySelectorAll('#pillsFiltro .pill').forEach(function(p){p.classList.toggle('active',p===b);});desenhar();});
+$('etqs').addEventListener('click',function(e){var b=e.target.closest('.etq');if(!b)return;S.etq=S.etq===b.dataset.e?'':b.dataset.e;desenhar();});
+var _tb=null;$('busca').addEventListener('input',function(){clearTimeout(_tb);var v=this.value;_tb=setTimeout(function(){S.busca=v;desenhar();},150);});
+
+/* ---------- janela da nota ---------- */
+function gerarSenha(){
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%&*?',a=new Uint32Array(16),s='';
+  (window.crypto||window.msCrypto).getRandomValues(a);for(var i=0;i<16;i++)s+=c[a[i]%c.length];return s;
+}
+function abrirNota(n,tipo){
+  var novo=!n,pode=novo||podeEditar(n),dono=novo||ehMinha(n);
+  S.ed={id:n?n.id:null,tipo:n?n.tipo:tipo,titulo:n?n.titulo:'',conteudo:n?n.conteudo:'',itens:n?(n.itens||[]).map(function(i){return {texto:i.texto,ok:!!i.ok};}):[],
+    login:n?n.login:'',link:n?n.link:'',cor:n?n.cor:'padrao',etiquetas:n?(n.etiquetas||[]).slice():[],tem_senha:!!(n&&n.tem_senha),senha:'',senhaSuja:false,senhaLida:false,pode:pode,dono:dono,sujo:false};
+  var e=S.ed,m=$('mdNota');
+  m.dataset.cor=e.cor;
+  var corpo='';
+  if(e.tipo==='texto')corpo='<div class="campo"><textarea id="edTexto" placeholder="Escreva sua nota..."></textarea></div>';
+  else if(e.tipo==='lista')corpo='<div class="campo"><div class="itens" id="edItens"></div><div class="item-ed" style="margin-top:6px"><span style="width:16px;text-align:center;color:var(--muted)">+</span><input type="text" id="edNovoItem" placeholder="Novo item (Enter para incluir)"'+(pode?'':' disabled')+'></div></div>';
+  else corpo=
+    '<div class="campo"><label for="edLogin">Login / usuário</label><div class="linha"><input type="text" id="edLogin" autocomplete="off" placeholder="E-mail, CPF ou usuário"><button class="mini" type="button" id="cpLogin">Copiar</button></div></div>'+
+    '<div class="campo"><label for="edSenha">Senha</label><div class="linha"><input type="password" id="edSenha" autocomplete="new-password" placeholder="'+(e.tem_senha?'senha guardada (clique no olho para ver)':'Digite ou gere uma senha')+'"><button class="mini" type="button" id="olhoSenha" title="Mostrar / esconder">👁</button><button class="mini" type="button" id="cpSenha">Copiar</button>'+(pode?'<button class="mini" type="button" id="gerSenha" title="Gerar uma senha forte">Gerar</button>':'')+'</div></div>'+
+    '<div class="campo"><label for="edLink">Link do site</label><div class="linha"><input type="text" id="edLink" autocomplete="off" placeholder="https://..."><button class="mini" type="button" id="abrirLink">Abrir</button></div></div>'+
+    '<div class="campo"><label for="edTexto">O que é (observações)</label><textarea id="edTexto" placeholder="Ex.: portal do tribunal, acesso do escritório..."></textarea></div>'+
+    '<div class="aviso-senha">A senha fica criptografada no sistema. Se você compartilhar esta nota, quem receber poderá ver a senha.</div>';
+  var cores=dono?'<div class="campo"><label>Cor</label><div class="cores" id="edCores">'+CORES.map(function(c){return '<button type="button" data-cor="'+c[0]+'" title="'+c[1]+'" style="--c:'+(CORHEX[c[0]]||'transparent')+'" class="'+(e.cor===c[0]?'on':'')+'"></button>';}).join('')+'</div></div>':'';
+  var etq=dono?'<div class="campo"><label>Etiquetas</label><div class="etq-ed" id="edEtq"></div></div>':'';
+  m.innerHTML='<div class="md-cab"><input type="text" id="edTitulo" placeholder="'+(e.tipo==='senha'?'Nome (ex.: Portal do TJAL)':'Título')+'" maxlength="200"'+(pode?'':' readonly')+'><span class="tipo" style="font-size:10px;font-weight:700;color:var(--muted)">'+TIPO_NOME[e.tipo].toUpperCase()+'</span></div>'+
+    '<div class="md-corpo">'+corpo+cores+etq+(pode?'':'<div class="somente-leitura-aviso">Você pode ver esta nota, mas não alterá-la.</div>')+'</div>'+
+    '<div class="md-rod"><div class="esq">'+(dono&&!novo?'<button class="btn" type="button" id="btComp">👥 Compartilhar</button><button class="btn" type="button" id="btArq">'+(n.arquivada?'Desarquivar':'Arquivar')+'</button><button class="btn perigo" type="button" id="btDel">Apagar</button>':'')+(!dono?'<button class="btn" type="button" id="btSair">Parar de ver</button>':'')+'</div>'+
+    '<div class="dir"><button class="btn" type="button" id="btFechar">'+(pode?'Cancelar':'Fechar')+'</button>'+(pode?'<button class="btn prim" type="button" id="btSalvar">Salvar</button>':'')+'</div></div>';
+  $('edTitulo').value=e.titulo;
+  var ta=$('edTexto');if(ta){ta.value=e.conteudo;if(window.SagaTexto){var ed=SagaTexto.ligar(ta);if(!pode&&ed)ed.leitura(true);}}
+  if(e.tipo==='lista')desenharItens();
+  if(e.tipo==='senha'){$('edLogin').value=e.login;$('edLink').value=e.link;if(!pode){$('edLogin').readOnly=true;$('edLink').readOnly=true;$('edSenha').readOnly=true;}}
+  if(dono)desenharEtqEd();
+  ligarJanela();
+  $('moNota').classList.add('aberto');
+  setTimeout(function(){var f=novo?$('edTitulo'):null;if(f)f.focus();},50);
+}
+function desenharItens(){
+  var e=S.ed,box=$('edItens');if(!box)return;
+  var ordem=e.itens.map(function(i,ix){return {i:i,ix:ix};}).sort(function(a,b){return (a.i.ok-b.i.ok)||(a.ix-b.ix);});
+  box.innerHTML=ordem.map(function(o){return '<div class="item-ed'+(o.i.ok?' ok':'')+'"><input type="checkbox" data-ix="'+o.ix+'"'+(o.i.ok?' checked':'')+(e.pode?'':' disabled')+'><input type="text" data-tx="'+o.ix+'" value="'+esc(o.i.texto)+'"'+(e.pode?'':' readonly')+'>'+(e.pode?'<button type="button" data-rm="'+o.ix+'" aria-label="Remover item">✕</button>':'')+'</div>';}).join('');
+}
+function desenharEtqEd(){
+  var e=S.ed,box=$('edEtq');if(!box)return;
+  var sug=todasEtiquetas().filter(function(x){return e.etiquetas.indexOf(x)<0;});
+  box.innerHTML=e.etiquetas.map(function(x,i){return '<span class="chip">'+esc(x)+'<button type="button" data-rmetq="'+i+'" aria-label="Tirar etiqueta">✕</button></span>';}).join('')+
+    '<input type="text" id="edNovaEtq" list="listaEtqSug" placeholder="+ etiqueta (Enter)" maxlength="40" autocomplete="off"><datalist id="listaEtqSug">'+sug.map(function(x){return '<option value="'+esc(x)+'">';}).join('')+'</datalist>';
+}
+function ligarJanela(){
+  var e=S.ed,m=$('mdNota');
+  m.addEventListener('input',function(){e.sujo=true;},{once:true});
+  $('edTitulo').addEventListener('input',function(){e.titulo=this.value;});
+  if($('edLogin'))$('edLogin').addEventListener('input',function(){e.login=this.value;});
+  if($('edLink'))$('edLink').addEventListener('input',function(){e.link=this.value;});
+  if($('edSenha'))$('edSenha').addEventListener('input',function(){e.senha=this.value;e.senhaSuja=true;e.senhaLida=true;});
+  if($('cpLogin'))$('cpLogin').onclick=function(){if(e.login)copiar(e.login,'Login');};
+  if($('abrirLink'))$('abrirLink').onclick=function(){var u=urlSegura(e.link);if(u)window.open(u,'_blank','noopener,noreferrer');else toast('Link inválido.','erro');};
+  var carregarSenha=async function(){
+    if(e.senhaLida||!e.id||!e.tem_senha)return true;
+    var s=await pegarSenha({id:e.id});if(s==null)return false;
+    e.senha=s;e.senhaLida=true;$('edSenha').value=s;return true;
+  };
+  var remascarar=null;
+  if($('olhoSenha'))$('olhoSenha').onclick=async function(){
+    var campo=$('edSenha');
+    if(campo.type==='password'){if(!(await carregarSenha()))return;campo.type='text';clearTimeout(remascarar);remascarar=setTimeout(function(){if(campo.isConnected)campo.type='password';},30000);}
+    else campo.type='password';
+  };
+  if($('cpSenha'))$('cpSenha').onclick=async function(){if(!(await carregarSenha()))return;if(e.senha)copiar(e.senha,'Senha');else toast('Esta nota ainda não tem senha.','erro');};
+  if($('gerSenha'))$('gerSenha').onclick=function(){var s=gerarSenha();e.senha=s;e.senhaSuja=true;e.senhaLida=true;var c=$('edSenha');c.value=s;c.type='text';e.sujo=true;clearTimeout(remascarar);remascarar=setTimeout(function(){if(c.isConnected)c.type='password';},30000);};
+  var itens=$('edItens');
+  if(itens){
+    itens.addEventListener('change',function(ev){var c=ev.target.closest('input[data-ix]');if(c){e.itens[+c.dataset.ix].ok=c.checked;e.sujo=true;desenharItens();}});
+    itens.addEventListener('input',function(ev){var t=ev.target.closest('input[data-tx]');if(t){e.itens[+t.dataset.tx].texto=t.value;e.sujo=true;}});
+    itens.addEventListener('click',function(ev){var b=ev.target.closest('[data-rm]');if(b){e.itens.splice(+b.dataset.rm,1);e.sujo=true;desenharItens();}});
+    $('edNovoItem').addEventListener('keydown',function(ev){if(ev.key!=='Enter')return;ev.preventDefault();var v=this.value.trim();if(!v)return;e.itens.push({texto:v,ok:false});this.value='';e.sujo=true;desenharItens();});
+  }
+  var cores=$('edCores');
+  if(cores)cores.addEventListener('click',function(ev){var b=ev.target.closest('button[data-cor]');if(!b)return;e.cor=b.dataset.cor;e.sujo=true;m.dataset.cor=e.cor;cores.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});});
+  var etq=$('edEtq');
+  if(etq){
+    etq.addEventListener('click',function(ev){var b=ev.target.closest('[data-rmetq]');if(b){e.etiquetas.splice(+b.dataset.rmetq,1);e.sujo=true;desenharEtqEd();}});
+    etq.addEventListener('keydown',function(ev){
+      if(ev.key!=='Enter'&&ev.key!==',')return;var t=ev.target;if(t.id!=='edNovaEtq')return;ev.preventDefault();
+      var v=t.value.trim();if(!v)return;if(e.etiquetas.indexOf(v)<0&&e.etiquetas.length<12)e.etiquetas.push(v);e.sujo=true;desenharEtqEd();var nn=$('edNovaEtq');if(nn)nn.focus();
+    });
+  }
+  $('btFechar').onclick=function(){fecharNota();};
+  if($('btSalvar'))$('btSalvar').onclick=salvarNota;
+  var n=e.id?S.notas.find(function(x){return x.id===e.id;}):null;
+  if($('btComp'))$('btComp').onclick=function(){fecharNota(true);abrirCompartilhar(n);};
+  if($('btArq'))$('btArq').onclick=async function(){await atualizarNota(n.id,{arquivada:!n.arquivada,fixada:false},n.arquivada?'Nota desarquivada.':'Nota arquivada.');fecharNota(true);desenhar();};
+  if($('btDel'))$('btDel').onclick=function(){apagarNota(n);};
+  if($('btSair'))$('btSair').onclick=function(){sairDaNota(n);};
+}
+async function salvarNota(){
+  var e=S.ed,btn=$('btSalvar');if(!e||!e.pode||btn.disabled)return;
+  var conteudo=$('edTexto')?$('edTexto').value:'';
+  var itens=e.itens.map(function(i){return {texto:String(i.texto||'').trim(),ok:!!i.ok};}).filter(function(i){return i.texto;});
+  var vazio=!e.titulo.trim()&&!(puro(conteudo))&&!itens.length&&!(e.login||e.link||e.senha||e.tem_senha);
+  if(vazio){fecharNota(true);return;}
+  btn.disabled=true;
+  var campos={titulo:e.titulo.trim(),conteudo:conteudo,itens:itens};
+  if(e.tipo==='senha'){campos.login=e.login.trim();campos.link=e.link.trim();}
+  if(e.dono){campos.cor=e.cor;campos.etiquetas=e.etiquetas;}
+  var id=e.id,r;
+  if(id){r=await _sb.from('notas').update(campos).eq('id',id).select(COLUNAS).single();}
+  else{campos.tipo=e.tipo;r=await _sb.from('notas').insert(campos).select(COLUNAS).single();}
+  if(r.error){btn.disabled=false;toast('Não foi possível salvar: '+esc(r.error.message||''),'erro');return;}
+  id=r.data.id;
+  if(e.tipo==='senha'&&e.senhaSuja){
+    var rs=await _sb.rpc('nota_definir_senha',{p_nota:id,p_senha:e.senha});
+    if(rs.error){btn.disabled=false;toast('A nota foi salva, mas a senha não: '+esc(rs.error.message||''),'erro');await carregar();desenhar();return;}
+    var r2=await _sb.from('notas').select(COLUNAS).eq('id',id).single();if(r2.data)r.data=r2.data;
+  }
+  var i=S.notas.findIndex(function(x){return x.id===id;});if(i>=0)S.notas[i]=r.data;else S.notas.unshift(r.data);
+  fecharNota(true);desenhar();toast('Nota salva.','sucesso');
+}
+function fecharNota(forcar){
+  var e=S.ed;
+  $('moNota').classList.remove('aberto');
+  setTimeout(function(){if(!$('moNota').classList.contains('aberto'))$('mdNota').innerHTML='';},250);
+  S.ed=null;
+  if(location.search)history.replaceState(null,'',location.pathname);
+}
+
+/* ---------- compartilhar ---------- */
+async function abrirCompartilhar(n){
+  if(!n)return;
+  var r=await _sb.rpc('notas_colegas');
+  if(r.error){toast('Não foi possível listar os colegas.','erro');return;}
+  var colegas=r.data||[];colegas.forEach(function(c){S.pessoas[c.id]=c;});
+  var atuais={};(S.comp[n.id]||[]).forEach(function(c){atuais[c.usuario_id]=c;});
+  var m=$('mdComp');m.dataset.cor=n.cor;
+  m.innerHTML='<div class="md-cab"><div style="flex:1;font-size:16px;font-weight:700">Compartilhar nota</div></div>'+
+    '<div class="md-corpo"><div class="somente-leitura-aviso">Escolha com quem compartilhar "'+esc(n.titulo||'nota sem título')+'". Cada pessoa recebe um aviso no sino.'+(n.tipo==='senha'?' <b>Atenção: quem receber poderá ver a senha.</b>':'')+'</div><div class="comp-lista" id="compLista">'+
+    (colegas.length?colegas.map(function(c){var a=atuais[c.id];return '<div class="comp-lin"><label><input type="checkbox" data-u="'+esc(c.id)+'"'+(a?' checked':'')+'>'+esc(c.nome_completo)+'</label><select data-e="'+esc(c.id)+'"><option value="0"'+(a&&a.pode_editar?'':' selected')+'>Só ver</option><option value="1"'+(a&&a.pode_editar?' selected':'')+'>Pode editar</option></select></div>';}).join(''):'<div class="somente-leitura-aviso">Nenhum colega disponível.</div>')+
+    '</div></div><div class="md-rod"><div class="dir"><button class="btn" type="button" id="cpCancelar">Cancelar</button><button class="btn prim" type="button" id="cpSalvar">Salvar</button></div></div>';
+  $('moComp').classList.add('aberto');
+  $('cpCancelar').onclick=function(){$('moComp').classList.remove('aberto');};
+  $('cpSalvar').onclick=async function(){
+    var lista=[];$('compLista').querySelectorAll('input[data-u]').forEach(function(c){if(c.checked)lista.push({usuario_id:c.dataset.u,pode_editar:$('compLista').querySelector('select[data-e="'+c.dataset.u+'"]').value==='1'});});
+    this.disabled=true;
+    var rr=await _sb.rpc('nota_compartilhar',{p_nota:n.id,p_com:lista});
+    this.disabled=false;
+    if(rr.error){toast('Não foi possível compartilhar: '+esc(rr.error.message||''),'erro');return;}
+    S.comp[n.id]=lista.map(function(l){return {nota_id:n.id,usuario_id:l.usuario_id,pode_editar:l.pode_editar};});
+    $('moComp').classList.remove('aberto');desenhar();
+    toast(lista.length?('Nota compartilhada com '+lista.length+(lista.length>1?' pessoas.':' pessoa.')):'Nota não está mais compartilhada.','sucesso');
+  };
+}
+['moNota','moComp'].forEach(function(id){$(id).addEventListener('mousedown',function(e){if(e.target===this){if(id==='moNota')fecharNota();else this.classList.remove('aberto');}});});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){if($('moComp').classList.contains('aberto'))$('moComp').classList.remove('aberto');else if($('moNota').classList.contains('aberto'))fecharNota();}});
+document.addEventListener('visibilitychange',async function(){if(document.visibilityState==='visible'&&!S.ed&&!$('moComp').classList.contains('aberto')){if(await carregar())desenhar();}});
+
+/* ---------- início ---------- */
+async function init(){
+  await SagaUI.carregar('notas');
+  var s=await _sb.auth.getSession();
+  if(!s.data||!s.data.session){window.location.href='login_padrao_metalico.html';return;}
+  var eu=await _sb.from('usuarios').select('id,nome_completo').eq('auth_user_id',s.data.session.user.id).maybeSingle();
+  if(!eu.data){toast('Não foi possível identificar o seu usuário.','erro');return;}
+  S.eu=eu.data.id;S.pessoas[eu.data.id]=eu.data;
+  var pp=await _sb.from('usuarios').select('id,nome_completo');(pp.data||[]).forEach(function(p){S.pessoas[p.id]=p;});
+  if(!(await carregar()))return;
+  desenhar();
+  var id=new URLSearchParams(location.search).get('nota');
+  if(id){var n=S.notas.find(function(x){return x.id===id;});if(n){if(n.arquivada){S.filtro='arq';document.querySelectorAll('#pillsFiltro .pill').forEach(function(p){p.classList.toggle('active',p.dataset.f==='arq');});desenhar();}abrirNota(n);}else toast('Nota não encontrada (ou você não tem acesso).','erro');}
+}
+init().catch(function(e){toast('Erro ao abrir as notas: '+esc(e.message||''),'erro');});
+</script>
+</body>
+</html>
