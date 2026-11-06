@@ -494,7 +494,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
         <input type="text" id="inputNovoNumero" inputmode="numeric" placeholder="0000000-00.0000.0.00.0000" autocomplete="off" oninput="if(window.SagaPlanilha)this.value=SagaPlanilha.formatar('cnj',this.value)">
       </div>
       <div class="form-field">
-        <label>Tese</label>
+        <label>Tipo de ação</label>
         <div id="novoAreasTeses"></div><div class="dropdown-custom" id="dropdownNovaTese" style="display:none"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovaTese')"><span id="labelNovaTese">Selecione a tese...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovaTese"></div></div>
       </div>
       <div class="form-field">
@@ -606,7 +606,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
       <div class="filtros-scroll">
         <div id="filtroAreasTeses" style="min-width:240px;flex:1"></div>
         <div class="dropdown-custom" id="dropdownTese" style="display:none">
-          <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownTese')"><span id="labelFiltroTese">Tese</span><div class="chevron-dd"></div></div>
+          <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownTese')"><span id="labelFiltroTese">Tipo de ação</span><div class="chevron-dd"></div></div>
           <div class="dropdown-custom-lista" id="listaTeses"><div class="dropdown-custom-opcao" style="color:var(--muted)">Carregando...</div></div>
         </div>
         <div class="dropdown-custom" id="dropdownStatus">
@@ -651,7 +651,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
             <thead>
               <tr>
                 <th class="checkbox-col"><input type="checkbox" id="chkTodos"></th>
-                <th>Cliente</th><th>Tese</th><th>Status</th><th>Responsavel</th>
+                <th>Cliente</th><th>Tipo de ação</th><th>Status</th><th>Responsavel</th>
                 <th>Inicio</th><th>Prazo</th><th>Valor da causa</th><th></th>
               </tr>
             </thead>
@@ -1080,7 +1080,7 @@ async function confirmarRealocarEDesativar(){
   var r=await _sb.rpc(rpc,params);
   if(r.error){showToast('Nao foi possivel desativar: '+(r.error.message||'tente novamente.'),'error');return;}
   closeModal('modalRealocarCatalogo');
-  showToast((origem.tipo==='tese'?'Tese':'Status')+' desativado(a).','success');
+  showToast((origem.tipo==='tese'?'Tipo de ação':'Status')+' desativado(a).','success');
   if(origem.tipo==='tese'){await carregarTodasTeses();}else{await carregarTodosStatus();}
   await carregarOpcoesFiltros();carregarProcessos();
 }
@@ -1173,7 +1173,7 @@ async function restaurarPreferencias(){
 function sincronizarUI(){
   document.getElementById('inputBusca').value=state.busca;
   document.querySelectorAll('.pill-quantidade').forEach(function(p){p.classList.toggle('ativo',p.getAttribute('data-qtd')==state.pageSize||(p.getAttribute('data-qtd')==='todos'&&state.pageSize==='todos'));});
-  document.getElementById('labelFiltroTese').textContent=state.filtroTese?state.filtroTese.nome:'Tese';
+  document.getElementById('labelFiltroTese').textContent=state.filtroTese?state.filtroTese.nome:'Tipo de ação';
   document.getElementById('labelFiltroStatus').textContent=state.filtroStatus?state.filtroStatus.nome:'Status';
   document.getElementById('labelFiltroResponsavel').textContent=state.filtroResponsavel?((state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0])||'Responsavel'):'Responsavel';
   if(state.filtroPeriodoDe)document.getElementById('inputPeriodoDe').value=state.filtroPeriodoDe;
@@ -1190,7 +1190,7 @@ function atualizarLabelPeriodo(){
 function renderTagsAtivas(){
   var tags=[];
   if(state.filtroArea!=='*')tags.push({label:'Área: '+(catalogoTeses.area(state.filtroArea)?.nome||'Sem área'),fn:function(){state.filtroArea='*';state.filtroTese=null;renderDropdownsTeses();aplicarFiltros();}});
-  if(state.filtroTese)tags.push({label:'Tese: '+state.filtroTese.nome,fn:function(){state.filtroTese=null;document.getElementById('labelFiltroTese').textContent='Tese';renderDropdownsTeses();aplicarFiltros();}});
+  if(state.filtroTese)tags.push({label:'Tipo de ação: '+state.filtroTese.nome,fn:function(){state.filtroTese=null;document.getElementById('labelFiltroTese').textContent='Tipo de ação';renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroStatus)tags.push({label:'Status: '+state.filtroStatus.nome,fn:function(){state.filtroStatus=null;document.getElementById('labelFiltroStatus').textContent='Status';renderDropdownsStatus();aplicarFiltros();}});
   if(state.filtroResponsavel)tags.push({label:'Resp.: '+(state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0]),fn:function(){state.filtroResponsavel=null;document.getElementById('labelFiltroResponsavel').textContent='Responsavel';renderDropdownsResponsavel();aplicarFiltros();}});
   if(state.filtroPeriodoDe||state.filtroPeriodoAte)tags.push({label:'Periodo',fn:function(){state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';atualizarLabelPeriodo();aplicarFiltros();}});
@@ -1423,7 +1423,7 @@ function limparFiltros(){
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
   document.getElementById('inputBusca').value='';
   document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';
-  document.getElementById('labelFiltroTese').textContent='Tese';
+  document.getElementById('labelFiltroTese').textContent='Tipo de ação';
   document.getElementById('labelFiltroStatus').textContent='Status';
   document.getElementById('labelFiltroResponsavel').textContent='Responsavel';
   atualizarLabelPeriodo();renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();aplicarFiltros();
@@ -1507,7 +1507,7 @@ function renderLista(){
     var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var st=p.status||{};var re=p.responsavel||{};
     return '<div class="cartao-cliente" onclick="verFicha(\''+p.id+'\')">'
       +'<div class="cartao-topo"><div><div class="cartao-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div><div class="cartao-cpf">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</div></div>'+statusBadge(st)+'</div>'
-      +'<div class="cartao-linha"><span class="cartao-label">Tese</span>'+teseTag(te)+'</div>'
+      +'<div class="cartao-linha"><span class="cartao-label">Tipo de ação</span>'+teseTag(te)+'</div>'
       +'<div class="cartao-linha"><span class="cartao-label">Responsavel</span>'+(re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar" data-saga-nome="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted)">N/A</span>')+'</div>'
       +providenciaHtml(p)+'<div class="cartao-rodape">'+prazoHtml(p.data_prazo)+acoesBtns(p)+'</div>'
       +'</div>';
@@ -1926,7 +1926,7 @@ function renderDropdownsResponsavel(){
     });
   });
 }
-function selTese(t){state.filtroTese=t;document.getElementById('labelFiltroTese').textContent=t?t.nome:'Tese';fecharTodosDropdowns();renderDropdownsTeses();aplicarFiltros();}
+function selTese(t){state.filtroTese=t;document.getElementById('labelFiltroTese').textContent=t?t.nome:'Tipo de ação';fecharTodosDropdowns();renderDropdownsTeses();aplicarFiltros();}
 function selStatus(s){state.filtroStatus=s;document.getElementById('labelFiltroStatus').textContent=s?s.nome:'Status';fecharTodosDropdowns();renderDropdownsStatus();aplicarFiltros();}
 function selResp(u){state.filtroResponsavel=u;document.getElementById('labelFiltroResponsavel').textContent=u?(u.sem?'Sem responsável':u.nome_completo.split(' ')[0]||'Responsavel'):'Responsavel';fecharTodosDropdowns();renderDropdownsResponsavel();aplicarFiltros();}
 
@@ -2023,7 +2023,7 @@ function abrirNovoProcesso(){
   document.getElementById('previaHonorarios').textContent='';
   aplicarMascaraMoeda(document.getElementById('inputNovoValorCausa'));
   document.getElementById('inputNovoNumero').value='';
-  document.getElementById('labelNovaTese').textContent='Selecione a tese...';
+  document.getElementById('labelNovaTese').textContent='Selecione o tipo de ação...';
   document.getElementById('labelNovoStatus').textContent='Selecione o status...';
   state.novoResponsavel=null;
   document.getElementById('labelNovoResponsavel').textContent='Sem responsavel';
@@ -2081,7 +2081,7 @@ function selPessoaNovo(p){
 }
 async function salvarNovoProcesso(){
   if(!state.novoPessoa){showToast('Selecione uma pessoa.','warning');return;}
-  if(!state.novoTese){showToast('Selecione a tese.','warning');return;}
+  if(!state.novoTese){showToast('Selecione o tipo de ação.','warning');return;}
   if(!state.novoStatus){showToast('Selecione o status inicial.','warning');return;}
   var dados={
     pessoa_id:state.novoPessoa.id,tese_id:state.novoTese.id,area_direito_id:state.novoArea||null,status_id:state.novoStatus.id,

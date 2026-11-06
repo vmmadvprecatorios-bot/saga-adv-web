@@ -397,7 +397,7 @@ window.SagaPlanilha=(function(){
     var tipo=cols.find(function(c){return c.nome==='Tipo de ação'&&!c.campo_sistema;}),tipoSel=tipo&&filtros[tipo.id]&&filtros[tipo.id].size===1?Array.from(filtros[tipo.id])[0]:'';
     w.innerHTML='<div class="sp-abas" role="tablist" aria-label="Área do direito">'+
       [{id:'*',nome:'Todas as áreas'}].concat(areas).concat([{id:null,nome:'Sem área'}]).map(function(a){var at=(a.id===atual)||(a.id===null&&atual===null);return '<button type="button" role="tab" aria-selected="'+at+'" class="sp-aba'+(at?' ativo':'')+'" data-area="'+(a.id===null?'__sem':h(a.id))+'">'+h(a.nome)+'</button>';}).join('')+'</div>'+
-      '<div class="sp-sub">'+(atual!=='*'&&teses.length?'<div class="sp-pills sp-teses" role="group" aria-label="Tese"><button type="button" class="sp-pill'+(!teseAtual?' ativo':'')+'" data-tese="">Todas as teses</button>'+teses.map(function(t){return '<button type="button" class="sp-pill'+(teseAtual===t.id?' ativo':'')+'" data-tese="'+h(t.id)+'">'+h(t.nome)+'</button>';}).join('')+'</div>':'')+
+      '<div class="sp-sub">'+(atual!=='*'&&teses.length?'<div class="sp-pills sp-teses" role="group" aria-label="Tipo de ação"><button type="button" class="sp-pill'+(!teseAtual?' ativo':'')+'" data-tese="">Todos os tipos de ação</button>'+teses.map(function(t){return '<button type="button" class="sp-pill'+(teseAtual===t.id?' ativo':'')+'" data-tese="'+h(t.id)+'">'+h(t.nome)+'</button>';}).join('')+'</div>':'')+
       (tipo?'<label class="sp-tipo">Tipo de ação <select data-tipo><option value="">Todos</option>'+opcoesDaColuna(tipo).map(function(o){return '<option value="'+h(o.id)+'"'+(String(o.id)===String(tipoSel)?' selected':'')+'>'+h(o.nome)+'</option>';}).join('')+'</select></label>':'')+(state.admin?'<a class="sp-org" href="configuracoes_padrao_metalico.html?aba=areas-teses">Organizar áreas e teses</a>':'')+'</div>';
     w.querySelectorAll('[data-area]').forEach(function(b){b.onclick=function(){var v=b.dataset.area;state.filtroArea=v==='*'?'*':v==='__sem'?null:v;state.filtroTese=null;
       try{localStorage.setItem('saga-planilha-area-'+FASE_FIXA,JSON.stringify(state.filtroArea));}catch(e){}
@@ -510,7 +510,7 @@ window.SagaPlanilha=(function(){
   }
   var APELIDOS={'pessoa.nome':['nome','nome do cliente','cliente','nome da parte','parte','autor','beneficiario'],'pessoa.cpf':['cpf','cpf/cnpj','documento'],
     'processo.numero':['processo','processo cnj','numero do processo','n do processo','cnj','numero cnj','n processo'],'processo.valor_precatorio':['valor','valor bruto','valor bruto do prc','valor do precatorio','prc'],
-    'processo.tese':['tese'],'pessoa.uf':['uf','estado'],'pessoa.telefone':['telefone','celular','whatsapp','fone'],'pessoa.email':['email','e-mail']};
+    'processo.tese':['tese','tipo de acao','tipo de ação'],'pessoa.uf':['uf','estado'],'pessoa.telefone':['telefone','celular','whatsapp','fone'],'pessoa.email':['email','e-mail']};
   function alvosImportacao(){
     var lista=colunasDaTela().filter(function(c){return SISTEMA_SO_LEITURA.indexOf(c.campo_sistema)===-1&&['processo.situacao_acao','processo.area'].indexOf(c.campo_sistema)===-1;});
     var tese=cols.find(function(c){return c.campo_sistema==='processo.tese';});if(tese&&lista.indexOf(tese)===-1)lista.push(tese);
@@ -670,7 +670,7 @@ window.SagaPlanilha=(function(){
   }
   function renderFunil(kv){
     var etapas=etapasFunil();if(!etapas.length)return false;
-    var cRet=colPorChave('captacao.data_retorno'),cTipo=cols.find(function(c){return c.nome==='Tipo de ação'&&!c.campo_sistema;}),cTrf=cols.find(function(c){return c.nome==='Competência'&&!c.campo_sistema;});
+    var cRet=colPorChave('captacao.data_retorno'),cTipo=cols.find(function(c){return c.campo_sistema==='processo.tese';}),cTrf=cols.find(function(c){return c.nome==='Competência'&&!c.campo_sistema;});
     var hoje=hojeISO(),total=state.processos.length,pode=state.permissoes.editar===true;
     var grupos=etapas.map(function(e){return {e:e,itens:[]};}),fora=[];
     state.processos.forEach(function(p){var et=statusDe(p).etapa;var g=grupos.find(function(x){return x.e.nome===et;});if(g)g.itens.push(p);else fora.push(p);});
@@ -804,7 +804,7 @@ window.SagaPlanilha=(function(){
     var campos={};cs.forEach(function(c){campos[c.id]={c:c};});extras.forEach(function(x){campos[x.id]={x:x};});
     // Resumo: só os campos escolhidos, na ordem escolhida; "Todos os dados" tem sempre todos, numerados na ordem da planilha
     var chaveFixos='saga-ficha-ordem-'+(capt?'captacao-':'')+(opts.usuarioId||''),chaveAntiga='saga-ficha-campos-'+(capt?'captacao-':'')+(opts.usuarioId||''),chaveAberto='saga-ficha-todos-aberto';
-    var PADRAO=capt?['processo.numero','processo.captador','processo.valor_precatorio','processo.status','#Tipo de ação','#Competência','@captacao.data_retorno','@captacao.etiquetas']
+    var PADRAO=capt?['processo.numero','processo.captador','processo.valor_precatorio','processo.status','processo.tese','#Competência','@captacao.data_retorno','@captacao.etiquetas']
       :['processo.tese','processo.responsavel','processo.valor_precatorio','processo.valor_causa','processo.numero','extra:Honorários','extra:Data de início'];
     var ehPadrao=function(c,k){return k.indexOf('extra:')===0?false:(c.campo_sistema===k||(!c.campo_sistema&&!c.chave&&k==='#'+c.nome)||(c.chave&&k==='@'+c.chave));};
     var ordem=null;

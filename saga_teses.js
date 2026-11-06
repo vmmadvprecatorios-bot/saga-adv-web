@@ -21,14 +21,14 @@
   }
   // Menus em posição normal: expandem o conteúdo e acompanham a rolagem da janela.
   function menu(root,label,opcoes,valor,escolher,admin){
-    root.classList.add('st-campo');root.innerHTML='<span class="st-label">'+esc(label)+'</span><button type="button" class="st-trigger" aria-expanded="false" aria-label="'+esc(label)+'"><span></span><i>▾</i></button><div class="st-menu" hidden><div class="st-opcoes" role="group" aria-label="'+esc(label)+'"></div><div class="st-fim"></div></div>';
+    const rot=label==='Tese'?'Tipo de ação':label;root.classList.add('st-campo');root.innerHTML='<span class="st-label">'+esc(rot)+'</span><button type="button" class="st-trigger" aria-expanded="false" aria-label="'+esc(rot)+'"><span></span><i>▾</i></button><div class="st-menu" hidden><div class="st-opcoes" role="group" aria-label="'+esc(label)+'"></div><div class="st-fim"></div></div>';
     const btn=root.querySelector('button'),painel=root.querySelector('.st-menu');
     function fechar(){painel.hidden=true;btn.setAttribute('aria-expanded','false');}
     function atualizar(){btn.querySelector('span').textContent=valor().nome;}
     function abrir(){
       const atual=valor().id;
       root.querySelector('.st-opcoes').innerHTML=opcoes().map(e=>'<div class="st-linha"><button type="button" class="st-opcao" data-id="'+esc(e.id??'')+'" aria-pressed="'+(e.id===atual)+'">'+esc(e.nome)+'</button>'+(admin&&e.id&&e.id!=='*'?'<button type="button" class="st-lapis" data-id="'+esc(e.id)+'" aria-label="Editar '+esc(e.nome)+'">✎</button>':'')+'</div>').join('');
-      root.querySelector('.st-fim').innerHTML=admin?'<button type="button" class="st-novo">+ Nova '+(label==='Tese'?'tese':'área')+'</button>':'';
+      root.querySelector('.st-fim').innerHTML=admin?'<button type="button" class="st-novo">'+(label==='Tese'?'+ Novo tipo de ação':'+ Nova área')+'</button>':'';
       painel.hidden=false;btn.setAttribute('aria-expanded','true');
     }
     btn.onclick=()=>{if(painel.hidden)abrir();else fechar();};
@@ -124,7 +124,7 @@
         if(te&&(te.area_direito_id||null)!==areaId&&!(op.permitirAreaAvulsa&&!te.area_direito_id))teseId=null;
         mudou();
       },o.admin&&!op.filtro?id=>editar('area',id):null);
-      const t=menu(root.querySelector('.st-tese'),'Tese',()=>[{id:null,nome:op.filtro?'Todas as teses':'Escolha a tese'}].concat(todasTeses().filter(te=>ativo(te)&&(areaId==='*'||(te.area_direito_id||null)===areaId))),()=>({id:teseId,nome:tese(teseId)?.nome||(op.filtro?'Todas as teses':'Escolha a tese')}),id=>{
+      const t=menu(root.querySelector('.st-tese'),'Tese',()=>[{id:null,nome:op.filtro?'Todos os tipos de ação':'Escolha o tipo de ação'}].concat(todasTeses().filter(te=>ativo(te)&&(areaId==='*'||(te.area_direito_id||null)===areaId))),()=>({id:teseId,nome:tese(teseId)?.nome||(op.filtro?'Todos os tipos de ação':'Escolha o tipo de ação')}),id=>{
         teseId=id;if(id)areaId=tese(id)?.area_direito_id||null;mudou();
       },o.admin&&!op.filtro?id=>editar('tese',id):null);
       const ti=document.createElement('input'),ai=document.createElement('input');ti.type=ai.type='hidden';if(op.teseInputId)ti.id=op.teseInputId;if(op.areaInputId)ai.id=op.areaInputId;root.append(ti,ai);
