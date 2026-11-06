@@ -3044,7 +3044,7 @@ function aplicarFatiaTarefa(chave,valor){
   }
   paginaAtualLista=1;aplicarFiltrosERenderizar();
 }
-document.getElementById('btnGraficosTarefas').addEventListener('click',function(){graficosTarefasOcultos=!graficosTarefasOcultos;try{localStorage.setItem('saga-tarefas-graficos-ocultos',graficosTarefasOcultos?'1':'0');}catch(e){}renderGraficosTarefas();});
+document.getElementById('btnGraficosTarefas').addEventListener('click',function(){graficosTarefasOcultos=!graficosTarefasOcultos;try{localStorage.setItem('saga-tarefas-graficos-ocultos',graficosTarefasOcultos?'1':'0');}catch(e){}var raiz=document.getElementById('graficosTarefas');if(graficosTarefasOcultos){this.textContent='Mostrar gráficos';this.setAttribute('aria-expanded','false');window.sagaRecolher(raiz,true);}else{renderGraficosTarefas();window.sagaRecolher(raiz,false);}});
 document.getElementById('graficosTarefas').addEventListener('click',function(e){var b=e.target.closest('[data-graf]');if(b)aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);});
 document.getElementById('graficosTarefas').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);}});
 

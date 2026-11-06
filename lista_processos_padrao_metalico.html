@@ -1310,7 +1310,7 @@ function aplicarFatiaProcesso(chave,valor){
   }
   aplicarFiltros();
 }
-document.getElementById('btnGraficosProcessos').addEventListener('click',function(){graficosProcessosOcultos=!graficosProcessosOcultos;try{localStorage.setItem('saga-processos-graficos-ocultos',graficosProcessosOcultos?'1':'0');}catch(e){}renderGraficosProcessos();});
+document.getElementById('btnGraficosProcessos').addEventListener('click',function(){graficosProcessosOcultos=!graficosProcessosOcultos;try{localStorage.setItem('saga-processos-graficos-ocultos',graficosProcessosOcultos?'1':'0');}catch(e){}var raiz=document.getElementById('graficosProcessos');if(graficosProcessosOcultos&&!state.erroGraficos){this.textContent='Mostrar gráficos';this.setAttribute('aria-expanded','false');window.sagaRecolher(raiz,true);}else{renderGraficosProcessos();if(!state.erroGraficos)window.sagaRecolher(raiz,false);}});
 document.getElementById('graficosProcessos').addEventListener('click',function(e){var b=e.target.closest('[data-graf]');if(b)aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);});
 document.getElementById('graficosProcessos').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);}});
 

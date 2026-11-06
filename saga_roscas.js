@@ -44,8 +44,9 @@ button.sr-leg{cursor:pointer}button.sr-leg:hover,button.sr-leg:focus-visible{bac
     root.innerHTML='<div class="sr-graficos-barra"><button type="button" class="sr-toggle" aria-expanded="true"></button></div><div class="sr-graficos"></div>';
     var btn=root.querySelector('.sr-toggle'),painel=root.querySelector('.sr-graficos');
     painel.id=root.id+'-painel';painel.setAttribute('aria-label',op.rotulo||'Gráficos');btn.setAttribute('aria-controls',painel.id);
-    function atualizar(lista){
-      grupos=lista;root.hidden=!grupos.length;painel.hidden=ocultos;btn.textContent=ocultos?'Mostrar gráficos':'Ocultar gráficos';btn.setAttribute('aria-expanded',String(!ocultos));
+    function atualizar(lista,animar){
+      grupos=lista;root.hidden=!grupos.length;btn.textContent=ocultos?'Mostrar gráficos':'Ocultar gráficos';btn.setAttribute('aria-expanded',String(!ocultos));
+      if(animar&&window.sagaRecolher){if(ocultos){window.sagaRecolher(painel,true);return;}painel.hidden=false;}else painel.hidden=ocultos;
       if(ocultos)return;
       painel.dataset.colunas=String(Math.min(4,grupos.length));
       painel.style.setProperty('--sr-colunas',String(Math.max(1,Math.min(4,grupos.length))));
@@ -98,7 +99,7 @@ button.sr-leg{cursor:pointer}button.sr-leg:hover,button.sr-leg:focus-visible{bac
       if(g.escolher)g.escolher(item);
       else{selecionados.set(gid,selecionados.get(gid)===id?null:id);atualizar(grupos);}
     }
-    btn.onclick=function(){ocultos=!ocultos;try{localStorage.setItem(op.chave,ocultos?'1':'0');}catch(e){}atualizar(grupos);};
+    btn.onclick=function(){ocultos=!ocultos;try{localStorage.setItem(op.chave,ocultos?'1':'0');}catch(e){}atualizar(grupos,true);if(!ocultos&&window.sagaRecolher)window.sagaRecolher(painel,false);};
     painel.onclick=function(e){var b=e.target.closest('[data-graf]');if(b)escolher(b.dataset.graf,b.dataset.v);};
     painel.onkeydown=function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();escolher(b.dataset.graf,b.dataset.v);}};
     return {atualizar:atualizar};

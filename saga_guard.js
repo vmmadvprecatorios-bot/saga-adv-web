@@ -465,6 +465,33 @@
     }
   });
 
+  // Recolher / expandir um bloco com movimento fluido (altura, transparência e leve subida).
+  // sagaRecolher(el, true) recolhe e depois esconde; sagaRecolher(el, false) mostra e expande.
+  // Com "efeitos de movimento" desligados, só troca na hora.
+  window.sagaRecolher=function(el,ocultar,fim){
+    if(!el)return;
+    var curva='cubic-bezier(.22,.78,.25,1)',sem=false;
+    try{sem=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}
+    var limpar=function(){['height','opacity','transform','overflow','transition','marginBottom','willChange'].forEach(function(k){el.style[k]='';});};
+    if(el._recolhendo){clearTimeout(el._recolhendo);el._recolhendo=null;limpar();}
+    if(sem||!el.isConnected){el.hidden=!!ocultar;limpar();if(fim)fim();return;}
+    var mb=getComputedStyle(el).marginBottom;
+    var terminar=function(){el._recolhendo=null;if(ocultar)el.hidden=true;limpar();if(fim)fim();};
+    var trans='height 420ms '+curva+',opacity 300ms ease,transform 420ms '+curva+',margin-bottom 420ms '+curva;
+    el.style.overflow='hidden';el.style.willChange='height,opacity,transform';
+    if(ocultar){
+      el.style.height=el.offsetHeight+'px';void el.offsetHeight;
+      el.style.transition=trans;
+      el.style.height='0px';el.style.opacity='0';el.style.transform='translateY(-10px)';el.style.marginBottom='0px';
+    }else{
+      el.hidden=false;var h=el.scrollHeight;
+      el.style.height='0px';el.style.opacity='0';el.style.transform='translateY(-10px)';el.style.marginBottom='0px';void el.offsetHeight;
+      el.style.transition=trans;
+      el.style.height=h+'px';el.style.opacity='1';el.style.transform='none';el.style.marginBottom=mb;
+    }
+    el._recolhendo=setTimeout(terminar,470);
+  };
+
   // Saida suave ao trocar de tela pelo menu: os blocos somem em cascata rapida
   var saindo=false;
   window.sagaIrPara=function(url){
