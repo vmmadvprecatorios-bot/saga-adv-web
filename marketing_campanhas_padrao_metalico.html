@@ -649,6 +649,7 @@ async function abrirMaterial(id){
   document.getElementById('mvTitulo').textContent=m.nome_arquivo;
   document.getElementById('mvSub').textContent=(TIPOS_MAT[m.tipo_material]||'Material')+' · '+(camp?camp.nome:'Sem campanha')+' · enviado por '+(nomeUsuario(m.usuario_id)||'—')+' em '+dataBR(m.criado_em)+(m.versao>1?' · versão '+m.versao:'');
   document.getElementById('mvSituacao').innerHTML=etq(f.nome,f.cor);
+  if(window.SagaTexto)SagaTexto.ligar(document.getElementById('mvTexto'));
   document.getElementById('mvTexto').value='';
   SagaMencoes.limpar(document.getElementById('mvTexto'));SagaMencoes.anexar(document.getElementById('mvTexto'),{sb:_sb,tabela:'materiais_marketing',registroId:id});
   var pv=document.getElementById('mvPreview');pv.innerHTML='<div class="vazio">Carregando…</div>';
@@ -657,7 +658,7 @@ async function abrirMaterial(id){
   document.getElementById('mvHist').innerHTML=hist.length?hist.slice().reverse().map(function(c){
     var a=ACOES_HIST[c.acao]||ACOES_HIST.comentario;
     var antes=c.acao==='nova_versao'&&c.caminho_anterior?' <button class="lnk" data-anterior="'+esc(c.caminho_anterior)+'" type="button">ver versão '+(c.versao-1)+'</button>':'';
-    return '<div class="mv-item" style="--c:'+a.cor+'"><div class="quem"><b>'+esc(nomeUsuario(c.usuario_id)||'Alguém')+'</b> '+a.nome+(c.versao?' (v'+c.versao+')':'')+' · '+dataHoraBR(c.criado_em)+antes+'</div>'+(c.texto?'<div class="txt">'+SagaMencoes.destacar(c.texto)+'</div>':'')+'</div>';
+    return '<div class="mv-item" style="--c:'+a.cor+'"><div class="quem"><b>'+esc(nomeUsuario(c.usuario_id)||'Alguém')+'</b> '+a.nome+(c.versao?' (v'+c.versao+')':'')+' · '+dataHoraBR(c.criado_em)+antes+'</div>'+(c.texto?'<div class="txt">'+(window.SagaTexto&&/^\s*<(p|ul|ol)[\s>]/i.test(c.texto||'')?SagaTexto.html(c.texto):SagaMencoes.destacar(c.texto))+'</div>':'')+'</div>';
   }).join(''):'<div class="sub">Nenhum comentário ainda.</div>';
   document.querySelectorAll('#mvHist [data-anterior]').forEach(function(b){b.addEventListener('click',async function(){
     var r=await _sb.storage.from('marketing-materiais').createSignedUrl(b.dataset.anterior,600);

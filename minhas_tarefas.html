@@ -4627,7 +4627,7 @@ function renderizarComentariosModal(){
       '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(autor ? autor.nome : '') + '"' + (autor ? ' data-saga-usuario="' + escaparHtml(autor.id) + '"' : '') + ' style="background:' + (autor ? autor.cor : '#8b93a8') + ';">' + (autor ? autor.iniciais : '?') + '</div>' +
       '<div class="corpo-comentario-tarefa">' +
         '<div class="topo-comentario-tarefa"><span class="autor-comentario-tarefa">' + escaparHtml(autor ? autor.nome : 'Colaborador inativo') + '</span><span class="tempo-comentario-tarefa">' + tempoRelativo(c.timestamp) + '</span></div>' +
-        '<div class="texto-comentario-tarefa">' + SagaMencoes.destacar(c.texto) + '</div>' +
+        '<div class="texto-comentario-tarefa">' + (window.SagaTexto&&/^\s*<(p|ul|ol)[\s>]/i.test(c.texto||'')?SagaTexto.html(c.texto):SagaMencoes.destacar(c.texto)) + '</div>' +
       '</div>';
     container.appendChild(item);
   });
@@ -4986,7 +4986,7 @@ document.getElementById('selectResponsavelTarefa').addEventListener('change', fu
   renderizarChipsCompartilhar();
 });
 
-if(window.SagaTexto) SagaTexto.ligar(document.getElementById('textareaDescricaoTarefa'));
+if(window.SagaTexto){ SagaTexto.ligar(document.getElementById('textareaDescricaoTarefa')); SagaTexto.ligar(document.getElementById('textareaNovoComentario')); }
 iniciarMinhasTarefas();
 </script>
 

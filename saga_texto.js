@@ -67,6 +67,7 @@
     var w=document.createTreeWalker(d,NodeFilter.SHOW_TEXT),nos=[];while(w.nextNode())nos.push(w.currentNode);
     nos.forEach(function(n){
       if(!/@[A-Za-zÀ-ÿ]/.test(n.nodeValue))return;
+      if(global.SagaMencoes){var tp=document.createElement('template');tp.innerHTML=global.SagaMencoes.destacar(n.nodeValue);n.parentNode.replaceChild(tp.content,n);return;}
       var partes=n.nodeValue.split(/(@[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ. ]*[A-Za-zÀ-ÿ])/),frag=document.createDocumentFragment();
       partes.forEach(function(p,i){if(i%2){var s=document.createElement('span');s.className='mencao';s.textContent=p;frag.appendChild(s);}else if(p)frag.appendChild(document.createTextNode(p));});
       n.parentNode.replaceChild(frag,n);

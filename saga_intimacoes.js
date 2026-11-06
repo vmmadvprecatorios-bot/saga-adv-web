@@ -878,6 +878,7 @@
     carregarHistorico(i.id);
   }
   function preencherJanela(i){
+    if(window.SagaTexto)SagaTexto.ligar(document.getElementById('siComent'));
     SagaMencoes.anexar(document.getElementById('siComent'),{sb:S.sb,tabela:'intimacoes',registroId:i.id});
     var j=justicaDe(i);
     document.getElementById('siTitulo').textContent=(i.tipo_documento||i.tipo_comunicacao||'Intimação')+' · '+cnj(i);
