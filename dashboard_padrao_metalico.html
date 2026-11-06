@@ -1234,7 +1234,7 @@ async function carregarRoscasDashboard() {
     var valores = agruparRoscaDashboard(financeiro.filter(function(row) { return !temFiltro || ids.has(row.processo_id); }), function(row) {
       return {id:row.tese || '',nome:row.tese || 'Sem tese',valor:Number(row.valor_expectativa || 0),cor:row.tese_cor};
     });
-    grupos.push(grafico('honorarios', 'Honorários esperados por tese', SagaRoscas.topo(valores,6,'Outras'), 'financeiro.html', 'Expectativa dos processos criados no período e equipe selecionados.', true));
+    grupos.push(grafico('honorarios', 'Honorários esperados por tipo de ação', SagaRoscas.topo(valores,6,'Outras'), 'financeiro.html', 'Expectativa dos processos criados no período e equipe selecionados.', true));
   }
   if (!roscasDashboard) roscasDashboard = SagaRoscas.criar(document.getElementById('roscasDashboard'), {chave:'saga-dashboard-roscas-ocultas',rotulo:'Gráficos do Dashboard'});
   roscasDashboard.atualizar(grupos);

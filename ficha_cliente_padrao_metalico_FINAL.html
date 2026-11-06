@@ -448,7 +448,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
   </div>
 </div>
 <div class="modal-overlay" id="newThesisModal">
-  <div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Adicionar nova tese</h3><p>A tese ficará disponível para todos os clientes neste protótipo.</p></div><button class="modal-close" data-close-modal="newThesisModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="newThesisName">Nome da tese</label><input id="newThesisName" type="text" placeholder="Ex.: Abono de permanência"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newThesisModal">Cancelar</button><button class="btn-primary" id="saveNewThesisButton">Adicionar tese</button></div></div>
+  <div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Adicionar novo tipo de ação</h3><p>O tipo de ação ficará disponível para todos os clientes.</p></div><button class="modal-close" data-close-modal="newThesisModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="newThesisName">Nome do tipo de ação</label><input id="newThesisName" type="text" placeholder="Ex.: Abono de permanência"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newThesisModal">Cancelar</button><button class="btn-primary" id="saveNewThesisButton">Adicionar tipo de ação</button></div></div>
 </div>
 
 <div class="modal-overlay" id="contatoClienteModal"><div class="modal"><div class="modal-head"><h3>Registrar contato com a cliente</h3><button class="modal-close" data-close-modal="contatoClienteModal" aria-label="Fechar">✕</button></div><div class="modal-body"><input type="hidden" id="contatoProcessoId"><label class="form-field action-field" for="contatoTexto">O que foi conversado<textarea id="contatoTexto" rows="3" maxlength="2000"></textarea></label><label class="form-field action-field">Situação após o contato, opcional<div id="contatoSituacaoRoot"></div></label></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="contatoClienteModal">Cancelar</button><button class="btn-primary" id="salvarContatoCliente">Salvar contato</button></div></div></div>
@@ -2020,7 +2020,7 @@ async function createNewProcess(){
   const cnjBruto=document.getElementById('newProcessCnj').value.trim();
   const valorBruto=document.getElementById('newProcessValor').value.trim();
   if(!pessoaId){showToast('Selecione uma pessoa antes de criar o processo.','warning');return;}
-  if(!teseId||teseId==='__add_tese__'){showToast('Selecione uma tese para criar o processo.','warning');return;}
+  if(!teseId||teseId==='__add_tese__'){showToast('Selecione um tipo de ação para criar o processo.','warning');return;}
   if(!dataInicio){showToast('Informe a data de início do processo.','warning');return;}
   const fase=document.getElementById('newProcessFase').value;
   const inicial=(state.statusFunil||[]).filter(s=>s.fase===fase).sort((a,b)=>(a.ordem||0)-(b.ordem||0))[0];
@@ -2029,7 +2029,7 @@ async function createNewProcess(){
   const payload={situacao_acao_id:document.getElementById('newProcessSituacao').value||null,pessoa_id:pessoaId,tese_id:teseId,area_direito_id:document.getElementById('newProcessArea').value||null,status_id:statusInicialId,responsavel_id:responsavelId,numero_processo_cnj:cnjBruto?maskCnjProcessNumber(cnjBruto):null,valor_causa:valorBruto?currencyValueToNumber(valorBruto):null,data_inicio:dataInicio,criado_por_id:state.usuario.internoId};
   const r=await _sb.from('processos').insert(payload).select('id').single();
   if(r.error){
-    if(String(r.error.code)==='23505'){showToast('Esta pessoa já possui um processo com esta tese.','warning');return;}
+    if(String(r.error.code)==='23505'){showToast('Esta pessoa já possui um processo com este tipo de ação.','warning');return;}
     showToast('Não foi possível criar o processo. Verifique os dados e suas permissões.','error');
     return;
   }
@@ -2676,7 +2676,7 @@ function mapearProcesso(row){
     id:row.id,
     pessoaId:row.pessoa_id,
     situacaoAcaoId:row.situacao_acao_id||null,
-    tese:teseRow?teseRow.nome:'Tese não identificada',
+    tese:teseRow?teseRow.nome:'Tipo de ação não identificado',
     teseId:row.tese_id,
     areaDireitoId:row.area_direito_id||null,
     status:statusRow?statusRow.nome:(row.status_id?'Status cadastrado':'Sem status'),

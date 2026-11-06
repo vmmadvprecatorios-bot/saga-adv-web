@@ -156,7 +156,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
   <!-- HONORARIOS POR PROCESSO -->
   <section class="tab-pane" id="aba-processos">
     <div class="toolbar">
-      <div class="busca"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input id="buscaProcessos" placeholder="Buscar cliente, CPF, tese ou número do processo..."></div>
+      <div class="busca"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input id="buscaProcessos" placeholder="Buscar cliente, CPF, tipo de ação ou número do processo..."></div>
       <div class="pills" id="filtroEtapa"></div>
     </div>
     <div class="tabela-wrap"><table>
@@ -332,11 +332,11 @@ function dadosGraficosFinanceiro(){
   if(fontes.processos){
     var teses=new Map();
     state.processos.filter(function(p){return p.etapa==='expectativa';}).forEach(function(p){
-      var nome=p.tese||'Sem tese',g=teses.get(nome);
+      var nome=p.tese||'Sem tipo de ação',g=teses.get(nome);
       if(!g){g={id:nome,nome:nome,valor:0,cor:p.tese_cor};teses.set(nome,g);}
       g.valor+=Number(p.valor_expectativa||0);
     });
-    grupos.push({id:'teses',titulo:'Honorários esperados por tese',moeda:true,
+    grupos.push({id:'teses',titulo:'Honorários esperados por tipo de ação',moeda:true,
       dica:'Expectativa dos processos que aguardam sentença. Clique para destacar.',
       itens:SagaRoscas.topo(Array.from(teses.values()),6,'Outras')});
     var recebido=0,receber=0;
@@ -474,7 +474,7 @@ function abrirProcesso(id){
   state.procAberto=p;
   state.rateioModal=state.rateios.filter(function(r){return r.processo_id===id;}).map(function(r){return Object.assign({},r);});
   document.getElementById('mpTitulo').textContent=p.cliente;
-  document.getElementById('mpSub').textContent=(p.tese||'Sem tese')+' · '+(p.numero_processo_cnj||'Sem número')+(p.status?' · '+p.status:'');
+  document.getElementById('mpSub').textContent=(p.tese||'Sem tipo de ação')+' · '+(p.numero_processo_cnj||'Sem número')+(p.status?' · '+p.status:'');
   document.getElementById('mpValorCausa').value=p.valor_causa==null?'Não informado':moeda(p.valor_causa);
   document.getElementById('mpPercentual').value=p.percentual_honorarios==null?'':String(p.percentual_honorarios).replace('.',',');
   document.getElementById('mpSentenca').value=numeroParaMoedaCampo(p.valor_honorarios_sentenca);

@@ -969,7 +969,7 @@
     if(!S.pode.criarProc||!lote||lote.ocupado)return;
     var marcados=selecionadosLote();if(!marcados.length)return;
     var incompleto=marcados.find(function(g){return !g.nome.trim()||!g.teseId;});
-    if(incompleto){loteMensagem('Preencha cliente, área e tese dos processos marcados antes de conferir.');incompleto.row.scrollIntoView({block:'center',behavior:'smooth'});return;}
+    if(incompleto){loteMensagem('Preencha cliente, área e tipo de ação dos processos marcados antes de conferir.');incompleto.row.scrollIntoView({block:'center',behavior:'smooth'});return;}
     travarLote(true);loteMensagem('Conferindo processos já cadastrados...');
     try{
       var numeros=marcados.flatMap(function(g){return [g.numero,mascaraLote(g.numero)];});
@@ -1041,7 +1041,7 @@
     document.getElementById('siLoteTodos').onchange=function(){var valor=this.checked;lote.grupos.forEach(function(g){if(!loteTentados.has(g.numero)){g.marcado=valor;g.checkbox.checked=valor;}});atualizarSelecaoLote();};
     document.getElementById('siLoteAplicar').onclick=function(){
       var v=lote.menuTodos.valor(),resp=document.getElementById('siLoteRespTodos').value;
-      selecionadosLote().forEach(function(g){if(v.teseId||v.areaId!=='*'){g.menu.definir(v);g.teseId=v.teseId;}if(resp!=='__manter__'){g.responsavel=resp;g.row.querySelector('select').value=resp;}});loteMensagem('Área, tese e responsável aplicados somente aos marcados.');
+      selecionadosLote().forEach(function(g){if(v.teseId||v.areaId!=='*'){g.menu.definir(v);g.teseId=v.teseId;}if(resp!=='__manter__'){g.responsavel=resp;g.row.querySelector('select').value=resp;}});loteMensagem('Área, tipo de ação e responsável aplicados somente aos marcados.');
     };
     document.getElementById('siLoteCriar').onclick=conferirLote;
     document.getElementById('siLoteParar').onclick=function(){lote.parar=true;this.disabled=true;loteMensagem('Parada solicitada. Aguardando o processo atual terminar.');};
@@ -1194,7 +1194,7 @@
     sugerir();
     document.getElementById('siIncOk').addEventListener('click',async function(){
       var tese=document.getElementById('siIncTese').value,cliente=document.getElementById('siIncCli').value.trim();
-      if(!tese){toast('Escolha a tese.','error');return;}
+      if(!tese){toast('Escolha o tipo de ação.','error');return;}
       if(!cliente){toast('Informe o cliente.','error');return;}
       var dados=comTarefa?dadosTarefa('siIncResp'):null,et=comTarefa?etiqueta():null;
       if(comTarefa&&!dados.titulo){toast('Escreva o que precisa ser feito.','error');return;}

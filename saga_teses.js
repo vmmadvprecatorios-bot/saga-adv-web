@@ -68,10 +68,10 @@
           o.sb.from('teses').select('id,nome,descricao,cor,ativo,ordem,area_direito_id').order('ordem').order('nome')]);
         if(r[0].error||r[1].error)throw r[0].error||r[1].error;
         areas=r[0].data||[];teses=r[1].data||[];notificar();return true;
-      }catch(e){if(o.erro)o.erro(e.message||'Não foi possível carregar as áreas e teses.');return false;}
+      }catch(e){if(o.erro)o.erro(e.message||'Não foi possível carregar as áreas e tipos de ação.');return false;}
     }
     async function gravar(tipo,item){
-      if(!o.admin)throw new Error('Só o administrador geral cria ou altera áreas e teses.');
+      if(!o.admin)throw new Error('Só o administrador geral cria ou altera áreas e tipos de ação.');
       const p={p_id:item.id||null,p_nome:item.nome.trim(),p_ativo:item.ativo!==false,p_ordem:item.ordem??null};
       if(tipo==='tese')p.p_area_id=item.area_direito_id||null;
       const r=await o.sb.rpc(tipo==='tese'?'tese_salvar':'area_direito_salvar',p);if(r.error)throw r.error;
@@ -89,7 +89,7 @@
     function editor(root,tipo,id,areaId){
       if(!o.admin||ocupado)return;
       const atual=(tipo==='tese'?tese(id):area(id))||{nome:'',ativo:true,area_direito_id:areaId==='*'?null:areaId};
-      root.innerHTML='<div class="st-editor"><strong>'+(id?'Editar ':'Nova ')+(tipo==='tese'?'tese':'área')+'</strong><label>Nome<input class="st-nome" type="text" autocomplete="off"></label>'+(tipo==='tese'?'<div class="st-editor-area"></div>':'')+'<label class="st-ativo"><input type="checkbox"> Ativa na lista</label><div class="st-erro" role="alert"></div><div class="st-acoes"><button type="button" class="st-salvar">Salvar</button><button type="button" class="st-cancelar">Cancelar</button>'+(id?'<button type="button" class="st-subir">↑ Subir</button><button type="button" class="st-descer">↓ Descer</button>':'')+'</div></div>';
+      root.innerHTML='<div class="st-editor"><strong>'+(tipo==='tese'?(id?'Editar tipo de ação':'Novo tipo de ação'):(id?'Editar área':'Nova área'))+'</strong><label>Nome<input class="st-nome" type="text" autocomplete="off"></label>'+(tipo==='tese'?'<div class="st-editor-area"></div>':'')+'<label class="st-ativo"><input type="checkbox"> Ativa na lista</label><div class="st-erro" role="alert"></div><div class="st-acoes"><button type="button" class="st-salvar">Salvar</button><button type="button" class="st-cancelar">Cancelar</button>'+(id?'<button type="button" class="st-subir">↑ Subir</button><button type="button" class="st-descer">↓ Descer</button>':'')+'</div></div>';
       const form=root.firstChild,input=form.querySelector('.st-nome');input.value=atual.nome;form.querySelector('input[type=checkbox]').checked=atual.ativo!==false;
       let areaEscolhida=atual.area_direito_id||null,areaMenu=null;
       if(tipo==='tese')areaMenu=menu(form.querySelector('.st-editor-area'),'Área do direito',()=>[{id:null,nome:'Sem área'}].concat(todasAreas().filter(a=>a.ativo||a.id===areaEscolhida)),()=>({id:areaEscolhida,nome:area(areaEscolhida)?.nome||'Sem área'}),id=>{areaEscolhida=id;},null);
@@ -141,7 +141,7 @@
       if(!o.admin){root.replaceChildren();return;}
       root.classList.add('st-gestao');
       function linha(tipo,e){return '<div class="st-registro'+(e.ativo?'':' st-inativo')+'" data-tipo="'+tipo+'" data-id="'+esc(e.id)+'"><span>'+esc(e.nome)+'</span><div class="st-acoes"><button type="button" data-acao="editar">'+(tipo==='tese'?'Editar / mudar área':'Renomear')+'</button><button type="button" data-acao="subir" aria-label="Subir '+esc(e.nome)+'">↑</button><button type="button" data-acao="descer" aria-label="Descer '+esc(e.nome)+'">↓</button><button type="button" data-acao="ativo">'+(e.ativo?'Desativar':'Reativar')+'</button></div></div>';}
-      root.innerHTML='<button type="button" data-nova-area>+ Nova área</button><div class="st-erro" role="alert"></div>'+todasAreas().concat([{id:null,nome:'Sem área'}]).map(a=>'<section class="st-grupo" data-area="'+esc(a.id||'')+'">'+(a.id?linha('area',a):'<h3>Sem área</h3>')+'<div class="st-teses">'+todasTeses().filter(t=>(t.area_direito_id||null)===a.id).map(t=>linha('tese',t)).join('')+'<div class="st-acoes"><button type="button" data-nova-tese>+ Nova tese</button></div></div></section>').join('')+'<div class="st-gestao-editor"></div>';
+      root.innerHTML='<button type="button" data-nova-area>+ Nova área</button><div class="st-erro" role="alert"></div>'+todasAreas().concat([{id:null,nome:'Sem área'}]).map(a=>'<section class="st-grupo" data-area="'+esc(a.id||'')+'">'+(a.id?linha('area',a):'<h3>Sem área</h3>')+'<div class="st-teses">'+todasTeses().filter(t=>(t.area_direito_id||null)===a.id).map(t=>linha('tese',t)).join('')+'<div class="st-acoes"><button type="button" data-nova-tese>+ Novo tipo de ação</button></div></div></section>').join('')+'<div class="st-gestao-editor"></div>';
       root.onclick=async ev=>{
         const b=ev.target.closest('button');if(!b||ocupado||b.closest('.st-editor'))return;
         const ed=root.querySelector('.st-gestao-editor'),row=b.closest('[data-tipo]'),tipo=row?.dataset.tipo,id=row?.dataset.id,e=tipo==='tese'?tese(id):area(id);
@@ -155,7 +155,7 @@
       };
     }
     function gerenciar(root){if(!paineis.includes(root))paineis.push(root);renderGestao(root);}
-    function texto(teseId,areaId){const t=tese(teseId),a=area(t?.area_direito_id||areaId);return (a?a.nome+' · ':'')+(t?.nome||'Tese indisponível');}
+    function texto(teseId,areaId){const t=tese(teseId),a=area(t?.area_direito_id||areaId);return (a?a.nome+' · ':'')+(t?.nome||'Tipo de ação indisponível');}
     estilos();return {carregar,montar,gerenciar,editor,salvar,mover,area,tese,todasAreas,todasTeses,texto};
   }
   global.SagaTeses={criar};

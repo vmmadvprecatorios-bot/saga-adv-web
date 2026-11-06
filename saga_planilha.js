@@ -312,10 +312,12 @@ window.SagaPlanilha=(function(){
           var pronto=false;
           var criar=async function(){if(pronto)return;pronto=true;var nome=inp.value.trim();if(!nome){terminar();td.innerHTML=antes;return;}
             td.classList.add('sp-salvando');
-            try{var lista=(c.opcoes||[]).map(function(o){return {id:o.id,nome:o.nome,cor:o.cor,ativo:o.ativo!==false};}).concat([{nome:nome}]);
+            try{
+              if(cfg.criarOpcao){var idNovo=await cfg.criarOpcao(nome);await cfg.gravar(idNovo,c);aviso('Opção "'+h(nome)+'" criada.');}
+              else{var lista=(c.opcoes||[]).map(function(o){return {id:o.id,nome:o.nome,cor:o.cor,ativo:o.ativo!==false};}).concat([{nome:nome}]);
               await rpcOk('lista_coluna_salvar',{p_id:c.id,p_nome:c.nome,p_opcoes:lista});await carregarColunas();
               var c2=cols.find(function(x){return x.id===c.id;});var nova=(c2.opcoes||[]).find(function(o){return norm(o.nome)===norm(nome);});
-              await cfg.gravar(nova?nova.id:null,c2);aviso('Opção "'+h(nome)+'" criada.');}
+              await cfg.gravar(nova?nova.id:null,c2);aviso('Opção "'+h(nome)+'" criada.');}}
             catch(e){aviso(h(e.message||'Não foi possível salvar.'),true);}
             terminar();cfg.depois();};
           inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();criar();}else if(e.key==='Escape'){pronto=true;terminar();td.innerHTML=antes;}});
@@ -356,9 +358,31 @@ window.SagaPlanilha=(function(){
   async function editar(td){
     var p=processo(td.closest('tr').dataset.spProc),c=cols.find(function(x){return x.id===td.dataset.spCel;});
     if(!p||!c||!editavel(p,c))return;
+    var criar=criadorDeOpcao(c,p);
     await editarCelula(td,{c:c,v:bruto(p,c),texto:texto(p,c),opcoes:function(){return opcoesDe(c);},
-      podeNova:c.tipo==='opcao'&&!c.campo_sistema&&SagaPlanilha._gerenciar,
+      podeNova:(c.tipo==='opcao'&&!c.campo_sistema&&SagaPlanilha._gerenciar)||!!criar,criarOpcao:criar,
       gravar:function(valor,cc){return gravar(p,cc||c,valor);},depois:aplicar});
+  }
+  // "+ Nova opção" nas colunas do sistema: cria no cadastro próprio (tipo de ação, área, situação, status) e já escolhe na célula
+  function criadorDeOpcao(c,p){
+    var adm=!!state.admin;
+    if(c.campo_sistema==='processo.tese'&&adm)return async function(nome){
+      var id=await rpcOk('tese_salvar',{p_id:null,p_nome:nome,p_area_id:p.area_direito_id||null,p_ativo:true,p_ordem:null});
+      try{await catalogoTeses.carregar();state.teses=catalogoTeses.todasTeses();state.todasTeses=state.teses;if(typeof renderDropdownsTeses==='function')renderDropdownsTeses();}catch(e){}
+      return id;};
+    if(c.campo_sistema==='processo.area'&&adm)return async function(nome){
+      var id=await rpcOk('area_direito_salvar',{p_id:null,p_nome:nome,p_ativo:true,p_ordem:null});
+      try{await catalogoTeses.carregar();}catch(e){}renderAbas();return id;};
+    if(c.campo_sistema==='processo.situacao_acao'&&adm)return async function(nome){
+      var id=await rpcOk('catalogo_salvar',{p_categoria:'situacao_acao',p_id:null,p_nome:nome,p_cor:'#7da0ca',p_ativo:true,p_conta_protocolada:false});
+      var r=await _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada').eq('categoria','situacao_acao').order('ordem');if(!r.error)situacoes=r.data||[];
+      return id;};
+    if(c.campo_sistema==='processo.status'&&(adm||state.podeGerenciarColunas))return async function(nome){
+      var lista=state.statusList||[],ordem=lista.reduce(function(m,s){return Math.max(m,s.ordem||0);},0)+1;
+      var r=await _sb.from('status_funil').insert({nome:nome,cor:'#7da0ca',fase:FASE_FIXA,ordem:ordem,ativo:true}).select('id,nome,cor,fase,ordem,etapa').single();
+      if(r.error)throw new Error('Não foi possível criar o status. Verifique suas permissões.');
+      lista.push(r.data);if(typeof renderDropdownsStatus==='function')renderDropdownsStatus();return r.data.id;};
+    return null;
   }
   async function rpcOk(n,a){var r=await _sb.rpc(n,a);if(r.error)throw r.error;return r.data;}
   async function gravar(p,c,valor){
@@ -434,7 +458,7 @@ window.SagaPlanilha=(function(){
     w.innerHTML='<div class="sp-abas" role="tablist" aria-label="Área do direito">'+
       [{id:'*',nome:'Todas as áreas'}].concat(areas).concat([{id:null,nome:'Sem área'}]).map(function(a){var at=(a.id===atual)||(a.id===null&&atual===null);return '<button type="button" role="tab" aria-selected="'+at+'" class="sp-aba'+(at?' ativo':'')+'" data-area="'+(a.id===null?'__sem':h(a.id))+'">'+h(a.nome)+'</button>';}).join('')+'</div>'+
       '<div class="sp-sub">'+(atual!=='*'&&teses.length?'<div class="sp-pills sp-teses" role="group" aria-label="Tipo de ação"><button type="button" class="sp-pill'+(!teseAtual?' ativo':'')+'" data-tese="">Todos os tipos de ação</button>'+teses.map(function(t){return '<button type="button" class="sp-pill'+(teseAtual===t.id?' ativo':'')+'" data-tese="'+h(t.id)+'">'+h(t.nome)+'</button>';}).join('')+'</div>':'')+
-      (tipo?'<label class="sp-tipo">Tipo de ação <select data-tipo><option value="">Todos</option>'+opcoesDaColuna(tipo).map(function(o){return '<option value="'+h(o.id)+'"'+(String(o.id)===String(tipoSel)?' selected':'')+'>'+h(o.nome)+'</option>';}).join('')+'</select></label>':'')+(state.admin?'<a class="sp-org" href="configuracoes_padrao_metalico.html?aba=areas-teses">Organizar áreas e teses</a>':'')+'</div>';
+      (tipo?'<label class="sp-tipo">Tipo de ação <select data-tipo><option value="">Todos</option>'+opcoesDaColuna(tipo).map(function(o){return '<option value="'+h(o.id)+'"'+(String(o.id)===String(tipoSel)?' selected':'')+'>'+h(o.nome)+'</option>';}).join('')+'</select></label>':'')+(state.admin?'<a class="sp-org" href="configuracoes_padrao_metalico.html?aba=areas-teses">Organizar áreas e tipos de ação</a>':'')+'</div>';
     w.querySelectorAll('[data-area]').forEach(function(b){b.onclick=function(){var v=b.dataset.area;state.filtroArea=v==='*'?'*':v==='__sem'?null:v;state.filtroTese=null;
       try{localStorage.setItem('saga-planilha-area-'+FASE_FIXA,JSON.stringify(state.filtroArea));}catch(e){}
       if(typeof renderDropdownsTeses==='function')renderDropdownsTeses();renderAbas();aplicarFiltros();};});
@@ -528,7 +552,7 @@ window.SagaPlanilha=(function(){
     window.addEventListener('resize',fecharMenu);
     return true;
   }
-  // ---------- importar planilha (colar do Excel/Google Planilhas ou arquivo .csv) ----------
+  // ---------- importar planilha (colar do Excel/Google Planilhas, arquivo .xlsx (saga_xlsx.js) ou .csv) ----------
   function janela(titulo,corpo,rodape){
     var ov=document.createElement('div');ov.className='modal-overlay sp-ov';ov.style.display='flex';
     ov.innerHTML='<div class="modal sp-modal sp-modal-larga" role="dialog" aria-modal="true" aria-label="'+h(titulo)+'"><div class="modal-head"><h3>'+h(titulo)+'</h3><button class="modal-close" type="button" data-fechar aria-label="Fechar">×</button></div><div class="modal-body">'+corpo+'</div><div class="modal-foot">'+(rodape||'')+'</div></div>';
@@ -597,9 +621,9 @@ window.SagaPlanilha=(function(){
     var alvos=alvosImportacao(),dados=null,mapa=[],temCab=false;
     var teses=(state.teses||[]).filter(function(t){return t.ativo!==false;});
     var j=janela('Importar planilha para a Captação',
-      '<p class="sp-ajuda">Copie as linhas no Excel ou no Google Planilhas e cole abaixo (Ctrl+V), ou escolha um arquivo .csv. Pode vir só com nome e CPF, ou com processo, TRF, tipo de ação e valor, em qualquer ordem: o sistema reconhece as colunas e o senhor confere antes de gravar.</p>'+
+      '<p class="sp-ajuda">Copie as linhas no Excel ou no Google Planilhas e cole abaixo (Ctrl+V), ou escolha um arquivo do Excel (.xlsx) ou .csv. Pode vir só com nome e CPF, ou com processo, TRF, tipo de ação e valor, em qualquer ordem: o sistema reconhece as colunas e o senhor confere antes de gravar.</p>'+
       '<textarea class="sp-colar" placeholder="Cole aqui as linhas da planilha"></textarea>'+
-      '<div class="sp-imp-linha"><label class="btn-secondary sp-arquivo">Escolher arquivo .csv<input type="file" accept=".csv,.txt,.tsv" hidden></label><span class="sp-ajuda" style="margin:0">Planilha do Excel (.xlsx): use Arquivo &gt; Salvar como &gt; CSV, ou copie e cole.</span></div>'+
+      '<div class="sp-imp-linha"><label class="btn-secondary sp-arquivo">Escolher arquivo (.xlsx ou .csv)<input type="file" accept=".xlsx,.csv,.txt,.tsv" hidden></label><span class="sp-ajuda sp-arq-info" style="margin:0">Excel (.xlsx), CSV ou copiar e colar.</span><label class="sp-ajuda sp-arq-aba" style="margin:0" hidden>Aba: <select></select></label></div>'+
       '<div class="sp-imp-mapa"></div><div class="sp-imp-res"></div>',
       '<button type="button" class="btn-secondary" data-fechar>Cancelar</button><button type="button" class="btn-primary" data-conferir disabled>Conferir</button><button type="button" class="btn-primary" data-gravar hidden>Gravar</button>');
     var conferencia=null;
@@ -616,7 +640,7 @@ window.SagaPlanilha=(function(){
       j.q('.sp-imp-mapa').innerHTML='<div class="sp-ajuda"><b>'+corpo.length+'</b> linha(s)'+(temCab?' (a primeira linha era o cabeçalho)':'')+'. Confira em que coluna do SAGA vai cada coluna colada:</div>'+
         '<div class="sp-imp-tab"><table><thead><tr>'+cab.map(function(c,i){return '<th><div class="sp-imp-orig">'+h(c||('Coluna '+(i+1)))+'</div><select data-col="'+i+'">'+opcoesSel(mapa[i])+'</select></th>';}).join('')+'</tr></thead><tbody>'+
         corpo.slice(0,5).map(function(l){return '<tr>'+l.map(function(v){return '<td>'+h(v)+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>'+
-        '<div class="sp-imp-linha"><label class="sp-ajuda" style="margin:0">Tese para as linhas sem tese:</label><select class="sp-tese">'+teses.map(function(t){return '<option value="'+h(t.id)+'">'+h(t.nome)+'</option>';}).join('')+'</select></div>';
+        '<div class="sp-imp-linha"><label class="sp-ajuda" style="margin:0">Tipo de ação para as linhas sem tipo:</label><select class="sp-tese">'+teses.map(function(t){return '<option value="'+h(t.id)+'">'+h(t.nome)+'</option>';}).join('')+'</select></div>';
       j.q('.sp-imp-mapa').querySelectorAll('select[data-col]').forEach(function(sel){sel.onchange=function(){mapa[+sel.dataset.col]=sel.value;conferencia=null;j.q('[data-gravar]').hidden=true;j.q('.sp-imp-res').innerHTML='';};});
       j.q('[data-conferir]').disabled=false;
     };
@@ -625,7 +649,19 @@ window.SagaPlanilha=(function(){
       return dados.map(function(l){var o={};mapa.forEach(function(k,i){if(!k||l[i]==null||l[i]==='')return;var v=l[i];if(k===compId)v=normTribunal(v);if(k==='pessoa.cpf'||k==='processo.numero')v=formatar(k==='pessoa.cpf'?'cpf':'cnj',v);o[k]=v;});return o;});
     };
     j.q('.sp-colar').addEventListener('input',function(){montar(this.value);});
-    j.q('input[type=file]').addEventListener('change',function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){j.q('.sp-colar').value=r.result;montar(r.result);};r.readAsText(f,'utf-8');});
+    var info=j.q('.sp-arq-info'),caixaAba=j.q('.sp-arq-aba'),selAba=caixaAba.querySelector('select');
+    var usarTexto=function(txt){j.q('.sp-colar').value=txt;montar(txt);};
+    j.q('input[type=file]').addEventListener('change',async function(){var f=this.files[0];this.value='';if(!f)return;caixaAba.hidden=true;
+      if(/\.xlsx$/i.test(f.name)){
+        if(!window.SagaXlsx){aviso('Leitor de Excel não carregou. Recarregue a página.',true);return;}
+        info.textContent='Lendo '+f.name+'...';
+        try{var livro=await SagaXlsx.abrir(await f.arrayBuffer());
+          var lerAba=async function(i){info.textContent='Lendo a aba "'+livro.abas[i]+'"...';var linhas=await livro.ler(i);info.textContent=f.name+': '+linhas.length+' linha(s) na aba "'+livro.abas[i]+'".';usarTexto(SagaXlsx.paraTexto(linhas));};
+          if(livro.abas.length>1){selAba.innerHTML=livro.abas.map(function(n,i){return '<option value="'+i+'">'+h(n)+'</option>';}).join('');caixaAba.hidden=false;selAba.onchange=function(){lerAba(+selAba.value).catch(function(e){info.textContent='';aviso(h(e.message||'Não foi possível ler a planilha.'),true);});};}
+          await lerAba(0);
+        }catch(e){info.textContent='Excel (.xlsx), CSV ou copiar e colar.';aviso(h(e.message||'Não foi possível ler a planilha.'),true);}
+        return;}
+      var r=new FileReader();r.onload=function(){info.textContent=f.name;usarTexto(r.result);};r.readAsText(f,'utf-8');});
     j.q('[data-conferir]').onclick=async function(){
       if(!dados)return;if(mapa.indexOf('pessoa.nome')===-1){aviso('Indique qual coluna é o nome do cliente.',true);return;}
       var b=this;b.disabled=true;b.textContent='Conferindo...';

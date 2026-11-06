@@ -146,7 +146,16 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .comp-lin label{flex:1;display:flex;align-items:center;gap:9px;font-size:12.5px;cursor:pointer}.comp-lin input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold)}
 .comp-lin select{height:28px;border-radius:8px;border:1px solid var(--border-soft);background:var(--panel-solid);font-size:11px;padding:0 6px}
 .somente-leitura-aviso{font-size:11px;color:var(--muted)}
-@media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.grade{columns:1}.acoes{opacity:1}}
+.barra-opcoes{display:contents}
+@media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.grade{columns:1}.acoes{opacity:1}
+  /* Celular (06/11): cabeçalho compacto para as notas aparecerem logo */
+  .page-head{margin-bottom:12px;gap:10px}.page-head p{display:none}
+  .novas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}.novas .btn-nova{padding:9px 6px;font-size:12px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra{gap:8px;margin-bottom:10px}.barra .busca{flex:1 1 100%;min-width:0}
+  .barra-opcoes{display:flex;gap:6px;width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}.barra-opcoes::-webkit-scrollbar{display:none}
+  .barra-opcoes .pills{flex:0 0 auto;flex-wrap:nowrap}.barra-opcoes .pill{white-space:nowrap}
+  .etqs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-bottom:10px;padding-bottom:2px}.etqs::-webkit-scrollbar{display:none}.etqs>*{flex:0 0 auto}
+  .dica-arrastar{display:none}}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -168,7 +177,8 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
     </div>
   </div>
   <div class="barra">
-    <input class="busca" id="busca" type="search" placeholder="Buscar nas notas (título, texto, itens, login, link, etiquetas)..." autocomplete="off">
+    <input class="busca" id="busca" type="search" placeholder="Buscar nas notas (título, texto, etiquetas, acessos)..." autocomplete="off">
+    <div class="barra-opcoes">
     <div class="pills" id="pillsVisao" title="Como ver as notas">
       <button class="pill active" data-v="cartoes" type="button">▦ Cartões</button>
       <button class="pill" data-v="lista" type="button">☰ Lista</button>
@@ -183,6 +193,7 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
       <button class="pill" data-f="minhas" type="button">Minhas</button>
       <button class="pill" data-f="comp" type="button">Compartilhadas comigo</button>
       <button class="pill" data-f="arq" type="button">Arquivadas</button>
+    </div>
     </div>
   </div>
   <div class="etqs" id="etqs"></div>
@@ -208,9 +219,9 @@ window._sb=_sb;
 /* =====================================================================
    NOTAS (T105) · pessoais, com cores, fixar, arquivar, etiquetas, compartilhar com colegas
    Tipos: texto, lista (checklist) e senha (nome, login, senha, link, o que é).
-   A senha fica criptografada no banco: só sai pela função nota_ver_senha (dono ou quem recebeu a nota).
+   A senha de cada acesso fica criptografada no banco (notas_credenciais): só sai pela função nota_credencial_ver_senha (dono ou quem recebeu a nota).
    ===================================================================== */
-var COLUNAS='id,dono_id,tipo,titulo,conteudo,itens,login,link,tem_senha,cor,fixada,arquivada,etiquetas,ordem,criado_em,atualizado_em';
+var COLUNAS='id,dono_id,tipo,titulo,conteudo,itens,cor,fixada,arquivada,etiquetas,ordem,criado_em,atualizado_em';
 var CORES=[['padrao','Sem cor'],['amarelo','Amarelo'],['verde','Verde'],['azul','Azul'],['rosa','Rosa'],['laranja','Laranja'],['roxo','Roxo'],['cinza','Cinza']];
 var CORHEX={amarelo:'#f5c542',verde:'#6fcf7f',azul:'#5bc0eb',rosa:'#f78fb3',laranja:'#f59e42',roxo:'#b69cf0',cinza:'#b0b7c3'};
 var ICO_COPIAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>';
@@ -238,11 +249,6 @@ function copiar(texto,rotulo){
 }
 async function pegarSenhaCred(id){
   var r=await _sb.rpc('nota_credencial_ver_senha',{p_cred:id});
-  if(r.error){toast('Não foi possível ler a senha: '+esc(r.error.message||''),'erro');return null;}
-  return r.data||'';
-}
-async function pegarSenha(n){
-  var r=await _sb.rpc('nota_ver_senha',{p_nota:n.id});
   if(r.error){toast('Não foi possível ler a senha: '+esc(r.error.message||''),'erro');return null;}
   return r.data||'';
 }

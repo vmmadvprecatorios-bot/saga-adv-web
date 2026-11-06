@@ -521,7 +521,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
       </div>
       <div class="form-field">
         <label>Tipo de ação</label>
-        <div id="novoAreasTeses"></div><div class="dropdown-custom" id="dropdownNovaTese" style="display:none"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovaTese')"><span id="labelNovaTese">Selecione a tese...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovaTese"></div></div>
+        <div id="novoAreasTeses"></div><div class="dropdown-custom" id="dropdownNovaTese" style="display:none"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovaTese')"><span id="labelNovaTese">Selecione o tipo de ação...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovaTese"></div></div>
       </div>
       <div class="form-field">
         <label>Status inicial</label>
@@ -544,19 +544,19 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 
 <div class="modal-overlay" id="modalGerenciarCatalogos" style="display:none">
   <div class="modal-box" style="max-width:520px">
-    <div class="modal-head"><div><h3>Gerenciar catalogos</h3><p>Organize áreas e teses ou gerencie os status.</p></div><button class="modal-close" onclick="closeModal('modalGerenciarCatalogos')">&#x2715;</button></div>
+    <div class="modal-head"><div><h3>Gerenciar catalogos</h3><p>Organize áreas e tipos de ação ou gerencie os status.</p></div><button class="modal-close" onclick="closeModal('modalGerenciarCatalogos')">&#x2715;</button></div>
     <div class="modal-body">
       <div class="cat-tabs">
-        <button type="button" class="cat-tab" id="tabCatTeses" onclick="trocarTabCatalogo('teses')">Teses <span class="cat-tab-qtd" id="qtdCatTeses">0</span></button>
+        <button type="button" class="cat-tab" id="tabCatTeses" onclick="trocarTabCatalogo('teses')">Tipos de ação <span class="cat-tab-qtd" id="qtdCatTeses">0</span></button>
         <button type="button" class="cat-tab" id="tabCatStatus" onclick="trocarTabCatalogo('status')">Status <span class="cat-tab-qtd" id="qtdCatStatus">0</span></button>
       </div>
       <div class="cat-lista" id="listaCatalogoTeses"></div>
       <div class="cat-lista" id="listaCatalogoStatus" style="display:none"></div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
         <div id="formNovaTeseCat">
-          <div class="form-field"><label>Nova tese</label><input type="text" id="novaTeseCatNome" placeholder="Nome da tese"></div>
+          <div class="form-field"><label>Novo tipo de ação</label><input type="text" id="novaTeseCatNome" placeholder="Nome do tipo de ação"></div>
           <div class="cat-nova-cor"><span>Cor</span><button type="button" class="cat-swatch" id="swatchNovaTese" title="Escolher cor" onclick="abrirPaletaNovo(this,'novaTeseCatCor')"></button><input type="hidden" id="novaTeseCatCor" value="#4b8af5"></div>
-          <button type="button" class="btn-secondary" style="margin-top:10px" onclick="criarTeseCatalogo()">+ Adicionar tese</button>
+          <button type="button" class="btn-secondary" style="margin-top:10px" onclick="criarTeseCatalogo()">+ Adicionar tipo de ação</button>
         </div>
         <div id="formNovoStatusCat" style="display:none">
           <div class="form-field"><label>Novo status</label><input type="text" id="novoStatusCatNome" placeholder="Nome do status"></div>
@@ -613,7 +613,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
         <button class="btn-novo" id="btnNovoProcesso" style="display:none" onclick="abrirNovoProcesso()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Novo Processo
         </button>
-        <button class="btn-secondary" id="btnGerenciarCatalogos" style="display:none" onclick="abrirGerenciarCatalogos()" title="Gerenciar teses e status">
+        <button class="btn-secondary" id="btnGerenciarCatalogos" style="display:none" onclick="abrirGerenciarCatalogos()" title="Gerenciar tipos de ação e status">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V19a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H5a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H11a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.4 1z" stroke="currentColor" stroke-width="1.7"/></svg>Catalogos
         </button>
       </div>
@@ -720,6 +720,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_partes.js"></script>
 <script src="saga_roscas.js"></script>
 <script src="saga_paineis.js"></script>
+<script src="saga_xlsx.js"></script>
 <script src="saga_planilha.js"></script>
 <script>
 // ============================================================
@@ -2142,7 +2143,7 @@ async function salvarNovoProcesso(){
   if(txtPct&&(isNaN(pctHonorarios)||pctHonorarios<0||pctHonorarios>100)){showToast('O percentual de honorarios deve ficar entre 0 e 100.','warning');return;}
   var r=await _sb.from('processos').insert(dados).select('id').single();
   if(r.error){
-    if(r.error.code==='23505')showToast('Esta pessoa ja possui um processo com essa tese.','warning');
+    if(r.error.code==='23505')showToast('Esta pessoa já possui um processo com esse tipo de ação.','warning');
     else showToast('Erro ao salvar: '+(r.error.message||'tente novamente.'),'danger');
   }else{
     if(pctHonorarios!==null&&r.data){
