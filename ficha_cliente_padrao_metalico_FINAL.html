@@ -298,6 +298,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 <script src="saga_ui.js"></script>
 <script src="saga_teses.js"></script>
 <script src="saga_texto.js"></script>
+<script src="saga_partes.js"></script>
 <script src="saga_etiquetas.js"></script>
 <script src="saga_planilha.js"></script>
 <link rel="stylesheet" href="saga_tema.css">
@@ -369,6 +370,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
         <aside class="coluna-lateral">
           <section class="bloco-retorno-destaque atencao" id="blocoRetorno"></section>
+          <section class="bloco-lateral" id="secaoPartes"></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>Responsável</div><div class="responsavel-bloco" id="processResponsible"></div></section>
           <section class="bloco-lateral" id="secaoDocumentos"><div class="secao-titulo pastas-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Pastas do cliente</span><button type="button" class="pasta-topo-btn" id="btnNovaPasta" title="Criar pasta">+ Pasta</button></div><div class="arvore-pastas" id="documentList"></div><button class="btn-anexar-documento" id="btnAnexarDocumento">+ Anexar documento</button><input class="hidden" id="documentInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt"></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Tarefas</div><div class="tarefa-list" id="taskList"></div><button class="btn-nova-tarefa-mini" id="btnAddTask">+ Adicionar tarefa</button></section>
@@ -1688,7 +1690,17 @@ function renderTasks(){
   }));
   root.querySelectorAll('[data-task-edit]').forEach(button=>button.addEventListener('click',()=>abrirModalTarefa(button.dataset.taskEdit)));
 }
-function renderActiveProcess(){renderProcessTabs();renderProcessHeader();renderProcessData();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();}
+function renderPartes(){
+  const raiz=document.getElementById('secaoPartes');
+  if(!raiz||!window.SagaPartes)return;
+  const proc=getActiveProcess();
+  if(!proc||!perms.processosVisualizar){raiz.innerHTML='';raiz.style.display='none';return;}
+  raiz.style.display='';
+  SagaPartes.render({sb:_sb,raiz:raiz,processoId:proc.id,pessoaAtualId:state.pessoaRow&&state.pessoaRow.id,
+    podeEditar:perms.processosEditar===true,podeEditarDados:perms.processosEditarDados===true,
+    aoMudar:()=>{recarregarProcessoAtivo();}});
+}
+function renderActiveProcess(){renderProcessTabs();renderProcessHeader();renderProcessData();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
 
 async function addChecklistFromTemplate(templateId){
   if(!podeEditarChecklists())return false;
@@ -2044,7 +2056,7 @@ function renderProcessTabs(){
   const root=document.getElementById('processTabs');
   if(!root)return;
   renderActionSummary();
-  const abas=state.processos.map(process=>'<button class="process-tab status-'+process.statusTone+' '+(process.id===state.activeProcessId?'active':'')+'" type="button" data-process-tab="'+esc(process.id)+'">'+situacaoBadge(process,true)+esc(process.tese)+'</button>').join('');
+  const abas=state.processos.map(process=>'<button class="process-tab status-'+process.statusTone+' '+(process.id===state.activeProcessId?'active':'')+'" type="button" data-process-tab="'+esc(process.id)+'">'+situacaoBadge(process,true)+esc(process.tese)+(process.parteInfo?' <small style="opacity:.7">· '+esc(process.parteInfo.papel||'parte')+'</small>':'')+'</button>').join('');
   const criar=perms.processosCriar?'<button class="btn-new-process" id="btnNewProcess" type="button">+ Novo Processo</button>':'';
   root.innerHTML=abas||'<span class="ficha-mini-tag">Nenhum processo vinculado a esta pessoa.</span>';
   root.insertAdjacentHTML('beforeend',criar);
@@ -2667,9 +2679,21 @@ async function carregarProcessosDaPessoa(pessoaId){
     return [];
   }
   try{
+    // Processos em que a pessoa é o titular e processos em que ela é parte (herdeiro, pensionista...)
     const r=await _sb.from('processos').select(SELECT_PROCESSO).eq('pessoa_id',pessoaId).eq('excluido_logico',false).order('criado_em',{ascending:true});
     if(r.error)throw r.error;
-    state.processos=(r.data||[]).map(mapearProcesso);
+    const linhas=(r.data||[]).slice();
+    const papeis=new Map();
+    try{
+      const rp=await _sb.rpc('processos_da_pessoa',{p_pessoa_id:pessoaId});
+      (rp.data||[]).forEach(x=>papeis.set(x.processo_id,x));
+      const faltam=(rp.data||[]).map(x=>x.processo_id).filter(id=>!linhas.some(l=>l.id===id));
+      if(faltam.length){
+        const rx=await _sb.from('processos').select(SELECT_PROCESSO).in('id',faltam).eq('excluido_logico',false).order('criado_em',{ascending:true});
+        (rx.data||[]).forEach(l=>linhas.push(l));
+      }
+    }catch(e){}
+    state.processos=linhas.map(row=>{const proc=mapearProcesso(row);const info=papeis.get(row.id);proc.parteInfo=info&&!info.principal?{papel:info.papel,herdeiroDe:info.herdeiro_de}:null;return proc;});
     await carregarHonorariosDosProcessos(state.processos);
     if(!state.processos.some(proc=>proc.id===state.activeProcessId))state.activeProcessId=state.processos[0]?state.processos[0].id:null;
     return state.processos;
@@ -3028,7 +3052,7 @@ async function salvarExtrasProcesso(mud){
   if(!proc)return false;
   if(!(await checkPerm('processos','editar'))){showToast('Você não possui permissão para editar este processo.','warning');return false;}
   if(mud.data!==undefined){
-    const r=await _sb.from('processos').update({data_inicio:mud.data,atualizado_em:new Date().toISOString()}).eq('id',proc.id).eq('pessoa_id',state.pessoaRow.id);
+    const r=await _sb.from('processos').update({data_inicio:mud.data,atualizado_em:new Date().toISOString()}).eq('id',proc.id);
     if(r.error){showToast('Não foi possível atualizar a data de início.','error');return false;}
   }
   if(mud.pct!==undefined){
