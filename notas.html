@@ -120,6 +120,7 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .sug-etq{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:10.5px;color:var(--muted)}.etq-ed .mini{height:30px}
 .ico{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;min-width:26px;border-radius:7px;border:1px solid transparent;color:var(--muted);transition:border-color .15s,color .15s,background .15s}
 .ico:hover{color:var(--gold-light);border-color:var(--border-soft);background:color-mix(in srgb,var(--gold) 10%,transparent)}.ico:active{transform:scale(.92)}.ico svg{width:14px;height:14px}
+.ico.travado{color:var(--gold-light);border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent)}
 .linha .ico{height:var(--altura-controle,38px);width:34px}
 .cred{padding:6px 0;border-top:1px dashed color-mix(in srgb,var(--nc) 30%,transparent)}.cred:first-child{border-top:0;padding-top:0}
 .cred .nm{font-size:12px;font-weight:700;margin-bottom:2px;overflow-wrap:anywhere}
@@ -207,6 +208,8 @@ var CORES=[['padrao','Sem cor'],['amarelo','Amarelo'],['verde','Verde'],['azul',
 var CORHEX={amarelo:'#f5c542',verde:'#6fcf7f',azul:'#5bc0eb',rosa:'#f78fb3',laranja:'#f59e42',roxo:'#b69cf0',cinza:'#b0b7c3'};
 var ICO_COPIAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>';
 var ICO_ABRIR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></svg>';
+var ICO_TRAVADO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/></svg>';
+var ICO_DESTRAVADO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 017.5-2"/></svg>';
 var ICO_OLHO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 var TIPO_NOME={texto:'Nota',lista:'Checklist',senha:'Senha'};
 var S={creds:{},visao:'cartoes',modo:'minha',vistos:{},eu:null,notas:[],comp:{},pessoas:{},filtro:'todas',etq:'',busca:'',aberta:null,ed:null};
@@ -540,7 +543,7 @@ function gerarSenha(){
 function abrirNota(n,tipo){
   var novo=!n,pode=novo||podeEditar(n),dono=novo||ehMinha(n);
   S.ed={id:n?n.id:null,tipo:n?n.tipo:tipo,titulo:n?n.titulo:'',conteudo:n?n.conteudo:'',itens:n?(n.itens||[]).map(function(i){return {texto:i.texto,ok:!!i.ok};}):[],
-    creds:n?(S.creds[n.id]||[]).map(function(c){return {id:c.id,nome:c.nome,login:c.login,link:c.link,tem_senha:!!c.tem_senha,senha:'',senhaSuja:false,senhaLida:false,ver:false};}):[],cor:n?n.cor:'padrao',etiquetas:n?(n.etiquetas||[]).slice():[],pode:pode,dono:dono,sujo:false};
+    creds:n?(S.creds[n.id]||[]).map(function(c){return {id:c.id,nome:c.nome,login:c.login,link:c.link,tem_senha:!!c.tem_senha,senha:'',senhaSuja:false,senhaLida:false,ver:false,travada:!!c.tem_senha};}):[],cor:n?n.cor:'padrao',etiquetas:n?(n.etiquetas||[]).slice():[],pode:pode,dono:dono,sujo:false};
   var e=S.ed,m=$('mdNota');
   m.dataset.cor=e.cor;
   var corpo='';
@@ -574,7 +577,7 @@ function desenharCreds(){
       '<div class="cred-q-cab"><input type="text" data-f="nome" placeholder="Nome (ex.: Portal do TJAL)" maxlength="200" value="'+esc(c.nome)+'"'+ro+'>'+
         (e.pode?'<button class="ico" type="button" data-q-sobe="'+i+'" title="Subir"'+(i?'':' disabled style="opacity:.3"')+'>▲</button><button class="ico" type="button" data-q-desce="'+i+'" title="Descer"'+(i<e.creds.length-1?'':' disabled style="opacity:.3"')+'>▼</button><button class="ico" type="button" data-q-rm="'+i+'" title="Remover este acesso">✕</button>':'')+'</div>'+
       '<div class="campo"><label>Login</label><div class="linha"><input type="text" data-f="login" autocomplete="off" placeholder="E-mail, CPF ou usuário" value="'+esc(c.login)+'"'+ro+'><button class="ico" type="button" data-q-cp="login" data-i="'+i+'" title="Copiar o login">'+ICO_COPIAR+'</button></div></div>'+
-      '<div class="campo"><label>Senha</label><div class="linha"><input type="'+(c.ver?'text':'password')+'" data-f="senha" autocomplete="new-password" placeholder="'+(c.tem_senha&&!c.senhaLida?'senha guardada (clique no olho para ver)':'Digite ou gere uma senha')+'" value="'+esc(c.senhaLida?c.senha:'')+'"'+ro+'><button class="ico" type="button" data-q-olho="'+i+'" title="Mostrar / esconder a senha">'+ICO_OLHO+'</button><button class="ico" type="button" data-q-cp="senha" data-i="'+i+'" title="Copiar a senha">'+ICO_COPIAR+'</button>'+(e.pode?'<button class="mini" type="button" data-q-ger="'+i+'" title="Gerar uma senha forte">Gerar</button>':'')+'</div></div>'+
+      '<div class="campo"><label>Senha</label><div class="linha"><input type="'+(c.ver?'text':'password')+'" data-f="senha" autocomplete="new-password" placeholder="'+(c.tem_senha&&!c.senhaLida?'senha guardada (clique no olho para ver)':'Digite ou gere uma senha')+'" value="'+esc(c.senhaLida?c.senha:'')+'"'+ro+(c.travada?' readonly':'')+'><button class="ico" type="button" data-q-olho="'+i+'" title="Mostrar / esconder a senha">'+ICO_OLHO+'</button><button class="ico" type="button" data-q-cp="senha" data-i="'+i+'" title="Copiar a senha">'+ICO_COPIAR+'</button>'+(e.pode?'<button class="ico'+(c.travada?' travado':'')+'" type="button" data-q-trava="'+i+'" title="'+(c.travada?'Senha travada: clique para destravar':'Clique para travar a senha e evitar mudar sem querer')+'" aria-pressed="'+(c.travada?'true':'false')+'">'+(c.travada?ICO_TRAVADO:ICO_DESTRAVADO)+'</button><button class="mini" type="button" data-q-ger="'+i+'" title="'+(c.travada?'Destrave o cadeado para gerar uma nova senha':'Gerar uma senha forte')+'"'+(c.travada?' disabled style="opacity:.35;cursor:not-allowed"':'')+'>Gerar</button>':'')+'</div></div>'+
       '<div class="campo"><label>Link do site</label><div class="linha"><input type="text" data-f="link" autocomplete="off" placeholder="https://..." value="'+esc(c.link)+'"'+ro+'><button class="ico" type="button" data-q-abrir="'+i+'" title="Abrir a página">'+ICO_ABRIR+'</button></div></div>'+
     '</div>';
   }).join('')||'<div class="somente-leitura-aviso">Nenhum acesso cadastrado.</div>';
@@ -613,7 +616,7 @@ function ligarJanela(){
     });
     credsBox.addEventListener('click',async function(ev){
       var b=ev.target.closest('button');if(!b)return;
-      var i=b.dataset.qSobe!=null?+b.dataset.qSobe:b.dataset.qDesce!=null?+b.dataset.qDesce:b.dataset.qRm!=null?+b.dataset.qRm:b.dataset.qOlho!=null?+b.dataset.qOlho:b.dataset.qGer!=null?+b.dataset.qGer:b.dataset.qAbrir!=null?+b.dataset.qAbrir:+b.dataset.i;
+      var i=b.dataset.qSobe!=null?+b.dataset.qSobe:b.dataset.qDesce!=null?+b.dataset.qDesce:b.dataset.qRm!=null?+b.dataset.qRm:b.dataset.qOlho!=null?+b.dataset.qOlho:b.dataset.qGer!=null?+b.dataset.qGer:b.dataset.qTrava!=null?+b.dataset.qTrava:b.dataset.qAbrir!=null?+b.dataset.qAbrir:+b.dataset.i;
       var c=e.creds[i];if(!c)return;
       if(b.dataset.qSobe!=null&&i>0){e.creds.splice(i-1,0,e.creds.splice(i,1)[0]);e.sujo=true;desenharCreds();}
       else if(b.dataset.qDesce!=null&&i<e.creds.length-1){e.creds.splice(i+1,0,e.creds.splice(i,1)[0]);e.sujo=true;desenharCreds();}
@@ -626,7 +629,8 @@ function ligarJanela(){
         if(!c.ver){if(!(await carregarSenhaQ(c)))return;c.ver=true;desenharCreds();clearTimeout(c._t);c._t=setTimeout(function(){c.ver=false;if($('edCreds'))desenharCreds();},30000);}
         else{c.ver=false;desenharCreds();}
       }
-      else if(b.dataset.qGer!=null){c.senha=gerarSenha();c.senhaSuja=true;c.senhaLida=true;c.ver=true;e.sujo=true;desenharCreds();clearTimeout(c._t);c._t=setTimeout(function(){c.ver=false;if($('edCreds'))desenharCreds();},30000);}
+      else if(b.dataset.qTrava!=null){c.travada=!c.travada;desenharCreds();}
+      else if(b.dataset.qGer!=null){if(c.travada)return;c.senha=gerarSenha();c.senhaSuja=true;c.senhaLida=true;c.ver=true;c.travada=true;e.sujo=true;desenharCreds();clearTimeout(c._t);c._t=setTimeout(function(){c.ver=false;if($('edCreds'))desenharCreds();},30000);}
       else if(b.dataset.qAbrir!=null){var u=urlSegura(c.link);if(u)window.open(u,'_blank','noopener,noreferrer');else toast('Preencha um link válido.','erro');}
       else if(b.dataset.qCp==='login'){if(c.login)copiar(c.login,'Login');else toast('Login vazio.','erro');}
       else if(b.dataset.qCp==='senha'){if(!(await carregarSenhaQ(c)))return;if(c.senha)copiar(c.senha,'Senha');else toast('Este acesso ainda não tem senha.','erro');}
