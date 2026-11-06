@@ -119,7 +119,20 @@
   function primeiroNome(id){return (nomeUsuario(id)||'').split(' ')[0];}
   function cnj(i){return i.numero_processo_mascara||i.numero_processo||'Sem número';}
   function partesAtivas(i){var a=(i.partes||[]).filter(function(p){return p.polo==='A';}).map(function(p){return p.nome;});if(!a.length)a=(i.partes||[]).map(function(p){return p.nome;});return a.join(', ');}
-  function clienteDe(i){var p=i.processo_id&&S.processos[i.processo_id];return p&&p.pessoa?p.pessoa.nome_completo:'';}
+  // Todas as partes (titular e herdeiros) de cada processo: a intimação aparece para todos, sem duplicar
+  async function carregarPartes(ids){
+    try{
+      var r=await S.sb.from('processos_partes').select('processo_id,pessoa_id,principal,ordem').in('processo_id',ids).eq('ativo',true).order('ordem');
+      var pids=[...new Set((r.data||[]).map(function(x){return x.pessoa_id;}))],nomes={};
+      if(pids.length){var rp=await S.sb.from('pessoas').select('id,nome_completo').in('id',pids);(rp.data||[]).forEach(function(x){nomes[x.id]=x.nome_completo;});}
+      (r.data||[]).forEach(function(x){(S.partes[x.processo_id]=S.partes[x.processo_id]||[]).push({pessoa_id:x.pessoa_id,principal:x.principal,nome:nomes[x.pessoa_id]||'—'});});
+    }catch(e){}
+  }
+  function clienteDe(i){
+    var p=i.processo_id&&S.processos[i.processo_id];if(!p||!p.pessoa)return '';
+    var n=((S.partes||{})[i.processo_id]||[]).length;
+    return p.pessoa.nome_completo+(n>1?' e mais '+(n-1):'');
+  }
   function linksDe(chave){return S.links.filter(function(l){return l.tribunal_chave===chave;});}
   function coluna(id){return S.colunas.filter(function(c){return c.id===id;})[0];}
   function colunaDaSituacao(chave){return S.colunas.filter(function(c){return c.chave===chave;})[0];}
@@ -298,7 +311,7 @@
   async function carregar(){
     var sb=S.sb;
     var r=await Promise.all([
-      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
+      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id,processo_candidatos').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
       sb.from('intimacoes_colunas').select('*').order('ordem').order('criado_em'),
       sb.from('monitoramento_config').select('*').eq('tipo_alvo','oab').order('criado_em'),
       sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab,possui_registro_oab').order('nome_completo'),
@@ -309,7 +322,11 @@
     S.itens=r[0].data||[];S.colunas=r[1].data||[];S.oabs=r[2].data||[];S.usuarios=r[3].data||[];
     var ids=[...new Set(S.itens.map(function(i){return i.processo_id;}).filter(Boolean))];
     S.processos={};
-    if(ids.length){var p=await sb.from('processos').select('id,numero_processo_cnj,pessoa_id,responsavel_id,pessoa:pessoas(nome_completo)').in('id',ids);(p.data||[]).forEach(function(x){S.processos[x.id]=x;});}
+    S.partes={};
+    if(ids.length){
+      var p=await sb.from('processos').select('id,numero_processo_cnj,pessoa_id,responsavel_id,pessoa:pessoas(nome_completo)').in('id',ids);(p.data||[]).forEach(function(x){S.processos[x.id]=x;});
+      await carregarPartes(ids);
+    }
     S.carregado=true;
     return true;
   }
@@ -1120,13 +1137,35 @@
   function renderProcesso(i){
     var w=document.getElementById('siProcesso'),p=i.processo_id&&S.processos[i.processo_id];
     if(i.processo_id){
-      w.innerHTML='<div class="si-proc-box ok"><b>✓ Processo já cadastrado no SAGA</b><div style="margin-top:4px"><span class="si-cli">'+esc(p&&p.pessoa?p.pessoa.nome_completo:'Cliente')+'</span></div>'+
+      var pts=(S.partes||{})[i.processo_id]||[];
+      var quem=pts.length>1?pts.map(function(x){return '<a class="si-cli" style="display:block;color:inherit" href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(x.pessoa_id)+'&processo_id='+esc(i.processo_id)+'">'+esc(x.nome)+(x.principal?' <small>(titular)</small>':'')+'</a>';}).join(''):'<span class="si-cli">'+esc(p&&p.pessoa?p.pessoa.nome_completo:'Cliente')+'</span>';
+      w.innerHTML='<div class="si-proc-box ok"><b>✓ Processo já cadastrado no SAGA'+(pts.length>1?' · '+pts.length+' clientes':'')+'</b><div style="margin-top:4px">'+quem+'</div>'+
         '<div class="si-acoes" style="margin-top:8px"><a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(i.processo_id)+'">Abrir ficha do cliente</a></div></div>';
       return;
     }
+    if((i.processo_candidatos||[]).length>1){renderEscolherProcesso(i,w);return;}
     w.innerHTML='<div class="si-proc-box falta"><b>Este processo não está no sistema.</b><div class="si-sub">Deseja incorporar? O SAGA cria o processo (e o cliente, se ainda não existir) com o número e o tribunal desta intimação.</div>'+
       '<div class="si-acoes" style="margin-top:8px">'+(S.pode.criarProc?'<button class="si-btn pri sm" type="button" data-p="incorporar">Incorporar ao SAGA</button>':'')+(S.pode.criarProc&&S.pode.editar&&!i.triagem?'<button class="si-btn pri sm" type="button" data-p="incorporar-tarefa">Incorporar e criar tarefa</button>':'')+(S.pode.gerenciar?'<button class="si-btn sm" type="button" data-p="ligar">Ligar a um processo existente</button>':'')+'</div><div id="siProcForm"></div></div>';
     w.onclick=function(e){var b=e.target.closest('[data-p]');if(!b)return;if(b.dataset.p==='incorporar'||b.dataset.p==='incorporar-tarefa')formIncorporar(i,b.dataset.p==='incorporar-tarefa');else if(b.dataset.p==='ligar')formLigar(i);};
+  }
+  // Mais de um processo cadastrado com o mesmo número: a pessoa escolhe qual é (o sistema não adivinha)
+  async function renderEscolherProcesso(i,w){
+    w.innerHTML='<div class="si-proc-box falta"><b>Mais de um cadastro com este número</b><div class="si-sub">Escolha a qual deles esta intimação pertence. Se forem herdeiros do mesmo processo, o ideal é deixar um só processo e cadastrar os herdeiros como partes na ficha.</div><div id="siCand" class="si-sub" style="margin-top:8px">Carregando…</div></div>';
+    var r=await S.sb.from('processos').select('id,numero_processo_cnj,pessoa_id,responsavel_id,pessoa:pessoas(nome_completo)').in('id',i.processo_candidatos).eq('excluido_logico',false);
+    var box=document.getElementById('siCand');if(!box)return;
+    var lista=r.data||[];
+    if(!lista.length){box.textContent='Nenhum dos cadastros está mais ativo.';return;}
+    box.innerHTML=lista.map(function(p){return '<div class="si-acoes" style="align-items:center;margin-top:6px"><span class="si-cli" style="flex:1">'+esc(p.pessoa?p.pessoa.nome_completo:'Cliente')+' <small style="color:var(--muted)">· '+esc(nomeUsuario(p.responsavel_id)||'sem responsável')+'</small></span><button class="si-btn pri sm" type="button" data-esc="'+esc(p.id)+'">É este</button></div>';}).join('');
+    box.onclick=async function(e){
+      var b=e.target.closest('[data-esc]');if(!b)return;b.disabled=true;
+      var rr=await S.sb.rpc('intimacao_escolher_processo',{p_id:i.id,p_processo:b.dataset.esc});
+      if(rr.error){b.disabled=false;toast(esc(rr.error.message||'Não foi possível ligar.'),'error');return;}
+      var sel=lista.find(function(x){return x.id===b.dataset.esc;});
+      i.processo_id=b.dataset.esc;i.processo_candidatos=[];if(sel){S.processos[sel.id]=sel;if(!i.responsavel_id)i.responsavel_id=sel.responsavel_id;}
+      await carregarPartes([i.processo_id]);
+      toast('Intimação ligada ao processo escolhido.','sucesso');
+      renderProcesso(i);mudou();
+    };
   }
   async function formIncorporar(i,comTarefa){
     if(!S.pode.criarProc||i.processo_id||(comTarefa&&(!S.pode.editar||i.triagem)))return;
