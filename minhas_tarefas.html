@@ -1649,6 +1649,9 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   .btn-status-tarefa i{ width:6px; height:6px; border-radius:50%; background:var(--c-st,#8b93a8); }
   .btn-status-tarefa:disabled{ cursor:default; opacity:.85; }
   .btn-status-tarefa:not(:disabled):hover{ border-color:var(--c-st); }
+  .pill-status-tarefa[data-status="pendente"]{ background:color-mix(in srgb,#5b9bd5 14%,transparent); color:color-mix(in srgb,#5b9bd5 75%,var(--text)); }
+  .pill-status-tarefa[data-status="em_andamento"]{ background:color-mix(in srgb,#e0a93b 14%,transparent); color:color-mix(in srgb,#e0a93b 70%,var(--text)); }
+  .pill-status-tarefa[data-status="concluida"]{ background:color-mix(in srgb,#3fb98a 14%,transparent); color:color-mix(in srgb,#3fb98a 70%,var(--text)); }
   .btn-status-tarefa.st-pendente,.op-status-pendente i{ --c-st:#5b9bd5; }
   .btn-status-tarefa.st-em_andamento,.op-status-em_andamento i{ --c-st:#e0a93b; }
   .btn-status-tarefa.st-concluida,.op-status-concluida i{ --c-st:#3fb98a; }
@@ -2114,6 +2117,15 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
       <div class="campo-tf">
         <label for="inputHoraPrazoTarefa">Hora do prazo</label>
         <input type="time" id="inputHoraPrazoTarefa" disabled>
+      </div>
+    </div>
+
+    <div class="campo-tf">
+      <label>Status</label>
+      <div class="pills-prioridade" id="pillsStatusTarefa">
+        <div class="pill-prioridade-opcao pill-status-tarefa selecionada" data-status="pendente">Nova</div>
+        <div class="pill-prioridade-opcao pill-status-tarefa" data-status="em_andamento">Em andamento</div>
+        <div class="pill-prioridade-opcao pill-status-tarefa" data-status="concluida">Concluída</div>
       </div>
     </div>
 
@@ -3325,6 +3337,15 @@ async function definirStatusTarefa(id, novo){
 }
 var menuStatusTarefaEl = null;
 function fecharMenuStatusTarefa(){ if(menuStatusTarefaEl){ menuStatusTarefaEl.remove(); menuStatusTarefaEl = null; } }
+function marcarStatusModalTarefa(st){
+  estadoModalTarefa.status = st;
+  document.querySelectorAll('.pill-status-tarefa').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-status') === st); });
+}
+document.addEventListener('click', function(e){
+  var p = e.target.closest && e.target.closest('.pill-status-tarefa');
+  if(!p || p.closest('.somente-leitura')) return;
+  marcarStatusModalTarefa(p.getAttribute('data-status'));
+});
 function abrirMenuStatusTarefa(botao, tarefa){
   fecharMenuStatusTarefa();
   var m = document.createElement('div'); m.className = 'menu-status-tarefa'; m.setAttribute('role', 'menu');
@@ -4122,7 +4143,7 @@ function resetarFormularioTarefa(){
   var campoComentario=document.getElementById('textareaNovoComentario');campoComentario.value='';SagaMencoes.limpar(campoComentario);
   fecharMenuCompartilharTarefa();
   document.getElementById('buscaCompartilharTarefa').value = '';
-  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', etiquetaId:null, corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], responsaveisExtras:[], somenteLeitura:false };
+  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, status:'pendente', prioridade:'media', etiquetaId:null, corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], responsaveisExtras:[], somenteLeitura:false };
   document.querySelector('#modalTarefa .modal-tf').classList.remove('somente-leitura');
   document.getElementById('avisoSomenteLeituraTarefa').style.display = 'none';
   document.getElementById('avisoOrigemIntimacao').style.display = 'none';
@@ -4136,7 +4157,8 @@ function resetarFormularioTarefa(){
   document.getElementById('processoSelecionadoReadonly').style.display = 'none';
   document.getElementById('subsecaoProcessoVinculado').classList.remove('visivel');
   document.querySelectorAll('.opcao-tipo-tarefa').forEach(function(o){ o.classList.toggle('ativa', o.getAttribute('data-tipo') === 'pessoal'); });
-  document.querySelectorAll('.pill-prioridade-opcao').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === 'media'); });
+  document.querySelectorAll('.pill-prioridade-opcao[data-prioridade]').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === 'media'); });
+  marcarStatusModalTarefa('pendente');
   if(menuEtiquetaTarefa){ menuEtiquetaTarefa.fechar(); menuEtiquetaTarefa.atualizar(); }
   document.getElementById('btnExcluirTarefaModal').style.display = 'none';
   document.getElementById('secaoComentariosTarefa').style.display = 'none';
@@ -4313,7 +4335,8 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     }
 
     estadoModalTarefa.prioridade = tarefa.prioridade;
-    document.querySelectorAll('.pill-prioridade-opcao').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === tarefa.prioridade); });
+    document.querySelectorAll('.pill-prioridade-opcao[data-prioridade]').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === tarefa.prioridade); });
+    marcarStatusModalTarefa(tarefa.status || 'pendente');
 
     estadoModalTarefa.etiquetaId = tarefa.etiquetaId || null;
     estadoModalTarefa.corEtiqueta = tarefa.corEtiqueta || '';
@@ -4455,9 +4478,9 @@ document.getElementById('inputDataPrazoTarefa').addEventListener('change', funct
 });
 
 /* ===== Pills de prioridade ===== */
-document.querySelectorAll('.pill-prioridade-opcao').forEach(function(pill){
+document.querySelectorAll('.pill-prioridade-opcao[data-prioridade]').forEach(function(pill){
   pill.addEventListener('click', function(){
-    document.querySelectorAll('.pill-prioridade-opcao').forEach(function(p){ p.classList.remove('selecionada'); });
+    document.querySelectorAll('.pill-prioridade-opcao[data-prioridade]').forEach(function(p){ p.classList.remove('selecionada'); });
     pill.classList.add('selecionada');
     estadoModalTarefa.prioridade = pill.getAttribute('data-prioridade');
   });
@@ -4683,7 +4706,7 @@ document.getElementById('btnSalvarTarefa').addEventListener('click', async funct
     colunaId:colunaId, responsavelId:responsavelId, dataPrazo:dataPrazo, horaPrazo:horaPrazo,
     prioridade:estadoModalTarefa.prioridade, etiquetaId:estadoModalTarefa.etiquetaId, corEtiqueta:estadoModalTarefa.corEtiqueta,
     subtarefas:estadoModalTarefa.subtarefas.map(function(s){ return { texto:s.texto, concluida:!!s.concluida }; }),
-    status:tarefaExistente ? tarefaExistente.status : 'pendente',
+    status:tarefaExistente ? tarefaExistente.status : (estadoModalTarefa.status === 'em_andamento' ? 'em_andamento' : 'pendente'),
     ordemKanban:tarefaExistente && tarefaExistente.colunaId === colunaId ? tarefaExistente.ordemKanban : proximaOrdemColuna(colunaId)
   };
 
@@ -4713,6 +4736,11 @@ document.getElementById('btnSalvarTarefa').addEventListener('click', async funct
       window.SAGA_TASKS[idx] = salva;
     } else {
       window.SAGA_TASKS.push(salva);
+    }
+    var statusEscolhido = estadoModalTarefa.status || 'pendente';
+    if(statusEscolhido !== salva.status){
+      // conclusão e reabertura passam pelo mesmo caminho do cartão (data de conclusão, avisos)
+      await definirStatusTarefa(salva.id, statusEscolhido);
     }
     modalTarefaEl.classList.remove('aberto');
     aplicarFiltrosERenderizar();
