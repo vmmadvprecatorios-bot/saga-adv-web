@@ -359,13 +359,39 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
   .btn-novo{flex:1 1 100%;order:3;justify-content:center;margin-top:4px;}
   .tabela-scroll table{display:none;}
   .cartoes-mobile{display:flex;}
-  body.sp-planilha .tabela-scroll table{display:table;}
-  body.sp-planilha .cartoes-mobile{display:none;}
-  body.sp-planilha .tabela-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .presenca span{display:none;}
   .presenca{padding:6px;}
   .rodape-tabela{flex-direction:column;align-items:stretch;}
   .seletor-quantidade{justify-content:space-between;}
+  /* Celular (06/11): cabeçalho em 2 linhas (Lista|Kanban; Novo processo + Catálogos lado a lado) */
+  .conteudo{padding:14px 14px 24px;}
+  .header-pagina{margin-bottom:14px;gap:10px;}
+  .header-pagina>div:last-child{width:100%;gap:8px!important;}
+  .botoes-view{order:0;}
+  .btn-novo{flex:1 1 0;order:1;margin-top:0;padding:10px 12px;}
+  #btnGerenciarCatalogos{order:2;flex:0 0 auto;height:auto;padding:10px 12px;}
+  /* Gráficos: cartões mais baixos, sem espaço vazio */
+  .pr-graf{flex-basis:88%!important;padding:11px 12px;}
+  .pr-graficos .pr-graf-corpo{height:auto;min-height:118px;}
+  .pr-graficos .pr-leg-lista{max-height:150px;}
+  /* Cartões: sem moldura dupla em volta da lista */
+  body:not(.sp-ver-tabela) .tabela-wrap{background:none;border:0;box-shadow:none;backdrop-filter:none;}
+  body:not(.sp-ver-tabela) .cartoes-mobile{padding:0 0 10px;}
+  /* Filtros: rótulos acima do campo (sem sobrepor), menus em grade de 2 colunas */
+  .barra-filtros{padding-top:6px;gap:8px;margin-bottom:12px;}
+  .filtros-scroll{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+  #filtroAreasTeses{grid-column:1/-1;min-width:0!important;}
+  .barra-filtros .st-filtro .st-label{position:static;margin:0 0 4px;}
+  .barra-filtros .st-par{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .filtros-scroll>.dropdown-custom{min-width:0;}
+  .filtros-scroll>.dropdown-custom .dropdown-custom-valor{width:100%;min-width:0;}
+  .filtros-scroll .btn-limpar{justify-content:center;}
+  /* Kanban: uma coluna por vez, deslizando para o lado */
+  .barra-kanban{gap:8px;}
+  .busca-kanban{flex:1 1 100%;}
+  .quadro-kanban{gap:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
+  .coluna-kanban,.sp-funil .coluna-kanban{flex:0 0 84vw;max-width:340px;scroll-snap-align:start;max-height:none;}
+  .cartoes-mobile{gap:8px;}
 }
 @media(max-width:400px){.brand-name{font-size:15px;}.avatar{width:28px;height:28px;}.top-right{gap:12px;}}
 /* Catalogo de Teses e Status */
@@ -1521,7 +1547,7 @@ function renderLista(){
   }).join('');
   if(html===null)SagaPlanilha.renderTabela(state.processos);else document.getElementById('tbodyPrincipal').innerHTML=html;
   renderPaginacao();
-  var cards=state.processos.map(function(p){
+  var cards=window.SagaPlanilha&&SagaPlanilha.pronta()&&SagaPlanilha.cartoesHtml?SagaPlanilha.cartoesHtml(state.processos):state.processos.map(function(p){
     var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var st=p.status||{};var re=p.responsavel||{};
     return '<div class="cartao-cliente" onclick="verFicha(\''+p.id+'\')">'
       +'<div class="cartao-topo"><div><div class="cartao-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div><div class="cartao-cpf">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</div></div>'+statusBadge(st)+'</div>'

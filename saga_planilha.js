@@ -157,6 +157,34 @@ window.SagaPlanilha=(function(){
     }).join('');
     tb.querySelectorAll('tr[data-sp-proc]').forEach(function(tr){tr.onclick=null;});
   }
+  // Celular: cada processo vira um cartão com as colunas visíveis da planilha (a tabela larga fica opcional)
+  function cartoesHtml(lista){
+    var cs=visiveis(),hoje=hojeISO();
+    var cNome=cs.find(function(c){return c.campo_sistema==='pessoa.nome';})||colPorChave('pessoa.nome')||cols.find(function(c){return c.campo_sistema==='pessoa.nome';});
+    var cSt=cols.find(function(c){return c.campo_sistema==='processo.status';});
+    return lista.map(function(p){
+      var sig=!!p.sigilo&&!state.permissoes.editar_dados,pe=p.pessoa||{};
+      var st=cSt&&!sig?texto(p,cSt):'',stCor=cSt&&!sig?corDe(p,cSt):null;
+      var campos=cs.filter(function(c){return c.campo_sistema!=='pessoa.nome'&&c.campo_sistema!=='processo.status';}).map(function(c){
+        var v=bruto(p,c);if(v==null||v===''||(Array.isArray(v)&&!v.length))return '';
+        var t=sig&&c.campo_sistema!=='pessoa.nome'?'••••':exibir(c,texto(p,c)),cor=sig?null:corDe(p,c),conteudo;
+        if(!t&&!(c.tipo==='link'))return '';
+        if(c.tipo==='link'&&!sig&&Array.isArray(v))conteudo=v.map(function(l){var u=/^https?:\/\//i.test(l.url||'')?l.url:'';return u?'<a href="'+h(u)+'" target="_blank" rel="noopener noreferrer" class="sp-link" onclick="event.stopPropagation()">'+h(l.texto||l.url)+'</a>':'';}).join(' · ');
+        else if(c.chave==='captacao.data_retorno'&&!sig){var iso=String(v).slice(0,10),cl=iso<hoje?'atrasado':iso===hoje?'hoje':'';conteudo='<span class="sp-ret '+cl+'">'+h(t)+(cl==='atrasado'?' · atrasado':cl==='hoje'?' · hoje':'')+'</span>';}
+        else if(cor)conteudo='<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>';
+        else conteudo=h(t);
+        return '<div class="sp-cc-campo"><span class="sp-cc-rot">'+h(nomeCol(c))+'</span><span class="sp-cc-val">'+conteudo+'</span></div>';
+      }).filter(Boolean).slice(0,6);
+      var nome=cNome?texto(p,cNome):pe.nome_completo;
+      return '<div class="cartao-cliente sp-cc" data-sp-proc="'+h(p.id)+'" onclick="verFicha(\''+h(p.id)+'\')">'+
+        '<div class="sp-cc-topo"><div class="cartao-nome">'+h(nome||'N/D')+'</div>'+(st?'<span class="sp-cc-status" style="--c:'+h(stCor||'#8a94a8')+'"><i></i>'+h(st)+'</span>':'')+'</div>'+
+        (campos.length?'<div class="sp-cc-campos">'+campos.join('')+'</div>':'')+
+        (typeof providenciaHtml==='function'?providenciaHtml(p):'')+
+        '<div class="cartao-rodape" onclick="event.stopPropagation()">'+(typeof acoesBtns==='function'?acoesBtns(p):'')+'</div></div>';
+    }).join('');
+  }
+  function verTabelaNoCelular(){try{return localStorage.getItem('saga-planilha-celular')==='tabela';}catch(e){return false;}}
+  function aplicarModoCelular(){document.body.classList.toggle('sp-ver-tabela',verTabelaNoCelular());}
   function editavel(p,c){
     if(!state.permissoes.editar)return false;
     if(p.sigilo&&!state.permissoes.editar_dados)return false;
@@ -382,10 +410,13 @@ window.SagaPlanilha=(function(){
         '<button type="button" class="sp-pill sp-pill-solta'+(minhas?' ativo':'')+'" data-minhas aria-pressed="'+minhas+'">Minhas fichas</button>'+
         '<button type="button" class="btn-secondary sp-btn" data-importar>Importar planilha</button><button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
       '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos'],['sim','Protocolados'],['nao','Não protocolados']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>')+
+      '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button></div>'+
       '<button type="button" class="btn-secondary sp-btn" data-colunas>Colunas</button>'+
       (n?'<button type="button" class="sp-limpar-tudo" data-limpar>Limpar filtros das colunas ('+n+')</button>':'');
     b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){protocolo=x.dataset.protocolo;aplicar();};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
+    b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem('saga-planilha-celular',x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
+    aplicarModoCelular();
     b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){retorno=x.dataset.retorno;aplicar();};});
     var bm=b.querySelector('[data-minhas]');if(bm)bm.onclick=function(){minhas=!minhas;aplicar();};
     var bi=b.querySelector('[data-importar]');if(bi)bi.onclick=abrirImportar;
@@ -444,6 +475,11 @@ window.SagaPlanilha=(function(){
       '.sp-org{margin-left:auto;font-size:11.5px;color:var(--gold-light);text-decoration:underline}.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
       '.sp-modal{max-width:520px;width:94vw}.sp-col-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;max-height:52vh;overflow:auto;margin-top:8px}.sp-ajuda{font-size:11.5px;color:var(--muted);margin:0 0 8px}.sp-col-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
       '#listaView .tabela-scroll{max-height:70vh;overflow:auto}'+
+      '.sp-modo-cel{display:none}.sp-cc-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.sp-cc-topo .cartao-nome{font-weight:600;min-width:0;overflow-wrap:anywhere}'+
+      '.sp-cc-status{display:inline-flex;align-items:center;gap:5px;flex:0 1 auto;max-width:48%;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;color:var(--text);background:color-mix(in srgb,var(--c) 16%,transparent);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-cc-status i{width:7px;height:7px;border-radius:50%;background:var(--c);flex:0 0 auto}'+
+      '.sp-cc-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin-top:10px}.sp-cc-campo{min-width:0;display:flex;flex-direction:column;gap:1px}.sp-cc-rot{font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}.sp-cc-val{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-cc .cartao-rodape{justify-content:flex-end;margin-top:10px;padding-top:8px}.sp-cc:active{transform:scale(.99)}'+
+      '@media(max-width:760px){.sp-modo-cel{display:flex}#spBarra{gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}#spBarra::-webkit-scrollbar{display:none}#spBarra>*{flex:0 0 auto}.sp-pill{white-space:nowrap}.sp-abas{scrollbar-width:none}.sp-sub{gap:8px}.sp-org{margin-left:0}.sp-tipo{width:100%}.sp-tipo select{flex:1;max-width:none}'+
+      'body.sp-planilha:not(.sp-ver-tabela) #listaView .tabela-scroll table{display:none}body.sp-planilha:not(.sp-ver-tabela) #listaView .cartoes-mobile{display:flex}body.sp-planilha.sp-ver-tabela #listaView .tabela-scroll{display:block;max-height:65vh}body.sp-planilha.sp-ver-tabela #listaView .tabela-scroll table{display:table}body.sp-planilha.sp-ver-tabela #listaView .cartoes-mobile{display:none}}'+
       '.sp-selo{display:inline-flex;align-items:center;gap:6px;font-size:12px}.sp-selo i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}.sp-rapidos{display:flex;gap:2px;flex-wrap:wrap}'+
       '.sp-ficha{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px 14px}.sp-ficha .campo-dado{min-width:0}.sp-ficha .campo-dado-valor{min-height:22px;overflow-wrap:anywhere}'+
       '.sp-ficha .sp-editavel{cursor:pointer;border-radius:6px;padding:2px 4px;margin:-2px -4px}.sp-ficha .sp-editavel:hover{background:color-mix(in srgb,var(--gold) 8%,transparent)}.sp-ficha .sp-lapis{opacity:0;font-size:11px;margin-left:5px;color:var(--muted)}.sp-ficha .sp-editavel:hover .sp-lapis{opacity:1}'+
@@ -907,5 +943,5 @@ window.SagaPlanilha=(function(){
   }
   function formatarCampo(tipo,v){return formatar(tipo,v);}
 
-  return {retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
+  return {retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
 })();
