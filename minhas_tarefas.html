@@ -16,7 +16,7 @@
     --text:#e8eaf0;--muted:#8b93a8;--texto-sidebar-mobile:#c3cee0;
     --danger:#e85d5d;--warning:#e8b84c;--success:#5dd8a0;--info:#6fa3d8;
     --prio-baixa:#8a9bb8; --prio-media:#6fa2ff; --prio-alta:#9a86f0; --prio-urgente:#ee7089;
-    --priority-high:var(--prio-alta);
+    --priority-high:color-mix(in srgb,var(--warning) 68%,var(--danger));
     --radius:16px;--radius-sm:10px;
     --shadow:0 22px 55px rgba(0,0,0,.35);
   }
@@ -498,7 +498,7 @@
   }
   .prioridade-baixa{ background:color-mix(in srgb,var(--prio-baixa) 16%,transparent); color:color-mix(in srgb,var(--prio-baixa) 70%,var(--text)); border-color:color-mix(in srgb,var(--prio-baixa) 28%,transparent); }
   .prioridade-media{ background:color-mix(in srgb,var(--prio-media) 16%,transparent); color:color-mix(in srgb,var(--prio-media) 72%,var(--text)); border-color:color-mix(in srgb,var(--prio-media) 28%,transparent); }
-  .prioridade-alta{ background:color-mix(in srgb,var(--priority-high) 17%,transparent); color:color-mix(in srgb,var(--priority-high) 72%,var(--text)); border-color:color-mix(in srgb,var(--priority-high) 30%,transparent); }
+  .prioridade-alta{ background:color-mix(in srgb,var(--prio-alta) 17%,transparent); color:color-mix(in srgb,var(--prio-alta) 72%,var(--text)); border-color:color-mix(in srgb,var(--prio-alta) 30%,transparent); }
   .prioridade-urgente{ background:color-mix(in srgb,var(--prio-urgente) 18%,transparent); color:color-mix(in srgb,var(--prio-urgente) 72%,var(--text)); border-color:color-mix(in srgb,var(--prio-urgente) 32%,transparent); }
 
   .icone-processo-tooltip{ position:relative; cursor:help; }
@@ -784,7 +784,7 @@
   }
   .pill-prioridade-opcao[data-prioridade="baixa"]{ background:color-mix(in srgb,var(--prio-baixa) 12%,transparent); color:color-mix(in srgb,var(--prio-baixa) 70%,var(--text)); }
   .pill-prioridade-opcao[data-prioridade="media"]{ background:color-mix(in srgb,var(--prio-media) 12%,transparent); color:color-mix(in srgb,var(--prio-media) 72%,var(--text)); }
-  .pill-prioridade-opcao[data-prioridade="alta"]{ background:color-mix(in srgb,var(--priority-high) 14%,transparent); color:color-mix(in srgb,var(--priority-high) 72%,var(--text)); }
+  .pill-prioridade-opcao[data-prioridade="alta"]{ background:color-mix(in srgb,var(--prio-alta) 14%,transparent); color:color-mix(in srgb,var(--prio-alta) 72%,var(--text)); }
   .pill-prioridade-opcao[data-prioridade="urgente"]{ background:color-mix(in srgb,var(--prio-urgente) 14%,transparent); color:color-mix(in srgb,var(--prio-urgente) 72%,var(--text)); }
   .pill-prioridade-opcao.selecionada{ border-color:currentColor; box-shadow:inset 0 0 0 1px currentColor; }
 
@@ -1273,24 +1273,24 @@
     box-shadow:0 1px 1px color-mix(in srgb,color-mix(in srgb,var(--gold-deep) 82%,black) 8%,transparent);
   }
   [data-theme="light"] .prioridade-baixa{
-    background:color-mix(in srgb,var(--info) 16%,transparent);
-    color:color-mix(in srgb,var(--info) 75%,black);
-    border-color:color-mix(in srgb,var(--info) 45%,transparent);
+    background:color-mix(in srgb,var(--prio-baixa) 16%,transparent);
+    color:color-mix(in srgb,var(--prio-baixa) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-baixa) 45%,transparent);
   }
   [data-theme="light"] .prioridade-media{
-    background:color-mix(in srgb,var(--gold) 16%,transparent);
-    color:color-mix(in srgb,var(--gold) 75%,black);
-    border-color:color-mix(in srgb,var(--gold) 45%,transparent);
+    background:color-mix(in srgb,var(--prio-media) 16%,transparent);
+    color:color-mix(in srgb,var(--prio-media) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-media) 45%,transparent);
   }
   [data-theme="light"] .prioridade-alta{
-    background:color-mix(in srgb,var(--priority-high) 18%,transparent);
-    color:color-mix(in srgb,var(--priority-high) 72%,black);
-    border-color:color-mix(in srgb,var(--priority-high) 50%,transparent);
+    background:color-mix(in srgb,var(--prio-alta) 18%,transparent);
+    color:color-mix(in srgb,var(--prio-alta) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-alta) 50%,transparent);
   }
   [data-theme="light"] .prioridade-urgente{
-    background:color-mix(in srgb,var(--danger) 16%,transparent);
-    color:color-mix(in srgb,var(--danger) 70%,black);
-    border-color:color-mix(in srgb,var(--danger) 48%,transparent);
+    background:color-mix(in srgb,var(--prio-urgente) 16%,transparent);
+    color:color-mix(in srgb,var(--prio-urgente) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-urgente) 48%,transparent);
   }
 
   [data-theme="light"] .badge-prazo-card{
@@ -1394,24 +1394,24 @@
     flex:0 0 auto;
   }
   .card-tarefa .prioridade-baixa{
-    background:color-mix(in srgb,var(--info) 20%,transparent);
-    color:color-mix(in srgb,var(--info) 70%,var(--text));
-    border-color:color-mix(in srgb,var(--info) 40%,transparent);
+    background:color-mix(in srgb,var(--prio-baixa) 20%,transparent);
+    color:color-mix(in srgb,var(--prio-baixa) 70%,var(--text));
+    border-color:color-mix(in srgb,var(--prio-baixa) 40%,transparent);
   }
   .card-tarefa .prioridade-media{
-    background:color-mix(in srgb,var(--warning) 19%,transparent);
-    color:color-mix(in srgb,var(--warning) 72%,var(--text));
-    border-color:color-mix(in srgb,var(--warning) 38%,transparent);
+    background:color-mix(in srgb,var(--prio-media) 19%,transparent);
+    color:color-mix(in srgb,var(--prio-media) 72%,var(--text));
+    border-color:color-mix(in srgb,var(--prio-media) 38%,transparent);
   }
   .card-tarefa .prioridade-alta{
-    background:color-mix(in srgb,var(--priority-high) 20%,transparent);
-    color:color-mix(in srgb,var(--priority-high) 72%,var(--text));
-    border-color:color-mix(in srgb,var(--priority-high) 40%,transparent);
+    background:color-mix(in srgb,var(--prio-alta) 20%,transparent);
+    color:color-mix(in srgb,var(--prio-alta) 72%,var(--text));
+    border-color:color-mix(in srgb,var(--prio-alta) 40%,transparent);
   }
   .card-tarefa .prioridade-urgente{
-    background:color-mix(in srgb,var(--danger) 22%,transparent);
-    color:color-mix(in srgb,var(--danger) 72%,var(--text));
-    border-color:color-mix(in srgb,var(--danger) 42%,transparent);
+    background:color-mix(in srgb,var(--prio-urgente) 22%,transparent);
+    color:color-mix(in srgb,var(--prio-urgente) 72%,var(--text));
+    border-color:color-mix(in srgb,var(--prio-urgente) 42%,transparent);
   }
   .card-tarefa .badge-prazo-card.prazo-verde{
     background:color-mix(in srgb,var(--success) 19%,transparent);
@@ -1451,24 +1451,24 @@
     box-shadow:0 1px 1px color-mix(in srgb,color-mix(in srgb,var(--gold-deep) 82%,black) 10%,transparent);
   }
   [data-theme="light"] .card-tarefa .prioridade-baixa{
-    background:color-mix(in srgb,var(--info) 18%,transparent);
-    color:color-mix(in srgb,var(--info) 75%,black);
-    border-color:color-mix(in srgb,var(--info) 50%,transparent);
+    background:color-mix(in srgb,var(--prio-baixa) 18%,transparent);
+    color:color-mix(in srgb,var(--prio-baixa) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-baixa) 50%,transparent);
   }
   [data-theme="light"] .card-tarefa .prioridade-media{
-    background:color-mix(in srgb,var(--gold) 18%,transparent);
-    color:color-mix(in srgb,var(--gold) 75%,black);
-    border-color:color-mix(in srgb,var(--gold) 50%,transparent);
+    background:color-mix(in srgb,var(--prio-media) 18%,transparent);
+    color:color-mix(in srgb,var(--prio-media) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-media) 50%,transparent);
   }
   [data-theme="light"] .card-tarefa .prioridade-alta{
-    background:color-mix(in srgb,var(--priority-high) 20%,transparent);
-    color:color-mix(in srgb,var(--priority-high) 72%,black);
-    border-color:color-mix(in srgb,var(--priority-high) 55%,transparent);
+    background:color-mix(in srgb,var(--prio-alta) 20%,transparent);
+    color:color-mix(in srgb,var(--prio-alta) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-alta) 55%,transparent);
   }
   [data-theme="light"] .card-tarefa .prioridade-urgente{
-    background:color-mix(in srgb,var(--danger) 18%,transparent);
-    color:color-mix(in srgb,var(--danger) 70%,black);
-    border-color:color-mix(in srgb,var(--danger) 50%,transparent);
+    background:color-mix(in srgb,var(--prio-urgente) 18%,transparent);
+    color:color-mix(in srgb,var(--prio-urgente) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-urgente) 50%,transparent);
   }
   [data-theme="light"] .card-tarefa .badge-prazo-card.prazo-verde{
     background:color-mix(in srgb,var(--success) 20%,transparent);
@@ -1515,9 +1515,9 @@
     border-color:color-mix(in srgb,var(--prio-media) 55%,transparent);
   }
   [data-theme="light"] .pill-prioridade-opcao[data-prioridade="alta"]{
-    background:color-mix(in srgb,var(--priority-high) 22%,transparent);
-    color:color-mix(in srgb,var(--priority-high) 90%,black);
-    border-color:color-mix(in srgb,var(--priority-high) 60%,transparent);
+    background:color-mix(in srgb,var(--prio-alta) 22%,transparent);
+    color:color-mix(in srgb,var(--prio-alta) 90%,black);
+    border-color:color-mix(in srgb,var(--prio-alta) 60%,transparent);
   }
   [data-theme="light"] .pill-prioridade-opcao[data-prioridade="urgente"]{
     background:color-mix(in srgb,var(--prio-urgente) 20%,transparent);
@@ -1634,6 +1634,21 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   .situacao-prazo{ display:inline-block; padding:4px 7px; border-radius:6px; background:var(--prazo-cor); color:var(--prazo-texto); font-size:10px; font-weight:700; line-height:1.35; overflow-wrap:anywhere; }
   [data-situacao-prazo="muito-atrasada"] .situacao-prazo{ outline:2px solid var(--prazo-muito-contorno); outline-offset:1px; font-weight:800; }
   .prazo-data-neutra{ color:var(--muted); font-size:10px; font-variant-numeric:tabular-nums; }
+  /* Cartão da tarefa organizado em linhas alinhadas:
+     1) caixinha + tipo à esquerda, prioridade à direita; 2) título; 3) etiqueta (linha própria);
+     4) processo e cliente; 5) responsável à esquerda, prazo e data à direita, na mesma linha */
+  .card-tarefa .topo-card-tarefa{ justify-content:space-between; align-items:center; flex-wrap:nowrap; }
+  .card-tarefa .topo-card-tarefa .badge-prioridade-pill{ flex:0 0 auto; margin-left:auto; }
+  .linha-etiqueta-card{ display:flex; flex-wrap:wrap; gap:5px; margin:-2px 0 8px; min-width:0; }
+  .linha-etiqueta-card .se-tag{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .card-tarefa .numero-processo-card{ margin-bottom:5px; }
+  .card-tarefa .meta-processo-card{ margin-bottom:10px; line-height:1.35; }
+  .card-tarefa .rodape-card-tarefa{ align-items:center; gap:10px; margin-top:2px; }
+  .prazo-rodape-card{ flex:1 1 auto; min-width:0; display:flex; justify-content:flex-end; }
+  .card-tarefa .prazo-info{ flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:4px 8px; }
+  .card-tarefa .situacao-prazo{ white-space:nowrap; }
+  .card-tarefa .prazo-data-neutra{ white-space:nowrap; line-height:1.35; }
+
   .legenda-prazos{ display:flex; flex-wrap:wrap; gap:7px 14px; margin:0 0 12px; color:var(--muted); font-size:10px; line-height:1.5; }
   .legenda-prazos span{ display:inline-flex; align-items:center; gap:5px; }
   .legenda-prazos [data-situacao-prazo]::before{ content:''; width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--prazo-cor); }
@@ -1669,7 +1684,7 @@ try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList
 html.saga-embed, html.saga-embed body{background:transparent !important}
 html.saga-embed body > *:not(#modalTarefa):not(#sagaConfirma):not(#toastContainer):not(script):not(style){display:none !important}
 #secaoComentariosTarefa{display:none !important}
-[data-theme="light"]{ --prio-baixa:#5f7089; --prio-media:#2f6cd6; --prio-alta:#6a4fd6; --prio-urgente:#d63f66; --priority-high:var(--prio-alta); }
+[data-theme="light"]{ --prio-baixa:#5f7089; --prio-media:#2f6cd6; --prio-alta:#6a4fd6; --prio-urgente:#d63f66; }
 html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
 </style>
 </head>
@@ -3241,9 +3256,10 @@ function criarCardTarefaEl(tarefa){
   card.innerHTML =
     '<div class="topo-card-tarefa">' +
       '<div class="topo-card-tarefa-esquerda">' + criarCheckboxConclusaoCard(tarefa) + badgeTipoHtml + '</div>' +
-      etiquetaHtml +
+      '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' +
     '</div>' +
     '<div class="titulo-card-tarefa">' + escaparHtml(tarefa.titulo) + '</div>' +
+    (etiquetaHtml ? '<div class="linha-etiqueta-card">' + etiquetaHtml + '</div>' : '') +
     htmlDeParaTarefa(tarefa) +
     (!podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '')) +
     (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
@@ -3252,10 +3268,7 @@ function criarCardTarefaEl(tarefa){
     barraSubHtml +
     '<div class="rodape-card-tarefa">' +
       '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(resp ? resp.nome : '') + '"' + (resp ? ' data-saga-usuario="' + escaparHtml(resp.id) + '"' : '') + ' style="background:' + (resp ? resp.cor : '#8b93a8') + ';" title="' + escaparHtml(resp ? resp.nome : '') + '">' + escaparHtml(resp ? resp.iniciais : '?') + '</div>' +
-      '<div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">' +
-        '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' +
-        badgePrazoHtml +
-      '</div>' +
+      '<div class="prazo-rodape-card">' + badgePrazoHtml + '</div>' +
     '</div>';
 
   card.addEventListener('click', function(){ abrirModalTarefa(tarefa.id); });
