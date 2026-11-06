@@ -77,20 +77,25 @@
   function janela(parte){
     var c=S.cfg,edit=!!parte,escolhida=edit?{id:parte.pessoa_id,nome_completo:nomeDe(parte.pessoa_id)}:null,novaPessoa=false;
     var ov=document.createElement('div');ov.className='modal-overlay open';ov.id='ptJanela';
-    var opPap='<option value="">— sem papel —</option>'+S.papeis.map(function(p){return '<option value="'+esc(p.id)+'"'+(edit&&parte.papel_id===p.id?' selected':'')+'>'+esc(p.nome)+'</option>';}).join('');
-    var opDe='<option value="">— ninguém (parte direta) —</option>'+S.partes.filter(function(p){return !edit||p.pessoa_id!==parte.pessoa_id;}).map(function(p){return '<option value="'+esc(p.pessoa_id)+'"'+(edit&&parte.herdeiro_de_id===p.pessoa_id?' selected':'')+'>'+esc(nomeDe(p.pessoa_id))+'</option>';}).join('');
+    // Menus suspensos no padrão do sistema (custom-select da ficha); sem eles, cai no menu simples do navegador
+    var optPap=[['','— sem papel —']].concat(S.papeis.map(function(p){return [p.id,p.nome];}));
+    var optDe=[['','— ninguém (parte direta) —']].concat(S.partes.filter(function(p){return !edit||p.pessoa_id!==parte.pessoa_id;}).map(function(p){return [p.pessoa_id,nomeDe(p.pessoa_id)];}));
+    var valPap=edit&&parte.papel_id?parte.papel_id:'',valDe=edit&&parte.herdeiro_de_id?parte.herdeiro_de_id:'';
+    var temCustom=typeof global.customSelectMarkup==='function'&&typeof global.bindCustomSelects==='function';
+    var menu=function(id,val,opts){return temCustom?global.customSelectMarkup(id,val,opts):'<select id="'+id+'">'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';};
     ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" style="max-width:520px"><div class="modal-head"><div class="modal-title-stack"><h3>'+(edit?'Editar parte':'Adicionar herdeiro ou parte')+'</h3><p>Cada herdeiro tem a própria ficha e vê este processo nela.</p></div><button class="modal-close" data-fechar aria-label="Fechar">✕</button></div>'+
       '<div class="modal-body">'+
       '<div class="form-field" id="ptCampoPessoa"><label>Pessoa</label>'+(edit?'<div class="pt-sel"><b>'+esc(escolhida.nome_completo)+'</b></div>':
         '<input type="text" id="ptBusca" placeholder="Buscar por nome ou CPF..." autocomplete="off"><div class="pt-res" id="ptRes" hidden></div><button type="button" class="pt-add" id="ptNova" style="margin-top:6px">+ Cadastrar nova pessoa</button>'+
         '<div id="ptNovaBox" hidden style="margin-top:8px"><div class="form-field"><label>Nome completo</label><input type="text" id="ptNome"></div><div class="form-field"><label>CPF (opcional)</label><input type="text" id="ptCpf" inputmode="numeric" maxlength="18" placeholder="000.000.000-00"></div></div>')+'</div>'+
-      '<div class="pt-2"><div class="form-field"><label for="ptPapel">Papel</label><select id="ptPapel">'+opPap+'</select></div><div class="form-field"><label for="ptDe">Herdeiro de</label><select id="ptDe">'+opDe+'</select></div></div>'+
+      '<div class="pt-2"><div class="form-field"><label>Papel</label>'+menu('ptPapel',valPap,optPap)+'</div><div class="form-field"><label>Herdeiro de</label>'+menu('ptDe',valDe,optDe)+'</div></div>'+
       '<div class="pt-2"><div class="form-field"><label for="ptQuota">Quota-parte % (opcional)</label><input type="text" id="ptQuota" inputmode="decimal" placeholder="Ex.: 25" value="'+(edit&&parte.quota!=null?esc(String(parte.quota).replace('.',',')):'')+'"></div>'+
       (c.podeEditarDados?'<div class="form-field"><label for="ptPct">Honorários % (só se diferente)</label><input type="text" id="ptPct" inputmode="decimal" placeholder="igual ao do processo" value="'+(edit&&parte.percentual_honorarios!=null?esc(String(parte.percentual_honorarios).replace('.',',')):'')+'"></div>':'<div></div>')+'</div>'+
       '<div class="form-field"><label for="ptObs">Observação</label><input type="text" id="ptObs" value="'+(edit&&parte.observacao?esc(parte.observacao):'')+'"></div>'+
       '<div id="ptErro" style="color:var(--danger);font-size:11px;min-height:14px"></div></div>'+
       '<div class="modal-foot"><button class="btn-secondary" data-fechar type="button">Cancelar</button><button class="btn-primary" id="ptSalvar" type="button">Salvar</button></div></div>';
     document.body.appendChild(ov);
+    if(temCustom)global.bindCustomSelects(ov);
     var fechar=function(){ov.remove();};
     ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('[data-fechar]'))fechar();});
     var q=function(id){return ov.querySelector('#'+id);};
