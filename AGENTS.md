@@ -23,6 +23,7 @@ Quem coordena e revisa o seu trabalho é o Claude. Ele confere o PR, testa e pub
 - `saga_tema.css`: tema (claro/escuro, cores como variáveis). Use as variáveis, não cores soltas.
 - `ponto_calculo.js`: cálculo do ponto, cópia fiel do Apps Script da planilha. **Não altere** sem pedido explícito.
 - `saga_intimacoes.js`: tela de intimações.
+- Regra de 09/11 (Dr. Victor): todo recurso novo usa os efeitos de movimento do sistema: entrada e saída suaves (abrir/fechar janelas, cartões que somem ou mudam de lugar, recolher/expandir blocos, com `window.sagaRecolher` do saga_guard.js), curva `cubic-bezier(.22,.78,.25,1)`, 200 a 420 ms, nunca troca seca. Tudo deve respeitar a chavinha "Efeitos de movimento" (localStorage `saga-movimento`='reduzido' desliga: troca na hora).
 - Banco: Supabase. A tela só lê e grava pelo cliente já configurado nas telas; as regras de acesso ficam no banco.
 - Biblioteca do Supabase: `vendor/supabase-js-2.118.0.js` (versão fixa, guardada no repositório). Não use CDN com versão solta (ex.: `@2`). Script de fora só com versão exata; atualizar versão é tarefa do Claude.
 
