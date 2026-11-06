@@ -1639,6 +1639,11 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
      4) processo e cliente; 5) responsável à esquerda, prazo e data à direita, na mesma linha */
   .card-tarefa .topo-card-tarefa{ justify-content:space-between; align-items:center; flex-wrap:nowrap; }
   .card-tarefa .topo-card-tarefa .badge-prioridade-pill{ flex:0 0 auto; margin-left:auto; }
+  .pilha-avatares-resp{ display:flex; align-items:center; flex:0 0 auto; }
+  .pilha-avatares-resp .mini-avatar-resp + .mini-avatar-resp{ margin-left:-7px; }
+  .pilha-avatares-resp .mini-avatar-resp{ box-shadow:0 0 0 2px var(--panel-solid); }
+  .extras-resp-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .extras-resp-chips:not(:empty){ margin-bottom:8px; }
   .linha-etiqueta-card{ display:flex; flex-wrap:wrap; gap:5px; margin:-2px 0 8px; min-width:0; }
   .linha-etiqueta-card .se-tag{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .card-tarefa .numero-processo-card{ margin-bottom:5px; }
@@ -2045,6 +2050,12 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
       </div>
     </div>
 
+    <div class="campo-tf" id="campoOutrosResponsaveis">
+      <label for="selectAddResponsavelExtra">Outros responsáveis <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(todos editam e concluem)</span></label>
+      <div class="extras-resp-chips" id="chipsOutrosResponsaveis"></div>
+      <select id="selectAddResponsavelExtra" class="input-select-simples-tf" aria-label="Adicionar outro responsável"></select>
+    </div>
+
     <div class="campo-tf" id="campoCompartilharTarefa">
       <label for="btnCompartilharTarefa">Compartilhar com <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted)">(veem e comentam, não editam)</span></label>
       <div class="chips-compartilhar" id="chipsCompartilharTarefa"></div>
@@ -2292,8 +2303,21 @@ function tarefaDoBanco(r){
     anexos: (r.anexos || []).map(function(a){ return { id:a.id, nome:a.nome_arquivo, caminho:a.caminho_storage, tamanho:a.tamanho_bytes, tipo:a.tipo_mime, enviadoPorId:a.enviado_por_id }; }),
     comentarios: (r.comentarios || []).slice().sort(function(a, b){ return new Date(a.criado_em) - new Date(b.criado_em); })
       .map(function(c){ return { id:c.id, autorId:c.autor_id, texto:c.texto, timestamp:c.criado_em }; }),
-    compartilhadaCom: (r.compartilhadas || []).map(function(x){ return x.usuario_id; })
+    compartilhadaCom: (r.compartilhadas || []).map(function(x){ return x.usuario_id; }),
+    responsaveisExtras: (r.extras || []).map(function(x){ return x.usuario_id; }).filter(function(id){ return id !== r.responsavel_id; })
   };
+}
+
+// Todos os responsáveis da tarefa (o principal primeiro)
+function idsResponsaveisTarefa(t){ return (t.responsavelId ? [t.responsavelId] : []).concat((t.responsaveisExtras || []).filter(function(id){ return id !== t.responsavelId; })); }
+function souResponsavelDaTarefa(t){ return idsResponsaveisTarefa(t).indexOf(usuarioLogadoId) !== -1; }
+function avataresResponsaveisHtml(t){
+  var ids = idsResponsaveisTarefa(t);
+  if(!ids.length) return '<div class="mini-avatar-resp" style="background:#8b93a8;" title="Sem responsável">?</div>';
+  return '<div class="pilha-avatares-resp">' + ids.map(function(id){
+    var c = getColaborador(id);
+    return '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(c ? c.nome : '') + '"' + (c ? ' data-saga-usuario="' + escaparHtml(c.id) + '"' : '') + ' style="background:' + (c ? c.cor : '#8b93a8') + ';" title="' + escaparHtml(c ? c.nome : nomeUsuario(id)) + '">' + escaparHtml(c ? c.iniciais : '?') + '</div>';
+  }).join('') + '</div>';
 }
 
 // Quem atribuiu a quem: "De Fulano" para quem recebeu, "Para Fulano" para quem atribuiu
@@ -2308,7 +2332,7 @@ function htmlDeParaTarefa(t){
 
 // Dono da tarefa: quem criou, o responsavel ou o administrador. Marcados so veem e comentam.
 function souDonoDaTarefa(t){
-  return !!t && (isAdmin || t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId);
+  return !!t && (isAdmin || t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId || (t.responsaveisExtras || []).indexOf(usuarioLogadoId) !== -1);
 }
 
 function diaLocal(ts){
@@ -2320,7 +2344,8 @@ var SELECT_TAREFA = 'id,titulo,descricao,tipo,processo_id,responsavel_id,criado_
   'processo:processos(' + SELECT_PROCESSO + '),' +
   'anexos:tarefas_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime,enviado_por_id),' +
   'comentarios:tarefas_comentarios(id,autor_id,texto,criado_em),' +
-  'compartilhadas:tarefas_compartilhadas(usuario_id)';
+  'compartilhadas:tarefas_compartilhadas(usuario_id),' +
+  'extras:tarefas_responsaveis(usuario_id)';
 
 async function carregarDadosTarefas(){
   var sessao = await _sb.auth.getSession();
@@ -2390,6 +2415,20 @@ function tarefaParaBanco(t){
 }
 
 // Marca e desmarca colegas na tarefa (cada marcado recebe aviso no sino)
+async function sincronizarResponsaveisExtras(idTarefa, antes, depois){
+  var incluir = depois.filter(function(id){ return antes.indexOf(id) === -1; });
+  var remover = antes.filter(function(id){ return depois.indexOf(id) === -1; });
+  if(incluir.length){
+    var ri = await _sb.from('tarefas_responsaveis').insert(incluir.map(function(id){ return { tarefa_id:idTarefa, usuario_id:id }; }));
+    if(ri.error){ mostrarToast('Não foi possível incluir os responsáveis: ' + escaparHtml(ri.error.message), 'erro'); return antes; }
+  }
+  if(remover.length){
+    var rr = await _sb.from('tarefas_responsaveis').delete().eq('tarefa_id', idTarefa).in('usuario_id', remover);
+    if(rr.error){ mostrarToast('Não foi possível remover os responsáveis: ' + escaparHtml(rr.error.message), 'erro'); return antes; }
+  }
+  return depois.slice();
+}
+
 async function sincronizarCompartilhamentoTarefa(idTarefa, antes, depois){
   var incluir = depois.filter(function(id){ return antes.indexOf(id) === -1; });
   var remover = antes.filter(function(id){ return depois.indexOf(id) === -1; });
@@ -2800,9 +2839,9 @@ function desmarcarOpcaoMulti(idLista, valor){
 function tarefaPassaFiltros(t, ignorar){
   // Visao: minhas (sou o responsavel), recebidas de outros, ou que eu atribui a outros
   var outroCriou = t.criadoPorId && t.criadoPorId !== usuarioLogadoId;
-  if(filtrosAtivos.visao === 'Minhas' && t.responsavelId !== usuarioLogadoId) return false;
-  if(filtrosAtivos.visao === 'Recebidas' && !(t.responsavelId === usuarioLogadoId && outroCriou)) return false;
-  if(filtrosAtivos.visao === 'Atribuidas' && !(t.criadoPorId === usuarioLogadoId && t.responsavelId && t.responsavelId !== usuarioLogadoId)) return false;
+  if(filtrosAtivos.visao === 'Minhas' && !souResponsavelDaTarefa(t)) return false;
+  if(filtrosAtivos.visao === 'Recebidas' && !(souResponsavelDaTarefa(t) && outroCriou)) return false;
+  if(filtrosAtivos.visao === 'Atribuidas' && !(t.criadoPorId === usuarioLogadoId && idsResponsaveisTarefa(t).some(function(id){ return id !== usuarioLogadoId; }))) return false;
   if(filtrosAtivos.tipo === 'Pessoal' && t.tipo !== 'pessoal') return false;
   if(filtrosAtivos.tipo === 'Vinculada a Processo' && t.tipo !== 'processo') return false;
 
@@ -2831,8 +2870,7 @@ function tarefaPassaFiltros(t, ignorar){
     if(!t.processoVinculado || filtrosAtivos.fases.indexOf(t.processoVinculado.fase) === -1) return false;
   }
   if(ignorar!=='responsaveis' && filtrosAtivos.responsaveis.length > 0){
-    var nomeResp = nomeResponsavelFiltroTarefa(t);
-    if(filtrosAtivos.responsaveis.indexOf(nomeResp) === -1) return false;
+    if(!nomesResponsaveisTarefa(t).some(function(n){ return filtrosAtivos.responsaveis.indexOf(n) !== -1; })) return false;
   }
   if(ignorar!=='etiquetas' && filtrosAtivos.etiquetas.length && filtrosAtivos.etiquetas.indexOf(t.etiquetaId || '') === -1) return false;
   if(filtrosAtivos.busca){
@@ -2864,6 +2902,7 @@ var PRIORIDADES_GRAFICOS_TAREFAS=[
 var graficosTarefasOcultos=false,gruposRoscasTarefas={};
 try{graficosTarefasOcultos=localStorage.getItem('saga-tarefas-graficos-ocultos')==='1';}catch(e){}
 function nomeResponsavelFiltroTarefa(t){var c=getColaborador(t.responsavelId);return c?c.nome:(nomesUsuarios[t.responsavelId]||'');}
+function nomesResponsaveisTarefa(t){var ids=idsResponsaveisTarefa(t);if(!ids.length)return [''];return ids.map(function(id){var c=getColaborador(id);return c?c.nome:(nomesUsuarios[id]||'');});}
 function nomeCurtoRoscaTarefa(nome){var partes=nome.trim().split(/\s+/);return partes.length>1?partes[0]+' '+partes[partes.length-1]:nome;}
 function classePrazoRoscaTarefa(t){var s=situacaoPrazoTarefa(t.status==='concluida'?Object.assign({},t,{status:'pendente'}):t);return s?s.classe:'sem';}
 function dadosGraficosTarefas(){
@@ -2874,13 +2913,13 @@ function dadosGraficosTarefas(){
   // só o seu próprio filtro, para manter "Outros" estável e permitir desmarcá-lo.
   var baseResp=window.SAGA_TASKS.filter(function(t){return t.status!=='concluida'&&tarefaPassaFiltros(t,'responsaveis');});
   var mapaResp=new Map();
-  baseResp.forEach(function(t){var nome=nomeResponsavelFiltroTarefa(t);mapaResp.set(nome,(mapaResp.get(nome)||0)+1);});
+  baseResp.forEach(function(t){nomesResponsaveisTarefa(t).forEach(function(nome){mapaResp.set(nome,(mapaResp.get(nome)||0)+1);});});
   filtrosAtivos.responsaveis.forEach(function(nome){if(!mapaResp.has(nome))mapaResp.set(nome,0);});
   var nomes=Array.from(mapaResp.keys()).sort(function(a,b){return mapaResp.get(b)-mapaResp.get(a)||a.localeCompare(b,'pt-BR');});
-  var paleta=Array.from(new Set(window.SAGA_TASKS.map(nomeResponsavelFiltroTarefa))).sort();
+  var paleta=Array.from(new Set([].concat.apply([],window.SAGA_TASKS.map(nomesResponsaveisTarefa)))).sort();
   var responsaveis=nomes.slice(0,6).map(function(nome){return {v:nome,nome:nome?nomeCurtoRoscaTarefa(nome):'Sem responsável',dica:nome||'Sem responsável',valores:[nome],cor:nome?'var(--g'+(paleta.indexOf(nome)%8+1)+')':'var(--g-sem)'};});
   if(nomes.length>6)responsaveis.push({v:'__outros__',nome:'Outros',valores:nomes.slice(6),cor:'var(--g-sem)'});
-  responsaveis.forEach(function(x){x.n=abertas.filter(function(t){return x.valores.indexOf(nomeResponsavelFiltroTarefa(t))!==-1;}).length;x.ativa=x.valores.some(function(v){return filtrosAtivos.responsaveis.indexOf(v)!==-1;});});
+  responsaveis.forEach(function(x){x.n=abertas.filter(function(t){return nomesResponsaveisTarefa(t).some(function(n){return x.valores.indexOf(n)!==-1;});}).length;x.ativa=x.valores.some(function(v){return filtrosAtivos.responsaveis.indexOf(v)!==-1;});});
   var baseEt=window.SAGA_TASKS.filter(function(t){return t.status!=='concluida'&&tarefaPassaFiltros(t,'etiquetas');});
   var ids=Array.from(new Set(baseEt.map(function(t){return t.etiquetaId||'';}).concat(filtrosAtivos.etiquetas)));
   var etiquetas=ids.map(function(id){var e=catalogoEtiquetas&&catalogoEtiquetas.porId(id);return {v:id,nome:e?e.nome:id?'Etiqueta indisponível':'Sem etiqueta',cor:e?SagaEtiquetas.cor(e.cor):'var(--g-sem)',valores:[id],n:contar(function(t){return t.etiquetaId||'';},id),ativa:filtrosAtivos.etiquetas.indexOf(id)!==-1};}).sort(function(a,b){return b.n-a.n||a.nome.localeCompare(b.nome,'pt-BR');});
@@ -3275,7 +3314,7 @@ function criarCardTarefaEl(tarefa){
     metaProcessoHtml +
     barraSubHtml +
     '<div class="rodape-card-tarefa">' +
-      '<div class="mini-avatar-resp" data-saga-nome="' + escaparHtml(resp ? resp.nome : '') + '"' + (resp ? ' data-saga-usuario="' + escaparHtml(resp.id) + '"' : '') + ' style="background:' + (resp ? resp.cor : '#8b93a8') + ';" title="' + escaparHtml(resp ? resp.nome : '') + '">' + escaparHtml(resp ? resp.iniciais : '?') + '</div>' +
+      avataresResponsaveisHtml(tarefa) +
       '<div class="prazo-rodape-card">' + badgePrazoHtml + '</div>' +
     '</div>';
 
@@ -3655,7 +3694,7 @@ function valorOrdenavel(t, coluna){
     case 'processo': return t.processoVinculado ? t.processoVinculado.numero : '';
     case 'tribunal': return t.processoVinculado ? t.processoVinculado.tribunal : '';
     case 'fase': return t.processoVinculado ? t.processoVinculado.fase : '';
-    case 'responsavel': return getColaborador(t.responsavelId) ? getColaborador(t.responsavelId).nome : '';
+    case 'responsavel': return idsResponsaveisTarefa(t).map(nomeUsuario).join(', ');
     case 'prioridade': return { baixa:0, media:1, alta:2, urgente:3 }[t.prioridade];
     case 'prazo': return t.dataPrazo ? t.dataPrazo + (t.horaPrazo||'00:00') : '9999';
     default: return '';
@@ -3693,7 +3732,7 @@ function criarLinhaTabela(tarefa){
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.numero : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.tribunal : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.fase : '-') + '</td>' +
-    '<td>' + escaparHtml(resp ? resp.nome : '-') + '</td>' +
+    '<td>' + escaparHtml(idsResponsaveisTarefa(tarefa).map(nomeUsuario).join(', ') || '-') + '</td>' +
     '<td><span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span></td>' +
     '<td>' + seloEtiquetaTarefa(tarefa) + '</td>' +
     '<td>' + badgePrazoHtml + '</td>' +
@@ -3848,7 +3887,9 @@ var estadoModalTarefa = {
   subtarefas:[],
   anexos:[],
   anexosRemovidos:[],
-  comentarios:[]
+  comentarios:[],
+  compartilhar:[],
+  responsaveisExtras:[]
 };
 
 function obterComponenteSelectCustomTarefa(selectId){
@@ -3981,7 +4022,7 @@ function resetarFormularioTarefa(){
   var campoComentario=document.getElementById('textareaNovoComentario');campoComentario.value='';SagaMencoes.limpar(campoComentario);
   fecharMenuCompartilharTarefa();
   document.getElementById('buscaCompartilharTarefa').value = '';
-  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', etiquetaId:null, corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], somenteLeitura:false };
+  estadoModalTarefa = { tipo:'pessoal', processoVinculado:null, prioridade:'media', etiquetaId:null, corEtiqueta:'', subtarefas:[], anexos:[], anexosRemovidos:[], comentarios:[], compartilhar:[], responsaveisExtras:[], somenteLeitura:false };
   document.querySelector('#modalTarefa .modal-tf').classList.remove('somente-leitura');
   document.getElementById('avisoSomenteLeituraTarefa').style.display = 'none';
   document.getElementById('avisoOrigemIntimacao').style.display = 'none';
@@ -4002,7 +4043,42 @@ function resetarFormularioTarefa(){
   renderizarSubtarefasModal();
   renderizarAnexosModal();
   renderizarChipsCompartilhar();
+  renderizarOutrosResponsaveis();
 }
+
+function renderizarOutrosResponsaveis(){
+  var wrap = document.getElementById('chipsOutrosResponsaveis');
+  var sel = document.getElementById('selectAddResponsavelExtra');
+  var principal = document.getElementById('selectResponsavelTarefa').value || usuarioLogadoId;
+  estadoModalTarefa.responsaveisExtras = estadoModalTarefa.responsaveisExtras.filter(function(id){ return id !== principal; });
+  wrap.replaceChildren();
+  estadoModalTarefa.responsaveisExtras.forEach(function(id){
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip-compartilhar';
+    chip.textContent = nomeUsuario(id);
+    chip.setAttribute('aria-label', 'Remover ' + nomeUsuario(id) + ' dos responsáveis');
+    chip.disabled = !!estadoModalTarefa.somenteLeitura;
+    var x = document.createElement('span'); x.textContent = '×'; x.setAttribute('aria-hidden', 'true'); chip.appendChild(x);
+    chip.addEventListener('click', function(){
+      if(estadoModalTarefa.somenteLeitura) return;
+      estadoModalTarefa.responsaveisExtras.splice(estadoModalTarefa.responsaveisExtras.indexOf(id), 1);
+      renderizarOutrosResponsaveis(); renderizarChipsCompartilhar();
+    });
+    wrap.appendChild(chip);
+  });
+  var disponiveis = dadosColaboradores.filter(function(c){ return c.id !== principal && estadoModalTarefa.responsaveisExtras.indexOf(c.id) === -1 && (!idsQueVeemTarefas || idsQueVeemTarefas.indexOf(c.id) !== -1); });
+  sel.innerHTML = '<option value="">+ Adicionar responsável...</option>' + disponiveis.map(function(c){ return '<option value="' + escaparHtml(c.id) + '">' + escaparHtml(c.nome) + '</option>'; }).join('');
+  sel.value = '';
+  sel.disabled = !!estadoModalTarefa.somenteLeitura || !disponiveis.length;
+}
+document.getElementById('selectAddResponsavelExtra').addEventListener('change', function(){
+  if(!this.value || estadoModalTarefa.somenteLeitura) return;
+  var id = this.value;
+  estadoModalTarefa.responsaveisExtras.push(id);
+  estadoModalTarefa.compartilhar = estadoModalTarefa.compartilhar.filter(function(x){ return x !== id; });
+  renderizarOutrosResponsaveis(); renderizarChipsCompartilhar();
+});
 
 function fecharMenuCompartilharTarefa(){
   document.getElementById('menuCompartilharTarefa').classList.remove('aberto');
@@ -4013,7 +4089,7 @@ function renderizarChipsCompartilhar(){
   var wrap = document.getElementById('chipsCompartilharTarefa');
   var lista = document.getElementById('listaCompartilharTarefa');
   var responsavel = document.getElementById('selectResponsavelTarefa').value || usuarioLogadoId;
-  var pessoas = dadosColaboradores.filter(function(c){ return c.id !== usuarioLogadoId && c.id !== responsavel && (!idsQueVeemTarefas || idsQueVeemTarefas.indexOf(c.id) !== -1 || estadoModalTarefa.compartilhar.indexOf(c.id) !== -1); });
+  var pessoas = dadosColaboradores.filter(function(c){ return c.id !== usuarioLogadoId && c.id !== responsavel && estadoModalTarefa.responsaveisExtras.indexOf(c.id) === -1 && (!idsQueVeemTarefas || idsQueVeemTarefas.indexOf(c.id) !== -1 || estadoModalTarefa.compartilhar.indexOf(c.id) !== -1); });
   var focoId = lista.contains(document.activeElement) ? document.activeElement.getAttribute('data-id') : null;
   var busca = document.getElementById('buscaCompartilharTarefa').value;
   function normalizarNome(nome){ return nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim(); }
@@ -4146,10 +4222,12 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     estadoModalTarefa.anexos = tarefa.anexos.map(function(a){ return Object.assign({}, a); });
     estadoModalTarefa.comentarios = tarefa.comentarios.slice();
     estadoModalTarefa.compartilhar = (tarefa.compartilhadaCom || []).slice();
+    estadoModalTarefa.responsaveisExtras = (tarefa.responsaveisExtras || []).slice();
     estadoModalTarefa.somenteLeitura = !souDonoDaTarefa(tarefa);
     renderizarSubtarefasModal();
     renderizarAnexosModal();
     renderizarChipsCompartilhar();
+    renderizarOutrosResponsaveis();
     if(estadoModalTarefa.somenteLeitura){
       var dono = getColaborador(tarefa.criadoPorId) || getColaborador(tarefa.responsavelId);
       document.querySelector('#modalTarefa .modal-tf').classList.add('somente-leitura');
@@ -4527,6 +4605,7 @@ document.getElementById('btnSalvarTarefa').addEventListener('click', async funct
 
     var salva = tarefaDoBanco(r.data);
     salva.compartilhadaCom = await sincronizarCompartilhamentoTarefa(salva.id, tarefaExistente ? (tarefaExistente.compartilhadaCom || []) : [], estadoModalTarefa.compartilhar.filter(function(id){ return id !== responsavelId; }));
+    salva.responsaveisExtras = await sincronizarResponsaveisExtras(salva.id, tarefaExistente ? (tarefaExistente.responsaveisExtras || []) : [], estadoModalTarefa.responsaveisExtras.filter(function(id){ return id !== responsavelId; }));
     salva.anexos = await sincronizarAnexosTarefa(salva.id);
     salva.comentarios = estadoModalTarefa.comentarios.slice();
     if(tarefaExistente){
@@ -4714,7 +4793,7 @@ function atualizarListasDeFiltro(){
     });
     ativarOpcoesMultiCheck(listaEt);
   }
-  var nomesResponsaveis=Array.from(new Set(dadosColaboradores.map(function(c){return c.nome;}).concat(window.SAGA_TASKS.map(nomeResponsavelFiltroTarefa))));
+  var nomesResponsaveis=Array.from(new Set(dadosColaboradores.map(function(c){return c.nome;}).concat([].concat.apply([],window.SAGA_TASKS.map(nomesResponsaveisTarefa)))));
   reconstruirOpcoesMulti('listaMultiResponsavel', nomesResponsaveis.map(function(nome){
     var c=dadosColaboradores.find(function(c){return c.nome===nome;});
     return {valor:nome,prefixoHtml:'<div class="mini-avatar-filtro" style="background:'+(c?c.cor:'var(--muted)')+';">'+escaparHtml(c?c.iniciais:'?')+'</div>'+(nome?'':'Sem responsável')};
@@ -4775,6 +4854,7 @@ document.addEventListener('saga-atualizar', async function(){
 document.getElementById('selectResponsavelTarefa').addEventListener('change', function(){
   var resp = this.value;
   estadoModalTarefa.compartilhar = estadoModalTarefa.compartilhar.filter(function(id){ return id !== resp; });
+  renderizarOutrosResponsaveis();
   renderizarChipsCompartilhar();
 });
 

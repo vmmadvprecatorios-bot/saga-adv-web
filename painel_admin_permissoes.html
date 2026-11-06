@@ -524,23 +524,25 @@ function renderCollaborators(){
 
 // Autorizações individuais da Lista, independentes dos níveis dos módulos.
 const listaAutorizacoes=[
-  ['gerenciar_colunas','Pode criar e remover colunas da Lista'],
-  ['distribuir','Pode distribuir fichas da Captação']
+  ['processos','gerenciar_colunas','Pode criar e remover colunas da Lista'],
+  ['processos','distribuir','Pode distribuir fichas da Captação'],
+  ['tarefas','ver_todas_processo','Vê todas as tarefas ligadas a processo e intimação (mesmo as criadas por outras pessoas)']
 ];
-function listaConcedida(c,acao){
+function listaConcedida(c,modulo,acao){
   if(c.eh_administrador)return true;
-  const id=permId('processos',acao),extra=(c.excecoes||[]).find(ex=>ex.permissao_id===id);
+  const id=permId(modulo,acao),extra=(c.excecoes||[]).find(ex=>ex.permissao_id===id);
   return extra?extra.concedida:(_papPermMap[c.papel_id]||new Set()).has(id);
 }
 function listaChavinhas(c,canEdit){
-  return '<div style="margin-top:16px">'+listaAutorizacoes.map(([acao,nome])=>{
-    const id=permId('processos',acao);
-    return `<label style="display:flex;align-items:center;gap:10px;margin:12px 0"><input type="checkbox" role="switch" data-lista-acao="${acao}" ${listaConcedida(c,acao)?'checked':''} ${canEdit&&id?'':'disabled'}><span>${nome}${id?'':' (indisponível)'}</span></label>`;
+  return '<div style="margin-top:16px">'+listaAutorizacoes.map(([modulo,acao,nome])=>{
+    const id=permId(modulo,acao);
+    return `<label style="display:flex;align-items:center;gap:10px;margin:12px 0"><input type="checkbox" role="switch" data-lista-acao="${modulo}.${acao}" ${listaConcedida(c,modulo,acao)?'checked':''} ${canEdit&&id?'':'disabled'}><span>${nome}${id?'':' (indisponível)'}</span></label>`;
   }).join('')+'</div>';
 }
-async function salvarListaAutorizacao(c,acao,concedida){
+async function salvarListaAutorizacao(c,chave,concedida){
+  const [modulo,acao]=chave.split('.');
   if(!canManageFor(c))throw new Error('Sem autoridade para alterar esta permissão.');
-  const id=permId('processos',acao);if(!id)throw new Error('Permissão indisponível no cadastro.');
+  const id=permId(modulo,acao);if(!id)throw new Error('Permissão indisponível no cadastro.');
   const {error}=await _sb.from('usuarios_permissoes_extra').upsert({usuario_id:c.id,permissao_id:id,concedida,definido_por_id:_currentUser.id},{onConflict:'usuario_id,permissao_id'});
   if(error)throw error;
 }
@@ -566,7 +568,7 @@ async function openCollaborator(id){
 
   document.querySelectorAll('[data-lista-acao]').forEach(input=>input.addEventListener('change',async()=>{
     const previous=!input.checked;input.disabled=true;
-    try{await salvarListaAutorizacao(c,input.dataset.listaAcao,input.checked);await loadData();openCollaborator(c.id);showToast('Permissão da Lista atualizada.','success')}
+    try{await salvarListaAutorizacao(c,input.dataset.listaAcao,input.checked);await loadData();openCollaborator(c.id);showToast('Permissão atualizada.','success')}
     catch(err){input.checked=previous;input.disabled=!canEdit;showToast('Erro: '+esc(err.message),'error')}
   }));
   document.getElementById('changeProfile').addEventListener('change',async e=>{
