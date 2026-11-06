@@ -14,6 +14,8 @@
       .st-editor{display:grid;gap:9px;padding:12px;margin-top:8px;border:1px solid var(--border-soft);border-radius:10px;background:var(--panel-solid);font-size:12px}.st-editor label{font:inherit;color:var(--muted)}.st-editor input[type=text]{width:100%;min-width:0;box-sizing:border-box;padding:9px;border:1px solid var(--border-soft);border-radius:7px;background:var(--panel);color:var(--text);font:inherit}.st-editor label.st-ativo{display:flex;align-items:center;gap:7px}.st-ativo input{width:auto!important}
       .st-acoes{display:flex;flex-wrap:wrap;gap:6px}.st-acoes button,.st-gestao>button{padding:7px 10px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);font-size:11px}.st-erro{color:var(--danger);font-size:12px;overflow-wrap:anywhere}.st-gestao{display:grid;gap:12px;min-width:0}.st-grupo{padding:12px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel)}
       .st-registro{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:8px 0;min-width:0}.st-registro>span{flex:1;min-width:90px;overflow-wrap:anywhere}.st-registro.st-inativo>span{text-decoration:line-through;opacity:.5}.st-teses{padding-left:12px;border-left:2px solid var(--border-soft)}.st-gestao[aria-busy=true] button{pointer-events:none;opacity:.5}
+      /* Na barra de filtros a lista de opções abre por cima da tela (não empurra a busca nem o resto para baixo) */
+      .st-filtro .st-campo{position:relative}.st-filtro .st-menu{position:absolute;top:100%;left:0;min-width:100%;width:max-content;max-width:min(340px,90vw);z-index:400;box-shadow:0 14px 34px rgba(0,0,0,.38)}
       @keyframes stMola{from{opacity:0;transform:translateY(-5px) scale(.98)}to{opacity:1;transform:none}}@media(max-width:600px){.st-par{grid-template-columns:minmax(0,1fr)}.st-teses{padding-left:8px}.st-registro .st-acoes{width:100%}}@media (min-resolution:100000dppx){.st-menu{animation:none}}
     `;document.head.appendChild(s);
   }
@@ -109,7 +111,7 @@
     }
     function montar(root,op={}){
       montados.get(root)?.destruir();
-      estilos();root.classList.add('st-par');
+      estilos();root.classList.add('st-par');root.classList.toggle('st-filtro',!!op.filtro);
       root.innerHTML='<div class="st-area"></div><div class="st-tese"></div><div class="st-edicao" style="grid-column:1/-1"></div>';
       let teseId=null,areaId='*';
       const editorRoot=root.querySelector('.st-edicao');
