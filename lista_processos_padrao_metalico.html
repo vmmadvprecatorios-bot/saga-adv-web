@@ -1292,7 +1292,7 @@ function renderPainelAcomp(){
   var raiz=document.getElementById('painelAcompanhamento');if(!raiz||!window.SagaPaineis)return;
   if(!state.permissoes.visualizar||(FASE_FIXA!=='juridico'&&FASE_FIXA!=='captacao')){raiz.hidden=true;return;}
   var base=(state.baseProcessos||[]).filter(function(p){return processoNoEscopo(p,'painel');});
-  SagaPaineis.render(raiz,{fase:FASE_FIXA,base:base,statusDe:statusDoProcesso,
+  SagaPaineis.render(raiz,{fase:FASE_FIXA,base:base,statusDe:statusDoProcesso,admin:!!state.admin,
     pessoaDe:function(p){return FASE_FIXA==='captacao'?p.captador_id:p.responsavel_id;},nomeDe:nomeUsuarioPainel,
     abrir:function(id){verFicha(id);},
     aoMudar:function(){state.page=1;if(state.view==='kanban')renderKanban();else renderLista();}});

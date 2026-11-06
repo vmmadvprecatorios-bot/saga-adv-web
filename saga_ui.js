@@ -875,6 +875,7 @@
     mencao:{titulo:'Menção'},
     nota_compartilhada:{titulo:'Nota compartilhada',tela:'notas.html'},
     retorno_captacao:{titulo:'Retornos de hoje',tela:'lista_processos_padrao_metalico.html?fase=captacao'},
+    processo_parado:{titulo:'Processo parado',tela:'lista_processos_padrao_metalico.html?fase=juridico'},
     tarefa_hoje:{titulo:'Tarefa para hoje',tela:'minhas_tarefas.html'},
     tarefa_atrasada:{titulo:'Tarefa atrasada',tela:'minhas_tarefas.html'},
     compromisso_hoje:{titulo:'Compromisso hoje',tela:'calendario_padrao_metalico.html'},
@@ -899,6 +900,7 @@
     {chave:'intimacoes',titulo:'Intimações',tipos:['movimentacao_cnj'],tela:'monitoramento_multi_oab.html',um:'intimação nova',varios:'intimações novas',cor:'#14b8a6'},
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
     {chave:'captacao',titulo:'Captação',tipos:['distribuicao','retorno_captacao'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
+    {chave:'parados',titulo:'Processos parados',tipos:['processo_parado'],tela:'lista_processos_padrao_metalico.html?fase=juridico',um:'processo parado',varios:'processos parados',cor:'#d6452d'},
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];

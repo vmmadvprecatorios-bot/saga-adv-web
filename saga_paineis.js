@@ -82,6 +82,12 @@
       '.pn-lin span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px}',
       '.pn-chip{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);border:1px solid color-mix(in srgb,var(--c) 38%,transparent);white-space:nowrap}',
       '.pn-vazio{font-size:12px;color:var(--muted);padding:10px 4px}',
+      '.pn-auto{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 2px;font-size:11px;color:var(--muted)}.pn-auto[hidden]{display:none}.pn-auto b{color:var(--text);font-weight:700}.pn-auto .pn-dot{width:7px;height:7px;border-radius:50%;background:var(--c,#8a94a8);flex:0 0 auto}.pn-auto>span:not(.pn-dot){flex:1;min-width:0}',
+      '.pn-aj{font:inherit;font-size:11px;font-weight:600;color:var(--gold-light);background:none;border:0;text-decoration:underline;cursor:pointer;padding:2px}',
+      '.pn-form{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:8px 0 4px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 3%,transparent)}.pn-form[hidden]{display:none}',
+      '.pn-form label{display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}.pn-form input[type=text]{width:84px;height:34px;padding:0 10px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:13px}',
+      '.pn-form .pn-chk{flex-direction:row;align-items:center;gap:6px;height:34px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--text);font-weight:600}',
+      '.pn-form button{height:34px;padding:0 14px;border-radius:8px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.pn-salvar{background:var(--gold);color:#fff;border:0}.pn-cancelar{background:none;border:1px solid var(--border-soft);color:var(--text)}.pn-form button:active{transform:scale(.96)}',
       '.pn-mais{display:none;width:100%;margin-top:6px;font:inherit;font-size:11.5px;font-weight:600;color:var(--gold-light);padding:8px;border:1px dashed var(--border-soft);border-radius:9px;background:none;cursor:pointer}.pn-mais:active{transform:scale(.98)}',
       '@media(max-width:760px){.pn-secao{padding:12px}.pn-cab{gap:6px 10px}.pn-cab h3{flex:1}.pn-cab p{order:3;flex:1 1 100%;min-width:0;font-size:10.5px}.pn-lin{grid-template-columns:10px minmax(0,1fr) auto;padding:7px 6px}.pn-lin span{display:none}.pn-corpo .sr-graficos{display:flex}.pn-corpo .sr-graf{flex-basis:88%}.pn-corpo .sr-graf-corpo{height:auto;min-height:150px}.pn-corpo .sr-leg-lista{max-height:190px}.pn-lista:not(.pn-todos) .pn-lin:nth-of-type(n+6){display:none}.pn-mais{display:block}}'
     ].join('\n');document.head.appendChild(s);
@@ -90,7 +96,7 @@
   function montar(raiz){
     estilos();
     raiz.classList.add('pn-secao');
-    raiz.innerHTML='<div class="pn-cab"><h3></h3><p></p><button type="button" class="pn-tog"></button></div><div class="pn-corpo" id="pnCorpo"><div id="pnRoscas"></div><div class="pn-lista" id="pnLista"></div></div>';
+    raiz.innerHTML='<div class="pn-cab"><h3></h3><p></p><button type="button" class="pn-tog"></button></div><div class="pn-auto" id="pnAuto" hidden></div><div class="pn-form" id="pnForm" hidden></div><div class="pn-corpo" id="pnCorpo"><div id="pnRoscas"></div><div class="pn-lista" id="pnLista"></div></div>';
     S.roscas=global.SagaRoscas.criar(raiz.querySelector('#pnRoscas'),{chave:'saga-painel-acomp-roscas',rotulo:'Gráficos do painel',semBarra:true});
     raiz.querySelector('.pn-tog').onclick=function(){
       S.ocultos=!S.ocultos;try{localStorage.setItem('saga-painel-acomp-oculto',S.ocultos?'1':'0');}catch(e){}
@@ -120,6 +126,7 @@
     raiz.querySelector('p').textContent=cap?'Datas de retorno combinadas com os clientes. Clique em uma fatia para filtrar a lista.':'Há quanto tempo cada processo está sem movimentação (intimação, comentário, tarefa, documento ou mudança de status). Clique em uma fatia para filtrar.';
     var tog=raiz.querySelector('.pn-tog');tog.textContent=S.ocultos?'Mostrar painel':'Ocultar painel';
     var corpo=raiz.querySelector('#pnCorpo');if(!corpo._recolhendo)corpo.hidden=S.ocultos;
+    renderAuto(raiz,cfg);
 
     var base=(cfg.base||[]).filter(conta);
     // contagem por faixa: respeita os outros filtros da tela, mas não a faixa escolhida (para ver todas as fatias)
@@ -151,6 +158,39 @@
         return '<button type="button" class="pn-lin" data-pid="'+esc(p.id)+'" style="--c:'+f.cor+'"><i></i><b>'+esc(pe.nome_completo||'Sem nome')+'</b><span>'+esc(st.nome||'')+'</span><span>'+esc(cfg.nomeDe(cfg.pessoaDe(p))||'')+(cap&&dataDe(p)?' · '+dataBR(dataDe(p)):'')+'</span><em class="pn-chip" style="--c:'+f.cor+';font-style:normal">'+esc(rotuloData(p))+'</em></button>';
       }).join('')+(itens.length>5?'<button type="button" class="pn-mais" data-pn-mais>'+(box.classList.contains('pn-todos')?'Mostrar menos':'Ver todos ('+itens.length+')')+'</button>':''):'<div class="pn-vazio">'+(cap?'Nenhum retorno com data neste filtro.':'Nenhum processo com data de movimentação neste filtro.')+'</div>');
   }
+  // Cobrança automática (bloco 96): tarefa "Dar impulso processual" + aviso no sino quando passa do limite
+  function renderAuto(raiz,cfg){
+    var el=raiz.querySelector('#pnAuto'),form=raiz.querySelector('#pnForm');
+    if(ehCap()||!global._sb){el.hidden=true;form.hidden=true;return;}
+    if(!S.auto&&!S.autoPedido){S.autoPedido=true;global._sb.rpc('parados_config').then(function(r){S.autoPedido=false;if(!r.error&&r.data){S.auto=r.data;renderAuto(raiz,S.cfg);}},function(){S.autoPedido=false;});}
+    if(!S.auto){el.hidden=true;return;}
+    var a=S.auto;el.hidden=false;
+    el.innerHTML='<span class="pn-dot" style="--c:'+(a.ativo?'#3fb98a':'#8a94a8')+'"></span><span>'+(a.ativo?'Cobrança automática: com <b>'+a.dias+' dias</b> parado, o responsável recebe a tarefa "Dar impulso processual" e um aviso no sino (repete a cada '+a.repetir+' dias).':'Cobrança automática de processos parados <b>desligada</b>.')+'</span>'+
+      (cfg&&cfg.admin?'<button type="button" class="pn-aj">Ajustar</button>':'');
+    var bt=el.querySelector('.pn-aj');if(bt)bt.onclick=function(){abrirForm(raiz);};
+  }
+  function recolher(el,fechar){if(global.sagaRecolher)global.sagaRecolher(el,fechar);else el.hidden=fechar;}
+  function abrirForm(raiz){
+    var form=raiz.querySelector('#pnForm'),a=S.auto||{ativo:true,dias:60,repetir:30};
+    if(!form.hidden){recolher(form,true);return;}
+    form.innerHTML='<label class="pn-chk"><input type="checkbox" data-a'+(a.ativo?' checked':'')+'> Ligada</label>'+
+      '<label>Limite (dias parado)<input type="text" inputmode="numeric" maxlength="3" data-d value="'+a.dias+'"></label>'+
+      '<label>Repetir a cada (dias)<input type="text" inputmode="numeric" maxlength="3" data-r value="'+a.repetir+'"></label>'+
+      '<button type="button" class="pn-salvar">Salvar</button><button type="button" class="pn-cancelar">Cancelar</button>';
+    form.querySelectorAll('input[type=text]').forEach(function(i){i.oninput=function(){i.value=i.value.replace(/\D/g,'').slice(0,3);};});
+    form.querySelector('.pn-cancelar').onclick=function(){recolher(form,true);};
+    form.querySelector('.pn-salvar').onclick=function(){
+      var b=this,d=parseInt(form.querySelector('[data-d]').value,10),r=parseInt(form.querySelector('[data-r]').value,10);
+      b.disabled=true;
+      global._sb.rpc('parados_config_salvar',{p_ativo:form.querySelector('[data-a]').checked,p_dias:d,p_repetir:r}).then(function(res){
+        b.disabled=false;
+        if(res.error){aviso(res.error.message||'Não foi possível salvar.','danger');return;}
+        S.auto=res.data;recolher(form,true);renderAuto(raiz,S.cfg);aviso('Cobrança automática atualizada.','success');
+      },function(){b.disabled=false;aviso('Sem conexão. Tente de novo.','danger');});
+    };
+    recolher(form,false);
+  }
+  function aviso(msg,tipo){if(typeof global.showToast==='function')global.showToast(esc(msg),tipo);else alert(msg);}
   function limpar(){S.faixa=null;S.pessoa=null;}
   function ativo(){return !!(S.faixa||S.pessoa!==null);}
   global.SagaPaineis={render:render,passa:passa,limpar:limpar,ativo:ativo};
