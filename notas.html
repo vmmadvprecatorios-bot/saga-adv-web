@@ -105,6 +105,15 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .cores{display:flex;gap:7px;flex-wrap:wrap}
 .cores button{width:24px;height:24px;border-radius:50%;border:2px solid transparent;background:var(--c);transition:transform .15s}.cores button:hover{transform:scale(1.15)}.cores button.on{border-color:var(--text)}
 .cores button[data-cor=padrao]{background:var(--panel-solid);border:2px solid var(--border-soft)}.cores button[data-cor=padrao].on{border-color:var(--text)}
+.cor-btn{position:relative}
+.cor-btn>button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px;border-radius:9px;border:1px solid var(--border-soft);font-size:11px;font-weight:600;color:var(--muted);transition:border-color .15s,color .15s}
+.cor-btn>button:hover{border-color:var(--gold);color:var(--text)}
+.cor-btn .bola{width:11px;height:11px;border-radius:50%;background:var(--c,transparent);border:1px solid color-mix(in srgb,var(--text) 35%,transparent);flex:0 0 auto}
+.cor-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:150px;padding:5px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:0 14px 34px rgba(0,0,0,.4);display:none;flex-direction:column;gap:1px}
+.cor-menu.aberto{display:flex}
+.cor-menu button{display:flex;align-items:center;gap:9px;height:28px;padding:0 9px;border-radius:7px;font-size:11.5px;text-align:left;color:var(--text)}
+.cor-menu button:hover{background:color-mix(in srgb,var(--gold) 12%,transparent)}.cor-menu button.on{font-weight:700;background:color-mix(in srgb,var(--gold) 16%,transparent)}
+.cor-menu .bola{width:11px;height:11px}
 .etq-ed{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .etq-ed .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;border-radius:10px;padding:2px 4px 2px 10px;background:color-mix(in srgb,var(--text) 9%,transparent)}.etq-ed .chip button{width:18px;height:18px;color:var(--muted)}
 .etq-ed input{flex:1;min-width:130px;height:30px;border:0;border-bottom:1px solid var(--border-soft);background:transparent;font-size:12px;outline:0}
@@ -476,10 +485,10 @@ function abrirNota(n,tipo){
     '<div class="campo"><label for="edLink">Link do site</label><div class="linha"><input type="text" id="edLink" autocomplete="off" placeholder="https://..."><button class="mini" type="button" id="abrirLink">Abrir</button></div></div>'+
     '<div class="campo"><label for="edTexto">O que é (observações)</label><textarea id="edTexto" placeholder="Ex.: portal do tribunal, acesso do escritório..."></textarea></div>'+
     '<div class="aviso-senha">A senha fica criptografada no sistema. Se você compartilhar esta nota, quem receber poderá ver a senha.</div>';
-  var cores=dono?'<div class="campo"><label>Cor</label><div class="cores" id="edCores">'+CORES.map(function(c){return '<button type="button" data-cor="'+c[0]+'" title="'+c[1]+'" style="--c:'+(CORHEX[c[0]]||'transparent')+'" class="'+(e.cor===c[0]?'on':'')+'"></button>';}).join('')+'</div></div>':'';
+  var corBtn=dono?'<div class="cor-btn"><button type="button" id="corBtn" aria-haspopup="menu" aria-expanded="false" title="Cor da nota"><span class="bola" id="corBola" style="--c:'+(CORHEX[e.cor]||'transparent')+'"></span>Cor ▾</button><div class="cor-menu" id="corMenu" role="menu">'+CORES.map(function(c){return '<button type="button" role="menuitem" data-cor="'+c[0]+'" class="'+(e.cor===c[0]?'on':'')+'"><span class="bola" style="--c:'+(CORHEX[c[0]]||'transparent')+'"></span>'+c[1]+'</button>';}).join('')+'</div></div>':'';
   var etq=dono?'<div class="campo"><label>Etiquetas</label><div class="etq-ed" id="edEtq"></div></div>':'';
-  m.innerHTML='<div class="md-cab"><input type="text" id="edTitulo" placeholder="'+(e.tipo==='senha'?'Nome (ex.: Portal do TJAL)':'Título')+'" maxlength="200"'+(pode?'':' readonly')+'><span class="tipo" style="font-size:10px;font-weight:700;color:var(--muted)">'+TIPO_NOME[e.tipo].toUpperCase()+'</span></div>'+
-    '<div class="md-corpo">'+corpo+cores+etq+(pode?'':'<div class="somente-leitura-aviso">Você pode ver esta nota, mas não alterá-la.</div>')+'</div>'+
+  m.innerHTML='<div class="md-cab"><input type="text" id="edTitulo" placeholder="'+(e.tipo==='senha'?'Nome (ex.: Portal do TJAL)':'Título')+'" maxlength="200"'+(pode?'':' readonly')+'><span class="tipo" style="font-size:10px;font-weight:700;color:var(--muted)">'+TIPO_NOME[e.tipo].toUpperCase()+'</span>'+corBtn+'</div>'+
+    '<div class="md-corpo">'+corpo+etq+(pode?'':'<div class="somente-leitura-aviso">Você pode ver esta nota, mas não alterá-la.</div>')+'</div>'+
     '<div class="md-rod"><div class="esq">'+(dono&&!novo?'<button class="btn" type="button" id="btComp">👥 Compartilhar</button><button class="btn" type="button" id="btArq">'+(n.arquivada?'Desarquivar':'Arquivar')+'</button><button class="btn perigo" type="button" id="btDel">Apagar</button>':'')+(!dono?'<button class="btn" type="button" id="btSair">Parar de ver</button>':'')+'</div>'+
     '<div class="dir"><button class="btn" type="button" id="btFechar">'+(pode?'Cancelar':'Fechar')+'</button>'+(pode?'<button class="btn prim" type="button" id="btSalvar">Salvar</button>':'')+'</div></div>';
   $('edTitulo').value=e.titulo;
@@ -538,8 +547,17 @@ function ligarJanela(){
     itens.addEventListener('click',function(ev){var b=ev.target.closest('[data-rm]');if(b){e.itens.splice(+b.dataset.rm,1);e.sujo=true;desenharItens();}});
     $('edNovoItem').addEventListener('keydown',function(ev){if(ev.key!=='Enter')return;ev.preventDefault();var v=this.value.trim();if(!v)return;e.itens.push({texto:v,ok:false});this.value='';e.sujo=true;desenharItens();});
   }
-  var cores=$('edCores');
-  if(cores)cores.addEventListener('click',function(ev){var b=ev.target.closest('button[data-cor]');if(!b)return;e.cor=b.dataset.cor;e.sujo=true;m.dataset.cor=e.cor;cores.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});});
+  var cbtn=$('corBtn'),cmenu=$('corMenu');
+  if(cbtn){
+    var fechaMenu=function(){cmenu.classList.remove('aberto');cbtn.setAttribute('aria-expanded','false');};
+    cbtn.addEventListener('click',function(ev){ev.stopPropagation();var ab=cmenu.classList.toggle('aberto');cbtn.setAttribute('aria-expanded',String(ab));});
+    cmenu.addEventListener('click',function(ev){
+      var b=ev.target.closest('button[data-cor]');if(!b)return;ev.stopPropagation();
+      e.cor=b.dataset.cor;e.sujo=true;m.dataset.cor=e.cor;$('corBola').style.setProperty('--c',CORHEX[e.cor]||'transparent');
+      cmenu.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});fechaMenu();
+    });
+    m.addEventListener('click',function(ev){if(!ev.target.closest('.cor-btn'))fechaMenu();});
+  }
   var etq=$('edEtq');
   if(etq){
     etq.addEventListener('click',function(ev){
