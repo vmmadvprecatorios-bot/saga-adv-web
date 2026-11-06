@@ -315,6 +315,11 @@
     border-radius:14px; padding:15px 17px;
   }
   .card-kpi-tarefa.kpi-atrasadas{ border-color:color-mix(in srgb,var(--danger) 30%,transparent); background:color-mix(in srgb,var(--danger) 5%,transparent); }
+  .kpi-filtro{ font:inherit; color:inherit; text-align:left; cursor:pointer; transition:transform .15s, border-color .15s, box-shadow .15s; }
+  .kpi-filtro:hover{ border-color:var(--gold); }
+  .kpi-filtro:active{ transform:scale(.97); }
+  .kpi-filtro.ativo{ border-color:var(--gold); box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 38%,transparent); }
+  .kpi-filtro:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .kpi-tarefa-valor{ font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:700; color:var(--text); }
   .card-kpi-tarefa.kpi-atrasadas .kpi-tarefa-valor{ color:var(--danger); }
   .kpi-tarefa-label{ font-size:10.5px; color:var(--muted); margin-top:3px; }
@@ -1754,22 +1759,22 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
 
     <!-- ===== RESUMO/KPIs DE TAREFAS ===== -->
     <div class="grid-kpis-tarefas">
-      <div class="card-kpi-tarefa">
+      <button type="button" class="card-kpi-tarefa kpi-filtro" data-faixa="total" aria-pressed="false" title="Clique para filtrar">
         <div class="kpi-tarefa-valor" id="kpiTotalTarefas">0</div>
         <div class="kpi-tarefa-label">Total de Tarefas</div>
-      </div>
-      <div class="card-kpi-tarefa">
+      </button>
+      <button type="button" class="card-kpi-tarefa kpi-filtro" data-faixa="andamento" aria-pressed="false" title="Clique para filtrar">
         <div class="kpi-tarefa-valor" id="kpiEmAndamento">0</div>
         <div class="kpi-tarefa-label">Em Andamento</div>
-      </div>
-      <div class="card-kpi-tarefa kpi-atrasadas">
+      </button>
+      <button type="button" class="card-kpi-tarefa kpi-filtro kpi-atrasadas" data-faixa="atrasadas" aria-pressed="false" title="Clique para filtrar">
         <div class="kpi-tarefa-valor" id="kpiAtrasadas">0</div>
         <div class="kpi-tarefa-label">Atrasadas</div>
-      </div>
-      <div class="card-kpi-tarefa">
+      </button>
+      <button type="button" class="card-kpi-tarefa kpi-filtro" data-faixa="concluidas" aria-pressed="false" title="Clique para filtrar">
         <div class="kpi-tarefa-valor" id="kpiConcluidasHoje">0</div>
         <div class="kpi-tarefa-label">Concluidas Hoje</div>
-      </div>
+      </button>
     </div>
 
     <div class="tr-linha-graficos">
@@ -2690,7 +2695,7 @@ var mapaChaveFiltroSimples = { dropFiltroTipo:'tipo', dropFiltroStatus:'status',
 });
 
 /* ===== Filtros multi-select: Tribunal, Fase, Responsavel ===== */
-var filtrosAtivos = { visao:'Todas', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
+var filtrosAtivos = { faixa:'', visao:'Todas', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
 
 function montarListaMultiResponsavel(){
   var container = document.getElementById('listaMultiResponsavel');
@@ -2769,7 +2774,7 @@ document.getElementById('btnTogglePainelFiltros').addEventListener('click', func
 });
 
 document.getElementById('btnLimparFiltrosTarefas').addEventListener('click', function(){
-  filtrosAtivos = { tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
+  filtrosAtivos = { faixa:'', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
   document.querySelectorAll('.painel-filtros-expandido .opcao-multi-check').forEach(function(o){ o.classList.remove('marcada'); });
   document.getElementById('textoFiltroEtiqueta').textContent = 'Todas as etiquetas';
   document.getElementById('textoFiltroTribunal').textContent = 'Todos os tribunais';
@@ -2793,6 +2798,8 @@ function renderizarChipsFiltros(){
   var container = document.getElementById('chipsFiltrosAtivos');
   container.innerHTML = '';
   var chips = [];
+  var rotFaixa = { total:'Total de tarefas', andamento:'Em andamento', atrasadas:'Atrasadas', concluidas:'Concluídas hoje' };
+  if(filtrosAtivos.faixa) chips.push({ label:'Painel: ' + rotFaixa[filtrosAtivos.faixa], limpar:function(){ filtrosAtivos.faixa=''; } });
   if(filtrosAtivos.tipo !== 'Todas') chips.push({ label:'Tipo: ' + filtrosAtivos.tipo, limpar:function(){ resetarDropdownSimples('dropFiltroTipo','Tipo'); filtrosAtivos.tipo='Todas'; } });
   if(filtrosAtivos.status !== 'Todos') chips.push({ label:'Status: ' + filtrosAtivos.status, limpar:function(){ resetarDropdownSimples('dropFiltroStatus','Status'); filtrosAtivos.status='Todos'; } });
   if(filtrosAtivos.prioridade !== 'Todas') chips.push({ label:'Prioridade: ' + filtrosAtivos.prioridade, limpar:function(){ resetarDropdownSimples('dropFiltroPrioridade','Prioridade'); filtrosAtivos.prioridade='Todas'; } });
@@ -2844,6 +2851,11 @@ function desmarcarOpcaoMulti(idLista, valor){
 ===================================================================== */
 
 function tarefaPassaFiltros(t, ignorar){
+  // Faixa de números do topo (Total, Em andamento, Atrasadas, Concluídas hoje)
+  var fx = filtrosAtivos.faixa;
+  if(fx === 'andamento' && t.status !== 'em_andamento') return false;
+  if(fx === 'atrasadas' && !tarefaEstaAtrasada(t)) return false;
+  if(fx === 'concluidas' && !(t.status === 'concluida' && t.dataConclusao === hojeISO())) return false;
   // Visao: minhas (sou o responsavel), recebidas de outros, ou que eu atribui a outros
   var outroCriou = t.criadoPorId && t.criadoPorId !== usuarioLogadoId;
   if(filtrosAtivos.visao === 'Minhas' && !souResponsavelDaTarefa(t)) return false;
@@ -3006,11 +3018,24 @@ document.getElementById('graficosTarefas').addEventListener('keydown',function(e
 
 function atualizarKpisTarefas(){
   var todas = window.SAGA_TASKS;
+  document.querySelectorAll('.kpi-filtro').forEach(function(b){
+    var lig = filtrosAtivos.faixa === b.getAttribute('data-faixa');
+    b.classList.toggle('ativo', lig); b.setAttribute('aria-pressed', lig ? 'true' : 'false');
+    b.title = lig ? 'Clique para tirar o filtro' : 'Clique para filtrar';
+  });
   document.getElementById('kpiTotalTarefas').textContent = todas.length;
   document.getElementById('kpiEmAndamento').textContent = todas.filter(function(t){ return t.status === 'em_andamento'; }).length;
   document.getElementById('kpiAtrasadas').textContent = todas.filter(function(t){ return tarefaEstaAtrasada(t); }).length;
   document.getElementById('kpiConcluidasHoje').textContent = todas.filter(function(t){ return t.status === 'concluida' && t.dataConclusao === hojeISO(); }).length;
 }
+
+document.querySelector('.grid-kpis-tarefas').addEventListener('click', function(e){
+  var b = e.target.closest('[data-faixa]'); if(!b) return;
+  var k = b.getAttribute('data-faixa');
+  // "Total" mostra tudo: tira o filtro da faixa; os outros alternam
+  filtrosAtivos.faixa = (k === 'total' || filtrosAtivos.faixa === k) ? '' : k;
+  aplicarFiltrosERenderizar();
+});
 
 function aplicarFiltrosERenderizar(){
   renderizarChipsFiltros();
@@ -3381,12 +3406,13 @@ function criarCardTarefaEl(tarefa){
 function criarArquivoConcluidasColuna(colunaId, tarefasConcluidas){
   if(tarefasConcluidas.length === 0) return null;
   var arquivo = document.createElement('div');
-  arquivo.className = 'arquivo-coluna-kanban' + (colunasConcluidasExpandidas[colunaId] ? ' aberto' : '');
+  var abrirConcl = !!colunasConcluidasExpandidas[colunaId] || filtrosAtivos.faixa === 'concluidas';
+  arquivo.className = 'arquivo-coluna-kanban' + (abrirConcl ? ' aberto' : '');
 
   var botao = document.createElement('button');
   botao.type = 'button';
   botao.className = 'btn-ver-concluidas-coluna';
-  botao.innerHTML = '<span>' + (colunasConcluidasExpandidas[colunaId] ? 'Ocultar' : 'Ver') + ' tarefas concluidas (' + tarefasConcluidas.length + ')</span><span class="seta-arquivo"></span>';
+  botao.innerHTML = '<span>' + (abrirConcl ? 'Ocultar' : 'Ver') + ' tarefas concluidas (' + tarefasConcluidas.length + ')</span><span class="seta-arquivo"></span>';
   botao.addEventListener('click', function(e){
     e.stopPropagation();
     colunasConcluidasExpandidas[colunaId] = !colunasConcluidasExpandidas[colunaId];
