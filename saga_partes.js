@@ -4,7 +4,7 @@
    Uso: SagaPartes.render({sb, raiz, processoId, podeEditar, podeEditarDados, aoMudar, pessoaAtualId}) */
 (function(global){
   'use strict';
-  var S={sb:null,cfg:null,partes:[],papeis:[],pessoas:{},carregando:0,estilos:false};
+  var S={sb:null,cfg:null,modo:'unico',partes:[],papeis:[],pessoas:{},carregando:0,estilos:false};
   var esc=function(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML;};
   var cpfFmt=function(c){var d=String(c||'').replace(/\D/g,'');return d.length===11?d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):d.length===14?d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'):(c||'');};
   var pct=function(v){return v==null?'':String(Number(v)).replace('.',',')+'%';};
@@ -22,7 +22,10 @@
       '.pt-add:hover{background:color-mix(in srgb,var(--gold) 8%,transparent)}'+
       '.pt-res{max-height:170px;overflow-y:auto;border:1px solid var(--border-soft);border-radius:9px;margin-top:4px}.pt-res button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:transparent;color:var(--text);font:inherit;font-size:11.5px;cursor:pointer}.pt-res button:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}'+
       '.pt-sel{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:9px;background:color-mix(in srgb,var(--gold) 10%,transparent);font-size:12px}'+
-      '.pt-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}';
+      '.pt-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}'+
+      '.pt-modo{display:flex;align-items:center;gap:8px;margin:2px 0 8px;font-size:10.5px;color:var(--muted)}.pt-modo .seg{display:inline-flex;border:1px solid var(--border-soft);border-radius:9px;overflow:hidden}.pt-modo .seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:10.5px;font-weight:700;padding:5px 10px;cursor:pointer}.pt-modo .seg button.on{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold-light)}'+
+      '.pt-docs{display:flex;flex-direction:column;gap:5px;margin-top:4px}.pt-doc{display:flex;align-items:center;gap:7px;font-size:11.5px}.pt-doc input[type=checkbox]{width:auto;height:auto;margin:0}.pt-doc span{flex:1;overflow-wrap:anywhere}.pt-doc.ok span{text-decoration:line-through;color:var(--muted)}.pt-doc button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0 4px}.pt-sug{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.pt-sug button{border:1px dashed var(--border-soft);background:transparent;color:var(--muted);border-radius:8px;font:inherit;font-size:10px;padding:3px 8px;cursor:pointer}.pt-sug button:hover{color:var(--gold-light);border-color:var(--gold)}'+
+      '.pt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pt-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 9px;border-radius:9px;background:color-mix(in srgb,var(--gold) 10%,transparent);font-size:11px}.pt-chip button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0 4px}';
     document.head.appendChild(s);
   }
 
@@ -30,8 +33,10 @@
     var c=S.cfg,sb=S.sb;
     var pa=await sb.from('etiquetas_catalogo').select('id,nome,cor,ordem').eq('categoria','papel_parte').eq('ativo',true).order('ordem');
     S.papeis=pa.data||[];
-    var r=await sb.from('processos_partes').select('id,pessoa_id,papel_id,herdeiro_de_id,principal,quota,percentual_honorarios,observacao,ordem').eq('processo_id',c.processoId).eq('ativo',true).order('ordem');
+    var r=await sb.from('processos_partes').select('id,pessoa_id,papel_id,herdeiro_de_id,principal,quota,percentual_honorarios,documentos,observacao,ordem').eq('processo_id',c.processoId).eq('ativo',true).order('ordem');
     S.partes=r.error?[]:(r.data||[]);
+    var rm=await sb.from('processos').select('contrato_modo').eq('id',c.processoId).maybeSingle();
+    S.modo=(rm.data&&rm.data.contrato_modo)||'unico';
     var ids=Array.from(new Set(S.partes.map(function(p){return p.pessoa_id;})));
     S.pessoas={};
     if(ids.length){var rp=await sb.from('pessoas').select('id,nome_completo,cpf,situacao_vital').in('id',ids);(rp.data||[]).forEach(function(p){S.pessoas[p.id]=p;});}
@@ -46,6 +51,7 @@
       if(p.herdeiro_de_id)subs.push('herdeiro de '+nomeDe(p.herdeiro_de_id));
       if(p.quota!=null)subs.push('quota '+pct(p.quota));
       if(p.percentual_honorarios!=null)subs.push('honorários '+pct(p.percentual_honorarios)+' (diferente do processo)');
+      var docs=Array.isArray(p.documentos)?p.documentos:[];if(docs.length)subs.push('documentos '+docs.filter(function(d){return d.ok;}).length+'/'+docs.length);
       var pes=S.pessoas[p.pessoa_id]||{};if(pes.cpf)subs.push(cpfFmt(pes.cpf));
       var atual=c.pessoaAtualId&&c.pessoaAtualId===p.pessoa_id;
       var nome=atual?'<span class="pt-nome">'+esc(nomeDe(p.pessoa_id))+' (esta ficha)</span>':'<a class="pt-nome" href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(p.pessoa_id)+'&processo_id='+encodeURIComponent(c.processoId)+'">'+esc(nomeDe(p.pessoa_id))+'</a>';
@@ -55,11 +61,20 @@
         (c.podeEditar?'<div class="pt-acoes"><button type="button" data-ed="'+esc(p.id)+'" title="Editar" aria-label="Editar parte">✎</button>'+(p.principal?'':'<button type="button" data-rm="'+esc(p.id)+'" title="Retirar do processo" aria-label="Retirar do processo">✕</button>')+'</div>':'')+'</div>';
     }).join('');
     c.raiz.innerHTML='<div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="9" r="2.4" stroke="currentColor" stroke-width="1.5"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15 15c3 0 6 1.7 6 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Partes do processo ('+S.partes.length+')</div>'+
+      (S.partes.length>1?'<div class="pt-modo"><span>Contrato:</span>'+(c.podeEditar?'<span class="seg"><button type="button" data-modo="unico" class="'+(S.modo==='unico'?'on':'')+'">Único</button><button type="button" data-modo="por_parte" class="'+(S.modo==='por_parte'?'on':'')+'">Um por herdeiro</button></span>':'<b>'+(S.modo==='por_parte'?'um por herdeiro':'único')+'</b>')+'</div>':'')+
       (linhas||'<div class="pt-vazio">Nenhuma parte cadastrada.</div>')+
       (c.podeEditar?'<button type="button" class="pt-add" id="ptAdd">+ Adicionar herdeiro ou parte</button>':'');
     c.raiz.querySelectorAll('[data-ed]').forEach(function(b){b.onclick=function(){janela(S.partes.find(function(p){return p.id===b.dataset.ed;}));};});
     c.raiz.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){retirar(b.dataset.rm);};});
+    c.raiz.querySelectorAll('[data-modo]').forEach(function(b){b.onclick=function(){mudarModo(b.dataset.modo);};});
     var add=c.raiz.querySelector('#ptAdd');if(add)add.onclick=function(){janela(null);};
+  }
+
+  async function mudarModo(m){
+    if(m===S.modo)return;
+    var r=await S.sb.rpc('processo_contrato_modo_salvar',{p_processo_id:S.cfg.processoId,p_modo:m});
+    if(r.error){aviso(r.error.message||'Não foi possível mudar o contrato.',true);return;}
+    S.modo=m;desenhar();aviso(m==='por_parte'?'Contrato: um por herdeiro.':'Contrato: único para todas as partes.');
   }
 
   async function retirar(id){
@@ -91,11 +106,25 @@
       '<div class="pt-2"><div class="form-field"><label>Papel</label>'+menu('ptPapel',valPap,optPap)+'</div><div class="form-field"><label>Herdeiro de</label>'+menu('ptDe',valDe,optDe)+'</div></div>'+
       '<div class="pt-2"><div class="form-field"><label for="ptQuota">Quota-parte % (opcional)</label><input type="text" id="ptQuota" inputmode="decimal" placeholder="Ex.: 25" value="'+(edit&&parte.quota!=null?esc(String(parte.quota).replace('.',',')):'')+'"></div>'+
       (c.podeEditarDados?'<div class="form-field"><label for="ptPct">Honorários % (só se diferente)</label><input type="text" id="ptPct" inputmode="decimal" placeholder="igual ao do processo" value="'+(edit&&parte.percentual_honorarios!=null?esc(String(parte.percentual_honorarios).replace('.',',')):'')+'"></div>':'<div></div>')+'</div>'+
+      '<div class="form-field"><label>Documentos desta pessoa</label><div class="pt-docs" id="ptDocs"></div><div style="display:flex;gap:6px;margin-top:6px"><input type="text" id="ptDocNovo" placeholder="Novo documento (Enter para incluir)"></div><div class="pt-sug" id="ptSug"></div></div>'+
       '<div class="form-field"><label for="ptObs">Observação</label><input type="text" id="ptObs" value="'+(edit&&parte.observacao?esc(parte.observacao):'')+'"></div>'+
       '<div id="ptErro" style="color:var(--danger);font-size:11px;min-height:14px"></div></div>'+
       '<div class="modal-foot"><button class="btn-secondary" data-fechar type="button">Cancelar</button><button class="btn-primary" id="ptSalvar" type="button">Salvar</button></div></div>';
     document.body.appendChild(ov);
     if(temCustom)global.bindCustomSelects(ov);
+    var docs=(edit&&Array.isArray(parte.documentos)?parte.documentos:[]).map(function(d){return {nome:d.nome,ok:!!d.ok,obs:d.obs||''};});
+    var SUG=['RG e CPF','Comprovante de residência','Certidão de óbito','Certidão de casamento','Procuração assinada','Contrato assinado','Declaração de herdeiros'];
+    var desenharDocs=function(){
+      var box=ov.querySelector('#ptDocs');
+      box.innerHTML=docs.length?docs.map(function(d,i){return '<label class="pt-doc'+(d.ok?' ok':'')+'"><input type="checkbox" data-i="'+i+'"'+(d.ok?' checked':'')+'><span>'+esc(d.nome)+'</span><button type="button" data-x="'+i+'" aria-label="Remover documento">✕</button></label>';}).join(''):'<div class="pt-vazio">Nenhum documento na lista.</div>';
+      box.querySelectorAll('input[data-i]').forEach(function(ch){ch.onchange=function(){docs[+ch.dataset.i].ok=ch.checked;desenharDocs();};});
+      box.querySelectorAll('button[data-x]').forEach(function(b){b.onclick=function(e){e.preventDefault();docs.splice(+b.dataset.x,1);desenharDocs();};});
+      var sug=ov.querySelector('#ptSug'),usados=docs.map(function(d){return d.nome;});
+      sug.innerHTML=SUG.filter(function(n){return usados.indexOf(n)<0;}).map(function(n){return '<button type="button" data-s="'+esc(n)+'">+ '+esc(n)+'</button>';}).join('');
+      sug.querySelectorAll('button').forEach(function(b){b.onclick=function(){docs.push({nome:b.dataset.s,ok:false,obs:''});desenharDocs();};});
+    };
+    desenharDocs();
+    ov.querySelector('#ptDocNovo').addEventListener('keydown',function(e){if(e.key!=='Enter')return;e.preventDefault();var v=this.value.trim();if(v){docs.push({nome:v,ok:false,obs:''});this.value='';desenharDocs();}});
     var fechar=function(){ov.remove();};
     ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('[data-fechar]'))fechar();});
     var q=function(id){return ov.querySelector('#'+id);};
@@ -118,7 +147,7 @@
     }
     q('ptSalvar').onclick=async function(){
       var erro=q('ptErro');erro.textContent='';
-      var dados={papel_id:q('ptPapel').value||null,herdeiro_de_id:q('ptDe').value||null,quota:q('ptQuota').value.trim().replace(',','.')||null,observacao:q('ptObs').value.trim()||null};
+      var dados={papel_id:q('ptPapel').value||null,herdeiro_de_id:q('ptDe').value||null,documentos:docs,quota:q('ptQuota').value.trim().replace(',','.')||null,observacao:q('ptObs').value.trim()||null};
       if(c.podeEditarDados){var h=q('ptPct').value.trim().replace(',','.');dados.percentual_honorarios=h||null;}
       if(edit)dados.id=parte.id;
       else if(escolhida)dados.pessoa_id=escolhida.id;
@@ -144,5 +173,62 @@
     if(minha!==S.carregando)return;
     desenhar();
   }
-  global.SagaPartes={render:render};
+  // ---------- seletor de várias pessoas (Novo processo) ----------
+  // SagaPartes.seletor({sb, raiz, podeCriar}) -> {itens(): [...]}; SagaPartes.salvarLote(sb, processoId, itens) -> nº de falhas
+  async function seletor(cfg){
+    estilos();
+    var sb=cfg.sb,raiz=cfg.raiz,itens=[],papeis=[],papelSel='';
+    var pa=await sb.from('etiquetas_catalogo').select('id,nome').eq('categoria','papel_parte').eq('ativo',true).order('ordem');
+    papeis=pa.data||[];
+    var herd=papeis.find(function(p){return /herdeir/i.test(p.nome);});papelSel=herd?herd.id:'';
+    var temCustom=typeof global.customSelectMarkup==='function'&&typeof global.bindCustomSelects==='function';
+    var opts=[['','— sem papel —']].concat(papeis.map(function(p){return [p.id,p.nome];}));
+    raiz.innerHTML='<label>Outros clientes ou herdeiros deste processo (opcional)</label>'+
+      '<div class="pt-2"><div><input type="text" id="psBusca" placeholder="Buscar por nome ou CPF..." autocomplete="off"></div><div id="psPapelBox">'+(temCustom?global.customSelectMarkup('psPapel',papelSel,opts):'<div class="pt-sug" id="psPapelBt" style="margin-top:0">'+papeis.map(function(p){return '<button type="button" data-p="'+esc(p.id)+'">'+esc(p.nome)+'</button>';}).join('')+'</div>')+'</div></div>'+
+      '<div class="pt-res" id="psRes" hidden></div>'+
+      (cfg.podeCriar?'<button type="button" class="pt-add" id="psNova" style="margin-top:6px">+ Cadastrar nova pessoa</button><div id="psNovaBox" hidden style="margin-top:8px"><div class="pt-2"><input type="text" id="psNome" placeholder="Nome completo"><input type="text" id="psCpf" inputmode="numeric" maxlength="18" placeholder="CPF (opcional)"></div><button type="button" class="pt-add" id="psNovaOk" style="margin-top:6px">Incluir na lista</button></div>':'')+
+      '<div class="pt-chips" id="psChips"></div>';
+    if(temCustom)global.bindCustomSelects(raiz);
+    var q=function(id){return raiz.querySelector('#'+id);};
+    var papelAtual=function(){var e=q('psPapel');return e?e.value||null:(papelSel||null);};
+    var bts=q('psPapelBt');
+    if(bts){var marca=function(){bts.querySelectorAll('button').forEach(function(b){var on=b.dataset.p===papelSel;b.style.color=on?'var(--gold-light)':'';b.style.borderColor=on?'var(--gold)':'';});};marca();bts.querySelectorAll('button').forEach(function(b){b.onclick=function(){papelSel=papelSel===b.dataset.p?'':b.dataset.p;marca();};});}
+    var nomePapel=function(id){var p=papeis.find(function(x){return x.id===id;});return p?p.nome:'';};
+    var chips=function(){
+      var box=q('psChips');
+      box.innerHTML=itens.map(function(it,i){return '<span class="pt-chip"><b>'+esc(it.nome)+'</b>'+(it.papel_id?'<span style="color:var(--muted)">'+esc(nomePapel(it.papel_id))+'</span>':'')+'<button type="button" data-x="'+i+'" aria-label="Tirar">✕</button></span>';}).join('');
+      box.querySelectorAll('button').forEach(function(b){b.onclick=function(){itens.splice(+b.dataset.x,1);chips();};});
+    };
+    var t=null;
+    q('psBusca').addEventListener('input',function(){
+      var v=this.value.trim();clearTimeout(t);
+      if(v.length<2){q('psRes').hidden=true;return;}
+      t=setTimeout(async function(){
+        var dig=v.replace(/\D/g,'');
+        var f='nome_completo.ilike.%'+v.replace(/[%,()]/g,' ')+'%'+(dig.length>=3?',cpf.ilike.%'+dig+'%':'');
+        var r=await sb.from('pessoas').select('id,nome_completo,cpf').or(f).limit(8);
+        var l=(r.data||[]).filter(function(p){return !(cfg.excluir||[]).includes(p.id)&&!itens.some(function(i){return i.pessoa_id===p.id;});});
+        var box=q('psRes');box.hidden=false;
+        box.innerHTML=l.length?l.map(function(p){return '<button type="button" data-id="'+esc(p.id)+'"><b>'+esc(p.nome_completo)+'</b> <span style="color:var(--muted);font-size:10px">'+esc(cpfFmt(p.cpf))+'</span></button>';}).join(''):'<div class="pt-vazio" style="padding:8px 10px">Ninguém encontrado.</div>';
+        box.querySelectorAll('button').forEach(function(b){b.onclick=function(){var p=l.find(function(x){return x.id===b.dataset.id;});itens.push({pessoa_id:p.id,nome:p.nome_completo,papel_id:papelAtual()});q('psBusca').value='';box.hidden=true;chips();};});
+      },250);
+    });
+    if(cfg.podeCriar){
+      q('psNova').onclick=function(){q('psNovaBox').hidden=!q('psNovaBox').hidden;if(!q('psNovaBox').hidden)q('psNome').focus();};
+      q('psCpf').addEventListener('input',function(){this.value=cpfFmt(this.value);});
+      q('psNovaOk').onclick=function(){var n=q('psNome').value.trim();if(!n){aviso('Escreva o nome da pessoa.',true);return;}itens.push({nome:n,cpf:q('psCpf').value.trim()||null,papel_id:papelAtual()});q('psNome').value='';q('psCpf').value='';q('psNovaBox').hidden=true;chips();};
+    }
+    return {itens:function(){return itens.slice();},limpar:function(){itens=[];chips();}};
+  }
+  async function salvarLote(sb,processoId,itens){
+    var falhas=0;
+    for(var i=0;i<itens.length;i++){
+      var it=itens[i],d={papel_id:it.papel_id||null};
+      if(it.pessoa_id)d.pessoa_id=it.pessoa_id;else{d.nome=it.nome;d.cpf=it.cpf||null;}
+      var r=await sb.rpc('processo_parte_salvar',{p_processo_id:processoId,p_dados:d});
+      if(r.error)falhas++;
+    }
+    return falhas;
+  }
+  global.SagaPartes={render:render,seletor:seletor,salvarLote:salvarLote};
 })(window);

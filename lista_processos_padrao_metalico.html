@@ -510,6 +510,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
         <div class="form-field" style="margin-bottom:0"><label>Honorários (%)</label><input type="text" inputmode="decimal" id="inputNovoHonorarios" placeholder="Ex.: 20"></div>
       </div>
       <div id="previaHonorarios" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+      <div class="form-field" id="novoExtras" style="margin-top:13px"></div>
     </div>
     <div class="modal-foot"><button class="btn-secondary" onclick="closeModal('modalNovoProcesso')">Cancelar</button><button class="btn-primary" onclick="salvarNovoProcesso()">Salvar processo</button></div>
   </div>
@@ -688,6 +689,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_ui.js"></script>
 <script src="saga_teses.js"></script>
 <script src="saga_etiquetas.js"></script>
+<script src="saga_partes.js"></script>
 <script src="saga_planilha.js"></script>
 <script>
 // ============================================================
@@ -2031,6 +2033,8 @@ function abrirNovoProcesso(){
   // quem está criando já entra como responsável (pode trocar)
   var eu=(state.responsaveis||[]).find(function(u){return String(u.id)===String(state.meuInternoId);});
   if(eu)selNovoResponsavel(eu);
+  state.novoExtras=null;
+  if(window.SagaPartes)SagaPartes.seletor({sb:_sb,raiz:document.getElementById('novoExtras'),podeCriar:true}).then(function(h){state.novoExtras=h;});
   openModal('modalNovoProcesso');
 }
 function renderNovoProcessoTese(){
@@ -2103,7 +2107,9 @@ async function salvarNovoProcesso(){
       var rf=await _sb.from('financeiro_processo').upsert({processo_id:r.data.id,percentual_honorarios:pctHonorarios},{onConflict:'processo_id'});
       if(rf.error)showToast('Processo criado, mas o percentual de honorarios nao foi salvo: '+(rf.error.message||''),'warning');
     }
-    showToast('Processo criado com sucesso.','success');closeModal('modalNovoProcesso');invalidarBaseProcessos();carregarProcessos();
+    var extras=state.novoExtras?state.novoExtras.itens().filter(function(i){return i.pessoa_id!==state.novoPessoa.id;}):[];
+    var falhas=extras.length&&r.data?await SagaPartes.salvarLote(_sb,r.data.id,extras):0;
+    showToast(falhas?'Processo criado, mas '+falhas+' pessoa(s) não puderam ser incluídas.':'Processo criado com sucesso.',falhas?'warning':'success');closeModal('modalNovoProcesso');invalidarBaseProcessos();carregarProcessos();
   }
 }
 

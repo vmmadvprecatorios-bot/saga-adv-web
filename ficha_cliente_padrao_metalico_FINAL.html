@@ -431,7 +431,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 <!-- Modal: excluir telefone -->
 <div class="modal-overlay" id="excluirTelefoneModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir telefone</h3><p>O número será marcado como excluído e não aparecerá mais na ficha.</p></div><button class="modal-close" data-close-modal="excluirTelefoneModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja excluir o telefone <strong id="excluirTelLabel" style="color:var(--text)"></strong>?</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="excluirTelefoneModal">Cancelar</button><button class="btn-danger" id="confirmarExcluirTelButton">Excluir telefone</button></div></div></div>
 
-<div class="modal-overlay" id="newProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Novo processo</h3><p>O processo será vinculado a esta cliente, preservando os dados pessoais já cadastrados.</p></div><button class="modal-close" data-close-modal="newProcessModal">✕</button></div><div class="modal-body"><div class="form-field"><div id="newProcessTeseSelect"></div></div><div class="form-field action-field"><label for="newProcessFase">Fase</label><select id="newProcessFase"><option value="captacao">Captação</option><option value="juridico">Jurídico</option></select></div><div class="form-field action-field"><label for="newProcessSituacao">Situação da ação</label><div id="newProcessSituacaoRoot"></div></div><div class="form-field"><label for="newProcessCnj">Número do Processo, CNJ</label><input id="newProcessCnj" type="text" placeholder="Ex.: 0000000-00.2026.4.05.8000"></div><div class="form-field" style="display:none"><label for="newProcessDataInicio">Data de início</label><input id="newProcessDataInicio" type="date"></div><div class="form-field"><label for="newProcessResponsavel">Responsável</label><div id="newProcessResponsavelSelect"></div></div><div class="form-field"><label for="newProcessValor">Valor da causa, opcional</label><input id="newProcessValor" type="text" placeholder="Ex.: R$ 9.100,00"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newProcessModal">Cancelar</button><button class="btn-primary" id="saveNewProcessButton">Criar processo</button></div></div></div>
+<div class="modal-overlay" id="newProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Novo processo</h3><p>O processo será vinculado a esta cliente, preservando os dados pessoais já cadastrados.</p></div><button class="modal-close" data-close-modal="newProcessModal">✕</button></div><div class="modal-body"><div class="form-field"><div id="newProcessTeseSelect"></div></div><div class="form-field action-field"><label for="newProcessFase">Fase</label><select id="newProcessFase"><option value="captacao">Captação</option><option value="juridico">Jurídico</option></select></div><div class="form-field action-field"><label for="newProcessSituacao">Situação da ação</label><div id="newProcessSituacaoRoot"></div></div><div class="form-field"><label for="newProcessCnj">Número do Processo, CNJ</label><input id="newProcessCnj" type="text" placeholder="Ex.: 0000000-00.2026.4.05.8000"></div><div class="form-field" style="display:none"><label for="newProcessDataInicio">Data de início</label><input id="newProcessDataInicio" type="date"></div><div class="form-field"><label for="newProcessResponsavel">Responsável</label><div id="newProcessResponsavelSelect"></div></div><div class="form-field"><label for="newProcessValor">Valor da causa, opcional</label><input id="newProcessValor" type="text" placeholder="Ex.: R$ 9.100,00"></div><div class="form-field" id="newProcessExtras"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="newProcessModal">Cancelar</button><button class="btn-primary" id="saveNewProcessButton">Criar processo</button></div></div></div>
 
 <div class="modal-overlay" id="locationImportModal">
   <div class="modal large">
@@ -2026,13 +2026,16 @@ async function createNewProcess(){
     showToast('Não foi possível criar o processo. Verifique os dados e suas permissões.','error');
     return;
   }
+  let falhasExtras=0;
+  const extras=state.novoProcessoExtras?state.novoProcessoExtras.itens():[];
+  if(extras.length&&window.SagaPartes)falhasExtras=await SagaPartes.salvarLote(_sb,r.data.id,extras);
   closeModal('newProcessModal');
   await carregarProcessosDaPessoa(pessoaId);
   state.activeProcessId=r.data.id;
   await carregarDetalhesProcesso(r.data.id);
   state.activeView='process';
   renderActiveProcess();
-  showToast('Novo processo criado e vinculado à pessoa.','success');
+  showToast(falhasExtras?'Processo criado, mas '+falhasExtras+' pessoa(s) não puderam ser incluídas. Inclua pelo bloco Partes do processo.':'Novo processo criado e vinculado à pessoa.',falhasExtras?'warning':'success');
 }
 
 // Volta para a tela de onde a pessoa veio (Processos, Financeiro, Agenda, Tarefas...).
@@ -2104,6 +2107,10 @@ function renderProcessTabs(){
     atualizarSituacaoNovoProcesso();
     document.getElementById('newProcessFase').onchange=atualizarSituacaoNovoProcesso;
     renderNewProcessCustomSelects();
+    state.novoProcessoExtras=null;
+    if(window.SagaPartes&&perms.processosEditar!==false){
+      SagaPartes.seletor({sb:_sb,raiz:document.getElementById('newProcessExtras'),podeCriar:true,excluir:[state.pessoaRow&&state.pessoaRow.id]}).then(h=>{state.novoProcessoExtras=h;});
+    }
     openModal('newProcessModal');
   });
 }
