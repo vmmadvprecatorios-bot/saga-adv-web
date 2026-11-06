@@ -2076,7 +2076,7 @@ function renderNewProcessCustomSelects(){
   const teseRoot=document.getElementById('newProcessTeseSelect');
   const responsavelRoot=document.getElementById('newProcessResponsavelSelect');
   const opcoesResponsavel=(state.responsaveis||[]).map(item=>[item.id,item.nome_completo]);
-  catalogoTeses.montar(teseRoot,{teseId:state.newProcessDraft.tese,areaId:state.newProcessDraft.area,teseInputId:'newProcessTese',areaInputId:'newProcessArea',permitirAreaAvulsa:true,mudou:v=>{state.newProcessDraft.tese=v.teseId;state.newProcessDraft.area=v.areaId;}});
+  catalogoTeses.montar(teseRoot,{teseId:state.newProcessDraft.tese,areaId:state.newProcessDraft.area,teseInputId:'newProcessTese',areaInputId:'newProcessArea',permitirAreaAvulsa:true,flutuante:true,mudou:v=>{state.newProcessDraft.tese=v.teseId;state.newProcessDraft.area=v.areaId;}});
   if(opcoesResponsavel.length){
     const responsavelSelecionado=state.newProcessDraft.responsavel||(opcoesResponsavel.some(o=>o[0]===state.usuario.internoId)?state.usuario.internoId:opcoesResponsavel[0][0]);
     state.newProcessDraft.responsavel=responsavelSelecionado;

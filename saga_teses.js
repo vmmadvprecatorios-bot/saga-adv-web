@@ -111,7 +111,7 @@
     }
     function montar(root,op={}){
       montados.get(root)?.destruir();
-      estilos();root.classList.add('st-par');root.classList.toggle('st-filtro',!!op.filtro);
+      estilos();root.classList.add('st-par');root.classList.toggle('st-filtro',!!(op.filtro||op.flutuante));
       root.innerHTML='<div class="st-area"></div><div class="st-tese"></div><div class="st-edicao" style="grid-column:1/-1"></div>';
       let teseId=null,areaId='*';
       const editorRoot=root.querySelector('.st-edicao');

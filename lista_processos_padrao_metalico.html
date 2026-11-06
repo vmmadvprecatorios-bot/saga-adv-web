@@ -2035,7 +2035,7 @@ function abrirNovoProcesso(){
 }
 function renderNovoProcessoTese(){
   if(menuNovoTeses)menuNovoTeses.destruir();
-  menuNovoTeses=catalogoTeses.montar(document.getElementById('novoAreasTeses'),{permitirAreaAvulsa:true,mudou:function(v){state.novoTese=catalogoTeses.tese(v.teseId);state.novoArea=v.areaId==='*'?null:v.areaId;}});
+  menuNovoTeses=catalogoTeses.montar(document.getElementById('novoAreasTeses'),{permitirAreaAvulsa:true,flutuante:true,mudou:function(v){state.novoTese=catalogoTeses.tese(v.teseId);state.novoArea=v.areaId==='*'?null:v.areaId;}});
 }
 
 function renderNovoProcessoStatus(){
