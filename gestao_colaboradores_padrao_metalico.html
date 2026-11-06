@@ -241,7 +241,7 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 var state = {
-  activeStatus: 'all', search: '', page: 1, pageSize: 5, customSize: '',
+  activeStatus: 'all', activePerfil: null, activeRegime: null, search: '', page: 1, pageSize: 5, customSize: '',
   activeActionId: null, activeStatusId: null,
   resetEmployeeId: null, resetReason: 'Solicitação do colaborador',
   historyEmployeeId: null, historyPage: 1,
@@ -342,21 +342,43 @@ function renderKpis(){
 }
 
 var roscasColaboradores;
+function nomePerfilColab(e){return e.papelNome||e.cargo||'Sem perfil';}
+function nomeRegimeColab(e){return (state.regimesRosca&&state.regimesRosca.get(e.id))||'Sem regime informado';}
+function passaBuscaColab(e){var termo=state.search.trim().toLowerCase();return !termo||[e.nome,e.email,e.papelNome,e.cargo].join(' ').toLowerCase().indexOf(termo)>=0;}
+// Cada gráfico respeita os filtros dos outros e ignora só o seu próprio, para poder trocar ou desmarcar a fatia
+function passaFiltrosColab(e,ignorar){
+  if(!passaBuscaColab(e))return false;
+  if(ignorar!=='situacao'&&state.activeStatus!=='all'&&employeeStatus(e)!==state.activeStatus)return false;
+  if(ignorar!=='perfil'&&state.activePerfil&&nomePerfilColab(e)!==state.activePerfil)return false;
+  if(ignorar!=='regime'&&state.activeRegime&&nomeRegimeColab(e)!==state.activeRegime)return false;
+  return true;
+}
+function definirStatusColab(valor){
+  state.activeStatus=valor;
+  document.querySelectorAll('[data-status-filter]').forEach(function(f){f.classList.toggle('active',f.dataset.statusFilter===valor);});
+}
 function renderRoscasColaboradores(){
   if(!state.session || state.loading || document.getElementById('sagaSemAcesso'))return;
-  var termo=state.search.trim().toLowerCase();
-  var base=state.employees.filter(function(e){return !termo||[e.nome,e.email,e.papelNome,e.cargo].join(' ').toLowerCase().indexOf(termo)>=0;});
-  function agrupar(lista,chave){
+  function agrupar(lista,chave,ativo){
     var grupos=new Map();
-    lista.forEach(function(e){var nome=chave(e),g=grupos.get(nome);if(g)g.valor++;else grupos.set(nome,{id:nome,nome:nome,valor:1});});
+    lista.forEach(function(e){var nome=chave(e),g=grupos.get(nome);if(g)g.valor++;else grupos.set(nome,{id:nome,nome:nome,valor:1,ativa:ativo===nome});});
+    if(ativo&&!grupos.has(ativo))grupos.set(ativo,{id:ativo,nome:ativo,valor:0,ativa:true});
     return Array.from(grupos.values()).sort(function(a,b){return b.valor-a.valor||a.nome.localeCompare(b.nome,'pt-BR');});
   }
-  var grupos=[{id:'situacao',titulo:'Colaboradores por situação',rotulo:'pessoas',
-    itens:[['ativo','Ativo','var(--success)'],['pendente','Pendente','var(--info)'],['inativo','Inativo','var(--muted)']].map(function(x){return {id:x[0],nome:x[1],cor:x[2],valor:base.filter(function(e){return employeeStatus(e)===x[0];}).length,ativa:state.activeStatus===x[0]};}),
-    escolher:function(item){trocarAbaColab('acessos');document.querySelector('[data-status-filter="'+(state.activeStatus===item.id?'all':item.id)+'"]').click();}}];
-  var filtrados=base.filter(function(e){return state.activeStatus==='all'||employeeStatus(e)===state.activeStatus;});
-  grupos.push({id:'perfil',titulo:'Colaboradores por perfil / cargo',rotulo:'pessoas',dica:'Clique para destacar.',itens:agrupar(filtrados,function(e){return e.papelNome||e.cargo||'Sem perfil';})});
-  if(state.souAdmin&&state.regimesRosca)grupos.push({id:'regime',titulo:'Colaboradores por regime',rotulo:'pessoas',dica:'Clique para destacar.',itens:agrupar(filtrados,function(e){return state.regimesRosca.get(e.id)||'Sem regime informado';})});
+  function alternar(chave,item){
+    if(chave==='situacao')definirStatusColab(state.activeStatus===item.id?'all':item.id);
+    else if(chave==='perfil')state.activePerfil=state.activePerfil===item.id?null:item.id;
+    else state.activeRegime=state.activeRegime===item.id?null:item.id;
+    state.page=1;renderEmployees();
+  }
+  var baseSit=state.employees.filter(function(e){return passaFiltrosColab(e,'situacao');});
+  var grupos=[{id:'situacao',titulo:'Colaboradores por situação',rotulo:'pessoas',dica:'Clique para filtrar a lista.',
+    itens:[['ativo','Ativo','var(--success)'],['pendente','Pendente','var(--info)'],['inativo','Inativo','var(--muted)']].map(function(x){return {id:x[0],nome:x[1],cor:x[2],valor:baseSit.filter(function(e){return employeeStatus(e)===x[0];}).length,ativa:state.activeStatus===x[0]};}),
+    escolher:function(item){alternar('situacao',item);}}];
+  grupos.push({id:'perfil',titulo:'Colaboradores por perfil / cargo',rotulo:'pessoas',dica:'Clique para filtrar a lista.',
+    itens:agrupar(state.employees.filter(function(e){return passaFiltrosColab(e,'perfil');}),nomePerfilColab,state.activePerfil),escolher:function(item){alternar('perfil',item);}});
+  if(state.souAdmin&&state.regimesRosca)grupos.push({id:'regime',titulo:'Colaboradores por regime',rotulo:'pessoas',dica:'Clique para filtrar a lista.',
+    itens:agrupar(state.employees.filter(function(e){return passaFiltrosColab(e,'regime');}),nomeRegimeColab,state.activeRegime),escolher:function(item){alternar('regime',item);}});
   if(!roscasColaboradores)roscasColaboradores=SagaRoscas.criar(document.getElementById('roscasColaboradores'),{chave:'saga-colaboradores-roscas-ocultas',rotulo:'Gráficos dos colaboradores'});
   roscasColaboradores.atualizar(grupos);
 }
@@ -364,10 +386,7 @@ function renderRoscasColaboradores(){
 // ── Tabela ────────────────────────────────────────────────────
 function filteredEmployees(){
   return state.employees.filter(function(e){
-    var matchStatus = state.activeStatus==='all' || state.activeStatus===employeeStatus(e);
-    var term = state.search.trim().toLowerCase();
-    var matchSearch = !term || [e.nome,e.email,e.papelNome,e.cargo].join(' ').toLowerCase().indexOf(term)>=0;
-    return matchStatus && matchSearch;
+    return passaFiltrosColab(e);
   });
 }
 
@@ -391,7 +410,10 @@ function renderEmployees(){
   var paged = list.slice(start, start+effectiveSize);
 
   var counter = document.getElementById('employeeCounter');
-  counter.innerHTML = '<b>'+list.length+'</b> de '+state.employees.length+' colaboradores';
+  counter.innerHTML = '<b>'+list.length+'</b> de '+state.employees.length+' colaboradores'
+    +(state.activePerfil?' · <button type="button" class="filter-pill active" data-limpar-filtro="perfil" title="Tirar este filtro">Perfil: '+esc(state.activePerfil)+' ✕</button>':'')
+    +(state.activeRegime?' · <button type="button" class="filter-pill active" data-limpar-filtro="regime" title="Tirar este filtro">Regime: '+esc(state.activeRegime)+' ✕</button>':'');
+  counter.querySelectorAll('[data-limpar-filtro]').forEach(function(b){b.onclick=function(){if(b.dataset.limparFiltro==='perfil')state.activePerfil=null;else state.activeRegime=null;state.page=1;renderEmployees();};});
 
   if(!list.length){
     document.getElementById('employeeTableWrap').innerHTML =
