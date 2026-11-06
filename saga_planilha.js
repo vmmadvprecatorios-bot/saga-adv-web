@@ -446,6 +446,8 @@ window.SagaPlanilha=(function(){
       '.sp-ficha-toggle{border:0;background:none;color:var(--gold-light);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:4px 0}.sp-ficha-toggle:active{transform:scale(.97)}'+
       '.sp-ficha-padrao{border:0;background:none;color:var(--muted);font:inherit;font-size:11px;text-decoration:underline;cursor:pointer}'+
       '.sp-ficha-todos{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px 14px}.sp-ficha-todos[hidden]{display:none}'+
+      '.sp-ficha-editando .campo-dado-label{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.sp-ferr{margin-left:auto;display:inline-flex;gap:4px}.sp-ferr button{min-width:22px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:11px;cursor:pointer;padding:0 6px}.sp-ferr button:hover:not(:disabled){color:var(--gold-light);border-color:var(--gold)}.sp-ferr button:disabled{opacity:.35;cursor:default}.sp-ferr .sp-fx.ligado{color:var(--gold-light);border-color:var(--gold)}'+
+      '.sp-num{display:inline-block;min-width:22px;font-variant-numeric:tabular-nums;color:var(--gold-light);font-weight:700}.sp-ficha-dica{grid-column:1/-1;font-size:11px;color:var(--muted)}.sp-edit-wrap{display:flex;flex-direction:column;gap:6px}.sp-ficha-editando .sp-editor{width:100%}'+
       '.sp-fixar{margin-left:6px;width:17px;height:17px;line-height:15px;border-radius:50%;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:11px;cursor:pointer;opacity:0;transition:opacity .15s;padding:0;vertical-align:middle}'+
       '.campo-dado:hover .sp-fixar,.sp-fixar:focus-visible{opacity:1}.sp-fixar:hover{color:var(--gold-light);border-color:var(--gold)}@media(hover:none){.sp-fixar{opacity:.7}}'+
       '.sp-ficha-tit{grid-column:1/-1;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-top:6px;padding-top:8px;border-top:1px solid var(--border-soft)}';
@@ -734,6 +736,51 @@ window.SagaPlanilha=(function(){
     if(c.campo_sistema==='pessoa.situacao_vital')return v==='vivo'?'Vivo':'Falecido';
     return exibir(c,texto({},c,v));
   }
+  // ---------- caixas de edição da ficha (modo "lápis": editar vários campos e salvar de uma vez) ----------
+  function mesmoValor(a,b){return JSON.stringify(a==null||a===''?null:a)===JSON.stringify(b==null||b===''?null:b);}
+  function controleCampo(c,v,textoAtual,ops,podeNova){
+    var campo,ler,bruto,definir,wrap=null,inpNova=null;
+    if(ops){
+      campo=document.createElement('select');
+      campo.innerHTML='<option value="">— vazio —</option>'+ops.map(function(o){return '<option value="'+h(o.id)+'">'+h(o.nome)+'</option>';}).join('')+(podeNova?'<option value="__nova">+ Nova opção...</option>':'');
+      if(v!=null&&v!==''&&!ops.some(function(o){return String(o.id)===String(v);})){var op=new Option((textoAtual||String(v))+' (desativada)',v);op.disabled=true;campo.add(op,1);}
+      campo.value=v==null?'':String(v);campo.className='sp-editor';
+      wrap=document.createElement('span');wrap.className='sp-edit-wrap';wrap.appendChild(campo);
+      inpNova=document.createElement('input');inpNova.type='text';inpNova.className='sp-editor';inpNova.placeholder='Nome da nova opção';inpNova.hidden=true;wrap.appendChild(inpNova);
+      campo.addEventListener('change',function(){inpNova.hidden=campo.value!=='__nova';if(!inpNova.hidden)inpNova.focus();});
+      ler=function(){if(campo.value==='__nova'){var n=inpNova.value.trim();if(!n)throw new Error('Escreva o nome da nova opção.');return {__nova:n};}return campo.value||null;};
+      bruto=function(){return campo.value+'\u0001'+inpNova.value;};
+      definir=function(b){var p=String(b).split('\u0001');if(Array.from(campo.options).some(function(o){return o.value===p[0];}))campo.value=p[0];inpNova.value=p[1]||'';inpNova.hidden=campo.value!=='__nova';};
+    }else if(c.tipo==='sim_nao'){
+      campo=document.createElement('select');campo.className='sp-editor';campo.innerHTML='<option value="">— vazio —</option><option value="true">Sim</option><option value="false">Não</option>';
+      campo.value=v===true||v==='true'?'true':v===false||v==='false'?'false':'';
+      ler=function(){return campo.value===''?null:campo.value==='true';};bruto=function(){return campo.value;};definir=function(b){campo.value=b;};
+    }else if(c.tipo==='link'){
+      campo=document.createElement('input');campo.type='url';campo.className='sp-editor';campo.placeholder='https://...';campo.value=Array.isArray(v)&&v[0]?v[0].url:'';
+      ler=function(){var u=campo.value.trim();if(!u)return null;if(!/^https?:\/\//i.test(u))throw new Error('O link precisa começar com https://');var t=Array.isArray(v)&&v[0]&&v[0].texto&&v[0].texto!==v[0].url?v[0].texto:u;return [{url:u,texto:t}];};
+      bruto=function(){return campo.value;};definir=function(b){campo.value=b;};
+    }else{
+      campo=document.createElement('input');campo.className='sp-editor';campo.type=c.tipo==='data'?'date':'text';
+      campo.value=v==null?'':(c.tipo==='data'?String(v).slice(0,10):String(v));
+      aplicarMascara(campo,c,v);
+      ler=function(){var x=campo.value.trim();if(!x)return null;var m=tipoMascara(c);return m==='cpf'||m==='cnj'||m==='tel'?formatar(m,x):x;};
+      bruto=function(){return campo.value;};definir=function(b){campo.value=b;};
+    }
+    var inicial;try{inicial=ler();}catch(e){inicial=v;}
+    return {campo:wrap||campo,ler:ler,bruto:bruto,definir:definir,mudou:function(novo){return novo&&novo.__nova?true:!mesmoValor(novo,inicial);}};
+  }
+  function controleExtra(x){
+    var campo=document.createElement('input');campo.className='sp-editor';
+    var ler;
+    if(x.tipo==='data'){
+      campo.type='date';campo.value=x.valor?String(x.valor).slice(0,10):'';
+      ler=function(){if(!campo.value)throw new Error('Informe a data de início do processo.');return campo.value;};
+    }else{
+      campo.type='text';campo.inputMode='decimal';campo.placeholder='Ex.: 20';campo.value=x.valor==null?'':String(x.valor).replace('.',',');
+      ler=function(){var t=campo.value.trim();if(!t)return null;var n=parseFloat(t.replace('%','').replace(',','.'));if(isNaN(n)||n<0||n>100)throw new Error('O percentual de honorários deve ficar entre 0 e 100.');return n;};
+    }
+    return {campo:campo,ler:ler,bruto:function(){return campo.value;},definir:function(b){campo.value=b;},mudou:function(novo){return !mesmoValor(novo,x.valor==null||x.valor===''?null:(x.tipo==='data'?String(x.valor).slice(0,10):Number(x.valor)));}};
+  }
   async function fichaDados(el,processoId,opts){
     opts=opts||{};estilos();
     try{
@@ -746,63 +793,111 @@ window.SagaPlanilha=(function(){
     }catch(e){console.warn('Dados do processo:',e);return false;}
     var sig=row.sigilo&&!opts.podeEditarDados;
     var capt=row.fase==='captacao';
+    var editando=opts.editando===true;
     var cs=cols.filter(function(c){if(!c.ativo||!(c.escopo==='ambos'||c.escopo===row.fase)||c.campo_sistema==='processo.fase')return false;
         // Na Captação: as colunas da planilha de captação e, das outras, só as que estiverem preenchidas
         if(capt&&c.ordem_captacao==null&&c.ordem<100){var v0=valorLinha(row,c);return !(v0==null||v0===''||(Array.isArray(v0)&&!v0.length));}
         return true;}).sort(function(a,b){return ordemCol(a,row.fase)-ordemCol(b,row.fase);});
     var sensiveis=['processo.numero','processo.tese','processo.responsavel','processo.valor_causa','processo.valor_precatorio'];
     var podeEd=function(c){if(!opts.podeEditar||sig)return false;if(SISTEMA_SO_LEITURA.indexOf(c.campo_sistema)!==-1)return false;if(sensiveis.indexOf(c.campo_sistema)!==-1&&!opts.podeEditarDados)return false;return true;};
-    var campoHtml=function(c){
-      var v=valorLinha(row,c),t=sig&&c.campo_sistema!=='pessoa.nome'?'••••':textoLinha(row,c,v),conteudo;
-      if(c.tipo==='link'&&!sig&&Array.isArray(v)&&v.length)conteudo=v.map(function(l){var u=/^https?:\/\//i.test(l.url||'')?l.url:'';return u?'<a href="'+h(u)+'" target="_blank" rel="noopener noreferrer" class="sp-link">'+h(l.texto||l.url)+'</a>':'';}).join(' · ');
-      else{var cor=c.campo_sistema==='processo.status'?row.status_cor:c.campo_sistema==='processo.situacao_acao'?row.situacao_acao_cor:(c.tipo==='opcao'&&!c.campo_sistema?((c.opcoes||[]).find(function(o){return String(o.id)===String(v);})||{}).cor:null);
-        conteudo=t?(cor?'<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>':h(t)):'<span class="sp-vazio">—</span>';}
-      var fixo=fixos.has(c.id);
-      return '<div class="campo-dado" data-sp-campo="'+h(c.id)+'"><div class="campo-dado-label">'+h(nomeCol(c,row.fase))+'<button type="button" class="sp-fixar" data-sp-fixar="'+h(c.id)+'" title="'+(fixo?'Tirar do resumo (continua em Todos os dados)':'Mostrar sempre no resumo')+'" aria-label="'+(fixo?'Tirar do resumo':'Mostrar no resumo')+'">'+(fixo?'×':'+')+'</button></div><div class="campo-dado-valor'+(podeEd(c)?' sp-editavel':'')+'" data-sp-ficha="'+h(c.id)+'"'+(podeEd(c)?' tabindex="0" title="Clique para editar"':'')+'>'+conteudo+(podeEd(c)?'<span class="sp-lapis" aria-hidden="true">✎</span>':'')+'</div></div>';
-    };
-    // Resumo: só os campos escolhidos (padrão = os de antes); o resto fica em "Todos os dados", que abre e fecha
-    var chaveFixos='saga-ficha-campos-'+(capt?'captacao-':'')+(opts.usuarioId||''),chaveAberto='saga-ficha-todos-aberto';
+    var extras=(opts.extras||[]).map(function(x){return {id:x.id,nome:x.nome,texto:x.texto||'',tipo:x.tipo,valor:x.valor,editavel:!!x.editavel&&!sig};});
+    var campos={};cs.forEach(function(c){campos[c.id]={c:c};});extras.forEach(function(x){campos[x.id]={x:x};});
+    // Resumo: só os campos escolhidos, na ordem escolhida; "Todos os dados" tem sempre todos, numerados na ordem da planilha
+    var chaveFixos='saga-ficha-ordem-'+(capt?'captacao-':'')+(opts.usuarioId||''),chaveAntiga='saga-ficha-campos-'+(capt?'captacao-':'')+(opts.usuarioId||''),chaveAberto='saga-ficha-todos-aberto';
     var PADRAO=capt?['processo.numero','processo.captador','processo.valor_precatorio','processo.status','#Tipo de ação','#Competência','@captacao.data_retorno','@captacao.etiquetas']
       :['processo.tese','processo.responsavel','processo.valor_precatorio','processo.valor_causa','processo.numero','extra:Honorários','extra:Data de início'];
-    var fixos;try{var salvo=JSON.parse(localStorage.getItem(chaveFixos)||'null');if(Array.isArray(salvo))fixos=new Set(salvo);}catch(e){}
-    if(!fixos){fixos=new Set();cs.forEach(function(c){if(PADRAO.indexOf(c.campo_sistema)!==-1||(!c.campo_sistema&&!c.chave&&PADRAO.indexOf('#'+c.nome)!==-1)||(c.chave&&PADRAO.indexOf('@'+c.chave)!==-1))fixos.add(c.id);});PADRAO.filter(function(k){return k.indexOf('extra:')===0;}).forEach(function(k){fixos.add(k);});}
-    var extras=(opts.extras||[]).map(function(html){var m=/campo-dado-label">([^<]*)/.exec(html);if(!m)return {id:'extra:?',html:html};var nome=m[1].trim();var id='extra:'+nome;
-      return {id:id,html:html.replace('<div class="campo-dado-label">'+m[1],'<div class="campo-dado-label">'+m[1]+'<button type="button" class="sp-fixar" data-sp-fixar="'+h(id)+'" title="'+(fixos.has(id)?'Tirar do resumo':'Mostrar sempre no resumo')+'">'+(fixos.has(id)?'×':'+')+'</button>')};});
-    var resumo=cs.filter(function(c){return fixos.has(c.id);}).map(campoHtml).concat(extras.filter(function(x){return fixos.has(x.id);}).map(function(x){return x.html;}));
-    var resto=cs.filter(function(c){return !fixos.has(c.id);}),restoExtras=extras.filter(function(x){return !fixos.has(x.id);});
-    var daPlanilha=function(c){return capt?c.ordem_captacao!=null:c.ordem<100;};
+    var ehPadrao=function(c,k){return k.indexOf('extra:')===0?false:(c.campo_sistema===k||(!c.campo_sistema&&!c.chave&&k==='#'+c.nome)||(c.chave&&k==='@'+c.chave));};
+    var ordem=null;
+    try{var s1=JSON.parse(localStorage.getItem(chaveFixos)||'null');if(Array.isArray(s1))ordem=s1;else{var s0=JSON.parse(localStorage.getItem(chaveAntiga)||'null');if(Array.isArray(s0))ordem=s0;}}catch(e){}
+    if(!ordem){ordem=[];PADRAO.forEach(function(k){if(k.indexOf('extra:')===0){ordem.push(k);return;}var c=cs.find(function(x){return ehPadrao(x,k);});if(c)ordem.push(c.id);});}
+    ordem=ordem.filter(function(id,i){return campos[id]&&ordem.indexOf(id)===i;});
+    var salvarOrdem=function(){try{localStorage.setItem(chaveFixos,JSON.stringify(ordem));}catch(e){}};
+    var no_resumo=function(id){return ordem.indexOf(id)!==-1;};
+    var rotulo=function(id){return campos[id].c?nomeCol(campos[id].c,row.fase):campos[id].x.nome;};
+    // texto/HTML de leitura
+    var valorHtml=function(c){
+      var v=valorLinha(row,c),t=sig&&c.campo_sistema!=='pessoa.nome'?'••••':textoLinha(row,c,v);
+      if(c.tipo==='link'&&!sig&&Array.isArray(v)&&v.length)return v.map(function(l){var u=/^https?:\/\//i.test(l.url||'')?l.url:'';return u?'<a href="'+h(u)+'" target="_blank" rel="noopener noreferrer" class="sp-link">'+h(l.texto||l.url)+'</a>':'';}).join(' · ');
+      var cor=c.campo_sistema==='processo.status'?row.status_cor:c.campo_sistema==='processo.situacao_acao'?row.situacao_acao_cor:(c.tipo==='opcao'&&!c.campo_sistema?((c.opcoes||[]).find(function(o){return String(o.id)===String(v);})||{}).cor:null);
+      return t?(cor?'<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>':h(t)):'<span class="sp-vazio">—</span>';
+    };
+    // um cartão de dado; "tudo" = dentro de Todos os dados (numerado)
+    var cartao=function(id,tudo,num){
+      var f=campos[id],c=f.c,x=f.x,editavelAqui=editando&&(c?podeEd(c):x.editavel)&&(!tudo||!no_resumo(id));
+      var valor=c?valorHtml(c):(x.texto?h(x.texto):'<span class="sp-vazio">—</span>');
+      var ferr='';
+      if(editando){
+        if(!tudo){var i=ordem.indexOf(id);ferr='<span class="sp-ferr"><button type="button" data-sp-mover="-1" data-id="'+h(id)+'" title="Mover para antes" aria-label="Mover para antes"'+(i===0?' disabled':'')+'>◀</button><button type="button" data-sp-mover="1" data-id="'+h(id)+'" title="Mover para depois" aria-label="Mover para depois"'+(i===ordem.length-1?' disabled':'')+'>▶</button><button type="button" data-sp-fixar="'+h(id)+'" title="Tirar do resumo (continua em Todos os dados)" aria-label="Tirar do resumo">×</button></span>';}
+        else ferr='<span class="sp-ferr"><button type="button" data-sp-fixar="'+h(id)+'" class="sp-fx'+(no_resumo(id)?' ligado':'')+'" title="'+(no_resumo(id)?'Tirar do resumo':'Mostrar no resumo')+'">'+(no_resumo(id)?'No resumo ×':'+ Resumo')+'</button></span>';
+      }
+      return '<div class="campo-dado'+(tudo?' sp-tudo-item':'')+'" data-sp-campo="'+h(id)+'"><div class="campo-dado-label">'+(tudo?'<span class="sp-num">'+num+'</span>':'')+h(rotulo(id))+ferr+'</div><div class="campo-dado-valor" data-sp-ficha="'+h(id)+'">'+(editavelAqui?'':valor)+'</div></div>';
+    };
+    var resumoHtml=ordem.length?ordem.map(function(id){return cartao(id,false);}).join(''):'<div class="sp-vazio" style="grid-column:1/-1">Nenhum campo no resumo.'+(editando?' Em "Todos os dados", use + Resumo.':'')+'</div>';
     var aberto=false;try{aberto=localStorage.getItem(chaveAberto)==='1';}catch(e){}
-    el.classList.add('sp-ficha');
-    el.innerHTML=(resumo.length?resumo.join(''):'<div class="sp-vazio" style="grid-column:1/-1">Nenhum campo no resumo. Abra "Todos os dados" e toque em + para escolher.</div>')+
-      '<div class="sp-ficha-barra"><button type="button" class="sp-ficha-toggle" aria-expanded="'+aberto+'">'+(aberto?'▾':'▸')+' Todos os dados do processo ('+(resto.length+restoExtras.length)+')</button>'+
-      '<button type="button" class="sp-ficha-padrao" title="Voltar aos campos de antes">Voltar ao padrão</button></div>'+
-      '<div class="sp-ficha-todos"'+(aberto?'':' hidden')+'>'+resto.filter(daPlanilha).map(campoHtml).join('')+
-        (resto.some(function(c){return !daPlanilha(c);})||restoExtras.length?'<div class="sp-ficha-tit">Outros dados do processo</div>'+resto.filter(function(c){return !daPlanilha(c);}).map(campoHtml).join('')+restoExtras.map(function(x){return x.html;}).join(''):'')+'</div>';
-    var salvarFixos=function(){try{localStorage.setItem(chaveFixos,JSON.stringify(Array.from(fixos)));}catch(e){}};
+    var tudoIds=cs.map(function(c){return c.id;}).concat(extras.map(function(x){return x.id;}));
+    el.classList.add('sp-ficha');el.classList.toggle('sp-ficha-editando',editando);
+    el.innerHTML=resumoHtml+
+      '<div class="sp-ficha-barra"><button type="button" class="sp-ficha-toggle" aria-expanded="'+aberto+'">'+(aberto?'▾':'▸')+' Todos os dados do processo ('+tudoIds.length+')</button>'+
+      (editando?'<button type="button" class="sp-ficha-padrao" title="Voltar aos campos de antes">Voltar ao padrão</button>':'')+'</div>'+
+      '<div class="sp-ficha-todos"'+(aberto?'':' hidden')+'>'+(editando?'<div class="sp-ficha-dica">Os campos que já estão no resumo são editados lá em cima. Use <b>+ Resumo</b> para trazer um campo para o resumo.</div>':'')+tudoIds.map(function(id,i){return cartao(id,true,i+1);}).join('')+'</div>';
     el.querySelector('.sp-ficha-toggle').onclick=function(){var box=el.querySelector('.sp-ficha-todos'),abrir=box.hidden;box.hidden=!abrir;this.setAttribute('aria-expanded',abrir);this.textContent=(abrir?'▾':'▸')+this.textContent.slice(1);try{localStorage.setItem(chaveAberto,abrir?'1':'0');}catch(e){}
       if(abrir&&!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)box.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:240,easing:'cubic-bezier(.2,1.2,.4,1)'});};
-    el.querySelector('.sp-ficha-padrao').onclick=function(){try{localStorage.removeItem(chaveFixos);}catch(e){}fichaDados(el,processoId,opts);};
-    el.querySelectorAll('[data-sp-fixar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.spFixar;if(fixos.has(id))fixos.delete(id);else fixos.add(id);salvarFixos();fichaDados(el,processoId,opts);};});
-    var opcoesFicha=function(c){
-      if(c.campo_sistema==='pessoa.uf')return UFS.map(function(u){return {id:u,nome:u};});
-      if(c.campo_sistema==='processo.status')return cat.status.filter(function(s){return s.ativo!==false&&s.fase===row.fase;}).map(function(s){return {id:s.id,nome:s.nome};});
-      if(c.campo_sistema==='processo.tese')return cat.teses.filter(function(t){return t.ativo!==false;}).map(function(t){return {id:t.id,nome:t.nome};});
-      if(c.campo_sistema==='processo.area')return cat.areas.filter(function(a){return a.ativo!==false;}).map(function(a){return {id:a.id,nome:a.nome};});
-      if(c.campo_sistema==='processo.situacao_acao')return situacoes.filter(function(s){return s.ativo!==false;}).map(function(s){return {id:s.id,nome:s.nome};});
-      if(c.campo_sistema==='pessoa.situacao_vital')return [{id:'vivo',nome:'Vivo'},{id:'falecido',nome:'Falecido'}];
-      if(c.tipo==='usuario')return cat.usuarios.map(function(u){return {id:u.id,nome:u.nome_completo};});
-      if(c.tipo==='opcao')return opcoesDaColuna(c);
-      return null;
-    };
-    var abrir=function(alvo){
-      var c=cols.find(function(x){return x.id===alvo.dataset.spFicha;});if(!c||!podeEd(c))return;
-      editarCelula(alvo,{c:c,v:valorLinha(row,c),texto:textoLinha(row,c,valorLinha(row,c)),opcoes:async function(){return opcoesFicha(c);},
-        podeNova:c.tipo==='opcao'&&!c.campo_sistema&&cat.gerenciar,
-        gravar:function(valor,cc){return rpcOk('lista_salvar_celula',{p_processo_id:processoId,p_coluna_id:(cc||c).id,p_valor:valor});},
-        depois:function(){if(c.campo_sistema&&opts.aoMudarSistema)opts.aoMudarSistema();else fichaDados(el,processoId,opts);}});
-    };
-    el.onclick=function(e){if(e.target.closest('a,select,input'))return;var alvo=e.target.closest('[data-sp-ficha].sp-editavel');if(alvo)abrir(alvo);};
-    el.onkeydown=function(e){if(e.key!=='Enter'||e.target.closest('select,input'))return;var alvo=e.target.closest('[data-sp-ficha].sp-editavel');if(alvo){e.preventDefault();abrir(alvo);}};
+    // as caixas de edição precisam sobreviver a recarregar o desenho: guardamos o que foi digitado antes de redesenhar
+    var controles={};
+    var redesenhar=function(){var pend=lerPendentes();opts.rascunho=pend;fichaDados(el,processoId,opts);};
+    var lerPendentes=function(){var o={};Object.keys(controles).forEach(function(id){try{o[id]=controles[id].bruto();}catch(e){}});return o;};
+    if(editando){
+      var pad=el.querySelector('.sp-ficha-padrao');if(pad)pad.onclick=function(){ordem=null;try{localStorage.removeItem(chaveFixos);localStorage.removeItem(chaveAntiga);}catch(e){}opts.rascunho=lerPendentes();fichaDados(el,processoId,opts);};
+      el.querySelectorAll('[data-sp-fixar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.spFixar,i=ordem.indexOf(id);if(i>=0)ordem.splice(i,1);else ordem.push(id);salvarOrdem();redesenhar();};});
+      el.querySelectorAll('[data-sp-mover]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.id,i=ordem.indexOf(id),j=i+Number(b.dataset.spMover);if(i<0||j<0||j>=ordem.length)return;ordem.splice(j,0,ordem.splice(i,1)[0]);salvarOrdem();redesenhar();};});
+      var opcoesFicha=function(c){
+        if(c.campo_sistema==='pessoa.uf')return UFS.map(function(u){return {id:u,nome:u};});
+        if(c.campo_sistema==='processo.status')return cat.status.filter(function(s){return s.ativo!==false&&s.fase===row.fase;}).map(function(s){return {id:s.id,nome:s.nome};});
+        if(c.campo_sistema==='processo.tese')return cat.teses.filter(function(t){return t.ativo!==false;}).map(function(t){return {id:t.id,nome:t.nome};});
+        if(c.campo_sistema==='processo.area')return cat.areas.filter(function(a){return a.ativo!==false;}).map(function(a){return {id:a.id,nome:a.nome};});
+        if(c.campo_sistema==='processo.situacao_acao')return situacoes.filter(function(s){return s.ativo!==false;}).map(function(s){return {id:s.id,nome:s.nome};});
+        if(c.campo_sistema==='pessoa.situacao_vital')return [{id:'vivo',nome:'Vivo'},{id:'falecido',nome:'Falecido'}];
+        if(c.tipo==='usuario')return cat.usuarios.map(function(u){return {id:u.id,nome:u.nome_completo};});
+        if(c.tipo==='opcao')return opcoesDaColuna(c);
+        return null;
+      };
+      var rasc=opts.rascunho||{};
+      el.querySelectorAll('[data-sp-ficha]').forEach(function(td){
+        var id=td.dataset.spFicha,f=campos[id];if(!f||td.innerHTML.trim()!=='')return;
+        var ctl=f.c?controleCampo(f.c,valorLinha(row,f.c),textoLinha(row,f.c,valorLinha(row,f.c)),opcoesFicha(f.c),f.c.tipo==='opcao'&&!f.c.campo_sistema&&cat.gerenciar):controleExtra(f.x);
+        td.appendChild(ctl.campo);controles[id]=ctl;
+        if(Object.prototype.hasOwnProperty.call(rasc,id))ctl.definir(rasc[id]);
+      });
+      opts.rascunho=null;
+      // Salvar tudo de uma vez (o botão Salvar da ficha chama isto)
+      el._sagaSalvar=async function(){
+        var mudancas=[],extrasMud={},sistema=false;
+        for(var id in controles){
+          var ctl=controles[id],f=campos[id],novo;
+          try{novo=ctl.ler();}catch(e){aviso(h(e.message),true);return false;}
+          if(f.x){if(!ctl.mudou(novo))continue;extrasMud[f.x.tipo]=novo;continue;}
+          if(!ctl.mudou(novo))continue;
+          mudancas.push({c:f.c,novo:novo,ctl:ctl});
+        }
+        if(!mudancas.length&&!Object.keys(extrasMud).length){return true;}
+        try{
+          for(var k=0;k<mudancas.length;k++){
+            var m=mudancas[k],valor=m.novo,c2=m.c;
+            if(valor&&valor.__nova){
+              var lista=(c2.opcoes||[]).map(function(o){return {id:o.id,nome:o.nome,cor:o.cor,ativo:o.ativo!==false};}).concat([{nome:valor.__nova}]);
+              await rpcOk('lista_coluna_salvar',{p_id:c2.id,p_nome:c2.nome,p_opcoes:lista});await carregarColunas();
+              c2=cols.find(function(x){return x.id===c2.id;})||c2;var nova=(c2.opcoes||[]).find(function(o){return norm(o.nome)===norm(valor.__nova);});valor=nova?nova.id:null;
+            }
+            await rpcOk('lista_salvar_celula',{p_processo_id:processoId,p_coluna_id:c2.id,p_valor:valor});
+            if(m.c.campo_sistema)sistema=true;
+          }
+          if(Object.keys(extrasMud).length){var ok=await opts.salvarExtras(extrasMud);if(ok===false)return false;sistema=true;}
+        }catch(e){aviso(h(e.message||'Não foi possível salvar.'),true);return false;}
+        aviso('Dados do processo atualizados.');
+        if(sistema&&opts.aoMudarSistema)opts.aoMudarSistema();
+        return true;
+      };
+    }else{el._sagaSalvar=null;}
     return true;
   }
   function formatarCampo(tipo,v){return formatar(tipo,v);}

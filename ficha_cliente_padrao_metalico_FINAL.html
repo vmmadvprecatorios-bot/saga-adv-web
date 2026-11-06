@@ -884,38 +884,40 @@ function renderProcessData(){
   const canEdit=perms.processosEditar===true;
   const canEditSensitive=perms.processosEditarDados===true;
   const headingBase='<div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18" stroke="currentColor" stroke-width="1.5"/></svg>Dados do Processo</div>';
-  if(state.isEditingProcess&&canEdit){
-    const opcoesResponsavel=(state.responsaveis||[]).map(item=>[item.id,item.nome_completo]);
-    const campoTese=canEditSensitive?'<div id="editProcessTeseSelect"></div>':'<div class="campo-dado-valor">'+esc(process.tese)+'</div>';
-    const campoResponsavel=canEditSensitive&&opcoesResponsavel.length?customSelectMarkup('editProcessResponsavel',process.responsavelId,opcoesResponsavel):'<div class="campo-dado-valor">'+esc(process.responsavel.nome)+'</div>';
-    const campoPrecatorio=canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessPrecatório" value="'+esc(process.precatório==='Não informado'?'':process.precatório)+'">':'<div class="campo-dado-valor">'+esc(process.precatório)+'</div>';
-    const campoValorCausa=canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessValorCausa" value="'+esc(process.valorCausa==='Não informado'?'':process.valorCausa)+'">':'<div class="campo-dado-valor dourado">'+esc(process.valorCausa)+'</div>';
-    heading.innerHTML=headingBase+'<div class="process-edit-actions"><button class="btn-inline-cancel" id="cancelProcessEdit" type="button">Cancelar</button><button class="btn-inline-save" id="saveProcessEdit" type="button">Salvar</button></div>';
-    grid.classList.add('process-data-editing');
-    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Área e tese</div>'+campoTese+'</div><div class="campo-dado"><div class="campo-dado-label">Responsável</div>'+campoResponsavel+'</div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div>'+campoPrecatorio+'</div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div>'+campoValorCausa+'</div><div class="campo-dado"><div class="campo-dado-label">Honorários (%)</div>'+(canEditSensitive?'<input class="campo-dado-edit-input" id="editProcessHonorarios" inputmode="decimal" placeholder="Ex.: 20" value="'+esc(process.honorariosPct==null?'':String(process.honorariosPct).replace('.',','))+'">':'<div class="campo-dado-valor">'+esc(textoHonorarios(process))+'</div>')+'</div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><input class="campo-dado-edit-input" id="editProcessCnj" value="'+esc(process.cnj==='Não informado'?'':process.cnj)+'"></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><input class="campo-dado-edit-input" id="editProcessProtocolo" type="date" value="'+esc(process.dataInicio||'')+'"></div>';
-    if(canEditSensitive){
-      catalogoTeses.montar(document.getElementById('editProcessTeseSelect'),{teseId:process.teseId,areaId:process.areaDireitoId,teseInputId:'editProcessTese',areaInputId:'editProcessArea',permitirAreaAvulsa:true});
-      bindCustomSelects(grid);
-      attachCurrencyMask(document.getElementById('editProcessPrecatório'));
-      attachCurrencyMask(document.getElementById('editProcessValorCausa'));
-    }
-    attachCnjMask(document.getElementById('editProcessCnj'));
-    document.getElementById('cancelProcessEdit').addEventListener('click',()=>{state.isEditingProcess=false;renderProcessData();});
-    document.getElementById('saveProcessEdit').addEventListener('click',async ()=>{await salvarEdicaoProcesso();});
+  const canDelete=perms.processosExcluir===true;
+  const editando=state.isEditingProcess&&canEdit;
+  const acoesHeading=[];
+  if(editando){
+    acoesHeading.push('<button class="btn-inline-cancel" id="cancelProcessEdit" type="button">Cancelar</button><button class="btn-inline-save" id="saveProcessEdit" type="button">Salvar</button>');
   }else{
-    const canDelete=perms.processosExcluir===true;
-    const acoesHeading=[];
     if(canEdit)acoesHeading.push('<button class="btn-edit-process" id="btnEditProcess" type="button" title="Editar dados do processo" aria-label="Editar dados do processo">✎</button>');
     if(canDelete)acoesHeading.push('<button class="btn-edit-process" id="btnDeleteProcess" type="button" title="Excluir processo" aria-label="Excluir processo" style="color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2m3 0l-1 13a1 1 0 01-1 1H8a1 1 0 01-1-1L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>');
-    heading.innerHTML=headingBase+(acoesHeading.length?'<div class="process-edit-actions">'+acoesHeading.join('')+'</div>':'');
-    grid.classList.remove('process-data-editing');
-    grid.innerHTML='<div class="campo-dado"><div class="campo-dado-label">Tese</div><div class="campo-dado-valor">'+esc(process.tese)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Responsável</div><div class="campo-dado-valor">'+esc(process.responsavel.nome)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Valor do Precatório</div><div class="campo-dado-valor">'+esc(process.precatório)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Valor da Causa</div><div class="campo-dado-valor dourado">'+esc(process.valorCausa)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Honorários</div><div class="campo-dado-valor">'+esc(textoHonorarios(process))+'</div></div><div class="campo-dado"><div class="campo-dado-label">Número do Processo</div><div class="campo-dado-valor">'+esc(process.cnj)+'</div></div><div class="campo-dado"><div class="campo-dado-label">Data de início</div><div class="campo-dado-valor">'+esc(process.protocolo)+'</div></div>';
-    // Dados do processo na mesma ordem da planilha do escritório, cada um editável aqui (T56)
-    if(window.SagaPlanilha){
-      const extras=Array.from(grid.querySelectorAll('.campo-dado')).filter(el=>/Honorários|Data de início/.test(el.querySelector('.campo-dado-label')?.textContent||'')).map(el=>el.outerHTML);
-      const pid=process.id;
-      SagaPlanilha.fichaDados(grid,pid,{podeEditar:canEdit,podeEditarDados:canEditSensitive,extras:extras,usuarioId:currentUser.id,ativo:()=>state.activeProcessId===pid&&!state.isEditingProcess,aoMudarSistema:()=>{if(state.activeProcessId===pid)recarregarProcessoAtivo();}});
-    }
+  }
+  heading.innerHTML=headingBase+(acoesHeading.length?'<div class="process-edit-actions">'+acoesHeading.join('')+'</div>':'');
+  grid.classList.toggle('process-data-editing',!!editando);
+  if(window.SagaPlanilha){
+    const pid=process.id;
+    // Honorários e data de início não são colunas da planilha: entram como dados extras, editados e salvos junto com os outros
+    const extras=[
+      {id:'extra:Honorários',nome:'Honorários (%)',texto:textoHonorarios(process),tipo:'pct',valor:process.honorariosPct,editavel:canEditSensitive},
+      {id:'extra:Data de início',nome:'Data de início',texto:process.protocolo&&process.protocolo!=='Não informado'?process.protocolo:'',tipo:'data',valor:process.dataInicio||'',editavel:canEdit}
+    ];
+    SagaPlanilha.fichaDados(grid,pid,{editando:!!editando,podeEditar:canEdit,podeEditarDados:canEditSensitive,extras:extras,usuarioId:currentUser.id,
+      ativo:()=>state.activeProcessId===pid,
+      salvarExtras:async mud=>salvarExtrasProcesso(mud),
+      aoMudarSistema:()=>{if(state.activeProcessId===pid)recarregarProcessoAtivo();}});
+  }else{grid.innerHTML='';}
+  if(editando){
+    document.getElementById('cancelProcessEdit').addEventListener('click',()=>{state.isEditingProcess=false;renderProcessData();});
+    document.getElementById('saveProcessEdit').addEventListener('click',async ()=>{
+      const botao=document.getElementById('saveProcessEdit');
+      if(!grid._sagaSalvar)return;
+      botao.disabled=true;
+      const ok=await grid._sagaSalvar();
+      botao.disabled=false;
+      if(ok){state.isEditingProcess=false;renderProcessData();}
+    });
+  }else{
     if(canEdit)document.getElementById('btnEditProcess').addEventListener('click',()=>{state.isEditingProcess=true;renderProcessData();});
     if(canDelete)document.getElementById('btnDeleteProcess').addEventListener('click',()=>{const processoAtual=getActiveProcess();if(!processoAtual)return;document.getElementById('deleteProcessLabel').textContent=processoAtual.tese+(processoAtual.cnj&&processoAtual.cnj!=='Não informado'?', CNJ '+processoAtual.cnj:'');openModal('deleteProcessModal');});
   }
@@ -2999,59 +3001,19 @@ async function carregarFicha(pessoaId,processoIdInicial){
 }
 
 /* ---------- Escritas: processo, checklist, documentos ---------- */
-async function salvarEdicaoProcesso(){
+async function salvarExtrasProcesso(mud){
   const proc=getActiveProcess();
   if(!proc)return false;
-  const podeEditar=await checkPerm('processos','editar');
-  if(!podeEditar){showToast('Você não possui permissão para editar este processo.','warning');return false;}
-  const teseInput=document.getElementById('editProcessTese');
-  const responsavelInput=document.getElementById('editProcessResponsavel');
-  const valorPrecatorioInput=document.getElementById('editProcessPrecatório');
-  const valorCausaInput=document.getElementById('editProcessValorCausa');
-  const cnjInput=document.getElementById('editProcessCnj');
-  const dataInicioInput=document.getElementById('editProcessProtocolo');
-  const novaTeseId=teseInput?teseInput.value:proc.teseId;
-  const novaAreaId=document.getElementById('editProcessArea')?document.getElementById('editProcessArea').value||null:proc.areaDireitoId;
-  const novoResponsavelId=responsavelInput?responsavelInput.value||null:proc.responsavelId||null;
-  const novoValorPrecatorio=valorPrecatorioInput?(valorPrecatorioInput.value.trim()?currencyValueToNumber(valorPrecatorioInput.value):null):proc.valorPrecatorioNum;
-  const novoValorCausa=valorCausaInput?(valorCausaInput.value.trim()?currencyValueToNumber(valorCausaInput.value):null):proc.valorCausaNum;
-  const mudouCampoSensivel=novaTeseId!==proc.teseId||novaAreaId!==proc.areaDireitoId||novoResponsavelId!==(proc.responsavelId||null)||novoValorPrecatorio!==proc.valorPrecatorioNum||novoValorCausa!==proc.valorCausaNum;
-  if(mudouCampoSensivel){
-    const podeEditarDados=await checkPerm('processos','editar_dados');
-    if(!podeEditarDados){showToast('Você não possui permissão para editar tese, responsável ou valores deste processo.','warning');return false;}
+  if(!(await checkPerm('processos','editar'))){showToast('Você não possui permissão para editar este processo.','warning');return false;}
+  if(mud.data!==undefined){
+    const r=await _sb.from('processos').update({data_inicio:mud.data,atualizado_em:new Date().toISOString()}).eq('id',proc.id).eq('pessoa_id',state.pessoaRow.id);
+    if(r.error){showToast('Não foi possível atualizar a data de início.','error');return false;}
   }
-  if(!novaTeseId){showToast('Selecione uma tese.','warning');return false;}
-  const dataInicio=dataInicioInput?dataInicioInput.value:'';
-  if(!dataInicio){showToast('Informe a data de início do processo.','warning');return false;}
-  const cnjBruto=cnjInput?cnjInput.value.trim():'';
-  const payload={numero_processo_cnj:cnjBruto?maskCnjProcessNumber(cnjBruto):null,data_inicio:dataInicio,atualizado_em:new Date().toISOString()};
-  if(mudouCampoSensivel){
-    payload.tese_id=novaTeseId;
-    payload.area_direito_id=novaAreaId;
-    payload.responsavel_id=novoResponsavelId;
-    payload.valor_precatorio_origem=novoValorPrecatorio;
-    payload.valor_causa=novoValorCausa;
+  if(mud.pct!==undefined){
+    if(!(await checkPerm('processos','editar_dados'))){showToast('Você não possui permissão para editar os honorários.','warning');return false;}
+    const rf=await _sb.from('financeiro_processo').upsert({processo_id:proc.id,percentual_honorarios:mud.pct,atualizado_em:new Date().toISOString()},{onConflict:'processo_id'}).select('processo_id');
+    if(rf.error||!rf.data||!rf.data.length){showToast('O percentual de honorários não foi gravado (verifique a permissão de financeiro).','warning');return false;}
   }
-  const honorariosInput=document.getElementById('editProcessHonorarios');
-  let novoPct=proc.honorariosPct;
-  if(honorariosInput){
-    const t=honorariosInput.value.trim();
-    novoPct=t?parseFloat(t.replace('%','').replace(',','.')):null;
-    if(t&&(isNaN(novoPct)||novoPct<0||novoPct>100)){showToast('O percentual de honorários deve ficar entre 0 e 100.','warning');return false;}
-  }
-  const r=await _sb.from('processos').update(payload).eq('id',proc.id).eq('pessoa_id',state.pessoaRow.id);
-  if(r.error){
-    if(String(r.error.code)==='23505'){showToast('Esta pessoa já possui um processo com esta tese.','warning');return false;}
-    showToast('Não foi possível atualizar o processo. Verifique os dados e suas permissões.','error');
-    return false;
-  }
-  if(novoPct!==proc.honorariosPct){
-    const rf=await _sb.from('financeiro_processo').upsert({processo_id:proc.id,percentual_honorarios:novoPct,atualizado_em:new Date().toISOString()},{onConflict:'processo_id'}).select('processo_id');
-    if(rf.error||!rf.data||!rf.data.length)showToast('Processo salvo, mas o percentual de honorários não foi gravado (verifique a permissão de financeiro).','warning');
-  }
-  state.isEditingProcess=false;
-  await recarregarProcessoAtivo();
-  showToast('Dados do processo atualizados.','success');
   return true;
 }
 async function excluirProcessoAtivo(){
