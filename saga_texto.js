@@ -119,6 +119,37 @@
 
   // ---------- o editor ----------
   var BOTOES=[['bold','<b>N</b>','Negrito (Ctrl+B)'],['italic','<i>I</i>','Itálico (Ctrl+I)'],['underline','<u>S</u>','Sublinhado (Ctrl+U)'],['destaque','<span style="background:#f5c54299;padding:0 3px;border-radius:3px">A</span>','Destacar (marca-texto)'],'|',['insertUnorderedList','• Lista','Lista com marcadores'],['insertOrderedList','1. Lista','Lista numerada'],'|',['limpar','Tx','Tirar a formatação']];
+  // Tira o marca-texto do trecho selecionado (ou do destaque onde está o cursor), sem mexer no resto do texto
+  function removerDestaque(area){
+    var sel=global.getSelection();if(!sel||!sel.rangeCount)return;
+    var r=sel.getRangeAt(0);if(!area.contains(r.commonAncestorContainer))return;
+    var alvos=Array.prototype.filter.call(area.querySelectorAll('mark,span[style*="background"]'),function(m){
+      try{return r.collapsed?m.contains(r.startContainer):r.intersectsNode(m);}catch(e){return false;}
+    });
+    var ultimo=null,primeiro=null;
+    alvos.forEach(function(m){
+      var mr=document.createRange();mr.selectNodeContents(m);
+      var ini=(!r.collapsed&&r.compareBoundaryPoints(Range.START_TO_START,mr)>0)?r.startContainer:null,fim=null;
+      var a=document.createRange(),meio=document.createRange(),d=document.createRange();
+      var cortaIni=!r.collapsed&&r.compareBoundaryPoints(Range.START_TO_START,mr)>0,cortaFim=!r.collapsed&&r.compareBoundaryPoints(Range.END_TO_END,mr)<0;
+      var pIni=cortaIni?[r.startContainer,r.startOffset]:[mr.startContainer,mr.startOffset],pFim=cortaFim?[r.endContainer,r.endOffset]:[mr.endContainer,mr.endOffset];
+      a.setStart(mr.startContainer,mr.startOffset);a.setEnd(pIni[0],pIni[1]);
+      meio.setStart(pIni[0],pIni[1]);meio.setEnd(pFim[0],pFim[1]);
+      d.setStart(pFim[0],pFim[1]);d.setEnd(mr.endContainer,mr.endOffset);
+      var fa=a.cloneContents(),fm=meio.cloneContents(),fd=d.cloneContents();
+      var blocos=document.createDocumentFragment(),aM=null,dM=null;
+      if(fa.textContent.length){aM=m.cloneNode(false);aM.appendChild(fa);blocos.appendChild(aM);}
+      var marc=document.createComment('');var nosMeio=Array.prototype.slice.call(fm.childNodes);
+      blocos.appendChild(fm);
+      if(fd.textContent.length){dM=m.cloneNode(false);dM.appendChild(fd);blocos.appendChild(dM);}
+      if(!primeiro&&nosMeio.length)primeiro=nosMeio[0];if(nosMeio.length)ultimo=nosMeio[nosMeio.length-1];
+      m.parentNode.replaceChild(blocos,m);
+    });
+    if(primeiro&&ultimo&&primeiro.parentNode&&ultimo.parentNode){
+      try{var nr=document.createRange();nr.setStartBefore(primeiro);nr.setEndAfter(ultimo);sel.removeAllRanges();sel.addRange(nr);}catch(e){}
+    }
+    area.normalize();
+  }
   function ligar(campo){
     if(!campo||campo._sagaTexto)return campo&&campo._sagaTexto;
     estilos();
@@ -139,12 +170,12 @@
     PALETA.forEach(function(p){
       var c=document.createElement('button');c.type='button';c.style.background=p[1];c.title=p[2];c.setAttribute('aria-label','Marca-texto '+p[2]);
       c.addEventListener('mousedown',function(e){e.preventDefault();});
-      c.addEventListener('click',function(){try{document.execCommand('hiliteColor',false,p[1]);}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
+      c.addEventListener('click',function(){try{removerDestaque(area);document.execCommand('hiliteColor',false,p[1]);}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
       faixa.appendChild(c);
     });
     var sem=document.createElement('button');sem.type='button';sem.className='sem';sem.textContent='Sem cor';
     sem.addEventListener('mousedown',function(e){e.preventDefault();});
-    sem.addEventListener('click',function(){try{document.execCommand('hiliteColor',false,'transparent');}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
+    sem.addEventListener('click',function(){try{removerDestaque(area);}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
     faixa.appendChild(sem);
     cx.appendChild(barra);cx.appendChild(faixa);cx.appendChild(area);
     campo.style.display='none';campo.parentNode.insertBefore(cx,campo.nextSibling);
@@ -153,8 +184,8 @@
         if(c==='destaque'){
           var sel=global.getSelection(),pai=sel&&sel.anchorNode&&(sel.anchorNode.nodeType===1?sel.anchorNode:sel.anchorNode.parentNode);
           var jaMarcado=pai&&pai.closest&&pai.closest('mark');
-          document.execCommand('hiliteColor',false,jaMarcado?'transparent':'#f5c542');
-        }else if(c==='limpar'){document.execCommand('removeFormat');document.execCommand('hiliteColor',false,'transparent');}
+          if(jaMarcado)removerDestaque(area);else document.execCommand('hiliteColor',false,'#f5c542');
+        }else if(c==='limpar'){document.execCommand('removeFormat');removerDestaque(area);}
         else document.execCommand(c,false,null);
       }catch(e){}
     }
