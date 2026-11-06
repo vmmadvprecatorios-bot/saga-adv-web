@@ -83,7 +83,7 @@
     var valPap=edit&&parte.papel_id?parte.papel_id:'',valDe=edit&&parte.herdeiro_de_id?parte.herdeiro_de_id:'';
     var temCustom=typeof global.customSelectMarkup==='function'&&typeof global.bindCustomSelects==='function';
     var menu=function(id,val,opts){return temCustom?global.customSelectMarkup(id,val,opts):'<select id="'+id+'">'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';};
-    ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" style="max-width:520px"><div class="modal-head"><div class="modal-title-stack"><h3>'+(edit?'Editar parte':'Adicionar herdeiro ou parte')+'</h3><p>Cada herdeiro tem a própria ficha e vê este processo nela.</p></div><button class="modal-close" data-fechar aria-label="Fechar">✕</button></div>'+
+    ov.innerHTML='<div class="modal" role="dialog" aria-modal="true" style="max-width:520px"><div class="modal-head"><div class="modal-title-stack"><h3>'+(edit?'Editar parte':'Adicionar herdeiro ou parte')+'</h3><p>Herdeiros ou outras partes (mesmo sem parentesco, como co-autores). Cada pessoa tem a própria ficha e vê este processo nela.</p></div><button class="modal-close" data-fechar aria-label="Fechar">✕</button></div>'+
       '<div class="modal-body">'+
       '<div class="form-field" id="ptCampoPessoa"><label>Pessoa</label>'+(edit?'<div class="pt-sel"><b>'+esc(escolhida.nome_completo)+'</b></div>':
         '<input type="text" id="ptBusca" placeholder="Buscar por nome ou CPF..." autocomplete="off"><div class="pt-res" id="ptRes" hidden></div><button type="button" class="pt-add" id="ptNova" style="margin-top:6px">+ Cadastrar nova pessoa</button>'+
