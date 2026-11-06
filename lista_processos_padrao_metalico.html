@@ -490,6 +490,10 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
         </div>
       </div>
       <div class="form-field">
+        <label for="inputNovoNumero">Número do processo (opcional)</label>
+        <input type="text" id="inputNovoNumero" inputmode="numeric" placeholder="0000000-00.0000.0.00.0000" autocomplete="off" oninput="if(window.SagaPlanilha)this.value=SagaPlanilha.formatar('cnj',this.value)">
+      </div>
+      <div class="form-field">
         <label>Tese</label>
         <div id="novoAreasTeses"></div><div class="dropdown-custom" id="dropdownNovaTese" style="display:none"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovaTese')"><span id="labelNovaTese">Selecione a tese...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovaTese"></div></div>
       </div>
@@ -498,28 +502,8 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
         <div class="dropdown-custom" id="dropdownNovoStatus"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovoStatus')"><span id="labelNovoStatus">Selecione o status...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovoStatus"></div></div>
       </div>
       <div class="form-field">
-        <label>Tipo de acao</label>
-        <div class="dropdown-custom" id="dropdownNovoTipo">
-          <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovoTipo')"><span id="labelNovoTipo">Selecione (opcional)...</span><div class="chevron-dd"></div></div>
-          <div class="dropdown-custom-lista">
-            <div class="dropdown-custom-opcao" onclick="selecionarNovoTipo(null,'Nao informado')">Nao informado</div>
-            <div class="dropdown-custom-opcao" onclick="selecionarNovoTipo('precatorio_originario','Precatorio originario')">Precatorio originario</div>
-            <div class="dropdown-custom-opcao" onclick="selecionarNovoTipo('pss_sobre_precatorio','PSS sobre precatorio')">PSS sobre precatorio</div>
-            <div class="dropdown-custom-opcao" onclick="selecionarNovoTipo('outro','Outro')">Outro</div>
-          </div>
-        </div>
-      </div>
-      <div class="form-field" id="campoNovoTipoDetalheWrap" style="display:none">
-        <label>Especifique o tipo</label>
-        <input type="text" id="inputNovoTipoDetalhe" placeholder="Ex: Cumprimento de sentenca, Impugnacao" maxlength="80">
-      </div>
-      <div class="form-field">
         <label>Responsavel</label>
         <div class="dropdown-custom" id="dropdownNovoResponsavel"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovoResponsavel')"><span id="labelNovoResponsavel">Sem responsavel</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovoResponsavel"></div></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-field" style="margin-bottom:0"><label>Data de inicio</label><input type="date" id="inputNovoDataInicio"></div>
-        <div class="form-field" style="margin-bottom:0"><label>Prazo (opcional)</label><input type="date" id="inputNovoDataPrazo"></div>
       </div>
       <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px;margin-top:13px">
         <div class="form-field" style="margin-bottom:0"><label>Valor da causa (R$)</label><input type="text" inputmode="numeric" id="inputNovoValorCausa" placeholder="0,00"></div>
@@ -2038,16 +2022,16 @@ function abrirNovoProcesso(){
   document.getElementById('inputNovoHonorarios').value='';
   document.getElementById('previaHonorarios').textContent='';
   aplicarMascaraMoeda(document.getElementById('inputNovoValorCausa'));
-  document.getElementById('inputNovoDataInicio').value=new Date().toISOString().slice(0,10);
-  document.getElementById('inputNovoDataPrazo').value='';
+  document.getElementById('inputNovoNumero').value='';
   document.getElementById('labelNovaTese').textContent='Selecione a tese...';
   document.getElementById('labelNovoStatus').textContent='Selecione o status...';
-  document.getElementById('labelNovoTipo').textContent='Selecione (opcional)...';
-  document.getElementById('campoNovoTipoDetalheWrap').style.display='none';
-  document.getElementById('inputNovoTipoDetalhe').value='';
   state.novoResponsavel=null;
   document.getElementById('labelNovoResponsavel').textContent='Sem responsavel';
-  renderNovoProcessoTese();renderNovoProcessoStatus();renderNovoProcessoResponsavel();openModal('modalNovoProcesso');
+  renderNovoProcessoTese();renderNovoProcessoStatus();renderNovoProcessoResponsavel();
+  // quem está criando já entra como responsável (pode trocar)
+  var eu=(state.responsaveis||[]).find(function(u){return String(u.id)===String(state.meuInternoId);});
+  if(eu)selNovoResponsavel(eu);
+  openModal('modalNovoProcesso');
 }
 function renderNovoProcessoTese(){
   if(menuNovoTeses)menuNovoTeses.destruir();
@@ -2067,15 +2051,6 @@ function renderNovoProcessoStatus(){
 }
 function selNovaTese(t){state.novoTese=t;document.getElementById('labelNovaTese').textContent=t.nome;document.getElementById('dropdownNovaTese').classList.remove('aberto');}
 function selNovoStatus(s){state.novoStatus=s;document.getElementById('labelNovoStatus').textContent=s.nome;document.getElementById('dropdownNovoStatus').classList.remove('aberto');}
-function selecionarNovoTipo(val,label){
-  state.novoTipo=val;
-  document.getElementById('labelNovoTipo').textContent=label;
-  document.getElementById('dropdownNovoTipo').classList.remove('aberto');
-  var wrap=document.getElementById('campoNovoTipoDetalheWrap');
-  var campo=document.getElementById('inputNovoTipoDetalhe');
-  if(val==='outro'){wrap.style.display='';campo.focus();}
-  else{wrap.style.display='none';campo.value='';}
-}
 var _buscaPessoaTimeout=null;
 function buscarPessoasModal(termo){
   clearTimeout(_buscaPessoaTimeout);
@@ -2108,17 +2083,12 @@ async function salvarNovoProcesso(){
   if(!state.novoPessoa){showToast('Selecione uma pessoa.','warning');return;}
   if(!state.novoTese){showToast('Selecione a tese.','warning');return;}
   if(!state.novoStatus){showToast('Selecione o status inicial.','warning');return;}
-  var tipoAcaoDetalhe=null;
-  if(state.novoTipo==='outro'){
-    tipoAcaoDetalhe=(document.getElementById('inputNovoTipoDetalhe').value||'').trim();
-    if(!tipoAcaoDetalhe){showToast('Especifique o tipo de acao no campo de texto.','warning');return;}
-  }
   var dados={
     pessoa_id:state.novoPessoa.id,tese_id:state.novoTese.id,area_direito_id:state.novoArea||null,status_id:state.novoStatus.id,
-    data_inicio:document.getElementById('inputNovoDataInicio').value||new Date().toISOString().slice(0,10),
-    data_prazo:document.getElementById('inputNovoDataPrazo').value||null,
+    data_inicio:new Date().toISOString().slice(0,10),
+    numero_processo_cnj:(document.getElementById('inputNovoNumero').value||'').trim()||null,
     valor_causa:valorMoedaParaNumero(document.getElementById('inputNovoValorCausa').value),
-    tipo_acao:state.novoTipo||null,tipo_acao_detalhe:tipoAcaoDetalhe,responsavel_id:state.novoResponsavel||null,criado_por_id:state.meuInternoId,
+    responsavel_id:state.novoResponsavel||null,criado_por_id:state.meuInternoId,
   };
   // Percentual de honorarios: vai para o financeiro do processo (expectativa = valor da causa x %)
   var txtPct=(document.getElementById('inputNovoHonorarios').value||'').trim();
