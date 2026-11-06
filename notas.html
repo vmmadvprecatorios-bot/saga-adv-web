@@ -128,7 +128,14 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .cred .lin span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cred-q{border:1px solid color-mix(in srgb,var(--nc) 30%,var(--border-soft));border-radius:13px;padding:11px 12px;display:flex;flex-direction:column;gap:9px;background:color-mix(in srgb,var(--text) 3%,transparent)}
 .cred-q-cab{display:flex;align-items:center;gap:6px}.cred-q-cab input{flex:1;min-width:0;height:34px;border-radius:9px;border:1px solid var(--border-soft);background:color-mix(in srgb,var(--text) 4%,transparent);padding:0 11px;font-size:13px;font-weight:700;outline:0}.cred-q-cab input:focus{border-color:var(--gold)}
-.cred-q .campo label{margin-bottom:3px}
+.cred-q{padding:8px 10px;gap:7px;border-radius:12px}
+.cred-q-cab input{height:30px;font-size:12.5px}
+.cred-q-cab .ico{width:24px;min-width:24px;height:30px}
+.cred-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cred-g .campo{min-width:0}
+.cred-q .campo label{margin-bottom:2px;font-size:9.5px}
+.cred-q .campo input[type=text],.cred-q .campo input[type=password]{height:30px;font-size:12px;padding:0 9px;border-radius:8px}
+.cred-q .linha{gap:3px}.cred-q .linha .ico{height:30px;width:28px;min-width:28px}.cred-q .linha .mini{height:30px;min-width:0;padding:0 7px;font-size:10px}
+@media(max-width:620px){.cred-g{grid-template-columns:1fr}}
 .aviso-senha{font-size:11px;color:var(--muted);border-radius:9px;padding:8px 10px;background:color-mix(in srgb,var(--warning) 10%,transparent);border:1px solid color-mix(in srgb,var(--warning) 30%,transparent)}
 .md-rod{display:flex;gap:8px;align-items:center;padding:10px 16px 14px;flex-wrap:wrap}
 .md-rod .esq{display:flex;gap:6px;flex-wrap:wrap}.md-rod .dir{margin-left:auto;display:flex;gap:8px}
@@ -545,7 +552,7 @@ function abrirNota(n,tipo){
   S.ed={id:n?n.id:null,tipo:n?n.tipo:tipo,titulo:n?n.titulo:'',conteudo:n?n.conteudo:'',itens:n?(n.itens||[]).map(function(i){return {texto:i.texto,ok:!!i.ok};}):[],
     creds:n?(S.creds[n.id]||[]).map(function(c){return {id:c.id,nome:c.nome,login:c.login,link:c.link,tem_senha:!!c.tem_senha,senha:'',senhaSuja:false,senhaLida:false,ver:false,travada:!!c.tem_senha};}):[],cor:n?n.cor:'padrao',etiquetas:n?(n.etiquetas||[]).slice():[],pode:pode,dono:dono,sujo:false};
   var e=S.ed,m=$('mdNota');
-  m.dataset.cor=e.cor;
+  m.dataset.cor=e.cor;m.style.maxWidth=e.tipo==='senha'?'660px':'';
   var corpo='';
   if(e.tipo==='texto')corpo='<div class="campo"><textarea id="edTexto" placeholder="Escreva sua nota..."></textarea></div>';
   else if(e.tipo==='lista')corpo='<div class="campo"><div class="itens" id="edItens"></div><div class="item-ed" style="margin-top:6px"><span style="width:16px;text-align:center;color:var(--muted)">+</span><input type="text" id="edNovoItem" placeholder="Novo item (Enter para incluir)"'+(pode?'':' disabled')+'></div></div>';
@@ -576,8 +583,8 @@ function desenharCreds(){
     return '<div class="cred-q" data-q="'+i+'">'+
       '<div class="cred-q-cab"><input type="text" data-f="nome" placeholder="Nome (ex.: Portal do TJAL)" maxlength="200" value="'+esc(c.nome)+'"'+ro+'>'+
         (e.pode?'<button class="ico" type="button" data-q-sobe="'+i+'" title="Subir"'+(i?'':' disabled style="opacity:.3"')+'>▲</button><button class="ico" type="button" data-q-desce="'+i+'" title="Descer"'+(i<e.creds.length-1?'':' disabled style="opacity:.3"')+'>▼</button><button class="ico" type="button" data-q-rm="'+i+'" title="Remover este acesso">✕</button>':'')+'</div>'+
-      '<div class="campo"><label>Login</label><div class="linha"><input type="text" data-f="login" autocomplete="off" placeholder="E-mail, CPF ou usuário" value="'+esc(c.login)+'"'+ro+'><button class="ico" type="button" data-q-cp="login" data-i="'+i+'" title="Copiar o login">'+ICO_COPIAR+'</button></div></div>'+
-      '<div class="campo"><label>Senha</label><div class="linha"><input type="'+(c.ver?'text':'password')+'" data-f="senha" autocomplete="new-password" placeholder="'+(c.tem_senha&&!c.senhaLida?'senha guardada (clique no olho para ver)':'Digite ou gere uma senha')+'" value="'+esc(c.senhaLida?c.senha:'')+'"'+ro+(c.travada?' readonly':'')+'><button class="ico" type="button" data-q-olho="'+i+'" title="Mostrar / esconder a senha">'+ICO_OLHO+'</button><button class="ico" type="button" data-q-cp="senha" data-i="'+i+'" title="Copiar a senha">'+ICO_COPIAR+'</button>'+(e.pode?'<button class="ico'+(c.travada?' travado':'')+'" type="button" data-q-trava="'+i+'" title="'+(c.travada?'Senha travada: clique para destravar':'Clique para travar a senha e evitar mudar sem querer')+'" aria-pressed="'+(c.travada?'true':'false')+'">'+(c.travada?ICO_TRAVADO:ICO_DESTRAVADO)+'</button><button class="mini" type="button" data-q-ger="'+i+'" title="'+(c.travada?'Destrave o cadeado para gerar uma nova senha':'Gerar uma senha forte')+'"'+(c.travada?' disabled style="opacity:.35;cursor:not-allowed"':'')+'>Gerar</button>':'')+'</div></div>'+
+      '<div class="cred-g"><div class="campo"><label>Login</label><div class="linha"><input type="text" data-f="login" autocomplete="off" placeholder="E-mail, CPF ou usuário" value="'+esc(c.login)+'"'+ro+'><button class="ico" type="button" data-q-cp="login" data-i="'+i+'" title="Copiar o login">'+ICO_COPIAR+'</button></div></div>'+
+      '<div class="campo"><label>Senha</label><div class="linha"><input type="'+(c.ver?'text':'password')+'" data-f="senha" autocomplete="new-password" placeholder="'+(c.tem_senha&&!c.senhaLida?'senha guardada':'Digite ou gere')+'" value="'+esc(c.senhaLida?c.senha:'')+'"'+ro+(c.travada?' readonly':'')+'><button class="ico" type="button" data-q-olho="'+i+'" title="Mostrar / esconder a senha">'+ICO_OLHO+'</button><button class="ico" type="button" data-q-cp="senha" data-i="'+i+'" title="Copiar a senha">'+ICO_COPIAR+'</button>'+(e.pode?'<button class="ico'+(c.travada?' travado':'')+'" type="button" data-q-trava="'+i+'" title="'+(c.travada?'Senha travada: clique para destravar':'Clique para travar a senha e evitar mudar sem querer')+'" aria-pressed="'+(c.travada?'true':'false')+'">'+(c.travada?ICO_TRAVADO:ICO_DESTRAVADO)+'</button><button class="mini" type="button" data-q-ger="'+i+'" title="'+(c.travada?'Destrave o cadeado para gerar uma nova senha':'Gerar uma senha forte')+'"'+(c.travada?' disabled style="opacity:.35;cursor:not-allowed"':'')+'>Gerar</button>':'')+'</div></div></div>'+
       '<div class="campo"><label>Link do site</label><div class="linha"><input type="text" data-f="link" autocomplete="off" placeholder="https://..." value="'+esc(c.link)+'"'+ro+'><button class="ico" type="button" data-q-abrir="'+i+'" title="Abrir a página">'+ICO_ABRIR+'</button></div></div>'+
     '</div>';
   }).join('')||'<div class="somente-leitura-aviso">Nenhum acesso cadastrado.</div>';
