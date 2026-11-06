@@ -1462,7 +1462,7 @@
       var m=(el.getAttribute('onclick')||'').match(/sagaIrPara\('([^']+)'\)/);if(!m)return;
       var a=document.createElement('a');
       Array.prototype.forEach.call(el.attributes,function(at){if(at.name!=='onclick')a.setAttribute(at.name,at.value);});
-      a.setAttribute('href',m[1]);a.innerHTML=el.innerHTML;
+      a.setAttribute('href',m[1]);while(el.firstChild)a.appendChild(el.firstChild);
       el.parentNode.replaceChild(a,el);
     });
     if(sb.dataset.linksLigados)return;sb.dataset.linksLigados='1';
@@ -1486,13 +1486,16 @@
       el.textContent=v.t;el.style.display=v.o?'none':'';if(v.a)el.classList.add('atrasada');
     });
   }
+  // Coloca o HTML dos menus pelo <template> (e nao por innerHTML): innerHTML durante a leitura da pagina faz o navegador
+  // desistir de segurar a primeira imagem (link rel=expect) e os menus passam a piscar na troca de tela.
+  function injetarHtml(el,html){var t=document.createElement('template');t.innerHTML=html;el.replaceChildren(t.content);}
   function montarMoldura(telaAtiva){
     var sb=document.getElementById('sidebarSaga'),tb=document.getElementById('topbarSaga');
     if(!sb&&!tb)return;
     if(!_molduraMontada){
       _molduraMontada=true;
-      if(sb){sb.innerHTML=SIDEBAR_HTML;linksDoMenu(sb);prepararMenuPermissoes();}
-      if(tb)tb.innerHTML=TOPBAR_HTML;
+      if(sb){injetarHtml(sb,SIDEBAR_HTML);linksDoMenu(sb);prepararMenuPermissoes();}
+      if(tb)injetarHtml(tb,TOPBAR_HTML);
       restaurarNumerosMoldura();
       try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)definirIniciaisAvatar(avt,ini);var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);var lg=localStorage.getItem('saga-logo');if(lg)aplicarMarca(lg,localStorage.getItem('saga-escritorio'));}catch(e){}
       ligarTema();
@@ -1515,6 +1518,10 @@
   }
   if(document.getElementById('sidebarSaga')||document.getElementById('topbarSaga'))montarMolduraCedo();
   else document.addEventListener('DOMContentLoaded',montarMolduraCedo);
+  // Marca o ponto em que o menu superior e o lateral ja estao montados. O saga_guard.js pede ao navegador
+  // (link rel=expect) que so desenhe a primeira imagem da tela nova a partir daqui; ate la a tela anterior
+  // continua parada, e na troca de tela so o conteudo muda (os menus nao piscam nem somem).
+  try{if(document.readyState==='loading'&&!document.getElementById('sagaFimDaTela'))document.write('<span id="sagaFimDaTela" hidden></span>');}catch(e){}
 
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';

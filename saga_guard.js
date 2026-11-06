@@ -80,11 +80,8 @@
   var molduraPedida=false;
   function mostrarMoldura(){
     if(molduraPedida)return;molduraPedida=true;
-    function ok(){html.classList.remove('saga-entrando');}
-    if(document.fonts&&document.fonts.status==='loading'){
-      var feito=false;function uma(){if(!feito){feito=true;ok();}}
-      document.fonts.ready.then(uma);setTimeout(uma,250);
-    }else ok();
+    // Os menus aparecem na hora, junto com a primeira imagem da tela (esperar as letras deixava tudo apagado por instantes)
+    html.classList.remove('saga-entrando');
   }
   // Telas antigas sem o menu padrao (data-simples): basta ter login salvo; aparecem quando a pagina termina de carregar
   if(document.currentScript&&document.currentScript.dataset.simples){
