@@ -2203,6 +2203,7 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
 <script src="saga_ui.js"></script>
 <script src="saga_etiquetas.js"></script>
 <script src="saga_mencoes.js"></script>
+<script src="saga_texto.js"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2874,7 +2875,7 @@ function tarefaPassaFiltros(t, ignorar){
   }
   if(ignorar!=='etiquetas' && filtrosAtivos.etiquetas.length && filtrosAtivos.etiquetas.indexOf(t.etiquetaId || '') === -1) return false;
   if(filtrosAtivos.busca){
-    var alvo = (t.titulo + ' ' + (t.descricao||'') + ' ' + (t.processoVinculado ? t.processoVinculado.numero + ' ' + t.processoVinculado.cliente : '')).toLowerCase();
+    var alvo = (t.titulo + ' ' + (window.SagaTexto ? SagaTexto.puro(t.descricao||'') : (t.descricao||'')) + ' ' + (t.processoVinculado ? t.processoVinculado.numero + ' ' + t.processoVinculado.cliente : '')).toLowerCase();
     if(alvo.indexOf(filtrosAtivos.busca) === -1) return false;
   }
   return true;
@@ -4858,6 +4859,7 @@ document.getElementById('selectResponsavelTarefa').addEventListener('change', fu
   renderizarChipsCompartilhar();
 });
 
+if(window.SagaTexto) SagaTexto.ligar(document.getElementById('textareaDescricaoTarefa'));
 iniciarMinhasTarefas();
 </script>
 

@@ -879,7 +879,7 @@
     if(S.aberta!==id)return;
     var cores={comentario:'#4b8af5',coluna:'#8a94a8',prazo:'#e0a93b',etiqueta:'#ec4899',concluida:'#2fae7a',reaberta:'#f97316',processo:'#8b5cf6',tarefa:'#4b8af5',vista:'#8a94a8'};
     var h=document.getElementById('siHist'),l=r.data||[];
-    h.innerHTML=l.length?l.map(function(c){return '<div class="si-hi" style="--c:'+(cores[c.tipo]||'#8a94a8')+'"><div class="q">'+esc(nomeUsuario(c.usuario_id)||'Sistema')+' · '+new Date(c.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div><div class="t">'+SagaMencoes.destacar(c.texto||'')+'</div></div>';}).join(''):'<div class="si-sub">Nenhum comentário ainda.</div>';
+    h.innerHTML=l.length?l.map(function(c){return '<div class="si-hi" style="--c:'+(cores[c.tipo]||'#8a94a8')+'"><div class="q">'+esc(nomeUsuario(c.usuario_id)||'Sistema')+' · '+new Date(c.criado_em).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</div><div class="t">'+(window.SagaTexto&&/^\s*<(p|ul|ol)[\s>]/i.test(c.texto||'')?SagaTexto.html(c.texto):SagaMencoes.destacar(c.texto||''))+'</div></div>';}).join(''):'<div class="si-sub">Nenhum comentário ainda.</div>';
   }
 
   /* Incorporação em lote: um item e uma chamada por número completo. */

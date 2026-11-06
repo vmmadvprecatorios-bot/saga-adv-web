@@ -24,7 +24,7 @@
 
   function htmlComentarios(lista,vazio){
     if(!lista.length)return '<div class="fa-vazio">'+e(vazio)+'</div>';
-    return lista.map(c=>'<div class="fa-com"><div class="fa-av" data-saga-usuario="'+e(c.autor)+'" data-saga-nome="'+e(nomeDe(c.autor))+'">'+e(ini(nomeDe(c.autor)))+'</div><div class="fa-com-corpo"><div class="fa-com-cab"><b>'+e(nomeDe(c.autor))+'</b><span>'+e(fmtHora(c.em))+'</span>'+(c.tipo&&c.tipo!=='comentario'?'<em>'+e(c.tipo==='tarefa'?'virou tarefa':c.tipo==='vista'?'vista':c.tipo)+'</em>':'')+'</div><div class="fa-com-texto">'+e(c.texto)+'</div></div></div>').join('');
+    return lista.map(c=>'<div class="fa-com"><div class="fa-av" data-saga-usuario="'+e(c.autor)+'" data-saga-nome="'+e(nomeDe(c.autor))+'">'+e(ini(nomeDe(c.autor)))+'</div><div class="fa-com-corpo"><div class="fa-com-cab"><b>'+e(nomeDe(c.autor))+'</b><span>'+e(fmtHora(c.em))+'</span>'+(c.tipo&&c.tipo!=='comentario'?'<em>'+e(c.tipo==='tarefa'?'virou tarefa':c.tipo==='vista'?'vista':c.tipo)+'</em>':'')+'</div><div class="fa-com-texto">'+(window.SagaTexto?SagaTexto.html(c.texto):e(c.texto))+'</div></div></div>').join('');
   }
   function caixaComentar(){
     return '<div class="fa-comentar"><textarea id="faTexto" rows="3" placeholder="Escreva um comentário... (Enter pula linha)"></textarea><button type="button" class="btn-primary" id="faEnviar">Comentar</button></div>';
@@ -55,12 +55,13 @@
       t.responsavelNome?'<span class="fa-chip">Responsável: '+e(t.responsavelNome)+'</span>':'',
       t.etiqueta&&t.etiqueta.nome?'<span class="fa-chip" style="border-color:'+e(t.etiqueta.cor||'')+'">'+e(t.etiqueta.nome)+'</span>':''].join('');
     const corpo='<div class="fa-chips">'+chips+'</div>'
-      +(t.descricao?'<div class="fa-rotulo">Descrição</div><div class="fa-texto">'+e(t.descricao)+'</div>':'')
+      +(t.descricao?'<div class="fa-rotulo">Descrição</div><div class="fa-texto">'+(window.SagaTexto?SagaTexto.html(t.descricao):e(t.descricao))+'</div>':'')
       +(origem?'<button type="button" class="fa-link" data-fa-intim="'+e(origem.id)+'">Veio da intimação: '+e((origem.tipo_documento||'Intimação')+(origem.tribunal?' ('+origem.tribunal+')':''))+' ›</button>':'')
       +'<div class="fa-rotulo">Comentários ('+coms.length+')</div><div class="fa-coms" id="faComs">'+htmlComentarios(coms,'Nenhum comentário ainda.')+'</div>'+caixaComentar();
     const rodape='<a class="btn-secondary fa-ir" href="minhas_tarefas.html?tarefa='+encodeURIComponent(id)+'">Abrir em Minhas Tarefas ↗</a>'
       +(podeEditar?'<button type="button" class="btn-secondary" id="faEditar">Editar</button><button type="button" class="btn-primary" id="faConcluir">Concluir tarefa</button>':'');
     const d=janela(e(t.titulo),'Tarefa deste processo',corpo,rodape);
+    if(window.SagaTexto)SagaTexto.ligar(d.querySelector('#faTexto'));
     const ed=d.querySelector('#faEditar');if(ed)ed.addEventListener('click',()=>{fechar();abrirModalTarefa(id);});
     const cc=d.querySelector('#faConcluir');if(cc)cc.addEventListener('click',async()=>{cc.disabled=true;const ok=await concluirTarefa(id);cc.disabled=false;if(ok!==false)fechar();});
     const oi=d.querySelector('[data-fa-intim]');if(oi)oi.addEventListener('click',()=>abrirIntimacao(oi.dataset.faIntim));
@@ -100,6 +101,7 @@
     const rodape=(i.link?'<a class="btn-secondary fa-ir" href="'+e(i.link)+'" target="_blank" rel="noopener">Ver no tribunal ↗</a>':'')
       +'<a class="btn-primary fa-ir" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(id)+'">Abrir em Intimações ↗</a>';
     const d=janela(e((i.etiqueta?i.etiqueta+' · ':'')+(i.tipo_documento||'Intimação')),'Intimação deste processo',corpo,rodape);
+    if(window.SagaTexto)SagaTexto.ligar(d.querySelector('#faTexto'));
     const vt=d.querySelector('[data-fa-tarefa]');if(vt)vt.addEventListener('click',()=>abrirTarefa(vt.dataset.faTarefa));
     d.querySelector('#faEnviar').addEventListener('click',async ev=>{
       const ta=d.querySelector('#faTexto');const t=ta.value.trim();if(!t){ta.focus();return;}
@@ -121,7 +123,7 @@
    +'.fa-link{display:block;margin-top:10px;padding:0;border:0;background:none;color:var(--gold);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;text-align:left}.fa-link:hover{text-decoration:underline}'
    +'.fa-coms{display:flex;flex-direction:column;gap:10px}.fa-com{display:flex;gap:9px}.fa-av{width:28px;height:28px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--text);font-size:9.5px;font-weight:700;background-size:cover;background-position:center}'
    +'.fa-com-corpo{min-width:0;flex:1}.fa-com-cab{display:flex;flex-wrap:wrap;gap:6px;align-items:baseline;font-size:11px;color:var(--text)}.fa-com-cab span{color:var(--muted);font-size:9.5px}.fa-com-cab em{font-style:normal;font-size:9px;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold)}'
-   +'.fa-com-texto{margin-top:2px;white-space:pre-wrap;word-break:break-word;font-size:12px;line-height:1.5;color:var(--text)}.fa-vazio{color:var(--muted);font-size:11px;font-style:italic}'
+   +'.fa-com-texto{margin-top:2px;word-break:break-word;font-size:12px;line-height:1.5;color:var(--text)}.fa-vazio{color:var(--muted);font-size:11px;font-style:italic}'
    +'.fa-comentar{display:flex;flex-direction:column;gap:8px;margin-top:12px}.fa-comentar textarea{width:100%;resize:vertical;padding:9px 11px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);font:inherit;font-size:12px}.fa-comentar textarea:focus{outline:none;border-color:var(--gold)}.fa-comentar .btn-primary{align-self:flex-end}'
    +'.fa-rodape{flex-wrap:wrap;gap:8px}.fa-ir{text-decoration:none;display:inline-flex;align-items:center}'
    +'.item-tarefa-mini[data-fa-abrir]{cursor:pointer}.item-tarefa-mini[data-fa-abrir]:hover{border-color:color-mix(in srgb,var(--gold) 45%,transparent)}'

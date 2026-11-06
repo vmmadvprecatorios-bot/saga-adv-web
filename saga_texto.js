@@ -163,5 +163,5 @@
   }
   function ligarTodos(raiz){(raiz||document).querySelectorAll('textarea[data-saga-texto]').forEach(ligar);}
 
-  global.SagaTexto={ligar:ligar,ligarTodos:ligarTodos,html:mostrar,limpar:limpar,vazio:function(v){return !textoDoHtml(paraHtml(v));}};
+  global.SagaTexto={ligar:ligar,ligarTodos:ligarTodos,html:mostrar,limpar:limpar,puro:function(v){return textoDoHtml(paraHtml(v));},vazio:function(v){return !textoDoHtml(paraHtml(v));}};
 })(window);
