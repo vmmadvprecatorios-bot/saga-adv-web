@@ -1644,6 +1644,21 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
      4) processo e cliente; 5) responsável à esquerda, prazo e data à direita, na mesma linha */
   .card-tarefa .topo-card-tarefa{ justify-content:space-between; align-items:center; flex-wrap:nowrap; }
   .card-tarefa .topo-card-tarefa .badge-prioridade-pill{ flex:0 0 auto; margin-left:auto; }
+  .linha-status-card{ display:flex; align-items:center; gap:6px; margin:-2px 0 8px; flex-wrap:wrap; }
+  .btn-status-tarefa{ display:inline-flex; align-items:center; gap:6px; height:22px; padding:0 9px; border-radius:8px; border:1px solid color-mix(in srgb,var(--c-st,#8b93a8) 45%,transparent); background:color-mix(in srgb,var(--c-st,#8b93a8) 14%,transparent); color:color-mix(in srgb,var(--c-st,#8b93a8) 80%,var(--text)); font:inherit; font-size:9.5px; font-weight:700; cursor:pointer; }
+  .btn-status-tarefa i{ width:6px; height:6px; border-radius:50%; background:var(--c-st,#8b93a8); }
+  .btn-status-tarefa:disabled{ cursor:default; opacity:.85; }
+  .btn-status-tarefa:not(:disabled):hover{ border-color:var(--c-st); }
+  .btn-status-tarefa.st-pendente,.op-status-pendente i{ --c-st:#5b9bd5; }
+  .btn-status-tarefa.st-em_andamento,.op-status-em_andamento i{ --c-st:#e0a93b; }
+  .btn-status-tarefa.st-concluida,.op-status-concluida i{ --c-st:#3fb98a; }
+  .seta-status{ font-size:8px; opacity:.7; }
+  .selo-atrasada-card{ display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:8px; background:color-mix(in srgb,var(--danger) 16%,transparent); border:1px solid color-mix(in srgb,var(--danger) 40%,transparent); color:var(--danger); font-size:9.5px; font-weight:700; }
+  .menu-status-tarefa{ position:fixed; z-index:5000; min-width:150px; padding:5px; border-radius:11px; background:var(--panel-solid); border:1px solid var(--border-soft); box-shadow:0 14px 34px rgba(0,0,0,.4); display:flex; flex-direction:column; gap:2px; }
+  .menu-status-tarefa button{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:var(--text); font:inherit; font-size:11.5px; cursor:pointer; text-align:left; }
+  .menu-status-tarefa button:hover{ background:color-mix(in srgb,var(--gold) 12%,transparent); }
+  .menu-status-tarefa button.atual{ font-weight:700; background:color-mix(in srgb,var(--gold) 16%,transparent); }
+  .menu-status-tarefa i{ width:8px; height:8px; border-radius:50%; background:var(--c-st,#8b93a8); }
   /* tarefa que eu compartilhei: azul claro discreto */
   .card-tarefa.compartilhei{ background:color-mix(in srgb,#4b8af5 13%,var(--panel-solid)); border-color:color-mix(in srgb,#4b8af5 38%,transparent); }
   .card-tarefa.compartilhei:hover{ border-color:color-mix(in srgb,#4b8af5 65%,transparent); }
@@ -1763,6 +1778,10 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
         <div class="kpi-tarefa-valor" id="kpiTotalTarefas">0</div>
         <div class="kpi-tarefa-label">Total de Tarefas</div>
       </button>
+      <button type="button" class="card-kpi-tarefa kpi-filtro" data-faixa="novas" aria-pressed="false" title="Clique para filtrar">
+        <div class="kpi-tarefa-valor" id="kpiNovas">0</div>
+        <div class="kpi-tarefa-label">Novas</div>
+      </button>
       <button type="button" class="card-kpi-tarefa kpi-filtro" data-faixa="andamento" aria-pressed="false" title="Clique para filtrar">
         <div class="kpi-tarefa-valor" id="kpiEmAndamento">0</div>
         <div class="kpi-tarefa-label">Em Andamento</div>
@@ -1816,7 +1835,7 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
           <div class="dropdown-custom-valor"><span>Status: Todos</span><div class="seta-dropdown"></div></div>
           <div class="dropdown-custom-lista">
             <div class="dropdown-custom-opcao selecionada">Todos</div>
-            <div class="dropdown-custom-opcao">Pendente</div>
+            <div class="dropdown-custom-opcao">Nova</div>
             <div class="dropdown-custom-opcao">Em Andamento</div>
             <div class="dropdown-custom-opcao">Concluida</div>
           </div>
@@ -2798,7 +2817,7 @@ function renderizarChipsFiltros(){
   var container = document.getElementById('chipsFiltrosAtivos');
   container.innerHTML = '';
   var chips = [];
-  var rotFaixa = { total:'Total de tarefas', andamento:'Em andamento', atrasadas:'Atrasadas', concluidas:'Concluídas hoje' };
+  var rotFaixa = { total:'Total de tarefas', novas:'Novas', andamento:'Em andamento', atrasadas:'Atrasadas', concluidas:'Concluídas hoje' };
   if(filtrosAtivos.faixa) chips.push({ label:'Painel: ' + rotFaixa[filtrosAtivos.faixa], limpar:function(){ filtrosAtivos.faixa=''; } });
   if(filtrosAtivos.tipo !== 'Todas') chips.push({ label:'Tipo: ' + filtrosAtivos.tipo, limpar:function(){ resetarDropdownSimples('dropFiltroTipo','Tipo'); filtrosAtivos.tipo='Todas'; } });
   if(filtrosAtivos.status !== 'Todos') chips.push({ label:'Status: ' + filtrosAtivos.status, limpar:function(){ resetarDropdownSimples('dropFiltroStatus','Status'); filtrosAtivos.status='Todos'; } });
@@ -2853,6 +2872,7 @@ function desmarcarOpcaoMulti(idLista, valor){
 function tarefaPassaFiltros(t, ignorar){
   // Faixa de números do topo (Total, Em andamento, Atrasadas, Concluídas hoje)
   var fx = filtrosAtivos.faixa;
+  if(fx === 'novas' && t.status !== 'pendente') return false;
   if(fx === 'andamento' && t.status !== 'em_andamento') return false;
   if(fx === 'atrasadas' && !tarefaEstaAtrasada(t)) return false;
   if(fx === 'concluidas' && !(t.status === 'concluida' && t.dataConclusao === hojeISO())) return false;
@@ -2865,7 +2885,7 @@ function tarefaPassaFiltros(t, ignorar){
   if(filtrosAtivos.tipo === 'Vinculada a Processo' && t.tipo !== 'processo') return false;
 
   if(filtrosAtivos.status !== 'Todos'){
-    var mapaStatus = { 'Pendente':'pendente', 'Em Andamento':'em_andamento', 'Concluida':'concluida' };
+    var mapaStatus = { 'Nova':'pendente', 'Em Andamento':'em_andamento', 'Concluida':'concluida' };
     if(t.status !== mapaStatus[filtrosAtivos.status]) return false;
   }
 
@@ -3024,6 +3044,7 @@ function atualizarKpisTarefas(){
     b.title = lig ? 'Clique para tirar o filtro' : 'Clique para filtrar';
   });
   document.getElementById('kpiTotalTarefas').textContent = todas.length;
+  document.getElementById('kpiNovas').textContent = todas.filter(function(t){ return t.status === 'pendente'; }).length;
   document.getElementById('kpiEmAndamento').textContent = todas.filter(function(t){ return t.status === 'em_andamento'; }).length;
   document.getElementById('kpiAtrasadas').textContent = todas.filter(function(t){ return tarefaEstaAtrasada(t); }).length;
   document.getElementById('kpiConcluidasHoje').textContent = todas.filter(function(t){ return t.status === 'concluida' && t.dataConclusao === hojeISO(); }).length;
@@ -3291,6 +3312,44 @@ function criarCheckboxConclusaoCard(tarefa){
   '</button>';
 }
 
+// Status da tarefa: Nova, Em andamento e Concluída são escolhidos no cartão; Atrasada aparece sozinha pelo prazo
+function rotuloStatusTarefa(t){ return t.status === 'concluida' ? 'Concluída' : t.status === 'em_andamento' ? 'Em andamento' : 'Nova'; }
+async function definirStatusTarefa(id, novo){
+  var t = window.SAGA_TASKS.filter(function(x){ return x.id === id; })[0];
+  if(!t || t.status === novo) return;
+  if(novo === 'concluida'){ await alternarConclusaoTarefa(id); return; }
+  if(!(await salvarCamposTarefa(id, { status: novo }))) return;
+  t.status = novo; t.dataConclusao = null;
+  aplicarFiltrosERenderizar();
+  mostrarToast('Tarefa marcada como <strong>' + rotuloStatusTarefa(t) + '</strong>.', 'sucesso');
+}
+var menuStatusTarefaEl = null;
+function fecharMenuStatusTarefa(){ if(menuStatusTarefaEl){ menuStatusTarefaEl.remove(); menuStatusTarefaEl = null; } }
+function abrirMenuStatusTarefa(botao, tarefa){
+  fecharMenuStatusTarefa();
+  var m = document.createElement('div'); m.className = 'menu-status-tarefa'; m.setAttribute('role', 'menu');
+  [['pendente','Nova'],['em_andamento','Em andamento'],['concluida','Concluída']].forEach(function(o){
+    var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
+    b.className = 'op-status-' + o[0] + (tarefa.status === o[0] ? ' atual' : '');
+    b.innerHTML = '<i></i>' + o[1];
+    b.addEventListener('click', function(e){ e.stopPropagation(); fecharMenuStatusTarefa(); definirStatusTarefa(tarefa.id, o[0]); });
+    m.appendChild(b);
+  });
+  document.body.appendChild(m);
+  var r = botao.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
+  m.style.top = Math.min(r.bottom + 4, innerHeight - m.offsetHeight - 8) + 'px';
+  menuStatusTarefaEl = m;
+}
+document.addEventListener('pointerdown', function(e){ if(menuStatusTarefaEl && !menuStatusTarefaEl.contains(e.target) && !e.target.closest('.btn-status-tarefa')) fecharMenuStatusTarefa(); }, true);
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharMenuStatusTarefa(); });
+function htmlStatusTarefa(t, podeMexer){
+  var atrasada = t.status !== 'concluida' && tarefaEstaAtrasada(t);
+  return '<div class="linha-status-card">' +
+    '<button type="button" class="btn-status-tarefa st-' + t.status + '"' + (podeMexer ? '' : ' disabled') + ' title="' + (podeMexer ? 'Mudar o status' : 'Status') + '"><i></i>' + rotuloStatusTarefa(t) + (podeMexer ? ' <span class="seta-status">▾</span>' : '') + '</button>' +
+    (atrasada ? '<span class="selo-atrasada-card">Atrasada</span>' : '') + '</div>';
+}
+
 // Tarefa minha que eu compartilhei com alguém: ganha um azul claro discreto no cartão e na linha
 function euCompartilhei(t){ return (t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId) && (t.compartilhadaCom || []).length > 0; }
 
@@ -3342,6 +3401,7 @@ function criarCardTarefaEl(tarefa){
       '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' +
     '</div>' +
     '<div class="titulo-card-tarefa">' + escaparHtml(tarefa.titulo) + '</div>' +
+    htmlStatusTarefa(tarefa, podeMexer) +
     (etiquetaHtml ? '<div class="linha-etiqueta-card">' + etiquetaHtml + '</div>' : '') +
     htmlDeParaTarefa(tarefa) +
     (!podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '')) +
@@ -3355,6 +3415,8 @@ function criarCardTarefaEl(tarefa){
     '</div>';
 
   card.addEventListener('click', function(){ abrirModalTarefa(tarefa.id); });
+  var btnSt = card.querySelector('.btn-status-tarefa');
+  if(btnSt && podeMexer) btnSt.addEventListener('click', function(e){ e.stopPropagation(); abrirMenuStatusTarefa(btnSt, tarefa); });
 
   if(tarefa.status !== 'concluida'){
     card.addEventListener('dragover', function(e){
@@ -3765,7 +3827,7 @@ function criarLinhaTabela(tarefa){
     '<td><div class="checkbox-conclusao' + (tarefa.status === 'concluida' ? ' marcado' : '') + '" data-id-check="' + tarefa.id + '">' +
       (tarefa.status === 'concluida' ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="#0a0e1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') +
     '</div></td>' +
-    '<td class="titulo-lista-tarefa">' + escaparHtml(tarefa.titulo) + '</td>' +
+    '<td class="titulo-lista-tarefa">' + escaparHtml(tarefa.titulo) + ' <span class="btn-status-tarefa st-' + tarefa.status + '" style="margin-left:6px;cursor:default"><i></i>' + rotuloStatusTarefa(tarefa) + '</span>' + (tarefa.status !== 'concluida' && tarefaEstaAtrasada(tarefa) ? ' <span class="selo-atrasada-card">Atrasada</span>' : '') + '</td>' +
     '<td>' + (tarefa.tipo === 'pessoal' ? 'Pessoal' : 'Processo') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.numero : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.tribunal : '-') + '</td>' +
