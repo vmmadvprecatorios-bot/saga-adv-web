@@ -50,7 +50,7 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .nota-lin .acoes{opacity:1;display:flex;gap:2px}
 @media(max-width:760px){.nota-lin{grid-template-columns:18px minmax(0,1fr) auto}.nota-lin .tipo,.nota-lin .lin-etq,.nota-lin .lin-data{display:none}}
 .sec-titulo{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;font-weight:700;color:var(--muted);margin:16px 2px 8px}
-.grade{columns:260px;column-gap:14px}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;align-items:start}.grade>.nota{margin:0}
 .nota{--nc:#8b93a8;break-inside:avoid;display:block;width:100%;margin:0 0 14px;text-align:left;position:relative;border-radius:15px;padding:13px 14px 10px;background:color-mix(in srgb,var(--nc) 9%,var(--panel-solid));border:1px solid color-mix(in srgb,var(--nc) 38%,transparent);cursor:pointer;transition:transform .22s cubic-bezier(.22,.78,.25,1),box-shadow .22s,border-color .2s;}
 .nota.nova{animation:notaEntra .35s cubic-bezier(.22,.78,.25,1) both}
 .nota:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.28);border-color:color-mix(in srgb,var(--nc) 70%,transparent)}
@@ -147,7 +147,7 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .comp-lin select{height:28px;border-radius:8px;border:1px solid var(--border-soft);background:var(--panel-solid);font-size:11px;padding:0 6px}
 .somente-leitura-aviso{font-size:11px;color:var(--muted)}
 .barra-opcoes{display:contents}
-@media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.grade{columns:1}.acoes{opacity:1}
+@media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.grade{grid-template-columns:1fr}.acoes{opacity:1}
   /* Celular (06/11): cabeçalho compacto para as notas aparecerem logo */
   .page-head{margin-bottom:12px;gap:10px}.page-head p{display:none}
   .novas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}.novas .btn-nova{padding:9px 6px;font-size:12px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -451,19 +451,23 @@ var _tb=null;$('busca').addEventListener('input',function(){clearTimeout(_tb);va
   var q=$('quadro'),d=null;
   function notaPorId(id){return S.notas.find(function(n){return n.id===id;});}
   function cartoes(){return Array.prototype.slice.call(q.querySelectorAll('.nota[data-id],.nota-lin[data-id]'));}
+  // posição de cada cartão SEM a animação (onde ele vai parar): mirar no cartão animado fazia a nota ir e voltar
+  function medir(){d.rects=new Map();cartoes().forEach(function(c){if(c===d.el)return;var t=c.style.transform;c.style.transform='none';d.rects.set(c,c.getBoundingClientRect());c.style.transform=t;});}
   function sob(x,y){
+    var achado=null;d.rects.forEach(function(r,c){if(!achado&&x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)achado={card:c,r:r};});
+    if(achado)return achado;
     var els=document.elementsFromPoint(x,y);
-    for(var i=0;i<els.length;i++){var c=els[i].closest&&els[i].closest('.nota[data-id],.nota-lin[data-id]');if(c&&c!==d.el&&!c.classList.contains('fantasma'))return {card:c};}
     for(var k=0;k<els.length;k++){var g=els[k].closest&&els[k].closest('[data-secao]');if(g&&q.contains(g))return {grade:g};}
     return null;
   }
   // desliza todos os cartões (menos o que está sendo arrastado) para o novo lugar
   function mudarLugar(fn){
-    if(semMovimento()){fn();return;}
+    if(semMovimento()){fn();medir();return;}
     var antes=new Map();cartoes().forEach(function(c){if(c!==d.el)antes.set(c,c.getBoundingClientRect());});
     fn();
+    medir();
     antes.forEach(function(a,c){
-      var b=c.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;if(!dx&&!dy)return;
+      var b=d.rects.get(c)||c.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top;if(!dx&&!dy)return;
       c.style.transition='none';c.style.transform='translate('+dx+'px,'+dy+'px)';
       void c.offsetHeight;
       c.style.transition='transform .3s cubic-bezier(.22,.78,.25,1)';c.style.transform='';
@@ -478,18 +482,29 @@ var _tb=null;$('busca').addEventListener('input',function(){clearTimeout(_tb);va
     if(!d||d.ativo)return;d.ativo=true;clearTimeout(d.timer);
     var r=d.el.getBoundingClientRect();d.dx=d.x0-r.left;d.dy=d.y0-r.top;
     var g=d.el.cloneNode(true);g.classList.add('fantasma');g.classList.remove('nova','arrastando');g.style.width=r.width+'px';g.style.left=r.left+'px';g.style.top=r.top+'px';
-    document.body.appendChild(g);d.ghost=g;d.el.classList.add('arrastando');document.body.classList.add('arrastando-notas');
+    document.body.appendChild(g);d.ghost=g;d.el.classList.add('arrastando');document.body.classList.add('arrastando-notas');medir();
     if(!semMovimento()&&g.animate)g.animate([{transform:'rotate(0deg) scale(1)',boxShadow:'0 0 0 rgba(0,0,0,0)'},{transform:'rotate(1.6deg) scale(1.03)',boxShadow:'0 22px 48px rgba(0,0,0,.45)'}],{duration:220,easing:'cubic-bezier(.34,1.56,.64,1)'});
     try{if(navigator.vibrate&&d.toque)navigator.vibrate(12);}catch(x){}
   }
   function mover(x,y){
     d.ghost.style.left=(x-d.dx)+'px';d.ghost.style.top=(y-d.dy)+'px';
     var t=sob(x,y),agora=Date.now();
-    if(t&&(agora-(d.ult||0))>70){
+    if(t&&(agora-(d.ult||0))>140){
       var pai,ref;
-      if(t.card){var rr=t.card.getBoundingClientRect(),depois=y>rr.top+rr.height/2;pai=t.card.parentNode;ref=depois?t.card.nextSibling:t.card;}
-      else{pai=t.grade;ref=null;}
-      var jaAli=(ref===d.el||(ref===d.el.nextSibling&&d.el.parentNode===pai));
+      // em grade decide pelo lado (esquerda/direita); em lista, por cima/baixo
+      if(t.card){
+        // ao entrar num cartão, a nota toma o lugar dele (depois dele se ele vinha depois; antes se vinha antes):
+        // assim não há vai-e-volta quando os vizinhos deslizam
+        var depois;pai=t.card.parentNode;
+        if(pai===d.el.parentNode){depois=!!(d.el.compareDocumentPosition(t.card)&Node.DOCUMENT_POSITION_FOLLOWING);}
+        else{var rr=t.r||t.card.getBoundingClientRect();depois=S.visao==='lista'?y>rr.top+rr.height/2:x>rr.left+rr.width/2;}
+        if(t.card===d.ultAlvo&&agora-(d.ult||0)<450)t=null;
+        ref=t?(depois?t.card.nextSibling:t.card):undefined;
+        if(t)d.ultAlvo=t.card;
+      }
+      // vão entre cartões (ou o espaço da própria nota): só conta se for a OUTRA seção (Fixadas/Outras); na mesma seção não faz nada
+      else{pai=t.grade;ref=pai===d.el.parentNode?undefined:null;}
+      var jaAli=ref===undefined||(ref===d.el||(ref===d.el.nextSibling&&d.el.parentNode===pai));
       if(!jaAli&&!(ref===null&&pai===d.el.parentNode&&d.el===pai.lastElementChild)){
         d.ult=agora;mudarLugar(function(){pai.insertBefore(d.el,ref);});pulo();
       }
@@ -540,7 +555,8 @@ var _tb=null;$('busca').addEventListener('input',function(){clearTimeout(_tb);va
     fim();
     if(igual)return;
     n.ordem=novo;if('fixada' in campos)n.fixada=campos.fixada;
-    desenhar();
+    // a nota já está no lugar certo na tela; só redesenha se mudou de seção (Fixadas/Outras) ou uma seção ficou vazia
+    if('fixada' in campos||!x.pai.querySelector('.nota[data-id],.nota-lin[data-id]'))desenhar();
     var r=await _sb.from('notas').update(campos).eq('id',n.id);
     if(r.error){n.ordem=antes.ordem;n.fixada=antes.fixada;desenharAnimado();toast('Não foi possível salvar a nova ordem.','erro');}
   }
