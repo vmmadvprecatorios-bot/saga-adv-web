@@ -309,7 +309,8 @@ window.SagaPlanilha=(function(){
         '<div class="cartao-rodape" onclick="event.stopPropagation()">'+(typeof acoesBtns==='function'?acoesBtns(p):'')+'</div></div>';
     }).join('');
   }
-  function verTabelaNoCelular(){try{return localStorage.getItem('saga-planilha-celular')==='tabela';}catch(e){return false;}}
+  // No celular a lista abre como planilha (pedido do Dr. Victor, 07/11); os cartões ficam como opção
+  function verTabelaNoCelular(){try{return localStorage.getItem('saga-planilha-celular2')!=='cartoes';}catch(e){return true;}}
   function aplicarModoCelular(){document.body.classList.toggle('sp-ver-tabela',verTabelaNoCelular());}
   function editavel(p,c){
     if(!state.permissoes.editar)return false;
@@ -561,12 +562,12 @@ window.SagaPlanilha=(function(){
         '<button type="button" class="sp-pill sp-pill-solta'+(minhas?' ativo':'')+'" data-minhas aria-pressed="'+minhas+'">Minhas fichas</button>'+
         '<button type="button" class="btn-secondary sp-btn" data-importar>Importar planilha</button><button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
       '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos'],['sim','Protocolados'],['nao','Não protocolados']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>')+
-      '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button></div>'+
+      '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button></div>'+
       '<button type="button" class="btn-secondary sp-btn" data-colunas>Colunas</button>'+
       (n?'<button type="button" class="sp-limpar-tudo" data-limpar>Limpar filtros das colunas ('+n+')</button>':'');
     b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){protocolo=x.dataset.protocolo;aplicar();};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
-    b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem('saga-planilha-celular',x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
+    b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem('saga-planilha-celular2',x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
     aplicarModoCelular();
     b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){retorno=x.dataset.retorno;aplicar();};});
     var bm=b.querySelector('[data-minhas]');if(bm)bm.onclick=function(){minhas=!minhas;aplicar();};
@@ -641,7 +642,7 @@ window.SagaPlanilha=(function(){
       '.sp-cc-status{display:inline-flex;align-items:center;gap:5px;flex:0 1 auto;max-width:48%;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;color:var(--text);background:color-mix(in srgb,var(--c) 16%,transparent);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-cc-status i{width:7px;height:7px;border-radius:50%;background:var(--c);flex:0 0 auto}'+
       '.sp-cc-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;margin-top:10px}.sp-cc-campo{min-width:0;display:flex;flex-direction:column;gap:1px}.sp-cc-rot{font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}.sp-cc-val{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-cc .cartao-rodape{justify-content:flex-end;margin-top:10px;padding-top:8px}.sp-cc:active{transform:scale(.99)}'+
       '@media(max-width:760px){.sp-modo-cel{display:flex}#spBarra{gap:8px;flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}#spBarra::-webkit-scrollbar{display:none}#spBarra>*{flex:0 0 auto}.sp-pill{white-space:nowrap}.sp-abas{scrollbar-width:none}.sp-sub{gap:8px}.sp-org{margin-left:0}.sp-tipo{width:100%}.sp-tipo select{flex:1;max-width:none}'+
-      'body.sp-planilha:not(.sp-ver-tabela) #listaView .tabela-scroll table{display:none}body.sp-planilha:not(.sp-ver-tabela) #listaView .cartoes-mobile{display:flex}body.sp-planilha.sp-ver-tabela #listaView .tabela-scroll{display:block;max-height:65vh}body.sp-planilha.sp-ver-tabela #listaView .tabela-scroll table{display:table}body.sp-planilha.sp-ver-tabela #listaView .cartoes-mobile{display:none}}'+
+      'body.sp-planilha:not(.sp-ver-tabela) #listaView .tabela-scroll table{display:none}body.sp-planilha:not(.sp-ver-tabela) #listaView .cartoes-mobile{display:flex}body.sp-planilha.sp-ver-tabela #listaView .tabela-scroll{display:block;max-height:65vh}body.sp-planilha.sp-ver-tabela #listaView .tabela-scroll table{display:table}body.sp-planilha.sp-ver-tabela #listaView .cartoes-mobile{display:none}body.sp-planilha.sp-ver-tabela .sp-tabela td{padding:9px 10px;font-size:12px}body.sp-planilha.sp-ver-tabela .sp-th{padding:10px}body.sp-planilha.sp-ver-tabela .sp-tabela tfoot td{padding:8px 10px}body.sp-planilha.sp-ver-tabela .sp-tabela td.sp-fixa-ult{max-width:46vw}body.sp-planilha.sp-ver-tabela .sp-tabela th.checkbox-col,body.sp-planilha.sp-ver-tabela .sp-tabela td:first-child{padding-left:8px;padding-right:4px}}'+
       '.sp-selo{display:inline-flex;align-items:center;gap:6px;font-size:12px}.sp-selo i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}.sp-rapidos{display:flex;gap:2px;flex-wrap:wrap}'+
       '.sp-ficha{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px 14px}.sp-ficha .campo-dado{min-width:0}.sp-ficha .campo-dado-valor{min-height:22px;overflow-wrap:anywhere}'+
       '.sp-ficha .sp-editavel{cursor:pointer;border-radius:6px;padding:2px 4px;margin:-2px -4px}.sp-ficha .sp-editavel:hover{background:color-mix(in srgb,var(--gold) 8%,transparent)}.sp-ficha .sp-lapis{opacity:0;font-size:11px;margin-left:5px;color:var(--muted)}.sp-ficha .sp-editavel:hover .sp-lapis{opacity:1}'+
