@@ -398,12 +398,16 @@
   var ATRIBS_ABA=['data-aba','data-aba-col','data-view','data-visao'];
   var CHAVE_ABA='saga-abas:'+location.pathname;
   function lerAbas(){try{return JSON.parse(sessionStorage.getItem(CHAVE_ABA)||'{}')||{};}catch(e){return {};}}
+  // Link que pede uma aba (ex.: configuracoes...?aba=preferencias, atalhos do menu da foto): ela vale mais que a lembrada
+  try{var abaUrl=new URLSearchParams(location.search).get('aba');if(abaUrl){var mu=lerAbas();mu['data-aba']=abaUrl;sessionStorage.setItem(CHAVE_ABA,JSON.stringify(mu));}}catch(e){}
   document.addEventListener('click',function(ev){
     var el=ev.target&&ev.target.closest&&ev.target.closest('[data-aba],[data-aba-col],[data-view],[data-visao]');
     if(!el||el.closest('.modal-overlay,#sidebarSaga,#topbarSaga'))return;
     var at=ATRIBS_ABA.find(function(a){return el.hasAttribute(a);});if(!at)return;
     var m=lerAbas();m[at]=el.getAttribute(at);
     try{sessionStorage.setItem(CHAVE_ABA,JSON.stringify(m));}catch(e){}
+    // o endereço acompanha a aba escolhida (assim o F5 não volta para a aba do link)
+    if(at==='data-aba'){try{var uu=new URL(location.href);if(uu.searchParams.has('aba')&&uu.searchParams.get('aba')!==m[at]){uu.searchParams.set('aba',m[at]);history.replaceState(history.state,'',uu);}}catch(e){}}
   },true);
   var abasRestauradas=false;
   function restaurarAbas(){
