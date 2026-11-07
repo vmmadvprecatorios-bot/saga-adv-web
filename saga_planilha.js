@@ -1192,13 +1192,25 @@ window.SagaPlanilha=(function(){
     return true;
   }
   // soltar um cartão em outra coluna muda aquele dado do processo (só listas de opções e Sim/Não)
-  async function soltarNoGrupo(pid,k){
+  // Soltar no Kanban "Organizar por": o cartão pousa na coluna nova na hora (mesmo efeito das Minhas Tarefas)
+  // e o Kanban não é redesenhado inteiro (era o que piscava); só volta se a gravação falhar.
+  async function soltarNoGrupo(pid,k,proximo){
     var kk=lerKb(),c=cols.find(function(x){return x.id===kk.por;}),p=processo(pid);if(!c||!p||!podeSoltar(c))return;
-    if(chaveGrupo(p,c)===k){renderKanban();return;}
-    if(!editavel(p,c)){aviso('Você não pode mudar este dado.',true);renderKanban();return;}
+    if(chaveGrupo(p,c)===k)return;
+    if(!editavel(p,c)){aviso('Você não pode mudar este dado.',true);return;}
     var valor=k===VAZIO?null:(tipoGrupo(c)==='simnao'?k==='true':k);
-    try{await gravar(p,c,valor);aviso(h(nomeCol(c))+' atualizado.');}catch(e){aviso(h(e.message||'Não foi possível mudar.'),true);}
-    renderKanban();
+    var corpo=document.querySelector('[data-sp-grupo="'+(window.CSS&&CSS.escape?CSS.escape(k):k)+'"]'),card=document.querySelector('.card-kanban[data-processo-id="'+pid+'"]');
+    var movido=false;
+    if(corpo&&card){
+      if(proximo&&proximo.parentNode===corpo)corpo.insertBefore(card,proximo);else corpo.appendChild(card);
+      document.querySelectorAll('.coluna-kanban').forEach(function(col){var cc=col.querySelector('.coluna-corpo'),ct=col.querySelector('.coluna-contagem');if(cc&&ct)ct.textContent=cc.querySelectorAll('.card-kanban').length;});
+      var col=corpo.closest('.coluna-kanban');if(col){col.classList.add('recebeu-card');setTimeout(function(){col.classList.remove('recebeu-card');},650);}
+      card.classList.add('pousando');setTimeout(function(){card.classList.remove('pousando');},450);
+      movido=true;
+    }
+    try{await gravar(p,c,valor);aviso(h(nomeCol(c))+' atualizado.');}
+    catch(e){aviso(h(e.message||'Não foi possível mudar.'),true);renderKanban();return;}
+    if(!movido)renderKanban();
   }
   // filtro de uma coluna do Kanban: escolhe a coluna da planilha e os valores (soma com os outros filtros da coluna)
   function menuFiltroGrupo(ancora,k,cPor){

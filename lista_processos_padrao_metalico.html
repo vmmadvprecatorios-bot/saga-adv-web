@@ -1851,7 +1851,7 @@ function ativarArrasteKanban(kv){
       removerIndicador();
       coluna.classList.remove('zona-drop-ativa');
       var processoId=state.kanbanArrastandoId;
-      if(corpo.hasAttribute('data-sp-grupo')){state.kanbanArrastandoId=null;if(processoId&&window.SagaPlanilha)SagaPlanilha.soltarNoGrupo(processoId,corpo.getAttribute('data-sp-grupo'));return;}
+      if(corpo.hasAttribute('data-sp-grupo')){state.kanbanArrastandoId=null;if(processoId&&window.SagaPlanilha)SagaPlanilha.soltarNoGrupo(processoId,corpo.getAttribute('data-sp-grupo'),indProximo);return;}
       var novoStatusId=corpo.getAttribute('data-status-id');
       state.kanbanArrastandoId=null;
       if(!processoId||!novoStatusId)return;
@@ -1907,7 +1907,8 @@ async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proxi
     if(novoStatus)p.status=novoStatus;
     var atualBase=(state.baseProcessos||[]).find(function(x){return x.id===p.id;});
     if(atualBase){atualBase.status_id=novoStatusId;if(novoStatus)atualBase.status=novoStatus;}
-    invalidarBaseProcessos();if(state.loading)carregarProcessos();else renderKanban();
+    // o cartão já pousou na coluna nova: não redesenha o Kanban inteiro (era isso que fazia a tela piscar)
+    invalidarBaseProcessos();if(!(corpo&&cardMovido)){if(state.loading)carregarProcessos();else renderKanban();}
     showToast('Processo movido para "'+(novoStatus?novoStatus.nome:'novo status')+'".','success');
   }
 }
