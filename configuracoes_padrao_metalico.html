@@ -101,6 +101,11 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
   .pr-cor-salvar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.pr-cor-salvar .s{font-size:11px}
   .temas-regra{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px}.temas-lista{display:flex;flex-wrap:wrap;gap:4px 16px;padding:4px 0 0 24px}
   .temas-regra label.chk{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer}.temas-regra input{width:15px;height:15px;accent-color:var(--gold)}
+  .aparelhos{display:flex;flex-direction:column;gap:8px;margin:6px 0 14px}
+  .aparelho{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 2%,transparent)}
+  .aparelho.atual{border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+  .ap-icone{width:34px;height:34px;flex:0 0 auto;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold-light)}
+  .ap-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ap-info b{font-size:13px;color:var(--text)}.ap-info b em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--gold-light);margin-left:6px}.ap-info small{font-size:11px;color:var(--muted)}
 </style>
 <link rel="stylesheet" href="saga_tema.css">
 </head>
@@ -170,7 +175,8 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
     </div>
     <div class="panel">
       <div class="panel-title">Aparelhos conectados</div>
-      <div class="panel-sub">Se você entrou no SAGA em outro computador ou celular e esqueceu de sair, encerre todas as sessões. Você também sairá deste aparelho e precisará entrar de novo.</div>
+      <div class="panel-sub">Onde o seu acesso ao SAGA está aberto agora. Saia de um aparelho específico (ele deixa de funcionar em até 1 hora) ou de todos de uma vez.</div>
+      <div class="aparelhos" id="sgAparelhos"><div class="s">Carregando…</div></div>
       <div class="acoes" style="justify-content:flex-start"><button class="btn-danger" id="sgSairTodos" type="button">Sair de todos os aparelhos</button></div>
     </div>
   </section>
@@ -298,6 +304,41 @@ function trocarAba(aba){
   if(aba==='areas-teses'&&!state.adminGeral)aba='perfil';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
+  if(aba==='seguranca')carregarAparelhos();
+}
+/* ----- Aparelhos conectados (bloco 109) ----- */
+function descreverAparelho(ua){
+  ua=String(ua||'');
+  var so=/iPhone/.test(ua)?'iPhone':/iPad/.test(ua)?'iPad':/Android/.test(ua)?'Celular Android':/Windows/.test(ua)?'Computador Windows':/Mac OS X|Macintosh/.test(ua)?'Mac':/Linux/.test(ua)?'Computador Linux':'Aparelho';
+  var nav=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/SamsungBrowser/.test(ua)?'navegador Samsung':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'';
+  var cel=/iPhone|Android|iPad/.test(ua);
+  return {nome:so+(nav?' · '+nav:''),cel:cel};
+}
+function quandoTexto(iso){
+  if(!iso)return '';var d=new Date(iso),min=Math.round((Date.now()-d)/60000);
+  if(min<2)return 'agora há pouco';if(min<60)return 'há '+min+' min';var h=Math.round(min/60);if(h<24)return 'há '+h+' h';
+  return d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+async function carregarAparelhos(){
+  var box=document.getElementById('sgAparelhos');if(!box)return;
+  var r=await _sb.rpc('minhas_sessoes');
+  if(r.error){box.innerHTML='<div class="s">Não foi possível listar os aparelhos agora.</div>';return;}
+  var lista=r.data||[];
+  if(!lista.length){box.innerHTML='<div class="s">Nenhum aparelho encontrado.</div>';return;}
+  box.innerHTML=lista.map(function(a){var d=descreverAparelho(a.aparelho);
+    return '<div class="aparelho'+(a.atual?' atual':'')+'" data-sessao="'+esc(a.id)+'">'+
+      '<span class="ap-icone" aria-hidden="true">'+(d.cel?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="7" y="2.5" width="10" height="19" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M11 18.5h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="12" rx="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>')+'</span>'+
+      '<span class="ap-info"><b>'+esc(d.nome)+(a.atual?' <em>este aparelho</em>':'')+'</b><small>Último uso '+esc(quandoTexto(a.ultimo_uso))+' · entrou em '+esc(new Date(a.criado_em).toLocaleDateString('pt-BR'))+(a.ip?' · IP '+esc(a.ip):'')+'</small></span>'+
+      (a.atual?'':'<button type="button" class="btn-secondary btn-sm" data-sair-sessao="'+esc(a.id)+'">Sair deste aparelho</button>')+'</div>';}).join('');
+  box.querySelectorAll('[data-sair-sessao]').forEach(function(b){b.addEventListener('click',async function(){
+    var ok=window.sagaConfirmar?await sagaConfirmar('Sair deste aparelho','O SAGA será encerrado nesse aparelho (em até 1 hora ele pede para entrar de novo).','Sair'):confirm('Sair deste aparelho?');if(!ok)return;
+    b.disabled=true;var rr=await _sb.rpc('encerrar_sessao',{p_id:b.dataset.sairSessao});
+    if(rr.error){b.disabled=false;showToast('Não foi possível: '+esc(erroTexto(rr.error)),'error');return;}
+    var linha=b.closest('.aparelho');
+    if(window.sagaRecolher)sagaRecolher(linha,true);else linha.remove();
+    setTimeout(function(){if(linha.parentNode)linha.remove();},450);
+    showToast('Pronto: esse aparelho foi desconectado.','success');
+  });});
 }
 
 /* Situações das ações, somente administrador geral. */
