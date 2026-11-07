@@ -353,22 +353,78 @@ html[data-cor="grafite"] body[data-theme="dark"] :is(.field-group select option,
 html[data-cor="grafite"] body[data-theme="dark"] .mo{background:rgba(10,10,10,.55)!important}
 html[data-cor="grafite"] body[data-theme="dark"] :is(.modal-head,.modal-foot){border-color:rgba(255,255,255,.08)!important}
 
-/* ===== Botões de ESCOLHA finos e discretos (pedido do Dr. Victor, 08/11; padrão nascido nas Notas) =====
-   Abas, filtros, Kanban/Lista, períodos, paginação: o selecionado fica com fundo dourado translúcido,
-   contorno fino e letra do tema (antes: azul cheio com letra branca). Botões de AÇÃO (Salvar, Confirmar,
-   Novo...) continuam cheios. O :not(#saga-escolha) dá força para vencer as regras gerais e as do Grafite. */
+/* ===== Botões finos e discretos em TODO o sistema (pedido do Dr. Victor, 08/11; padrão nascido nas Notas) =====
+   Três grupos, nas cores do tema (Azul e Grafite, claro e escuro):
+   1) ESCOLHA selecionada (abas, filtros, Kanban/Lista, períodos, paginação): fundo da cor de destaque translúcido + contorno fino.
+   2) AÇÃO principal (Novo, Salvar, Confirmar, Incorporar...): o mesmo tom translúcido, um pouco mais marcado; letra normal (nada de bloco preto/azul cheio).
+   3) AÇÃO secundária (Atualizar, Editar, Descartar, Cancelar...): fundo transparente, contorno leve, letra mais fina.
+   Botões de perigo (vermelhos) não mudam. Os :not(#...) dão força para vencer as regras de cada tela e as do Grafite.
+   Classe nova de botão: incluir na lista certa abaixo. */
+/* Tons dos botões: no ESCURO um pouco mais claros que o fundo; no CLARO um pouco mais escuros (pedido do Dr. Victor) */
+body{
+  --sb-sec:rgba(255,255,255,.07);--sb-sec-borda:rgba(255,255,255,.20);--sb-sec-hover:rgba(255,255,255,.12);
+  --sb-acao:color-mix(in srgb,var(--gold) 28%,rgba(255,255,255,.07));--sb-acao-borda:color-mix(in srgb,var(--gold) 70%,#ffffff);--sb-acao-hover:color-mix(in srgb,var(--gold) 40%,rgba(255,255,255,.08));
+  --sb-escolha:color-mix(in srgb,var(--gold) 24%,rgba(255,255,255,.06));--sb-escolha-borda:color-mix(in srgb,var(--gold) 60%,#ffffff);
+}
+body[data-theme="light"]{
+  --sb-sec:color-mix(in srgb,var(--text) 6%,transparent);--sb-sec-borda:color-mix(in srgb,var(--text) 24%,transparent);--sb-sec-hover:color-mix(in srgb,var(--text) 10%,transparent);
+  --sb-acao:color-mix(in srgb,var(--gold) 18%,transparent);--sb-acao-borda:color-mix(in srgb,var(--gold) 65%,transparent);--sb-acao-hover:color-mix(in srgb,var(--gold) 28%,transparent);
+  --sb-escolha:color-mix(in srgb,var(--gold) 16%,transparent);--sb-escolha-borda:color-mix(in srgb,var(--gold) 50%,transparent);
+}
+:is(.btn-secondary,.btn-secundario,.si-btn,.btn,.btn-hoje,.btn-voltar-biblioteca,.btn-marcar-todas,.btn-cancelar-tf,
+  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
+  .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
+  .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
+  .btn-nova.principal,.btn-bater-ponto)):not(:is(.btn-perigo,.btn-danger,.btn-excluir,.perigo,.danger)):not(#saga-b1):not(#saga-b2){
+  background:var(--sb-sec)!important;background-image:none!important;
+  border-color:var(--sb-sec-borda)!important;
+  color:var(--text)!important;font-weight:500!important;box-shadow:none!important;
+  transition:background-color .25s cubic-bezier(.22,.78,.25,1),border-color .25s cubic-bezier(.22,.78,.25,1),color .25s cubic-bezier(.22,.78,.25,1),transform .2s cubic-bezier(.22,.78,.25,1);
+}
+:is(.btn-secondary,.btn-secundario,.si-btn,.btn,.btn-hoje,.btn-voltar-biblioteca,.btn-marcar-todas,.btn-cancelar-tf,
+  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
+  .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
+  .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
+  .btn-nova.principal,.btn-bater-ponto)):not(:is(.btn-perigo,.btn-danger,.btn-excluir,.perigo,.danger)):not(#saga-b1):not(#saga-b2):hover{
+  background:var(--sb-sec-hover)!important;border-color:color-mix(in srgb,var(--gold) 50%,transparent)!important;
+}
+:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
+  .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
+  .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
+  .btn-nova.principal,.btn-bater-ponto):not(#saga-b1):not(#saga-b2){
+  background:var(--sb-acao)!important;background-image:none!important;
+  border:1px solid var(--sb-acao-borda)!important;
+  color:var(--text)!important;font-weight:600!important;box-shadow:none!important;text-shadow:none!important;
+  transition:background-color .25s cubic-bezier(.22,.78,.25,1),border-color .25s cubic-bezier(.22,.78,.25,1),transform .2s cubic-bezier(.22,.78,.25,1);
+}
+:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
+  .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
+  .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
+  .btn-nova.principal,.btn-bater-ponto):not(#saga-b1):not(#saga-b2):hover{
+  background:var(--sb-acao-hover)!important;border-color:var(--gold)!important;
+}
+:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
+  .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
+  .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
+  .btn-nova.principal,.btn-bater-ponto):not(#saga-b1):not(#saga-b2) :is(svg,svg *){color:var(--text)!important;stroke:currentColor!important}
 :is(.aba-topo.ativa,.btn-view.ativo,.campaign-view-btn.active,.cat-tab.ativo,.choice-pill.active,.filter-pill.active,
   .invite-tab.active,.mes-rapido-item.selecionado,.opcao-tipo-tarefa.ativa,.opcao-visao-tarefas.ativa,.pag-btn.ativo,
   .page-pill.active,.pill-direcao.ativo,.pill-fase.ativo,.pill-filtro-rapido.selecionada,.pill-qtd-pagina.selecionada,
   .pill-quantidade.ativo,.pill.active,.pill.ativo,.process-tab.active,.segment.active,.signature-tab.active,
   .tab-btn.active,.tab-btn.ativo,.toggle-choice.active,.visao-btn.ativo,.visao-btn.ativa,.sp-pill.ativo,
-  .seg button.active,.si-seg button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada):not(#saga-escolha){
-  background:color-mix(in srgb,var(--gold) 16%,transparent)!important;
-  background-image:none!important;
-  color:var(--text)!important;
-  font-weight:600;
-  border-color:color-mix(in srgb,var(--gold) 42%,transparent)!important;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 42%,transparent)!important;
+  .seg button.active,.si-seg button.active,.vis button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada,
+  .btn-secundario.ativo,.btn-sm.ativo,.btn-toggle-calendario.ativo,.chave-fase-op.ativa,.contact-status-option.active,
+  .dropdown-tipo-opcao.selecionada,.import-mode-tab.active,.location-tab.active,.sp-aba.ativo,.sp-kb-filtro.ativo,
+  .sub-toggle-item.ativo,.aba-tipo.ativa,.menu-ordenar-opcao.selecionada,.dropdown-custom-opcao.selecionada):not(#saga-b1):not(#saga-b2):not(#saga-b3){
+  background:var(--sb-escolha)!important;background-image:none!important;
+  color:var(--text)!important;font-weight:600!important;
+  border-color:var(--sb-escolha-borda)!important;
+  box-shadow:inset 0 0 0 1px var(--sb-escolha-borda)!important;
   transition:background-color .25s cubic-bezier(.22,.78,.25,1),color .25s cubic-bezier(.22,.78,.25,1),box-shadow .25s cubic-bezier(.22,.78,.25,1);
 }
 :is(.aba-topo.ativa,.btn-view.ativo,.campaign-view-btn.active,.cat-tab.ativo,.choice-pill.active,.filter-pill.active,
@@ -376,6 +432,9 @@ html[data-cor="grafite"] body[data-theme="dark"] :is(.modal-head,.modal-foot){bo
   .page-pill.active,.pill-direcao.ativo,.pill-fase.ativo,.pill-filtro-rapido.selecionada,.pill-qtd-pagina.selecionada,
   .pill-quantidade.ativo,.pill.active,.pill.ativo,.process-tab.active,.segment.active,.signature-tab.active,
   .tab-btn.active,.tab-btn.ativo,.toggle-choice.active,.visao-btn.ativo,.visao-btn.ativa,.sp-pill.ativo,
-  .seg button.active,.si-seg button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada):not(#saga-escolha) :is(svg,svg *,span:not([class*="qtd"]):not([class*="badge"]):not([class*="contagem"])){
+  .seg button.active,.si-seg button.active,.vis button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada,
+  .btn-secundario.ativo,.btn-sm.ativo,.btn-toggle-calendario.ativo,.chave-fase-op.ativa,.contact-status-option.active,
+  .dropdown-tipo-opcao.selecionada,.import-mode-tab.active,.location-tab.active,.sp-aba.ativo,.sp-kb-filtro.ativo,
+  .sub-toggle-item.ativo,.aba-tipo.ativa,.menu-ordenar-opcao.selecionada,.dropdown-custom-opcao.selecionada):not(#saga-b1):not(#saga-b2):not(#saga-b3) :is(svg,svg *,span:not([class*="qtd"]):not([class*="badge"]):not([class*="contagem"])){
   color:var(--text)!important;stroke:currentColor;
 }
