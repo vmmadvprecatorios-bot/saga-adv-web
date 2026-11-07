@@ -227,9 +227,14 @@
     return r.height>0&&r.height<=60&&r.width<=360&&(el.tagName==='BUTTON'||el.getAttribute('role')==='tab'||getComputedStyle(el).cursor==='pointer');
   }
   var ultimoAtivo=new WeakMap();
+  // (08/11) Grupos redesenhados do zero (ex.: barra da planilha, que refaz o HTML a cada clique) perdiam a memória e
+  // o destaque trocava seco. Agora o grupo também é lembrado por um "nome" (rótulo + classe + id do bloco onde está).
+  var ultimoPorNome=new Map();
+  function nomeGrupo(grupo){var dono=grupo.parentElement&&grupo.parentElement.closest('[id]');return (grupo.getAttribute('aria-label')||'')+'|'+(typeof grupo.className==='string'?grupo.className:'')+'|'+(dono?dono.id:'')+'|'+grupo.children.length;}
   function lembrar(grupo,ativo){
     var g=grupo.getBoundingClientRect(),r=ativo.getBoundingClientRect();
-    ultimoAtivo.set(grupo,{el:ativo,txt:ativo.textContent,x:r.left-g.left+grupo.scrollLeft,y:r.top-g.top+grupo.scrollTop,w:r.width,h:r.height});
+    var m={el:ativo,txt:ativo.textContent,grupo:grupo,x:r.left-g.left+grupo.scrollLeft,y:r.top-g.top+grupo.scrollTop,w:r.width,h:r.height};
+    ultimoAtivo.set(grupo,m);ultimoPorNome.set(nomeGrupo(grupo),m);
   }
   function deslizar(grupo,de,para){
     if(reduz||!grupo.animate)return;
@@ -283,6 +288,7 @@
       var grupo=el.parentElement,irmaos=Array.prototype.filter.call(grupo.children,function(x){return x!==el&&x.tagName===el.tagName;});
       if(!irmaos.length)return;
       var antes=ultimoAtivo.get(grupo);
+      if(!antes){var pn=ultimoPorNome.get(nomeGrupo(grupo));if(pn&&!pn.grupo.isConnected)antes=pn;}
       // O destaque mudou de botao (troca de classe ou botoes redesenhados): desliza do antigo para o novo
       if(antes&&antes.el!==el&&!(antes.el.isConnected&&ATIVO.test(antes.el.className))&&!(!antes.el.isConnected&&antes.txt===el.textContent))deslizar(grupo,antes,el);
       lembrar(grupo,el);
