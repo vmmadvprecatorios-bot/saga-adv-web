@@ -331,6 +331,15 @@
       '#topbarSaga .theme-toggle .knob{transition:left .42s cubic-bezier(.34,1.45,.64,1),background .25s ease !important;}'+
       '#sidebarSaga .sem-permissao,#sidebarSaga .perm-pendente{display:none !important;}'+
       '@media(max-width:760px){#sidebarSaga{position:fixed !important;}#topbarSaga .top-center{display:none !important;}}'+
+      '#topbarSaga .top-right .busca-cel-btn,#topbarSaga .top-center .busca-cel-fechar{display:none !important;}'+
+      '@media(max-width:760px){#topbarSaga .top-right .busca-cel-btn{display:inline-flex !important;flex:0 0 auto !important;align-items:center !important;justify-content:center !important;}'+
+        /* com a lupa a barra fica apertada: botões e espaços um pouco menores para o nome VMMADV caber */
+        '#topbarSaga div.top-right{gap:4px !important;}#topbarSaga .top-right .icon-btn{width:30px !important;height:30px !important;flex:0 0 auto !important;}#topbarSaga .top-right .theme-toggle{width:46px !important;flex:0 0 auto !important;}[data-theme="dark"] #topbarSaga .top-right .theme-toggle .knob{left:21px !important;}#topbarSaga .top-right .avatar{width:30px !important;height:30px !important;}#topbarSaga div.top-left{gap:6px !important;}#topbarSaga .brand .crest{width:22px !important;height:22px !important;}#topbarSaga .brand .brand-name{font-size:15px !important;}'+
+        '#topbarSaga.busca-cel .top-left,#topbarSaga.busca-cel .top-right>*:not(.notification-wrap):not(.presence-wrap):not(.avatar-wrap){visibility:hidden !important;}#topbarSaga.busca-cel .top-right>:is(.notification-wrap,.presence-wrap,.avatar-wrap)>:not(.popover){visibility:hidden !important;}'+
+        '#topbarSaga.busca-cel .top-center{display:flex !important;position:absolute !important;left:10px !important;right:10px !important;top:0 !important;bottom:0 !important;align-items:center !important;gap:8px !important;z-index:6 !important;}'+
+        '#topbarSaga.busca-cel .quick-search{width:auto !important;flex:1 1 auto !important;height:38px !important;}#topbarSaga.busca-cel .quick-search input{font-size:16px !important;}'+
+        '#topbarSaga.busca-cel .top-center .busca-cel-fechar{display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;width:38px !important;height:38px !important;border-radius:10px !important;cursor:pointer !important;}'+
+      '}'+
       /* ===== CELULAR (ate 760px): menu lateral deslizante, barra compacta, sem rolagem lateral ===== */
       '@media(max-width:760px){'+
         'html,body{overflow-x:clip !important;max-width:100vw !important;}'+
@@ -598,8 +607,11 @@
     +'<input id="globalSearch" placeholder="Buscar processos, pessoas, colaboradores..." autocomplete="off">'
     +'<div class="popover global-search-pop" id="globalSearchPop"></div>'
     +'</label>'
+    +'<button class="icon-btn busca-cel-fechar" id="buscaCelFechar" type="button" aria-label="Fechar a busca"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>'
     +'</div>'
     +'<div class="top-right">'
+    // lupa do celular: abre a busca por cima da barra (a barra de busca fica escondida no celular)
+    +'<button class="icon-btn busca-cel-btn" id="buscaCelBtn" type="button" aria-label="Buscar processos, pessoas e colaboradores" title="Buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>'
     +'<div class="presence-wrap">'
     +'<button class="presence-btn" id="presenceBtn" type="button"><span class="dot online"></span><span id="onlineText">Carregando...</span></button>'
     +'<div class="popover" id="presencePop"></div>'
@@ -1239,6 +1251,7 @@
     var input=document.getElementById('globalSearch');
     if(!input||input.dataset.ligado)return;
     input.dataset.ligado='true';
+    ligarBuscaCelular(input);
     var t=null;
     // Procura desde a primeira letra digitada
     input.addEventListener('input',function(){
@@ -1257,6 +1270,35 @@
       if(e.key==='Escape'&&pop){pop.classList.remove('open');input.blur();}
       if(e.key==='Enter'&&pop){var primeiro=pop.querySelector('.pop-row[onclick]');if(primeiro){e.preventDefault();primeiro.click();}}
     });
+  }
+
+  // Celular: a lupa abre a busca ocupando a barra de cima; o X, o Esc ou escolher um resultado fecha.
+  function ligarBuscaCelular(input){
+    var btn=document.getElementById('buscaCelBtn'),fechar=document.getElementById('buscaCelFechar'),barra=document.getElementById('topbarSaga');
+    if(!btn||!barra)return;
+    var semMov=function(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}};
+    var curva='cubic-bezier(.22,.78,.25,1)';
+    function abrir(){
+      if(barra.classList.contains('busca-cel'))return;
+      barra.classList.add('busca-cel');
+      var caixa=barra.querySelector('.top-center');
+      if(caixa&&caixa.animate&&!semMov())caixa.animate([{opacity:0,transform:'translateX(18px)'},{opacity:1,transform:'none'}],{duration:260,easing:curva});
+      input.focus();
+    }
+    function fecharBusca(){
+      if(!barra.classList.contains('busca-cel'))return;
+      var pop=document.getElementById('globalSearchPop');if(pop)pop.classList.remove('open');
+      var caixa=barra.querySelector('.top-center');
+      var fim=function(){barra.classList.remove('busca-cel');input.value='';input.blur();};
+      if(caixa&&caixa.animate&&!semMov()){var an=caixa.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateX(18px)'}],{duration:200,easing:curva});an.onfinish=fim;}
+      else fim();
+    }
+    btn.addEventListener('click',abrir);
+    if(fechar)fechar.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();fecharBusca();});
+    input.addEventListener('keydown',function(e){if(e.key==='Escape')fecharBusca();});
+    // escolher um resultado leva para outra tela; fecha a busca para não voltar aberta pelo botão voltar
+    document.addEventListener('click',function(e){var pop=document.getElementById('globalSearchPop');if(pop&&pop.contains(e.target)&&e.target.closest('.pop-row'))setTimeout(fecharBusca,0);});
+    window.addEventListener('resize',function(){if(window.innerWidth>760)barra.classList.remove('busca-cel');});
   }
 
   async function executarBuscaGlobal(termo){
