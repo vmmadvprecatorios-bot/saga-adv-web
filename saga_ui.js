@@ -28,7 +28,14 @@
   // Troca de tela pelo menu; com saga_guard.js ha uma saida suave
   if(!global.sagaIrPara)global.sagaIrPara=function(url){if(url)window.location.href=url;};
   // Cores do tema disponíveis (para criar outra: incluir aqui e as regras html[data-cor="..."] no saga_tema.css)
-  global.SAGA_CORES=[{id:'azul',nome:'Azul',descricao:'Padrão do sistema'},{id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe'}];
+  // Nome de cada tema (cor + modo), para conversar sobre ele: Azul Marinho/Azul Porcelana e Grafite Noturno/Grafite Linho
+  global.SAGA_CORES=[{id:'azul',nome:'Azul',descricao:'Padrão do sistema',escuro:'Azul Marinho',claro:'Azul Porcelana'},
+    {id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe',escuro:'Grafite Noturno',claro:'Grafite Linho'}];
+  global.sagaNomeTema=function(cor,modo){var c=global.SAGA_CORES.find(function(x){return x.id===cor;})||global.SAGA_CORES[0];return modo==='light'?c.claro:c.escuro;};
+  // dica do botão do sol e da lua: diz qual tema vai entrar ao clicar
+  global.sagaTituloTema=function(){var b=document.getElementById('themeToggle');if(!b)return;var cor='azul';try{cor=localStorage.getItem('saga-cor')||'azul';}catch(e){}
+    var modo=(document.body&&document.body.getAttribute('data-theme'))==='light'?'light':'dark';var outro=modo==='light'?'dark':'light';
+    var t='Agora: '+global.sagaNomeTema(cor,modo)+'. Clique para '+global.sagaNomeTema(cor,outro)+'.';b.setAttribute('title',t);b.setAttribute('aria-label',t);};
   global.sagaAplicarCor=function(cor){
     if(!global.SAGA_CORES.some(function(c){return c.id===cor;}))cor='azul';
     var h=document.documentElement;
@@ -36,6 +43,7 @@
     try{localStorage.setItem('saga-cor',cor);}catch(e){}
     var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';
     h.style.background=cor==='grafite'?(claro?'#F3F2EF':'#1A1A1A'):(claro?'#f3f5f8':'#172234');
+    global.sagaTituloTema();
     return cor;
   };
   // Efeitos de movimento: desligar = tudo troca na hora (vale na hora, sem recarregar). Usado no menu da foto e nas Configurações.
@@ -340,7 +348,9 @@
       var props=['position','top','left','right','width','transform'];
       var ancora=document.querySelector(id==='globalSearchPop'?'#topbarSaga .quick-search':id==='notifPop'?'#notifBtn':'#presenceBtn');
       var r=ancora?ancora.getBoundingClientRect():null;
-      if(!computador||!r||!r.width||!p.classList.contains('open')){props.forEach(function(k){p.style.removeProperty(k);});return;}
+      if(!computador||!r||!r.width){props.forEach(function(k){p.style.removeProperty(k);});return;}
+      // Fechando: mantém a posição em que abriu, para o efeito de fechar acontecer no mesmo lugar (antes ela pulava para o canto e "piscava")
+      if(!p.classList.contains('open'))return;
       // Busca: abaixo do campo, na mesma largura. Sino e Online: abaixo do proprio botao, alinhados pela direita.
       var w=id==='globalSearchPop'?r.width:id==='notifPop'?360:280;
       var left=id==='globalSearchPop'?r.left:r.right-w;
@@ -591,6 +601,7 @@
         try{localStorage.setItem('saga-tema',novo);}catch(e){}
       }
       trocarTemaComLuz(btn,novo,aplicar);
+      setTimeout(function(){global.sagaTituloTema&&global.sagaTituloTema();},700);
     });
   }
 
