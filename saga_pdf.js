@@ -4,6 +4,7 @@
    tabelas organizadas, número da página no rodapé) num quadro invisível e abre
    a janela de impressão do navegador. Lá a pessoa escolhe "Salvar como PDF".
    Uso: SagaPdf.imprimir({titulo, subtitulo, arquivo, paisagem, paginas:[html,...]})
+   Sem o cabeçalho do SAGA (etiquetas, cartas): {cru:true, css:'@page{...} ...', paginas:[html]}
    Classes prontas para o conteúdo: .kpis (caixas de números), table.tab (tabela),
    .num (número à direita), .fds/.feriado/.apagado (linhas), .neg/.pos (saldo),
    .alerta, .obs (bloco de texto), .assinaturas, .secao (título de seção), .nada.
@@ -66,13 +67,14 @@ window.SagaPdf=(function(){
   function imprimir(o){
     o=o||{};var m=marca();
     var paginas=(o.paginas&&o.paginas.length?o.paginas:['<div class="nada">Nada para imprimir.</div>']);
-    var pagina='@page{size:A4 '+(o.paisagem?'landscape':'portrait')+';margin:'+(o.paisagem?'9mm 10mm 11mm':'12mm 11mm 14mm')+';'+
+    // o.cru: página sem cabeçalho nem rodapé do SAGA (etiquetas e cartas); o.css define @page e o resto
+    var pagina=o.cru?'':'@page{size:A4 '+(o.paisagem?'landscape':'portrait')+';margin:'+(o.paisagem?'9mm 10mm 11mm':'12mm 11mm 14mm')+';'+
       '@bottom-left{content:"'+m.nome.replace(/"/g,'')+' · SAGA ADV";font-family:Arial,sans-serif;font-size:7pt;color:#9aa0aa}'+
       '@bottom-right{content:"Página " counter(page) " de " counter(pages);font-family:Arial,sans-serif;font-size:7pt;color:#9aa0aa}}';
     var html='<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>'+esc(o.arquivo||o.titulo||'SAGA')+'</title>'+
       '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">'+
-      '<style>'+pagina+CSS+'</style></head><body>'+
-      paginas.map(function(p){return '<section class="pagina">'+cabecalho(o)+p+'</section>';}).join('')+'</body></html>';
+      '<style>'+pagina+CSS+(o.css||'')+'</style></head><body>'+
+      (o.cru?paginas.join(''):paginas.map(function(p){return '<section class="pagina">'+cabecalho(o)+p+'</section>';}).join(''))+'</body></html>';
     var ifr=document.createElement('iframe');
     ifr.setAttribute('aria-hidden','true');ifr.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
     document.body.appendChild(ifr);

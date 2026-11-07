@@ -27,8 +27,8 @@
     const pid=state.pessoaRow&&state.pessoaRow.id;if(!pid)return;
     L.carregando=true;
     const [a,c,h,k]=await Promise.all([
-      _sb.from('localizacao_alvos').select('id,nome,parentesco_id,cpf,observacao,ordem').eq('pessoa_id',pid).eq('ativo',true).order('ordem',{ascending:true}).order('criado_em',{ascending:true}),
-      _sb.from('localizacao_contatos').select('id,alvo_id,tipo,valor,logradouro,numero,complemento,bairro,cidade,uf,cep,fonte,status_id,tentativas,observacao,criado_em,atualizado_em').eq('pessoa_id',pid).eq('ativo',true).order('criado_em',{ascending:true}),
+      _sb.from('localizacao_alvos').select('id,nome,parentesco_id,cpf,observacao,ordem,idade').eq('pessoa_id',pid).eq('ativo',true).order('ordem',{ascending:true}).order('criado_em',{ascending:true}),
+      _sb.from('localizacao_contatos').select('id,alvo_id,tipo,valor,logradouro,numero,complemento,bairro,cidade,uf,cep,fonte,status_id,tentativas,observacao,criado_em,atualizado_em,whatsapp,nao_perturbe,qualidade,tipo_endereco').eq('pessoa_id',pid).eq('ativo',true).order('criado_em',{ascending:true}),
       _sb.from('localizacao_historico').select('id,contato_id,evento,de_status_id,para_status_id,tentativas,observacao,usuario_id,criado_em').eq('pessoa_id',pid).order('criado_em',{ascending:false}).limit(80),
       _sb.from('etiquetas_catalogo').select('id,nome,cor,categoria,ordem,ativo,acao').in('categoria',['loc_telefone','loc_email','loc_endereco','parentesco']).order('ordem',{ascending:true})
     ]);
@@ -36,6 +36,8 @@
     const erro=[a,c,h,k].find(r=>r.error);
     if(erro){showToast('Não foi possível carregar a localização: '+(erro.error.message||''),'error');}
     L.pessoa=pid;L.alvos=a.data||[];L.contatos=c.data||[];L.hist=h.data||[];L.cat=k.data||[];
+    const cf=await _sb.from('cartas_fila').select('id,contato_id,status').eq('pessoa_id',pid).in('status',['a_enviar','impressa']);
+    L.cartas=cf.error?[]:(cf.data||[]);
   }
   async function recarregar(){await carregar();desenhar();}
 
@@ -71,7 +73,7 @@
     const conf=contar(lista,'confirma');
     const ed=podeEditar();
     return '<section class="loc2-alvo'+(aberto?' aberto':'')+'"><div class="loc2-alvo-cab" data-l="alvo" data-alvo="'+e(al.chave)+'" role="button" tabindex="0" aria-expanded="'+aberto+'">'
-      +'<span class="loc2-seta">›</span><span class="loc2-alvo-nome"><b>'+e(nome)+'</b><small>'+(al.id?e(p?p.nome:'Parente'):'Cliente')+(a&&a.cpf?' · CPF '+e(a.cpf):'')+'</small></span>'
+      +'<span class="loc2-seta">›</span><span class="loc2-alvo-nome"><b>'+e(nome)+'</b><small>'+(al.id?e(p?p.nome:'Parente'):'Cliente')+(a&&a.idade?' · '+e(a.idade)+' anos':'')+(a&&a.cpf?' · CPF '+e(a.cpf):'')+'</small></span>'
       +'<span class="loc2-alvo-conta">'+lista.length+' contato(s)'+(conf?' · <b class="ok">'+conf+' confirmado(s)</b>':'')+'</span>'
       +(al.id&&ed?'<button type="button" class="loc2-mini" data-l="alvo-menu" data-alvo-id="'+e(al.id)+'" title="Editar ou remover parente">⋯</button>':'')
       +'</div><div class="loc2-alvo-corpo">'
@@ -90,21 +92,54 @@
     if(c.tipo==='telefone'){
       if(ed)acoes+='<button type="button" class="loc2-acao tentativa" data-l="tentativa" data-id="'+e(c.id)+'" title="Liguei e não atendeu (+1 tentativa)">📞 Não atendeu'+(c.tentativas?' <b>'+c.tentativas+'</b>':'')+'</button>';
       acoes+='<a class="loc2-acao" href="https://wa.me/55'+e(chaveLocal('telefone',c))+'" target="_blank" rel="noopener" title="Abrir no WhatsApp">WhatsApp</a>';
+      if(ed)acoes+='<span class="loc2-wz" title="A WhatsApp deste número chama? Marque depois de testar">WhatsApp chama? <button type="button" class="loc2-acao'+(c.whatsapp===true?' ativo-sim':'')+'" data-l="wz-sim" data-id="'+e(c.id)+'">Sim</button><button type="button" class="loc2-acao'+(c.whatsapp===false?' ativo-nao':'')+'" data-l="wz-nao" data-id="'+e(c.id)+'">Não</button></span>';
       acoes+='<a class="loc2-acao" href="tel:'+e(chaveLocal('telefone',c))+'" title="Ligar">Ligar</a>';
     }else if(c.tipo==='email'){
       acoes+='<a class="loc2-acao" href="mailto:'+e(c.valor)+'" title="Escrever e-mail">E-mail</a>';
     }else if(ed){
+      const naFila=(L.cartas||[]).some(x=>x.contato_id===c.id);
+      acoes+='<button type="button" class="loc2-acao loc2-carta'+(naFila?' na-fila':'')+'" data-l="carta" data-id="'+e(c.id)+'" title="'+(naFila?'Já está na lista de cartas (tela Cartas)':'Enviar carta para este endereço: entra na lista de cartas')+'">'+ICONE_ENVELOPE+(naFila?'Na lista de cartas':'Enviar carta')+'</button>';
       acoes+='<button type="button" class="loc2-acao" data-l="editar-end" data-id="'+e(c.id)+'" title="Separar rua, número, bairro, cidade, UF e CEP (para a etiqueta da carta)">Editar</button>';
     }
     acoes+='<button type="button" class="loc2-acao" data-l="copiar" data-id="'+e(c.id)+'" title="Copiar">Copiar</button>';
     if(ed)acoes+='<button type="button" class="loc2-acao perigo" data-l="remover" data-id="'+e(c.id)+'" title="Remover da lista (fica no histórico)">✕</button>';
     const endSep=c.tipo==='endereco'?'<small class="loc2-end-sep">'+e([c.bairro,[c.cidade,c.uf].filter(Boolean).join('/'),c.cep?'CEP '+cepFmt(c.cep):''].filter(Boolean).join(' · ')||'Endereço ainda não separado em campos (use Editar)')+'</small>':'';
     return '<article class="loc2-contato" style="--st:'+e(cor)+'">'
-      +'<div class="loc2-contato-linha"><div class="loc2-valor"><b>'+e(valor)+'</b>'+endSep+'<small>'+(c.fonte?'Fonte: '+e(c.fonte)+' · ':'')+'desde '+e(new Date(c.criado_em).toLocaleDateString('pt-BR'))+'</small></div>'
+      +'<div class="loc2-contato-linha"><div class="loc2-valor"><b>'+e(valor)+selosContato(c)+'</b>'+endSep+'<small>'+(c.fonte?'Fonte: '+e(c.fonte)+' · ':'')+'desde '+e(new Date(c.criado_em).toLocaleDateString('pt-BR'))+'</small></div>'
       +'<button type="button" class="loc2-status" data-l="status" data-id="'+e(c.id)+'"'+(ed?'':' disabled')+'><i></i><span>'+e(s?s.nome:'Sem status')+'</span>'+(ed?'<em>▾</em>':'')+'</button></div>'
       +'<div class="loc2-contato-linha2"><div class="loc2-acoes">'+acoes+'</div>'
       +(ed?'<input type="text" class="loc2-obs" data-l-obs="'+e(c.id)+'" value="'+e(c.observacao||'')+'" placeholder="Observação (Enter para salvar)" maxlength="300">':(c.observacao?'<small class="loc2-obs-ro">'+e(c.observacao)+'</small>':''))
       +'</div>'+extra+'</article>';
+  }
+  const ICONE_ENVELOPE='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+  function selosContato(c){
+    let h='';
+    if(c.tipo==='telefone'){
+      h+=c.whatsapp===true?' <span class="loc2-selo wz">WhatsApp</span>':c.whatsapp===false?' <span class="loc2-selo sem">sem WhatsApp</span>':'';
+      if(c.nao_perturbe)h+=' <span class="loc2-selo np" title="Número na lista Não Perturbe (a Lemit avisa: lei 17.334/2021). Evite ligar oferecendo serviço.">Não perturbe</span>';
+    }
+    if(c.tipo==='endereco'&&c.tipo_endereco)h+=' <span class="loc2-selo">'+e(c.tipo_endereco)+'</span>';
+    if(c.qualidade)h+=' <span class="loc2-selo q">'+e(c.qualidade)+'</span>';
+    return h;
+  }
+  async function marcarWhats(id,valor){
+    const c=L.contatos.find(x=>x.id===id);if(!c)return;
+    const novo=c.whatsapp===valor?null:valor;
+    await atualizar(c,{whatsapp:novo,whatsapp_validado_por_id:novo===null?null:state.usuario.internoId,whatsapp_validado_em:novo===null?null:new Date().toISOString()},novo===null?'Marcação de WhatsApp desfeita.':novo?'Marcado: o WhatsApp chama.':'Marcado: não tem WhatsApp.');
+  }
+  async function enviarCarta(id){
+    const c=L.contatos.find(x=>x.id===id);if(!c)return;
+    if((L.cartas||[]).some(x=>x.contato_id===id)){if(confirm('Este endereço já está na lista de cartas. Abrir a tela Cartas?'))location.href='cartas.html';return;}
+    if(!c.logradouro&&!c.cep){showToast('Separe o endereço em rua, número, bairro, cidade e CEP (botão Editar) antes de mandar para as cartas.','warning');abrirEndereco(c);return;}
+    const pr=await _sb.from('processos').select('id').eq('pessoa_id',L.pessoa).eq('excluido_logico',false).order('criado_em',{ascending:false}).limit(1);
+    const alvo=c.alvo_id?L.alvos.find(a=>a.id===c.alvo_id):null;
+    const linha={pessoa_id:L.pessoa,processo_id:pr.data&&pr.data[0]?pr.data[0].id:null,contato_id:c.id,destinatario:alvo?alvo.nome:((state.cliente&&state.cliente.nome)||''),
+      logradouro:c.logradouro||c.valor,numero:c.numero,complemento:c.complemento,bairro:c.bairro,cidade:c.cidade,uf:c.uf,cep:c.cep};
+    const r=await _sb.from('cartas_fila').insert(linha).select('id,contato_id,status').single();
+    if(r.error){showToast('Não foi possível mandar para as cartas: '+(r.error.message||''),'error');return;}
+    (L.cartas=L.cartas||[]).push(r.data);
+    await recarregar();
+    showToast('Endereço enviado para a lista de cartas'+(alvo?' (em nome de '+e(alvo.nome)+')':'')+'.','success');
   }
   function desenharHistorico(){
     const itens=L.hist.slice(0,L.histAberto?80:6);
@@ -147,6 +182,9 @@
         else if(a==='copiar')copiar(id);
         else if(a==='remover')remover(id);
         else if(a==='editar-end')abrirEndereco(L.contatos.find(c=>c.id===id));
+        else if(a==='carta')enviarCarta(id);
+        else if(a==='wz-sim')marcarWhats(id,true);
+        else if(a==='wz-nao')marcarWhats(id,false);
         else if(a==='hist'){L.histAberto=!L.histAberto;desenhar();}
       });
     });
@@ -383,7 +421,7 @@
     pdf.destroy();
     return linhas.join('\n');
   }
-  function detectarFonte(t){if(/lemit/i.test(t))return 'Lemit';if(/data\s*solution|datasolution/i.test(t))return 'Data Solution';return 'Outra';}
+  function detectarFonte(t){if(/lemit/i.test(t))return 'Lemit';if(/date\s*solutions|data\s*solution|datasolution|dataadv/i.test(t))return 'Data Solution';return 'Outra';}
   const RX_LOGR=/^(rua|r\.|av\.?|avenida|travessa|tv\.?|trav\.?|rodovia|rod\.?|alameda|al\.|pra[çc]a|p[çc]a\.?|estrada|est\.|conjunto|conj\.?|cj\.?|loteamento|lot\.?|quadra|qd\.?|s[ií]tio|fazenda|faz\.?|vila|beco|largo|residencial|condom[ií]nio|cond\.?|setor|ladeira|vereda|via)\b/i;
   const RX_PAR=/(?<!\p{L})(m[ãa]e|pai|irm[ãa]o?|filh[oa]|c[ôo]njuge|espos[oa]|marido|av[ôóo]|net[oa]|sobrinh[oa]|prim[oa]|ti[oa]|genro|nora|cunhad[oa]|companheir[oa]|sogr[oa]|enteado|enteada|vizinh[oa])(?!\p{L})/iu;
   function extrair(texto){
@@ -426,6 +464,103 @@
     }
     return o;
   }
+  /* ---------- leitores próprios da Lemit e da Data Solution (pelas colunas da tabela do PDF) ---------- */
+  async function itensDoPdf(arquivo){
+    if(typeof carregarPdfjs!=='function')throw new Error('Leitor de PDF indisponível.');
+    const pdfjs=await carregarPdfjs();
+    const pdf=await pdfjs.getDocument({data:new Uint8Array(await arquivo.arrayBuffer()),isEvalSupported:false}).promise;
+    const itens=[];
+    for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n);const tc=await pg.getTextContent();
+      tc.items.forEach(it=>{if(it.str&&it.str.trim())itens.push({p:n,x:Math.round(it.transform[4]),y:Math.round(it.transform[5]),s:it.str});});}
+    pdf.destroy();
+    return itens;
+  }
+  function textoDosItens(itens){
+    const porL={};itens.forEach(i=>{const k=i.p+'|'+Math.round(i.y/3);(porL[k]=porL[k]||[]).push(i);});
+    return Object.keys(porL).sort((a,b)=>{const A=a.split('|').map(Number),B=b.split('|').map(Number);return A[0]-B[0]||B[1]-A[1];}).map(k=>porL[k].sort((a,b)=>a.x-b.x).map(i=>i.s).join(' ')).join('\n');
+  }
+  const ICONE_WHATS='',ICONE_NAO_PERTURBE='';
+  const semAcento=v=>String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim();
+  const limpa=v=>String(v||'').replace(/−/g,'-').replace(/[-]/g,'').replace(/\s+/g,' ').trim();
+  function secoes(itens,titulos){
+    // ordem de leitura de cima para baixo em todas as páginas; tira cabeçalho e rodapé da impressão do navegador
+    const T=titulos.map(semAcento);
+    const corpo=itens.filter(i=>i.y>28&&i.y<806).map(i=>Object.assign({g:(i.p-1)*2000+(900-i.y)},i)).sort((a,b)=>a.g-b.g||a.x-b.x);
+    const marcos=corpo.filter(i=>T.indexOf(semAcento(i.s))>=0&&i.x<110);
+    const out={};
+    marcos.forEach((m,k)=>{const fim=marcos[k+1]?marcos[k+1].g:Infinity;out[semAcento(m.s)]=corpo.filter(i=>i.g>m.g&&i.g<fim);});
+    return out;
+  }
+  function tabela(itens,ancoraFn){
+    if(!itens||!itens.length)return [];
+    const g0=itens[0].g,cab=itens.filter(i=>i.g-g0<=18&&!/^[-]+$/.test(i.s));
+    const cols=[];cab.slice().sort((a,b)=>a.x-b.x).forEach(i=>{const c=cols[cols.length-1];if(c&&i.x-c.xFim<=14){c.nome+=i.s;c.xFim=i.x+i.s.length*4;}else cols.push({x:i.x,xFim:i.x+i.s.length*4,nome:i.s});});
+    cols.forEach(c=>{c.chave=semAcento(c.nome).replace(/[^A-Z0-9]+/g,' ').trim();});
+    const corpo=itens.filter(i=>cab.indexOf(i)<0&&i.g-g0>12);
+    const colDe=i=>{let r=cols[0];cols.forEach(c=>{if(i.x>=c.x-6)r=c;});return r;};
+    corpo.forEach(i=>{i.col=colDe(i);});
+    const ancoras=corpo.filter(i=>ancoraFn(i,i.col));
+    return ancoras.map((a,k)=>{
+      const linha={_itens:[]};
+      corpo.forEach(i=>{let melhor=null,d=1e9;ancoras.forEach(an=>{const dd=Math.abs(an.g-i.g);if(dd<d){d=dd;melhor=an;}});if(melhor===a)linha._itens.push(i);});
+      cols.forEach(c=>{linha[c.chave]=limpa(linha._itens.filter(i=>i.col===c).sort((x,y)=>x.g-y.g||x.x-y.x).map(i=>i.s).join(' '));});
+      return linha;
+    });
+  }
+  function enderecoDe(rua,compl,bairro,cidUf,cep,tipo){
+    const o={};rua=limpa(rua);
+    const m=rua.match(/^(.*?\D)\s*,?\s*(\d+[A-Z]?)\b\s*(.*)$/i);
+    if(m){o.logradouro=m[1].replace(/[,\s]+$/,'');o.numero=m[2];if(m[3])o.complemento=m[3];}else o.logradouro=rua;
+    compl=limpa(compl);if(compl&&!/^nao informado$/i.test(semAcento(compl))&&(!o.complemento||o.complemento.indexOf(compl)<0))o.complemento=[o.complemento,compl].filter(Boolean).join(' ');
+    if(bairro&&!/^NAO INFORMADO$/.test(semAcento(bairro)))o.bairro=limpa(bairro);
+    const cu=limpa(cidUf).match(/^(.*?)[\s,\-\/]+([A-Z]{2})$/);if(cu){o.cidade=cu[1].trim();o.uf=cu[2];}else if(cidUf)o.cidade=limpa(cidUf);
+    const d=digitos(cep);if(d.length===8)o.cep=d;
+    if(tipo){const t=semAcento(tipo);o.tipo_endereco=/COM/.test(t)?'comercial':/RES/.test(t)?'residencial':null;}
+    o.valor=[[o.logradouro,o.numero].filter(Boolean).join(', '),o.complemento,o.bairro,[o.cidade,o.uf].filter(Boolean).join('/'),o.cep?'CEP '+cepFmt(o.cep):''].filter(Boolean).join(' - ');
+    return o;
+  }
+  const grauBonito=g=>{g=String(g||'').replace(/\bA[cç][oõ]es\b/gi,'').trim();const t=semAcento(g);const M={'IRMA(O)':'Irmão(ã)','MAE':'Mãe','PAI':'Pai','FILHA(O)':'Filho(a)','SOBRINHA(O)':'Sobrinho(a)','NETA(O)':'Neto(a)','CONJUGE':'Cônjuge','TIA(O)':'Tio(a)','AVO':'Avô/Avó','PRIMA(O)':'Primo(a)'};return M[t]||limpa(g);};
+  const cpfFmt=v=>{const d=digitos(v);return d.length===11?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9):limpa(v);};
+  function lerLemit(itens){
+    const S=secoes(itens,['DADOS GERAIS','RISCO DE CRÉDITO','VÍNCULOS','PARTICIPAÇÃO SOCIETÁRIA','TELEFONES CELULARES','TELEFONES FIXOS','E-MAILS','ENDEREÇOS']);
+    const out={fonte:'Lemit',telefone:[],email:[],endereco:[],parentes:[],dados:{}};
+    (S['DADOS GERAIS']||[]).forEach(i=>{if(i.x>120)return;const v=(S['DADOS GERAIS']||[]).find(j=>j.x>150&&Math.abs(j.g-i.g)<4);if(v)out.dados[semAcento(i.s)]=limpa(v.s);});
+    const sim=(i)=>i.s.trim()==='Sim';
+    ['TELEFONES CELULARES','TELEFONES FIXOS'].forEach(sec=>{
+      tabela(S[sec],sim).forEach(l=>{
+        const tx=l._itens.map(i=>i.s).join(' ');const m=tx.match(/\(?\d{2}\)?\s*\d{4,5}-?\d{4}/);if(!m)return;
+        out.telefone.push({valor:digitos(m[0]),whatsapp:tx.indexOf(ICONE_WHATS)>=0?true:null,nao_perturbe:tx.indexOf(ICONE_NAO_PERTURBE)>=0,qualidade:limpa(l.SITUACAO||'').replace(/\b(Sim|Recado|N[ãa]o)\b/g,' ').replace(/[uú]ltimo contato.*$/i,'').replace(/\s+/g,' ').trim()||null});
+      });
+    });
+    tabela(S['E-MAILS'],sim).forEach(l=>{const m=l._itens.map(i=>i.s).join(' ').match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);if(m)out.email.push({valor:m[0].toLowerCase()});});
+    tabela(S['ENDEREÇOS'.normalize('NFD').replace(/[̀-ͯ]/g,'')]||S['ENDERECOS'],sim).forEach(l=>{if(!l.ENDERECO)return;out.endereco.push(enderecoDe(l.ENDERECO,'',l.BAIRRO,l.CIDADE,l.CEP,l.TIPO));});
+    tabela(S['VINCULOS'],(i,c)=>c&&c.chave==='CPF'&&/\d{6,}/.test(i.s)).forEach(l=>{if(l.NOME)out.parentes.push({nome:l.NOME,cpf:cpfFmt(l.CPF),grau:grauBonito(l['TIPO DE VINCULO'])});});
+    return out;
+  }
+  function lerDataSolution(itens){
+    const S=secoes(itens,['Dados Cadastrais','Telefones','Enderecos','E-mails','Situacao Cadastral','Participacao Empresarial','Perfil de Consumo','Veiculo','Pessoas Ligadas','Perfil Sociodemografico','Historico Profissional']);
+    const out={fonte:'Data Solution',telefone:[],email:[],endereco:[],parentes:[],dados:{}};
+    const dc=S['DADOS CADASTRAIS']||[];
+    dc.forEach(i=>{if(!/^[A-Z ()\/]+$/.test(semAcento(i.s))||i.s!==i.s.toUpperCase())return;const v=dc.find(j=>Math.abs(j.x-i.x)<4&&j.g-i.g>8&&j.g-i.g<30);if(v)out.dados[semAcento(i.s)]=limpa(v.s);});
+    const qual=(i,c)=>c&&/QUALIFICACAO/.test(c.chave)&&/^\d+$/.test(i.s.trim());
+    tabela(S['TELEFONES'],qual).forEach(l=>{const d=digitos(l.TELEFONE);if(d.length>=10)out.telefone.push({valor:d,whatsapp:null,nao_perturbe:false,qualidade:l.QUALIFICACAO?l.QUALIFICACAO+'º na lista':null});});
+    tabela(S['E-MAILS'],qual).forEach(l=>{const m=(l['E MAIL']||'').match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);if(m)out.email.push({valor:m[0].toLowerCase()});});
+    tabela(S['ENDERECOS'],qual).forEach(l=>{if(l.ENDERECO)out.endereco.push(enderecoDe(l.ENDERECO,l.COMPLEMENTO,l.BAIRRO,l['CIDADE UF'],l.CEP,''));});
+    tabela(S['PESSOAS LIGADAS'],(i,c)=>c&&c.chave==='IDADE'&&/^\d+$/.test(i.s.trim())).forEach(l=>{if(l.NOME)out.parentes.push({nome:l.NOME,cpf:cpfFmt(l.CPF),grau:grauBonito(l['GRAU DE PARENTESCO']),idade:Number(l.IDADE)||null});});
+    return out;
+  }
+  // devolve o mesmo formato do leitor geral (telefone, email, endereco, parentes), já sem repetidos
+  function lerConsulta(itens){
+    const txt=textoDosItens(itens);
+    let r=null;
+    if(/lemit/i.test(txt))r=lerLemit(itens);
+    else if(/date\s*solutions|data\s*solution|dataadv/i.test(txt))r=lerDataSolution(itens);
+    if(!r||(!r.telefone.length&&!r.email.length&&!r.endereco.length&&!r.parentes.length)){const g=extrair(txt);g.fonte=detectarFonte(txt);return g;}
+    const vistos=new Set();
+    ['telefone','email','endereco'].forEach(t=>{r[t]=r[t].filter(o=>{const k=t+':'+chaveLocal(t,o);if(vistos.has(k))return false;vistos.add(k);return true;});});
+    const vp=new Set();r.parentes=r.parentes.filter(p=>{const k=digitos(p.cpf)||semAcento(p.nome);if(vp.has(k))return false;vp.add(k);return true;});
+    return r;
+  }
   function abrirLeitura(alvoInicial){
     const opAlvo='<option value="">'+e((state.cliente&&state.cliente.nome)||'Cliente')+' (o próprio cliente)</option>'+L.alvos.map(a=>'<option value="'+e(a.id)+'"'+(a.id===alvoInicial?' selected':'')+'>'+e(alvoRotulo(a.id))+'</option>').join('')+'<option value="__novo">+ Novo parente...</option>';
     const d=janela('Ler consulta de localização','O SAGA lê o PDF aqui no navegador e não guarda o arquivo: ficam só os dados que você confirmar.',
@@ -451,9 +586,11 @@
       let texto=d.querySelector('#loc2Txt').value;
       salvarBtn.disabled=true;salvarBtn.textContent='Lendo...';
       try{
-        if(arquivo){texto=/\.txt$/i.test(arquivo.name)?await arquivo.text():await textoDoPdf(arquivo);}
+        let dados=null;
+        if(arquivo&&!/\.txt$/i.test(arquivo.name)){const itens=await itensDoPdf(arquivo);texto=textoDosItens(itens);if(texto.trim())dados=lerConsulta(itens);}
+        else if(arquivo)texto=await arquivo.text();
         if(!texto||!texto.trim()){showToast('Escolha o PDF ou cole o texto da consulta.','warning');return;}
-        const dados=extrair(texto);dados.fonte=detectarFonte(texto);
+        if(!dados){dados=extrair(texto);dados.fonte=detectarFonte(texto);}
         if(!dados.telefone.length&&!dados.email.length&&!dados.endereco.length&&!dados.parentes.length){showToast(arquivo&&texto.trim().length<30?'Este PDF parece ser uma imagem (sem texto para ler). Cole o texto ou digite os contatos.':'Não encontrei telefone, e-mail ou endereço neste texto.','warning');return;}
         revisao=dados;arquivo=null;mostrarRevisao(d,dados);
         salvarBtn.textContent='Gravar selecionados';
@@ -464,12 +601,14 @@
   function mostrarRevisao(d,dados){
     const alvoSel=d.querySelector('#loc2LAlvo').value;
     const existentes=new Set(L.contatos.filter(c=>(c.alvo_id||'')===(alvoSel==='__novo'?'#':alvoSel)).map(c=>c.tipo+':'+chaveLocal(c.tipo,c)));
-    const linha=(tipo,o,i)=>{const ja=existentes.has(tipo+':'+chaveLocal(tipo,o));return '<label class="loc2-rev-item'+(ja?' ja':'')+'"><input type="checkbox" data-rev="'+tipo+'" data-i="'+i+'"'+(ja?' disabled':' checked')+'><span>'+e(tipo==='telefone'?fone(o.valor):o.valor)+(tipo==='endereco'&&(o.cidade||o.cep)?' <small>'+e([o.cidade,o.uf,o.cep?cepFmt(o.cep):''].filter(Boolean).join(' · '))+'</small>':'')+(ja?' <small>já está na lista</small>':'')+'</span></label>';};
+    const linha=(tipo,o,i)=>{const ja=existentes.has(tipo+':'+chaveLocal(tipo,o));return '<label class="loc2-rev-item'+(ja?' ja':'')+'"><input type="checkbox" data-rev="'+tipo+'" data-i="'+i+'"'+(ja?' disabled':' checked')+'><span>'+e(tipo==='telefone'?fone(o.valor):tipo==='endereco'?[[o.logradouro,o.numero].filter(Boolean).join(', '),o.complemento].filter(Boolean).join(' - ')||o.valor:o.valor)+selosContato(Object.assign({tipo:tipo},o))+(tipo==='endereco'&&(o.cidade||o.cep||o.bairro)?' <small>'+e([o.bairro,[o.cidade,o.uf].filter(Boolean).join('/'),o.cep?cepFmt(o.cep):''].filter(Boolean).join(' · '))+'</small>':'')+(ja?' <small>já está na lista</small>':'')+'</span></label>';};
+    const parJa=p=>L.alvos.some(a=>(digitos(a.cpf)&&digitos(a.cpf)===digitos(p.cpf))||semAcento(a.nome)===semAcento(p.nome));
     const grupo=(tipo,titulo)=>dados[tipo].length?'<div class="loc2-rev-grupo"><b>'+titulo+' ('+dados[tipo].length+')</b>'+dados[tipo].map((o,i)=>linha(tipo,o,i)).join('')+'</div>':'';
-    const pars=dados.parentes.length?'<div class="loc2-rev-grupo"><b>Parentes citados ('+dados.parentes.length+')</b><small class="loc2-dica">Marque para incluir como parente (depois puxe a consulta deles).</small>'+dados.parentes.map((p,i)=>'<label class="loc2-rev-item"><input type="checkbox" data-rev="parente" data-i="'+i+'"><span>'+e(p.nome)+' <small>'+e(p.grau)+(p.cpf?' · CPF '+e(p.cpf):'')+'</small></span></label>').join('')+'</div>':'';
+    const pars=dados.parentes.length?'<div class="loc2-rev-grupo"><b>Parentes ('+dados.parentes.length+')</b><small class="loc2-dica">Os novos já vêm marcados; depois dá para puxar a consulta de cada um.</small>'+dados.parentes.map((p,i)=>{const ja=parJa(p);return '<label class="loc2-rev-item'+(ja?' ja':'')+'"><input type="checkbox" data-rev="parente" data-i="'+i+'"'+(ja?' disabled':' checked')+'><span>'+e(p.nome)+' <small>'+e(p.grau)+(p.idade?' · '+p.idade+' anos':'')+(p.cpf?' · CPF '+e(p.cpf):'')+(ja?' · já está na lista':'')+'</small></span></label>';}).join('')+'</div>':'';
     const box=d.querySelector('#loc2Rev');
     d.querySelector('#loc2Zona').style.display='none';d.querySelector('#loc2Txt').closest('.form-field').style.display='none';d.querySelector('#loc2LAlvo').disabled=true;
-    box.innerHTML='<div class="loc2-rev"><div class="loc2-rev-topo">Fonte: <b>'+e(dados.fonte)+'</b> · confira e desmarque o que não servir.</div>'+grupo('telefone','Telefones')+grupo('email','E-mails')+grupo('endereco','Endereços')+pars+'</div>';
+    const novos=['telefone','email','endereco'].reduce((n,t)=>n+dados[t].filter(o=>!existentes.has(t+':'+chaveLocal(t,o))).length,0)+dados.parentes.filter(p=>!parJa(p)).length;
+    box.innerHTML='<div class="loc2-rev"><div class="loc2-rev-topo">Fonte: <b>'+e(dados.fonte)+'</b> · <b>'+novos+' informação(ões) nova(s)</b>; o que já estava na ficha aparece apagado e não é gravado de novo. Confira e desmarque o que não servir.</div>'+grupo('telefone','Telefones')+grupo('email','E-mails')+grupo('endereco','Endereços')+pars+'</div>';
   }
   async function gravarRevisao(d,dados){
     const btn=d.querySelector('[data-salvar]');btn.disabled=true;
@@ -497,7 +636,7 @@
       let novosPar=0;
       for(const p of pars){
         const grau=parentescos().find(x=>x.nome.toLowerCase().indexOf(String(p.grau).toLowerCase().slice(0,4))>=0);
-        const r=await _sb.from('localizacao_alvos').insert({pessoa_id:L.pessoa,nome:p.nome,cpf:p.cpf,parentesco_id:grau?grau.id:null,ordem:L.alvos.length+1+novosPar});
+        const r=await _sb.from('localizacao_alvos').insert({pessoa_id:L.pessoa,nome:p.nome,cpf:p.cpf,idade:p.idade||null,parentesco_id:grau?grau.id:null,ordem:L.alvos.length+1+novosPar});
         if(!r.error)novosPar++;
       }
       L.abertos.add(alvo||'cliente');
@@ -530,9 +669,12 @@
   +'.loc2-rev{display:flex;flex-direction:column;gap:12px;max-height:46vh;overflow:auto}.loc2-rev-topo{font-size:11px;color:var(--muted)}.loc2-rev-grupo{display:flex;flex-direction:column;gap:3px}.loc2-rev-grupo>b{font-size:11px;color:var(--text);margin-bottom:2px}.loc2-rev-item{display:flex;align-items:flex-start;gap:8px;padding:5px 6px;border-radius:7px;font-size:11.5px;color:var(--text);cursor:pointer}.loc2-rev-item:hover{background:color-mix(in srgb,var(--text) 5%,transparent)}.loc2-rev-item small{color:var(--muted);font-size:9.5px}.loc2-rev-item.ja{opacity:.55}.loc2-dica{color:var(--muted);font-size:10px;margin:2px 0 4px}'
   +'.loc2-end-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px}.loc2-end-grade .g2{grid-column:span 2}'
   +'.loc2-ger{display:flex;align-items:center;gap:6px;margin-bottom:6px}.loc2-ger input[type=color]{width:30px;height:28px;padding:0;border:1px solid var(--border-soft);border-radius:6px;background:none}.loc2-ger input[type=text]{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--border-soft);border-radius:7px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);font:inherit;font-size:11px}.loc2-ger small{color:var(--muted);font-size:9px}.loc2-ger button{width:28px;height:28px;border:1px solid var(--border-soft);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}.loc2-ger button:disabled{opacity:.3}.loc2-ger button.perigo:hover{color:var(--danger);border-color:var(--danger)}'
+  +'.loc2-selo{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);font-size:9.5px;font-weight:700;vertical-align:1px;text-transform:none}.loc2-selo.wz{color:#16a34a;border-color:color-mix(in srgb,#16a34a 45%,transparent);background:color-mix(in srgb,#16a34a 10%,transparent)}.loc2-selo.sem{color:var(--muted)}.loc2-selo.np{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 45%,transparent)}.loc2-selo.q{font-weight:600}'
+  +'.loc2-wz{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);margin-left:2px}.loc2-acao.ativo-sim{border-color:#16a34a;color:#16a34a;background:color-mix(in srgb,#16a34a 10%,transparent)}.loc2-acao.ativo-nao{border-color:var(--danger,#e5484d);color:var(--danger,#e5484d)}'
+  +'.loc2-carta{color:var(--gold-light)!important;border-color:color-mix(in srgb,var(--gold) 45%,transparent)!important}.loc2-carta.na-fila{opacity:.75;border-style:dashed!important}'
   +'@media(max-width:760px){.loc2-contato-linha{flex-direction:column}.loc2-status{max-width:100%}.loc2-end-grade{grid-template-columns:1fr 1fr}.loc2-alvo-conta{display:none}}';
   document.head.appendChild(css);
 
-  window.SagaLocalizacao={render:render,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,_L:L};
+  window.SagaLocalizacao={render:render,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,lerConsulta:lerConsulta,itensDoPdf:itensDoPdf,_L:L};
   window.renderLocalizationView=render;
 })();

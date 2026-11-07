@@ -4257,6 +4257,8 @@ async function init(){
     const processoIdUrl=params.get('processo_id');
     if(pessoaId){
       await carregarFicha(pessoaId,processoIdUrl||null);
+      // vindo da tela Cartas: abre direto a Localização
+      if(params.get('aba')==='localizacao'&&typeof activateLocation==='function')activateLocation();
       return;
     }
     // Lista de processos, Kanban e busca do topo abrem a ficha pelo processo:
