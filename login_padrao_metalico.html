@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>
+// Ja logado: esconde o formulario enquanto confere a sessao (evita piscar o login)
+(function(){try{var t=localStorage.getItem('saga-tema')||'dark';document.documentElement.style.background=t==='light'?'#f3f5f8':'#172234';
+if(localStorage.getItem('sb-fmoskdxgjulagedzjxxk-auth-token')){document.documentElement.classList.add('saga-entrando');
+document.write('<style id="loginOculto">html.saga-entrando body{opacity:0}body{transition:opacity .25s ease}</style>');
+setTimeout(function(){document.documentElement.classList.remove('saga-entrando');},4000);}}catch(e){}})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+    --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#6e4b1f;
+    --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+    --border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);
+    --text:#e8eaf0;--muted:#8b93a8;
+    --success:#5dd8a0;--warning:#e8b84c;--danger:#e85d5d;--info:#6fa3d8;
+    --radius:16px;--radius-sm:10px;
+    --shadow:0 22px 55px rgba(0,0,0,.35);
+  }
+
+  button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Montserrat',sans-serif;min-height:100vh;display:flex;}
+
+  /* ===== LADO ESQUERDO — DARK NAVY + CREST ===== */
+  .lado-esquerdo{
+    flex:1.12;
+    position:relative;
+    overflow:hidden;
+    min-height:100vh;
+    background:linear-gradient(150deg, var(--navy-2) 0%, var(--navy-1) 45%, var(--navy-3) 70%, var(--navy-1) 100%);
+    display:flex;flex-direction:column;justify-content:space-between;
+    padding:48px 52px;
+  }
+  .lado-esquerdo::before{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(
+      115deg,
+      rgba(255,255,255,.022) 0px,rgba(255,255,255,.022) 1px,
+      transparent 1px,transparent 14px
+    );
+    mix-blend-mode:overlay;
+  }
+  .lado-esquerdo::after{
+    content:'';position:absolute;
+    width:580px;height:580px;
+    background:radial-gradient(circle,color-mix(in srgb,var(--gold) 15%,transparent),transparent 65%);
+    top:-200px;right:-200px;border-radius:50%;
+  }
+  .brilho-inferior{
+    position:absolute;width:480px;height:480px;
+    background:radial-gradient(circle,rgba(111,163,216,.09),transparent 65%);
+    bottom:-200px;left:-160px;border-radius:50%;
+  }
+
+  .marca-topo{
+    display:flex;align-items:center;gap:11px;
+    z-index:2;position:relative;
+  }
+  .marca-topo-texto{
+    font-family:'Cormorant Garamond',serif;
+    font-size:21px;font-weight:600;color:#fff;letter-spacing:.5px;
+  }
+  .marca-topo-texto span{color:var(--gold-light);}
+
+  .crest-central{
+    position:relative;z-index:2;align-self:center;text-align:center;
+  }
+  .crest-svg-wrap{
+    width:210px;height:210px;margin:0 auto 28px;position:relative;
+  }
+  .anel-orbital{
+    position:absolute;inset:0;
+    border:1px solid color-mix(in srgb,var(--gold) 22%,transparent);border-radius:50%;
+  }
+  .anel-orbital.interno{
+    inset:22px;border-color:color-mix(in srgb,var(--gold) 38%,transparent);
+  }
+
+  .frase-visual{
+    z-index:2;position:relative;
+    text-align:center;max-width:370px;margin:0 auto;
+  }
+  .frase-visual h2{
+    font-family:'Cormorant Garamond',serif;
+    font-size:27px;font-weight:600;color:#fff;
+    line-height:1.35;margin-bottom:13px;
+  }
+  .frase-visual h2 em{color:var(--gold-light);font-style:italic;}
+  .frase-visual p{
+    font-size:12.5px;color:var(--muted);line-height:1.72;font-weight:400;
+  }
+
+  .rodape-esquerdo{
+    z-index:2;position:relative;
+    display:flex;justify-content:space-between;
+    font-size:10px;color:#5a6a87;letter-spacing:1.2px;text-transform:uppercase;
+  }
+
+  /* ===== LADO DIREITO — CLARO/MARFIM + FORMULARIO ===== */
+  .lado-direito{
+    flex:1;
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:40px;
+    background:linear-gradient(160deg, #f3f5f8 0%, #ffffff 55%, #e3e8ee 100%);
+    position:relative;
+  }
+  .lado-direito::before{
+    content:'';position:absolute;inset:0;
+    background:
+      radial-gradient(circle at 70% 25%, color-mix(in srgb,var(--gold) 7%,transparent), transparent 52%),
+      radial-gradient(circle at 20% 80%, rgba(19,38,66,.04), transparent 42%);
+  }
+
+  .formulario-login{
+    position:relative;z-index:2;
+    width:100%;max-width:360px;
+  }
+
+  .form-cabecalho{text-align:center;margin-bottom:32px;}
+  .form-cabecalho h1{
+    font-family:'Cormorant Garamond',serif;
+    font-size:27px;font-weight:600;color:#13233a;margin-bottom:7px;
+  }
+  .form-cabecalho p{font-size:12px;color:#4a586e;font-weight:400;}
+
+  .campo-form{margin-bottom:15px;}
+  .campo-form label{
+    display:block;
+    font-size:10.5px;font-weight:600;color:#3b4b64;
+    letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px;
+  }
+  .campo-form input{
+    width:100%;
+    background:#fff;
+    border:1.5px solid rgba(19,38,66,.22);
+    border-radius:var(--radius-sm);
+    padding:13px 15px;
+    color:#13233a;
+    font-size:13.5px;
+    font-family:'Montserrat',sans-serif;
+    outline:none;
+    transition:border-color .25s,box-shadow .25s;
+  }
+  .campo-form input::placeholder{color:#8c99ad;}
+  .campo-form input:focus{
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 13%,transparent);
+  }
+
+  .opcoes-form{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11.5px;color:#4a586e;
+    margin:6px 0 24px;
+  }
+  .opcoes-form label{
+    display:flex;align-items:center;gap:7px;cursor:pointer;
+  }
+  .opcoes-form a{
+    color:var(--gold-deep);text-decoration:none;font-weight:500;
+    transition:color .2s;
+  }
+  .opcoes-form a:hover{color:var(--gold);text-decoration:underline;}
+
+  .btn-entrar{
+    display:block;width:100%;
+    background:linear-gradient(135deg, var(--gold-light), var(--gold));
+    color:#13233a;
+    padding:14px;
+    font-size:13px;font-weight:700;letter-spacing:.4px;
+    border-radius:var(--radius-sm);
+    transition:filter .2s,box-shadow .2s;
+    box-shadow:0 5px 18px color-mix(in srgb,var(--gold) 28%,transparent);
+  }
+  .btn-entrar:hover:not(:disabled){filter:brightness(1.06);box-shadow:0 8px 26px color-mix(in srgb,var(--gold) 38%,transparent);}
+  .btn-entrar:disabled{opacity:0.6;cursor:not-allowed;}
+  .ou-google{display:flex;align-items:center;gap:10px;margin:16px 0 12px;font-size:11px;color:var(--muted)}
+  .ou-google::before,.ou-google::after{content:"";flex:1;height:1px;background:var(--border)}
+  .btn-google{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border-radius:var(--radius-sm);
+    border:1px solid #cfd6e0;background:#fff;color:#1f2a3d;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .2s,box-shadow .2s;box-shadow:0 2px 8px rgba(19,38,66,.06)}
+  .btn-google:hover:not(:disabled){border-color:var(--gold);box-shadow:0 4px 14px rgba(19,38,66,.10)}
+  .btn-google:disabled{opacity:.6;cursor:not-allowed}
+  .btn-google svg{width:18px;height:18px;flex:0 0 auto}
+
+  .rodape-form{
+    text-align:center;font-size:10.5px;color:#6b778a;
+    margin-top:24px;
+  }
+
+  /* ===== TOAST (standalone — sem topbar/sidebar nesta tela) ===== */
+  #toast-container{
+    position:fixed;bottom:28px;right:28px;z-index:9999;
+    display:flex;flex-direction:column;gap:10px;
+    pointer-events:none;
+  }
+  .toast{
+    padding:13px 18px;border-radius:var(--radius-sm);
+    font-size:12.5px;font-weight:500;color:#fff;max-width:340px;
+    background:linear-gradient(135deg,rgba(23,32,57,.97),rgba(13,19,38,.97));
+    border:1px solid var(--border-soft);
+    box-shadow:var(--shadow);
+    animation:toastIn .3s ease;
+    pointer-events:auto;
+  }
+  .toast.sucesso{border-left:3px solid var(--success);}
+  .toast.erro   {border-left:3px solid var(--danger);}
+  .toast.info   {border-left:3px solid var(--info);}
+  @keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ===== MODAL RECUPERACAO DE SENHA ===== */
+  .modal-recuperacao-overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(19,35,58,.52);
+    z-index:500;
+    align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .modal-recuperacao-overlay.aberto{display:flex;}
+  .modal-recuperacao-card{
+    width:100%;max-width:380px;
+    background:linear-gradient(160deg,#ffffff 0%,#f3f5f8 100%);
+    border:1.5px solid rgba(19,38,66,.28);
+    border-radius:var(--radius);
+    padding:36px 32px 32px;
+    box-shadow:0 28px 60px rgba(0,0,0,.28);
+    position:relative;
+  }
+  .modal-recuperacao-card h3{
+    font-family:'Cormorant Garamond',serif;
+    font-size:22px;font-weight:600;color:#13233a;
+    margin-bottom:8px;
+  }
+  .modal-recuperacao-card > p{
+    font-size:12px;color:#4a586e;line-height:1.65;
+    margin-bottom:24px;
+  }
+  .btn-fechar-modal{
+    position:absolute;top:14px;right:16px;
+    width:28px;height:28px;border-radius:50%;
+    background:rgba(19,38,66,.09);
+    color:var(--gold-deep);font-size:15px;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .2s;
+  }
+  .btn-fechar-modal:hover{background:rgba(19,38,66,.18);}
+  .btn-recuperar{
+    display:block;width:100%;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold));
+    color:#13233a;
+    padding:13px;
+    font-size:13px;font-weight:700;letter-spacing:.4px;
+    border-radius:var(--radius-sm);
+    transition:filter .2s,box-shadow .2s;
+    box-shadow:0 5px 18px color-mix(in srgb,var(--gold) 28%,transparent);
+    margin-top:18px;
+  }
+  .btn-recuperar:hover:not(:disabled){filter:brightness(1.06);}
+  .btn-recuperar:disabled{opacity:0.6;cursor:not-allowed;}
+
+  /* ===== RESPONSIVO ===== */
+  @media(max-width:900px){
+    body{flex-direction:column;}
+    .lado-esquerdo{min-height:260px;padding:30px 32px;flex:none;}
+    .crest-svg-wrap{width:130px;height:130px;margin-bottom:16px;}
+    .frase-visual h2{font-size:20px;}
+    .frase-visual p{font-size:11.5px;}
+    .lado-direito{padding:32px 22px;}
+    .rodape-esquerdo{display:none;}
+  }
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611072013">
+<style>@view-transition{navigation:auto;}::view-transition-group(root){animation-duration:.12s;}</style>
+</head>
+<body>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toast-container"></div>
+
+<!-- ===== MODAL RECUPERACAO DE SENHA ===== -->
+<div class="modal-recuperacao-overlay" id="modalRecuperacao"
+     role="dialog" aria-modal="true" aria-labelledby="tituloRecuperacao">
+  <div class="modal-recuperacao-card">
+    <button class="btn-fechar-modal" id="btnFecharRecuperacao" aria-label="Fechar">&#x2715;</button>
+    <h3 id="tituloRecuperacao">Redefinir senha</h3>
+    <p>Digite o e-mail cadastrado. Enviaremos um link para criar uma nova senha.</p>
+    <form id="formRecuperacao" novalidate>
+      <div class="campo-form">
+        <label for="recoveryEmail">E-mail</label>
+        <input type="email" id="recoveryEmail" placeholder="seu@email.com.br" autocomplete="email">
+      </div>
+      <button class="btn-recuperar" id="btnEnviarRecuperacao" type="submit">Enviar link</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== LADO ESQUERDO — MARCA E CREST ===== -->
+<div class="lado-esquerdo">
+  <div class="brilho-inferior"></div>
+
+  <div class="marca-topo">
+    <svg width="22" height="22" viewBox="0 0 48 48" fill="none">
+      <path d="M24 4l16 8v12c0 10-7 16-16 20-9-4-16-10-16-20V12l16-8z" stroke="#6fa2ff" stroke-width="2"/>
+    </svg>
+    <div class="marca-topo-texto">VMM<span>ADV</span></div>
+  </div>
+
+  <div class="crest-central">
+    <div class="crest-svg-wrap">
+      <div class="anel-orbital"></div>
+      <div class="anel-orbital interno"></div>
+      <svg width="210" height="210" viewBox="0 0 220 220">
+        <defs>
+          <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#b9d0f1"/>
+            <stop offset="30%"  stop-color="#4b8af5"/>
+            <stop offset="55%"  stop-color="#2f6cd6"/>
+            <stop offset="78%"  stop-color="#6fa2ff"/>
+            <stop offset="100%" stop-color="#e6ecf3"/>
+          </linearGradient>
+        </defs>
+        <g transform="translate(110,110)">
+          <path d="M0 -58l46 23v35c0 28-20 46-46 58-26-12-46-30-46-58v-35l46-23z"
+                fill="none" stroke="url(#metalGrad)" stroke-width="2.2"/>
+          <text y="-6" text-anchor="middle"
+                font-family="Cormorant Garamond,serif"
+                font-size="30" font-weight="600"
+                fill="url(#metalGrad)" letter-spacing="2">VM</text>
+          <text y="16" text-anchor="middle"
+                font-family="Montserrat,sans-serif"
+                font-size="9.5" font-weight="500"
+                fill="#6fa2ff" letter-spacing="3.5">ADVOCACIA</text>
+          <line x1="-28" y1="26" x2="28" y2="26" stroke="url(#metalGrad)" stroke-width=".8" opacity=".5"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="frase-visual">
+      <h2>Precisão e <em>elegância</em><br>em cada decisão.</h2>
+      <p>O sistema que organiza a operação do escritório com o mesmo rigor técnico do seu trabalho jurídico.</p>
+    </div>
+  </div>
+
+  <div class="rodape-esquerdo">
+    <span>Victor Morais Advocacia</span>
+    <span>Acesso Restrito</span>
+  </div>
+</div>
+
+<!-- ===== LADO DIREITO — FORMULARIO CLARO ===== -->
+<div class="lado-direito">
+  <div class="formulario-login">
+
+    <div class="form-cabecalho">
+      <h1>Bem-vindo de volta</h1>
+      <p>Entre com suas credenciais para continuar</p>
+    </div>
+
+    <form id="formLogin" novalidate>
+      <div class="campo-form">
+        <label for="loginEmail">E-mail</label>
+        <input type="email" id="loginEmail" placeholder="seu@email.com.br" autocomplete="email">
+      </div>
+
+      <div class="campo-form">
+        <label for="loginSenha">Senha</label>
+        <input type="password" id="loginSenha" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;" autocomplete="current-password">
+      </div>
+
+      <div class="opcoes-form">
+        <label>
+          <input type="checkbox" id="manterConectado" style="accent-color:var(--gold);">
+          Manter conectado
+        </label>
+        <a href="#" id="linkEsqueciSenha">Esqueci a senha</a>
+      </div>
+
+      <button class="btn-entrar" id="btnEntrar" type="submit">Entrar no Sistema</button>
+    </form>
+
+    <!-- Aparece so quando o login pelo Google estiver ligado no Supabase -->
+    <div id="blocoGoogle" hidden>
+      <div class="ou-google">ou</div>
+      <button class="btn-google" id="btnGoogle" type="button">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        Entrar com Google
+      </button>
+    </div>
+
+    <div class="rodape-form">Victor Morais Advocacia &middot; VMMADV</div>
+
+  </div>
+</div>
+
+<!-- ===== SUPABASE JS SDK v2 (UMD) ===== -->
+<script src="vendor/supabase-js-2.118.0.js"></script>
+
+<script>
+// ================================================================
+// VMMADV — Login com Supabase Auth
+// Fase 1: autenticacao real via supabase.auth.signInWithPassword()
+// ================================================================
+
+var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+
+// Destino pos-login. Alterar aqui se a tela inicial do sistema mudar.
+var TELA_POS_LOGIN = 'dashboard_padrao_metalico.html';
+
+// Inicializa o cliente Supabase (UMD expoe window.supabase)
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ================================================================
+// TOAST
+// ================================================================
+function showToast(msg, tipo) {
+  tipo = tipo || 'info';
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.innerHTML = msg;
+  c.appendChild(t);
+  setTimeout(function () {
+    t.style.opacity = '0';
+    t.style.transition = 'opacity .4s';
+    setTimeout(function () { t.remove(); }, 400);
+  }, 3600);
+}
+
+var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o administrador do escritório.';
+
+// ================================================================
+// VERIFICACAO DE SESSAO INICIAL
+// Se o usuario ja estiver autenticado, redireciona direto.
+// ================================================================
+(async function verificarSessaoInicial() {
+  var motivo = new URLSearchParams(window.location.search).get('motivo');
+  if (motivo === 'inatividade') {
+    showToast('Sua sessão foi encerrada após 2 horas sem uso fora do horário de expediente. Entre novamente.', 'info');
+  } else if (motivo === 'desligado') {
+    showToast(MSG_ACESSO_DESATIVADO, 'erro');
+  } else if (motivo === 'acesso') {
+    var msgAcesso = ''; try { msgAcesso = sessionStorage.getItem('saga-acesso-msg') || ''; sessionStorage.removeItem('saga-acesso-msg'); } catch (e) {}
+    showToast(msgAcesso || 'Acesso ao sistema não permitido neste horário ou local.', 'erro');
+  }
+  var erroGoogle = new URLSearchParams(window.location.search).get('error_description') || new URLSearchParams((window.location.hash || '').slice(1)).get('error_description');
+  if (erroGoogle) {
+    showToast(/cadastrad/i.test(erroGoogle) ? 'Este e-mail não está cadastrado na equipe do escritório. Use o e-mail funcional cadastrado pelo administrador.' : 'Não foi possível entrar com o Google. Tente de novo.', 'erro');
+    try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
+  }
+  try {
+    var r = await _sb.auth.getSession();
+    if (r.data && r.data.session) {
+      if (await contaLiberada()) {
+        try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
+        window.location.replace(await telaInicial());
+        return;
+      }
+    }
+  } catch (e) {
+    // Silencioso: falha aqui nao bloqueia o login
+  }
+  document.documentElement.classList.remove('saga-entrando');
+  mostrarBotaoGoogle();
+})();
+
+// Logo do escritorio (guardado no navegador desde o ultimo acesso) no lugar do escudo
+(function () {
+  var logo = null; try { logo = localStorage.getItem('saga-logo'); } catch (e) {}
+  if (!logo) return;
+  var topo = document.querySelector('.marca-topo');
+  if (topo) topo.innerHTML = '<img src="' + logo.replace(/"/g, '') + '" alt="Logo do escritório" style="height:34px;max-width:200px;object-fit:contain;display:block">';
+  var wrap = document.querySelector('.crest-svg-wrap svg');
+  if (wrap) {
+    var img = document.createElement('img');
+    img.src = logo; img.alt = '';
+    img.style.cssText = 'position:relative;z-index:1;max-width:70%;max-height:70%;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35))';
+    var caixa = wrap.parentNode;
+    caixa.style.display = 'flex'; caixa.style.alignItems = 'center'; caixa.style.justifyContent = 'center';
+    wrap.replaceWith(img);
+  }
+})();
+
+// Tela que a pessoa escolheu para abrir depois de entrar (Configuracoes > Preferencias)
+async function telaInicial() {
+  try {
+    var s = await _sb.auth.getSession();
+    var id = s.data && s.data.session && s.data.session.user.id;
+    if (!id) return TELA_POS_LOGIN;
+    var r = await _sb.from('usuarios').select('preferencias,tema_preferido').eq('auth_user_id', id).maybeSingle();
+    var t = r.data && r.data.preferencias && r.data.preferencias.tela_inicial;
+    var letra = r.data && r.data.preferencias && r.data.preferencias.letra;
+    try { if (letra) localStorage.setItem('saga-letra', String(letra)); } catch (e) {}
+    return (t && /^[a-z_]+\.html$/i.test(t)) ? t : TELA_POS_LOGIN;
+  } catch (e) { return TELA_POS_LOGIN; }
+}
+
+// Confere se a conta logada pertence a alguem da equipe e esta ativa
+// (liga a conta ao pre-cadastro pelo e-mail no primeiro acesso pelo Google)
+async function contaLiberada() {
+  try {
+    var v = await _sb.rpc('vincular_minha_conta');
+    if (v.error) return true; // falha de rede: as telas internas conferem de novo
+    if (v.data && v.data.ok) return true;
+    await _sb.auth.signOut();
+    showToast(v.data && v.data.motivo === 'desligado' ? MSG_ACESSO_DESATIVADO : 'Este e-mail não está cadastrado na equipe do escritório. Fale com o administrador.', 'erro');
+    return false;
+  } catch (e) { return true; }
+}
+
+// Botao "Entrar com Google": so aparece se o provedor estiver ligado no Supabase
+async function mostrarBotaoGoogle() {
+  try {
+    var r = await fetch(SUPABASE_URL + '/auth/v1/settings', { headers: { apikey: SUPABASE_KEY } });
+    var cfg = await r.json();
+    if (cfg && cfg.external && cfg.external.google) document.getElementById('blocoGoogle').hidden = false;
+  } catch (e) {}
+}
+document.getElementById('btnGoogle').addEventListener('click', async function () {
+  var btn = this;
+  btn.disabled = true;
+  var volta = window.location.href.split('?')[0].split('#')[0];
+  var r = await _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: volta, queryParams: { prompt: 'select_account' } } });
+  if (r.error) { btn.disabled = false; showToast('Não foi possível abrir o login do Google.', 'erro'); }
+});
+
+// ================================================================
+// LOGIN — formulario principal
+// ================================================================
+document.getElementById('formLogin').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  var email = document.getElementById('loginEmail').value.trim();
+  var senha = document.getElementById('loginSenha').value;
+  var btn   = document.getElementById('btnEntrar');
+
+  if (!email || !senha) {
+    showToast('Preencha e-mail e senha para continuar.', 'erro');
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = 'Verificando...';
+
+  try {
+    var r = await _sb.auth.signInWithPassword({ email: email, password: senha });
+
+    if (r.error) {
+      var msg = 'Erro ao fazer login. Tente novamente.';
+      var em  = r.error.message || '';
+      if (em.indexOf('Invalid login credentials') >= 0) {
+        msg = 'E-mail ou senha incorretos. Verifique seus dados.';
+      } else if (em.indexOf('Email not confirmed') >= 0) {
+        msg = 'E-mail ainda nao confirmado. Verifique sua caixa de entrada.';
+      } else if (em.indexOf('Too many requests') >= 0) {
+        msg = 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+      } else if (em.indexOf('User not found') >= 0) {
+        msg = 'Usuario nao encontrado. Verifique o e-mail digitado.';
+      } else if (/banned/i.test(em)) {
+        msg = MSG_ACESSO_DESATIVADO;
+      }
+      showToast(msg, 'erro');
+      btn.disabled    = false;
+      btn.textContent = 'Entrar no Sistema';
+      return;
+    }
+
+    // Colaborador desligado (inativo) ou fora da equipe nao entra, mesmo com a senha certa
+    if (!(await contaLiberada())) {
+      btn.disabled    = false;
+      btn.textContent = 'Entrar no Sistema';
+      return;
+    }
+
+    // Marca a entrada como atividade, para a contagem de inatividade do saga_ui.js
+    try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
+    showToast('Acesso autorizado. Redirecionando...', 'sucesso');
+    var destino = await telaInicial();
+    setTimeout(function () {
+      window.location.href = destino;
+    }, 800);
+
+  } catch (ex) {
+    showToast('Falha de conexao. Verifique sua internet e tente novamente.', 'erro');
+    btn.disabled    = false;
+    btn.textContent = 'Entrar no Sistema';
+  }
+});
+
+// ================================================================
+// RECUPERACAO DE SENHA — abre o modal
+// ================================================================
+document.getElementById('linkEsqueciSenha').addEventListener('click', function (e) {
+  e.preventDefault();
+  // Pre-preencher o e-mail se ja digitado no formulario principal
+  var emailExistente = document.getElementById('loginEmail').value.trim();
+  if (emailExistente) {
+    document.getElementById('recoveryEmail').value = emailExistente;
+  }
+  document.getElementById('modalRecuperacao').classList.add('aberto');
+  document.getElementById('recoveryEmail').focus();
+});
+
+document.getElementById('btnFecharRecuperacao').addEventListener('click', function () {
+  document.getElementById('modalRecuperacao').classList.remove('aberto');
+});
+
+// Fechar clicando fora do card
+document.getElementById('modalRecuperacao').addEventListener('click', function (e) {
+  if (e.target === this) { this.classList.remove('aberto'); }
+});
+
+// ESC fecha o modal
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    document.getElementById('modalRecuperacao').classList.remove('aberto');
+  }
+});
+
+// ================================================================
+// RECUPERACAO DE SENHA — envio do link
+// ================================================================
+document.getElementById('formRecuperacao').addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  var email = document.getElementById('recoveryEmail').value.trim();
+  var btn   = document.getElementById('btnEnviarRecuperacao');
+
+  if (!email) {
+    showToast('Digite seu e-mail para receber o link de redefinicao.', 'erro');
+    return;
+  }
+
+  // URL de callback: a tela de redefinicao de senha.
+  // IMPORTANTE: para funcionar, os arquivos devem ser servidos via HTTP
+  // (ex: VS Code Live Server em http://127.0.0.1:5500/) e esse endereco
+  // deve estar em: Supabase > Authentication > URL Configuration > Redirect URLs
+  var resetUrl = window.location.href.replace(/\/[^\/]*(\?.*)?$/, '/reset_senha_padrao_metalico.html');
+
+  btn.disabled    = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    var r = await _sb.auth.resetPasswordForEmail(email, { redirectTo: resetUrl });
+
+    if (r.error) {
+      showToast('Erro ao enviar o e-mail. Verifique o endereco e tente novamente.', 'erro');
+      btn.disabled    = false;
+      btn.textContent = 'Enviar link';
+      return;
+    }
+
+    document.getElementById('modalRecuperacao').classList.remove('aberto');
+    showToast('Link de redefinicao enviado. Verifique sua caixa de entrada.', 'sucesso');
+
+  } catch (ex) {
+    showToast('Falha de conexao. Tente novamente em alguns instantes.', 'erro');
+    btn.disabled    = false;
+    btn.textContent = 'Enviar link';
+  }
+});
+
+// ================================================================
+// PADRAO DE VERIFICACAO DE SESSAO — FASE 2+
+// ----------------------------------------------------------------
+// Copiar este bloco comentado para o inicio do <script> de cada
+// tela protegida do sistema. Descomentar e adaptar conforme necessario.
+//
+// *** REQUER: mesmo SUPABASE_URL/SUPABASE_KEY definidos antes ***
+//
+// async function verificarSessao() {
+//   var r = await _sb.auth.getSession();
+//   var session = r.data && r.data.session;
+//   if (!session) {
+//     window.location.href = 'login_padrao_metalico.html';
+//     return null;
+//   }
+//   // Carregar perfil do usuario logado:
+//   // var pr = await _sb.from('usuarios')
+//   //   .select('id, nome_completo, eh_administrador, foto_url, tema_preferido')
+//   //   .eq('auth_user_id', session.user.id)
+//   //   .single();
+//   // var perfil = pr.data;
+//   return session;
+// }
+// verificarSessao();
+// ================================================================
+</script>
+
+</body>
+</html>

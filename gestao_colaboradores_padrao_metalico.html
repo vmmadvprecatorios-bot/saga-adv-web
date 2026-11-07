@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611072013"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Gestão de Colaboradores</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy-1:#0a0e1a;--navy-2:#0d1326;--navy-3:#111833;
+  --gold:#c9a84c;--gold-light:#e8d48a;--gold-deep:#2f6cd6;
+  --panel:rgba(255,255,255,.045);--panel-2:rgba(255,255,255,.07);--panel-solid:#172039;
+  --border:rgba(201,168,76,.15);--border-soft:rgba(201,168,76,.12);
+  --text:#e8eaf0;--muted:#8b93a8;--danger:#e85d5d;--warning:#e8b84c;--success:#5dd8a0;--info:#6fa3d8;
+  --radius:16px;--radius-sm:10px;--shadow:0 22px 55px rgba(0,0,0,.35);
+}
+[data-theme="light"]{
+  --navy-1:#f3f5f8;--navy-2:#ffffff;--navy-3:#e3e8ee;
+  --gold:#a3812f;--gold-light:#d7b85e;--gold-deep:#8a6a23;
+  --panel:rgba(255,255,255,.74);--panel-2:rgba(255,255,255,.88);--panel-solid:#ffffff;
+  --border:rgba(19,38,66,.28);--border-soft:rgba(19,38,66,.18);
+  --text:#13233a;--muted:#4a586e;--shadow:0 22px 55px rgba(13,25,45,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{min-height:100vh;color:var(--text);font-family:Montserrat,Arial,sans-serif;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));overflow-x:hidden;transition:background .25s ease,color .25s ease}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--gold) 8%,transparent),transparent 33%),radial-gradient(circle at 94% 85%,rgba(111,163,216,.06),transparent 35%)}
+button{border:0;background:transparent;color:inherit;text-align:inherit;font:inherit;cursor:pointer}
+a,a:visited,a:hover,a:focus{color:inherit;text-decoration:none}
+input,textarea,select{font:inherit}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--gold) 32%,transparent);border-radius:8px}::-webkit-scrollbar-track{background:transparent}
+.hidden{display:none!important}.grow{flex:1}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Navegação de protótipo */
+
+/* Topbar e navegação global */
+.topbar{height:64px;position:sticky;top:0;z-index:180;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px)}
+[data-theme="light"] .topbar{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(243,245,248,.98))}
+.top-left,.top-right{display:flex;align-items:center;gap:14px}.top-left{min-width:0}.top-right{flex:0 0 auto}.hamburger{display:none;width:32px;height:32px;align-items:center;justify-content:center;border-radius:8px}.hamburger span{display:block;width:18px;height:1.7px;background:var(--gold);margin:3px auto;border-radius:2px}.brand{display:flex;align-items:center;gap:9px;flex:0 0 auto}.crest{width:32px;height:32px}.brand-name{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;letter-spacing:.5px}.brand-name b{color:var(--gold)}.quick-search{width:min(330px,34vw);height:36px;display:flex;align-items:center;gap:8px;padding:0 12px;border:1px solid var(--border-soft);background:var(--panel);border-radius:10px}.quick-search:focus-within{border-color:var(--gold)}.quick-search svg{color:var(--muted);flex:0 0 auto}.quick-search input{border:0;outline:0;background:transparent;color:var(--text);font-size:11px;width:100%}.quick-search input::placeholder{color:var(--muted)}.presence-wrap,.notification-wrap{position:relative}.presence-btn{border:1px solid var(--border-soft);background:var(--panel);border-radius:18px;padding:7px 12px;display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px;white-space:nowrap}.dot{width:7px;height:7px;border-radius:50%;display:inline-block}.dot.online{background:var(--success);box-shadow:0 0 7px var(--success)}.dot.offline{background:var(--muted)}.icon-btn{width:36px;height:36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);position:relative}.notif-count{position:absolute;right:-5px;top:-5px;min-width:16px;height:16px;border-radius:8px;background:var(--danger);color:white;font-size:9px;display:grid;place-items:center;font-weight:700}.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--gold));display:grid;place-items:center;color:var(--navy-1);font-family:'Cormorant Garamond',serif;font-weight:700;font-size:13px}.theme-toggle{width:70px;height:32px;border:1px solid var(--border-soft);border-radius:18px;background:var(--panel);padding:3px;position:relative;display:flex;align-items:center;justify-content:space-between}.theme-toggle svg{width:15px;height:15px;z-index:2}.theme-toggle .sun{color:var(--gold)}.theme-toggle .moon{color:var(--muted)}.theme-toggle .knob{width:24px;height:24px;border-radius:50%;position:absolute;top:3px;left:3px;background:linear-gradient(135deg,var(--gold-light),var(--gold));transition:left .25s ease;box-shadow:0 2px 7px rgba(0,0,0,.18)}[data-theme="light"] .theme-toggle .knob{left:41px}[data-theme="light"] .theme-toggle .sun{color:var(--gold)}[data-theme="light"] .theme-toggle .moon{color:var(--muted)}
+.popover{display:none;position:absolute;right:0;top:calc(100% + 8px);width:290px;padding:9px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);box-shadow:var(--shadow);z-index:700}.popover.open{display:block}[data-theme="light"] .popover{background:linear-gradient(135deg,#ffffff 0%,#eef2f7 100%)}.pop-title{font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);padding:7px 8px 5px}.pop-item,.notification-item{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;font-size:11px;width:100%}.pop-item:hover,.notification-item:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}.pop-meta,.notification-time{font-size:9px;color:var(--muted);margin-top:2px}.small-avatar{width:23px;height:23px;border-radius:50%;display:grid;place-items:center;font-size:8px;font-weight:700;color:var(--navy-1)}.notification-pop{width:330px}.notification-item{align-items:flex-start}.n-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);margin-top:5px;flex:0 0 auto}.n-dot.read{visibility:hidden}.notification-text{font-size:10.5px;line-height:1.45}
+.app{position:relative;z-index:1;display:flex}.sidebar{width:220px;flex:0 0 220px;min-height:calc(100vh - 64px);position:sticky;top:64px;align-self:flex-start;height:calc(100vh - 64px);overflow-y:auto;padding:18px 0;border-right:1px solid var(--border-soft);background:var(--panel);backdrop-filter:blur(14px)}.nav-section{font-size:9px;letter-spacing:1.8px;text-transform:uppercase;color:var(--muted);padding:15px 22px 6px}.nav-item{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12px;padding:10px 21px;border-left:2px solid transparent;transition:.18s;text-decoration:none}.nav-item svg{width:15px;height:15px;flex:0 0 auto}.nav-item:hover{color:var(--text);background:rgba(255,255,255,.035)}.nav-item.active{color:var(--gold);font-weight:700;border-left-color:var(--gold);background:linear-gradient(90deg,color-mix(in srgb,var(--gold) 14%,transparent),transparent)}
+
+/* Padrão unificado saga_ui (topbar/sidebar injetados) */
+.top-center{flex:1;display:flex;justify-content:center;min-width:0}
+.avatar-wrap{position:relative}
+.pop-row{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;cursor:pointer}
+.pop-row:hover{background:color-mix(in srgb,var(--gold) 9%,transparent)}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 7px var(--success);flex:0 0 auto}
+.avatar-pop{width:240px}
+.avatar-pop-info{padding:12px}
+.avatar-pop-nome{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.avatar-pop-email{font-size:10px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pop-divisor{height:1px;background:var(--border-soft);margin:2px 0}
+.pop-row-sair{color:var(--danger)}
+.pop-row-sair:hover{background:rgba(224,91,91,.1)}
+.global-search-pop{width:100%;left:0;right:auto;max-height:420px;overflow-y:auto}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90}
+.overlay.aberto{display:block}
+.nav-icon{width:15px;height:15px;flex:0 0 auto;color:var(--muted)}
+.nav-item.active .nav-icon{color:var(--gold)}
+@keyframes sagaGirar{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.icon-btn.girando svg{animation:sagaGirar .7s ease-in-out}
+
+/* Conteúdo administrativo */
+.admin-screen{display:block}.guest-screen{display:none}.guest-screen.active{display:flex}.content{padding:28px;min-width:0;flex:1}.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:20px}.page-title-stack{display:flex;flex-direction:column;gap:5px}.page-head h1{font-family:'Cormorant Garamond',serif;font-size:30px;line-height:1.05;font-weight:600}.page-sub{font-size:11.5px;color:var(--muted)}.security-note{display:flex;align-items:center;gap:8px;max-width:480px;background:rgba(93,216,160,.08);border:1px solid rgba(93,216,160,.26);border-radius:10px;padding:10px 12px;color:var(--success);font-size:10px;line-height:1.45}.security-note svg{flex:0 0 auto}
+.panel{background:var(--panel);backdrop-filter:blur(18px);border:1px solid var(--border-soft);border-radius:var(--radius);box-shadow:0 10px 22px rgba(0,0,0,.06)}.btn-primary,.btn-secondary,.btn-danger{height:38px;border-radius:10px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:11px;font-weight:700;white-space:nowrap}.btn-primary{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));background-size:200% 100%;color:var(--navy-1);box-shadow:0 6px 15px color-mix(in srgb,var(--gold) 18%,transparent);transition:background-position .45s ease,transform .15s}.btn-primary:hover{background-position:100% 0;transform:translateY(-1px)}.btn-secondary{background:var(--panel);border:1px solid var(--border);color:var(--text)}.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}.btn-danger{background:rgba(232,93,93,.11);border:1px solid rgba(232,93,93,.32);color:var(--danger)}.btn-danger:hover{background:rgba(232,93,93,.18)}.btn-danger:disabled,.btn-secondary:disabled,.btn-primary:disabled{opacity:.45;cursor:not-allowed}.btn-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);letter-spacing:1px}.btn-icon:hover{border-color:var(--gold);color:var(--gold)}.field,.textarea{width:100%;min-height:38px;padding:0 11px;background:rgba(255,255,255,.05);border:1px solid var(--border-soft);border-radius:9px;color:var(--text);outline:0;font-size:11px}.field:focus,.textarea:focus{border-color:var(--gold)}.textarea{min-height:78px;padding:10px;resize:vertical}[data-theme="light"] .field,[data-theme="light"] .textarea{background:rgba(255,255,255,.86);border-color:rgba(19,38,66,.18)}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:16px}.kpi-card{padding:16px;position:relative;overflow:hidden}.kpi-card:before{content:"";position:absolute;right:-18px;top:-18px;width:86px;height:86px;border-radius:50%;background:color-mix(in srgb,var(--gold) 9%,transparent)}.kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:700}.kpi-number{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;margin-top:5px}.kpi-meta{display:flex;align-items:center;gap:7px;margin-top:4px;font-size:9.5px;color:var(--muted)}.kpi-icon{position:absolute;right:14px;bottom:14px;color:var(--gold);opacity:.75}
+.toolbar{position:relative;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;flex-wrap:wrap;margin-bottom:14px;overflow:visible}.toolbar-left,.toolbar-right{display:flex;align-items:center;gap:9px;flex-wrap:wrap;overflow:visible}.status-filter{display:flex;gap:4px;padding:4px;border-radius:13px;background:rgba(255,255,255,.035);border:1px solid var(--border-soft)}.filter-pill{padding:8px 12px;border-radius:9px;color:var(--muted);font-size:10px;font-weight:700}.filter-pill:hover{color:var(--text)}.filter-pill.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1)}.employee-search{min-width:250px}.counter{font-size:10.5px;color:var(--muted)}.counter b{color:var(--text)}
+.employee-wrap{position:relative;overflow-x:auto;overflow-y:visible;z-index:1}.employee-table{width:100%;border-collapse:collapse;min-width:1020px}.employee-table th{font-size:9px;text-align:left;text-transform:uppercase;letter-spacing:.65px;color:var(--muted);padding:12px;border-bottom:1px solid var(--border-soft)}.employee-table td{padding:12px;border-bottom:1px solid var(--border-soft);font-size:10.5px;vertical-align:middle;overflow:visible}.employee-table tr:last-child td{border-bottom:0}.employee-table tr:hover{background:rgba(255,255,255,.025)}.person-cell{display:flex;align-items:center;gap:9px}.person-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;color:var(--navy-1)}.person-cell b{display:block;font-size:11px}.person-cell small{display:block;color:var(--muted);font-size:9px;margin-top:3px}.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:12px;font-size:9px;font-weight:700;white-space:nowrap}.profile-advogado{background:color-mix(in srgb,var(--gold) 13%,transparent);border:1px solid color-mix(in srgb,var(--gold) 28%,transparent);color:var(--gold)}.profile-administrativo{background:rgba(111,163,216,.13);border:1px solid rgba(111,163,216,.24);color:var(--info)}.profile-estagiario{background:rgba(93,216,160,.13);border:1px solid rgba(93,216,160,.24);color:var(--success)}.profile-socio_admin{background:rgba(232,184,76,.15);border:1px solid rgba(232,184,76,.27);color:var(--warning)}.profile-captacao{background:rgba(232,133,122,.13);border:1px solid rgba(232,133,122,.24);color:#ec9d92}.profile-marketing{background:rgba(201,142,216,.13);border:1px solid rgba(201,142,216,.26);color:#d5a5df}.status-badge{cursor:pointer}.status-ativo{background:rgba(93,216,160,.13);border:1px solid rgba(93,216,160,.24);color:var(--success)}.status-pendente{background:color-mix(in srgb,var(--info) 12%,transparent);border:1px solid color-mix(in srgb,var(--info) 26%,transparent);color:var(--info)}.status-pendente-nota{padding:10px 12px;color:var(--muted);font-size:11px;line-height:1.5;max-width:240px}.status-afastado{background:rgba(232,184,76,.14);border:1px solid rgba(232,184,76,.26);color:var(--warning)}.status-inativo{background:rgba(139,147,168,.16);border:1px solid rgba(139,147,168,.24);color:var(--muted)}.sem-acesso{background:rgba(111,163,216,.1);border:1px solid rgba(111,163,216,.22);color:var(--info)}.protected-badge{background:rgba(232,184,76,.12);border:1px solid rgba(232,184,76,.26);color:var(--warning)}.date-small{font-size:9px;color:var(--muted)}.protected-action{opacity:.45;cursor:not-allowed}
+.action-menu-wrap{position:relative;display:inline-flex;z-index:20;overflow:visible}.action-menu-wrap:has(.action-menu.open){z-index:360}.action-menu{display:none;position:fixed;width:220px;padding:6px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);box-shadow:0 20px 48px rgba(0,0,0,.44);z-index:1700}.action-menu.open{display:block}[data-theme="light"] .action-menu{background:linear-gradient(135deg,#ffffff 0%,#eef2f7 100%)}.action-menu button{display:flex;width:100%;align-items:center;gap:8px;padding:9px;border-radius:8px;font-size:10px;color:var(--text)}.action-menu button:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold)}.action-menu button.danger{color:var(--danger)}.action-menu button:disabled{opacity:.45;cursor:not-allowed}.status-menu{display:none;position:fixed;width:176px;padding:6px;border:1px solid var(--border);border-radius:12px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);box-shadow:0 20px 48px rgba(0,0,0,.44);z-index:1701}.status-menu.open{display:block}[data-theme="light"] .status-menu{background:linear-gradient(135deg,#ffffff 0%,#eef2f7 100%)}.status-menu button{display:flex;width:100%;align-items:center;gap:8px;padding:9px;border-radius:8px;font-size:10px;color:var(--text)}.status-menu button:hover{background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--gold)}
+.pagination{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0 0}.pagination-note{font-size:9px;color:var(--muted)}.page-pages{display:flex;align-items:center;gap:5px;flex-wrap:wrap}.page-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-right:2px}.page-pill{min-width:31px;height:31px;padding:0 9px;display:grid;place-items:center;border-radius:9px;border:1px solid var(--border-soft);font-size:10px;color:var(--muted);background:var(--panel)}.page-pill:hover{border-color:var(--gold);color:var(--gold)}.page-pill.active{background:linear-gradient(120deg,var(--gold),var(--gold-light),var(--gold));color:var(--navy-1);border-color:transparent;font-weight:700}.page-size{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.page-size .page-pill{min-width:auto;padding:0 8px}.custom-size-input{width:55px;height:31px;border:1px solid var(--border-soft);background:var(--panel);border-radius:9px;color:var(--text);text-align:center;font-size:10px}
+
+/* Modais */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1600;background:rgba(4,7,14,.66);backdrop-filter:blur(6px);padding:16px;overflow-y:auto}.modal-overlay.open{display:flex;align-items:center;justify-content:center}.modal{width:100%;max-width:680px;margin:auto;border-radius:18px;border:1px solid var(--border);background:linear-gradient(145deg,rgba(28,37,64,.97),rgba(17,24,44,.985));box-shadow:0 32px 78px rgba(0,0,0,.5);overflow:hidden}.modal.small{max-width:460px}.modal.wide{max-width:780px}[data-theme="light"] .modal{background:linear-gradient(145deg,rgba(255,255,255,.99),rgba(238,242,247,.995))}.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:19px 20px 14px;border-bottom:1px solid var(--border-soft)}.modal-title-stack{display:flex;flex-direction:column;gap:4px}.modal-head h2{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600}.modal-head p{font-size:10.5px;color:var(--muted);line-height:1.45}.modal-close{width:30px;height:30px;display:grid;place-items:center;border-radius:9px;border:1px solid var(--border-soft);color:var(--muted)}.modal-close:hover{color:var(--gold);border-color:var(--gold)}.modal-body{padding:18px 20px;max-height:69vh;overflow:auto}.modal-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:13px 20px;border-top:1px solid var(--border-soft)}.modal-foot .spacer{flex:1}.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field-group{display:flex;flex-direction:column;gap:6px}.field-group.full{grid-column:1/-1}.field-group label{font-size:9.5px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.7px}.field-group select{height:38px;border:1px solid var(--border-soft);border-radius:9px;background:rgba(255,255,255,.05);padding:0 11px;color:var(--text);outline:0;font-size:11px}.field-group select option{background:#161d33;color:#e8eaf0}[data-theme="light"] .field-group select{background:rgba(255,255,255,.86);border-color:rgba(19,38,66,.18);color:#13233a}[data-theme="light"] .field-group select option{background:#ffffff;color:#13233a}.warning-card{display:flex;gap:10px;padding:12px;border:1px solid rgba(232,184,76,.28);border-radius:11px;background:rgba(232,184,76,.08);color:var(--warning);font-size:10px;line-height:1.55}.warning-card svg{flex:0 0 auto;margin-top:1px}.loading-inline{display:inline-flex;align-items:center;gap:7px}.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:currentColor;border-radius:50%;display:inline-block;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.history-list{display:flex;flex-direction:column;gap:9px}.history-item{padding:12px;border:1px solid var(--border-soft);border-radius:11px;background:rgba(255,255,255,.025);display:flex;align-items:flex-start;gap:10px}.history-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto}.history-icon.admin{background:rgba(232,184,76,.12);color:var(--warning)}.history-icon.self{background:rgba(93,216,160,.12);color:var(--success)}.history-item strong{font-size:10.5px}.history-item p{font-size:9.5px;color:var(--muted);line-height:1.5;margin-top:3px}.empty-state{padding:30px 16px;text-align:center;color:var(--muted);font-size:10px}.empty-state svg{color:var(--gold);margin-bottom:8px}.empty-state h3{font-family:'Cormorant Garamond',serif;color:var(--text);font-size:20px;margin-bottom:5px}
+
+/* Recuperação de senha */
+.guest-screen{position:relative;z-index:1;min-height:100vh;align-items:center;justify-content:center;padding:102px 18px 48px}.guest-top{position:fixed;z-index:180;top:0;left:0;right:0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--border-soft);background:linear-gradient(135deg,rgba(20,28,48,.93),rgba(10,14,26,.97));backdrop-filter:blur(18px)}[data-theme="light"] .guest-top{background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(243,245,248,.98))}.guest-panel{width:min(100%,460px);padding:30px;text-align:center}.guest-crest{width:75px;height:75px;margin:0 auto 16px;display:grid;place-items:center;border-radius:22px;background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700}.guest-panel h1{font-family:'Cormorant Garamond',serif;font-size:32px;line-height:1.05}.guest-panel .lead{margin:9px auto 20px;font-size:10.5px;color:var(--muted);line-height:1.6;max-width:350px}.guest-form{text-align:left}.guest-form .field-group{margin-top:12px}.password-wrap{position:relative}.password-wrap .field{padding-right:40px}.password-eye{position:absolute;right:8px;bottom:4px;width:30px;height:30px;color:var(--muted);display:grid;place-items:center}.password-eye:hover{color:var(--gold)}.password-meter{margin-top:8px}.meter-track{height:6px;border-radius:8px;background:rgba(255,255,255,.09);overflow:hidden}.meter-fill{height:100%;width:0;border-radius:8px;transition:.25s}.meter-text{font-size:9px;color:var(--muted);margin-top:6px}.guest-action{width:100%;margin-top:16px}.guest-footer{margin-top:15px;font-size:9.5px;color:var(--muted)}.guest-footer button{color:var(--gold);font-weight:700}.guest-notice{display:flex;gap:8px;text-align:left;padding:11px;border-radius:11px;background:rgba(232,184,76,.09);border:1px solid rgba(232,184,76,.24);color:var(--warning);font-size:9.5px;line-height:1.5;margin-bottom:13px}.guest-success-icon{width:70px;height:70px;border-radius:22px;display:grid;place-items:center;margin:0 auto 16px;background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);color:var(--gold)}.guest-success-icon svg{width:34px;height:34px}.guest-panel .help-text{font-size:9px;color:var(--muted);margin-top:10px;line-height:1.5}
+.toast-area{position:fixed;right:22px;top:78px;z-index:1800;display:flex;flex-direction:column;gap:9px}.toast{display:flex;gap:9px;align-items:flex-start;width:min(340px,calc(100vw - 32px));padding:12px;border-radius:12px;background:linear-gradient(135deg,#161d33 0%,#11172c 100%);border:1px solid var(--border);box-shadow:var(--shadow);transform:translateX(18px);opacity:0;transition:.25s}.toast.show{transform:translateX(0);opacity:1}[data-theme="light"] .toast{background:linear-gradient(135deg,#ffffff 0%,#eef2f7 100%)}.toast-icon{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto}.toast.success .toast-icon{background:rgba(93,216,160,.15);color:var(--success)}.toast.error .toast-icon{background:rgba(232,93,93,.15);color:var(--danger)}.toast.info .toast-icon{background:rgba(111,163,216,.15);color:var(--info)}.toast p{font-size:10.5px;line-height:1.45}.toast p b{color:var(--gold)}
+
+@media(max-width:1024px){.sidebar{width:190px;flex-basis:190px}.content{padding:22px}.quick-search{width:230px}.kpi-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.topbar{padding:0 14px}.hamburger{display:block}.brand-name{font-size:16px}.quick-search{display:none}.presence-btn{padding:7px 9px}.presence-btn span{display:none}.theme-toggle{width:62px}.theme-toggle .knob{width:22px;height:22px}.theme-toggle svg{width:13px}.theme-toggle .knob{left:3px}[data-theme="light"] .theme-toggle .knob{left:35px}.sidebar{position:fixed;top:64px;left:-230px;width:220px;height:calc(100vh - 64px);z-index:170;transition:left .28s}.sidebar.open{left:0}.content{padding:18px 13px}.page-head h1{font-size:26px}.security-note{max-width:none}.kpi-grid{grid-template-columns:1fr}.toolbar{padding:11px}.toolbar-left,.toolbar-right{width:100%}.employee-search{min-width:0}.toolbar-right .btn-primary{width:100%}.employee-table,.employee-table thead,.employee-table tbody,.employee-table tr,.employee-table th,.employee-table td{display:block;min-width:0}.employee-table thead{display:none}.employee-table{border:0}.employee-table tr{margin-bottom:10px;border:1px solid var(--border-soft);border-radius:13px;padding:6px;background:rgba(255,255,255,.02)}.employee-table td{border-bottom:1px solid var(--border-soft);padding:9px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:right}.employee-table td:last-child{border-bottom:0}.employee-table td:before{content:attr(data-label);font-size:8.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.55px;text-align:left}.employee-table td[data-label="Colaborador"]{display:block;text-align:left}.employee-table td[data-label="Colaborador"]:before{display:none}.field-grid{grid-template-columns:1fr}.field-group.full{grid-column:auto}.modal-overlay{padding:8px}.modal-body{padding:14px}.modal-head,.modal-foot{padding-left:14px;padding-right:14px}.pagination{align-items:flex-start;flex-direction:column}.page-pages{width:100%}.guest-top{padding:0 14px}.guest-screen{padding:128px 13px 48px}.guest-panel{padding:24px 18px}.guest-panel h1{font-size:28px}.toast-area{right:12px;top:122px}.top-right{gap:8px}.avatar{width:32px;height:32px}.popover{position:fixed;right:10px;top:68px;width:min(330px,calc(100vw - 20px))}}
+@media (min-resolution:100000dppx){*,*:before,*:after{transition:none!important;animation:none!important}}
+.perfil-dd{position:relative}.perfil-dd-btn{width:100%;height:38px;padding:0 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;text-align:left;color:var(--text)}.perfil-dd-btn svg{color:var(--gold);flex-shrink:0;transition:transform .2s}.perfil-dd.open .perfil-dd-btn svg{transform:rotate(180deg)}.perfil-dd-menu{display:none;position:absolute;z-index:60;left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow-y:auto;padding:5px;border:1px solid var(--border);border-radius:10px;background:var(--panel-solid);box-shadow:0 12px 30px rgba(0,0,0,.35)}.perfil-dd.open .perfil-dd-menu{display:block}.perfil-dd-item{display:block;width:100%;padding:8px 10px;border-radius:7px;background:none;border:0;color:var(--text);font:inherit;font-size:11px;text-align:left;cursor:pointer}.perfil-dd-item:hover{background:var(--panel-2)}.perfil-dd-item.sel{color:var(--gold);font-weight:600}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611072013">
+</head>
+<body data-theme="dark">
+
+<div id="adminApp" class="admin-screen">
+  <div class="overlay" id="overlay"></div>
+  <header class="topbar" id="topbarSaga"></header>
+  <div class="app">
+    <div class="sidebar" id="sidebarSaga"></div>
+    <main class="content">
+      <section class="page-head">
+        <div class="page-title-stack"><h1>Gestão de Colaboradores</h1><p class="page-sub">Controle de acessos, status e segurança de credenciais da equipe.</p></div>
+        <button class="btn-primary" id="btnConvidarColaborador"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Convidar Colaborador</button>
+        <div class="security-note"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.7"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Senhas são protegidas por segurança. Esta interface permite apenas resetar, nunca visualizar credenciais.</span></div>
+      </section>
+      <div class="status-filter abas-col" id="abasColab" style="display:none;width:max-content;margin-bottom:14px"><button class="filter-pill active" data-aba-col="acessos" type="button">Acessos</button><button class="filter-pill" data-aba-col="equipe" type="button">Equipe e convites</button><button class="filter-pill" data-aba-col="acesso" type="button">Controle de acesso</button></div>
+      <section class="kpi-grid aba-acessos" id="kpiGrid"></section>
+      <section id="roscasColaboradores" hidden aria-label="Gráficos dos colaboradores"></section>
+      <section class="toolbar panel aba-acessos">
+        <div class="toolbar-left"><div class="status-filter" id="statusFilter"><button class="filter-pill active" data-status-filter="all">Todos</button><button class="filter-pill" data-status-filter="ativo">Ativos</button><button class="filter-pill" data-status-filter="pendente">Pendentes</button><button class="filter-pill" data-status-filter="inativo">Inativos</button></div><input class="field employee-search" id="employeeSearch" placeholder="Buscar por nome ou e-mail..."></div>
+        <div class="toolbar-right"><span class="counter" id="employeeCounter"></span></div>
+      </section>
+      <section class="panel aba-acessos" style="padding:0 14px 14px"><div class="employee-wrap" id="employeeTableWrap"></div><div class="pagination" id="pagination"></div></section>
+
+      <!-- EQUIPE E CONVITES (so o administrador geral) -->
+      <section id="painelEquipe" style="display:none">
+        <section class="toolbar panel">
+          <div class="toolbar-left"><span class="counter" id="eqContador"></span></div>
+          <div class="toolbar-right">
+            <button class="btn-secondary" id="eqConvidarTodos" type="button">Convidar todos os pendentes</button>
+            <button class="btn-primary" id="eqIncluir" type="button">+ Incluir pessoa</button>
+          </div>
+        </section>
+        <p class="date-small" style="margin:-4px 2px 12px;line-height:1.6">Visão geral da equipe. Inclua as pessoas com cargo, perfil, horário e salário; o convite só é enviado quando você clicar em Convidar (um por um) ou em Convidar todos. O convite sai pelo e-mail do administrador geral, com o link para a pessoa criar a senha. Quem ainda não criou a conta não entra no cálculo do ponto.</p>
+        <section class="panel" style="padding:0 14px 14px"><div class="employee-wrap" id="equipeWrap"></div></section>
+      </section>
+
+      <!-- CONTROLE DE ACESSO (so o administrador geral) -->
+      <section id="painelAcesso" style="display:none">
+        <section class="panel" style="padding:16px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div><b style="font-size:13px">Controle de acesso por horário e local</b><div class="date-small" style="margin-top:4px;line-height:1.55">Quando ligado, a equipe só entra no sistema em dias úteis, no horário abaixo, e do escritório (no mesmo raio do ponto). Home office aprovado libera o local naquele dia. Você nunca é bloqueado.</div></div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;cursor:pointer"><input type="checkbox" id="acAtivo" style="width:18px;height:18px"> Controle ligado</label>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-top:14px">
+            <div class="field-group"><label>Entrada liberada a partir de</label><input class="field" id="acInicio" type="time" style="width:150px"></div>
+            <div class="field-group"><label>Até</label><input class="field" id="acFim" type="time" style="width:150px"></div>
+            <label style="display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;height:38px"><input type="checkbox" id="acLocal"> Exigir que esteja no escritório</label>
+            <button class="btn-primary" id="acSalvar" type="button" style="margin-left:auto">Salvar</button>
+          </div>
+        </section>
+        <section class="panel" style="padding:0 14px 14px;margin-bottom:14px"><div class="employee-wrap" id="acPessoasWrap"></div></section>
+        <div class="kpi-label" style="margin:4px 2px 8px">Últimos acessos</div>
+        <section class="panel" style="padding:0 14px 14px"><div class="employee-wrap" id="acLogWrap"></div></section>
+      </section>
+    </main>
+  </div>
+</div>
+
+<section class="guest-screen" id="guestScreen">
+  <header class="guest-top"><div class="brand"><svg class="crest" viewBox="0 0 220 220" aria-hidden="true"><defs><linearGradient id="guestCrestGold" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6fa2ff"/><stop offset="38%" stop-color="#4b8af5"/><stop offset="60%" stop-color="#2f6cd6"/><stop offset="100%" stop-color="#cfe0ff"/></linearGradient></defs><g transform="translate(110,110)"><path d="M0 -55l44 22v33c0 27-19 44-44 55-25-11-44-28-44-55v-33l44-22z" fill="none" stroke="url(#guestCrestGold)" stroke-width="6"/><text x="0" y="10" text-anchor="middle" font-family="Cormorant Garamond, serif" font-size="38" font-weight="700" fill="url(#guestCrestGold)">VM</text></g></svg><div class="brand-name">VMM<b>ADV</b></div></div><button class="theme-toggle" id="guestThemeToggle" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button></header>
+  <article class="guest-panel panel" id="guestPanel"></article>
+</section>
+
+<div class="modal-overlay" id="resetModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h2 id="resetModalTitle">Resetar senha</h2><p id="resetModalSubtitle"></p></div><button class="modal-close" data-close="resetModal">✕</button></div><div class="modal-body" id="resetModalBody"></div><div class="modal-foot"><button class="btn-secondary" data-close="resetModal">Cancelar</button><button class="btn-danger" id="confirmResetButton">Confirmar reset</button></div></div></div>
+<div class="modal-overlay" id="historyModal"><div class="modal wide"><div class="modal-head"><div class="modal-title-stack"><h2 id="historyModalTitle">Histórico de senha</h2><p>Registro de metadados de segurança. Nenhuma senha é exibida.</p></div><button class="modal-close" data-close="historyModal">✕</button></div><div class="modal-body"><div id="historyModalBody"></div><div class="pagination" id="historyPagination"></div></div><div class="modal-foot"><button class="btn-secondary" data-close="historyModal">Fechar</button></div></div></div>
+<div class="modal-overlay" id="confirmStatusModal"><div class="modal small"><div class="modal-head"><div class="modal-title-stack"><h2>Alterar status do colaborador</h2><p id="confirmStatusText"></p></div><button class="modal-close" data-close="confirmStatusModal">✕</button></div><div class="modal-foot"><button class="btn-secondary" data-close="confirmStatusModal">Cancelar</button><button class="btn-danger" id="confirmStatusButton">Desligar colaborador</button></div></div></div>
+<div class="modal-overlay" id="excluirAcessoModal"><div class="modal small"><div class="modal-head"><div class="modal-title-stack"><h2>Excluir acesso definitivamente</h2><p>O login de <strong id="excluirAcessoNome"></strong> será apagado e o e-mail ficará livre. Esta ação não pode ser desfeita. O nome continua no histórico de processos, tarefas, comentários e ponto. Para voltar a ter acesso, a pessoa precisará de um novo convite.</p></div><button class="modal-close" data-close="excluirAcessoModal">✕</button></div><div class="modal-body" style="padding:0 20px 16px"><label for="excluirAcessoConfirmacao" style="display:block;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Para confirmar, digite EXCLUIR</label><input type="text" id="excluirAcessoConfirmacao" autocomplete="off" placeholder="EXCLUIR" style="width:100%;padding:10px;border-radius:9px;border:1px solid var(--border);background:var(--panel-2);color:var(--text);font:inherit;font-size:12px"></div><div class="modal-foot"><button class="btn-secondary" data-close="excluirAcessoModal">Cancelar</button><button class="btn-danger" id="confirmExcluirAcessoButton" disabled>Excluir acesso</button></div></div></div>
+<div class="modal-overlay" id="inviteModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title-stack">
+        <h2>Convidar Colaborador</h2>
+        <p>O colaborador receberá por e-mail um link para criar a senha de acesso.</p>
+      </div>
+      <button class="modal-close" data-close="inviteModal">&#10005;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-grid">
+        <div class="field-group">
+          <label for="inviteNome">Nome completo</label>
+          <input class="field" id="inviteNome" placeholder="Nome do colaborador">
+          <span id="inviteNomeError" style="color:var(--danger);font-size:9px;margin-top:3px;display:block"></span>
+        </div>
+        <div class="field-group">
+          <label for="inviteEmail">E-mail</label>
+          <input class="field" id="inviteEmail" type="email" placeholder="nome@vmmadv.com.br">
+          <span id="inviteEmailError" style="color:var(--danger);font-size:9px;margin-top:3px;display:block"></span>
+        </div>
+        <div class="field-group full">
+          <label for="invitePerfil">Perfil / cargo</label>
+          <input type="hidden" id="invitePerfil" value="">
+          <div class="perfil-dd" id="invitePerfilDd">
+            <button type="button" class="field perfil-dd-btn" id="invitePerfilBtn"><span id="invitePerfilLabel">Carregando perfis...</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+            <div class="perfil-dd-menu" id="invitePerfilMenu"></div>
+          </div>
+        </div>
+        <div class="field-group full">
+          <label for="inviteMensagem">Mensagem pessoal (opcional)</label>
+          <textarea class="textarea" id="inviteMensagem" placeholder="Adicione uma mensagem de boas-vindas ao convite"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" data-close="inviteModal">Cancelar</button>
+      <button class="btn-primary" id="sendInviteBtn">Enviar Convite</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="equipeModal"><div class="modal">
+  <div class="modal-head"><div class="modal-title-stack"><h2 id="eqmTitulo">Incluir pessoa na equipe</h2><p id="eqmSub">Cadastro completo. O convite é enviado depois, quando você quiser.</p></div><button class="modal-close" data-close="equipeModal" type="button">&#10005;</button></div>
+  <div class="modal-body"><div class="field-grid">
+    <div class="field-group"><label>Nome completo</label><input class="field" id="eqmNome"></div>
+    <div class="field-group"><label>E-mail funcional</label><input class="field" id="eqmEmail" type="email" placeholder="nome@exemplo.com"></div>
+    <div class="field-group"><label>Cargo / função</label><input class="field" id="eqmCargo" placeholder="Ex.: Localizadora"></div>
+    <div class="field-group"><label>Perfil de acesso</label><select id="eqmPerfil"></select></div>
+    <div class="field-group"><label>Regime</label><select id="eqmRegime"></select></div>
+    <div class="field-group"><label>Salário (R$)</label><input class="field" id="eqmSalario" inputmode="decimal" placeholder="0,00"></div>
+    <div class="field-group"><label>Admissão</label><input class="field" id="eqmAdmissao" type="date"></div>
+    <div class="field-group" id="eqmDemissaoCampo"><label>Desligamento (vazio se ativo)</label><input class="field" id="eqmDemissao" type="date"></div>
+    <div class="field-group" id="eqmEntradaCampo"><label>Entrada</label><input class="field" id="eqmEntrada" type="time"></div>
+    <div class="field-group" id="eqmSaidaCampo"><label>Saída</label><input class="field" id="eqmSaida" type="time"></div>
+    <div class="field-group" id="eqmCargaCampo"><label>Carga do dia</label><input class="field" id="eqmCarga" type="time"></div>
+    <div class="field-group full" id="eqmHorarioNota" style="display:none"><span class="date-small">Para mudar o horário de quem já está cadastrado, use Ponto Eletrônico &gt; Cadastro &gt; Horário (guarda a data a partir da qual vale).</span></div>
+  </div></div>
+  <div class="modal-foot"><button class="btn-secondary" data-close="equipeModal" type="button">Cancelar</button><button class="btn-primary" id="eqmSalvar" type="button">Salvar</button></div>
+</div></div>
+<div class="modal-overlay" id="eqConfirmaModal"><div class="modal small">
+  <div class="modal-head"><div class="modal-title-stack"><h2 id="eqcTitulo">Confirmar</h2><p id="eqcTexto"></p></div><button class="modal-close" data-close="eqConfirmaModal" type="button">&#10005;</button></div>
+  <div class="modal-foot"><button class="btn-secondary" data-close="eqConfirmaModal" type="button">Cancelar</button><button class="btn-primary" id="eqcSim" type="button">Confirmar</button></div>
+</div></div>
+<div class="toast-area" id="toastArea"></div>
+<div class="action-menu" id="actionMenuPortal"></div>
+<div class="status-menu" id="statusMenuPortal"></div>
+
+<!-- Supabase JS SDK v2 (UMD) — apenas Anon Key (Publishable Key) no frontend -->
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script src="saga_ui.js?v=202611072013"></script>
+<script src="saga_roscas.js?v=202611072013"></script>
+
+<script>
+// ============================================================
+// VMMADV — Gestão de Colaboradores
+// Fase 2: Conexão com Supabase real
+//
+// SEGURANÇA CRÍTICA: apenas Anon Key (Publishable Key) aqui.
+// Nunca inserir Service Role Key (sb_secret_...) neste arquivo.
+// ============================================================
+
+var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+var state = {
+  activeStatus: 'all', activePerfil: null, activeRegime: null, search: '', page: 1, pageSize: 5, customSize: '',
+  activeActionId: null, activeStatusId: null,
+  resetEmployeeId: null, resetReason: 'Solicitação do colaborador',
+  historyEmployeeId: null, historyPage: 1,
+  historyItems: [],
+  historyLoading: false,
+  guestMode: 'forgot',
+  guestRequestSent: false,
+  guestResetComplete: false,
+  session: null,
+  meuInternoId: null,
+  employees: [],
+  loading: false,
+  papeis: [],
+  inviteDraft: { nome: '', email: '', perfil_id: null, mensagem: '' },
+};
+
+// ── Utilitários ───────────────────────────────────────────────
+function esc(v){var e=document.createElement('div');e.textContent=v||'';return e.innerHTML;}
+function initials(name){return String(name||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0];}).join('').toUpperCase();}
+function fmtDate(v){if(!v)return 'Nunca';try{return new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(v));}catch(e){return v;}}
+function showToast(msg,type){type=type||'success';var t=document.createElement('div');t.className='toast '+type;t.innerHTML='<div class="toast-icon">'+(type==='success'?'✓':type==='error'?'!':'i')+'</div><p>'+msg+'</p>';document.getElementById('toastArea').appendChild(t);requestAnimationFrame(function(){t.classList.add('show');});setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},260);},3600);}
+function closePopovers(){document.querySelectorAll('.popover').forEach(function(p){p.classList.remove('open');});}
+function closeActionMenus(){document.getElementById('actionMenuPortal').classList.remove('open');document.getElementById('statusMenuPortal').classList.remove('open');state.activeActionId=null;state.activeStatusId=null;}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function positionPortalMenu(menu,anchor){var rect=anchor.getBoundingClientRect();var menuHeight=menu.offsetHeight||150;var top=rect.bottom+7;if(top+menuHeight>window.innerHeight-12&&rect.top-menuHeight-7>12)top=rect.top-menuHeight-7;menu.style.top=Math.max(12,top)+'px';menu.style.left=Math.max(12,rect.right-menu.offsetWidth)+'px';}
+function getEmployee(id){return state.employees.find(function(e){return e.id===id;});}
+function avatarColor(nome){var m={'Jurídico':'#4b8af5','Administrativo':'#6fa3d8','Estagiário':'#5dd8a0','Captação':'#e8b84c','Marketing':'#d7a1e5','Financeiro':'#8ca8e8','Administrador':'#6fa2ff'};return m[nome]||'#8b93a8';}
+function tipoLabel(tipo){return {convite_aceito:'Aceite do convite',reset_admin:'Reset pelo administrador',reset_proprio:'Troca pelo colaborador',primeira_senha:'Primeira senha'}[tipo]||tipo;}
+function tipoKind(tipo){return (tipo==='reset_admin')?'admin':'self';}
+
+// ── Supabase: carregar colaboradores ──────────────────────────
+async function loadEmployees(){
+  state.loading = true;
+  document.getElementById('employeeTableWrap').innerHTML = '<div class="empty-state" style="padding:30px"><p style="color:var(--muted);font-size:10.5px">Carregando colaboradores...</p></div>';
+  try{
+    // Busca todos os colaboradores com seus papéis
+    var r = await _sb.from('usuarios')
+      .select('id, nome_completo, email, cargo_titulo, ativo, auth_user_id, eh_administrador, criado_em, usuarios_papeis!usuario_id(papeis(id,nome))')
+      .order('nome_completo');
+    if(r.error) throw r.error;
+    state.regimesRosca = null;
+    if(state.souAdmin){
+      var rr = await _sb.from('ponto_colaboradores').select('usuario_id,regime');
+      if(!rr.error) state.regimesRosca = new Map((rr.data||[]).map(function(c){return [c.usuario_id,c.regime];}));
+    }
+    state.employees = (r.data||[]).map(function(u){
+      var papel = null;
+      if(u.usuarios_papeis && u.usuarios_papeis.length){
+        papel = u.usuarios_papeis[0].papeis;
+      }
+      return {
+        id: u.id,
+        nome: u.nome_completo || u.email,
+        email: u.email,
+        cargo: u.cargo_titulo || '',
+        ativo: u.ativo !== false,
+        authLinked: !!u.auth_user_id,
+        ehAdmin: !!u.eh_administrador,
+        papelNome: (papel && papel.nome) || '',
+        papelId: (papel && papel.id) || null,
+        cor: avatarColor((papel && papel.nome) || ''),
+        criado_em: u.criado_em,
+        // protected: é o próprio usuário logado e é admin
+        protected: u.id === state.meuInternoId && !!u.eh_administrador,
+      };
+    });
+  }catch(e){
+    showToast('Erro ao carregar colaboradores: '+(e.message||'verifique sua conexão.'),'error');
+    state.employees = [];
+  }
+  state.loading = false;
+}
+
+async function loadMeuPerfil(){
+  if(!state.session) return;
+  var r = await _sb.from('usuarios').select('id,eh_administrador').eq('auth_user_id', state.session.user.id).maybeSingle();
+  state.meuInternoId = (r.data && r.data.id) || null;
+  state.souAdmin = !!(r.data && r.data.eh_administrador);
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+// Mesma regra de eqPendente: sem conta e não desligado é pendente.
+function employeeStatus(employee){
+  if(employee.ativo === false) return 'inativo';
+  return employee.authLinked ? 'ativo' : 'pendente';
+}
+
+function renderKpis(){
+  renderRoscasColaboradores();
+  var active = state.employees.filter(function(e){return employeeStatus(e)==='ativo';}).length;
+  var inactive = state.employees.filter(function(e){return employeeStatus(e)==='inativo';}).length;
+  var pending = state.employees.filter(function(e){return employeeStatus(e)==='pendente';}).length;
+  document.getElementById('kpiGrid').innerHTML =
+    '<article class="panel kpi-card"><div class="kpi-label">Ativos</div><div class="kpi-number">'+active+'</div><div class="kpi-meta"><span class="dot online"></span>Acesso liberado ao sistema</div><svg class="kpi-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.3" stroke="currentColor" stroke-width="1.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" stroke="currentColor" stroke-width="1.5"/></svg></article>' +
+    '<article class="panel kpi-card"><div class="kpi-label">Pendentes</div><div class="kpi-number">'+pending+'</div><div class="kpi-meta"><span style="color:var(--info)">●</span>Ainda sem conta</div><svg class="kpi-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.5"/></svg></article>' +
+    '<article class="panel kpi-card"><div class="kpi-label">Inativos</div><div class="kpi-number">'+inactive+'</div><div class="kpi-meta"><span style="color:var(--muted)">●</span>Acesso suspenso</div><svg class="kpi-icon" width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg></article>';
+}
+
+var roscasColaboradores;
+function nomePerfilColab(e){return e.papelNome||e.cargo||'Sem perfil';}
+function nomeRegimeColab(e){return (state.regimesRosca&&state.regimesRosca.get(e.id))||'Sem regime informado';}
+function passaBuscaColab(e){var termo=state.search.trim().toLowerCase();return !termo||[e.nome,e.email,e.papelNome,e.cargo].join(' ').toLowerCase().indexOf(termo)>=0;}
+// Cada gráfico respeita os filtros dos outros e ignora só o seu próprio, para poder trocar ou desmarcar a fatia
+function passaFiltrosColab(e,ignorar){
+  if(!passaBuscaColab(e))return false;
+  if(ignorar!=='situacao'&&state.activeStatus!=='all'&&employeeStatus(e)!==state.activeStatus)return false;
+  if(ignorar!=='perfil'&&state.activePerfil&&nomePerfilColab(e)!==state.activePerfil)return false;
+  if(ignorar!=='regime'&&state.activeRegime&&nomeRegimeColab(e)!==state.activeRegime)return false;
+  return true;
+}
+function definirStatusColab(valor){
+  state.activeStatus=valor;
+  document.querySelectorAll('[data-status-filter]').forEach(function(f){f.classList.toggle('active',f.dataset.statusFilter===valor);});
+}
+function renderRoscasColaboradores(){
+  if(!state.session || state.loading || document.getElementById('sagaSemAcesso'))return;
+  function agrupar(lista,chave,ativo){
+    var grupos=new Map();
+    lista.forEach(function(e){var nome=chave(e),g=grupos.get(nome);if(g)g.valor++;else grupos.set(nome,{id:nome,nome:nome,valor:1,ativa:ativo===nome});});
+    if(ativo&&!grupos.has(ativo))grupos.set(ativo,{id:ativo,nome:ativo,valor:0,ativa:true});
+    return Array.from(grupos.values()).sort(function(a,b){return b.valor-a.valor||a.nome.localeCompare(b.nome,'pt-BR');});
+  }
+  function alternar(chave,item){
+    if(chave==='situacao')definirStatusColab(state.activeStatus===item.id?'all':item.id);
+    else if(chave==='perfil')state.activePerfil=state.activePerfil===item.id?null:item.id;
+    else state.activeRegime=state.activeRegime===item.id?null:item.id;
+    state.page=1;renderEmployees();
+  }
+  var baseSit=state.employees.filter(function(e){return passaFiltrosColab(e,'situacao');});
+  var grupos=[{id:'situacao',titulo:'Colaboradores por situação',rotulo:'pessoas',dica:'Clique para filtrar a lista.',
+    itens:[['ativo','Ativo','var(--success)'],['pendente','Pendente','var(--info)'],['inativo','Inativo','var(--muted)']].map(function(x){return {id:x[0],nome:x[1],cor:x[2],valor:baseSit.filter(function(e){return employeeStatus(e)===x[0];}).length,ativa:state.activeStatus===x[0]};}),
+    escolher:function(item){alternar('situacao',item);}}];
+  grupos.push({id:'perfil',titulo:'Colaboradores por perfil / cargo',rotulo:'pessoas',dica:'Clique para filtrar a lista.',
+    itens:agrupar(state.employees.filter(function(e){return passaFiltrosColab(e,'perfil');}),nomePerfilColab,state.activePerfil),escolher:function(item){alternar('perfil',item);}});
+  if(state.souAdmin&&state.regimesRosca)grupos.push({id:'regime',titulo:'Colaboradores por regime',rotulo:'pessoas',dica:'Clique para filtrar a lista.',
+    itens:agrupar(state.employees.filter(function(e){return passaFiltrosColab(e,'regime');}),nomeRegimeColab,state.activeRegime),escolher:function(item){alternar('regime',item);}});
+  if(!roscasColaboradores)roscasColaboradores=SagaRoscas.criar(document.getElementById('roscasColaboradores'),{chave:'saga-colaboradores-roscas-ocultas',rotulo:'Gráficos dos colaboradores'});
+  roscasColaboradores.atualizar(grupos);
+}
+
+// ── Tabela ────────────────────────────────────────────────────
+function filteredEmployees(){
+  return state.employees.filter(function(e){
+    return passaFiltrosColab(e);
+  });
+}
+
+function statusBadgeHtml(employee){
+  var status = employeeStatus(employee);
+  var label = { ativo:'Ativo', pendente:'Pendente', inativo:'Inativo' }[status];
+  var cls = 'status-' + status;
+  if(employee.protected){
+    return '<span class="badge '+cls+'">'+label+'</span> <span class="badge protected-badge" title="Sócio/Admin não pode ter o próprio acesso alterado por aqui.">Protegido</span>';
+  }
+  var extra = (!employee.authLinked && status !== 'pendente') ? ' <span class="badge sem-acesso" style="margin-left:3px">Sem acesso</span>' : '';
+  return '<button class="badge status-badge '+cls+'" data-status-toggle="'+employee.id+'">'+label+'</button>'+extra;
+}
+
+function renderEmployees(){
+  var list = filteredEmployees();
+  var effectiveSize = state.pageSize==='all' ? Math.max(1,list.length) : Number(state.pageSize)||5;
+  var totalPages = Math.max(1, Math.ceil(list.length/effectiveSize));
+  if(state.page > totalPages) state.page = totalPages;
+  var start = (state.page-1)*effectiveSize;
+  var paged = list.slice(start, start+effectiveSize);
+
+  var counter = document.getElementById('employeeCounter');
+  counter.innerHTML = '<b>'+list.length+'</b> de '+state.employees.length+' colaboradores'
+    +(state.activePerfil?' · <button type="button" class="filter-pill active" data-limpar-filtro="perfil" title="Tirar este filtro">Perfil: '+esc(state.activePerfil)+' ✕</button>':'')
+    +(state.activeRegime?' · <button type="button" class="filter-pill active" data-limpar-filtro="regime" title="Tirar este filtro">Regime: '+esc(state.activeRegime)+' ✕</button>':'');
+  counter.querySelectorAll('[data-limpar-filtro]').forEach(function(b){b.onclick=function(){if(b.dataset.limparFiltro==='perfil')state.activePerfil=null;else state.activeRegime=null;state.page=1;renderEmployees();};});
+
+  if(!list.length){
+    document.getElementById('employeeTableWrap').innerHTML =
+      '<div class="empty-state" style="padding:40px 20px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.3" stroke="currentColor" stroke-width="1.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5" stroke="currentColor" stroke-width="1.5"/></svg><h3>Nenhum colaborador encontrado</h3><p>Não há registros compatíveis com os filtros aplicados.</p></div>';
+    renderPagination(0, 1, effectiveSize);
+    renderKpis();
+    return;
+  }
+
+  var rows = paged.map(function(emp){
+    var protectedText = 'Sócio/Admin não pode ter o próprio acesso alterado por aqui.';
+    var disableBtn = emp.protected ? ' disabled title="'+protectedText+'"' : ' data-actions-toggle="'+emp.id+'"';
+    var perfilClass = emp.papelNome ? 'profile-'+emp.papelNome.toLowerCase().replace(/[^a-z]/g,'').replace('juridico','advogado') : '';
+    return '<tr>' +
+      '<td data-label="Colaborador"><div class="person-cell"><span class="person-avatar" data-saga-nome="'+esc(emp.nome)+'" style="background:'+emp.cor+'">'+initials(emp.nome)+'</span><span><b>'+esc(emp.nome)+'</b><small>'+esc(emp.email)+'</small></span></div></td>' +
+      '<td data-label="Perfil / cargo"><span class="badge '+perfilClass+'">'+esc(emp.papelNome||'Sem perfil')+'</span><div class="date-small" style="margin-top:4px">'+esc(emp.cargo)+'</div></td>' +
+      '<td data-label="Status">'+statusBadgeHtml(emp)+'</td>' +
+      '<td data-label="Último acesso ao sistema"><span class="date-small">'+(emp.authLinked?'Cadastro completo':'Aguardando onboarding')+'</span></td>' +
+      '<td data-label="Ações"><div class="action-menu-wrap"><button class="btn-icon '+(emp.protected?'protected-action':'')+'"'+disableBtn+' aria-label="Abrir ações">•••</button></div></td>' +
+      '</tr>';
+  }).join('');
+
+  document.getElementById('employeeTableWrap').innerHTML =
+    '<table class="employee-table"><thead><tr><th>Colaborador</th><th>Perfil / cargo</th><th>Status</th><th>Onboarding</th><th>Ações</th></tr></thead><tbody>'+rows+'</tbody></table>';
+
+  document.querySelectorAll('[data-actions-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(e){e.stopPropagation();openActionMenu(btn.dataset.actionsToggle, btn);});
+  });
+  document.querySelectorAll('[data-status-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(e){e.stopPropagation();openStatusMenu(btn.dataset.statusToggle, btn);});
+  });
+  renderPagination(list.length, totalPages, effectiveSize);
+  renderKpis();
+}
+
+// ── Paginação ─────────────────────────────────────────────────
+function renderPagination(total, totalPages, effectiveSize){
+  var pages = [];
+  var start = Math.max(0, state.page-3);
+  var end = Math.min(totalPages, state.page+2);
+  for(var i=start+1;i<=end;i++) pages.push(i);
+  var sizes = [5,20,50,100,'all'];
+  document.getElementById('pagination').innerHTML =
+    '<span class="pagination-note">Exibindo '+(total?((state.page-1)*effectiveSize+1):0)+' a '+Math.min(total,state.page*effectiveSize)+' de '+total+'</span>' +
+    '<div class="page-pages"><span class="page-label">Página</span>' +
+    '<button class="page-pill" data-page-nav="prev" '+(state.page===1?'disabled':'')+'>‹</button>' +
+    pages.map(function(p){return '<button class="page-pill '+(p===state.page?'active':'')+'" data-page="'+p+'">'+p+'</button>';}).join('') +
+    '<button class="page-pill" data-page-nav="next" '+(state.page===totalPages?'disabled':'')+'>›</button></div>' +
+    '<div class="page-size"><span class="page-label">Por página</span>' +
+    sizes.map(function(s){return '<button class="page-pill '+(String(state.pageSize)===String(s)?'active':'')+'" data-page-size="'+s+'">'+(s==='all'?'Todos':s)+'</button>';}).join('') +
+    '<input class="custom-size-input" id="customPageSize" type="number" min="1" max="100" placeholder="Outro" value="'+esc(String(state.customSize||''))+'"></div>';
+
+  document.querySelectorAll('[data-page]').forEach(function(btn){btn.addEventListener('click',function(){state.page=Number(btn.dataset.page);renderEmployees();});});
+  document.querySelectorAll('[data-page-nav]').forEach(function(btn){btn.addEventListener('click',function(){state.page+=btn.dataset.pageNav==='prev'?-1:1;renderEmployees();});});
+  document.querySelectorAll('[data-page-size]').forEach(function(btn){btn.addEventListener('click',function(){state.pageSize=btn.dataset.pageSize==='all'?'all':Number(btn.dataset.pageSize);state.customSize='';state.page=1;renderEmployees();});});
+  var cps = document.getElementById('customPageSize');
+  if(cps) cps.addEventListener('change',function(e){var v=Math.min(100,Math.max(1,Number(e.target.value)||5));state.customSize=v;state.pageSize=v;state.page=1;renderEmployees();});
+}
+
+// ── Action menu ───────────────────────────────────────────────
+function openActionMenu(employeeId, anchor){
+  var emp = getEmployee(employeeId);
+  if(!emp) return;
+  var menu = document.getElementById('actionMenuPortal');
+  menu.innerHTML =
+    '<button data-reset-password="'+emp.id+'"><span>↻</span> Resetar senha</button>' +
+    '<button data-view-history="'+emp.id+'"><span>◌</span> Ver histórico de senha</button>' +
+    (emp.protected || !state.souAdmin ? '' : '<button data-excluir-acesso="'+emp.id+'" style="color:var(--danger)"><span>✕</span> Excluir acesso definitivamente</button>');
+  menu.classList.add('open');
+  positionPortalMenu(menu, anchor);
+  menu.querySelector('[data-reset-password]').addEventListener('click', function(){closeActionMenus();openResetModal(emp.id);});
+  menu.querySelector('[data-view-history]').addEventListener('click', function(){closeActionMenus();openHistoryModal(emp.id);});
+  var btnExcluirAcesso = menu.querySelector('[data-excluir-acesso]');
+  if(btnExcluirAcesso) btnExcluirAcesso.addEventListener('click', function(){closeActionMenus();openExcluirAcessoModal(emp.id);});
+}
+
+// ── Status menu ───────────────────────────────────────────────
+function openStatusMenu(employeeId, anchor){
+  var emp = getEmployee(employeeId);
+  if(!emp) return;
+  var menu = document.getElementById('statusMenuPortal');
+  menu.innerHTML = !emp.authLinked
+    ? '<div class="status-pendente-nota">Aguardando a pessoa criar a conta</div>'
+    : '<button data-status-choice="true" data-employee-status="'+emp.id+'"><span class="dot" style="background:var(--success)"></span>Ativo</button>' +
+    '<button data-status-choice="false" data-employee-status="'+emp.id+'"><span class="dot" style="background:var(--muted)"></span>Inativo</button>';
+  menu.classList.add('open');
+  positionPortalMenu(menu, anchor);
+  menu.querySelectorAll('[data-status-choice]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var nextAtivo = btn.dataset.statusChoice === 'true';
+      var target = getEmployee(btn.dataset.employeeStatus);
+      closeActionMenus();
+      if(!nextAtivo){
+        document.getElementById('confirmStatusText').textContent = 'Deseja desligar '+target.nome+'? O login é bloqueado na hora, inclusive se a pessoa estiver com o sistema aberto. Você pode reativar depois.';
+        document.getElementById('confirmStatusButton').onclick = function(){
+          confirmStatusChange(target.id, false);
+          closeModal('confirmStatusModal');
+        };
+        openModal('confirmStatusModal');
+        return;
+      }
+      confirmStatusChange(target.id, true);
+    });
+  });
+}
+
+// Desligar, reativar ou excluir o acesso passa pela Edge Function gerenciar-acesso,
+// que bloqueia/desbloqueia o login no Supabase Auth (so o servidor tem essa chave).
+async function chamarGerenciarAcesso(employeeId, acao){
+  try{
+    var r = await _sb.functions.invoke('gerenciar-acesso', { body: { usuario_id: employeeId, acao: acao } });
+    if(!r.error) return { ok: true, msg: (r.data && r.data.mensagem) || 'Acesso atualizado.' };
+    var msg = 'Não foi possível alterar o acesso agora.';
+    try{ var corpo = r.error.context && await r.error.context.json(); if(corpo && corpo.erro) msg = corpo.erro; }catch(_){}
+    return { ok: false, msg: msg };
+  }catch(e){
+    return { ok: false, msg: 'Não foi possível alterar o acesso agora. Verifique sua conexão.' };
+  }
+}
+
+async function confirmStatusChange(employeeId, nextAtivo){
+  var emp = getEmployee(employeeId);
+  if(!emp) return;
+  var res = await chamarGerenciarAcesso(employeeId, nextAtivo ? 'reativar' : 'desligar');
+  if(!res.ok){showToast(esc(res.msg),'error');return;}
+  emp.ativo = nextAtivo;
+  renderEmployees();
+  showToast(esc(res.msg), nextAtivo?'success':'info');
+}
+
+// Exclusao definitiva do login (so administrador; pede para digitar EXCLUIR)
+function openExcluirAcessoModal(employeeId){
+  var emp = getEmployee(employeeId);
+  if(!emp) return;
+  if(emp.protected){showToast('Você não pode excluir o seu próprio acesso.','error');return;}
+  state.excluirAcessoId = employeeId;
+  document.getElementById('excluirAcessoNome').textContent = emp.nome;
+  var campo = document.getElementById('excluirAcessoConfirmacao');
+  campo.value = '';
+  document.getElementById('confirmExcluirAcessoButton').disabled = true;
+  openModal('excluirAcessoModal');
+  setTimeout(function(){campo.focus();},50);
+}
+async function confirmarExcluirAcesso(){
+  var emp = getEmployee(state.excluirAcessoId);
+  if(!emp) return;
+  if(document.getElementById('excluirAcessoConfirmacao').value.trim().toUpperCase()!=='EXCLUIR') return;
+  var btn = document.getElementById('confirmExcluirAcessoButton');
+  btn.disabled = true; btn.textContent = 'Excluindo...';
+  var res = await chamarGerenciarAcesso(emp.id, 'excluir');
+  btn.textContent = 'Excluir acesso';
+  if(!res.ok){btn.disabled=false;showToast(esc(res.msg),'error');return;}
+  closeModal('excluirAcessoModal');
+  emp.ativo = false; emp.authLinked = false;
+  renderEmployees();
+  showToast(esc(res.msg),'info');
+}
+
+// ── Modal de reset de senha ───────────────────────────────────
+function openResetModal(employeeId){
+  var emp = getEmployee(employeeId);
+  if(!emp || emp.protected){showToast('Sócio/Admin não pode ter a senha alterada por aqui.','error');return;}
+  state.resetEmployeeId = employeeId;
+  state.resetReason = 'Solicitação do colaborador';
+  document.getElementById('resetModalTitle').textContent = 'Resetar senha de '+emp.nome;
+  document.getElementById('resetModalSubtitle').textContent = 'A senha atual não será exibida nem recuperada.';
+  document.getElementById('resetModalBody').innerHTML =
+    '<div class="warning-card"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+    '<span>Um link de redefinição de senha será enviado para <b>'+esc(emp.email)+'</b>. A senha atual continuará válida até que o link seja usado. O colaborador será solicitado a criar uma nova senha ao clicar no link.</span></div>' +
+    '<div class="field-grid" style="margin-top:16px">' +
+    '<div class="field-group full"><label for="resetReasonField">Motivo do reset</label>' +
+    '<select class="field" id="resetReasonField" style="height:38px">' +
+    '<option value="Solicitação do colaborador">Solicitação do colaborador</option>' +
+    '<option value="Esqueceu a senha">Esqueceu a senha</option>' +
+    '<option value="Medida de segurança preventiva">Medida de segurança preventiva</option>' +
+    '<option value="Outro">Outro</option>' +
+    '</select></div>' +
+    '<div class="field-group full hidden" id="otherReasonWrap"><label for="otherReason">Descreva o motivo</label><textarea id="otherReason" class="textarea" placeholder="Informe o motivo do reset"></textarea></div>' +
+    '</div>';
+  document.getElementById('resetReasonField').addEventListener('change', function(e){
+    state.resetReason = e.target.value;
+    document.getElementById('otherReasonWrap').classList.toggle('hidden', e.target.value!=='Outro');
+  });
+  document.getElementById('confirmResetButton').onclick = confirmReset;
+  openModal('resetModal');
+}
+
+async function confirmReset(){
+  var emp = getEmployee(state.resetEmployeeId);
+  if(!emp) return;
+  var btn = document.getElementById('confirmResetButton');
+  var reasonField = document.getElementById('resetReasonField');
+  var otherField = document.getElementById('otherReason');
+  var reason = (reasonField&&reasonField.value==='Outro') ? (otherField&&otherField.value.trim()||'Outro motivo') : (reasonField&&reasonField.value||state.resetReason);
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-inline"><span class="spinner"></span> Enviando</span>';
+
+  try{
+    // Calcular URL de redefinição — aponta para a página dedicada de reset
+    var resetUrl = window.location.href.replace(/\/[^\/]*(\?.*)?$/, '/reset_senha_padrao_metalico.html');
+
+    // Enviar e-mail de redefinição via Supabase Auth
+    var r = await _sb.auth.resetPasswordForEmail(emp.email, {redirectTo: resetUrl});
+    if(r.error) throw r.error;
+
+    // Registrar no histórico de segurança (melhor esforço)
+    if(state.meuInternoId && emp.id){
+      var hi = await _sb.from('historico_seguranca_usuarios').insert({
+        usuario_id: emp.id,
+        tipo: 'reset_admin',
+        executado_por_id: state.meuInternoId,
+        motivo: reason,
+      });
+      if(hi.error) console.warn('[reset] historico:', hi.error.message);
+    }
+
+    closeModal('resetModal');
+    showToast('Link de redefinição enviado para <b>'+esc(emp.email)+'</b>.', 'success');
+  }catch(e){
+    showToast('Erro ao enviar link de reset: '+(e.message||'tente novamente.'),'error');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Confirmar reset';
+  }
+}
+
+// ── Histórico de segurança ────────────────────────────────────
+async function openHistoryModal(employeeId){
+  var emp = getEmployee(employeeId);
+  if(!emp) return;
+  state.historyEmployeeId = employeeId;
+  state.historyPage = 1;
+  state.historyItems = [];
+  state.historyLoading = true;
+  document.getElementById('historyModalTitle').textContent = 'Histórico de senha de '+emp.nome;
+  document.getElementById('historyModalBody').innerHTML = '<div class="empty-state" style="padding:20px"><p style="color:var(--muted);font-size:10.5px">Carregando histórico...</p></div>';
+  openModal('historyModal');
+
+  try{
+    var r = await _sb.from('historico_seguranca_usuarios')
+      .select('id, tipo, motivo, criado_em, executado_por:executado_por_id(nome_completo)')
+      .eq('usuario_id', emp.id)
+      .order('criado_em', {ascending: false});
+    if(r.error) throw r.error;
+    state.historyItems = r.data || [];
+  }catch(e){
+    showToast('Erro ao carregar histórico: '+(e.message||''),'error');
+    state.historyItems = [];
+  }
+  state.historyLoading = false;
+  renderHistory();
+}
+
+function renderHistory(){
+  var list = state.historyItems;
+  var size = 5;
+  var pages = Math.max(1, Math.ceil(list.length/size));
+  if(state.historyPage > pages) state.historyPage = pages;
+  var start = (state.historyPage-1)*size;
+  var paged = list.slice(start, start+size);
+
+  document.getElementById('historyModalBody').innerHTML = list.length ?
+    '<div class="history-list">' +
+    paged.map(function(item){
+      var kind = tipoKind(item.tipo);
+      var executor = (item.executado_por && item.executado_por.nome_completo) || 'Colaborador';
+      return '<article class="history-item"><div class="history-icon '+kind+'">'+(kind==='admin'?'↻':'✓')+'</div>' +
+        '<div><strong>'+tipoLabel(item.tipo)+'</strong>' +
+        '<p><b>'+fmtDate(item.criado_em)+'</b><br>'+esc(executor)+(item.motivo?' — '+esc(item.motivo):'')+'</p></div></article>';
+    }).join('') + '</div>' :
+    '<div class="empty-state"><svg width="31" height="31" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.5"/></svg><h3>Sem histórico de trocas</h3><p>Este colaborador ainda não alterou a senha desde a criação da conta.</p></div>';
+
+  document.getElementById('historyPagination').innerHTML = list.length > size ?
+    '<span class="pagination-note">'+list.length+' registro(s)</span><div class="page-pages">' +
+    Array.from({length:pages},function(_,i){return '<button class="page-pill '+(i+1===state.historyPage?'active':'')+'" data-history-page="'+(i+1)+'">'+(i+1)+'</button>';}).join('') +
+    '</div>' : '';
+
+  document.querySelectorAll('[data-history-page]').forEach(function(btn){
+    btn.addEventListener('click', function(){state.historyPage=Number(btn.dataset.historyPage);renderHistory();});
+  });
+}
+
+// ── Tela de recuperação de senha (guest) ──────────────────────
+function renderGuest(){
+  var panel = document.getElementById('guestPanel');
+  // Fluxo "esqueci a senha"
+  if(state.guestMode === 'forgot'){
+    if(state.guestRequestSent){
+      panel.innerHTML =
+        '<div class="guest-success-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M3 7l9 6 9-6" stroke="currentColor" stroke-width="1.7"/></svg></div>' +
+        '<h1>Verifique seu e-mail</h1>' +
+        '<p class="lead">Se o e-mail informado estiver cadastrado, você receberá um link para redefinir sua senha em poucos minutos.</p>' +
+        '<button class="btn-primary guest-action" id="backLoginButton">Voltar para o login</button>';
+      document.getElementById('backLoginButton').addEventListener('click', function(){window.location.href='login_padrao_metalico.html';});
+      return;
+    }
+    panel.innerHTML =
+      '<div class="guest-crest">VM</div>' +
+      '<h1>Esqueceu sua senha?</h1>' +
+      '<p class="lead">Informe o e-mail cadastrado no Sistema VMM<span style="color:var(--gold)">ADV</span> para receber o link de redefinição.</p>' +
+      '<form class="guest-form" id="forgotForm">' +
+      '<div class="field-group"><label for="forgotEmail">E-mail cadastrado</label><input class="field" id="forgotEmail" type="email" placeholder="nome@vmmadv.com.br" required></div>' +
+      '<button class="btn-primary guest-action" type="submit">Enviar link de redefinição</button>' +
+      '</form>' +
+      '<p class="guest-footer">Lembrou a senha? <button id="guestLoginLink">Voltar para o login</button></p>';
+    document.getElementById('guestLoginLink').addEventListener('click', function(){window.location.href='login_padrao_metalico.html';});
+    document.getElementById('forgotForm').addEventListener('submit', async function(e){
+      e.preventDefault();
+      var btn = e.currentTarget.querySelector('button[type="submit"]');
+      var email = document.getElementById('forgotEmail').value.trim();
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-inline"><span class="spinner"></span> Enviando</span>';
+      try{
+        var resetUrl = window.location.href.replace(/\/[^\/]*(\?.*)?$/, '/reset_senha_padrao_metalico.html');
+        var r = await _sb.auth.resetPasswordForEmail(email, {redirectTo: resetUrl});
+        // Não revelamos se o e-mail existe ou não (segurança)
+        if(r.error && r.error.message !== 'For security purposes, you can only request this once every 60 seconds'){
+          console.warn('[forgot]', r.error.message);
+        }
+        state.guestRequestSent = true;
+        renderGuest();
+      }catch(err){
+        showToast('Erro ao processar solicitação. Tente novamente.','error');
+        btn.disabled = false;
+        btn.textContent = 'Enviar link de redefinição';
+      }
+    });
+    return;
+  }
+
+  // Estado de sucesso — protótipo visual (sem chamada real ao Supabase)
+  if(state.guestResetComplete){
+    panel.innerHTML =
+      '<div class="guest-success-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 12l4 4 8-8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>' +
+      '<h1>Senha redefinida com sucesso.</h1>' +
+      '<p class="lead">Sua nova senha foi registrada de forma segura. Você já pode acessar o sistema com suas novas credenciais.</p>' +
+      '<div class="guest-notice" style="background:rgba(111,163,216,.09);border-color:rgba(111,163,216,.28);color:var(--info);text-align:left;margin-bottom:14px">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+      '<span><b>Protótipo visual.</b> Nenhuma senha foi alterada. O fluxo real é executado por <code>reset_senha_padrao_metalico.html</code>.</span>' +
+      '</div>' +
+      '<button class="btn-primary guest-action" id="goLoginButton">Ir para o login</button>';
+    document.getElementById('goLoginButton').addEventListener('click', function(){window.location.href='login_padrao_metalico.html';});
+    return;
+  }
+
+  // ── VIEW "NOVA SENHA" — PROTÓTIPO VISUAL APENAS ──────────────
+  // Esta view existe exclusivamente para revisão de design (navegação do protótipo).
+  // O fluxo real de redefinição de senha via token de recovery é processado
+  // integralmente por reset_senha_padrao_metalico.html, que é o redirectTo
+  // de todos os links enviados por e-mail. Nenhuma chamada Supabase é feita aqui.
+  panel.innerHTML =
+    '<div class="guest-crest">VM</div>' +
+    '<h1>Definir nova senha</h1>' +
+    '<p class="lead">Olá, <b>colaborador</b>. Escolha uma nova senha para acessar o Sistema VMM<span style="color:var(--gold)">ADV</span>.</p>' +
+    '<div class="guest-notice" style="background:rgba(111,163,216,.09);border-color:rgba(111,163,216,.28);color:var(--info)">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>' +
+    '<span><b>Visualização de protótipo.</b> O fluxo real é tratado por <code>reset_senha_padrao_metalico.html</code>. Este formulário valida campos localmente mas não chama o Supabase.</span>' +
+    '</div>' +
+    '<form class="guest-form" id="newPasswordForm">' +
+    '<div class="field-group"><label for="newPassword">Nova senha</label><div class="password-wrap"><input class="field" id="newPassword" type="password" autocomplete="new-password" required><button type="button" class="password-eye" data-password-eye="newPassword">◉</button></div></div>' +
+    '<div class="field-group"><label for="confirmPassword">Confirmar nova senha</label><div class="password-wrap"><input class="field" id="confirmPassword" type="password" autocomplete="new-password" required><button type="button" class="password-eye" data-password-eye="confirmPassword">◉</button></div></div>' +
+    '<div class="password-meter"><div class="meter-track"><div class="meter-fill" id="meterFill"></div></div><div class="meter-text" id="meterText">Digite uma senha para verificar a segurança.</div></div>' +
+    '<button class="btn-primary guest-action" type="submit">Redefinir senha e entrar</button>' +
+    '</form>';
+
+  document.querySelectorAll('[data-password-eye]').forEach(function(btn){
+    btn.addEventListener('click', function(){var inp=document.getElementById(btn.dataset.passwordEye);inp.type=inp.type==='password'?'text':'password';});
+  });
+  document.getElementById('newPassword').addEventListener('input', function(e){updatePasswordStrength(e.target.value);});
+
+  // Protótipo: valida campos localmente e exibe tela de sucesso visual.
+  // NÃO chama _sb.auth.updateUser() nem acessa o banco de dados.
+  document.getElementById('newPasswordForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var a = document.getElementById('newPassword').value;
+    var b = document.getElementById('confirmPassword').value;
+    if(a.length<8){showToast('A nova senha deve ter ao menos 8 caracteres.','error');return;}
+    if(a!==b){showToast('A confirmação da senha não confere.','error');return;}
+    // Exibe tela de sucesso como protótipo visual
+    state.guestResetComplete = true;
+    renderGuest();
+  });
+}
+
+function updatePasswordStrength(value){
+  var score=0;
+  if(value.length>=8)score++;
+  if(/[A-Z]/.test(value))score++;
+  if(/[0-9]/.test(value))score++;
+  if(/[^A-Za-z0-9]/.test(value))score++;
+  var labels=['Fraca','Fraca','Média','Boa','Forte'];
+  var colors=['var(--danger)','var(--danger)','var(--warning)','var(--gold)','var(--success)'];
+  var widths=[18,28,52,74,100];
+  var fill=document.getElementById('meterFill');
+  var text=document.getElementById('meterText');
+  if(fill){fill.style.width=widths[score]+'%';fill.style.background=colors[score];text.textContent='Segurança da senha: '+labels[score]+'.';}
+}
+
+// ── Topbar ────────────────────────────────────────────────────
+// Obsoleto: presença, notificações, hamburguer e tema da topbar/sidebar
+// principais agora são cuidados exclusivamente pelo saga_ui.js.
+function renderPresence(){ /* obsoleto: saga_ui.js cuida da presença e das notificações */ }
+
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='dark'?'light':'dark';}
+function setupTopbar(){
+  // guestThemeToggle pertence à tela de "Esqueci a senha/Nova senha" (protótipo
+  // visual isolado), que não usa a topbar/sidebar unificadas do saga_ui.js.
+  document.getElementById('guestThemeToggle').addEventListener('click',toggleTheme);
+  document.addEventListener('click',function(e){
+    if(!e.target.closest('.action-menu-wrap')&&!e.target.closest('.status-badge')&&!e.target.closest('.action-menu')&&!e.target.closest('.status-menu'))closeActionMenus();
+  });
+  window.addEventListener('resize',closeActionMenus);
+  window.addEventListener('scroll',closeActionMenus,true);
+}
+
+// ── Navegação do protótipo ────────────────────────────────────
+function switchPrototype(target){
+  document.querySelectorAll('[data-prototype]').forEach(function(btn){btn.classList.toggle('active',btn.dataset.prototype===target);});
+  if(target==='admin'||target==='reset-modal'){
+    document.getElementById('adminApp').style.display='block';
+    document.getElementById('guestScreen').classList.remove('active');
+    if(target==='reset-modal'){
+      // Abrir modal de reset no primeiro colaborador não-protegido
+      var first=state.employees.find(function(e){return !e.protected;});
+      if(first)openResetModal(first.id);
+    }
+    return;
+  }
+  document.getElementById('adminApp').style.display='none';
+  document.getElementById('guestScreen').classList.add('active');
+  state.guestMode=target==='forgot'?'forgot':'new-password';
+  state.guestRequestSent=false;
+  state.guestResetComplete=false;
+  renderGuest();
+}
+
+// ── Convite de colaborador ────────────────────────────────────
+async function loadPapeis(){
+  if(state.papeis.length) return;
+  var r = await _sb.from('papeis').select('id,nome,editavel').order('nome');
+  if(!r.error && r.data) state.papeis = r.data;
+}
+
+function preencherSelectPerfis(){
+  var menu = document.getElementById('invitePerfilMenu');
+  if(!menu) return;
+  menu.innerHTML = state.papeis.map(function(p){
+    return '<button type="button" class="perfil-dd-item" data-id="'+esc(p.id)+'">'+esc(p.nome)+'</button>';
+  }).join('');
+  if(state.papeis.length) selecionarPerfilConvite('');
+  else document.getElementById('invitePerfilLabel').textContent = 'Nenhum perfil cadastrado';
+}
+
+function selecionarPerfilConvite(id){
+  var papel = state.papeis.find(function(p){return String(p.id)===String(id);});
+  document.getElementById('invitePerfil').value = papel ? papel.id : '';
+  document.getElementById('invitePerfilLabel').textContent = papel ? papel.nome : 'Selecione um perfil';
+  document.querySelectorAll('#invitePerfilMenu .perfil-dd-item').forEach(function(b){b.classList.toggle('sel',b.dataset.id===String(id));});
+}
+
+function ligarDropdownPerfil(){
+  var dd = document.getElementById('invitePerfilDd');
+  if(!dd) return;
+  document.getElementById('invitePerfilBtn').addEventListener('click',function(e){e.stopPropagation();dd.classList.toggle('open');});
+  document.getElementById('invitePerfilMenu').addEventListener('click',function(e){
+    var item = e.target.closest('.perfil-dd-item');
+    if(!item) return;
+    selecionarPerfilConvite(item.dataset.id);
+    dd.classList.remove('open');
+  });
+  document.addEventListener('click',function(e){if(!dd.contains(e.target))dd.classList.remove('open');});
+}
+
+function validateInviteDraft(){
+  var ok = true;
+  var nome = document.getElementById('inviteNome').value.trim();
+  var email = document.getElementById('inviteEmail').value.trim();
+  document.getElementById('inviteNomeError').textContent = '';
+  document.getElementById('inviteEmailError').textContent = '';
+  if(!nome){ document.getElementById('inviteNomeError').textContent = 'Informe o nome completo.'; ok = false; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ document.getElementById('inviteEmailError').textContent = 'Informe um e-mail valido.'; ok = false; }
+  if(!document.getElementById('invitePerfil').value){ showToast('Selecione um perfil para o convidado.', 'error'); ok = false; }
+  return ok;
+}
+
+// Pede ao servidor (Edge Function enviar-convite) o envio do e-mail
+async function dispararEmailConvite(conviteId){
+  try{
+    var r = await _sb.functions.invoke('enviar-convite', { body: { convite_id: conviteId } });
+    if(!r.error) return { ok: true };
+    var msg = 'O convite foi registrado, mas o e-mail não pôde ser enviado agora.';
+    try{ var corpo = r.error.context && await r.error.context.json(); if(corpo && corpo.erro) msg = corpo.erro; }catch(_){}
+    return { ok: false, msg: msg };
+  }catch(e){
+    return { ok: false, msg: 'O convite foi registrado, mas o e-mail não pôde ser enviado agora.' };
+  }
+}
+
+async function sendInvite(){
+  if(!validateInviteDraft()) return;
+  var btn = document.getElementById('sendInviteBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando';
+  try {
+    var expira = new Date(Date.now() + 7*86400000).toISOString();
+    var payload = {
+      email: document.getElementById('inviteEmail').value.trim(),
+      nome_sugerido: document.getElementById('inviteNome').value.trim(),
+      papel_sugerido_id: document.getElementById('invitePerfil').value || null,
+      status: 'aguardando_envio',
+      expira_em: expira,
+    };
+    var mensagem = document.getElementById('inviteMensagem').value.trim();
+    if(mensagem) payload.mensagem_pessoal = mensagem;
+    if(state.meuInternoId) payload.convidado_por_id = state.meuInternoId;
+    var r = await _sb.from('convites').insert(payload).select('id').single();
+    if(r.error) throw r.error;
+    btn.innerHTML = '<span class="spinner"></span> Enviando e-mail';
+    var envio = await dispararEmailConvite(r.data.id);
+    closeModal('inviteModal');
+    if(envio.ok) showToast('Convite enviado para <b>'+esc(payload.email)+'</b>.', 'success');
+    else showToast(esc(envio.msg), 'error');
+    loadEmployees();
+  } catch(e) {
+    showToast('Erro ao registrar convite: ' + (e.message || 'verifique sua conexao.'), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Enviar Convite';
+  }
+}
+
+// ── Inicialização ─────────────────────────────────────────────
+// ============================================================
+// EQUIPE E CONVITES (so o administrador geral)
+// Cadastro completo da equipe (cargo, perfil, regime, horario, salario) e convites
+// individuais ou em lote, enviados pela funcao enviar-convite (Gmail do administrador).
+// ============================================================
+var equipe={lista:[],regimes:[],confirmar:null};
+function eqHm(min){return min==null?'':('0'+Math.floor(min/60)).slice(-2)+':'+('0'+(min%60)).slice(-2);}
+function eqMin(v){if(!v)return null;var p=String(v).split(':').map(Number);return p[0]*60+(p[1]||0);}
+function eqDataBR(d){if(!d)return '';var p=String(d).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function eqDinheiro(v){return v==null||v===''?'':Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function eqJornadaVigente(js){
+  var hoje=new Date().toISOString().slice(0,10),vale=null;
+  js.slice().sort(function(a,b){return (a.vigente_desde||'')<(b.vigente_desde||'')?-1:1;}).forEach(function(j){if(!j.vigente_desde||j.vigente_desde<=hoje)vale=j;});
+  return vale||js[0]||null;
+}
+function eqSituacao(x){
+  if(x.u.auth_user_id)return x.u.ativo===false||(x.pc&&x.pc.demissao&&x.pc.demissao<new Date().toISOString().slice(0,10))?['Desligado','status-inativo']:['Ativo','status-ativo'];
+  if(x.convite&&x.convite.status==='pendente'&&new Date(x.convite.expira_em)>new Date())return ['Convidado em '+eqDataBR(x.convite.criado_em),'status-afastado'];
+  return ['Pré-cadastrado','sem-acesso'];
+}
+function eqPendente(x){return !x.u.auth_user_id&&x.u.ativo!==false;}
+
+async function carregarEquipe(){
+  var r=await Promise.all([
+    _sb.from('usuarios').select('id,nome_completo,email,cargo_titulo,ativo,auth_user_id,eh_administrador,usuarios_papeis!usuario_id(papeis(id,nome))').order('nome_completo'),
+    _sb.from('ponto_colaboradores').select('*'),
+    _sb.from('ponto_jornadas').select('*'),
+    _sb.from('convites').select('id,email,status,criado_em,expira_em').order('criado_em',{ascending:false}),
+    _sb.from('ponto_regimes').select('*').order('ordem')
+  ]);
+  var erro=r.find(function(x){return x.error;});if(erro)throw erro.error;
+  equipe.regimes=r[4].data||[];
+  var pcPor={},jPor={},cvPor={};
+  (r[1].data||[]).forEach(function(p){if(p.usuario_id)pcPor[p.usuario_id]=p;});
+  (r[2].data||[]).forEach(function(j){(jPor[j.colaborador_id]=jPor[j.colaborador_id]||[]).push(j);});
+  (r[3].data||[]).forEach(function(c){var k=String(c.email||'').toLowerCase();if(!cvPor[k])cvPor[k]=c;});
+  equipe.lista=(r[0].data||[]).map(function(u){
+    var pc=pcPor[u.id]||null,papel=u.usuarios_papeis&&u.usuarios_papeis[0]&&u.usuarios_papeis[0].papeis;
+    return {u:u,pc:pc,papel:papel||null,jornadas:pc?(jPor[pc.id]||[]):[],convite:cvPor[String(u.email||'').toLowerCase()]||null};
+  });
+}
+function renderEquipe(){
+  var lista=equipe.lista,pend=lista.filter(eqPendente).length;
+  document.getElementById('eqContador').innerHTML='<b>'+lista.length+'</b> pessoas · <b>'+pend+'</b> sem conta ainda';
+  var bt=document.getElementById('eqConvidarTodos');bt.textContent='Convidar todos os pendentes ('+pend+')';bt.disabled=!pend;
+  var rows=lista.map(function(x){
+    var sit=eqSituacao(x),j=eqJornadaVigente(x.jornadas),reg=x.pc?x.pc.regime:'',livre=(equipe.regimes.find(function(g){return g.nome===reg;})||{}).livre;
+    var horario=!x.pc?'<span class="date-small">Fora do ponto</span>':livre?'<span class="date-small">Livre</span>':j?eqHm(j.entrada_min)+'–'+eqHm(j.saida_min)+'<div class="date-small">'+eqHm(j.carga_min)+' por dia</div>':'<span class="date-small">Sem horário</span>';
+    var acoes='';
+    if(eqPendente(x))acoes+='<button class="btn-secondary" style="height:30px" data-eq-convidar="'+x.u.id+'" type="button">'+(x.convite&&x.convite.status==='pendente'?'Reenviar convite':'Convidar')+'</button>';
+    if(!x.u.eh_administrador)acoes+='<button class="btn-secondary" style="height:30px" data-eq-editar="'+x.u.id+'" type="button">Editar</button>';
+    if(eqPendente(x)&&!x.u.eh_administrador)acoes+='<button class="btn-danger" style="height:30px" data-eq-remover="'+x.u.id+'" type="button">Remover</button>';
+    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" data-saga-nome="'+esc(x.u.nome_completo||'')+'" style="background:'+avatarColor(x.papel&&x.papel.nome||'')+'">'+initials(x.u.nome_completo||x.u.email)+'</span><span><b>'+esc(x.u.nome_completo||'')+'</b><small>'+esc(x.u.email||'')+'</small></span></div></td>'+
+      '<td data-label="Cargo / perfil">'+esc(x.u.cargo_titulo||(x.pc&&x.pc.cargo)||'')+'<div class="date-small">'+esc(x.papel?x.papel.nome:'Sem perfil')+'</div></td>'+
+      '<td data-label="Regime">'+esc(reg||'—')+'</td><td data-label="Horário">'+horario+'</td>'+
+      '<td data-label="Salário">'+(x.pc&&x.pc.salario!=null?eqDinheiro(x.pc.salario):'<span class="date-small">—</span>')+'</td>'+
+      '<td data-label="Admissão">'+(x.pc&&x.pc.admissao?eqDataBR(x.pc.admissao):'<span class="date-small">—</span>')+'</td>'+
+      '<td data-label="Situação"><span class="badge '+sit[1]+'">'+esc(sit[0])+'</span></td>'+
+      '<td data-label="Ações"><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+acoes+'</div></td></tr>';
+  }).join('');
+  document.getElementById('equipeWrap').innerHTML='<table class="employee-table"><thead><tr><th>Pessoa</th><th>Cargo / perfil</th><th>Regime</th><th>Horário</th><th>Salário</th><th>Admissão</th><th>Situação</th><th style="text-align:right">Ações</th></tr></thead><tbody>'+(rows||'<tr><td colspan="8" class="date-small" style="padding:30px;text-align:center">Ninguém na equipe ainda.</td></tr>')+'</tbody></table>';
+  document.querySelectorAll('[data-eq-convidar]').forEach(function(b){b.addEventListener('click',function(){convidarPessoa(b.dataset.eqConvidar,b);});});
+  document.querySelectorAll('[data-eq-editar]').forEach(function(b){b.addEventListener('click',function(){abrirPessoa(b.dataset.eqEditar);});});
+  document.querySelectorAll('[data-eq-remover]').forEach(function(b){b.addEventListener('click',function(){removerPessoa(b.dataset.eqRemover);});});
+}
+async function atualizarEquipe(){
+  try{await carregarEquipe();}catch(e){showToast('Erro ao carregar a equipe: '+esc(e.message||''),'error');}
+  renderEquipe();
+}
+function eqConfirmar(titulo,texto,botao){
+  return new Promise(function(ok){
+    document.getElementById('eqcTitulo').textContent=titulo;document.getElementById('eqcTexto').textContent=texto;
+    var sim=document.getElementById('eqcSim');sim.textContent=botao||'Confirmar';
+    equipe.confirmar=ok;sim.onclick=function(){equipe.confirmar=null;closeModal('eqConfirmaModal');ok(true);};
+    openModal('eqConfirmaModal');
+  });
+}
+async function abrirPessoa(id){
+  await loadPapeis();
+  var x=id?equipe.lista.find(function(y){return y.u.id===id;}):null;
+  state.eqId=id||null;
+  document.getElementById('eqmTitulo').textContent=x?'Editar '+(x.u.nome_completo||''):'Incluir pessoa na equipe';
+  document.getElementById('eqmPerfil').innerHTML='<option value="">Escolha o perfil</option>'+state.papeis.filter(function(p){return p.editavel!==false;}).map(function(p){return '<option value="'+p.id+'">'+esc(p.nome)+'</option>';}).join('');
+  document.getElementById('eqmRegime').innerHTML=equipe.regimes.map(function(g){return '<option>'+esc(g.nome)+'</option>';}).join('');
+  document.getElementById('eqmNome').value=x?(x.u.nome_completo||''):'';
+  var em=document.getElementById('eqmEmail');em.value=x?(x.u.email||''):'';em.disabled=!!(x&&x.u.auth_user_id);
+  document.getElementById('eqmCargo').value=x?(x.u.cargo_titulo||(x.pc&&x.pc.cargo)||''):'';
+  document.getElementById('eqmPerfil').value=x&&x.papel?x.papel.id:'';
+  document.getElementById('eqmRegime').value=x&&x.pc?x.pc.regime:'Estágio';
+  document.getElementById('eqmSalario').value=x&&x.pc&&x.pc.salario!=null?String(x.pc.salario).replace('.',','):'';
+  document.getElementById('eqmAdmissao').value=x&&x.pc?(x.pc.admissao||''):'';
+  document.getElementById('eqmDemissao').value=x&&x.pc?(x.pc.demissao||''):'';
+  document.getElementById('eqmDemissaoCampo').style.display=x&&x.pc?'':'none';
+  var temHorario=!!(x&&x.jornadas.length);
+  ['eqmEntradaCampo','eqmSaidaCampo','eqmCargaCampo'].forEach(function(k){document.getElementById(k).style.display=temHorario?'none':'';});
+  document.getElementById('eqmHorarioNota').style.display=temHorario?'':'none';
+  ['eqmEntrada','eqmSaida','eqmCarga'].forEach(function(k){document.getElementById(k).value='';});
+  eqAtualizarHorario();
+  openModal('equipeModal');
+}
+function eqAtualizarHorario(){
+  var livre=(equipe.regimes.find(function(g){return g.nome===document.getElementById('eqmRegime').value;})||{}).livre;
+  var x=state.eqId?equipe.lista.find(function(y){return y.u.id===state.eqId;}):null;
+  var mostrar=!livre&&!(x&&x.jornadas.length);
+  ['eqmEntradaCampo','eqmSaidaCampo','eqmCargaCampo'].forEach(function(k){document.getElementById(k).style.display=mostrar?'':'none';});
+}
+function eqSugerirCarga(){
+  var e=eqMin(document.getElementById('eqmEntrada').value),s2=eqMin(document.getElementById('eqmSaida').value);
+  if(e==null||s2==null||s2<=e)return;
+  var reg=equipe.regimes.find(function(g){return g.nome===document.getElementById('eqmRegime').value;})||{};
+  document.getElementById('eqmCarga').value=eqHm(s2-e-(reg.almoco||0));
+}
+async function salvarPessoa(){
+  var reg=document.getElementById('eqmRegime').value,livre=(equipe.regimes.find(function(g){return g.nome===reg;})||{}).livre;
+  var sal=document.getElementById('eqmSalario').value.trim().replace(/\./g,'').replace(',','.');
+  if(sal&&isNaN(Number(sal))){showToast('Salário inválido.','error');return;}
+  if(!document.getElementById('eqmPerfil').value){showToast('Escolha o perfil de acesso.','error');return;}
+  var p={usuario_id:state.eqId||'',nome:document.getElementById('eqmNome').value,email:document.getElementById('eqmEmail').value,cargo:document.getElementById('eqmCargo').value,
+    papel_id:document.getElementById('eqmPerfil').value,regime:reg,salario:sal,admissao:document.getElementById('eqmAdmissao').value};
+  if(state.eqId)p.demissao=document.getElementById('eqmDemissao').value;
+  var ent=eqMin(document.getElementById('eqmEntrada').value),sai=eqMin(document.getElementById('eqmSaida').value),carga=eqMin(document.getElementById('eqmCarga').value);
+  if(document.getElementById('eqmEntradaCampo').style.display!=='none'&&!livre){
+    if(ent==null||sai==null||!carga){showToast('Informe entrada, saída e carga do dia.','error');return;}
+    if(sai<=ent){showToast('A saída precisa ser depois da entrada.','error');return;}
+    p.entrada_min=ent;p.saida_min=sai;p.carga_min=carga;
+  }
+  var btn=document.getElementById('eqmSalvar');btn.disabled=true;
+  var r=await _sb.rpc('equipe_salvar',{p:p});
+  btn.disabled=false;
+  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&r.error.message)||'Erro ao salvar.'),'error');return;}
+  closeModal('equipeModal');showToast(state.eqId?'Cadastro atualizado.':'Pessoa incluída. O convite ainda não foi enviado.','success');
+  await atualizarEquipe();await loadEmployees();renderEmployees();
+}
+// Envia (ou reenvia) o convite de uma pessoa. silencioso: usado no envio em lote
+async function convidarPessoa(id,btn,silencioso){
+  var x=equipe.lista.find(function(y){return y.u.id===id;});if(!x)return false;
+  if(btn){btn.disabled=true;btn.textContent='Enviando…';}
+  try{
+    var conviteId=null;
+    if(x.convite&&['pendente','aguardando_envio'].indexOf(x.convite.status)>=0&&new Date(x.convite.expira_em)>new Date())conviteId=x.convite.id;
+    else{
+      var ins=await _sb.from('convites').insert({email:String(x.u.email).toLowerCase(),nome_sugerido:x.u.nome_completo,papel_sugerido_id:x.papel?x.papel.id:null,convidado_por_id:state.meuInternoId,status:'aguardando_envio'}).select('id').single();
+      if(ins.error)throw new Error(ins.error.message);
+      conviteId=ins.data.id;
+    }
+    var r=await _sb.functions.invoke('enviar-convite',{body:{convite_id:conviteId}});
+    var d=r.data||{};
+    if(r.error&&!d.erro){try{var ctx=r.error.context;d=ctx&&ctx.json?await ctx.json():d;}catch(e){}}
+    if(!d.ok)throw new Error(d.erro||d.mensagem||(r.error&&r.error.message)||'Falha no envio.');
+    if(!silencioso)showToast(esc(d.mensagem||'Convite enviado.'),'success');
+    return true;
+  }catch(e){
+    if(!silencioso)showToast(esc((x.u.nome_completo||x.u.email)+': '+e.message),'error');
+    x.erroEnvio=e.message;return false;
+  }finally{
+    if(!silencioso)await atualizarEquipe();
+  }
+}
+async function convidarTodos(){
+  var pend=equipe.lista.filter(eqPendente);
+  if(!pend.length)return;
+  if(!await eqConfirmar('Convidar todos','Enviar o convite para '+pend.length+' pessoa(s) sem conta: '+pend.map(function(x){return x.u.nome_completo;}).join(', ')+'?','Enviar convites'))return;
+  var bt=document.getElementById('eqConvidarTodos');bt.disabled=true;
+  var ok=0,falhas=[];
+  for(var i=0;i<pend.length;i++){
+    bt.textContent='Enviando '+(i+1)+' de '+pend.length+'…';
+    if(await convidarPessoa(pend[i].u.id,null,true))ok++;else falhas.push((pend[i].u.nome_completo||pend[i].u.email)+' ('+pend[i].erroEnvio+')');
+  }
+  showToast(ok+' convite(s) enviado(s)'+(falhas.length?'. Falharam: '+esc(falhas.join('; ')):'.'),falhas.length?'error':'success');
+  await atualizarEquipe();
+}
+async function removerPessoa(id){
+  var x=equipe.lista.find(function(y){return y.u.id===id;});if(!x)return;
+  if(!await eqConfirmar('Remover da equipe','Remover '+(x.u.nome_completo||x.u.email)+' do pré-cadastro? O convite pendente é cancelado. Se depois quiser incluir de novo, é só cadastrar outra vez.','Remover'))return;
+  var r=await _sb.rpc('equipe_remover',{p_usuario:id});
+  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&r.error.message)||'Erro ao remover.'),'error');return;}
+  showToast('Removido(a) da equipe.','success');await atualizarEquipe();await loadEmployees();renderEmployees();
+}
+// ============================================================
+// CONTROLE DE ACESSO (T29): horario e local de entrada da equipe
+// O banco decide em acesso_verificar; aqui o administrador liga, ajusta e libera.
+// ============================================================
+var acesso={cfg:null,regras:{},libs:{},ultimo:{},pessoas:[]};
+function acHm(m){return m==null?'':('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2);}
+function acHojeKey(){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Maceio',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+function acQuando(ts){var d=new Date(ts);return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(d);}
+async function carregarAcesso(){
+  var hoje=acHojeKey();
+  var r=await Promise.all([
+    _sb.from('ponto_config').select('id,acesso_ativo,acesso_inicio_min,acesso_fim_min,acesso_exigir_local').maybeSingle(),
+    _sb.from('usuarios').select('id,nome_completo,email,ativo,auth_user_id,eh_administrador').not('auth_user_id','is',null).eq('ativo',true).order('nome_completo'),
+    _sb.from('acesso_regras').select('*'),
+    _sb.from('acesso_liberacoes').select('*').eq('data',hoje),
+    _sb.from('acessos_log').select('*').order('momento',{ascending:false}).limit(40)
+  ]);
+  var erro=r.find(function(x){return x.error;});if(erro)throw erro.error;
+  acesso.cfg=r[0].data||{};
+  acesso.pessoas=(r[1].data||[]).filter(function(u){return !u.eh_administrador;});
+  acesso.regras={};(r[2].data||[]).forEach(function(x){acesso.regras[x.usuario_id]=x;});
+  acesso.libs={};(r[3].data||[]).forEach(function(x){acesso.libs[x.usuario_id]=x;});
+  acesso.log=r[4].data||[];acesso.ultimo={};acesso.log.forEach(function(x){if(!acesso.ultimo[x.usuario_id])acesso.ultimo[x.usuario_id]=x;});
+  acesso.nomes={};(r[1].data||[]).forEach(function(u){acesso.nomes[u.id]=u.nome_completo;});
+}
+function acMapa(x){return x&&x.latitude!=null?' <a href="https://www.google.com/maps?q='+x.latitude+','+x.longitude+'" target="_blank" rel="noopener" style="color:var(--gold)">ver no mapa</a>':'';}
+function acResultado(x){if(!x)return '<span class="date-small">Nenhum acesso ainda</span>';return '<span class="badge '+(x.permitido?'status-ativo':'status-inativo')+'">'+(x.permitido?'Entrou':'Bloqueado')+'</span> <span class="date-small">'+acQuando(x.momento)+' · '+esc(x.motivo||'')+(x.distancia_m!=null&&!x.permitido?' · '+x.distancia_m+' m além':'')+'</span>'+acMapa(x);}
+function renderAcesso(){
+  var c=acesso.cfg||{};
+  document.getElementById('acAtivo').checked=!!c.acesso_ativo;
+  document.getElementById('acInicio').value=acHm(c.acesso_inicio_min==null?300:c.acesso_inicio_min);
+  document.getElementById('acFim').value=acHm(c.acesso_fim_min==null?1200:c.acesso_fim_min);
+  document.getElementById('acLocal').checked=c.acesso_exigir_local!==false;
+  var rows=acesso.pessoas.map(function(u){
+    var rg=acesso.regras[u.id]||{},lib=acesso.libs[u.id],modo=rg.livre?'livre':(rg.inicio_min!=null||rg.fim_min!=null?'proprio':'padrao');
+    return '<tr><td data-label="Pessoa"><div class="person-cell"><span class="person-avatar" data-saga-nome="'+esc(u.nome_completo)+'" style="background:'+avatarColor('')+'">'+initials(u.nome_completo)+'</span><span><b>'+esc(u.nome_completo)+'</b><small>'+esc(u.email)+'</small></span></div></td>'+
+      '<td data-label="Regra"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select class="field" style="width:auto;min-width:150px" data-ac-modo="'+u.id+'"><option value="padrao"'+(modo==='padrao'?' selected':'')+'>Horário padrão</option><option value="proprio"'+(modo==='proprio'?' selected':'')+'>Horário próprio</option><option value="livre"'+(modo==='livre'?' selected':'')+'>Livre (sem trava)</option></select>'+
+      '<span data-ac-horas="'+u.id+'" style="display:'+(modo==='proprio'?'inline-flex':'none')+';gap:4px;align-items:center"><input class="field" type="time" style="width:110px" data-ac-ini="'+u.id+'" value="'+acHm(rg.inicio_min)+'"> às <input class="field" type="time" style="width:110px" data-ac-fim="'+u.id+'" value="'+acHm(rg.fim_min)+'"></span>'+
+      '<button class="btn-secondary" style="height:32px" data-ac-salvar="'+u.id+'" type="button">Salvar</button></div></td>'+
+      '<td data-label="Último acesso">'+acResultado(acesso.ultimo[u.id])+'</td>'+
+      '<td data-label="Hoje">'+(lib?'<span class="badge status-afastado">Liberado hoje</span> <button class="btn-secondary" style="height:30px" data-ac-cancelar="'+lib.id+'" type="button">Cancelar</button>':'<button class="btn-secondary" style="height:30px" data-ac-liberar="'+u.id+'" type="button">Liberar hoje</button>')+'</td></tr>';
+  }).join('');
+  document.getElementById('acPessoasWrap').innerHTML='<table class="employee-table"><thead><tr><th>Pessoa</th><th>Regra de acesso</th><th>Último acesso</th><th>Hoje</th></tr></thead><tbody>'+(rows||'<tr><td colspan="4" class="date-small" style="padding:30px;text-align:center">Ninguém da equipe com conta ainda. Quem aceitar o convite aparece aqui.</td></tr>')+'</tbody></table>';
+  var logs=acesso.log.map(function(x){return '<tr><td data-label="Quando">'+acQuando(x.momento)+'</td><td data-label="Pessoa">'+esc(acesso.nomes[x.usuario_id]||'—')+'</td><td data-label="Resultado">'+acResultado(x).replace(/<span class="date-small">[^<]*<\/span>/,'')+'</td><td data-label="Motivo">'+esc(x.motivo||'')+(x.distancia_m!=null&&!x.permitido?' · '+x.distancia_m+' m além do limite':'')+'</td></tr>';}).join('');
+  document.getElementById('acLogWrap').innerHTML='<table class="employee-table"><thead><tr><th>Quando</th><th>Pessoa</th><th>Resultado</th><th>Motivo</th></tr></thead><tbody>'+(logs||'<tr><td colspan="4" class="date-small" style="padding:30px;text-align:center">Nenhum acesso registrado ainda.</td></tr>')+'</tbody></table>';
+  document.querySelectorAll('[data-ac-modo]').forEach(function(sel){sel.addEventListener('change',function(){document.querySelector('[data-ac-horas="'+sel.dataset.acModo+'"]').style.display=sel.value==='proprio'?'inline-flex':'none';});});
+  document.querySelectorAll('[data-ac-salvar]').forEach(function(b){b.addEventListener('click',function(){salvarRegraAcesso(b.dataset.acSalvar);});});
+  document.querySelectorAll('[data-ac-liberar]').forEach(function(b){b.addEventListener('click',function(){liberarHoje(b.dataset.acLiberar);});});
+  document.querySelectorAll('[data-ac-cancelar]').forEach(function(b){b.addEventListener('click',function(){cancelarLiberacao(b.dataset.acCancelar);});});
+}
+async function atualizarAcesso(){try{await carregarAcesso();}catch(e){showToast('Erro ao carregar o controle de acesso: '+esc(e.message||''),'error');return;}renderAcesso();}
+async function salvarConfigAcesso(){
+  var ini=eqMin(document.getElementById('acInicio').value),fim=eqMin(document.getElementById('acFim').value),ligar=document.getElementById('acAtivo').checked;
+  if(ini==null||fim==null||fim<=ini){showToast('Informe um horário de início e fim válido.','error');return;}
+  if(ligar&&!acesso.cfg.acesso_ativo&&!await eqConfirmar('Ligar o controle de acesso','A partir de agora, a equipe só entra no sistema em dias úteis, das '+acHm(ini)+' às '+acHm(fim)+(document.getElementById('acLocal').checked?', e do escritório (ou em home office aprovado)':'')+'. Quem estiver fora disso sai do sistema em até 30 minutos. Você não é afetado. Ligar?','Ligar'))return;
+  var r=await _sb.from('ponto_config').update({acesso_ativo:ligar,acesso_inicio_min:ini,acesso_fim_min:fim,acesso_exigir_local:document.getElementById('acLocal').checked}).eq('id',true);
+  if(r.error){showToast('Erro ao salvar: '+esc(r.error.message),'error');return;}
+  showToast(ligar?'Controle de acesso ligado.':'Configuração salva (controle desligado).','success');atualizarAcesso();
+}
+async function salvarRegraAcesso(id){
+  var modo=document.querySelector('[data-ac-modo="'+id+'"]').value,linha={usuario_id:id,livre:modo==='livre',inicio_min:null,fim_min:null,atualizado_em:new Date().toISOString()};
+  if(modo==='proprio'){
+    linha.inicio_min=eqMin(document.querySelector('[data-ac-ini="'+id+'"]').value);linha.fim_min=eqMin(document.querySelector('[data-ac-fim="'+id+'"]').value);
+    if(linha.inicio_min==null||linha.fim_min==null||linha.fim_min<=linha.inicio_min){showToast('Informe o horário próprio (início e fim).','error');return;}
+  }
+  var r=modo==='padrao'?await _sb.from('acesso_regras').delete().eq('usuario_id',id):await _sb.from('acesso_regras').upsert(linha,{onConflict:'usuario_id'});
+  if(r.error){showToast('Erro ao salvar: '+esc(r.error.message),'error');return;}
+  showToast('Regra de acesso salva.','success');atualizarAcesso();
+}
+async function liberarHoje(id){
+  if(!await eqConfirmar('Liberar hoje','Liberar '+(acesso.nomes[id]||'esta pessoa')+' para entrar hoje fora do horário e fora do escritório? Amanhã volta a valer a regra normal.','Liberar hoje'))return;
+  var r=await _sb.from('acesso_liberacoes').insert({usuario_id:id,data:acHojeKey(),qualquer_horario:true,qualquer_local:true,motivo:'Liberado pelo administrador'});
+  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  showToast('Liberado para hoje.','success');atualizarAcesso();
+}
+async function cancelarLiberacao(libId){
+  var r=await _sb.from('acesso_liberacoes').delete().eq('id',libId);
+  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  showToast('Liberação cancelada.','success');atualizarAcesso();
+}
+
+function trocarAbaColab(aba){
+  document.querySelectorAll('[data-aba-col]').forEach(function(b){b.classList.toggle('active',b.dataset.abaCol===aba);});
+  document.querySelectorAll('.aba-acessos').forEach(function(el){el.style.display=aba==='acessos'?'':'none';});
+  document.getElementById('painelEquipe').style.display=aba==='equipe'?'':'none';
+  document.getElementById('painelAcesso').style.display=aba==='acesso'?'':'none';
+  if(aba==='equipe')atualizarEquipe();
+  if(aba==='acesso')atualizarAcesso();
+}
+
+async function init(){
+  await SagaUI.carregar('colaboradores');
+  ligarDropdownPerfil();
+  setupTopbar();
+
+  // NOTA DE ARQUITETURA (Fase 2):
+  // Tokens de recovery NÃO são processados aqui.
+  // O destino canônico de todos os links de redefinição de senha
+  // é exclusivamente reset_senha_padrao_metalico.html (validado em Fase 1).
+  // A view "nova senha" abaixo é protótipo visual apenas — sem Supabase real.
+
+  // Sessão administrativa normal
+  var rs = await _sb.auth.getSession();
+  state.session = rs.data && rs.data.session;
+  if(state.session){
+    await loadMeuPerfil();
+    await loadEmployees();
+  }else{
+    state.employees = [];
+  }
+
+  renderEmployees();
+
+  // Aba Equipe e convites: so o administrador geral
+  if(state.souAdmin){
+    document.getElementById('abasColab').style.display='flex';
+    document.querySelectorAll('[data-aba-col]').forEach(function(b){b.addEventListener('click',function(){trocarAbaColab(b.dataset.abaCol);});});
+    document.getElementById('eqIncluir').addEventListener('click',function(){abrirPessoa(null);});
+    document.getElementById('eqConvidarTodos').addEventListener('click',convidarTodos);
+    document.getElementById('eqmSalvar').addEventListener('click',salvarPessoa);
+    document.getElementById('acSalvar').addEventListener('click',salvarConfigAcesso);
+    document.getElementById('eqmRegime').addEventListener('change',eqAtualizarHorario);
+    ['eqmEntrada','eqmSaida'].forEach(function(k){document.getElementById(k).addEventListener('change',eqSugerirCarga);});
+    var abaUrl=new URLSearchParams(location.search).get('aba');if(abaUrl==='equipe'||abaUrl==='acesso')trocarAbaColab(abaUrl);
+  }
+
+  // Filtros e buscas
+  document.querySelectorAll('[data-status-filter]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      state.activeStatus=btn.dataset.statusFilter;
+      state.page=1;
+      document.querySelectorAll('[data-status-filter]').forEach(function(f){f.classList.toggle('active',f.dataset.statusFilter===state.activeStatus);});
+      renderEmployees();
+    });
+  });
+  document.getElementById('employeeSearch').addEventListener('input',function(e){state.search=e.target.value;state.page=1;renderEmployees();});
+  document.getElementById('globalSearch')?.addEventListener('input',function(e){state.search=e.target.value;document.getElementById('employeeSearch').value=e.target.value;state.page=1;renderEmployees();});
+
+  // Navegação do protótipo
+  document.querySelectorAll('[data-prototype]').forEach(function(btn){btn.addEventListener('click',function(){switchPrototype(btn.dataset.prototype);});});
+
+  // Modais
+  document.querySelectorAll('[data-close]').forEach(function(btn){btn.addEventListener('click',function(){closeModal(btn.dataset.close);});});
+  var campoExcluirAcesso = document.getElementById('excluirAcessoConfirmacao');
+  campoExcluirAcesso.addEventListener('input',function(){document.getElementById('confirmExcluirAcessoButton').disabled = campoExcluirAcesso.value.trim().toUpperCase()!=='EXCLUIR';});
+  document.getElementById('confirmExcluirAcessoButton').addEventListener('click', confirmarExcluirAcesso);
+  document.querySelectorAll('.modal-overlay').forEach(function(modal){modal.addEventListener('click',function(e){if(e.target===modal)closeModal(modal.id);});});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){document.querySelectorAll('.modal-overlay.open').forEach(function(m){closeModal(m.id);});closeActionMenus();closePopovers();}});
+
+  // Convite de colaborador
+  document.getElementById('btnConvidarColaborador').addEventListener('click', async function(){
+    await loadPapeis();
+    preencherSelectPerfis();
+    document.getElementById('inviteNome').value = '';
+    document.getElementById('inviteEmail').value = '';
+    document.getElementById('inviteMensagem').value = '';
+    document.getElementById('inviteNomeError').textContent = '';
+    document.getElementById('inviteEmailError').textContent = '';
+    openModal('inviteModal');
+  });
+  document.getElementById('sendInviteBtn').addEventListener('click', sendInvite);
+}
+
+document.addEventListener('saga-atualizar',async function(){
+  if(!state.session)return;
+  await loadEmployees();renderEmployees();
+});
+init();
+</script>
+</body>
+</html>

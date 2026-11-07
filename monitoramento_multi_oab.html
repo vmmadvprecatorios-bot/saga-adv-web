@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611072013"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Intimações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:72ch}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
+.pill{height:32px;padding:0 14px;border-radius:8px;font-size:11.5px;font-weight:700;color:var(--muted)}
+.pill.active{background:var(--gold);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.kpi-card{background:var(--panel);border:1px solid var(--border-soft);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi-card .rotulo{font-size:11px;color:var(--muted);font-weight:600}
+.kpi-card .kpi-value{font-size:24px;margin-top:6px}
+.kpi-filtro{font:inherit;color:inherit;text-align:left;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}.kpi-filtro:hover{border-color:var(--c)}.kpi-filtro:active{transform:scale(.97)}.kpi-filtro.ativo{border-color:var(--c);box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 40%,transparent)}.kpi-filtro:focus-visible{outline:2px solid var(--c);outline-offset:2px}
+.kpi-card .faixa{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--gold))}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.toast.erro{border-color:var(--danger)}.toast.sucesso{border-color:var(--success)}
+.aviso-leitura{display:none;margin-bottom:12px;padding:9px 12px;border-radius:10px;font-size:12px;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);background:color-mix(in srgb,var(--gold) 8%,transparent)}
+body.si-so-leitura .aviso-leitura{display:block}
+@media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.kpis{grid-template-columns:1fr 1fr;gap:9px}}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611072013">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Intimações</h1>
+      <p id="subtitulo">Intimações publicadas no Diário de Justiça Eletrônico Nacional (CNJ) para as OABs do escritório.</p>
+    </div>
+    <div class="pills" id="pillsVisao">
+      <button class="pill active" data-visao="kanban" type="button">Kanban</button>
+      <button class="pill" data-visao="lista" type="button">Lista</button>
+    </div>
+  </div>
+  <div class="aviso-leitura">Você pode ver as intimações, mas não alterá-las. Para mover, comentar ou concluir, peça a permissão "Editar intimações" ao administrador.</div>
+  <div class="kpis" id="kpis"></div>
+  <div id="intimGraficos"></div>
+  <div id="intimFiltros"></div>
+  <div id="intimQuadro"></div>
+  <div id="intimLista" style="display:none"></div>
+</main>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611072013"></script>
+<script src="saga_texto.js?v=202611072013"></script>
+<script src="saga_intimacoes.js?v=202611072013"></script>
+<script>
+/* =====================================================================
+   INTIMAÇÕES (tela própria; o quadro, a lista, os filtros e as janelas vêm de saga_intimacoes.js)
+   Ver: movimentacoes_cnj.visualizar ou monitoramento_oab.visualizar · Editar: movimentacoes_cnj.editar
+   ===================================================================== */
+var visao='kanban';
+try{var v=localStorage.getItem('saga-mon-visao');if(v==='lista'||v==='kanban')visao=v;}catch(e){}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},5000);}
+
+function renderTudo(){
+  document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.classList.toggle('active',b.dataset.visao===visao);});
+  var c=SagaIntimacoes.contagens();
+  var cards=[['hoje','Disponibilizadas hoje',c.hoje,'#4b8af5'],['abertas','Abertas',c.abertas,'#e5484d'],['vencidas','Prazos vencidos',c.atrasadas,'#f97316'],['fora','Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']],fx=SagaIntimacoes.faixa();
+  document.getElementById('kpis').innerHTML=cards.map(function(k){return '<button type="button" class="kpi-card kpi-filtro'+(fx===k[0]?' ativo':'')+'" data-faixa="'+k[0]+'" aria-pressed="'+(fx===k[0])+'" title="'+(fx===k[0]?'Clique para tirar o filtro':'Clique para filtrar')+'" style="--c:'+k[3]+'"><span class="faixa"></span><div class="rotulo">'+esc(k[1])+'</div><div class="kpi-value">'+k[2]+'</div></button>';}).join('');
+  SagaIntimacoes.montarFiltros(document.getElementById('intimFiltros'));
+  SagaIntimacoes.renderGraficos(document.getElementById('intimGraficos'));
+  var q=document.getElementById('intimQuadro'),l=document.getElementById('intimLista');
+  q.style.display=visao==='kanban'?'':'none';l.style.display=visao==='lista'?'':'none';
+  if(visao==='kanban')SagaIntimacoes.renderQuadro(q);else SagaIntimacoes.renderLista(l,false);
+}
+document.getElementById('kpis').addEventListener('click',function(e){var b=e.target.closest('[data-faixa]');if(b)SagaIntimacoes.definirFaixa(b.dataset.faixa);});
+document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.addEventListener('click',function(){
+  visao=b.dataset.visao;try{localStorage.setItem('saga-mon-visao',visao);}catch(e){}renderTudo();});});
+document.addEventListener('saga-atualizar',async function(){await SagaIntimacoes.carregar();renderTudo();});
+
+async function init(){
+  await SagaUI.carregar('monitoramento');
+  var s=await _sb.auth.getSession();
+  if(!s.data||!s.data.session){window.location.href='login_padrao_metalico.html';return;}
+  var eu=await _sb.from('usuarios').select('id,eh_administrador').eq('auth_user_id',s.data.session.user.id).maybeSingle();
+  var meuId=eu.data&&eu.data.id;
+  var p=await Promise.all([
+    _sb.rpc('verificar_permissao',{p_usuario_id:meuId,p_modulo:'movimentacoes_cnj',p_acao:'visualizar'}),
+    _sb.rpc('verificar_permissao',{p_usuario_id:meuId,p_modulo:'monitoramento_oab',p_acao:'visualizar'})]);
+  if(p[0].data!==true&&p[1].data!==true&&!(eu.data&&eu.data.eh_administrador)){
+    document.querySelector('.content').innerHTML='<div class="page-head"><div><h1>Intimações</h1><p>Você não tem permissão para ver as intimações. Fale com o administrador.</p></div></div>';return;
+  }
+  var ok=await SagaIntimacoes.iniciar({sb:_sb,meuId:meuId,ehAdmin:!!(eu.data&&eu.data.eh_administrador),toast:toast,aoMudar:renderTudo});
+  if(!ok)return;
+  var qs=new URLSearchParams(location.search);
+  if(qs.get('processo_id'))SagaIntimacoes.filtrarProcesso(qs.get('processo_id'));
+  if(qs.get('tribunal'))SagaIntimacoes.filtrarTribunal(qs.get('tribunal'));
+  renderTudo();
+  if(qs.get('intimacao'))SagaIntimacoes.abrir(qs.get('intimacao'));
+  if(qs.get('intimacao')||qs.get('processo_id')||qs.get('modo')||qs.get('tribunal'))history.replaceState(null,'',location.pathname);
+}
+init().catch(function(e){toast('Erro ao abrir as intimações: '+esc(e.message||''),'erro');});
+</script>
+</body>
+</html>

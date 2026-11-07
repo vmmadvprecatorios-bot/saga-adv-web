@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611072013"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Configurações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--radius:16px;--radius-sm:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px}
+.btn-primary,.btn-secondary,.btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 16px;border-radius:10px;font-size:12px;font-weight:700;white-space:nowrap}
+.btn-primary{background:var(--gold);color:#fff;border:1px solid var(--gold)}
+.btn-primary:disabled,.btn-secondary:disabled{opacity:.6;cursor:not-allowed}
+.btn-secondary{border:1px solid var(--border);background:var(--panel);color:var(--text)}
+.btn-secondary:hover{border-color:var(--gold)}
+.btn-danger{border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)}
+.btn-sm{height:32px;padding:0 12px;font-size:11.5px}
+.tabs{display:flex;gap:6px;padding:5px;border-radius:13px;margin-bottom:18px;background:var(--panel);border:1px solid var(--border-soft);max-width:100%;width:max-content;box-sizing:border-box;overflow-x:auto}
+.tab-btn{padding:9px 14px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.tab-btn.active{background:var(--gold);color:#fff}
+.tab-pane{display:none}.tab-pane.ativo{display:block}
+.panel{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:20px;max-width:860px;margin-bottom:16px}
+.panel-title{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600}
+.panel-sub{color:var(--muted);font-size:11.5px;margin:3px 0 14px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}
+.campo{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;min-width:0}
+.campo label{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.campo input,.campo select,.campo textarea{width:100%;height:38px;padding:0 11px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);outline:0;font-size:12.5px}
+.campo input:focus,.campo select:focus{border-color:var(--gold)}
+.campo input[readonly]{opacity:.7}
+.campo .dica{font-size:10.5px;color:var(--muted)}
+.acoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px}
+.foto-linha{display:flex;align-items:center;gap:18px;margin-bottom:16px;flex-wrap:wrap}
+.foto{width:96px;height:96px;border-radius:50%;background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;background-size:cover;background-position:center;flex:0 0 auto;box-shadow:0 8px 22px rgba(0,0,0,.25)}
+.foto.logo{border-radius:16px;background-color:var(--panel-2);background-size:contain;background-repeat:no-repeat;color:var(--muted);font-size:11px;width:150px;height:80px;border:1px dashed var(--border)}
+.foto-botoes{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--panel-2);border:1px solid var(--border-soft)}
+.seg button{padding:8px 16px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted)}
+.seg button.active{background:var(--gold);color:#fff}
+.linha-opcao{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
+.linha-opcao:last-child{border-bottom:0}
+.linha-opcao .t{font-size:13px;font-weight:600}
+.linha-opcao .s{font-size:11px;color:var(--muted);margin-top:2px}
+/* Interruptor estilo iPhone */
+.switch{position:relative;width:46px;height:27px;flex:0 0 auto}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch span{position:absolute;inset:0;border-radius:20px;background:color-mix(in srgb,var(--text) 18%,transparent);transition:background .25s ease;cursor:pointer}
+.switch span::after{content:'';position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .38s cubic-bezier(.34,1.45,.64,1)}
+.switch input:checked+span{background:var(--success,#2fae7a)}
+.switch input:checked+span::after{transform:translateX(19px)}
+.switch input:focus-visible+span{outline:2px solid var(--gold);outline-offset:2px}
+.forca{height:5px;border-radius:4px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden;margin-top:6px}
+.forca i{display:block;height:100%;width:0;border-radius:4px;transition:width .3s ease,background .3s ease}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:340px}
+.toast.success{border-color:color-mix(in srgb,var(--success) 50%,transparent)}
+.toast.error{border-color:color-mix(in srgb,var(--danger) 55%,transparent)}
+/* Janela de ajuste da imagem (zoom e enquadramento) */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:1700;align-items:flex-start;justify-content:center;padding:28px 14px;background:rgba(4,7,14,.6);backdrop-filter:blur(5px);overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{width:100%;max-width:560px;border:1px solid var(--border);border-radius:18px;background:var(--panel-solid);box-shadow:var(--shadow)}
+.modal-head{display:flex;justify-content:space-between;gap:12px;padding:18px 20px 12px;border-bottom:1px solid var(--border-soft)}
+.modal-head h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.modal-head p{font-size:11px;color:var(--muted);margin-top:3px}
+.modal-close{width:30px;height:30px;border:1px solid var(--border-soft);border-radius:9px;color:var(--muted);flex:0 0 auto}
+.modal-body{padding:16px 20px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 16px;border-top:1px solid var(--border-soft);flex-wrap:wrap}
+.corte-area{display:flex;justify-content:center;margin-bottom:14px}
+#corteCanvas{max-width:100%;border-radius:12px;cursor:grab;touch-action:none;background:#0b111c}
+#corteCanvas.arrastando{cursor:grabbing}
+.corte-zoom{display:flex;align-items:center;gap:10px}
+.corte-zoom input[type=range]{flex:1;accent-color:var(--gold)}
+.corte-zoom span{font-size:12px;color:var(--muted);min-width:44px;text-align:right}
+.corte-dicas{font-size:11px;color:var(--muted);margin-top:8px;text-align:center}
+@media(max-width:760px){.content{padding:20px 16px 34px}.grid2,.grid3{grid-template-columns:1fr}}
+/* telas largas: os blocos usam a largura toda, lado a lado (pedido do Dr. Victor, 08/11) */
+@media(min-width:1100px){
+  .tab-pane.ativo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+  .tab-pane.ativo>.panel{max-width:none;margin-bottom:0;min-width:0}
+  .tab-pane.ativo>.panel:only-child{grid-column:1/-1}
+  #aba-preferencias>.panel:first-child{order:1}#aba-preferencias>.panel:last-child{order:2}
+  #painelCoresEquipe{order:3;grid-column:1/-1}
+  #listaCoresEquipe{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:28px}
+  /* Aparência e Avisos no sino com a mesma altura: a lista de avisos rola dentro do quadro */
+  #aba-preferencias>.panel:last-child{display:flex;flex-direction:column;align-self:stretch}
+  #aba-preferencias #prAvisos{flex:1 1 auto;height:0;min-height:220px;overflow:auto;padding-right:6px;overscroll-behavior:contain}
+}
+.situacao-editor{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-soft)}.situacao-editor input[type=text]{flex:1 1 220px;min-width:0;padding:9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);color:var(--text)}.situacao-editor label{display:flex;align-items:center;gap:5px;font-size:11px}.situacao-editor input[type=color]{width:38px;height:32px;border:1px solid var(--border);background:var(--panel);border-radius:6px}.situacao-editor button{white-space:normal}.situacao-editor button:active{transform:scale(.98)}
+  /* botões da cor: o espaço fica sempre reservado (nada pula); só aparecem e somem suave (08/11) */
+  .pr-cor-salvar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;transition:opacity .26s cubic-bezier(.22,.78,.25,1),transform .26s cubic-bezier(.22,.78,.25,1),visibility 0s linear .26s}
+  .pr-cor-salvar.mostrar{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .26s cubic-bezier(.22,.78,.25,1),transform .26s cubic-bezier(.22,.78,.25,1),visibility 0s}
+  /* troca de cor da prévia: a tela inteira esmaece de uma cor para a outra (sem parecer que recarregou) */
+  html.saga-cor-trocando #sidebarSaga,html.saga-cor-trocando #topbarSaga{view-transition-name:none !important}
+  html.saga-cor-trocando::view-transition-group(root){animation-duration:.38s}
+  html.saga-cor-trocando::view-transition-old(root),html.saga-cor-trocando::view-transition-new(root){animation-duration:.38s;animation-timing-function:cubic-bezier(.22,.78,.25,1);mix-blend-mode:normal}
+  .temas-regra{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px}.temas-lista{display:flex;flex-wrap:wrap;gap:4px 16px;padding:4px 0 0 24px}
+  .temas-regra label.chk{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer}.temas-regra input{width:15px;height:15px;accent-color:var(--gold)}
+  .aparelhos{display:flex;flex-direction:column;gap:8px;margin:6px 0 14px}
+  .aparelho{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 2%,transparent)}
+  .aparelho.atual{border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+  .ap-icone{width:34px;height:34px;flex:0 0 auto;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold-light)}
+  .ap-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ap-info b{font-size:13px;color:var(--text)}.ap-info b em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--gold-light);margin-left:6px}.ap-info small{font-size:11px;color:var(--muted)}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611072013">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Configurações</h1>
+      <p>Seu perfil, sua senha e as preferências do sistema.</p>
+    </div>
+  </div>
+
+  <div class="tabs" id="abas">
+    <button class="tab-btn active" data-aba="perfil" type="button">Meu perfil</button>
+    <button class="tab-btn" data-aba="seguranca" type="button">Segurança</button>
+    <button class="tab-btn" data-aba="preferencias" type="button">Preferências</button>
+    <button class="tab-btn" data-aba="areas-teses" type="button" id="abaAreasTesesBtn" style="display:none">Áreas e tipos de ação</button>
+    <button class="tab-btn" data-aba="escritorio" type="button" id="abaEscritorioBtn" style="display:none">Escritório</button>
+  </div>
+
+  <!-- MEU PERFIL -->
+  <section class="tab-pane ativo" id="aba-perfil">
+    <div class="panel">
+      <div class="panel-title">Meu perfil</div>
+      <div class="panel-sub">A foto e o nome aparecem para a equipe no menu, no chat e em quem está online.</div>
+      <div class="foto-linha">
+        <div class="foto" id="pfFoto">--</div>
+        <div>
+          <div class="foto-botoes">
+            <button class="btn-secondary btn-sm" id="pfTrocarFoto" type="button">Trocar foto</button>
+            <button class="btn-secondary btn-sm" id="pfTirarFoto" type="button" style="display:none">Remover foto</button>
+          </div>
+          <div class="dica" style="font-size:10.5px;color:var(--muted);margin-top:6px">PNG, JPG ou WEBP. A imagem é ajustada para um quadrado.</div>
+          <input id="pfArquivo" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="campo"><label for="pfNome">Nome completo</label><input id="pfNome" maxlength="120"></div>
+        <div class="campo"><label for="pfEmail">E-mail de acesso</label><input id="pfEmail" readonly><span class="dica">Só o administrador altera o e-mail de acesso.</span></div>
+        <div class="campo"><label for="pfCargo">Cargo</label><input id="pfCargo" maxlength="80" placeholder="Ex.: Advogada, Estagiário, Atendimento"></div>
+        <div class="campo"><label for="pfTelefone">Telefone / WhatsApp</label><input id="pfTelefone" maxlength="20" placeholder="(82) 90000-0000" inputmode="tel"></div>
+      </div>
+      <div class="grid3">
+        <div class="campo"><label for="pfOab">Número da OAB</label><input id="pfOab" maxlength="20" placeholder="Se tiver"></div>
+        <div class="campo"><label for="pfUfOab">UF da OAB</label><input id="pfUfOab" maxlength="2" placeholder="AL"></div>
+        <div class="campo"><label>&nbsp;</label></div>
+      </div>
+      <div class="acoes"><button class="btn-primary" id="pfSalvar" type="button">Salvar perfil</button></div>
+    </div>
+  </section>
+
+  <!-- SEGURANCA -->
+  <section class="tab-pane" id="aba-seguranca">
+    <div class="panel">
+      <div class="panel-title">Trocar senha</div>
+      <div class="panel-sub">Use pelo menos 8 caracteres, misturando letras e números.</div>
+      <div class="campo"><label for="sgAtual">Senha atual</label><input id="sgAtual" type="password" autocomplete="current-password"></div>
+      <div class="grid2">
+        <div class="campo"><label for="sgNova">Nova senha</label><input id="sgNova" type="password" autocomplete="new-password"><div class="forca"><i id="sgForca"></i></div><span class="dica" id="sgForcaTxt"></span></div>
+        <div class="campo"><label for="sgConfirma">Repita a nova senha</label><input id="sgConfirma" type="password" autocomplete="new-password"></div>
+      </div>
+      <div class="acoes"><button class="btn-primary" id="sgSalvar" type="button">Trocar senha</button></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Aparelhos conectados</div>
+      <div class="panel-sub">Onde o seu acesso ao SAGA está aberto agora. Saia de um aparelho específico (ele deixa de funcionar em até 1 hora) ou de todos de uma vez.</div>
+      <div class="aparelhos" id="sgAparelhos"><div class="s">Carregando…</div></div>
+      <div class="acoes" style="justify-content:flex-start"><button class="btn-danger" id="sgSairTodos" type="button">Sair de todos os aparelhos</button></div>
+    </div>
+  </section>
+
+  <!-- PREFERENCIAS -->
+  <section class="tab-pane" id="aba-preferencias">
+    <div class="panel">
+      <div class="panel-title">Aparência</div>
+      <div class="linha-opcao">
+        <div><div class="t">Tema</div><div class="s">Também dá para trocar no botão do sol e da lua, no alto da tela.</div></div>
+        <div class="seg" id="prTema"><button type="button" data-v="light">Claro</button><button type="button" data-v="dark">Escuro</button></div>
+      </div>
+      <div class="linha-opcao">
+        <div><div class="t">Cor do tema</div><div class="s" id="prCorAjuda">A cor do sistema. O claro e o escuro de cada cor continuam no botão do sol e da lua.</div></div>
+        <div><div class="saga-cores" id="prCor"></div><div class="pr-cor-salvar" id="prCorSalvarWrap" aria-hidden="true"><button type="button" class="btn-primary" id="prCorSalvar" tabindex="-1">Salvar cor do tema</button><button type="button" class="btn-secondary" id="prCorDesfazer" tabindex="-1">Cancelar</button></div></div>
+      </div>
+      <div class="linha-opcao">
+        <div><div class="t">Efeitos de movimento</div><div class="s">Telas, janelas e cartões entram e saem com movimento suave. Desligado, tudo troca na hora.</div></div>
+        <div class="seg" id="prMov"><button type="button" data-v="ligado">Ligados</button><button type="button" data-v="reduzido">Desligados</button></div>
+      </div>
+      <div class="linha-opcao">
+        <div><div class="t">Tamanho da letra</div><div class="s">Aumenta tudo no sistema, neste e nos outros aparelhos.</div></div>
+        <div class="seg" id="prLetra"><button type="button" data-v="1">Normal</button><button type="button" data-v="1.1">Grande</button><button type="button" data-v="1.2">Maior</button></div>
+      </div>
+      <div class="linha-opcao">
+        <div><div class="t">Tela inicial</div><div class="s">Qual tela abre logo depois de entrar no sistema.</div></div>
+        <div class="campo" style="margin:0;min-width:220px"><select id="prTelaInicial"></select></div>
+      </div>
+    </div>
+    <div class="panel" id="painelCoresEquipe" hidden>
+      <div class="panel-title">Cor do tema da equipe</div>
+      <div class="panel-sub">Só o administrador vê. Primeiro a regra do escritório (quais cores a equipe pode escolher); depois, se quiser, uma exceção para cada pessoa: "Todos os temas" para ela ou uma cor fixa (a pessoa só troca entre claro e escuro).</div>
+      <div class="temas-regra" id="temasRegra"></div>
+      <div class="t" style="margin:16px 0 6px">Por colaborador</div>
+      <div id="listaCoresEquipe"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title" id="tituloAvisos">Avisos no sino</div>
+      <div class="panel-sub">Escolha quais avisos aparecem no sino do alto da tela. Os desligados não somem do sistema: só deixam de chamar a sua atenção.</div>
+      <div id="prAvisos"></div>
+    </div>
+  </section>
+
+  <!-- ESCRITORIO (administrador geral) -->
+  <section class="tab-pane" id="aba-areas-teses"><div class="panel"><h2>Áreas e tipos de ação</h2><p>Organize os tipos de ação por área do direito. Desativar mantém os nomes nos processos já cadastrados.</p><div id="catalogoAreasTeses"></div></div><div class="panel"><h2>Situações da ação</h2><p>Desativar retira a opção dos novos registros e preserva o histórico. Marque as situações que contam como protocoladas.</p><div id="catalogoSituacoes"></div></div></section>
+  <section class="tab-pane" id="aba-escritorio">
+    <div class="panel">
+      <div class="panel-title">Dados do escritório</div>
+      <div class="panel-sub">Usados nos e-mails do sistema, nos relatórios e nos documentos. Só o administrador geral vê e altera.</div>
+      <div class="foto-linha">
+        <div class="foto logo" id="esLogo">Sem logo</div>
+        <div>
+          <div class="foto-botoes">
+            <button class="btn-secondary btn-sm" id="esTrocarLogo" type="button">Enviar logo</button>
+            <button class="btn-secondary btn-sm" id="esTirarLogo" type="button" style="display:none">Remover logo</button>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);margin-top:6px">Aparece na barra do alto de todas as telas e na tela de login. PNG com fundo transparente fica melhor.</div>
+          <input id="esArquivo" type="file" accept="image/png,image/jpeg,image/webp" style="display:none">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="campo"><label for="esNome">Nome do escritório</label><input id="esNome" maxlength="120"></div>
+        <div class="campo"><label for="esCnpj">CNPJ</label><input id="esCnpj" maxlength="18" placeholder="00.000.000/0000-00" inputmode="numeric"></div>
+        <div class="campo"><label for="esOab">OAB da sociedade / principal</label><input id="esOab" maxlength="30"></div>
+        <div class="campo"><label for="esTelefone">Telefone</label><input id="esTelefone" maxlength="20" inputmode="tel"></div>
+        <div class="campo"><label for="esEmail">E-mail do escritório</label><input id="esEmail" maxlength="120" type="email"></div>
+        <div class="campo"><label for="esEndereco">Endereço</label><input id="esEndereco" maxlength="200"></div>
+      </div>
+      <div class="acoes"><button class="btn-primary" id="esSalvar" type="button">Salvar dados do escritório</button></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<!-- Ajustar imagem antes de enviar -->
+<div class="modal-overlay" id="modalCorte"><div class="modal">
+  <div class="modal-head"><div><h2 id="corteTitulo">Ajustar imagem</h2><p>Arraste a imagem para posicionar e use o zoom para aumentar ou diminuir.</p></div><button class="modal-close" id="corteFechar" type="button" aria-label="Fechar">✕</button></div>
+  <div class="modal-body">
+    <div class="corte-area"><canvas id="corteCanvas" width="320" height="320"></canvas></div>
+    <div class="corte-zoom">
+      <button class="btn-secondary btn-sm" id="corteMenos" type="button" aria-label="Diminuir">−</button>
+      <input type="range" id="corteZoom" min="20" max="400" value="100" aria-label="Zoom">
+      <button class="btn-secondary btn-sm" id="corteMais" type="button" aria-label="Aumentar">+</button>
+      <span id="corteZoomTxt">100%</span>
+    </div>
+    <div class="corte-dicas">Dica: a rodinha do mouse também dá zoom. <button class="btn-secondary btn-sm" id="corteCentralizar" type="button" style="margin-left:6px">Centralizar</button></div>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" id="corteCancelar" type="button">Cancelar</button><button class="btn-primary" id="corteUsar" type="button">Usar esta imagem</button></div>
+</div></div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611072013"></script>
+<script src="saga_teses.js?v=202611072013"></script>
+<script>
+/* =====================================================================
+   CONFIGURACOES (T31 + T24)
+   - Meu perfil: foto (armazenamento "avatares", pasta = id da conta), nome, cargo, telefone, OAB
+   - Seguranca: trocar senha (confere a atual) e sair de todos os aparelhos
+   - Preferencias: tema, tamanho da letra, tela inicial, avisos do sino (usuarios.preferencias / preferencias_notificacao)
+   - Escritorio (administrador geral): configuracoes_sistema
+   ===================================================================== */
+var TELAS=[['dashboard_padrao_metalico.html','Dashboard','dashboard'],['lista_processos_padrao_metalico.html','Processos em Andamento','processos'],
+  ['calendario_padrao_metalico.html','Agenda','agenda'],['minhas_tarefas.html','Minhas Tarefas','tarefas'],['chat_interno_padrao_metalico.html','Chat Interno','chat'],
+  ['ponto_eletronico_padrao_metalico.html','Ponto Eletrônico','ponto'],['financeiro.html','Financeiro','financeiro'],['marketing_campanhas_padrao_metalico.html','Marketing','marketing']];
+var AVISOS=[['chat','Chat','mensagens novas'],['tarefas','Tarefas','tarefas atribuídas, do dia e atrasadas'],['agenda','Agenda','compromissos do dia'],
+  ['mencao','Menções','quando alguém marca você num comentário'],['intimacoes','Intimações','intimações novas do tribunal'],
+  ['captacao','Captação','fichas distribuídas, retornos do dia e fichas sem data de retorno'],['parados','Processos parados e retornos','processos parados, não protocolados, retornos do Jurídico e resumo da semana'],
+  ['notas','Notas','notas compartilhadas com você'],['teses','Teses e radar','atualizações de teses e itens novos do radar de oportunidades'],['marketing','Marketing','materiais para aprovar, ajustes e decisões'],['outros','Outros avisos','tribunal novo e demais avisos do sistema']];
+var catalogoTeses=null;
+var state={eu:null,authId:null,escritorio:null,admin:false};
+
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4200);}
+function iniciais(n){return String(n||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase()||'--';}
+function erroTexto(e){return (e&&(e.message||e.error_description))||'Não foi possível concluir.';}
+function trocarAba(aba){
+  if(aba==='areas-teses'&&!state.adminGeral)aba='perfil';
+  document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
+  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
+  if(aba==='seguranca')carregarAparelhos();
+}
+/* ----- Aparelhos conectados (bloco 109) ----- */
+function descreverAparelho(ua){
+  ua=String(ua||'');
+  var so=/iPhone/.test(ua)?'iPhone':/iPad/.test(ua)?'iPad':/Android/.test(ua)?'Celular Android':/Windows/.test(ua)?'Computador Windows':/Mac OS X|Macintosh/.test(ua)?'Mac':/Linux/.test(ua)?'Computador Linux':'Aparelho';
+  var nav=/Edg\//.test(ua)?'Edge':/OPR\//.test(ua)?'Opera':/SamsungBrowser/.test(ua)?'navegador Samsung':/Chrome\//.test(ua)?'Chrome':/Firefox\//.test(ua)?'Firefox':/Safari\//.test(ua)?'Safari':'';
+  var cel=/iPhone|Android|iPad/.test(ua);
+  return {nome:so+(nav?' · '+nav:''),cel:cel};
+}
+function quandoTexto(iso){
+  if(!iso)return '';var d=new Date(iso),min=Math.round((Date.now()-d)/60000);
+  if(min<2)return 'agora há pouco';if(min<60)return 'há '+min+' min';var h=Math.round(min/60);if(h<24)return 'há '+h+' h';
+  return d.toLocaleDateString('pt-BR')+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+async function carregarAparelhos(){
+  var box=document.getElementById('sgAparelhos');if(!box)return;
+  var r=await _sb.rpc('minhas_sessoes');
+  if(r.error){box.innerHTML='<div class="s">Não foi possível listar os aparelhos agora.</div>';return;}
+  var lista=r.data||[];
+  if(!lista.length){box.innerHTML='<div class="s">Nenhum aparelho encontrado.</div>';return;}
+  box.innerHTML=lista.map(function(a){var d=descreverAparelho(a.aparelho);
+    return '<div class="aparelho'+(a.atual?' atual':'')+'" data-sessao="'+esc(a.id)+'">'+
+      '<span class="ap-icone" aria-hidden="true">'+(d.cel?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="7" y="2.5" width="10" height="19" rx="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M11 18.5h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="12" rx="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>')+'</span>'+
+      '<span class="ap-info"><b>'+esc(d.nome)+(a.atual?' <em>este aparelho</em>':'')+'</b><small>Último uso '+esc(quandoTexto(a.ultimo_uso))+' · entrou em '+esc(new Date(a.criado_em).toLocaleDateString('pt-BR'))+(a.ip?' · IP '+esc(a.ip):'')+'</small></span>'+
+      (a.atual?'':'<button type="button" class="btn-secondary btn-sm" data-sair-sessao="'+esc(a.id)+'">Sair deste aparelho</button>')+'</div>';}).join('');
+  box.querySelectorAll('[data-sair-sessao]').forEach(function(b){b.addEventListener('click',async function(){
+    var ok=window.sagaConfirmar?await sagaConfirmar('Sair deste aparelho','O SAGA será encerrado nesse aparelho (em até 1 hora ele pede para entrar de novo).','Sair'):confirm('Sair deste aparelho?');if(!ok)return;
+    b.disabled=true;var rr=await _sb.rpc('encerrar_sessao',{p_id:b.dataset.sairSessao});
+    if(rr.error){b.disabled=false;showToast('Não foi possível: '+esc(erroTexto(rr.error)),'error');return;}
+    var linha=b.closest('.aparelho');
+    if(window.sagaRecolher)sagaRecolher(linha,true);else linha.remove();
+    setTimeout(function(){if(linha.parentNode)linha.remove();},450);
+    showToast('Pronto: esse aparelho foi desconectado.','success');
+  });});
+}
+
+/* Situações das ações, somente administrador geral. */
+var situacoesAcao=[];
+var salvandoSituacao=false;
+async function carregarSituacoesAcao(){
+  if(!state.adminGeral)return;
+  var r=await _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada').eq('categoria','situacao_acao').order('ordem');
+  if(r.error){showToast('Não foi possível carregar as situações. '+esc(erroTexto(r.error)),'error');return false;}
+  situacoesAcao=r.data||[];renderSituacoesAcao();return true;
+}
+function renderSituacoesAcao(){
+  var root=document.getElementById('catalogoSituacoes');root.replaceChildren();if(!state.adminGeral)return;
+  situacoesAcao.concat([{id:null,nome:'',cor:'#4b8af5',ativo:true,conta_protocolada:false}]).forEach(function(item,index){
+    var row=document.createElement('div');row.className='situacao-editor';
+    var nome=document.createElement('input');nome.type='text';nome.value=item.nome;nome.maxLength=120;nome.placeholder='Nova situação';nome.setAttribute('aria-label',item.id?'Nome da situação':'Nome da nova situação');
+    var cor=document.createElement('input');cor.type='color';cor.value=/^#[0-9a-f]{6}$/i.test(item.cor)?item.cor:'#4b8af5';cor.setAttribute('aria-label','Cor da situação');
+    var label=document.createElement('label'),conta=document.createElement('input');conta.type='checkbox';conta.checked=item.conta_protocolada===true;label.append(conta,document.createTextNode('Conta como protocolada'));
+    var ativoLabel=document.createElement('label'),ativo=document.createElement('input');ativo.type='checkbox';ativo.checked=item.ativo!==false;ativoLabel.append(ativo,document.createTextNode('Ativa'));
+    var salvar=document.createElement('button');salvar.type='button';salvar.className='btn-secondary btn-sm';salvar.textContent=item.id?'Salvar':'Criar situação';
+    salvar.onclick=function(){var n=nome.value.trim();if(!n){showToast('Informe o nome da situação.','error');nome.focus();return;}gravarSituacaoAcao({id:item.id,nome:n,cor:cor.value,ativo:ativo.checked,conta_protocolada:conta.checked});};
+    row.append(nome,cor,label,ativoLabel,salvar);
+    if(item.id){[-1,1].forEach(function(delta){var b=document.createElement('button');b.type='button';b.className='btn-secondary btn-sm';b.textContent=delta<0?'Subir':'Descer';b.disabled=index+delta<0||index+delta>=situacoesAcao.length;b.onclick=function(){reordenarSituacaoAcao(index,delta);};row.appendChild(b);});}
+    root.appendChild(row);
+  });
+}
+function parametrosSituacao(item){return {p_categoria:'situacao_acao',p_id:item.id||null,p_nome:item.nome,p_cor:item.cor,p_ativo:item.ativo!==false,p_conta_protocolada:item.conta_protocolada===true};}
+async function gravarSituacaoAcao(item){
+  if(!state.adminGeral||salvandoSituacao)return;
+  salvandoSituacao=true;document.querySelectorAll('#catalogoSituacoes button').forEach(b=>b.disabled=true);
+  try{var r=await _sb.rpc('catalogo_salvar',parametrosSituacao(item));if(r.error)throw r.error;if(await carregarSituacoesAcao())showToast('Situação salva.','success');else showToast('Situação salva, mas a lista não foi atualizada. Recarregue a tela.','error');}
+  catch(e){showToast('Não foi possível salvar: '+esc(erroTexto(e)),'error');renderSituacoesAcao();}
+  finally{salvandoSituacao=false;renderSituacoesAcao();}
+}
+async function reordenarSituacaoAcao(index,delta){
+  if(!state.adminGeral||salvandoSituacao)return;
+  var lista=situacoesAcao.slice();[lista[index],lista[index+delta]]=[lista[index+delta],lista[index]];
+  salvandoSituacao=true;document.querySelectorAll('#catalogoSituacoes button').forEach(b=>b.disabled=true);
+  try{
+    for(var i=0;i<lista.length;i++){var r=await _sb.rpc('catalogo_salvar',Object.assign(parametrosSituacao(lista[i]),{p_ordem:i+1}));if(r.error)throw r.error;}
+    if(await carregarSituacoesAcao())showToast('Ordem das situações salva.','success');else showToast('Ordem salva, mas a lista não foi atualizada. Recarregue a tela.','error');
+  }catch(e){showToast('Não foi possível salvar a ordem: '+esc(erroTexto(e)),'error');await carregarSituacoesAcao();}
+  finally{salvandoSituacao=false;renderSituacoesAcao();}
+}
+
+/* ----- Meu perfil ----- */
+function mostrarFoto(url){
+  var f=document.getElementById('pfFoto');
+  if(url){f.style.backgroundImage='url("'+url+'")';f.textContent='';}
+  else{f.style.backgroundImage='';f.textContent=iniciais(document.getElementById('pfNome').value||(state.eu&&state.eu.nome_completo));}
+  document.getElementById('pfTirarFoto').style.display=url?'':'none';
+}
+function preencherPerfil(){
+  var u=state.eu;
+  document.getElementById('pfNome').value=u.nome_completo||'';
+  document.getElementById('pfEmail').value=u.email||'';
+  document.getElementById('pfCargo').value=u.cargo_titulo||'';
+  document.getElementById('pfTelefone').value=u.telefone||'';
+  document.getElementById('pfOab').value=u.numero_oab||'';
+  document.getElementById('pfUfOab').value=u.uf_oab||'';
+  mostrarFoto(u.foto_url);
+}
+async function salvarPerfil(){
+  var nome=document.getElementById('pfNome').value.trim();
+  if(nome.length<3){showToast('Informe o nome completo.','error');return;}
+  var b=document.getElementById('pfSalvar');b.disabled=true;
+  var dados={nome_completo:nome,cargo_titulo:document.getElementById('pfCargo').value.trim()||null,telefone:document.getElementById('pfTelefone').value.trim()||null,
+    numero_oab:document.getElementById('pfOab').value.trim()||null,uf_oab:(document.getElementById('pfUfOab').value.trim().toUpperCase()||null)};
+  dados.possui_registro_oab=!!dados.numero_oab;
+  var r=await _sb.from('usuarios').update(dados).eq('id',state.eu.id).select('id');
+  b.disabled=false;
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível salvar: '+esc(erroTexto(r.error)),'error');return;}
+  Object.assign(state.eu,dados);
+  try{localStorage.setItem('saga-iniciais',iniciais(nome));}catch(e){}
+  if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+  showToast('Perfil salvo.','success');
+}
+/* ----- Ajustar imagem (zoom e enquadramento) antes de enviar ----- */
+var CORTE={img:null,modo:'foto',z:1,x:0,y:0,ok:null};
+function tamanhoCorte(){return CORTE.modo==='foto'?{w:320,h:320,ow:512,oh:512}:{w:480,h:160,ow:960,oh:320};}
+function escalaBase(){var t=tamanhoCorte(),i=CORTE.img;return CORTE.modo==='foto'?Math.max(t.w/i.width,t.h/i.height):Math.min(t.w/i.width,t.h/i.height);}
+function desenharCorte(cv,saida){
+  var t=tamanhoCorte(),ctx=cv.getContext('2d'),k=saida?cv.width/t.w:1,i=CORTE.img,e=escalaBase()*CORTE.z*k;
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,cv.width,cv.height);
+  if(!saida&&CORTE.modo==='logo'){ // xadrez: mostra o que fica transparente
+    for(var a=0;a<cv.height;a+=12)for(var b=0;b<cv.width;b+=12){ctx.fillStyle=((a+b)/12)%2?'#2a3448':'#323d54';ctx.fillRect(b,a,12,12);}
+  }
+  if(saida&&CORTE.modo==='foto'){ctx.fillStyle='#ffffff';ctx.fillRect(0,0,cv.width,cv.height);}
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(i,cv.width/2+CORTE.x*k-i.width*e/2,cv.height/2+CORTE.y*k-i.height*e/2,i.width*e,i.height*e);
+  if(!saida&&CORTE.modo==='foto'){ // mascara redonda: so o circulo vira a foto
+    ctx.fillStyle='rgba(4,7,14,.55)';ctx.beginPath();ctx.rect(0,0,cv.width,cv.height);ctx.arc(cv.width/2,cv.height/2,cv.width/2-4,0,Math.PI*2,true);ctx.fill('evenodd');
+    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cv.width/2,cv.height/2,cv.width/2-4,0,Math.PI*2);ctx.stroke();
+  }
+  if(!saida&&CORTE.modo==='logo'){ctx.strokeStyle='rgba(255,255,255,.6)';ctx.setLineDash([6,5]);ctx.strokeRect(1,1,cv.width-2,cv.height-2);ctx.setLineDash([]);}
+}
+function ajustarZoom(z){
+  CORTE.z=Math.max(0.2,Math.min(4,z));
+  document.getElementById('corteZoom').value=Math.round(CORTE.z*100);
+  document.getElementById('corteZoomTxt').textContent=Math.round(CORTE.z*100)+'%';
+  desenharCorte(document.getElementById('corteCanvas'));
+}
+function abrirCorte(arq,modo){
+  return new Promise(function(ok){
+    var img=new Image(),url=URL.createObjectURL(arq);
+    img.onload=function(){
+      CORTE={img:img,modo:modo,z:1,x:0,y:0,ok:ok,url:url};
+      var t=tamanhoCorte(),cv=document.getElementById('corteCanvas');cv.width=t.w;cv.height=t.h;
+      document.getElementById('corteTitulo').textContent=modo==='foto'?'Ajustar foto de perfil':'Ajustar logo do escritório';
+      ajustarZoom(1);document.getElementById('modalCorte').classList.add('open');
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);showToast('Não foi possível ler a imagem.','error');ok(null);};
+    img.src=url;
+  });
+}
+function fecharCorte(blob){
+  document.getElementById('modalCorte').classList.remove('open');
+  if(CORTE.url)URL.revokeObjectURL(CORTE.url);
+  var ok=CORTE.ok;CORTE.ok=null;if(ok)ok(blob);
+}
+function usarCorte(){
+  var t=tamanhoCorte(),out=document.createElement('canvas');out.width=t.ow;out.height=t.oh;
+  desenharCorte(out,true);
+  out.toBlob(function(b){fecharCorte(b);},CORTE.modo==='foto'?'image/jpeg':'image/png',0.9);
+}
+function ligarCorte(){
+  var cv=document.getElementById('corteCanvas'),arr=null;
+  cv.addEventListener('pointerdown',function(e){arr={x:e.clientX,y:e.clientY,ox:CORTE.x,oy:CORTE.y};cv.setPointerCapture(e.pointerId);cv.classList.add('arrastando');});
+  cv.addEventListener('pointermove',function(e){if(!arr)return;var r=cv.getBoundingClientRect(),k=cv.width/r.width;CORTE.x=arr.ox+(e.clientX-arr.x)*k;CORTE.y=arr.oy+(e.clientY-arr.y)*k;desenharCorte(cv);});
+  ['pointerup','pointercancel'].forEach(function(t){cv.addEventListener(t,function(){arr=null;cv.classList.remove('arrastando');});});
+  cv.addEventListener('wheel',function(e){e.preventDefault();ajustarZoom(CORTE.z*(e.deltaY<0?1.08:1/1.08));},{passive:false});
+  document.getElementById('corteZoom').addEventListener('input',function(){ajustarZoom(Number(this.value)/100);});
+  document.getElementById('corteMenos').addEventListener('click',function(){ajustarZoom(CORTE.z/1.15);});
+  document.getElementById('corteMais').addEventListener('click',function(){ajustarZoom(CORTE.z*1.15);});
+  document.getElementById('corteCentralizar').addEventListener('click',function(){CORTE.x=0;CORTE.y=0;ajustarZoom(1);});
+  document.getElementById('corteUsar').addEventListener('click',usarCorte);
+  ['corteCancelar','corteFechar'].forEach(function(id){document.getElementById(id).addEventListener('click',function(){fecharCorte(null);});});
+}
+function caminhoDaUrl(url){var m=/\/avatares\/(.+)$/.exec(url||'');return m?decodeURIComponent(m[1].split('?')[0]):null;}
+async function enviarFoto(arq){
+  if(!arq)return;
+  if(!/^image\//.test(arq.type)){showToast('Escolha uma imagem (PNG, JPG ou WEBP).','error');return;}
+  var blob=await abrirCorte(arq,'foto');
+  document.getElementById('pfArquivo').value='';
+  if(!blob)return;
+  var b=document.getElementById('pfTrocarFoto');b.disabled=true;b.textContent='Enviando…';
+  try{
+    var caminho=state.authId+'/foto_'+Date.now()+'.jpg';
+    var up=await _sb.storage.from('avatares').upload(caminho,blob,{contentType:'image/jpeg'});
+    if(up.error)throw up.error;
+    var url=_sb.storage.from('avatares').getPublicUrl(caminho).data.publicUrl;
+    var antiga=caminhoDaUrl(state.eu.foto_url);
+    var r=await _sb.from('usuarios').update({foto_url:url}).eq('id',state.eu.id).select('id');
+    if(r.error||!r.data||!r.data.length){await _sb.storage.from('avatares').remove([caminho]);throw r.error||new Error('Sem permissão.');}
+    if(antiga)_sb.storage.from('avatares').remove([antiga]);
+    state.eu.foto_url=url;mostrarFoto(url);
+    if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+    showToast('Foto atualizada.','success');
+  }catch(e){showToast('Não foi possível enviar a foto: '+esc(erroTexto(e)),'error');}
+  finally{b.disabled=false;b.textContent='Trocar foto';document.getElementById('pfArquivo').value='';}
+}
+async function removerFoto(){
+  if(!(await sagaConfirmar('Remover foto','Remover a sua foto de perfil? No lugar dela aparecem as suas iniciais.','Remover')))return;
+  var antiga=caminhoDaUrl(state.eu.foto_url);
+  var r=await _sb.from('usuarios').update({foto_url:null}).eq('id',state.eu.id).select('id');
+  if(r.error){showToast('Não foi possível remover: '+esc(erroTexto(r.error)),'error');return;}
+  if(antiga)_sb.storage.from('avatares').remove([antiga]);
+  state.eu.foto_url=null;mostrarFoto(null);
+  if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+  showToast('Foto removida.','success');
+}
+
+/* ----- Seguranca ----- */
+function forcaSenha(s){
+  var p=0;if(s.length>=8)p++;if(s.length>=12)p++;if(/[a-z]/.test(s)&&/[A-Z]/.test(s))p++;if(/\d/.test(s))p++;if(/[^A-Za-z0-9]/.test(s))p++;
+  return Math.min(4,p);
+}
+function mostrarForca(){
+  var s=document.getElementById('sgNova').value,f=forcaSenha(s),i=document.getElementById('sgForca');
+  var cores=['#e5484d','#f97316','#e0a93b','#2fae7a','#16a34a'],txt=['Muito fraca','Fraca','Razoável','Boa','Forte'];
+  i.style.width=(s?(f+1)*20:0)+'%';i.style.background=cores[f];
+  document.getElementById('sgForcaTxt').textContent=s?txt[f]:'';
+}
+async function trocarSenha(){
+  var atual=document.getElementById('sgAtual').value,nova=document.getElementById('sgNova').value,conf=document.getElementById('sgConfirma').value;
+  if(!atual){showToast('Digite a senha atual.','error');return;}
+  if(nova.length<8||!/[A-Za-z]/.test(nova)||!/\d/.test(nova)){showToast('A nova senha precisa ter pelo menos 8 caracteres, com letras e números.','error');return;}
+  if(nova!==conf){showToast('A confirmação não bate com a nova senha.','error');return;}
+  if(nova===atual){showToast('A nova senha é igual à atual.','error');return;}
+  var b=document.getElementById('sgSalvar');b.disabled=true;
+  try{
+    // confere a senha atual antes de trocar
+    var ok=await _sb.auth.signInWithPassword({email:state.eu.email,password:atual});
+    if(ok.error){showToast('A senha atual está incorreta.','error');return;}
+    var r=await _sb.auth.updateUser({password:nova});
+    if(r.error)throw r.error;
+    ['sgAtual','sgNova','sgConfirma'].forEach(function(id){document.getElementById(id).value='';});mostrarForca();
+    showToast('Senha trocada. Use a nova senha na próxima vez que entrar.','success');
+  }catch(e){showToast('Não foi possível trocar a senha: '+esc(erroTexto(e)),'error');}
+  finally{b.disabled=false;}
+}
+async function sairDeTodos(){
+  if(!(await sagaConfirmar('Sair de todos os aparelhos','Encerrar o SAGA em todos os computadores e celulares, inclusive neste? Você precisará entrar de novo.','Sair de todos')))return;
+  try{await _sb.auth.signOut({scope:'global'});}catch(e){}
+  try{localStorage.removeItem('saga-permissoes');}catch(e){}
+  window.location.href='login_padrao_metalico.html';
+}
+
+/* ----- Preferencias ----- */
+function prefs(){return (state.eu&&state.eu.preferencias)||{};}
+function marcarSeg(id,valor){document.querySelectorAll('#'+id+' button').forEach(function(b){b.classList.toggle('active',b.dataset.v===String(valor));});}
+async function salvarPreferencias(mudancas,msg){
+  var p=Object.assign({},prefs(),mudancas);
+  var r=await _sb.from('usuarios').update({preferencias:p}).eq('id',state.eu.id).select('id');
+  if(r.error){showToast('Não foi possível salvar: '+esc(erroTexto(r.error)),'error');return false;}
+  state.eu.preferencias=p;if(msg)showToast(msg,'success');return true;
+}
+function preencherPreferencias(){
+  var tema=document.body.getAttribute('data-theme')||'dark';marcarSeg('prTema',tema);
+  montarCores();
+  var mov='ligado';try{mov=localStorage.getItem('saga-movimento')==='reduzido'?'reduzido':'ligado';}catch(e){}marcarSeg('prMov',mov);
+  montarCoresEquipe();
+  var letra=String(prefs().letra||(function(){try{return localStorage.getItem('saga-letra')||'1';}catch(e){return '1';}})());marcarSeg('prLetra',letra);
+  var sel=document.getElementById('prTelaInicial');
+  var telas=TELAS.filter(function(t){return !window.SagaUI||!SagaUI.podeVerTela||SagaUI.podeVerTela(t[2]);});
+  sel.innerHTML=telas.map(function(t){return '<option value="'+t[0]+'">'+esc(t[1])+'</option>';}).join('');
+  sel.value=prefs().tela_inicial||'dashboard_padrao_metalico.html';
+  var desl=((state.eu.preferencias_notificacao||{}).desligados)||[];
+  document.getElementById('prAvisos').innerHTML=AVISOS.map(function(a){
+    return '<div class="linha-opcao"><div><div class="t">'+esc(a[1])+'</div><div class="s">'+esc(a[2])+'</div></div>'+
+      '<label class="switch"><input type="checkbox" data-aviso="'+a[0]+'"'+(desl.indexOf(a[0])>=0?'':' checked')+' aria-label="'+esc(a[1])+'"><span></span></label></div>';
+  }).join('');
+  document.querySelectorAll('[data-aviso]').forEach(function(c){c.addEventListener('change',salvarAvisos);});
+}
+async function salvarAvisos(){
+  var desl=[];document.querySelectorAll('[data-aviso]').forEach(function(c){if(!c.checked)desl.push(c.dataset.aviso);});
+  var p=Object.assign({},state.eu.preferencias_notificacao||{},{desligados:desl});
+  var r=await _sb.from('usuarios').update({preferencias_notificacao:p}).eq('id',state.eu.id).select('id');
+  if(r.error){showToast('Não foi possível salvar: '+esc(erroTexto(r.error)),'error');return;}
+  state.eu.preferencias_notificacao=p;
+  if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+  showToast('Avisos do sino atualizados.','success');
+}
+/* ----- Cor do tema (Azul padrão, Grafite...) ----- */
+document.addEventListener('click',function(e){if(e.target&&e.target.id==='prCorSalvar')salvarCorTema();else if(e.target&&e.target.id==='prCorDesfazer')desfazerCorTema();});
+var AMOSTRAS={azul:['#172234','#212e44','#4b8af5','#e8ecf1','#ffffff','#1f3e6d'],grafite:['#1A1A1A','#242424','#D4B98A','#F3F2EF','#FFFFFF','#1A1A1A']};
+function coresDisponiveis(){return window.SAGA_CORES||[{id:'azul',nome:'Azul',descricao:'Padrão do sistema'}];}
+function corAtual(){return state.eu.tema_cor_fixo||prefs().cor||'azul';}
+function coresPermitidas(){var ids=window.sagaTemasPermitidos?sagaTemasPermitidos(state.eu):null;return coresDisponiveis().filter(function(c){return !ids||ids.indexOf(c.id)>=0;});}
+var corEscolhida=null;
+function montarCores(){
+  var root=document.getElementById('prCor');if(!root)return;
+  if(!window._sagaTemasRegra&&!montarCores.lendo){montarCores.lendo=1;_sb.rpc('temas_regra').then(function(r){if(r&&r.data){window._sagaTemasRegra=r.data;montarCores();}});}var fixo=state.eu.tema_cor_fixo,atual=corAtual();
+  var lista=coresPermitidas();if(!lista.some(function(c){return c.id===atual;}))atual='azul';
+  corEscolhida=atual;
+  root.innerHTML=lista.map(function(c){var a=AMOSTRAS[c.id]||AMOSTRAS.azul;
+    return '<button type="button" class="saga-cor-op'+(c.id===atual?' active':'')+'" data-cor="'+esc(c.id)+'"'+(fixo?' disabled':'')+' aria-pressed="'+(c.id===atual)+'">'+
+      '<span class="saga-cor-amostra">'+a.map(function(x){return '<i style="background:'+x+'"></i>';}).join('')+'</span><span><b>'+esc(c.nome)+'</b><small>'+esc(c.descricao||'')+'</small>'+(c.escuro?'<small class="saga-cor-nomes">🌙 '+esc(c.escuro)+' · ☀️ '+esc(c.claro)+'</small>':'')+'</span></button>';}).join('');
+  document.getElementById('prCorAjuda').textContent=fixo?'O administrador definiu a cor do seu tema. Você troca só entre claro e escuro (sol e lua).':(lista.length<coresDisponiveis().length?'As cores liberadas pelo administrador. Escolha e clique em Salvar; o claro e o escuro continuam no sol e na lua.':'Clique numa cor para ver como fica e em Salvar para manter. O claro e o escuro de cada cor continuam no botão do sol e da lua.');
+  var wrap=document.getElementById('prCorSalvarWrap');mostrarSalvarCor(false);
+  root.querySelectorAll('[data-cor]').forEach(function(b){b.addEventListener('click',function(){
+    if(state.eu.tema_cor_fixo)return;corEscolhida=b.dataset.cor;
+    root.querySelectorAll('[data-cor]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b);});
+    var mudou=corEscolhida!==corAtual();
+    // mostra o sistema na cor escolhida já agora (prévia); só fica valendo ao clicar em Salvar
+    trocarCorSuave(corEscolhida);
+    mostrarSalvarCor(mudou);
+  });});
+}
+async function salvarCorTema(){
+  var cor=corEscolhida;if(!cor||state.eu.tema_cor_fixo)return;
+  var btn=document.getElementById('prCorSalvar');btn.disabled=true;
+  var ok=await salvarPreferencias({cor:cor},'Cor do tema salva.');btn.disabled=false;
+  if(ok===false)return;
+  if(window.sagaAplicarCor)sagaAplicarCor(cor);
+  mostrarSalvarCor(false);
+}
+function desfazerCorTema(){trocarCorSuave(corAtual());montarCores();}
+function mostrarSalvarCor(sim){
+  var w=document.getElementById('prCorSalvarWrap');if(!w)return;
+  w.classList.toggle('mostrar',!!sim);w.setAttribute('aria-hidden',sim?'false':'true');
+  w.querySelectorAll('button').forEach(function(b){b.tabIndex=sim?0:-1;});
+}
+// prévia da cor: esmaece da cor antiga para a nova (respeita "Efeitos de movimento")
+function trocarCorSuave(cor){
+  if(!window.sagaAplicarCor)return;
+  var h=document.documentElement,cur=h.getAttribute('data-cor')||'azul';if(cur===cor)return;
+  var sem=false;try{sem=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}
+  if(sem||!document.startViewTransition){sagaAplicarCor(cor);return;}
+  h.classList.add('saga-cor-trocando');
+  try{var t=document.startViewTransition(function(){sagaAplicarCor(cor);});
+    t.finished.finally(function(){h.classList.remove('saga-cor-trocando');});}
+  catch(e){h.classList.remove('saga-cor-trocando');sagaAplicarCor(cor);}
+}
+// saiu da tela sem salvar: volta a cor salva (a prévia não fica valendo)
+window.addEventListener('pagehide',function(){try{if(corEscolhida&&state.eu&&corEscolhida!==corAtual()&&window.sagaAplicarCor)sagaAplicarCor(corAtual());}catch(e){}});
+async function montarTemasRegra(){
+  var box=document.getElementById('temasRegra');if(!box)return;
+  var r=await _sb.rpc('temas_regra');var rg=(r&&r.data)||{todos:true,liberados:['azul','grafite']};window._sagaTemasRegra=rg;
+  var cores=coresDisponiveis();
+  box.innerHTML='<label class="chk"><input type="radio" name="temasModo" value="todos"'+(rg.todos!==false?' checked':'')+'> Todas as cores liberadas para toda a equipe</label>'+
+    '<label class="chk"><input type="radio" name="temasModo" value="lista"'+(rg.todos===false?' checked':'')+'> Só as cores marcadas abaixo</label>'+
+    '<div class="temas-lista"'+(rg.todos===false?'':' hidden')+'>'+cores.map(function(c){var on=c.id==='azul'||(rg.liberados||[]).indexOf(c.id)>=0;return '<label class="chk"><input type="checkbox" value="'+esc(c.id)+'"'+(on?' checked':'')+(c.id==='azul'?' disabled title="O Azul é a cor padrão e fica sempre liberada"':'')+'> '+esc(c.nome)+'</label>';}).join('')+'</div>'+
+    '<div style="margin-top:8px"><button type="button" class="btn-primary btn-sm" id="temasRegraSalvar">Salvar regra</button></div>';
+  var lista=box.querySelector('.temas-lista');
+  box.querySelectorAll('input[name="temasModo"]').forEach(function(i){i.addEventListener('change',function(){var mostrar=box.querySelector('input[name="temasModo"]:checked').value==='lista';if(window.sagaRecolher)sagaRecolher(lista,!mostrar);else lista.hidden=!mostrar;});});
+  box.querySelector('#temasRegraSalvar').addEventListener('click',async function(){
+    var todos=box.querySelector('input[name="temasModo"]:checked').value==='todos';
+    var lib=Array.prototype.map.call(box.querySelectorAll('.temas-lista input:checked'),function(i){return i.value;});
+    this.disabled=true;var rr=await _sb.rpc('temas_regra_salvar',{p_todos:todos,p_liberados:lib});this.disabled=false;
+    if(rr.error){showToast('Não foi possível salvar: '+esc(erroTexto(rr.error)),'error');return;}
+    window._sagaTemasRegra=rr.data;showToast(todos?'Todas as cores liberadas para a equipe.':'Regra salva: a equipe só escolhe entre as cores marcadas.','success');montarCoresEquipe();
+  });
+}
+async function montarCoresEquipe(){
+  var painel=document.getElementById('painelCoresEquipe');if(!painel)return;
+  if(!state.adminGeral){painel.hidden=true;return;}
+  painel.hidden=false;var lista=document.getElementById('listaCoresEquipe');lista.innerHTML='<div class="s">Carregando...</div>';
+  if(!document.getElementById('temasRegra').innerHTML)montarTemasRegra();
+  var r=await _sb.from('usuarios').select('id,nome_completo,tema_cor_fixo,temas_modo,preferencias,eh_administrador').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');
+  if(r.error){lista.innerHTML='<div class="s">Não foi possível carregar a equipe.</div>';return;}
+  var opcoes=function(v){return '<option value="">Segue a regra do escritório</option><option value="__todos"'+(v==='__todos'?' selected':'')+'>Todos os temas liberados para ela</option>'+coresDisponiveis().map(function(c){return '<option value="'+esc(c.id)+'"'+(v===c.id?' selected':'')+'>Só '+esc(c.nome)+' (fixo; troca só claro/escuro)</option>';}).join('');};
+  lista.innerHTML=(r.data||[]).filter(function(u){return u.id!==state.eu.id;}).map(function(u){
+    var escolhida=(u.preferencias||{}).cor||'azul',nomeEsc=(coresDisponiveis().find(function(c){return c.id===escolhida;})||{nome:'Azul'}).nome;
+    return '<div class="linha-opcao"><div><div class="t">'+esc(u.nome_completo||'')+'</div><div class="s">'+(u.tema_cor_fixo?'Cor fixada pelo administrador':u.temas_modo==='todos'?'Todos os temas liberados · usa hoje: '+esc(nomeEsc):'Usa hoje: '+esc(nomeEsc))+'</div></div>'+
+      '<div class="campo" style="margin:0;min-width:230px"><select data-cor-usuario="'+esc(u.id)+'"'+(u.eh_administrador?' disabled title="O cadastro de um administrador só pode ser alterado por ele mesmo."':'')+'>'+opcoes(u.tema_cor_fixo||(u.temas_modo==='todos'?'__todos':''))+'</select></div></div>';
+  }).join('')||'<div class="s">Nenhum colaborador com conta ainda.</div>';
+  lista.querySelectorAll('[data-cor-usuario]').forEach(function(sel){sel.addEventListener('change',async function(){
+    sel.disabled=true;var v=sel.value,uid=sel.dataset.corUsuario;
+    var r1=await _sb.rpc('usuario_definir_tema_cor',{p_usuario:uid,p_cor:v&&v!=='__todos'?v:null});
+    var r2=r1.error?r1:await _sb.rpc('usuario_definir_temas_modo',{p_usuario:uid,p_modo:v==='__todos'?'todos':null});
+    sel.disabled=false;
+    if(r2.error){showToast('Não foi possível salvar: '+esc(erroTexto(r2.error)),'error');return;}
+    showToast(v==='__todos'?'Todos os temas liberados para o colaborador.':v?'Cor fixada para o colaborador.':'O colaborador segue a regra do escritório.','success');montarCoresEquipe();
+  });});
+}
+function aplicarLetra(v){
+  try{localStorage.setItem('saga-letra',String(v));}catch(e){}
+  document.documentElement.style.zoom=v==='1'?'':v;
+}
+
+/* ----- Escritorio (administrador geral) ----- */
+function mostrarLogo(url){
+  var l=document.getElementById('esLogo');
+  if(url){l.style.backgroundImage='url("'+url+'")';l.textContent='';}else{l.style.backgroundImage='';l.textContent='Sem logo';}
+  document.getElementById('esTirarLogo').style.display=url?'':'none';
+}
+function preencherEscritorio(){
+  var c=state.escritorio||{};
+  document.getElementById('esNome').value=c.nome_escritorio||'';document.getElementById('esCnpj').value=c.cnpj||'';
+  document.getElementById('esOab').value=c.oab_principal||'';document.getElementById('esTelefone').value=c.telefone||'';
+  document.getElementById('esEmail').value=c.email||'';document.getElementById('esEndereco').value=c.endereco||'';
+  mostrarLogo(c.logo_url);
+}
+function cnpjValido(v){
+  var c=String(v||'').replace(/\D/g,'');if(c.length!==14||/^(\d)\1+$/.test(c))return false;
+  function dv(n){var s=0,p=n-7;for(var i=0;i<n;i++){s+=Number(c[i])*p--;if(p<2)p=9;}var r=s%11;return r<2?0:11-r;}
+  return dv(12)===Number(c[12])&&dv(13)===Number(c[13]);
+}
+async function salvarEscritorio(){
+  var nome=document.getElementById('esNome').value.trim(),cnpj=document.getElementById('esCnpj').value.trim(),email=document.getElementById('esEmail').value.trim();
+  if(!nome){showToast('Informe o nome do escritório.','error');return;}
+  if(cnpj&&!cnpjValido(cnpj)){showToast('CNPJ inválido. Confira os números.','error');return;}
+  if(email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){showToast('E-mail do escritório inválido.','error');return;}
+  var b=document.getElementById('esSalvar');b.disabled=true;
+  var dados={nome_escritorio:nome,cnpj:cnpj||null,oab_principal:document.getElementById('esOab').value.trim()||null,telefone:document.getElementById('esTelefone').value.trim()||null,
+    email:email||null,endereco:document.getElementById('esEndereco').value.trim()||null,atualizado_por_id:state.eu.id,atualizado_em:new Date().toISOString()};
+  var r=await _sb.from('configuracoes_sistema').update(dados).eq('id',state.escritorio.id).select('id');
+  b.disabled=false;
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível salvar: '+esc(erroTexto(r.error)),'error');return;}
+  Object.assign(state.escritorio,dados);showToast('Dados do escritório salvos.','success');
+}
+async function enviarLogo(arq){
+  if(!arq)return;
+  if(!/^image\//.test(arq.type)){showToast('Escolha uma imagem (PNG, JPG ou WEBP).','error');return;}
+  var blob=await abrirCorte(arq,'logo');
+  document.getElementById('esArquivo').value='';
+  if(!blob)return;
+  var b=document.getElementById('esTrocarLogo');b.disabled=true;
+  try{
+    var caminho='escritorio/logo_'+Date.now()+'.png';
+    var up=await _sb.storage.from('avatares').upload(caminho,blob,{contentType:'image/png'});
+    if(up.error)throw up.error;
+    var url=_sb.storage.from('avatares').getPublicUrl(caminho).data.publicUrl,antiga=caminhoDaUrl(state.escritorio.logo_url);
+    var r=await _sb.from('configuracoes_sistema').update({logo_url:url}).eq('id',state.escritorio.id).select('id');
+    if(r.error||!r.data||!r.data.length){await _sb.storage.from('avatares').remove([caminho]);throw r.error||new Error('Sem permissão.');}
+    if(antiga)_sb.storage.from('avatares').remove([antiga]);
+    state.escritorio.logo_url=url;mostrarLogo(url);
+    if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+    showToast('Logo atualizado: já aparece na barra do alto e na tela de login.','success');
+  }catch(e){showToast('Não foi possível enviar o logo: '+esc(erroTexto(e)),'error');}
+  finally{b.disabled=false;document.getElementById('esArquivo').value='';}
+}
+async function removerLogo(){
+  if(!(await sagaConfirmar('Remover logo','Remover o logo do escritório?','Remover')))return;
+  var antiga=caminhoDaUrl(state.escritorio.logo_url);
+  var r=await _sb.from('configuracoes_sistema').update({logo_url:null}).eq('id',state.escritorio.id).select('id');
+  if(r.error){showToast('Não foi possível remover: '+esc(erroTexto(r.error)),'error');return;}
+  if(antiga)_sb.storage.from('avatares').remove([antiga]);
+  state.escritorio.logo_url=null;mostrarLogo(null);
+  if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
+  showToast('Logo removido.','success');
+}
+
+/* ----- Inicio ----- */
+function ligarEventos(){
+  ligarCorte();
+  document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.addEventListener('click',function(){trocarAba(b.dataset.aba);});});
+  document.getElementById('pfSalvar').addEventListener('click',salvarPerfil);
+  document.getElementById('pfTrocarFoto').addEventListener('click',function(){document.getElementById('pfArquivo').click();});
+  document.getElementById('pfArquivo').addEventListener('change',function(){enviarFoto(this.files[0]);});
+  document.getElementById('pfTirarFoto').addEventListener('click',removerFoto);
+  document.getElementById('pfNome').addEventListener('input',function(){if(!state.eu.foto_url)mostrarFoto(null);});
+  document.getElementById('sgNova').addEventListener('input',mostrarForca);
+  document.getElementById('sgSalvar').addEventListener('click',trocarSenha);
+  document.getElementById('sgSairTodos').addEventListener('click',sairDeTodos);
+  document.querySelectorAll('#prTema button').forEach(function(b){b.addEventListener('click',function(){
+    var atual=document.body.getAttribute('data-theme');marcarSeg('prTema',b.dataset.v);
+    if(atual!==b.dataset.v){var t=document.getElementById('themeToggle');if(t)t.click();else{document.body.setAttribute('data-theme',b.dataset.v);try{localStorage.setItem('saga-tema',b.dataset.v);}catch(e){}}}
+    _sb.from('usuarios').update({tema_preferido:b.dataset.v}).eq('id',state.eu.id);
+  });});
+  document.querySelectorAll('#prMov button').forEach(function(b){b.addEventListener('click',function(){
+    marcarSeg('prMov',b.dataset.v);
+    if(window.sagaDefinirMovimento)sagaDefinirMovimento(b.dataset.v==='reduzido');
+    showToast(b.dataset.v==='reduzido'?'Efeitos de movimento desligados.':'Efeitos de movimento ligados.','success');
+  });});
+  document.querySelectorAll('#prLetra button').forEach(function(b){b.addEventListener('click',function(){
+    marcarSeg('prLetra',b.dataset.v);aplicarLetra(b.dataset.v);salvarPreferencias({letra:b.dataset.v},'Tamanho da letra salvo.');
+  });});
+  document.getElementById('prTelaInicial').addEventListener('change',function(){salvarPreferencias({tela_inicial:this.value},'Tela inicial salva.');});
+  document.getElementById('esSalvar').addEventListener('click',salvarEscritorio);
+  document.getElementById('esTrocarLogo').addEventListener('click',function(){document.getElementById('esArquivo').click();});
+  document.getElementById('esArquivo').addEventListener('change',function(){enviarLogo(this.files[0]);});
+  document.getElementById('esTirarLogo').addEventListener('click',removerLogo);
+  document.getElementById('esCnpj').addEventListener('input',function(){
+    var d=this.value.replace(/\D/g,'').slice(0,14),f=d;
+    if(d.length>12)f=d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/,'$1.$2.$3/$4-$5');
+    else if(d.length>8)f=d.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4}).*/,'$1.$2.$3/$4');
+    else if(d.length>5)f=d.replace(/^(\d{2})(\d{3})(\d{0,3}).*/,'$1.$2.$3');
+    else if(d.length>2)f=d.replace(/^(\d{2})(\d{0,3}).*/,'$1.$2');
+    this.value=f;
+  });
+  document.addEventListener('saga-atualizar',carregar);
+}
+async function carregar(){
+  var s=await _sb.auth.getSession();
+  if(!s.data||!s.data.session){window.location.href='login_padrao_metalico.html';return;}
+  state.authId=s.data.session.user.id;
+  var r=await _sb.from('usuarios').select('id,nome_completo,email,cargo_titulo,telefone,numero_oab,uf_oab,foto_url,eh_administrador,preferencias,preferencias_notificacao,tema_preferido,tema_cor_fixo,temas_modo').eq('auth_user_id',state.authId).maybeSingle();
+  if(r.error||!r.data){showToast('Não foi possível carregar o seu perfil.','error');return;}
+  state.eu=r.data;
+  state.adminGeral=r.data.eh_administrador===true;
+  document.getElementById('abaAreasTesesBtn').style.display=state.adminGeral?'':'none';
+  if(state.adminGeral){
+    if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:true,erro:function(msg){showToast(esc(msg),'error');}});
+    await carregarSituacoesAcao();
+    await catalogoTeses.carregar();catalogoTeses.gerenciar(document.getElementById('catalogoAreasTeses'));
+  }else{
+    document.getElementById('catalogoAreasTeses').replaceChildren();
+    document.getElementById('catalogoSituacoes').replaceChildren();
+    if(document.getElementById('aba-areas-teses').classList.contains('ativo'))trocarAba('perfil');
+  }
+  var adm=await _sb.rpc('eh_admin_sistema');state.admin=adm.data===true;
+  if(state.admin){
+    var c=await _sb.from('configuracoes_sistema').select('*').limit(1).maybeSingle();
+    state.escritorio=c.data;
+    document.getElementById('abaEscritorioBtn').style.display=c.data?'':'none';
+    if(c.data)preencherEscritorio();
+  }
+  preencherPerfil();preencherPreferencias();
+}
+async function init(){
+  ligarEventos();
+  await SagaUI.carregar('configuracoes');
+  await carregar();
+  var aba=new URLSearchParams(location.search).get('aba');if(aba&&document.getElementById('aba-'+aba))trocarAba(aba);
+}
+init().catch(function(e){showToast('Erro ao abrir as configurações: '+esc(e.message||''),'error');});
+</script>
+</body>
+</html>
