@@ -231,8 +231,9 @@ window.SagaPlanilha=(function(){
   }
   function selecionar(td,rolar){
     document.querySelectorAll('.sp-tabela td.sp-sel').forEach(function(x){x.classList.remove('sp-sel');});
+    pintarCruz(null);
     if(!td){sel=null;return;}
-    sel={proc:td.closest('tr').dataset.spProc,col:td.dataset.spCel};td.classList.add('sp-sel');
+    sel={proc:td.closest('tr').dataset.spProc,col:td.dataset.spCel};td.classList.add('sp-sel');pintarCruz(td);
     if(rolar){
       var sc=td.closest('.tabela-scroll'),r=td.getBoundingClientRect();
       if(sc){var rs=sc.getBoundingClientRect(),fx=sc.querySelector('thead th.sp-fixa-ult'),esq=rs.left+(fx&&!td.classList.contains('sp-fixa')?fx.getBoundingClientRect().right-rs.left:0);
@@ -242,7 +243,15 @@ window.SagaPlanilha=(function(){
       r=td.getBoundingClientRect();if(r.top<70||r.bottom>innerHeight)td.scrollIntoView({block:'nearest'});
     }
   }
-  function restaurarSelecao(){var td=celulaSel();if(td)td.classList.add('sp-sel');}
+  function restaurarSelecao(){var td=celulaSel();if(td){td.classList.add('sp-sel');pintarCruz(td);}}
+  // destaque em cruz, como no Excel: a linha e a coluna da célula selecionada ficam com um tom suave
+  function pintarCruz(td){
+    document.querySelectorAll('.sp-tabela .sp-cruz-l,.sp-tabela .sp-cruz-c').forEach(function(x){x.classList.remove('sp-cruz-l','sp-cruz-c');});
+    if(!td)return;
+    var tr=td.closest('tr');if(tr)Array.prototype.forEach.call(tr.children,function(c){c.classList.add('sp-cruz-l');});
+    var id=idCss(td.dataset.spCel);
+    document.querySelectorAll('.sp-tabela [data-sp-cel="'+id+'"],.sp-tabela [data-sp-col="'+id+'"],.sp-tabela [data-sp-tot="'+id+'"]').forEach(function(c){c.classList.add('sp-cruz-c');});
+  }
   function moverSel(dl,dc){
     var td=celulaSel();if(!td)return false;
     var tr=td.closest('tr'),cels=Array.prototype.slice.call(tr.querySelectorAll('td[data-sp-cel]')),i=cels.indexOf(td);
@@ -312,7 +321,8 @@ window.SagaPlanilha=(function(){
     }).join('');
   }
   // No celular a lista abre como planilha (pedido do Dr. Victor, 07/11); os cartões ficam como opção
-  function verTabelaNoCelular(){try{return localStorage.getItem('saga-planilha-celular2')!=='cartoes';}catch(e){return true;}}
+  var CHAVE_CEL=function(){return 'saga-planilha-celular2-'+(state.meuInternoId||'');};
+  function verTabelaNoCelular(){try{return localStorage.getItem(CHAVE_CEL())!=='cartoes';}catch(e){return true;}}
   function aplicarModoCelular(){document.body.classList.toggle('sp-ver-tabela',verTabelaNoCelular());}
   function editavel(p,c){
     if(!state.permissoes.editar)return false;
@@ -569,7 +579,7 @@ window.SagaPlanilha=(function(){
       (n?'<button type="button" class="sp-limpar-tudo" data-limpar>Limpar filtros das colunas ('+n+')</button>':'');
     b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){protocolo=x.dataset.protocolo;aplicar();};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
-    b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem('saga-planilha-celular2',x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
+    b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem(CHAVE_CEL(),x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
     aplicarModoCelular();
     b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){retorno=x.dataset.retorno;aplicar();};});
     var bm=b.querySelector('[data-minhas]');if(bm)bm.onclick=function(){minhas=!minhas;aplicar();};
@@ -638,6 +648,10 @@ window.SagaPlanilha=(function(){
       '.sp-tabela td.sp-fixa{background-clip:padding-box}.sp-tabela thead th.sp-fixa{background:var(--panel-solid,var(--panel))}'+
       '.tabela-scroll.sp-rolado .sp-fixa-ult{box-shadow:8px 0 12px -10px rgba(0,0,0,.55)}'+
       '.sp-tabela td.sp-sel{box-shadow:inset 0 0 0 2px var(--gold)!important;border-radius:3px}'+
+      // a cor da linha fica por cima do fundo zebrado do tema (camada de imagem), sem apagar o zebrado
+      '.sp-tabela .sp-cruz-l,.sp-tabela .sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--gold) 10%,transparent),color-mix(in srgb,var(--gold) 10%,transparent))!important;transition:background-image .2s cubic-bezier(.22,.78,.25,1)}'+
+      '.sp-tabela .sp-cruz-l.sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--gold) 16%,transparent),color-mix(in srgb,var(--gold) 16%,transparent))!important}'+
+      '.sp-tabela th.sp-cruz-c .sp-th{color:var(--gold-light)}.sp-tabela th.sp-cruz-c{box-shadow:inset 0 -2px 0 var(--gold)}'+
       '.sp-tabela tfoot td{position:sticky;bottom:0;z-index:2;background:var(--panel-solid,var(--panel));border-top:1px solid var(--border);padding:10px 14px;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
       '.sp-tabela tfoot .sp-tot-num{color:var(--gold-light);font-variant-numeric:tabular-nums}.sp-tot-sub{display:block;font-size:9.5px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-top:2px}'+
       '.sp-modo-cel{display:none}.sp-cc-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.sp-cc-topo .cartao-nome{font-weight:600;min-width:0;overflow-wrap:anywhere}'+
