@@ -85,6 +85,15 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .corte-zoom span{font-size:12px;color:var(--muted);min-width:44px;text-align:right}
 .corte-dicas{font-size:11px;color:var(--muted);margin-top:8px;text-align:center}
 @media(max-width:760px){.content{padding:20px 16px 34px}.grid2,.grid3{grid-template-columns:1fr}}
+/* telas largas: os blocos usam a largura toda, lado a lado (pedido do Dr. Victor, 08/11) */
+@media(min-width:1100px){
+  .tab-pane.ativo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+  .tab-pane.ativo>.panel{max-width:none;margin-bottom:0;min-width:0}
+  .tab-pane.ativo>.panel:only-child{grid-column:1/-1}
+  #aba-preferencias>.panel:first-child{order:1}#aba-preferencias>.panel:last-child{order:2}
+  #painelCoresEquipe{order:3;grid-column:1/-1}
+  #listaCoresEquipe{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));column-gap:28px}
+}
 .situacao-editor{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-soft)}.situacao-editor input[type=text]{flex:1 1 220px;min-width:0;padding:9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);color:var(--text)}.situacao-editor label{display:flex;align-items:center;gap:5px;font-size:11px}.situacao-editor input[type=color]{width:38px;height:32px;border:1px solid var(--border);background:var(--panel);border-radius:6px}.situacao-editor button{white-space:normal}.situacao-editor button:active{transform:scale(.98)}
   .pr-cor-salvar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.pr-cor-salvar .s{font-size:11px}
   .temas-regra{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px}.temas-lista{display:flex;flex-wrap:wrap;gap:4px 16px;padding:4px 0 0 24px}
