@@ -336,6 +336,26 @@ window.SagaPlanilha=(function(){
 
   // ---------- menu de filtro estilo Excel ----------
   function fecharMenu(){if(menuAberto){menuAberto.remove();menuAberto=null;}}
+  // Menu sempre inteiro na tela: abre para baixo; se não couber, para cima; se ainda não couber, rola por dentro
+  function caberNaTela(m,r){
+    var h=m.offsetHeight,baixo=window.innerHeight-r.bottom-12,cima=r.top-12;
+    if(h<=baixo){m.style.top=(r.bottom+4)+'px';return;}
+    if(h<=cima){m.style.top=(r.top-4-h)+'px';return;}
+    var usar=Math.max(baixo,cima);m.style.maxHeight=usar+'px';m.style.overflowY='auto';
+    m.style.top=(baixo>=cima?r.bottom+4:r.top-4-usar)+'px';
+  }
+  function menuEscolherColunaFiltro(ancora){
+    fecharMenu();
+    var cs=colunasDaTela().filter(function(c){return c.tipo!=='link';});
+    var m=document.createElement('div');m.className='sp-menu';m.style.width='270px';
+    m.innerHTML='<div class="sp-menu-tit">Filtrar por</div><input type="search" class="sp-busca" placeholder="Procurar coluna..." data-q>'+
+      '<div class="sp-lista">'+cs.map(function(c){return '<button type="button" class="sp-item sp-col-opcao" data-c="'+h(c.id)+'"><span>'+h(nomeCol(c))+'</span>'+(filtros[c.id]?'<em>✓</em>':'')+'</button>';}).join('')+'</div>';
+    document.body.appendChild(m);menuAberto=m;
+    var r=ancora.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-278))+'px';caberNaTela(m,r);
+    var q=m.querySelector('[data-q]');q.focus();
+    q.oninput=function(){var t=norm(q.value);m.querySelectorAll('.sp-col-opcao').forEach(function(b){b.hidden=t&&norm(b.textContent).indexOf(t)<0;});};
+    m.addEventListener('click',function(e){var b=e.target.closest('[data-c]');if(!b)return;e.stopPropagation();var c=cols.find(function(x){return x.id===b.dataset.c;});if(c)abrirMenu(c,ancora);});
+  }
   function abrirMenu(c,ancora){
     fecharMenu();
     var base=(state.baseProcessos||[]).filter(function(p){return processoNoEscopoSemPlanilha(p)&&passa(p,c.id);});
@@ -356,7 +376,7 @@ window.SagaPlanilha=(function(){
       '<div class="sp-menu-acoes"><button type="button" class="btn-secondary sp-limpar">Limpar filtro</button><button type="button" class="btn-primary sp-ok">OK</button></div>';
     document.body.appendChild(m);menuAberto=m;
     var r=ancora.getBoundingClientRect(),w=Math.min(300,window.innerWidth-16);
-    m.style.width=w+'px';m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';m.style.top=Math.min(r.bottom+4,window.innerHeight-60)+'px';
+    m.style.width=w+'px';m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';caberNaTela(m,r);
     var checks=function(){return Array.from(m.querySelectorAll('.sp-lista input'));};
     var todos=m.querySelector('[data-todos]');
     var sincTodos=function(){var vis=checks().filter(function(i){return !i.closest('label').hidden;});todos.checked=vis.length&&vis.every(function(i){return i.checked;});};
@@ -706,6 +726,10 @@ window.SagaPlanilha=(function(){
       '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button></div>'+
       '<button type="button" class="btn-secondary sp-btn" data-foco title="Cor do destaque da célula, da linha e da coluna selecionadas"><span class="sp-foco-bola"></span> Foco</button>'+
       '<button type="button" class="btn-secondary sp-btn" data-colunas>Colunas</button>'+
+      // "+ Filtrar": escolhe qualquer coluna e os valores, também no Kanban (onde os cabeçalhos da planilha não aparecem); os filtros se somam
+      '<button type="button" class="btn-secondary sp-btn" data-filtrar title="Filtrar por qualquer coluna da planilha; os filtros se somam">+ Filtrar</button>'+
+      Object.keys(filtros).map(function(id){var c=cols.find(function(x){return x.id===id;});if(!c)return '';var v=filtros[id],q=Array.isArray(v)?v.length:(v&&v.size)||0;
+        return '<button type="button" class="sp-chip-filtro" data-chip="'+h(id)+'" title="Mudar este filtro">'+h(nomeCol(c))+(q?' · '+q:'')+'<span data-tirar="'+h(id)+'" title="Tirar este filtro" aria-label="Tirar este filtro">×</span></button>';}).join('')+
       (n?'<button type="button" class="sp-limpar-tudo" data-limpar>Limpar filtros das colunas ('+n+')</button>':'');
     b.querySelectorAll('.sp-pills[role="group"]').forEach(function(novo){
       var velho=gruposAntes[novo.getAttribute('aria-label')];
@@ -717,6 +741,10 @@ window.SagaPlanilha=(function(){
     b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){protocolo=x.dataset.protocolo;aplicar();};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
     b.querySelector('[data-foco]').onclick=function(e){e.stopPropagation();abrirMenuFoco(this);};
+    b.querySelector('[data-filtrar]').onclick=function(e){e.stopPropagation();menuEscolherColunaFiltro(this);};
+    b.querySelectorAll('[data-chip]').forEach(function(x){x.onclick=function(e){e.stopPropagation();
+      var t=e.target.closest('[data-tirar]');if(t){delete filtros[t.dataset.tirar];aplicar();return;}
+      var c=cols.find(function(y){return y.id===x.dataset.chip;});if(c)abrirMenu(c,x);};});
     b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem(CHAVE_CEL(),x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
     aplicarModoCelular();
     b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){retorno=x.dataset.retorno;aplicar();};});
@@ -776,6 +804,7 @@ window.SagaPlanilha=(function(){
       '#spAbas{margin:0 0 12px}.sp-abas{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border-soft);scrollbar-width:thin}.sp-aba{border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .25s}'+
       '.sp-aba{border-radius:9px}.sp-abas{padding-bottom:3px}.sp-aba:hover{color:var(--text)}.sp-aba.ativo{color:var(--gold-light);border-bottom-color:var(--gold)}.sp-aba:active{transform:scale(.97)}'+
       '.sp-org{margin-left:auto;font-size:11.5px;color:var(--gold-light);text-decoration:underline}.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
+      '.sp-col-opcao{width:100%;border:0;background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center}.sp-col-opcao:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}.sp-col-opcao[hidden]{display:none}.sp-chip-filtro{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 6px 0 10px;border-radius:9px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--text);font:inherit;font-size:11.5px;font-weight:500;cursor:pointer;white-space:nowrap}.sp-chip-filtro span{width:18px;height:18px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted)}.sp-chip-filtro span:hover{background:color-mix(in srgb,var(--text) 10%,transparent);color:var(--text)}'+
       '.sp-item-col{display:flex;align-items:center;gap:6px;justify-content:space-between}.sp-item-col label{display:flex;align-items:center;gap:6px;min-width:0;flex:1}.sp-item-col label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-item-col .sp-editor{min-width:0}.sp-col-ger{display:flex;gap:2px;flex:0 0 auto;opacity:.55;transition:opacity .2s cubic-bezier(.22,.78,.25,1)}.sp-item-col:hover .sp-col-ger,.sp-item-col:focus-within .sp-col-ger{opacity:1}.sp-ico{width:24px;height:24px;border-radius:7px;border:1px solid transparent;background:none;color:var(--muted);font-size:11px;cursor:pointer}.sp-ico:hover{color:var(--text);border-color:var(--border-soft)}'+
       '.sp-foco-menu{position:fixed;z-index:3000;width:230px;padding:8px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--panel));box-shadow:0 16px 38px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:6px}'+
       '.sp-foco-menu .tit{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:2px 4px}.sp-foco-menu .padrao{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:0;background:none;color:var(--text);font:inherit;font-size:12px;cursor:pointer;text-align:left}.sp-foco-menu .padrao:hover,.sp-foco-menu .padrao.on{background:color-mix(in srgb,var(--gold) 12%,transparent)}'+
@@ -1232,7 +1261,7 @@ window.SagaPlanilha=(function(){
     desenhar();
     document.body.appendChild(m);menuAberto=m;
     var r=ancora.getBoundingClientRect();m.style.top=Math.min(r.bottom+6,window.innerHeight-m.offsetHeight-8)+'px';m.style.left=Math.max(8,Math.min(r.right-290,window.innerWidth-298))+'px';
-    if(!(window.sagaMq?sagaMq():{matches:false}).matches&&m.animate)m.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,.78,.25,1)'});
+    // a entrada do menu é animada pelo saga_guard.js (animar aqui também dobrava o efeito)
   }
 
   // ---------- ficha do cliente: "Dados do Processo" na ordem da planilha, editável ----------
