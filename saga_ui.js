@@ -27,6 +27,26 @@
   };
   // Troca de tela pelo menu; com saga_guard.js ha uma saida suave
   if(!global.sagaIrPara)global.sagaIrPara=function(url){if(url)window.location.href=url;};
+  // Cores do tema disponíveis (para criar outra: incluir aqui e as regras html[data-cor="..."] no saga_tema.css)
+  global.SAGA_CORES=[{id:'azul',nome:'Azul',descricao:'Padrão do sistema'},{id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe'}];
+  global.sagaAplicarCor=function(cor){
+    if(!global.SAGA_CORES.some(function(c){return c.id===cor;}))cor='azul';
+    var h=document.documentElement;
+    if(cor==='azul')h.removeAttribute('data-cor');else h.setAttribute('data-cor',cor);
+    try{localStorage.setItem('saga-cor',cor);}catch(e){}
+    var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';
+    h.style.background=cor==='grafite'?(claro?'#F3F2EF':'#1A1A1A'):(claro?'#f3f5f8':'#172234');
+    return cor;
+  };
+  // Efeitos de movimento: desligar = tudo troca na hora (vale na hora, sem recarregar). Usado no menu da foto e nas Configurações.
+  global.sagaDefinirMovimento=function(reduzir){
+    try{localStorage.setItem('saga-movimento',reduzir?'reduzido':'normal');}catch(e){}
+    var h=document.documentElement,est=document.getElementById('sagaSemMovimento');
+    h.classList.toggle('saga-sem-movimento',!!reduzir);
+    if(reduzir&&!est){est=document.createElement('style');est.id='sagaSemMovimento';est.textContent='html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}';document.head.appendChild(est);}
+    else if(!reduzir&&est)est.remove();
+    try{document.dispatchEvent(new CustomEvent('saga-movimento-mudou'));}catch(e){}
+  };
   var _temaSalvo=localStorage.getItem('saga-tema')||'dark';
   if(document.body)document.body.setAttribute('data-theme',_temaSalvo);
   else document.addEventListener('DOMContentLoaded',function(){document.body.setAttribute('data-theme',_temaSalvo);});
@@ -695,15 +715,8 @@
       // chavinha: ligada = efeitos de movimento ligados. Vale na hora, sem recarregar a tela
       var desenharChave=function(){var lig=!reduzido();btnMov.setAttribute('role','switch');btnMov.setAttribute('aria-checked',lig?'true':'false');btnMov.classList.toggle('sg-ligada',lig);};
       desenharChave();
-      var alternarMov=function(){
-        var novoReduzido=!reduzido();
-        try{localStorage.setItem('saga-movimento',novoReduzido?'reduzido':'normal');}catch(e){}
-        var h=document.documentElement,est=document.getElementById('sagaSemMovimento');
-        h.classList.toggle('saga-sem-movimento',novoReduzido);
-        if(novoReduzido&&!est){est=document.createElement('style');est.id='sagaSemMovimento';est.textContent='html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}';document.head.appendChild(est);}
-        else if(!novoReduzido&&est)est.remove();
-        desenharChave();
-      };
+      var alternarMov=function(){global.sagaDefinirMovimento(!reduzido());desenharChave();};
+      document.addEventListener('saga-movimento-mudou',desenharChave);
       btnMov.addEventListener('click',alternarMov);
       btnMov.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();alternarMov();}});
     }
@@ -739,7 +752,7 @@
       var s=await global._sb.auth.getSession();
       if(!s.data||!s.data.session)return;
       var authId=s.data.session.user.id;
-      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo,foto_url,preferencias,preferencias_notificacao').eq('auth_user_id',authId).single();
+      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo,foto_url,preferencias,preferencias_notificacao,tema_cor_fixo').eq('auth_user_id',authId).single();
       if(r.error||!r.data)return;
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
@@ -749,6 +762,8 @@
       // tamanho da letra escolhido nas Configuracoes vale em qualquer aparelho
       var letra=String((r.data.preferencias||{}).letra||'1');
       try{if(localStorage.getItem('saga-letra')!==letra){localStorage.setItem('saga-letra',letra);document.documentElement.style.zoom=letra==='1'?'':letra;}}catch(e){}
+      // cor do tema: a fixada pelo administrador vale mais que a escolha da pessoa; sem nada, Azul
+      global.sagaAplicarCor(r.data.tema_cor_fixo||(r.data.preferencias||{}).cor||'azul');
       _avisosDesligados=((r.data.preferencias_notificacao||{}).desligados)||[];
       var nm=document.getElementById('avatarPopNome');if(nm)nm.textContent=r.data.nome_completo||'';
       var em=document.getElementById('avatarPopEmail');if(em)em.textContent=r.data.email||'';

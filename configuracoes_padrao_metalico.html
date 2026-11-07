@@ -169,6 +169,14 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
         <div class="seg" id="prTema"><button type="button" data-v="light">Claro</button><button type="button" data-v="dark">Escuro</button></div>
       </div>
       <div class="linha-opcao">
+        <div><div class="t">Cor do tema</div><div class="s" id="prCorAjuda">A cor do sistema. O claro e o escuro de cada cor continuam no botão do sol e da lua.</div></div>
+        <div class="saga-cores" id="prCor"></div>
+      </div>
+      <div class="linha-opcao">
+        <div><div class="t">Efeitos de movimento</div><div class="s">Telas, janelas e cartões entram e saem com movimento suave. Desligado, tudo troca na hora.</div></div>
+        <div class="seg" id="prMov"><button type="button" data-v="ligado">Ligados</button><button type="button" data-v="reduzido">Desligados</button></div>
+      </div>
+      <div class="linha-opcao">
         <div><div class="t">Tamanho da letra</div><div class="s">Aumenta tudo no sistema, neste e nos outros aparelhos.</div></div>
         <div class="seg" id="prLetra"><button type="button" data-v="1">Normal</button><button type="button" data-v="1.1">Grande</button><button type="button" data-v="1.2">Maior</button></div>
       </div>
@@ -176,6 +184,11 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
         <div><div class="t">Tela inicial</div><div class="s">Qual tela abre logo depois de entrar no sistema.</div></div>
         <div class="campo" style="margin:0;min-width:220px"><select id="prTelaInicial"></select></div>
       </div>
+    </div>
+    <div class="panel" id="painelCoresEquipe" hidden>
+      <div class="panel-title">Cor do tema da equipe</div>
+      <div class="panel-sub">Só o administrador vê. "Livre": a pessoa escolhe a cor nas Preferências dela. Ou escolha uma cor fixa para ela (a pessoa não consegue trocar).</div>
+      <div id="listaCoresEquipe"></div>
     </div>
     <div class="panel">
       <div class="panel-title">Avisos no sino</div>
@@ -485,6 +498,9 @@ async function salvarPreferencias(mudancas,msg){
 }
 function preencherPreferencias(){
   var tema=document.body.getAttribute('data-theme')||'dark';marcarSeg('prTema',tema);
+  montarCores();
+  var mov='ligado';try{mov=localStorage.getItem('saga-movimento')==='reduzido'?'reduzido':'ligado';}catch(e){}marcarSeg('prMov',mov);
+  montarCoresEquipe();
   var letra=String(prefs().letra||(function(){try{return localStorage.getItem('saga-letra')||'1';}catch(e){return '1';}})());marcarSeg('prLetra',letra);
   var sel=document.getElementById('prTelaInicial');
   var telas=TELAS.filter(function(t){return !window.SagaUI||!SagaUI.podeVerTela||SagaUI.podeVerTela(t[2]);});
@@ -505,6 +521,41 @@ async function salvarAvisos(){
   state.eu.preferencias_notificacao=p;
   if(window.SagaUI&&SagaUI.atualizarPerfil)SagaUI.atualizarPerfil();
   showToast('Avisos do sino atualizados.','success');
+}
+/* ----- Cor do tema (Azul padrão, Grafite...) ----- */
+var AMOSTRAS={azul:['#172234','#212e44','#4b8af5','#e8ecf1','#ffffff','#1f3e6d'],grafite:['#1A1A1A','#242424','#D4B98A','#F3F2EF','#FFFFFF','#1A1A1A']};
+function coresDisponiveis(){return window.SAGA_CORES||[{id:'azul',nome:'Azul',descricao:'Padrão do sistema'}];}
+function corAtual(){return state.eu.tema_cor_fixo||prefs().cor||'azul';}
+function montarCores(){
+  var root=document.getElementById('prCor');if(!root)return;var fixo=state.eu.tema_cor_fixo,atual=corAtual();
+  root.innerHTML=coresDisponiveis().map(function(c){var a=AMOSTRAS[c.id]||AMOSTRAS.azul;
+    return '<button type="button" class="saga-cor-op'+(c.id===atual?' active':'')+'" data-cor="'+esc(c.id)+'"'+(fixo?' disabled':'')+' aria-pressed="'+(c.id===atual)+'">'+
+      '<span class="saga-cor-amostra">'+a.map(function(x){return '<i style="background:'+x+'"></i>';}).join('')+'</span><span><b>'+esc(c.nome)+'</b><small>'+esc(c.descricao||'')+'</small></span></button>';}).join('');
+  document.getElementById('prCorAjuda').textContent=fixo?'O administrador definiu a cor do seu tema. Para mudar, fale com ele.':'A cor do sistema. O claro e o escuro de cada cor continuam no botão do sol e da lua.';
+  root.querySelectorAll('[data-cor]').forEach(function(b){b.addEventListener('click',async function(){
+    if(state.eu.tema_cor_fixo)return;var cor=b.dataset.cor;
+    if(window.sagaAplicarCor)sagaAplicarCor(cor);
+    root.querySelectorAll('[data-cor]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b);});
+    await salvarPreferencias({cor:cor},'Cor do tema salva.');
+  });});
+}
+async function montarCoresEquipe(){
+  var painel=document.getElementById('painelCoresEquipe');if(!painel)return;
+  if(!state.adminGeral){painel.hidden=true;return;}
+  painel.hidden=false;var lista=document.getElementById('listaCoresEquipe');lista.innerHTML='<div class="s">Carregando...</div>';
+  var r=await _sb.from('usuarios').select('id,nome_completo,tema_cor_fixo,preferencias,eh_administrador').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');
+  if(r.error){lista.innerHTML='<div class="s">Não foi possível carregar a equipe.</div>';return;}
+  var opcoes=function(v){return '<option value="">Livre (a pessoa escolhe)</option>'+coresDisponiveis().map(function(c){return '<option value="'+esc(c.id)+'"'+(v===c.id?' selected':'')+'>'+esc(c.nome)+' (fixo)</option>';}).join('');};
+  lista.innerHTML=(r.data||[]).filter(function(u){return u.id!==state.eu.id;}).map(function(u){
+    var escolhida=(u.preferencias||{}).cor||'azul',nomeEsc=(coresDisponiveis().find(function(c){return c.id===escolhida;})||{nome:'Azul'}).nome;
+    return '<div class="linha-opcao"><div><div class="t">'+esc(u.nome_completo||'')+'</div><div class="s">'+(u.tema_cor_fixo?'Cor fixada pelo administrador':'Usa hoje: '+esc(nomeEsc))+'</div></div>'+
+      '<div class="campo" style="margin:0;min-width:230px"><select data-cor-usuario="'+esc(u.id)+'"'+(u.eh_administrador?' disabled title="O cadastro de um administrador só pode ser alterado por ele mesmo."':'')+'>'+opcoes(u.tema_cor_fixo||'')+'</select></div></div>';
+  }).join('')||'<div class="s">Nenhum colaborador com conta ainda.</div>';
+  lista.querySelectorAll('[data-cor-usuario]').forEach(function(sel){sel.addEventListener('change',async function(){
+    sel.disabled=true;var rr=await _sb.rpc('usuario_definir_tema_cor',{p_usuario:sel.dataset.corUsuario,p_cor:sel.value||null});sel.disabled=false;
+    if(rr.error){showToast('Não foi possível salvar: '+esc(erroTexto(rr.error)),'error');return;}
+    showToast(sel.value?'Cor fixada para o colaborador.':'Colaborador livre para escolher a cor.','success');montarCoresEquipe();
+  });});
 }
 function aplicarLetra(v){
   try{localStorage.setItem('saga-letra',String(v));}catch(e){}
@@ -591,6 +642,11 @@ function ligarEventos(){
     if(atual!==b.dataset.v){var t=document.getElementById('themeToggle');if(t)t.click();else{document.body.setAttribute('data-theme',b.dataset.v);try{localStorage.setItem('saga-tema',b.dataset.v);}catch(e){}}}
     _sb.from('usuarios').update({tema_preferido:b.dataset.v}).eq('id',state.eu.id);
   });});
+  document.querySelectorAll('#prMov button').forEach(function(b){b.addEventListener('click',function(){
+    marcarSeg('prMov',b.dataset.v);
+    if(window.sagaDefinirMovimento)sagaDefinirMovimento(b.dataset.v==='reduzido');
+    showToast(b.dataset.v==='reduzido'?'Efeitos de movimento desligados.':'Efeitos de movimento ligados.','success');
+  });});
   document.querySelectorAll('#prLetra button').forEach(function(b){b.addEventListener('click',function(){
     marcarSeg('prLetra',b.dataset.v);aplicarLetra(b.dataset.v);salvarPreferencias({letra:b.dataset.v},'Tamanho da letra salvo.');
   });});
@@ -613,7 +669,7 @@ async function carregar(){
   var s=await _sb.auth.getSession();
   if(!s.data||!s.data.session){window.location.href='login_padrao_metalico.html';return;}
   state.authId=s.data.session.user.id;
-  var r=await _sb.from('usuarios').select('id,nome_completo,email,cargo_titulo,telefone,numero_oab,uf_oab,foto_url,eh_administrador,preferencias,preferencias_notificacao,tema_preferido').eq('auth_user_id',state.authId).maybeSingle();
+  var r=await _sb.from('usuarios').select('id,nome_completo,email,cargo_titulo,telefone,numero_oab,uf_oab,foto_url,eh_administrador,preferencias,preferencias_notificacao,tema_preferido,tema_cor_fixo').eq('auth_user_id',state.authId).maybeSingle();
   if(r.error||!r.data){showToast('Não foi possível carregar o seu perfil.','error');return;}
   state.eu=r.data;
   state.adminGeral=r.data.eh_administrador===true;

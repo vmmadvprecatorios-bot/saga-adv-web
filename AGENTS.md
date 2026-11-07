@@ -41,3 +41,4 @@ Quem coordena e revisa o seu trabalho é o Claude. Ele confere o PR, testa e pub
 - Abra a tela alterada no navegador (Playwright, com o Supabase simulado) e confira: modo claro e escuro, largura de celular, sem erro no console.
 - Confira que as outras telas que usam o mesmo arquivo continuam abrindo.
 - Se algo não pôde ser testado, escreva isso claramente no PR. Não afirme que testou o que não testou.
+- Temas (07/11): o SAGA tem duas cores de tema, Azul (padrão) e Grafite (`html[data-cor="grafite"]`, regras no fim do `saga_tema.css`), cada uma com claro e escuro. Telas novas usam só as variáveis do tema (`--panel`, `--text`, `--gold`, `--border`...), nunca cores fixas. Botão com fundo `var(--gold)` precisa de letra escura no Grafite escuro.

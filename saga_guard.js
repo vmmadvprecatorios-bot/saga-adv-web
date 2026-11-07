@@ -23,7 +23,11 @@
 
   var tema='dark';
   try{tema=localStorage.getItem('saga-tema')||'dark';}catch(e){}
-  html.style.background=tema==='light'?'#f3f5f8':'#172234';
+  // Cor do tema (Azul padrão ou Grafite), escolhida nas Configurações > Preferências (ou fixada pelo administrador)
+  var cor='azul';
+  try{cor=localStorage.getItem('saga-cor')||'azul';}catch(e){}
+  if(cor&&cor!=='azul')html.setAttribute('data-cor',cor);
+  html.style.background=cor==='grafite'?(tema==='light'?'#F3F2EF':'#1A1A1A'):(tema==='light'?'#f3f5f8':'#172234');
   html.style.colorScheme=tema==='light'?'light':'dark';
 
   var temSessao=false;
