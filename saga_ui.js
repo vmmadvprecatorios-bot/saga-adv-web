@@ -153,10 +153,26 @@
       '#topbarSaga .pop-avatar-status.on{background:#5dd8a0;}'+
       '#topbarSaga .notif-ok{flex:0 0 auto !important;border:0 !important;background:transparent !important;color:var(--muted,#8b93a8) !important;border-radius:6px !important;padding:4px 7px !important;font-size:10px !important;font-weight:500 !important;cursor:pointer !important;}'+
       '#topbarSaga .notif-ok:hover{background:var(--gold) !important;color:#fff !important;border-color:var(--gold) !important;}'+
-      '#topbarSaga .avatar-pop-nome{color:#e8eaf0 !important;}[data-theme="light"] #topbarSaga .avatar-pop-nome{color:#13233a !important;}'+
-      '#topbarSaga .avatar-pop-email{color:#8b93a8 !important;}[data-theme="light"] #topbarSaga .avatar-pop-email{color:#4a586e !important;}'+
-      '#topbarSaga .pop-divisor{background:color-mix(in srgb,var(--gold) 12%,transparent) !important;}'+
-      '#topbarSaga .pop-row-sair{color:#e85d5d !important;}'+
+      /* Janela da foto (08/11): mesmo padrão do sino e do online, letra fina, compacta */
+      '#topbarSaga #avatarPop{width:248px !important;padding:6px !important;border-radius:12px !important;box-shadow:0 14px 34px rgba(0,0,0,.28) !important;top:calc(100% + 10px) !important;font-family:Montserrat,Arial,sans-serif !important;transform-origin:top right;}'+
+      '#topbarSaga #avatarPop.open{animation:sagaPopEntra .22s cubic-bezier(.22,.78,.25,1);}'+
+      '@keyframes sagaPopEntra{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}'+
+      '#topbarSaga .avatar-pop-info{display:flex !important;align-items:center !important;gap:10px !important;padding:8px 8px 10px !important;margin:0 0 4px !important;border-bottom:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;}'+
+      '#topbarSaga .avatar-pop-foto{position:relative;overflow:hidden;width:32px;height:32px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#fff;font-family:"Cormorant Garamond",serif;font-weight:700;font-size:12.5px;}'+
+      'html[data-cor="grafite"] body[data-theme="dark"] #topbarSaga .avatar-pop-foto{color:#1A1A1A;}'+
+      '#topbarSaga .avatar-pop-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}'+
+      '#topbarSaga .avatar-pop-txt{display:flex;flex-direction:column;min-width:0;gap:2px;}'+
+      '#topbarSaga .avatar-pop-nome{font-size:12px !important;font-weight:600 !important;line-height:1.25 !important;color:var(--text) !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
+      '#topbarSaga .avatar-pop-email{font-size:10px !important;font-weight:400 !important;color:var(--muted) !important;margin:0 !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'+
+      '#topbarSaga .avatar-pop-email:empty{display:none;}'+
+      '#topbarSaga #avatarPop .pop-title{padding:6px 8px 3px !important;font-size:9px !important;font-weight:500 !important;letter-spacing:1.2px !important;}'+
+      '#topbarSaga #avatarPop .pop-row{gap:9px !important;padding:7px 8px !important;border-radius:8px !important;font-size:11.5px !important;font-weight:400 !important;line-height:1.3 !important;color:var(--text) !important;cursor:pointer !important;transition:background .18s ease,color .18s ease;}'+
+      '#topbarSaga #avatarPop .pop-row svg{flex:0 0 auto;color:var(--muted);transition:color .18s ease;}'+
+      '#topbarSaga #avatarPop .pop-row:hover svg,#topbarSaga #avatarPop .pop-row:focus-visible svg{color:var(--gold);}'+
+      '#topbarSaga #avatarPop .pop-row:focus-visible{outline:none;background:color-mix(in srgb,var(--gold) 9%,transparent) !important;}'+
+      '#topbarSaga .pop-divisor{height:1px !important;margin:4px 6px !important;background:color-mix(in srgb,var(--gold) 12%,transparent) !important;}'+
+      '#topbarSaga #avatarPop .pop-row-sair{color:var(--muted) !important;}'+
+      '#topbarSaga #avatarPop .pop-row-sair:hover{color:var(--text) !important;}'+
       '#topbarSaga a.pop-row-link{display:flex !important;align-items:center !important;gap:9px !important;text-decoration:none !important;color:inherit !important;cursor:pointer !important;}'+
       '#topbarSaga .avatar{position:relative !important;overflow:hidden !important;cursor:pointer !important;}'+
       '#topbarSaga .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;}'+
@@ -581,21 +597,16 @@
     +'<button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
     +'<div class="avatar-wrap" id="avatarWrap">'
     +'<div class="avatar" id="avatarTop" title="Menu do usuario">--</div>'
-    +'<div class="popover avatar-pop" id="avatarPop">'
-    +'<div class="avatar-pop-info">'
-    +'<div class="avatar-pop-nome" id="avatarPopNome">--</div>'
-    +'<div class="avatar-pop-email" id="avatarPopEmail">--</div>'
-    +'</div>'
-    +'<div class="pop-divisor"></div>'
-    +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=perfil" data-ir="configuracoes_padrao_metalico.html?aba=perfil">'
-    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Configurações</a>'
+    +'<div class="popover avatar-pop" id="avatarPop" role="menu">'
+    +'<div class="avatar-pop-info"><span class="avatar-pop-foto" id="avatarPopFoto" aria-hidden="true"></span>'
+    +'<span class="avatar-pop-txt"><span class="avatar-pop-nome" id="avatarPopNome">--</span><span class="avatar-pop-email" id="avatarPopEmail"></span></span></div>'
+    +'<div class="pop-title">Minha conta</div>'
+    +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=perfil" data-ir="configuracoes_padrao_metalico.html?aba=perfil"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 21a8 8 0 0116 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>Meu perfil</span></a>'
+    +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=preferencias" data-ir="configuracoes_padrao_metalico.html?aba=preferencias"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="6" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="12" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.6"/></svg><span>Preferências</span></a>'
+    +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=seguranca" data-ir="configuracoes_padrao_metalico.html?aba=seguranca"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Segurança e aparelhos</span></a>'
     // "Efeitos de movimento" fica só em Configurações > Preferências (pedido do Dr. Victor, 08/11)
     +'<div class="pop-divisor"></div>'
-    +'<div class="pop-row pop-row-sair" data-acao="sair">'
-    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Sair do sistema'
-    +'</div>'
+    +'<div class="pop-row pop-row-sair" data-acao="sair" role="menuitem" tabindex="0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sair do sistema</span></div>'
     +'</div>'
     +'</div>'
     +'</div>';
@@ -786,6 +797,7 @@
         var p=document.getElementById('avatarPop');
         var aberto=p.classList.contains('open');
         fecharTodosPopovers();
+        var mini=document.getElementById('avatarPopFoto');if(mini)mini.innerHTML=av.innerHTML;
         if(!aberto)p.classList.add('open');
       });
     }
@@ -815,6 +827,7 @@
         e.stopPropagation();
         sagaLogout();
       });
+      btnSair.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();sagaLogout();}});
     }
     var btnRefresh=document.getElementById('refreshBtn');
     if(btnRefresh&&!btnRefresh.dataset.ligado){
