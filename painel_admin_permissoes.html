@@ -62,7 +62,18 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
 .level{display:inline-flex;align-items:center;justify-content:center;padding:5px 8px;border-radius:8px;font-size:9px;font-weight:700;text-transform:capitalize}.level-sem_acesso{background:rgba(139,147,168,.14);color:var(--muted)}.level-visualizar{background:rgba(111,163,216,.15);color:var(--info)}.level-comentar{background:rgba(232,184,76,.15);color:var(--warning)}.level-editar{background:color-mix(in srgb,var(--gold) 17%,transparent);color:var(--gold)}.level-admin_total{background:rgba(93,216,160,.15);color:var(--success)}
 
 /* Collaborators */
-.collab-list{display:grid;gap:10px}.collab-card{padding:14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;cursor:pointer;transition:transform .18s,border-color .18s}.collab-card:hover{transform:translateY(-1px);border-color:var(--gold)}.avatar-lg{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--navy-1);font-size:14px}.collab-name{font-size:12.5px;font-weight:700;line-height:1.3}.collab-role{font-size:10px;color:var(--muted);margin-top:3px}.collab-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.exception-count{font-size:10px;color:var(--warning);white-space:nowrap}.arrow{color:var(--muted);font-size:18px}
+.collab-list{display:grid;gap:10px}
+/* Cartões (3 ou 4 por linha) e Kanban por perfil (pedido de 08/11) */
+.collab-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.collab-grade .collab-card{grid-template-columns:1fr;justify-items:center;text-align:center;padding:18px 14px;gap:8px}
+.collab-grade .collab-card .arrow{display:none}.collab-grade .collab-meta{justify-content:center;flex-wrap:wrap}
+.collab-kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;align-items:flex-start}
+.collab-col{flex:0 0 270px;border:1px solid var(--border-soft);border-radius:14px;background:color-mix(in srgb,var(--text) 3%,transparent);padding:10px;display:flex;flex-direction:column;gap:8px}
+.collab-col-cab{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;padding:2px 4px}.collab-col-cab .dot{width:8px;height:8px;border-radius:50%}.collab-col-cab small{margin-left:auto;color:var(--muted);font-weight:500}
+.collab-col .collab-card{padding:10px;gap:10px}
+#collabModo.hidden{display:none}
+:is(.collab-grade,.collab-col) :is(.collab-name,.collab-role){display:block}:is(.collab-grade,.collab-col) .collab-role{color:var(--muted);font-size:11.5px;margin:2px 0 6px}:is(.collab-grade,.collab-col) .collab-meta{display:flex;gap:6px;align-items:center}
+@media(max-width:760px){.collab-col{flex-basis:84vw}}.collab-card{padding:14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px;cursor:pointer;transition:transform .18s,border-color .18s}.collab-card:hover{transform:translateY(-1px);border-color:var(--gold)}.avatar-lg{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:'Cormorant Garamond',serif;font-weight:700;color:var(--navy-1);font-size:14px}.collab-name{font-size:12.5px;font-weight:700;line-height:1.3}.collab-role{font-size:10px;color:var(--muted);margin-top:3px}.collab-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}.exception-count{font-size:10px;color:var(--warning);white-space:nowrap}.arrow{color:var(--muted);font-size:18px}
 .empty{padding:44px 18px;text-align:center;color:var(--muted);font-size:11px}.empty svg{color:var(--gold);margin-bottom:10px}.empty h3{font-family:'Cormorant Garamond',serif;font-size:19px;color:var(--text);margin-bottom:5px}
 
 /* Modules */
@@ -108,6 +119,11 @@ button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-v
         </div>
         <input class="field" id="viewSearch" placeholder="Buscar por nome, perfil ou módulo...">
         <select class="field select-field native-select-hidden" id="profileFilter"><option value="all">Todos os perfis</option></select>
+        <div class="segmented" id="collabModo" role="group" aria-label="Como ver os colaboradores">
+          <button class="segment" data-modo="lista" type="button">Lista</button>
+          <button class="segment" data-modo="cartoes" type="button">Cartões</button>
+          <button class="segment" data-modo="kanban" type="button">Kanban por perfil</button>
+        </div>
       </div>
       <div class="toolbar-right"><span class="counter" id="viewCounter"></span><button class="btn-primary hidden" id="newProfileBtn"><span>+</span> Novo Perfil</button></div>
     </section>
@@ -517,13 +533,24 @@ function refreshProfileFilter(){
 /* ================================================================
    VISÃO: COLABORADORES
 ================================================================ */
+function modoColab(){try{return localStorage.getItem('saga-painel-colab-modo')||'lista';}catch(e){return 'lista';}}
 function renderCollaborators(){
   const root=document.getElementById('viewRoot');
   const term=document.getElementById('viewSearch').value.trim().toLowerCase();
   const pf=document.getElementById('profileFilter').value;
   const filtered=_colaboradores.filter(c=>(!term||[c.nome_completo,c.cargo_titulo,c.papel_nome].join(' ').toLowerCase().includes(term))&&(pf==='all'||c.papel_id===pf));
   document.getElementById('viewCounter').innerHTML=`<b>${filtered.length}</b> de ${_colaboradores.length} colaboradores`;
-  root.innerHTML=`<div class="collab-list">${filtered.map(c=>{
+  const modo=modoColab();
+  document.querySelectorAll('#collabModo .segment').forEach(b=>b.classList.toggle('active',b.dataset.modo===modo));
+  const cartao=c=>{const ec=exceptionModuleCount(c);return`<button class="collab-card panel" data-collab-card="${c.id}">${avatarHtml(c)}<span><span class="collab-name">${esc(c.nome_completo)}</span><span class="collab-role">${esc(c.cargo_titulo||'')}</span><span class="collab-meta"><span class="badge" style="background:${c.papel_cor}22;color:${c.papel_cor};border:1px solid ${c.papel_cor}55"><span class="dot" style="background:${c.papel_cor}"></span>${esc(c.papel_nome)}</span>${c.eh_administrador?'<span class="badge grant">Administrador</span>':`<span class="exception-count">${ec?ec+' módulo(s) com exceção':'Sem exceções'}</span>`}</span></span><span class="arrow">›</span></button>`;};
+  const vazio=`<div class="panel empty"><h3>Nenhum colaborador encontrado</h3><p>Ajuste a busca ou o filtro de perfil.</p></div>`;
+  if(modo==='cartoes'){root.innerHTML=`<div class="collab-grade">${filtered.map(cartao).join('')||vazio}</div>`;}
+  else if(modo==='kanban'){
+    const grupos=new Map();filtered.forEach(c=>{const k=c.papel_nome||'Sem perfil';if(!grupos.has(k))grupos.set(k,{cor:c.papel_cor||'#8b93a8',itens:[]});grupos.get(k).itens.push(c);});
+    const cols=[...grupos.entries()].sort((a,b)=>a[0]==='Administrador'?-1:b[0]==='Administrador'?1:a[0].localeCompare(b[0],'pt-BR'));
+    root.innerHTML=cols.length?`<div class="collab-kanban">${cols.map(([nome,g])=>`<section class="collab-col"><div class="collab-col-cab"><span class="dot" style="background:${g.cor}"></span>${esc(nome)}<small>${g.itens.length}</small></div>${g.itens.map(cartao).join('')}</section>`).join('')}</div>`:vazio;
+  }
+  else root.innerHTML=`<div class="collab-list">${filtered.map(c=>{
     const ec=exceptionModuleCount(c);
     return`<button class="collab-card panel" data-collab-card="${c.id}">${avatarHtml(c)}<span><span class="collab-name">${esc(c.nome_completo)}</span><span class="collab-role">${esc(c.cargo_titulo)}</span><span class="collab-meta"><span class="badge" style="background:${c.papel_cor}22;color:${c.papel_cor};border:1px solid ${c.papel_cor}55"><span class="dot" style="background:${c.papel_cor}"></span>${esc(c.papel_nome)}</span>${c.eh_administrador?'<span class="badge grant">Administrador</span>':`<span class="exception-count">${ec?ec+' módulo(s) com exceção':'Sem exceções'}</span>`}</span></span><span class="arrow">›</span></button>`;
   }).join('')||`<div class="panel empty"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.5"/></svg><h3>Nenhum colaborador encontrado</h3><p>Ajuste a busca ou o filtro de perfil.</p></div>`}</div>`;
@@ -704,6 +731,7 @@ function askDeleteProfile(id){
    RENDER GERAL + TROCA DE VISÃO
 ================================================================ */
 function renderAll(){
+  var cm=document.getElementById('collabModo');if(cm)cm.classList.toggle('hidden',activeView!=='collaborators');
   if(activeView==='collaborators')renderCollaborators();
   else if(activeView==='modules')renderModules();
   else renderProfiles();
@@ -711,7 +739,7 @@ function renderAll(){
 
 function changeView(v){
   activeView=v;
-  document.querySelectorAll('.segment').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.querySelectorAll('#viewToggle .segment').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
   const pfSel=document.getElementById('profileFilter');
   pfSel.classList.toggle('hidden',v!=='collaborators');
   const pfCs=pfSel.nextElementSibling;
@@ -756,9 +784,10 @@ async function init(){
   changeView('collaborators');
   enhanceSelectsWithin(document.querySelector('.toolbar'));
 
-  document.querySelectorAll('.segment').forEach(b=>b.addEventListener('click',()=>changeView(b.dataset.view)));
+  document.querySelectorAll('#viewToggle .segment').forEach(b=>b.addEventListener('click',()=>changeView(b.dataset.view)));
   document.getElementById('viewSearch').addEventListener('input',renderAll);
   document.getElementById('profileFilter').addEventListener('change',renderAll);
+  document.getElementById('collabModo').addEventListener('click',e=>{const b=e.target.closest('[data-modo]');if(!b)return;try{localStorage.setItem('saga-painel-colab-modo',b.dataset.modo);}catch(x){}renderCollaborators();});
   document.getElementById('newProfileBtn').addEventListener('click',()=>openProfileModal());
   document.getElementById('profileSaveBtn').addEventListener('click',saveProfile);
   document.getElementById('profileDeleteBtn').addEventListener('click',()=>activeProfileId&&askDeleteProfile(activeProfileId));
