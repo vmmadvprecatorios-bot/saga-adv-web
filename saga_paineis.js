@@ -162,10 +162,11 @@
   function renderAuto(raiz,cfg){
     var el=raiz.querySelector('#pnAuto'),form=raiz.querySelector('#pnForm');
     if(ehCap()||!global._sb){el.hidden=true;form.hidden=true;return;}
-    if(!S.auto&&!S.autoPedido){S.autoPedido=true;global._sb.rpc('parados_config').then(function(r){S.autoPedido=false;if(!r.error&&r.data){S.auto=r.data;renderAuto(raiz,S.cfg);}},function(){S.autoPedido=false;});}
+    if(!S.auto&&!S.autoPedido){S.autoPedido=true;Promise.all([global._sb.rpc('parados_config'),global._sb.rpc('acompanhamento_config')]).then(function(rs){S.autoPedido=false;if(!rs[0].error&&rs[0].data){S.auto=rs[0].data;S.acomp=(!rs[1].error&&rs[1].data)||{ativo:true,dias_protocolo:30,repetir:15};renderAuto(raiz,S.cfg);}},function(){S.autoPedido=false;});}
     if(!S.auto){el.hidden=true;return;}
     var a=S.auto;el.hidden=false;
-    el.innerHTML='<span class="pn-dot" style="--c:'+(a.ativo?'#3fb98a':'#8a94a8')+'"></span><span>'+(a.ativo?'Cobrança automática: com <b>'+a.dias+' dias</b> parado, o responsável recebe a tarefa "Dar impulso processual" e um aviso no sino (repete a cada '+a.repetir+' dias).':'Cobrança automática de processos parados <b>desligada</b>.')+'</span>'+
+    el.innerHTML='<span class="pn-dot" style="--c:'+(a.ativo?'#3fb98a':'#8a94a8')+'"></span><span>'+(a.ativo?'Cobrança automática: com <b>'+a.dias+' dias</b> parado, o responsável recebe a tarefa "Dar impulso processual" e um aviso no sino (repete a cada '+a.repetir+' dias; com 120 dias a tarefa vira urgente).':'Cobrança automática de processos parados <b>desligada</b>.')+
+      (S.acomp?(S.acomp.ativo?' Processo <b>não protocolado</b> há '+S.acomp.dias_protocolo+' dias e sem data de retorno: tarefa "Protocolar ou resolver a pendência" (repete a cada '+S.acomp.repetir+' dias). Retornos do dia no sino; resumo da semana às segundas.':' Cobrança de não protocolados <b>desligada</b>.'):'')+'</span>'+
       (cfg&&cfg.admin?'<button type="button" class="pn-aj">Ajustar</button>':'');
     var bt=el.querySelector('.pn-aj');if(bt)bt.onclick=function(){abrirForm(raiz);};
   }
@@ -173,19 +174,25 @@
   function abrirForm(raiz){
     var form=raiz.querySelector('#pnForm'),a=S.auto||{ativo:true,dias:60,repetir:30};
     if(!form.hidden){recolher(form,true);return;}
-    form.innerHTML='<label class="pn-chk"><input type="checkbox" data-a'+(a.ativo?' checked':'')+'> Ligada</label>'+
+    var ac=S.acomp||{ativo:true,dias_protocolo:30,repetir:15};
+    form.innerHTML='<label class="pn-chk"><input type="checkbox" data-a'+(a.ativo?' checked':'')+'> Parados: ligada</label>'+
       '<label>Limite (dias parado)<input type="text" inputmode="numeric" maxlength="3" data-d value="'+a.dias+'"></label>'+
       '<label>Repetir a cada (dias)<input type="text" inputmode="numeric" maxlength="3" data-r value="'+a.repetir+'"></label>'+
+      '<label class="pn-chk"><input type="checkbox" data-na'+(ac.ativo?' checked':'')+'> Não protocolados: ligada</label>'+
+      '<label>Avisar depois de (dias)<input type="text" inputmode="numeric" maxlength="3" data-nd value="'+ac.dias_protocolo+'"></label>'+
+      '<label>Repetir a cada (dias)<input type="text" inputmode="numeric" maxlength="3" data-nr value="'+ac.repetir+'"></label>'+
       '<button type="button" class="pn-salvar">Salvar</button><button type="button" class="pn-cancelar">Cancelar</button>';
     form.querySelectorAll('input[type=text]').forEach(function(i){i.oninput=function(){i.value=i.value.replace(/\D/g,'').slice(0,3);};});
     form.querySelector('.pn-cancelar').onclick=function(){recolher(form,true);};
     form.querySelector('.pn-salvar').onclick=function(){
       var b=this,d=parseInt(form.querySelector('[data-d]').value,10),r=parseInt(form.querySelector('[data-r]').value,10);
       b.disabled=true;
-      global._sb.rpc('parados_config_salvar',{p_ativo:form.querySelector('[data-a]').checked,p_dias:d,p_repetir:r}).then(function(res){
-        b.disabled=false;
+      var nd=parseInt(form.querySelector('[data-nd]').value,10),nr=parseInt(form.querySelector('[data-nr]').value,10);
+      Promise.all([global._sb.rpc('parados_config_salvar',{p_ativo:form.querySelector('[data-a]').checked,p_dias:d,p_repetir:r}),
+                   global._sb.rpc('acompanhamento_config_salvar',{p_ativo:form.querySelector('[data-na]').checked,p_dias:nd,p_repetir:nr})]).then(function(rs){
+        b.disabled=false;var res=rs[0].error?rs[0]:rs[1];
         if(res.error){aviso(res.error.message||'Não foi possível salvar.','danger');return;}
-        S.auto=res.data;recolher(form,true);renderAuto(raiz,S.cfg);aviso('Cobrança automática atualizada.','success');
+        S.auto=rs[0].data;S.acomp=rs[1].data;recolher(form,true);renderAuto(raiz,S.cfg);aviso('Cobrança automática atualizada.','success');
       },function(){b.disabled=false;aviso('Sem conexão. Tente de novo.','danger');});
     };
     recolher(form,false);

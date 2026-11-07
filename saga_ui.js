@@ -979,6 +979,10 @@
     nota_compartilhada:{titulo:'Nota compartilhada',tela:'notas.html'},
     retorno_captacao:{titulo:'Retornos de hoje',tela:'lista_processos_padrao_metalico.html?fase=captacao'},
     processo_parado:{titulo:'Processo parado',tela:'lista_processos_padrao_metalico.html?fase=juridico'},
+    retorno_juridico:{titulo:'Retornos do Jurídico',tela:'lista_processos_padrao_metalico.html?fase=juridico'},
+    acompanhamento:{titulo:'Fichas sem data de retorno',tela:'lista_processos_padrao_metalico.html?fase=captacao'},
+    nao_protocolado:{titulo:'Ainda não protocolado',tela:'minhas_tarefas.html'},
+    resumo_semanal:{titulo:'Resumo da semana',tela:'lista_processos_padrao_metalico.html?fase=juridico'},
     tarefa_hoje:{titulo:'Tarefa para hoje',tela:'minhas_tarefas.html'},
     tarefa_atrasada:{titulo:'Tarefa atrasada',tela:'minhas_tarefas.html'},
     compromisso_hoje:{titulo:'Compromisso hoje',tela:'calendario_padrao_metalico.html'},
@@ -1002,8 +1006,8 @@
     {chave:'mencao',titulo:'Menções',tipos:['mencao'],tela:null,um:'menção em comentário',varios:'menções em comentários',cor:'#8b5cf6'},
     {chave:'intimacoes',titulo:'Intimações',tipos:['movimentacao_cnj'],tela:'monitoramento_multi_oab.html',um:'intimação nova',varios:'intimações novas',cor:'#14b8a6'},
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
-    {chave:'captacao',titulo:'Captação',tipos:['distribuicao','retorno_captacao'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
-    {chave:'parados',titulo:'Processos parados',tipos:['processo_parado'],tela:'lista_processos_padrao_metalico.html?fase=juridico',um:'processo parado',varios:'processos parados',cor:'#d6452d'},
+    {chave:'captacao',titulo:'Captação',tipos:['distribuicao','retorno_captacao','acompanhamento'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
+    {chave:'parados',titulo:'Processos parados e retornos',tipos:['processo_parado','nao_protocolado','retorno_juridico','resumo_semanal'],tela:'lista_processos_padrao_metalico.html?fase=juridico',um:'processo parado',varios:'processos parados',cor:'#d6452d'},
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
