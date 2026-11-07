@@ -103,7 +103,7 @@
       // marca-texto: menu suspenso que abre abaixo do botão A (antes era uma faixa de bolinhas exposta)
       '.saga-editor{position:relative}',
       '.saga-cores{display:none;position:absolute;z-index:60;min-width:138px;padding:5px;border:1px solid var(--border);border-radius:11px;background:var(--panel-solid,var(--panel));box-shadow:0 14px 34px rgba(0,0,0,.28);flex-direction:column;gap:1px}.saga-cores.aberto{display:flex}',
-      '.saga-cores button{display:flex;align-items:center;gap:8px;width:100%;padding:5px 8px;border:0;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:11.5px;text-align:left;cursor:pointer}.saga-cores button:hover,.saga-cores button:focus-visible{background:color-mix(in srgb,var(--text) 8%,transparent);outline:0}',
+      '.saga-cores button{display:flex;align-items:center;gap:8px;width:100%;padding:4px 8px;border:0;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:11.5px;text-align:left;cursor:pointer}.saga-cores button:hover,.saga-cores button:focus-visible{background:color-mix(in srgb,var(--text) 8%,transparent);outline:0}',
       '.saga-cores button i{width:9px;height:9px;border-radius:50%;flex:0 0 auto;opacity:.75;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}.saga-cores .sem{margin-top:3px;border-top:1px solid var(--border-soft);border-radius:0 0 7px 7px;color:var(--muted)}.saga-cores .sem i{background:transparent;position:relative;overflow:hidden}.saga-cores .sem i::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:var(--muted);transform:rotate(-45deg)}',
       '.saga-editor{width:100%;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 4%,transparent);overflow:visible}',
       '.saga-editor:focus-within{border-color:var(--gold)}',
@@ -184,14 +184,20 @@
     // abre o menu de cores logo abaixo do botão A, com movimento suave (respeita "efeitos de movimento")
     function alternarCores(btn){
       if(faixa.classList.contains('aberto')){fecharCores();return;}
-      var bx=btn.getBoundingClientRect(),cb=cx.getBoundingClientRect();
-      faixa.style.left=Math.max(4,Math.min(bx.left-cb.left,cb.width-146))+'px';faixa.style.top=(bx.bottom-cb.top+4)+'px';
+      // o menu flutua por cima da página (não é cortado pelo cartão nem invade o bloco de baixo) e abre para cima quando falta espaço
+      if(faixa.parentNode!==document.body)document.body.appendChild(faixa);
+      faixa.style.position='fixed';faixa.style.zIndex='5000';faixa.style.visibility='hidden';
       faixa.classList.add('aberto');
+      var bx=btn.getBoundingClientRect(),w=faixa.offsetWidth,h=faixa.offsetHeight;
+      var acima=bx.bottom+4+h>window.innerHeight-8&&bx.top-4-h>8;
+      faixa.style.left=Math.max(8,Math.min(bx.left,window.innerWidth-w-8))+'px';
+      faixa.style.top=(acima?bx.top-4-h:Math.min(bx.bottom+4,window.innerHeight-h-8))+'px';
+      faixa.style.visibility='';
       var calmo=window.sagaMq&&window.sagaMq().matches;
-      if(!calmo&&faixa.animate)faixa.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,.78,.25,1)'});
-      setTimeout(function(){document.addEventListener('mousedown',foraCores,true);document.addEventListener('keydown',escCores,true);},0);
+      if(!calmo&&faixa.animate)faixa.animate([{opacity:0,transform:'translateY('+(acima?6:-6)+'px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,.78,.25,1)'});
+      setTimeout(function(){document.addEventListener('mousedown',foraCores,true);document.addEventListener('keydown',escCores,true);window.addEventListener('scroll',fecharCores,true);window.addEventListener('resize',fecharCores);},0);
     }
-    function fecharCores(){faixa.classList.remove('aberto');document.removeEventListener('mousedown',foraCores,true);document.removeEventListener('keydown',escCores,true);}
+    function fecharCores(e){if(e&&e.type==='scroll'&&faixa.contains(e.target))return;faixa.classList.remove('aberto');document.removeEventListener('mousedown',foraCores,true);document.removeEventListener('keydown',escCores,true);window.removeEventListener('scroll',fecharCores,true);window.removeEventListener('resize',fecharCores);}
     function foraCores(e){if(!faixa.contains(e.target)&&!(e.target.closest&&e.target.closest('[data-cmd="destaque"]')))fecharCores();}
     function escCores(e){if(e.key==='Escape'){e.stopPropagation();fecharCores();area.focus();}}
     campo.style.display='none';campo.parentNode.insertBefore(cx,campo.nextSibling);
