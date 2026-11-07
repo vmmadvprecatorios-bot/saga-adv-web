@@ -1025,7 +1025,8 @@
     agenda_solicitacao:{titulo:'Pedido de atendimento',tela:'calendario_padrao_metalico.html'},
     agenda_resposta:{titulo:'Resposta da agenda',tela:'calendario_padrao_metalico.html'},
     movimentacao_cnj:{titulo:'Intimação',tela:'monitoramento_multi_oab.html'},
-    tese_atualizacao:{titulo:'Atualização de tese',tela:'teses.html'}
+    tese_atualizacao:{titulo:'Atualização de tese',tela:'teses.html'},
+    radar_novo:{titulo:'Radar de oportunidades',tela:'teses.html?aba=radar'}
   };
   function infoNotif(n){
     var t=TIPOS_NOTIF[n.tipo];
@@ -1044,7 +1045,7 @@
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
     {chave:'captacao',titulo:'Captação',tipos:['distribuicao','retorno_captacao','acompanhamento'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
     {chave:'parados',titulo:'Processos parados e retornos',tipos:['processo_parado','nao_protocolado','retorno_juridico','resumo_semanal'],tela:'lista_processos_padrao_metalico.html?fase=juridico',um:'processo parado',varios:'processos parados',cor:'#d6452d'},
-    {chave:'teses',titulo:'Teses',tipos:['tese_atualizacao'],tela:'teses.html',um:'atualização de tese',varios:'atualizações de teses',cor:'#0ea5e9'},
+    {chave:'teses',titulo:'Teses e radar',tipos:['tese_atualizacao','radar_novo'],tela:'teses.html',um:'aviso de teses e radar',varios:'avisos de teses e radar',cor:'#0ea5e9'},
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
@@ -1485,6 +1486,7 @@
   var PERMS_TELA={
     processos:['processos.visualizar'],processos_juridico:['processos.visualizar'],processos_captacao:['processos.visualizar'],
     cartas:['pessoas.visualizar'],
+    teses:['teses.visualizar'],
     agenda:['compromissos.visualizar'],
     tarefas:['tarefas.visualizar'],
     chat:['chat.usar'],

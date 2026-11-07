@@ -147,6 +147,7 @@ const moduleList = [
   {key:'marketing',    name:'Marketing/Campanhas',    short:'MK'},
   {key:'tarefas',      name:'Minhas Tarefas',         short:'MT'},
   {key:'multi_oab',    name:'Monitoramento Multi-OAB',short:'MO'},
+  {key:'teses',        name:'Teses e oportunidades',  short:'TO'},
   {key:'financeiro',   name:'Financeiro',             short:'FI'},
   {key:'colaboradores',name:'Colaboradores',          short:'CO'},
   {key:'configuracoes',name:'Configurações',          short:'CF'}
@@ -167,6 +168,13 @@ const NIVEL_ACTIONS = {
     comentar:   [['dashboard','visualizar']],
     editar:     [['dashboard','visualizar']],
     admin_total:[['dashboard','visualizar']]
+  },
+  // Teses e oportunidades (08/11): Editar = cria e edita; Admin total = também apaga de vez
+  teses:        {
+    visualizar: [['teses','visualizar']],
+    comentar:   [['teses','visualizar']],
+    editar:     [['teses','visualizar'],['teses','criar'],['teses','editar']],
+    admin_total:[['teses','visualizar'],['teses','criar'],['teses','editar'],['teses','excluir']]
   },
   colaboradores:{
     visualizar: [['colaboradores','visualizar']],
@@ -528,8 +536,7 @@ const listaAutorizacoes=[
   ['processos','distribuir','Pode distribuir fichas da Captação'],
   ['tarefas','ver_todas_processo','Vê todas as tarefas ligadas a processo e intimação (mesmo as criadas por outras pessoas)'],
   ['compromissos','atende_clientes','Atende clientes: aparece na agenda para os colegas marcarem atendimento nos horários dele'],
-  ['ponto','exportar_pdf','Baixar PDF do ponto: baixa a folha de ponto e os relatórios de atividades de toda a equipe (aba "Baixar PDF" do Ponto)'],
-  ['teses','publicar','Publica atualizações de teses e cuida da Prateleira de produtos e do Radar de oportunidades']
+  ['ponto','exportar_pdf','Baixar PDF do ponto: baixa a folha de ponto e os relatórios de atividades de toda a equipe (aba "Baixar PDF" do Ponto)']
 ];
 function listaConcedida(c,modulo,acao){
   if(c.eh_administrador)return true;
