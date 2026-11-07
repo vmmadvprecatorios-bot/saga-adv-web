@@ -98,7 +98,13 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
   #aba-preferencias #prAvisos{flex:1 1 auto;height:0;min-height:220px;overflow:auto;padding-right:6px;overscroll-behavior:contain}
 }
 .situacao-editor{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border-soft)}.situacao-editor input[type=text]{flex:1 1 220px;min-width:0;padding:9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2);color:var(--text)}.situacao-editor label{display:flex;align-items:center;gap:5px;font-size:11px}.situacao-editor input[type=color]{width:38px;height:32px;border:1px solid var(--border);background:var(--panel);border-radius:6px}.situacao-editor button{white-space:normal}.situacao-editor button:active{transform:scale(.98)}
-  .pr-cor-salvar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.pr-cor-salvar .s{font-size:11px}
+  /* botões da cor: o espaço fica sempre reservado (nada pula); só aparecem e somem suave (08/11) */
+  .pr-cor-salvar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;opacity:0;visibility:hidden;transform:translateY(-4px);pointer-events:none;transition:opacity .26s cubic-bezier(.22,.78,.25,1),transform .26s cubic-bezier(.22,.78,.25,1),visibility 0s linear .26s}
+  .pr-cor-salvar.mostrar{opacity:1;visibility:visible;transform:none;pointer-events:auto;transition:opacity .26s cubic-bezier(.22,.78,.25,1),transform .26s cubic-bezier(.22,.78,.25,1),visibility 0s}
+  /* troca de cor da prévia: a tela inteira esmaece de uma cor para a outra (sem parecer que recarregou) */
+  html.saga-cor-trocando #sidebarSaga,html.saga-cor-trocando #topbarSaga{view-transition-name:none !important}
+  html.saga-cor-trocando::view-transition-group(root){animation-duration:.38s}
+  html.saga-cor-trocando::view-transition-old(root),html.saga-cor-trocando::view-transition-new(root){animation-duration:.38s;animation-timing-function:cubic-bezier(.22,.78,.25,1);mix-blend-mode:normal}
   .temas-regra{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px}.temas-lista{display:flex;flex-wrap:wrap;gap:4px 16px;padding:4px 0 0 24px}
   .temas-regra label.chk{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text);cursor:pointer}.temas-regra input{width:15px;height:15px;accent-color:var(--gold)}
   .aparelhos{display:flex;flex-direction:column;gap:8px;margin:6px 0 14px}
@@ -191,7 +197,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
       </div>
       <div class="linha-opcao">
         <div><div class="t">Cor do tema</div><div class="s" id="prCorAjuda">A cor do sistema. O claro e o escuro de cada cor continuam no botão do sol e da lua.</div></div>
-        <div><div class="saga-cores" id="prCor"></div><div class="pr-cor-salvar" id="prCorSalvarWrap" hidden><button type="button" class="btn-primary" id="prCorSalvar">Salvar cor do tema</button><button type="button" class="btn-secondary" id="prCorDesfazer">Cancelar</button><span class="s">Você já está vendo a cor nova; ela só fica valendo (em todos os seus aparelhos) depois de salvar.</span></div></div>
+        <div><div class="saga-cores" id="prCor"></div><div class="pr-cor-salvar" id="prCorSalvarWrap" aria-hidden="true"><button type="button" class="btn-primary" id="prCorSalvar" tabindex="-1">Salvar cor do tema</button><button type="button" class="btn-secondary" id="prCorDesfazer" tabindex="-1">Cancelar</button></div></div>
       </div>
       <div class="linha-opcao">
         <div><div class="t">Efeitos de movimento</div><div class="s">Telas, janelas e cartões entram e saem com movimento suave. Desligado, tudo troca na hora.</div></div>
@@ -598,14 +604,14 @@ function montarCores(){
     return '<button type="button" class="saga-cor-op'+(c.id===atual?' active':'')+'" data-cor="'+esc(c.id)+'"'+(fixo?' disabled':'')+' aria-pressed="'+(c.id===atual)+'">'+
       '<span class="saga-cor-amostra">'+a.map(function(x){return '<i style="background:'+x+'"></i>';}).join('')+'</span><span><b>'+esc(c.nome)+'</b><small>'+esc(c.descricao||'')+'</small>'+(c.escuro?'<small class="saga-cor-nomes">🌙 '+esc(c.escuro)+' · ☀️ '+esc(c.claro)+'</small>':'')+'</span></button>';}).join('');
   document.getElementById('prCorAjuda').textContent=fixo?'O administrador definiu a cor do seu tema. Você troca só entre claro e escuro (sol e lua).':(lista.length<coresDisponiveis().length?'As cores liberadas pelo administrador. Escolha e clique em Salvar; o claro e o escuro continuam no sol e na lua.':'Clique numa cor para ver como fica e em Salvar para manter. O claro e o escuro de cada cor continuam no botão do sol e da lua.');
-  var wrap=document.getElementById('prCorSalvarWrap');wrap.hidden=true;
+  var wrap=document.getElementById('prCorSalvarWrap');mostrarSalvarCor(false);
   root.querySelectorAll('[data-cor]').forEach(function(b){b.addEventListener('click',function(){
     if(state.eu.tema_cor_fixo)return;corEscolhida=b.dataset.cor;
     root.querySelectorAll('[data-cor]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b);});
     var mudou=corEscolhida!==corAtual();
     // mostra o sistema na cor escolhida já agora (prévia); só fica valendo ao clicar em Salvar
-    if(window.sagaAplicarCor)sagaAplicarCor(corEscolhida);
-    if(mudou&&wrap.hidden){wrap.hidden=false;if(window.sagaRecolher)sagaRecolher(wrap,false);}else if(!mudou)wrap.hidden=true;
+    trocarCorSuave(corEscolhida);
+    mostrarSalvarCor(mudou);
   });});
 }
 async function salvarCorTema(){
@@ -614,9 +620,25 @@ async function salvarCorTema(){
   var ok=await salvarPreferencias({cor:cor},'Cor do tema salva.');btn.disabled=false;
   if(ok===false)return;
   if(window.sagaAplicarCor)sagaAplicarCor(cor);
-  document.getElementById('prCorSalvarWrap').hidden=true;
+  mostrarSalvarCor(false);
 }
-function desfazerCorTema(){if(window.sagaAplicarCor)sagaAplicarCor(corAtual());montarCores();}
+function desfazerCorTema(){trocarCorSuave(corAtual());montarCores();}
+function mostrarSalvarCor(sim){
+  var w=document.getElementById('prCorSalvarWrap');if(!w)return;
+  w.classList.toggle('mostrar',!!sim);w.setAttribute('aria-hidden',sim?'false':'true');
+  w.querySelectorAll('button').forEach(function(b){b.tabIndex=sim?0:-1;});
+}
+// prévia da cor: esmaece da cor antiga para a nova (respeita "Efeitos de movimento")
+function trocarCorSuave(cor){
+  if(!window.sagaAplicarCor)return;
+  var h=document.documentElement,cur=h.getAttribute('data-cor')||'azul';if(cur===cor)return;
+  var sem=false;try{sem=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}
+  if(sem||!document.startViewTransition){sagaAplicarCor(cor);return;}
+  h.classList.add('saga-cor-trocando');
+  try{var t=document.startViewTransition(function(){sagaAplicarCor(cor);});
+    t.finished.finally(function(){h.classList.remove('saga-cor-trocando');});}
+  catch(e){h.classList.remove('saga-cor-trocando');sagaAplicarCor(cor);}
+}
 // saiu da tela sem salvar: volta a cor salva (a prévia não fica valendo)
 window.addEventListener('pagehide',function(){try{if(corEscolhida&&state.eu&&corEscolhida!==corAtual()&&window.sagaAplicarCor)sagaAplicarCor(corAtual());}catch(e){}});
 async function montarTemasRegra(){
