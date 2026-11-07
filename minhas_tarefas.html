@@ -1656,6 +1656,21 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   .btn-status-tarefa.st-em_andamento,.op-status-em_andamento i{ --c-st:#e0a93b; }
   .btn-status-tarefa.st-concluida,.op-status-concluida i{ --c-st:#3fb98a; }
   .seta-status{ font-size:8px; opacity:.7; }
+  .pill-status-tarefa.dinamico{ background:color-mix(in srgb,var(--c-st) 14%,transparent); color:color-mix(in srgb,var(--c-st) 72%,var(--text)); }
+  .menu-status-tarefa .gerenciar{ margin-top:3px; border-top:1px solid var(--border-soft); border-radius:0 0 8px 8px; color:var(--muted); }
+  .lista-status-ger{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .linha-status-ger{ display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:6px; align-items:center; }
+  .linha-status-ger input[type=text]{ height:34px; border-radius:9px; border:1px solid var(--border-soft); background:color-mix(in srgb,var(--text) 4%,transparent); color:var(--text); padding:0 10px; font:inherit; font-size:12.5px; min-width:0; }
+  .linha-status-ger input[type=text]:focus{ border-color:var(--gold); outline:0; }
+  .linha-status-ger input[type=color]{ width:34px; height:34px; padding:2px; border-radius:9px; border:1px solid var(--border-soft); background:transparent; cursor:pointer; }
+  .linha-status-ger .acoes{ display:flex; gap:3px; }
+  .linha-status-ger .acoes button{ width:28px; height:34px; border-radius:8px; border:1px solid var(--border-soft); background:transparent; color:var(--muted); cursor:pointer; font-size:11px; }
+  .linha-status-ger .acoes button:hover:not(:disabled){ color:var(--text); border-color:var(--gold); }
+  .linha-status-ger .acoes button:disabled{ opacity:.3; cursor:default; }
+  .linha-status-ger.inativo input[type=text]{ text-decoration:line-through; opacity:.55; }
+  .btn-novo-status-ger{ display:block; text-align:center; width:100%; height:34px; margin-bottom:14px; border-radius:9px; border:1px dashed var(--border); background:transparent; color:var(--muted); font:inherit; font-size:12px; font-weight:600; cursor:pointer; transition:border-color .2s cubic-bezier(.22,.78,.25,1),color .2s cubic-bezier(.22,.78,.25,1); }
+  .btn-novo-status-ger:hover{ border-color:var(--gold); color:var(--text); }
+  .linha-status-ger .selo-base{ font-size:9.5px; color:var(--muted); white-space:nowrap; padding:0 4px; }
   .selo-atrasada-card{ display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:8px; background:color-mix(in srgb,var(--danger) 16%,transparent); border:1px solid color-mix(in srgb,var(--danger) 40%,transparent); color:var(--danger); font-size:9.5px; font-weight:700; }
   .menu-status-tarefa{ position:fixed; z-index:5000; min-width:150px; padding:5px; border-radius:11px; background:var(--panel-solid); border:1px solid var(--border-soft); box-shadow:0 14px 34px rgba(0,0,0,.4); display:flex; flex-direction:column; gap:2px; }
   .menu-status-tarefa button{ display:flex; align-items:center; gap:8px; padding:8px 10px; border:0; border-radius:8px; background:transparent; color:var(--text); font:inherit; font-size:11.5px; cursor:pointer; text-align:left; }
@@ -2206,6 +2221,20 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
     <div class="rodape-modal-tf" style="margin-top:6px;">
       <button class="btn-cancelar-tf" id="btnCancelarNovaColuna">Cancelar</button>
       <button class="btn-confirmar-tf" id="btnConfirmarNovaColuna">Criar Coluna</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: Gerenciar status das tarefas (administrador ou quem ele autorizar) ===== -->
+<div class="modal-overlay-tf" id="modalStatusTarefa">
+  <div class="modal-tf modal-tf-pequeno" style="max-width:480px">
+    <h3>Status das tarefas</h3>
+    <div class="modal-tf-sub">Crie, renomeie, mude a cor e a ordem. "Nova", "Em andamento" e "Concluída" são a base do sistema: dá para renomear, não para remover. Remover só desativa: as tarefas que já estão no status continuam com ele.</div>
+    <div class="lista-status-ger" id="listaStatusGer"></div>
+    <button type="button" class="btn-novo-status-ger" id="btnNovoStatusTarefa">+ Novo status</button>
+    <div class="rodape-modal-tf">
+      <button class="btn-cancelar-tf" id="btnCancelarStatusTarefa">Cancelar</button>
+      <button class="btn-confirmar-tf" id="btnSalvarStatusTarefa">Salvar</button>
     </div>
   </div>
 </div>
@@ -2897,8 +2926,8 @@ function tarefaPassaFiltros(t, ignorar){
   if(filtrosAtivos.tipo === 'Vinculada a Processo' && t.tipo !== 'processo') return false;
 
   if(filtrosAtivos.status !== 'Todos'){
-    var mapaStatus = { 'Nova':'pendente', 'Em Andamento':'em_andamento', 'Concluida':'concluida' };
-    if(t.status !== mapaStatus[filtrosAtivos.status]) return false;
+    var stF = STATUS_TAREFA.filter(function(x){ return x.nome === filtrosAtivos.status; })[0];
+    if(!stF || t.status !== stF.chave) return false;
   }
 
   if(filtrosAtivos.prioridade !== 'Todas'){
@@ -3325,7 +3354,124 @@ function criarCheckboxConclusaoCard(tarefa){
 }
 
 // Status da tarefa: Nova, Em andamento e Concluída são escolhidos no cartão; Atrasada aparece sozinha pelo prazo
-function rotuloStatusTarefa(t){ return t.status === 'concluida' ? 'Concluída' : t.status === 'em_andamento' ? 'Em andamento' : 'Nova'; }
+// Lista de status (tabela tarefas_status, bloco 114): o administrador ou quem ele autorizar edita
+var STATUS_TAREFA = [
+  { chave:'pendente', nome:'Nova', cor:'#5b9bd5', ordem:1, ativo:true, base:true },
+  { chave:'em_andamento', nome:'Em andamento', cor:'#e0a93b', ordem:2, ativo:true, base:true },
+  { chave:'concluida', nome:'Concluída', cor:'#3fb98a', ordem:999, ativo:true, base:true }
+];
+var podeGerenciarStatusTarefa = false;
+function statusTarefaDe(chave){ return STATUS_TAREFA.filter(function(x){ return x.chave === chave; })[0] || null; }
+function statusTarefaAtivos(atual){ return STATUS_TAREFA.filter(function(x){ return x.ativo || x.chave === atual; }).sort(function(a,b){ return a.ordem - b.ordem; }); }
+function rotuloStatusTarefa(t){ var st = statusTarefaDe(t.status); return st ? st.nome : (t.status === 'concluida' ? 'Concluída' : t.status === 'em_andamento' ? 'Em andamento' : 'Nova'); }
+function corStatusTarefa(chave){ var st = statusTarefaDe(chave); return st ? st.cor : '#8b93a8'; }
+async function carregarStatusTarefa(){
+  try{
+    var r = await Promise.all([ _sb.from('tarefas_status').select('chave,nome,cor,ordem,ativo,base').order('ordem'), _sb.rpc('pode_gerenciar_status_tarefa') ]);
+    if(!r[0].error && r[0].data && r[0].data.length) STATUS_TAREFA = r[0].data;
+    podeGerenciarStatusTarefa = !r[1].error && r[1].data === true;
+  }catch(e){}
+  montarStatusDaTela();
+}
+// Atualiza o que depende dos nomes: filtro, pílulas do formulário e rótulos dos quadros do topo
+function montarStatusDaTela(){
+  var pills = document.getElementById('pillsStatusTarefa');
+  if(pills){
+    var atual = (typeof estadoModalTarefa !== 'undefined' && estadoModalTarefa && estadoModalTarefa.status) || 'pendente';
+    pills.innerHTML = statusTarefaAtivos(atual).map(function(st){
+      return '<div class="pill-prioridade-opcao pill-status-tarefa dinamico' + (st.chave === atual ? ' selecionada' : '') + '" data-status="' + escaparHtml(st.chave) + '" style="--c-st:' + escaparHtml(st.cor) + '">' + escaparHtml(st.nome) + '</div>';
+    }).join('');
+  }
+  var drop = document.getElementById('dropFiltroStatus');
+  if(drop){
+    var lista = drop.querySelector('.dropdown-custom-lista'), valor = drop.getAttribute('data-valor') || 'Todos';
+    // no filtro entram os ativos e os desativados que ainda têm tarefa
+    var emUso = {}; (window.SAGA_TASKS || []).forEach(function(t){ emUso[t.status] = 1; });
+    var nomes = STATUS_TAREFA.filter(function(st){ return st.ativo || emUso[st.chave]; }).sort(function(a,b){ return a.ordem - b.ordem; }).map(function(st){ return st.nome; });
+    if(valor !== 'Todos' && nomes.indexOf(valor) < 0){ valor = 'Todos'; filtrosAtivos.status = 'Todos'; drop.setAttribute('data-valor','Todos'); drop.querySelector('.dropdown-custom-valor span').textContent = 'Status: Todos'; }
+    lista.innerHTML = ['Todos'].concat(nomes).map(function(n){ return '<div class="dropdown-custom-opcao' + (n === valor ? ' selecionada' : '') + '">' + escaparHtml(n) + '</div>'; }).join('');
+    lista.querySelectorAll('.dropdown-custom-opcao').forEach(function(opcao){
+      opcao.addEventListener('click', function(e){
+        e.stopPropagation();
+        lista.querySelectorAll('.dropdown-custom-opcao').forEach(function(o){ o.classList.remove('selecionada'); });
+        opcao.classList.add('selecionada');
+        var texto = opcao.textContent.trim();
+        drop.querySelector('.dropdown-custom-valor span').textContent = 'Status: ' + texto;
+        drop.setAttribute('data-valor', texto);
+        filtrosAtivos.status = texto;
+        drop.classList.remove('aberto');
+        paginaAtualLista = 1;
+        aplicarFiltrosERenderizar();
+      });
+    });
+  }
+  var lNovas = document.querySelector('[data-faixa="novas"] .kpi-tarefa-label'), lAnd = document.querySelector('[data-faixa="andamento"] .kpi-tarefa-label');
+  var sNova = statusTarefaDe('pendente'), sAnd = statusTarefaDe('em_andamento');
+  if(lNovas && sNova) lNovas.textContent = sNova.nome === 'Nova' ? 'Novas' : sNova.nome;
+  if(lAnd && sAnd) lAnd.textContent = sAnd.nome === 'Em andamento' ? 'Em Andamento' : sAnd.nome;
+}
+/* ----- Gerenciar status (janela) ----- */
+var rascunhoStatusTarefa = [];
+function abrirGerenciarStatusTarefa(){
+  if(!podeGerenciarStatusTarefa){ mostrarToast('Só o administrador ou quem ele autorizar altera os status.', 'erro'); return; }
+  rascunhoStatusTarefa = STATUS_TAREFA.slice().sort(function(a,b){ return a.ordem - b.ordem; }).map(function(x){ return { chave:x.chave, nome:x.nome, cor:x.cor, ativo:x.ativo, base:x.base }; });
+  desenharGerenciarStatusTarefa();
+  document.getElementById('modalStatusTarefa').classList.add('aberto');
+}
+function desenharGerenciarStatusTarefa(){
+  var box = document.getElementById('listaStatusGer');
+  // "Concluída" fica sempre por último; os demais podem subir e descer
+  var movel = rascunhoStatusTarefa.filter(function(x){ return x.chave !== 'concluida'; });
+  box.innerHTML = rascunhoStatusTarefa.map(function(x, i){
+    var im = movel.indexOf(x);
+    return '<div class="linha-status-ger' + (x.ativo ? '' : ' inativo') + '" data-i="' + i + '">' +
+      '<input type="color" value="' + escaparHtml(x.cor) + '" data-cor aria-label="Cor do status">' +
+      '<input type="text" maxlength="40" value="' + escaparHtml(x.nome) + '" data-nome aria-label="Nome do status"' + (x.ativo ? '' : ' disabled') + '>' +
+      '<div class="acoes">' + (x.chave === 'concluida' ? '<span class="selo-base">sempre por último</span>' :
+        '<button type="button" data-sobe title="Subir"' + (im > 0 ? '' : ' disabled') + '>▲</button><button type="button" data-desce title="Descer"' + (im >= 0 && im < movel.length - 1 ? '' : ' disabled') + '>▼</button>' +
+        (x.base ? '<button type="button" disabled title="Status de base: não pode ser removido">✕</button>' : (x.ativo ? '<button type="button" data-remover title="Remover (desativa)">✕</button>' : '<button type="button" data-reativar title="Reativar">↺</button>'))) +
+      '</div></div>';
+  }).join('');
+}
+document.getElementById('listaStatusGer').addEventListener('input', function(e){
+  var l = e.target.closest('[data-i]'); if(!l) return; var x = rascunhoStatusTarefa[+l.getAttribute('data-i')];
+  if(e.target.hasAttribute('data-nome')) x.nome = e.target.value;
+  if(e.target.hasAttribute('data-cor')) x.cor = e.target.value;
+});
+document.getElementById('listaStatusGer').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b || b.disabled) return; var l = b.closest('[data-i]'); var i = +l.getAttribute('data-i'), x = rascunhoStatusTarefa[i];
+  var movel = rascunhoStatusTarefa.filter(function(y){ return y.chave !== 'concluida'; }), im = movel.indexOf(x);
+  if(b.hasAttribute('data-sobe') && im > 0){ var j = rascunhoStatusTarefa.indexOf(movel[im-1]); rascunhoStatusTarefa[i] = rascunhoStatusTarefa[j]; rascunhoStatusTarefa[j] = x; }
+  else if(b.hasAttribute('data-desce') && im < movel.length - 1){ var k = rascunhoStatusTarefa.indexOf(movel[im+1]); rascunhoStatusTarefa[i] = rascunhoStatusTarefa[k]; rascunhoStatusTarefa[k] = x; }
+  else if(b.hasAttribute('data-remover')){ if(!x.chave){ rascunhoStatusTarefa.splice(i,1); } else x.ativo = false; }
+  else if(b.hasAttribute('data-reativar')) x.ativo = true;
+  desenharGerenciarStatusTarefa();
+});
+document.getElementById('btnNovoStatusTarefa').addEventListener('click', function(){
+  var c = rascunhoStatusTarefa.filter(function(y){ return y.chave === 'concluida'; })[0];
+  var novo = { chave:'', nome:'', cor:'#a77bd6', ativo:true, base:false };
+  if(c) rascunhoStatusTarefa.splice(rascunhoStatusTarefa.indexOf(c), 0, novo); else rascunhoStatusTarefa.push(novo);
+  desenharGerenciarStatusTarefa();
+  var campos = document.querySelectorAll('#listaStatusGer [data-nome]'); var alvo = campos[rascunhoStatusTarefa.indexOf(novo)]; if(alvo) alvo.focus();
+});
+document.getElementById('btnCancelarStatusTarefa').addEventListener('click', function(){ document.getElementById('modalStatusTarefa').classList.remove('aberto'); });
+document.getElementById('btnSalvarStatusTarefa').addEventListener('click', async function(){
+  var btn = this;
+  var vazio = rascunhoStatusTarefa.filter(function(x){ return !String(x.nome || '').trim(); })[0];
+  if(vazio){ mostrarToast('Dê um nome a todos os status (ou remova o novo que ficou em branco).', 'erro'); return; }
+  var vistos = {}, repetido = null;
+  rascunhoStatusTarefa.forEach(function(x){ if(!x.ativo) return; var k = x.nome.trim().toLowerCase(); if(vistos[k]) repetido = x.nome; vistos[k] = 1; });
+  if(repetido){ mostrarToast('Há dois status chamados "' + escaparHtml(repetido) + '".', 'erro'); return; }
+  btn.disabled = true;
+  var r = await _sb.rpc('tarefas_status_salvar', { p_itens: rascunhoStatusTarefa.map(function(x){ return { chave:x.chave, nome:x.nome.trim(), cor:x.cor, ativo:x.ativo }; }) });
+  btn.disabled = false;
+  if(r.error){ mostrarToast('Não foi possível salvar os status: ' + escaparHtml(r.error.message || ''), 'erro'); return; }
+  if(r.data && r.data.length) STATUS_TAREFA = r.data;
+  document.getElementById('modalStatusTarefa').classList.remove('aberto');
+  montarStatusDaTela();
+  aplicarFiltrosERenderizar();
+  mostrarToast('Status das tarefas salvos.', 'sucesso');
+});
 async function definirStatusTarefa(id, novo){
   var t = window.SAGA_TASKS.filter(function(x){ return x.id === id; })[0];
   if(!t || t.status === novo) return;
@@ -3339,6 +3485,8 @@ var menuStatusTarefaEl = null;
 function fecharMenuStatusTarefa(){ if(menuStatusTarefaEl){ menuStatusTarefaEl.remove(); menuStatusTarefaEl = null; } }
 function marcarStatusModalTarefa(st){
   estadoModalTarefa.status = st;
+  // status desativado em que a tarefa ainda está: a pílula aparece só para ela
+  if(!document.querySelector('#pillsStatusTarefa [data-status="' + st + '"]')) montarStatusDaTela();
   document.querySelectorAll('.pill-status-tarefa').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-status') === st); });
 }
 document.addEventListener('click', function(e){
@@ -3349,13 +3497,19 @@ document.addEventListener('click', function(e){
 function abrirMenuStatusTarefa(botao, tarefa){
   fecharMenuStatusTarefa();
   var m = document.createElement('div'); m.className = 'menu-status-tarefa'; m.setAttribute('role', 'menu');
-  [['pendente','Nova'],['em_andamento','Em andamento'],['concluida','Concluída']].forEach(function(o){
+  statusTarefaAtivos(tarefa.status).forEach(function(st){
     var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitem');
-    b.className = 'op-status-' + o[0] + (tarefa.status === o[0] ? ' atual' : '');
-    b.innerHTML = '<i></i>' + o[1];
-    b.addEventListener('click', function(e){ e.stopPropagation(); fecharMenuStatusTarefa(); definirStatusTarefa(tarefa.id, o[0]); });
+    b.className = (tarefa.status === st.chave ? 'atual' : '');
+    b.innerHTML = '<i style="width:7px;height:7px;border-radius:50%;background:' + escaparHtml(st.cor) + '"></i>' + escaparHtml(st.nome);
+    b.addEventListener('click', function(e){ e.stopPropagation(); fecharMenuStatusTarefa(); definirStatusTarefa(tarefa.id, st.chave); });
     m.appendChild(b);
   });
+  if(podeGerenciarStatusTarefa){
+    var g = document.createElement('button'); g.type = 'button'; g.className = 'gerenciar'; g.setAttribute('role', 'menuitem');
+    g.innerHTML = '⚙ Gerenciar status…';
+    g.addEventListener('click', function(e){ e.stopPropagation(); fecharMenuStatusTarefa(); abrirGerenciarStatusTarefa(); });
+    m.appendChild(g);
+  }
   document.body.appendChild(m);
   var r = botao.getBoundingClientRect();
   m.style.left = Math.max(8, Math.min(r.left, innerWidth - m.offsetWidth - 8)) + 'px';
@@ -3367,7 +3521,7 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharM
 function htmlStatusTarefa(t, podeMexer){
   var atrasada = t.status !== 'concluida' && tarefaEstaAtrasada(t);
   return '<div class="linha-status-card">' +
-    '<button type="button" class="btn-status-tarefa st-' + t.status + '"' + (podeMexer ? '' : ' disabled') + ' title="' + (podeMexer ? 'Mudar o status' : 'Status') + '"><i></i>' + rotuloStatusTarefa(t) + (podeMexer ? ' <span class="seta-status">▾</span>' : '') + '</button>' +
+    '<button type="button" class="btn-status-tarefa st-' + t.status + '" style="--c-st:' + escaparHtml(corStatusTarefa(t.status)) + '"' + (podeMexer ? '' : ' disabled') + ' title=""' + (podeMexer ? 'Mudar o status' : 'Status') + '"><i></i>' + rotuloStatusTarefa(t) + (podeMexer ? ' <span class="seta-status">▾</span>' : '') + '</button>' +
     (atrasada ? '<span class="selo-atrasada-card">Atrasada</span>' : '') + '</div>';
 }
 
@@ -3848,7 +4002,7 @@ function criarLinhaTabela(tarefa){
     '<td><div class="checkbox-conclusao' + (tarefa.status === 'concluida' ? ' marcado' : '') + '" data-id-check="' + tarefa.id + '">' +
       (tarefa.status === 'concluida' ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="#0a0e1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') +
     '</div></td>' +
-    '<td class="titulo-lista-tarefa">' + escaparHtml(tarefa.titulo) + ' <span class="btn-status-tarefa st-' + tarefa.status + '" style="margin-left:6px;cursor:default"><i></i>' + rotuloStatusTarefa(tarefa) + '</span>' + (tarefa.status !== 'concluida' && tarefaEstaAtrasada(tarefa) ? ' <span class="selo-atrasada-card">Atrasada</span>' : '') + '</td>' +
+    '<td class="titulo-lista-tarefa">' + escaparHtml(tarefa.titulo) + ' <span class="btn-status-tarefa st-' + tarefa.status + '" style="margin-left:6px;cursor:default;--c-st:' + escaparHtml(corStatusTarefa(tarefa.status)) + '"><i></i>' + rotuloStatusTarefa(tarefa) + '</span>' + (tarefa.status !== 'concluida' && tarefaEstaAtrasada(tarefa) ? ' <span class="selo-atrasada-card">Atrasada</span>' : '') + '</td>' +
     '<td>' + (tarefa.tipo === 'pessoal' ? 'Pessoal' : 'Processo') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.numero : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.tribunal : '-') + '</td>' +
@@ -4706,7 +4860,7 @@ document.getElementById('btnSalvarTarefa').addEventListener('click', async funct
     colunaId:colunaId, responsavelId:responsavelId, dataPrazo:dataPrazo, horaPrazo:horaPrazo,
     prioridade:estadoModalTarefa.prioridade, etiquetaId:estadoModalTarefa.etiquetaId, corEtiqueta:estadoModalTarefa.corEtiqueta,
     subtarefas:estadoModalTarefa.subtarefas.map(function(s){ return { texto:s.texto, concluida:!!s.concluida }; }),
-    status:tarefaExistente ? tarefaExistente.status : (estadoModalTarefa.status === 'em_andamento' ? 'em_andamento' : 'pendente'),
+    status:tarefaExistente ? tarefaExistente.status : (estadoModalTarefa.status && estadoModalTarefa.status !== 'concluida' ? estadoModalTarefa.status : 'pendente'),
     ordemKanban:tarefaExistente && tarefaExistente.colunaId === colunaId ? tarefaExistente.ordemKanban : proximaOrdemColuna(colunaId)
   };
 
@@ -4937,6 +5091,7 @@ async function iniciarMinhasTarefas(){
   await SagaUI.carregar('tarefas');
   var ok = await carregarDadosTarefas();
   if(!ok) return;
+  await carregarStatusTarefa();
   var eu = getColaborador(usuarioLogadoId);
   document.getElementById('textoResumoVisao').textContent = isAdmin
     ? 'visualizando como ' + (eu ? eu.nome : '') + ' (Administrador): todas as tarefas do escritório'
