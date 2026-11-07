@@ -352,3 +352,30 @@ html[data-cor="grafite"] body[data-theme="dark"] :is(.modal,.modal-box,.popover,
 html[data-cor="grafite"] body[data-theme="dark"] :is(.field-group select option,.pasta-select option){background:#242424!important;color:#F2F2F2!important}
 html[data-cor="grafite"] body[data-theme="dark"] .mo{background:rgba(10,10,10,.55)!important}
 html[data-cor="grafite"] body[data-theme="dark"] :is(.modal-head,.modal-foot){border-color:rgba(255,255,255,.08)!important}
+
+/* ===== Botões de ESCOLHA finos e discretos (pedido do Dr. Victor, 08/11; padrão nascido nas Notas) =====
+   Abas, filtros, Kanban/Lista, períodos, paginação: o selecionado fica com fundo dourado translúcido,
+   contorno fino e letra do tema (antes: azul cheio com letra branca). Botões de AÇÃO (Salvar, Confirmar,
+   Novo...) continuam cheios. O :not(#saga-escolha) dá força para vencer as regras gerais e as do Grafite. */
+:is(.aba-topo.ativa,.btn-view.ativo,.campaign-view-btn.active,.cat-tab.ativo,.choice-pill.active,.filter-pill.active,
+  .invite-tab.active,.mes-rapido-item.selecionado,.opcao-tipo-tarefa.ativa,.opcao-visao-tarefas.ativa,.pag-btn.ativo,
+  .page-pill.active,.pill-direcao.ativo,.pill-fase.ativo,.pill-filtro-rapido.selecionada,.pill-qtd-pagina.selecionada,
+  .pill-quantidade.ativo,.pill.active,.pill.ativo,.process-tab.active,.segment.active,.signature-tab.active,
+  .tab-btn.active,.tab-btn.ativo,.toggle-choice.active,.visao-btn.ativo,.visao-btn.ativa,.sp-pill.ativo,
+  .seg button.active,.si-seg button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada):not(#saga-escolha){
+  background:color-mix(in srgb,var(--gold) 16%,transparent)!important;
+  background-image:none!important;
+  color:var(--text)!important;
+  font-weight:600;
+  border-color:color-mix(in srgb,var(--gold) 42%,transparent)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 42%,transparent)!important;
+  transition:background-color .25s cubic-bezier(.22,.78,.25,1),color .25s cubic-bezier(.22,.78,.25,1),box-shadow .25s cubic-bezier(.22,.78,.25,1);
+}
+:is(.aba-topo.ativa,.btn-view.ativo,.campaign-view-btn.active,.cat-tab.ativo,.choice-pill.active,.filter-pill.active,
+  .invite-tab.active,.mes-rapido-item.selecionado,.opcao-tipo-tarefa.ativa,.opcao-visao-tarefas.ativa,.pag-btn.ativo,
+  .page-pill.active,.pill-direcao.ativo,.pill-fase.ativo,.pill-filtro-rapido.selecionada,.pill-qtd-pagina.selecionada,
+  .pill-quantidade.ativo,.pill.active,.pill.ativo,.process-tab.active,.segment.active,.signature-tab.active,
+  .tab-btn.active,.tab-btn.ativo,.toggle-choice.active,.visao-btn.ativo,.visao-btn.ativa,.sp-pill.ativo,
+  .seg button.active,.si-seg button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada):not(#saga-escolha) :is(svg,svg *,span:not([class*="qtd"]):not([class*="badge"]):not([class*="contagem"])){
+  color:var(--text)!important;stroke:currentColor;
+}
