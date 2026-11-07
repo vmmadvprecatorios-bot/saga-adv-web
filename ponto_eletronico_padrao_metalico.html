@@ -273,6 +273,7 @@ tr.apagado td{color:var(--muted)}
       </div>
       <div class="toolbar">
         <div class="nav-mes"><button class="btn-secondary btn-sm" id="mesAnt" type="button">‹</button><b id="mesTitulo"></b><button class="btn-secondary btn-sm" id="mesProx" type="button">›</button></div>
+        <button class="btn-secondary btn-sm" id="pdfMeuPonto" type="button" style="margin-left:auto">Folha de ponto em PDF</button>
       </div>
       <div class="tabela-wrap"><table class="mes"><thead id="theadMes"></thead><tbody id="tbMes"></tbody></table></div>
     </div>
@@ -319,7 +320,7 @@ tr.apagado td{color:var(--muted)}
 
   <!-- EQUIPE -->
   <section class="tab-pane" id="aba-equipe">
-    <div class="toolbar"><div class="campo" style="margin:0"><input id="eqData" type="date"></div><span class="sub" id="eqResumo"></span></div>
+    <div class="toolbar"><div class="campo" style="margin:0"><input id="eqData" type="date"></div><span class="sub" id="eqResumo"></span><button class="btn-secondary btn-sm" id="pdfEquipe" type="button" style="margin-left:auto" title="Uma folha por colaborador, do mês da data escolhida">Folha de ponto de todos (PDF)</button></div>
     <section id="roscasPontoEquipe" hidden aria-label="Gráfico mensal do ponto da equipe"></section>
     <div class="tabela-wrap"><table><thead><tr><th>Colaborador</th><th>Regime</th><th>Horário</th><th>Entrada</th><th>Saída</th><th>Pausas</th><th class="num">Trabalhadas</th><th class="num">Saldo</th><th>Status</th><th>Ocorrências</th><th>Relatório</th></tr></thead><tbody id="tbEquipe"></tbody></table></div>
     <div class="secao-titulo">Justificativas para decidir</div>
@@ -333,7 +334,8 @@ tr.apagado td{color:var(--muted)}
     <div class="toolbar">
       <div class="nav-mes"><button class="btn-secondary btn-sm" id="bhAnt" type="button">‹</button><b id="bhMes"></b><button class="btn-secondary btn-sm" id="bhProx" type="button">›</button></div>
       <span class="sub" id="bhInfo"></span>
-      <button class="btn-secondary btn-sm" id="bhFechar" type="button" style="display:none;margin-left:auto">Fechar este mês agora</button>
+      <button class="btn-secondary btn-sm" id="pdfBanco" type="button" style="margin-left:auto" title="Uma folha por colaborador, deste mês">Folha de ponto de todos (PDF)</button>
+      <button class="btn-secondary btn-sm" id="bhFechar" type="button" style="display:none">Fechar este mês agora</button>
     </div>
     <div class="tabela-wrap"><table class="banco"><thead><tr><th>Colaborador</th><th>Regime</th><th class="num" title="Saldo transportado do mês anterior">Anterior</th><th class="num" id="bhColPeriodo" title="Saldo do dia 1º até o fechamento">1º a 25</th><th class="num" title="Saldo anterior + saldo do período">Total</th><th class="num" title="Descontar na folha">Descontar</th><th class="num" title="Compensar até o fim do mês (até 1 dia de carga)">Compensar</th><th class="num" title="Excedente desconsiderado (acima de 1 dia de carga)">Excedente</th><th class="num" id="bhColPos" title="Saldo do dia seguinte ao fechamento até o fim do mês">26 ao fim</th><th class="num" title="Saldo levado para o próximo mês">Transportar</th><th>Situação</th></tr></thead><tbody id="tbBanco"></tbody></table></div>
     <p class="sub" style="margin-top:12px;max-width:900px">Regras da planilha: no dia do fechamento (dia 25) soma-se o saldo do dia 1º até o fechamento com o saldo transportado do mês anterior. Saldo negativo é descontado na folha. Saldo positivo, até 1 dia de carga, deve ser compensado até o fim do mês (saída mais cedo ou folga); o que passar de 1 dia é desconsiderado. No dia 1º do mês seguinte o sistema apura do dia 26 ao fim do mês e transporta o resultado. O fechamento e o transporte acontecem sozinhos quando o gestor abre o Ponto; o botão serve para fechar antes do dia 25 ou refazer.</p>
@@ -345,7 +347,7 @@ tr.apagado td{color:var(--muted)}
       <div class="pills" id="relModo"><button class="pill" data-modo="dia" type="button">Dia</button><button class="pill" data-modo="semana" type="button">Semana</button><button class="pill" data-modo="mes" type="button">Mês</button></div>
       <div class="nav-mes"><button class="btn-secondary btn-sm" id="relAnt" type="button">‹</button><b id="rlTitulo"></b><button class="btn-secondary btn-sm" id="relProx" type="button">›</button></div>
       <div class="campo" style="margin:0;min-width:220px"><select id="relPessoa"></select></div>
-      <button class="btn-secondary btn-sm" id="relImprimir" type="button" style="margin-left:auto">Imprimir / salvar PDF</button>
+      <button class="btn-secondary btn-sm" id="relImprimir" type="button" style="margin-left:auto">Salvar em PDF</button>
     </div>
     <div id="relConteudo"></div>
     <p class="sub no-print" style="margin-top:12px;max-width:900px">Conta como atividade tudo o que a pessoa fez: batidas do ponto, atividades registradas à mão (WhatsApp, ligação, e-mail…) e o que ela fez dentro do SAGA (tarefas, comentários, agenda, clientes, documentos, processos, financeiro, marketing e mensagens do chat, só a quantidade). Intervalo sem atividade é o tempo entre duas atividades dentro do expediente (as pausas do ponto não contam); acima do limite definido em Cadastro aparece em vermelho. Clientes atendidos são os clientes diferentes ligados às atividades do período. Só o administrador geral vê esta aba.</p>
@@ -434,7 +436,7 @@ tr.apagado td{color:var(--muted)}
 <div class="modal-overlay" id="modalColab"><div class="modal" style="max-width:1180px">
   <div class="modal-head"><div><h2 id="mcNome"></h2><p id="mcSub"></p></div><button class="modal-close" data-fechar="modalColab" type="button">✕</button></div>
   <div class="modal-body">
-    <div class="toolbar"><div class="nav-mes"><button class="btn-secondary btn-sm" id="mcAnt" type="button">‹</button><b id="mcMes"></b><button class="btn-secondary btn-sm" id="mcProx" type="button">›</button></div><span class="sub" id="mcResumo"></span></div>
+    <div class="toolbar"><div class="nav-mes"><button class="btn-secondary btn-sm" id="mcAnt" type="button">‹</button><b id="mcMes"></b><button class="btn-secondary btn-sm" id="mcProx" type="button">›</button></div><span class="sub" id="mcResumo"></span><button class="btn-secondary btn-sm" id="pdfColab" type="button" style="margin-left:auto">Folha de ponto em PDF</button></div>
     <div class="tabela-wrap"><table class="mes"><thead id="mcThead"></thead><tbody id="mcTb"></tbody></table></div>
   </div>
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalColab" type="button">Fechar</button></div>
@@ -551,6 +553,7 @@ window._sb=_sb;
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
 <script src="ponto_calculo.js"></script>
 <script src="saga_roscas.js"></script>
+<script src="saga_pdf.js"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -1739,7 +1742,7 @@ function prepararRelatorios(){
   document.getElementById('relAnt').addEventListener('click',function(){moverRel(-1);});
   document.getElementById('relProx').addEventListener('click',function(){moverRel(1);});
   document.getElementById('relPessoa').addEventListener('change',function(){state.rel.pessoa=this.value;renderRelatorios();});
-  document.getElementById('relImprimir').addEventListener('click',function(){window.print();});
+  document.getElementById('relImprimir').addEventListener('click',pdfRelatorio);
   document.getElementById('relConteudo').addEventListener('click',function(ev){
     var tr=ev.target.closest('[data-rel-ir]');if(!tr)return;
     if(tr.dataset.relPessoa)state.rel.pessoa=tr.dataset.relPessoa;
@@ -1769,6 +1772,7 @@ async function renderRelatorios(){
     var an={};dias.forEach(function(d){an[d]=analisarDia(porDia[d]||[],d,limite);});
     return {c:c,porDia:porDia,an:an};
   });
+  state.rel.ultimo={per:per,dados:dados,obs:obs,limite:limite,dias:dias,modo:state.rel.modo,pessoa:state.rel.pessoa};
   var gerado='Gerado em '+dataBR(state.hoje)+' às '+horaDe(new Date().toISOString())+' · limite de intervalo: '+limite+' min';
   var hh=function(m){return m?PC.hhmm(m):'—';};
   var tot=function(d){var t={dias:0,trab:0,nAtiv:0,gaps:0,maior:0,cli:{}};dias.forEach(function(k){var a=d.an[k];if(a.temPonto)t.dias++;t.trab+=a.trab;t.nAtiv+=a.nAtiv;t.gaps+=a.gaps.length;if(a.maior>t.maior)t.maior=a.maior;Object.keys(a.clientes).forEach(function(x){t.cli[x]=1;});});t.nCli=Object.keys(t.cli).length;return t;};
@@ -1800,6 +1804,99 @@ async function renderRelatorios(){
   }
   if(!lista.length)h='<div class="vazio">Nenhum colaborador com conta no ponto.</div>';
   alvo.innerHTML=h;
+}
+/* ===== PDF: folha de ponto (uma por colaborador) e relatório de atividades ===== */
+function pdfTexto(html){var d=document.createElement('div');d.innerHTML=html||'';return d.textContent;}
+function pdfSaldo(v){if(v===null||v===undefined||v==='')return '';return '<span class="'+(v<0?'neg':v>0?'pos':'')+'">'+(v>0?'+':'')+PC.hhmm(v)+'</span>';}
+function folhaPontoHtml(c,calc,a,m){
+  var livre=regimeDe(c).livre,t=calc.resumo,E=SagaPdf.esc;
+  var cj=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),fimKeyDe(mesK(a,m))<state.hoje?fimKeyDe(mesK(a,m)):state.hoje);
+  var jornada=livre?'Horário livre':(cj&&cj.carga?PC.hhmm(cj.entrada)+' às '+PC.hhmm(cj.saida)+' · carga '+PC.hhmm(cj.carga):'');
+  var h='<div class="pessoa"><h2>'+E(c.nome)+'</h2><div class="info">'+[c.codigo,c.cargo,c.regime,jornada].filter(Boolean).map(E).join(' · ')+'</div></div>';
+  var k=livre?[['Horas no mês',PC.hhmm(t.trab)],['Dias com registro',t.dias],['Média por dia',t.dias?PC.hhmm(t.trab/t.dias):'—']]:
+    [['Carga do mês',PC.hhmm(t.carga)],['Trabalhadas',PC.hhmm(t.trab)],['Abonadas',PC.hhmm(t.abono)],['Saldo do mês',pdfSaldo(t.saldo)],['Saldo válido',pdfSaldo(t.valido)],
+     ['Atrasos',t.atrasos],['Saídas antecipadas',t.antec],['Pausas excedidas',t.pausas],['Faltas',t.faltas],['Marcações incompletas',t.incompletas]];
+  h+='<div class="kpis">'+k.map(function(x){return '<div><span>'+E(x[0])+'</span><b>'+(typeof x[1]==='string'&&x[1].indexOf('<')===0?x[1]:E(x[1]))+'</b></div>';}).join('')+'</div>';
+  var cab=livre?['Data','Dia','Situação','Início 1','Fim 1','Início 2','Fim 2','Início 3','Fim 3','Horas','Ocorrências']:['Data','Dia','Situação','Entrada','Pausas','Saída','Carga','Trabalhadas','Saldo','Atraso','Saída antec.','Ocorrências'];
+  var numIni=livre?9:6;
+  h+='<table class="tab"><thead><tr>'+cab.map(function(x,i){return '<th'+(i>=numIni&&i<cab.length-1?' class="num"':'')+'>'+x+'</th>';}).join('')+'</tr></thead><tbody>';
+  calc.dias.forEach(function(x){
+    var d=x.d,mk=x.mk,cls='';
+    if(x.sit==='Sábado'||x.sit==='Domingo')cls='fds';else if(x.sit==='Feriado'||x.sit==='Ponto facultativo'||x.sit==='Folga concedida')cls='feriado';
+    if(['Não admitido','Desligado','Sem controle'].indexOf(x.sit)>=0)cls='apagado';
+    var ocorr=d.ocorr.slice();if(x.observacao)ocorr.push(x.observacao);
+    var cel;
+    if(livre)cel=[0,1,2,3,4,5].map(function(i){return '<td>'+PC.hhmmRelogio(mk[i])+'</td>';}).join('')+'<td class="num">'+PC.hhmm(d.trab)+'</td>';
+    else{var pausas=[];for(var i=1;i<=5;i+=2)if(mk[i]!==null)pausas.push(PC.hhmmRelogio(mk[i])+'–'+(mk[i+1]!==null?PC.hhmmRelogio(mk[i+1]):'…'));
+      cel='<td>'+PC.hhmmRelogio(mk[0])+'</td><td>'+pausas.join('<br>')+'</td><td>'+PC.hhmmRelogio(mk[7])+'</td><td class="num">'+PC.hhmm(d.carga)+'</td><td class="num">'+PC.hhmm(d.trab)+'</td><td class="num">'+pdfSaldo(d.saldo)+'</td><td class="num">'+(d.atraso||'')+'</td><td class="num">'+(d.antec||'')+'</td>';}
+    h+='<tr class="'+cls+'"><td>'+dataBR(x.key)+'</td><td>'+E(x.nomeDia)+'</td><td>'+E(x.sit)+(d.status&&d.status!==x.sit?' <span class="etq">'+E(d.status)+'</span>':'')+'</td>'+cel+'<td class="mini">'+E(ocorr.join('; '))+'</td></tr>';
+  });
+  h+='<tr class="total"><td colspan="'+(livre?9:6)+'">Total do mês</td>'+(livre?'<td class="num">'+PC.hhmm(t.trab)+'</td>':'<td class="num">'+PC.hhmm(t.carga)+'</td><td class="num">'+PC.hhmm(t.trab)+'</td><td class="num">'+pdfSaldo(t.saldo)+'</td><td class="num">'+(t.atrasos||'')+'</td><td class="num">'+(t.antec||'')+'</td>')+'<td>'+(livre?'':E('Perfil: '+(t.perfil||'')))+'</td></tr>';
+  h+='</tbody></table><div class="assinaturas"><div>'+E(c.nome)+'<br><span class="mini">Colaborador(a)</span></div><div>Responsável<br><span class="mini">Victor Morais Advocacia</span></div></div>';
+  return h;
+}
+async function pdfFolhaPonto(lista,a,m,btn){
+  if(!window.SagaPdf){showToast('Não foi possível montar o PDF.','error');return;}
+  var ini=mesK(a,m)+'-01',fim=fimKeyDe(mesK(a,m));
+  if(!lista)lista=state.colabsPonto.filter(function(c){return (!c.demissao||c.demissao>=ini)&&(!c.admissao||c.admissao<=fim);});
+  if(!lista.length){showToast('Nenhum colaborador neste mês.','error');return;}
+  var txt=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='Montando o PDF…';}
+  try{
+    var calcs=await Promise.all(lista.map(function(c){return dadosMes(c,a,m);}));
+    var mes=NOMES_MES[m-1]+' de '+a;
+    SagaPdf.imprimir({titulo:'Folha de ponto',subtitulo:mes,paisagem:true,
+      arquivo:'Folha de ponto - '+(lista.length===1?lista[0].nome:'equipe')+' - '+mes,
+      paginas:lista.map(function(c,i){return '<div class="compacta">'+folhaPontoHtml(c,calcs[i],a,m)+'</div>';})});
+  }catch(e){showToast('Erro ao montar o PDF: '+esc(e.message||''),'error');}
+  finally{if(btn){btn.disabled=false;btn.textContent=txt;}}
+}
+function pdfLinhaTempo(eventos,gaps){
+  var E=SagaPdf.esc;
+  var itens=eventos.map(function(e){return {t:e.momento,e:e};}).concat((gaps||[]).map(function(g){return {t:g.de,g:g,depois:true};}));
+  itens.sort(function(a,b){return a.t<b.t?-1:a.t>b.t?1:(a.depois?1:0)-(b.depois?1:0);});
+  if(!itens.length)return '<div class="nada">Nenhuma atividade registrada neste dia.</div>';
+  return '<table class="tab"><thead><tr><th style="width:52px">Hora</th><th style="width:110px">Tipo</th><th>O que foi feito</th><th style="width:170px">Cliente</th></tr></thead><tbody>'+
+    itens.map(function(it){
+      if(it.g)return '<tr class="gap"><td>'+horaDe(it.g.de)+'</td><td colspan="3">Sem atividade até '+horaDe(it.g.ate)+' ('+duracaoTxt(it.g.min)+')</td></tr>';
+      var e=it.e;return '<tr><td>'+horaDe(e.momento)+'</td><td>'+E(e.origem)+'</td><td>'+textoRico(e.descricao||'')+'</td><td>'+E(e.cliente||'')+'</td></tr>';
+    }).join('')+'</tbody></table>';
+}
+function pdfKpisDia(a,limite){
+  var hh=function(x){return x?PC.hhmm(x):'—';};
+  return '<div class="kpis"><div><span>Entrada</span><b>'+(a.entrada?horaDe(a.entrada):'—')+'</b></div><div><span>Saída</span><b>'+(a.saida?horaDe(a.saida):'—')+'</b></div><div><span>Trabalhadas</span><b>'+hh(a.trab)+'</b></div>'+
+    '<div><span>Atividades</span><b>'+a.nAtiv+'</b></div><div><span>Clientes atendidos</span><b>'+a.nCli+'</b></div><div><span>Maior intervalo</span><b'+(a.maior>limite?' class="alerta"':'')+'>'+(a.maior?duracaoTxt(a.maior):'—')+'</b></div></div>';
+}
+function pdfRelatorio(){
+  var u=state.rel&&state.rel.ultimo;if(!u||!u.dados){showToast('Aguarde o relatório carregar.','error');return;}
+  var E=SagaPdf.esc,hh=function(x){return x?PC.hhmm(x):'—';},paginas=[],L=u.limite;
+  var tot=function(d){var t={dias:0,trab:0,nAtiv:0,gaps:0,maior:0,cli:{}};u.dias.forEach(function(k){var a=d.an[k];if(a.temPonto)t.dias++;t.trab+=a.trab;t.nAtiv+=a.nAtiv;t.gaps+=a.gaps.length;if(a.maior>t.maior)t.maior=a.maior;Object.keys(a.clientes).forEach(function(x){t.cli[x]=1;});});t.nCli=Object.keys(t.cli).length;return t;};
+  var obsDe=function(d,k){var o=u.obs[d.c.id+'|'+k];return o?'<div class="obs"><b>Observações do dia</b><div>'+textoRico(o)+'</div></div>':'';};
+  var cabPessoa=function(d){return '<div class="pessoa"><h2>'+E(d.c.nome)+'</h2><div class="info">'+[d.c.cargo,d.c.regime].filter(Boolean).map(E).join(' · ')+'</div></div>';};
+  if(u.modo==='dia'){
+    var k=u.per.ini;
+    if(u.dados.length>1){
+      paginas.push('<div class="secao">Resumo da equipe</div><table class="tab"><thead><tr><th>Colaborador</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima de '+L+' min</th></tr></thead><tbody>'+
+        u.dados.map(function(d){var a=d.an[k];return '<tr><td><b>'+E(d.c.nome)+'</b></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>L?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+'</tbody></table>');
+    }
+    u.dados.forEach(function(d){var a=d.an[k];
+      paginas.push(cabPessoa(d)+pdfKpisDia(a,L)+(a.nCli?'<div class="mini" style="margin:-4px 0 10px">Clientes: '+Object.keys(a.clientes).map(function(x){return E(a.clientes[x]);}).join(', ')+'</div>':'')+
+        '<div class="secao">Linha do tempo do dia</div>'+pdfLinhaTempo(d.porDia[k]||[],a.gaps)+obsDe(d,k));});
+  }else{
+    if(u.dados.length>1){
+      paginas.push('<div class="secao">Resumo da equipe</div><table class="tab"><thead><tr><th>Colaborador</th><th class="num">Dias com ponto</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Média por dia</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima de '+L+' min</th></tr></thead><tbody>'+
+        u.dados.map(function(d){var t=tot(d);return '<tr><td><b>'+E(d.c.nome)+'</b></td><td class="num">'+t.dias+'</td><td class="num">'+hh(t.trab)+'</td><td class="num">'+t.nAtiv+'</td><td class="num">'+(t.dias?(t.nAtiv/t.dias).toFixed(1).replace('.',','):'—')+'</td><td class="num">'+t.nCli+'</td><td class="num'+(t.maior>L?' alerta':'')+'">'+(t.maior?duracaoTxt(t.maior):'—')+'</td><td class="num'+(t.gaps?' alerta':'')+'">'+t.gaps+'</td></tr>';}).join('')+'</tbody></table>');
+    }
+    u.dados.forEach(function(d){var t=tot(d);
+      var linhas=u.dias.filter(function(k){var a=d.an[k];return a.temPonto||a.nAtiv;});
+      var h=cabPessoa(d)+'<div class="kpis"><div><span>Dias com ponto</span><b>'+t.dias+'</b></div><div><span>Trabalhadas</span><b>'+hh(t.trab)+'</b></div><div><span>Atividades</span><b>'+t.nAtiv+'</b></div><div><span>Média por dia</span><b>'+(t.dias?(t.nAtiv/t.dias).toFixed(1).replace('.',','):'—')+'</b></div><div><span>Clientes atendidos</span><b>'+t.nCli+'</b></div><div><span>Intervalos acima de '+L+' min</span><b'+(t.gaps?' class="alerta"':'')+'>'+t.gaps+'</b></div></div>';
+      h+='<div class="secao">Dia a dia</div>'+(linhas.length?'<table class="tab"><thead><tr><th>Dia</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima</th></tr></thead><tbody>'+
+        linhas.map(function(k){var a=d.an[k];return '<tr><td><b>'+dataBR(k)+'</b></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>L?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+'</tbody></table>':'<div class="nada">Sem registros no período.</div>');
+      // relatório diário de cada dia do período, em seguida
+      linhas.forEach(function(k){var a=d.an[k];h+='<div class="secao" style="break-before:auto;margin-top:18px">'+dataBR(k)+' · relatório do dia</div>'+pdfKpisDia(a,L)+pdfLinhaTempo(d.porDia[k]||[],a.gaps)+obsDe(d,k);});
+      paginas.push(h);});
+  }
+  var nomeArq=(u.dados.length===1?u.dados[0].c.nome:'equipe');
+  SagaPdf.imprimir({titulo:'Relatório de atividades',subtitulo:u.per.titulo,paisagem:false,arquivo:'Relatório de atividades - '+nomeArq+' - '+u.per.titulo,paginas:paginas});
 }
 async function abrirAtestado(caminho){
   var w=window.open('','_blank');
@@ -1841,6 +1938,10 @@ function ligarEventos(){
   document.getElementById('mesProx').addEventListener('click',function(){mudarMes(1);carregarMeuMes();});
   document.getElementById('mcAnt').addEventListener('click',function(){mudarMes(-1,state.mc);renderMesColab();});
   document.getElementById('mcProx').addEventListener('click',function(){mudarMes(1,state.mc);renderMesColab();});
+  document.getElementById('pdfMeuPonto').addEventListener('click',function(){if(state.meuColab)pdfFolhaPonto([state.meuColab],state.ano,state.mes,this);});
+  document.getElementById('pdfColab').addEventListener('click',function(){if(state.mc)pdfFolhaPonto([state.mc.colab],state.mc.ano,state.mc.mes,this);});
+  document.getElementById('pdfEquipe').addEventListener('click',function(){var d=(document.getElementById('eqData').value||state.hoje).split('-').map(Number);pdfFolhaPonto(null,d[0],d[1],this);});
+  document.getElementById('pdfBanco').addEventListener('click',function(){pdfFolhaPonto(null,state.bh.ano,state.bh.mes,this);});
   document.getElementById('relSalvar').addEventListener('click',salvarRelatorio);
   document.getElementById('relNova').addEventListener('click',function(){
     fecharModal('modalRel');var d=document.getElementById('atDesc');
