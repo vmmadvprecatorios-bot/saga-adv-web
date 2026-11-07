@@ -36,6 +36,14 @@
   global.sagaTituloTema=function(){var b=document.getElementById('themeToggle');if(!b)return;var cor='azul';try{cor=localStorage.getItem('saga-cor')||'azul';}catch(e){}
     var modo=(document.body&&document.body.getAttribute('data-theme'))==='light'?'light':'dark';var outro=modo==='light'?'dark':'light';
     var t='Agora: '+global.sagaNomeTema(cor,modo)+'. Clique para '+global.sagaNomeTema(cor,outro)+'.';b.setAttribute('title',t);b.setAttribute('aria-label',t);};
+  // cores que a pessoa pode usar: fixada > "todos" para ela > regra geral do escritório (o Azul sempre pode)
+  global.sagaTemasPermitidos=function(u){
+    u=u||_perfilAtual||{};var todas=global.SAGA_CORES.map(function(c){return c.id;});
+    if(u.tema_cor_fixo)return [u.tema_cor_fixo];
+    var rg=global._sagaTemasRegra||{todos:true};
+    if(u.temas_modo==='todos'||rg.todos!==false||u.eh_administrador)return todas;
+    var lib=(rg.liberados||[]).concat(['azul']);return todas.filter(function(id){return lib.indexOf(id)>=0;});
+  };
   global.sagaAplicarCor=function(cor){
     if(!global.SAGA_CORES.some(function(c){return c.id===cor;}))cor='azul';
     var h=document.documentElement;
@@ -828,7 +836,7 @@
       var s=await global._sb.auth.getSession();
       if(!s.data||!s.data.session)return;
       var authId=s.data.session.user.id;
-      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo,foto_url,preferencias,preferencias_notificacao,tema_cor_fixo').eq('auth_user_id',authId).single();
+      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo,foto_url,preferencias,preferencias_notificacao,tema_cor_fixo,temas_modo').eq('auth_user_id',authId).single();
       if(r.error||!r.data)return;
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
@@ -839,7 +847,11 @@
       var letra=String((r.data.preferencias||{}).letra||'1');
       try{if(localStorage.getItem('saga-letra')!==letra){localStorage.setItem('saga-letra',letra);document.documentElement.style.zoom=letra==='1'?'':letra;}}catch(e){}
       // cor do tema: a fixada pelo administrador vale mais que a escolha da pessoa; sem nada, Azul
-      global.sagaAplicarCor(r.data.tema_cor_fixo||(r.data.preferencias||{}).cor||'azul');
+      // e só vale cor liberada pelo administrador (regra geral ou "todos os temas" para a pessoa)
+      try{var rg=await global._sb.rpc('temas_regra');if(!rg.error&&rg.data)global._sagaTemasRegra=rg.data;}catch(e){}
+      var corEsc=r.data.tema_cor_fixo||(r.data.preferencias||{}).cor||'azul';
+      if(!r.data.tema_cor_fixo&&global.sagaTemasPermitidos(r.data).indexOf(corEsc)<0)corEsc='azul';
+      global.sagaAplicarCor(corEsc);
       _avisosDesligados=((r.data.preferencias_notificacao||{}).desligados)||[];
       var nm=document.getElementById('avatarPopNome');if(nm)nm.textContent=r.data.nome_completo||'';
       var em=document.getElementById('avatarPopEmail');if(em)em.textContent=r.data.email||'';

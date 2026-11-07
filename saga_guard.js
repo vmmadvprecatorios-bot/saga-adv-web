@@ -467,6 +467,14 @@
   window.addEventListener('pageshow',function(ev){
     if(ev.persisted){
       saindo=false;html.classList.remove('saga-carregando');mostrarMoldura();
+      // a cópia guardada pelo navegador é de antes da última troca: reaplica cor, modo e letra salvos agora
+      try{
+        var corS=localStorage.getItem('saga-cor')||'azul',temaS=localStorage.getItem('saga-tema')||'dark',letraS=localStorage.getItem('saga-letra')||'1';
+        if(corS==='azul')html.removeAttribute('data-cor');else html.setAttribute('data-cor',corS);
+        if(document.body&&document.body.getAttribute('data-theme')!==temaS)document.body.setAttribute('data-theme',temaS);
+        html.style.zoom=letraS==='1'?'':letraS;
+        if(window.sagaAplicarCor)window.sagaAplicarCor(corS);
+      }catch(e){}
       if(document.getAnimations)document.getAnimations().forEach(function(a){try{a.cancel();}catch(e){}});
     }
   });
