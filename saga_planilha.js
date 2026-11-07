@@ -159,6 +159,7 @@ window.SagaPlanilha=(function(){
     }).join('');
     tb.querySelectorAll('tr[data-sp-proc]').forEach(function(tr){tr.onclick=null;});
     renderTotais(tabela,cs,lista);aplicarLarguras();atualizarFixas();restaurarSelecao();
+    var kp=document.getElementById('spKanbanPor');if(kp)kp.style.display='none';
   }
   // ---------- largura das colunas (arrastar a borda do cabeçalho; vale só para você) ----------
   var CHAVE_LARG=function(){return 'saga-planilha-larg-'+FASE_FIXA+'-'+(state.meuInternoId||'');};
@@ -639,6 +640,11 @@ window.SagaPlanilha=(function(){
       '.sp-org{margin-left:auto;font-size:11.5px;color:var(--gold-light);text-decoration:underline}.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
       '.sp-modal{max-width:520px;width:94vw}.sp-col-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;max-height:52vh;overflow:auto;margin-top:8px}.sp-ajuda{font-size:11.5px;color:var(--muted);margin:0 0 8px}.sp-col-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
       '#listaView .tabela-scroll{max-height:70vh;overflow:auto}'+
+      '.sp-kb-por{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-kb-por select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:9px;padding:7px 9px;font:inherit;font-size:12px;max-width:230px}.sp-kb-por select:focus{border-color:var(--gold);outline:0}'+
+      '.sp-kb-padrao{border:0;background:none;color:var(--gold-light);font:inherit;font-size:11.5px;text-decoration:underline;cursor:pointer}'+
+      '.sp-kb-filtro{margin-left:auto;border:1px solid var(--border-soft);background:transparent;color:var(--muted);font:inherit;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;cursor:pointer;white-space:nowrap}.sp-kb-filtro:hover,.sp-kb-filtro.ativo{border-color:var(--gold);color:var(--gold-light)}'+
+      '.sp-kb .coluna-cabecalho{flex-wrap:wrap;row-gap:6px}.sp-kb .coluna-titulo{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;flex:1 1 120px;min-width:0}.sp-kb-chips{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 8px}.sp-kb-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 8px;border-radius:999px;background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);font-size:10.5px;color:var(--text);max-width:100%}.sp-kb-chip button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;padding:0 3px}'+
+      '.sp-kb-limpar{border:0;background:none;color:var(--muted);font:inherit;font-size:10.5px;text-decoration:underline;cursor:pointer}.sp-kb-nada{padding:14px 10px;color:var(--muted);font-size:11.5px;text-align:center}'+
       '.sp-th{min-width:0;overflow:hidden}.sp-th-nome{overflow:hidden;text-overflow:ellipsis;min-width:0}.sp-funil{flex:0 0 auto}'+
       '.sp-redim{position:absolute;top:0;right:-4px;width:9px;height:100%;cursor:col-resize;z-index:3;touch-action:none}'+
       '.sp-redim::after{content:"";position:absolute;top:22%;bottom:22%;left:4px;width:1px;background:var(--border);transition:background .2s,top .2s cubic-bezier(.22,.78,.25,1),bottom .2s cubic-bezier(.22,.78,.25,1)}'+
@@ -691,6 +697,7 @@ window.SagaPlanilha=(function(){
     var abas=document.createElement('div');abas.id='spAbas';var cab=document.querySelector('.barra-filtros');(cab||document.getElementById('listaView')).parentNode.insertBefore(abas,cab||document.getElementById('listaView'));
     var barra=document.createElement('div');barra.id='spBarra';
     var lv=document.getElementById('listaView');lv.parentNode.insertBefore(barra,lv);
+    var bk=document.getElementById('barraKanban');if(bk&&!document.getElementById('spKanbanPor')){var kp=document.createElement('div');kp.id='spKanbanPor';kp.className='sp-kb-por';kp.style.display='none';bk.insertBefore(kp,bk.querySelector('.busca-kanban'));}
     pronta=true;renderBarra();
     // Clique no nome abre a ficha; clique duplo em outra célula edita; cabeçalho abre o filtro
     var tabela=document.querySelector('#listaView table');
@@ -936,6 +943,139 @@ window.SagaPlanilha=(function(){
     return true;
   }
 
+  // ---------- Kanban organizado pela coluna escolhida, com filtro em cada coluna ----------
+  // Guardado só neste aparelho e nesta conta (como as larguras): {por: id da coluna, filtros: {grupo: {coluna: [chaves]}}}
+  var CHAVE_KB=function(){return 'saga-planilha-kanban-'+FASE_FIXA+'-'+(state.meuInternoId||'');};
+  var kb=null,opsCache={};
+  var FAIXAS=[[0,50000,'Até R$ 50 mil'],[50000,100000,'R$ 50 a 100 mil'],[100000,200000,'R$ 100 a 200 mil'],[200000,500000,'R$ 200 a 500 mil'],[500000,Infinity,'Acima de R$ 500 mil']];
+  var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  function lerKb(){if(!kb){try{kb=JSON.parse(localStorage.getItem(CHAVE_KB())||'null');}catch(e){}kb=kb||{por:null,filtros:{}};kb.filtros=kb.filtros||{};}return kb;}
+  function guardarKb(){try{localStorage.setItem(CHAVE_KB(),JSON.stringify(kb));}catch(e){}}
+  function agrupavel(c){
+    if(!c||!c.ativo)return false;
+    if(['pessoa.nome','pessoa.cpf','processo.numero','pessoa.telefone','pessoa.email','processo.criado_em','processo.atualizado_em'].indexOf(c.campo_sistema)>=0)return false;
+    if(c.campo_sistema==='processo.fase')return false;
+    return ['opcao','sim_nao','usuario','moeda','numero','data'].indexOf(c.tipo)>=0||['processo.status','processo.tese','processo.area','processo.situacao_acao','processo.responsavel','processo.captador','pessoa.uf','pessoa.situacao_vital','processo.valor_causa','processo.valor_precatorio','processo.ultima_movimentacao'].indexOf(c.campo_sistema)>=0;
+  }
+  function tipoGrupo(c){
+    if(c.tipo==='moeda'||c.tipo==='numero'||c.campo_sistema==='processo.valor_causa'||c.campo_sistema==='processo.valor_precatorio')return 'faixa';
+    if(c.tipo==='data'||c.campo_sistema==='processo.ultima_movimentacao')return 'mes';
+    if(c.tipo==='sim_nao')return 'simnao';
+    return 'opcao';
+  }
+  function chaveGrupo(p,c){
+    var v=bruto(p,c),t=tipoGrupo(c);
+    if(v==null||v===''||(Array.isArray(v)&&!v.length))return VAZIO;
+    if(t==='faixa'){var n=Number(v);if(!isFinite(n))return VAZIO;for(var i=0;i<FAIXAS.length;i++)if(n>=FAIXAS[i][0]&&n<FAIXAS[i][1])return 'f'+i;return VAZIO;}
+    if(t==='mes')return String(v).slice(0,7);
+    if(t==='simnao')return v===true||v==='true'?'true':'false';
+    return String(v);
+  }
+  // colunas do Kanban na ordem lógica (ordem do menu; meses do mais novo para o mais antigo)
+  function gruposDe(c,lista){
+    var t=tipoGrupo(c),g=[];
+    if(t==='faixa')g=FAIXAS.map(function(f,i){return {k:'f'+i,nome:f[2]};});
+    else if(t==='simnao')g=[{k:'true',nome:'Sim',cor:'#16a34a'},{k:'false',nome:'Não',cor:'#e5484d'}];
+    else if(t==='mes'){var ms={};lista.forEach(function(p){var k=chaveGrupo(p,c);if(k!==VAZIO)ms[k]=1;});g=Object.keys(ms).sort().reverse().map(function(k){return {k:k,nome:MESES[Number(k.slice(5,7))-1]+' de '+k.slice(0,4)};});}
+    else{
+      var ops=opsCache[c.id]||[];
+      g=ops.map(function(o){var cor=null;if(c.campo_sistema==='processo.status'){var st=(state.statusList||[]).find(function(x){return String(x.id)===String(o.id);});cor=st&&st.cor;}else if(c.campo_sistema==='processo.situacao_acao'){cor=(situacao(o.id)||{}).cor;}else if(c.tipo==='opcao'&&!c.campo_sistema){var oo=(c.opcoes||[]).find(function(x){return String(x.id)===String(o.id);});cor=oo&&oo.cor;}else if(c.campo_sistema==='processo.tese'){var te=(state.teses||[]).find(function(x){return String(x.id)===String(o.id);});cor=te&&te.cor;}return {k:String(o.id),nome:o.nome,cor:cor};});
+      // valores antigos que não estão mais no menu também ganham coluna
+      var ja={};g.forEach(function(x){ja[x.k]=1;});lista.forEach(function(p){var k=chaveGrupo(p,c);if(k!==VAZIO&&!ja[k]){ja[k]=1;g.push({k:k,nome:texto(p,c)||k});}});
+    }
+    g.push({k:VAZIO,nome:t==='simnao'?'Não informado':'Sem '+nomeCol(c).toLowerCase(),vazio:true});
+    return g;
+  }
+  function podeSoltar(c){return tipoGrupo(c)==='opcao'||tipoGrupo(c)==='simnao';}
+  function filtrosDoGrupo(k){var f=lerKb().filtros[k]||{};return f;}
+  function passaGrupo(p,k){var f=filtrosDoGrupo(k);for(var id in f){var c=cols.find(function(x){return x.id===id;});if(!c||!f[id].length)continue;if(f[id].indexOf(chave(p,c))<0)return false;}return true;}
+  function seletorKanban(){
+    var el=document.getElementById('spKanbanPor');if(!el)return;
+    var k=lerKb(),cs=colunasDaTela().filter(agrupavel);
+    el.style.display=state.view==='kanban'?'':'none';
+    var bn=document.getElementById('btnNovaColunaKanban');if(bn&&state.view==='kanban')bn.style.display=k.por?'none':'';
+    el.innerHTML='<label for="spKbSel">Organizar por</label><select id="spKbSel"><option value="">Padrão ('+(FASE_FIXA==='captacao'?'etapas do funil':'status do processo')+')</option>'+cs.map(function(c){return '<option value="'+h(c.id)+'"'+(k.por===c.id?' selected':'')+'>'+h(nomeCol(c))+'</option>';}).join('')+'</select>'+
+      (k.por?'<button type="button" class="sp-kb-padrao" id="spKbPadrao" title="Voltar à organização padrão desta área">Voltar ao padrão</button>':'');
+    el.querySelector('#spKbSel').onchange=function(){k.por=this.value||null;k.filtros={};guardarKb();if(typeof renderKanban==='function')renderKanban();};
+    var bp=el.querySelector('#spKbPadrao');if(bp)bp.onclick=function(){k.por=null;k.filtros={};guardarKb();renderKanban();};
+  }
+  function cartaoGenerico(p,c){
+    var sig=!!p.sigilo&&!state.permissoes.editar_dados,pe=p.pessoa||{},st=statusDe(p);
+    var whats=String(pe.telefone_whatsapp||'').replace(/\D/g,'');
+    var cTipo=cols.find(function(x){return x.campo_sistema==='processo.tese';});var tipo=cTipo?texto(p,cTipo):'';
+    var pessoaId=FASE_FIXA==='captacao'?p.captador_id:p.responsavel_id,nomeP=nomeUsuario(pessoaId);
+    var cPet=cols.find(function(x){return /status da peti/i.test(norm(x.nome))&&!x.campo_sistema;});var pet=cPet&&c.id!==cPet.id?texto(p,cPet):'';
+    var valor=p.valor_precatorio_origem||p.valor_causa;
+    return '<div class="card-kanban sp-card" data-processo-id="'+h(p.id)+'" draggable="'+(state.permissoes.editar===true&&podeSoltar(c)?'true':'false')+'" onclick="verFicha(\''+h(p.id)+'\')">'+
+      '<div class="card-nome">'+h(sig?'••••':(pe.nome_completo||'N/D'))+'</div>'+
+      (c.campo_sistema!=='processo.status'?'<div class="sp-card-status"><i style="background:'+h(st.cor||'#8a94a8')+'"></i>'+h(st.nome||'')+'</div>':'')+
+      ((tipo&&c.campo_sistema!=='processo.tese')||pet?'<div class="sp-card-linha">'+h([c.campo_sistema!=='processo.tese'?tipo:'',pet].filter(Boolean).join(' · '))+'</div>':'')+
+      (valor&&!sig?'<div class="sp-card-valor">'+h(new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(valor)))+'</div>':'')+
+      '<div class="card-rodape"><div style="display:flex;align-items:center;gap:6px">'+(nomeP?'<div class="card-avatar" data-saga-nome="'+h(nomeP)+'"'+(pessoaId?' data-saga-usuario="'+h(pessoaId)+'"':'')+' title="'+h(nomeP)+'">'+h(nomeP.split(' ').map(function(x){return x[0];}).slice(0,2).join(''))+'</div><span class="sp-card-cap">'+h(nomeP.split(' ')[0])+'</span>':'')+'</div>'+
+      (whats.length>=10&&!sig?'<a class="card-whats-mini" href="https://wa.me/55'+h(whats)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir WhatsApp">WhatsApp</a>':'')+'</div></div>';
+  }
+  // chamado pela tela no começo do renderKanban: devolve true quando desenhou (organização escolhida)
+  function kanbanAgrupado(kv){
+    seletorKanban();
+    var k=lerKb(),c=k.por?cols.find(function(x){return x.id===k.por;}):null;
+    if(!c||!agrupavel(c)){if(k.por){k.por=null;guardarKb();seletorKanban();}return false;}
+    if(tipoGrupo(c)==='opcao'&&!opsCache[c.id]){kv.innerHTML='<div class="estado-vazio-kanban"><b>Organizando…</b></div>';opcoesDe(c).then(function(o){opsCache[c.id]=o||[];renderKanban();});return true;}
+    var lista=state.processos,grupos=gruposDe(c,lista),total=lista.length;
+    var porG={};grupos.forEach(function(g){porG[g.k]=[];});
+    lista.forEach(function(p){var kk=chaveGrupo(p,c);(porG[kk]=porG[kk]||[]).push(p);});
+    var ord=function(a,b){return String((a.pessoa||{}).nome_completo||'').localeCompare(String((b.pessoa||{}).nome_completo||''),'pt-BR');};
+    kv.innerHTML='<div class="quadro-kanban sp-funil sp-kb">'+grupos.filter(function(g){return !(g.vazio&&!(porG[g.k]||[]).length&&tipoGrupo(c)!=='simnao');}).map(function(g){
+      var todos=(porG[g.k]||[]),vis=todos.filter(function(p){return passaGrupo(p,g.k);}),nf=Object.keys(filtrosDoGrupo(g.k)).filter(function(id){return (filtrosDoGrupo(g.k)[id]||[]).length;}).length;
+      var pct=total?Math.round(todos.length*100/total):0,cor=g.cor||(g.vazio?'#8a94a8':'var(--gold)');
+      var chips=Object.keys(filtrosDoGrupo(g.k)).map(function(id){var cc=cols.find(function(x){return x.id===id;});var vs=filtrosDoGrupo(g.k)[id];if(!cc||!vs.length)return '';
+        var nomes=vs.map(function(v){if(v===VAZIO)return '(vazio)';var pp=(state.baseProcessos||[]).find(function(p){return chave(p,cc)===v;});return pp?texto(pp,cc):v;});
+        return '<span class="sp-kb-chip">'+h(nomeCol(cc))+': '+h(nomes.join(', '))+'<button type="button" data-kb-tira="'+h(g.k)+'|'+h(id)+'" aria-label="Tirar filtro">×</button></span>';}).join('');
+      return '<div class="coluna-kanban" data-coluna-id="'+h(g.k)+'">'+
+        '<div class="coluna-cabecalho"><span class="coluna-cor-dot" style="background:'+h(cor)+'"></span><div class="coluna-titulo">'+h(g.nome)+'</div><span class="coluna-contagem">'+(nf?vis.length+' de '+todos.length:todos.length)+'</span><span class="sp-pct">'+pct+'%</span>'+
+        '<button type="button" class="sp-kb-filtro'+(nf?' ativo':'')+'" data-kb-filtro="'+h(g.k)+'" title="Filtrar só esta coluna">'+(nf?nf+' filtro'+(nf>1?'s':''):'Filtrar')+' ▾</button></div>'+
+        '<div class="sp-funil-barra"><i style="width:'+pct+'%;background:'+h(cor)+'"></i></div>'+
+        (chips?'<div class="sp-kb-chips">'+chips+'<button type="button" class="sp-kb-limpar" data-kb-limpar="'+h(g.k)+'">limpar</button></div>':'')+
+        '<div class="coluna-corpo" data-sp-grupo="'+h(g.k)+'">'+vis.sort(ord).map(function(p){return cartaoGenerico(p,c);}).join('')+(vis.length?'':'<div class="sp-kb-nada">'+(todos.length?'Nenhum cartão com estes filtros.':'Nenhum processo.')+'</div>')+'</div></div>';
+    }).join('')+'</div>';
+    kv.querySelectorAll('[data-kb-filtro]').forEach(function(b){b.onclick=function(e){e.stopPropagation();menuFiltroGrupo(b,b.dataset.kbFiltro,c);};});
+    kv.querySelectorAll('[data-kb-tira]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var x=b.dataset.kbTira.split('|');delete lerKb().filtros[x[0]][x[1]];guardarKb();renderKanban();};});
+    kv.querySelectorAll('[data-kb-limpar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();delete lerKb().filtros[b.dataset.kbLimpar];guardarKb();renderKanban();};});
+    if(state.permissoes.editar===true&&podeSoltar(c)&&typeof ativarArrasteKanban==='function')ativarArrasteKanban(kv);
+    if(!(window.sagaMq?sagaMq():{matches:false}).matches)kv.querySelectorAll('.coluna-kanban').forEach(function(col,i){if(col.animate)col.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:Math.min(i,10)*40,easing:'cubic-bezier(.22,.78,.25,1)',fill:'backwards'});});
+    return true;
+  }
+  // soltar um cartão em outra coluna muda aquele dado do processo (só listas de opções e Sim/Não)
+  async function soltarNoGrupo(pid,k){
+    var kk=lerKb(),c=cols.find(function(x){return x.id===kk.por;}),p=processo(pid);if(!c||!p||!podeSoltar(c))return;
+    if(chaveGrupo(p,c)===k){renderKanban();return;}
+    if(!editavel(p,c)){aviso('Você não pode mudar este dado.',true);renderKanban();return;}
+    var valor=k===VAZIO?null:(tipoGrupo(c)==='simnao'?k==='true':k);
+    try{await gravar(p,c,valor);aviso(h(nomeCol(c))+' atualizado.');}catch(e){aviso(h(e.message||'Não foi possível mudar.'),true);}
+    renderKanban();
+  }
+  // filtro de uma coluna do Kanban: escolhe a coluna da planilha e os valores (soma com os outros filtros da coluna)
+  function menuFiltroGrupo(ancora,k,cPor){
+    fecharMenu();
+    var itens=(state.processos||[]).filter(function(p){return chaveGrupo(p,cPor)===k;});
+    var cs=colunasDaTela().filter(function(c){return c.id!==cPor.id&&['link'].indexOf(c.tipo)<0&&c.campo_sistema!=='pessoa.nome';});
+    var f=filtrosDoGrupo(k),sel=cs.find(function(c){return /protocol|documenta/i.test(norm(c.nome))&&!(f[c.id]||[]).length;})||cs[0];
+    var m=document.createElement('div');m.className='sp-menu';m.style.width='290px';
+    var desenhar=function(){
+      var vals={};itens.forEach(function(p){var v=chave(p,sel);vals[v]=vals[v]||{n:0,t:v===VAZIO?'(vazio)':texto(p,sel)||v};vals[v].n++;});
+      var atuais=f[sel.id]||[];
+      m.innerHTML='<div class="sp-menu-tit">Filtrar esta coluna</div><select class="sp-busca" id="spKbCol">'+cs.map(function(c){return '<option value="'+h(c.id)+'"'+(c===sel?' selected':'')+'>'+h(nomeCol(c))+((f[c.id]||[]).length?' ✓':'')+'</option>';}).join('')+'</select>'+
+        '<div class="sp-lista">'+Object.keys(vals).sort(function(a,b){return vals[a].t.localeCompare(vals[b].t,'pt-BR',{numeric:true});}).map(function(v){return '<label class="sp-item"><input type="checkbox" value="'+h(v)+'"'+(atuais.indexOf(v)>=0?' checked':'')+'><span>'+h(exibir(sel,vals[v].t))+'</span><em>'+vals[v].n+'</em></label>';}).join('')+'</div>'+
+        '<div class="sp-menu-acoes"><button type="button" class="btn-secondary" data-x="limpar">Limpar</button><button type="button" class="btn-primary" data-x="ok">Aplicar</button></div>';
+      m.querySelector('#spKbCol').onchange=function(){sel=cs.find(function(c){return c.id===this.value;}.bind(this));desenhar();};
+      m.querySelector('[data-x="limpar"]').onclick=function(){if(lerKb().filtros[k])delete lerKb().filtros[k][sel.id];guardarKb();fecharMenu();renderKanban();};
+      m.querySelector('[data-x="ok"]').onclick=function(){var v=Array.prototype.map.call(m.querySelectorAll('.sp-lista input:checked'),function(i){return i.value;});var fk=lerKb().filtros[k]=lerKb().filtros[k]||{};if(v.length)fk[sel.id]=v;else delete fk[sel.id];guardarKb();fecharMenu();renderKanban();};
+    };
+    desenhar();
+    document.body.appendChild(m);menuAberto=m;
+    var r=ancora.getBoundingClientRect();m.style.top=Math.min(r.bottom+6,window.innerHeight-m.offsetHeight-8)+'px';m.style.left=Math.max(8,Math.min(r.right-290,window.innerWidth-298))+'px';
+    if(!(window.sagaMq?sagaMq():{matches:false}).matches&&m.animate)m.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,.78,.25,1)'});
+  }
+
   // ---------- ficha do cliente: "Dados do Processo" na ordem da planilha, editável ----------
   var catFicha=null;
   async function catalogosFicha(){
@@ -1142,5 +1282,5 @@ window.SagaPlanilha=(function(){
   }
   function formatarCampo(tipo,v){return formatar(tipo,v);}
 
-  return {retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
+  return {retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,kanbanAgrupado:kanbanAgrupado,soltarNoGrupo:soltarNoGrupo,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
 })();

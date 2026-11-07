@@ -1622,6 +1622,8 @@ function ordenarCardsColuna(cards,criterio,direcao){
 function renderKanban(){
   prepararVisaoProcessos();renderGraficosProcessos();atualizarContagem();
   var kv=document.getElementById('kanbanView');
+  // Organização escolhida pela pessoa ("Organizar por"); sem escolha, segue o padrão da área
+  if(window.SagaPlanilha&&SagaPlanilha.kanbanAgrupado&&SagaPlanilha.kanbanAgrupado(kv))return;
   // Captação: Kanban como funil (colunas = etapas que agrupam os status)
   if(FASE_FIXA==='captacao'&&window.SagaPlanilha&&SagaPlanilha.renderFunil&&SagaPlanilha.renderFunil(kv))return;
   document.querySelectorAll('body > .menu-ordenar').forEach(function(m){m.remove();});
@@ -1846,6 +1848,7 @@ function ativarArrasteKanban(kv){
       removerIndicador();
       coluna.classList.remove('zona-drop-ativa');
       var processoId=state.kanbanArrastandoId;
+      if(corpo.hasAttribute('data-sp-grupo')){state.kanbanArrastandoId=null;if(processoId&&window.SagaPlanilha)SagaPlanilha.soltarNoGrupo(processoId,corpo.getAttribute('data-sp-grupo'));return;}
       var novoStatusId=corpo.getAttribute('data-status-id');
       state.kanbanArrastandoId=null;
       if(!processoId||!novoStatusId)return;
