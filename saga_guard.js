@@ -606,7 +606,8 @@
 
   // Janela aberta (cadastro, cartão, aviso, menu do celular): a rodinha do mouse e o dedo rolam só a janela.
   // Ao chegar ao fim da janela, a tela de trás não rola junto. Vale para todas as telas.
-  var SEL_CAMADA='[class*="modal"],[class*="overlay"],[class*="backdrop"],[class*="dialog"],[class*="drawer"],dialog[open]';
+  // (08/11) incluídas as janelas .mo (Notas, Teses, Cartas), .si-ov (Intimações), visores de documento e qualquer [role=dialog]/[aria-modal]
+  var SEL_CAMADA='[class*="modal"],[class*="overlay"],[class*="backdrop"],[class*="dialog"],[class*="drawer"],dialog[open],.mo,.si-ov,[class*="-ov"],[class*="visor"],[role="dialog"],[aria-modal="true"]';
   function camadaAberta(){
     var lista=document.querySelectorAll(SEL_CAMADA),melhor=null,zMelhor=-1;
     for(var i=0;i<lista.length;i++){
@@ -660,5 +661,5 @@
   },{passive:false,capture:true});
   // Listas dentro de janelas e menus suspensos: ao chegar ao fim, não passam a rolagem para a tela
   (document.head||html).appendChild(Object.assign(document.createElement('style'),{textContent:
-    '[class*="modal"],[class*="modal"] *,[class*="popover"],[class*="popover"] *,[class*="dropdown"],[class*="dropdown"] *,[class*="pop-"],dialog,dialog *{overscroll-behavior:contain;}'}));
+    '[class*="modal"],[class*="modal"] *,[class*="popover"],[class*="popover"] *,[class*="dropdown"],[class*="dropdown"] *,[class*="pop-"],dialog,dialog *,.mo,.mo *,.si-ov,.si-ov *,[class*="visor"],[class*="visor"] *{overscroll-behavior:contain;}'}));
 })();

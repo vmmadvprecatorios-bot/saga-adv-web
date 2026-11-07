@@ -476,11 +476,9 @@ $('quadro').addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.target
 (function(){
   var btn=$('btnNova'),menu=$('menuNova'),curva='cubic-bezier(.22,.78,.25,1)';
   var semMov=function(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}};
-  function fechar(){if(!menu.classList.contains('aberto'))return;btn.setAttribute('aria-expanded','false');
-    if(menu.animate&&!semMov()){var a=menu.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-4px) scale(.98)'}],{duration:180,easing:curva});a.onfinish=function(){menu.classList.remove('aberto');};}else menu.classList.remove('aberto');}
-  function abrir(){menu.classList.add('aberto');btn.setAttribute('aria-expanded','true');
-    if(menu.animate&&!semMov())menu.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:240,easing:curva});
-    var p=menu.querySelector('button');if(p)p.focus({preventScroll:true});}
+  // só mostra/esconde: o saga_guard.js anima a abertura e o fechamento (animar aqui também dobrava o efeito)
+  function fechar(){if(!menu.classList.contains('aberto'))return;btn.setAttribute('aria-expanded','false');menu.classList.remove('aberto');}
+  function abrir(){menu.classList.add('aberto');btn.setAttribute('aria-expanded','true');var p=menu.querySelector('button');if(p)p.focus({preventScroll:true});}
   btn.addEventListener('click',function(e){e.stopPropagation();if(menu.classList.contains('aberto')&&btn.getAttribute('aria-expanded')==='true')fechar();else abrir();});
   menu.addEventListener('click',function(e){var b=e.target.closest('[data-nova]');if(!b)return;fechar();abrirNota(null,b.dataset.nova);});
   document.addEventListener('mousedown',function(e){if(!e.target.closest('.novas'))fechar();});

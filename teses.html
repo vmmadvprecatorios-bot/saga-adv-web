@@ -296,8 +296,9 @@ function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g
 function dataBR(iso){if(!iso)return '';var d=new Date(String(iso).length===10?iso+'T12:00:00':iso);return isNaN(d)?'':d.toLocaleDateString('pt-BR');}
 function puro(v){v=String(v||'').replace(/<\/(p|li|div|h\d)>|<br\s*\/?>/gi,' $&');return (window.SagaTexto?SagaTexto.puro(v):v.replace(/<[^>]*>/g,' ')).replace(/\s+/g,' ').trim();}
 function semMov(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
-function abrir(id){$(id).classList.add('aberto');var md=$(id).querySelector('.md');if(md&&md.animate&&!semMov())md.animate([{opacity:0,transform:'translateY(10px) scale(.98)'},{opacity:1,transform:'none'}],{duration:260,easing:'cubic-bezier(.22,.78,.25,1)'});}
-function fechar(id){var m=$(id),md=m.querySelector('.md');if(!m.classList.contains('aberto'))return;if(md&&md.animate&&!semMov()){var a=md.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(8px) scale(.98)'}],{duration:200,easing:'cubic-bezier(.22,.78,.25,1)'});a.onfinish=function(){m.classList.remove('aberto');};}else m.classList.remove('aberto');}
+// Só mostra/esconde: o saga_guard.js já anima toda janela que abre e fecha (animar aqui também fazia a janela sumir, voltar e sumir de novo)
+function abrir(id){$(id).classList.add('aberto');}
+function fechar(id){var m=$(id);if(m)m.classList.remove('aberto');}
 function opcoes(cat){return T.cat.filter(function(c){return c.categoria===cat&&c.ativo;}).sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});}
 function catPorId(id){return T.cat.find(function(c){return c.id===id;});}
 function nomeTese(id){var t=T.teses.find(function(x){return x.id===id;});return t?t.nome:'';}

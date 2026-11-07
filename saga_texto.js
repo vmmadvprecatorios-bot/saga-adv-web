@@ -194,7 +194,7 @@
       faixa.style.top=(acima?bx.top-4-h:Math.min(bx.bottom+4,window.innerHeight-h-8))+'px';
       faixa.style.visibility='';
       var calmo=window.sagaMq&&window.sagaMq().matches;
-      if(!calmo&&faixa.animate)faixa.animate([{opacity:0,transform:'translateY('+(acima?6:-6)+'px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,.78,.25,1)'});
+      // a abertura e o fechamento são animados pelo saga_guard.js (animar aqui também dobrava o efeito)
       setTimeout(function(){document.addEventListener('mousedown',foraCores,true);document.addEventListener('keydown',escCores,true);window.addEventListener('scroll',fecharCores,true);window.addEventListener('resize',fecharCores);},0);
     }
     function fecharCores(e){if(e&&e.type==='scroll'&&faixa.contains(e.target))return;faixa.classList.remove('aberto');document.removeEventListener('mousedown',foraCores,true);document.removeEventListener('keydown',escCores,true);window.removeEventListener('scroll',fecharCores,true);window.removeEventListener('resize',fecharCores);}
