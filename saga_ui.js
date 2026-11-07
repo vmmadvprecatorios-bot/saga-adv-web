@@ -1563,3 +1563,33 @@
 
   global.SagaUI={atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);
+
+/* Copiar com um clique (07/11): qualquer botão com data-copiar="texto" (e data-copiar-rotulo="CPF") copia o texto.
+   window.sagaIconeCopiar(texto, rotulo) devolve o HTML do botãozinho; window.sagaCopiar(texto, rotulo) copia direto. */
+(function(global){
+  var ICONE='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var OK='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function esc(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML.replace(/"/g,'&quot;');}
+  function avisar(msg){if(typeof global.showToast==='function'){try{global.showToast(msg,'success');return;}catch(e){}}}
+  global.sagaCopiar=function(texto,rotulo){
+    texto=String(texto==null?'':texto);if(!texto)return Promise.resolve(false);
+    var feito=function(){avisar((rotulo||'Texto')+' copiado.');return true;};
+    var antigo=function(){var t=document.createElement('textarea');t.value=texto;t.setAttribute('readonly','');t.style.position='fixed';t.style.opacity='0';document.body.appendChild(t);t.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}t.remove();return ok?feito():false;};
+    if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(texto).then(feito,antigo);
+    return Promise.resolve(antigo());
+  };
+  global.sagaIconeCopiar=function(texto,rotulo){
+    if(texto==null||String(texto).trim()==='')return '';
+    return '<button type="button" class="saga-copiar" data-copiar="'+esc(texto)+'" data-copiar-rotulo="'+esc(rotulo||'Texto')+'" title="Copiar '+esc((rotulo||'').toLowerCase())+'" aria-label="Copiar '+esc(rotulo||'')+'">'+ICONE+'</button>';
+  };
+  if(!document.getElementById('sagaCopiarCss')){var st=document.createElement('style');st.id='sagaCopiarCss';
+    st.textContent='.saga-copiar{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-left:5px;padding:0;border:1px solid transparent;border-radius:6px;background:none;color:var(--muted,#8a94a8);cursor:pointer;vertical-align:middle;flex:0 0 auto;transition:color .2s,background .2s,border-color .2s,transform .2s cubic-bezier(.22,.78,.25,1)}.saga-copiar:hover,.saga-copiar:focus-visible{color:var(--gold-light,#7fa6e6);border-color:var(--border-soft,#2f3d55);background:color-mix(in srgb,var(--gold,#4b8af5) 10%,transparent);outline:0}.saga-copiar:active{transform:scale(.88)}.saga-copiar.copiado{color:var(--success,#3fb98a)}';
+    (document.head||document.documentElement).appendChild(st);}
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('[data-copiar]');if(!b)return;
+    e.preventDefault();e.stopPropagation();
+    global.sagaCopiar(b.getAttribute('data-copiar'),b.getAttribute('data-copiar-rotulo')).then(function(ok){
+      if(!ok||!b.classList.contains('saga-copiar'))return;var antes=b.innerHTML;b.innerHTML=OK;b.classList.add('copiado');
+      setTimeout(function(){b.innerHTML=antes;b.classList.remove('copiado');},1200);});
+  },true);
+})(window);

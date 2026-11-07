@@ -907,7 +907,13 @@ window.SagaPlanilha=(function(){
         if(!tudo){var i=ordem.indexOf(id);ferr='<span class="sp-ferr"><button type="button" data-sp-mover="-1" data-id="'+h(id)+'" title="Mover para antes" aria-label="Mover para antes"'+(i===0?' disabled':'')+'>◀</button><button type="button" data-sp-mover="1" data-id="'+h(id)+'" title="Mover para depois" aria-label="Mover para depois"'+(i===ordem.length-1?' disabled':'')+'>▶</button><button type="button" data-sp-fixar="'+h(id)+'" title="Tirar do resumo (continua em Todos os dados)" aria-label="Tirar do resumo">×</button></span>';}
         else ferr='<span class="sp-ferr"><button type="button" data-sp-fixar="'+h(id)+'" class="sp-fx'+(no_resumo(id)?' ligado':'')+'" title="'+(no_resumo(id)?'Tirar do resumo':'Mostrar no resumo')+'">'+(no_resumo(id)?'No resumo ×':'+ Resumo')+'</button></span>';
       }
-      return '<div class="campo-dado'+(tudo?' sp-tudo-item':'')+'" data-sp-campo="'+h(id)+'"><div class="campo-dado-label">'+(tudo?'<span class="sp-num">'+num+'</span>':'')+h(rotulo(id))+ferr+'</div><div class="campo-dado-valor" data-sp-ficha="'+h(id)+'">'+(editavelAqui?'':valor)+'</div></div>';
+      // botãozinho de copiar ao lado do valor (só na leitura; links e dados em sigilo não)
+      var copiar='';
+      if(!editando&&window.sagaIconeCopiar){
+        var puro=c?(c.tipo==='link'||(sig&&c.campo_sistema!=='pessoa.nome')?'':textoLinha(row,c,valorLinha(row,c))):(x.texto||'');
+        if(puro&&!/^(não informad[oa]|n\/d|—|-)$/i.test(String(puro).trim()))copiar=sagaIconeCopiar(puro,rotulo(id));
+      }
+      return '<div class="campo-dado'+(tudo?' sp-tudo-item':'')+'" data-sp-campo="'+h(id)+'"><div class="campo-dado-label">'+(tudo?'<span class="sp-num">'+num+'</span>':'')+h(rotulo(id))+ferr+'</div><div class="campo-dado-valor" data-sp-ficha="'+h(id)+'">'+(editavelAqui?'':valor+copiar)+'</div></div>';
     };
     var resumoHtml=ordem.length?ordem.map(function(id){return cartao(id,false);}).join(''):'<div class="sp-vazio" style="grid-column:1/-1">Nenhum campo no resumo.'+(editando?' Em "Todos os dados", use + Resumo.':'')+'</div>';
     var aberto=false;try{aberto=localStorage.getItem(chaveAberto)==='1';}catch(e){}

@@ -248,6 +248,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 #tagGerenciar{margin-top:10px;max-height:46vh;overflow:auto;overscroll-behavior:contain}.tag-ger-grupo{margin-bottom:12px}.tag-ger-tit{font-size:9px;font-weight:700;letter-spacing:.65px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
 .tag-ger-linha{display:flex;align-items:center;gap:6px;margin-bottom:5px}.tag-ger-linha input[type=color]{width:28px;height:28px;padding:2px;border:1px solid var(--border-soft);border-radius:7px;background:none;cursor:pointer;flex:0 0 auto}.tag-ger-linha input[type=text]{flex:1;min-width:0;height:30px;padding:0 9px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:11.5px}
 .tag-ger-linha button{height:28px;min-width:28px;border:1px solid var(--border-soft);border-radius:7px;background:var(--panel);color:var(--text);cursor:pointer;font-size:11px}.tag-ger-linha button:disabled{opacity:.35;cursor:default}.tag-ger-nova{border:1px dashed var(--border);background:none;color:var(--gold-light);border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
+.ficha-titulo .cpf-info{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px}.ficha-titulo .cpf-info>span{display:inline-flex;align-items:center;min-width:0}.ficha-titulo .end-linha{overflow-wrap:anywhere}.ficha-titulo .end-vazio{color:var(--muted)}.ficha-titulo .end-incluir{margin-left:6px;padding:2px 8px;border:1px dashed var(--border);border-radius:7px;background:none;color:var(--gold-light);font:inherit;font-size:11px;cursor:pointer}.ficha-titulo .end-incluir:active{transform:scale(.95)}
 </style>
 
 <style id="location-contact-workflow-styles">
@@ -782,7 +783,7 @@ function renderClientContacts(){
       if(podeCriarTel&&!principal)botoes+='<button class="btn-tel-icon" title="Tornar principal" aria-label="Tornar principal" data-tel-id="'+esc(tel.id)+'" data-tel-acao="tornar-principal"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.2 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.2 6.1-.6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>';
       if(podeCriarTel)botoes+='<button class="btn-tel-icon editar" title="Editar telefone" aria-label="Editar telefone" data-tel-id="'+esc(tel.id)+'" data-tel-acao="editar"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1L20 7l-3-3L5 16l-1 4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>';
       if(podeExcluirTel)botoes+='<button class="btn-tel-icon excluir" title="Excluir telefone" aria-label="Excluir telefone" data-tel-id="'+esc(tel.id)+'" data-tel-acao="excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>';
-      return '<div class="tel-item"><span class="tel-numero">'+numero+'</span>'+linkWa+
+      return '<div class="tel-item"><span class="tel-numero">'+numero+'</span>'+(window.sagaIconeCopiar?sagaIconeCopiar(formatarTelefone(tel.numero||tel.valor||''),'Telefone'):'')+linkWa+
         '<div class="tel-badges">'+seloTipoTel+seloValidacao+seloPrincipal+'</div>'+
         (botoes?'<div class="tel-acoes">'+botoes+'</div>':'')+
         '</div>';
@@ -818,7 +819,7 @@ function renderClientContacts(){
       if(podeGerenciarEmails&&!principal)botoesEmail+='<button class="btn-tel-icon" title="Tornar principal" aria-label="Tornar principal" data-email-id="'+esc(emailItem.id)+'" data-email-acao="tornar-principal"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.2 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.2 6.1-.6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>';
       if(podeGerenciarEmails)botoesEmail+='<button class="btn-tel-icon editar" title="Editar e-mail" aria-label="Editar e-mail" data-email-id="'+esc(emailItem.id)+'" data-email-acao="editar"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1L20 7l-3-3L5 16l-1 4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>';
       if(podeGerenciarEmails)botoesEmail+='<button class="btn-tel-icon excluir" title="Excluir e-mail" aria-label="Excluir e-mail" data-email-id="'+esc(emailItem.id)+'" data-email-acao="excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>';
-      return '<div class="tel-item"><span class="tel-numero">'+esc(enderecoEmail)+'</span>'+botaoEnviar+
+      return '<div class="tel-item"><span class="tel-numero">'+esc(enderecoEmail)+'</span>'+(window.sagaIconeCopiar?sagaIconeCopiar(enderecoEmail,'E-mail'):'')+botaoEnviar+
         '<div class="tel-badges">'+seloValidacao+seloPrincipal+'</div>'+
         (botoesEmail?'<div class="tel-acoes">'+botoesEmail+'</div>':'')+
         '</div>';
@@ -857,7 +858,7 @@ function renderClientContacts(){
       if(podeGerenciarEnderecos&&!principal)botoesEndereco+='<button class="btn-tel-icon" title="Tornar principal" aria-label="Tornar principal" data-endereco-id="'+esc(enderecoItem.id)+'" data-endereco-acao="tornar-principal"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.6 5.6 6.1.6-4.6 4.2 1.3 6-5.4-3.1-5.4 3.1 1.3-6-4.6-4.2 6.1-.6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg></button>';
       if(podeGerenciarEnderecos)botoesEndereco+='<button class="btn-tel-icon editar" title="Editar endereço" aria-label="Editar endereço" data-endereco-id="'+esc(enderecoItem.id)+'" data-endereco-acao="editar"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1L20 7l-3-3L5 16l-1 4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></button>';
       if(podeGerenciarEnderecos)botoesEndereco+='<button class="btn-tel-icon excluir" title="Excluir endereço" aria-label="Excluir endereço" data-endereco-id="'+esc(enderecoItem.id)+'" data-endereco-acao="excluir"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>';
-      return '<div class="tel-item"><div style="min-width:0;flex:1 1 100%"><div class="tel-numero">'+esc(enderecoTexto)+'</div>'+(linhaSecundaria?'<div style="margin-top:2px;color:var(--muted);font-size:9px;line-height:1.4">'+esc(linhaSecundaria)+'</div>':'')+'</div>'+
+      return '<div class="tel-item"><div style="min-width:0;flex:1 1 100%"><div class="tel-numero">'+esc(enderecoTexto)+(window.sagaIconeCopiar?sagaIconeCopiar([enderecoTexto,linhaSecundaria.replace(/ · /g,', ')].filter(Boolean).join(', '),'Endereço'):'')+'</div>'+(linhaSecundaria?'<div style="margin-top:2px;color:var(--muted);font-size:9px;line-height:1.4">'+esc(linhaSecundaria)+'</div>':'')+'</div>'+
         '<div class="tel-badges">'+seloTipo+seloValidacao+seloPrincipal+'</div>'+
         (botoesEndereco?'<div class="tel-acoes">'+botoesEndereco+'</div>':'')+
         '</div>';
@@ -2621,7 +2622,21 @@ function renderHeaderCliente(){
   const h1=document.querySelector('.ficha-titulo h1');
   if(h1){h1.textContent=state.cliente.nome;h1.style.opacity='';}
   const cpfInfo=document.querySelector('.ficha-titulo .cpf-info');
-  if(cpfInfo)cpfInfo.textContent='CPF '+state.cliente.cpf+(state.cliente.cidade?', '+state.cliente.cidade:'');
+  if(cpfInfo){
+    // CPF e endereço no topo, com copiar. O endereço vem da lista de endereços da ficha (o principal ou o primeiro);
+    // se não houver, usa o do cadastro; sem nenhum, oferece incluir.
+    const copia=(t,r)=>window.sagaIconeCopiar?sagaIconeCopiar(t,r):'';
+    const ends=state.enderecos||[];
+    const endPrincipal=ends.find(e=>e.principal)||ends[0]||null;
+    let endTexto='';
+    if(endPrincipal){
+      const cidadeUf=[endPrincipal.cidade,endPrincipal.uf].filter(Boolean).join('/');
+      endTexto=[endPrincipal.endereco,cidadeUf,endPrincipal.cep?'CEP '+endPrincipal.cep:''].filter(Boolean).join(', ');
+    }else if(state.pessoaAtual&&String(state.pessoaAtual.endereco||'').trim()){endTexto=state.cliente.endereco;}
+    const cpfTxt=state.cliente.cpf&&state.cliente.cpf!=='Não informado'?state.cliente.cpf:'';
+    cpfInfo.innerHTML='<span class="cpf-linha">CPF '+(cpfTxt?esc(cpfTxt)+copia(cpfTxt,'CPF'):'não informado')+'</span>'+
+      '<span class="end-linha">'+(endTexto?esc(endTexto)+copia(endTexto,'Endereço'):'<span class="end-vazio">Endereço não informado</span>'+(perms.pessoasEditar&&state.pessoaRow?' <button type="button" class="end-incluir" onclick="abrirModalAdicionarEndereco()">+ Incluir endereço</button>':''))+'</span>';
+  }
 
   const header=document.querySelector('.ficha-header');
   if(header){
@@ -3582,6 +3597,7 @@ async function recarregarEnderecos(){
   if(!pessoaId)return;
   await carregarEnderecos(pessoaId);
   renderClientContacts();
+  renderHeaderCliente();
 }
 
 // ---------- Modal adicionar telefone ----------
