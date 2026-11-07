@@ -522,6 +522,9 @@
     +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Intimações</div>'
+    +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Teses e oportunidades</div>'
     +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicacao</div><div class="nav-grupo" data-grupo="comunicacao">'
     +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
@@ -862,7 +865,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',teses:'Teses e oportunidades'};
   var _canalPresenca=null;
   var _telaAtual='';
   var _colaboradoresAtivos=null;
@@ -990,7 +993,8 @@
     agenda_atribuida:{titulo:'Compromisso atribuído a você',tela:'calendario_padrao_metalico.html'},
     agenda_solicitacao:{titulo:'Pedido de atendimento',tela:'calendario_padrao_metalico.html'},
     agenda_resposta:{titulo:'Resposta da agenda',tela:'calendario_padrao_metalico.html'},
-    movimentacao_cnj:{titulo:'Intimação',tela:'monitoramento_multi_oab.html'}
+    movimentacao_cnj:{titulo:'Intimação',tela:'monitoramento_multi_oab.html'},
+    tese_atualizacao:{titulo:'Atualização de tese',tela:'teses.html'}
   };
   function infoNotif(n){
     var t=TIPOS_NOTIF[n.tipo];
@@ -1009,6 +1013,7 @@
     {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
     {chave:'captacao',titulo:'Captação',tipos:['distribuicao','retorno_captacao','acompanhamento'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
     {chave:'parados',titulo:'Processos parados e retornos',tipos:['processo_parado','nao_protocolado','retorno_juridico','resumo_semanal'],tela:'lista_processos_padrao_metalico.html?fase=juridico',um:'processo parado',varios:'processos parados',cor:'#d6452d'},
+    {chave:'teses',titulo:'Teses',tipos:['tese_atualizacao'],tela:'teses.html',um:'atualização de tese',varios:'atualizações de teses',cor:'#0ea5e9'},
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];

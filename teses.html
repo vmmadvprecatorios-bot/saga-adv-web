@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Teses e oportunidades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:80ch}
+.btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:11px;font-size:12px;font-weight:700;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
+.btn:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default}
+.btn-ouro{background:var(--gold);border-color:var(--gold);color:#fff}.btn-ouro:hover{background:var(--gold-light);border-color:var(--gold-light)}
+a.btn{text-decoration:none;color:inherit}
+.btn-sm{height:30px;padding:0 11px;font-size:11.5px;border-radius:9px}
+html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafite"] body[data-theme="dark"] .pill.active,html[data-cor="grafite"] body[data-theme="dark"] .tese-item.ativo .n{color:#1A1A1A}
+.abas{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel);margin-bottom:16px;flex-wrap:wrap}
+.pill{height:34px;padding:0 15px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted);transition:background .22s cubic-bezier(.22,.78,.25,1),color .22s}
+.pill.active{background:var(--gold);color:#fff}.pill b{margin-left:6px;opacity:.85}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.busca{flex:1 1 240px;min-width:200px;height:38px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel);padding:0 13px;font-size:12.5px;outline:0}
+.busca:focus,.sel:focus{border-color:var(--gold)}
+.sel{height:38px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel);padding:0 10px;font-size:12px;outline:0;max-width:260px}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;border:1px dashed var(--border-soft);border-radius:14px}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.aba-pane{display:none}.aba-pane.ativo{display:block;animation:entra .32s cubic-bezier(.22,.78,.25,1)}
+@keyframes entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* atualizações */
+.atu-grade{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
+.teses-lista{display:flex;flex-direction:column;gap:3px;padding:8px;border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);position:sticky;top:80px;max-height:calc(100vh - 110px);overflow:auto}
+.teses-tit{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:700;padding:6px 8px}
+.tese-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;font-size:12.5px;text-align:left;color:var(--text);transition:background .2s}
+.tese-item:hover{background:color-mix(in srgb,var(--gold) 8%,transparent)}
+.tese-item.ativo{background:color-mix(in srgb,var(--gold) 16%,transparent);font-weight:700}
+.tese-item .n{margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:700}
+.tese-item i{width:7px;height:7px;border-radius:50%;background:var(--gold);flex:0 0 auto}
+.posts{display:flex;flex-direction:column;gap:10px}
+.post{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:14px 16px;cursor:pointer;transition:border-color .2s,transform .2s cubic-bezier(.22,.78,.25,1),box-shadow .2s;position:relative}
+.post:hover{border-color:color-mix(in srgb,var(--gold) 45%,transparent);transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.14)}
+.post.novo::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:var(--gold)}
+.post-topo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.selo{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:700;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 13%,transparent);color:var(--text)}
+.selo i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.etq-tese{font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.marca-novo{font-size:10px;font-weight:800;color:var(--gold-light);letter-spacing:.6px;text-transform:uppercase}
+.fixo{font-size:11px}
+.post h3{font-size:15px;font-weight:700;line-height:1.3}
+.post .previa{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post .rodape{display:flex;gap:10px;align-items:center;margin-top:8px;font-size:11px;color:var(--muted)}
+.post .rodape .acoes{margin-left:auto;display:flex;gap:6px}
+/* prateleira */
+.prod-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start}
+.prod{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.prod h3{font-size:15px;font-weight:700;line-height:1.3}
+.prod .sub{font-size:11px;color:var(--muted)}
+.prod .bloco b{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.prod .bloco div{font-size:12.5px;line-height:1.5}
+.prod .mais{display:none;flex-direction:column;gap:8px}.prod.aberto .mais{display:flex;animation:entra .3s cubic-bezier(.22,.78,.25,1)}
+.prod .etqs{display:flex;flex-wrap:wrap;gap:4px}.prod .etqs span{font-size:10.5px;padding:1px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted)}
+.prod .rodape{display:flex;gap:6px;align-items:center;margin-top:2px}
+.lnk{color:var(--gold-light);font-size:11.5px;font-weight:600;text-decoration:underline;cursor:pointer}
+/* radar */
+.radar{display:flex;flex-direction:column;gap:10px}
+.rad{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:13px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px}
+.rad h3{font-size:14px;font-weight:700}
+.rad .meta{font-size:11px;color:var(--muted);margin-top:2px}
+.rad .res{grid-column:1/-1;font-size:12.5px;line-height:1.5}
+.rad .acoes{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;justify-content:flex-end}
+/* janela */
+.mo{position:fixed;inset:0;z-index:2500;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px)}
+.mo.aberto{display:flex}
+.md{width:100%;max-width:760px;max-height:calc(100vh - 36px);display:flex;flex-direction:column;border-radius:18px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow)}
+.md-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px 18px 10px;border-bottom:1px solid var(--border-soft)}
+.md-cab h2{font-family:'Cormorant Garamond',serif;font-size:23px;font-weight:600;line-height:1.15}
+.md-cab p{font-size:11.5px;color:var(--muted);margin-top:3px}
+.md-x{width:30px;height:30px;border-radius:9px;border:1px solid var(--border-soft);color:var(--muted);flex:0 0 auto}
+.md-corpo{padding:14px 18px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.md-rod{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:12px 18px 16px;border-top:1px solid var(--border-soft);flex-wrap:wrap}
+.campo{display:flex;flex-direction:column;gap:5px;min-width:0}.campo label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.campo input,.campo select,.campo textarea{border-radius:9px;border:1px solid var(--border-soft);background:var(--panel);padding:8px 10px;font-size:12.5px;outline:0;min-height:36px}
+.campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--gold)}
+.grade2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chk{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer}.chk input{width:15px;height:15px;accent-color:var(--gold)}
+.leitura .corpo{font-size:14px;line-height:1.7}.leitura .corpo p{margin:0 0 10px;text-align:justify}.leitura .corpo ul,.leitura .corpo ol{margin:0 0 10px 22px}
+.leitura .meta{font-size:11.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.opc-linha{display:flex;align-items:center;gap:8px;margin-bottom:6px}.opc-linha input[type=text]{flex:1;min-width:0;height:32px;border-radius:8px;border:1px solid var(--border-soft);background:var(--panel);padding:0 9px;font-size:12px}.opc-linha input[type=color]{width:32px;height:30px;border:1px solid var(--border-soft);border-radius:7px;background:none;padding:0}
+@media(max-width:860px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.atu-grade{grid-template-columns:1fr}.teses-lista{position:static;flex-direction:row;overflow-x:auto;max-height:none}.teses-tit{display:none}.tese-item{flex:0 0 auto}.grade2{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<link rel="stylesheet" href="saga_tema.css">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Teses e oportunidades</h1>
+      <p>Onde a equipe se atualiza sobre as teses do escritório (o que está acontecendo com cada uma), a prateleira dos produtos jurídicos que oferecemos e o radar de novas oportunidades.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap" id="botoesTopo"></div>
+  </div>
+  <div class="abas" id="abas">
+    <button class="pill active" type="button" data-aba="atualizacoes">Atualizações de teses<b id="qtdNovas" hidden></b></button>
+    <button class="pill" type="button" data-aba="prateleira">Prateleira de produtos</button>
+    <button class="pill" type="button" data-aba="radar">Radar de oportunidades<b id="qtdRadar" hidden></b></button>
+  </div>
+
+  <section class="aba-pane ativo" id="aba-atualizacoes">
+    <div class="atu-grade">
+      <nav class="teses-lista" id="tesesLista" aria-label="Teses"></nav>
+      <div>
+        <div class="barra"><input class="busca" id="buscaAtu" type="search" placeholder="Buscar nas atualizações..." autocomplete="off"><select class="sel" id="filtroSit" aria-label="Situação"><option value="">Todas as situações</option></select></div>
+        <div class="posts" id="posts"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="aba-pane" id="aba-prateleira">
+    <div class="barra"><input class="busca" id="buscaProd" type="search" placeholder="Buscar produto, público, documento..." autocomplete="off"><select class="sel" id="filtroProdSit" aria-label="Situação"><option value="">Todas as situações</option></select><select class="sel" id="filtroArea" aria-label="Área"><option value="">Todas as áreas</option></select></div>
+    <div class="prod-grade" id="produtos"></div>
+  </section>
+
+  <section class="aba-pane" id="aba-radar">
+    <div class="barra"><div class="abas" id="radarStatus" style="margin:0"></div><input class="busca" id="buscaRadar" type="search" placeholder="Buscar no radar..." autocomplete="off"></div>
+    <div class="radar" id="radar"></div>
+  </section>
+</main>
+</div>
+
+<div class="mo" id="moLer" role="dialog" aria-modal="true" aria-label="Atualização"><div class="md leitura" id="mdLer"></div></div>
+<div class="mo" id="moForm" role="dialog" aria-modal="true" aria-label="Editar"><div class="md" id="mdForm"></div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js"></script>
+<script src="saga_texto.js"></script>
+<script>
+/* =====================================================================
+   SAGA · Teses e oportunidades (bloco 110)
+   Atualizações de teses (blog interno da equipe), Prateleira de produtos jurídicos e Radar de oportunidades.
+   ===================================================================== */
+var T={aba:'atualizacoes',pode:false,admin:false,eu:null,teses:[],areas:[],cat:[],posts:[],lidos:{},produtos:[],radar:[],tese:'',sit:'',busca:'',prodSit:'',area:'',buscaProd:'',radarSt:'novo',buscaRadar:'',pessoas:{}};
+var RADAR_ST=[['novo','Novos'],['analise','Em análise'],['incorporado','Incorporados'],['descartado','Descartados']];
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg){var w=$('toastWrap');var t=document.createElement('div');t.className='toast';t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
+function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function dataBR(iso){if(!iso)return '';var d=new Date(iso.length===10?iso+'T12:00:00':iso);return d.toLocaleDateString('pt-BR');}
+function puro(v){v=String(v||'').replace(/<\/(p|li|div|h\d)>|<br\s*\/?>/gi,' $&');return (window.SagaTexto?SagaTexto.puro(v):v.replace(/<[^>]*>/g,' ')).replace(/\s+/g,' ').trim();}
+function semMov(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+function abrir(id){$(id).classList.add('aberto');var md=$(id).querySelector('.md');if(md&&md.animate&&!semMov())md.animate([{opacity:0,transform:'translateY(10px) scale(.98)'},{opacity:1,transform:'none'}],{duration:260,easing:'cubic-bezier(.22,.78,.25,1)'});}
+function fechar(id){var m=$(id),md=m.querySelector('.md');if(md&&md.animate&&!semMov()){var a=md.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(8px) scale(.98)'}],{duration:200,easing:'cubic-bezier(.22,.78,.25,1)'});a.onfinish=function(){m.classList.remove('aberto');};}else m.classList.remove('aberto');}
+function opcoes(cat){return T.cat.filter(function(c){return c.categoria===cat&&c.ativo;}).sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});}
+function catPorId(id){return T.cat.find(function(c){return c.id===id;});}
+function nomeTese(id){var t=T.teses.find(function(x){return x.id===id;});return t?t.nome:'';}
+function nomeArea(id){var a=T.areas.find(function(x){return x.id===id;});return a?a.nome:'';}
+function selo(c){return c?'<span class="selo" style="--c:'+esc(c.cor||'#8a94a8')+'"><i></i>'+esc(c.nome)+'</span>':'';}
+function nomePessoa(id){var p=(T.pessoas[id]||'').trim().split(/\s+/).filter(Boolean);return p.length>1?p[0]+' '+p[p.length-1]:(p[0]||'');}
+
+/* ---------- dados ---------- */
+async function carregarTudo(){
+  var r=await Promise.all([
+    _sb.from('teses').select('id,nome,ativo,area_direito_id').order('nome'),
+    _sb.from('areas_direito').select('id,nome,ativo,ordem').order('ordem'),
+    _sb.from('etiquetas_catalogo').select('id,nome,cor,categoria,ordem,ativo').in('categoria',['tese_situacao','produto_situacao']),
+    _sb.from('teses_atualizacoes').select('id,tese_id,situacao_id,titulo,corpo,link,fixada,ativo,autor_id,criado_em,atualizado_em').order('criado_em',{ascending:false}).limit(2000),
+    _sb.from('teses_leituras').select('atualizacao_id').eq('usuario_id',T.eu||''),
+    _sb.from('produtos_juridicos').select('*').order('ordem').order('nome'),
+    _sb.from('radar_oportunidades').select('*').order('criado_em',{ascending:false}).limit(1000),
+    _sb.from('usuarios').select('id,nome_completo')
+  ]);
+  T.teses=(r[0].data||[]).filter(function(t){return t.ativo!==false;});T.areas=(r[1].data||[]).filter(function(a){return a.ativo!==false;});
+  T.cat=r[2].data||[];T.posts=r[3].data||[];T.lidos={};(r[4].data||[]).forEach(function(l){T.lidos[l.atualizacao_id]=1;});
+  T.produtos=r[5].data||[];T.radar=r[6].data||[];(r[7].data||[]).forEach(function(u){T.pessoas[u.id]=u.nome_completo||'';});
+  montarFiltros();desenharTudo();
+}
+function montarFiltros(){
+  $('filtroSit').innerHTML='<option value="">Todas as situações</option>'+opcoes('tese_situacao').map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+'</option>';}).join('');$('filtroSit').value=T.sit;
+  $('filtroProdSit').innerHTML='<option value="">Todas as situações</option>'+opcoes('produto_situacao').map(function(c){return '<option value="'+c.id+'">'+esc(c.nome)+'</option>';}).join('');$('filtroProdSit').value=T.prodSit;
+  $('filtroArea').innerHTML='<option value="">Todas as áreas</option>'+T.areas.map(function(a){return '<option value="'+a.id+'">'+esc(a.nome)+'</option>';}).join('');$('filtroArea').value=T.area;
+}
+function desenharTudo(){desenharBotoes();desenharTeses();desenharPosts();desenharProdutos();desenharRadar();}
+
+/* ---------- topo ---------- */
+function desenharBotoes(){
+  var b='';
+  if(T.pode){
+    if(T.aba==='atualizacoes')b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Nova atualização</button>';
+    else if(T.aba==='prateleira')b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo produto</button>';
+    else b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo informativo</button>';
+    if(T.admin&&T.aba!=='radar')b='<button class="btn" type="button" id="btnOpcoes">Organizar situações</button>'+b;
+  }
+  $('botoesTopo').innerHTML=b;
+  var n=$('btnNovo');if(n)n.onclick=function(){if(T.aba==='atualizacoes')formPost(null);else if(T.aba==='prateleira')formProduto(null);else formRadar(null);};
+  var o=$('btnOpcoes');if(o)o.onclick=function(){organizarOpcoes(T.aba==='atualizacoes'?'tese_situacao':'produto_situacao');};
+  var novas=T.posts.filter(function(p){return p.ativo&&!T.lidos[p.id]&&p.autor_id!==T.eu;}).length;
+  $('qtdNovas').hidden=!novas;$('qtdNovas').textContent=novas;
+  var nr=T.radar.filter(function(r){return r.status==='novo';}).length;$('qtdRadar').hidden=!nr;$('qtdRadar').textContent=nr;
+}
+
+/* ---------- atualizações de teses ---------- */
+function postsVisiveis(){return T.posts.filter(function(p){return p.ativo||T.pode;});}
+function desenharTeses(){
+  var vis=postsVisiveis(),cont={},novos={};
+  vis.forEach(function(p){var k=p.tese_id||'__geral';cont[k]=(cont[k]||0)+1;if(!T.lidos[p.id]&&p.autor_id!==T.eu&&p.ativo)novos[k]=1;});
+  var itens=[{id:'',nome:'Todas as teses',n:vis.length,novo:Object.keys(novos).length>0}].concat(cont.__geral?[{id:'__geral',nome:'Geral (escritório)',n:cont.__geral,novo:!!novos.__geral}]:[]).concat(T.teses.filter(function(t){return cont[t.id];}).map(function(t){return {id:t.id,nome:t.nome,n:cont[t.id],novo:!!novos[t.id]};}));
+  $('tesesLista').innerHTML='<div class="teses-tit">Teses com atualização</div>'+itens.map(function(i){return '<button type="button" class="tese-item'+(T.tese===i.id?' ativo':'')+'" data-tese="'+esc(i.id)+'">'+(i.novo?'<i title="Tem atualização que você ainda não leu"></i>':'')+'<span>'+esc(i.nome)+'</span><span class="n">'+i.n+'</span></button>';}).join('')+
+    (T.teses.length?'':'<div class="vazio" style="padding:14px">Cadastre os tipos de ação em Configurações.</div>');
+}
+function desenharPosts(){
+  var b=norm(T.busca);
+  var lista=postsVisiveis().filter(function(p){
+    if(T.tese==='__geral'&&p.tese_id)return false;if(T.tese&&T.tese!=='__geral'&&p.tese_id!==T.tese)return false;
+    if(T.sit&&p.situacao_id!==T.sit)return false;
+    if(b&&norm(p.titulo+' '+puro(p.corpo)+' '+nomeTese(p.tese_id)).indexOf(b)<0)return false;return true;
+  }).sort(function(a,b){return (b.fixada?1:0)-(a.fixada?1:0)||(a.criado_em<b.criado_em?1:-1);});
+  if(!lista.length){$('posts').innerHTML='<div class="vazio"><b>Nenhuma atualização aqui ainda.</b>'+(T.pode?'Clique em "+ Nova atualização" para escrever a primeira.':'Quando o Dr. Victor publicar, ela aparece aqui e no seu sino.')+'</div>';return;}
+  $('posts').innerHTML=lista.map(function(p){
+    var novo=!T.lidos[p.id]&&p.autor_id!==T.eu&&p.ativo;
+    return '<article class="post'+(novo?' novo':'')+'" data-post="'+p.id+'" tabindex="0">'+
+      '<div class="post-topo">'+selo(catPorId(p.situacao_id))+'<span class="etq-tese">'+esc(nomeTese(p.tese_id)||'Geral')+'</span>'+(p.fixada?'<span class="fixo" title="Fixada no topo">📌</span>':'')+(novo?'<span class="marca-novo">Novo</span>':'')+(p.ativo?'':'<span class="marca-novo" style="color:var(--muted)">Arquivada</span>')+'</div>'+
+      '<h3>'+esc(p.titulo)+'</h3><div class="previa">'+esc(puro(p.corpo).slice(0,320))+'</div>'+
+      '<div class="rodape"><span>'+esc(nomePessoa(p.autor_id)||'Escritório')+' · '+dataBR(p.criado_em)+(p.atualizado_em&&p.atualizado_em.slice(0,16)!==p.criado_em.slice(0,16)?' · editada '+dataBR(p.atualizado_em):'')+'</span>'+
+      (T.pode?'<span class="acoes"><button class="btn btn-sm" type="button" data-editar="'+p.id+'">Editar</button></span>':'')+'</div></article>';
+  }).join('');
+}
+async function lerPost(id){
+  var p=T.posts.find(function(x){return x.id===id;});if(!p)return;
+  $('mdLer').innerHTML='<div class="md-cab"><div><div class="post-topo">'+selo(catPorId(p.situacao_id))+'<span class="etq-tese">'+esc(nomeTese(p.tese_id)||'Geral')+'</span></div><h2>'+esc(p.titulo)+'</h2><div class="meta" style="margin-top:4px">'+esc(nomePessoa(p.autor_id)||'Escritório')+' · '+dataBR(p.criado_em)+'</div></div><button class="md-x" type="button" data-fechar="moLer" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo"><div class="corpo">'+(window.SagaTexto?SagaTexto.html(p.corpo):esc(p.corpo))+'</div>'+(p.link?'<a class="lnk" href="'+esc(p.link)+'" target="_blank" rel="noopener noreferrer">Abrir a fonte (decisão, notícia, informativo)</a>':'')+'</div>'+
+    '<div class="md-rod">'+(T.pode?'<button class="btn" type="button" data-editar="'+p.id+'">Editar</button>':'')+'<button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
+  abrir('moLer');
+  if(!T.lidos[p.id]&&p.autor_id!==T.eu){T.lidos[p.id]=1;await _sb.from('teses_leituras').insert({atualizacao_id:p.id});desenharTeses();desenharPosts();desenharBotoes();}
+}
+function opcoesSel(cat,atual,vazio){return (vazio?'<option value="">'+vazio+'</option>':'')+opcoes(cat).map(function(c){return '<option value="'+c.id+'"'+(c.id===atual?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('')+(T.admin?'<option value="__nova">+ Nova opção...</option>':'');}
+async function novaOpcao(sel,cat){
+  if(sel.value!=='__nova')return;
+  var nome=prompt('Nome da nova opção:');sel.value='';if(!nome||!nome.trim())return;
+  var r=await _sb.from('etiquetas_catalogo').insert({categoria:cat,nome:nome.trim(),cor:'#8a94a8',ordem:opcoes(cat).length+1}).select('id,nome,cor,categoria,ordem,ativo').single();
+  if(r.error){toast('Não foi possível criar: '+esc(r.error.message));return;}
+  T.cat.push(r.data);var at=r.data.id;sel.innerHTML=opcoesSel(cat,at,sel.dataset.vazio||'');sel.value=at;montarFiltros();
+}
+function formPost(id){
+  var p=id?T.posts.find(function(x){return x.id===id;}):null;
+  $('mdForm').innerHTML='<div class="md-cab"><div><h2>'+(p?'Editar atualização':'Nova atualização de tese')+'</h2><p>A equipe recebe o aviso no sino e lê aqui, sem precisar perguntar.</p></div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo"><div class="grade2"><div class="campo"><label for="fpTese">Tese (tipo de ação)</label><select id="fpTese"><option value="">Geral (escritório)</option>'+T.teses.map(function(t){return '<option value="'+t.id+'"'+(p&&p.tese_id===t.id?' selected':'')+'>'+esc(t.nome)+'</option>';}).join('')+'</select></div>'+
+    '<div class="campo"><label for="fpSit">Situação da tese</label><select id="fpSit" data-vazio="Sem situação">'+opcoesSel('tese_situacao',p&&p.situacao_id,'Sem situação')+'</select></div></div>'+
+    '<div class="campo"><label for="fpTit">Título</label><input id="fpTit" maxlength="200" placeholder="Ex.: PSS: julgamento marcado no STJ para 20/11" value="'+esc(p?p.titulo:'')+'"></div>'+
+    '<div class="campo"><label for="fpCorpo">Texto</label><textarea id="fpCorpo" rows="10"></textarea></div>'+
+    '<div class="campo"><label for="fpLink">Link da fonte (opcional)</label><input id="fpLink" type="url" placeholder="https://..." value="'+esc(p&&p.link||'')+'"></div>'+
+    '<label class="chk"><input type="checkbox" id="fpFix"'+(p&&p.fixada?' checked':'')+'> Fixar no topo</label></div>'+
+    '<div class="md-rod">'+(p?'<button class="btn" type="button" id="fpArq" style="margin-right:auto">'+(p.ativo?'Arquivar':'Reativar')+'</button>':'')+'<button class="btn" type="button" data-fechar="moForm">Cancelar</button><button class="btn btn-ouro" type="button" id="fpSalvar">'+(p?'Salvar':'Publicar')+'</button></div>';
+  var ta=$('fpCorpo');if(window.SagaTexto)SagaTexto.ligar(ta);ta.value=p?p.corpo:'';
+  $('fpSit').onchange=function(){novaOpcao(this,'tese_situacao');};
+  abrir('moForm');
+  $('fpSalvar').onclick=async function(){
+    var dados={tese_id:$('fpTese').value||null,situacao_id:$('fpSit').value||null,titulo:$('fpTit').value.trim(),corpo:$('fpCorpo').value||'',link:$('fpLink').value.trim()||null,fixada:$('fpFix').checked};
+    if(!dados.titulo){toast('Escreva o título.');return;}
+    if(dados.link&&!/^https?:\/\//i.test(dados.link)){toast('O link precisa começar com https://');return;}
+    this.disabled=true;var r=p?await _sb.from('teses_atualizacoes').update(dados).eq('id',p.id):await _sb.from('teses_atualizacoes').insert(dados);this.disabled=false;
+    if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));return;}
+    fechar('moForm');toast(p?'Atualização salva.':'Atualização publicada. A equipe foi avisada no sino.');carregarTudo();
+  };
+  var arq=$('fpArq');if(arq)arq.onclick=async function(){var r=await _sb.from('teses_atualizacoes').update({ativo:!p.ativo}).eq('id',p.id);if(r.error){toast('Não foi possível: '+esc(r.error.message));return;}fechar('moForm');toast(p.ativo?'Atualização arquivada (some para a equipe).':'Atualização reativada.');carregarTudo();};
+}
+
+/* ---------- prateleira ---------- */
+function desenharProdutos(){
+  var b=norm(T.buscaProd);
+  var lista=T.produtos.filter(function(p){
+    if(!p.ativo&&!T.pode)return false;if(T.prodSit&&p.situacao_id!==T.prodSit)return false;if(T.area&&p.area_id!==T.area)return false;
+    if(b&&norm([p.nome,p.resumo,p.publico,p.documentos,p.fundamento,(p.etiquetas||[]).join(' '),nomeArea(p.area_id)].join(' ')).indexOf(b)<0)return false;return true;
+  });
+  if(!lista.length){$('produtos').innerHTML='<div class="vazio" style="grid-column:1/-1"><b>Nenhum produto na prateleira ainda.</b>'+(T.pode?'Clique em "+ Novo produto" ou incorpore um item do Radar.':'')+'</div>';return;}
+  $('produtos').innerHTML=lista.map(function(p){
+    var bl=function(t,v){return v?'<div class="bloco"><b>'+t+'</b><div>'+esc(v).replace(/\n/g,'<br>')+'</div></div>':'';};
+    return '<article class="prod" data-prod="'+p.id+'">'+
+      '<div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between"><div><h3>'+esc(p.nome)+'</h3><div class="sub">'+esc([nomeArea(p.area_id),nomeTese(p.tese_id)].filter(Boolean).join(' · ')||'Sem área')+(p.ativo?'':' · fora da prateleira')+'</div></div>'+selo(catPorId(p.situacao_id))+'</div>'+
+      bl('Resumo da tese',p.resumo)+
+      '<div class="mais">'+bl('Quem tem direito (público)',p.publico)+bl('Documentos necessários',p.documentos)+bl('Fundamento e jurisprudência',p.fundamento)+'</div>'+
+      ((p.etiquetas||[]).length?'<div class="etqs">'+p.etiquetas.map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div>':'')+
+      '<div class="rodape">'+((p.publico||p.documentos||p.fundamento)?'<span class="lnk" data-vermais="'+p.id+'">Ver tudo</span>':'')+(T.pode?'<span style="margin-left:auto"><button class="btn btn-sm" type="button" data-editar-prod="'+p.id+'">Editar</button></span>':'')+'</div></article>';
+  }).join('');
+}
+function formProduto(id,base){
+  var p=id?T.produtos.find(function(x){return x.id===id;}):null;base=base||{};
+  var v=function(k){return esc(p?(p[k]||''):(base[k]||''));};
+  $('mdForm').innerHTML='<div class="md-cab"><div><h2>'+(p?'Editar produto':'Novo produto jurídico')+'</h2><p>Cada produto é uma tese que o escritório oferece ou estuda oferecer.</p></div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo"><div class="campo"><label for="ppNome">Nome do produto</label><input id="ppNome" maxlength="160" value="'+v('nome')+'" placeholder="Ex.: Restituição do PSS sobre precatório"></div>'+
+    '<div class="grade2"><div class="campo"><label for="ppArea">Área do direito</label><select id="ppArea"><option value="">Sem área</option>'+T.areas.map(function(a){return '<option value="'+a.id+'"'+(p&&p.area_id===a.id?' selected':'')+'>'+esc(a.nome)+'</option>';}).join('')+'</select></div>'+
+    '<div class="campo"><label for="ppSit">Situação</label><select id="ppSit" data-vazio="Sem situação">'+opcoesSel('produto_situacao',p&&p.situacao_id,'Sem situação')+'</select></div></div>'+
+    '<div class="campo"><label for="ppTese">Tipo de ação ligado (opcional)</label><select id="ppTese"><option value="">Nenhum</option>'+T.teses.map(function(t){return '<option value="'+t.id+'"'+(p&&p.tese_id===t.id?' selected':'')+'>'+esc(t.nome)+'</option>';}).join('')+'</select></div>'+
+    '<div class="campo"><label for="ppRes">Resumo da tese</label><textarea id="ppRes" rows="3">'+v('resumo')+'</textarea></div>'+
+    '<div class="campo"><label for="ppPub">Quem tem direito (público-alvo)</label><textarea id="ppPub" rows="2">'+v('publico')+'</textarea></div>'+
+    '<div class="campo"><label for="ppDoc">Documentos necessários</label><textarea id="ppDoc" rows="3">'+v('documentos')+'</textarea></div>'+
+    '<div class="campo"><label for="ppFun">Fundamento e jurisprudência</label><textarea id="ppFun" rows="3">'+v('fundamento')+'</textarea></div>'+
+    '<div class="campo"><label for="ppEtq">Etiquetas (separe por vírgula)</label><input id="ppEtq" value="'+esc(p?(p.etiquetas||[]).join(', '):'')+'"></div></div>'+
+    '<div class="md-rod">'+(p?'<button class="btn" type="button" id="ppAtivo" style="margin-right:auto">'+(p.ativo?'Tirar da prateleira':'Voltar para a prateleira')+'</button>':'')+'<button class="btn" type="button" data-fechar="moForm">Cancelar</button><button class="btn btn-ouro" type="button" id="ppSalvar">Salvar</button></div>';
+  $('ppSit').onchange=function(){novaOpcao(this,'produto_situacao');};
+  abrir('moForm');
+  $('ppSalvar').onclick=async function(){
+    var d={nome:$('ppNome').value.trim(),area_id:$('ppArea').value||null,situacao_id:$('ppSit').value||null,tese_id:$('ppTese').value||null,resumo:$('ppRes').value.trim(),publico:$('ppPub').value.trim(),documentos:$('ppDoc').value.trim(),fundamento:$('ppFun').value.trim(),
+      etiquetas:$('ppEtq').value.split(',').map(function(x){return x.trim();}).filter(Boolean)};
+    if(!d.nome){toast('Escreva o nome do produto.');return;}
+    this.disabled=true;
+    var r=p?await _sb.from('produtos_juridicos').update(d).eq('id',p.id).select('id').single():await _sb.from('produtos_juridicos').insert(d).select('id').single();
+    this.disabled=false;if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));return;}
+    if(base.radarId){await _sb.from('radar_oportunidades').update({status:'incorporado',produto_id:r.data.id}).eq('id',base.radarId);}
+    fechar('moForm');toast(base.radarId?'Incorporado à prateleira.':'Produto salvo.');carregarTudo();
+  };
+  var at=$('ppAtivo');if(at)at.onclick=async function(){var r=await _sb.from('produtos_juridicos').update({ativo:!p.ativo}).eq('id',p.id);if(r.error){toast(esc(r.error.message));return;}fechar('moForm');carregarTudo();};
+}
+
+/* ---------- radar ---------- */
+function desenharRadar(){
+  var cont={};T.radar.forEach(function(r){cont[r.status]=(cont[r.status]||0)+1;});
+  $('radarStatus').innerHTML=RADAR_ST.map(function(s){return '<button class="pill'+(T.radarSt===s[0]?' active':'')+'" type="button" data-radar-st="'+s[0]+'">'+s[1]+(cont[s[0]]?'<b>'+cont[s[0]]+'</b>':'')+'</button>';}).join('');
+  var b=norm(T.buscaRadar);
+  var lista=T.radar.filter(function(r){return r.status===T.radarSt&&(!b||norm([r.titulo,r.fonte,r.resumo].join(' ')).indexOf(b)>=0);});
+  if(!lista.length){$('radar').innerHTML='<div class="vazio"><b>Nada aqui.</b>'+(T.radarSt==='novo'?'Os informativos de novas teses (radar) entram aqui; por enquanto, quem publica cadastra com "+ Novo informativo". Depois ligaremos o e-mail do radar para chegar sozinho.':'')+'</div>';return;}
+  $('radar').innerHTML=lista.map(function(r){
+    var prod=r.produto_id&&T.produtos.find(function(p){return p.id===r.produto_id;});
+    return '<article class="rad"><div><h3>'+esc(r.titulo)+'</h3><div class="meta">'+esc([r.fonte,r.data?dataBR(r.data):'',nomePessoa(r.criado_por_id)?'cadastrado por '+nomePessoa(r.criado_por_id):''].filter(Boolean).join(' · '))+(prod?' · na prateleira: <b>'+esc(prod.nome)+'</b>':'')+'</div></div>'+
+      '<div class="acoes">'+(r.link?'<a class="btn btn-sm" href="'+esc(r.link)+'" target="_blank" rel="noopener noreferrer">Abrir</a>':'')+
+      (T.pode?(r.status==='novo'?'<button class="btn btn-sm" type="button" data-rad-st="analise" data-rad="'+r.id+'">Em análise</button>':'')+
+        (r.status!=='incorporado'?'<button class="btn btn-sm btn-ouro" type="button" data-rad-inc="'+r.id+'">Incorporar à prateleira</button>':'')+
+        (r.status!=='descartado'&&r.status!=='incorporado'?'<button class="btn btn-sm" type="button" data-rad-st="descartado" data-rad="'+r.id+'">Descartar</button>':'')+
+        (r.status==='descartado'?'<button class="btn btn-sm" type="button" data-rad-st="novo" data-rad="'+r.id+'">Voltar para novos</button>':'')+
+        '<button class="btn btn-sm" type="button" data-rad-edit="'+r.id+'">Editar</button>':'')+'</div>'+
+      (r.resumo?'<div class="res">'+esc(r.resumo).replace(/\n/g,'<br>')+'</div>':'')+'</article>';
+  }).join('');
+}
+function formRadar(id){
+  var r=id?T.radar.find(function(x){return x.id===id;}):null;
+  $('mdForm').innerHTML='<div class="md-cab"><div><h2>'+(r?'Editar informativo':'Novo informativo do radar')+'</h2><p>Uma oportunidade de tese nova (informativo, decisão, notícia). Se valer a pena, incorpore à prateleira.</p></div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo"><div class="campo"><label for="rdTit">Título</label><input id="rdTit" maxlength="240" value="'+esc(r?r.titulo:'')+'"></div>'+
+    '<div class="grade2"><div class="campo"><label for="rdFonte">Fonte</label><input id="rdFonte" placeholder="Ex.: Informativo STJ 820, e-mail do radar" value="'+esc(r&&r.fonte||'')+'"></div><div class="campo"><label for="rdData">Data</label><input id="rdData" type="date" value="'+esc(r&&r.data||'')+'"></div></div>'+
+    '<div class="campo"><label for="rdLink">Link (opcional)</label><input id="rdLink" type="url" placeholder="https://..." value="'+esc(r&&r.link||'')+'"></div>'+
+    '<div class="campo"><label for="rdRes">Resumo</label><textarea id="rdRes" rows="6">'+esc(r?r.resumo:'')+'</textarea></div></div>'+
+    '<div class="md-rod"><button class="btn" type="button" data-fechar="moForm">Cancelar</button><button class="btn btn-ouro" type="button" id="rdSalvar">Salvar</button></div>';
+  abrir('moForm');
+  $('rdSalvar').onclick=async function(){
+    var d={titulo:$('rdTit').value.trim(),fonte:$('rdFonte').value.trim()||null,data:$('rdData').value||null,link:$('rdLink').value.trim()||null,resumo:$('rdRes').value.trim()};
+    if(!d.titulo){toast('Escreva o título.');return;}if(d.link&&!/^https?:\/\//i.test(d.link)){toast('O link precisa começar com https://');return;}
+    this.disabled=true;var q=r?await _sb.from('radar_oportunidades').update(d).eq('id',r.id):await _sb.from('radar_oportunidades').insert(d);this.disabled=false;
+    if(q.error){toast('Não foi possível salvar: '+esc(q.error.message));return;}fechar('moForm');toast('Informativo salvo.');carregarTudo();
+  };
+}
+
+/* ---------- organizar situações (administrador: renomear, cor, ordem, desativar) ---------- */
+function organizarOpcoes(cat){
+  var lista=T.cat.filter(function(c){return c.categoria===cat;}).sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+  $('mdForm').innerHTML='<div class="md-cab"><div><h2>Organizar situações</h2><p>Renomeie, troque a cor, mude a ordem ou desative (o que já foi usado continua no histórico).</p></div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo" id="opcLista">'+lista.map(function(c,i){return '<div class="opc-linha" data-opc="'+c.id+'"><input type="color" value="'+esc(c.cor||'#8a94a8')+'"><input type="text" value="'+esc(c.nome)+'" maxlength="60"><button class="btn btn-sm" type="button" data-sobe'+(i?'':' disabled')+'>↑</button><button class="btn btn-sm" type="button" data-desce'+(i<lista.length-1?'':' disabled')+'>↓</button><label class="chk"><input type="checkbox"'+(c.ativo?' checked':'')+'> Ativa</label></div>';}).join('')+
+    '<div class="opc-linha"><input type="text" id="opcNova" placeholder="Nova opção" maxlength="60"><button class="btn btn-sm" type="button" id="opcAdd">Adicionar</button></div></div>'+
+    '<div class="md-rod"><button class="btn" type="button" data-fechar="moForm">Fechar</button><button class="btn btn-ouro" type="button" id="opcSalvar">Salvar</button></div>';
+  var box=$('opcLista');
+  box.addEventListener('click',function(e){var l=e.target.closest('.opc-linha');if(!l)return;
+    if(e.target.closest('[data-sobe]')&&l.previousElementSibling)l.parentNode.insertBefore(l,l.previousElementSibling);
+    if(e.target.closest('[data-desce]')&&l.nextElementSibling&&l.nextElementSibling.dataset.opc)l.parentNode.insertBefore(l.nextElementSibling,l);
+    box.querySelectorAll('[data-opc]').forEach(function(x,i,arr){x.querySelector('[data-sobe]').disabled=!i;x.querySelector('[data-desce]').disabled=i===arr.length-1;});});
+  $('opcAdd').onclick=async function(){var n=$('opcNova').value.trim();if(!n)return;var r=await _sb.from('etiquetas_catalogo').insert({categoria:cat,nome:n,cor:'#8a94a8',ordem:lista.length+1}).select('id,nome,cor,categoria,ordem,ativo').single();if(r.error){toast(esc(r.error.message));return;}T.cat.push(r.data);organizarOpcoes(cat);};
+  abrir('moForm');
+  $('opcSalvar').onclick=async function(){
+    var linhas=box.querySelectorAll('[data-opc]'),erro=null;this.disabled=true;
+    for(var i=0;i<linhas.length;i++){var l=linhas[i],ins=l.querySelectorAll('input');var r=await _sb.from('etiquetas_catalogo').update({cor:ins[0].value,nome:ins[1].value.trim()||'Sem nome',ordem:i+1,ativo:ins[2].checked}).eq('id',l.dataset.opc);if(r.error)erro=r.error;}
+    this.disabled=false;if(erro){toast('Não foi possível salvar: '+esc(erro.message));return;}fechar('moForm');toast('Situações atualizadas.');carregarTudo();
+  };
+}
+
+/* ---------- eventos ---------- */
+function trocarAba(a){
+  T.aba=a;document.querySelectorAll('#abas [data-aba]').forEach(function(b){b.classList.toggle('active',b.dataset.aba===a);});
+  document.querySelectorAll('.aba-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+a);});
+  try{var u=new URL(location.href);u.searchParams.set('aba',a);u.searchParams.delete('post');history.replaceState(history.state,'',u);}catch(e){}
+  desenharBotoes();
+}
+function ligar(){
+  $('abas').addEventListener('click',function(e){var b=e.target.closest('[data-aba]');if(b)trocarAba(b.dataset.aba);});
+  $('tesesLista').addEventListener('click',function(e){var b=e.target.closest('[data-tese]');if(!b)return;T.tese=b.dataset.tese;desenharTeses();desenharPosts();});
+  $('posts').addEventListener('click',function(e){var ed=e.target.closest('[data-editar]');if(ed){e.stopPropagation();formPost(ed.dataset.editar);return;}var p=e.target.closest('[data-post]');if(p)lerPost(p.dataset.post);});
+  $('posts').addEventListener('keydown',function(e){if(e.key==='Enter'){var p=e.target.closest('[data-post]');if(p)lerPost(p.dataset.post);}});
+  $('mdLer').addEventListener('click',function(e){var ed=e.target.closest('[data-editar]');if(ed){fechar('moLer');setTimeout(function(){formPost(ed.dataset.editar);},220);}});
+  var tm;function deb(fn){return function(){var v=this.value;clearTimeout(tm);tm=setTimeout(function(){fn(v);},180);};}
+  $('buscaAtu').addEventListener('input',deb(function(v){T.busca=v;desenharPosts();}));
+  $('filtroSit').addEventListener('change',function(){T.sit=this.value;desenharPosts();});
+  $('buscaProd').addEventListener('input',deb(function(v){T.buscaProd=v;desenharProdutos();}));
+  $('filtroProdSit').addEventListener('change',function(){T.prodSit=this.value;desenharProdutos();});
+  $('filtroArea').addEventListener('change',function(){T.area=this.value;desenharProdutos();});
+  $('produtos').addEventListener('click',function(e){var v=e.target.closest('[data-vermais]');if(v){var c=v.closest('.prod');c.classList.toggle('aberto');v.textContent=c.classList.contains('aberto')?'Ver menos':'Ver tudo';return;}var ed=e.target.closest('[data-editar-prod]');if(ed)formProduto(ed.dataset.editarProd);});
+  $('radarStatus').addEventListener('click',function(e){var b=e.target.closest('[data-radar-st]');if(b){T.radarSt=b.dataset.radarSt;desenharRadar();}});
+  $('buscaRadar').addEventListener('input',deb(function(v){T.buscaRadar=v;desenharRadar();}));
+  $('radar').addEventListener('click',async function(e){
+    var st=e.target.closest('[data-rad-st]');if(st){var r=await _sb.from('radar_oportunidades').update({status:st.dataset.radSt}).eq('id',st.dataset.rad);if(r.error){toast(esc(r.error.message));return;}carregarTudo();return;}
+    var inc=e.target.closest('[data-rad-inc]');if(inc){var it=T.radar.find(function(x){return x.id===inc.dataset.radInc;});formProduto(null,{nome:it.titulo,resumo:it.resumo,fundamento:[it.fonte,it.link].filter(Boolean).join(' · '),radarId:it.id});return;}
+    var ed=e.target.closest('[data-rad-edit]');if(ed)formRadar(ed.dataset.radEdit);
+  });
+  document.addEventListener('click',function(e){var f=e.target.closest('[data-fechar]');if(f)fechar(f.dataset.fechar);});
+  document.querySelectorAll('.mo').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m)fechar(m.id);});});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')document.querySelectorAll('.mo.aberto').forEach(function(m){fechar(m.id);});});
+  document.addEventListener('saga-atualizar',carregarTudo);
+}
+async function init(){
+  ligar();
+  await SagaUI.carregar('teses');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  var r=await Promise.all([_sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle(),_sb.rpc('pode_publicar_teses'),_sb.rpc('eh_admin_sistema')]);
+  T.eu=r[0].data&&r[0].data.id;T.pode=r[1].data===true;T.admin=r[2].data===true;
+  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a&&$('aba-'+a))trocarAba(a);
+  await carregarTudo();
+  var post=q.get('post');if(post){trocarAba('atualizacoes');lerPost(post);}
+}
+init().catch(function(e){toast('Erro ao abrir: '+esc(e.message||''));});
+</script>
+</body>
+</html>
