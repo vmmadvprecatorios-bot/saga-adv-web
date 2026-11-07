@@ -98,13 +98,16 @@
       '.saga-texto{text-align:justify;text-justify:inter-word;hyphens:auto;overflow-wrap:anywhere}',
       '.saga-texto p{margin:0 0 .6em}.saga-texto p:last-child{margin-bottom:0}',
       '.saga-texto ul,.saga-texto ol{margin:0 0 .6em;padding-left:1.4em}.saga-texto li{margin:.1em 0}',
-      '.saga-texto mark,.saga-editor-area mark{background:color-mix(in srgb,#f5c542 55%,transparent);color:inherit;padding:0 2px;border-radius:3px}',
-      PALETA.map(function(p){return '.saga-texto mark[data-c="'+p[0]+'"],.saga-editor-area mark[data-c="'+p[0]+'"]{background:color-mix(in srgb,'+p[1]+' 55%,transparent)}';}).join('\n'),
-      '.saga-cores{display:none;align-items:center;gap:6px;padding:5px 8px;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}.saga-cores.aberto{display:flex}',
-      '.saga-cores button{width:15px;height:15px;min-width:15px;padding:0;border-radius:50%;border:2px solid transparent;cursor:pointer}.saga-cores button:hover{border-color:var(--text)}.saga-cores .sem{width:auto;border-radius:7px;padding:0 8px;font:inherit;font-size:10.5px;background:transparent;color:var(--muted);border:1px solid var(--border-soft)}',
-      '.saga-editor{width:100%;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 4%,transparent);overflow:hidden}',
+      '.saga-texto mark,.saga-editor-area mark{background:color-mix(in srgb,#f5c542 32%,transparent);color:inherit;padding:0 2px;border-radius:3px}',
+      PALETA.map(function(p){return '.saga-texto mark[data-c="'+p[0]+'"],.saga-editor-area mark[data-c="'+p[0]+'"]{background:color-mix(in srgb,'+p[1]+' 32%,transparent)}';}).join('\n'),
+      // marca-texto: menu suspenso que abre abaixo do botão A (antes era uma faixa de bolinhas exposta)
+      '.saga-editor{position:relative}',
+      '.saga-cores{display:none;position:absolute;z-index:60;min-width:138px;padding:5px;border:1px solid var(--border);border-radius:11px;background:var(--panel-solid,var(--panel));box-shadow:0 14px 34px rgba(0,0,0,.28);flex-direction:column;gap:1px}.saga-cores.aberto{display:flex}',
+      '.saga-cores button{display:flex;align-items:center;gap:8px;width:100%;padding:5px 8px;border:0;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:11.5px;text-align:left;cursor:pointer}.saga-cores button:hover,.saga-cores button:focus-visible{background:color-mix(in srgb,var(--text) 8%,transparent);outline:0}',
+      '.saga-cores button i{width:9px;height:9px;border-radius:50%;flex:0 0 auto;opacity:.75;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}.saga-cores .sem{margin-top:3px;border-top:1px solid var(--border-soft);border-radius:0 0 7px 7px;color:var(--muted)}.saga-cores .sem i{background:transparent;position:relative;overflow:hidden}.saga-cores .sem i::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:var(--muted);transform:rotate(-45deg)}',
+      '.saga-editor{width:100%;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 4%,transparent);overflow:visible}',
       '.saga-editor:focus-within{border-color:var(--gold)}',
-      '.saga-editor-barra{display:flex;flex-wrap:wrap;gap:3px;padding:5px 6px;border-bottom:1px solid var(--border-soft);background:color-mix(in srgb,var(--text) 3%,transparent)}',
+      '.saga-editor-barra{border-radius:10px 10px 0 0;display:flex;flex-wrap:wrap;gap:3px;padding:5px 6px;border-bottom:1px solid var(--border-soft);background:color-mix(in srgb,var(--text) 3%,transparent)}',
       '.saga-editor-barra button{min-width:28px;height:26px;padding:0 7px;border:1px solid transparent;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:12px;cursor:pointer;line-height:1}',
       '.saga-editor-barra button:hover{background:color-mix(in srgb,var(--gold) 12%,transparent);border-color:color-mix(in srgb,var(--gold) 30%,transparent)}',
       '.saga-editor-barra button.ligado{background:color-mix(in srgb,var(--gold) 20%,transparent);border-color:var(--gold)}',
@@ -118,7 +121,7 @@
   }
 
   // ---------- o editor ----------
-  var BOTOES=[['bold','<b>N</b>','Negrito (Ctrl+B)'],['italic','<i>I</i>','Itálico (Ctrl+I)'],['underline','<u>S</u>','Sublinhado (Ctrl+U)'],['destaque','<span style="background:#f5c54299;padding:0 3px;border-radius:3px">A</span>','Destacar (marca-texto)'],'|',['insertUnorderedList','• Lista','Lista com marcadores'],['insertOrderedList','1. Lista','Lista numerada'],'|',['limpar','Tx','Tirar a formatação']];
+  var BOTOES=[['bold','<b>N</b>','Negrito (Ctrl+B)'],['italic','<i>I</i>','Itálico (Ctrl+I)'],['underline','<u>S</u>','Sublinhado (Ctrl+U)'],['destaque','<span style="display:inline-flex;flex-direction:column;align-items:center;line-height:1">A<i style="display:block;width:11px;height:2px;margin-top:1px;border-radius:2px;background:#d9b95a;opacity:.8"></i></span>','Destacar (marca-texto)'],'|',['insertUnorderedList','• Lista','Lista com marcadores'],['insertOrderedList','1. Lista','Lista numerada'],'|',['limpar','Tx','Tirar a formatação']];
   // Tira o marca-texto do trecho selecionado (ou do destaque onde está o cursor), sem mexer no resto do texto
   function removerDestaque(area){
     var sel=global.getSelection();if(!sel||!sel.rangeCount)return;
@@ -163,21 +166,34 @@
       if(b==='|'){var s=document.createElement('span');s.className='sep';barra.appendChild(s);return;}
       var btn=document.createElement('button');btn.type='button';btn.innerHTML=b[1];btn.title=b[2];btn.setAttribute('aria-label',b[2]);btn.dataset.cmd=b[0];
       btn.addEventListener('mousedown',function(e){e.preventDefault();}); // não tira o cursor do texto
-      btn.addEventListener('click',function(){if(b[0]==='destaque'){faixa.classList.toggle('aberto');return;}comando(b[0]);area.focus();estado();});
+      btn.addEventListener('click',function(){if(b[0]==='destaque'){alternarCores(btn);return;}comando(b[0]);area.focus();estado();});
       barra.appendChild(btn);
     });
     var faixa=document.createElement('div');faixa.className='saga-cores';faixa.setAttribute('role','group');faixa.setAttribute('aria-label','Cores do marca-texto');
     PALETA.forEach(function(p){
-      var c=document.createElement('button');c.type='button';c.style.background=p[1];c.title=p[2];c.setAttribute('aria-label','Marca-texto '+p[2]);
+      var c=document.createElement('button');c.type='button';c.innerHTML='<i style="background:'+p[1]+'"></i>'+p[2];c.setAttribute('aria-label','Marca-texto '+p[2]);
       c.addEventListener('mousedown',function(e){e.preventDefault();});
-      c.addEventListener('click',function(){try{removerDestaque(area);document.execCommand('hiliteColor',false,p[1]);}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
+      c.addEventListener('click',function(){try{removerDestaque(area);document.execCommand('hiliteColor',false,p[1]);}catch(e){}fecharCores();area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
       faixa.appendChild(c);
     });
-    var sem=document.createElement('button');sem.type='button';sem.className='sem';sem.textContent='Sem cor';
+    var sem=document.createElement('button');sem.type='button';sem.className='sem';sem.innerHTML='<i></i>Sem cor';
     sem.addEventListener('mousedown',function(e){e.preventDefault();});
-    sem.addEventListener('click',function(){try{removerDestaque(area);}catch(e){}faixa.classList.remove('aberto');area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
+    sem.addEventListener('click',function(){try{removerDestaque(area);}catch(e){}fecharCores();area.focus();estado();area.dispatchEvent(new Event('input',{bubbles:true}));});
     faixa.appendChild(sem);
     cx.appendChild(barra);cx.appendChild(faixa);cx.appendChild(area);
+    // abre o menu de cores logo abaixo do botão A, com movimento suave (respeita "efeitos de movimento")
+    function alternarCores(btn){
+      if(faixa.classList.contains('aberto')){fecharCores();return;}
+      var bx=btn.getBoundingClientRect(),cb=cx.getBoundingClientRect();
+      faixa.style.left=Math.max(4,Math.min(bx.left-cb.left,cb.width-146))+'px';faixa.style.top=(bx.bottom-cb.top+4)+'px';
+      faixa.classList.add('aberto');
+      var calmo=window.sagaMq&&window.sagaMq().matches;
+      if(!calmo&&faixa.animate)faixa.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,.78,.25,1)'});
+      setTimeout(function(){document.addEventListener('mousedown',foraCores,true);document.addEventListener('keydown',escCores,true);},0);
+    }
+    function fecharCores(){faixa.classList.remove('aberto');document.removeEventListener('mousedown',foraCores,true);document.removeEventListener('keydown',escCores,true);}
+    function foraCores(e){if(!faixa.contains(e.target)&&!(e.target.closest&&e.target.closest('[data-cmd="destaque"]')))fecharCores();}
+    function escCores(e){if(e.key==='Escape'){e.stopPropagation();fecharCores();area.focus();}}
     campo.style.display='none';campo.parentNode.insertBefore(cx,campo.nextSibling);
     function comando(c){
       try{

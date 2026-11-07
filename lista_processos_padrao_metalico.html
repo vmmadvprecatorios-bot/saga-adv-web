@@ -1164,7 +1164,7 @@ async function carregarPermissoes(){
 async function carregarPerfil(){
   if(!state.session)return;
   var r=await _sb.from('usuarios').select('id,nome_completo,email,eh_administrador').eq('auth_user_id',state.session.user.id).maybeSingle();
-  if(r.data){state.admin=r.data.eh_administrador===true;state.meuInternoId=r.data.id;var av=document.getElementById('avatarTop');if(av)av.textContent=iniciais(r.data.nome_completo||r.data.email);}
+  if(r.data){state.admin=r.data.eh_administrador===true;state.meuInternoId=r.data.id;/* a bolinha do perfil (foto ou iniciais) é cuidada pelo saga_ui.js em todas as telas */}
 }
 
 // Opcoes de filtros

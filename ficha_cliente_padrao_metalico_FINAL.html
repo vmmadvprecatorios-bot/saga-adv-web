@@ -2441,7 +2441,7 @@ async function carregarPerfil(){
     currentUser={id:r.data.id,nome:state.usuario.nome,iniciais:iniciaisNome(state.usuario.nome),perfil:'',permissoesExtra:[]};
     state.ehAdmin=r.data.eh_administrador===true;
     const av=document.getElementById('avatarTop');
-    if(av){av.textContent=currentUser.iniciais;av.title=esc(currentUser.nome||'Meu perfil');}
+    if(av){av.title=currentUser.nome||'Meu perfil';} // a foto/iniciais da bolinha ficam com o saga_ui.js (antes isto apagava a foto)
     const avc=document.getElementById('avatarComentario');
     if(avc){avc.textContent=currentUser.iniciais;avc.setAttribute('data-saga-nome',currentUser.nome||'');}
     return true;
