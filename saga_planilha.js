@@ -579,6 +579,31 @@ window.SagaPlanilha=(function(){
   }
 
   // ---------- escolher colunas ----------
+  /* ----- Cor do foco da planilha (cruz da célula selecionada): padrão do tema ou cor escolhida, guardada no navegador de cada pessoa ----- */
+  var CORES_FOCO=[['#2f6cd6','Azul'],['#1f8a5b','Verde'],['#d4a017','Amarelo'],['#e07b2f','Laranja'],['#d6457a','Rosa'],['#7b5cd6','Roxo'],['#c0392b','Vermelho'],['#6b7280','Cinza']];
+  function corFoco(){try{return localStorage.getItem('saga-foco-cor')||'';}catch(e){return '';}}
+  function aplicarCorFoco(){var c=corFoco();if(/^#[0-9a-f]{6}$/i.test(c))document.documentElement.style.setProperty('--sp-foco-escolhido',c);else document.documentElement.style.removeProperty('--sp-foco-escolhido');}
+  function definirCorFoco(c){try{if(c)localStorage.setItem('saga-foco-cor',c);else localStorage.removeItem('saga-foco-cor');}catch(e){}aplicarCorFoco();}
+  aplicarCorFoco();
+  var menuFoco=null;
+  function fecharMenuFoco(){if(menuFoco){menuFoco.remove();menuFoco=null;document.removeEventListener('mousedown',foraFoco,true);document.removeEventListener('keydown',escFoco,true);}}
+  function foraFoco(e){if(menuFoco&&!menuFoco.contains(e.target)&&!e.target.closest('[data-foco]'))fecharMenuFoco();}
+  function escFoco(e){if(e.key==='Escape'){e.stopPropagation();fecharMenuFoco();}}
+  function abrirMenuFoco(btn){
+    if(menuFoco){fecharMenuFoco();return;}
+    var atual=corFoco(),m=document.createElement('div');m.className='sp-foco-menu';m.setAttribute('role','menu');m.setAttribute('aria-label','Cor do foco');
+    m.innerHTML='<div class="tit">Cor do foco</div><button type="button" class="padrao'+(atual?'':' on')+'" data-padrao><span class="sp-foco-bola" style="background:var(--gold)"></span>Padrão do tema</button>'+
+      '<div class="sp-foco-cores">'+CORES_FOCO.map(function(c){return '<button type="button" title="'+c[1]+'" aria-label="'+c[1]+'" data-cor="'+c[0]+'" style="--c:'+c[0]+'"'+(atual.toLowerCase()===c[0]?' class="on"':'')+'></button>';}).join('')+'</div>'+
+      '<label class="sp-foco-outra"><input type="color" value="'+(atual||'#2f6cd6')+'" data-outra> Outra cor…</label>';
+    document.body.appendChild(m);menuFoco=m;
+    var r=btn.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';m.style.top=Math.min(r.bottom+6,innerHeight-m.offsetHeight-8)+'px';
+    m.addEventListener('click',function(e){
+      if(e.target.closest('[data-padrao]')){definirCorFoco('');fecharMenuFoco();aviso('Foco na cor padrão do tema.');return;}
+      var c=e.target.closest('[data-cor]');if(c){definirCorFoco(c.dataset.cor);fecharMenuFoco();aviso('Cor do foco alterada.');}
+    });
+    m.querySelector('[data-outra]').addEventListener('input',function(e){definirCorFoco(e.target.value);});
+    setTimeout(function(){document.addEventListener('mousedown',foraFoco,true);document.addEventListener('keydown',escFoco,true);},0);
+  }
   function escolherColunas(){
     fecharMenu();
     var cs=colunasDaTela();
@@ -676,10 +701,12 @@ window.SagaPlanilha=(function(){
         '<button type="button" class="btn-secondary sp-btn" data-importar>Importar planilha</button><button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
       '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos'],['sim','Protocolados'],['nao','Não protocolados']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>')+
       '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button></div>'+
+      '<button type="button" class="btn-secondary sp-btn" data-foco title="Cor do destaque da célula, da linha e da coluna selecionadas"><span class="sp-foco-bola"></span> Foco</button>'+
       '<button type="button" class="btn-secondary sp-btn" data-colunas>Colunas</button>'+
       (n?'<button type="button" class="sp-limpar-tudo" data-limpar>Limpar filtros das colunas ('+n+')</button>':'');
     b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){protocolo=x.dataset.protocolo;aplicar();};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
+    b.querySelector('[data-foco]').onclick=function(e){e.stopPropagation();abrirMenuFoco(this);};
     b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem(CHAVE_CEL(),x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
     aplicarModoCelular();
     b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){retorno=x.dataset.retorno;aplicar();};});
@@ -740,6 +767,10 @@ window.SagaPlanilha=(function(){
       '.sp-aba{border-radius:9px}.sp-abas{padding-bottom:3px}.sp-aba:hover{color:var(--text)}.sp-aba.ativo{color:var(--gold-light);border-bottom-color:var(--gold)}.sp-aba:active{transform:scale(.97)}'+
       '.sp-org{margin-left:auto;font-size:11.5px;color:var(--gold-light);text-decoration:underline}.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
       '.sp-item-col{display:flex;align-items:center;gap:6px;justify-content:space-between}.sp-item-col label{display:flex;align-items:center;gap:6px;min-width:0;flex:1}.sp-item-col label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-item-col .sp-editor{min-width:0}.sp-col-ger{display:flex;gap:2px;flex:0 0 auto;opacity:.55;transition:opacity .2s cubic-bezier(.22,.78,.25,1)}.sp-item-col:hover .sp-col-ger,.sp-item-col:focus-within .sp-col-ger{opacity:1}.sp-ico{width:24px;height:24px;border-radius:7px;border:1px solid transparent;background:none;color:var(--muted);font-size:11px;cursor:pointer}.sp-ico:hover{color:var(--text);border-color:var(--border-soft)}'+
+      '.sp-foco-menu{position:fixed;z-index:3000;width:230px;padding:8px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--panel));box-shadow:0 16px 38px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:6px}'+
+      '.sp-foco-menu .tit{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:2px 4px}.sp-foco-menu .padrao{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:0;background:none;color:var(--text);font:inherit;font-size:12px;cursor:pointer;text-align:left}.sp-foco-menu .padrao:hover,.sp-foco-menu .padrao.on{background:color-mix(in srgb,var(--gold) 12%,transparent)}'+
+      '.sp-foco-cores{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;padding:2px 4px}.sp-foco-cores button{width:20px;height:20px;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer;padding:0}.sp-foco-cores button.on{border-color:var(--text)}.sp-foco-cores button:hover{transform:scale(1.12)}'+
+      '.sp-foco-outra{display:flex;align-items:center;gap:8px;font-size:12px;padding:2px 4px;color:var(--text)}.sp-foco-outra input{width:30px;height:24px;padding:0;border:1px solid var(--border-soft);border-radius:6px;background:none;cursor:pointer}.sp-foco-bola{width:10px;height:10px;border-radius:50%;background:var(--sp-foco-escolhido,var(--gold));display:inline-block;margin-right:6px;vertical-align:-1px}'+
       '.sp-nova-col{margin-top:14px;padding:12px;border:1px solid var(--border-soft);border-radius:12px;display:flex;flex-direction:column;gap:8px}.sp-nova-tit{font-size:12px;font-weight:600}.sp-nova-grade{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:6px}.sp-nova-rod{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.sp-col-ger[hidden]{display:none}.sp-item-col.perguntando{grid-column:1/-1;background:color-mix(in srgb,var(--danger) 7%,transparent);border-radius:9px}.sp-col-pergunta{display:flex;gap:4px;flex:0 0 auto}.sp-col-pergunta .sp-btn{height:26px;padding:0 8px;font-size:11px}.sp-perigo{color:var(--danger)!important}.sp-removidas{margin-top:10px;font-size:12px}.sp-removidas summary{cursor:pointer;color:var(--muted)}.sp-removidas .sp-item-col{padding:5px 2px}@media(max-width:620px){.sp-nova-grade{grid-template-columns:1fr}}'+
       '.sp-modal{max-width:620px;width:94vw}.sp-col-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;max-height:52vh;overflow:auto;margin-top:8px}.sp-ajuda{font-size:11.5px;color:var(--muted);margin:0 0 8px}.sp-col-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
       '#listaView .tabela-scroll{max-height:70vh;overflow:auto}'+
@@ -756,11 +787,14 @@ window.SagaPlanilha=(function(){
       '.sp-tabela .sp-fixa{position:sticky;z-index:1}.sp-tabela thead th.sp-fixa{z-index:4}.sp-tabela tfoot td.sp-fixa{z-index:4}'+
       '.sp-tabela td.sp-fixa{background-clip:padding-box}.sp-tabela thead th.sp-fixa{background:var(--panel-solid,var(--panel))}'+
       '.tabela-scroll.sp-rolado .sp-fixa-ult{box-shadow:8px 0 12px -10px rgba(0,0,0,.55)}'+
-      '.sp-tabela td.sp-sel{box-shadow:inset 0 0 0 2px var(--gold)!important;border-radius:3px}'+
+      // Cor do foco (cruz): padrão = cor do tema (no claro a própria cor de destaque; no escuro a versão clara, mais forte); o botão "Foco" troca
+      '.sp-tabela{--sp-foco:var(--sp-foco-escolhido,var(--gold));--sp-foco-a:12%;--sp-foco-b:20%}'+
+      'body:not([data-theme="light"]) .sp-tabela{--sp-foco:var(--sp-foco-escolhido,var(--gold-light,var(--gold)));--sp-foco-a:17%;--sp-foco-b:28%}'+
+      '.sp-tabela td.sp-sel{box-shadow:inset 0 0 0 2px var(--sp-foco)!important;border-radius:3px}'+
       // a cor da linha fica por cima do fundo zebrado do tema (camada de imagem), sem apagar o zebrado
-      '.sp-tabela .sp-cruz-l,.sp-tabela .sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--gold) 10%,transparent),color-mix(in srgb,var(--gold) 10%,transparent))!important;transition:background-image .2s cubic-bezier(.22,.78,.25,1)}'+
-      '.sp-tabela .sp-cruz-l.sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--gold) 16%,transparent),color-mix(in srgb,var(--gold) 16%,transparent))!important}'+
-      '.sp-tabela th.sp-cruz-c .sp-th{color:var(--gold-light)}.sp-tabela th.sp-cruz-c{box-shadow:inset 0 -2px 0 var(--gold)}'+
+      '.sp-tabela .sp-cruz-l,.sp-tabela .sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--sp-foco) var(--sp-foco-a),transparent),color-mix(in srgb,var(--sp-foco) var(--sp-foco-a),transparent))!important;transition:background-image .2s cubic-bezier(.22,.78,.25,1)}'+
+      '.sp-tabela .sp-cruz-l.sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--sp-foco) var(--sp-foco-b),transparent),color-mix(in srgb,var(--sp-foco) var(--sp-foco-b),transparent))!important}'+
+      '.sp-tabela th.sp-cruz-c .sp-th{color:var(--sp-foco)}.sp-tabela th.sp-cruz-c{box-shadow:inset 0 -2px 0 var(--sp-fold)}'+
       '.sp-tabela tfoot td{position:sticky;bottom:0;z-index:2;background:var(--panel-solid,var(--panel));border-top:1px solid var(--border);padding:10px 14px;font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
       '.sp-tabela tfoot .sp-tot-num{color:var(--gold-light);font-variant-numeric:tabular-nums}.sp-tot-sub{display:block;font-size:9.5px;font-weight:500;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);margin-top:2px}'+
       '.sp-modo-cel{display:none}.sp-cc-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.sp-cc-topo .cartao-nome{font-weight:600;min-width:0;overflow-wrap:anywhere}'+
