@@ -226,7 +226,7 @@
     var r=el.getBoundingClientRect();
     return r.height>0&&r.height<=60&&r.width<=360&&(el.tagName==='BUTTON'||el.getAttribute('role')==='tab'||getComputedStyle(el).cursor==='pointer');
   }
-  var ultimoAtivo=new WeakMap();
+  var ultimoAtivo=new WeakMap(),ultimaTrocaGrupo=0;
   // (08/11) Grupos redesenhados do zero (ex.: barra da planilha, que refaz o HTML a cada clique) perdiam a memória e
   // o destaque trocava seco. Agora o grupo também é lembrado por um "nome" (rótulo + classe + id do bloco onde está).
   var ultimoPorNome=new Map();
@@ -260,6 +260,9 @@
     fantasma.style.cssText='position:absolute;z-index:-1;pointer-events:none;margin:0;left:0;top:0;'+
       'border-radius:'+raio+';box-shadow:'+sombra+';background-color:'+cor+';'+(fundo?'background-image:'+fundo+';':'');
     grupo.appendChild(fantasma);
+    // (08/11) os outros botões do grupo apagam o destaque na hora: a transição deles deixava, por um instante, dois destaques na tela
+    var irmaos=Array.prototype.filter.call(grupo.children,function(x){return x!==para&&x!==fantasma&&x.style;});
+    var transIrmaos=irmaos.map(function(x){var t=[x.style.getPropertyValue('transition'),x.style.getPropertyPriority('transition')];x.style.setProperty('transition','none','important');return t;});
     var props=['background-color','background-image','box-shadow','border-color','transition'],antes={};
     props.forEach(function(p){antes[p]=[para.style.getPropertyValue(p),para.style.getPropertyPriority(p)];});
     antes.transition=transAntes;
@@ -278,7 +281,7 @@
       props.forEach(function(p){if(p!=='transition')volta(p);});
       void para.offsetWidth;
       fantasma.remove();
-      requestAnimationFrame(function(){volta('transition');});
+      requestAnimationFrame(function(){volta('transition');irmaos.forEach(function(x,i){if(transIrmaos[i][0])x.style.setProperty('transition',transIrmaos[i][0],transIrmaos[i][1]);else x.style.removeProperty('transition');});});
     }
     anim.onfinish=pronto;anim.oncancel=pronto;
   }
@@ -290,7 +293,7 @@
       var antes=ultimoAtivo.get(grupo);
       if(!antes){var pn=ultimoPorNome.get(nomeGrupo(grupo));if(pn&&!pn.grupo.isConnected)antes=pn;}
       // O destaque mudou de botao (troca de classe ou botoes redesenhados): desliza do antigo para o novo
-      if(antes&&antes.el!==el&&!(antes.el.isConnected&&ATIVO.test(antes.el.className))&&!(!antes.el.isConnected&&antes.txt===el.textContent))deslizar(grupo,antes,el);
+      if(antes&&antes.el!==el&&!(antes.el.isConnected&&ATIVO.test(antes.el.className))&&!(!antes.el.isConnected&&antes.txt===el.textContent)){ultimaTrocaGrupo=Date.now();deslizar(grupo,antes,el);}
       lembrar(grupo,el);
     }catch(e){if(window.SAGA_DEBUG)console.warn('[saga] abas',e);}});
   }
@@ -378,8 +381,31 @@
       else m.addedNodes.forEach(function(n){if(n.nodeType===1){paraConferir.add(n);}});
     });
   }
+  // (08/11) Troca de aba/modo (Kanban ↔ Lista, abas do Ponto, de Colaboradores, filtros...): o botão já deslizava,
+  // mas o conteúdo trocava seco. Agora o bloco grande que aparece logo depois de uma troca de seleção entra suave.
+  var animadosConteudo=new WeakMap();
+  function ehConteudo(el){
+    if(!el||el.nodeType!==1||!el.isConnected||el.getAttribute('aria-hidden')==='true')return false;
+    if(/^(SCRIPT|STYLE|LINK|BUTTON|INPUT|SELECT|OPTION|TEXTAREA|svg|path|TR|TD|TH|TBODY|THEAD|LI|SPAN|B|I|LABEL)$/i.test(el.tagName))return false;
+    if(el.closest('#sidebarSaga,#topbarSaga,.leaflet-container')||ehJanela(el))return false;
+    var cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')return false;
+    var r=el.getBoundingClientRect();
+    return r.width>=280&&r.height>=70;
+  }
+  function animarConteudo(lista){
+    if(reduz||Date.now()-ultimaTrocaGrupo>900)return;
+    var feitos=[];
+    lista.forEach(function(el){try{
+      if(!ehConteudo(el))return;
+      if(feitos.some(function(f){return f.contains(el)||el.contains(f);}))return; // só o bloco de fora
+      var ult=animadosConteudo.get(el);if(ult&&Date.now()-ult<500)return;
+      animadosConteudo.set(el,Date.now());feitos.push(el);
+      if(el.animate)el.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:300,easing:'cubic-bezier(.22,.78,.25,1)'});
+    }catch(e){}});
+  }
   function conferirJanelas(){
     var itens=Array.from(paraConferir);paraConferir.clear();
+    try{var prof=function(n){var d=0;while(n&&n.parentNode){d++;n=n.parentNode;}return d;};animarConteudo(itens.filter(function(n){return n&&n.nodeType===1;}).map(function(n){return [prof(n),n];}).sort(function(a,b){return a[0]-b[0];}).map(function(x){return x[1];}));}catch(e){}
     itens.forEach(function(el){try{
       if(!el.isConnected||!ehJanela(el))return;
       var antes=visivelAntes.get(el),agora=estaVisivel(el);
@@ -391,7 +417,7 @@
   var agendado=false;
   function agendarConferencia(){
     if(agendado)return;agendado=true;
-    requestAnimationFrame(function(){agendado=false;try{conferirJanelas();}catch(e){}try{conferirGrupos();}catch(e){}});
+    requestAnimationFrame(function(){agendado=false;try{conferirGrupos();}catch(e){}try{conferirJanelas();}catch(e){}});
   }
 
   var fio=null,fioTimer=null;

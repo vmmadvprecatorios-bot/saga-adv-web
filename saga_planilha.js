@@ -696,6 +696,9 @@ window.SagaPlanilha=(function(){
     var b=document.getElementById('spBarra');if(!b)return;
     var n=Object.keys(filtros).length+(ordem?1:0);
     var capt=FASE_FIXA==='captacao';
+    // Grupos de botões que já estão na tela são reaproveitados (só troca o selecionado): assim o destaque desliza
+    // inteiro, como nos outros botões do sistema (refazer o HTML a cada clique cortava o efeito no meio)
+    var gruposAntes={};b.querySelectorAll('.sp-pills[role="group"]').forEach(function(g){gruposAntes[g.getAttribute('aria-label')]=g;});
     b.innerHTML=(capt?'<div class="sp-pills" role="group" aria-label="Data de retorno">'+[['','Todos os retornos'],['hoje','Retorno hoje'],['atrasados','Atrasados'],['semana','Próximos 7 dias']].map(function(o){return '<button type="button" class="sp-pill'+(retorno===o[0]?' ativo':'')+'" data-retorno="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
         '<button type="button" class="sp-pill sp-pill-solta'+(minhas?' ativo':'')+'" data-minhas aria-pressed="'+minhas+'">Minhas fichas</button>'+
         '<button type="button" class="btn-secondary sp-btn" data-importar>Importar planilha</button><button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
@@ -704,6 +707,13 @@ window.SagaPlanilha=(function(){
       '<button type="button" class="btn-secondary sp-btn" data-foco title="Cor do destaque da célula, da linha e da coluna selecionadas"><span class="sp-foco-bola"></span> Foco</button>'+
       '<button type="button" class="btn-secondary sp-btn" data-colunas>Colunas</button>'+
       (n?'<button type="button" class="sp-limpar-tudo" data-limpar>Limpar filtros das colunas ('+n+')</button>':'');
+    b.querySelectorAll('.sp-pills[role="group"]').forEach(function(novo){
+      var velho=gruposAntes[novo.getAttribute('aria-label')];
+      if(!velho||velho.children.length!==novo.children.length)return;
+      Array.prototype.forEach.call(novo.children,function(nb,i){var vb=velho.children[i];if(vb.textContent!==nb.textContent)return;
+        vb.className=nb.className;Array.prototype.forEach.call(nb.attributes,function(at){if(at.name!=='class')vb.setAttribute(at.name,at.value);});});
+      novo.replaceWith(velho);
+    });
     b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){protocolo=x.dataset.protocolo;aplicar();};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
     b.querySelector('[data-foco]').onclick=function(e){e.stopPropagation();abrirMenuFoco(this);};
