@@ -68,7 +68,13 @@
     // Menus: a imagem da tela anterior fica parada ate a tela nova ter desenhado os dela (nada pisca)
     '@media(min-width:761px){#sidebarSaga{view-transition-name:saga-lateral;}#topbarSaga{view-transition-name:saga-topo;}}'+
     '@keyframes sagaMenuVelho{0%,99%{opacity:1;}100%{opacity:0;}}@keyframes sagaMenuNovo{0%,99%{opacity:0;}100%{opacity:1;}}'+
-    '::view-transition-group(saga-lateral),::view-transition-group(saga-topo){animation:none;}'+
+    '::view-transition-group(saga-topo){animation:none;}'+
+    // Menu lateral (08/11): se a largura muda entre as telas (aberto pelo mouse -> recolhido), a imagem antiga
+    // não é espremida (ficava "pequenininha"): fica no tamanho real, cortada, e a largura desliza suave
+    '::view-transition-group(saga-lateral){overflow:clip;animation-duration:.3s;animation-timing-function:cubic-bezier(.22,.78,.25,1);}'+
+    '::view-transition-image-pair(saga-lateral){overflow:clip;}'+
+    '::view-transition-old(saga-lateral),::view-transition-new(saga-lateral){inline-size:auto;block-size:100%;object-fit:none;object-position:left top;}'+
+    'html.saga-sem-movimento::view-transition-group(saga-lateral){animation:none;}'+
     '::view-transition-old(saga-lateral),::view-transition-old(saga-topo){animation:sagaMenuVelho .35s linear both;mix-blend-mode:normal;}'+
     '::view-transition-new(saga-lateral),::view-transition-new(saga-topo){animation:sagaMenuNovo .35s linear both;mix-blend-mode:normal;}'+
     '#sidebarSaga,#topbarSaga{font-family:Montserrat,Arial,sans-serif;}'+

@@ -466,6 +466,8 @@
   function _aplicarColapsoSalvo(){
     var sb=document.getElementById('sidebarSaga');
     if(sb&&_sidebarColapsada)sb.classList.add('collapsed');
+    // trocou de tela com o mouse em cima do menu aberto: já nasce aberto, desde o primeiro quadro
+    try{if(sb&&_sidebarColapsada&&window.innerWidth>760&&sessionStorage.getItem('saga-menu-hover')==='1'){sb.style.transition='none';sb.classList.add('sg-aberto');}}catch(e){}
   }
   if(document.getElementById('sidebarSaga'))_aplicarColapsoSalvo();
   else document.addEventListener('DOMContentLoaded',_aplicarColapsoSalvo);
