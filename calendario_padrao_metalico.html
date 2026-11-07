@@ -707,17 +707,25 @@ function toLocalDatetimeValue(d) {
   return dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
 }
 
+// 09/11: "reuniao" e "Reuniao" (ou "retorno" e "Retorno") são a mesma categoria: compara sem maiúsculas e sem acento
+function semAcentoTipo(t){ return String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+function chaveTipoExistente(tipo){
+  if (!tipo) return null;
+  if (categoriasMap[tipo]) return tipo;
+  var n = semAcentoTipo(tipo);
+  return Object.keys(categoriasMap).find(function(k){ return semAcentoTipo(k) === n || semAcentoTipo(categoriasMap[k].nome) === n; }) || null;
+}
 function corDoTipo(tipo) {
   if (!tipo) return CORES_PADRAO[5];
-  if (categoriasMap[tipo]) return categoriasMap[tipo].cor;
+  var kx = chaveTipoExistente(tipo); if (kx) return categoriasMap[kx].cor;
   var idx = TIPOS_PADRAO.indexOf(tipo);
   return idx >= 0 ? CORES_PADRAO[idx % CORES_PADRAO.length] : CORES_PADRAO[5];
 }
 
 function nomeDoTipo(tipo) {
   if (!tipo) return tipo;
-  if (categoriasMap[tipo]) return categoriasMap[tipo].nome;
-  return tipo;
+  var kx = chaveTipoExistente(tipo); if (kx) return categoriasMap[kx].nome;
+  return tipo.charAt(0).toUpperCase() + tipo.slice(1);
 }
 
 function classUrgenciaTarefa(data_prazo) {
@@ -870,9 +878,9 @@ async function carregarEventos(transicao) {
 
     // Atualizar mapa de tipos com novos tipos encontrados no banco
     novosCompromissos.forEach(function(c) {
-      if (c.tipo && !categoriasMap[c.tipo]) {
+      if (c.tipo && !chaveTipoExistente(c.tipo)) {
         var idx = Object.keys(categoriasMap).length;
-        categoriasMap[c.tipo] = { nome: c.tipo, cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
+        categoriasMap[c.tipo] = { nome: c.tipo.charAt(0).toUpperCase() + c.tipo.slice(1), cor: CORES_PADRAO[idx % CORES_PADRAO.length] };
       }
     });
 
@@ -1031,11 +1039,11 @@ function renderizarView(transicao) {
   var entrada = conteudo.animate([
     { opacity:.45, transform:trocaVisao ? 'scale(.97)' : 'translateX(' + (-distancia) + 'px)' },
     { opacity:1, transform:trocaVisao ? 'scale(1)' : 'translateX(0)' }
-  ], { duration:250, easing:'cubic-bezier(.34,1.45,.64,1)' });
+  ], { duration:300, easing:'cubic-bezier(.22,.78,.25,1)' });
   var saida = copia.animate([
     { opacity:1, transform:trocaVisao ? 'scale(1)' : 'translateX(0)' },
     { opacity:0, transform:trocaVisao ? 'scale(1.025)' : 'translateX(' + distancia + 'px)' }
-  ], { duration:250, easing:'ease-out' });
+  ], { duration:300, easing:'cubic-bezier(.22,.78,.25,1)' });
   var ativa = { copia:copia, animacoes:[entrada, saida] };
   transicaoCalendarioAtiva = ativa;
   Promise.allSettled([entrada.finished, saida.finished]).then(function() {
@@ -1524,6 +1532,35 @@ function popularDropdownTipo(desabilitado) {
     }
     lista.appendChild(opt);
   });
+  // 09/11 (regra de 04/11): criar categoria dentro do próprio menu
+  if (!desabilitado) {
+    var nova = document.createElement('div');
+    nova.className = 'dropdown-tipo-opcao dropdown-tipo-nova';
+    nova.textContent = '+ Nova categoria';
+    nova.style.cssText = 'color:var(--gold-light,var(--gold));border-top:1px solid var(--border-soft);margin-top:4px';
+    nova.addEventListener('click', function(e) {
+      e.stopPropagation();
+      nova.innerHTML = '';
+      var inp = document.createElement('input');
+      inp.type = 'text'; inp.maxLength = 40; inp.placeholder = 'Nome da categoria e Enter';
+      inp.style.cssText = 'width:100%;font:inherit;font-size:12px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--panel-2,transparent);color:var(--text)';
+      nova.appendChild(inp); inp.focus();
+      inp.addEventListener('click', function(ev){ ev.stopPropagation(); });
+      inp.addEventListener('keydown', function(ev) {
+        if (ev.key === 'Escape') { ev.preventDefault(); popularDropdownTipo(false); return; }
+        if (ev.key !== 'Enter') return;
+        ev.preventDefault();
+        var nome = inp.value.trim(); if (!nome) return;
+        var chave = chaveTipoExistente(nome);
+        if (!chave) { var idx = Object.keys(categoriasMap).length; chave = nome; categoriasMap[nome] = { nome: nome, cor: CORES_PADRAO[idx % CORES_PADRAO.length] }; salvarPreferencias(); renderizarLegenda(); }
+        tipoSelecionado = chave;
+        document.getElementById('dropTipoTexto').textContent = nomeDoTipo(chave);
+        popularDropdownTipo(false);
+        document.getElementById('dropdownTipo').classList.remove('aberto');
+      });
+    });
+    lista.appendChild(nova);
+  }
   if (desabilitado) {
     document.getElementById('dropTipoValor').classList.add('desabilitado');
   } else {

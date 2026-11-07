@@ -15,7 +15,7 @@
   window.sagaMq=function(){var r=false;try{r=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}var nada=function(){};return {matches:r,addEventListener:nada,removeEventListener:nada,addListener:nada,removeListener:nada};};
   if(window.sagaMq().matches){
     html.classList.add('saga-sem-movimento');
-    try{document.write('<style id="sagaSemMovimento">html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}</style>');}catch(e){}
+    try{document.write('<style id="sagaSemMovimento">html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after,html.saga-sem-movimento #topbarSaga *,html.saga-sem-movimento #sidebarSaga *,html.saga-sem-movimento #topbarSaga *::before,html.saga-sem-movimento #topbarSaga *::after,html.saga-sem-movimento #sidebarSaga *::before,html.saga-sem-movimento #sidebarSaga *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}</style>');}catch(e){}
   }
 
   // Tamanho da letra escolhido nas Configuracoes (antes da primeira imagem da tela)
@@ -102,6 +102,8 @@
     return;
   }
   var reduz=!!(window.matchMedia&&(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches);
+  // A chave "Efeitos de movimento" vale na hora: as Configurações avisam a troca e as animações por script obedecem
+  document.addEventListener('saga-movimento-mudou',function(){try{reduz=window.sagaMq().matches;}catch(e){}});
 
   // Conta as buscas ao banco em andamento: a tela so aparece quando todas terminam
   var pendentes=0,ultimaBusca=0;
@@ -360,6 +362,8 @@
       try{if(!estaVisivel(el)){visivelAntes.set(el,false);fecharJanela(el);}}catch(e){}
     });
   }
+  // Janelas (09/11, Dr. Victor): abrem na curva do sistema, sem a mola que passava do ponto e voltava
+  var CURVA_JANELA='cubic-bezier(.22,.78,.25,1)';
   function animarJanela(el){
     if(reduz||!el.animate)return;
     var r=el.getBoundingClientRect(),base=getComputedStyle(el).transform;base=base==='none'?'':base+' ';
@@ -370,12 +374,12 @@
       var maior=null,area=0;
       Array.prototype.forEach.call(el.children,function(c){var b=c.getBoundingClientRect(),a=b.width*b.height;if(a>area&&a<r.width*r.height*0.98){area=a;maior=c;}});
       if(maior){var bm=getComputedStyle(maior).transform;bm=bm==='none'?'':bm+' ';
-        maior.animate([{opacity:0,transform:bm+'translateY(16px) scale(.94)'},{opacity:1,offset:.5},{opacity:1,transform:bm+'translateY(0) scale(1)'}],{duration:380,easing:MOLA});}
+        maior.animate([{opacity:0,transform:bm+'translateY(16px) scale(.94)'},{opacity:1,offset:.5},{opacity:1,transform:bm+'translateY(0) scale(1)'}],{duration:340,easing:CURVA_JANELA});}
       return;
     }
     var origem=(r.left+r.width/2>innerWidth/2?'top right':'top left');
     if(r.top>innerHeight*0.6)origem=origem.replace('top','bottom');
-    el.animate([{opacity:0,transform:base+'scale(.9)',transformOrigin:origem},{opacity:1,offset:.45,transformOrigin:origem},{opacity:1,transform:base+'scale(1)',transformOrigin:origem}],{duration:320,easing:MOLA});
+    el.animate([{opacity:0,transform:base+'scale(.9)',transformOrigin:origem},{opacity:1,offset:.45,transformOrigin:origem},{opacity:1,transform:base+'scale(1)',transformOrigin:origem}],{duration:300,easing:CURVA_JANELA});
   }
   var paraConferir=new Set();
   // paraConteudo: só o que de fato APARECEU (conteúdo novo desenhado, ou bloco que estava escondido e foi mostrado).
@@ -651,7 +655,7 @@
   }
   if(!reduz){
     document.addEventListener('pointerdown',function(ev){
-      if(ev.button!==0)return;
+      if(ev.button!==0||reduz)return;
       var el=ev.target.closest&&ev.target.closest(SEL_BOTAO);
       if(!el||!el.animate||el.disabled||el.closest('[draggable="true"],.leaflet-container'))return;
       var r=el.getBoundingClientRect();if(r.width>420||r.height>260)return;

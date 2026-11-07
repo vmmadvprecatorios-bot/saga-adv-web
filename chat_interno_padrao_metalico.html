@@ -164,6 +164,10 @@
   .bloco-mensagem.minha .menu-acoes-mensagem{right:40px;}
   .bloco-mensagem:not(.minha) .menu-acoes-mensagem{left:40px;}
   .bloco-mensagem:hover .menu-acoes-mensagem{opacity:1;visibility:visible;}
+  /* 09/11: o menu de ações não cobre mais o nome de quem escreveu: no computador fica ao lado do balão; no celular, no canto direito */
+  .bloco-mensagem:not(.minha) .menu-acoes-mensagem{left:calc(100% + 6px);top:18px;}
+  .bloco-mensagem.minha .menu-acoes-mensagem{right:calc(100% + 6px);top:4px;}
+  @media (max-width:760px){.bloco-mensagem:not(.minha) .menu-acoes-mensagem{left:auto;right:0;top:-14px;}.bloco-mensagem.minha .menu-acoes-mensagem{right:40px;top:-14px;}}
   .btn-acao-msg{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:background 0.15s;}
   .btn-acao-msg:hover{background:color-mix(in srgb,var(--gold) 15%,transparent);}
   .separador-acoes-msg{width:1px;background:color-mix(in srgb,var(--text) 10%,transparent);margin:4px 2px;}

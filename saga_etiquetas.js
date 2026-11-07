@@ -30,22 +30,25 @@
   }
   function criar(o){
     var itens=[],widgets=[];
+    // 09/11: o mesmo menu serve para outras listas do catálogo (ex.: categoria do lançamento no Financeiro)
+    var CAT=o.categoria||'tarefa';
+    var TX=Object.assign({campo:'Etiqueta',vazio:'Sem etiqueta',nova:'+ Nova etiqueta',editar:'Editar etiqueta',novaT:'Nova etiqueta',salvar:'Salvar etiqueta',erro:'Não foi possível salvar a etiqueta.',carregar:'Não foi possível carregar as etiquetas.'},o.textos||{});
     async function carregar(){
       try{
-        var r=await o.sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem').eq('categoria','tarefa').order('ordem').order('nome');
+        var r=await o.sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem').eq('categoria',CAT).order('ordem').order('nome');
         if(r.error)throw r.error;
         itens=r.data||[];
         widgets.forEach(function(w){w.atualizar();});
         return true;
       }catch(e){
         if(o.reserva)itens=o.reserva;
-        if(o.erro)o.erro('Não foi possível carregar as etiquetas.');
+        if(o.erro)o.erro(TX.carregar);
         return false;
       }
     }
     function montar(root,op){
       estilos();root.classList.add('se-campo');
-      root.innerHTML='<button type="button" class="se-botao" aria-label="Etiqueta" aria-expanded="false"><span class="se-bola"></span><span></span><span class="se-seta">▾</span></button>'+
+      root.innerHTML='<button type="button" class="se-botao" aria-label="'+TX.campo+'" aria-expanded="false"><span class="se-bola"></span><span></span><span class="se-seta">▾</span></button>'+
         '<div class="se-menu" hidden><div class="se-lista" role="group" aria-label="Etiquetas"></div><div class="se-admin"></div><div class="se-editor" hidden></div></div><div class="se-previa"></div>';
       var btn=root.querySelector('.se-botao'),menu=root.querySelector('.se-menu'),lista=root.querySelector('.se-lista'),editor=root.querySelector('.se-editor');
       var ocupado=false;
@@ -53,23 +56,25 @@
       function fechar(){if(ocupado)return;menu.hidden=true;editor.hidden=true;btn.setAttribute('aria-expanded','false');}
       function atualizar(){
         var e=op.valor();btn.querySelector('.se-bola').style.setProperty('--c',cor(e&&e.cor));
-        btn.children[1].textContent=e?e.nome:'Sem etiqueta';btn.disabled=!permitido();
+        btn.children[1].textContent=e?e.nome:TX.vazio;btn.disabled=!permitido();
         root.querySelector('.se-previa').innerHTML=selo(e);
       }
       function renderMenu(){
         var atual=op.valor();
-        lista.innerHTML='<div class="se-linha"><button type="button" class="se-opcao" data-sem aria-pressed="'+(!atual)+'"><span class="se-bola"></span>Sem etiqueta</button></div>'+
+        lista.innerHTML='<div class="se-linha"><button type="button" class="se-opcao" data-sem aria-pressed="'+(!atual)+'"><span class="se-bola"></span>'+TX.vazio+'</button></div>'+
           itens.filter(function(e){return e.ativo===true;}).map(function(e){return '<div class="se-linha"><button type="button" class="se-opcao" data-id="'+esc(e.id)+'" aria-pressed="'+!!(atual&&(atual.id===e.id||(!atual.id&&atual.nome===e.nome)))+'"><span class="se-bola" style="--c:'+cor(e.cor)+'"></span>'+esc(e.nome)+'</button>'+
             (o.admin&&!e.reserva?'<button type="button" class="se-editar" data-id="'+esc(e.id)+'" aria-label="Editar '+esc(e.nome)+'" title="Editar etiqueta">✎</button>':'')+'</div>';}).join('');
-        root.querySelector('.se-admin').innerHTML=o.admin?'<button type="button" class="se-nova">+ Nova etiqueta</button>':'';
+        root.querySelector('.se-admin').innerHTML=o.admin?'<button type="button" class="se-nova">'+TX.nova+'</button>':'';
         // A etiqueta inativa permanece no selo, sem voltar às opções de escolha.
       }
-      function abrir(){if(!permitido()||ocupado)return;renderMenu();editor.hidden=true;menu.hidden=false;btn.setAttribute('aria-expanded','true');}
+      function abrir(){if(!permitido()||ocupado)return;renderMenu();editor.hidden=true;menu.hidden=false;btn.setAttribute('aria-expanded','true');
+        // 09/11: dentro de janelas, o menu aparece inteiro (rola a janela até o fim do menu)
+        try{requestAnimationFrame(function(){var r=menu.getBoundingClientRect();if(r.bottom>innerHeight-8)menu.scrollIntoView({block:'nearest',behavior:(localStorage.getItem('saga-movimento')==='reduzido'?'auto':'smooth')});});}catch(e){}}
       function editar(e){
         if(!o.admin||!permitido())return;
         editor.hidden=false;
-        editor.innerHTML='<strong>'+(e?'Editar etiqueta':'Nova etiqueta')+'</strong><label>Nome (até 40 caracteres)<input class="se-nome" type="text" maxlength="40" autocomplete="off"></label><label>Cor <input class="se-cor" type="color"></label>'+
-          (e?'<label class="se-ativo"><input type="checkbox" checked>Mostrar na lista</label>':'')+'<div class="se-erro" role="alert"></div><div class="se-acoes"><button type="button" class="se-salvar">Salvar etiqueta</button><button type="button" class="se-cancelar">Cancelar</button></div>';
+        editor.innerHTML='<strong>'+(e?TX.editar:TX.novaT)+'</strong><label>Nome (até 40 caracteres)<input class="se-nome" type="text" maxlength="40" autocomplete="off"></label><label>Cor <input class="se-cor" type="color"></label>'+
+          (e?'<label class="se-ativo"><input type="checkbox" checked>Mostrar na lista</label>':'')+'<div class="se-erro" role="alert"></div><div class="se-acoes"><button type="button" class="se-salvar">'+TX.salvar+'</button><button type="button" class="se-cancelar">Cancelar</button></div>';
         editor.querySelector('.se-nome').value=e?e.nome:'';
         editor.querySelector('.se-cor').value=cor(e?e.cor:'#4b8af5');
         editor.querySelector('.se-cancelar').onclick=function(){editor.hidden=true;};
@@ -80,13 +85,13 @@
           ocupado=true;editor.querySelectorAll('button,input').forEach(function(b){b.disabled=true;});
           try{
             var p={p_id:e?e.id:null,p_nome:nome,p_cor:editor.querySelector('.se-cor').value,p_ativo:e?editor.querySelector('.se-ativo input').checked:true};
-            var r=await o.sb.rpc('etiqueta_tarefa_salvar',p);if(r.error)throw r.error;
+            var r=o.salvar?await o.salvar(p):await o.sb.rpc('etiqueta_tarefa_salvar',p);if(r&&r.error)throw r.error;
             var ok=await carregar();
             if(!ok){msg.textContent='Etiqueta salva. Feche e abra a tela para atualizar a lista.';return;}
             if(o.alterou)o.alterou(e,p);
             if(op.alterou)op.alterou(e,p);
             atualizar();renderMenu();editor.hidden=true;
-          }catch(err){msg.textContent=err.message||'Não foi possível salvar a etiqueta.';}
+          }catch(err){msg.textContent=err.message||TX.erro;}
           finally{ocupado=false;editor.querySelectorAll('button,input').forEach(function(b){b.disabled=false;});}
         };
         editor.querySelector('.se-nome').focus();

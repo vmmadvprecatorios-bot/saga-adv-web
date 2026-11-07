@@ -1357,7 +1357,9 @@ function carregarPdfjs(){
   return _pdfjsPromessa;
 }
 function tipoVisualizacao(doc){
-  const ext=String(doc.tipoDocumento||String(doc.nome||'').split('.').pop()||'').toLowerCase();
+  // 09/11: a extensão do nome do arquivo manda; o "tipo" gravado só vale se o nome não tiver extensão
+  const pelaNome=/\.([a-z0-9]{2,5})$/i.exec(String(doc.nome||''));
+  const ext=String(pelaNome?pelaNome[1]:(doc.tipoDocumento||'')).toLowerCase();
   if(ext==='pdf')return 'pdf';
   if(['jpg','jpeg','png','gif','webp','bmp'].includes(ext))return 'imagem';
   if(['txt','csv'].includes(ext))return 'texto';
@@ -2098,10 +2100,14 @@ function renderProcessTabs(){
   const root=document.getElementById('processTabs');
   if(!root)return;
   renderActionSummary();
-  const abas=state.processos.map(process=>'<button class="process-tab status-'+process.statusTone+' '+(process.id===state.activeProcessId?'active':'')+'" type="button" data-process-tab="'+esc(process.id)+'">'+situacaoBadge(process,true)+esc(process.tese)+(process.parteInfo?' <small style="opacity:.7">· '+esc(process.parteInfo.papel||'parte')+'</small>':'')+'</button>').join('');
+  const abas=state.processos.map(process=>'<button class="process-tab status-'+process.statusTone+' '+(process.id===state.activeProcessId&&state.activeView!=='location'?'active':'')+'" type="button" data-process-tab="'+esc(process.id)+'">'+situacaoBadge(process,true)+esc(process.tese)+(process.parteInfo?' <small style="opacity:.7">· '+esc(process.parteInfo.papel||'parte')+'</small>':'')+'</button>').join('');
   const criar=perms.processosCriar?'<button class="btn-new-process" id="btnNewProcess" type="button">+ Novo Processo</button>':'';
   root.innerHTML=abas||'<span class="ficha-mini-tag">Nenhum processo vinculado a esta pessoa.</span>';
-  root.insertAdjacentHTML('beforeend',criar);
+  // 09/11 (vistoria): a Localização (telefones, e-mails, endereços, parentes e leitura das consultas) voltou a ter botão na ficha
+  const loc='<button class="process-tab location-tab'+(state.activeView==='location'?' active':'')+'" type="button" id="btnLocalizacao" title="Telefones, e-mails, endereços e parentes do cliente"><span class="location-tab-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" stroke="currentColor" stroke-width="1.6"/></svg></span>Localização</button>';
+  root.insertAdjacentHTML('beforeend',loc+criar);
+  const btnLoc=document.getElementById('btnLocalizacao');
+  if(btnLoc)btnLoc.addEventListener('click',()=>{if(state.activeView!=='location')activateLocation();});
   root.querySelectorAll('[data-process-tab]').forEach(button=>button.addEventListener('click',()=>activateProcess(button.dataset.processTab)));
   const btnNovo=document.getElementById('btnNewProcess');
   if(btnNovo)btnNovo.addEventListener('click',()=>{

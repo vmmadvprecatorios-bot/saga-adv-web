@@ -82,6 +82,8 @@
       '.pn-lin span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:11px}',
       '.pn-chip{font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:9px;color:var(--c);background:color-mix(in srgb,var(--c) 15%,transparent);border:1px solid color-mix(in srgb,var(--c) 38%,transparent);white-space:nowrap}',
       '.pn-vazio{font-size:12px;color:var(--muted);padding:10px 4px}',
+      // 09/11: no claro, a letra da etiqueta escurece (o amarelo/verde puro quase sumia no fundo branco)
+      'body[data-theme="light"] .pn-chip{color:color-mix(in srgb,var(--c) 55%,#1a1a1a)}',
       '.pn-auto{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 2px;font-size:11px;color:var(--muted)}.pn-auto[hidden]{display:none}.pn-auto b{color:var(--text);font-weight:700}.pn-auto .pn-dot{width:7px;height:7px;border-radius:50%;background:var(--c,#8a94a8);flex:0 0 auto}.pn-auto>span:not(.pn-dot){flex:1;min-width:0}',
       '.pn-aj{font:inherit;font-size:11px;font-weight:600;color:var(--gold-light);background:none;border:0;text-decoration:underline;cursor:pointer;padding:2px}',
       '.pn-form{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:8px 0 4px;padding:10px 12px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 3%,transparent)}.pn-form[hidden]{display:none}',

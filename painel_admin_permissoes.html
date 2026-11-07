@@ -443,7 +443,7 @@ async function loadData(){
   _colaboradores=(usrRes.data||[]).map(u=>{
     const papel_id=u.usuarios_papeis?.[0]?.papel_id||null;
     const papel=_papeis.find(p=>p.id===papel_id);
-    return{id:u.id,nome_completo:u.nome_completo,cargo_titulo:u.cargo_titulo||'',eh_administrador:u.eh_administrador,auth_user_id:u.auth_user_id,papel_id,papel_nome:papel?.nome||'—',papel_cor:papel?.cor||'#8b93a8',excecoes:extrasMap[u.id]||[]};
+    return{id:u.id,nome_completo:u.nome_completo,cargo_titulo:u.cargo_titulo||'',eh_administrador:u.eh_administrador,auth_user_id:u.auth_user_id,papel_id,papel_nome:papel?.nome||'Sem perfil',papel_cor:papel?.cor||'#8b93a8',excecoes:extrasMap[u.id]||[]};
   });
 }
 

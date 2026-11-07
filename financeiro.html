@@ -327,6 +327,11 @@ function aplicarMascaraMoeda(input){
     input.value=(parseInt(d,10)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   });
 }
+// Campos de porcentagem (09/11): só números e uma vírgula, até 2 casas, no máximo 100
+function formatarPct(v){var t=String(v==null?'':v).replace(/\./g,',').replace(/[^\d,]/g,'').replace(/,(?=.*,)/g,'');var pp=t.split(',');pp[0]=pp[0].replace(/^0+(?=\d)/,'');if(pp[1]!=null)pp[1]=pp[1].slice(0,2);t=pp.join(',');var n=Number(t.replace(',','.'));if(isFinite(n)&&n>100)t='100';return t;}
+function aplicarMascaraPct(input,ativo){
+  input.addEventListener('input',function(){if(ativo&&!ativo())return;var fim=input.value.length-input.selectionEnd;input.value=formatarPct(input.value);var pos=Math.max(0,input.value.length-fim);try{input.setSelectionRange(pos,pos);}catch(e){}});
+}
 function moedaParaNumero(t){if(!t)return null;var n=parseFloat(String(t).replace(/\./g,'').replace(',','.'));return isNaN(n)?null:n;}
 function numeroParaMoedaCampo(n){return n==null?'':Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function percentualParaNumero(t){if(t==null||String(t).trim()==='')return null;var n=parseFloat(String(t).replace('%','').replace(',','.'));return isNaN(n)?NaN:n;}
@@ -759,6 +764,13 @@ function ligarEventos(){
   var escolherPart=function(e){var c=e.target.closest('[data-part]');if(!c)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();state.escPart=state.escPart===c.dataset.part?'':c.dataset.part;renderEscritorios();renderGraficosFinanceiro();};
   kE.addEventListener('click',escolherPart);kE.addEventListener('keydown',escolherPart);
   document.getElementById('btnNovoLancamento').addEventListener('click',function(){abrirLancamento(null);});
+  aplicarMascaraPct(document.getElementById('mpPercentual'));
+  // Valor do rateio: em "% da causa" formata como porcentagem; em "R$ fixo", como dinheiro
+  (function(){var rv=document.getElementById('rnValor'),rf=document.getElementById('rnForma');
+    aplicarMascaraPct(rv,function(){return rf.value==='percentual';});
+    rv.addEventListener('input',function(){if(rf.value!=='fixo')return;var d=rv.value.replace(/\D/g,'');rv.value=d?(parseInt(d,10)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';});
+    rf.addEventListener('change',function(){rv.value='';});
+  })();
   ['mpPercentual','mpSentenca','mpRecebido'].forEach(function(i){document.getElementById(i).addEventListener('input',atualizarResumoModal);});
   aplicarMascaraMoeda(document.getElementById('mpSentenca'));aplicarMascaraMoeda(document.getElementById('mpRecebido'));aplicarMascaraMoeda(document.getElementById('mlValor'));
   document.getElementById('rnBeneficiario').addEventListener('change',function(e){document.getElementById('rnExternoWrap').style.display=e.target.value==='__externo__'?'':'none';});

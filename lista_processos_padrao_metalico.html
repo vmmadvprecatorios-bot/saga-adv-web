@@ -2192,6 +2192,8 @@ function atualizarPreviaHonorarios(){
   else el.textContent=t||vc?'Informe valor da causa e percentual para calcular a expectativa.':'';
 }
 document.getElementById('inputNovoValorCausa').addEventListener('input',atualizarPreviaHonorarios);
+// 09/11: honorários (%) formatados ao digitar, até 2 casas e no máximo 100
+document.getElementById('inputNovoHonorarios').addEventListener('input',function(){var inp=this;if(!window.SagaPlanilha||!SagaPlanilha.formatar)return;var fim=inp.value.length-inp.selectionEnd;inp.value=SagaPlanilha.formatar('pct100',inp.value);var pos=Math.max(0,inp.value.length-fim);try{inp.setSelectionRange(pos,pos);}catch(e){}});
 document.getElementById('inputNovoHonorarios').addEventListener('input',atualizarPreviaHonorarios);
 
 // Toggle Lista/Kanban
@@ -2205,7 +2207,7 @@ function toggleView(view,semCarregar){
   document.getElementById('kanbanView').style.display=view==='kanban'?'block':'none';
   document.getElementById('barraKanban').style.display='flex';
   document.querySelector('#barraKanban .busca-kanban').style.display=view==='kanban'?'':'none';
-  document.getElementById('btnNovaColunaKanban').style.display=view==='kanban'?'':'none';
+  document.getElementById('btnNovaColunaKanban').style.display=view==='kanban'&&state.podeGerenciarCatalogos?'':'none';
   renderSeletorFaseKanban();
   if(view==='kanban')renderKanban();else if(!semCarregar)carregarProcessos();
 }
@@ -2238,6 +2240,7 @@ async function init(){
   var btnNovo=document.getElementById('btnNovoProcesso');
   if(btnNovo)btnNovo.style.display=state.permissoes.criar?'flex':'none';
   var podeGerenciarCatalogos=state.admin||await verificarPermissao('status_funil','gerenciar');
+  state.podeGerenciarCatalogos=!!podeGerenciarCatalogos; // 09/11: "Nova coluna" do Kanban só para quem pode (como Catálogos)
   state.podeGerenciarColunas=await verificarPermissao('status_funil','gerenciar');
   var btnCat=document.getElementById('btnGerenciarCatalogos');
   if(btnCat)btnCat.style.display=podeGerenciarCatalogos?'flex':'none';

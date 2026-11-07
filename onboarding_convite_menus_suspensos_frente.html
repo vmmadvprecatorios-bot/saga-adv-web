@@ -119,7 +119,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 </head>
 <body data-theme="dark">
 
-<div class="prototype-nav" aria-label="Navegação do protótipo">
+<div class="prototype-nav" aria-label="Navegação do protótipo" hidden style="display:none">
   <span class="prototype-label">Navegação do protótipo</span>
   <button class="active" data-prototype-view="admin">Gestão de Convites</button>
   <button data-prototype-view="new">Modal Novo Convite</button>
@@ -849,7 +849,12 @@ async function init(){
     }
   }
 
-  // Sessão administrativa normal
+  // 09/11 (vistoria): esta página só serve para quem chega pelo link do e-mail de convite ou de troca de senha.
+  // Aberta sem o link (ou com link vencido), ia para a antiga tela de demonstração: agora vai para o login.
+  window.location.replace('login_padrao_metalico.html');
+  return;
+
+  // Sessão administrativa normal (protótipo antigo, não é mais usado: os convites ficam em Colaboradores)
   var rs = await _sb.auth.getSession();
   state.session = rs.data && rs.data.session;
 

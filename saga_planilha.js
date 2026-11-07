@@ -18,7 +18,10 @@ window.SagaPlanilha=(function(){
   function ordemCol(c,fase){return (fase||(typeof FASE_FIXA!=='undefined'?FASE_FIXA:''))==='captacao'?(c.ordem_captacao!=null?c.ordem_captacao:1000+c.ordem):c.ordem;}
   function colPorChave(k){return cols.find(function(c){return c.chave===k;});}
   function hojeISO(d){var x=d||new Date();return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');}
-  var VAZIO='\u0000vazio';
+  // Marca de "vazio" nos filtros. Antes começava com um caractere invisível (\u0000) que o navegador trocava por "�"
+  // dentro das caixinhas de marcar: escolher só "(Vazias)" escondia tudo (vistoria 09/11). VAZIO_ANTIGO converte filtros guardados.
+  var VAZIO='__saga_vazio__',VAZIO_ANTIGO='\u0000vazio';
+  function trocaVazioAntigo(lista){return (lista||[]).map(function(v){return v===VAZIO_ANTIGO||v==='\ufffdvazio'?VAZIO:v;});}
   var SISTEMA_SO_LEITURA=['processo.fase','processo.criado_em','processo.atualizado_em'];
   // Colunas que só fazem sentido numa fase
   var SO_CAPTACAO=['processo.captador'];
@@ -95,7 +98,7 @@ window.SagaPlanilha=(function(){
   function colunasDaTela(){return cols.filter(function(c){return c.ativo&&(c.escopo==='ambos'||c.escopo===FASE_FIXA)&&!(FASE_FIXA==='juridico'&&SO_CAPTACAO.indexOf(c.campo_sistema)!==-1);}).sort(function(a,b){return ordemCol(a)-ordemCol(b);});}
   function visiveis(){var oc=ocultas||{};return colunasDaTela().filter(function(c){return !oc[c.id];});}
   function lerPreferencias(){
-    try{var s=JSON.parse(localStorage.getItem(CHAVE())||'null');if(s){ocultas=s.ocultas||{};filtros={};Object.keys(s.filtros||{}).forEach(function(k){filtros[k]=new Set(s.filtros[k]);});ordem=s.ordem||null;protocolo=s.protocolo||'';retorno=s.retorno||'';minhas=!!s.minhas;}}catch(e){}
+    try{var s=JSON.parse(localStorage.getItem(CHAVE())||'null');if(s){ocultas=s.ocultas||{};filtros={};Object.keys(s.filtros||{}).forEach(function(k){filtros[k]=new Set(trocaVazioAntigo(s.filtros[k]));});ordem=s.ordem||null;protocolo=s.protocolo||'';retorno=s.retorno||'';minhas=!!s.minhas;}}catch(e){}
     if(!ocultas)ocultas=padraoOcultas();
   }
   // Na Captação, o padrão mostra só as colunas da planilha de captação; as outras ficam em "Colunas"
@@ -414,6 +417,8 @@ window.SagaPlanilha=(function(){
       case 'tel':return d.length>10?porPadrao(d.slice(0,11),'(##) #####-####'):porPadrao(d,'(##) ####-####');
       case 'moeda':if(!d)return '';return (parseInt(d,10)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
       case 'pct':return String(v==null?'':v).replace(/[^\d,]/g,'').replace(/,(?=.*,)/g,'');
+      // porcentagem de verdade (honorários etc.): de 0 a 100, até 2 casas depois da vírgula (09/11: aceitava 2050%)
+      case 'pct100':{var t=String(v==null?'':v).replace(/\./g,',').replace(/[^\d,]/g,'').replace(/,(?=.*,)/g,'');var pp=t.split(',');pp[0]=pp[0].replace(/^0+(?=\d)/,'');if(pp[1]!=null)pp[1]=pp[1].slice(0,2);t=pp.join(',');var nn=Number(t.replace(',','.'));if(isFinite(nn)&&nn>100)t='100';return t;}
     }
     return v;
   }
@@ -422,7 +427,8 @@ window.SagaPlanilha=(function(){
     if(c.campo_sistema==='processo.numero')return 'cnj';
     if(c.campo_sistema==='pessoa.telefone')return 'tel';
     if(c.tipo==='moeda')return 'moeda';
-    if(c.tipo==='porcentagem'||c.tipo==='numero')return 'pct';
+    if(c.tipo==='porcentagem')return 'pct100';
+    if(c.tipo==='numero')return 'pct';
     return null;
   }
   // Honorários (sucumbenciais, totais e partes): guardados em % do valor da causa, mas dá para digitar em R$
@@ -442,7 +448,7 @@ window.SagaPlanilha=(function(){
       inp.placeholder=modo==='reais'?'0,00':'0';
       var n=lerNum(),c=causa();dica.textContent=n==null||!c?'':(modo==='reais'?'= '+String(Math.round((orig&&orig.txt===inp.value?orig.pct:n/c*100)*100)/100).replace('.',',')+'% da causa':'= R$ '+moedaTxt(c*n/100));}
     inp.value=v==null||v===''?'':String(v).replace('.',',');
-    inp.addEventListener('input',function(){var fimAntes=inp.value.length-inp.selectionEnd;inp.value=formatar(modo==='reais'?'moeda':'pct',inp.value);var pos=Math.max(0,inp.value.length-fimAntes);try{inp.setSelectionRange(pos,pos);}catch(e){}desenhar();});
+    inp.addEventListener('input',function(){var fimAntes=inp.value.length-inp.selectionEnd;inp.value=formatar(modo==='reais'?'moeda':'pct100',inp.value);var pos=Math.max(0,inp.value.length-fimAntes);try{inp.setSelectionRange(pos,pos);}catch(e){}desenhar();});
     // mousedown sem tirar o foco: assim a célula não salva ao clicar no botão
     bt.addEventListener('mousedown',function(e){e.preventDefault();});
     bt.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();
@@ -459,11 +465,11 @@ window.SagaPlanilha=(function(){
   }
   function aplicarMascara(inp,c,v){
     var t=tipoMascara(c);if(!t)return;
-    inp.inputMode=t==='pct'?'decimal':'numeric';
+    inp.inputMode=t==='pct'||t==='pct100'?'decimal':'numeric';
     if(t==='moeda')inp.value=v==null||v===''?'':formatar('moeda',Number(v).toFixed(2));
-    else if(t==='pct')inp.value=v==null?'':String(v).replace('.',',');
+    else if(t==='pct'||t==='pct100')inp.value=v==null?'':String(v).replace('.',',');
     else inp.value=formatar(t,v==null?'':v);
-    inp.placeholder={cpf:'000.000.000-00',cnj:'0000000-00.0000.0.00.0000',tel:'(00) 00000-0000',moeda:'0,00',pct:'0'}[t]||'';
+    inp.placeholder={cpf:'000.000.000-00',cnj:'0000000-00.0000.0.00.0000',tel:'(00) 00000-0000',moeda:'0,00',pct:'0',pct100:'0,00'}[t]||'';
     inp.addEventListener('input',function(){var fimAntes=inp.value.length-inp.selectionEnd;inp.value=formatar(t,inp.value);var pos=Math.max(0,inp.value.length-fimAntes);try{inp.setSelectionRange(pos,pos);}catch(e){}});
   }
   // Texto mostrado de CPF, processo e telefone sempre com a pontuação certa
@@ -1133,7 +1139,7 @@ window.SagaPlanilha=(function(){
   var kb=null,opsCache={};
   var FAIXAS=[[0,50000,'Até R$ 50 mil'],[50000,100000,'R$ 50 a 100 mil'],[100000,200000,'R$ 100 a 200 mil'],[200000,500000,'R$ 200 a 500 mil'],[500000,Infinity,'Acima de R$ 500 mil']];
   var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  function lerKb(){if(!kb){try{kb=JSON.parse(localStorage.getItem(CHAVE_KB())||'null');}catch(e){}kb=kb||{por:null,filtros:{}};kb.filtros=kb.filtros||{};}return kb;}
+  function lerKb(){if(!kb){try{kb=JSON.parse(localStorage.getItem(CHAVE_KB())||'null');}catch(e){}kb=kb||{por:null,filtros:{}};kb.filtros=kb.filtros||{};try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isArray(f))kb.filtros[k]=trocaVazioAntigo(f);else if(f&&typeof f==='object')Object.keys(f).forEach(function(c){if(Array.isArray(f[c]))f[c]=trocaVazioAntigo(f[c]);});});}catch(e){}}return kb;}
   function guardarKb(){try{localStorage.setItem(CHAVE_KB(),JSON.stringify(kb));}catch(e){}}
   function agrupavel(c){
     if(!c||!c.ativo)return false;
@@ -1177,7 +1183,7 @@ window.SagaPlanilha=(function(){
     var el=document.getElementById('spKanbanPor');if(!el)return;
     var k=lerKb(),cs=colunasDaTela().filter(agrupavel);
     el.style.display=state.view==='kanban'?'':'none';
-    var bn=document.getElementById('btnNovaColunaKanban');if(bn&&state.view==='kanban')bn.style.display=k.por?'none':'';
+    var bn=document.getElementById('btnNovaColunaKanban');if(bn&&state.view==='kanban')bn.style.display=k.por||!state.podeGerenciarCatalogos?'none':'';
     el.innerHTML='<label for="spKbSel">Organizar por</label><select id="spKbSel"><option value="">Padrão ('+(FASE_FIXA==='captacao'?'etapas do funil':'status do processo')+')</option>'+cs.map(function(c){return '<option value="'+h(c.id)+'"'+(k.por===c.id?' selected':'')+'>'+h(nomeCol(c))+'</option>';}).join('')+'</select>'+
       (k.por?'<button type="button" class="sp-kb-padrao" id="spKbPadrao" title="Voltar à organização padrão desta área">Voltar ao padrão</button>':'');
     el.querySelector('#spKbSel').onchange=function(){k.por=this.value||null;k.filtros={};guardarKb();if(typeof renderKanban==='function')renderKanban();};

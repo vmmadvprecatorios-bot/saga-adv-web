@@ -59,7 +59,7 @@
     try{localStorage.setItem('saga-movimento',reduzir?'reduzido':'normal');}catch(e){}
     var h=document.documentElement,est=document.getElementById('sagaSemMovimento');
     h.classList.toggle('saga-sem-movimento',!!reduzir);
-    if(reduzir&&!est){est=document.createElement('style');est.id='sagaSemMovimento';est.textContent='html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}';document.head.appendChild(est);}
+    if(reduzir&&!est){est=document.createElement('style');est.id='sagaSemMovimento';est.textContent='html.saga-sem-movimento *,html.saga-sem-movimento *::before,html.saga-sem-movimento *::after,html.saga-sem-movimento #topbarSaga *,html.saga-sem-movimento #sidebarSaga *,html.saga-sem-movimento #topbarSaga *::before,html.saga-sem-movimento #topbarSaga *::after,html.saga-sem-movimento #sidebarSaga *::before,html.saga-sem-movimento #sidebarSaga *::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important}';document.head.appendChild(est);}
     else if(!reduzir&&est)est.remove();
     try{document.dispatchEvent(new CustomEvent('saga-movimento-mudou'));}catch(e){}
   };
@@ -195,6 +195,8 @@
       '@media(max-width:760px){#sidebarSaga .nav-grupo{display:block !important;}#sidebarSaga .nav-section[data-grupo]{cursor:default !important;pointer-events:none;}#sidebarSaga .nav-section[data-grupo]::after{display:none !important;}}'+
       // grupos: título clicável com setinha
       '#sidebarSaga .nav-section[data-grupo]{cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:space-between !important;user-select:none;}'+
+      // 09/11: título de grupo sem nenhuma tela permitida some (o display:flex acima vencia o sem-permissao e "Gestão" aparecia vazio)
+      '#sidebarSaga .nav-section[data-grupo].sem-permissao,#sidebarSaga .nav-section[data-grupo].perm-pendente{display:none !important;}'+
       '#sidebarSaga .nav-section[data-grupo]::after{content:"";width:6px;height:6px;margin-right:2px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);transition:transform .28s cubic-bezier(.22,.78,.25,1);opacity:.7}'+
       '#sidebarSaga .nav-section[data-grupo].fechado::after{transform:rotate(-45deg);}'+
       '#sidebarSaga .nav-section[data-grupo]:hover{opacity:1 !important;filter:brightness(1.25);}'+
@@ -541,7 +543,7 @@
   }
 
   var SIDEBAR_HTML=''
-    +'<div class="nav-section" data-grupo="operacao" role="button" tabindex="0" aria-expanded="true">Operacao</div><div class="nav-grupo" data-grupo="operacao">'
+    +'<div class="nav-section" data-grupo="operacao" role="button" tabindex="0" aria-expanded="true">Operação</div><div class="nav-grupo" data-grupo="operacao">'
     +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Jurídico</div>'
@@ -566,14 +568,14 @@
     +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Teses e oportunidades</div>'
-    +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicacao</div><div class="nav-grupo" data-grupo="comunicacao">'
+    +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicação</div><div class="nav-grupo" data-grupo="comunicacao">'
     +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Chat Interno<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
     +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Ponto Eletronico</div>'
-    +'</div><div class="nav-section" data-grupo="gestao" role="button" tabindex="0" aria-expanded="true">Gestao</div><div class="nav-grupo" data-grupo="gestao">'
+    +'Ponto Eletrônico</div>'
+    +'</div><div class="nav-section" data-grupo="gestao" role="button" tabindex="0" aria-expanded="true">Gestão</div><div class="nav-grupo" data-grupo="gestao">'
     +'<div class="nav-item" data-tela="colaboradores" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Colaboradores</div>'
@@ -714,6 +716,8 @@
       function aplicar(){
         document.body.setAttribute('data-theme',novo);
         try{localStorage.setItem('saga-tema',novo);}catch(e){}
+        // 09/11: o fundo da página (atrás de tudo) acompanha o claro/escuro na hora
+        try{var corA=document.documentElement.getAttribute('data-cor')||'azul';document.documentElement.style.background=corA==='grafite'?(novo==='light'?'#F3F2EF':'#1A1A1A'):(novo==='light'?'#f3f5f8':'#172234');document.documentElement.style.colorScheme=novo==='light'?'light':'dark';}catch(e){}
       }
       trocarTemaComLuz(btn,novo,aplicar);
       setTimeout(function(){global.sagaTituloTema&&global.sagaTituloTema();},700);
@@ -1590,7 +1594,7 @@
       if(!tela||['processos','processos_juridico','processos_captacao','agenda','tarefas','chat','ponto'].indexOf(tela)===-1)el.classList.add('perm-pendente');
     });
     document.querySelectorAll('#sidebarSaga .nav-section').forEach(function(sec){
-      if(/operac|comunic/i.test(sec.textContent))sec.classList.remove('perm-pendente');
+      if(/opera[cç]|comunic/i.test(sec.textContent))sec.classList.remove('perm-pendente');
     });
   }
   async function aplicarPermissoes(telaAtiva){
@@ -1624,9 +1628,11 @@
       +'<div style="width:52px;height:52px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#e5484d 14%,transparent);color:#e5484d"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.8"/></svg></div>'
       +'<div style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:600;color:var(--text,#13233a);margin-bottom:6px">Sem acesso a esta tela</div>'
       +'<div style="font-size:12.5px;color:var(--muted,#4a586e);line-height:1.5;margin-bottom:18px">Seu perfil não tem permissão para abrir esta área. Se precisar, peça ao administrador para liberar.</div>'
-      +(destino?'<a href="'+destino+'" style="display:inline-block;background:var(--gold,#1f3e6d);color:#fff;text-decoration:none;font-size:12.5px;font-weight:700;padding:10px 18px;border-radius:9px">Voltar ao início</a>':'')
+      +(destino?'<a class="saga-btn-inicio" href="'+destino+'" style="display:inline-block;border:1px solid var(--border,#d5dbe4);text-decoration:none;font-size:12.5px;padding:10px 18px;border-radius:9px">Voltar ao início</a>':'')
       +'</div>';
     document.body.appendChild(d);
+    // o conteúdo de trás não fica montado por baixo da cortina (o banco já protege os dados; aqui some também da tela)
+    try{document.querySelectorAll('.saga-conteudo').forEach(function(el){el.style.display='none';});}catch(e){}
   }
 
   // Marca os blocos de conteudo da tela (tudo que nao e menu superior nem lateral)

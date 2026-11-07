@@ -1036,7 +1036,7 @@ async function abrirPessoa(id){
   document.getElementById('eqmCargo').value=x?(x.u.cargo_titulo||(x.pc&&x.pc.cargo)||''):'';
   document.getElementById('eqmPerfil').value=x&&x.papel?x.papel.id:'';
   document.getElementById('eqmRegime').value=x&&x.pc?x.pc.regime:'Estágio';
-  document.getElementById('eqmSalario').value=x&&x.pc&&x.pc.salario!=null?String(x.pc.salario).replace('.',','):'';
+  document.getElementById('eqmSalario').value=x&&x.pc&&x.pc.salario!=null?Number(x.pc.salario).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
   document.getElementById('eqmAdmissao').value=x&&x.pc?(x.pc.admissao||''):'';
   document.getElementById('eqmDemissao').value=x&&x.pc?(x.pc.demissao||''):'';
   document.getElementById('eqmDemissaoCampo').style.display=x&&x.pc?'':'none';
@@ -1059,6 +1059,8 @@ function eqSugerirCarga(){
   var reg=equipe.regimes.find(function(g){return g.nome===document.getElementById('eqmRegime').value;})||{};
   document.getElementById('eqmCarga').value=eqHm(s2-e-(reg.almoco||0));
 }
+// 09/11: salário formatado ao digitar (só números; mostra 3.500,00)
+document.addEventListener('input',function(ev){var t=ev.target;if(!t||t.id!=='eqmSalario')return;var d=t.value.replace(/\D/g,'');t.value=d?(parseInt(d,10)/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';});
 async function salvarPessoa(){
   var reg=document.getElementById('eqmRegime').value,livre=(equipe.regimes.find(function(g){return g.nome===reg;})||{}).livre;
   var sal=document.getElementById('eqmSalario').value.trim().replace(/\./g,'').replace(',','.');
@@ -1218,9 +1220,16 @@ async function trocarAbaColab(aba){
     if(abaColabAtual!=='equipe')return; // a pessoa já trocou de aba enquanto carregava
     renderEquipe();
   }
+  // Os gráficos ficam visíveis nas três abas; os cartões de cima somem/voltam e eles mudavam de lugar num salto
+  // (era o "tremor" ao abrir Equipe e convites). Agora deslizam do lugar antigo para o novo (FLIP), na curva do sistema.
+  var rosc=document.getElementById('roscasColaboradores'),y0=(rosc&&!rosc.hidden)?rosc.getBoundingClientRect().top:null;
   document.querySelectorAll('.aba-acessos').forEach(function(el){el.style.display=aba==='acessos'?'':'none';});
   document.getElementById('painelEquipe').style.display=aba==='equipe'?'':'none';
   document.getElementById('painelAcesso').style.display=aba==='acesso'?'':'none';
+  try{
+    var semMov=localStorage.getItem('saga-movimento')==='reduzido';
+    if(y0!==null&&!semMov&&rosc.animate){var dy=y0-rosc.getBoundingClientRect().top;if(Math.abs(dy)>2)rosc.animate([{transform:'translateY('+dy+'px)'},{transform:'none'}],{duration:320,easing:'cubic-bezier(.22,.78,.25,1)'});}
+  }catch(e){}
   if(aba==='equipe'&&jaTinha){
     var antes=JSON.stringify(equipe.lista);
     carregarEquipe().then(function(){if(JSON.stringify(equipe.lista)!==antes&&abaColabAtual==='equipe')renderEquipe();}).catch(function(){});

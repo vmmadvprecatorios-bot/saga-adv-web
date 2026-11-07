@@ -779,6 +779,15 @@ function ligarEventos(){
   document.getElementById('esTrocarLogo').addEventListener('click',function(){document.getElementById('esArquivo').click();});
   document.getElementById('esArquivo').addEventListener('change',function(){enviarLogo(this.files[0]);});
   document.getElementById('esTirarLogo').addEventListener('click',removerLogo);
+  // 09/11: telefone do escritório formatado ao digitar, como o CNPJ
+  document.getElementById('esTelefone').addEventListener('input',function(){
+    var d=this.value.replace(/\D/g,'').slice(0,11),f=d;
+    if(d.length>10)f=d.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3');
+    else if(d.length>6)f=d.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');
+    else if(d.length>2)f=d.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2');
+    else if(d.length>0)f='('+d;
+    this.value=f;
+  });
   document.getElementById('esCnpj').addEventListener('input',function(){
     var d=this.value.replace(/\D/g,'').slice(0,14),f=d;
     if(d.length>12)f=d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2}).*/,'$1.$2.$3/$4-$5');

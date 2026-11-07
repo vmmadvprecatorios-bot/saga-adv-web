@@ -371,10 +371,18 @@ function previaModelo(){
   var d=ex?dadosDe(ex):{nome:'Maria da Silva',cliente:'Maria da Silva',cpf:'***.456.789-**',processo:'0000000-00.0000.4.05.8000',processo_originario:'',tribunal:'TRF-5 / AL',tribunal_extenso:'Tribunal Regional Federal da 5ª Região',tipo_acao:'PSS',valor:'R$ 150.000,00',rua:'Rua Exemplo, 100',complemento:'',bairro:'Centro',cidade:'Maceió',uf:'AL',cep:'57000-000',endereco:'Rua Exemplo, 100 - Centro - Maceió/AL',data_hoje:hojeExtenso(),escritorio:SagaPdf.nomeEscritorio()};
   SagaPdf.imprimir({cru:true,css:CSS_CARTA,paginas:[paginaCarta(d,$('modCorpo').value)],arquivo:'Prévia da carta'});
 }
+document.addEventListener('selectionchange',function(){try{var sel=window.getSelection();if(!sel||!sel.rangeCount)return;var r=sel.getRangeAt(0),box=document.getElementById('moModelos');if(box&&box.contains(r.startContainer)&&r.startContainer.parentElement&&r.startContainer.parentElement.closest('[contenteditable="true"]'))C.ultimoCursor=r.cloneRange();}catch(e){}});
 function inserirMarcador(k){
   var t='{'+k+'}';
   var ed=document.querySelector('#moModelos .saga-editor [contenteditable="true"]')||document.querySelector('#moModelos [contenteditable="true"]');
-  if(ed){ed.focus();document.execCommand('insertText',false,t);ed.dispatchEvent(new Event('input',{bubbles:true}));}
+  if(ed){
+    // 09/11: insere onde o cursor estava (ou no fim do texto), e não no começo
+    var sel=window.getSelection(),dentro=sel&&sel.rangeCount&&ed.contains(sel.getRangeAt(0).startContainer);
+    if(!dentro&&C.ultimoCursor&&ed.contains(C.ultimoCursor.startContainer)){sel.removeAllRanges();sel.addRange(C.ultimoCursor);dentro=true;}
+    if(!dentro){ed.focus();var rg=document.createRange();rg.selectNodeContents(ed);rg.collapse(false);sel.removeAllRanges();sel.addRange(rg);}
+    else ed.focus();
+    document.execCommand('insertText',false,t);ed.dispatchEvent(new Event('input',{bubbles:true}));
+  }
   else{var ta=$('modCorpo');var p=ta.selectionStart||ta.value.length;ta.value=ta.value.slice(0,p)+t+ta.value.slice(p);}
 }
 
