@@ -271,10 +271,13 @@
     para.style.setProperty('box-shadow','none','important');
     para.style.setProperty('border-color','transparent','important');
     para.style.setProperty('transition','color .2s ease','important');
+    // (08/11) só posição e escala (o navegador desenha à parte): animar largura travava quando a tela estava
+    // ocupada montando a planilha no mesmo instante. Curva do sistema, sem "quique".
+    fantasma.style.width=fim.w+'px';fantasma.style.height=fim.h+'px';fantasma.style.transformOrigin='0 0';fantasma.style.willChange='transform';
     var anim=fantasma.animate([
-      {transform:'translate('+de.x+'px,'+de.y+'px)',width:de.w+'px',height:de.h+'px'},
-      {transform:'translate('+fim.x+'px,'+fim.y+'px)',width:fim.w+'px',height:fim.h+'px'}
-    ],{duration:380,easing:'cubic-bezier(.3,1.18,.55,1)',fill:'forwards'});
+      {transform:'translate('+de.x+'px,'+de.y+'px) scale('+(de.w/fim.w)+','+(de.h/fim.h)+')'},
+      {transform:'translate('+fim.x+'px,'+fim.y+'px) scale(1,1)'}
+    ],{duration:340,easing:'cubic-bezier(.22,.78,.25,1)',fill:'forwards'});
     function volta(p){if(antes[p][0])para.style.setProperty(p,antes[p][0],antes[p][1]);else para.style.removeProperty(p);}
     function pronto(){
       // devolve a cor do botao ainda sem transicao (para nao piscar) e so depois a transicao dele
@@ -407,6 +410,9 @@
       if(!ehConteudo(el))return;
       if(feitos.some(function(f){return f.contains(el)||el.contains(f);}))return; // só o bloco de fora
       var ult=animadosConteudo.get(el);if(ult&&Date.now()-ult<500)return;
+      // dentro de um bloco que acabou de entrar (ex.: aba que carrega os dados logo depois): não anima de novo (tremia)
+      for(var an=el.parentElement;an;an=an.parentElement){var ta=animadosConteudo.get(an);if(ta&&Date.now()-ta<1200)return;}
+      if(el.getAnimations&&el.getAnimations().some(function(a){return a.playState==='running';}))return;
       animadosConteudo.set(el,Date.now());feitos.push(el);
       if(el.animate)el.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:300,easing:'cubic-bezier(.22,.78,.25,1)'});
     }catch(e){}});

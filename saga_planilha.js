@@ -738,7 +738,10 @@ window.SagaPlanilha=(function(){
         vb.className=nb.className;Array.prototype.forEach.call(nb.attributes,function(at){if(at.name!=='class')vb.setAttribute(at.name,at.value);});});
       novo.replaceWith(velho);
     });
-    b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){protocolo=x.dataset.protocolo;aplicar();};});
+    // troca o selecionado na hora e só remonta a tabela depois que o deslize começou (montar a tabela no mesmo instante travava o efeito)
+    b.querySelectorAll('[data-protocolo]').forEach(function(x){x.onclick=function(){if(protocolo===x.dataset.protocolo)return;protocolo=x.dataset.protocolo;
+      x.parentNode.querySelectorAll('.sp-pill').forEach(function(y){y.classList.toggle('ativo',y===x);});
+      requestAnimationFrame(function(){setTimeout(aplicar,60);});};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
     b.querySelector('[data-foco]').onclick=function(e){e.stopPropagation();abrirMenuFoco(this);};
     b.querySelector('[data-filtrar]').onclick=function(e){e.stopPropagation();menuEscolherColunaFiltro(this);};
@@ -747,7 +750,7 @@ window.SagaPlanilha=(function(){
       var c=cols.find(function(y){return y.id===x.dataset.chip;});if(c)abrirMenu(c,x);};});
     b.querySelectorAll('[data-modo]').forEach(function(x){x.onclick=function(){try{localStorage.setItem(CHAVE_CEL(),x.dataset.modo);}catch(e){}aplicarModoCelular();renderBarra();};});
     aplicarModoCelular();
-    b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){retorno=x.dataset.retorno;aplicar();};});
+    b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){if(retorno===x.dataset.retorno)return;retorno=x.dataset.retorno;x.parentNode.querySelectorAll('.sp-pill').forEach(function(y){y.classList.toggle('ativo',y===x);});requestAnimationFrame(function(){setTimeout(aplicar,60);});};});
     var bm=b.querySelector('[data-minhas]');if(bm)bm.onclick=function(){minhas=!minhas;aplicar();};
     var bi=b.querySelector('[data-importar]');if(bi)bi.onclick=abrirImportar;
     var bd=b.querySelector('[data-distribuir]');if(bd)bd.onclick=abrirDistribuir;
