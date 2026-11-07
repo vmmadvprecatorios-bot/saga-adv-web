@@ -497,11 +497,20 @@
     var tAbrir=null,tFechar=null;
     // trocou de tela clicando no menu aberto pelo mouse: a tela nova já nasce com ele aberto (sem encolher e abrir de novo)
     var vinhaAberto=false;try{vinhaAberto=sessionStorage.getItem('saga-menu-hover')==='1';sessionStorage.removeItem('saga-menu-hover');}catch(e){}
+    // o mouse está mesmo sobre o menu? (pela posição; na passagem animada entre telas o navegador
+    // diz que o mouse "saiu" do menu sem ter saído, e o menu fechava sozinho: pedido do Dr. Victor, 08/11)
+    var dentro=function(e){var r=sb.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<r.right&&e.clientY>=r.top&&e.clientY<r.bottom;};
+    var vigiando=false;
+    var vigiar=function(){
+      if(vigiando)return;vigiando=true;
+      var ver=function(e){if(dentro(e))return;document.removeEventListener('mousemove',ver,true);vigiando=false;clearTimeout(tAbrir);tFechar=setTimeout(function(){sb.classList.remove('sg-aberto');},160);};
+      document.addEventListener('mousemove',ver,true);
+    };
     if(vinhaAberto&&window.innerWidth>760&&sb.classList.contains('collapsed')){
-      sb.classList.add('sg-aberto');
-      // só recolhe quando o mouse estiver fora do menu
-      var conferir=function(e){document.removeEventListener('mousemove',conferir,true);if(!sb.contains(e.target))sb.classList.remove('sg-aberto');};
-      document.addEventListener('mousemove',conferir,true);
+      // a tela nova nasce com o menu aberto, sem animar a largura; só recolhe quando o mouse sair dele
+      sb.style.transition='none';sb.classList.add('sg-aberto');void sb.offsetWidth;
+      requestAnimationFrame(function(){requestAnimationFrame(function(){sb.style.transition='';});});
+      vigiar();
     }
     sb.addEventListener('click',function(e){
       if(sb.classList.contains('sg-aberto')&&e.target.closest('.nav-item')){try{sessionStorage.setItem('saga-menu-hover','1');}catch(x){}}
@@ -510,7 +519,9 @@
       if(window.innerWidth<=760||!sb.classList.contains('collapsed'))return;
       clearTimeout(tFechar);tAbrir=setTimeout(function(){sb.classList.add('sg-aberto');},90);
     });
-    sb.addEventListener('mouseleave',function(){
+    sb.addEventListener('mouseleave',function(e){
+      // "saída" falsa (o mouse continua em cima do menu): espera ele sair de verdade
+      if(sb.classList.contains('sg-aberto')&&dentro(e)){vigiar();return;}
       clearTimeout(tAbrir);tFechar=setTimeout(function(){sb.classList.remove('sg-aberto');},160);
     });
   }
