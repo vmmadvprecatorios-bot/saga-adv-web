@@ -788,6 +788,10 @@ async function init(){
   state.podeVer=true;state.podeEditar=perms[1].data===true;
   document.getElementById('btnNovoLancamento').style.display=state.podeEditar?'':'none';
   await carregarTudo();
+  // Veio do Dashboard: abre a aba pedida já filtrada pelo tipo de ação
+  var qF=new URLSearchParams(location.search);
+  if(qF.get('busca')){state.buscaP=qF.get('busca');var bp=document.getElementById('buscaProcessos');if(bp)bp.value=state.buscaP;}
+  if(qF.get('aba')&&document.getElementById('aba-'+qF.get('aba')))trocarAba(qF.get('aba'));
 }
 init().catch(function(e){showToast('Erro ao abrir o financeiro: '+esc(e.message||''),'error');});
 </script>

@@ -1202,6 +1202,9 @@ async function restaurarPreferencias(){
     state.filtroPeriodoAte=f.filtroPeriodoAte||null;state.pageSize=f.pageSize||20;
     sincronizarUI();
   }
+  // Veio de um gráfico do Dashboard (?area=...): abre já filtrado pela área
+  var qA=new URLSearchParams(location.search);
+  if(qA.has('area')){var a=qA.get('area');state.filtroArea=a==='*'?'*':(a||null);state.filtroTese=null;sincronizarUI();}
 }
 function sincronizarUI(){
   document.getElementById('inputBusca').value=state.busca;

@@ -1458,5 +1458,5 @@
   global.SagaIntimacoes={iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,renderGraficos:renderGraficos,
     injetarNoKanbanTarefas:injetarNoKanbanTarefas,abrir:abrir,contagens:contagens,justicaDe:justicaDe,
     faixa:function(){return S.f.faixa||'';},definirFaixa:function(k){S.f.faixa=S.f.faixa===k?'':(k||'');mudou();},
-    filtrarProcesso:function(id){S.f.processo=id||null;},pronto:function(){return S.carregado;}};
+    filtrarProcesso:function(id){S.f.processo=id||null;},filtrarTribunal:function(t){S.f.tribunal=t||'';},pronto:function(){return S.carregado;}};
 })(window);

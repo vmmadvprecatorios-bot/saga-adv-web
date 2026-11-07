@@ -5102,6 +5102,9 @@ async function iniciarMinhasTarefas(){
   var qsTI = new URLSearchParams(location.search);
   // Endereço antigo das intimações (quando ficavam junto das tarefas): vai para a tela própria
   if(qsTI.get('modo') === 'intimacoes' || qsTI.get('intimacao')){ location.replace('monitoramento_multi_oab.html' + location.search); return; }
+  // Veio do gráfico "Tarefas por prazo" do Dashboard: abre filtrado pela faixa
+  var prazoUrl = qsTI.get('prazo'), faixaUrl = prazoUrl && PRAZOS_GRAFICOS_TAREFAS.find(function(x){ return x.v === prazoUrl; });
+  if(faixaUrl){ filtrosAtivos.prazo = faixaUrl.filtro; var dpz = document.getElementById('dropFiltroPrazo'); if(dpz){ dpz.setAttribute('data-valor', faixaUrl.filtro); var sp = dpz.querySelector('.dropdown-custom-valor span'); if(sp) sp.textContent = 'Prazo: ' + faixaUrl.filtro; } }
   aplicarFiltrosERenderizar();
   // Veio de uma notificacao: abre a tarefa direto
   var idTarefaUrl = qsTI.get('tarefa');

@@ -114,9 +114,10 @@ async function init(){
   if(!ok)return;
   var qs=new URLSearchParams(location.search);
   if(qs.get('processo_id'))SagaIntimacoes.filtrarProcesso(qs.get('processo_id'));
+  if(qs.get('tribunal'))SagaIntimacoes.filtrarTribunal(qs.get('tribunal'));
   renderTudo();
   if(qs.get('intimacao'))SagaIntimacoes.abrir(qs.get('intimacao'));
-  if(qs.get('intimacao')||qs.get('processo_id')||qs.get('modo'))history.replaceState(null,'',location.pathname);
+  if(qs.get('intimacao')||qs.get('processo_id')||qs.get('modo')||qs.get('tribunal'))history.replaceState(null,'',location.pathname);
 }
 init().catch(function(e){toast('Erro ao abrir as intimações: '+esc(e.message||''),'erro');});
 </script>

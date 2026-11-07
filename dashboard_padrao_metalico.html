@@ -1197,8 +1197,9 @@ async function carregarRoscasDashboard() {
   ]);
   if (!cargaDashboardAtual(carga)) return;
   function dados(i) { return resultados[i].status === 'fulfilled' ? resultados[i].value : null; }
+  // Clicar numa fatia abre a tela já filtrada por ela (destino pode ser função que recebe a fatia)
   function grafico(id, titulo, itens, destino, dica, moeda) {
-    return { id:id, titulo:titulo, itens:itens, moeda:!!moeda, dica:dica + ' Clique para abrir a tela.', escolher:function() { sagaIrPara(destino); } };
+    return { id:id, titulo:titulo, itens:itens, moeda:!!moeda, dica:dica + ' Clique numa fatia para abrir a tela já filtrada.', escolher:function(item) { sagaIrPara(typeof destino === 'function' ? destino(item || {}) : destino); } };
   }
   var grupos = [], processos = dados(0), areas = dados(1), tarefas = dados(2), intimacoes = dados(3), financeiro = dados(4);
   if (p.processos && processos) {
@@ -1209,32 +1210,32 @@ async function carregarRoscasDashboard() {
       if (g) g.valor++; else semFase++;
     });
     if (semFase) fases.push({id:'outras',nome:'Outras fases',valor:semFase,cor:'var(--g-sem)'});
-    grupos.push(grafico('fase', 'Processos por fase', fases, 'lista_processos_padrao_metalico.html', 'Processos criados no período e equipe selecionados.'));
+    grupos.push(grafico('fase', 'Processos por fase', fases, function(it) { return 'lista_processos_padrao_metalico.html?fase=' + (it.id === 'captacao' ? 'captacao' : 'juridico'); }, 'Processos criados no período e equipe selecionados.'));
     if (areas) {
       var nomes = new Map(areas.map(function(a) { return [a.id,a.nome]; }));
       var porArea = agruparRoscaDashboard(processos, function(proc) {
         return {id:proc.area_direito_id || '',nome:proc.area_direito_id ? nomes.get(proc.area_direito_id) || 'Área não identificada' : 'Sem área',valor:1,cor:proc.area_direito_id ? null : 'var(--g-sem)'};
       });
-      grupos.push(grafico('area', 'Processos por área do direito', porArea, 'lista_processos_padrao_metalico.html', 'Processos criados no período e equipe selecionados.'));
+      grupos.push(grafico('area', 'Processos por área do direito', porArea, function(it) { return 'lista_processos_padrao_metalico.html?fase=juridico&area=' + encodeURIComponent(it.id == null ? '*' : it.id); }, 'Processos criados no período e equipe selecionados.'));
     }
   }
   if (tarefas) {
     var faixas = [['distante','Mais de 3 dias','azul'],['proximo','De 1 a 3 dias','amarelo'],['hoje','Vence hoje','laranja'],['atrasada','Atraso de 1 a 7 dias','vermelho'],['muito-atrasada','Atraso maior que 7 dias','vermelho-escuro'],['sem','Sem prazo',null]];
     grupos.push(grafico('prazo', 'Tarefas abertas por prazo', faixas.map(function(x) {
       return {id:x[0],nome:x[1],cor:x[2] ? 'var(--prazo-' + x[2] + ')' : 'var(--g-sem)',valor:tarefas.filter(function(t) { return prazoRoscaDashboard(t.data_prazo) === x[0]; }).length};
-    }), 'minhas_tarefas.html', 'Tarefas abertas criadas no período e equipe selecionados.'));
+    }), function(it) { return 'minhas_tarefas.html' + (it.id ? '?prazo=' + encodeURIComponent(it.id) : ''); }, 'Tarefas abertas criadas no período e equipe selecionados.'));
   }
   if (intimacoes) {
     var daEquipe = intimacoes.filter(function(i) { return !f.responsaveisIds.length || f.responsaveisIds.indexOf(i.responsavel_id) !== -1 || (i.advogados_ids || []).some(function(id) { return f.responsaveisIds.indexOf(id) !== -1; }); });
     var tribunais = agruparRoscaDashboard(daEquipe, function(i) { var nome = tribunalRoscaDashboard(i); return {id:nome.replace(/[^A-Z0-9]/g,''),nome:nome,valor:1}; });
-    grupos.push(grafico('tribunal', 'Intimações abertas por tribunal', tribunais, 'monitoramento_multi_oab.html', 'Intimações disponibilizadas no período e equipe selecionados.'));
+    grupos.push(grafico('tribunal', 'Intimações abertas por tribunal', tribunais, function(it) { return 'monitoramento_multi_oab.html' + (it.nome && it.id !== 'outras' ? '?tribunal=' + encodeURIComponent(it.nome) : ''); }, 'Intimações disponibilizadas no período e equipe selecionados.'));
   }
   if (financeiro && (!temFiltro || processos)) {
     var ids = new Set((processos || []).map(function(proc) { return proc.id; }));
     var valores = agruparRoscaDashboard(financeiro.filter(function(row) { return !temFiltro || ids.has(row.processo_id); }), function(row) {
       return {id:row.tese || '',nome:row.tese || 'Sem tese',valor:Number(row.valor_expectativa || 0),cor:row.tese_cor};
     });
-    grupos.push(grafico('honorarios', 'Honorários esperados por tipo de ação', SagaRoscas.topo(valores,6,'Outras'), 'financeiro.html', 'Expectativa dos processos criados no período e equipe selecionados.', true));
+    grupos.push(grafico('honorarios', 'Honorários esperados por tipo de ação', SagaRoscas.topo(valores,6,'Outras'), function(it) { return 'financeiro.html?aba=processos' + (it.nome && it.nome !== 'Outras' && it.nome !== 'Sem tese' ? '&busca=' + encodeURIComponent(it.nome) : ''); }, 'Expectativa dos processos criados no período e equipe selecionados.', true));
   }
   if (!roscasDashboard) roscasDashboard = SagaRoscas.criar(document.getElementById('roscasDashboard'), {chave:'saga-dashboard-roscas-ocultas',rotulo:'Gráficos do Dashboard'});
   roscasDashboard.atualizar(grupos);
@@ -1514,6 +1515,11 @@ async function carregarTarefas() {
     });
     atualizarListaDashboard(container, html);
 
+    // Clicar na tarefa abre ela em Minhas Tarefas
+    container.querySelectorAll('.item-tarefa').forEach(function(item) {
+      item.style.cursor = 'pointer';item.title = 'Abrir a tarefa';
+      item.onclick = function() { sagaIrPara('minhas_tarefas.html?tarefa=' + encodeURIComponent(item.getAttribute('data-id'))); };
+    });
     // Eventos de conclusao
     container.querySelectorAll('.btn-concluir-tarefa').forEach(function(btn) {
       btn.onclick = function(e) {
@@ -1583,12 +1589,14 @@ async function carregarNotificacoes() {
     });
     atualizarListaDashboard(container, html);
 
-    // Click marca como lida
+    // Clicar abre o item da notificação (tarefa, intimação, processo...) e marca como lida, como no sino
+    var notifs = r.data;
     container.querySelectorAll('.item-notificacao').forEach(function(item) {
+      item.style.cursor = 'pointer';item.title = 'Abrir';
       item.onclick = function() {
-        if (item.getAttribute('data-lida') === 'false') {
-          marcarNotificacaoLida(item.getAttribute('data-id'), item);
-        }
+        var n = notifs.find(function(x) { return String(x.id) === item.getAttribute('data-id'); });
+        if (n && window.SagaUI && SagaUI.abrirNotificacao) { SagaUI.abrirNotificacao(n); return; }
+        if (item.getAttribute('data-lida') === 'false') marcarNotificacaoLida(item.getAttribute('data-id'), item);
       };
     });
 

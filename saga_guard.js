@@ -387,14 +387,22 @@
   function ehConteudo(el){
     if(!el||el.nodeType!==1||!el.isConnected||el.getAttribute('aria-hidden')==='true')return false;
     if(/^(SCRIPT|STYLE|LINK|BUTTON|INPUT|SELECT|OPTION|TEXTAREA|svg|path|TR|TD|TH|TBODY|THEAD|LI|SPAN|B|I|LABEL)$/i.test(el.tagName))return false;
+    if(el.closest('[class*="modal"],.mo,.si-ov,[role="dialog"],[class*="popover"],[class*="dropdown"],[class*="menu"]'))return false; // dentro de janela/menu: o saga_guard já anima a janela
     if(el.closest('#sidebarSaga,#topbarSaga,.leaflet-container')||ehJanela(el))return false;
     var cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')return false;
     var r=el.getBoundingClientRect();
-    return r.width>=280&&r.height>=70;
+    return r.width>=150&&r.height>=56;
   }
+  // (08/11, Dr. Victor: "sempre que aplicar um filtro ou selecionar algo que mude as informações, efeito de movimento")
+  // escolher num menu suspenso, opção de filtro, chip, legenda de gráfico ou aba também conta como troca
+  document.addEventListener('change',function(e){var t=e.target;if(t&&(t.tagName==='SELECT'||t.type==='checkbox'||t.type==='radio'||t.type==='date'))ultimaTrocaGrupo=Date.now();},true);
+  document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('[class*="opcao"],[class*="option"],[class*="pill"],[class*="chip"],[class*="filtro"],[class*="leg"],[class*="tab"],[class*="aba"],[role="tab"],[role="option"],[role="menuitem"],[data-filtro],[data-f]');
+    if(t&&!t.closest('#sidebarSaga,#topbarSaga'))ultimaTrocaGrupo=Date.now();},true);
   function animarConteudo(lista){
     if(reduz||Date.now()-ultimaTrocaGrupo>900)return;
     var feitos=[];
+    // linhas de tabela redesenhadas: anima a tabela inteira uma vez
+    lista=lista.map(function(el){return el&&el.nodeType===1&&/^(TR|TBODY|TD)$/.test(el.tagName)&&el.closest?el.closest('table')||el:el;});
     lista.forEach(function(el){try{
       if(!ehConteudo(el))return;
       if(feitos.some(function(f){return f.contains(el)||el.contains(f);}))return; // só o bloco de fora
