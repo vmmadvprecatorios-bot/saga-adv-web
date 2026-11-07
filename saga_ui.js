@@ -361,7 +361,7 @@
       st.textContent='#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:16px;height:16px;padding:0 4px;border-radius:5px;background:rgba(229,72,77,.2) !important;color:#ff9b9e !important;font-size:9.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;line-height:1;}'
         +'#sidebarSaga .nav-badge-dia{background:rgba(96,150,240,.2) !important;color:#a9c8ff !important}#sidebarSaga .nav-badge-dia.atrasada{background:rgba(229,72,77,.2) !important;color:#ff9b9e !important}'
         // menu claro (Grafite claro): cores fortes para aparecer sobre o fundo claro
-        +'html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-chat,html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-dia.atrasada{background:#c0392b !important;color:#fff !important;font-weight:700}'
+        +'html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-chat,html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-dia.atrasada{background:#9C7A43 !important;color:#fff !important;font-weight:700}'
         +'html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-dia{background:#1A1A1A !important;color:#fff !important;font-weight:700}'
         +'';
       document.head.appendChild(st);
