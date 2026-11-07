@@ -102,9 +102,9 @@
       PALETA.map(function(p){return '.saga-texto mark[data-c="'+p[0]+'"],.saga-editor-area mark[data-c="'+p[0]+'"]{background:color-mix(in srgb,'+p[1]+' 32%,transparent)}';}).join('\n'),
       // marca-texto: menu suspenso que abre abaixo do botão A (antes era uma faixa de bolinhas exposta)
       '.saga-editor{position:relative}',
-      '.saga-cores{display:none;position:absolute;z-index:60;min-width:138px;padding:5px;border:1px solid var(--border);border-radius:11px;background:var(--panel-solid,var(--panel));box-shadow:0 14px 34px rgba(0,0,0,.28);flex-direction:column;gap:1px}.saga-cores.aberto{display:flex}',
-      '.saga-cores button{display:flex;align-items:center;gap:8px;width:100%;padding:4px 8px;border:0;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:11.5px;text-align:left;cursor:pointer}.saga-cores button:hover,.saga-cores button:focus-visible{background:color-mix(in srgb,var(--text) 8%,transparent);outline:0}',
-      '.saga-cores button i{width:9px;height:9px;border-radius:50%;flex:0 0 auto;opacity:.75;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}.saga-cores .sem{margin-top:3px;border-top:1px solid var(--border-soft);border-radius:0 0 7px 7px;color:var(--muted)}.saga-cores .sem i{background:transparent;position:relative;overflow:hidden}.saga-cores .sem i::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:var(--muted);transform:rotate(-45deg)}',
+      '.saga-mtcores{display:none;position:absolute;z-index:60;min-width:138px;padding:5px;border:1px solid var(--border);border-radius:11px;background:var(--panel-solid,var(--panel));box-shadow:0 14px 34px rgba(0,0,0,.28);flex-direction:column;gap:1px}.saga-mtcores.aberto{display:flex}',
+      '.saga-mtcores button{display:flex;align-items:center;gap:8px;width:100%;padding:4px 8px;border:0;border-radius:7px;background:transparent;color:var(--text);font:inherit;font-size:11.5px;text-align:left;cursor:pointer}.saga-mtcores button:hover,.saga-mtcores button:focus-visible{background:color-mix(in srgb,var(--text) 8%,transparent);outline:0}',
+      '.saga-mtcores button i{width:9px;height:9px;border-radius:50%;flex:0 0 auto;opacity:.75;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25)}.saga-mtcores .sem{margin-top:3px;border-top:1px solid var(--border-soft);border-radius:0 0 7px 7px;color:var(--muted)}.saga-mtcores .sem i{background:transparent;position:relative;overflow:hidden}.saga-mtcores .sem i::after{content:"";position:absolute;left:-2px;right:-2px;top:50%;height:1.5px;background:var(--muted);transform:rotate(-45deg)}',
       '.saga-editor{width:100%;border:1px solid var(--border-soft);border-radius:11px;background:color-mix(in srgb,var(--text) 4%,transparent);overflow:visible}',
       '.saga-editor:focus-within{border-color:var(--gold)}',
       '.saga-editor-barra{border-radius:10px 10px 0 0;display:flex;flex-wrap:wrap;gap:3px;padding:5px 6px;border-bottom:1px solid var(--border-soft);background:color-mix(in srgb,var(--text) 3%,transparent)}',
@@ -169,7 +169,7 @@
       btn.addEventListener('click',function(){if(b[0]==='destaque'){alternarCores(btn);return;}comando(b[0]);area.focus();estado();});
       barra.appendChild(btn);
     });
-    var faixa=document.createElement('div');faixa.className='saga-cores';faixa.setAttribute('role','group');faixa.setAttribute('aria-label','Cores do marca-texto');
+    var faixa=document.createElement('div');faixa.className='saga-mtcores';faixa.setAttribute('role','group');faixa.setAttribute('aria-label','Cores do marca-texto');
     PALETA.forEach(function(p){
       var c=document.createElement('button');c.type='button';c.innerHTML='<i style="background:'+p[1]+'"></i>'+p[2];c.setAttribute('aria-label','Marca-texto '+p[2]);
       c.addEventListener('mousedown',function(e){e.preventDefault();});
