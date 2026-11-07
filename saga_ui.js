@@ -832,11 +832,18 @@
     var btnRefresh=document.getElementById('refreshBtn');
     if(btnRefresh&&!btnRefresh.dataset.ligado){
       btnRefresh.dataset.ligado='true';
+      // Atualizar (08/11, Dr. Victor): o ícone dá UMA volta completa e só depois a tela recarrega
+      // (antes recarregava no meio do giro e a animação "quebrava"). Cliques repetidos durante o giro são ignorados.
       btnRefresh.addEventListener('click',function(){
-        btnRefresh.classList.add('girando');
-        setTimeout(function(){btnRefresh.classList.remove('girando');},700);
-        // Recarrega a tela inteira, em qualquer tela (a aba aberta e os filtros guardados voltam sozinhos)
-        setTimeout(function(){location.reload();},180);
+        if(btnRefresh.dataset.girando)return;
+        btnRefresh.dataset.girando='1';btnRefresh.setAttribute('aria-busy','true');
+        var recarregar=function(){location.reload();};
+        var semMov=false;try{semMov=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}
+        var svg=btnRefresh.querySelector('svg');
+        if(semMov||!svg||!svg.animate){recarregar();return;}
+        var giro=svg.animate([{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],{duration:620,easing:'cubic-bezier(.22,.78,.25,1)',fill:'forwards'});
+        var feito=false,fim=function(){if(feito)return;feito=true;requestAnimationFrame(function(){requestAnimationFrame(recarregar);});};
+        giro.onfinish=fim;giro.oncancel=fim;setTimeout(fim,1200);
       });
     }
     if(!document.body.dataset.sagaClickLigado){
