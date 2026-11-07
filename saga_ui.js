@@ -366,6 +366,8 @@
         '#sidebarSaga .nav-section{font-size:11px !important;padding:18px 22px 8px !important;}'+
         /* o fundo escuro cobre so a area a direita do menu: em telas onde o menu fica dentro de outra camada, ele nunca fica por cima dos itens */
         /* janelas da barra superior (notificacoes, online, busca, perfil): largura da tela, logo abaixo da barra */
+        /* janela da foto (perfil) no celular: abaixo da barra, alinhada à direita e sempre dentro da tela (antes abria para fora, em pé) */
+        '#topbarSaga #avatarPop{position:fixed !important;top:68px !important;right:8px !important;left:auto !important;width:min(260px,calc(100vw - 16px)) !important;max-height:calc(100dvh - 84px) !important;overflow-y:auto !important;transform:none !important;}'+
         '#topbarSaga .popover{position:fixed !important;top:68px !important;left:8px !important;right:8px !important;width:auto !important;max-width:none !important;max-height:calc(100dvh - 84px) !important;overflow-y:auto !important;overscroll-behavior:contain !important;}'+
         'html.saga-menu-aberto,html.saga-menu-aberto body{overflow:hidden !important;overscroll-behavior:none !important;}'+
         /* menu aberto com a pagina rolada: a barra de cima fica presa no topo (antes subia junto e sobrava uma faixa em branco) */
