@@ -1440,6 +1440,7 @@ async function carregarProvidenciasVisiveis(){
   document.querySelectorAll('[data-providencia-processo]').forEach(function(el){el.innerHTML=seloProvidencia(el.dataset.providenciaProcesso);});
 }
 async function carregarProcessos(){
+  ['listaView','kanbanView'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.minHeight='';});
   var pedido=state.pedidoProcessos=(state.pedidoProcessos||0)+1;
   if(!state.permissoes.visualizar){state.baseProcessos=[];renderSemPermissao();renderGraficosProcessos();return;}
   state.loading=true;renderSkeleton();
@@ -1928,11 +1929,21 @@ function renderPaginacao(){
   h+='<button class="pag-btn" onclick="irPagina('+(pg+1)+')" '+(pg===totalPags?'disabled':'')+'>&#8250;</button>';
   document.getElementById('paginacao').innerHTML=h;
 }
-function irPagina(p){if(p<1||p>Math.ceil(state.totalProcessos/state.pageSize))return;state.page=p;carregarProcessos();window.scrollTo({top:0,behavior:'smooth'});}
+// Trocar de página ou de quantidade por página: só redesenha a tabela e mantém a tela onde está (antes subia para o topo)
+function redesenharNoLugar(semSegurarAltura){
+  var y=window.scrollY,main=document.querySelector('main.content,.conteudo'),ym=main?main.scrollTop:0;
+  // segura a altura da lista: a última página (mais curta) não faz a tela subir e os botões de página ficam no mesmo lugar
+  var lv=document.getElementById(state.view==='lista'?'listaView':'kanbanView');if(lv){if(semSegurarAltura)lv.style.minHeight='';else{var h=lv.offsetHeight;if(h>parseFloat(lv.style.minHeight||0))lv.style.minHeight=h+'px';}}
+  if(state.baseProcessos&&!state.loading){if(state.view==='lista')renderLista();else renderKanban();}else carregarProcessos();
+  var ts=document.querySelector('#listaView .tabela-scroll');if(ts)ts.scrollTop=0;
+  window.scrollTo(0,y);if(main)main.scrollTop=ym;
+  requestAnimationFrame(function(){window.scrollTo(0,y);if(main)main.scrollTop=ym;});
+}
+function irPagina(p){if(p<1||p>Math.ceil(state.totalProcessos/state.pageSize))return;state.page=p;redesenharNoLugar();}
 function alterarPageSize(ps){
   state.pageSize=ps;state.page=1;
   document.querySelectorAll('.pill-quantidade').forEach(function(p){p.classList.toggle('ativo',p.getAttribute('data-qtd')==ps||(p.getAttribute('data-qtd')==='todos'&&ps==='todos'));});
-  document.getElementById('qtdCustom').value='';salvarPreferencias();carregarProcessos();
+  document.getElementById('qtdCustom').value='';salvarPreferencias();redesenharNoLugar(true);
 }
 function aplicarQtdCustom(){var v=parseInt(document.getElementById('qtdCustom').value,10);if(!v||v<1)return;alterarPageSize(v);}
 
