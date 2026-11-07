@@ -230,7 +230,7 @@
   // (08/11) Grupos redesenhados do zero (ex.: barra da planilha, que refaz o HTML a cada clique) perdiam a memória e
   // o destaque trocava seco. Agora o grupo também é lembrado por um "nome" (rótulo + classe + id do bloco onde está).
   var ultimoPorNome=new Map();
-  function nomeGrupo(grupo){var dono=grupo.parentElement&&grupo.parentElement.closest('[id]');return (grupo.getAttribute('aria-label')||'')+'|'+(typeof grupo.className==='string'?grupo.className:'')+'|'+(dono?dono.id:'')+'|'+grupo.children.length;}
+  function nomeGrupo(grupo){var dono=grupo.parentElement&&grupo.parentElement.closest('[id]');return (grupo.getAttribute('aria-label')||'')+'|'+(typeof grupo.className==='string'?grupo.className:'')+'|'+(dono?dono.id:'')+'|'+Array.prototype.filter.call(grupo.children,function(x){return x.getAttribute('aria-hidden')!=='true';}).length;}
   function lembrar(grupo,ativo){
     var g=grupo.getBoundingClientRect(),r=ativo.getBoundingClientRect();
     var m={el:ativo,txt:ativo.textContent,grupo:grupo,x:r.left-g.left+grupo.scrollLeft,y:r.top-g.top+grupo.scrollTop,w:r.width,h:r.height};
@@ -400,12 +400,12 @@
   // escolher num menu suspenso, opção de filtro, chip, legenda de gráfico ou aba também conta como troca
   document.addEventListener('change',function(e){var t=e.target;if(t&&(t.tagName==='SELECT'||t.type==='checkbox'||t.type==='radio'||t.type==='date'))ultimaTrocaGrupo=Date.now();},true);
   document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('[class*="opcao"],[class*="option"],[class*="pill"],[class*="chip"],[class*="filtro"],[class*="leg"],[class*="tab"],[class*="aba"],[role="tab"],[role="option"],[role="menuitem"],[data-filtro],[data-f]');
-    if(t&&!t.closest('#sidebarSaga,#topbarSaga'))ultimaTrocaGrupo=Date.now();},true);
+    if(t&&!t.closest('#sidebarSaga,#topbarSaga,table,[contenteditable="true"]')&&!e.target.closest('table')){var rr=t.getBoundingClientRect();if(rr.width<=420&&rr.height<=80)ultimaTrocaGrupo=Date.now();}},true);
   function animarConteudo(lista){
     if(reduz||Date.now()-ultimaTrocaGrupo>900)return;
     var feitos=[];
     // linhas de tabela redesenhadas: anima a tabela inteira uma vez
-    lista=lista.map(function(el){return el&&el.nodeType===1&&/^(TR|TBODY|TD)$/.test(el.tagName)&&el.closest?el.closest('table')||el:el;});
+    lista=lista.filter(function(el){return !(el&&el.nodeType===1&&/^(TD|TH)$/.test(el.tagName));}).map(function(el){return el&&el.nodeType===1&&/^(TR|TBODY)$/.test(el.tagName)&&el.closest?el.closest('table')||el:el;});
     lista.forEach(function(el){try{
       if(!ehConteudo(el))return;
       if(feitos.some(function(f){return f.contains(el)||el.contains(f);}))return; // só o bloco de fora

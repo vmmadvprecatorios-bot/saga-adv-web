@@ -733,8 +733,10 @@ window.SagaPlanilha=(function(){
       (n?'<button type="button" class="sp-limpar-tudo" data-limpar>Limpar filtros das colunas ('+n+')</button>':'');
     b.querySelectorAll('.sp-pills[role="group"]').forEach(function(novo){
       var velho=gruposAntes[novo.getAttribute('aria-label')];
-      if(!velho||velho.children.length!==novo.children.length)return;
-      Array.prototype.forEach.call(novo.children,function(nb,i){var vb=velho.children[i];if(vb.textContent!==nb.textContent)return;
+      var reais=function(g){return Array.prototype.filter.call(g.children,function(x){return x.getAttribute('aria-hidden')!=='true';});};
+      if(!velho)return;var vReais=reais(velho);
+      if(vReais.length!==novo.children.length)return;
+      Array.prototype.forEach.call(novo.children,function(nb,i){var vb=vReais[i];if(vb.textContent!==nb.textContent)return;
         vb.className=nb.className;Array.prototype.forEach.call(nb.attributes,function(at){if(at.name!=='class')vb.setAttribute(at.name,at.value);});});
       novo.replaceWith(velho);
     });
