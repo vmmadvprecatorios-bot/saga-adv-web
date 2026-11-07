@@ -270,7 +270,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
       <div class="campo"><label>Data</label><input id="mlData" type="date"></div>
     </div>
     <div class="grid2">
-      <div class="campo"><label>Categoria</label><input id="mlCategoria" list="listaCategorias" placeholder="Ex.: Consultoria"><datalist id="listaCategorias"></datalist></div>
+      <div class="campo"><label>Categoria</label><div id="mlCategoria"></div></div>
       <div class="campo"><label>Processo (opcional)</label><select id="mlProcesso"></select></div>
     </div>
     <div class="campo"><label>Observação</label><textarea id="mlObservacao"></textarea></div>
@@ -290,6 +290,7 @@ window._sb=_sb;
 <script src="saga_ui.js?v=202611072036"></script>
 <script src="saga_texto.js?v=202611072036"></script>
 <script src="saga_roscas.js?v=202611072036"></script>
+<script src="saga_etiquetas.js?v=202611072036"></script>
 <script>
 /* =====================================================================
    FINANCEIRO (dados reais do banco)
@@ -640,32 +641,51 @@ function renderLancamentos(){
 function opcoesProcessos(){
   return '<option value="">Nenhum (lançamento do escritório)</option>'+state.processos.map(function(p){return '<option value="'+esc(p.processo_id)+'">'+esc(p.cliente+' · '+(p.tese||'')+(p.numero_processo_cnj?' · '+p.numero_processo_cnj:''))+'</option>';}).join('');
 }
+// Categoria do lançamento: menu do catálogo (etiquetas_catalogo, lista 'lancamento_categoria'; bloco 117)
+var catalogoCategorias=null,widgetCategoria=null;
+async function montarCategoriaLancamento(){
+  if(!window.SagaEtiquetas)return;
+  if(!catalogoCategorias){
+    catalogoCategorias=SagaEtiquetas.criar({sb:_sb,categoria:'lancamento_categoria',admin:!!state.admin,
+      salvar:function(p){return _sb.rpc('catalogo_salvar',{p_categoria:'lancamento_categoria',p_id:p.p_id,p_nome:p.p_nome,p_cor:p.p_cor,p_ativo:p.p_ativo,p_conta_protocolada:null});},
+      textos:{campo:'Categoria',vazio:'Sem categoria',nova:'+ Nova categoria',editar:'Editar categoria',novaT:'Nova categoria',salvar:'Salvar categoria',erro:'Não foi possível salvar a categoria.',carregar:'Não foi possível carregar as categorias.'},
+      erro:function(m){showToast(m,'error');}});
+    await catalogoCategorias.carregar();
+  }
+  var root=document.getElementById('mlCategoria');
+  widgetCategoria=catalogoCategorias.montar(root,{
+    valor:function(){var n=state.catEscolhida;if(!n)return null;return catalogoCategorias.todas().find(function(e){return e.nome.toLowerCase()===n.toLowerCase();})||{nome:n,cor:'#8a94a8'};},
+    escolher:function(e){state.catEscolhida=e?e.nome:'';},
+    podeEditar:function(){return !!state.podeEditar;},
+    alterou:function(antes,p){if(antes&&state.catEscolhida&&antes.nome===state.catEscolhida)state.catEscolhida=p.p_nome;}
+  });
+}
 function abrirLancamento(id){
   var l=id?state.lancamentos.find(function(x){return x.id===id;}):null;
   if(id&&!l)return;
   state.lancEditando=l;
   document.getElementById('mlTitulo').textContent=l?'Editar lançamento':'Novo lançamento avulso';
   document.getElementById('mlProcesso').innerHTML=opcoesProcessos();
-  var cats=Array.from(new Set(state.lancamentos.map(function(x){return x.categoria;}).filter(Boolean).concat(['Honorários avulsos','Consultoria','Custas','Aluguel','Energia','Internet','Material de escritório','Folha de pagamento','Impostos'])));
-  document.getElementById('listaCategorias').innerHTML=cats.map(function(c){return '<option value="'+esc(c)+'">';}).join('');
   document.getElementById('mlTipo').value=l?l.tipo:'receita';
   document.getElementById('mlSituacao').value=l?l.situacao:'confirmado';
   document.getElementById('mlDescricao').value=l?l.descricao:'';
   document.getElementById('mlValor').value=l?numeroParaMoedaCampo(l.valor):'';
   document.getElementById('mlData').value=l?l.data_lancamento:hojeISO();
-  document.getElementById('mlCategoria').value=l?(l.categoria||''):'';
+  // 09/11: categoria em menu suspenso (lista do catálogo; o administrador cria, renomeia e desativa no próprio menu)
+  state.catEscolhida=l?(l.categoria||''):'';
+  montarCategoriaLancamento();
   document.getElementById('mlProcesso').value=l?(l.processo_id||''):'';
   if(window.SagaTexto)SagaTexto.ligar(document.getElementById('mlObservacao'));
   document.getElementById('mlObservacao').value=l?(l.observacao||''):'';
   document.getElementById('mlExcluir').style.display=l&&state.podeEditar?'':'none';
-  ['mlTipo','mlSituacao','mlDescricao','mlValor','mlData','mlCategoria','mlProcesso','mlObservacao','mlSalvar'].forEach(function(i){document.getElementById(i).disabled=!state.podeEditar;});
+  ['mlTipo','mlSituacao','mlDescricao','mlValor','mlData','mlProcesso','mlObservacao','mlSalvar'].forEach(function(i){document.getElementById(i).disabled=!state.podeEditar;});
   abrirModal('modalLancamento');
 }
 async function salvarLancamento(){
   if(!state.podeEditar)return;
   var payload={tipo:document.getElementById('mlTipo').value,situacao:document.getElementById('mlSituacao').value,
     descricao:document.getElementById('mlDescricao').value.trim(),valor:moedaParaNumero(document.getElementById('mlValor').value),
-    data_lancamento:document.getElementById('mlData').value||hojeISO(),categoria:document.getElementById('mlCategoria').value.trim()||null,
+    data_lancamento:document.getElementById('mlData').value||hojeISO(),categoria:(state.catEscolhida||'').trim()||null,
     processo_id:document.getElementById('mlProcesso').value||null,observacao:document.getElementById('mlObservacao').value.trim()||null};
   if(!payload.descricao){showToast('Informe a descrição.','error');return;}
   if(!payload.valor||payload.valor<=0){showToast('Informe um valor maior que zero.','error');return;}
@@ -791,13 +811,14 @@ async function init(){
   var meuId=eu.data&&eu.data.id;
   var perms=await Promise.all([
     _sb.rpc('verificar_permissao',{p_usuario_id:meuId,p_modulo:'financeiro',p_acao:'visualizar'}),
-    _sb.rpc('verificar_permissao',{p_usuario_id:meuId,p_modulo:'financeiro',p_acao:'editar'})
+    _sb.rpc('verificar_permissao',{p_usuario_id:meuId,p_modulo:'financeiro',p_acao:'editar'}),
+    _sb.rpc('eh_admin_sistema')
   ]);
   if(perms[0].data!==true){
     document.querySelector('.content').innerHTML='<div class="page-head"><div><h1>Financeiro</h1><p>Você não tem permissão para ver o financeiro. Fale com o administrador.</p></div></div>';
     return;
   }
-  state.podeVer=true;state.podeEditar=perms[1].data===true;
+  state.podeVer=true;state.podeEditar=perms[1].data===true;state.admin=perms[2]&&perms[2].data===true;
   document.getElementById('btnNovoLancamento').style.display=state.podeEditar?'':'none';
   await carregarTudo();
   // Veio do Dashboard: abre a aba pedida já filtrada pelo tipo de ação

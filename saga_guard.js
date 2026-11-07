@@ -302,7 +302,7 @@
       lembrar(grupo,el);
     }catch(e){if(window.SAGA_DEBUG)console.warn('[saga] abas',e);}});
   }
-  // Janelas que aparecem (online agora, notificacoes, cadastros, menus suspensos, avisos): surgem com mola
+  // Janelas que aparecem (online agora, notificacoes, cadastros, menus suspensos, avisos): surgem suaves, na curva do sistema
   var visivelAntes=new WeakMap();
   function ehJanela(el){
     if(!el||el.nodeType!==1||el.id==='sagaCarregando'||el.getAttribute('aria-hidden')==='true')return false;
@@ -369,7 +369,7 @@
     var r=el.getBoundingClientRect(),base=getComputedStyle(el).transform;base=base==='none'?'':base+' ';
     var telaToda=r.width>=innerWidth*0.9&&r.height>=innerHeight*0.85;
     if(telaToda){
-      // fundo escurece suave e a janela de dentro cresce com mola
+      // fundo escurece suave e a janela de dentro cresce suave (sem passar do ponto)
       el.animate([{opacity:0},{opacity:1}],{duration:180,easing:'ease-out'});
       var maior=null,area=0;
       Array.prototype.forEach.call(el.children,function(c){var b=c.getBoundingClientRect(),a=b.width*b.height;if(a>area&&a<r.width*r.height*0.98){area=a;maior=c;}});
