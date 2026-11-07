@@ -51,7 +51,9 @@
     // Fio fino de carregamento sob o menu superior, so se a espera passar de um instante
     '#sagaCarregando{position:fixed;left:0;right:0;height:2px;z-index:1400;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .2s ease;}'+
     '#sagaCarregando.ativo{opacity:1;}'+
-    '#sagaCarregando::after{content:"";position:absolute;top:0;bottom:0;width:38%;left:-38%;border-radius:2px;background:linear-gradient(90deg,transparent,var(--gold,#c9a96e),transparent);animation:sagaFio 1s ease-in-out infinite;}'+
+    '#sagaCarregando::after{content:"";position:absolute;top:0;bottom:0;width:38%;left:-38%;border-radius:2px;background:linear-gradient(90deg,transparent,var(--saga-fio,var(--gold,#c9a96e)),transparent);box-shadow:0 0 8px var(--saga-fio-brilho,transparent);animation:sagaFio 1s ease-in-out infinite;}'+
+    // Azul escuro: o destaque azul some no fundo azul; o fio fica claro, com um leve brilho
+    'html:not([data-cor="grafite"]) body[data-theme="dark"] #sagaCarregando{--saga-fio:#dce8ff;--saga-fio-brilho:rgba(150,190,255,.55);}'+
     '@keyframes sagaFio{to{left:100%;}}'+
     // Todas as telas com o menu padrao: mesmo fundo (sem quadriculado nem brilhos proprios)
     // e mesma barra de rolagem, para nada mudar de lugar ou de cor na troca de tela
