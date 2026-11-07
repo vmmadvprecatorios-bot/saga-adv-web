@@ -404,6 +404,38 @@ window.SagaPlanilha=(function(){
     if(c.tipo==='porcentagem'||c.tipo==='numero')return 'pct';
     return null;
   }
+  // Honorários (sucumbenciais, totais e partes): guardados em % do valor da causa, mas dá para digitar em R$
+  // (o botão ao lado alterna % / R$; em R$ o sistema converte para % do valor da causa)
+  function ehHonorario(c){return c&&c.tipo==='porcentagem'&&(/sucumb/i.test(c.nome||'')||/^hon_/.test(c.chave||''));}
+  function campoHonorario(v,causaFn){
+    var wrap=document.createElement('span');wrap.className='sp-hon';
+    var inp=document.createElement('input');inp.type='text';inp.className='sp-editor';inp.inputMode='decimal';
+    var bt=document.createElement('button');bt.type='button';bt.className='sp-hon-modo';
+    var dica=document.createElement('span');dica.className='sp-hon-dica';
+    var modo='pct',orig=null; // orig: o % de onde veio o R$ mostrado (trocar de modo sem mexer não muda o valor)
+    var causa=function(){var n=Number(causaFn?causaFn():null);return n>0?n:null;};
+    var moedaTxt=function(n){return formatar('moeda',Number(n).toFixed(2));};
+    var pctTxt=function(n){return String(Math.round(Number(n)*1000000)/1000000).replace('.',',');};
+    var lerNum=function(){var t=inp.value.trim();if(!t)return null;var n=modo==='reais'?parseFloat(t.replace(/\./g,'').replace(',','.')):parseFloat(t.replace('%','').replace(',','.'));return isNaN(n)?null:n;};
+    function desenhar(){bt.textContent=modo==='reais'?'R$':'%';bt.title=modo==='reais'?'Digitando em reais: clique para digitar em percentual':'Digitando em percentual: clique para digitar em reais';
+      inp.placeholder=modo==='reais'?'0,00':'0';
+      var n=lerNum(),c=causa();dica.textContent=n==null||!c?'':(modo==='reais'?'= '+String(Math.round((orig&&orig.txt===inp.value?orig.pct:n/c*100)*100)/100).replace('.',',')+'% da causa':'= R$ '+moedaTxt(c*n/100));}
+    inp.value=v==null||v===''?'':String(v).replace('.',',');
+    inp.addEventListener('input',function(){var fimAntes=inp.value.length-inp.selectionEnd;inp.value=formatar(modo==='reais'?'moeda':'pct',inp.value);var pos=Math.max(0,inp.value.length-fimAntes);try{inp.setSelectionRange(pos,pos);}catch(e){}desenhar();});
+    // mousedown sem tirar o foco: assim a célula não salva ao clicar no botão
+    bt.addEventListener('mousedown',function(e){e.preventDefault();});
+    bt.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();
+      var n=lerNum(),c=causa();
+      if(modo==='pct'){if(!c){aviso('Para digitar em R$, preencha antes o valor da causa.',true);return;}modo='reais';inp.value=n==null?'':moedaTxt(c*n/100);orig=n==null?null:{pct:n,txt:inp.value};}
+      else{modo='pct';inp.value=n==null||!c?'':pctTxt(orig&&orig.txt===inp.value?orig.pct:n/c*100);orig=null;}
+      desenhar();inp.focus();});
+    wrap.appendChild(inp);wrap.appendChild(bt);wrap.appendChild(dica);desenhar();
+    var ler=function(){var n=lerNum();if(n==null)return null;
+      if(modo==='reais'){var c=causa();if(!c)throw new Error('Para digitar em R$, preencha antes o valor da causa.');n=orig&&orig.txt===inp.value?orig.pct:n/c*100;}
+      if(n<0||n>100)throw new Error('O percentual deve ficar entre 0 e 100% do valor da causa.');
+      return pctTxt(n);};
+    return {wrap:wrap,input:inp,ler:ler};
+  }
   function aplicarMascara(inp,c,v){
     var t=tipoMascara(c);if(!t)return;
     inp.inputMode=t==='pct'?'decimal':'numeric';
@@ -436,13 +468,15 @@ window.SagaPlanilha=(function(){
       }else if(c.tipo==='link'){
         campo=document.createElement('input');campo.type='url';campo.placeholder='https://...';campo.value=Array.isArray(v)&&v[0]?v[0].url:'';
         ler=function(){var u=campo.value.trim();if(!u)return null;if(!/^https?:\/\//i.test(u))throw new Error('O link precisa começar com https://');var t=Array.isArray(v)&&v[0]&&v[0].texto&&v[0].texto!==v[0].url?v[0].texto:u;return [{url:u,texto:t}];};
+      }else if(ehHonorario(c)){
+        var hc=campoHonorario(v,cfg.causa);campo=hc.input;ler=hc.ler;var caixa=hc.wrap;
       }else{
         campo=document.createElement('input');campo.type=c.tipo==='data'?'date':'text';
         campo.value=v==null?'':(c.tipo==='data'?String(v).slice(0,10):String(v));
         aplicarMascara(campo,c,v);
         ler=function(){var x=campo.value.trim();if(!x)return null;var m=tipoMascara(c);return m==='cpf'||m==='cnj'||m==='tel'?formatar(m,x):x;};
       }
-      campo.className='sp-editor';td.innerHTML='';td.appendChild(campo);campo.focus();if(campo.tagName==='INPUT'&&campo.type==='text'&&campo.select)campo.select();
+      campo.className='sp-editor';td.innerHTML='';td.appendChild(caixa||campo);campo.focus();if(campo.tagName==='INPUT'&&campo.type==='text'&&campo.select)campo.select();
       var feito=false,tecla=null,fim=function(){if(cfg.fim)try{cfg.fim(tecla);}catch(x){}};
       var cancelar=function(){if(feito)return;feito=true;terminar();td.innerHTML=antes;fim();};
       var salvar=async function(){
@@ -501,7 +535,7 @@ window.SagaPlanilha=(function(){
     var criar=criadorDeOpcao(c,p);
     await editarCelula(td,{c:c,v:bruto(p,c),texto:texto(p,c),opcoes:function(){return opcoesDe(c);},
       podeNova:(c.tipo==='opcao'&&!c.campo_sistema&&SagaPlanilha._gerenciar)||!!criar,criarOpcao:criar,
-      gravar:function(valor,cc){return gravar(p,cc||c,valor);},depois:redesenhar,fim:aposEditar});
+      gravar:function(valor,cc){return gravar(p,cc||c,valor);},depois:redesenhar,fim:aposEditar,causa:function(){return p.valor_causa;}});
   }
   // "+ Nova opção" nas colunas do sistema: cria no cadastro próprio (tipo de ação, área, situação, status) e já escolhe na célula
   function criadorDeOpcao(c,p){
@@ -616,6 +650,7 @@ window.SagaPlanilha=(function(){
       '.sp-th:hover,.sp-th.ativo{color:var(--gold-light)}.sp-funil{opacity:.7;font-size:10px}.sp-th:active{transform:scale(.97)}'+
       '.sp-tabela td{max-width:260px;overflow:hidden;text-overflow:ellipsis}.sp-tabela td.sp-editavel{cursor:cell}.sp-tabela td.sp-editavel:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 35%,transparent)}'+
       '.sp-tabela td.sp-salvando{opacity:.5}.sp-vazio{color:var(--muted)}.sp-link{color:var(--gold-light);text-decoration:underline}.sp-link-ficha{cursor:pointer}.sp-link-ficha:hover{text-decoration:underline}'+
+      '.sp-hon{display:flex;align-items:center;gap:4px;min-width:170px}.sp-hon .sp-editor{min-width:0;flex:1}.sp-hon-modo{flex:0 0 auto;height:28px;min-width:34px;padding:0 6px;border-radius:7px;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--text);font:inherit;font-size:11px;font-weight:600;cursor:pointer}.sp-hon-modo:hover{border-color:var(--gold)}.sp-hon-dica{flex:0 0 auto;font-size:10px;color:var(--muted);white-space:nowrap}'+
       '.sp-editor{width:100%;min-width:140px;background:var(--panel);color:var(--text);border:1px solid var(--gold);border-radius:7px;padding:6px 8px;font:inherit;font-size:12px}'+
       '.sp-menu{position:fixed;z-index:3000;background:var(--panel-solid,var(--panel));border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.35);padding:10px;max-height:min(480px,80vh);display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(16px)}'+
       '.sp-menu-tit{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:2px 4px 6px}'+
@@ -1112,7 +1147,7 @@ window.SagaPlanilha=(function(){
   }
   // ---------- caixas de edição da ficha (modo "lápis": editar vários campos e salvar de uma vez) ----------
   function mesmoValor(a,b){return JSON.stringify(a==null||a===''?null:a)===JSON.stringify(b==null||b===''?null:b);}
-  function controleCampo(c,v,textoAtual,ops,podeNova){
+  function controleCampo(c,v,textoAtual,ops,podeNova,causaFn){
     var campo,ler,bruto,definir,wrap=null,inpNova=null;
     if(ops){
       campo=document.createElement('select');
@@ -1132,6 +1167,9 @@ window.SagaPlanilha=(function(){
     }else if(c.tipo==='link'){
       campo=document.createElement('input');campo.type='url';campo.className='sp-editor';campo.placeholder='https://...';campo.value=Array.isArray(v)&&v[0]?v[0].url:'';
       ler=function(){var u=campo.value.trim();if(!u)return null;if(!/^https?:\/\//i.test(u))throw new Error('O link precisa começar com https://');var t=Array.isArray(v)&&v[0]&&v[0].texto&&v[0].texto!==v[0].url?v[0].texto:u;return [{url:u,texto:t}];};
+      bruto=function(){return campo.value;};definir=function(b){campo.value=b;};
+    }else if(ehHonorario(c)){
+      var hc=campoHonorario(v,causaFn);campo=hc.input;wrap=hc.wrap;ler=hc.ler;
       bruto=function(){return campo.value;};definir=function(b){campo.value=b;};
     }else{
       campo=document.createElement('input');campo.className='sp-editor';campo.type=c.tipo==='data'?'date':'text';
@@ -1244,7 +1282,7 @@ window.SagaPlanilha=(function(){
       var rasc=opts.rascunho||{};
       el.querySelectorAll('[data-sp-ficha]').forEach(function(td){
         var id=td.dataset.spFicha,f=campos[id];if(!f||td.innerHTML.trim()!=='')return;
-        var ctl=f.c?controleCampo(f.c,valorLinha(row,f.c),textoLinha(row,f.c,valorLinha(row,f.c)),opcoesFicha(f.c),f.c.tipo==='opcao'&&!f.c.campo_sistema&&cat.gerenciar):controleExtra(f.x);
+        var ctl=f.c?controleCampo(f.c,valorLinha(row,f.c),textoLinha(row,f.c,valorLinha(row,f.c)),opcoesFicha(f.c),f.c.tipo==='opcao'&&!f.c.campo_sistema&&cat.gerenciar,function(){return row.valor_causa;}):controleExtra(f.x);
         td.appendChild(ctl.campo);controles[id]=ctl;
         if(Object.prototype.hasOwnProperty.call(rasc,id))ctl.definir(rasc[id]);
       });

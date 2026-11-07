@@ -18,16 +18,26 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
 .page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
 .page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:72ch}
-.novas{display:flex;gap:8px;flex-wrap:wrap}
-.btn-nova{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:11px;font-size:12px;font-weight:700;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
-.btn-nova:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}.btn-nova:active{transform:scale(.96)}
-.btn-nova.principal{background:var(--gold);border-color:var(--gold);color:#fff}
+.novas{position:relative;display:flex}
+.btn-nova{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px 0 12px;border-radius:10px;font-size:12px;font-weight:600;letter-spacing:.2px;color:var(--text);border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 8%,var(--panel));transition:border-color .25s cubic-bezier(.22,.78,.25,1),background .25s cubic-bezier(.22,.78,.25,1),transform .2s cubic-bezier(.22,.78,.25,1)}
+.btn-nova:hover,.btn-nova[aria-expanded="true"]{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 15%,var(--panel))}.btn-nova:active{transform:scale(.97)}
+.btn-nova .mais{font-size:15px;font-weight:400;line-height:1;color:var(--gold-light,var(--gold))}.btn-nova .seta{font-size:8px;opacity:.6;margin-left:2px;transition:transform .25s cubic-bezier(.22,.78,.25,1)}.btn-nova[aria-expanded="true"] .seta{transform:rotate(180deg)}
+.menu-nova{position:absolute;right:0;top:calc(100% + 6px);z-index:60;width:272px;padding:5px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--panel));box-shadow:0 16px 38px rgba(0,0,0,.3);display:none;flex-direction:column;gap:1px;transform-origin:top right}
+.menu-nova.aberto{display:flex}
+.menu-nova button{display:grid;grid-template-columns:28px minmax(0,1fr);align-items:center;gap:2px 9px;width:100%;padding:7px 9px;border-radius:8px;text-align:left;color:var(--text);transition:background .2s cubic-bezier(.22,.78,.25,1)}
+.menu-nova button:hover,.menu-nova button:focus-visible{background:color-mix(in srgb,var(--gold) 11%,transparent);outline:0}
+.menu-nova .ic{grid-row:span 2;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold-light,var(--gold));background:color-mix(in srgb,var(--gold) 10%,transparent)}
+.menu-nova .ic svg{width:15px;height:15px}
+.menu-nova b{font-size:12px;font-weight:600}.menu-nova small{font-size:10.5px;color:var(--muted);line-height:1.3}
 .barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-.busca{flex:1 1 240px;min-width:200px;height:38px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel);padding:0 13px;font-size:12.5px;outline:0}
+.busca{flex:1 1 240px;min-width:200px;height:34px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:0 13px;font-size:12.5px;outline:0}
 .busca:focus{border-color:var(--gold)}
-.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);flex-wrap:wrap}
-.pill{height:30px;padding:0 13px;border-radius:8px;font-size:11.5px;font-weight:700;color:var(--muted)}
-.pill.active{background:var(--gold);color:#fff}
+.pills{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--border-soft);border-radius:10px;background:var(--panel);flex-wrap:wrap}
+.pill{height:28px;padding:0 11px;border-radius:8px;font-size:11px;font-weight:500;letter-spacing:.2px;color:var(--muted);transition:background .25s cubic-bezier(.22,.78,.25,1),color .25s cubic-bezier(.22,.78,.25,1)}
+.pill:hover{color:var(--text)}
+/* versão fina e discreta (pedido de 08/11); vence a regra geral do saga_tema.css só nesta tela */
+html body main.content .barra .pills button.pill.active{background:color-mix(in srgb,var(--gold) 16%,transparent)!important;color:var(--text)!important;font-weight:600;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 42%,transparent)!important}
+html body main.content .barra .pills button.pill.active svg{color:var(--text)!important}
 .etqs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .etq{height:26px;padding:0 11px;border-radius:13px;font-size:11px;font-weight:600;border:1px solid var(--border-soft);color:var(--muted);background:transparent;transition:border-color .15s,color .15s}
 .etq:hover{border-color:var(--gold);color:var(--text)}.etq.ativa{border-color:var(--gold);color:var(--gold-light);background:color-mix(in srgb,var(--gold) 12%,transparent)}
@@ -158,7 +168,7 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.grade{grid-template-columns:1fr}.acoes{opacity:1}
   /* Celular (06/11): cabeçalho compacto para as notas aparecerem logo */
   .page-head{margin-bottom:12px;gap:10px}.page-head p{display:none}
-  .novas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%}.novas .btn-nova{padding:9px 6px;font-size:12px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .novas{width:100%}.novas .btn-nova{width:100%;justify-content:center}.menu-nova{left:0;right:0;width:auto;transform-origin:top center}
   .barra{gap:8px;margin-bottom:10px}.barra .busca{flex:1 1 100%;min-width:0}
   .barra-opcoes{display:flex;gap:6px;width:100%;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}.barra-opcoes::-webkit-scrollbar{display:none}
   .barra-opcoes .pills{flex:0 0 auto;flex-wrap:nowrap}.barra-opcoes .pill{white-space:nowrap}
@@ -179,11 +189,14 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
       <p>Suas anotações pessoais, checklists, senhas, e-mails funcionais e telefones. Só você vê o que criou; você pode compartilhar uma nota com colegas (só ver ou também editar).</p>
     </div>
     <div class="novas">
-      <button class="btn-nova principal" type="button" data-nova="texto">+ Nota</button>
-      <button class="btn-nova" type="button" data-nova="lista" title="Lista de tarefas com caixinhas para marcar (ex.: coisas para fazer hoje)">☑ Checklist</button>
-      <button class="btn-nova" type="button" data-nova="senha">🔑 Senha / link</button>
-      <button class="btn-nova" type="button" data-nova="emails" title="E-mails funcionais da equipe e as senhas criadas">✉ E-mails funcionais</button>
-      <button class="btn-nova" type="button" data-nova="telefones" title="Números de telefone do escritório e a colaboradora responsável por cada um">☎ Telefones</button>
+      <button class="btn-nova" type="button" id="btnNova" aria-haspopup="menu" aria-expanded="false"><span class="mais">+</span>Nova nota<span class="seta">▼</span></button>
+      <div class="menu-nova" id="menuNova" role="menu">
+        <button type="button" role="menuitem" data-nova="texto"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h7l4 4v12H7z"/><path d="M14 4v4h4M9.5 12h5M9.5 15.5h5"/></svg></span><b>Nota</b><small>Texto livre, com formatação</small></button>
+        <button type="button" role="menuitem" data-nova="lista"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7l1.5 1.5L9 6M5 13l1.5 1.5L9 12M5 19l1.5 1.5L9 18"/><path d="M12 7.5h7M12 13.5h7M12 19.5h7"/></svg></span><b>Checklist</b><small>Lista com caixinhas para marcar</small></button>
+        <button type="button" role="menuitem" data-nova="senha"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="14" r="3.5"/><path d="M10.5 11.5L19 3M15.5 6.5l2.5 2.5M13.5 8.5l2 2"/></svg></span><b>Senha / link</b><small>Acessos de sites, com senha protegida</small></button>
+        <button type="button" role="menuitem" data-nova="emails"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/></svg></span><b>E-mails funcionais</b><small>E-mail e senha de cada colaboradora</small></button>
+        <button type="button" role="menuitem" data-nova="telefones"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h3l1.5 4-2 1.3a10 10 0 005.2 5.2l1.3-2 4 1.5v3a2 2 0 01-2 2A15 15 0 014.5 5.5a2 2 0 012-2z"/></svg></span><b>Telefones</b><small>Números e a responsável por cada um</small></button>
+      </div>
     </div>
   </div>
   <div class="barra">
@@ -460,7 +473,19 @@ $('quadro').addEventListener('click',async function(e){
   abrirNota(n);
 });
 $('quadro').addEventListener('keydown',function(e){if(e.key==='Enter'&&(e.target.classList.contains('nota')||e.target.classList.contains('nota-lin'))){e.target.click();}});
-document.querySelectorAll('[data-nova]').forEach(function(b){b.addEventListener('click',function(){abrirNota(null,b.dataset.nova);});});
+(function(){
+  var btn=$('btnNova'),menu=$('menuNova'),curva='cubic-bezier(.22,.78,.25,1)';
+  var semMov=function(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}};
+  function fechar(){if(!menu.classList.contains('aberto'))return;btn.setAttribute('aria-expanded','false');
+    if(menu.animate&&!semMov()){var a=menu.animate([{opacity:1,transform:'none'},{opacity:0,transform:'translateY(-4px) scale(.98)'}],{duration:180,easing:curva});a.onfinish=function(){menu.classList.remove('aberto');};}else menu.classList.remove('aberto');}
+  function abrir(){menu.classList.add('aberto');btn.setAttribute('aria-expanded','true');
+    if(menu.animate&&!semMov())menu.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:240,easing:curva});
+    var p=menu.querySelector('button');if(p)p.focus({preventScroll:true});}
+  btn.addEventListener('click',function(e){e.stopPropagation();if(menu.classList.contains('aberto')&&btn.getAttribute('aria-expanded')==='true')fechar();else abrir();});
+  menu.addEventListener('click',function(e){var b=e.target.closest('[data-nova]');if(!b)return;fechar();abrirNota(null,b.dataset.nova);});
+  document.addEventListener('mousedown',function(e){if(!e.target.closest('.novas'))fechar();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&btn.getAttribute('aria-expanded')==='true'){fechar();btn.focus();}});
+})();
 $('pillsFiltro').addEventListener('click',function(e){var b=e.target.closest('.pill');if(!b)return;S.filtro=b.dataset.f;document.querySelectorAll('#pillsFiltro .pill').forEach(function(p){p.classList.toggle('active',p===b);});desenhar();});
 function pintarPills(){
   document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.classList.toggle('active',b.dataset.v===S.visao);});
