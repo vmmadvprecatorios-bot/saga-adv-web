@@ -586,8 +586,9 @@ window.SagaPlanilha=(function(){
     ov.innerHTML='<div class="modal sp-modal" role="dialog" aria-modal="true" aria-label="Colunas da lista"><div class="modal-head"><h3>Colunas da lista</h3><button class="modal-close" type="button" data-fechar>×</button></div>'+
       '<div class="modal-body"><p class="sp-ajuda">Mesma ordem da planilha do escritório. Marque as colunas que quer ver; vale só para você.</p>'+
       '<div class="sp-col-acoes"><button type="button" class="btn-secondary" data-todas>Mostrar todas</button><button type="button" class="btn-secondary" data-poucas>Só as principais</button><button type="button" class="btn-secondary" data-larg title="Volta todas as colunas à largura automática">Larguras originais</button></div>'+
-      '<div class="sp-col-lista">'+cs.map(function(c){return '<label class="sp-item"><input type="checkbox" value="'+h(c.id)+'"'+(ocultas[c.id]?'':' checked')+(ocultavel(c)?'':' disabled')+'> <span>'+h(nomeCol(c))+'</span></label>';}).join('')+'</div>'+
-      (SagaPlanilha._gerenciar?'<p class="sp-ajuda">Criar, renomear ou remover colunas do escritório e as opções de cada uma: em breve aqui; por enquanto, peça ao Claude.</p>':'')+
+      '<div class="sp-col-lista">'+cs.map(function(c){var ger=SagaPlanilha._gerenciar;return '<div class="sp-item sp-item-col" data-col="'+h(c.id)+'"><label><input type="checkbox" value="'+h(c.id)+'"'+(ocultas[c.id]?'':' checked')+(ocultavel(c)?'':' disabled')+'> <span>'+h(nomeCol(c))+'</span></label>'+
+        (ger?'<span class="sp-col-ger"><button type="button" class="sp-ico" data-renomear="'+h(c.id)+'" title="Renomear coluna" aria-label="Renomear coluna">✎</button>'+(c.campo_sistema?'':'<button type="button" class="sp-ico" data-remover-col="'+h(c.id)+'" title="Remover coluna (os dados ficam guardados)" aria-label="Remover coluna">✕</button>')+'</span>':'')+'</div>';}).join('')+'</div>'+
+      (SagaPlanilha._gerenciar?gerenciarColunasHtml():'')+
       '</div><div class="modal-foot"><button type="button" class="btn-primary" data-ok>Aplicar</button></div></div>';
     document.body.appendChild(ov);
     var fechar=function(){ov.remove();};
@@ -597,6 +598,71 @@ window.SagaPlanilha=(function(){
     ov.querySelector('[data-todas]').onclick=function(){ov.querySelectorAll('.sp-col-lista input').forEach(function(i){i.checked=true;});};
     ov.querySelector('[data-poucas]').onclick=function(){ov.querySelectorAll('.sp-col-lista input').forEach(function(i){var c=cols.find(function(x){return x.id===i.value;});i.checked=!ocultavel(c)||PRINCIPAIS.indexOf(c.campo_sistema)!==-1||/status da peti|tipo de a|compet/i.test(norm(c.nome));});};
     ov.querySelector('[data-ok]').onclick=function(){ocultas={};ov.querySelectorAll('.sp-col-lista input').forEach(function(i){if(!i.checked)ocultas[i.value]=true;});Object.keys(filtros).forEach(function(k){if(ocultas[k])delete filtros[k];});fechar();aplicar();};
+    if(SagaPlanilha._gerenciar)ligarGerenciarColunas(ov,fechar);
+  }
+  /* ----- Criar, renomear, remover e restaurar colunas (administrador ou quem tem "gerenciar colunas") -----
+     Remover só desativa: os valores ficam guardados e a coluna pode voltar. Colunas do sistema (nome, CPF, status...) só se escondem. */
+  var TIPOS_COLUNA=[['texto','Texto'],['numero','Número'],['moeda','Valor em R$'],['porcentagem','Porcentagem'],['data','Data'],['sim_nao','Sim / Não'],['opcao','Lista de opções (menu)'],['usuario','Colaborador'],['link','Link']];
+  function gerenciarColunasHtml(){
+    var fase=FASE_FIXA==='captacao'?'Captação':'Jurídico';
+    var removidas=cols.filter(function(c){return !c.ativo&&!c.campo_sistema;}).sort(function(a,b){return String(a.nome).localeCompare(String(b.nome),'pt-BR');});
+    return '<div class="sp-nova-col"><div class="sp-nova-tit">+ Nova coluna</div>'+
+      '<div class="sp-nova-grade"><input type="text" class="sp-editor" data-nc-nome maxlength="80" placeholder="Nome da coluna">'+
+      '<select class="sp-editor" data-nc-tipo>'+TIPOS_COLUNA.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select>'+
+      '<select class="sp-editor" data-nc-escopo><option value="ambos">Jurídico e Captação</option><option value="'+(FASE_FIXA==='captacao'?'captacao':'juridico')+'">Só '+fase+'</option><option value="'+(FASE_FIXA==='captacao'?'juridico':'captacao')+'">Só '+(FASE_FIXA==='captacao'?'Jurídico':'Captação')+'</option></select></div>'+
+      '<textarea class="sp-editor" data-nc-opcoes rows="3" placeholder="Opções do menu, uma por linha" hidden></textarea>'+
+      '<div class="sp-nova-rod"><span class="sp-ajuda">A coluna nova aparece na planilha e em "Todos os dados" da ficha do cliente.</span><button type="button" class="btn-primary" data-nc-criar>Criar coluna</button></div></div>'+
+      (removidas.length?'<details class="sp-removidas"><summary>Colunas removidas ('+removidas.length+')</summary>'+removidas.map(function(c){return '<div class="sp-item sp-item-col"><span>'+h(c.nome)+'</span><button type="button" class="btn-secondary sp-btn" data-restaurar="'+h(c.id)+'">Restaurar</button></div>';}).join('')+'</details>':'');
+  }
+  function ligarGerenciarColunas(ov,fechar){
+    var tipo=ov.querySelector('[data-nc-tipo]'),ops=ov.querySelector('[data-nc-opcoes]');
+    tipo.onchange=function(){ops.hidden=tipo.value!=='opcao';};
+    var reabrir=async function(msg){await carregarColunas();fechar();aplicar();escolherColunas();if(msg)aviso(msg);};
+    ov.querySelector('[data-nc-criar]').onclick=async function(){
+      var nome=ov.querySelector('[data-nc-nome]').value.trim();
+      if(!nome){aviso('Escreva o nome da coluna.',true);ov.querySelector('[data-nc-nome]').focus();return;}
+      var lista=null;
+      if(tipo.value==='opcao'){lista=ops.value.split('\n').map(function(x){return x.trim();}).filter(Boolean).map(function(n){return {nome:n};});if(!lista.length){aviso('Escreva ao menos uma opção (uma por linha).',true);ops.focus();return;}}
+      this.disabled=true;
+      try{await rpcOk('lista_coluna_salvar',{p_id:null,p_nome:nome,p_tipo:tipo.value,p_escopo:ov.querySelector('[data-nc-escopo]').value,p_opcoes:lista,p_ativo:true});await reabrir('Coluna "'+h(nome)+'" criada.');}
+      catch(e){this.disabled=false;aviso(h(e.message||'Não foi possível criar.'),true);}
+    };
+    ov.querySelectorAll('[data-renomear]').forEach(function(b){b.onclick=function(){
+      var c=cols.find(function(x){return x.id===b.dataset.renomear;});if(!c)return;
+      var item=b.closest('.sp-item-col'),span=item.querySelector('label span');
+      var inp=document.createElement('input');inp.type='text';inp.className='sp-editor';inp.maxLength=80;inp.value=c.nome;span.replaceWith(inp);inp.focus();inp.select();
+      var feito=false;
+      var salvar=async function(){if(feito)return;feito=true;var n=inp.value.trim();
+        if(!n||n===c.nome){inp.replaceWith(span);return;}
+        try{await rpcOk('lista_coluna_salvar',{p_id:c.id,p_nome:n,p_tipo:null,p_escopo:null,p_opcoes:null,p_ativo:null});await reabrir('Coluna renomeada para "'+h(n)+'".');}
+        catch(e){aviso(h(e.message||'Não foi possível renomear.'),true);inp.replaceWith(span);}};
+      inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();salvar();}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();feito=true;inp.replaceWith(span);}});
+      inp.addEventListener('blur',function(){setTimeout(salvar,0);});
+    };});
+    ov.querySelectorAll('[data-remover-col]').forEach(function(b){b.onclick=async function(){
+      var c=cols.find(function(x){return x.id===b.dataset.removerCol;});if(!c)return;
+      var aqui=FASE_FIXA==='captacao'?'Captação':'Jurídico',outra=FASE_FIXA==='captacao'?'Jurídico':'Captação';
+      // pergunta na própria linha: só desta planilha ou das duas (os dados ficam guardados)
+      var item=b.closest('.sp-item-col'),ger=item.querySelector('.sp-col-ger');
+      var soAqui=await new Promise(function(res){
+        var q=document.createElement('span');q.className='sp-col-pergunta';
+        q.innerHTML=(c.escopo==='ambos'?'<button type="button" class="btn-secondary sp-btn" data-r="aqui">Só da '+aqui+'</button><button type="button" class="btn-secondary sp-btn sp-perigo perigo" data-r="tudo">Das duas</button>':'<button type="button" class="btn-secondary sp-btn sp-perigo perigo" data-r="tudo">Remover</button>')+'<button type="button" class="sp-ico" data-r="nao" title="Cancelar">↩</button>';
+        ger.hidden=true;item.classList.add('perguntando');item.appendChild(q);
+        q.addEventListener('click',function(e){var x=e.target.closest('[data-r]');if(!x)return;q.remove();ger.hidden=false;item.classList.remove('perguntando');res(x.dataset.r==='nao'?null:x.dataset.r==='aqui');});
+      });
+      if(soAqui===null)return;
+      try{
+        if(soAqui)await rpcOk('lista_coluna_salvar',{p_id:c.id,p_nome:c.nome,p_tipo:null,p_escopo:FASE_FIXA==='captacao'?'juridico':'captacao',p_opcoes:null,p_ativo:null});
+        else await rpcOk('lista_coluna_salvar',{p_id:c.id,p_nome:c.nome,p_tipo:null,p_escopo:null,p_opcoes:null,p_ativo:false});
+        delete filtros[c.id];
+        await reabrir('Coluna "'+h(c.nome)+'" removida'+(soAqui?' da '+aqui:'')+'.');
+      }catch(e){aviso(h(e.message||'Não foi possível remover.'),true);}
+    };});
+    ov.querySelectorAll('[data-restaurar]').forEach(function(b){b.onclick=async function(){
+      var c=cols.find(function(x){return x.id===b.dataset.restaurar;});if(!c)return;
+      try{await rpcOk('lista_coluna_salvar',{p_id:c.id,p_nome:c.nome,p_tipo:null,p_escopo:null,p_opcoes:null,p_ativo:true});await reabrir('Coluna "'+h(c.nome)+'" de volta.');}
+      catch(e){aviso(h(e.message||'Não foi possível restaurar.'),true);}
+    };});
   }
 
   // ---------- barra (protocolados, colunas, filtros ativos) ----------
@@ -673,7 +739,9 @@ window.SagaPlanilha=(function(){
       '#spAbas{margin:0 0 12px}.sp-abas{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border-soft);scrollbar-width:thin}.sp-aba{border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .25s}'+
       '.sp-aba{border-radius:9px}.sp-abas{padding-bottom:3px}.sp-aba:hover{color:var(--text)}.sp-aba.ativo{color:var(--gold-light);border-bottom-color:var(--gold)}.sp-aba:active{transform:scale(.97)}'+
       '.sp-org{margin-left:auto;font-size:11.5px;color:var(--gold-light);text-decoration:underline}.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
-      '.sp-modal{max-width:520px;width:94vw}.sp-col-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;max-height:52vh;overflow:auto;margin-top:8px}.sp-ajuda{font-size:11.5px;color:var(--muted);margin:0 0 8px}.sp-col-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
+      '.sp-item-col{display:flex;align-items:center;gap:6px;justify-content:space-between}.sp-item-col label{display:flex;align-items:center;gap:6px;min-width:0;flex:1}.sp-item-col label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-item-col .sp-editor{min-width:0}.sp-col-ger{display:flex;gap:2px;flex:0 0 auto;opacity:.55;transition:opacity .2s cubic-bezier(.22,.78,.25,1)}.sp-item-col:hover .sp-col-ger,.sp-item-col:focus-within .sp-col-ger{opacity:1}.sp-ico{width:24px;height:24px;border-radius:7px;border:1px solid transparent;background:none;color:var(--muted);font-size:11px;cursor:pointer}.sp-ico:hover{color:var(--text);border-color:var(--border-soft)}'+
+      '.sp-nova-col{margin-top:14px;padding:12px;border:1px solid var(--border-soft);border-radius:12px;display:flex;flex-direction:column;gap:8px}.sp-nova-tit{font-size:12px;font-weight:600}.sp-nova-grade{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr);gap:6px}.sp-nova-rod{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.sp-col-ger[hidden]{display:none}.sp-item-col.perguntando{grid-column:1/-1;background:color-mix(in srgb,var(--danger) 7%,transparent);border-radius:9px}.sp-col-pergunta{display:flex;gap:4px;flex:0 0 auto}.sp-col-pergunta .sp-btn{height:26px;padding:0 8px;font-size:11px}.sp-perigo{color:var(--danger)!important}.sp-removidas{margin-top:10px;font-size:12px}.sp-removidas summary{cursor:pointer;color:var(--muted)}.sp-removidas .sp-item-col{padding:5px 2px}@media(max-width:620px){.sp-nova-grade{grid-template-columns:1fr}}'+
+      '.sp-modal{max-width:620px;width:94vw}.sp-col-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px;max-height:52vh;overflow:auto;margin-top:8px}.sp-ajuda{font-size:11.5px;color:var(--muted);margin:0 0 8px}.sp-col-acoes{display:flex;gap:6px;flex-wrap:wrap}'+
       '#listaView .tabela-scroll{max-height:70vh;overflow:auto}'+
       '.sp-kb-por{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-kb-por select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:9px;padding:7px 9px;font:inherit;font-size:12px;max-width:230px}.sp-kb-por select:focus{border-color:var(--gold);outline:0}'+
       '.sp-kb-padrao{border:0;background:none;color:var(--gold-light);font:inherit;font-size:11.5px;text-decoration:underline;cursor:pointer}'+
