@@ -378,10 +378,21 @@
     el.animate([{opacity:0,transform:base+'scale(.9)',transformOrigin:origem},{opacity:1,offset:.45,transformOrigin:origem},{opacity:1,transform:base+'scale(1)',transformOrigin:origem}],{duration:320,easing:MOLA});
   }
   var paraConferir=new Set();
+  // paraConteudo: só o que de fato APARECEU (conteúdo novo desenhado, ou bloco que estava escondido e foi mostrado).
+  // Mudança de classe/estilo num bloco que já estava na tela não conta (clicar em "Filtrar" fazia o Kanban inteiro tremer).
+  var paraConteudo=new Set();
+  var CLASSE_MOSTRA=/(^|\s)(ativo|ativa|active|aberto|aberta|open|visivel|show)(\s|$)/;
   function anotarMudancas(lista){
     lista.forEach(function(m){
-      if(m.type==='attributes')paraConferir.add(m.target);
-      else m.addedNodes.forEach(function(n){if(n.nodeType===1){paraConferir.add(n);}});
+      if(m.type==='attributes'){
+        paraConferir.add(m.target);
+        var o=m.oldValue||'',t=m.target,apareceu=false;
+        if(m.attributeName==='style')apareceu=/display\s*:\s*none/.test(o)&&!/display\s*:\s*none/.test(t.getAttribute('style')||'');
+        else if(m.attributeName==='hidden')apareceu=m.oldValue!==null&&!t.hasAttribute('hidden');
+        else if(m.attributeName==='class')apareceu=!CLASSE_MOSTRA.test(o)&&CLASSE_MOSTRA.test(typeof t.className==='string'?t.className:'');
+        if(apareceu)paraConteudo.add(t);
+      }
+      else m.addedNodes.forEach(function(n){if(n.nodeType===1){paraConferir.add(n);paraConteudo.add(n);}});
     });
   }
   // (08/11) Troca de aba/modo (Kanban ↔ Lista, abas do Ponto, de Colaboradores, filtros...): o botão já deslizava,
@@ -419,7 +430,8 @@
   }
   function conferirJanelas(){
     var itens=Array.from(paraConferir);paraConferir.clear();
-    try{var prof=function(n){var d=0;while(n&&n.parentNode){d++;n=n.parentNode;}return d;};animarConteudo(itens.filter(function(n){return n&&n.nodeType===1;}).map(function(n){return [prof(n),n];}).sort(function(a,b){return a[0]-b[0];}).map(function(x){return x[1];}));}catch(e){}
+    var novos=Array.from(paraConteudo);paraConteudo.clear();
+    try{var prof=function(n){var d=0;while(n&&n.parentNode){d++;n=n.parentNode;}return d;};if(!(window.__sagaSemConteudoAte>Date.now()))animarConteudo(novos.filter(function(n){return n&&n.nodeType===1;}).map(function(n){return [prof(n),n];}).sort(function(a,b){return a[0]-b[0];}).map(function(x){return x[1];}));}catch(e){}
     itens.forEach(function(el){try{
       if(!el.isConnected||!ehJanela(el))return;
       var antes=visivelAntes.get(el),agora=estaVisivel(el);
@@ -483,7 +495,7 @@
     html.classList.remove('saga-carregando');
     try{
       conferirGrupos();registrarJanelas();
-      new MutationObserver(function(lista){try{verFechamentos(lista);}catch(e){}anotarMudancas(lista);agendarConferencia();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open']});
+      new MutationObserver(function(lista){try{verFechamentos(lista);}catch(e){}anotarMudancas(lista);agendarConferencia();}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeOldValue:true,attributeFilter:['class','style','hidden','open']});
     }catch(e){}
   }
   // Menus prontos: espera a tela terminar de buscar os dados (sem buscas por um instante) e mostra tudo de uma vez

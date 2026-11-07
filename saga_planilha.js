@@ -395,7 +395,8 @@ window.SagaPlanilha=(function(){
       fecharMenu();aplicar();
     };
     m.querySelector('.sp-busca').focus();
-    if(!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)m.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.2,1.4,.4,1)'});
+    // entrada do menu animada pelo saga_guard.js (animar aqui dobrava o efeito)
+    if(false)m.animate([{opacity:0,transform:'translateY(-6px) scale(.97)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.2,1.4,.4,1)'});
   }
   function ocultavel(c){return c.campo_sistema!=='pessoa.nome';}
   function processoNoEscopoSemPlanilha(p){var antes=pronta;pronta=false;try{return processoNoEscopo(p);}finally{pronta=antes;}}
@@ -905,7 +906,7 @@ window.SagaPlanilha=(function(){
     var fechar=function(){ov.remove();};
     ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('[data-fechar]'))fechar();});
     ov.addEventListener('keydown',function(e){if(e.key==='Escape')fechar();});
-    var m=ov.querySelector('.modal');if(!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)m.animate([{opacity:0,transform:'translateY(14px) scale(.97)'},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.2,1.3,.4,1)'});
+    var m=ov.querySelector('.modal');/* entrada da janela animada pelo saga_guard.js (animar aqui dobrava o efeito) */if(false)m.animate([{opacity:0,transform:'translateY(14px) scale(.97)'},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.2,1.3,.4,1)'});
     return {ov:ov,fechar:fechar,q:function(sel){return ov.querySelector(sel);}};
   }
   function lerTabela(txt){
@@ -1120,7 +1121,9 @@ window.SagaPlanilha=(function(){
         '<div class="coluna-corpo" data-status-id="'+h(g.e.status[0].id)+'">'+g.itens.sort(ordenar).map(cartao).join('')+'</div></div>';
     }).join('')+(fora.length?'<div class="coluna-kanban"><div class="coluna-cabecalho"><div class="coluna-titulo">Sem etapa</div><span class="coluna-contagem">'+fora.length+'</span></div><div class="coluna-corpo" data-status-id="'+h(etapas[0].status[0].id)+'">'+fora.map(cartao).join('')+'</div></div>':'')+'</div>';
     if(pode&&typeof ativarArrasteKanban==='function')ativarArrasteKanban(kv);
-    if(!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)kv.querySelectorAll('.coluna-kanban').forEach(function(c,i){c.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:i*45,easing:'cubic-bezier(.2,1.2,.4,1)',fill:'backwards'});});
+    // cascata das colunas só quando o funil aparece pela primeira vez (não a cada filtro ou redesenho: fazia o quadro tremer)
+    var entraFunil=!kv.__funilJaMostrado;kv.__funilJaMostrado=true;
+    if(entraFunil&&!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)kv.querySelectorAll('.coluna-kanban').forEach(function(c,i){c.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:i*45,easing:'cubic-bezier(.2,1.2,.4,1)',fill:'backwards'});});
     return true;
   }
 
@@ -1222,7 +1225,9 @@ window.SagaPlanilha=(function(){
     kv.querySelectorAll('[data-kb-tira]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var x=b.dataset.kbTira.split('|');delete lerKb().filtros[x[0]][x[1]];guardarKb();renderKanban();};});
     kv.querySelectorAll('[data-kb-limpar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();delete lerKb().filtros[b.dataset.kbLimpar];guardarKb();renderKanban();};});
     if(state.permissoes.editar===true&&podeSoltar(c)&&typeof ativarArrasteKanban==='function')ativarArrasteKanban(kv);
-    if(!(window.sagaMq?sagaMq():{matches:false}).matches)kv.querySelectorAll('.coluna-kanban').forEach(function(col,i){if(col.animate)col.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:Math.min(i,10)*40,easing:'cubic-bezier(.22,.78,.25,1)',fill:'backwards'});});
+    // cascata das colunas só quando a organização muda (não a cada filtro ou redesenho: fazia o quadro tremer)
+    var orgNova=kv.__orgMostrada!==c.id;kv.__orgMostrada=c.id;
+    if(orgNova&&!(window.sagaMq?sagaMq():{matches:false}).matches)kv.querySelectorAll('.coluna-kanban').forEach(function(col,i){if(col.animate)col.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],{duration:320,delay:Math.min(i,10)*40,easing:'cubic-bezier(.22,.78,.25,1)',fill:'backwards'});});
     return true;
   }
   // soltar um cartão em outra coluna muda aquele dado do processo (só listas de opções e Sim/Não)
@@ -1247,6 +1252,14 @@ window.SagaPlanilha=(function(){
     if(!movido)renderKanban();
   }
   // filtro de uma coluna do Kanban: escolhe a coluna da planilha e os valores (soma com os outros filtros da coluna)
+  // Filtro de uma coluna do Kanban: redesenha, mas só os cartões dessa coluna entram suaves (o resto do quadro fica parado)
+  function redesenharSoColuna(k){
+    window.__sagaSemConteudoAte=Date.now()+600;
+    renderKanban();
+    var corpo=document.querySelector('[data-sp-grupo="'+(window.CSS&&CSS.escape?CSS.escape(k):k)+'"]');
+    var calmo=(window.sagaMq?sagaMq():{matches:false}).matches;
+    if(corpo&&!calmo&&corpo.animate)corpo.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:260,easing:'cubic-bezier(.22,.78,.25,1)'});
+  }
   function menuFiltroGrupo(ancora,k,cPor){
     fecharMenu();
     var itens=(state.processos||[]).filter(function(p){return chaveGrupo(p,cPor)===k;});
@@ -1260,12 +1273,12 @@ window.SagaPlanilha=(function(){
         '<div class="sp-lista">'+Object.keys(vals).sort(function(a,b){return vals[a].t.localeCompare(vals[b].t,'pt-BR',{numeric:true});}).map(function(v){return '<label class="sp-item"><input type="checkbox" value="'+h(v)+'"'+(atuais.indexOf(v)>=0?' checked':'')+'><span>'+h(exibir(sel,vals[v].t))+'</span><em>'+vals[v].n+'</em></label>';}).join('')+'</div>'+
         '<div class="sp-menu-acoes"><button type="button" class="btn-secondary" data-x="limpar">Limpar</button><button type="button" class="btn-primary" data-x="ok">Aplicar</button></div>';
       m.querySelector('#spKbCol').onchange=function(){sel=cs.find(function(c){return c.id===this.value;}.bind(this));desenhar();};
-      m.querySelector('[data-x="limpar"]').onclick=function(){if(lerKb().filtros[k])delete lerKb().filtros[k][sel.id];guardarKb();fecharMenu();renderKanban();};
-      m.querySelector('[data-x="ok"]').onclick=function(){var v=Array.prototype.map.call(m.querySelectorAll('.sp-lista input:checked'),function(i){return i.value;});var fk=lerKb().filtros[k]=lerKb().filtros[k]||{};if(v.length)fk[sel.id]=v;else delete fk[sel.id];guardarKb();fecharMenu();renderKanban();};
+      m.querySelector('[data-x="limpar"]').onclick=function(){if(lerKb().filtros[k])delete lerKb().filtros[k][sel.id];guardarKb();fecharMenu();redesenharSoColuna(k);};
+      m.querySelector('[data-x="ok"]').onclick=function(){var v=Array.prototype.map.call(m.querySelectorAll('.sp-lista input:checked'),function(i){return i.value;});var fk=lerKb().filtros[k]=lerKb().filtros[k]||{};if(v.length)fk[sel.id]=v;else delete fk[sel.id];guardarKb();fecharMenu();redesenharSoColuna(k);};
     };
     desenhar();
     document.body.appendChild(m);menuAberto=m;
-    var r=ancora.getBoundingClientRect();m.style.top=Math.min(r.bottom+6,window.innerHeight-m.offsetHeight-8)+'px';m.style.left=Math.max(8,Math.min(r.right-290,window.innerWidth-298))+'px';
+    var r=ancora.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.right-290,window.innerWidth-298))+'px';caberNaTela(m,r);
     // a entrada do menu é animada pelo saga_guard.js (animar aqui também dobrava o efeito)
   }
 
