@@ -203,6 +203,17 @@ tr.apagado td{color:var(--muted)}
   #relCorpo tr[data-rel-ir]:hover td{background:var(--panel-2)}
   td.alerta{color:#e5484d;font-weight:700}
   .pr-atalhos{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .bx-tipos{margin-bottom:12px}.bx-painel{max-width:900px;display:flex;flex-direction:column;gap:18px}
+  .bx-tit{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .bx-tit>span:first-child{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--gold);color:var(--navy-1);font-size:11px;letter-spacing:0}
+  html[data-cor="grafite"] body[data-theme="dark"] .bx-tit>span:first-child{color:#1A1A1A}
+  .bx-mais{margin-left:auto;text-transform:none;letter-spacing:0;font-weight:500}
+  .bx-pessoas{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 14px}
+  .bx-pessoas label{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 2px;cursor:pointer}.bx-pessoas input,#aba-pdf input[type=radio]{width:15px;height:15px;flex:0 0 auto;accent-color:var(--gold)}
+  .bx-pessoas small{color:var(--muted);font-size:11px}
+  .bx-datas{margin-top:10px;max-width:460px}
+  .pr-atalhos .btn-sm.ativo{border-color:var(--gold);color:var(--gold-light)}
+  .bx-rodape{display:flex;align-items:center;justify-content:flex-end;gap:14px;flex-wrap:wrap;border-top:1px solid var(--border-soft);padding-top:14px}.bx-rodape .sub{margin-right:auto}
   .pr-pessoas{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:4px}.campo .pr-pessoas label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text);margin:0;cursor:pointer}
   .campo .pr-pessoas input,.pr-item input{width:15px;height:15px;min-height:0;flex:0 0 auto;padding:0;margin:0;accent-color:var(--gold)}
   .pr-topo{display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;font-size:12.5px}
@@ -238,6 +249,7 @@ tr.apagado td{color:var(--muted)}
     <button class="tab-btn" data-aba="equipe" id="abaEquipeBtn" style="display:none">Equipe <span class="qtd" id="qtdPend" style="display:none">0</span></button>
     <button class="tab-btn" data-aba="banco" id="abaBancoBtn" style="display:none">Banco de horas</button>
     <button class="tab-btn" data-aba="rel" id="abaRelBtn" style="display:none">Relatórios</button>
+    <button class="tab-btn" data-aba="pdf" id="abaPdfBtn" style="display:none">Baixar PDF</button>
     <button class="tab-btn" data-aba="cadastro" id="abaCadastroBtn" style="display:none">Cadastro</button>
   </div>
 
@@ -362,6 +374,30 @@ tr.apagado td{color:var(--muted)}
     <p class="sub no-print" style="margin-top:12px;max-width:900px">Conta como atividade tudo o que a pessoa fez: batidas do ponto, atividades registradas à mão (WhatsApp, ligação, e-mail…) e o que ela fez dentro do SAGA (tarefas, comentários, agenda, clientes, documentos, processos, financeiro, marketing e mensagens do chat, só a quantidade). Intervalo sem atividade é o tempo entre duas atividades dentro do expediente (as pausas do ponto não contam); acima do limite definido em Cadastro aparece em vermelho. Clientes atendidos são os clientes diferentes ligados às atividades do período. Só o administrador geral vê esta aba.</p>
   </section>
 
+  <!-- BAIXAR PDF (administrador ou quem tem a permissao ponto.exportar_pdf) -->
+  <section class="tab-pane" id="aba-pdf">
+    <div class="pills bx-tipos" id="bxTipo"><button class="pill" data-bx="ponto" type="button">Folha de ponto</button><button class="pill" data-bx="rel" type="button">Relatórios de atividades</button></div>
+    <div class="panel bx-painel">
+      <div class="bx-bloco">
+        <div class="bx-tit"><span>1</span> Quem <span class="bx-mais"><button class="lnk" type="button" id="bxTodos">todos</button> · <button class="lnk" type="button" id="bxNenhum">nenhum</button></span></div>
+        <div class="bx-pessoas" id="bxPessoas"></div>
+      </div>
+      <div class="bx-bloco">
+        <div class="bx-tit"><span>2</span> Período</div>
+        <div class="pr-atalhos" id="bxAtalhos"></div>
+        <div class="grid2 bx-datas" id="bxMeses"><div class="campo"><label>Do mês</label><input id="bxMesIni" type="month"></div><div class="campo"><label>Até o mês</label><input id="bxMesFim" type="month"></div></div>
+        <div class="grid2 bx-datas" id="bxDias" style="display:none"><div class="campo"><label>De</label><input id="bxIni" type="date"></div><div class="campo"><label>Até</label><input id="bxFim" type="date"></div></div>
+      </div>
+      <div class="bx-bloco" id="bxOpcRel" style="display:none">
+        <div class="bx-tit"><span>3</span> O que vai no PDF</div>
+        <label class="chk"><input type="radio" name="bxConteudo" value="metricas" checked> Resumo e métricas: totais do período, mês a mês, atividades por tipo e o dia a dia em tabela</label>
+        <label class="chk"><input type="radio" name="bxConteudo" value="completo"> Tudo isso e mais o relatório completo de cada dia (linha do tempo), um por página</label>
+      </div>
+      <div class="bx-rodape"><span class="sub" id="bxInfo"></span><button class="btn-primary" id="bxBaixar" type="button">Baixar PDF</button></div>
+    </div>
+    <p class="sub" style="margin-top:12px;max-width:900px">A folha de ponto sai com uma página por colaborador e por mês, na ordem das pessoas. Os relatórios trazem, para cada pessoa, os totais do período, a tabela mês a mês (para comparar a produção), as atividades por tipo e o dia a dia; com mais de uma pessoa, a primeira página compara a equipe. Para baixar, o navegador abre a janela de impressão: escolha "Salvar como PDF". Esta aba aparece para o administrador e para quem tiver a permissão "Baixar PDF do ponto" no Painel de Permissões.</p>
+  </section>
+
   <!-- CADASTRO (gestor) -->
   <section class="tab-pane" id="aba-cadastro">
     <div class="toolbar"><div class="secao-titulo" style="margin:0">Colaboradores no ponto</div><button class="btn-primary btn-sm" id="cadIncluir" type="button" style="margin-left:auto">+ Incluir colaborador</button></div>
@@ -438,7 +474,7 @@ tr.apagado td{color:var(--muted)}
       <div class="sub" id="relObsInfo" style="margin-top:-4px"></div>
     </div>
   </div>
-  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalRel" type="button">Fechar</button><button class="btn-primary" id="relSalvar" type="button">Salvar observações</button></div>
+  <div class="modal-foot"><button class="btn-secondary" id="relPdf" type="button" style="margin-right:auto" disabled>Salvar este relatório em PDF</button><button class="btn-secondary" data-fechar="modalRel" type="button">Fechar</button><button class="btn-primary" id="relSalvar" type="button">Salvar observações</button></div>
 </div></div>
 
 <!-- Mes de um colaborador (gestor) -->
@@ -822,7 +858,8 @@ async function abrirRelatorio(key,colab,podeEditar){
   document.getElementById('relSalvar').style.display=podeEditar?'':'none';
   document.getElementById('relNovaWrap').style.display=podeEditar&&key===state.hoje?'':'none';
   abrirModal('modalRel');
-  var verTudo=proprio||state.pode.admin;
+  var bPdf=document.getElementById('relPdf');bPdf.disabled=true;state.relAtual=null;
+  var verTudo=proprio||state.pode.admin||state.pode.exporta;
   var res=await Promise.all([
     _sb.from('ponto_dias').select('relatorio,relatorio_em').eq('colaborador_id',colab.id).eq('data',key).maybeSingle(),
     verTudo&&colab.usuario_id?_sb.rpc('relatorio_atividades',{p_usuario:colab.usuario_id,p_ini:key,p_fim:key}):Promise.resolve({data:null})
@@ -841,6 +878,7 @@ async function abrirRelatorio(key,colab,podeEditar){
     ['Atividades',String(a.nAtiv)],['Clientes atendidos',String(a.nCli)],['Maior intervalo',a.maior?duracaoTxt(a.maior):'—',a.maior>limite]];
   document.getElementById('relResumo').innerHTML=chips.map(function(c){return '<span class="chip'+(c[2]?' alerta':'')+'">'+esc(c[0])+'<b>'+esc(c[1])+'</b></span>';}).join('');
   document.getElementById('relLinha').innerHTML=htmlLinhaTempo(ev,a.gaps).replace('Nenhuma atividade ainda.','Nenhuma atividade registrada neste dia.');
+  state.relAtual={key:key,colab:colab,ev:ev,obs:dia.relatorio||'',limite:limite};bPdf.disabled=false;
 }
 function infoObs(quando,podeEditar){
   var txt=quando?'Salva em '+dataBR(dataLocalDe(quando))+' às '+horaDe(quando)+'. ':'';
@@ -2019,6 +2057,132 @@ function ligarEscolherRel(){
     document.getElementById('prIni').value=ini;document.getElementById('prFim').value=fim;listarRelEscolha();});});
   document.getElementById('prSalvar').addEventListener('click',pdfRelEscolhidos);
 }
+/* ===== Aba "Baixar PDF": ponto e relatórios de várias pessoas e vários meses de uma vez ===== */
+function bxTipo(){return state.bx&&state.bx.tipo||'ponto';}
+function mesesEntre(ki,kf){var l=[],k=ki;while(k<=kf&&l.length<60){l.push(k);k=mesSeguinte(k);}return l;}
+function bxAtalhos(){
+  var h=state.hoje,mes=h.slice(0,7),ant=mesAnterior(mes);
+  var ultimos=function(n){var k=mes;for(var i=1;i<n;i++)k=mesAnterior(k);return k;};
+  var ano=h.slice(0,4);
+  var l=bxTipo()==='ponto'?
+    [['Este mês',mes,mes],['Mês passado',ant,ant],['Últimos 3 meses',ultimos(3),mes],['Últimos 6 meses',ultimos(6),mes],['Este ano',ano+'-01',mes],['Ano passado',(ano-1)+'-01',(ano-1)+'-12']]:
+    [['Este mês',mes,mes],['Mês passado',ant,ant],['Últimos 2 meses',ultimos(2),mes],['Últimos 3 meses',ultimos(3),mes],['Últimos 4 meses',ultimos(4),mes],['Últimos 6 meses',ultimos(6),mes],['Este ano',ano+'-01',mes]];
+  return l;
+}
+function prepararBaixar(){
+  state.bx={tipo:'ponto'};
+  document.querySelectorAll('#bxTipo [data-bx]').forEach(function(b){b.addEventListener('click',function(){state.bx.tipo=b.dataset.bx;montarBaixar();});});
+  document.getElementById('bxTodos').addEventListener('click',function(){document.querySelectorAll('#bxPessoas input').forEach(function(i){i.checked=true;});infoBaixar();});
+  document.getElementById('bxNenhum').addEventListener('click',function(){document.querySelectorAll('#bxPessoas input').forEach(function(i){i.checked=false;});infoBaixar();});
+  document.getElementById('bxPessoas').addEventListener('change',infoBaixar);
+  ['bxMesIni','bxMesFim','bxIni','bxFim'].forEach(function(id){document.getElementById(id).addEventListener('change',function(){marcarAtalho();infoBaixar();});});
+  document.getElementById('bxAtalhos').addEventListener('click',function(e){
+    var b=e.target.closest('[data-ini]');if(!b)return;var ini=b.dataset.ini,fim=b.dataset.fim;
+    document.getElementById('bxMesIni').value=ini;document.getElementById('bxMesFim').value=fim;
+    document.getElementById('bxIni').value=ini+'-01';var f=fimKeyDe(fim);document.getElementById('bxFim').value=f>state.hoje?state.hoje:f;
+    marcarAtalho();infoBaixar();
+  });
+  document.querySelectorAll('input[name="bxConteudo"]').forEach(function(r){r.addEventListener('change',infoBaixar);});
+  document.getElementById('bxBaixar').addEventListener('click',function(){if(bxTipo()==='ponto')baixarPontos(this);else baixarRelatorios(this);});
+  var mes=state.hoje.slice(0,7);document.getElementById('bxMesIni').value=mes;document.getElementById('bxMesFim').value=mes;
+  document.getElementById('bxIni').value=mes+'-01';document.getElementById('bxFim').value=state.hoje;
+}
+function bxPessoasLista(){return state.colabs.filter(function(c){return c.temConta;});}
+function montarBaixar(){
+  var t=bxTipo();
+  document.querySelectorAll('#bxTipo [data-bx]').forEach(function(b){var a=b.dataset.bx===t;b.classList.toggle('active',a);b.style.background=a?'var(--gold)':'';b.style.borderColor=a?'var(--gold)':'';b.style.color=a?'var(--navy-1)':'';});
+  var marc={};document.querySelectorAll('#bxPessoas input').forEach(function(i){marc[i.value]=i.checked;});var primeira=!document.querySelector('#bxPessoas input');
+  document.getElementById('bxPessoas').innerHTML=bxPessoasLista().map(function(c){var on=primeira||marc[c.id]!==false;
+    return '<label><input type="checkbox" value="'+c.id+'"'+(on?' checked':'')+'> <span>'+esc(c.nome)+(c.demissao?' <small>(desligado em '+dataBR(c.demissao)+')</small>':'')+'</span></label>';}).join('')||'<div class="sub">Nenhum colaborador com conta no ponto.</div>';
+  document.getElementById('bxAtalhos').innerHTML=bxAtalhos().map(function(a){return '<button class="btn-secondary btn-sm" type="button" data-ini="'+a[1]+'" data-fim="'+a[2]+'">'+a[0]+'</button>';}).join('');
+  document.getElementById('bxMeses').style.display=t==='ponto'?'':'none';
+  document.getElementById('bxDias').style.display=t==='rel'?'':'none';
+  document.getElementById('bxOpcRel').style.display=t==='rel'?'':'none';
+  document.getElementById('bxBaixar').textContent=t==='ponto'?'Baixar folha de ponto (PDF)':'Baixar relatórios (PDF)';
+  marcarAtalho();infoBaixar();
+}
+function bxPeriodo(){
+  if(bxTipo()==='ponto'){var a=document.getElementById('bxMesIni').value,b=document.getElementById('bxMesFim').value;return {ini:a,fim:b,ok:!!a&&!!b&&a<=b};}
+  var i=document.getElementById('bxIni').value,f=document.getElementById('bxFim').value;return {ini:i,fim:f,ok:!!i&&!!f&&i<=f};
+}
+function marcarAtalho(){
+  var p=bxPeriodo(),t=bxTipo();
+  document.querySelectorAll('#bxAtalhos [data-ini]').forEach(function(b){var ff=fimKeyDe(b.dataset.fim);if(ff>state.hoje)ff=state.hoje;
+    var on=t==='ponto'?(p.ini===b.dataset.ini&&p.fim===b.dataset.fim):(p.ini===b.dataset.ini+'-01'&&p.fim===ff);b.classList.toggle('ativo',on);});
+}
+function bxEscolhidos(){var ids={};document.querySelectorAll('#bxPessoas input:checked').forEach(function(i){ids[i.value]=1;});return bxPessoasLista().filter(function(c){return ids[c.id];});}
+function ativoNoMes(c,k){var ini=k+'-01',fim=fimKeyDe(k);return (!c.admissao||c.admissao<=fim)&&(!c.demissao||c.demissao>=ini);}
+function infoBaixar(){
+  var p=bxPeriodo(),pes=bxEscolhidos(),el=document.getElementById('bxInfo'),btn=document.getElementById('bxBaixar');
+  if(!pes.length){el.textContent='Marque pelo menos uma pessoa.';btn.disabled=true;return;}
+  if(!p.ok){el.textContent='Escolha um período válido (o início antes do fim).';btn.disabled=true;return;}
+  if(bxTipo()==='ponto'){
+    var meses=mesesEntre(p.ini,p.fim).filter(function(k){return k<=state.hoje.slice(0,7);});
+    if(meses.length>24){el.textContent='Escolha no máximo 24 meses de cada vez.';btn.disabled=true;return;}
+    var n=0;pes.forEach(function(c){meses.forEach(function(k){if(ativoNoMes(c,k))n++;});});
+    el.textContent=pes.length+' pessoa'+(pes.length>1?'s':'')+' × '+meses.length+(meses.length>1?' meses':' mês')+' = '+n+' folha'+(n===1?'':'s')+' (uma página cada)';btn.disabled=!n;
+  }else{
+    var dias=diasDoPeriodo(p.ini,p.fim).length;
+    if(dias>370){el.textContent='Escolha no máximo 1 ano de cada vez.';btn.disabled=true;return;}
+    el.textContent=pes.length+' pessoa'+(pes.length>1?'s':'')+' · '+dias+' dia'+(dias>1?'s':'')+' ('+dataBR(p.ini)+' a '+dataBR(p.fim)+')';btn.disabled=false;
+  }
+}
+function nomePeriodoMeses(ki,kf){var a=partesMes(ki),b=partesMes(kf);if(ki===kf)return NOMES_MES[a.m-1]+' de '+a.a;if(a.a===b.a)return NOMES_MES[a.m-1]+' a '+NOMES_MES[b.m-1]+' de '+b.a;return NOMES_MES[a.m-1]+' de '+a.a+' a '+NOMES_MES[b.m-1]+' de '+b.a;}
+async function bxOcupado(btn,fn){var t=btn.textContent;btn.disabled=true;btn.textContent='Montando o PDF…';try{await fn(function(msg){btn.textContent=msg;});}catch(e){showToast('Erro ao montar o PDF: '+esc(e.message||''),'error');}finally{btn.disabled=false;btn.textContent=t;}}
+function baixarPontos(btn){
+  var p=bxPeriodo(),pes=bxEscolhidos(),meses=mesesEntre(p.ini,p.fim).filter(function(k){return k<=state.hoje.slice(0,7);});
+  bxOcupado(btn,async function(av){
+    var paginas=[],feitos=0,total=0;pes.forEach(function(c){meses.forEach(function(k){if(ativoNoMes(c,k))total++;});});
+    for(var i=0;i<pes.length;i++){var c=pes[i],ks=meses.filter(function(k){return ativoNoMes(c,k);});
+      var calcs=await Promise.all(ks.map(function(k){var q=partesMes(k);return dadosMes(c,q.a,q.m);}));
+      ks.forEach(function(k,j){var q=partesMes(k);paginas.push('<div class="compacta">'+folhaPontoHtml(c,calcs[j],q.a,q.m)+'</div>');});
+      feitos+=ks.length;av('Montando '+feitos+' de '+total+'…');}
+    if(!paginas.length){showToast('Nenhuma folha no período escolhido.','error');return;}
+    var per=nomePeriodoMeses(meses[0],meses[meses.length-1]);
+    SagaPdf.imprimir({titulo:'Folha de ponto',subtitulo:per,paisagem:true,arquivo:'Folha de ponto - '+(pes.length===1?pes[0].nome:'equipe')+' - '+per,paginas:paginas});
+  });
+}
+function bxTotais(d,dias){
+  var t={dias:0,trab:0,nAtiv:0,gaps:0,maior:0,cli:{},tipos:{}};
+  dias.forEach(function(k){var a=d.an[k];if(a.temPonto)t.dias++;t.trab+=a.trab;t.nAtiv+=a.nAtiv;t.gaps+=a.gaps.length;if(a.maior>t.maior)t.maior=a.maior;Object.keys(a.clientes).forEach(function(x){t.cli[x]=1;});
+    (d.porDia[k]||[]).forEach(function(e){if(e.origem!=='Ponto')t.tipos[e.origem]=(t.tipos[e.origem]||0)+1;});});
+  t.nCli=Object.keys(t.cli).length;return t;
+}
+function baixarRelatorios(btn){
+  var p=bxPeriodo(),pes=bxEscolhidos().filter(function(c){return c.usuario_id;}),completo=document.querySelector('input[name="bxConteudo"]:checked').value==='completo';
+  bxOcupado(btn,async function(av){
+    var L=state.cfg.intervalo_alerta_min||30,E=SagaPdf.esc,hh=function(x){return x?PC.hhmm(x):'—';},paginas=[],todos=[];
+    var media=function(t){return t.dias?(t.nAtiv/t.dias).toFixed(1).replace('.',','):'—';};
+    for(var i=0;i<pes.length;i++){av('Lendo '+(i+1)+' de '+pes.length+'…');var carga=await carregarDadosRel([pes[i]],p.ini,p.fim,L);todos.push(carga);}
+    var titulo=dataBR(p.ini)+' a '+dataBR(p.fim);
+    if(todos.length>1){
+      paginas.push('<div class="secao" style="margin-top:0">Comparativo da equipe · '+E(titulo)+'</div><table class="tab"><thead><tr><th>Colaborador</th><th class="num">Dias com ponto</th><th class="num">Trabalhadas</th><th class="num">Média de horas/dia</th><th class="num">Atividades</th><th class="num">Atividades/dia</th><th class="num">Clientes</th><th class="num">Intervalos acima de '+L+' min</th></tr></thead><tbody>'+
+        todos.map(function(cg){var d=cg.dados[0],t=bxTotais(d,cg.dias);return '<tr><td><b>'+E(d.c.nome)+'</b></td><td class="num">'+t.dias+'</td><td class="num">'+hh(t.trab)+'</td><td class="num">'+(t.dias?PC.hhmm(t.trab/t.dias):'—')+'</td><td class="num">'+t.nAtiv+'</td><td class="num">'+media(t)+'</td><td class="num">'+t.nCli+'</td><td class="num'+(t.gaps?' alerta':'')+'">'+t.gaps+'</td></tr>';}).join('')+'</tbody></table>');
+    }
+    todos.forEach(function(cg){
+      var d=cg.dados[0],t=bxTotais(d,cg.dias);
+      var h='<div class="pessoa"><h2>'+E(d.c.nome)+'</h2><div class="info">'+E(titulo)+[d.c.cargo,d.c.regime].filter(Boolean).map(function(x){return ' · '+E(x);}).join('')+'</div></div>'+
+        '<div class="kpis"><div><span>Dias com ponto</span><b>'+t.dias+'</b></div><div><span>Trabalhadas</span><b>'+hh(t.trab)+'</b></div><div><span>Média de horas/dia</span><b>'+(t.dias?PC.hhmm(t.trab/t.dias):'—')+'</b></div><div><span>Atividades</span><b>'+t.nAtiv+'</b></div><div><span>Atividades/dia</span><b>'+media(t)+'</b></div><div><span>Clientes atendidos</span><b>'+t.nCli+'</b></div><div><span>Intervalos acima de '+L+' min</span><b'+(t.gaps?' class="alerta"':'')+'>'+t.gaps+'</b></div></div>';
+      // mês a mês
+      var porMes={};cg.dias.forEach(function(k){(porMes[k.slice(0,7)]=porMes[k.slice(0,7)]||[]).push(k);});
+      var ms=Object.keys(porMes).sort();
+      h+='<div class="secao">Mês a mês</div><table class="tab"><thead><tr><th>Mês</th><th class="num">Dias com ponto</th><th class="num">Trabalhadas</th><th class="num">Média de horas/dia</th><th class="num">Atividades</th><th class="num">Atividades/dia</th><th class="num">Clientes</th><th class="num">Intervalos acima</th></tr></thead><tbody>'+
+        ms.map(function(k){var tm=bxTotais(d,porMes[k]),q=partesMes(k);return '<tr><td><b>'+NOMES_MES[q.m-1]+' de '+q.a+'</b></td><td class="num">'+tm.dias+'</td><td class="num">'+hh(tm.trab)+'</td><td class="num">'+(tm.dias?PC.hhmm(tm.trab/tm.dias):'—')+'</td><td class="num">'+tm.nAtiv+'</td><td class="num">'+media(tm)+'</td><td class="num">'+tm.nCli+'</td><td class="num'+(tm.gaps?' alerta':'')+'">'+tm.gaps+'</td></tr>';}).join('')+
+        (ms.length>1?'<tr class="total"><td>Total</td><td class="num">'+t.dias+'</td><td class="num">'+hh(t.trab)+'</td><td class="num">'+(t.dias?PC.hhmm(t.trab/t.dias):'—')+'</td><td class="num">'+t.nAtiv+'</td><td class="num">'+media(t)+'</td><td class="num">'+t.nCli+'</td><td class="num">'+t.gaps+'</td></tr>':'')+'</tbody></table>';
+      // atividades por tipo
+      var tipos=Object.keys(t.tipos).sort(function(x,y){return t.tipos[y]-t.tipos[x];});
+      h+='<div class="secao">Atividades por tipo</div>'+(tipos.length?'<table class="tab" style="max-width:420px"><thead><tr><th>Tipo</th><th class="num">Quantidade</th><th class="num">% do total</th></tr></thead><tbody>'+
+        tipos.map(function(x){return '<tr><td>'+E(x)+'</td><td class="num">'+t.tipos[x]+'</td><td class="num">'+(100*t.tipos[x]/t.nAtiv).toFixed(1).replace('.',',')+'%</td></tr>';}).join('')+'</tbody></table>':'<div class="nada">Nenhuma atividade no período.</div>');
+      paginas.push(h);
+      // dia a dia
+      var lin=cg.dias.filter(function(k){var a=d.an[k];return a.temPonto||a.nAtiv||cg.obs[d.c.id+'|'+k];});
+      paginas.push('<div class="pessoa"><h2>'+E(d.c.nome)+'</h2><div class="info">Dia a dia · '+E(titulo)+'</div></div>'+(lin.length?'<table class="tab"><thead><tr><th>Dia</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima</th></tr></thead><tbody>'+
+        lin.map(function(k){var a=d.an[k];return '<tr><td><b>'+dataBR(k)+'</b> <span class="mini">'+DIAS_SEM_PR[new Date(k+'T12:00:00Z').getUTCDay()]+'</span></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>L?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+'</tbody></table>':'<div class="nada">Sem registros no período.</div>'));
+      if(completo)lin.forEach(function(k){paginas.push(pdfPaginaDia(d,k,L,cg.obs));});
+    });
+    SagaPdf.imprimir({titulo:'Relatório de atividades',subtitulo:titulo,arquivo:'Relatório de atividades - '+(pes.length===1?pes[0].nome:'equipe')+' - '+titulo.replace(/\//g,'-'),paginas:paginas});
+  });
+}
 async function abrirAtestado(caminho){
   var w=window.open('','_blank');
   var r=await _sb.storage.from('atestados').createSignedUrl(caminho,300);
@@ -2029,7 +2193,7 @@ async function abrirAtestado(caminho){
 function trocarAba(aba){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='rel')renderRelatorios();
+  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='rel')renderRelatorios();if(aba==='pdf')montarBaixar();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
@@ -2064,6 +2228,11 @@ function ligarEventos(){
   document.getElementById('pdfEquipe').addEventListener('click',function(){var d=(document.getElementById('eqData').value||state.hoje).split('-').map(Number);pdfFolhaPonto(null,d[0],d[1],this);});
   document.getElementById('pdfBanco').addEventListener('click',function(){pdfFolhaPonto(null,state.bh.ano,state.bh.mes,this);});
   document.getElementById('relSalvar').addEventListener('click',salvarRelatorio);
+  document.getElementById('relPdf').addEventListener('click',function(){
+    var r=state.relAtual;if(!r)return;var limite=r.limite,a=analisarDia(r.ev,r.key,limite);
+    var d={c:r.colab,porDia:{},an:{}};d.porDia[r.key]=r.ev;d.an[r.key]=a;var obs={};if(r.obs)obs[r.colab.id+'|'+r.key]=r.obs;
+    SagaPdf.imprimir({titulo:'Relatório de atividades',subtitulo:dataBR(r.key),arquivo:'Relatório de atividades - '+r.colab.nome+' - '+dataBR(r.key).replace(/\//g,'-'),paginas:[pdfPaginaDia(d,r.key,limite,obs)]});
+  });
   document.getElementById('relNova').addEventListener('click',function(){
     fecharModal('modalRel');var d=document.getElementById('atDesc');
     if(d){d.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){d.focus();},350);}
@@ -2115,8 +2284,8 @@ async function init(){
   var eu=await _sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle();
   state.meuId=eu.data&&eu.data.id;
   state.hoje=hojeKey();var p=state.hoje.split('-').map(Number);state.ano=p[0];state.mes=p[1];
-  var perms=await Promise.all([_sb.rpc('ponto_ve_equipe'),_sb.rpc('ponto_aprova'),_sb.rpc('ponto_gerencia'),_sb.rpc('eh_admin_sistema')]);
-  state.pode={equipe:perms[0].data===true,aprova:perms[1].data===true,gerencia:perms[2].data===true,admin:perms[3].data===true};
+  var perms=await Promise.all([_sb.rpc('ponto_ve_equipe'),_sb.rpc('ponto_aprova'),_sb.rpc('ponto_gerencia'),_sb.rpc('eh_admin_sistema'),_sb.rpc('ponto_exporta')]);
+  state.pode={equipe:perms[0].data===true,aprova:perms[1].data===true,gerencia:perms[2].data===true,admin:perms[3].data===true,exporta:perms[3].data===true||perms[4].data===true};
   await carregarBase();
   await carregarBanco();
   var mesAtual=state.hoje.slice(0,7),mesBh=state.hoje>=fechKeyDe(mesAtual)?mesAtual:mesAnterior(mesAtual);
@@ -2124,6 +2293,7 @@ async function init(){
   if(state.pode.equipe||state.pode.gerencia)document.getElementById('abaBancoBtn').style.display='';
   if(state.pode.gerencia)document.getElementById('abaCadastroBtn').style.display='';
   if(state.pode.admin){document.getElementById('abaRelBtn').style.display='';prepararRelatorios();document.querySelectorAll('.so-admin').forEach(function(el){el.style.display='';});}
+  if(state.pode.exporta){document.getElementById('abaPdfBtn').style.display='';prepararBaixar();}
   state.ferAno=Number(state.hoje.slice(0,4));
   rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});
   if(state.pode.equipe||state.pode.aprova){document.getElementById('abaEquipeBtn').style.display='';document.getElementById('eqData').value=state.hoje;carregarPendencias();}
