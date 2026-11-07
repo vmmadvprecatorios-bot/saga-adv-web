@@ -479,6 +479,49 @@
     }
   });
 
+  // Kanbans: agarrar o fundo com o mouse e puxar para o lado (como o Google Planilhas / Trello).
+  // Vale para qualquer quadro com colunas que passam da tela; clicar num cartão continua arrastando o cartão.
+  (function(){
+    var QUADROS='.quadro-kanban,.kanban-wrapper,.si-quadro,.kanban,.mat-kanban,[data-arrastar-lado]';
+    var NAO='[draggable="true"],[class*="card"],[class*="cartao"],button,a,input,select,textarea,label,option,[contenteditable="true"],.menu-ordenar,.sp-menu';
+    var st=document.createElement('style');
+    st.textContent='.saga-pode-puxar{cursor:grab}body.saga-puxando,body.saga-puxando *{cursor:grabbing!important;user-select:none!important}';
+    (document.head||document.documentElement).appendChild(st);
+    function rolavel(el){
+      for(var e=el;e&&e!==document.body;e=e.parentElement){
+        var cs=getComputedStyle(e);
+        if((cs.overflowX==='auto'||cs.overflowX==='scroll')&&e.scrollWidth>e.clientWidth+2)return e;
+      }
+      return null;
+    }
+    var p=null;
+    document.addEventListener('mousemove',function(ev){
+      if(p)return;
+      var q=ev.target.closest&&ev.target.closest(QUADROS);
+      document.querySelectorAll('.saga-pode-puxar').forEach(function(x){if(x!==q)x.classList.remove('saga-pode-puxar');});
+      if(q&&!ev.target.closest(NAO)&&rolavel(q))q.classList.add('saga-pode-puxar');else if(q)q.classList.remove('saga-pode-puxar');
+    },{passive:true});
+    document.addEventListener('mousedown',function(ev){
+      if(ev.button!==0||!ev.target.closest)return;
+      var q=ev.target.closest(QUADROS);if(!q||ev.target.closest(NAO))return;
+      var r=rolavel(q);if(!r)return;
+      p={r:r,x:ev.clientX,y:ev.clientY,sl:r.scrollLeft,st:window.scrollY,ativo:false};
+    });
+    document.addEventListener('mousemove',function(ev){
+      if(!p)return;
+      var dx=ev.clientX-p.x;
+      if(!p.ativo){if(Math.abs(dx)<4)return;p.ativo=true;document.body.classList.add('saga-puxando');}
+      ev.preventDefault();
+      p.r.scrollLeft=p.sl-dx;
+    });
+    function soltar(){
+      if(!p)return;var foi=p.ativo;p=null;document.body.classList.remove('saga-puxando');
+      // depois de puxar, o clique que vem junto não abre nada
+      if(foi){var bloq=function(e){e.stopPropagation();e.preventDefault();window.removeEventListener('click',bloq,true);};window.addEventListener('click',bloq,true);setTimeout(function(){window.removeEventListener('click',bloq,true);},350);}
+    }
+    document.addEventListener('mouseup',soltar);window.addEventListener('blur',soltar);
+  })();
+
   // Recolher / expandir um bloco com movimento fluido (altura, transparência e leve subida).
   // sagaRecolher(el, true) recolhe e depois esconde; sagaRecolher(el, false) mostra e expande.
   // Com "efeitos de movimento" desligados, só troca na hora.
