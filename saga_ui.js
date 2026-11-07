@@ -68,9 +68,10 @@
       'html.saga-tema-escurecendo::view-transition-new(root){-webkit-mask-image:radial-gradient(circle at var(--saga-tema-x) var(--saga-tema-y),transparent var(--saga-tema-r),#000 calc(var(--saga-tema-r) + 1px));mask-image:radial-gradient(circle at var(--saga-tema-x) var(--saga-tema-y),transparent var(--saga-tema-r),#000 calc(var(--saga-tema-r) + 1px));}'+
       // Ja comeca no ponto certo (sem o instante de tela toda escura antes da onda)
       'html.saga-tema-clareando::view-transition-new(root){clip-path:circle(0px at var(--saga-tema-x) var(--saga-tema-y));}'+
-      // Menus superior e lateral ficam parados: nao entram na onda de luz
-      'html.saga-tema-trocando #topbarSaga{view-transition-name:saga-tema-topo;}'+
-      'html.saga-tema-trocando #sidebarSaga{view-transition-name:saga-tema-lateral;}'+
+      // Menus superior e lateral ficam parados: nao entram na onda de luz (tema Azul). No Grafite os menus mudam de cor
+      // junto com a tela, entao entram na mesma onda de luz (pedido de 07/11)
+      'html.saga-tema-trocando:not([data-cor="grafite"]) #topbarSaga{view-transition-name:saga-tema-topo;}'+
+      'html.saga-tema-trocando:not([data-cor="grafite"]) #sidebarSaga{view-transition-name:saga-tema-lateral;}'+
       'html.saga-tema-trocando::view-transition-old(saga-tema-topo),html.saga-tema-trocando::view-transition-old(saga-tema-lateral){display:none;}'+
       'html.saga-tema-trocando::view-transition-group(saga-tema-topo),html.saga-tema-trocando::view-transition-group(saga-tema-lateral),html.saga-tema-trocando::view-transition-new(saga-tema-topo),html.saga-tema-trocando::view-transition-new(saga-tema-lateral){animation:none !important;}'+
       '#themeToggle{view-transition-name:saga-tema-botao;}'+
