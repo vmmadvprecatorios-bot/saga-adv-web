@@ -175,7 +175,8 @@
       '#sidebarSaga .nav-section[data-grupo].fechado::after{transform:rotate(-45deg);}'+
       '#sidebarSaga .nav-section[data-grupo]:hover{opacity:1 !important;filter:brightness(1.25);}'+
       '#sidebarSaga .nav-section[data-grupo]:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}'+
-      '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section[data-grupo]::after{display:none;}'+
+      '#sidebarSaga.collapsed .nav-section[data-grupo]::after{display:none !important;}'+
+      '#sidebarSaga.collapsed .nav-section[data-grupo]{cursor:default !important;pointer-events:none !important;}'+
       '#sidebarSaga .nav-section,#sidebarSaga .nav-secao{font-size:10px !important;letter-spacing:1.6px !important;color:#9aa6b8 !important;text-transform:uppercase !important;font-weight:600 !important;padding:17px 22px 7px !important;opacity:1 !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-section,[data-theme="light"] #sidebarSaga .nav-secao{color:#5b6880 !important;}'+
       '#sidebarSaga .nav-item{display:flex !important;align-items:center !important;gap:11px !important;padding:11px 22px !important;font-size:13px !important;color:#d5dbe4 !important;font-weight:500 !important;cursor:pointer !important;border-left:3px solid transparent !important;background:transparent !important;transition:all .2s !important;}'+
@@ -454,7 +455,7 @@
       if(fech[id]){g.hidden=true;marcar(true);}
       if(sec.dataset.ligado)return;sec.dataset.ligado='1';
       var alternar=function(){
-        if(sb.classList.contains('collapsed')&&!sb.classList.contains('sg-aberto'))return;
+        if(sb.classList.contains('collapsed'))return; // menu recolhido: grupos sempre abertos, sem opção de fechar
         var fechar=!g.hidden;marcar(fechar);
         if(global.sagaRecolher)global.sagaRecolher(g,fechar);else g.hidden=fechar;
         var f=gruposFechados();if(fechar)f[id]=true;else delete f[id];try{localStorage.setItem('saga-menu-grupos',JSON.stringify(f));}catch(e){}
@@ -467,6 +468,17 @@
   function ligarFaixaRecolhida(sb){
     if(sb.dataset.faixa)return;sb.dataset.faixa='1';
     var tAbrir=null,tFechar=null;
+    // trocou de tela clicando no menu aberto pelo mouse: a tela nova já nasce com ele aberto (sem encolher e abrir de novo)
+    var vinhaAberto=false;try{vinhaAberto=sessionStorage.getItem('saga-menu-hover')==='1';sessionStorage.removeItem('saga-menu-hover');}catch(e){}
+    if(vinhaAberto&&window.innerWidth>760&&sb.classList.contains('collapsed')){
+      sb.classList.add('sg-aberto');
+      // só recolhe quando o mouse estiver fora do menu
+      var conferir=function(e){document.removeEventListener('mousemove',conferir,true);if(!sb.contains(e.target))sb.classList.remove('sg-aberto');};
+      document.addEventListener('mousemove',conferir,true);
+    }
+    sb.addEventListener('click',function(e){
+      if(sb.classList.contains('sg-aberto')&&e.target.closest('.nav-item')){try{sessionStorage.setItem('saga-menu-hover','1');}catch(x){}}
+    },true);
     sb.addEventListener('mouseenter',function(){
       if(window.innerWidth<=760||!sb.classList.contains('collapsed'))return;
       clearTimeout(tFechar);tAbrir=setTimeout(function(){sb.classList.add('sg-aberto');},90);
