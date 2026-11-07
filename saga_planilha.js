@@ -128,6 +128,8 @@ window.SagaPlanilha=(function(){
       if(ea||eb)return ea===eb?0:ea?1:-1;
       if(num)return (Number(va)-Number(vb))*dir;
       if(c.tipo==='data')return String(va).localeCompare(String(vb))*dir;
+      // opções da planilha (ex.: coluna Mês) seguem a ordem do menu, não a alfabética
+      if(c.tipo==='opcao'&&!c.campo_sistema){var oa=(c.opcoes||[]).find(function(o){return String(o.id)===String(va);}),ob=(c.opcoes||[]).find(function(o){return String(o.id)===String(vb);});if(oa&&ob)return ((oa.ordem||0)-(ob.ordem||0))*dir;}
       return texto(a,c,va).localeCompare(texto(b,c,vb),'pt-BR',{numeric:true,sensitivity:'base'})*dir;
     });
   }
