@@ -56,6 +56,16 @@ a.btn-secondary{text-decoration:none}
 .etapa-box .t{font-size:11px;color:var(--muted);margin-top:2px}
 .etapa-box .v{font-size:12px;font-weight:600;margin-top:6px}
 .aviso{display:flex;gap:10px;align-items:center;margin-top:14px;padding:11px 13px;border-radius:11px;font-size:12px;border:1px solid color-mix(in srgb,var(--warning) 40%,transparent);background:color-mix(in srgb,var(--warning) 10%,transparent)}
+#kpisEscritorios{grid-template-columns:repeat(6,minmax(0,1fr))}#kpisEscritorios .kpi-value{font-size:19px}
+@media(max-width:1250px){#kpisEscritorios{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:640px){#kpisEscritorios{grid-template-columns:repeat(2,minmax(0,1fr))}#kpisEscritorios .kpi-value{font-size:17px}}
+.esc-filtros{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.esc-filtros select{height:34px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);font:inherit;font-size:12px;padding:0 10px;max-width:100%}
+.esc-filtros label{font-size:11px;color:var(--muted);font-weight:600}
+.kpi-card.escolhivel{cursor:pointer;transition:border-color .25s cubic-bezier(.22,.78,.25,1),transform .25s cubic-bezier(.22,.78,.25,1)}
+.kpi-card.escolhivel:hover{border-color:var(--c)}.kpi-card.escolhivel.ativo{border-color:var(--c);box-shadow:0 0 0 1px var(--c)}
+.kpi-card .pct-medio{font-size:10.5px;color:var(--muted);margin-top:2px}
+td.zero{color:var(--muted)}tr.destaque td{background:color-mix(in srgb,var(--gold) 8%,transparent)}
 .aviso button{margin-left:auto;text-decoration:underline;font-weight:600;font-size:11.5px}
 
 .tabela-wrap{overflow-x:auto;border:1px solid var(--border-soft);border-radius:var(--radius);background:var(--panel)}
@@ -139,6 +149,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
     <button class="tab-btn" data-aba="processos">Honorários por processo <span class="qtd" id="qtdProcessos">0</span></button>
     <button class="tab-btn" data-aba="lancamentos">Lançamentos avulsos <span class="qtd" id="qtdLancamentos">0</span></button>
     <button class="tab-btn" data-aba="distribuicao">Distribuição</button>
+    <button class="tab-btn" data-aba="escritorios">Por escritório e participante</button>
   </div>
 
   <!-- VISAO GERAL -->
@@ -176,6 +187,28 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
       <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Processo</th><th>Situação</th><th class="num">Valor</th></tr></thead>
       <tbody id="tbodyLancamentos"></tbody>
     </table></div>
+  </section>
+
+  <!-- POR ESCRITORIO E PARTICIPANTE (colunas de honorários da planilha, em % do valor da causa) -->
+  <section class="tab-pane" id="aba-escritorios">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-title">Honorários por escritório e participante</div>
+      <div class="panel-sub">Vem das colunas de honorários da planilha do Jurídico e da Captação (Totais, VMM, Sarmento, Ancref, Parceiros, Equipe), todas em <b>% do valor da causa</b>. Ex.: honorários de 25% → VMM 12%, Sarmento 12%, Ancref 1%. O valor em R$ é o percentual aplicado ao valor da causa.</div>
+    </div>
+    <div class="esc-filtros">
+      <label for="escTese">Tipo de ação</label><select id="escTese"><option value="">Todos</option></select>
+      <label for="escFase">Fase</label><select id="escFase"><option value="">Jurídico e Captação</option><option value="juridico">Jurídico</option><option value="captacao">Captação</option></select>
+    </div>
+    <div class="kpis" id="kpisEscritorios"></div>
+    <div id="avisoEscritorios"></div>
+    <div class="panel" style="margin-top:14px">
+      <div class="panel-title">Por tipo de ação</div>
+      <div class="panel-sub" id="subTabelaEsc">Clique num quadro acima para destacar um escritório ou participante.</div>
+      <div class="tabela-wrap"><table>
+        <thead><tr><th>Tipo de ação</th><th class="num">Processos</th><th class="num">Totais</th><th class="num">VMM</th><th class="num">Sarmento</th><th class="num">Ancref</th><th class="num">Parceiros</th><th class="num">Equipe</th></tr></thead>
+        <tbody id="tbodyEscritorios"></tbody>
+      </table></div>
+    </div>
   </section>
 
   <!-- DISTRIBUICAO -->
@@ -271,7 +304,7 @@ var ETAPAS={
   recebido:{nome:'Recebido',cor:'#2fae7a'},
   sem_percentual:{nome:'Sem percentual',cor:'#8a94a8'}
 };
-var state={aba:'visao',processos:[],lancamentos:[],rateios:[],usuarios:[],podeVer:false,podeEditar:false,fontesRoscas:{},
+var state={escritorios:[],escTese:'',escFase:'',escPart:'',aba:'visao',processos:[],lancamentos:[],rateios:[],usuarios:[],podeVer:false,podeEditar:false,fontesRoscas:{},
   periodoVisao:'ano',periodoLanc:'mes',filtroEtapa:'todas',filtroTipo:'todos',buscaP:'',buscaL:'',
   procAberto:null,rateioModal:[],lancEditando:null};
 
@@ -371,6 +404,13 @@ function dadosGraficosFinanceiro(){
       dica:'Distribuição prevista em todas as etapas, como na aba Distribuição. Clique para destacar.',
       itens:Array.from(beneficiarios.values()).sort(function(a,b){return b.valor-a.valor||a.nome.localeCompare(b.nome,'pt-BR');})});
   }
+  if(state.escritorios.length){
+    var Le=state.escritorios.filter(function(p){return (!state.escTese||(p.tese||'Sem tipo de ação')===state.escTese)&&(!state.escFase||p.fase===state.escFase);});
+    var partes=PARTICIPANTES.slice(1).map(function(x){return {id:x[0],nome:x[1],cor:x[2],valor:Le.reduce(function(s2,p){return s2+reaisDe(p,x[0]);},0),ativa:state.escPart===x[0]};});
+    grupos.push({id:'escritorios',titulo:'Honorários por escritório e participante',moeda:true,
+      dica:'Colunas de honorários da planilha (% do valor da causa). Clique para ver na aba Por escritório.',
+      itens:partes,escolher:function(item){state.escPart=state.escPart===item.id?'':item.id;trocarAba('escritorios');renderEscritorios();renderGraficosFinanceiro();}});
+  }
   return grupos;
 }
 function renderGraficosFinanceiro(){
@@ -386,8 +426,10 @@ async function carregarTudo(){
     _sb.from('vw_financeiro_processos').select('*').order('cliente'),
     _sb.from('financeiro_lancamentos').select('*').order('data_lancamento',{ascending:false}),
     _sb.from('financeiro_rateio').select('*').order('criado_em'),
-    _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo')
+    _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo'),
+    _sb.rpc('financeiro_honorarios_participantes')
   ]);
+  state.escritorios=r[4].error?[]:(r[4].data||[]);
   if(r[0].error){showToast('Não foi possível carregar o financeiro: '+esc(r[0].error.message),'error');}
   state.processos=r[0].data||[];
   state.lancamentos=r[1].data||[];
@@ -399,7 +441,7 @@ async function carregarTudo(){
 function renderTudo(){
   document.getElementById('qtdProcessos').textContent=state.processos.length;
   document.getElementById('qtdLancamentos').textContent=state.lancamentos.length;
-  renderVisao();renderProcessos();renderLancamentos();renderDistribuicao();
+  renderVisao();renderProcessos();renderLancamentos();renderDistribuicao();renderEscritorios();
 }
 
 /* ------------------------- VISAO GERAL ------------------------- */
@@ -657,6 +699,47 @@ function renderDistribuicao(){
   }).join('');
 }
 
+/* ------------------------- POR ESCRITORIO E PARTICIPANTE ------------------------- */
+var PARTICIPANTES=[['pct_total','Honorários totais','#c9a45c'],['pct_vmm','VMM','#4b8af5'],['pct_sarmento','Sarmento','#2E8B8B'],['pct_ancref','Ancref','#a77bd6'],['pct_parceiros','Parceiros','#e0a93b'],['pct_equipe','Equipe','#3fb98a']];
+function reaisDe(p,campo){var pc=Number(p[campo]),vc=Number(p.valor_causa);return (p[campo]==null||!isFinite(pc)||!(vc>0))?0:Math.round(vc*pc)/100;}
+function renderEscritorios(){
+  var sel=document.getElementById('escTese');if(!sel)return;
+  var teses={};state.escritorios.forEach(function(p){teses[p.tese||'Sem tipo de ação']=1;});
+  var nomes=Object.keys(teses).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+  if(state.escTese&&nomes.indexOf(state.escTese)<0)state.escTese='';
+  sel.innerHTML='<option value="">Todos</option>'+nomes.map(function(n){return '<option'+(n===state.escTese?' selected':'')+'>'+esc(n)+'</option>';}).join('');
+  var L=state.escritorios.filter(function(p){
+    var temAlgum=PARTICIPANTES.some(function(x){return p[x[0]]!=null;});
+    return temAlgum&&(!state.escTese||(p.tese||'Sem tipo de ação')===state.escTese)&&(!state.escFase||p.fase===state.escFase);
+  });
+  document.getElementById('kpisEscritorios').innerHTML=PARTICIPANTES.map(function(x){
+    var com=L.filter(function(p){return p[x[0]]!=null;}),tot=com.reduce(function(s,p){return s+reaisDe(p,x[0]);},0);
+    var medio=com.length?com.reduce(function(s,p){return s+Number(p[x[0]]);},0)/com.length:0;
+    return '<div class="kpi-card escolhivel'+(state.escPart===x[0]?' ativo':'')+'" data-part="'+x[0]+'" role="button" tabindex="0" style="--c:'+x[2]+'"><span class="faixa"></span><div class="rotulo">'+esc(x[1])+'</div><div class="kpi-value">'+moeda(tot)+'</div>'+
+      '<div class="meta">'+com.length+' processo(s)'+(com.length?' · média '+(Math.round(medio*100)/100).toLocaleString('pt-BR')+'% da causa':'')+'</div></div>';
+  }).join('');
+  // avisos: sem valor da causa, e partes que passam do total
+  var semCausa=L.filter(function(p){return !(Number(p.valor_causa)>0);}).length;
+  var passa=L.filter(function(p){if(p.pct_total==null)return false;var soma=['pct_vmm','pct_sarmento','pct_ancref','pct_parceiros','pct_equipe'].reduce(function(s,k){return s+(Number(p[k])||0);},0);return soma>Number(p.pct_total)+0.001;});
+  var av='';
+  if(semCausa)av+='<div class="aviso">⚠ '+semCausa+' processo(s) com percentual mas sem valor da causa: entram com R$ 0,00. Preencha o valor da causa na planilha ou na ficha.</div>';
+  if(passa.length)av+='<div class="aviso">⚠ Em '+passa.length+' processo(s) a soma das partes (VMM, Sarmento, Ancref, Parceiros, Equipe) passa dos honorários totais: '+passa.slice(0,5).map(function(p){return esc(p.cliente);}).join(', ')+(passa.length>5?'…':'')+'.</div>';
+  if(!state.escritorios.length)av+='<div class="aviso">Nenhum processo com honorários em percentual ainda. Preencha as colunas "Honorários - Totais", "Honorários - VMM" etc. na planilha do Jurídico ou da Captação.</div>';
+  document.getElementById('avisoEscritorios').innerHTML=av;
+  // tabela por tipo de ação
+  var grupos={};
+  L.forEach(function(p){var n=p.tese||'Sem tipo de ação',g=grupos[n]||(grupos[n]={nome:n,qtd:0});g.qtd++;PARTICIPANTES.forEach(function(x){g[x[0]]=(g[x[0]]||0)+reaisDe(p,x[0]);});});
+  var linhas=Object.keys(grupos).map(function(k){return grupos[k];}).sort(function(a,b){return (b[state.escPart||'pct_total']||0)-(a[state.escPart||'pct_total']||0)||a.nome.localeCompare(b.nome,'pt-BR');});
+  var tot={nome:'Total',qtd:L.length};PARTICIPANTES.forEach(function(x){tot[x[0]]=linhas.reduce(function(s,g){return s+(g[x[0]]||0);},0);});
+  var cel=function(g,k){var v=g[k]||0;return '<td class="num'+(v?'':' zero')+'"'+(state.escPart===k?' style="font-weight:700"':'')+'>'+moeda(v)+'</td>';};
+  var tb=document.getElementById('tbodyEscritorios');
+  tb.innerHTML=linhas.length?linhas.map(function(g){return '<tr><td>'+esc(g.nome)+'</td><td class="num">'+g.qtd+'</td>'+PARTICIPANTES.map(function(x){return cel(g,x[0]);}).join('')+'</tr>';}).join('')+
+    '<tr class="destaque"><td><b>Total</b></td><td class="num"><b>'+tot.qtd+'</b></td>'+PARTICIPANTES.map(function(x){return cel(tot,x[0]);}).join('')+'</tr>'
+    :'<tr><td colspan="8" class="vazio">Nenhum processo neste filtro.</td></tr>';
+  var pe=PARTICIPANTES.filter(function(x){return x[0]===state.escPart;})[0];
+  document.getElementById('subTabelaEsc').textContent=pe?('Em destaque: '+pe[1]+' (ordenado do maior para o menor). Clique de novo no quadro para tirar.'):'Clique num quadro acima para destacar um escritório ou participante.';
+}
+
 /* ------------------------- ABAS E EVENTOS ------------------------- */
 function trocarAba(aba){
   state.aba=aba;
@@ -670,6 +753,11 @@ function ligarEventos(){
   document.getElementById('buscaProcessos').addEventListener('input',function(e){state.buscaP=e.target.value;renderProcessos();});
   document.getElementById('buscaLancamentos').addEventListener('input',function(e){state.buscaL=e.target.value;renderLancamentos();});
   document.getElementById('btnAtualizar').addEventListener('click',carregarTudo);
+  document.getElementById('escTese').addEventListener('change',function(e){state.escTese=e.target.value;renderEscritorios();renderGraficosFinanceiro();});
+  document.getElementById('escFase').addEventListener('change',function(e){state.escFase=e.target.value;renderEscritorios();renderGraficosFinanceiro();});
+  var kE=document.getElementById('kpisEscritorios');
+  var escolherPart=function(e){var c=e.target.closest('[data-part]');if(!c)return;if(e.type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();state.escPart=state.escPart===c.dataset.part?'':c.dataset.part;renderEscritorios();renderGraficosFinanceiro();};
+  kE.addEventListener('click',escolherPart);kE.addEventListener('keydown',escolherPart);
   document.getElementById('btnNovoLancamento').addEventListener('click',function(){abrirLancamento(null);});
   ['mpPercentual','mpSentenca','mpRecebido'].forEach(function(i){document.getElementById(i).addEventListener('input',atualizarResumoModal);});
   aplicarMascaraMoeda(document.getElementById('mpSentenca'));aplicarMascaraMoeda(document.getElementById('mpRecebido'));aplicarMascaraMoeda(document.getElementById('mlValor'));

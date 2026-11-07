@@ -74,8 +74,8 @@ window.SagaPlanilha=(function(){
     if(c.tipo==='moeda')return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v));
     if(c.tipo==='porcentagem'){
       var pc=Number(v).toLocaleString('pt-BR')+'%';
-      // Honorários sucumbenciais: % do valor da causa; mostra também quanto dá em reais
-      if(/sucumb/i.test(c.nome||'')&&p&&Number(p.valor_causa)>0)pc+=' ('+new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(p.valor_causa)*Number(v)/100)+')';
+      // Honorários (sucumbenciais, totais e a parte de cada escritório/participante): % do valor da causa; mostra também quanto dá em reais
+      if((/sucumb/i.test(c.nome||'')||/^hon_/.test(c.chave||''))&&p&&Number(p.valor_causa)>0)pc+=' ('+new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(p.valor_causa)*Number(v)/100)+')';
       return pc;
     }
     if(c.tipo==='numero')return Number(v).toLocaleString('pt-BR');
