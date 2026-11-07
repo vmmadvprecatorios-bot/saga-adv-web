@@ -13,41 +13,51 @@ window.SagaPdf=(function(){
   function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
   function marca(){var logo='',nome='';try{logo=localStorage.getItem('saga-logo')||'';nome=localStorage.getItem('saga-escritorio')||'';}catch(e){}return {logo:logo,nome:nome||'Victor Morais Advocacia'};}
   function agora(){return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date()).replace(',',' às');}
+  // Sempre no tema Azul claro (Azul Porcelana): marinho, linhas alternando branco e azul bem claro
   var CSS=
     '*{box-sizing:border-box}html,body{margin:0;padding:0;background:#fff}'+
-    'body{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#1d2433;font-size:9pt;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    'body{font-family:Inter,"Segoe UI",Arial,sans-serif;color:#13233a;font-size:9pt;line-height:1.4;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
     '.pagina{break-after:page}.pagina:last-child{break-after:auto}'+
-    '.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:9px;margin-bottom:14px;border-bottom:2px solid #b08d57}'+
+    '.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:9px;margin-bottom:14px;border-bottom:2px solid #1f3e6d}'+
     '.marca{display:flex;align-items:center;gap:10px}.marca img{height:34px;max-width:170px;object-fit:contain}'+
-    '.marca .nome{font-family:"Cormorant Garamond",Georgia,serif;font-size:17pt;font-weight:700;color:#13233a;letter-spacing:.3px}.marca .nome em{font-style:normal;color:#b08d57}'+
-    '.marca .esc{font-size:7.5pt;letter-spacing:1.4px;text-transform:uppercase;color:#7a808c}'+
+    '.marca .nome{font-family:"Cormorant Garamond",Georgia,serif;font-size:17pt;font-weight:700;color:#13233a;letter-spacing:.3px}.marca .nome em{font-style:normal;color:#2c5592}'+
+    '.marca .esc{font-size:7.5pt;letter-spacing:1.4px;text-transform:uppercase;color:#5f6f86}'+
     '.titulo{text-align:right}.titulo h1{margin:0;font-family:"Cormorant Garamond",Georgia,serif;font-size:18pt;font-weight:700;color:#13233a;line-height:1.1}'+
-    '.titulo .sub{font-size:8.5pt;color:#5d6472;margin-top:3px}'+
+    '.titulo .sub{font-size:8.5pt;color:#5f6f86;margin-top:3px}'+
     '.pessoa{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 10px}'+
-    '.pessoa h2{margin:0;font-family:"Cormorant Garamond",Georgia,serif;font-size:15pt;color:#13233a}.pessoa .info{font-size:8.5pt;color:#5d6472}'+
-    '.secao{font-size:7.5pt;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#8a6a35;margin:14px 0 6px}'+
+    '.pessoa h2{margin:0;font-family:"Cormorant Garamond",Georgia,serif;font-size:15pt;color:#13233a}.pessoa .info{font-size:8.5pt;color:#5f6f86}'+
+    '.secao{font-size:7.5pt;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#1f3e6d;margin:14px 0 6px}'+
     '.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin:0 0 12px}'+
-    '.kpis div{border:1px solid #e4dfd5;border-radius:6px;padding:6px 8px;background:#fbfaf7;break-inside:avoid}'+
-    '.kpis span{display:block;font-size:6.8pt;letter-spacing:.6px;text-transform:uppercase;color:#7a808c}.kpis b{display:block;font-size:11pt;color:#13233a;margin-top:1px;font-variant-numeric:tabular-nums}'+
+    '.kpis div{border:1px solid #d3dce9;border-radius:6px;padding:6px 8px;background:#f3f6fa;break-inside:avoid}'+
+    '.kpis div>span{display:block;font-size:6.8pt;letter-spacing:.6px;text-transform:uppercase;color:#5f6f86}.kpis b{display:block;font-size:11pt;color:#13233a;margin-top:1px;font-variant-numeric:tabular-nums}'+
+    '.kpis .forte{background:#e3ebf6;border-color:#b9c8de}.kpis .ruim b{color:#b42318}'+
     'table.tab{width:100%;border-collapse:collapse;font-size:8pt}'+
     'table.tab thead{display:table-header-group}table.tab tr{break-inside:avoid}'+
-    'table.tab th{background:#13233a;color:#fff;font-weight:600;font-size:6.9pt;letter-spacing:.6px;text-transform:uppercase;text-align:left;padding:5px 6px;border:1px solid #13233a}'+
-    'table.tab td{padding:4px 6px;border:1px solid #e4dfd5;vertical-align:top}'+
-    'table.tab tbody tr:nth-child(even) td{background:#faf9f6}'+
-    'table.tab .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}'+
-    'table.tab tr.fds td{background:#f1f2f4!important;color:#6b7280}table.tab tr.feriado td{background:#f8f1e4!important;color:#6b5a3a}table.tab tr.apagado td{color:#a3a8b1}'+
-    'table.tab tr.total td{background:#efe9dd!important;font-weight:700;border-top:2px solid #b08d57}'+
+    'table.tab th{background:#1f3e6d;color:#fff;font-weight:600;font-size:6.9pt;letter-spacing:.6px;text-transform:uppercase;text-align:left;padding:5px 6px;border:1px solid #1f3e6d}'+
+    'table.tab td{padding:4px 6px;border:1px solid #dbe3ee;vertical-align:top}'+
+    'table.tab tbody tr:nth-child(odd) td{background:#ffffff}table.tab tbody tr:nth-child(even) td{background:#eef2f7}'+
+    'table.tab .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}table.tab th.num{text-align:right}table.tab .c,table.tab th.c{text-align:center}'+
+    'table.tab tr.fds td{background:#e4e9f1!important;color:#6b7a90}table.tab tr.feriado td{background:#dde8f7!important;color:#2c5592}table.tab tr.apagado td{color:#a3adbd}'+
+    'table.tab tr.total td{background:#d6e1f0!important;font-weight:700;border-top:2px solid #1f3e6d;color:#13233a}'+
     'table.tab tr.gap td{background:#fdf0f0!important;color:#b42318;font-style:italic}'+
     '.neg{color:#b42318;font-weight:700}.pos{color:#1f7a3f;font-weight:700}.alerta{color:#b42318;font-weight:700}'+
-    '.mini{font-size:7.5pt;color:#6b7280}.etq{display:inline-block;border:1px solid #d9d3c6;border-radius:4px;padding:0 4px;font-size:7pt;white-space:nowrap}'+
-    '.obs{border:1px solid #e4dfd5;border-left:3px solid #b08d57;border-radius:6px;padding:8px 10px;background:#fbfaf7;margin-top:10px;break-inside:avoid}.obs p{margin:0 0 4px}'+
-    '.nada{color:#7a808c;font-style:italic;padding:8px 0}'+
-    '.assinaturas{display:flex;gap:40px;margin-top:34px;break-inside:avoid}.assinaturas div{flex:1;border-top:1px solid #6b7280;padding-top:4px;text-align:center;font-size:8pt;color:#4b5563}'+
-    '.rodape{margin-top:10px;font-size:7pt;color:#9aa0aa}'+
-    // folha de ponto: o mês inteiro numa página
-    '.compacta .kpis{grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:4px;margin-bottom:8px}.compacta .kpis div{padding:3px 6px}.compacta .kpis b{font-size:9.5pt}.compacta .kpis span{font-size:6.2pt}'+
-    '.compacta{line-height:1.22}.compacta table.tab{font-size:7.2pt}.compacta table.tab td{padding:1.2px 5px}.compacta table.tab th{padding:3px 5px}.compacta .pessoa{margin-bottom:6px}.compacta .pessoa h2{font-size:13pt}'+
-    '.compacta .etq{font-size:6.3pt;padding:0 3px}.compacta .assinaturas{margin-top:16px}.compacta .cab{margin-bottom:8px;padding-bottom:6px}';
+    '.mini{font-size:7.5pt;color:#5f6f86}.etq{display:inline-block;border:1px solid #c9d5e6;border-radius:4px;padding:0 4px;font-size:7pt;white-space:nowrap}'+
+    '.obs{border:1px solid #d3dce9;border-left:3px solid #1f3e6d;border-radius:6px;padding:8px 10px;background:#f3f6fa;margin-top:10px;break-inside:avoid}.obs p{margin:0 0 4px}'+
+    '.nada{color:#5f6f86;font-style:italic;padding:8px 0}'+
+    '.assinaturas{display:flex;gap:40px;margin-top:34px;break-inside:avoid}.assinaturas div{flex:1;border-top:1px solid #5f6f86;padding-top:4px;text-align:center;font-size:8pt;color:#3d4b60}'+
+    '.rodape{margin-top:10px;font-size:7pt;color:#8a96a8}'+
+    // folha de ponto: ficha da pessoa, resumo em dois grupos e o mês inteiro numa página
+    '.ficha-colab{display:grid;grid-template-columns:2.2fr .7fr 1.2fr 1fr 1.7fr 1.2fr;border:1px solid #c9d5e6;border-radius:8px;overflow:hidden;margin:0 0 8px}'+
+    '.ficha-colab div{padding:5px 9px;border-left:1px solid #dbe3ee;background:#f7f9fc;min-width:0}.ficha-colab div:first-child{border-left:0;background:#e3ebf6}'+
+    '.ficha-colab span{display:block;font-size:6.3pt;letter-spacing:.7px;text-transform:uppercase;color:#5f6f86}.ficha-colab b{display:block;font-size:9pt;color:#13233a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ficha-colab .larga b{font-family:"Cormorant Garamond",Georgia,serif;font-size:12.5pt;line-height:1.1}'+
+    '.grupos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 8px}.grupos.um{grid-template-columns:1fr}'+
+    '.grupo-tit{font-size:6.6pt;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:#1f3e6d;margin:0 0 3px}'+
+    '.grupos .kpis{grid-template-columns:repeat(5,1fr);gap:4px;margin:0}.grupos.um .kpis{grid-template-columns:repeat(3,1fr)}.grupos .kpis div{padding:3px 6px}.grupos .kpis b{font-size:9.5pt}.grupos .kpis div>span{font-size:6pt;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'+
+    'table.folha{font-size:7.3pt;line-height:1.2}table.folha td{padding:1.1px 6px}table.folha th{padding:3.5px 6px}'+
+    'table.folha td.dia{white-space:nowrap}table.folha .dsem{color:#5f6f86;font-size:6.6pt;text-transform:uppercase;letter-spacing:.4px}'+
+    'table.folha tr.semana td{border-top:1.6px solid #9fb3cf}table.folha td.ocorr{font-size:6.8pt;color:#3d4b60}'+
+    '.legenda{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:6.8pt;color:#5f6f86;margin-top:4px}.legenda i{display:inline-block;width:10px;height:8px;border:1px solid #c9d5e6;border-radius:2px;margin-left:8px}.legenda i:first-child{margin-left:0}.legenda .l-fds{background:#e4e9f1}.legenda .l-fer{background:#dde8f7}.legenda span{margin-left:auto}'+
+    '.compacta{line-height:1.22}.compacta .assinaturas{margin-top:14px}.compacta .cab{margin-bottom:8px;padding-bottom:6px}';
   function cabecalho(o){
     var m=marca();
     var esquerda=m.logo?'<img src="'+esc(m.logo)+'" alt="">':'<div><div class="nome">VMM<em>ADV</em></div><div class="esc">'+esc(m.nome)+'</div></div>';
@@ -83,5 +93,5 @@ window.SagaPdf=(function(){
     Promise.race([Promise.all(esperar),new Promise(function(r){setTimeout(r,2500);})]).then(function(){setTimeout(abrir,120);});
     return ifr;
   }
-  return {imprimir:imprimir,esc:esc};
+  return {imprimir:imprimir,esc:esc,nomeEscritorio:function(){return marca().nome;}};
 })();

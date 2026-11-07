@@ -202,6 +202,14 @@ tr.apagado td{color:var(--muted)}
   #relCorpo tr[data-rel-ir]{cursor:pointer}
   #relCorpo tr[data-rel-ir]:hover td{background:var(--panel-2)}
   td.alerta{color:#e5484d;font-weight:700}
+  .pr-atalhos{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+  .pr-pessoas{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:4px}.campo .pr-pessoas label{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--text);margin:0;cursor:pointer}
+  .campo .pr-pessoas input,.pr-item input{width:15px;height:15px;min-height:0;flex:0 0 auto;padding:0;margin:0;accent-color:var(--gold)}
+  .pr-topo{display:flex;justify-content:space-between;align-items:center;margin:12px 0 6px;font-size:12.5px}
+  .pr-lista{max-height:46vh;overflow:auto;border:1px solid var(--border-soft);border-radius:12px;padding:4px 10px;overscroll-behavior:contain}
+  .pr-grupo{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:10px 0 2px;font-weight:700}
+  .pr-item{display:flex;align-items:center;gap:9px;padding:6px 2px;font-size:12.5px;border-bottom:1px solid var(--border-soft);cursor:pointer}.pr-item:last-child{border-bottom:0}
+  .pr-item b{min-width:96px}.pr-item span{color:var(--muted);font-size:11.5px}
   @media print{
     #topbarSaga,#sidebarSaga,.page-head,#abas,.toolbar,.no-print,.tab-pane:not(.ativo){display:none!important}
     .content{padding:0!important;margin:0!important}
@@ -347,7 +355,8 @@ tr.apagado td{color:var(--muted)}
       <div class="pills" id="relModo"><button class="pill" data-modo="dia" type="button">Dia</button><button class="pill" data-modo="semana" type="button">Semana</button><button class="pill" data-modo="mes" type="button">Mês</button></div>
       <div class="nav-mes"><button class="btn-secondary btn-sm" id="relAnt" type="button">‹</button><b id="rlTitulo"></b><button class="btn-secondary btn-sm" id="relProx" type="button">›</button></div>
       <div class="campo" style="margin:0;min-width:220px"><select id="relPessoa"></select></div>
-      <button class="btn-secondary btn-sm" id="relImprimir" type="button" style="margin-left:auto">Salvar em PDF</button>
+      <button class="btn-secondary btn-sm" id="relEscolher" type="button" style="margin-left:auto" title="Junte num PDF só os relatórios que quiser: um dia, vários dias, o mês inteiro, de uma ou de várias pessoas">Escolher relatórios…</button>
+      <button class="btn-secondary btn-sm" id="relImprimir" type="button">Salvar em PDF</button>
     </div>
     <div id="relConteudo"></div>
     <p class="sub no-print" style="margin-top:12px;max-width:900px">Conta como atividade tudo o que a pessoa fez: batidas do ponto, atividades registradas à mão (WhatsApp, ligação, e-mail…) e o que ela fez dentro do SAGA (tarefas, comentários, agenda, clientes, documentos, processos, financeiro, marketing e mensagens do chat, só a quantidade). Intervalo sem atividade é o tempo entre duas atividades dentro do expediente (as pausas do ponto não contam); acima do limite definido em Cadastro aparece em vermelho. Clientes atendidos são os clientes diferentes ligados às atividades do período. Só o administrador geral vê esta aba.</p>
@@ -487,6 +496,21 @@ tr.apagado td{color:var(--muted)}
 </div></div>
 
 <!-- Feriado (gestor) -->
+<div class="modal-overlay" id="modalPdfRel"><div class="modal" style="max-width:640px">
+  <div class="modal-head"><div><h2>Relatórios para o PDF</h2><p>Escolha o período e as pessoas, marque os relatórios do dia que quer e salve tudo num documento só.</p></div><button class="modal-close" data-fechar="modalPdfRel" type="button">✕</button></div>
+  <div class="modal-body">
+    <div class="grid2">
+      <div class="campo"><label>De</label><input id="prIni" type="date"></div>
+      <div class="campo"><label>Até</label><input id="prFim" type="date"></div>
+    </div>
+    <div class="pr-atalhos"><button class="btn-secondary btn-sm" type="button" data-pr-atalho="hoje">Hoje</button><button class="btn-secondary btn-sm" type="button" data-pr-atalho="semana">Esta semana</button><button class="btn-secondary btn-sm" type="button" data-pr-atalho="mes">Este mês</button><button class="btn-secondary btn-sm" type="button" data-pr-atalho="mesant">Mês passado</button></div>
+    <div class="campo" style="margin-top:10px"><label>Pessoas</label><div class="pr-pessoas" id="prPessoas"></div></div>
+    <div class="pr-topo"><b id="prQtd">Relatórios</b><span><button class="lnk" type="button" id="prTodos">marcar todos</button> · <button class="lnk" type="button" id="prNenhum">desmarcar</button></span></div>
+    <div class="pr-lista" id="prLista"><div class="sub">Carregando…</div></div>
+    <label class="chk" style="margin-top:10px"><input type="checkbox" id="prResumo" checked> Incluir no começo o resumo do período de cada pessoa</label>
+  </div>
+  <div class="modal-foot"><button class="btn-secondary" data-fechar="modalPdfRel" type="button">Cancelar</button><button class="btn-primary" id="prSalvar" type="button">Salvar PDF</button></div>
+</div></div>
 <div class="modal-overlay" id="modalFeriado"><div class="modal" style="max-width:520px">
   <div class="modal-head"><div><h2>Incluir feriado</h2></div><button class="modal-close" data-fechar="modalFeriado" type="button">✕</button></div>
   <div class="modal-body">
@@ -1743,6 +1767,7 @@ function prepararRelatorios(){
   document.getElementById('relProx').addEventListener('click',function(){moverRel(1);});
   document.getElementById('relPessoa').addEventListener('change',function(){state.rel.pessoa=this.value;renderRelatorios();});
   document.getElementById('relImprimir').addEventListener('click',pdfRelatorio);
+  ligarEscolherRel();
   document.getElementById('relConteudo').addEventListener('click',function(ev){
     var tr=ev.target.closest('[data-rel-ir]');if(!tr)return;
     if(tr.dataset.relPessoa)state.rel.pessoa=tr.dataset.relPessoa;
@@ -1811,28 +1836,37 @@ function pdfSaldo(v){if(v===null||v===undefined||v==='')return '';return '<span 
 function folhaPontoHtml(c,calc,a,m){
   var livre=regimeDe(c).livre,t=calc.resumo,E=SagaPdf.esc;
   var cj=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),fimKeyDe(mesK(a,m))<state.hoje?fimKeyDe(mesK(a,m)):state.hoje);
-  var jornada=livre?'Horário livre':(cj&&cj.carga?PC.hhmm(cj.entrada)+' às '+PC.hhmm(cj.saida)+' · carga '+PC.hhmm(cj.carga):'');
-  var h='<div class="pessoa"><h2>'+E(c.nome)+'</h2><div class="info">'+[c.codigo,c.cargo,c.regime,jornada].filter(Boolean).map(E).join(' · ')+'</div></div>';
-  var k=livre?[['Horas no mês',PC.hhmm(t.trab)],['Dias com registro',t.dias],['Média por dia',t.dias?PC.hhmm(t.trab/t.dias):'—']]:
-    [['Carga do mês',PC.hhmm(t.carga)],['Trabalhadas',PC.hhmm(t.trab)],['Abonadas',PC.hhmm(t.abono)],['Saldo do mês',pdfSaldo(t.saldo)],['Saldo válido',pdfSaldo(t.valido)],
-     ['Atrasos',t.atrasos],['Saídas antecipadas',t.antec],['Pausas excedidas',t.pausas],['Faltas',t.faltas],['Marcações incompletas',t.incompletas]];
-  h+='<div class="kpis">'+k.map(function(x){return '<div><span>'+E(x[0])+'</span><b>'+(typeof x[1]==='string'&&x[1].indexOf('<')===0?x[1]:E(x[1]))+'</b></div>';}).join('')+'</div>';
-  var cab=livre?['Data','Dia','Situação','Início 1','Fim 1','Início 2','Fim 2','Início 3','Fim 3','Horas','Ocorrências']:['Data','Dia','Situação','Entrada','Pausas','Saída','Carga','Trabalhadas','Saldo','Atraso','Saída antec.','Ocorrências'];
-  var numIni=livre?9:6;
-  h+='<table class="tab"><thead><tr>'+cab.map(function(x,i){return '<th'+(i>=numIni&&i<cab.length-1?' class="num"':'')+'>'+x+'</th>';}).join('')+'</tr></thead><tbody>';
-  calc.dias.forEach(function(x){
-    var d=x.d,mk=x.mk,cls='';
-    if(x.sit==='Sábado'||x.sit==='Domingo')cls='fds';else if(x.sit==='Feriado'||x.sit==='Ponto facultativo'||x.sit==='Folga concedida')cls='feriado';
-    if(['Não admitido','Desligado','Sem controle'].indexOf(x.sit)>=0)cls='apagado';
+  var jornada=livre?'Horário livre':(cj&&cj.carga?PC.hhmm(cj.entrada)+' às '+PC.hhmm(cj.saida)+' (carga '+PC.hhmm(cj.carga)+')':'—');
+  // ficha do colaborador
+  var h='<div class="ficha-colab">'+[['Colaborador(a)',c.nome,'larga'],['Código',c.codigo],['Cargo',c.cargo],['Regime',c.regime],['Jornada',jornada],['Mês',NOMES_MES[m-1]+' de '+a]]
+    .map(function(x){return '<div class="'+(x[2]||'')+'"><span>'+x[0]+'</span><b>'+E(x[1]||'—')+'</b></div>';}).join('')+'</div>';
+  // resumo em dois grupos: horas e ocorrências
+  var kp=function(l){return '<div class="kpis">'+l.map(function(x){return '<div'+(x[2]?' class="'+x[2]+'"':'')+'><span>'+E(x[0])+'</span><b>'+(typeof x[1]==='string'&&x[1].indexOf('<')===0?x[1]:E(x[1]))+'</b></div>';}).join('')+'</div>';};
+  if(livre)h+='<div class="grupos um"><div class="grupo"><div class="grupo-tit">Horas do mês</div>'+kp([['Horas no mês',PC.hhmm(t.trab),'forte'],['Dias com registro',t.dias],['Média por dia',t.dias?PC.hhmm(t.trab/t.dias):'—']])+'</div></div>';
+  else h+='<div class="grupos"><div class="grupo"><div class="grupo-tit">Horas do mês</div>'+kp([['Carga',PC.hhmm(t.carga)],['Trabalhadas',PC.hhmm(t.trab),'forte'],['Abonadas',PC.hhmm(t.abono)],['Saldo do mês',pdfSaldo(t.saldo),'forte'],['Saldo válido',pdfSaldo(t.valido)]])+'</div>'+
+    '<div class="grupo"><div class="grupo-tit">Ocorrências</div>'+kp([['Atrasos',t.atrasos],['Saídas antecipadas',t.antec],['Pausas excedidas',t.pausas],['Faltas',t.faltas,t.faltas?'ruim':''],['Marcações incompletas',t.incompletas,t.incompletas?'ruim':'']])+'</div></div>';
+  // tabela do mês
+  var cab=livre?[['Dia'],['Situação'],['Início 1'],['Fim 1'],['Início 2'],['Fim 2'],['Início 3'],['Fim 3'],['Horas','num'],['Ocorrências']]:
+    [['Dia'],['Situação'],['Entrada','c'],['Pausas','c'],['Saída','c'],['Carga','num'],['Trabalhadas','num'],['Saldo','num'],['Atraso','num'],['Saída antec.','num'],['Ocorrências']];
+  h+='<table class="tab folha"><thead><tr>'+cab.map(function(x){return '<th'+(x[1]?' class="'+x[1]+'"':'')+'>'+x[0]+'</th>';}).join('')+'</tr></thead><tbody>';
+  calc.dias.forEach(function(x,idx){
+    var d=x.d,mk=x.mk,cls=[];
+    var fds=x.sit==='Sábado'||x.sit==='Domingo';
+    if(fds)cls.push('fds');else if(x.sit==='Feriado'||x.sit==='Ponto facultativo'||x.sit==='Folga concedida')cls.push('feriado');
+    if(['Não admitido','Desligado','Sem controle'].indexOf(x.sit)>=0)cls.push('apagado');
+    if(idx&&new Date(x.key+'T12:00:00Z').getUTCDay()===1)cls.push('semana');
     var ocorr=d.ocorr.slice();if(x.observacao)ocorr.push(x.observacao);
+    var dia='<b>'+x.key.slice(8,10)+'/'+x.key.slice(5,7)+'</b> <span class="dsem">'+E(String(x.nomeDia||'').slice(0,3))+'</span>';
+    var sit=fds||x.sit==='Dia útil'?(fds?E(x.sit):''):E(x.sit);
     var cel;
     if(livre)cel=[0,1,2,3,4,5].map(function(i){return '<td>'+PC.hhmmRelogio(mk[i])+'</td>';}).join('')+'<td class="num">'+PC.hhmm(d.trab)+'</td>';
     else{var pausas=[];for(var i=1;i<=5;i+=2)if(mk[i]!==null)pausas.push(PC.hhmmRelogio(mk[i])+'–'+(mk[i+1]!==null?PC.hhmmRelogio(mk[i+1]):'…'));
-      cel='<td>'+PC.hhmmRelogio(mk[0])+'</td><td>'+pausas.join('<br>')+'</td><td>'+PC.hhmmRelogio(mk[7])+'</td><td class="num">'+PC.hhmm(d.carga)+'</td><td class="num">'+PC.hhmm(d.trab)+'</td><td class="num">'+pdfSaldo(d.saldo)+'</td><td class="num">'+(d.atraso||'')+'</td><td class="num">'+(d.antec||'')+'</td>';}
-    h+='<tr class="'+cls+'"><td>'+dataBR(x.key)+'</td><td>'+E(x.nomeDia)+'</td><td>'+E(x.sit)+(d.status&&d.status!==x.sit?' <span class="etq">'+E(d.status)+'</span>':'')+'</td>'+cel+'<td class="mini">'+E(ocorr.join('; '))+'</td></tr>';
+      cel='<td class="c">'+PC.hhmmRelogio(mk[0])+'</td><td class="c">'+pausas.join(' · ')+'</td><td class="c">'+PC.hhmmRelogio(mk[7])+'</td><td class="num">'+(d.carga?PC.hhmm(d.carga):'')+'</td><td class="num">'+(d.trab?PC.hhmm(d.trab):'')+'</td><td class="num">'+(d.saldo?pdfSaldo(d.saldo):'')+'</td><td class="num">'+(d.atraso?d.atraso+' min':'')+'</td><td class="num">'+(d.antec?d.antec+' min':'')+'</td>';}
+    h+='<tr class="'+cls.join(' ')+'"><td class="dia">'+dia+'</td><td>'+sit+'</td>'+cel+'<td class="ocorr">'+E(ocorr.join('; '))+'</td></tr>';
   });
-  h+='<tr class="total"><td colspan="'+(livre?9:6)+'">Total do mês</td>'+(livre?'<td class="num">'+PC.hhmm(t.trab)+'</td>':'<td class="num">'+PC.hhmm(t.carga)+'</td><td class="num">'+PC.hhmm(t.trab)+'</td><td class="num">'+pdfSaldo(t.saldo)+'</td><td></td><td></td>')+'<td>'+(livre?'':E('Perfil: '+(t.perfil||'')))+'</td></tr>';
-  h+='</tbody></table><div class="assinaturas"><div>'+E(c.nome)+'<br><span class="mini">Colaborador(a)</span></div><div>Responsável<br><span class="mini">Victor Morais Advocacia</span></div></div>';
+  h+='<tr class="total"><td colspan="'+(livre?8:5)+'">Total do mês</td>'+(livre?'<td class="num">'+PC.hhmm(t.trab)+'</td>':'<td class="num">'+PC.hhmm(t.carga)+'</td><td class="num">'+PC.hhmm(t.trab)+'</td><td class="num">'+pdfSaldo(t.saldo)+'</td><td></td><td></td>')+'<td>'+(livre?'':E('Perfil do mês: '+(t.perfil||'—')))+'</td></tr>';
+  h+='</tbody></table><div class="legenda"><i class="l-fds"></i>Fim de semana <i class="l-fer"></i>Feriado, ponto facultativo ou folga <span>Saldo: <b class="pos">+</b> horas a mais · <b class="neg">−</b> horas a menos</span></div>';
+  h+='<div class="assinaturas"><div>'+E(c.nome)+'<br><span class="mini">Colaborador(a)</span></div><div>Responsável<br><span class="mini">'+E(SagaPdf.nomeEscritorio())+'</span></div></div>';
   return h;
 }
 async function pdfFolhaPonto(lista,a,m,btn){
@@ -1892,11 +1926,98 @@ function pdfRelatorio(){
       h+='<div class="secao">Dia a dia</div>'+(linhas.length?'<table class="tab"><thead><tr><th>Dia</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th><th class="num">Intervalos acima</th></tr></thead><tbody>'+
         linhas.map(function(k){var a=d.an[k];return '<tr><td><b>'+dataBR(k)+'</b></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>L?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td><td class="num'+(a.gaps.length?' alerta':'')+'">'+a.gaps.length+'</td></tr>';}).join('')+'</tbody></table>':'<div class="nada">Sem registros no período.</div>');
       // relatório diário de cada dia do período, em seguida
-      linhas.forEach(function(k){var a=d.an[k];h+='<div class="secao" style="break-before:auto;margin-top:18px">'+dataBR(k)+' · relatório do dia</div>'+pdfKpisDia(a,L)+pdfLinhaTempo(d.porDia[k]||[],a.gaps)+obsDe(d,k);});
-      paginas.push(h);});
+      paginas.push(h);
+      // em seguida, o relatório de cada dia, um por página
+      linhas.forEach(function(k){paginas.push(pdfPaginaDia(d,k,L,u.obs));});});
   }
   var nomeArq=(u.dados.length===1?u.dados[0].c.nome:'equipe');
   SagaPdf.imprimir({titulo:'Relatório de atividades',subtitulo:u.per.titulo,paisagem:false,arquivo:'Relatório de atividades - '+nomeArq+' - '+u.per.titulo,paginas:paginas});
+}
+/* Escolher relatórios: junta num PDF os relatórios do dia marcados (de uma ou mais pessoas, em quaisquer dias) */
+async function carregarDadosRel(pessoas,ini,fim,limite){
+  var res=await Promise.all(pessoas.map(function(c){return _sb.rpc('relatorio_atividades',{p_usuario:c.usuario_id,p_ini:ini,p_fim:fim});}));
+  var erro=res.find(function(r){return r.error;});if(erro)throw erro.error;
+  var ro=await _sb.from('ponto_dias').select('colaborador_id,data,relatorio').gte('data',ini).lte('data',fim).not('relatorio','is',null);
+  var obs={};(ro.data||[]).forEach(function(o){obs[o.colaborador_id+'|'+o.data]=o.relatorio;});
+  var dias=diasDoPeriodo(ini,fim);
+  var dados=pessoas.map(function(c,i){
+    var porDia={};(res[i].data||[]).forEach(function(e){var k=dataLocalDe(e.momento);(porDia[k]=porDia[k]||[]).push(e);});
+    var an={};dias.forEach(function(d){an[d]=analisarDia(porDia[d]||[],d,limite);});
+    return {c:c,porDia:porDia,an:an};
+  });
+  return {dados:dados,obs:obs,dias:dias,limite:limite,per:{ini:ini,fim:fim,titulo:(ini===fim?dataBR(ini):dataBR(ini)+' a '+dataBR(fim))}};
+}
+function pessoasDoRel(ini){return state.colabsPonto.filter(function(c){return c.usuario_id&&(!c.demissao||c.demissao>=ini);});}
+function abrirEscolherRel(){
+  var per=periodoRel();state.pr={ini:per.ini,fim:per.fim,marcados:{}};
+  document.getElementById('prIni').value=per.ini;document.getElementById('prFim').value=per.fim;
+  var sel=state.rel.pessoa;
+  document.getElementById('prPessoas').innerHTML=pessoasDoRel(per.ini).map(function(c){return '<label><input type="checkbox" value="'+c.usuario_id+'"'+(!sel||sel===c.usuario_id?' checked':'')+'> '+esc(c.nome)+'</label>';}).join('');
+  abrirModal('modalPdfRel');listarRelEscolha();
+}
+var versaoPr=0;
+async function listarRelEscolha(){
+  var ini=document.getElementById('prIni').value,fim=document.getElementById('prFim').value,alvo=document.getElementById('prLista');
+  if(!ini||!fim||fim<ini){alvo.innerHTML='<div class="sub">Escolha um período válido.</div>';return;}
+  if(diasDoPeriodo(ini,fim).length>93){alvo.innerHTML='<div class="sub">Escolha no máximo 3 meses de cada vez.</div>';return;}
+  var ids=Array.prototype.map.call(document.querySelectorAll('#prPessoas input:checked'),function(i){return i.value;});
+  var pessoas=pessoasDoRel(ini).filter(function(c){return ids.indexOf(c.usuario_id)>=0;});
+  if(!pessoas.length){alvo.innerHTML='<div class="sub">Marque pelo menos uma pessoa.</div>';state.pr.carga=null;contarRelEscolha();return;}
+  var v=++versaoPr;alvo.innerHTML='<div class="sub">Carregando…</div>';
+  try{var carga=await carregarDadosRel(pessoas,ini,fim,state.cfg.intervalo_alerta_min||30);}
+  catch(e){alvo.innerHTML='<div class="sub">Erro: '+esc(e.message||'')+'</div>';return;}
+  if(v!==versaoPr)return;
+  state.pr.carga=carga;var h='';
+  carga.dados.forEach(function(d){
+    var lin=carga.dias.filter(function(k){var a=d.an[k];return a.temPonto||a.nAtiv||carga.obs[d.c.id+'|'+k];});
+    h+='<div class="pr-grupo">'+esc(d.c.nome)+'</div>'+(lin.length?lin.map(function(k){var a=d.an[k],ch=d.c.usuario_id+'|'+k;
+      return '<label class="pr-item"><input type="checkbox" data-pr="'+ch+'"'+(state.pr.marcados[ch]!==false?' checked':'')+'><b>'+dataBR(k)+'</b><span>'+esc(DIAS_SEM_PR[new Date(k+'T12:00:00Z').getUTCDay()])+' · '+a.nAtiv+' atividade'+(a.nAtiv===1?'':'s')+(a.entrada?' · '+horaDe(a.entrada)+(a.saida?'–'+horaDe(a.saida):''):'')+(carga.obs[d.c.id+'|'+k]?' · com observações':'')+'</span></label>';}).join(''):'<div class="sub" style="padding:6px 2px">Nenhum relatório no período.</div>');
+  });
+  alvo.innerHTML=h;contarRelEscolha();
+}
+var DIAS_SEM_PR=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+function contarRelEscolha(){var n=document.querySelectorAll('#prLista [data-pr]:checked').length;document.getElementById('prQtd').textContent=n+' relatório'+(n===1?'':'s')+' do dia marcado'+(n===1?'':'s');document.getElementById('prSalvar').disabled=!n;}
+function pdfPaginaDia(d,k,L,obs){
+  var a=d.an[k],E=SagaPdf.esc,o=obs[d.c.id+'|'+k];
+  return '<div class="pessoa"><h2>'+E(d.c.nome)+'</h2><div class="info">'+E(dataBR(k)+' ('+DIAS_SEM_PR[new Date(k+'T12:00:00Z').getUTCDay()]+')')+[d.c.cargo,d.c.regime].filter(Boolean).map(function(x){return ' · '+E(x);}).join('')+'</div></div>'+
+    pdfKpisDia(a,L)+(a.nCli?'<div class="mini" style="margin:-4px 0 10px">Clientes: '+Object.keys(a.clientes).map(function(x){return E(a.clientes[x]);}).join(', ')+'</div>':'')+
+    '<div class="secao">Linha do tempo do dia</div>'+pdfLinhaTempo(d.porDia[k]||[],a.gaps)+(o?'<div class="obs"><b>Observações do dia</b><div>'+textoRico(o)+'</div></div>':'');
+}
+function pdfRelEscolhidos(){
+  var carga=state.pr&&state.pr.carga;if(!carga)return;
+  var marc={};document.querySelectorAll('#prLista [data-pr]:checked').forEach(function(i){marc[i.dataset.pr]=1;});
+  var E=SagaPdf.esc,hh=function(x){return x?PC.hhmm(x):'—';},L=carga.limite,paginas=[],resumo=document.getElementById('prResumo').checked,pessoasUsadas=0;
+  carga.dados.forEach(function(d){
+    var dias=carga.dias.filter(function(k){return marc[d.c.usuario_id+'|'+k];});if(!dias.length)return;pessoasUsadas++;
+    if(resumo&&dias.length>1){
+      var t={trab:0,nAtiv:0,gaps:0,cli:{}};dias.forEach(function(k){var a=d.an[k];t.trab+=a.trab;t.nAtiv+=a.nAtiv;t.gaps+=a.gaps.length;Object.keys(a.clientes).forEach(function(x){t.cli[x]=1;});});
+      paginas.push('<div class="pessoa"><h2>'+E(d.c.nome)+'</h2><div class="info">Resumo dos '+dias.length+' dias escolhidos</div></div>'+
+        '<div class="kpis"><div><span>Dias</span><b>'+dias.length+'</b></div><div><span>Trabalhadas</span><b>'+hh(t.trab)+'</b></div><div><span>Atividades</span><b>'+t.nAtiv+'</b></div><div><span>Clientes atendidos</span><b>'+Object.keys(t.cli).length+'</b></div><div><span>Intervalos acima de '+L+' min</span><b'+(t.gaps?' class="alerta"':'')+'>'+t.gaps+'</b></div></div>'+
+        '<table class="tab"><thead><tr><th>Dia</th><th>Entrada</th><th>Saída</th><th class="num">Trabalhadas</th><th class="num">Atividades</th><th class="num">Clientes</th><th class="num">Maior intervalo</th></tr></thead><tbody>'+
+        dias.map(function(k){var a=d.an[k];return '<tr><td><b>'+dataBR(k)+'</b> <span class="mini">'+DIAS_SEM_PR[new Date(k+'T12:00:00Z').getUTCDay()]+'</span></td><td>'+(a.entrada?horaDe(a.entrada):'—')+'</td><td>'+(a.saida?horaDe(a.saida):'—')+'</td><td class="num">'+hh(a.trab)+'</td><td class="num">'+a.nAtiv+'</td><td class="num">'+a.nCli+'</td><td class="num'+(a.maior>L?' alerta':'')+'">'+(a.maior?duracaoTxt(a.maior):'—')+'</td></tr>';}).join('')+'</tbody></table>');
+    }
+    dias.forEach(function(k){paginas.push(pdfPaginaDia(d,k,L,carga.obs));});
+  });
+  if(!paginas.length){showToast('Marque pelo menos um relatório.','error');return;}
+  var unico=pessoasUsadas===1?carga.dados.find(function(d){return carga.dias.some(function(k){return marc[d.c.usuario_id+'|'+k];});}).c.nome:'equipe';
+  SagaPdf.imprimir({titulo:'Relatório de atividades',subtitulo:carga.per.titulo,arquivo:'Relatórios de atividades - '+unico+' - '+carga.per.titulo,paginas:paginas});
+  fecharModal('modalPdfRel');
+}
+function ligarEscolherRel(){
+  document.getElementById('relEscolher').addEventListener('click',abrirEscolherRel);
+  ['prIni','prFim'].forEach(function(id){document.getElementById(id).addEventListener('change',listarRelEscolha);});
+  document.getElementById('prPessoas').addEventListener('change',listarRelEscolha);
+  document.getElementById('prLista').addEventListener('change',function(e){var i=e.target.closest('[data-pr]');if(i){state.pr.marcados[i.dataset.pr]=i.checked;contarRelEscolha();}});
+  document.getElementById('prTodos').addEventListener('click',function(){document.querySelectorAll('#prLista [data-pr]').forEach(function(i){i.checked=true;state.pr.marcados[i.dataset.pr]=true;});contarRelEscolha();});
+  document.getElementById('prNenhum').addEventListener('click',function(){document.querySelectorAll('#prLista [data-pr]').forEach(function(i){i.checked=false;state.pr.marcados[i.dataset.pr]=false;});contarRelEscolha();});
+  document.querySelectorAll('[data-pr-atalho]').forEach(function(b){b.addEventListener('click',function(){
+    var h=state.hoje,ini=h,fim=h,t=b.dataset.prAtalho;
+    if(t==='semana'){var dw=new Date(h+'T12:00:00Z').getUTCDay();ini=addDias(h,-((dw+6)%7));fim=addDias(ini,6);}
+    else if(t==='mes'){ini=h.slice(0,8)+'01';fim=fimKeyDe(h.slice(0,7));}
+    else if(t==='mesant'){var k=mesAnterior(h.slice(0,7));ini=k+'-01';fim=fimKeyDe(k);}
+    if(fim>h)fim=h;
+    document.getElementById('prIni').value=ini;document.getElementById('prFim').value=fim;listarRelEscolha();});});
+  document.getElementById('prSalvar').addEventListener('click',pdfRelEscolhidos);
 }
 async function abrirAtestado(caminho){
   var w=window.open('','_blank');
