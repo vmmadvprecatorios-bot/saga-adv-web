@@ -158,7 +158,24 @@
       /* ===== SIDEBAR: aparencia fixa, retratil, sticky ===== */
       '#sidebarSaga{width:208px !important;background:var(--navy-2) !important;border-right:1px solid var(--border) !important;padding:22px 0 !important;position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;flex-grow:0 !important;flex-shrink:0 !important;flex-basis:208px !important;transition:width .22s ease,min-width .22s ease,flex-basis .22s ease,padding .22s ease,opacity .18s ease !important;}'+
       '[data-theme="light"] #sidebarSaga{background:#ffffff !important;border-right-color:var(--border) !important;}'+
-      '#sidebarSaga.collapsed{width:0 !important;min-width:0 !important;flex-basis:0 !important;padding:0 !important;opacity:0 !important;overflow:hidden !important;border:none !important;}'+
+      // recolhido no computador = faixa de 64 px só com os ícones; passando o mouse abre por cima (sem empurrar a tela)
+      '@media(min-width:761px){#sidebarSaga{transition:width .3s cubic-bezier(.22,.78,.25,1),min-width .3s cubic-bezier(.22,.78,.25,1),margin-right .3s cubic-bezier(.22,.78,.25,1),box-shadow .3s ease !important;}'+
+        '#sidebarSaga.collapsed{width:64px !important;min-width:64px !important;flex-basis:64px !important;overflow-x:hidden !important;z-index:150 !important;}'+
+        '#sidebarSaga.collapsed .nav-item{white-space:nowrap !important;}'+
+        '#sidebarSaga.collapsed .nav-grupo{display:block !important;}'+
+        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section{height:1px !important;padding:0 !important;margin:12px 16px !important;font-size:0 !important;overflow:hidden !important;background:var(--border-soft) !important;}'+
+        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat{opacity:0 !important;}'+
+        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item{color:transparent !important;font-size:0 !important;}'+
+        '#sidebarSaga.collapsed.sg-aberto{width:208px !important;min-width:208px !important;margin-right:-144px !important;box-shadow:14px 0 34px rgba(0,0,0,.28) !important;}}'+
+      // celular: fica como era (grupos sempre abertos, sem setinha)
+      '@media(max-width:760px){#sidebarSaga .nav-grupo{display:block !important;}#sidebarSaga .nav-section[data-grupo]{cursor:default !important;pointer-events:none;}#sidebarSaga .nav-section[data-grupo]::after{display:none !important;}}'+
+      // grupos: título clicável com setinha
+      '#sidebarSaga .nav-section[data-grupo]{cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:space-between !important;user-select:none;}'+
+      '#sidebarSaga .nav-section[data-grupo]::after{content:"";width:6px;height:6px;margin-right:2px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);transition:transform .28s cubic-bezier(.22,.78,.25,1);opacity:.7}'+
+      '#sidebarSaga .nav-section[data-grupo].fechado::after{transform:rotate(-45deg);}'+
+      '#sidebarSaga .nav-section[data-grupo]:hover{opacity:1 !important;filter:brightness(1.25);}'+
+      '#sidebarSaga .nav-section[data-grupo]:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}'+
+      '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section[data-grupo]::after{display:none;}'+
       '#sidebarSaga .nav-section,#sidebarSaga .nav-secao{font-size:10px !important;letter-spacing:1.6px !important;color:#9aa6b8 !important;text-transform:uppercase !important;font-weight:600 !important;padding:17px 22px 7px !important;opacity:1 !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-section,[data-theme="light"] #sidebarSaga .nav-secao{color:#5b6880 !important;}'+
       '#sidebarSaga .nav-item{display:flex !important;align-items:center !important;gap:11px !important;padding:11px 22px !important;font-size:13px !important;color:#d5dbe4 !important;font-weight:500 !important;cursor:pointer !important;border-left:3px solid transparent !important;background:transparent !important;transition:all .2s !important;}'+
@@ -427,8 +444,40 @@
 
   var _perfilAtual=null;
 
+  // ===== Menu lateral: grupos Operação / Comunicação / Gestão que abrem e fecham (lembrado neste navegador) =====
+  function gruposFechados(){try{return JSON.parse(localStorage.getItem('saga-menu-grupos')||'{}')||{};}catch(e){return {};}}
+  function ligarGruposMenu(sb){
+    var fech=gruposFechados();
+    sb.querySelectorAll('.nav-section[data-grupo]').forEach(function(sec){
+      var id=sec.getAttribute('data-grupo'),g=sb.querySelector('.nav-grupo[data-grupo="'+id+'"]');if(!g)return;
+      var marcar=function(fechado){sec.classList.toggle('fechado',fechado);sec.setAttribute('aria-expanded',fechado?'false':'true');};
+      if(fech[id]){g.hidden=true;marcar(true);}
+      if(sec.dataset.ligado)return;sec.dataset.ligado='1';
+      var alternar=function(){
+        if(sb.classList.contains('collapsed')&&!sb.classList.contains('sg-aberto'))return;
+        var fechar=!g.hidden;marcar(fechar);
+        if(global.sagaRecolher)global.sagaRecolher(g,fechar);else g.hidden=fechar;
+        var f=gruposFechados();if(fechar)f[id]=true;else delete f[id];try{localStorage.setItem('saga-menu-grupos',JSON.stringify(f));}catch(e){}
+      };
+      sec.addEventListener('click',alternar);
+      sec.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();alternar();}});
+    });
+  }
+  // ===== Computador, menu recolhido: faixa só com os ícones; passando o mouse ela abre por cima da tela e fecha ao sair =====
+  function ligarFaixaRecolhida(sb){
+    if(sb.dataset.faixa)return;sb.dataset.faixa='1';
+    var tAbrir=null,tFechar=null;
+    sb.addEventListener('mouseenter',function(){
+      if(window.innerWidth<=760||!sb.classList.contains('collapsed'))return;
+      clearTimeout(tFechar);tAbrir=setTimeout(function(){sb.classList.add('sg-aberto');},90);
+    });
+    sb.addEventListener('mouseleave',function(){
+      clearTimeout(tAbrir);tFechar=setTimeout(function(){sb.classList.remove('sg-aberto');},160);
+    });
+  }
+
   var SIDEBAR_HTML=''
-    +'<div class="nav-section">Operacao</div>'
+    +'<div class="nav-section" data-grupo="operacao" role="button" tabindex="0" aria-expanded="true">Operacao</div><div class="nav-grupo" data-grupo="operacao">'
     +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Jurídico</div>'
@@ -447,14 +496,14 @@
     +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Intimações</div>'
-    +'<div class="nav-section">Comunicacao</div>'
+    +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicacao</div><div class="nav-grupo" data-grupo="comunicacao">'
     +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Chat Interno<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
     +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Ponto Eletronico</div>'
-    +'<div class="nav-section">Gestao</div>'
+    +'</div><div class="nav-section" data-grupo="gestao" role="button" tabindex="0" aria-expanded="true">Gestao</div><div class="nav-grupo" data-grupo="gestao">'
     +'<div class="nav-item" data-tela="colaboradores" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Colaboradores</div>'
@@ -472,7 +521,7 @@
     +'Marketing</div>'
     +'<div class="nav-item sem-permissao" data-tela="permissoes" onclick="sagaIrPara(\'painel_admin_permissoes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Permissões</div>';
+    +'Permissões</div></div>';
 
   var TOPBAR_HTML=''
     +'<div class="top-left">'
@@ -1402,8 +1451,8 @@
     });
     document.querySelectorAll('#sidebarSaga .nav-section').forEach(function(sec){
       sec.classList.remove('perm-pendente');
-      var el=sec.nextElementSibling,algum=false;
-      while(el&&!el.classList.contains('nav-section')){if(el.classList.contains('nav-item')&&!el.classList.contains('sem-permissao'))algum=true;el=el.nextElementSibling;}
+      var grupo=sec.nextElementSibling,algum=false;
+      if(grupo&&grupo.classList.contains('nav-grupo'))grupo.querySelectorAll('.nav-item').forEach(function(it){if(!it.classList.contains('sem-permissao'))algum=true;});
       sec.classList.toggle('sem-permissao',!algum);
     });
   }
@@ -1529,7 +1578,7 @@
     if(!sb&&!tb)return;
     if(!_molduraMontada){
       _molduraMontada=true;
-      if(sb){injetarHtml(sb,SIDEBAR_HTML);linksDoMenu(sb);prepararMenuPermissoes();}
+      if(sb){injetarHtml(sb,SIDEBAR_HTML);linksDoMenu(sb);prepararMenuPermissoes();ligarGruposMenu(sb);ligarFaixaRecolhida(sb);}
       if(tb)injetarHtml(tb,TOPBAR_HTML);
       restaurarNumerosMoldura();
       try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)definirIniciaisAvatar(avt,ini);var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);var lg=localStorage.getItem('saga-logo');if(lg)aplicarMarca(lg,localStorage.getItem('saga-escritorio'));}catch(e){}
