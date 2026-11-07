@@ -1831,7 +1831,7 @@ function folhaPontoHtml(c,calc,a,m){
       cel='<td>'+PC.hhmmRelogio(mk[0])+'</td><td>'+pausas.join('<br>')+'</td><td>'+PC.hhmmRelogio(mk[7])+'</td><td class="num">'+PC.hhmm(d.carga)+'</td><td class="num">'+PC.hhmm(d.trab)+'</td><td class="num">'+pdfSaldo(d.saldo)+'</td><td class="num">'+(d.atraso||'')+'</td><td class="num">'+(d.antec||'')+'</td>';}
     h+='<tr class="'+cls+'"><td>'+dataBR(x.key)+'</td><td>'+E(x.nomeDia)+'</td><td>'+E(x.sit)+(d.status&&d.status!==x.sit?' <span class="etq">'+E(d.status)+'</span>':'')+'</td>'+cel+'<td class="mini">'+E(ocorr.join('; '))+'</td></tr>';
   });
-  h+='<tr class="total"><td colspan="'+(livre?9:6)+'">Total do mês</td>'+(livre?'<td class="num">'+PC.hhmm(t.trab)+'</td>':'<td class="num">'+PC.hhmm(t.carga)+'</td><td class="num">'+PC.hhmm(t.trab)+'</td><td class="num">'+pdfSaldo(t.saldo)+'</td><td class="num">'+(t.atrasos||'')+'</td><td class="num">'+(t.antec||'')+'</td>')+'<td>'+(livre?'':E('Perfil: '+(t.perfil||'')))+'</td></tr>';
+  h+='<tr class="total"><td colspan="'+(livre?9:6)+'">Total do mês</td>'+(livre?'<td class="num">'+PC.hhmm(t.trab)+'</td>':'<td class="num">'+PC.hhmm(t.carga)+'</td><td class="num">'+PC.hhmm(t.trab)+'</td><td class="num">'+pdfSaldo(t.saldo)+'</td><td></td><td></td>')+'<td>'+(livre?'':E('Perfil: '+(t.perfil||'')))+'</td></tr>';
   h+='</tbody></table><div class="assinaturas"><div>'+E(c.nome)+'<br><span class="mini">Colaborador(a)</span></div><div>Responsável<br><span class="mini">Victor Morais Advocacia</span></div></div>';
   return h;
 }
