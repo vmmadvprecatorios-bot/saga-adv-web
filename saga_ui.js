@@ -503,7 +503,7 @@
     var vigiando=false;
     var vigiar=function(){
       if(vigiando)return;vigiando=true;
-      var ver=function(e){if(dentro(e))return;document.removeEventListener('mousemove',ver,true);vigiando=false;clearTimeout(tAbrir);tFechar=setTimeout(function(){sb.classList.remove('sg-aberto');},160);};
+      var ver=function(e){if(dentro(e))return;document.removeEventListener('mousemove',ver,true);vigiando=false;try{sessionStorage.removeItem('saga-menu-hover');}catch(x){}clearTimeout(tAbrir);tFechar=setTimeout(function(){sb.classList.remove('sg-aberto');},160);};
       document.addEventListener('mousemove',ver,true);
     };
     if(vinhaAberto&&window.innerWidth>760&&sb.classList.contains('collapsed')){
@@ -522,6 +522,9 @@
     sb.addEventListener('mouseleave',function(e){
       // "saída" falsa (o mouse continua em cima do menu): espera ele sair de verdade
       if(sb.classList.contains('sg-aberto')&&dentro(e)){vigiar();return;}
+      // saiu de verdade (mesmo logo depois de clicar numa opção): a tela nova nasce com o menu recolhido,
+      // sem abrir e fechar de novo (pedido do Dr. Victor, 08/11)
+      try{sessionStorage.removeItem('saga-menu-hover');}catch(x){}
       clearTimeout(tAbrir);tFechar=setTimeout(function(){sb.classList.remove('sg-aberto');},160);
     });
   }
