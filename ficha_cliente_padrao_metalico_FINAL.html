@@ -246,6 +246,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 #tagModal select{width:100%;height:40px;padding:0 10px;border:1px solid var(--border-soft);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:12px}
 .tag-gerenciar-btn{margin-top:12px;border:0;background:none;color:var(--gold-light);font:inherit;font-size:11px;font-weight:600;text-decoration:underline;cursor:pointer;padding:0}
 #tagGerenciar{margin-top:10px;max-height:46vh;overflow:auto;overscroll-behavior:contain}.tag-ger-grupo{margin-bottom:12px}.tag-ger-tit{font-size:9px;font-weight:700;letter-spacing:.65px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.mc-lista{display:flex;flex-direction:column;gap:12px}.mc-modelo{border:1px solid var(--border-soft);border-radius:11px;padding:10px}.mc-modelo>.tag-ger-linha input[type=text]{font-weight:600}.mc-itens{margin:6px 0 0 14px;padding-left:10px;border-left:2px solid var(--border-soft)}.mc-novo{margin-top:12px}#modelosChecklistCorpo{max-height:60vh;overflow:auto;overscroll-behavior:contain}
 .tag-ger-linha{display:flex;align-items:center;gap:6px;margin-bottom:5px}.tag-ger-linha input[type=color]{width:28px;height:28px;padding:2px;border:1px solid var(--border-soft);border-radius:7px;background:none;cursor:pointer;flex:0 0 auto}.tag-ger-linha input[type=text]{flex:1;min-width:0;height:30px;padding:0 9px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:11.5px}
 .tag-ger-linha button{height:28px;min-width:28px;border:1px solid var(--border-soft);border-radius:7px;background:var(--panel);color:var(--text);cursor:pointer;font-size:11px}.tag-ger-linha button:disabled{opacity:.35;cursor:default}.tag-ger-nova{border:1px dashed var(--border);background:none;color:var(--gold-light);border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
 .ficha-titulo .cpf-info{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px}.ficha-titulo .cpf-info>span{display:inline-flex;align-items:center;min-width:0}.ficha-titulo .end-linha{overflow-wrap:anywhere}.ficha-titulo .end-vazio{color:var(--muted)}.ficha-titulo .end-incluir{margin-left:6px;padding:2px 8px;border:1px dashed var(--border);border-radius:7px;background:none;color:var(--gold-light);font:inherit;font-size:11px;cursor:pointer}.ficha-titulo .end-incluir:active{transform:scale(.95)}
@@ -356,12 +357,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
             <div class="checklist-list" id="checklistList"></div>
             <div class="menu-modelos-checklist">
               <button class="btn-add-checklist" id="btnAddChecklist">+ Adicionar Checklist</button>
-              <div class="dropdown-modelos" id="dropdownModelos">
-                <button class="opcao-modelo" data-checklist-template="documentacao">Documentação Inicial</button>
-                <button class="opcao-modelo" data-checklist-template="movimentacoes">Movimentações do Processo</button>
-                <button class="opcao-modelo" data-checklist-template="localizacao">Checklist de Localização</button>
-                <button class="opcao-modelo personalizado" data-checklist-template="personalizado">+ Criar checklist personalizado</button>
-              </div>
+              <div class="dropdown-modelos" id="dropdownModelos"></div>
             </div>
           </section>
 
@@ -1747,7 +1743,8 @@ async function addChecklistFromTemplate(templateId){
     openModal('customChecklistModal');
     return;
   }
-  const template=checklistTemplates[templateId];
+  const modelo=(state.modelosChecklist||[]).find(m=>String(m.id)===String(templateId));
+  const template=modelo?{nome:modelo.nome,itens:(Array.isArray(modelo.itens)?modelo.itens:[]).map(String).filter(t=>t.trim())}:checklistTemplates[templateId];
   if(!template||!process)return;
   const novaLista={
     id:'cl-'+Date.now(),
@@ -2056,7 +2053,7 @@ function voltarTelaAnterior(){
   if(veioDoSistema&&history.length>1)history.back();
   else window.location.href='lista_processos_padrao_metalico.html';
 }
-function setupInteractions(){document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.querySelectorAll('[data-checklist-template]').forEach(button=>button.addEventListener('click',()=>addChecklistFromTemplate(button.dataset.checklistTemplate)));document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('btnAnexarDocumento').addEventListener('click',()=>{state.pastaAlvoUpload=null;},true);document.getElementById('documentInput').addEventListener('change',async event=>{const arquivos=Array.from(event.target.files||[]);for(const file of arquivos)await enviarDocumento(file);event.target.value='';state.pastaAlvoUpload=null;});document.getElementById('btnNovaPasta').addEventListener('click',()=>abrirModalPasta('nova',{paiId:null}));document.getElementById('pastaSalvar').addEventListener('click',salvarModalPasta);document.getElementById('pastaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();salvarModalPasta();}});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirNovaTarefaCompleta());document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
+function setupInteractions(){document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.getElementById('dropdownModelos').addEventListener('click',ev=>{const b=ev.target.closest('[data-checklist-template]');if(b){addChecklistFromTemplate(b.dataset.checklistTemplate);return;}if(ev.target.closest('[data-gerenciar-modelos]')){document.getElementById('dropdownModelos').classList.remove('aberto');abrirGerenciarModelos();}});document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('btnAnexarDocumento').addEventListener('click',()=>{state.pastaAlvoUpload=null;},true);document.getElementById('documentInput').addEventListener('change',async event=>{const arquivos=Array.from(event.target.files||[]);for(const file of arquivos)await enviarDocumento(file);event.target.value='';state.pastaAlvoUpload=null;});document.getElementById('btnNovaPasta').addEventListener('click',()=>abrirModalPasta('nova',{paiId:null}));document.getElementById('pastaSalvar').addEventListener('click',salvarModalPasta);document.getElementById('pastaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();salvarModalPasta();}});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirNovaTarefaCompleta());document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
 
 
 /* Localização, importação externa e teses globais */
@@ -2161,6 +2158,7 @@ async function setup(){
   SagaTexto.ligar(document.getElementById('editCommentInput'));
   setupModalsTelefone();
   await carregarCatalogoEtiquetas();
+  await carregarModelosChecklist();
   renderClientContacts();
   renderActiveProcess();
 }
@@ -2513,6 +2511,85 @@ async function carregarListas(){
   responsavelOptions.length=0;
   state.responsaveis.forEach(item=>responsavelOptions.push([item.id,item.nome_completo]));
   return {teses:state.teses,responsaveis:state.responsaveis};
+}
+/* ---------- Modelos de checklist (bloco 119): o administrador cria, renomeia, reordena e remove (remover = desativar) ---------- */
+const MODELOS_CHECKLIST_RESERVA=Object.keys(checklistTemplates).map((chave,k)=>({id:chave,chave,nome:checklistTemplates[chave].nome,itens:checklistTemplates[chave].itens.slice(),ordem:k+1,ativo:true}));
+async function carregarModelosChecklist(){
+  try{
+    if(state.adminSistema===undefined){const a=await _sb.rpc('eh_admin_sistema');state.adminSistema=a.data===true;}
+    const r=await _sb.from('checklist_modelos').select('id,chave,nome,itens,ordem,ativo').order('ordem').order('criado_em');
+    if(r.error)throw r.error;
+    state.modelosChecklist=r.data&&r.data.length?r.data:MODELOS_CHECKLIST_RESERVA;state.modelosChecklistBanco=!!(r.data&&r.data.length);
+  }catch(e){state.modelosChecklist=MODELOS_CHECKLIST_RESERVA;state.modelosChecklistBanco=false;}
+  renderDropdownModelos();
+}
+function renderDropdownModelos(){
+  const d=document.getElementById('dropdownModelos');if(!d)return;
+  const ativos=(state.modelosChecklist||MODELOS_CHECKLIST_RESERVA).filter(m=>m.ativo!==false);
+  d.innerHTML=ativos.map(m=>'<button class="opcao-modelo" type="button" data-checklist-template="'+esc(m.id)+'">'+esc(m.nome)+'</button>').join('')+
+    '<button class="opcao-modelo personalizado" type="button" data-checklist-template="personalizado">+ Criar checklist personalizado</button>'+
+    (state.adminSistema&&state.modelosChecklistBanco?'<button class="opcao-modelo personalizado" type="button" data-gerenciar-modelos>Gerenciar modelos…</button>':'');
+}
+function itensDoModelo(m){return (Array.isArray(m.itens)?m.itens:[]).map(String);}
+async function salvarModeloChecklist(id,dados,msg){
+  const r=await _sb.from('checklist_modelos').update(dados).eq('id',id);
+  if(r.error){showToast('Não foi possível salvar: '+esc(r.error.message),'error');return false;}
+  await carregarModelosChecklist();renderGerenciarModelos();if(msg)showToast(msg,'success');return true;
+}
+function abrirGerenciarModelos(){
+  let m=document.getElementById('modelosChecklistModal');
+  if(!m){
+    m=document.createElement('div');m.className='modal-overlay';m.id='modelosChecklistModal';
+    m.innerHTML='<div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Modelos de checklist</h3><p>O que aparece em "+ Adicionar Checklist". Mudanças valem para os próximos checklists; os que já estão nos processos ficam como estão.</p></div><button class="modal-close" type="button" data-fechar-modelos>✕</button></div><div class="modal-body" id="modelosChecklistCorpo"></div><div class="modal-foot"><button class="btn-secondary" type="button" data-fechar-modelos>Fechar</button></div></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click',ev=>{if(ev.target===m||ev.target.closest('[data-fechar-modelos]'))closeModal('modelosChecklistModal');});
+  }
+  renderGerenciarModelos();openModal('modelosChecklistModal');
+}
+function renderGerenciarModelos(){
+  const corpo=document.getElementById('modelosChecklistCorpo');if(!corpo)return;
+  const ativos=(state.modelosChecklist||[]).filter(x=>x.ativo!==false);
+  corpo.innerHTML='<div class="mc-lista">'+ativos.map((md,k)=>'<div class="mc-modelo" data-modelo="'+esc(md.id)+'">'+
+      '<div class="tag-ger-linha"><input type="text" value="'+esc(md.nome)+'" maxlength="80" data-mc-nome aria-label="Nome do modelo">'+
+      '<button type="button" data-mc-mover="-1" title="Subir"'+(k===0?' disabled':'')+'>↑</button><button type="button" data-mc-mover="1" title="Descer"'+(k===ativos.length-1?' disabled':'')+'>↓</button>'+
+      '<button type="button" data-mc-remover title="Remover do menu">Remover</button></div>'+
+      '<div class="mc-itens">'+itensDoModelo(md).map((t,j,arr)=>'<div class="tag-ger-linha mc-item" data-item="'+j+'"><input type="text" value="'+esc(t)+'" maxlength="160" data-mc-item aria-label="Item '+(j+1)+'">'+
+        '<button type="button" data-mc-item-mover="-1" title="Subir"'+(j===0?' disabled':'')+'>↑</button><button type="button" data-mc-item-mover="1" title="Descer"'+(j===arr.length-1?' disabled':'')+'>↓</button><button type="button" data-mc-item-remover title="Tirar item">✕</button></div>').join('')+
+      '<div class="tag-ger-linha"><input type="text" placeholder="+ Novo item (Enter para incluir)" maxlength="160" data-mc-novo-item></div></div></div>').join('')+'</div>'+
+    '<div class="tag-ger-linha mc-novo"><input type="text" placeholder="Nome do novo modelo" maxlength="80" data-mc-novo><button type="button" class="tag-ger-nova" data-mc-criar>+ Novo modelo</button></div>';
+  corpo.querySelectorAll('.mc-modelo').forEach(box=>{
+    const md=(state.modelosChecklist||[]).find(x=>String(x.id)===box.dataset.modelo);if(!md)return;
+    const itens=itensDoModelo(md);
+    box.querySelector('[data-mc-nome]').addEventListener('change',ev=>{const v=ev.target.value.trim();if(!v){ev.target.value=md.nome;return;}salvarModeloChecklist(md.id,{nome:v},'Modelo renomeado.');});
+    box.querySelector('[data-mc-remover]').addEventListener('click',async()=>{
+      const ok=window.sagaConfirmar?await sagaConfirmar('Remover modelo','Tirar "'+md.nome+'" do menu? Os checklists que já estão nos processos continuam.','Remover'):true;
+      if(!ok)return;const fim=()=>salvarModeloChecklist(md.id,{ativo:false},'Modelo removido do menu.');
+      if(window.sagaRecolher)window.sagaRecolher(box,true,fim);else fim();
+    });
+    box.querySelectorAll('[data-mc-mover]').forEach(b=>b.addEventListener('click',async()=>{
+      const lista=(state.modelosChecklist||[]).filter(x=>x.ativo!==false),k=lista.indexOf(md),d=Number(b.dataset.mcMover);if(!lista[k+d])return;
+      lista.splice(k,1);lista.splice(k+d,0,md);
+      for(let n=0;n<lista.length;n++){if(lista[n].ordem!==n+1){const r=await _sb.from('checklist_modelos').update({ordem:n+1}).eq('id',lista[n].id);if(r.error){showToast('Não foi possível reordenar.','error');return;}}}
+      await carregarModelosChecklist();renderGerenciarModelos();
+    }));
+    box.querySelectorAll('.mc-item').forEach(li=>{
+      const j=Number(li.dataset.item);
+      li.querySelector('[data-mc-item]').addEventListener('change',ev=>{const v=ev.target.value.trim();const novo=itens.slice();if(!v){ev.target.value=itens[j];return;}novo[j]=v;salvarModeloChecklist(md.id,{itens:novo},'Item atualizado.');});
+      li.querySelector('[data-mc-item-remover]').addEventListener('click',()=>{const novo=itens.slice();novo.splice(j,1);const fim=()=>salvarModeloChecklist(md.id,{itens:novo},'Item tirado do modelo.');if(window.sagaRecolher)window.sagaRecolher(li,true,fim);else fim();});
+      li.querySelectorAll('[data-mc-item-mover]').forEach(b=>b.addEventListener('click',()=>{const d=Number(b.dataset.mcItemMover);if(itens[j+d]===undefined)return;const novo=itens.slice();const [x]=novo.splice(j,1);novo.splice(j+d,0,x);salvarModeloChecklist(md.id,{itens:novo});}));
+    });
+    const novoItem=box.querySelector('[data-mc-novo-item]');
+    novoItem.addEventListener('keydown',ev=>{if(ev.key!=='Enter')return;ev.preventDefault();const v=novoItem.value.trim();if(!v)return;salvarModeloChecklist(md.id,{itens:itens.concat([v])},'Item incluído.').then(ok=>{if(ok){const c=document.querySelector('.mc-modelo[data-modelo="'+md.id+'"] [data-mc-novo-item]');if(c)c.focus();}});});
+  });
+  const nome=corpo.querySelector('[data-mc-novo]');
+  const criar=async()=>{const v=nome.value.trim();if(!v){nome.focus();return;}
+    const ordem=(state.modelosChecklist||[]).filter(x=>x.ativo!==false).length+1;
+    const r=await _sb.from('checklist_modelos').insert({nome:v,itens:[],ordem,ativo:true,criado_por_id:state.usuario&&state.usuario.internoId||null});
+    if(r.error){showToast('Não foi possível criar: '+esc(r.error.message),'error');return;}
+    await carregarModelosChecklist();renderGerenciarModelos();showToast('Modelo criado. Inclua os itens.','success');
+    const ult=document.querySelectorAll('.mc-modelo [data-mc-novo-item]');if(ult.length)ult[ult.length-1].focus();};
+  corpo.querySelector('[data-mc-criar]').addEventListener('click',criar);
+  nome.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();criar();}});
 }
 async function carregarCatalogoEtiquetas(){
   try{
