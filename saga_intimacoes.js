@@ -156,11 +156,13 @@
   }
   function advogadosDe(i){var ids=(i.advogados_ids||[]).slice();if(!ids.length&&i.responsavel_id)ids=[i.responsavel_id];externos();var po=S._extCache.porOab;(i.advogados||[]).forEach(function(a){var k=po[chaveOab(a.numero_oab,a.uf_oab)];if(k)ids.push(k);});return ids.filter(function(x,k){return ids.indexOf(x)===k;});}
   function urgencia(i){
-    if(!i.prazo||i.concluida)return null;var h=hojeISO();
-    if(i.prazo<h)return {cls:'atrasado',txt:'Atrasado · '+dataBR(i.prazo)};
-    if(i.prazo===h)return {cls:'hoje',txt:'Vence hoje'};
-    var d=(new Date(i.prazo+'T12:00:00')-new Date(h+'T12:00:00'))/86400000;
-    return {cls:d<=3?'perto':'longe',txt:'Prazo '+dataBR(i.prazo)};
+    if(i.concluida)return null;
+    var sug=!i.prazo&&semPrazoAberta(i)&&i._sug,p=i.prazo||(sug?i._sug.vencimento:'');
+    if(!p)return null;var h=hojeISO(),cls,txt;
+    if(p<h){cls='atrasado';txt=(sug?'Sugerido · venceu ':'Atrasado · ')+dataBR(p);}
+    else if(p===h){cls='hoje';txt=sug?'Sugerido · vence hoje':'Vence hoje';}
+    else{var d=(new Date(p+'T12:00:00')-new Date(h+'T12:00:00'))/86400000;cls=d<=3?'perto':'longe';txt=(sug?'Sugerido · ':'Prazo ')+dataBR(p);}
+    return {cls:cls+(sug?' sug':''),txt:txt,titulo:sug?'Prazo sugerido pelo SAGA ('+i._sug.dias+' dias úteis: '+i._sug.motivo+'). Abra a intimação para confirmar.':''};
   }
   var ICO_COPIAR='<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M5 15V5a2 2 0 012-2h10" stroke="currentColor" stroke-width="1.8"/></svg>';
 
@@ -235,6 +237,7 @@
   '.si-prazo.hoje{background:color-mix(in srgb,#f97316 18%,transparent);color:#f97316}'+
   '.si-prazo.perto{background:color-mix(in srgb,var(--warning) 18%,transparent);color:var(--warning)}'+
   '.si-prazo.longe{background:color-mix(in srgb,var(--success) 15%,transparent);color:var(--success)}'+
+  '.si-prazo.sug{background:transparent;border:1px dashed currentColor;padding:1px 6px;font-weight:600}'+
   '.si-vazio{padding:22px 10px;text-align:center;color:var(--muted);font-size:11.5px}'+
   '.si-tit-injetado{font-size:9.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold);margin:2px 0 -2px}'+
   '.si-tabela{overflow-x:auto;border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:16px}'+
@@ -324,6 +327,7 @@
     S.links=r[4].data||[];
     if(r[0].error){toast('Erro ao carregar as intimações: '+esc(r[0].error.message),'error');return false;}
     S.itens=r[0].data||[];S.colunas=r[1].data||[];S.oabs=r[2].data||[];S.usuarios=r[3].data||[];
+    pedirSugestoes();
     var ids=[...new Set(S.itens.map(function(i){return i.processo_id;}).filter(Boolean))];
     S.processos={};
     S.partes={};
@@ -353,7 +357,28 @@
     montarJanelas();
     return carregar();
   }
-  function mudou(){if(S.aoMudar)S.aoMudar();}
+  function mudou(){pedirSugestoes();if(S.aoMudar)S.aoMudar();}
+  // Prazo sugerido nas intimações abertas sem prazo: lê o texto só delas (em lotes) e calcula com saga_prazos.js
+  function semPrazoAberta(i){return !i.prazo&&!i.concluida&&!i.triagem;}
+  function pedirSugestoes(){
+    if(!window.SagaPrazos||!S.sb)return;
+    var faltam=S.itens.filter(function(i){return semPrazoAberta(i)&&i._sug===undefined;});
+    if(!faltam.length)return;
+    faltam.forEach(function(i){i._sug=null;});
+    (async function(){
+      try{
+        await SagaPrazos.carregar(S.sb);
+        for(var k=0;k<faltam.length;k+=100){
+          var lote=faltam.slice(k,k+100),r=await S.sb.from('intimacoes').select('id,texto').in('id',lote.map(function(i){return i.id;}));
+          var tx={};(r.data||[]).forEach(function(x){tx[x.id]=x.texto||'';});
+          lote.forEach(function(i){i._sug=SagaPrazos.sugerir({texto:tx[i.id]||i.resumo||'',tipo:i.tipo_documento||i.tipo_comunicacao,orgao:i.orgao,disponibilizacao:i.data_disponibilizacao});});
+        }
+      }catch(e){}
+      if(S.aoMudar)S.aoMudar();
+    })();
+  }
+  function prazoOuSugerido(i){return i.prazo||(semPrazoAberta(i)&&i._sug?i._sug.vencimento:'');}
+  function seloPrazo(u){return u?'<span class="si-prazo '+u.cls+'"'+(u.titulo?' title="'+esc(u.titulo)+'"':'')+'>'+esc(u.txt)+'</span>':'';}
 
   /* ---------- filtros ---------- */
   function filtradas(semConclusao,semNovasTribunal){
@@ -494,7 +519,7 @@
       '<div class="si-rod">'+etiquetaSituacao(i)+
         (i.triagem==='tarefa'?'<span class="si-tag" style="--c:#4b8af5">Virou tarefa</span>':i.triagem==='vista'?'<span class="si-tag" style="--c:#8a94a8">Vista</span>':'')+
         (i.etiqueta?'<span class="si-tag" style="--c:'+esc(i.etiqueta_cor||corEtiqueta(i.etiqueta))+'">'+esc(i.etiqueta)+'</span>':'')+
-        (u?'<span class="si-prazo '+u.cls+'">'+esc(u.txt)+'</span>':'')+
+        seloPrazo(u)+
         (i.processo_id?'<span class="si-tag" style="--c:#2fae7a">Na ficha do cliente</span>':'<span class="si-tag" style="--c:#8b5cf6">Fora do SAGA</span>')+
       '</div>';
     return el;
@@ -593,7 +618,7 @@
     mudou();
   }
   function ordenar(l){return l.slice().sort(function(a,b){
-    var pa=a.prazo||'9999',pb=b.prazo||'9999';if(pa!==pb)return pa<pb?-1:1;
+    var pa=prazoOuSugerido(a)||'9999',pb=prazoOuSugerido(b)||'9999';if(pa!==pb)return pa<pb?-1:1;
     return String(b.data_disponibilizacao||'').localeCompare(String(a.data_disponibilizacao||''));});}
   function renderQuadro(el){
     var lista=filtradas(true,true),f=S.f;
@@ -695,7 +720,7 @@
         '<td><b>'+esc(j.sigla)+'</b><div class="si-sub">'+esc(j.rotulo)+'</div><div class="si-sub">'+esc(i.orgao||'')+'</div></td>'+
         '<td>'+esc(i.tipo_documento||i.tipo_comunicacao||'')+'</td>'+
         '<td>'+esc(advogadosDe(i).map(primeiroNome).join(' + ')||'—')+'</td>'+
-        '<td>'+(i.etiqueta?'<span class="si-tag" style="--c:'+esc(i.etiqueta_cor||corEtiqueta(i.etiqueta))+'">'+esc(i.etiqueta)+'</span> ':'')+(u?'<span class="si-prazo '+u.cls+'">'+esc(u.txt)+'</span>':'')+'</td>'+
+        '<td>'+(i.etiqueta?'<span class="si-tag" style="--c:'+esc(i.etiqueta_cor||corEtiqueta(i.etiqueta))+'">'+esc(i.etiqueta)+'</span> ':'')+seloPrazo(u)+'</td>'+
         '<td>'+etiquetaSituacao(i)+'</td></tr>';
     }).join('');
     el.innerHTML=(comTitulo?'<div class="si-titulo-secao">Intimações</div>':'')+'<div class="si-tabela"><table><thead><tr><th></th><th>Disponibilizada</th><th>Processo</th><th>Parte / cliente</th><th>Justiça</th><th>Documento</th><th>Advogados</th><th>Etiqueta e prazo</th><th>Situação</th></tr></thead><tbody>'+
@@ -917,7 +942,7 @@
     var t=document.getElementById('siTexto');t.textContent='Carregando o texto...';
     var r2=await S.sb.from('intimacoes').select('texto').eq('id',i.id).maybeSingle();
     if(S.aberta===i.id)t.innerHTML=r2.data&&r2.data.texto?destacar(r2.data.texto):'<span class="si-sub">Sem texto.</span>';
-    if(S.aberta===i.id&&window.SagaPrazos){S.prazoTexto=SagaPrazos.prazoDoTexto(r2.data&&r2.data.texto);ligarPrazos();sugerirPrazo(i,r2.data&&r2.data.texto);}
+    if(S.aberta===i.id&&window.SagaPrazos){S.prazoTexto=SagaPrazos.prazoDoTexto(r2.data&&r2.data.texto);ligarPrazos();sugerirPrazo(i,(r2.data&&r2.data.texto)||i.resumo||'');}
     carregarHistorico(i.id);
   }
   function preencherJanela(i){
@@ -1444,9 +1469,9 @@
     var lAdv=listaSem('advogado');
     m={};lAdv.forEach(function(i){var ids=advogadosDe(i);if(!ids.length){(m['-']=m['-']||{nome:'Sem advogado',n:0,sem:true}).n++;return;}ids.forEach(function(id){(m[id]=m[id]||{nome:primeiroNome(id)||'—',v:id,n:0}).n++;});});
     var porAdv=topo(m,7);
-    var l=filtradas(true,true).filter(function(i){return !i.concluida;}),pz={venc:0,hoje:0,vir:0,sem:0};
-    l.forEach(function(i){if(!i.prazo)pz.sem++;else if(i.prazo<h)pz.venc++;else if(i.prazo===h)pz.hoje++;else pz.vir++;});
-    var prazos=[{nome:'Vencidos',n:pz.venc,cor:'var(--g-venc)',sem:true},{nome:'Vencem hoje',n:pz.hoje,cor:'var(--g-hoje)',sem:true},{nome:'A vencer',n:pz.vir,cor:'var(--g-ok)',sem:true},{nome:'Sem prazo',n:pz.sem,cor:'var(--g-sem)',sem:true}].filter(function(x){return x.n>0;});
+    var l=filtradas(true,true).filter(function(i){return !i.concluida;}),pz={venc:0,hoje:0,vir:0,sug:0,sem:0};
+    l.forEach(function(i){if(!i.prazo){if(semPrazoAberta(i)&&i._sug)pz.sug++;else pz.sem++;}else if(i.prazo<h)pz.venc++;else if(i.prazo===h)pz.hoje++;else pz.vir++;});
+    var prazos=[{nome:'Vencidos',n:pz.venc,cor:'var(--g-venc)',sem:true},{nome:'Vencem hoje',n:pz.hoje,cor:'var(--g-hoje)',sem:true},{nome:'A vencer',n:pz.vir,cor:'var(--g-ok)',sem:true},{nome:'Sugerido (a confirmar)',n:pz.sug,cor:'var(--g3)',sem:true},{nome:'Sem prazo',n:pz.sem,cor:'var(--g-sem)',sem:true}].filter(function(x){return x.n>0;});
     return [{k:'tribunal',titulo:'Por tribunal',itens:porTrib,atual:S.f.tribunal},{k:'situacao',titulo:'Por situação',itens:porSit,atual:S.f.situacao},{k:'advogado',titulo:'Por advogado',itens:porAdv,atual:S.f.advogado,total:lAdv.length,dica:'Intimação com mais de um advogado conta para cada um'},{k:'prazos',titulo:'Prazos',itens:prazos,atual:''}];
   }
   function htmlRosca(g){
