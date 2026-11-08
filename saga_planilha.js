@@ -22,7 +22,7 @@ window.SagaPlanilha=(function(){
   // dentro das caixinhas de marcar: escolher só "(Vazias)" escondia tudo (vistoria 09/11). VAZIO_ANTIGO converte filtros guardados.
   var VAZIO='__saga_vazio__',VAZIO_ANTIGO='\u0000vazio';
   function trocaVazioAntigo(lista){return (lista||[]).map(function(v){return v===VAZIO_ANTIGO||v==='\ufffdvazio'?VAZIO:v;});}
-  var SISTEMA_SO_LEITURA=['processo.fase','processo.criado_em','processo.atualizado_em'];
+  var SISTEMA_SO_LEITURA=['processo.fase','processo.criado_em','processo.atualizado_em','processo.providencia'];
   // Colunas que só fazem sentido numa fase
   var SO_CAPTACAO=['processo.captador'];
 
@@ -56,6 +56,7 @@ window.SagaPlanilha=(function(){
       case 'processo.criado_em':return p.criado_em&&String(p.criado_em).slice(0,10);
       case 'processo.atualizado_em':return p.atualizado_em&&String(p.atualizado_em).slice(0,10);
       case 'processo.ultima_movimentacao':return p.ultima_movimentacao_em&&String(p.ultima_movimentacao_em).slice(0,10);
+      case 'processo.providencia':return p.providencia_atual;
     }
     return (p.campos||{})[c.id];
   }
@@ -69,6 +70,7 @@ window.SagaPlanilha=(function(){
       case 'processo.fase':return v==='juridico'?'Jurídico':v==='captacao'?'Captação':v;
       case 'processo.responsavel':case 'processo.captador':return nomeUsuario(v)||'';
       case 'processo.situacao_acao':return (situacao(v)||{}).nome||'';
+      case 'processo.providencia':return v+(p&&p.providencia_prazo?' · até '+String(p.providencia_prazo).slice(0,10).split('-').reverse().slice(0,2).join('/'):'');
       case 'pessoa.situacao_vital':return v==='vivo'?'Vivo':v==='falecido'?'Falecido':v;
     }
     if(c.tipo==='sim_nao')return v===true||v==='true'?'Sim':'Não';

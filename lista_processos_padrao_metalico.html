@@ -1394,7 +1394,7 @@ async function lerBaseProcessos(f){
   cache.promessa=(async function(){
     var pessoaIds=null;
     if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
-    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+
+    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
       'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem,etapa),responsavel:usuarios!responsavel_id(id,nome_completo)';
     var linhas=[],inicio=0;
     while(true){
@@ -1404,6 +1404,8 @@ async function lerBaseProcessos(f){
       if(f.de)q=q.gte('data_inicio',f.de);if(f.ate)q=q.lte('data_inicio',f.ate);
       if(f.busca){if(pessoaIds&&pessoaIds.length)q=q.or('pessoa_id.in.('+pessoaIds.join(',')+'),numero_processo_cnj.ilike.%'+f.busca+'%');else q=q.ilike('numero_processo_cnj','%'+f.busca+'%');}
       var r=await q.order('criado_em',{ascending:false}).order('id').range(inicio,inicio+999);
+      // bloco 118 ainda não aplicado: a coluna providencia_* não existe; lê sem ela
+      if(r.error&&window._temProvidencia!==false&&/providencia/i.test(r.error.message||'')){window._temProvidencia=false;SELECT=SELECT.replace('providencia_atual,providencia_prazo,','');linhas=[];inicio=0;continue;}
       if(r.error)throw r.error;
       var lote=r.data||[];linhas=linhas.concat(lote);inicio+=lote.length;
       if(typeof r.count==='number'&&inicio>=r.count)break;
