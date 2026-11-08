@@ -165,6 +165,7 @@ const moduleList = [
   {key:'tarefas',      name:'Minhas Tarefas',         short:'MT'},
   {key:'multi_oab',    name:'Monitoramento Multi-OAB',short:'MO'},
   {key:'teses',        name:'Teses e oportunidades',  short:'TO'},
+  {key:'treinamentos', name:'Treinamentos',           short:'TR'},
   {key:'financeiro',   name:'Financeiro',             short:'FI'},
   {key:'colaboradores',name:'Colaboradores',          short:'CO'},
   {key:'configuracoes',name:'Configurações',          short:'CF'}
@@ -192,6 +193,13 @@ const NIVEL_ACTIONS = {
     comentar:   [['teses','visualizar']],
     editar:     [['teses','visualizar'],['teses','criar'],['teses','editar']],
     admin_total:[['teses','visualizar'],['teses','criar'],['teses','editar'],['teses','excluir']]
+  },
+  // Treinamentos (bloco 121): Editar = cria e edita; Admin total = também vê quem concluiu
+  treinamentos: {
+    visualizar: [['treinamentos','visualizar']],
+    comentar:   [['treinamentos','visualizar']],
+    editar:     [['treinamentos','visualizar'],['treinamentos','editar']],
+    admin_total:[['treinamentos','visualizar'],['treinamentos','editar'],['treinamentos','acompanhar']]
   },
   colaboradores:{
     visualizar: [['colaboradores','visualizar']],
