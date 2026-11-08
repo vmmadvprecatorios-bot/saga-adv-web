@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611080121"></script>
+<script src="saga_guard.js?v=202611080129"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -461,6 +461,7 @@
   .modal-tf.somente-leitura .opcao-tipo-tarefa, .modal-tf.somente-leitura .pill-prioridade-opcao, .modal-tf.somente-leitura .select-custom-tf,
   .modal-tf.somente-leitura .atalhos-data-rapida, .modal-tf.somente-leitura .btn-add-subtarefa, .modal-tf.somente-leitura .area-anexos-drop,
   .modal-tf.somente-leitura .linha-cor-etiqueta, .modal-tf.somente-leitura .lista-subtarefas-modal{ pointer-events:none; }
+  .modal-tf.somente-leitura .sp-prazos{ display:none; }
   .modal-tf.somente-leitura #campoCompartilharTarefa, .modal-tf.somente-leitura #btnSalvarTarefa, .modal-tf.somente-leitura #btnExcluirTarefaModal, .modal-tf.somente-leitura .btn-add-subtarefa, .modal-tf.somente-leitura .area-anexos-drop{ display:none !important; }
   .selo-compartilhada-card{ display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:700; color:var(--gold); margin-top:4px; }
   .lista-cards-coluna{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:9px; min-height:40px; }
@@ -1734,7 +1735,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611080121">
+<link rel="stylesheet" href="saga_tema.css?v=202611080129">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2124,7 +2125,7 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
         <input type="date" id="inputDataPrazoTarefa">
         <div class="atalhos-data-rapida">
           <div class="atalho-data-pill" data-atalho="hoje">Hoje</div>
-          <div class="atalho-data-pill" data-atalho="amanha">Amanha</div>
+          <div class="atalho-data-pill" data-atalho="amanha">Amanhã</div>
           <div class="atalho-data-pill" data-atalho="semana">Esta Semana</div>
           <div class="atalho-data-pill" data-atalho="semdata">Sem Data</div>
         </div>
@@ -2148,7 +2149,7 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
       <label>Prioridade</label>
       <div class="pills-prioridade">
         <div class="pill-prioridade-opcao" data-prioridade="baixa">Baixa</div>
-        <div class="pill-prioridade-opcao selecionada" data-prioridade="media">Media</div>
+        <div class="pill-prioridade-opcao selecionada" data-prioridade="media">Média</div>
         <div class="pill-prioridade-opcao" data-prioridade="alta">Alta</div>
         <div class="pill-prioridade-opcao" data-prioridade="urgente">Urgente</div>
       </div>
@@ -2271,10 +2272,11 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611080121"></script>
-<script src="saga_etiquetas.js?v=202611080121"></script>
-<script src="saga_mencoes.js?v=202611080121"></script>
-<script src="saga_texto.js?v=202611080121"></script>
+<script src="saga_ui.js?v=202611080129"></script>
+<script src="saga_etiquetas.js?v=202611080129"></script>
+<script src="saga_mencoes.js?v=202611080129"></script>
+<script src="saga_prazos.js?v=202611080129"></script>
+<script src="saga_texto.js?v=202611080129"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2547,7 +2549,7 @@ function formatarDataBr(isoDate){
   return partes[2] + '/' + partes[1] + '/' + partes[0];
 }
 
-function hojeISO(){ return new Date().toISOString().slice(0,10); }
+function hojeISO(){ return diasRelativos(0); } /* data local (Maceió); toISOString usava o horário UTC e virava o dia às 21h */
 
 function diferencaEmHoras(dataISO, horaStr){
   if(!dataISO) return null;
@@ -4305,6 +4307,7 @@ function resetarFormularioTarefa(){
   document.getElementById('inputTituloTarefa').value = '';
   document.getElementById('textareaDescricaoTarefa').value = '';
   document.getElementById('inputDataPrazoTarefa').value = '';
+  if(window._prazosTarefa) _prazosTarefa.redesenhar();
   document.getElementById('inputHoraPrazoTarefa').value = '';
   document.getElementById('inputHoraPrazoTarefa').disabled = true;
   document.getElementById('inputBuscaProcesso').value = '';
@@ -4478,6 +4481,7 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
     preencherMoverAoComentar(tarefa);
     selecionarValorSelectCustomTarefa('selectResponsavelTarefa', tarefa.responsavelId);
     document.getElementById('inputDataPrazoTarefa').value = tarefa.dataPrazo || '';
+    if(window._prazosTarefa) _prazosTarefa.redesenhar();
     document.getElementById('inputHoraPrazoTarefa').value = tarefa.horaPrazo || '';
     document.getElementById('inputHoraPrazoTarefa').disabled = !tarefa.dataPrazo;
 
@@ -4614,6 +4618,8 @@ document.addEventListener('click', function(e){
 });
 
 /* ===== Atalhos rapidos de data ===== */
+/* Prazo em dias úteis (saga_prazos.js): pula sábados, domingos e feriados do escritório */
+var _prazosTarefa = window.SagaPrazos ? SagaPrazos.ligar(document.getElementById('inputDataPrazoTarefa'), {sb:_sb, modo:'tarefa'}) : null;
 document.querySelectorAll('.atalho-data-pill').forEach(function(pill){
   pill.addEventListener('click', function(){
     var atalho = pill.getAttribute('data-atalho');
@@ -4624,6 +4630,7 @@ document.querySelectorAll('.atalho-data-pill').forEach(function(pill){
     else if(atalho === 'semana'){ inputData.value = diasRelativos(7); }
     else if(atalho === 'semdata'){ inputData.value = ''; }
     inputHora.disabled = !inputData.value;
+    if(window._prazosTarefa) _prazosTarefa.redesenhar();
   });
 });
 document.getElementById('inputDataPrazoTarefa').addEventListener('change', function(){

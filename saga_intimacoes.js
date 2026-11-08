@@ -301,6 +301,7 @@
   '.si-link input,.si-link select{height:32px;padding:0 8px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px;min-width:0}'+
   '.si-link.falta{background:color-mix(in srgb,var(--warning) 7%,transparent);border-radius:8px;padding:6px}'+
   'body.si-so-leitura .si-chk,body.si-so-leitura .si-mover,body.si-so-leitura #siConcluir,body.si-so-leitura #siSalvarPrazo,body.si-so-leitura #siComentar,body.si-so-leitura #siComent,body.si-so-leitura #siMoverCom,body.si-so-leitura #siMoverCom+span{display:none !important}'+
+  'body.si-so-leitura #siPrazo~.sp-prazos{display:none}'+
   'body.si-so-leitura #siColuna,body.si-so-leitura #siPrazo,body.si-so-leitura #siEtiquetaCampo .se-botao,body.si-so-leitura #siCor{pointer-events:none;opacity:.7}'+
   '@media(max-width:860px){.si-link{grid-template-columns:1fr 1fr}'+
   '}'+
@@ -861,6 +862,13 @@
     document.getElementById('siHoras').addEventListener('click',function(e){var b=e.target.closest('[data-hora]');if(b)salvarHoras(Number(b.dataset.hora));});
   }
   function aberta(){return S.itens.filter(function(x){return x.id===S.aberta;})[0];}
+  // atalhos de prazo em dias úteis (saga_prazos.js): contam a partir da disponibilização no Diário
+  function ligarPrazos(){
+    if(!window.SagaPrazos)return;
+    if(S.prazosCtl){S.prazosCtl.redesenhar();return;}
+    S.prazosCtl=SagaPrazos.ligar(document.getElementById('siPrazo'),{sb:S.sb,modo:'intimacao',inicio:function(){var i=aberta();return i&&i.data_disponibilizacao;},sugestao:function(){return S.prazoTexto;}});
+  }
+  function ligarPrazoTarefa(i){if(window.SagaPrazos&&document.getElementById('siTrPrazo'))SagaPrazos.ligar(document.getElementById('siTrPrazo'),{sb:S.sb,modo:'intimacao',inicio:i.data_disponibilizacao,sugestao:S.aberta===i.id?S.prazoTexto:null});}
   function destacar(t){
     return esc(t).replace(/(prazo (?:comum )?(?:de|em) \d+\s*(?:\([^)]{1,30}\))?\s*(?:dias(?: úteis)?|horas))/gi,'<mark>$1</mark>')
       .replace(/(\b(?:intime-se|intimem-se|cite-se|manifeste-se|manifestar-se)\b)/gi,'<mark>$1</mark>');
@@ -875,6 +883,7 @@
     var t=document.getElementById('siTexto');t.textContent='Carregando o texto...';
     var r2=await S.sb.from('intimacoes').select('texto').eq('id',i.id).maybeSingle();
     if(S.aberta===i.id)t.innerHTML=r2.data&&r2.data.texto?destacar(r2.data.texto):'<span class="si-sub">Sem texto.</span>';
+    if(S.aberta===i.id&&window.SagaPrazos){S.prazoTexto=SagaPrazos.prazoDoTexto(r2.data&&r2.data.texto);ligarPrazos();}
     carregarHistorico(i.id);
   }
   function preencherJanela(i){
@@ -893,6 +902,7 @@
     document.getElementById('siColuna').innerHTML=opcoesSituacao(situacaoDe(i).chave);
     document.getElementById('siColuna').disabled=!S.pode.editar;
     document.getElementById('siPrazo').value=i.prazo||'';
+    S.prazoTexto=null;ligarPrazos();
     definirEtiqueta(i.etiqueta||'',i.etiqueta_cor||(i.etiqueta?corEtiqueta(i.etiqueta):'#e5484d'));
     var partes=(i.partes||[]).map(function(p){return '<span class="si-cli">'+esc(p.nome)+'</span>'+(p.polo?' <span class="si-sub" style="display:inline">('+(p.polo==='A'?'polo ativo':p.polo==='P'?'polo passivo':esc(p.polo))+')</span>':'');}).join('<br>');
     var advs=(i.advogados||[]).map(function(a){return esc(a.nome)+' (OAB '+esc(a.numero_oab)+'/'+esc(a.uf_oab)+')';}).join('<br>');
@@ -1103,7 +1113,7 @@
     var processoForm=document.getElementById('siProcForm');if(processoForm)processoForm.replaceChildren();
     var f=document.getElementById('siTriForm');
     f.innerHTML=camposTarefa(i,true)+'<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siTrOk">Criar a tarefa</button><button class="si-btn sm" type="button" id="siTrCancela">Cancelar</button></div>';
-    var etiqueta=montarEtiquetaTarefa(i,rascunho);
+    var etiqueta=montarEtiquetaTarefa(i,rascunho);ligarPrazoTarefa(i);
     if(rascunho){document.getElementById('siTrTit').value=rascunho.titulo;document.getElementById('siTrPrazo').value=rascunho.prazo||'';document.getElementById('siTrResp').value=rascunho.responsavel||'';document.getElementById('siTrDesc').value=rascunho.descricao;}
     document.getElementById('siTrTit').focus();
     document.getElementById('siTrCancela').onclick=function(){f.innerHTML='';};
@@ -1180,7 +1190,7 @@
       (comTarefa?camposTarefa(i,false):'')+'<div class="si-acoes"><button class="si-btn pri sm" type="button" id="siIncOk">'+(comTarefa?'Incorporar e criar tarefa':'Incorporar')+'</button></div>';
     if(menuTesesIncorporar)menuTesesIncorporar.destruir();
     menuTesesIncorporar=catalogoTeses.montar(document.getElementById('siIncAreasTeses'),{teseInputId:'siIncTese'});
-    var etiqueta=comTarefa?montarEtiquetaTarefa(i):null;
+    var etiqueta=comTarefa?montarEtiquetaTarefa(i):null;if(comTarefa)ligarPrazoTarefa(i);
     var escolhida=null,tm=null,buscaCliente=0;
     async function sugerir(){
       var campo=document.getElementById('siIncCli');if(!campo)return;var v=campo.value.trim(),pedido=++buscaCliente;var s=document.getElementById('siIncSug');
