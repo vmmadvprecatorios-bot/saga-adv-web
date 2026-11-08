@@ -997,6 +997,13 @@
     document.getElementById('siLoteSelecionados').textContent=n+' de '+disponiveis.length+' processos disponíveis marcados';
     document.getElementById('siLoteCriar').disabled=lote.ocupado||!n;
   }
+  function mostrarFichaLote(g,p){
+    g.sugestoes.replaceChildren();
+    var t=document.createElement('span');t.textContent='✓ Vai para a ficha que já existe: '+SagaFichas.descrever(p)+'. ';g.sugestoes.appendChild(t);
+    var b=document.createElement('button');b.type='button';b.className='si-btn sm';b.textContent='Criar ficha nova (outra pessoa)';
+    b.onclick=function(){g.pessoaId=null;g.fichaAuto=false;g.fichaNova=true;g.sugestoes.textContent='Será criada uma ficha nova para este processo.';};
+    g.sugestoes.appendChild(b);
+  }
   async function sugerirClienteLote(g,estado){
     if(lote!==estado||estado.ocupado||g.pessoaId||loteTentados.has(g.numero))return;
     var nome=g.nome.trim(),pedido=++g.busca;
@@ -1046,8 +1053,21 @@
       var encontrados=new Map();(r.error?[]:r.data||[]).forEach(function(p){var n=String(p.numero_processo_cnj||'').replace(/\D/g,'');if(n.length===20)encontrados.set(n,p.id);});
       S.itens.forEach(function(i){if(i.processo_id&&numeroLote(i))encontrados.set(numeroLote(i),i.processo_id);});
       marcados.forEach(function(g){g.existente=encontrados.get(g.numero)||null;});
-      var ligados=marcados.filter(function(g){return g.existente;}).length,novos=marcados.length-ligados,clientes=marcados.filter(function(g){return !g.existente&&!g.pessoaId;}).length;
+      // Fichas repetidas (08/11): quem já tem ficha no SAGA usa a ficha existente (o processo vira mais um cartão nela)
+      var reaproveitadas=[];
+      if(window.SagaFichas){
+        loteMensagem('Procurando clientes que já têm ficha...');
+        for(var g0 of marcados){
+          if(g0.existente||g0.pessoaId||g0.fichaNova)continue;
+          var ja=await SagaFichas.procurar(S.sb,{nome:g0.nome});
+          if(ja.length){g0.pessoaId=ja[0].id;g0.fichaAuto=true;reaproveitadas.push(ja[0].nome_completo);mostrarFichaLote(g0,ja[0]);}
+        }
+      }
+      var semFicha={};marcados.forEach(function(g){if(!g.existente&&!g.pessoaId)semFicha[window.SagaFichas?SagaFichas.normalizar(g.nome):g.nome]=1;});
+      var ligados=marcados.filter(function(g){return g.existente;}).length,novos=marcados.length-ligados,clientes=Object.keys(semFicha).length;
       var resumo=marcados.length+' processos selecionados. Previsão: '+novos+' processos novos, '+clientes+' clientes novos e '+ligados+' apenas ligados a existentes.';
+      if(reaproveitadas.length)resumo+=' '+reaproveitadas.length+' processo(s) vão para fichas que já existem ('+reaproveitadas.slice(0,5).join(', ')+(reaproveitadas.length>5?'…':'')+'); se algum for outra pessoa com o mesmo nome, cancele e use "Criar ficha nova" na linha.';
+      resumo+=' O mesmo cliente repetido neste lote fica com uma ficha só.';
       resumo+=' O banco também pode localizar um processo que não esteja visível nesta conferência; nesse caso, apenas ligará as intimações.';
       if(r.error)resumo+=' A consulta de processos existentes não ficou disponível; as quantidades de novos são estimadas.';
       loteMensagem(resumo);
@@ -1068,6 +1088,8 @@
         try{
           var r=await S.sb.rpc('intimacao_incorporar',{p_id:g.itens[0].id,p_pessoa_id:g.pessoaId||null,p_cliente_nome:g.nome.trim(),p_tese_id:g.teseId,p_responsavel_id:g.responsavel||null});
           if(r.error)throw r.error;if(!r.data)throw new Error('O banco não devolveu o processo. Confira antes de tentar em outra sessão.');
+          // o mesmo cliente mais adiante neste lote usa a ficha que acabou de ser criada (não duplica)
+          if(!g.pessoaId&&window.SagaFichas){try{var rp=await S.sb.from('processos').select('pessoa_id').eq('id',r.data).maybeSingle();var pid=rp.data&&rp.data.pessoa_id;if(pid){g.pessoaId=pid;marcados.forEach(function(h){if(h!==g&&!h.pessoaId&&!h.fichaNova&&!h.existente&&SagaFichas.mesmoNome(h.nome,g.nome))h.pessoaId=pid;});}}catch(x){}}
           registro.processoId=r.data;registro.tipo=g.existente===r.data?'ligado':'novo';registro.mensagem=registro.tipo==='ligado'?'Ligado a processo existente':'Processo criado ou localizado pelo banco';
           S.itens.forEach(function(i){if(numeroLote(i)===g.numero)i.processo_id=r.data;});g.marcado=false;g.checkbox.checked=false;
         }catch(e){registro.tipo='erro';registro.mensagem='Falhou: '+(e.message||'Não foi possível confirmar a operação. Confira o processo antes de tentar em outra sessão.');g.marcado=true;g.checkbox.checked=true;}
@@ -1103,7 +1125,7 @@
       g.checkbox.checked=g.marcado;g.checkbox.onchange=function(){g.marcado=this.checked;atualizarSelecaoLote();};
       g.menu=catalogoTeses.montar(row.querySelector('.si-lote-tese'),{mudou:function(v){g.teseId=v.teseId;}});
       row.querySelector('select').onchange=function(){g.responsavel=this.value;};
-      g.input.oninput=function(){g.nome=this.value;g.pessoaId=null;g.busca++;g.sugestoes.replaceChildren();clearTimeout(g.timer);g.timer=setTimeout(function(){sugerirClienteLote(g,estado);},250);};
+      g.input.oninput=function(){g.nome=this.value;g.pessoaId=null;g.fichaNova=false;g.fichaAuto=false;g.busca++;g.sugestoes.replaceChildren();clearTimeout(g.timer);g.timer=setTimeout(function(){sugerirClienteLote(g,estado);},250);};
       g.input.onfocus=function(){sugerirClienteLote(g,estado);};
       if(anterior)row.querySelectorAll('input,button,select').forEach(function(el){el.disabled=true;});
     });
@@ -1268,6 +1290,15 @@
       var dados=comTarefa?dadosTarefa('siIncResp'):null,et=comTarefa?etiqueta():null;
       if(comTarefa&&!dados.titulo){toast('Escreva o que precisa ser feito.','error');return;}
       if(et&&et.reserva){toast('Escolha uma etiqueta cadastrada ou Sem etiqueta antes de salvar.','error');return;}
+      // Fichas repetidas (08/11): se a pessoa já tem ficha, pergunta antes de criar outra
+      if(!escolhida&&window.SagaFichas){
+        var ja=await SagaFichas.procurar(S.sb,{nome:cliente});
+        if(ja.length){
+          var usar=await (window.sagaConfirmar?sagaConfirmar('Essa pessoa já tem ficha','Já existe no SAGA:\n• '+ja.map(SagaFichas.descrever).join('\n• ')+'\n\nUsar a ficha existente? O processo vira mais um cartão nela (recomendado).','Usar a ficha existente',false):Promise.resolve(confirm('Usar a ficha existente de '+ja[0].nome_completo+'?')));
+          if(usar){escolhida=ja[0].id;cliente=ja[0].nome_completo;document.getElementById('siIncCli').value=cliente;}
+          else if(!(await (window.sagaConfirmar?sagaConfirmar('Criar outra ficha?','Só crie outra ficha se for OUTRA pessoa com o mesmo nome (ou um processo que precisa ficar separado, como o de vários irmãos).','Criar ficha nova',false):Promise.resolve(confirm('Criar outra ficha?')))))return;
+        }
+      }
       var button=this,incorporado=false;button.disabled=true;
       try{
         var responsavel=document.getElementById('siIncResp').value||null;

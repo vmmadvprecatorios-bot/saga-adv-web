@@ -338,6 +338,7 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 .pessoa-selecionada-info{display:none;align-items:center;gap:10px;padding:9px 11px;background:rgba(93,216,160,.07);border:1px solid rgba(93,216,160,.22);border-radius:9px;margin-top:8px;}
 .pessoa-selecionada-nome{font-size:12px;font-weight:600;color:var(--success);}
 .pessoa-selecionada-cpf{font-size:10px;color:var(--muted);}
+.pessoa-ja-tem{margin-top:8px;padding:8px 11px;border-radius:9px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);background:color-mix(in srgb,var(--gold) 8%,transparent);font-size:11.5px;line-height:1.5}.pessoa-ja-tem[hidden]{display:none}.pessoa-ja-tem a{color:var(--gold-light)}
 .toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
 .toast{background:var(--panel-solid);border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:12px 16px;font-size:12px;color:var(--text);font-family:'Montserrat',sans-serif;box-shadow:var(--shadow);max-width:320px;opacity:0;transform:translateX(20px);transition:opacity .25s,transform .25s;}
 .toast.visivel{opacity:1;transform:translateX(0);}
@@ -722,6 +723,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_roscas.js?v=202611081845"></script>
 <script src="saga_paineis.js?v=202611081845"></script>
 <script src="saga_xlsx.js?v=202611081845"></script>
+<script src="saga_fichas.js?v=202611081845"></script>
 <script src="saga_planilha.js?v=202611081845"></script>
 <script>
 // ============================================================
@@ -811,6 +813,16 @@ async function criarNovaPessoaRapida(){
   var telDigitos=(document.getElementById('novaPessoaTelefone').value||'').replace(/\D/g,'');
   if(!nome){showToast('Informe o nome completo.','warning');return;}
   var cpf=cpfDigitos?cpfDigitos:null;
+  // Fichas repetidas (08/11): se a pessoa já tem ficha, usa a existente (o processo novo vira mais um cartão nela)
+  if(window.SagaFichas){
+    var ja=await SagaFichas.procurar(_sb,{nome:nome,cpf:cpf});
+    if(ja.length){
+      var usar=await sagaConfirmar('Essa pessoa já tem ficha','Já existe no SAGA:\n• '+ja.map(SagaFichas.descrever).join('\n• ')+'\n\nUsar a ficha existente? O novo processo vira mais um cartão nela (recomendado).','Usar a ficha existente',false);
+      if(usar){selPessoaNovo(ja[0]);document.getElementById('novoPessoaCriarWrap').style.display='none';showToast('Usando a ficha que já existe. Continue preenchendo o processo.','success');return;}
+      if(ja.some(function(p){return p.motivo==='mesmo CPF';})){showToast('Já existe uma ficha com este CPF. Use a ficha existente.','warning');return;}
+      if(!(await sagaConfirmar('Criar outra ficha?','Só crie outra ficha se for OUTRA pessoa com o mesmo nome (ou um processo que precisa ficar separado, como o de vários irmãos).','Criar ficha nova',false)))return;
+    }
+  }
   var r=await _sb.from('pessoas').insert({nome_completo:nome,cpf:cpf,situacao_vital:'vivo',criado_por_id:state.meuInternoId}).select('id,nome_completo,cpf').single();
   if(r.error){
     if(String(r.error.code)==='23505'){showToast('Ja existe uma pessoa cadastrada com este CPF.','warning');return;}
@@ -2181,6 +2193,19 @@ function selPessoaNovo(p){
   document.getElementById('pessoaSelecionadaInfo').style.display='flex';
   document.getElementById('pessoaSelecionadaNome').textContent=p.nome_completo;
   document.getElementById('pessoaSelecionadaCpf').textContent=mascaraCpf(p.cpf);
+  mostrarProcessosDaPessoa(p.id);
+}
+// Ao escolher uma pessoa que já tem processos, mostra quais: o novo processo será mais um cartão na mesma ficha
+async function mostrarProcessosDaPessoa(pid){
+  var info=document.getElementById('pessoaSelecionadaInfo'),el=document.getElementById('pessoaJaTemProcessos');
+  if(!el){el=document.createElement('div');el.id='pessoaJaTemProcessos';el.className='pessoa-ja-tem';info.parentNode.insertBefore(el,info.nextSibling);}
+  el.hidden=true;el.textContent='';
+  var r=await _sb.from('processos').select('id,numero_processo_cnj,excluido_logico,tese:teses!tese_id(nome)').eq('pessoa_id',pid);
+  if(!state.novoPessoa||state.novoPessoa.id!==pid)return;
+  var l=(r.data||[]).filter(function(x){return !x.excluido_logico;});
+  if(!l.length)return;
+  el.innerHTML='Esta pessoa já tem <b>'+l.length+' processo'+(l.length>1?'s':'')+'</b>: '+l.slice(0,4).map(function(x){return esc((x.tese&&x.tese.nome?x.tese.nome+' · ':'')+(x.numero_processo_cnj||'(sem número)'));}).join('; ')+(l.length>4?'…':'')+'. O novo processo será mais um cartão na mesma ficha. <a href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(pid)+'" target="_blank" rel="noopener">Abrir a ficha</a>';
+  el.hidden=false;
 }
 async function salvarNovoProcesso(){
   if(!state.novoPessoa){showToast('Selecione uma pessoa.','warning');return;}
