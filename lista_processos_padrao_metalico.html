@@ -2084,6 +2084,7 @@ async function executarAtribuicao(){
 
 // Novo Processo
 function abrirNovoProcesso(){
+  if(window.SagaPlanilha&&SagaPlanilha.esquecerNovoNaColuna)SagaPlanilha.esquecerNovoNaColuna();
   state.novoArea=null;state.novoPessoa=null;state.novoTese=null;state.novoStatus=null;state.novoTipo=null;
   document.getElementById('inputNovoPessoa').value='';
   document.getElementById('pessoaSelecionadaInfo').style.display='none';
@@ -2169,6 +2170,9 @@ async function salvarNovoProcesso(){
   var txtPct=(document.getElementById('inputNovoHonorarios').value||'').trim();
   var pctHonorarios=txtPct?parseFloat(txtPct.replace('%','').replace(',','.')):null;
   if(txtPct&&(isNaN(pctHonorarios)||pctHonorarios<0||pctHonorarios>100)){showToast('O percentual de honorarios deve ficar entre 0 e 100.','warning');return;}
+  // "+" no título da coluna do Kanban: o processo nasce já naquela coluna
+  var naColuna=window.SagaPlanilha&&SagaPlanilha.dadosNovoNaColuna?SagaPlanilha.dadosNovoNaColuna():null;
+  if(naColuna){if(naColuna.campos)dados.campos=Object.assign({},dados.campos||{},naColuna.campos);else if(naColuna.campo)dados[naColuna.campo]=naColuna.valor;}
   var r=await _sb.from('processos').insert(dados).select('id').single();
   if(r.error){
     if(r.error.code==='23505')showToast('Esta pessoa já possui um processo com esse tipo de ação.','warning');
@@ -2180,6 +2184,7 @@ async function salvarNovoProcesso(){
     }
     var extras=state.novoExtras?state.novoExtras.itens().filter(function(i){return i.pessoa_id!==state.novoPessoa.id;}):[];
     var falhas=extras.length&&r.data?await SagaPartes.salvarLote(_sb,r.data.id,extras):0;
+    if(window.SagaPlanilha&&SagaPlanilha.esquecerNovoNaColuna)SagaPlanilha.esquecerNovoNaColuna();
     showToast(falhas?'Processo criado, mas '+falhas+' pessoa(s) não puderam ser incluídas.':'Processo criado com sucesso.',falhas?'warning':'success');closeModal('modalNovoProcesso');invalidarBaseProcessos();carregarProcessos();
   }
 }

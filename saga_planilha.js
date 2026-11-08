@@ -839,6 +839,8 @@ window.SagaPlanilha=(function(){
       '#listaView .tabela-scroll{max-height:70vh;overflow:auto}'+
       '.sp-kb-por{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-kb-por select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:9px;padding:7px 9px;font:inherit;font-size:12px;max-width:230px}.sp-kb-por select:focus{border-color:var(--gold);outline:0}'+
       '.sp-kb-padrao{border:0;background:none;color:var(--gold-light);font:inherit;font-size:11.5px;text-decoration:underline;cursor:pointer}'+
+      '.sp-kb-novo{border:1px solid var(--border-soft);background:transparent;color:var(--text);font:inherit;font-size:14px;line-height:1;width:24px;height:24px;border-radius:8px;cursor:pointer;margin-left:4px;transition:border-color .2s cubic-bezier(.22,.78,.25,1),background-color .2s cubic-bezier(.22,.78,.25,1)}.sp-kb-novo:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}'+
+      '.sp-novo-coluna{margin:0 0 12px;padding:8px 11px;border-radius:9px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 9%,transparent);font-size:12px}.sp-novo-coluna[hidden]{display:none}'+
       '.sp-kb-filtro{margin-left:auto;border:1px solid var(--border-soft);background:transparent;color:var(--muted);font:inherit;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:8px;cursor:pointer;white-space:nowrap}.sp-kb-filtro:hover,.sp-kb-filtro.ativo{border-color:var(--gold);color:var(--gold-light)}'+
       '.sp-kb .coluna-cabecalho{flex-wrap:wrap;row-gap:6px}.sp-kb .coluna-titulo{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25;flex:1 1 120px;min-width:0}.sp-kb-chips{display:flex;flex-wrap:wrap;gap:4px;padding:0 12px 8px}.sp-kb-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 4px 2px 8px;border-radius:999px;background:color-mix(in srgb,var(--gold) 12%,transparent);border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);font-size:10.5px;color:var(--text);max-width:100%}.sp-kb-chip button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;padding:0 3px}'+
       '.sp-kb-limpar{border:0;background:none;color:var(--muted);font:inherit;font-size:10.5px;text-decoration:underline;cursor:pointer}.sp-kb-nada{padding:14px 10px;color:var(--muted);font-size:11.5px;text-align:center}'+
@@ -1190,6 +1192,29 @@ window.SagaPlanilha=(function(){
     return g;
   }
   function podeSoltar(c){return tipoGrupo(c)==='opcao'||tipoGrupo(c)==='simnao';}
+  // "+" no título da coluna do Kanban: abre o Novo Processo e o processo nasce já com o valor daquela coluna
+  var CAMPO_NOVO={'processo.status':'status_id','processo.tese':'tese_id','processo.area':'area_direito_id','processo.situacao_acao':'situacao_acao_id','processo.responsavel':'responsavel_id','processo.captador':'captador_id'};
+  var pendenteNovo=null;
+  function podeNovoNaColuna(c){return !!(state.permissoes&&state.permissoes.criar)&&podeSoltar(c)&&(!c.campo_sistema||!!CAMPO_NOVO[c.campo_sistema])&&typeof abrirNovoProcesso==='function';}
+  function novoNaColuna(c,k,nome){
+    abrirNovoProcesso();
+    pendenteNovo={c:c,k:k,nome:nome};
+    var valor=k===VAZIO?null:(tipoGrupo(c)==='simnao'?k==='true':k);
+    if(c.campo_sistema==='processo.status'&&valor){state.novoStatus={id:valor,nome:nome};var ls=document.getElementById('labelNovoStatus');if(ls)ls.textContent=nome;}
+    if(c.campo_sistema==='processo.tese'&&valor){state.novoTese={id:valor,nome:nome};var lt=document.getElementById('labelNovaTese');if(lt)lt.textContent=nome;}
+    var corpo=document.querySelector('#modalNovoProcesso .modal-body');
+    if(corpo){var av=document.getElementById('spNovoNaColuna');if(!av){av=document.createElement('div');av.id='spNovoNaColuna';av.className='sp-novo-coluna';corpo.insertBefore(av,corpo.firstChild);}
+      av.innerHTML='Vai entrar na coluna <b>'+h(nome||'(vazio)')+'</b> ('+h(nomeCol(c))+').';av.hidden=false;}
+  }
+  // usado pelo salvarNovoProcesso: devolve o que acrescentar aos dados e esquece o pedido
+  function dadosNovoNaColuna(){
+    var pn=pendenteNovo;
+    if(!pn)return null;
+    var valor=pn.k===VAZIO?null:(tipoGrupo(pn.c)==='simnao'?pn.k==='true':pn.k);
+    if(pn.c.campo_sistema)return CAMPO_NOVO[pn.c.campo_sistema]?{campo:CAMPO_NOVO[pn.c.campo_sistema],valor:valor}:null;
+    var campos={};campos[pn.c.id]=valor;return {campos:campos};
+  }
+  function esquecerNovoNaColuna(){pendenteNovo=null;var av=document.getElementById('spNovoNaColuna');if(av)av.hidden=true;}
   function filtrosDoGrupo(k){var f=lerKb().filtros[k]||{};return f;}
   function passaGrupo(p,k){var f=filtrosDoGrupo(k);for(var id in f){var c=cols.find(function(x){return x.id===id;});if(!c||!f[id].length)continue;if(f[id].indexOf(chave(p,c))<0)return false;}return true;}
   function seletorKanban(){
@@ -1235,12 +1260,14 @@ window.SagaPlanilha=(function(){
         return '<span class="sp-kb-chip">'+h(nomeCol(cc))+': '+h(nomes.join(', '))+'<button type="button" data-kb-tira="'+h(g.k)+'|'+h(id)+'" aria-label="Tirar filtro">×</button></span>';}).join('');
       return '<div class="coluna-kanban" data-coluna-id="'+h(g.k)+'">'+
         '<div class="coluna-cabecalho"><span class="coluna-cor-dot" style="background:'+h(cor)+'"></span><div class="coluna-titulo">'+h(g.nome)+'</div><span class="coluna-contagem">'+(nf?vis.length+' de '+todos.length:todos.length)+'</span><span class="sp-pct">'+pct+'%</span>'+
-        '<button type="button" class="sp-kb-filtro'+(nf?' ativo':'')+'" data-kb-filtro="'+h(g.k)+'" title="Filtrar só esta coluna">'+(nf?nf+' filtro'+(nf>1?'s':''):'Filtrar')+' ▾</button></div>'+
+        '<button type="button" class="sp-kb-filtro'+(nf?' ativo':'')+'" data-kb-filtro="'+h(g.k)+'" title="Filtrar só esta coluna">'+(nf?nf+' filtro'+(nf>1?'s':''):'Filtrar')+' ▾</button>'+
+          (podeNovoNaColuna(c)?'<button type="button" class="sp-kb-novo" data-kb-novo="'+h(g.k)+'" title="Novo processo nesta coluna" aria-label="Novo processo em '+h(g.nome)+'">+</button>':'')+'</div>'+
         '<div class="sp-funil-barra"><i style="width:'+pct+'%;background:'+h(cor)+'"></i></div>'+
         (chips?'<div class="sp-kb-chips">'+chips+'<button type="button" class="sp-kb-limpar" data-kb-limpar="'+h(g.k)+'">limpar</button></div>':'')+
         '<div class="coluna-corpo" data-sp-grupo="'+h(g.k)+'">'+vis.sort(ord).map(function(p){return cartaoGenerico(p,c);}).join('')+(vis.length?'':'<div class="sp-kb-nada">'+(todos.length?'Nenhum cartão com estes filtros.':'Nenhum processo.')+'</div>')+'</div></div>';
     }).join('')+'</div>';
     kv.querySelectorAll('[data-kb-filtro]').forEach(function(b){b.onclick=function(e){e.stopPropagation();menuFiltroGrupo(b,b.dataset.kbFiltro,c);};});
+    kv.querySelectorAll('[data-kb-novo]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var g=grupos.find(function(x){return x.k===b.dataset.kbNovo;});novoNaColuna(c,b.dataset.kbNovo,g?g.nome:'');};});
     kv.querySelectorAll('[data-kb-tira]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var x=b.dataset.kbTira.split('|');delete lerKb().filtros[x[0]][x[1]];guardarKb();renderKanban();};});
     kv.querySelectorAll('[data-kb-limpar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();delete lerKb().filtros[b.dataset.kbLimpar];guardarKb();renderKanban();};});
     if(state.permissoes.editar===true&&podeSoltar(c)&&typeof ativarArrasteKanban==='function')ativarArrasteKanban(kv);
@@ -1751,5 +1778,5 @@ window.SagaPlanilha=(function(){
     });
   }
 
-  return {exportarExcel:exportarExcel,pintarLote:pintarLote,retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,kanbanAgrupado:kanbanAgrupado,soltarNoGrupo:soltarNoGrupo,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
+  return {dadosNovoNaColuna:dadosNovoNaColuna,esquecerNovoNaColuna:esquecerNovoNaColuna,exportarExcel:exportarExcel,pintarLote:pintarLote,retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,kanbanAgrupado:kanbanAgrupado,soltarNoGrupo:soltarNoGrupo,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
 })();
