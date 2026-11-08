@@ -23,7 +23,7 @@
       '.pt-res{max-height:170px;overflow-y:auto;border:1px solid var(--border-soft);border-radius:9px;margin-top:4px}.pt-res button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:transparent;color:var(--text);font:inherit;font-size:11.5px;cursor:pointer}.pt-res button:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}'+
       '.pt-sel{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:9px;background:color-mix(in srgb,var(--gold) 10%,transparent);font-size:12px}'+
       '.pt-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}'+
-      '.pt-modo{display:flex;align-items:center;gap:8px;margin:2px 0 8px;font-size:10.5px;color:var(--muted)}.pt-modo .seg{display:inline-flex;border:1px solid var(--border-soft);border-radius:9px;overflow:hidden}.pt-modo .seg button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:10.5px;font-weight:700;padding:5px 10px;cursor:pointer}.pt-modo .seg button.on{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--gold-light)}'+
+      '.pt-modo{display:flex;align-items:center;gap:8px;margin:2px 0 8px;font-size:10.5px;color:var(--muted)}.pt-modo .seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--border-soft);border-radius:10px;background:color-mix(in srgb,var(--text) 3%,transparent)}.pt-modo .seg button{border:0;border-radius:7px;background:transparent;color:var(--muted);font:inherit;font-size:10.5px;font-weight:500;padding:4px 10px;cursor:pointer;transition:background-color .2s cubic-bezier(.22,.78,.25,1),color .2s cubic-bezier(.22,.78,.25,1)}.pt-modo .seg button.active{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--text)}'+
       '.pt-docs{display:flex;flex-direction:column;gap:5px;margin-top:4px}.pt-doc{display:flex;align-items:center;gap:7px;font-size:11.5px}.pt-doc input[type=checkbox]{width:auto;height:auto;margin:0}.pt-doc span{flex:1;overflow-wrap:anywhere}.pt-doc.ok span{text-decoration:line-through;color:var(--muted)}.pt-doc button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0 4px}.pt-sug{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.pt-sug button{border:1px dashed var(--border-soft);background:transparent;color:var(--muted);border-radius:8px;font:inherit;font-size:10px;padding:3px 8px;cursor:pointer}.pt-sug button:hover{color:var(--gold-light);border-color:var(--gold)}'+
       '.pt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pt-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 9px;border-radius:9px;background:color-mix(in srgb,var(--gold) 10%,transparent);font-size:11px}.pt-chip button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0 4px}';
     document.head.appendChild(s);
@@ -61,7 +61,7 @@
         (c.podeEditar?'<div class="pt-acoes"><button type="button" data-ed="'+esc(p.id)+'" title="Editar" aria-label="Editar parte">✎</button>'+(p.principal?'':'<button type="button" data-rm="'+esc(p.id)+'" title="Retirar do processo" aria-label="Retirar do processo">✕</button>')+'</div>':'')+'</div>';
     }).join('');
     c.raiz.innerHTML='<div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="9" r="2.4" stroke="currentColor" stroke-width="1.5"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5M15 15c3 0 6 1.7 6 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Partes do processo ('+S.partes.length+')</div>'+
-      (S.partes.length>1?'<div class="pt-modo"><span>Contrato:</span>'+(c.podeEditar?'<span class="seg"><button type="button" data-modo="unico" class="'+(S.modo==='unico'?'on':'')+'">Único</button><button type="button" data-modo="por_parte" class="'+(S.modo==='por_parte'?'on':'')+'">Um por herdeiro</button></span>':'<b>'+(S.modo==='por_parte'?'um por herdeiro':'único')+'</b>')+'</div>':'')+
+      (S.partes.length>1?'<div class="pt-modo"><span>Contrato:</span>'+(c.podeEditar?'<span class="seg" role="group" aria-label="Contrato"><button type="button" data-modo="unico" class="'+(S.modo==='unico'?'active':'')+'" aria-pressed="'+(S.modo==='unico')+'">Único</button><button type="button" data-modo="por_parte" class="'+(S.modo==='por_parte'?'active':'')+'" aria-pressed="'+(S.modo==='por_parte')+'">Um por herdeiro</button></span>':'<b>'+(S.modo==='por_parte'?'um por herdeiro':'único')+'</b>')+'</div>':'')+
       (linhas||'<div class="pt-vazio">Nenhuma parte cadastrada.</div>')+
       (c.podeEditar?'<button type="button" class="pt-add" id="ptAdd">+ Adicionar herdeiro ou parte</button>':'');
     c.raiz.querySelectorAll('[data-ed]').forEach(function(b){b.onclick=function(){janela(S.partes.find(function(p){return p.id===b.dataset.ed;}));};});
@@ -70,10 +70,16 @@
     var add=c.raiz.querySelector('#ptAdd');if(add)add.onclick=function(){janela(null);};
   }
 
+  // 08/11: troca na hora do clique (o destaque desliza como nos outros seletores) e só volta se o banco recusar
+  function marcarModo(m){if(!S.cfg||!S.cfg.raiz)return;S.cfg.raiz.querySelectorAll('.pt-modo [data-modo]').forEach(function(b){var on=b.dataset.modo===m;b.classList.toggle('active',on);b.setAttribute('aria-pressed',on);});}
   async function mudarModo(m){
-    if(m===S.modo)return;
+    if(m===S.modo||S.mudandoModo)return;
+    var antes=S.modo,t0=Date.now();S.mudandoModo=true;marcarModo(m);
     var r=await S.sb.rpc('processo_contrato_modo_salvar',{p_processo_id:S.cfg.processoId,p_modo:m});
-    if(r.error){aviso(r.error.message||'Não foi possível mudar o contrato.',true);return;}
+    // espera o destaque terminar de deslizar (~340 ms) antes de redesenhar: redesenhar no meio cortava o efeito
+    var falta=420-(Date.now()-t0);if(falta>0)await new Promise(function(ok){setTimeout(ok,falta);});
+    S.mudandoModo=false;
+    if(r.error){marcarModo(antes);aviso(r.error.message||'Não foi possível mudar o contrato.',true);return;}
     S.modo=m;desenhar();aviso(m==='por_parte'?'Contrato: um por herdeiro.':'Contrato: único para todas as partes.');
   }
 
