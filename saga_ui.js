@@ -54,6 +54,13 @@
     global.sagaTituloTema();
     return cor;
   };
+  // 08/11: outra janela/aba do SAGA trocou a cor ou o claro/escuro → esta acompanha na hora (ex.: dois monitores)
+  global.addEventListener('storage',function(e){
+    try{
+      if(e.key==='saga-cor'&&e.newValue&&e.newValue!==(document.documentElement.getAttribute('data-cor')||'azul'))global.sagaAplicarCor(e.newValue);
+      if(e.key==='saga-tema'&&e.newValue&&document.body&&document.body.getAttribute('data-theme')!==e.newValue){document.body.setAttribute('data-theme',e.newValue);if(global.sagaAplicarCor)global.sagaAplicarCor(document.documentElement.getAttribute('data-cor')||'azul');}
+    }catch(x){}
+  });
   // Efeitos de movimento: desligar = tudo troca na hora (vale na hora, sem recarregar). Usado no menu da foto e nas Configurações.
   global.sagaDefinirMovimento=function(reduzir){
     try{localStorage.setItem('saga-movimento',reduzir?'reduzido':'normal');}catch(e){}
