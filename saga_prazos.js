@@ -40,6 +40,25 @@
   // tenta achar no texto "prazo de 15 dias" / "no prazo de 5 (cinco) dias úteis" / "manifestação em 15 dias"
   function prazoDoTexto(t){t=String(t||'');var m=/prazo (?:comum )?(?:de|em) (\d{1,3})\s*(?:\([^)]{1,30}\))?\s*dias/i.exec(t)||/\b(?:em|dentro de) (\d{1,3})\s*(?:\([^)]{1,30}\))?\s*dias/i.exec(t);return m?Math.min(365,+m[1]):null;}
 
+  // Sugere o prazo de resposta de uma intimação (o advogado confirma). Ordem: prazo escrito no texto;
+  // regras pelo que a intimação pede; regras pelo tipo do ato; se nada bater, 5 dias (art. 218, § 3º, do CPC).
+  function sugerir(o){
+    o=o||{};var t=String(o.texto||''),tipo=String(o.tipo||'').toLowerCase();
+    var jef=/juizado/i.test(String(o.orgao||''))||/juizado especial/i.test(t.slice(0,800));
+    var n=prazoDoTexto(t),motivo;
+    if(n)motivo='prazo escrito na intimação';
+    else if(/embargos de declara/i.test(t)&&/(contrarraz|manifest|resposta)/i.test(t)){n=5;motivo='resposta aos embargos de declaração (art. 1.023, § 2º, do CPC)';}
+    else if(/contrarraz/i.test(t)){n=jef?10:15;motivo=jef?'contrarrazões ao recurso no Juizado (art. 42, § 2º, da Lei 9.099/95)':'contrarrazões ao recurso (art. 1.003, § 5º, do CPC)';}
+    else if(/r[ée]plica|sobre a contesta|(?:à|a) contesta[çc][ãa]o/i.test(t)){n=15;motivo='réplica à contestação (arts. 350 e 351 do CPC)';}
+    else if(/(laudo|per[íi]cia|pericial)/i.test(t)&&/manifest/i.test(t)){n=15;motivo='manifestação sobre o laudo (art. 477, § 1º, do CPC)';}
+    else if(/senten[çc]a/.test(tipo)){n=jef?10:15;motivo=jef?'recurso inominado contra a sentença (art. 42 da Lei 9.099/95)':'apelação contra a sentença (art. 1.003, § 5º, do CPC)';}
+    else if(/ac[óo]rd[ãa]o/.test(tipo)){n=15;motivo='recurso contra o acórdão (art. 1.003, § 5º, do CPC)';}
+    else if(/decis[ãa]o/.test(tipo)&&!jef){n=15;motivo='agravo de instrumento contra a decisão (arts. 1.003, § 5º, e 1.015 do CPC)';}
+    else{n=5;motivo='sem prazo escrito: prazo geral de 5 dias (art. 218, § 3º, do CPC)';}
+    var r=prazoIntimacao(o.disponibilizacao||iso(new Date()),n);
+    return {dias:n,motivo:motivo,doTexto:motivo==='prazo escrito na intimação',publicacao:r.publicacao,vencimento:r.vencimento};
+  }
+
   function estilos(){
     if(document.getElementById('sagaPrazosCss'))return;
     var s=document.createElement('style');s.id='sagaPrazosCss';
@@ -89,5 +108,5 @@
     desenhar();carregar(cfg.sb||global._sb).then(mostrarInfo);
     return {redesenhar:function(){aplicado=null;desenhar();carregar(cfg.sb||global._sb).then(mostrarInfo);}};
   }
-  global.SagaPrazos={ligar:ligar,carregar:carregar,somar:somar,prazoIntimacao:prazoIntimacao,prazoDoTexto:prazoDoTexto,diaUtil:function(s,opc){return util(data(s),opc);}};
+  global.SagaPrazos={ligar:ligar,carregar:carregar,sugerir:sugerir,dataBR:br,somar:somar,prazoIntimacao:prazoIntimacao,prazoDoTexto:prazoDoTexto,diaUtil:function(s,opc){return util(data(s),opc);}};
 })(window);

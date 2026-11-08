@@ -302,6 +302,9 @@
   '.si-link.falta{background:color-mix(in srgb,var(--warning) 7%,transparent);border-radius:8px;padding:6px}'+
   'body.si-so-leitura .si-chk,body.si-so-leitura .si-mover,body.si-so-leitura #siConcluir,body.si-so-leitura #siSalvarPrazo,body.si-so-leitura #siComentar,body.si-so-leitura #siComent,body.si-so-leitura #siMoverCom,body.si-so-leitura #siMoverCom+span{display:none !important}'+
   'body.si-so-leitura #siPrazo~.sp-prazos{display:none}'+
+  '.si-sug-prazo{border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 8%,transparent);border-radius:11px;padding:10px 12px;margin:0 0 12px;font-size:12px}'+
+  '.si-sug-prazo .si-sug-tit{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}.si-sug-prazo .si-sug-data{font-size:15px;font-weight:600;margin:2px 0}'+
+  '.si-sug-prazo .si-acoes{margin-top:8px}'+
   'body.si-so-leitura #siColuna,body.si-so-leitura #siPrazo,body.si-so-leitura #siEtiquetaCampo .se-botao,body.si-so-leitura #siCor{pointer-events:none;opacity:.7}'+
   '@media(max-width:860px){.si-link{grid-template-columns:1fr 1fr}'+
   '}'+
@@ -787,6 +790,7 @@
         '<div>'+
           '<div class="si-sec" style="margin-top:0">Triagem</div><div id="siTriagem"></div>'+
           '<div class="si-acoes" style="margin:12px 0 14px;justify-content:flex-end"><button class="si-btn sm" type="button" id="siConcluir">Concluir</button></div>'+
+          '<div id="siSugPrazo"></div>'+
           '<div class="si-g2"><div class="si-campo"><label for="siColuna">Situação</label><select id="siColuna"></select></div>'+
           '<div class="si-campo"><label for="siPrazo">Prazo</label><input id="siPrazo" type="date"></div></div>'+
           '<div class="si-g2 si-etiqueta-linha"><div class="si-campo"><label>Etiqueta (o que fazer)</label><input id="siEtiqueta" type="hidden"><div id="siEtiquetaCampo"></div></div>'+
@@ -868,7 +872,37 @@
     if(S.prazosCtl){S.prazosCtl.redesenhar();return;}
     S.prazosCtl=SagaPrazos.ligar(document.getElementById('siPrazo'),{sb:S.sb,modo:'intimacao',inicio:function(){var i=aberta();return i&&i.data_disponibilizacao;},sugestao:function(){return S.prazoTexto;}});
   }
-  function ligarPrazoTarefa(i){if(window.SagaPrazos&&document.getElementById('siTrPrazo'))SagaPrazos.ligar(document.getElementById('siTrPrazo'),{sb:S.sb,modo:'intimacao',inicio:i.data_disponibilizacao,sugestao:S.aberta===i.id?S.prazoTexto:null});}
+  function ligarPrazoTarefa(i){
+    var c=document.getElementById('siTrPrazo');if(!window.SagaPrazos||!c)return;
+    SagaPrazos.ligar(c,{sb:S.sb,modo:'intimacao',inicio:i.data_disponibilizacao,sugestao:S.aberta===i.id?S.prazoTexto:null});
+    // sem prazo salvo: a tarefa já vem com o prazo sugerido
+    if(!c.value&&S.sugestao&&S.sugestao.id===i.id){c.value=S.sugestao.vencimento;c.dispatchEvent(new Event('change',{bubbles:true}));}
+  }
+  // Ao abrir uma intimação sem prazo, o SAGA calcula o prazo de resposta e o advogado só confirma
+  async function sugerirPrazo(i,texto){
+    var w=document.getElementById('siSugPrazo');if(!w||!window.SagaPrazos)return;
+    w.replaceChildren();S.sugestao=null;
+    if(i.prazo||i.concluida||i.triagem)return;
+    await SagaPrazos.carregar(S.sb);if(S.aberta!==i.id||i.prazo)return;
+    var g=SagaPrazos.sugerir({texto:texto,tipo:i.tipo_documento||i.tipo_comunicacao,orgao:i.orgao,disponibilizacao:i.data_disponibilizacao});
+    S.sugestao=Object.assign({id:i.id},g);
+    w.innerHTML='<div class="si-sug-prazo" role="status"><div class="si-sug-tit">Prazo sugerido pelo SAGA</div>'+
+      '<div class="si-sug-data">Vence '+esc(SagaPrazos.dataBR(g.vencimento))+' · '+g.dias+' dias úteis</div>'+
+      '<div class="si-sub" style="margin:0">Motivo: '+esc(g.motivo)+'. Disponibilizada em '+dataBR(i.data_disponibilizacao)+', publicada em '+esc(SagaPrazos.dataBR(g.publicacao))+'; contagem sem sábados, domingos, feriados do escritório e recesso (20/12 a 20/01). Confira feriados e suspensões do tribunal.</div>'+
+      (S.pode.editar?'<div class="si-acoes"><button class="si-btn pri sm" type="button" data-sug="ok">Confirmar prazo</button><button class="si-btn sm" type="button" data-sug="mudar">Mudar</button></div>':'')+'</div>';
+    if(window.sagaRecolher){w.firstElementChild.hidden=true;window.sagaRecolher(w.firstElementChild,false);}
+    w.onclick=async function(e){
+      var b=e.target.closest('[data-sug]');if(!b||b.disabled)return;
+      var at=aberta();if(!at||!S.sugestao||S.sugestao.id!==at.id)return;
+      var campo=document.getElementById('siPrazo');
+      if(b.dataset.sug==='mudar'){campo.value=S.sugestao.vencimento;campo.dispatchEvent(new Event('change',{bubbles:true}));fechar();campo.focus();toast('Ajuste a data (ou use os atalhos) e clique em "Salvar prazo e etiqueta".');return;}
+      b.disabled=true;
+      var ok=await atualizar(at.id,{prazo:S.sugestao.vencimento});
+      if(ok){campo.value=S.sugestao.vencimento;campo.dispatchEvent(new Event('change',{bubbles:true}));fechar();toast('Prazo confirmado: '+SagaPrazos.dataBR(at.prazo)+'.','sucesso');carregarHistorico(at.id);}
+      else b.disabled=false;
+    };
+    function fechar(){var caixa=w.firstElementChild;if(!caixa)return;if(window.sagaRecolher)window.sagaRecolher(caixa,true,function(){w.replaceChildren();});else w.replaceChildren();}
+  }
   function destacar(t){
     return esc(t).replace(/(prazo (?:comum )?(?:de|em) \d+\s*(?:\([^)]{1,30}\))?\s*(?:dias(?: úteis)?|horas))/gi,'<mark>$1</mark>')
       .replace(/(\b(?:intime-se|intimem-se|cite-se|manifeste-se|manifestar-se)\b)/gi,'<mark>$1</mark>');
@@ -883,7 +917,7 @@
     var t=document.getElementById('siTexto');t.textContent='Carregando o texto...';
     var r2=await S.sb.from('intimacoes').select('texto').eq('id',i.id).maybeSingle();
     if(S.aberta===i.id)t.innerHTML=r2.data&&r2.data.texto?destacar(r2.data.texto):'<span class="si-sub">Sem texto.</span>';
-    if(S.aberta===i.id&&window.SagaPrazos){S.prazoTexto=SagaPrazos.prazoDoTexto(r2.data&&r2.data.texto);ligarPrazos();}
+    if(S.aberta===i.id&&window.SagaPrazos){S.prazoTexto=SagaPrazos.prazoDoTexto(r2.data&&r2.data.texto);ligarPrazos();sugerirPrazo(i,r2.data&&r2.data.texto);}
     carregarHistorico(i.id);
   }
   function preencherJanela(i){
@@ -902,7 +936,7 @@
     document.getElementById('siColuna').innerHTML=opcoesSituacao(situacaoDe(i).chave);
     document.getElementById('siColuna').disabled=!S.pode.editar;
     document.getElementById('siPrazo').value=i.prazo||'';
-    S.prazoTexto=null;ligarPrazos();
+    S.prazoTexto=null;S.sugestao=null;document.getElementById('siSugPrazo').replaceChildren();ligarPrazos();
     definirEtiqueta(i.etiqueta||'',i.etiqueta_cor||(i.etiqueta?corEtiqueta(i.etiqueta):'#e5484d'));
     var partes=(i.partes||[]).map(function(p){return '<span class="si-cli">'+esc(p.nome)+'</span>'+(p.polo?' <span class="si-sub" style="display:inline">('+(p.polo==='A'?'polo ativo':p.polo==='P'?'polo passivo':esc(p.polo))+')</span>':'');}).join('<br>');
     var advs=(i.advogados||[]).map(function(a){return esc(a.nome)+' (OAB '+esc(a.numero_oab)+'/'+esc(a.uf_oab)+')';}).join('<br>');
