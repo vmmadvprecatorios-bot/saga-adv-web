@@ -406,6 +406,7 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 .cat-grupo{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--gold);padding:12px 0 4px;}
 .cat-grupo:first-child{padding-top:0;}
 .cat-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border-soft);}
+.cat-ordem{display:inline-flex;gap:3px}.cat-ordem .btn-acao:disabled{opacity:.3;cursor:default}
 .cat-item input[type=text]{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border-soft);border-radius:7px;color:inherit;padding:6px 8px;font-size:12px;font-family:inherit;outline:0;}
 .cat-item input[type=text]:focus{border-color:var(--gold);}
 .cat-swatch{width:26px;height:26px;flex:0 0 auto;border-radius:7px;border:2px solid color-mix(in srgb,var(--text) 18%,transparent);cursor:pointer;transition:transform .15s,border-color .15s;}
@@ -544,7 +545,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 
 <div class="modal-overlay" id="modalGerenciarCatalogos" style="display:none">
   <div class="modal-box" style="max-width:520px">
-    <div class="modal-head"><div><h3>Gerenciar catalogos</h3><p>Organize áreas e tipos de ação ou gerencie os status.</p></div><button class="modal-close" onclick="closeModal('modalGerenciarCatalogos')">&#x2715;</button></div>
+    <div class="modal-head"><div><h3>Gerenciar catálogos</h3><p>Organize áreas e tipos de ação ou gerencie os status.</p></div><button class="modal-close" onclick="closeModal('modalGerenciarCatalogos')">&#x2715;</button></div>
     <div class="modal-body">
       <div class="cat-tabs">
         <button type="button" class="cat-tab" id="tabCatTeses" onclick="trocarTabCatalogo('teses')">Tipos de ação <span class="cat-tab-qtd" id="qtdCatTeses">0</span></button>
@@ -841,7 +842,7 @@ function selNovoResponsavel(u){
   document.getElementById('dropdownNovoResponsavel').classList.remove('aberto');
 }
 
-/* ---------- Gerenciar catalogos (Teses e Status) ---------- */
+/* ---------- Gerenciar catálogos (Teses e Status) ---------- */
 state.catalogoTab='teses';
 state.realocar={tipo:null,id:null,nome:null,afetados:0,destinoId:null};
 var PALETA_CATALOGO=['#4b8af5','#e07a3f','#e85d5d','#d9467a','#c46a9c','#b05cc8','#7c6cf0','#4f7de0','#3aa0d8','#2bb5b5','#4cc3a0','#2fae7a','#6cbf4a','#a8b83a','#d4a73a','#a0785a','#8a94a8','#5b6b8a'];
@@ -1005,10 +1006,36 @@ function renderCatalogoStatus(){
     if(!porFase[f]){porFase[f]=[];fases.push(f);}
     porFase[f].push(s);
   });
+  fases.sort(function(a,b){var o=['captacao','juridico'];var ia=o.indexOf(a),ib=o.indexOf(b);return (ia<0?9:ia)-(ib<0?9:ib);});
   l.innerHTML=fases.map(function(f){
-    return '<div class="cat-grupo">'+esc(f)+' · '+porFase[f].length+'</div>'+porFase[f].map(function(s){return itemCatalogoHtml('status',s);}).join('');
+    var nomeFase=f==='captacao'?'Captação':f==='juridico'?'Jurídico':f;
+    return '<div class="cat-grupo">'+esc(nomeFase)+' · '+porFase[f].length+' etapa'+(porFase[f].length===1?'':'s')+'</div>'+porFase[f].map(function(s,k){
+      // ↑ ↓ mudam a ordem da etapa dentro da fase (ordem do funil, do Kanban e dos menus)
+      return itemCatalogoHtml('status',s).replace('<button type="button" class="btn-acao btn-acao-danger"','<span class="cat-ordem"><button type="button" class="btn-acao" data-status-mover="'+esc(s.id)+'|-1" title="Subir"'+(k===0?' disabled':'')+'>↑</button><button type="button" class="btn-acao" data-status-mover="'+esc(s.id)+'|1" title="Descer"'+(k===porFase[f].length-1?' disabled':'')+'>↓</button></span><button type="button" class="btn-acao btn-acao-danger"');
+    }).join('');
   }).join('');
   ligarItensCatalogo(l,'status',state.todosStatus,salvarCorStatus,salvarNomeStatus,'status');
+  l.querySelectorAll('[data-status-mover]').forEach(function(b){b.addEventListener('click',function(){var x=b.dataset.statusMover.split('|');moverStatusCatalogo(x[0],Number(x[1]),b);});});
+}
+// Reordena uma etapa dentro da sua fase e grava a ordem nova de todas (1, 2, 3...)
+async function moverStatusCatalogo(id,dir,btn){
+  var item=state.todosStatus.find(function(x){return String(x.id)===String(id);});if(!item)return;
+  var fase=item.fase||'Sem fase',irmas=state.todosStatus.filter(function(x){return (x.fase||'Sem fase')===fase;}),k=irmas.indexOf(item);
+  if(!irmas[k+dir])return;
+  var todas=state.todosStatus.slice(),base=Math.min.apply(null,irmas.map(function(x){return x.ordem||0;}));
+  irmas.splice(k,1);irmas.splice(k+dir,0,item);
+  if(btn)btn.disabled=true;
+  for(var n=0;n<irmas.length;n++){
+    var nova=base+n;if(irmas[n].ordem===nova)continue;
+    var res=await atualizarCatalogo('status_funil',irmas[n].id,{ordem:nova});
+    if(!res.ok){avisarFalhaCatalogo(res,'reordenar');await carregarTodosStatus();renderCatalogoStatus();return;}
+    irmas[n].ordem=nova;
+  }
+  state.todosStatus=todas.sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
+  renderCatalogoStatus();
+  var linha=document.querySelector('[data-status-nome-id="'+id+'"]');if(linha){var it=linha.closest('.cat-item');if(it&&it.animate&&!(window.sagaMq&&sagaMq().matches))it.animate([{background:'color-mix(in srgb,var(--gold) 16%,transparent)'},{background:'transparent'}],{duration:700,easing:'cubic-bezier(.22,.78,.25,1)'});}
+  if(typeof invalidarBaseProcessos==='function')invalidarBaseProcessos();
+  if(typeof carregarProcessos==='function')carregarProcessos();
 }
 async function salvarCorItem(tabela,lista,id,cor,btn){
   var item=lista.find(function(x){return String(x.id)===String(id);});
