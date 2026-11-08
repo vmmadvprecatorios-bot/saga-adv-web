@@ -95,16 +95,19 @@ window.SagaPlanilha=(function(){
     return null;
   }
 
-  function colunasDaTela(){return cols.filter(function(c){return c.ativo&&(c.escopo==='ambos'||c.escopo===FASE_FIXA)&&!(FASE_FIXA==='juridico'&&SO_CAPTACAO.indexOf(c.campo_sistema)!==-1);}).sort(function(a,b){return ordemCol(a)-ordemCol(b);});}
+  function colunasDaTela(){var lista=cols.filter(function(c){return c.ativo&&(c.escopo==='ambos'||c.escopo===FASE_FIXA)&&!(FASE_FIXA==='juridico'&&SO_CAPTACAO.indexOf(c.campo_sistema)!==-1);}).sort(function(a,b){return ordemCol(a)-ordemCol(b);});
+    // ordem própria da pessoa (arrastando o cabeçalho); colunas novas entram no lugar de sempre
+    if(ordemCols&&ordemCols.length){var pos={};ordemCols.forEach(function(id,i){pos[id]=i;});var base=lista.slice();lista.sort(function(a,b){var pa=pos[a.id],pb=pos[b.id];if(pa!=null&&pb!=null)return pa-pb;return base.indexOf(a)-base.indexOf(b);});}
+    return lista;}
   function visiveis(){var oc=ocultas||{};return colunasDaTela().filter(function(c){return !oc[c.id];});}
   function lerPreferencias(){
-    try{var s=JSON.parse(localStorage.getItem(CHAVE())||'null');if(s){ocultas=s.ocultas||{};filtros={};Object.keys(s.filtros||{}).forEach(function(k){filtros[k]=new Set(trocaVazioAntigo(s.filtros[k]));});ordem=s.ordem||null;protocolo=s.protocolo||'';retorno=s.retorno||'';minhas=!!s.minhas;}}catch(e){}
+    try{var s=JSON.parse(localStorage.getItem(CHAVE())||'null');if(s){ocultas=s.ocultas||{};filtros={};Object.keys(s.filtros||{}).forEach(function(k){filtros[k]=new Set(trocaVazioAntigo(s.filtros[k]));});ordem=s.ordem||null;protocolo=s.protocolo||'';retorno=s.retorno||'';minhas=!!s.minhas;ordemCols=Array.isArray(s.ordemCols)?s.ordemCols:null;}}catch(e){}
     if(!ocultas)ocultas=padraoOcultas();
   }
   // Na Captação, o padrão mostra só as colunas da planilha de captação; as outras ficam em "Colunas"
   function padraoOcultas(){var o={};if(FASE_FIXA==='captacao')colunasDaTela().forEach(function(c){if(c.ordem_captacao==null)o[c.id]=true;});return o;}
   function guardar(){
-    try{var f={};Object.keys(filtros).forEach(function(k){f[k]=Array.from(filtros[k]);});localStorage.setItem(CHAVE(),JSON.stringify({ocultas:ocultas,filtros:f,ordem:ordem,protocolo:protocolo,retorno:retorno,minhas:minhas}));}catch(e){}
+    try{var f={};Object.keys(filtros).forEach(function(k){f[k]=Array.from(filtros[k]);});localStorage.setItem(CHAVE(),JSON.stringify({ocultas:ocultas,filtros:f,ordem:ordem,protocolo:protocolo,retorno:retorno,minhas:minhas,ordemCols:ordemCols}));}catch(e){}
   }
 
   // ---------- filtros e ordem (usados pela tela em processoNoEscopo e prepararVisaoProcessos) ----------
@@ -162,6 +165,7 @@ window.SagaPlanilha=(function(){
     }).join('');
     tb.querySelectorAll('tr[data-sp-proc]').forEach(function(tr){tr.onclick=null;});
     renderTotais(tabela,cs,lista);aplicarLarguras();atualizarFixas();restaurarSelecao();
+    ligarArrastarColunas(thead);restaurarMarcados();
     var kp=document.getElementById('spKanbanPor');if(kp)kp.style.display='none';
   }
   // ---------- largura das colunas (arrastar a borda do cabeçalho; vale só para você) ----------
@@ -297,7 +301,7 @@ window.SagaPlanilha=(function(){
   function aposEditar(tecla){
     if(tecla==='Enter')moverSel(1,0);else if(tecla==='Tab')moverSel(0,1);else if(tecla==='ShiftTab')moverSel(0,-1);else restaurarSelecao();
   }
-  function redesenhar(){renderBarra();if(state.view==='lista')renderLista();else renderKanban();if(typeof atualizarContagem==='function')atualizarContagem();}
+  function redesenhar(){renderBarra();if(state.view==='lista')renderLista();else renderKanban();if(typeof atualizarContagem==='function')atualizarContagem();try{pintarLote();}catch(e){}}
   // Celular: cada processo vira um cartão com as colunas visíveis da planilha (a tabela larga fica opcional)
   function cartoesHtml(lista){
     var cs=visiveis(),hoje=hojeISO();
@@ -733,6 +737,8 @@ window.SagaPlanilha=(function(){
       '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button></div>'+
       '<button type="button" class="btn-secondary sp-btn" data-foco title="Cor do destaque da célula, da linha e da coluna selecionadas"><span class="sp-foco-bola"></span> Foco</button>'+
       '<button type="button" class="btn-secondary sp-btn" data-colunas>Colunas</button>'+
+      '<button type="button" class="btn-secondary sp-btn" data-visoes title="Guardar e trocar combinações de filtros, ordem e colunas">Visões ▾</button>'+
+      '<button type="button" class="btn-secondary sp-btn" data-exportar title="Baixar em Excel exatamente o que está na tela: colunas visíveis, filtros e ordem (todas as páginas)">Exportar Excel</button>'+
       // "+ Filtrar": escolhe qualquer coluna e os valores, também no Kanban (onde os cabeçalhos da planilha não aparecem); os filtros se somam
       '<button type="button" class="btn-secondary sp-btn" data-filtrar title="Filtrar por qualquer coluna da planilha; os filtros se somam">+ Filtrar</button>'+
       Object.keys(filtros).map(function(id){var c=cols.find(function(x){return x.id===id;});if(!c)return '';var v=filtros[id],q=Array.isArray(v)?v.length:(v&&v.size)||0;
@@ -752,6 +758,8 @@ window.SagaPlanilha=(function(){
       x.parentNode.querySelectorAll('.sp-pill').forEach(function(y){y.classList.toggle('ativo',y===x);});
       requestAnimationFrame(function(){setTimeout(aplicar,60);});};});
     b.querySelector('[data-colunas]').onclick=escolherColunas;
+    b.querySelector('[data-visoes]').onclick=function(e){e.stopPropagation();menuVisoes(this);};
+    b.querySelector('[data-exportar]').onclick=function(){exportarExcel(false);};
     b.querySelector('[data-foco]').onclick=function(e){e.stopPropagation();abrirMenuFoco(this);};
     b.querySelector('[data-filtrar]').onclick=function(e){e.stopPropagation();menuEscolherColunaFiltro(this);};
     b.querySelectorAll('[data-chip]').forEach(function(x){x.onclick=function(e){e.stopPropagation();
@@ -886,6 +894,7 @@ window.SagaPlanilha=(function(){
     var barra=document.createElement('div');barra.id='spBarra';
     var lv=document.getElementById('listaView');lv.parentNode.insertBefore(barra,lv);
     var bk=document.getElementById('barraKanban');if(bk&&!document.getElementById('spKanbanPor')){var kp=document.createElement('div');kp.id='spKanbanPor';kp.className='sp-kb-por';kp.style.display='none';bk.insertBefore(kp,bk.querySelector('.busca-kanban'));}
+    estilosPacote2();document.addEventListener('change',aoMarcar);
     pronta=true;renderBarra();
     // Clique no nome abre a ficha; clique duplo em outra célula edita; cabeçalho abre o filtro
     var tabela=document.querySelector('#listaView table');
@@ -1497,5 +1506,246 @@ window.SagaPlanilha=(function(){
   }
   function formatarCampo(tipo,v){return formatar(tipo,v);}
 
-  return {retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,kanbanAgrupado:kanbanAgrupado,soltarNoGrupo:soltarNoGrupo,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
+  /* =====================================================================================
+     PACOTE 2 DA PLANILHA (08/11): alterar vários de uma vez, exportar para Excel o que está
+     na tela, visões salvas e ordem das colunas arrastando o cabeçalho. Tudo por pessoa e
+     neste aparelho (decisão do Dr. Victor: ajustes não passam para outro aparelho).
+     ===================================================================================== */
+  var CURVA='cubic-bezier(.22,.78,.25,1)';
+  function semMovimento(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+  function listaFiltrada(){
+    var base=(state.baseProcessos||[]).filter(function(p){return typeof processoNoEscopo==='function'?processoNoEscopo(p):passa(p);});
+    return ordenar(base);
+  }
+  function estilosPacote2(){
+    if(document.getElementById('spEstilo2'))return;
+    var st=document.createElement('style');st.id='spEstilo2';st.textContent=
+      // barra dos marcados (embaixo, no meio)
+      '#spLote{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:1200;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;max-width:calc(100vw - 24px);padding:9px 12px;border:1px solid var(--border);border-radius:14px;background:var(--panel-solid,var(--panel));box-shadow:0 14px 34px rgba(0,0,0,.28);backdrop-filter:blur(14px);transform:translate(-50%,0);opacity:1;transition:opacity .26s '+CURVA+',transform .26s '+CURVA+'}'+
+      '#spLote.sp-lote-fora{opacity:0;transform:translate(-50%,16px);pointer-events:none}'+
+      'body.sp-com-lote .saga-conteudo:last-of-type,body.sp-com-lote #listaView{padding-bottom:76px}'+
+      '#spLote{width:max-content}@media(max-width:760px){#spLote{left:12px;right:12px;width:auto;transform:none;gap:6px;padding:8px 10px}#spLote.sp-lote-fora{transform:translateY(16px)}#spLote b{width:100%;text-align:center;font-size:12px}#spLote .sp-btn{flex:1 1 auto;padding:7px 8px;font-size:11.5px}}'+
+      '#spLote b{font-size:12.5px;color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}#spLote .sp-lote-todos{font:inherit;font-size:11.5px;color:var(--gold-light);background:none;border:0;text-decoration:underline;cursor:pointer;padding:2px}'+
+      // arrastar coluna
+      '.sp-tabela th.sp-col-arrastando{opacity:.45}.sp-tabela th[data-sp-col]{cursor:grab}'+
+      '#spMarcaColuna{position:fixed;width:3px;border-radius:2px;background:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 22%,transparent);z-index:3100;pointer-events:none;transition:left .12s '+CURVA+'}'+
+      '#spFantasmaCol{position:fixed;z-index:3101;pointer-events:none;padding:8px 12px;border:1px solid var(--gold);border-radius:9px;background:var(--panel-solid,var(--panel));color:var(--text);font-size:11px;letter-spacing:.8px;text-transform:uppercase;box-shadow:0 10px 24px rgba(0,0,0,.28)}'+
+      // visões salvas
+      '.sp-visao{display:flex;align-items:center;gap:4px}.sp-visao .sp-op{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-visao .sp-ico{flex:0 0 auto}'+
+      '.sp-visao-nova{display:flex;gap:6px;padding:6px 2px 2px}.sp-visao-nova input{flex:1;min-width:0;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font:inherit;font-size:12px}'+
+      '.sp-lote-form{display:grid;gap:12px}.sp-lote-form label{display:grid;gap:5px;font-size:12px;color:var(--muted)}.sp-lote-form select,.sp-lote-form input{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 10px;font:inherit;font-size:13px}'+
+      '.sp-lote-prog{height:6px;border-radius:4px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}.sp-lote-prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s '+CURVA+'}';
+    document.head.appendChild(st);
+  }
+
+  // ---------- 1) Marcar várias linhas e alterar de uma vez ----------
+  var marcados=new Set();
+  function chkLinhas(){return Array.prototype.slice.call(document.querySelectorAll('#listaView .chk-linha'));}
+  function restaurarMarcados(){
+    chkLinhas().forEach(function(c){c.checked=marcados.has(c.value);});
+    var t=document.getElementById('chkTodos');if(t){var v=chkLinhas();t.checked=v.length>0&&v.every(function(c){return c.checked;});}
+    pintarLote();
+  }
+  function aoMarcar(e){
+    var t=e.target;if(!t||!t.closest||!t.closest('#listaView'))return;
+    if(t.id==='chkTodos'){chkLinhas().forEach(function(c){c.checked=t.checked;if(t.checked)marcados.add(c.value);else marcados.delete(c.value);});pintarLote();return;}
+    if(t.classList&&t.classList.contains('chk-linha')){if(t.checked)marcados.add(t.value);else marcados.delete(t.value);
+      var tt=document.getElementById('chkTodos');if(tt){var v=chkLinhas();tt.checked=v.length>0&&v.every(function(c){return c.checked;});}pintarLote();}
+  }
+  function colunasEmLote(){
+    return colunasDaTela().filter(function(c){
+      if(SISTEMA_SO_LEITURA.indexOf(c.campo_sistema)!==-1)return false;
+      // dados que são de cada pessoa ou de cada processo não fazem sentido iguais para vários
+      if(['pessoa.nome','pessoa.cpf','pessoa.telefone','pessoa.email','processo.numero','processo.valor_causa','processo.valor_precatorio','processo.ultima_movimentacao'].indexOf(c.campo_sistema)!==-1)return false;
+      if(['processo.tese','processo.responsavel'].indexOf(c.campo_sistema)!==-1&&!state.permissoes.editar_dados)return false;
+      return ['opcao','usuario','sim_nao','data','texto','porcentagem','moeda','numero'].indexOf(c.tipo)!==-1||!!c.campo_sistema;
+    });
+  }
+  function pintarLote(){
+    var bar=document.getElementById('spLote');
+    if(!bar){bar=document.createElement('div');bar.id='spLote';bar.className='sp-lote-fora';bar.setAttribute('role','region');bar.setAttribute('aria-label','Processos marcados');document.body.appendChild(bar);}
+    // tira da lista quem saiu do filtro
+    var vivos={};listaFiltrada().forEach(function(p){vivos[p.id]=1;});marcados.forEach(function(id){if(!vivos[id])marcados.delete(id);});
+    var n=marcados.size,total=Object.keys(vivos).length,naTela=chkLinhas().length;
+    document.body.classList.toggle('sp-com-lote',!!n&&state.view==='lista');
+    if(!n||state.view!=='lista'){bar.classList.add('sp-lote-fora');return;}
+    bar.innerHTML='<b>'+n+(n===1?' processo marcado':' processos marcados')+'</b>'+
+      (n<total&&n>=naTela&&total>naTela?'<button type="button" class="sp-lote-todos" data-lote-todos>Marcar todos os '+total+' do filtro</button>':'')+
+      (state.permissoes.editar?'<button type="button" class="btn-primary sp-btn" data-lote-alterar>Alterar…</button>':'')+
+      '<button type="button" class="btn-secondary sp-btn" data-lote-exportar>Exportar marcados</button>'+
+      '<button type="button" class="btn-secondary sp-btn" data-lote-limpar>Desmarcar</button>';
+    bar.classList.remove('sp-lote-fora');
+    var bt=bar.querySelector('[data-lote-todos]');if(bt)bt.onclick=function(){Object.keys(vivos).forEach(function(id){marcados.add(id);});restaurarMarcados();};
+    var ba=bar.querySelector('[data-lote-alterar]');if(ba)ba.onclick=abrirAlterarLote;
+    bar.querySelector('[data-lote-exportar]').onclick=function(){exportarExcel(true);};
+    bar.querySelector('[data-lote-limpar]').onclick=function(){marcados.clear();restaurarMarcados();};
+  }
+  function abrirAlterarLote(){
+    var cs=colunasEmLote(),ids=Array.from(marcados);
+    var j=janela('Alterar '+ids.length+(ids.length===1?' processo':' processos'),
+      '<div class="sp-lote-form"><p class="sp-ajuda">Escolha a coluna e o valor novo. O valor vale para todos os processos marcados; quem não puder ser alterado (por exemplo, sigiloso) fica como está.</p>'+
+      '<label>Coluna<select id="spLoteCol"><option value="">Escolha a coluna…</option>'+cs.map(function(c){return '<option value="'+h(c.id)+'">'+h(nomeCol(c))+'</option>';}).join('')+'</select></label>'+
+      '<label id="spLoteValorRot" hidden>Valor novo<span id="spLoteValor"></span></label>'+
+      '<div class="sp-lote-prog" id="spLoteProg" hidden><i></i></div><div class="sp-ajuda" id="spLoteMsg"></div></div>',
+      '<button type="button" class="btn-secondary" data-fechar>Cancelar</button><button type="button" class="btn-primary" id="spLoteOk" disabled>Aplicar</button>');
+    var selC=j.q('#spLoteCol'),cx=j.q('#spLoteValor'),rot=j.q('#spLoteValorRot'),ok=j.q('#spLoteOk'),ler=null,col=null;
+    selC.onchange=async function(){
+      col=cols.find(function(x){return x.id===selC.value;});ler=null;cx.innerHTML='';rot.hidden=!col;ok.disabled=!col;if(!col)return;
+      var ops=await opcoesDe(col),campo;
+      if(ops){campo=document.createElement('select');campo.innerHTML='<option value="">— deixar vazio —</option>'+ops.map(function(o){return '<option value="'+h(o.id)+'">'+h(o.nome)+'</option>';}).join('');ler=function(){return campo.value||null;};}
+      else if(col.tipo==='sim_nao'){campo=document.createElement('select');campo.innerHTML='<option value="">— deixar vazio —</option><option value="true">Sim</option><option value="false">Não</option>';ler=function(){return campo.value===''?null:campo.value==='true';};}
+      else{campo=document.createElement('input');campo.type=col.tipo==='data'?'date':'text';aplicarMascara(campo,col,null);
+        ler=function(){var x=campo.value.trim();if(!x)return null;var m=tipoMascara(col);return m==='cpf'||m==='cnj'||m==='tel'?formatar(m,x):x;};}
+      campo.id='spLoteCampo';cx.appendChild(campo);ok.textContent='Aplicar a '+ids.length;
+    };
+    ok.onclick=async function(){
+      if(!col||!ler)return;var valor;try{valor=ler();}catch(e){aviso(h(e.message),true);return;}
+      ok.disabled=true;selC.disabled=true;var prog=j.q('#spLoteProg'),barra=prog.querySelector('i'),msg=j.q('#spLoteMsg');prog.hidden=false;
+      var feitos=0,pulados=0,erros=0;
+      for(var i=0;i<ids.length;i++){
+        var p=processo(ids[i]);
+        if(!p||!editavel(p,col)){pulados++;}
+        else{try{await gravar(p,col,valor);feitos++;}catch(e){erros++;}}
+        barra.style.width=Math.round((i+1)/ids.length*100)+'%';msg.textContent=(i+1)+' de '+ids.length+'…';
+      }
+      j.fechar();redesenhar();
+      aviso(feitos+(feitos===1?' processo alterado':' processos alterados')+(pulados?'; '+pulados+' sem permissão para alterar':'')+(erros?'; '+erros+' com erro (tente de novo)':'')+'.',erros>0);
+    };
+  }
+
+  // ---------- 2) Exportar para Excel o que está na tela (colunas visíveis, filtro e ordem atuais) ----------
+  var CRC=null;
+  function crc32(b){if(!CRC){CRC=[];for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;CRC[n]=c>>>0;}}var x=0xFFFFFFFF;for(var i=0;i<b.length;i++)x=CRC[(x^b[i])&255]^(x>>>8);return (x^0xFFFFFFFF)>>>0;}
+  function zipSemCompressao(arquivos){
+    var enc=new TextEncoder(),partes=[],centrais=[],pos=0;
+    function u16(v){return [v&255,(v>>>8)&255];}function u32(v){return [v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255];}
+    arquivos.forEach(function(a){
+      var nome=enc.encode(a.nome),dados=enc.encode(a.texto),crc=crc32(dados);
+      var loc=[].concat(u32(0x04034b50),u16(20),u16(0x0800),u16(0),u16(0),u16(0x21),u32(crc),u32(dados.length),u32(dados.length),u16(nome.length),u16(0));
+      partes.push(new Uint8Array(loc),nome,dados);
+      centrais.push({nome:nome,crc:crc,tam:dados.length,pos:pos});pos+=loc.length+nome.length+dados.length;
+    });
+    var ini=pos,tamCentral=0;
+    centrais.forEach(function(c){var cab=[].concat(u32(0x02014b50),u16(20),u16(20),u16(0x0800),u16(0),u16(0),u16(0x21),u32(c.crc),u32(c.tam),u32(c.tam),u16(c.nome.length),u16(0),u16(0),u16(0),u16(0),u32(0),u32(c.pos));
+      partes.push(new Uint8Array(cab),c.nome);tamCentral+=cab.length+c.nome.length;});
+    partes.push(new Uint8Array([].concat(u32(0x06054b50),u16(0),u16(0),u16(centrais.length),u16(centrais.length),u32(tamCentral),u32(ini),u16(0))));
+    return new Blob(partes,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  }
+  function xmlTexto(v){return String(v==null?'':v).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function letraCol(i){var s='';i++;while(i>0){var m=(i-1)%26;s=String.fromCharCode(65+m)+s;i=Math.floor((i-1)/26);}return s;}
+  function valorExcel(p,c){
+    // devolve {n:número} para valores, {t:texto} para o resto (como aparece na tela)
+    var sig=!!p.sigilo&&!state.permissoes.editar_dados;
+    if(sig&&c.campo_sistema!=='pessoa.nome')return {t:'(sigiloso)'};
+    var v=bruto(p,c);
+    if(v==null||v===''||(Array.isArray(v)&&!v.length))return {t:''};
+    if((c.tipo==='moeda'||c.tipo==='numero'||c.tipo==='porcentagem')&&isFinite(Number(v)))return {n:Number(v),pct:c.tipo==='porcentagem',moeda:c.tipo==='moeda'};
+    if(c.tipo==='link'&&Array.isArray(v))return {t:v.map(function(l){return l.url;}).join(' ')};
+    return {t:exibir(c,texto(p,c,v))||''};
+  }
+  function exportarExcel(soMarcados){
+    var cs=visiveis(),lista=listaFiltrada();
+    if(soMarcados)lista=lista.filter(function(p){return marcados.has(String(p.id));});
+    if(!lista.length){aviso('Nada para exportar com os filtros de agora.',true);return;}
+    var linhas=['<row r="1">'+cs.map(function(c,i){return '<c r="'+letraCol(i)+'1" t="inlineStr" s="1"><is><t>'+xmlTexto(nomeCol(c))+'</t></is></c>';}).join('')+'</row>'];
+    lista.forEach(function(p,k){var r=k+2;
+      linhas.push('<row r="'+r+'">'+cs.map(function(c,i){var x=valorExcel(p,c),ref=letraCol(i)+r;
+        if(x.n!=null)return '<c r="'+ref+'"'+(x.moeda?' s="2"':x.pct?' s="3"':'')+'><v>'+(x.pct?x.n/100:x.n)+'</v></c>';
+        return x.t?'<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xmlTexto(x.t)+'</t></is></c>':'';}).join('')+'</row>');});
+    var larg=cs.map(function(c,i){var w=Math.min(48,Math.max(10,String(nomeCol(c)).length+4));return '<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>';}).join('');
+    var nomeAba=(FASE_FIXA==='captacao'?'Captação':'Jurídico');
+    var arquivos=[
+      {nome:'[Content_Types].xml',texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'},
+      {nome:'_rels/.rels',texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+      {nome:'xl/workbook.xml',texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="'+xmlTexto(nomeAba)+'" sheetId="1" r:id="rId1"/></sheets></workbook>'},
+      {nome:'xl/_rels/workbook.xml.rels',texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>'},
+      {nome:'xl/styles.xml',texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;R$&quot; #,##0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="10" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>'},
+      {nome:'xl/worksheets/sheet1.xml',texto:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>'+larg+'</cols><sheetData>'+linhas.join('')+'</sheetData><autoFilter ref="A1:'+letraCol(cs.length-1)+(lista.length+1)+'"/></worksheet>'}
+    ];
+    var blob=zipSemCompressao(arquivos),url=URL.createObjectURL(blob),a=document.createElement('a');
+    var d=new Date(),dt=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    a.href=url;a.download='SAGA_'+(FASE_FIXA==='captacao'?'Captacao':'Juridico')+(soMarcados?'_marcados':'')+'_'+dt+'.xlsx';/* nome sem acento: alguns navegadores trocam por "download" */document.body.appendChild(a);a.click();
+    setTimeout(function(){URL.revokeObjectURL(url);a.remove();},2000);
+    aviso('Planilha com '+lista.length+(lista.length===1?' processo':' processos')+' e '+cs.length+' colunas baixada.');
+    return blob;
+  }
+
+  // ---------- 3) Visões salvas (filtros, ordem, colunas, ordem das colunas) ----------
+  var CHAVE_VISOES=function(){return 'saga-planilha-visoes-'+FASE_FIXA+'-'+(state.meuInternoId||'');};
+  function lerVisoes(){try{var v=JSON.parse(localStorage.getItem(CHAVE_VISOES())||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
+  function guardarVisoes(v){try{localStorage.setItem(CHAVE_VISOES(),JSON.stringify(v));}catch(e){aviso('Não foi possível guardar neste navegador.',true);}}
+  function estadoAtual(){var f={};Object.keys(filtros).forEach(function(k){f[k]=Array.from(filtros[k]);});
+    return {ocultas:Object.assign({},ocultas||{}),filtros:f,ordem:ordem,protocolo:protocolo,retorno:retorno,minhas:minhas,ordemCols:ordemCols?ordemCols.slice():null};}
+  function aplicarVisao(v){var s=v.estado||{};ocultas=s.ocultas||padraoOcultas();filtros={};Object.keys(s.filtros||{}).forEach(function(k){filtros[k]=new Set(s.filtros[k]);});
+    ordem=s.ordem||null;protocolo=s.protocolo||'';retorno=s.retorno||'';minhas=!!s.minhas;ordemCols=s.ordemCols||null;fecharMenu();aplicar();aviso('Visão "'+h(v.nome)+'" aplicada.');}
+  function menuVisoes(ancora){
+    fecharMenu();
+    var vs=lerVisoes(),m=document.createElement('div');m.className='sp-menu';m.style.width='290px';
+    var desenhar=function(){
+      vs=lerVisoes();
+      m.innerHTML='<div class="sp-menu-tit">Visões salvas</div>'+
+        (vs.length?'<div class="sp-lista">'+vs.map(function(v,i){return '<div class="sp-visao"><button type="button" class="sp-op" data-ver="'+i+'" title="Aplicar esta visão">'+h(v.nome)+'</button><button type="button" class="sp-ico" data-renomear-v="'+i+'" title="Renomear" aria-label="Renomear '+h(v.nome)+'">✎</button><button type="button" class="sp-ico" data-subir-v="'+i+'" title="Subir na lista" aria-label="Subir '+h(v.nome)+'"'+(i?'':' disabled')+'>↑</button><button type="button" class="sp-ico" data-tirar-v="'+i+'" title="Remover" aria-label="Remover '+h(v.nome)+'">×</button></div>';}).join('')+'</div>':
+          '<p class="sp-ajuda" style="margin:2px 4px 6px">Nenhuma visão salva ainda. Monte os filtros, a ordem e as colunas e salve aqui (ex.: "Protocolados TRF-5").</p>')+
+        '<div class="sp-visao-nova"><input type="text" maxlength="40" placeholder="Nome da visão atual" data-nome-v aria-label="Nome da visão atual"><button type="button" class="btn-primary sp-btn" data-salvar-v>Salvar</button></div>'+
+        '<button type="button" class="sp-op" data-padrao-v>Voltar ao padrão (sem filtros)</button>';
+    };
+    desenhar();
+    document.body.appendChild(m);menuAberto=m;
+    var r=ancora.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-298))+'px';caberNaTela(m,r);
+    m.addEventListener('click',function(e){
+      e.stopPropagation();var t=e.target.closest('button');if(!t)return;
+      if(t.dataset.ver!=null){aplicarVisao(vs[+t.dataset.ver]);return;}
+      if(t.dataset.tirarV!=null){var n=vs[+t.dataset.tirarV].nome;vs.splice(+t.dataset.tirarV,1);guardarVisoes(vs);desenhar();aviso('Visão "'+h(n)+'" removida.');return;}
+      if(t.dataset.subirV!=null){var i=+t.dataset.subirV;if(i>0){var x=vs[i];vs[i]=vs[i-1];vs[i-1]=x;guardarVisoes(vs);desenhar();}return;}
+      if(t.dataset.renomearV!=null){var k=+t.dataset.renomearV,linha=t.parentNode;linha.innerHTML='<input type="text" maxlength="40" class="sp-editor" value="'+h(vs[k].nome)+'" aria-label="Novo nome">';var inp=linha.querySelector('input');inp.focus();inp.select();
+        var ok=function(){var nn=inp.value.trim();if(nn){vs[k].nome=nn;guardarVisoes(vs);}desenhar();};inp.onkeydown=function(ev){if(ev.key==='Enter'){ev.preventDefault();ok();}else if(ev.key==='Escape'){ev.stopPropagation();desenhar();}};inp.onblur=ok;return;}
+      if(t.hasAttribute('data-salvar-v')){var nm=m.querySelector('[data-nome-v]').value.trim();if(!nm){m.querySelector('[data-nome-v]').focus();return;}
+        var ja=vs.findIndex(function(v){return norm(v.nome)===norm(nm);});var nova={nome:nm,estado:estadoAtual(),em:new Date().toISOString()};
+        if(ja>=0)vs[ja]=nova;else vs.push(nova);guardarVisoes(vs);desenhar();aviso(ja>=0?'Visão "'+h(nm)+'" atualizada.':'Visão "'+h(nm)+'" salva.');return;}
+      if(t.hasAttribute('data-padrao-v')){filtros={};ordem=null;protocolo='';retorno='';minhas=false;ordemCols=null;ocultas=padraoOcultas();fecharMenu();aplicar();aviso('Planilha de volta ao padrão.');}
+    });
+    m.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.hasAttribute('data-nome-v')){e.preventDefault();m.querySelector('[data-salvar-v]').click();}});
+  }
+
+  // ---------- 4) Ordem das colunas: arrastar o cabeçalho ----------
+  var ordemCols=null;
+  function ligarArrastarColunas(thead){
+    if(thead._spArrastar)return;thead._spArrastar=true;
+    var ini=null,arr=null,marca=null,fant=null,alvo=null,ignorarClique=false;
+    thead.addEventListener('click',function(e){if(ignorarClique){e.stopPropagation();e.preventDefault();ignorarClique=false;}},true);
+    thead.addEventListener('pointerdown',function(e){
+      if(e.button!==0||e.target.closest('[data-sp-redim]'))return;
+      var th=e.target.closest('th[data-sp-col]');if(!th)return;
+      var c=cols.find(function(x){return x.id===th.dataset.spCol;});if(!c||c.campo_sistema==='pessoa.nome')return;
+      ini={x:e.clientX,y:e.clientY,th:th,id:th.dataset.spCol};
+    });
+    window.addEventListener('pointermove',function(e){
+      if(!ini)return;
+      if(!arr){if(Math.abs(e.clientX-ini.x)<8)return;arr=ini;arr.th.classList.add('sp-col-arrastando');
+        fant=document.createElement('div');fant.id='spFantasmaCol';fant.textContent=arr.th.textContent.replace(/[▾⏷↑↓]/g,'').trim();document.body.appendChild(fant);
+        marca=document.createElement('div');marca.id='spMarcaColuna';document.body.appendChild(marca);fecharMenu();}
+      fant.style.left=(e.clientX+12)+'px';fant.style.top=(e.clientY+10)+'px';
+      var ths=Array.prototype.slice.call(thead.querySelectorAll('th[data-sp-col]')),tr=thead.getBoundingClientRect(),melhor=null;
+      ths.forEach(function(t){var rr=t.getBoundingClientRect(),meio=rr.left+rr.width/2;var lado=e.clientX<meio?'antes':'depois';var x=lado==='antes'?rr.left:rr.right;var d=Math.abs(e.clientX-x);if(!melhor||d<melhor.d)melhor={d:d,t:t,lado:lado,x:x};});
+      if(melhor){var cn=cols.find(function(x){return x.id===melhor.t.dataset.spCol;});
+        if(cn&&cn.campo_sistema==='pessoa.nome'&&melhor.lado==='antes'){melhor.lado='depois';melhor.x=melhor.t.getBoundingClientRect().right;}
+        alvo=melhor;marca.style.left=(melhor.x-1)+'px';marca.style.top=tr.top+'px';marca.style.height=Math.min(window.innerHeight-tr.top,thead.parentNode.getBoundingClientRect().height)+'px';}
+    });
+    window.addEventListener('pointerup',function(){
+      if(!ini)return;var a=arr,al=alvo;ini=null;arr=null;alvo=null;
+      if(fant){fant.remove();fant=null;}if(marca){marca.remove();marca=null;}
+      if(!a)return;ignorarClique=true;setTimeout(function(){ignorarClique=false;},0);a.th.classList.remove('sp-col-arrastando');
+      if(!al||al.t.dataset.spCol===a.id)return;
+      var lista=colunasDaTela().map(function(c){return c.id;}).filter(function(id){return id!==a.id;});
+      var pos=lista.indexOf(al.t.dataset.spCol);if(pos<0)return;if(al.lado==='depois')pos++;
+      lista.splice(pos,0,a.id);
+      // a coluna anda até o lugar novo (o cabeçalho desliza; a tabela inteira é redesenhada em seguida)
+      var antesX={};Array.prototype.forEach.call(thead.querySelectorAll('th[data-sp-col]'),function(t){antesX[t.dataset.spCol]=t.getBoundingClientRect().left;});
+      ordemCols=lista;guardar();redesenhar();
+      if(!semMovimento()){var th2=document.querySelector('#listaView table thead');if(th2)Array.prototype.forEach.call(th2.querySelectorAll('th[data-sp-col]'),function(t){var x0=antesX[t.dataset.spCol];if(x0==null)return;var dx=x0-t.getBoundingClientRect().left;if(Math.abs(dx)>1&&t.animate)t.animate([{transform:'translateX('+dx+'px)'},{transform:'none'}],{duration:300,easing:CURVA});});}
+      aviso('Ordem das colunas guardada (só para você). Para voltar à ordem do escritório: Visões › Voltar ao padrão.');
+    });
+  }
+
+  return {exportarExcel:exportarExcel,pintarLote:pintarLote,retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,kanbanAgrupado:kanbanAgrupado,soltarNoGrupo:soltarNoGrupo,limpar:limpar,pronta:function(){return pronta;},_gerenciar:false};
 })();

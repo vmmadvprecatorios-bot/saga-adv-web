@@ -2200,6 +2200,7 @@ document.getElementById('inputNovoHonorarios').addEventListener('input',atualiza
 var CHAVE_VIEW_PROCESSOS='saga-processos-view';
 function toggleView(view,semCarregar){
   state.view=view;
+  if(window.SagaPlanilha&&SagaPlanilha.pintarLote)try{SagaPlanilha.pintarLote();}catch(e){}
   try{localStorage.setItem(CHAVE_VIEW_PROCESSOS,view);}catch(e){}
   document.getElementById('btnViewLista').classList.toggle('ativo',view==='lista');
   document.getElementById('btnViewKanban').classList.toggle('ativo',view==='kanban');
