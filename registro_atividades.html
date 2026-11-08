@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611080135"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Registro de atividades</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:78ch}
+.botoes{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 15px;border-radius:11px;font-size:12px;font-weight:700;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
+.btn:hover{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ouro{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-ouro:hover{background:var(--gold-light);border-color:var(--gold-light)}
+html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafite"] body[data-theme="dark"] .pill.active{color:#1A1A1A}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.busca{flex:1 1 240px;min-width:200px;height:38px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel);padding:0 13px;font-size:12.5px;outline:0}
+.busca:focus,.sel:focus{border-color:var(--gold)}
+.sel{height:38px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel);padding:0 10px;font-size:12px;outline:0;max-width:260px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);flex-wrap:wrap}
+.pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:700;color:var(--muted);transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
+.pill.active{background:var(--gold);color:#fff}.pill b{font-weight:700;opacity:.8;margin-left:4px}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.toast.success{border-color:color-mix(in srgb,#16a34a 50%,var(--border))}.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Registro de atividades (T88) */
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.resumo-topo{font-size:11.5px;color:var(--muted);margin:0 0 10px}
+.dia{margin:16px 0 6px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.lista{display:flex;flex-direction:column;border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);overflow:hidden}
+.ev{display:grid;grid-template-columns:52px 170px 92px minmax(0,1fr);gap:10px;align-items:start;padding:10px 14px;border-bottom:1px solid var(--border-soft);font-size:12px;animation:evEntra .32s cubic-bezier(.22,.78,.25,1) both}
+.ev:last-child{border-bottom:0}
+.ev:hover{background:color-mix(in srgb,var(--gold) 5%,transparent)}
+.ev .hora{color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.ev .quem{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ev .quem small{display:block;font-weight:500;color:var(--muted);font-size:10.5px}
+.acao{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:10.5px;font-weight:600;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 13%,transparent);color:var(--c);width:max-content}
+.oque{min-width:0}
+.oque .res{overflow-wrap:anywhere}
+.oque .campos{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.oque .campos span{font-size:10.5px;padding:1px 7px;border-radius:7px;border:1px solid var(--border-soft);color:var(--muted)}
+.oque .cli{display:inline-block;margin-top:4px;font-size:11px;color:var(--gold-light);cursor:pointer;text-decoration:none}
+.oque .cli:hover{text-decoration:underline}
+.mais{display:flex;justify-content:center;margin:14px 0}
+.btn[hidden],.filtros[hidden]{display:none}
+@keyframes evEntra{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+html.sem-movimento .ev{animation:none}
+@media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.ev{grid-template-columns:44px minmax(0,1fr);gap:4px 10px}.ev .quem{grid-column:2}.ev .acao{grid-column:2}.ev .oque{grid-column:1/-1}.busca{min-width:0}.sel{max-width:none;flex:1 1 45%}}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611080135">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Registro de atividades</h1>
+      <p>Tudo o que foi feito no SAGA: quem fez, quando e o quê (criou, alterou ou excluiu), em processos, clientes, tarefas, intimações, agenda, comentários, financeiro, documentos e catálogos. Só o administrador geral vê esta tela. Notas e Chat ficam de fora por privacidade; o Ponto tem registro próprio.</p>
+    </div>
+    <div class="botoes"><button class="btn" type="button" id="btnAtualizar">Atualizar</button></div>
+  </div>
+  <div class="filtros">
+    <input class="busca" id="fBusca" type="search" placeholder="Buscar por cliente, processo, tarefa ou texto...">
+    <select class="sel" id="fPessoa" aria-label="Pessoa"><option value="">Todas as pessoas</option></select>
+    <select class="sel" id="fModulo" aria-label="Módulo"><option value="">Todos os módulos</option></select>
+    <select class="sel" id="fAcao" aria-label="Ação"><option value="">Todas as ações</option><option value="criou">Criou</option><option value="alterou">Alterou</option><option value="excluiu">Excluiu</option></select>
+    <select class="sel" id="fPeriodo" aria-label="Período"><option value="1">Hoje</option><option value="7" selected>Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="">Tudo</option></select>
+  </div>
+  <p class="resumo-topo" id="resumoTopo"></p>
+  <div id="area"></div>
+  <div class="mais"><button class="btn" type="button" id="btnMais" hidden>Carregar mais</button></div>
+</main>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611080135"></script>
+<script>
+/* =====================================================================
+   SAGA · Registro de atividades (T88): lê atividades_log (bloco 120); só o administrador geral
+   ===================================================================== */
+var A={linhas:[],usuarios:{},pessoas:{},pagina:0,acabou:false,pedido:0,filtroProcesso:null};
+var POR_PAGINA=200;
+var CORES={criou:'#16a34a',alterou:'#2563eb',excluiu:'#e5484d'};
+var MODULOS=['Processos','Clientes','Tarefas','Intimações','Agenda','Comentários','Financeiro','Documentos','Teses','Catálogos','Biblioteca','Marketing','Colaboradores'];
+var NOMES_CAMPOS={status_id:'Status',responsavel_id:'Responsável',captador_id:'Captador',data_prazo:'Prazo',hora_prazo:'Hora do prazo',concluida:'Concluída',concluida_em:'Data de conclusão',titulo:'Título',descricao:'Descrição',campos:'Dados da planilha',valor_causa:'Valor da causa',valor_precatorio_origem:'Valor do precatório',numero_processo_cnj:'Número do processo',tese_id:'Tipo de ação',area_direito_id:'Área',situacao_acao_id:'Situação da ação',nome_completo:'Nome',cpf:'CPF',excluido_logico:'Excluído',etiqueta_id:'Etiqueta',cor_etiqueta:'Cor da etiqueta',coluna_id:'Coluna',prazo:'Prazo',situacao:'Situação',triagem:'Triagem',etiqueta:'Etiqueta',processo_id:'Processo',pessoa_id:'Cliente',prioridade:'Prioridade',status:'Status',conteudo:'Texto',data_inicio:'Início',data_fim:'Fim',nome:'Nome',ativo:'Ativo',opcoes:'Opções',itens:'Itens',telefone:'Telefone',email:'E-mail',logradouro:'Endereço',numero:'Número',cep:'CEP',cidade:'Cidade',uf:'UF',sigilo:'Sigilo',tipo_acao:'Tipo de ação',subtarefas:'Subtarefas',valor:'Valor',data_vencimento:'Vencimento',data_pagamento:'Pagamento',pago:'Pago'};
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
+function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function nomeCampo(c){return NOMES_CAMPOS[c]||String(c).replace(/_id$/,'').replace(/_/g,' ');}
+function diaChave(iso){return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));}
+function diaExtenso(iso){var t=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(iso));var h=diaChave(new Date().toISOString());return diaChave(iso)===h?'Hoje · '+t:t;}
+function hora(iso){return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',hour:'2-digit',minute:'2-digit'}).format(new Date(iso));}
+function nomeUsuario(id){if(!id)return 'Sistema (automático)';var u=A.usuarios[id];return u?u.nome_completo:'Usuário removido';}
+function linkFicha(l){if(!l.pessoa_id)return '';var p=A.pessoas[l.pessoa_id];var nome=p?p.nome_completo:'Abrir ficha';return '<a class="cli" href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(l.pessoa_id)+(l.processo_id?'&processo_id='+encodeURIComponent(l.processo_id):'')+'" onclick="event.preventDefault();sagaIrPara(this.getAttribute(\'href\'))">Cliente: '+esc(nome)+'</a>';}
+
+async function buscar(maisUma){
+  var pedido=++A.pedido;
+  if(!maisUma){A.pagina=0;A.linhas=[];A.acabou=false;}
+  var q=_sb.from('atividades_log').select('id,quando,usuario_id,tabela,modulo,registro_id,acao,processo_id,pessoa_id,resumo,campos').order('quando',{ascending:false}).order('id',{ascending:false});
+  var f={pessoa:$('fPessoa').value,modulo:$('fModulo').value,acao:$('fAcao').value,periodo:$('fPeriodo').value,busca:$('fBusca').value.trim()};
+  if(f.pessoa==='__sistema')q=q.is('usuario_id',null);else if(f.pessoa)q=q.eq('usuario_id',f.pessoa);
+  if(f.modulo)q=q.eq('modulo',f.modulo);
+  if(f.acao)q=q.eq('acao',f.acao);
+  if(f.periodo){var d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-(Number(f.periodo)-1));q=q.gte('quando',d.toISOString());}
+  if(A.filtroProcesso)q=q.eq('processo_id',A.filtroProcesso);
+  if(f.busca){
+    var ids=Object.keys(A.pessoas).filter(function(k){return norm(A.pessoas[k].nome_completo).indexOf(norm(f.busca))>=0;});
+    var termo=f.busca.replace(/[%,()]/g,' ');
+    q=q.or('resumo.ilike.%'+termo+'%'+(ids.length?',pessoa_id.in.('+ids.slice(0,80).join(',')+')':''));
+  }
+  var r=await q.range(A.pagina*POR_PAGINA,A.pagina*POR_PAGINA+POR_PAGINA-1);
+  if(pedido!==A.pedido)return;
+  if(r.error){
+    $('area').innerHTML='<div class="lista"><div class="vazio"><b>O registro ainda não está ligado</b>'+(/atividades_log|does not exist|schema cache/i.test(r.error.message||'')?'Ele começa a funcionar quando o bloco 120 for aplicado no banco.':esc(r.error.message))+'</div></div>';
+    $('btnMais').hidden=true;$('resumoTopo').textContent='';return;
+  }
+  var novas=r.data||[];A.linhas=A.linhas.concat(novas);A.acabou=novas.length<POR_PAGINA;
+  await completarPessoas(novas);
+  desenhar();
+}
+async function completarPessoas(linhas){
+  var faltam=[...new Set(linhas.map(function(l){return l.pessoa_id;}).filter(function(id){return id&&!A.pessoas[id];}))];
+  for(var k=0;k<faltam.length;k+=100){var r=await _sb.from('pessoas').select('id,nome_completo').in('id',faltam.slice(k,k+100));(r.data||[]).forEach(function(p){A.pessoas[p.id]=p;});}
+}
+function desenhar(){
+  var area=$('area');
+  if(!A.linhas.length){area.innerHTML='<div class="lista"><div class="vazio"><b>Nada encontrado</b>Mude o período ou os filtros.</div></div>';$('btnMais').hidden=true;$('resumoTopo').textContent='';return;}
+  var html='',dia='';
+  A.linhas.forEach(function(l){
+    var d=diaChave(l.quando);
+    if(d!==dia){if(dia)html+='</div>';dia=d;html+='<div class="dia">'+esc(diaExtenso(l.quando))+'</div><div class="lista">';}
+    var campos=(l.campos||[]).filter(function(c){return c!=='id';}).slice(0,8);
+    html+='<div class="ev"><span class="hora">'+hora(l.quando)+'</span>'+
+      '<span class="quem">'+esc(nomeUsuario(l.usuario_id))+'<small>'+esc(l.modulo)+'</small></span>'+
+      '<span class="acao" style="--c:'+(CORES[l.acao]||'#8a94a8')+'">'+esc(l.acao.charAt(0).toUpperCase()+l.acao.slice(1))+'</span>'+
+      '<span class="oque"><span class="res">'+esc(l.resumo||'(sem descrição)')+'</span>'+
+      (campos.length?'<span class="campos">'+campos.map(function(c){return '<span>'+esc(nomeCampo(c))+'</span>';}).join('')+((l.campos||[]).length>8?'<span>+'+((l.campos||[]).length-8)+'</span>':'')+'</span>':'')+
+      linkFicha(l)+'</span></div>';
+  });
+  if(dia)html+='</div>';
+  area.innerHTML=html;
+  $('btnMais').hidden=A.acabou;
+  $('resumoTopo').textContent=A.linhas.length+(A.acabou?'':'+')+' atividade'+(A.linhas.length===1?'':'s')+(A.filtroProcesso?' deste processo':'')+' no período escolhido.';
+}
+function ligar(){
+  var tm=null;
+  $('fBusca').addEventListener('input',function(){clearTimeout(tm);tm=setTimeout(function(){buscar(false);},350);});
+  ['fPessoa','fModulo','fAcao','fPeriodo'].forEach(function(id){$(id).addEventListener('change',function(){buscar(false);});});
+  $('btnMais').addEventListener('click',function(){A.pagina++;buscar(true);});
+  $('btnAtualizar').addEventListener('click',function(){buscar(false);});
+  document.addEventListener('saga-atualizar',function(){buscar(false);});
+}
+async function init(){
+  ligar();
+  await SagaUI.carregar('atividades');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  var adm=await _sb.rpc('eh_admin_sistema');
+  if(adm.data!==true){$('area').innerHTML='<div class="lista"><div class="vazio"><b>Só o administrador geral vê esta tela</b>Peça ao administrador se precisar de alguma informação daqui.</div></div>';document.querySelector('.filtros').hidden=true;return;}
+  var params=new URLSearchParams(location.search);A.filtroProcesso=params.get('processo_id')||null;
+  var u=await _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo');
+  (u.data||[]).forEach(function(x){A.usuarios[x.id]=x;});
+  $('fPessoa').innerHTML='<option value="">Todas as pessoas</option>'+(u.data||[]).map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.nome_completo)+(x.ativo===false?' (inativo)':'')+'</option>';}).join('')+'<option value="__sistema">Sistema (automático)</option>';
+  $('fModulo').innerHTML='<option value="">Todos os módulos</option>'+MODULOS.map(function(m){return '<option>'+esc(m)+'</option>';}).join('');
+  await buscar(false);
+}
+init().catch(function(e){toast('Erro ao abrir o registro: '+esc(e.message||''),'error');});
+</script>
+</body>
+</html>
