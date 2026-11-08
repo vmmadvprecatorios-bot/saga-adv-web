@@ -842,18 +842,7 @@
         e.preventDefault();e.stopPropagation();fecharTodosPopovers();global.sagaIrPara(a.getAttribute('href'));
       });
     });
-    var btnMov=document.querySelector('[data-acao="movimento"]');
-    if(btnMov&&!btnMov.dataset.ligado){
-      btnMov.dataset.ligado='1';
-      var reduzido=function(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}};
-      // chavinha: ligada = efeitos de movimento ligados. Vale na hora, sem recarregar a tela
-      var desenharChave=function(){var lig=!reduzido();btnMov.setAttribute('role','switch');btnMov.setAttribute('aria-checked',lig?'true':'false');btnMov.classList.toggle('sg-ligada',lig);};
-      desenharChave();
-      var alternarMov=function(){global.sagaDefinirMovimento(!reduzido());desenharChave();};
-      document.addEventListener('saga-movimento-mudou',desenharChave);
-      btnMov.addEventListener('click',alternarMov);
-      btnMov.addEventListener('keydown',function(ev){if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();alternarMov();}});
-    }
+    // (09/11) a chave "Efeitos de movimento" fica só em Configurações > Preferências; o menu da foto não tem mais a chave
     var btnSair=document.querySelector('[data-acao="sair"]');
     if(btnSair&&!btnSair.dataset.ligado){
       btnSair.dataset.ligado='true';
@@ -1164,25 +1153,25 @@
     var refs={};g.itens.forEach(function(n){refs[n.referencia_id||n.id]=1;});
     if(Object.keys(refs).length===1){await abrirNotificacao(g.itens[0],ids);return;}
     await marcarLidas(ids);
-    if(g.grupo.tela)window.location.href=g.grupo.tela;
+    if(g.grupo.tela)global.sagaIrPara(g.grupo.tela);
     else carregarNotificacoes();
   }
 
   async function abrirNotificacao(n,idsParaMarcar){
     await marcarLidas(idsParaMarcar||(n.lida?[]:[n.id]));
-    if(n.tipo==='distribuicao'){window.location.href='lista_processos_padrao_metalico.html?fase=captacao';return;}
+    if(n.tipo==='distribuicao'){global.sagaIrPara('lista_processos_padrao_metalico.html?fase=captacao');return;}
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{
       var d=await global._sb.rpc('destino_notificacao',{p_id:n.id});
       if(d.data&&d.data.tela){
         var p=new URLSearchParams();
         Object.keys(d.data).forEach(function(k){if(k!=='tela'&&d.data[k])p.set(k,d.data[k]);});
-        window.location.href=d.data.tela+'?'+p.toString();
+        global.sagaIrPara(d.data.tela+'?'+p.toString());
         return;
       }
     }catch(e){}
     var tela=infoNotif(n).tela;
-    if(tela)window.location.href=tela;
+    if(tela)global.sagaIrPara(tela);
     else contarNaoLidas();
   }
 
@@ -1341,15 +1330,15 @@
       var html='';
       if(pessoas.length){
         html+='<div class="pop-title">Pessoas</div>';
-        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="window.location.href=\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\'"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?'CPF '+esc(p.cpf):'Sem CPF')+'</div></div></div>';}).join('');
+        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?'CPF '+esc(p.cpf):'Sem CPF')+'</div></div></div>';}).join('');
       }
       if(processos.length){
         html+='<div class="pop-title">Processos</div>';
-        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="window.location.href=\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\'"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(pr.numero_processo_cnj):'Sem numero CNJ')+'</div></div></div>';}).join('');
+        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(pr.numero_processo_cnj):'Sem numero CNJ')+'</div></div></div>';}).join('');
       }
       if(colaboradores.length){
         html+='<div class="pop-title">Colaboradores</div>';
-        html+=colaboradores.map(function(u){return '<div class="pop-row" onclick="window.location.href=\'gestao_colaboradores_padrao_metalico.html\'"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(u.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+esc(u.email||'')+'</div></div></div>';}).join('');
+        html+=colaboradores.map(function(u){return '<div class="pop-row" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(u.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+esc(u.email||'')+'</div></div></div>';}).join('');
       }
       if(!html)html='<div style="padding:14px;font-size:10.5px;color:var(--muted);text-align:center">Nenhum resultado.</div>';
       pop.innerHTML=html;

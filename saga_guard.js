@@ -11,7 +11,7 @@
 
   // Efeitos de movimento: ligados para TODOS os perfis e aparelhos (antes o SAGA desligava sozinho quando o
   // computador ou celular estava com 'reduzir movimento' / 'mostrar animacoes' desligado). So desliga se a pessoa
-  // escolher no SAGA (menu do perfil > Efeitos de movimento).
+  // escolher no SAGA (Configurações > Preferências > Efeitos de movimento).
   window.sagaMq=function(){var r=false;try{r=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}var nada=function(){};return {matches:r,addEventListener:nada,removeEventListener:nada,addListener:nada,removeListener:nada};};
   if(window.sagaMq().matches){
     html.classList.add('saga-sem-movimento');

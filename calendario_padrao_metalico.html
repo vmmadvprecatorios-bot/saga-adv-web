@@ -177,6 +177,9 @@
   .celula-dia.hoje .numero-dia{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);}
   .numero-dia{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px;flex:0 0 auto;}
   .eventos-dia{display:flex;flex-direction:column;gap:2px;overflow:hidden;flex:1;}
+  /* 09/11: a cor do evento vem em --c; no claro a letra escurece um pouco (amarelo/verde puro sumia no fundo branco) */
+  .evento-mini,.evento-temporal{color:var(--c,var(--text));}
+  [data-theme="light"] .evento-mini,[data-theme="light"] .evento-temporal{color:color-mix(in srgb,var(--c,var(--text)) 58%,#1a1a1a);}
   .evento-mini{font-size:9.5px;padding:3px 6px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:4px;font-weight:500;transition:filter .15s;}
   .evento-mini:hover{filter:brightness(1.2);}
   .evento-mini .dot-mini{width:5px;height:5px;border-radius:50%;flex:0 0 auto;}
@@ -1150,7 +1153,7 @@ function renderizarMes() {
       if (item._tipo === 'tarefa') {
         dot.style.background = COR_TAREFA;
         el.style.background  = 'color-mix(in srgb,' + COR_TAREFA + ' 18%,transparent)';
-        el.style.color       = COR_TAREFA;
+        el.style.setProperty('--c', COR_TAREFA);
         el.appendChild(dot);
         el.appendChild(document.createTextNode(item.obj.titulo || 'Tarefa'));
         el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalTarefa(item.obj); });
@@ -1158,7 +1161,7 @@ function renderizarMes() {
         var cor = corDoTipo(item.obj.tipo);
         dot.style.background = cor;
         el.style.background  = 'color-mix(in srgb,' + cor + ' 18%,transparent)';
-        el.style.color       = cor;
+        el.style.setProperty('--c', cor);
         el.appendChild(dot);
         el.appendChild(document.createTextNode((formatarHora(item.obj.data_hora_inicio) ? formatarHora(item.obj.data_hora_inicio) + ' ' : '') + (item.obj.titulo || 'Compromisso')));
         el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalCompromisso(item.obj); });
@@ -1270,7 +1273,7 @@ function renderizarGradeTemporal(wrap, numDias, dataInicio) {
       el.style.top    = top + 'px';
       el.style.height = '34px';
       el.style.background = 'color-mix(in srgb,' + COR_TAREFA + ' 22%,transparent)';
-      el.style.color      = COR_TAREFA;
+      el.style.setProperty('--c', COR_TAREFA);
       el.style.border     = '1px solid color-mix(in srgb,' + COR_TAREFA + ' 35%,transparent)';
       el.innerHTML = '<div class="hora-ev">Prazo</div><div class="titulo-ev">' + (t.titulo || 'Tarefa') + '</div>';
       el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalTarefa(t); });
@@ -1293,7 +1296,7 @@ function renderizarGradeTemporal(wrap, numDias, dataInicio) {
       el.style.top        = top + 'px';
       el.style.height     = Math.max(h_ev, 30) + 'px';
       el.style.background = 'color-mix(in srgb,' + cor + ' 22%,transparent)';
-      el.style.color      = cor;
+      el.style.setProperty('--c', cor);
       el.style.border     = '1px solid color-mix(in srgb,' + cor + ' 35%,transparent)';
       el.innerHTML = '<div class="hora-ev">' + formatarHora(c.data_hora_inicio) + '</div><div class="titulo-ev">' + (c.titulo || 'Compromisso') + '</div>';
       el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalCompromisso(c); });

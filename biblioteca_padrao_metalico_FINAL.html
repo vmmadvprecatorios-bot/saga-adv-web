@@ -3050,6 +3050,11 @@ async function inicializarBibliotecaReal(){
         return;
       }
 
+      // 09/11 (vistoria): avisa já ao abrir se o programa que monta o Word não carregou (antes só avisava depois de baixar o modelo)
+      if(!window.PizZip || !(window.docxtemplater || window.Docxtemplater)){
+        showToast('O gerador de documentos Word não carregou nesta página. Recarregue a tela (botão Atualizar) e tente de novo; se continuar, verifique a internet.', 'erro');
+        return;
+      }
       criarModalGeracaoDocumentoBiblioteca();
       state.modeloGeracaoDocumento = modelo;
       state.arquivoGeracaoDocumento = arquivo;

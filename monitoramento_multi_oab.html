@@ -54,6 +54,8 @@ body.si-so-leitura .aviso-leitura{display:block}
   </div>
   <div class="aviso-leitura">Você pode ver as intimações, mas não alterá-las. Para mover, comentar ou concluir, peça a permissão "Editar intimações" ao administrador.</div>
   <div class="kpis" id="kpis"></div>
+  <style>#intimGraficos[hidden]{display:none!important}</style>
+  <div class="si-graf-barra" style="display:flex;justify-content:flex-end;margin:0 0 8px"><button type="button" class="si-btn" id="btnGraficosIntim" aria-controls="intimGraficos" aria-expanded="true">Ocultar gráficos</button></div>
   <div id="intimGraficos"></div>
   <div id="intimFiltros"></div>
   <div id="intimQuadro"></div>
@@ -78,6 +80,10 @@ window._sb=_sb;
    Ver: movimentacoes_cnj.visualizar ou monitoramento_oab.visualizar · Editar: movimentacoes_cnj.editar
    ===================================================================== */
 var visao='kanban';
+// 09/11 (vistoria): Ocultar/Mostrar gráficos, como em Tarefas e Agenda (lembrado no navegador, com movimento)
+var graficosIntimOcultos=false;
+try{graficosIntimOcultos=localStorage.getItem('saga-intimacoes-graficos-ocultos')==='1';}catch(e){}
+function pintarBotaoGraficosIntim(){var b=document.getElementById('btnGraficosIntim');if(!b)return;b.textContent=graficosIntimOcultos?'Mostrar gráficos':'Ocultar gráficos';b.setAttribute('aria-expanded',String(!graficosIntimOcultos));}
 try{var v=localStorage.getItem('saga-mon-visao');if(v==='lista'||v==='kanban')visao=v;}catch(e){}
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},5000);}
@@ -88,11 +94,17 @@ function renderTudo(){
   var cards=[['hoje','Disponibilizadas hoje',c.hoje,'#4b8af5'],['abertas','Abertas',c.abertas,'#e5484d'],['vencidas','Prazos vencidos',c.atrasadas,'#f97316'],['fora','Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']],fx=SagaIntimacoes.faixa();
   document.getElementById('kpis').innerHTML=cards.map(function(k){return '<button type="button" class="kpi-card kpi-filtro'+(fx===k[0]?' ativo':'')+'" data-faixa="'+k[0]+'" aria-pressed="'+(fx===k[0])+'" title="'+(fx===k[0]?'Clique para tirar o filtro':'Clique para filtrar')+'" style="--c:'+k[3]+'"><span class="faixa"></span><div class="rotulo">'+esc(k[1])+'</div><div class="kpi-value">'+k[2]+'</div></button>';}).join('');
   SagaIntimacoes.montarFiltros(document.getElementById('intimFiltros'));
-  SagaIntimacoes.renderGraficos(document.getElementById('intimGraficos'));
+  var gEl=document.getElementById('intimGraficos');SagaIntimacoes.renderGraficos(gEl);gEl.hidden=graficosIntimOcultos;
   var q=document.getElementById('intimQuadro'),l=document.getElementById('intimLista');
   q.style.display=visao==='kanban'?'':'none';l.style.display=visao==='lista'?'':'none';
   if(visao==='kanban')SagaIntimacoes.renderQuadro(q);else SagaIntimacoes.renderLista(l,false);
 }
+pintarBotaoGraficosIntim();
+document.getElementById('btnGraficosIntim').addEventListener('click',function(){
+  graficosIntimOcultos=!graficosIntimOcultos;try{localStorage.setItem('saga-intimacoes-graficos-ocultos',graficosIntimOcultos?'1':'0');}catch(e){}
+  pintarBotaoGraficosIntim();var g=document.getElementById('intimGraficos');
+  if(window.sagaRecolher)window.sagaRecolher(g,graficosIntimOcultos);else g.hidden=graficosIntimOcultos;
+});
 document.getElementById('kpis').addEventListener('click',function(e){var b=e.target.closest('[data-faixa]');if(b)SagaIntimacoes.definirFaixa(b.dataset.faixa);});
 document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.addEventListener('click',function(){
   visao=b.dataset.visao;try{localStorage.setItem('saga-mon-visao',visao);}catch(e){}renderTudo();});});
