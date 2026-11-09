@@ -21,7 +21,8 @@
     var campos='id,nome_completo,cpf';
     try{
       if(cpf.length===11){
-        var r1=await sb.from('pessoas').select(campos).eq('cpf',cpf).limit(5);
+        // o CPF pode estar gravado só com números ou com pontos e traço
+        var r1=await sb.from('pessoas').select(campos).in('cpf',[cpf,cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4')]).limit(5);
         (r1.data||[]).forEach(function(p){achados[p.id]=Object.assign({motivo:'mesmo CPF'},p);});
       }
       if(nome.length>=5){

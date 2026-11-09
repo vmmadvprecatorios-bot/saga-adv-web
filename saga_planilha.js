@@ -788,8 +788,9 @@ window.SagaPlanilha=(function(){
     var gruposAntes={};b.querySelectorAll('.sp-pills[role="group"]').forEach(function(g){gruposAntes[g.getAttribute('aria-label')]=g;});
     b.innerHTML=(capt?'<div class="sp-pills" role="group" aria-label="Data de retorno">'+[['','Todos os retornos'],['hoje','Retorno hoje'],['atrasados','Atrasados'],['semana','Próximos 7 dias']].map(function(o){return '<button type="button" class="sp-pill'+(retorno===o[0]?' ativo':'')+'" data-retorno="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
         '<button type="button" class="sp-pill sp-pill-solta'+(minhas?' ativo':'')+'" data-minhas aria-pressed="'+minhas+'">Minhas fichas</button>'+
-        '<button type="button" class="btn-secondary sp-btn" data-importar>Importar planilha</button><button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
-      '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos'],['sim','Protocolados'],['nao','Não protocolados']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>')+
+        (state.permissoes&&state.permissoes.criar?'<button type="button" class="btn-secondary sp-btn" data-importar title="Colar do Excel ou escolher um arquivo .xlsx/.csv">Importar planilha</button>':'')+'<button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
+      '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos'],['sim','Protocolados'],['nao','Não protocolados']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
+        (state.permissoes&&state.permissoes.criar?'<button type="button" class="btn-secondary sp-btn" data-importar title="Colar do Excel ou escolher um arquivo .xlsx/.csv">Importar planilha</button>':''))+
       '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button></div>'+
       '<button type="button" class="btn-secondary sp-btn" data-foco title="Cor do destaque da célula, da linha e da coluna selecionadas"><span class="sp-foco-bola"></span> Foco</button>'+
       '<button type="button" class="btn-secondary sp-btn" data-colunas>Colunas</button>'+
@@ -873,7 +874,10 @@ window.SagaPlanilha=(function(){
       '.sp-modal.sp-modal-larga{max-width:860px}.sp-colar{width:100%;min-height:110px;resize:vertical;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:10px;font:inherit;font-size:12px}'+
       '.sp-imp-linha{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0}.sp-imp-linha select,.sp-imp-tab select{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:5px 6px;font:inherit;font-size:11.5px;max-width:200px}'+
       '.sp-imp-tab{overflow:auto;max-height:240px;border:1px solid var(--border-soft);border-radius:9px;margin-top:6px}.sp-imp-tab table{min-width:0;width:max-content}.sp-imp-tab th,.sp-imp-tab td{padding:6px 9px;font-size:11.5px;text-transform:none;letter-spacing:0}.sp-imp-orig{color:var(--muted);font-size:10.5px;margin-bottom:4px}'+
-      '.sp-imp-resumo{margin-top:10px;font-size:12.5px}.sp-erro{color:var(--danger,#e5484d)}.sp-alerta{color:var(--warning,#e0a93b)}.sp-imp-erros{font-size:11.5px;color:var(--muted);margin:6px 0 0 18px}.sp-arquivo{cursor:pointer;display:inline-flex;align-items:center}'+
+      '.sp-imp-resumo{margin-top:10px;font-size:12.5px}.sp-erro{color:var(--danger,#e5484d)}.sp-alerta{color:var(--warning,#e0a93b)}.sp-imp-erros{font-size:11.5px;color:var(--muted);margin:6px 0 0 18px}'+
+      '.sp-imp-fx .sp-ajuda{margin:10px 0 6px}.sp-imp-fx-lista{max-height:220px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--border-soft);border-radius:9px;padding:2px 8px}.sp-imp-fx-item{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:3px 0;border-bottom:1px solid var(--border-soft)}.sp-imp-fx-item:last-child{border-bottom:0}.sp-imp-fx-item .sp-item{flex:0 1 auto;min-width:0;max-width:100%}'+
+      '.sp-imp-fx-seta{color:var(--muted)}.sp-imp-fx-alvo{font-size:12px;color:var(--muted);transition:opacity .3s cubic-bezier(.22,.78,.25,1)}.sp-imp-fx-alvo select{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:7px;padding:4px 6px;font:inherit;font-size:11.5px;max-width:340px}'+
+      '.sp-imp-fx-nova{font-size:11.5px;color:var(--gold-light);opacity:0;transition:opacity .3s cubic-bezier(.22,.78,.25,1)}.sp-imp-fx-item.desligado .sp-imp-fx-alvo{opacity:.4;text-decoration:line-through}.sp-imp-fx-item.desligado .sp-imp-fx-nova{opacity:1}.sp-arquivo{cursor:pointer;display:inline-flex;align-items:center}'+
       '.sp-dist-bloco{margin-bottom:12px}.sp-dist-tit{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}.sp-dist-pessoas{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px;max-height:180px;overflow:auto}.sp-bloco{width:64px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:3px 6px;font:inherit}.sp-dist-previa{font-size:12.5px;padding:8px 0}'+
       '.sp-funil .coluna-kanban{flex:0 0 280px}.sp-pct{font-size:10.5px;color:var(--muted);margin-left:4px}.sp-funil-barra{height:3px;margin:0 14px 8px;background:var(--border-soft);border-radius:2px;overflow:hidden}.sp-funil-barra i{display:block;height:100%;border-radius:2px;transition:width .6s cubic-bezier(.2,1,.3,1)}'+
       '.sp-card-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);margin:4px 0}.sp-card-status i{width:7px;height:7px;border-radius:50%;flex:0 0 auto}.sp-card-linha{font-size:11.5px;margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'+
@@ -1044,7 +1048,7 @@ window.SagaPlanilha=(function(){
     if(!state.permissoes.criar){aviso('Você não tem permissão para cadastrar processos.',true);return;}
     var alvos=alvosImportacao(),dados=null,mapa=[],temCab=false;
     var teses=(state.teses||[]).filter(function(t){return t.ativo!==false;});
-    var j=janela('Importar planilha para a Captação',
+    var j=janela('Importar planilha para '+(FASE_FIXA==='captacao'?'a Captação':'o Jurídico'),
       '<p class="sp-ajuda">Copie as linhas no Excel ou no Google Planilhas e cole abaixo (Ctrl+V), ou escolha um arquivo do Excel (.xlsx) ou .csv. Pode vir só com nome e CPF, ou com processo, TRF, tipo de ação e valor, em qualquer ordem: o sistema reconhece as colunas e o senhor confere antes de gravar.</p>'+
       '<textarea class="sp-colar" placeholder="Cole aqui as linhas da planilha"></textarea>'+
       '<div class="sp-imp-linha"><label class="btn-secondary sp-arquivo">Escolher arquivo (.xlsx ou .csv)<input type="file" accept=".xlsx,.csv,.txt,.tsv" hidden></label><span class="sp-ajuda sp-arq-info" style="margin:0">Excel (.xlsx), CSV ou copiar e colar.</span><label class="sp-ajuda sp-arq-aba" style="margin:0" hidden>Aba: <select></select></label></div>'+
@@ -1086,18 +1090,42 @@ window.SagaPlanilha=(function(){
         }catch(e){info.textContent='Excel (.xlsx), CSV ou copiar e colar.';aviso(h(e.message||'Não foi possível ler a planilha.'),true);}
         return;}
       var r=new FileReader();r.onload=function(){info.textContent=f.name;usarTexto(r.result);};r.readAsText(f,'utf-8');});
+    // Fichas de cliente que já existem com o MESMO NOME (o CPF não achou ninguém): o senhor confirma na prévia.
+    // Regra do Dr. Victor (08/11): uma ficha por pessoa; ficha nova só quando for outra pessoa.
+    var grupos=[];
+    var descFicha=function(f){return f.nome+(f.tem_cpf?' · CPF ...'+f.cpf_final:' · sem CPF')+' · '+(f.processos?f.processos+' processo'+(f.processos>1?'s':''):'sem processo');};
     j.q('[data-conferir]').onclick=async function(){
       if(!dados)return;if(mapa.indexOf('pessoa.nome')===-1){aviso('Indique qual coluna é o nome do cliente.',true);return;}
-      var b=this;b.disabled=true;b.textContent='Conferindo...';
-      try{var linhas=linhasParaGravar();conferencia=await rpcOk('lista_conferir_linhas',{p_linhas:linhas});}
+      var b=this,linhas;b.disabled=true;b.textContent='Conferindo...';
+      try{linhas=linhasParaGravar();conferencia=await rpcOk('lista_conferir_linhas',{p_linhas:linhas});}
       catch(e){aviso(h(e.message||'Não foi possível conferir.'),true);b.disabled=false;b.textContent='Conferir';return;}
       b.disabled=false;b.textContent='Conferir de novo';
       var erros=conferencia.filter(function(x){return x.erro;}),cli=conferencia.filter(function(x){return !x.erro&&x.cliente_existente_id;}),proc=conferencia.filter(function(x){return !x.erro&&x.processo_existente_id;}),rep=conferencia.filter(function(x){return !x.erro&&(x.cpf_repetido_na_colagem||x.numero_repetido_na_colagem);});
+      var repNome=conferencia.filter(function(x){return !x.erro&&x.nome_repetido_na_colagem;});
+      grupos=[];var porChave={};
+      conferencia.forEach(function(x){
+        if(x.erro||x.cliente_existente_id||!x.nome_chave||!Array.isArray(x.mesmo_nome)||!x.mesmo_nome.length)return;
+        var g=porChave[x.nome_chave];
+        if(!g){g=porChave[x.nome_chave]={nome:(linhas[x.linha-1]||{})['pessoa.nome']||x.nome_chave,linhas:[],fichas:[],ids:{}};grupos.push(g);}
+        g.linhas.push(x);x.mesmo_nome.forEach(function(f){if(!g.ids[f.id]){g.ids[f.id]=1;g.fichas.push(f);}});
+      });
+      var nMesmo=grupos.reduce(function(t,g){return t+g.linhas.length;},0);
       var boas=conferencia.length-erros.length;
       j.q('.sp-imp-res').innerHTML='<div class="sp-imp-resumo"><b>'+boas+'</b> linha(s) prontas para gravar'+(erros.length?' · <span class="sp-erro">'+erros.length+' com erro (não serão gravadas)</span>':'')+
-        (cli.length?' · '+cli.length+' cliente(s) já cadastrado(s): o processo novo entra na ficha que já existe':'')+(proc.length?' · <span class="sp-alerta">'+proc.length+' número(s) de processo que já existem</span>':'')+(rep.length?' · <span class="sp-alerta">'+rep.length+' repetida(s) na própria planilha</span>':'')+'</div>'+
+        (cli.length?' · '+cli.length+' com CPF de cliente já cadastrado: o processo novo entra na ficha que já existe':'')+
+        (nMesmo?' · '+nMesmo+' com o nome de um cliente que já tem ficha (confira abaixo)':'')+
+        (repNome.length?' · '+repNome.length+(repNome.length>1?' repetem':' repete')+' um nome da própria planilha: fica'+(repNome.length>1?'m':'')+' na mesma ficha':'')+
+        (proc.length?' · <span class="sp-alerta">'+proc.length+' número(s) de processo que já existem</span>':'')+(rep.length?' · <span class="sp-alerta">'+rep.length+' repetida(s) na própria planilha</span>':'')+'</div>'+
         (erros.length?'<ul class="sp-imp-erros">'+erros.slice(0,10).map(function(x){return '<li>Linha '+x.linha+': '+h(x.erro)+'</li>';}).join('')+(erros.length>10?'<li>... e mais '+(erros.length-10)+'</li>':'')+'</ul>':'')+
+        (grupos.length?'<div class="sp-imp-fx"><p class="sp-ajuda">Estes nomes já têm ficha de cliente no SAGA. O processo novo entra na ficha que já existe (uma ficha por pessoa). <b>Desmarque</b> se for outra pessoa: aí ela ganha ficha nova.</p><div class="sp-imp-fx-lista">'+
+          grupos.map(function(g,i){
+            return '<div class="sp-imp-fx-item"><label class="sp-item"><input type="checkbox" data-fx="'+i+'" checked><span><b>'+h(g.nome)+'</b>'+(g.linhas.length>1?' ('+g.linhas.length+' linhas)':'')+'</span></label>'+
+              '<span class="sp-imp-fx-seta" aria-hidden="true">→</span><span class="sp-imp-fx-alvo">'+
+              (g.fichas.length>1?'<select data-fx-sel="'+i+'" aria-label="Qual ficha">'+g.fichas.map(function(f){return '<option value="'+h(f.id)+'">'+h(descFicha(f))+'</option>';}).join('')+'</select>':h(descFicha(g.fichas[0])))+
+              '</span><span class="sp-imp-fx-nova">ficha nova</span></div>';
+          }).join('')+'</div></div>':'')+
         (proc.length||rep.length?'<label class="sp-item"><input type="checkbox" class="sp-pular-rep" checked> Não gravar as linhas com processo que já existe ou repetidas</label>':'');
+      j.q('.sp-imp-res').querySelectorAll('[data-fx]').forEach(function(c){c.onchange=function(){c.closest('.sp-imp-fx-item').classList.toggle('desligado',!c.checked);};});
       var g=j.q('[data-gravar]');g.hidden=!boas;g.textContent='Gravar '+boas+' linha(s)';
     };
     j.q('[data-gravar]').onclick=async function(){
@@ -1105,17 +1133,27 @@ window.SagaPlanilha=(function(){
       var pularRep=j.q('.sp-pular-rep')&&j.q('.sp-pular-rep').checked;
       var pular=new Set(conferencia.filter(function(x){return x.erro||(pularRep&&(x.processo_existente_id||x.cpf_repetido_na_colagem&&x.numero_repetido_na_colagem||x.numero_repetido_na_colagem));}).map(function(x){return x.linha;}));
       var linhas=linhasParaGravar(),tese=j.q('.sp-tese')&&j.q('.sp-tese').value||null,criadas=0,novos=0;
+      // ficha confirmada acima; só nas linhas em que ela vale (CPF diferente é outra pessoa: o banco já tirou da lista)
+      grupos.forEach(function(g,i){
+        var c=j.q('[data-fx="'+i+'"]');if(!c||!c.checked)return;
+        var sel=j.q('[data-fx-sel="'+i+'"]'),id=sel?sel.value:g.fichas[0].id;
+        g.linhas.forEach(function(x){if(linhas[x.linha-1]&&x.mesmo_nome.some(function(f){return f.id===id;}))linhas[x.linha-1]['pessoa.id']=id;});
+      });
+      var chaveDa=function(n){var x=conferencia[n-1];return x&&x.nome_chave;},criadasPorNome={};
       b.disabled=true;j.q('[data-conferir]').disabled=true;
       try{
         for(var ini=0;ini<linhas.length;ini+=1000){
           var lote=linhas.slice(ini,ini+1000),pl=[];for(var k=0;k<lote.length;k++)if(pular.has(ini+k+1))pl.push(k+1);
           if(pl.length===lote.length)continue;
+          // mais de 1.000 linhas: o mesmo nome (sem CPF) num lote seguinte vai para a ficha criada no lote anterior
+          lote.forEach(function(o,k){var ch=chaveDa(ini+k+1);if(!o['pessoa.id']&&!o['pessoa.cpf']&&ch&&criadasPorNome[ch])o['pessoa.id']=criadasPorNome[ch];});
           b.textContent='Gravando '+Math.min(ini+1000,linhas.length)+' de '+linhas.length+'...';
-          var r=await rpcOk('lista_criar_linhas',{p_tela:'captacao',p_linhas:lote,p_tese_padrao:tese,p_pular:pl});
-          criadas+=r.length;novos+=r.filter(function(x){return x.cliente_novo;}).length;
+          var r=await rpcOk('lista_criar_linhas',{p_tela:FASE_FIXA,p_linhas:lote,p_tese_padrao:tese,p_pular:pl});
+          criadas+=r.length;
+          r.forEach(function(x){if(!x.cliente_novo)return;novos++;var ch=chaveDa(ini+x.linha);if(ch)criadasPorNome[ch]=x.pessoa_id;});
         }
       }catch(e){aviso(h(e.message||'Não foi possível gravar.'),true);b.disabled=false;b.textContent='Tentar de novo';j.q('[data-conferir]').disabled=false;return;}
-      j.fechar();aviso(criadas+' ficha(s) criada(s) na Captação'+(novos?' ('+novos+' cliente(s) novo(s))':'')+'.');
+      j.fechar();aviso(criadas+(FASE_FIXA==='captacao'?' ficha(s) criada(s) na Captação':' processo(s) cadastrado(s) no Jurídico')+(novos?' ('+novos+' cliente(s) novo(s))':'')+'.');
       if(typeof invalidarBaseProcessos==='function')invalidarBaseProcessos();if(typeof carregarProcessos==='function')carregarProcessos();
     };
     setTimeout(function(){j.q('.sp-colar').focus();},50);
