@@ -50,7 +50,7 @@
     {id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe',escuro:'Grafite Noturno',claro:'Grafite Linho'}];
   global.sagaNomeTema=function(cor,modo){var c=global.SAGA_CORES.find(function(x){return x.id===cor;})||global.SAGA_CORES[0];return modo==='light'?c.claro:c.escuro;};
   // dica do botão do sol e da lua: diz qual tema vai entrar ao clicar
-  global.sagaTituloTema=function(){var b=document.getElementById('themeToggle');if(!b)return;var cor='azul';try{cor=localStorage.getItem('saga-cor')||'azul';}catch(e){}
+  global.sagaTituloTema=function(){var b=document.getElementById('themeToggle');if(!b)return;var cor=document.documentElement.getAttribute('data-cor')||'azul';
     var modo=(document.body&&document.body.getAttribute('data-theme'))==='light'?'light':'dark';var outro=modo==='light'?'dark':'light';
     var t='Agora: '+global.sagaNomeTema(cor,modo)+'. Clique para '+global.sagaNomeTema(cor,outro)+'.';b.setAttribute('title',t);b.setAttribute('aria-label',t);};
   // cores que a pessoa pode usar: fixada > "todos" para ela > regra geral do escritório (o Azul sempre pode)
@@ -61,11 +61,13 @@
     if(u.temas_modo==='todos'||rg.todos!==false||u.eh_administrador)return todas;
     var lib=(rg.liberados||[]).concat(['azul']);return todas.filter(function(id){return lib.indexOf(id)>=0;});
   };
-  global.sagaAplicarCor=function(cor){
+  // opcoes.previa = só mostra nesta tela (Configurações, antes de "Salvar cor do tema"): não grava no navegador
+  // nem muda as outras abas abertas
+  global.sagaAplicarCor=function(cor,opcoes){
     if(!global.SAGA_CORES.some(function(c){return c.id===cor;}))cor='azul';
     var h=document.documentElement;
     if(cor==='azul')h.removeAttribute('data-cor');else h.setAttribute('data-cor',cor);
-    try{localStorage.setItem('saga-cor',cor);}catch(e){}
+    if(!(opcoes&&opcoes.previa)){try{localStorage.setItem('saga-cor',cor);}catch(e){}}
     var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';
     h.style.background=cor==='grafite'?(claro?'#F3F2EF':'#1A1A1A'):(claro?'#f3f5f8':'#172234');
     global.sagaTituloTema();
@@ -1793,6 +1795,9 @@
     ligarContadorChat();
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
+
+  // 09/11: página devolvida pela memória do navegador (botão voltar): confere de novo no banco a cor, a letra e o perfil
+  global.addEventListener('pageshow',function(ev){if(ev.persisted&&_perfilAtual)carregarPerfil();});
 
   global.SagaUI={abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);
