@@ -72,6 +72,9 @@ window.SagaPlanilha=(function(){
       case 'processo.situacao_acao':return (situacao(v)||{}).nome||'';
       case 'processo.providencia':return v+(p&&p.providencia_prazo?' · até '+String(p.providencia_prazo).slice(0,10).split('-').reverse().slice(0,2).join('/'):'');
       case 'pessoa.situacao_vital':return v==='vivo'?'Vivo':v==='falecido'?'Falecido':v;
+      case 'pessoa.cpf':return window.sagaFmt?sagaFmt.cpf(v):String(v);
+      case 'pessoa.telefone':return window.sagaFmt?sagaFmt.tel(v):String(v);
+      case 'processo.numero':return window.sagaFmt?sagaFmt.cnj(v):String(v);
     }
     if(c.tipo==='sim_nao')return v===true||v==='true'?'Sim':'Não';
     if(c.tipo==='usuario')return nomeUsuario(v)||'';

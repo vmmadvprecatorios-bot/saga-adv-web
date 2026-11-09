@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090044"></script>
+<script src="saga_guard.js?v=202611090118"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -328,15 +328,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611090044"></script>
-<script src="saga_fichas.js?v=202611090044"></script>
-<script src="saga_teses.js?v=202611090044"></script>
-<script src="saga_mencoes.js?v=202611090044"></script>
-<script src="saga_texto.js?v=202611090044"></script>
-<script src="saga_partes.js?v=202611090044"></script>
-<script src="saga_etiquetas.js?v=202611090044"></script>
-<script src="saga_planilha.js?v=202611090044"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611090044">
+<script src="saga_ui.js?v=202611090118"></script>
+<script src="saga_fichas.js?v=202611090118"></script>
+<script src="saga_teses.js?v=202611090118"></script>
+<script src="saga_mencoes.js?v=202611090118"></script>
+<script src="saga_texto.js?v=202611090118"></script>
+<script src="saga_partes.js?v=202611090118"></script>
+<script src="saga_etiquetas.js?v=202611090118"></script>
+<script src="saga_planilha.js?v=202611090118"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611090118">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -2165,7 +2165,7 @@ function locationKnownCount(){return ['telefones','emails','enderecos','familiar
 function renderLocalizationView(){const root=document.getElementById('localizationViewRoot');const db=state.localizacao;const sections=[];if(db.telefones.length)sections.push(locationAccordion('telefones','Telefones',db.telefones.length,renderSimpleLocationList(db.telefones,'telefones')));if(db.emails.length)sections.push(locationAccordion('emails','E-mails',db.emails.length,renderSimpleLocationList(db.emails,'emails')));if(db.enderecos.length)sections.push(locationAccordion('enderecos','Endereços',db.enderecos.length,renderSimpleLocationList(db.enderecos,'enderecos')));if(db.familiares.length)sections.push(locationAccordion('familiares','Vínculos Familiares',db.familiares.length,renderFamilyTable(db.familiares)));if(db.empresas.length)sections.push(locationAccordion('empresas','Participação Societária',db.empresas.length,renderCompanyTable(db.empresas)));if(db.situacao&&db.situacao.status)sections.push(locationAccordion('situacao','Situação',1,renderSituation(db.situacao)));root.innerHTML='<div class="location-view-head"><div class="location-view-title"><h2>Dados de Localização</h2><p>Histórico consolidado de consultas externas para esta cliente.</p></div><button class="btn-primary" id="btnNewLocationQuery">'+localIcon()+'Nova Consulta</button></div><div class="location-kpis"><div class="location-kpi"><b>'+locationKnownCount()+'</b><span>Informações consolidadas</span></div><div class="location-kpi"><b>'+db.consultas.length+'</b><span>Consultas realizadas</span></div><div class="location-kpi"><b>'+db.familiares.length+'</b><span>Vínculos familiares</span></div></div>'+(sections.length?'<div class="location-accordion-list">'+sections.join('')+'</div>':'<div class="location-empty"><b>Nenhuma consulta registrada</b><p>Realize uma nova consulta para começar a consolidar informações externas de localização.</p></div>')+'<div class="location-query-log"><h3>Consultas realizadas</h3>'+renderLocationLog()+'</div>';document.getElementById('btnNewLocationQuery').addEventListener('click',openLocationImportModal);root.querySelectorAll('[data-location-accordion]').forEach(button=>button.addEventListener('click',()=>{const key=button.dataset.locationAccordion;state.locationAccordion[key]=!state.locationAccordion[key];renderLocalizationView();}));}
 function locationAccordion(key,title,count,content){const open=!!state.locationAccordion[key];return '<section class="location-accordion '+(open?'open':'')+'"><button class="location-accordion-toggle" type="button" data-location-accordion="'+key+'"><span class="location-accordion-title">'+localIcon()+'<span><b>'+esc(title)+'</b><span>'+count+' item(ns)</span></span></span><i class="location-accordion-caret"></i></button><div class="location-accordion-content">'+content+'</div></section>';}
 function renderSimpleLocationList(items,type){return '<div class="location-data-list">'+items.map(item=>'<div class="location-data-row"><div><b>'+esc(compactLocationValue(item,type))+'</b><small>Fonte: '+esc(item.fonte)+' , identificado em '+esc(item.data)+(type==='enderecos'?' , '+esc(item.tipo):'')+'</small></div><span class="source-badge">'+esc(item.fonte)+'</span></div>').join('')+'</div>';}
-function renderFamilyTable(items){return '<table class="location-table"><thead><tr><th>Nome</th><th>CPF</th><th>Grau de parentesco</th></tr></thead><tbody>'+items.map(item=>'<tr><td data-label="Nome">'+esc(item.nome)+'</td><td data-label="CPF">'+esc(item.cpf)+'</td><td data-label="Grau">'+esc(item.grau)+'</td></tr>').join('')+'</tbody></table>';}
+function renderFamilyTable(items){return '<table class="location-table"><thead><tr><th>Nome</th><th>CPF</th><th>Grau de parentesco</th></tr></thead><tbody>'+items.map(item=>'<tr><td data-label="Nome">'+esc(item.nome)+'</td><td data-label="CPF">'+esc((window.sagaFmt?sagaFmt.cpf(item.cpf):item.cpf))+'</td><td data-label="Grau">'+esc(item.grau)+'</td></tr>').join('')+'</tbody></table>';}
 function renderCompanyTable(items){return '<table class="location-table"><thead><tr><th>Empresa</th><th>CNPJ</th><th>Participação</th></tr></thead><tbody>'+items.map(item=>'<tr><td data-label="Empresa">'+esc(item.nome)+'</td><td data-label="CNPJ">'+esc(item.cnpj)+'</td><td data-label="Participação">'+esc(item.percentual)+'</td></tr>').join('')+'</tbody></table>';}
 function renderSituation(item){const tone=normalizeTextValue(item.status)==='vivo'?'vivo':'falecido';return '<div class="location-situation"><span class="location-status-badge '+tone+'">'+esc(item.status)+'</span><span class="location-income">Faixa de renda: '+esc(item.renda||'Não informada')+' , fonte: '+esc(item.fonte)+' , '+esc(item.data)+'</span></div>';}
 function renderLocationLog(){if(!state.localizacao.consultas.length)return '';return state.localizacao.consultas.map(log=>'<div class="location-log-item"><div><b>'+esc(log.fonte)+'</b><small>'+esc(log.data)+' , '+esc(log.resumo)+'</small></div><span class="source-badge">'+log.novos+' novo(s)</span></div>').join('');}
@@ -2403,7 +2403,7 @@ if(false){setup();}
     return '<div class="family-contact-list">'+families.map(family=>{
       const owner=locationOwnerFamily(family);const key=owner.id;const isOpen=!!state.locationFamilyExpanded[key];const contacts=family.contatos||{telefones:[],emails:[],enderecos:[]};
       const phone=renderContactWorkList(contacts.telefones,'telefones',owner);const email=renderContactWorkList(contacts.emails,'emails',owner);const address=renderContactWorkList(contacts.enderecos,'enderecos',owner);
-      return '<article class="family-contact-card '+(isOpen?'open':'')+'"><button class="family-contact-toggle" type="button" data-family-contact-toggle="'+esc(key)+'"><span class="family-contact-identity"><b>'+esc(family.nome)+'</b><span>CPF '+esc(family.cpf)+' , '+esc(family.grau)+'</span></span><i class="family-contact-caret"></i></button><div class="family-contact-details">'+
+      return '<article class="family-contact-card '+(isOpen?'open':'')+'"><button class="family-contact-toggle" type="button" data-family-contact-toggle="'+esc(key)+'"><span class="family-contact-identity"><b>'+esc(family.nome)+'</b><span>CPF '+esc((window.sagaFmt?sagaFmt.cpf(family.cpf):family.cpf))+' , '+esc(family.grau)+'</span></span><i class="family-contact-caret"></i></button><div class="family-contact-details">'+
         (phone?'<section class="family-contact-group"><div class="family-contact-group-title">Telefones</div>'+phone+'</section>':'')+
         (email?'<section class="family-contact-group"><div class="family-contact-group-title">E-mails</div>'+email+'</section>':'')+
         (address?'<section class="family-contact-group"><div class="family-contact-group-title">Endereços</div>'+address+'</section>':'')+
@@ -2768,7 +2768,7 @@ function aplicarPessoaNoEstado(row){
     nome:row.nome_completo||'Sem nome',
     cpf:mascaraCpf(row.cpf),
     cidade:[row.municipio,row.uf].filter(Boolean).join(', ')||'Cidade não informada',
-    telefone:row.telefone_whatsapp||'Não informado',
+    telefone:row.telefone_whatsapp?(window.sagaFmt?sagaFmt.tel(row.telefone_whatsapp):row.telefone_whatsapp):'Não informado',
     telefoneNumerico:telefoneNumerico,
     email:row.email||'Não informado',
     endereco:[row.endereco,row.municipio&&row.uf?row.municipio+'/'+row.uf:(row.municipio||row.uf||'')].filter(Boolean).join(', ')||'Não informado',
@@ -2875,7 +2875,7 @@ function mapearProcesso(row){
     valorPrecatorioNum:row.valor_precatorio_origem===null||row.valor_precatorio_origem===undefined?null:Number(row.valor_precatorio_origem),
     valorCausa:fmtMoeda(row.valor_causa),
     valorCausaNum:row.valor_causa===null||row.valor_causa===undefined?null:Number(row.valor_causa),
-    cnj:row.numero_processo_cnj||'Não informado',
+    cnj:row.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(row.numero_processo_cnj):row.numero_processo_cnj):'Não informado',
     dataInicio:row.data_inicio||'',
     dataPrazo:row.data_prazo||'',
     protocolo:fmtData(row.data_inicio),
@@ -4471,7 +4471,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611090044"></script>
-<script src="saga_ficha_atividades.js?v=202611090044"></script>
+<script src="saga_localizacao.js?v=202611090118"></script>
+<script src="saga_ficha_atividades.js?v=202611090118"></script>
 </body>
 </html>
