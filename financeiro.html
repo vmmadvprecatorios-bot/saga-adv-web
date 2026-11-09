@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611091226"></script>
+<script src="saga_guard.js?v=202611091326"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Financeiro</title>
@@ -123,7 +123,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
   .tabs{max-width:100%}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611091226">
+<link rel="stylesheet" href="saga_tema.css?v=202611091326">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -287,10 +287,10 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611091226"></script>
-<script src="saga_texto.js?v=202611091226"></script>
-<script src="saga_roscas.js?v=202611091226"></script>
-<script src="saga_etiquetas.js?v=202611091226"></script>
+<script src="saga_ui.js?v=202611091326"></script>
+<script src="saga_texto.js?v=202611091326"></script>
+<script src="saga_roscas.js?v=202611091326"></script>
+<script src="saga_etiquetas.js?v=202611091326"></script>
 <script>
 /* =====================================================================
    FINANCEIRO (dados reais do banco)
@@ -368,12 +368,15 @@ function nomeBeneficiario(r){
 var roscasFinanceiro;
 function dadosGraficosFinanceiro(){
   var grupos=[],fontes=state.fontesRoscas;
+  // (09/11, bloco 131) o que ainda falta receber de cada processo: com saque parcial, o restante continua "a receber"
+  var falta=function(p){return p.valor_restante!=null?Number(p.valor_restante||0):Number((p.etapa==='sentenca'?p.valor_honorarios_sentenca:p.valor_expectativa)||0);};
+  var etapaFalta=function(p){return p.etapa_restante!==undefined?p.etapa_restante:(p.etapa==='sentenca'||p.etapa==='expectativa'?p.etapa:null);};
   if(fontes.processos){
     var teses=new Map();
-    state.processos.filter(function(p){return p.etapa==='expectativa';}).forEach(function(p){
+    state.processos.filter(function(p){return etapaFalta(p)==='expectativa';}).forEach(function(p){
       var nome=p.tese||'Sem tipo de ação',g=teses.get(nome);
       if(!g){g={id:nome,nome:nome,valor:0,cor:p.tese_cor};teses.set(nome,g);}
-      g.valor+=Number(p.valor_expectativa||0);
+      g.valor+=falta(p);
     });
     grupos.push({id:'teses',titulo:'Honorários esperados por tipo de ação',moeda:true,
       dica:'Expectativa dos processos que aguardam sentença. Clique para destacar.',
@@ -381,7 +384,7 @@ function dadosGraficosFinanceiro(){
     var recebido=0,receber=0;
     state.processos.forEach(function(p){
       if(p.etapa==='recebido'&&dentroDoPeriodo(p.data_recebimento,state.periodoVisao))recebido+=Number(p.valor_recebido||0);
-      if(p.etapa==='sentenca')receber+=Number(p.valor_honorarios_sentenca||0);
+      if(etapaFalta(p)==='sentenca')receber+=falta(p);
     });
     grupos.push({id:'recebimentos',titulo:'Recebido e a receber',moeda:true,
       dica:'Recebido no período da Visão geral e a receber após sentença. Clique para filtrar os processos por etapa.',
@@ -469,8 +472,12 @@ function renderVisao(){
   renderPills('periodoVisao',PERIODOS,state.periodoVisao,function(v){state.periodoVisao=v;renderVisao();});
   var P=state.processos,per=state.periodoVisao;
   var soma=function(lista,campo){return lista.reduce(function(s,x){return s+Number(x[campo]||0);},0);};
-  var exp=P.filter(function(p){return p.etapa==='expectativa';});
-  var sen=P.filter(function(p){return p.etapa==='sentenca';});
+  // (09/11, bloco 131) "a receber" = o que ainda falta (saque parcial não some); o recebido continua somando à parte
+  var restante=function(p){return p.valor_restante!=null?Number(p.valor_restante||0):Number((p.etapa==='sentenca'?p.valor_honorarios_sentenca:p.valor_expectativa)||0);};
+  var etapaR=function(p){return p.etapa_restante!==undefined?p.etapa_restante:(p.etapa==='sentenca'||p.etapa==='expectativa'?p.etapa:null);};
+  var exp=P.filter(function(p){return etapaR(p)==='expectativa';});
+  var sen=P.filter(function(p){return etapaR(p)==='sentenca';});
+  var somaRest=function(lista){return lista.reduce(function(s,x){return s+restante(x);},0);};
   var rec=P.filter(function(p){return p.etapa==='recebido';});
   var recPer=rec.filter(function(p){return dentroDoPeriodo(p.data_recebimento,per);});
   var L=state.lancamentos.filter(function(l){return l.situacao==='confirmado'&&dentroDoPeriodo(l.data_lancamento,per);});
@@ -481,8 +488,8 @@ function renderVisao(){
   var resultado=soma(recPer,'valor_recebido')+receitasAv-despesasAv-pago;
   var rotPer={mes:'neste mês',ano:'neste ano',tudo:'no total'}[per];
   var cards=[
-    ['Expectativa de honorários',soma(exp,'valor_expectativa'),exp.length+' processo(s) aguardando sentença','#4b8af5'],
-    ['A receber (após sentença)',soma(sen,'valor_honorarios_sentenca'),sen.length+' processo(s) com sentença','#e0a93b'],
+    ['Expectativa de honorários',somaRest(exp),exp.length+' processo(s) aguardando sentença','#4b8af5'],
+    ['A receber (após sentença)',somaRest(sen),sen.length+' processo(s) com sentença','#e0a93b'],
     ['Recebido '+rotPer,soma(recPer,'valor_recebido'),recPer.length+' processo(s) com valor sacado','#2fae7a'],
     ['Lançamentos avulsos '+rotPer,receitasAv-despesasAv,'Entradas '+moeda(receitasAv)+' · Saídas '+moeda(despesasAv),'#8a6fd6'],
     ['Pago aos colaboradores '+rotPer,pago,'Total distribuído (todas as etapas): '+moeda(distribuido),'#c46a9c'],
@@ -493,7 +500,7 @@ function renderVisao(){
   }).join('');
   var semPct=P.filter(function(p){return p.etapa==='sem_percentual';});
   document.getElementById('etapasVisao').innerHTML=[
-    ['expectativa',exp.length,soma(exp,'valor_expectativa')],['sentenca',sen.length,soma(sen,'valor_honorarios_sentenca')],
+    ['expectativa',exp.length,somaRest(exp)],['sentenca',sen.length,somaRest(sen)],
     ['recebido',rec.length,soma(rec,'valor_recebido')],['sem_percentual',semPct.length,null]
   ].map(function(e){var E=ETAPAS[e[0]];return '<div class="etapa-box" style="border-left:4px solid '+E.cor+'"><div class="n">'+e[1]+'</div><div class="t">'+E.nome+'</div><div class="v">'+(e[2]==null?'Sem cálculo':moeda(e[2]))+'</div></div>';}).join('');
   document.getElementById('avisoSemPercentual').innerHTML=semPct.length?'<div class="aviso">⚠ '+semPct.length+' processo(s) sem percentual de honorários: a expectativa não pode ser calculada.<button type="button" id="verSemPct">Ver processos</button></div>':'';
