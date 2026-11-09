@@ -832,7 +832,7 @@
       '<div class="si-mb"><div id="siOabLista"></div>'+
         '<div class="si-oab-nova"><div class="si-campo"><label for="siOnAdv">Advogado</label><select id="siOnAdv"></select><input id="siOnNome" placeholder="Nome do advogado parceiro" style="display:none;margin-top:6px"></div><div class="si-campo"><label for="siOnNum">Número da OAB</label><input id="siOnNum" inputmode="numeric" placeholder="Ex.: 15318"></div><div class="si-campo"><label for="siOnUf">UF</label><select id="siOnUf">'+Object.keys(UF_NOME).map(function(u){return '<option'+(u==='AL'?' selected':'')+'>'+u+'</option>';}).join('')+'</select></div><button class="si-btn pri" type="button" id="siOnAdd" style="height:36px">Incluir</button></div>'+
         '<div class="si-sub" style="margin-top:8px">Ao incluir, o sistema busca as intimações dos últimos 30 dias dessa OAB.</div>'+
-        '<div id="siHorasWrap" style="display:none"><div class="si-sec">Horários da busca automática (dias úteis)</div><div class="si-horas" id="siHoras"></div></div>'+
+        '<div id="siHorasWrap" style="display:none"><div class="si-sec">Horários da busca automática (todos os dias, inclusive sábado, domingo e feriado)</div><div class="si-horas" id="siHoras"></div></div>'+
       '</div><div class="si-mf"><button class="si-btn" type="button" data-fechar>Fechar</button></div>'+
     '</div></div>';
     w.insertAdjacentHTML('beforeend','<div class="si-ov" id="siLinks"><div class="si-modal">'+
@@ -1471,7 +1471,7 @@
     selAdv.innerHTML='<option value="">Escolha...</option>'+S.usuarios.filter(ehAdvogado).map(function(u){return '<option value="'+esc(u.id)+'">'+esc(u.nome_completo)+'</option>';}).join('')+'<option value="__outro">Outro advogado (parceiro, sem acesso ao SAGA)</option>';
     if(antes&&selAdv.querySelector('option[value="'+antes+'"]'))selAdv.value=antes;
     document.getElementById('siHorasWrap').style.display=S.ehAdmin?'':'none';
-    document.getElementById('siHoras').innerHTML=[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(h){return '<button type="button" data-hora="'+h+'" class="'+(S.horas.indexOf(h)!==-1?'on':'')+'">'+h+'h</button>';}).join('');
+    document.getElementById('siHoras').innerHTML=[6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22].map(function(h){return '<button type="button" data-hora="'+h+'" class="'+(S.horas.indexOf(h)!==-1?'on':'')+'">'+h+'h</button>';}).join('');
   }
   async function incluirOab(){
     var adv=document.getElementById('siOnAdv').value,num=document.getElementById('siOnNum').value.replace(/\D/g,''),uf=document.getElementById('siOnUf').value;
@@ -1505,7 +1505,7 @@
     if(c.error||!c.data){toast('Não foi possível salvar os horários.','error');return;}
     var r=await S.sb.from('configuracoes_sistema').update({extra:Object.assign({},c.data.extra||{},{monitoramento_horas:S.horas})}).eq('id',c.data.id);
     if(r.error)toast('Não foi possível salvar os horários: '+esc(r.error.message),'error');
-    else toast(S.horas.length?'Busca automática às '+S.horas.map(function(x){return x+'h';}).join(', ')+' nos dias úteis.':'Busca automática desligada (só pelo botão).','sucesso');
+    else toast(S.horas.length?'Busca automática às '+S.horas.map(function(x){return x+'h';}).join(', ')+' todos os dias.':'Busca automática desligada (só pelo botão).','sucesso');
   }
   async function buscarAgora(configId,btn){
     var txt=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='Buscando no CNJ...';}

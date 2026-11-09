@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090241"></script>
+<script src="saga_guard.js?v=202611091226"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Configurações</title>
@@ -113,7 +113,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
   .ap-icone{width:34px;height:34px;flex:0 0 auto;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold-light)}
   .ap-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ap-info b{font-size:13px;color:var(--text)}.ap-info b em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--gold-light);margin-left:6px}.ap-info small{font-size:11px;color:var(--muted)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611090241">
+<link rel="stylesheet" href="saga_tema.css?v=202611091226">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -208,8 +208,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
         <div class="seg" id="prLetra"><button type="button" data-v="1">Normal</button><button type="button" data-v="1.1">Grande</button><button type="button" data-v="1.2">Maior</button></div>
       </div>
       <div class="linha-opcao">
-        <div><div class="t">Tela inicial</div><div class="s">Qual tela abre logo depois de entrar no sistema.</div></div>
-        <div class="campo" style="margin:0;min-width:220px"><select id="prTelaInicial"></select></div>
+        <div><div class="t">Tela inicial</div><div class="s">Depois de entrar, o SAGA abre sempre o <b>Ponto</b>, para todos (regra do escritório): cada um já começa batendo o ponto.</div></div>
       </div>
     </div>
     <div class="panel" id="painelCoresEquipe" hidden>
@@ -282,8 +281,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611090241"></script>
-<script src="saga_teses.js?v=202611090241"></script>
+<script src="saga_ui.js?v=202611091226"></script>
+<script src="saga_teses.js?v=202611091226"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)
@@ -557,12 +556,18 @@ async function sairDeTodos(){
 function prefs(){return (state.eu&&state.eu.preferencias)||{};}
 function marcarSeg(id,valor){document.querySelectorAll('#'+id+' button').forEach(function(b){b.classList.toggle('active',b.dataset.v===String(valor));});}
 async function salvarPreferencias(mudancas,msg){
-  var p=Object.assign({},prefs(),mudancas);
-  var r=await _sb.from('usuarios').update({preferencias:p}).eq('id',state.eu.id).select('id');
+  // 09/11: a mudança é SOMADA no banco ao que já está gravado (minhas_preferencias_salvar, bloco 134).
+  // Antes a tela regravava todas as preferências com a cópia da memória e podia desfazer o tema salvo em outra tela.
+  var r=await _sb.rpc('minhas_preferencias_salvar',{p_mudancas:mudancas});
+  if(r.error&&/minhas_preferencias_salvar|function|PGRST202/i.test(String(r.error.message||r.error.code||''))){
+    var p=Object.assign({},prefs(),mudancas);
+    r=await _sb.from('usuarios').update({preferencias:p}).eq('id',state.eu.id).select('id');
+    if(!r.error&&(!r.data||!r.data.length)){showToast('A preferência não foi gravada (o banco recusou). Tente de novo ou avise o administrador.','error');return false;}
+    if(!r.error)r={data:p,error:null};
+  }
   if(r.error){showToast('Não foi possível salvar: '+esc(erroTexto(r.error)),'error');return false;}
-  // 08/11: o banco pode recusar sem dar erro (0 linhas gravadas): não dizer "salvo" nesse caso
-  if(!r.data||!r.data.length){showToast('A preferência não foi gravada (o banco recusou). Tente de novo ou avise o administrador.','error');return false;}
-  state.eu.preferencias=p;if(msg)showToast(msg,'success');return true;
+  state.eu.preferencias=(r.data&&typeof r.data==='object')?r.data:Object.assign({},prefs(),mudancas);
+  if(msg)showToast(msg,'success');return true;
 }
 function preencherPreferencias(){
   var tema=document.body.getAttribute('data-theme')||'dark';marcarSeg('prTema',tema);
@@ -570,10 +575,6 @@ function preencherPreferencias(){
   var mov='ligado';try{mov=localStorage.getItem('saga-movimento')==='reduzido'?'reduzido':'ligado';}catch(e){}marcarSeg('prMov',mov);
   montarCoresEquipe();
   var letra=String(prefs().letra||(function(){try{return localStorage.getItem('saga-letra')||'1';}catch(e){return '1';}})());marcarSeg('prLetra',letra);
-  var sel=document.getElementById('prTelaInicial');
-  var telas=TELAS.filter(function(t){return !window.SagaUI||!SagaUI.podeVerTela||SagaUI.podeVerTela(t[2]);});
-  sel.innerHTML=telas.map(function(t){return '<option value="'+t[0]+'">'+esc(t[1])+'</option>';}).join('');
-  sel.value=prefs().tela_inicial||'dashboard_padrao_metalico.html';
   var desl=((state.eu.preferencias_notificacao||{}).desligados)||[];
   document.getElementById('prAvisos').innerHTML=AVISOS.map(function(a){
     return '<div class="linha-opcao"><div><div class="t">'+esc(a[1])+'</div><div class="s">'+esc(a[2])+'</div></div>'+
@@ -605,23 +606,25 @@ function montarCores(){
   root.innerHTML=lista.map(function(c){var a=AMOSTRAS[c.id]||AMOSTRAS.azul;
     return '<button type="button" class="saga-cor-op'+(c.id===atual?' active':'')+'" data-cor="'+esc(c.id)+'"'+(fixo?' disabled':'')+' aria-pressed="'+(c.id===atual)+'">'+
       '<span class="saga-cor-amostra">'+a.map(function(x){return '<i style="background:'+x+'"></i>';}).join('')+'</span><span><b>'+esc(c.nome)+'</b><small>'+esc(c.descricao||'')+'</small>'+(c.escuro?'<small class="saga-cor-nomes">🌙 '+esc(c.escuro)+' · ☀️ '+esc(c.claro)+'</small>':'')+'</span></button>';}).join('');
-  document.getElementById('prCorAjuda').textContent=fixo?'O administrador definiu a cor do seu tema. Você troca só entre claro e escuro (sol e lua).':(lista.length<coresDisponiveis().length?'As cores liberadas pelo administrador. Escolha e clique em Salvar; o claro e o escuro continuam no sol e na lua.':'Clique numa cor para ver como fica e em Salvar para manter. O claro e o escuro de cada cor continuam no botão do sol e da lua.');
+  document.getElementById('prCorAjuda').textContent=fixo?'O administrador definiu a cor do seu tema. Você troca só entre claro e escuro (sol e lua).':(lista.length<coresDisponiveis().length?'As cores liberadas pelo administrador. Clique numa cor e ela já fica salva; o claro e o escuro continuam no sol e na lua.':'Clique numa cor e ela já fica salva em todas as telas. O claro e o escuro de cada cor continuam no botão do sol e da lua.');
   var wrap=document.getElementById('prCorSalvarWrap');mostrarSalvarCor(false);
   root.querySelectorAll('[data-cor]').forEach(function(b){b.addEventListener('click',function(){
     if(state.eu.tema_cor_fixo)return;corEscolhida=b.dataset.cor;
     root.querySelectorAll('[data-cor]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b);});
-    var mudou=corEscolhida!==corAtual();
-    // mostra o sistema na cor escolhida já agora (prévia); só fica valendo ao clicar em Salvar
+    if(corEscolhida===corAtual())return;
+    // 09/11 (Dr. Victor): clicou na cor, já fica salva em todas as telas (antes era só uma prévia até apertar
+    // "Salvar cor do tema"; quem saía sem esse botão via o tema voltar para o anterior)
     trocarCorSuave(corEscolhida);
-    mostrarSalvarCor(mudou);
+    salvarCorTema();
   });});
 }
 async function salvarCorTema(){
   var cor=corEscolhida;if(!cor||state.eu.tema_cor_fixo)return;
-  var btn=document.getElementById('prCorSalvar');btn.disabled=true;
-  var ok=await salvarPreferencias({cor:cor},'Cor do tema salva.');btn.disabled=false;
-  if(ok===false)return;
-  corSalvaNestaTela=cor;
+  var btn=document.getElementById('prCorSalvar');if(btn)btn.disabled=true;
+  corSalvaNestaTela=cor; // quem volta de tela logo depois do clique não perde a cor
+  var nome=(coresDisponiveis().find(function(c){return c.id===cor;})||{nome:cor}).nome;
+  var ok=await salvarPreferencias({cor:cor},'Tema '+nome+' salvo em todas as telas.');if(btn)btn.disabled=false;
+  if(ok===false){corSalvaNestaTela=null;trocarCorSuave(corAtual());montarCores();return;}
   if(window.sagaAplicarCor)sagaAplicarCor(cor);
   mostrarSalvarCor(false);
 }
@@ -777,7 +780,7 @@ function ligarEventos(){
   document.querySelectorAll('#prLetra button').forEach(function(b){b.addEventListener('click',function(){
     marcarSeg('prLetra',b.dataset.v);aplicarLetra(b.dataset.v);salvarPreferencias({letra:b.dataset.v},'Tamanho da letra salvo.');
   });});
-  document.getElementById('prTelaInicial').addEventListener('change',function(){salvarPreferencias({tela_inicial:this.value},'Tela inicial salva.');});
+
   document.getElementById('esSalvar').addEventListener('click',salvarEscritorio);
   document.getElementById('esTrocarLogo').addEventListener('click',function(){document.getElementById('esArquivo').click();});
   document.getElementById('esArquivo').addEventListener('change',function(){enviarLogo(this.files[0]);});

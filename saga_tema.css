@@ -374,7 +374,7 @@ body[data-theme="light"]{
   --sb-escolha:color-mix(in srgb,var(--gold) 16%,transparent);--sb-escolha-borda:color-mix(in srgb,var(--gold) 50%,transparent);
 }
 :is(.btn-secondary,.btn-secundario,.si-btn,.btn,.btn-hoje,.btn-voltar-biblioteca,.btn-marcar-todas,.btn-cancelar-tf,
-  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm,.kanban-mais):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm,.kanban-mais,.sp-faixa-chip):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
   .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
   .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
   .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
@@ -385,7 +385,7 @@ body[data-theme="light"]{
   transition:background-color .25s cubic-bezier(.22,.78,.25,1),border-color .25s cubic-bezier(.22,.78,.25,1),color .25s cubic-bezier(.22,.78,.25,1),transform .2s cubic-bezier(.22,.78,.25,1);
 }
 :is(.btn-secondary,.btn-secundario,.si-btn,.btn,.btn-hoje,.btn-voltar-biblioteca,.btn-marcar-todas,.btn-cancelar-tf,
-  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm,.kanban-mais):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm,.kanban-mais,.sp-faixa-chip):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
   .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
   .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
   .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
@@ -422,7 +422,7 @@ body[data-theme="light"]{
   .seg button.active,.si-seg button.active,.vis button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada,
   .btn-secundario.ativo,.btn-sm.ativo,.btn-toggle-calendario.ativo,.chave-fase-op.ativa,.contact-status-option.active,
   .dropdown-tipo-opcao.selecionada,.import-mode-tab.active,.location-tab.active,.sp-aba.ativo,.sp-kb-filtro.ativo,
-  .sub-toggle-item.ativo,.aba-tipo.ativa,.menu-ordenar-opcao.selecionada,.dropdown-custom-opcao.selecionada):not(#saga-b1):not(#saga-b2):not(#saga-b3){
+  .sub-toggle-item.ativo,.aba-tipo.ativa,.menu-ordenar-opcao.selecionada,.dropdown-custom-opcao.selecionada,.sp-faixa-chip.active):not(#saga-b1):not(#saga-b2):not(#saga-b3){
   background:var(--sb-escolha)!important;background-image:none!important;
   color:var(--text)!important;font-weight:600!important;
   border-color:var(--sb-escolha-borda)!important;
@@ -437,7 +437,7 @@ body[data-theme="light"]{
   .seg button.active,.si-seg button.active,.vis button.active,.custom-select-option.selected,.select-custom-tf-opcao.selecionada,
   .btn-secundario.ativo,.btn-sm.ativo,.btn-toggle-calendario.ativo,.chave-fase-op.ativa,.contact-status-option.active,
   .dropdown-tipo-opcao.selecionada,.import-mode-tab.active,.location-tab.active,.sp-aba.ativo,.sp-kb-filtro.ativo,
-  .sub-toggle-item.ativo,.aba-tipo.ativa,.menu-ordenar-opcao.selecionada,.dropdown-custom-opcao.selecionada):not(#saga-b1):not(#saga-b2):not(#saga-b3) :is(svg,svg *,span:not([class*="qtd"]):not([class*="badge"]):not([class*="contagem"])){
+  .sub-toggle-item.ativo,.aba-tipo.ativa,.menu-ordenar-opcao.selecionada,.dropdown-custom-opcao.selecionada,.sp-faixa-chip.active):not(#saga-b1):not(#saga-b2):not(#saga-b3) :is(svg,svg *,span:not([class*="qtd"]):not([class*="badge"]):not([class*="contagem"])){
   color:var(--text)!important;stroke:currentColor;
 }
 /* ===== Vistoria geral (09/11): botões que faltavam na regra dos botões finos =====
@@ -489,7 +489,7 @@ html:not(.saga-pode-apagar) :is(
   #mcExcluir, #mvExcluir, [data-rem], #mlExcluir, [data-remover],
   [data-excluir-post], [data-excluir-prod], [data-rad-del],
   [data-rmjorn], [data-ferrm], .cat-btn-excluir, .si-btn[data-excluir],
-  #btnRemover, #areasLista [data-rm]
+  #btnRemover, #areasLista [data-rm], [data-lote-excluir]
 ){display:none!important}
 
 /* Listas suspensas (09/11): as opções abertas seguem o tema (antes, no escuro, vinham com fundo branco e letra clara) */

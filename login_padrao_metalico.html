@@ -276,7 +276,7 @@ setTimeout(function(){document.documentElement.classList.remove('saga-entrando')
     .rodape-esquerdo{display:none;}
   }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611090241">
+<link rel="stylesheet" href="saga_tema.css?v=202611091226">
 <style>@view-transition{navigation:auto;}::view-transition-group(root){animation-duration:.12s;}</style>
 </head>
 <body>
@@ -412,7 +412,8 @@ var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
 var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
 
 // Destino pos-login. Alterar aqui se a tela inicial do sistema mudar.
-var TELA_POS_LOGIN = 'dashboard_padrao_metalico.html';
+// 09/11 (Dr. Victor): depois de entrar, TODO MUNDO (inclusive o administrador) abre no Ponto, para já bater o ponto
+var TELA_POS_LOGIN = 'ponto_eletronico_padrao_metalico.html';
 
 // Inicializa o cliente Supabase (UMD expoe window.supabase)
 var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -488,17 +489,16 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
   }
 })();
 
-// Tela que a pessoa escolheu para abrir depois de entrar (Configuracoes > Preferencias)
+// Primeira tela depois de entrar: sempre o Ponto (regra do escritório, 09/11); aqui só se aproveita para trazer o tamanho da letra
 async function telaInicial() {
   try {
     var s = await _sb.auth.getSession();
     var id = s.data && s.data.session && s.data.session.user.id;
     if (!id) return TELA_POS_LOGIN;
     var r = await _sb.from('usuarios').select('preferencias,tema_preferido').eq('auth_user_id', id).maybeSingle();
-    var t = r.data && r.data.preferencias && r.data.preferencias.tela_inicial;
     var letra = r.data && r.data.preferencias && r.data.preferencias.letra;
     try { if (letra) localStorage.setItem('saga-letra', String(letra)); } catch (e) {}
-    return (t && /^[a-z_]+\.html$/i.test(t)) ? t : TELA_POS_LOGIN;
+    return TELA_POS_LOGIN;
   } catch (e) { return TELA_POS_LOGIN; }
 }
 
