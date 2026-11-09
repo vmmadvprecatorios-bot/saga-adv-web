@@ -489,3 +489,8 @@ html:not(.saga-pode-apagar) :is(
   [data-rmjorn], [data-ferrm], .cat-btn-excluir, .si-btn[data-excluir],
   #btnRemover, #areasLista [data-rm]
 ){display:none!important}
+
+/* Listas suspensas (09/11): as opções abertas seguem o tema (antes, no escuro, vinham com fundo branco e letra clara) */
+select option,select optgroup{background:var(--panel-solid);color:var(--text)}
+select option:checked{background:color-mix(in srgb,var(--gold) 22%,var(--panel-solid));color:var(--text)}
+select option:disabled{color:var(--muted)}

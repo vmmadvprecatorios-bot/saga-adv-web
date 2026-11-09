@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090120"></script>
+<script src="saga_guard.js?v=202611090205"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Fichas do agente</title>
@@ -58,9 +58,17 @@ html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafit
 .res-proc button:hover,.res-proc button:focus-visible{border-color:var(--gold);outline:0}
 .res-proc small{display:block;color:var(--muted);font-variant-numeric:tabular-nums}
 .btn[hidden],.pills[hidden]{display:none}
+.dv-tab{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}
+.dv-tab th{text-align:left;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--border-soft)}
+.dv-tab td{padding:8px;border-bottom:1px solid var(--border-soft);vertical-align:middle;overflow-wrap:anywhere}
+.dv-tab tr:last-child td{border-bottom:0}
+.dv-tab .dv-campo{font-weight:600}.dv-tab .dv-novo{color:var(--gold-light)}
+.dv-tab .dv-acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.dv-tab .dv-acoes .btn{height:30px;padding:0 11px;font-size:11px;font-weight:500}
+@media(max-width:760px){.dv-tab thead{display:none}.dv-tab tr{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--border-soft)}.dv-tab td{border:0;padding:2px 0;background:transparent!important}.dv-tab tr{border-radius:10px}.dv-tab td.dv-campo,.dv-tab td.dv-acoes-td{grid-column:1/-1}.dv-tab td[data-r]::before{content:attr(data-r);display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}.dv-tab .dv-acoes{justify-content:flex-start}}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.it-topo{grid-template-columns:minmax(0,1fr)}.it-acoes{justify-content:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611090120">
+<link rel="stylesheet" href="saga_tema.css?v=202611090205">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -78,6 +86,7 @@ html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafit
   <div class="barra">
     <div class="pills" id="pills" role="tablist" aria-label="Situação">
       <button class="pill active" type="button" data-sit="pendente">Pendentes<b id="nPendente"></b></button>
+      <button class="pill" type="button" data-sit="divergencias">Divergências<b id="nDivergencias"></b></button>
       <button class="pill" type="button" data-sit="aplicada">Aplicadas<b id="nAplicada"></b></button>
       <button class="pill" type="button" data-sit="descartada">Descartadas<b id="nDescartada"></b></button>
     </div>
@@ -95,12 +104,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611090120"></script>
+<script src="saga_ui.js?v=202611090205"></script>
 <script>
 /* =====================================================================
    SAGA · Fichas do agente (T122): lê ponte_obsidian_entradas (bloco 123); só o administrador geral
    ===================================================================== */
-var P={sit:'pendente',linhas:[],abertos:{},ligando:null,pedido:0};
+var P={sit:'pendente',linhas:[],abertos:{},ligando:null,pedido:0,cols:null};
 var CORES={pendente:'#d97706',aplicada:'#16a34a',descartada:'#8a94a8'};
 function $(id){return document.getElementById(id);}
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
@@ -110,7 +119,36 @@ function soDigitos(v){return String(v||'').replace(/\D/g,'');}
 function fmtCnj(v){var d=soDigitos(v);if(d.length!==20)return v||'';return d.slice(0,7)+'-'+d.slice(7,9)+'.'+d.slice(9,13)+'.'+d.slice(13,14)+'.'+d.slice(14,16)+'.'+d.slice(16);}
 function dataBr(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:String(v||'');}
 
+// ===== Divergências: o agente mandou um valor diferente do que já está no SAGA (bloco 129) =====
+var NOMES_DIV={'processo.valor_causa':'Valor da causa','processo.valor_precatorio':'Valor do precatório','financeiro.valor_principal':'Valor principal','financeiro.valor_correcao_selic':'Correção (Selic)','financeiro.valor_honorarios_total':'Honorários contratuais (R$)','financeiro.percentual_honorarios':'Honorários contratuais (%)','financeiro.valor_honorarios_sentenca':'Honorários definidos na sentença (R$)','financeiro.valor_recebido':'Valor recebido','financeiro.data_sentenca':'Data da sentença','financeiro.data_protocolo':'Data do protocolo','financeiro.data_recebimento':'Data do recebimento','cliente.cpf':'CPF','cliente.situacao_vital':'Vivo / falecido','cliente.data_falecimento':'Data do falecimento','cliente.uf':'UF','cliente.municipio':'Município','cliente.telefone':'Telefone','cliente.email':'E-mail','cliente.endereco':'Endereço'};
+function nomeDiv(c){if(NOMES_DIV[c])return NOMES_DIV[c];if(c.indexOf('coluna.')===0)return c.slice(7);if(c.indexOf('perfil.')===0)return 'Perfil: '+c.slice(7).replace(/_/g,' ');return c;}
+function valorDiv(c,v){
+  if(v==null||v==='')return '—';v=String(v);
+  if(/^(processo\.valor|financeiro\.valor)/.test(c))return isFinite(Number(v))?Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):v;
+  if(c==='financeiro.percentual_honorarios')return isFinite(Number(v))?Number(v).toLocaleString('pt-BR')+'%':v;
+  if(/data_/.test(c))return dataBr(v);
+  if(c==='cliente.cpf')return window.sagaFmt?sagaFmt.cpf(v):v;
+  if(c==='cliente.telefone')return window.sagaFmt?sagaFmt.tel(v):v;
+  if(c.indexOf('coluna.')===0&&P.cols){var col=P.cols.find(function(x){return x.nome===c.slice(7);});
+    if(col&&col.tipo==='opcao'){var o=(col.opcoes||[]).find(function(o){return String(o.id)===v;});if(o)return o.nome;}
+    if(col&&col.tipo==='moeda'&&isFinite(Number(v)))return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    if(col&&col.tipo==='porcentagem'&&isFinite(Number(v)))return Number(v).toLocaleString('pt-BR')+'%';
+    if(col&&col.tipo==='data')return dataBr(v);}
+  return v;
+}
+async function carregarDivergencias(){
+  var r=await _sb.from('ponte_obsidian_entradas').select('id,recebido_em,numero_processo,cliente,processo_id,resultado').eq('situacao','aplicada').not('resultado','is',null).order('recebido_em',{ascending:false}).limit(1000);
+  if(r.error)return {erro:r.error};
+  var visto={},lista=[];
+  (r.data||[]).forEach(function(l){
+    if(!l.processo_id||visto[l.processo_id])return;visto[l.processo_id]=1; // vale só o envio mais recente de cada processo
+    var ab=((l.resultado&&l.resultado.divergencias)||[]).filter(function(d){return !d.resolvido;});
+    if(ab.length){l.abertas=ab;lista.push(l);}
+  });
+  return {lista:lista};
+}
 async function contar(){
+  var dv=await carregarDivergencias();var nd=$('nDivergencias');if(nd)nd.textContent=dv.lista&&dv.lista.length?String(dv.lista.reduce(function(a,l){return a+l.abertas.length;},0)):'';
   for(var s of ['pendente','aplicada','descartada']){
     var r=await _sb.from('ponte_obsidian_entradas').select('id',{count:'exact',head:true}).eq('situacao',s);
     var el=$('n'+s.charAt(0).toUpperCase()+s.slice(1));if(el)el.textContent=r.count?String(r.count):'';
@@ -118,6 +156,15 @@ async function contar(){
 }
 async function buscar(){
   var pedido=++P.pedido;
+  if(P.sit==='divergencias'){
+    if(!P.cols){var rc=await _sb.from('lista_colunas').select('id,nome,tipo,opcoes');P.cols=rc.data||[];}
+    var dv=await carregarDivergencias();if(pedido!==P.pedido)return;
+    if(dv.erro){$('area').innerHTML='<div class="lista"><div class="vazio"><b>Não foi possível abrir</b>'+esc(dv.erro.message)+'</div></div>';return;}
+    P.linhas=dv.lista;P.procs={};
+    var idsD=P.linhas.map(function(l){return l.processo_id;});
+    if(idsD.length){var qd=await _sb.from('processos').select('id,pessoa_id,numero_processo_cnj,pessoas(nome_completo)').in('id',idsD);(qd.data||[]).forEach(function(p){P.procs[p.id]=p;});}
+    desenharDiv();contar();return;
+  }
   var r=await _sb.from('ponte_obsidian_entradas').select('id,recebido_em,numero_processo,cliente,dados,situacao,processo_id,motivo,resolvido_em').eq('situacao',P.sit).order('recebido_em',{ascending:false}).limit(300);
   if(pedido!==P.pedido)return;
   if(r.error){$('area').innerHTML='<div class="lista"><div class="vazio"><b>Não foi possível abrir</b>'+esc(r.error.message)+'</div></div>';return;}
@@ -154,6 +201,39 @@ function desenhar(){
       '<div class="ligar" id="lig-'+l.id+'" hidden><input class="busca" type="search" placeholder="Digite o número do processo ou o nome do cliente..." data-busca-proc="'+l.id+'"><div class="res-proc" id="res-'+l.id+'"></div></div></div>';
   }).join('')+'</div>';
   $('resumoTopo').textContent=P.linhas.length+' ficha'+(P.linhas.length===1?'':'s')+(P.sit==='pendente'?' esperando você.':'.');
+}
+function desenharDiv(){
+  var area=$('area');
+  if(!P.linhas.length){area.innerHTML='<div class="lista"><div class="vazio"><b>Nada para decidir</b>Quando o agente mandar um dado diferente do que já está no SAGA, ele aparece aqui.</div></div>';$('resumoTopo').textContent='';return;}
+  area.innerHTML='<div class="lista">'+P.linhas.map(function(l){
+    var pr=P.procs[l.processo_id];
+    var nome=pr&&pr.pessoas&&pr.pessoas.nome_completo||l.cliente||'(sem nome)';
+    var sub=fmtCnj(pr?pr.numero_processo_cnj:l.numero_processo)+' · enviada em '+quando(l.recebido_em);
+    var linhas=l.abertas.map(function(d){
+      var k=l.id+'|'+d.campo;
+      return '<tr data-dv="'+esc(k)+'"><td class="dv-campo">'+esc(nomeDiv(d.campo))+'</td><td data-r="No SAGA">'+esc(valorDiv(d.campo,d.no_saga))+'</td><td data-r="O agente mandou" class="dv-novo">'+esc(valorDiv(d.campo,d.agente))+'</td>'+
+        '<td class="dv-acoes-td"><div class="dv-acoes"><button class="btn" type="button" data-dv-escolha="saga" data-dv-k="'+esc(k)+'">Manter o do SAGA</button><button class="btn" type="button" data-dv-escolha="agente" data-dv-k="'+esc(k)+'">Usar o do agente</button></div></td></tr>';
+    }).join('');
+    return '<div class="it" id="it-'+l.id+'"><div class="it-topo"><div><div class="it-nome">'+esc(nome)+'</div><div class="it-sub">'+esc(sub)+'</div><span class="it-motivo" style="--c:#d97706">'+l.abertas.length+' dado'+(l.abertas.length===1?'':'s')+' para decidir</span></div><div class="it-acoes">'+(pr?'<button class="btn" type="button" data-ficha="'+pr.pessoa_id+'|'+pr.id+'">Abrir ficha</button>':'')+'</div></div>'+
+      '<table class="dv-tab"><thead><tr><th>Campo</th><th>No SAGA</th><th>O agente mandou</th><th></th></tr></thead><tbody>'+linhas+'</tbody></table></div>';
+  }).join('')+'</div>';
+  var tot=P.linhas.reduce(function(a,l){return a+l.abertas.length;},0);
+  $('resumoTopo').textContent=tot+' dado'+(tot===1?'':'s')+' diferente'+(tot===1?'':'s')+' do SAGA em '+P.linhas.length+' processo'+(P.linhas.length===1?'':'s')+'. Nada muda até você escolher.';
+}
+async function decidir(k,escolha,btn){
+  var i=k.indexOf('|'),entrada=k.slice(0,i),campo=k.slice(i+1);
+  var l=P.linhas.find(function(x){return x.id===entrada;});var d=l&&l.abertas.find(function(x){return x.campo===campo;});
+  if(escolha==='agente'){
+    var ok=window.sagaConfirmar?await sagaConfirmar('Usar o valor do agente?','"'+nomeDiv(campo)+'" passa de '+valorDiv(campo,d&&d.no_saga)+' para '+valorDiv(campo,d&&d.agente)+'. A troca fica no Registro de atividades.','Usar o do agente',false):confirm('Usar o valor do agente?');
+    if(!ok)return;
+  }
+  var tr=btn.closest('tr');tr.querySelectorAll('button').forEach(function(b){b.disabled=true;});
+  var r=await _sb.rpc('ponte_obsidian_divergencia',{p_entrada:entrada,p_campo:campo,p_escolha:escolha});
+  if(r.error){toast('Não foi possível: '+r.error.message,'error');tr.querySelectorAll('button').forEach(function(b){b.disabled=false;});return;}
+  toast(escolha==='agente'?'Valor do agente gravado no SAGA.':'Mantido o valor do SAGA.','success');
+  l.abertas=l.abertas.filter(function(x){return x.campo!==campo;});
+  var depois=function(){contar();if(!l.abertas.length){P.linhas=P.linhas.filter(function(x){return x!==l;});var it=$('it-'+entrada);if(it&&window.sagaRecolher)sagaRecolher(it,true,desenharDiv);else desenharDiv();}else desenharDiv();};
+  if(window.sagaRecolher)sagaRecolher(tr,true,depois);else depois();
 }
 function recolher(el,ocultar){if(window.sagaRecolher)sagaRecolher(el,ocultar);else el.hidden=ocultar;}
 var tmBusca=null;
@@ -200,6 +280,7 @@ function ligar(){
     var b=e.target.closest('button');if(!b)return;
     if(b.dataset.ver){var id=b.dataset.ver;P.abertos[id]=!P.abertos[id];b.textContent=P.abertos[id]?'Esconder':'Ver o que veio';b.setAttribute('aria-expanded',String(!!P.abertos[id]));recolher($('det-'+id),!P.abertos[id]);}
     else if(b.dataset.ligar){var lg=$('lig-'+b.dataset.ligar);var abrir=lg.hidden;recolher(lg,!abrir);if(abrir){var inp=lg.querySelector('input');var l=P.linhas.find(function(x){return x.id===b.dataset.ligar;});if(inp&&!inp.value&&l&&l.cliente){inp.value=l.cliente;buscarProcessos(l.id,l.cliente);}setTimeout(function(){inp&&inp.focus();},50);}}
+    else if(b.dataset.dvEscolha)decidir(b.dataset.dvK,b.dataset.dvEscolha,b);
     else if(b.dataset.descartar)aplicar(b.dataset.descartar,null);
     else if(b.dataset.escolher){var p=b.dataset.escolher.split('|');aplicar(p[0],p[1]);}
     else if(b.dataset.ficha){var f=b.dataset.ficha.split('|');sagaIrPara('ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(f[0])+'&processo_id='+encodeURIComponent(f[1]));}
@@ -212,6 +293,11 @@ async function init(){
   var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
   var adm=await _sb.rpc('eh_admin_sistema');
   if(adm.data!==true){$('area').innerHTML='<div class="lista"><div class="vazio"><b>Só o administrador geral vê esta tela</b>Peça ao administrador se precisar de alguma informação daqui.</div></div>';$('pills').hidden=true;return;}
+  // Aviso do sino: se o envio tem dado diferente para decidir, abre direto em Divergências
+  var ent=new URLSearchParams(location.search).get('entrada');
+  if(ent){var re=await _sb.from('ponte_obsidian_entradas').select('situacao,resultado').eq('id',ent).maybeSingle();
+    var d=re.data;var abre=d&&d.situacao==='aplicada'&&((d.resultado&&d.resultado.divergencias)||[]).some(function(x){return !x.resolvido;})?'divergencias':(d&&d.situacao)||'pendente';
+    $('pills').querySelectorAll('.pill').forEach(function(x){x.classList.toggle('active',x.dataset.sit===abre);});P.sit=abre;}
   await buscar();
 }
 init().catch(function(e){toast('Erro ao abrir: '+(e.message||''),'error');});

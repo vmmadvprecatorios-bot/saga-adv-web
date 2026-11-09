@@ -1249,6 +1249,10 @@
     };
   }
 
+  // Pedir ao agente de petições (bloco 130): só para quem tem a permissão "agente.pedir" (lida da lista guardada pelo saga_ui)
+  function podePedirAgente(){
+    try{var c=JSON.parse(localStorage.getItem('saga-permissoes')||'null');return !!(c&&Array.isArray(c.perms)&&c.perms.indexOf('agente.pedir')!==-1);}catch(e){return false;}
+  }
   /* ---------- processo: já cadastrado, incorporar ou ligar ---------- */
   function renderProcesso(i){
     var w=document.getElementById('siProcesso'),p=i.processo_id&&S.processos[i.processo_id];
@@ -1256,7 +1260,18 @@
       var pts=(S.partes||{})[i.processo_id]||[];
       var quem=pts.length>1?pts.map(function(x){return '<a class="si-cli" style="display:block;color:inherit" href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(x.pessoa_id)+'&processo_id='+esc(i.processo_id)+'">'+esc(x.nome)+(x.principal?' <small>(titular)</small>':'')+'</a>';}).join(''):'<span class="si-cli">'+esc(p&&p.pessoa?p.pessoa.nome_completo:'Cliente')+'</span>';
       w.innerHTML='<div class="si-proc-box ok"><b>✓ Processo já cadastrado no SAGA'+(pts.length>1?' · '+pts.length+' clientes':'')+'</b><div style="margin-top:4px">'+quem+'</div>'+
-        '<div class="si-acoes" style="margin-top:8px"><a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(i.processo_id)+'">Abrir ficha do cliente</a></div></div>';
+        '<div class="si-acoes" style="margin-top:8px"><a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(i.processo_id)+'">Abrir ficha do cliente</a>'+
+        (podePedirAgente()?'<button class="si-btn sm" type="button" id="siPedirAgente">Pedir ao agente</button>':'')+'</div></div>';
+      var bAg=document.getElementById('siPedirAgente');
+      if(bAg)bAg.addEventListener('click',async function(){
+        var ok=window.sagaConfirmar?await sagaConfirmar('Pedir ao agente?','O agente de petições analisa esta intimação na próxima vez que o Dr. Victor abrir o agente no computador. O resultado volta para a ficha do processo.','Pedir ao agente',false):confirm('Pedir ao agente para analisar esta intimação?');
+        if(!ok)return;
+        bAg.disabled=true;
+        var r=await S.sb.rpc('pedir_ao_agente',{p_processo:i.processo_id,p_tipo:'analisar_intimacao',p_observacao:null,p_intimacao:i.id});
+        bAg.disabled=false;
+        if(r.error){toast('Não foi possível pedir: '+r.error.message,'error');return;}
+        toast(r.data&&r.data.ja_existia?'Esta intimação já estava na fila do agente.':'Pedido enviado ao agente.','ok');
+      });
       return;
     }
     if((i.processo_candidatos||[]).length>1){renderEscolherProcesso(i,w);return;}

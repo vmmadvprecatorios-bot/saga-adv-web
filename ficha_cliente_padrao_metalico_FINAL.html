@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090120"></script>
+<script src="saga_guard.js?v=202611090205"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -270,6 +270,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .ra-linha li::before{content:"";position:absolute;left:-19px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
 .ra-linha .ra-data{font-variant-numeric:tabular-nums;color:var(--muted);margin-right:6px}.ra-linha .ra-fonte{color:var(--muted);font-size:11px}
 .ra-pecas{width:100%;border-collapse:collapse;font-size:12px}.ra-pecas td{padding:6px 4px;border-bottom:1px solid var(--border-soft);vertical-align:top;color:var(--text)}.ra-pecas td:first-child{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
+/* Pedidos ao agente de petições (bloco 130) */
+.ag-lista{display:flex;flex-direction:column;gap:8px}
+.ag-item{border:1px solid var(--border-soft);border-radius:11px;padding:8px 10px;font-size:11px;line-height:1.45}
+.ag-topo{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ag-tipo{font-weight:600;color:var(--text)}
+.ag-sit{font-size:9.5px;padding:1px 7px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 13%,transparent);color:var(--c);white-space:nowrap}
+.ag-sub{color:var(--muted);font-size:10px;margin-top:2px}
+.ag-obs{margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text)}
+.ag-resp{margin-top:5px;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--gold) 8%,transparent);white-space:pre-wrap;overflow-wrap:anywhere}
+.ag-cancelar{margin-top:4px;font-size:10px;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:0;padding:0}
+.ag-vazio{font-size:10.5px;color:var(--muted)}
+#pedirAgenteTipo{width:100%;outline:0;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text);font:inherit;font-size:11.5px;padding:9px 10px}
 </style>
 
 <style id="location-contact-workflow-styles">
@@ -328,15 +340,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611090120"></script>
-<script src="saga_fichas.js?v=202611090120"></script>
-<script src="saga_teses.js?v=202611090120"></script>
-<script src="saga_mencoes.js?v=202611090120"></script>
-<script src="saga_texto.js?v=202611090120"></script>
-<script src="saga_partes.js?v=202611090120"></script>
-<script src="saga_etiquetas.js?v=202611090120"></script>
-<script src="saga_planilha.js?v=202611090120"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611090120">
+<script src="saga_ui.js?v=202611090205"></script>
+<script src="saga_fichas.js?v=202611090205"></script>
+<script src="saga_teses.js?v=202611090205"></script>
+<script src="saga_mencoes.js?v=202611090205"></script>
+<script src="saga_texto.js?v=202611090205"></script>
+<script src="saga_partes.js?v=202611090205"></script>
+<script src="saga_etiquetas.js?v=202611090205"></script>
+<script src="saga_planilha.js?v=202611090205"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611090205">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -409,6 +421,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>Responsável</div><div class="responsavel-bloco" id="processResponsible"></div></section>
           <section class="bloco-lateral" id="secaoDocumentos"><div class="secao-titulo pastas-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Pastas do cliente</span><button type="button" class="pasta-topo-btn" id="btnNovaPasta" title="Criar pasta">+ Pasta</button></div><div class="arvore-pastas" id="documentList"></div><button class="btn-anexar-documento" id="btnAnexarDocumento">+ Anexar documento</button><input class="hidden" id="documentInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt"></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Tarefas</div><div class="tarefa-list" id="taskList"></div><button class="btn-nova-tarefa-mini" id="btnAddTask">+ Adicionar tarefa</button></section>
+          <section class="bloco-lateral" id="secaoAgente" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Agente de petições</div><div class="ag-lista" id="agenteLista"></div><button class="btn-nova-tarefa-mini" id="btnPedirAgente" hidden>+ Pedir ao agente</button></section>
           <section class="bloco-lateral" id="secaoNotas" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Notas</div><div class="notas-ficha" id="notasFicha"></div><button class="btn-nova-tarefa-mini" id="btnNovaNotaFicha" type="button">+ Nova nota sobre o cliente</button></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Ações</div><div class="botoes-acao-lateral"><button class="btn-acao-lateral" id="btnVerMovimentacoes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Intimações do processo</button></div></section>
         </aside>
@@ -429,6 +442,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 <div class="modal-overlay" id="customChecklistModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Criar checklist personalizado</h3><p>Defina o título e o primeiro item deste checklist.</p></div><button class="modal-close" data-close-modal="customChecklistModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="customChecklistName">Nome do checklist</label><input id="customChecklistName" type="text" placeholder="Ex.: Conferência de documentos"></div><div class="form-field"><label for="customChecklistFirstItem">Primeiro item</label><input id="customChecklistFirstItem" type="text" placeholder="Ex.: Revisar todos os anexos"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="customChecklistModal">Cancelar</button><button class="btn-primary" id="saveCustomChecklistButton">Criar checklist</button></div></div></div>
 <div class="modal-overlay" id="returnModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Editar retorno agendado</h3><p>Esta agenda reflete automaticamente no Kanban e nos filtros.</p></div><button class="modal-close" data-close-modal="returnModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="returnDate">Data</label><input id="returnDate" type="date" value="2026-06-23"></div><div class="form-field"><label for="returnTime">Horário</label><input id="returnTime" type="time" value="14:30"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="returnModal">Cancelar</button><button class="btn-primary" id="saveReturnButton">Salvar retorno</button></div></div></div>
 <div class="modal-overlay" id="taskModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="taskModalTitle">Adicionar tarefa</h3><p id="taskModalSub">Registre uma tarefa rápida vinculada a esta ficha.</p></div><button class="modal-close" data-close-modal="taskModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="taskTitleInput">Tarefa</label><input id="taskTitleInput" type="text" placeholder="Descreva a tarefa"></div><div class="form-field"><label for="taskResponsavelSelect">Responsável</label><div id="taskResponsavelSelect"></div></div><div class="form-field"><label for="taskDeadlineInput">Prazo</label><input id="taskDeadlineInput" type="date"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="taskModal">Cancelar</button><button class="btn-primary" id="saveTaskButton">Salvar tarefa</button></div></div></div>
+<div class="modal-overlay" id="pedirAgenteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Pedir ao agente de petições</h3><p>O pedido entra na fila. Na próxima vez que o Dr. Victor abrir o agente no computador, ele trabalha o processo e o resultado volta para esta ficha.</p></div><button class="modal-close" data-close-modal="pedirAgenteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="pedirAgenteTipo">O que o agente deve fazer</label><select id="pedirAgenteTipo"><option value="analisar_processo">Analisar o processo</option><option value="atualizar_ficha">Atualizar a ficha do processo</option><option value="preparar_peticao">Preparar petição</option><option value="relatorio_cliente">Fazer relatório ao cliente</option></select></div><div class="form-field"><label for="pedirAgenteObs">Observação (opcional)</label><textarea id="pedirAgenteObs" placeholder="Ex.: ver se já dá para pedir a penhora; conferir o cálculo..."></textarea></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="pedirAgenteModal">Cancelar</button><button class="btn-primary" id="enviarPedidoAgente">Pedir ao agente</button></div></div></div>
 <div class="modal-overlay" id="editCommentModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Editar comentário</h3><p>Atualize o conteúdo do comentário selecionado.</p></div><button class="modal-close" data-close-modal="editCommentModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="editCommentInput">Comentário</label><textarea id="editCommentInput"></textarea></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="editCommentModal">Cancelar</button><button class="btn-primary" id="saveCommentEditButton">Salvar comentário</button></div></div></div>
 <div class="modal-overlay" id="deleteCommentModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir comentário</h3><p>Esta ação remove o comentário do histórico desta ficha.</p></div><button class="modal-close" data-close-modal="deleteCommentModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja remover este comentário do histórico?</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="deleteCommentModal">Cancelar</button><button class="btn-danger" id="deleteCommentButton">Excluir comentário</button></div></div></div>
 
@@ -1759,6 +1773,63 @@ function renderPartes(){
     aoMudar:()=>{recarregarProcessoAtivo();}});
 }
 function prepararMencoes(){const proc=getActiveProcess(),campo=document.getElementById('commentInput');if(proc&&campo&&campo._sagaTexto&&window.SagaMencoes)SagaMencoes.anexar(campo,{sb:_sb,tabela:'processos',registroId:proc.id});}
+// Pedidos ao agente de petições (bloco 130): fila SAGA -> agente
+const AG_TIPOS={analisar_processo:'Analisar o processo',analisar_intimacao:'Analisar a intimação',preparar_peticao:'Preparar petição',atualizar_ficha:'Atualizar a ficha',relatorio_cliente:'Relatório ao cliente'};
+const AG_SIT={aberto:['Na fila','#d97706'],em_andamento:['Em andamento','#2563eb'],feito:['Feito','#16a34a'],cancelado:['Cancelado','#8a94a8']};
+async function carregarPedidosAgente(pid){
+  try{
+    const r=await _sb.from('pedidos_agente').select('id,tipo,observacao,origem,situacao,pedido_por_id,criado_em,concluido_em,resposta').eq('processo_id',pid).order('criado_em',{ascending:false}).limit(20);
+    return r.error?null:(r.data||[]);
+  }catch(e){return null;}
+}
+async function renderAgente(){
+  const sec=document.getElementById('secaoAgente');if(!sec)return;
+  const process=getActiveProcess();if(!process){sec.hidden=true;return;}
+  if(state.podePedirAgente===undefined)state.podePedirAgente=await checkPerm('agente','pedir');
+  const lista=process.pedidosAgente;
+  if(lista===null&&!state.podePedirAgente){sec.hidden=true;return;}
+  const fmt=d=>d?new Date(d).toLocaleDateString('pt-BR',{timeZone:'America/Maceio'}):'';
+  const meu=state.usuario&&state.usuario.internoId;
+  const itens=(lista||[]).filter(p=>p.situacao!=='cancelado'||!p.concluido_em||Date.now()-new Date(p.concluido_em)<7*864e5).slice(0,6);
+  document.getElementById('agenteLista').innerHTML=itens.length?itens.map(p=>{
+    const st=AG_SIT[p.situacao]||[p.situacao,'#8a94a8'];
+    const quem=p.origem==='automatico'?'automático (intimação com prazo)':'pedido em '+fmt(p.criado_em);
+    const podeCancelar=(p.situacao==='aberto'||p.situacao==='em_andamento')&&(state.ehAdmin===true||p.pedido_por_id===meu);
+    return '<div class="ag-item"><div class="ag-topo"><span class="ag-tipo">'+esc(AG_TIPOS[p.tipo]||p.tipo)+'</span><span class="ag-sit" style="--c:'+st[1]+'">'+esc(st[0])+'</span></div>'+
+      '<div class="ag-sub">'+esc(quem)+(p.situacao==='feito'&&p.concluido_em?' · feito em '+fmt(p.concluido_em):'')+'</div>'+
+      (p.observacao?'<div class="ag-obs">'+esc(p.observacao)+'</div>':'')+
+      (p.resposta?'<div class="ag-resp">'+esc(p.resposta)+'</div>':'')+
+      (podeCancelar?'<button type="button" class="ag-cancelar" data-ag-cancelar="'+esc(p.id)+'">Cancelar pedido</button>':'')+'</div>';
+  }).join(''):'<div class="ag-vazio">Nenhum pedido ao agente neste processo.</div>';
+  document.getElementById('btnPedirAgente').hidden=!state.podePedirAgente;
+  sec.hidden=false;
+  document.querySelectorAll('[data-ag-cancelar]').forEach(b=>b.addEventListener('click',async()=>{
+    const ok=window.sagaConfirmar?await sagaConfirmar('Cancelar o pedido?','O pedido sai da fila do agente. Ele continua no histórico como cancelado.','Cancelar pedido',false):confirm('Cancelar o pedido?');
+    if(!ok)return;
+    const r=await _sb.rpc('cancelar_pedido_agente',{p_id:b.dataset.agCancelar});
+    if(r.error){showToast('Não foi possível cancelar: '+r.error.message,'error');return;}
+    showToast('Pedido cancelado.','info');await atualizarPedidosAgente();
+  }));
+}
+async function atualizarPedidosAgente(){
+  const process=getActiveProcess();if(!process)return;
+  process.pedidosAgente=await carregarPedidosAgente(process.id);
+  await renderAgente();
+}
+function ligarPedidoAgente(){
+  const btn=document.getElementById('btnPedirAgente');if(!btn||btn._ligado)return;btn._ligado=true;
+  btn.addEventListener('click',()=>{document.getElementById('pedirAgenteTipo').value='analisar_processo';document.getElementById('pedirAgenteObs').value='';openModal('pedirAgenteModal');});
+  document.getElementById('enviarPedidoAgente').addEventListener('click',async()=>{
+    const process=getActiveProcess();if(!process)return;
+    const b=document.getElementById('enviarPedidoAgente');b.disabled=true;
+    const r=await _sb.rpc('pedir_ao_agente',{p_processo:process.id,p_tipo:document.getElementById('pedirAgenteTipo').value,p_observacao:document.getElementById('pedirAgenteObs').value.trim()||null,p_intimacao:null});
+    b.disabled=false;
+    if(r.error){showToast('Não foi possível pedir: '+r.error.message,'error');return;}
+    closeModal('pedirAgenteModal');
+    showToast(r.data&&r.data.ja_existia?'Esse pedido já estava na fila; a observação foi juntada.':'Pedido enviado ao agente.','success');
+    await atualizarPedidosAgente();
+  });
+}
 // Resumo do agente de petições: o que o agente gravou no Obsidian e mandou ao SAGA (bloco 123)
 async function carregarResumoAgente(pid){
   try{
@@ -1803,7 +1874,7 @@ function renderResumoAgente(){
     if(window.sagaRecolher)window.sagaRecolher(d,!state.resumoAgenteAberto);else d.hidden=!state.resumoAgenteAberto;
   });
 }
-function renderActiveProcess(){prepararMencoes();renderProcessTabs();renderProcessHeader();renderProcessData();renderResumoAgente();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
+function renderActiveProcess(){prepararMencoes();renderProcessTabs();renderProcessHeader();renderProcessData();renderResumoAgente();renderChecklists();ligarPedidoAgente();renderAgente();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
 
 async function addChecklistFromTemplate(templateId){
   if(!podeEditarChecklists())return false;
@@ -3224,9 +3295,11 @@ async function carregarDetalhesProcesso(pid){
       carregarCompromissos(pid),
       carregarIntimacoesProcesso(pid),
       carregarHistoricoStatus(pid),
-      carregarResumoAgente(pid)
+      carregarResumoAgente(pid),
+      carregarPedidosAgente(pid)
     ]);
     processo.resumoAgente=dados[6];
+    processo.pedidosAgente=dados[7];
     processo.intimacoes=dados[4];
     processo.timeline=dados[0].concat(dados[5]).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
     processo.documentos=dados[1];
@@ -4471,7 +4544,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611090120"></script>
-<script src="saga_ficha_atividades.js?v=202611090120"></script>
+<script src="saga_localizacao.js?v=202611090205"></script>
+<script src="saga_ficha_atividades.js?v=202611090205"></script>
 </body>
 </html>
