@@ -174,6 +174,17 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
   .barra-opcoes .pills{flex:0 0 auto;flex-wrap:nowrap}.barra-opcoes .pill{white-space:nowrap}
   .etqs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-bottom:10px;padding-bottom:2px}.etqs::-webkit-scrollbar{display:none}.etqs>*{flex:0 0 auto}
   .dica-arrastar{display:none}}
+/* nota ligada a cliente/processo (09/11) */
+.nota .chip.cli,.nota-lin .chip.cli,.vinc-ed .chip.cli{background:color-mix(in srgb,var(--gold) 16%,transparent);color:var(--gold-light,var(--gold));text-decoration:none;font-weight:600;transition:background-color .2s cubic-bezier(.22,.78,.25,1)}
+.nota .chip.cli:hover,.nota-lin .chip.cli:hover,.vinc-ed .chip.cli:hover{background:color-mix(in srgb,var(--gold) 26%,transparent)}
+.vinc-ed{position:relative;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vinc-ed .chip.cli.grande{display:inline-flex;align-items:center;font-size:12px;padding:6px 12px;border-radius:12px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vinc-res{flex-basis:100%;width:100%;background:var(--panel-solid,#212e44);border:1px solid var(--border-soft);border-radius:10px;padding:4px;box-shadow:0 12px 28px rgba(0,0,0,.3);max-height:240px;overflow:auto;overscroll-behavior:contain;animation:vincAbre .22s cubic-bezier(.22,.78,.25,1)}
+.vinc-res[hidden]{display:none}
+.vinc-res button{display:block;width:100%;text-align:left;border:0;background:none;color:var(--text);font:inherit;font-size:12px;padding:8px 10px;border-radius:7px;cursor:pointer}
+.vinc-res button:hover{background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.vinc-nada{padding:8px 10px;font-size:12px;color:var(--muted)}
+@keyframes vincAbre{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611082339">
 </head>
@@ -244,7 +255,8 @@ window._sb=_sb;
    Tipos: texto, lista (checklist) e senha (nome, login, senha, link, o que é).
    A senha de cada acesso fica criptografada no banco (notas_credenciais): só sai pela função nota_credencial_ver_senha (dono ou quem recebeu a nota).
    ===================================================================== */
-var COLUNAS='id,dono_id,tipo,titulo,conteudo,itens,cor,fixada,arquivada,etiquetas,ordem,criado_em,atualizado_em';
+var COLUNAS_BASE='id,dono_id,tipo,titulo,conteudo,itens,cor,fixada,arquivada,etiquetas,ordem,criado_em,atualizado_em';
+var COLUNAS=COLUNAS_BASE+',pessoa_id,processo_id';   // nota ligada a cliente/processo (09/11, bloco 125)
 var CORES=[['padrao','Sem cor'],['amarelo','Amarelo'],['verde','Verde'],['azul','Azul'],['rosa','Rosa'],['laranja','Laranja'],['roxo','Roxo'],['cinza','Cinza']];
 var CORHEX={amarelo:'#f5c542',verde:'#6fcf7f',azul:'#5bc0eb',rosa:'#f78fb3',laranja:'#f59e42',roxo:'#b69cf0',cinza:'#b0b7c3'};
 var ICO_COPIAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>';
@@ -258,7 +270,7 @@ function temCreds(t){return t==='senha'||t==='emails';}
 function fmtTel(v){var d=String(v||'').replace(/\D/g,'').slice(0,11);if(!d)return '';if(d.length<=2)return '('+d;if(d.length<=6)return '('+d.slice(0,2)+') '+d.slice(2);if(d.length<=10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7);}
 // colaboradoras ativas, em ordem alfabética, para os menus de responsável
 function colaboradoras(atual){var l=Object.keys(S.pessoas).map(function(k){return S.pessoas[k];}).filter(function(p){return p.ativo!==false||p.id===atual;});return l.sort(function(a,b){return String(a.nome_completo).localeCompare(String(b.nome_completo),'pt-BR');});}
-var S={creds:{},visao:'cartoes',modo:'minha',vistos:{},eu:null,notas:[],comp:{},pessoas:{},filtro:'todas',etq:'',busca:'',aberta:null,ed:null};
+var S={cli:{},procs:{},semVinculo:false,creds:{},visao:'cartoes',modo:'minha',vistos:{},eu:null,notas:[],comp:{},pessoas:{},filtro:'todas',etq:'',busca:'',aberta:null,ed:null};
 
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
@@ -284,7 +296,10 @@ async function pegarSenhaCred(id){
 /* ---------- carregar ---------- */
 async function carregar(){
   var r=await Promise.all([
-    _sb.from('notas').select(COLUNAS).order('atualizado_em',{ascending:false}).limit(1000),
+    _sb.from('notas').select(COLUNAS).order('atualizado_em',{ascending:false}).limit(1000).then(function(x){
+      // banco ainda sem a ligação com cliente: carrega como antes e esconde o campo
+      if(x.error&&/pessoa_id|processo_id/.test(x.error.message||'')){COLUNAS=COLUNAS_BASE;S.semVinculo=true;return _sb.from('notas').select(COLUNAS).order('atualizado_em',{ascending:false}).limit(1000);}
+      return x;}),
     _sb.from('notas_compartilhadas').select('nota_id,usuario_id,pode_editar'),
     _sb.from('notas_credenciais').select('id,nota_id,ordem,nome,login,link,tem_senha').order('ordem')
   ]);
@@ -292,7 +307,26 @@ async function carregar(){
   S.notas=r[0].data||[];
   S.comp={};(r[1].data||[]).forEach(function(c){(S.comp[c.nota_id]=S.comp[c.nota_id]||[]).push(c);});
   S.creds={};(r[2].data||[]).forEach(function(c){(S.creds[c.nota_id]=S.creds[c.nota_id]||[]).push(c);});
+  await carregarVinculos(S.notas);
   return true;
+}
+// nomes dos clientes e números dos processos ligados às notas (só os que faltam)
+async function carregarVinculos(lista){
+  if(S.semVinculo)return;
+  var pids={},prids={};
+  (lista||[]).forEach(function(n){if(n.pessoa_id&&!S.cli[n.pessoa_id])pids[n.pessoa_id]=1;if(n.processo_id&&!S.procs[n.processo_id])prids[n.processo_id]=1;});
+  var pp=Object.keys(pids),pr=Object.keys(prids);
+  try{
+    if(pr.length){var a=await _sb.from('processos').select('id,numero_processo_cnj,pessoa_id').in('id',pr);(a.data||[]).forEach(function(x){S.procs[x.id]={numero:x.numero_processo_cnj||'',pessoa_id:x.pessoa_id};if(x.pessoa_id&&!S.cli[x.pessoa_id]&&pp.indexOf(x.pessoa_id)<0)pp.push(x.pessoa_id);});}
+    if(pp.length){var b=await _sb.from('pessoas').select('id,nome_completo').in('id',pp);(b.data||[]).forEach(function(x){S.cli[x.id]=x.nome_completo;});}
+  }catch(e){}
+}
+function hrefFicha(n){var pid=n.pessoa_id||((S.procs[n.processo_id]||{}).pessoa_id);return 'ficha_cliente_padrao_metalico_FINAL.html?'+(n.processo_id?'processo_id='+encodeURIComponent(n.processo_id):'pessoa_id='+encodeURIComponent(pid||''));}
+function nomeCliente(n){var pid=n.pessoa_id||((S.procs[n.processo_id]||{}).pessoa_id);return (pid&&S.cli[pid])||'Cliente';}
+function chipCliente(n){
+  if(S.semVinculo||(!n.pessoa_id&&!n.processo_id))return '';
+  var pr=n.processo_id&&S.procs[n.processo_id];
+  return '<a class="chip cli" href="'+esc(hrefFicha(n))+'" data-ficha title="Abrir a ficha do cliente'+(pr&&pr.numero?' · processo '+esc(pr.numero):'')+'">👤 '+esc(nomeCliente(n))+'</a>';
 }
 
 /* ---------- filtros e lista ---------- */
@@ -304,7 +338,7 @@ function passa(n){
   if(S.etq&&(n.etiquetas||[]).indexOf(S.etq)<0)return false;
   var q=S.busca.trim().toLowerCase();
   if(q){
-    var alvo=[n.titulo,puro(n.conteudo),(S.creds[n.id]||[]).map(function(c){return c.nome+' '+c.login+' '+c.link;}).join(' '),(n.etiquetas||[]).join(' '),(n.itens||[]).map(function(i){return n.tipo==='telefones'?[i.numero,String(i.numero||'').replace(/\D/g,''),i.descricao,i.responsavel_id?nomeDe(i.responsavel_id):''].join(' '):i.texto;}).join(' ')].join(' ').toLowerCase();
+    var alvo=[n.titulo,puro(n.conteudo),(n.pessoa_id||n.processo_id)?nomeCliente(n)+' '+((S.procs[n.processo_id]||{}).numero||''):'',(S.creds[n.id]||[]).map(function(c){return c.nome+' '+c.login+' '+c.link;}).join(' '),(n.etiquetas||[]).join(' '),(n.itens||[]).map(function(i){return n.tipo==='telefones'?[i.numero,String(i.numero||'').replace(/\D/g,''),i.descricao,i.responsavel_id?nomeDe(i.responsavel_id):''].join(' '):i.texto;}).join(' ')].join(' ').toLowerCase();
     if(alvo.indexOf(q)<0)return false;
   }
   return true;
@@ -329,7 +363,7 @@ function previaNota(n){
 function dataCurta(iso){var d=new Date(iso);return isNaN(d)?'':d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
 function linha(n){
   var dono=ehMinha(n),comp=compCom(n);
-  var chips=(n.etiquetas||[]).map(function(e){return '<span class="chip">'+esc(e)+'</span>';}).join('');
+  var chips=chipCliente(n)+(n.etiquetas||[]).map(function(e){return '<span class="chip">'+esc(e)+'</span>';}).join('');
   if(!dono)chips+='<span class="chip comp">de '+esc(primeiro(n.dono_id))+(podeEditar(n)?' · pode editar':' · só ver')+'</span>';
   else if(comp.length)chips+='<span class="chip comp">com '+comp.length+(comp.length>1?' pessoas':' pessoa')+'</span>';
   return '<article class="nota-lin'+(S.vistos[n.id]?'':' nova')+'" data-id="'+esc(n.id)+'" data-cor="'+esc(n.cor)+'" tabindex="0"'+(dono&&S.modo==='minha'?' data-arrastavel':'')+'>'+
@@ -363,7 +397,7 @@ function cartao(n){
       (n.conteudo?'<div style="margin-top:6px;color:var(--muted)">'+SagaTexto.html(n.conteudo)+'</div>':'')+'</div>';
   }
   var dono=ehMinha(n),comp=compCom(n);
-  var chips=(n.etiquetas||[]).map(function(e){return '<span class="chip">'+esc(e)+'</span>';}).join('');
+  var chips=chipCliente(n)+(n.etiquetas||[]).map(function(e){return '<span class="chip">'+esc(e)+'</span>';}).join('');
   if(!dono)chips+='<span class="chip comp">de '+esc(primeiro(n.dono_id))+(podeEditar(n)?' · pode editar':' · só ver')+'</span>';
   else if(comp.length)chips+='<span class="chip comp">com '+comp.length+(comp.length>1?' pessoas':' pessoa')+'</span>';
   var acoes=acoesHtml(n);
@@ -441,6 +475,7 @@ async function sairDaNota(n){
 }
 $('quadro').addEventListener('click',async function(e){
   if(S.arrastou||document.body.classList.contains('arrastando-notas')){e.preventDefault();e.stopPropagation();return;}
+  var fx=e.target.closest('a[data-ficha]');if(fx){e.preventDefault();e.stopPropagation();if(window.sagaIrPara)sagaIrPara(fx.getAttribute('href'));else location.href=fx.getAttribute('href');return;}
   var card=e.target.closest('.nota,.nota-lin');if(!card)return;
   var n=S.notas.find(function(x){return x.id===card.dataset.id;});if(!n)return;
   var ac=e.target.closest('[data-a]');
@@ -625,7 +660,7 @@ function gerarSenha(){
 function abrirNota(n,tipo){
   var novo=!n,pode=novo||podeEditar(n),dono=novo||ehMinha(n);
   S.ed={id:n?n.id:null,tipo:n?n.tipo:tipo,titulo:n?n.titulo:'',conteudo:n?n.conteudo:'',itens:n?(n.itens||[]).map(function(i){return n.tipo==='telefones'?{numero:i.numero||'',responsavel_id:i.responsavel_id||'',descricao:i.descricao||''}:{texto:i.texto,ok:!!i.ok};}):[],
-    creds:n?(S.creds[n.id]||[]).map(function(c){return {id:c.id,nome:c.nome,login:c.login,link:c.link,tem_senha:!!c.tem_senha,senha:'',senhaSuja:false,senhaLida:false,ver:false,travada:!!c.tem_senha};}):[],cor:n?n.cor:'padrao',etiquetas:n?(n.etiquetas||[]).slice():[],pode:pode,dono:dono,sujo:false};
+    creds:n?(S.creds[n.id]||[]).map(function(c){return {id:c.id,nome:c.nome,login:c.login,link:c.link,tem_senha:!!c.tem_senha,senha:'',senhaSuja:false,senhaLida:false,ver:false,travada:!!c.tem_senha};}):[],cor:n?n.cor:'padrao',etiquetas:n?(n.etiquetas||[]).slice():[],pode:pode,dono:dono,sujo:false,pessoa_id:n?n.pessoa_id||null:null,processo_id:n?n.processo_id||null:null};
   var e=S.ed,m=$('mdNota');
   m.dataset.cor=e.cor;m.style.maxWidth=(temCreds(e.tipo)||e.tipo==='telefones')?'680px':'';
   var corpo='';
@@ -644,6 +679,8 @@ function abrirNota(n,tipo){
     '<div class="aviso-senha">As senhas ficam criptografadas no sistema. Se você compartilhar esta nota, quem receber poderá ver as senhas.</div>';
   var corBtn=dono?'<div class="cor-btn"><button type="button" id="corBtn" aria-haspopup="menu" aria-expanded="false" title="Cor da nota"><span class="bola" id="corBola" style="--c:'+(CORHEX[e.cor]||'transparent')+'"></span>Cor ▾</button><div class="cor-menu" id="corMenu" role="menu">'+CORES.map(function(c){return '<button type="button" role="menuitem" data-cor="'+c[0]+'" class="'+(e.cor===c[0]?'on':'')+'"><span class="bola" style="--c:'+(CORHEX[c[0]]||'transparent')+'"></span>'+c[1]+'</button>';}).join('')+'</div></div>':'';
   var etq=dono?'<div class="campo"><label>Etiquetas</label><div class="etq-ed" id="edEtq"></div></div>':'';
+  // cliente ou processo ligado (só o dono muda; quem recebeu a nota vê o cliente)
+  if(!S.semVinculo&&(dono||e.pessoa_id||e.processo_id))etq+='<div class="campo"><label>Cliente ou processo (opcional)</label><div class="vinc-ed" id="edVinc"></div></div>';
   m.innerHTML='<div class="md-cab"><input type="text" id="edTitulo" placeholder="'+(e.tipo==='senha'?'Título da nota (ex.: Acessos dos tribunais)':e.tipo==='emails'?'Título (ex.: E-mails funcionais da equipe)':e.tipo==='telefones'?'Título (ex.: Telefones do escritório)':'Título')+'" maxlength="200"'+(pode?'':' readonly')+'><span class="tipo" style="font-size:10px;font-weight:700;color:var(--muted)">'+TIPO_NOME[e.tipo].toUpperCase()+'</span>'+corBtn+'</div>'+
     '<div class="md-corpo">'+corpo+etq+(pode?'':'<div class="somente-leitura-aviso">Você pode ver esta nota, mas não alterá-la.</div>')+'</div>'+
     '<div class="md-rod"><div class="esq">'+(dono&&!novo?'<button class="btn" type="button" id="btComp">👥 Compartilhar</button><button class="btn" type="button" id="btArq">'+(n.arquivada?'Desarquivar':'Arquivar')+'</button><button class="btn perigo" type="button" id="btDel">Apagar</button>':'')+(!dono?'<button class="btn" type="button" id="btSair">Parar de ver</button>':'')+'</div>'+
@@ -654,9 +691,47 @@ function abrirNota(n,tipo){
   if(temCreds(e.tipo)){if(!e.creds.length&&pode)e.creds.push(novaCred());desenharCreds();}
   if(e.tipo==='telefones'){if(!e.itens.length&&pode)e.itens.push(novoTel());desenharTels();}
   if(dono)desenharEtqEd();
+  desenharVinc();
   ligarJanela();
   $('moNota').classList.add('aberto');
   setTimeout(function(){var f=novo?$('edTitulo'):null;if(f)f.focus();},50);
+}
+function desenharVinc(){
+  var box=$('edVinc'),e=S.ed;if(!box||!e)return;
+  if(e.pessoa_id||e.processo_id){
+    var pr=e.processo_id&&S.procs[e.processo_id];
+    box.innerHTML='<a class="chip cli grande" href="'+esc(hrefFicha(e))+'" data-ficha-ed title="Abrir a ficha do cliente">👤 '+esc(nomeCliente(e))+(pr&&pr.numero?' · '+esc(pr.numero):'')+'</a>'+
+      (e.dono?'<button type="button" class="btn vinc-tirar" data-vinc-tirar title="Tirar a ligação com o cliente">Desligar</button>':'');
+    return;
+  }
+  if(!e.dono){box.innerHTML='';return;}
+  box.innerHTML='<input type="text" id="edVincBusca" placeholder="Digite o nome do cliente, o CPF ou o número do processo" autocomplete="off"><div class="vinc-res" id="edVincRes" hidden></div>';
+}
+var _vincEspera=null,_vincPedido=0;
+async function buscarVinc(q){
+  var res=$('edVincRes');if(!res)return;
+  q=String(q||'').trim();if(q.length<3){res.hidden=true;res.innerHTML='';return;}
+  var meu=++_vincPedido,dig=q.replace(/\D/g,''),itens=[];
+  try{
+    var pedidos=[_sb.from('pessoas').select('id,nome_completo,cpf').ilike('nome_completo','%'+q.replace(/[%_,()]/g,' ')+'%').order('nome_completo').limit(8)];
+    if(dig.length===11)pedidos.push(_sb.from('pessoas').select('id,nome_completo,cpf').in('cpf',[dig,dig.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4')]).limit(3));
+    if(dig.length>=5)pedidos.push(_sb.from('processos').select('id,numero_processo_cnj,pessoa_id,pessoa:pessoas(nome_completo)').ilike('numero_processo_cnj','%'+q.replace(/[%_,()]/g,'')+'%').limit(6));
+    var r=await Promise.all(pedidos);if(meu!==_vincPedido)return;
+    var vistos={};
+    r.forEach(function(x,k){(x.data||[]).forEach(function(d){
+      if(d.numero_processo_cnj!==undefined){itens.push({tipo:'proc',id:d.id,pessoa_id:d.pessoa_id,numero:d.numero_processo_cnj||'',nome:(d.pessoa||{}).nome_completo||''});}
+      else if(!vistos[d.id]){vistos[d.id]=1;itens.push({tipo:'pes',id:d.id,nome:d.nome_completo,cpf:d.cpf});}
+    });});
+  }catch(err){itens=[];}
+  S.vincOpcoes=itens;
+  res.innerHTML=itens.length?itens.map(function(o,i){return '<button type="button" data-vinc="'+i+'">'+(o.tipo==='proc'?'<b>'+esc(o.numero)+'</b> · '+esc(o.nome||'cliente'):'<b>'+esc(o.nome)+'</b>'+(o.cpf?' · CPF ...'+esc(String(o.cpf).replace(/\D/g,'').slice(-2)):''))+'</button>';}).join(''):'<div class="vinc-nada">Nada encontrado.</div>';
+  res.hidden=false;
+}
+function escolherVinc(o){
+  var e=S.ed;if(!e||!o)return;
+  if(o.tipo==='proc'){e.processo_id=o.id;e.pessoa_id=o.pessoa_id||null;S.procs[o.id]={numero:o.numero,pessoa_id:o.pessoa_id};if(o.pessoa_id&&o.nome)S.cli[o.pessoa_id]=o.nome;}
+  else{e.pessoa_id=o.id;e.processo_id=null;S.cli[o.id]=o.nome;}
+  e.sujo=true;desenharVinc();
 }
 function novaCred(){return {id:null,nome:'',login:'',link:'',tem_senha:false,senha:'',senhaSuja:false,senhaLida:false,ver:false};}
 function desenharCreds(){
@@ -781,6 +856,18 @@ function ligarJanela(){
       if(ev.key!=='Enter'&&ev.key!==',')return;var t=ev.target;if(t.id!=='edNovaEtq')return;ev.preventDefault();juntarEtiqueta(t.value);var nn=$('edNovaEtq');if(nn)nn.focus();
     });
   }
+  var vinc=$('edVinc');
+  if(vinc){
+    vinc.addEventListener('input',function(ev){if(ev.target.id!=='edVincBusca')return;clearTimeout(_vincEspera);var v=ev.target.value;_vincEspera=setTimeout(function(){buscarVinc(v);},250);});
+    vinc.addEventListener('click',function(ev){
+      var b=ev.target.closest('[data-vinc]');if(b){escolherVinc((S.vincOpcoes||[])[+b.dataset.vinc]);return;}
+      if(ev.target.closest('[data-vinc-tirar]')){e.pessoa_id=null;e.processo_id=null;e.sujo=true;desenharVinc();var i=$('edVincBusca');if(i)i.focus();return;}
+      var a=ev.target.closest('a[data-ficha-ed]');
+      if(a){ev.preventDefault();var url=a.getAttribute('href'),ir=function(){fecharNota(true);if(window.sagaIrPara)sagaIrPara(url);else location.href=url;};
+        if(e.sujo&&window.sagaConfirmar)sagaConfirmar('Abrir a ficha do cliente','A nota tem mudanças que ainda não foram salvas. Sair mesmo assim?','Sair sem salvar').then(function(ok){if(ok)ir();});else ir();}
+    });
+    vinc.addEventListener('keydown',function(ev){if(ev.target.id==='edVincBusca'&&ev.key==='Enter'){ev.preventDefault();var o=(S.vincOpcoes||[])[0];if(o&&!$('edVincRes').hidden)escolherVinc(o);}});
+  }
   $('btFechar').onclick=function(){fecharNota();};
   if($('btSalvar'))$('btSalvar').onclick=salvarNota;
   var n=e.id?S.notas.find(function(x){return x.id===e.id;}):null;
@@ -806,7 +893,7 @@ async function salvarNota(){
   if(vazio){fecharNota(true);return;}
   btn.disabled=true;
   var campos={titulo:e.titulo.trim(),conteudo:conteudo,itens:itens};
-  if(e.dono){campos.cor=e.cor;campos.etiquetas=e.etiquetas;}
+  if(e.dono){campos.cor=e.cor;campos.etiquetas=e.etiquetas;if(!S.semVinculo){campos.pessoa_id=e.pessoa_id||null;campos.processo_id=e.processo_id||null;}}
   var id=e.id,r;
   if(id){r=await _sb.from('notas').update(campos).eq('id',id).select(COLUNAS).single();}
   else{campos.tipo=e.tipo;campos.ordem=-Date.now()/1000;r=await _sb.from('notas').insert(campos).select(COLUNAS).single();}
@@ -867,7 +954,15 @@ async function init(){
   var pp=await _sb.from('usuarios').select('id,nome_completo,ativo');(pp.data||[]).forEach(function(p){S.pessoas[p.id]=p;});
   if(!(await carregar()))return;
   desenhar();
-  var id=new URLSearchParams(location.search).get('nota');
+  var qs=new URLSearchParams(location.search),nova=qs.get('nova');
+  if(nova&&TIPO_NOME[nova]){
+    var vp=qs.get('pessoa_id'),vpr=qs.get('processo_id');
+    await carregarVinculos([{pessoa_id:vp,processo_id:vpr}]);
+    abrirNota(null,nova);
+    if(S.ed&&!S.semVinculo&&(vp||vpr)){S.ed.pessoa_id=vp||((S.procs[vpr]||{}).pessoa_id)||null;S.ed.processo_id=vpr||null;desenharVinc();}
+    return;
+  }
+  var id=qs.get('nota');
   if(id){var n=S.notas.find(function(x){return x.id===id;});if(n){if(n.arquivada){S.filtro='arq';document.querySelectorAll('#pillsFiltro .pill').forEach(function(p){p.classList.toggle('active',p.dataset.f==='arq');});desenhar();}abrirNota(n);}else toast('Nota não encontrada (ou você não tem acesso).','erro');}
 }
 init().catch(function(e){toast('Erro ao abrir as notas: '+esc(e.message||''),'erro');});
