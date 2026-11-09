@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090229"></script>
+<script src="saga_guard.js?v=202611090232"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -340,15 +340,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611090229"></script>
-<script src="saga_fichas.js?v=202611090229"></script>
-<script src="saga_teses.js?v=202611090229"></script>
-<script src="saga_mencoes.js?v=202611090229"></script>
-<script src="saga_texto.js?v=202611090229"></script>
-<script src="saga_partes.js?v=202611090229"></script>
-<script src="saga_etiquetas.js?v=202611090229"></script>
-<script src="saga_planilha.js?v=202611090229"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611090229">
+<script src="saga_ui.js?v=202611090232"></script>
+<script src="saga_fichas.js?v=202611090232"></script>
+<script src="saga_teses.js?v=202611090232"></script>
+<script src="saga_mencoes.js?v=202611090232"></script>
+<script src="saga_texto.js?v=202611090232"></script>
+<script src="saga_partes.js?v=202611090232"></script>
+<script src="saga_etiquetas.js?v=202611090232"></script>
+<script src="saga_planilha.js?v=202611090232"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611090232">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -3249,7 +3249,9 @@ function prepararTarefaEmbutida(){
   const frame=document.createElement('iframe');
   frame.title='Nova tarefa';
   frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;opacity:0;transition:opacity 280ms '+TAREFA_CURVA;
-  frame.src='minhas_tarefas.html?embed=1&processo='+encodeURIComponent(processo.id);
+  // pede a página com a versão atual dos arquivos (o Ctrl+Shift+R não atualiza o que abre por dentro; sem isso o navegador podia usar a versão antiga por até 10 min)
+  const versao=((document.querySelector('script[src*="saga_ui.js?v="]')||{}).src||'').split('?v=')[1]||'';
+  frame.src='minhas_tarefas.html?embed=1&processo='+encodeURIComponent(processo.id)+(versao?'&v='+encodeURIComponent(versao):'');
   ov.appendChild(espera);ov.appendChild(frame);
   if(!document.getElementById('faGiraCss')){const st=document.createElement('style');st.id='faGiraCss';st.textContent='@keyframes faGira{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
   document.body.appendChild(ov);
@@ -4579,7 +4581,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611090229"></script>
-<script src="saga_ficha_atividades.js?v=202611090229"></script>
+<script src="saga_localizacao.js?v=202611090232"></script>
+<script src="saga_ficha_atividades.js?v=202611090232"></script>
 </body>
 </html>
