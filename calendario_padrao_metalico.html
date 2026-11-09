@@ -393,6 +393,23 @@
   [data-theme="light"] .modal-gen-caixa,
   [data-theme="light"] .dropdown-tipo-lista,
   [data-theme="light"] .typeahead-lista{background:linear-gradient(145deg,var(--panel-solid),var(--navy-1));}
+  /* Agenda do escritório (09/11): qual agenda, quem vê, repetição e sinais no evento */
+  .header-acoes-ag{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .campo-modal select,.campo-modal input[type="date"]{width:100%;background:var(--panel);border:1px solid var(--border-soft);border-radius:9px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'Montserrat',sans-serif;outline:none;}
+  .campo-modal select:focus,.campo-modal input[type="date"]:focus{border-color:var(--gold-light);}
+  .campo-modal select:disabled{opacity:.5;cursor:not-allowed;}
+  .campo-modal input[type="date"]{color-scheme:dark;}
+  [data-theme="light"] .campo-modal input[type="date"]{color-scheme:light;}
+  .seg{display:inline-flex;gap:4px;padding:4px;border-radius:11px;background:var(--panel);border:1px solid var(--border-soft);flex-wrap:wrap;}
+  .seg button{border:1px solid transparent;background:none;font:inherit;font-size:12px;padding:7px 13px;border-radius:8px;color:var(--muted);cursor:pointer;}
+  .seg button:disabled{opacity:.45;cursor:not-allowed;}
+  .dica-campo{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.45;}
+  .sel-pessoa-ag{height:34px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel);color:var(--text);font:inherit;font-size:12px;padding:0 10px;max-width:220px;}
+  .sel-pessoa-ag[hidden]{display:none;}
+  .ev-marca{display:inline-flex;align-items:center;margin-left:4px;opacity:.75;vertical-align:-1px;}
+  .ev-marca svg{width:10px;height:10px;}
+  .aviso-serie{font-size:11.5px;color:var(--muted);background:color-mix(in srgb,var(--gold) 8%,transparent);border:1px solid color-mix(in srgb,var(--gold) 25%,transparent);border-radius:9px;padding:9px 11px;margin:0 0 12px;line-height:1.45;}
+  .aviso-serie[hidden]{display:none;}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611091226">
 </head>
@@ -414,13 +431,19 @@
     <div class="header-pagina">
       <div>
         <h1>Calendário</h1>
-        <div class="contagem">Compromissos do escritório e tarefas de <strong id="nomeUsuarioHeader">...</strong></div>
+        <div class="contagem"><span id="subMinha">Seus compromissos e tarefas, <strong id="nomeUsuarioHeader">...</strong></span><span id="subEscritorio" hidden>Eventos que todo o escritório vê. Assim ninguém marca outra coisa no mesmo horário.</span></div>
+      </div>
+      <div class="header-acoes-ag">
+      <div class="botoes-view" id="escopoAgenda" role="group" aria-label="Qual agenda">
+        <div class="btn-view" id="btnEscopoMinha" data-escopo="minha" title="Seus compromissos (particulares e do escritório) e suas tarefas">Minha agenda</div>
+        <div class="btn-view" id="btnEscopoEscritorio" data-escopo="escritorio" title="Eventos que todo o escritório vê">Agenda do escritório</div>
       </div>
       <div class="botoes-view">
         <div class="btn-view" id="btnViewMes">Mês</div>
         <div class="btn-view" id="btnViewSemana">Semana</div>
         <div class="btn-view" id="btnViewDia">Dia</div>
         <div class="btn-view" id="btnViewLista">Lista</div>
+      </div>
       </div>
     </div>
 
@@ -435,6 +458,7 @@
         </button>
       </div>
       <button class="btn-hoje" id="btnHoje">Hoje</button>
+      <select class="sel-pessoa-ag" id="filtroPessoaAg" hidden aria-label="Ver os eventos de uma pessoa"><option value="">Todas as pessoas</option></select>
       <button class="btn-novo-comp" id="btnNovoCompromisso">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         Novo Compromisso
@@ -493,7 +517,8 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="5" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="19" y1="5" x2="5" y2="19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       </button>
     </div>
-    <div class="aviso-leitura" id="avisoLeitura" style="display:none;">Voce esta visualizando um compromisso criado por outro colaborador. Apenas o criador pode edita-lo.</div>
+    <div class="aviso-leitura" id="avisoLeitura" style="display:none;">Você está vendo um compromisso de outro colaborador. Só quem criou, a pessoa da agenda e o Jurídico (nos eventos do escritório) podem mudar.</div>
+    <div class="aviso-serie" id="avisoSerie" hidden></div>
     <div class="campo-modal">
       <label>Titulo</label>
       <input type="text" id="compTitulo" placeholder="Ex.: Audiencia - Cliente Fulano" maxlength="200">
@@ -518,6 +543,22 @@
         <input type="datetime-local" id="compFim">
       </div>
     </div>
+    <div class="grid-2-campos">
+      <div class="campo-modal">
+        <label for="compRepete">Repetir</label>
+        <select id="compRepete">
+          <option value="nao">Não repete</option>
+          <option value="diaria">Todo dia</option>
+          <option value="semanal">Toda semana</option>
+          <option value="mensal">Todo mês</option>
+          <option value="anual">Todo ano</option>
+        </select>
+      </div>
+      <div class="campo-modal" id="campoRepeteAte" hidden>
+        <label for="compRepeteAte">Até (opcional)</label>
+        <input type="date" id="compRepeteAte">
+      </div>
+    </div>
     <div class="campo-modal">
       <label>Local ou link</label>
       <input type="text" id="compLocal" placeholder="Ex.: Rua das Flores 42, sala 3 ou https://meet.google.com/...">
@@ -535,8 +576,16 @@
       <textarea id="compObservacao" placeholder="Informacoes adicionais..."></textarea>
     </div>
     <div class="campo-modal" id="campoAtribuir">
-      <label for="compResponsavel">Agenda de (atribuir a)</label>
+      <label for="compResponsavel">Agenda de (para quem é)</label>
       <select id="compResponsavel"></select>
+    </div>
+    <div class="campo-modal" id="campoVisibilidade">
+      <label>Quem vê</label>
+      <div class="seg" id="segVisibilidade" role="group" aria-label="Quem vê este evento">
+        <button type="button" data-vis="particular" class="active" aria-pressed="true">Só eu (particular)</button>
+        <button type="button" data-vis="escritorio" aria-pressed="false">Agenda do escritório</button>
+      </div>
+      <div class="dica-campo" id="dicaVisibilidade"></div>
     </div>
     <div class="bloco-pedido" id="blocoPedido" style="display:none;">
       <div id="pedidoTexto"></div>
@@ -639,6 +688,13 @@ var painelDiaAtual = null; // data (Date) do painel lateral aberto
 var _cbExcluir     = null;
 var _debounceTimer = null;
 var anoSeletorRapido = dataAtual.getFullYear();
+// Agenda do escritório (09/11): qual agenda está aberta, filtro de pessoa e quem pode editar os eventos do escritório
+var escopoAgenda = (function(){ try { return localStorage.getItem('saga-agenda-escopo') === 'escritorio' ? 'escritorio' : 'minha'; } catch(e) { return 'minha'; } })();
+var filtroPessoaAg = '';
+var podeEditarEscritorio = false;
+var visSelecionada = 'particular';
+var compAbertoAg = null; // compromisso aberto na janela (num evento que se repete: a data clicada, com _serie)
+var COLUNAS_COMP = 'id, titulo, tipo, data_hora_inicio, data_hora_fim, local_ou_link, observacao, criado_por_id, processo_id, responsavel_id, concluido, concluido_em, comentario_conclusao, situacao, visibilidade, repete, repete_ate, ocorrencias_concluidas';
 
 var NOMES_MESES  = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 var NOMES_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
@@ -790,6 +846,9 @@ async function inicializar() {
     var pessoas = await _sb.from('usuarios').select('id,nome_completo');
     (pessoas.data || []).forEach(function(u) { nomesRoscasAgenda.set(u.id,u.nome_completo); });
     nomesRoscasAgenda.set(meuPerfilId,meuNome);
+    // quem tem "editar eventos do escritório" (Jurídico; o administrador tem todas)
+    try { var pm = await _sb.rpc('minhas_permissoes'); podeEditarEscritorio = !pm.error && Array.isArray(pm.data) && pm.data.indexOf('compromissos.editar_escritorio') >= 0; } catch(e) {}
+    prepararEscopoAgenda(pessoas.data || []);
     // Veio de uma notificacao: abre o dia do compromisso e o compromisso
     var paramsUrl = new URLSearchParams(location.search);
     var dataUrl = paramsUrl.get('data'), compUrl = paramsUrl.get('compromisso');
@@ -801,7 +860,12 @@ async function inicializar() {
       history.replaceState(null,'',location.pathname);
       var compAchado = compromissos.find(function(c){ return c.id === compUrl; });
       if (compAchado) abrirModalCompromisso(compAchado);
-      else showToast('Esse compromisso não existe mais.', 'erro');
+      else {
+        // evento do escritório de outra pessoa (aviso no sino) ou fora do período: busca direto
+        var rcUrl = await _sb.from('compromissos').select(COLUNAS_COMP).eq('id', compUrl).maybeSingle();
+        if (rcUrl.data) abrirModalCompromisso(rcUrl.data);
+        else showToast('Esse compromisso não existe mais.', 'erro');
+      }
     }
 
   } catch(e) {
@@ -877,18 +941,28 @@ async function carregarEventos(transicao) {
   if (!calendarioJaRenderizado) mostrarSkeletonCalendario();
 
   try {
-    var rComp = await _sb.from('compromissos')
-      .select('id, titulo, tipo, data_hora_inicio, data_hora_fim, local_ou_link, observacao, criado_por_id, processo_id, responsavel_id, concluido, concluido_em, comentario_conclusao, situacao')
-      .or('criado_por_id.eq.' + meuPerfilId + ',responsavel_id.eq.' + meuPerfilId)
-      .gte('data_hora_inicio', inicio.toISOString())
-      .lte('data_hora_inicio', fim.toISOString())
-      .order('data_hora_inicio');
-
+    // Minha agenda: o que eu criei ou é para mim (particular ou do escritório). Agenda do escritório: os eventos que todos veem.
+    // Eventos que se repetem vêm à parte (começaram antes do período) e viram uma data por repetição.
+    var baseComp = function() {
+      var q = _sb.from('compromissos').select(COLUNAS_COMP);
+      if (escopoAgenda === 'escritorio') {
+        q = q.eq('visibilidade', 'escritorio');
+        if (filtroPessoaAg) q = q.or('criado_por_id.eq.' + filtroPessoaAg + ',responsavel_id.eq.' + filtroPessoaAg);
+      } else q = q.or('criado_por_id.eq.' + meuPerfilId + ',responsavel_id.eq.' + meuPerfilId);
+      return q;
+    };
+    var rsComp = await Promise.all([
+      baseComp().eq('repete', 'nao').gte('data_hora_inicio', inicio.toISOString()).lte('data_hora_inicio', fim.toISOString()).order('data_hora_inicio'),
+      baseComp().neq('repete', 'nao').lte('data_hora_inicio', fim.toISOString())
+    ]);
+    var rComp = rsComp[0];
     if (rComp.error) throw rComp.error;
+    if (rsComp[1].error) throw rsComp[1].error;
     if (versao !== versaoCarregamentoCalendario) return;
-    var novosCompromissos = rComp.data || [];
+    var novosCompromissos = (rComp.data || []).concat(expandirRepeticoes(rsComp[1].data || [], inicio, fim))
+      .sort(function(a, b) { return String(a.data_hora_inicio).localeCompare(String(b.data_hora_inicio)); });
 
-    var rTar = await _sb.from('tarefas')
+    var rTar = escopoAgenda === 'escritorio' ? { data: [] } : await _sb.from('tarefas')
       .select('id, titulo, tipo, data_prazo, responsavel_id, concluida')
       .eq('responsavel_id', meuPerfilId)
       .eq('concluida', false)
@@ -917,6 +991,124 @@ async function carregarEventos(transicao) {
   renderizarLegenda();
   renderizarView(transicao);
   atualizarContagem();
+}
+
+// ================================================================
+// AGENDA DO ESCRITÓRIO (09/11): qual agenda, repetições e sinais no evento
+// ================================================================
+function diaLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function nomeDiaSemana(d) { return ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'][d.getDay()]; }
+// data da repetição k (todo mês no mesmo dia; dia 31 cai no último dia dos meses curtos; 29/02 cai em 28/02)
+function dataRepeticao(base, repete, k) {
+  var y = base.getFullYear(), m = base.getMonth(), d = base.getDate(), h = base.getHours(), mi = base.getMinutes();
+  if (repete === 'diaria') return new Date(y, m, d + k, h, mi);
+  if (repete === 'semanal') return new Date(y, m, d + 7 * k, h, mi);
+  if (repete === 'mensal') { var ultM = new Date(y, m + k + 1, 0).getDate(); return new Date(y, m + k, Math.min(d, ultM), h, mi); }
+  var ultA = new Date(y + k, m + 1, 0).getDate(); return new Date(y + k, m, Math.min(d, ultA), h, mi);
+}
+function expandirRepeticoes(lista, inicio, fim) {
+  var saida = [];
+  lista.forEach(function(c) {
+    if (!c.repete || c.repete === 'nao') { saida.push(c); return; }
+    var base = new Date(c.data_hora_inicio), dur = c.data_hora_fim ? (new Date(c.data_hora_fim) - base) : 0;
+    var ate = c.repete_ate ? new Date(c.repete_ate + 'T23:59:59') : null, feitas = c.ocorrencias_concluidas || [];
+    var k = 0; // começa perto do período, sem percorrer anos de repetição
+    if (c.repete === 'diaria') k = Math.floor((inicio - base) / 864e5) - 1;
+    else if (c.repete === 'semanal') k = Math.floor((inicio - base) / (7 * 864e5)) - 1;
+    else if (c.repete === 'mensal') k = (inicio.getFullYear() - base.getFullYear()) * 12 + inicio.getMonth() - base.getMonth() - 1;
+    else k = inicio.getFullYear() - base.getFullYear() - 1;
+    k = Math.max(0, k);
+    for (var guarda = 0; guarda < 400; guarda++, k++) {
+      var d = dataRepeticao(base, c.repete, k);
+      if (d > fim || (ate && d > ate)) break;
+      var dFim = dur ? new Date(d.getTime() + dur) : null;
+      if ((dFim || d) < inicio) continue;
+      var dia = diaLocal(d);
+      saida.push(Object.assign({}, c, { data_hora_inicio: d.toISOString(), data_hora_fim: dFim ? dFim.toISOString() : null,
+        _serie: c, _dia: dia, concluido: feitas.indexOf(dia) >= 0, comentario_conclusao: null }));
+    }
+  });
+  return saida;
+}
+function rotuloRepete(c) {
+  var d = new Date((c._serie || c).data_hora_inicio);
+  if (c.repete === 'diaria') return 'todo dia';
+  if (c.repete === 'semanal') return 'toda semana (' + nomeDiaSemana(d) + ')';
+  if (c.repete === 'mensal') return 'todo mês, no dia ' + d.getDate();
+  if (c.repete === 'anual') return 'todo ano, em ' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+  return '';
+}
+function primeiroNomeAg(id) { var n = nomesRoscasAgenda.get(id) || ''; return n.split(' ')[0]; }
+// texto do evento: na agenda do escritório, o nome da pessoa vem antes
+function rotuloEvento(c) {
+  var t = c.titulo || 'Compromisso';
+  if (escopoAgenda === 'escritorio') { var p = primeiroNomeAg(c.responsavel_id || c.criado_por_id); if (p) t = p + ' · ' + t; }
+  return t;
+}
+var SVG_REPETE_AG = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 2l3 3-3 3M3 11V9a4 4 0 014-4h16M7 22l-3-3 3-3m17-3v2a4 4 0 01-4 4H1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var SVG_CADEADO_AG = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+function marcasEvento(c) {
+  return (c.visibilidade === 'particular' ? '<span class="ev-marca" title="Particular: só você e a pessoa da agenda veem">' + SVG_CADEADO_AG + '</span>' : '') +
+         (c.repete && c.repete !== 'nao' ? '<span class="ev-marca" title="Repete ' + escaparHtml(rotuloRepete(c)) + '">' + SVG_REPETE_AG + '</span>' : '');
+}
+// mostrar/esconder suave (respeita "Efeitos de movimento")
+function mostrarSuave(el, mostrar) {
+  if (!el || el.hidden === !mostrar) return;
+  if (window.sagaRecolher && el.closest('.modal-comp')) { window.sagaRecolher(el, !mostrar); return; }
+  el.hidden = !mostrar;
+  if (mostrar && !movimentoCalendarioReduzido.matches && el.animate) el.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.22,.78,.25,1)' });
+}
+function prepararEscopoAgenda(pessoas) {
+  var sel = document.getElementById('filtroPessoaAg');
+  sel.innerHTML = '<option value="">Todas as pessoas</option>' + pessoas.filter(function(u) { return u.nome_completo; })
+    .sort(function(a, b) { return a.nome_completo.localeCompare(b.nome_completo, 'pt-BR'); })
+    .map(function(u) { return '<option value="' + escaparHtml(u.id) + '">' + escaparHtml(u.nome_completo) + '</option>'; }).join('');
+  sel.addEventListener('change', function() { filtroPessoaAg = sel.value; carregarEventos('visao'); });
+  ['btnEscopoMinha', 'btnEscopoEscritorio'].forEach(function(id) {
+    var b = document.getElementById(id);
+    b.addEventListener('click', function() { trocarEscopoAgenda(b.dataset.escopo); });
+  });
+  aplicarEscopoAgendaUI();
+}
+function aplicarEscopoAgendaUI() {
+  document.getElementById('btnEscopoMinha').className = 'btn-view' + (escopoAgenda === 'minha' ? ' ativo' : '');
+  document.getElementById('btnEscopoEscritorio').className = 'btn-view' + (escopoAgenda === 'escritorio' ? ' ativo' : '');
+  mostrarSuave(document.getElementById('filtroPessoaAg'), escopoAgenda === 'escritorio');
+  document.getElementById('subMinha').hidden = escopoAgenda !== 'minha';
+  document.getElementById('subEscritorio').hidden = escopoAgenda !== 'escritorio';
+}
+function trocarEscopoAgenda(e) {
+  if (e === escopoAgenda) return;
+  escopoAgenda = e === 'escritorio' ? 'escritorio' : 'minha';
+  try { localStorage.setItem('saga-agenda-escopo', escopoAgenda); } catch(x) {}
+  aplicarEscopoAgendaUI();
+  // o destaque desliza primeiro; a agenda redesenha logo depois
+  setTimeout(function() { carregarEventos('visao'); }, 60);
+}
+// "Quem vê": particular ou agenda do escritório (ligado a processo vai sempre para o escritório)
+var compSomenteLeitura = false;
+function definirVisibilidade(v) {
+  visSelecionada = v === 'escritorio' ? 'escritorio' : 'particular';
+  atualizarVisibilidadeUI();
+}
+function atualizarVisibilidadeUI() {
+  var temProc = !!document.getElementById('compProcessoId').value;
+  if (temProc) visSelecionada = 'escritorio';
+  document.querySelectorAll('#segVisibilidade [data-vis]').forEach(function(b) {
+    var at = b.dataset.vis === visSelecionada;
+    b.classList.toggle('active', at); b.setAttribute('aria-pressed', at ? 'true' : 'false');
+    b.disabled = compSomenteLeitura || (temProc && b.dataset.vis === 'particular');
+  });
+  document.getElementById('dicaVisibilidade').textContent = temProc ? 'Ligado a processo: aparece na agenda do escritório para todos.'
+    : visSelecionada === 'escritorio' ? 'Todo o escritório vê este evento; o Jurídico pode ajustar. Assim ninguém marca outra coisa para a mesma pessoa nesse horário.'
+    : 'Particular: só você e a pessoa da agenda veem. Se um colega for marcar algo para ela no mesmo horário, ele só vê que o horário está ocupado.';
+}
+function atualizarRepeticaoUI() {
+  var sel = document.getElementById('compRepete'), ini = document.getElementById('compInicio').value, d = ini ? new Date(ini) : null;
+  sel.querySelector('[value="semanal"]').textContent = d ? 'Toda semana (' + nomeDiaSemana(d) + ')' : 'Toda semana';
+  sel.querySelector('[value="mensal"]').textContent = d ? 'Todo mês, no dia ' + d.getDate() : 'Todo mês';
+  sel.querySelector('[value="anual"]').textContent = d ? 'Todo ano, em ' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') : 'Todo ano';
+  mostrarSuave(document.getElementById('campoRepeteAte'), sel.value !== 'nao');
 }
 
 function mostrarSkeletonCalendario() {
@@ -1135,7 +1327,7 @@ function renderizarLista() {
       el.style.setProperty('--c', cor);
       var hora = formatarHora(c.data_hora_inicio), horaFim = c.data_hora_fim ? formatarHora(c.data_hora_fim) : '';
       el.innerHTML = '<span class="al-hora">' + escaparHtml(hora || 'Dia todo') + (horaFim && horaFim !== hora ? '<small>até ' + escaparHtml(horaFim) + '</small>' : '') + '</span>' +
-        '<span class="al-ponto"></span><span class="al-txt"><b>' + escaparHtml(c.titulo || 'Compromisso') + '</b><small>' + escaparHtml([nomeDoTipo(c.tipo), c.local_ou_link].filter(Boolean).join(' · ')) + '</small></span>' +
+        '<span class="al-ponto"></span><span class="al-txt"><b>' + escaparHtml(rotuloEvento(c)) + marcasEvento(c) + '</b><small>' + escaparHtml([nomeDoTipo(c.tipo), c.local_ou_link].filter(Boolean).join(' · ')) + '</small></span>' +
         (c.concluido ? '<span class="al-est ok">Concluído</span>' : c.situacao === 'solicitado' ? '<span class="al-est">Aguardando confirmação</span>' : '');
       el.addEventListener('click', function() { abrirModalCompromisso(c); });
       marcarEstadoEvento(el, c);
@@ -1239,7 +1431,9 @@ function renderizarMes() {
         el.style.background  = 'color-mix(in srgb,' + cor + ' 18%,transparent)';
         el.style.setProperty('--c', cor);
         el.appendChild(dot);
-        el.appendChild(document.createTextNode((formatarHora(item.obj.data_hora_inicio) ? formatarHora(item.obj.data_hora_inicio) + ' ' : '') + (item.obj.titulo || 'Compromisso')));
+        var txMes = document.createElement('span');
+        txMes.textContent = (formatarHora(item.obj.data_hora_inicio) ? formatarHora(item.obj.data_hora_inicio) + ' ' : '') + rotuloEvento(item.obj);
+        el.appendChild(txMes); el.insertAdjacentHTML('beforeend', marcasEvento(item.obj));
         el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalCompromisso(item.obj); });
         marcarEstadoEvento(el, item.obj);
       }
@@ -1351,7 +1545,7 @@ function renderizarGradeTemporal(wrap, numDias, dataInicio) {
       el.style.background = 'color-mix(in srgb,' + COR_TAREFA + ' 22%,transparent)';
       el.style.setProperty('--c', COR_TAREFA);
       el.style.border     = '1px solid color-mix(in srgb,' + COR_TAREFA + ' 35%,transparent)';
-      el.innerHTML = '<div class="hora-ev">Prazo</div><div class="titulo-ev">' + (t.titulo || 'Tarefa') + '</div>';
+      el.innerHTML = '<div class="hora-ev">Prazo</div><div class="titulo-ev">' + escaparHtml(t.titulo || 'Tarefa') + '</div>';
       el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalTarefa(t); });
       fundo.appendChild(el);
     });
@@ -1374,7 +1568,7 @@ function renderizarGradeTemporal(wrap, numDias, dataInicio) {
       el.style.background = 'color-mix(in srgb,' + cor + ' 22%,transparent)';
       el.style.setProperty('--c', cor);
       el.style.border     = '1px solid color-mix(in srgb,' + cor + ' 35%,transparent)';
-      el.innerHTML = '<div class="hora-ev">' + formatarHora(c.data_hora_inicio) + '</div><div class="titulo-ev">' + (c.titulo || 'Compromisso') + '</div>';
+      el.innerHTML = '<div class="hora-ev">' + formatarHora(c.data_hora_inicio) + '</div><div class="titulo-ev">' + escaparHtml(rotuloEvento(c)) + marcasEvento(c) + '</div>';
       el.addEventListener('click', function(e) { e.stopPropagation(); abrirModalCompromisso(c); });
       marcarEstadoEvento(el, c);
       fundo.appendChild(el);
@@ -1432,8 +1626,8 @@ function abrirPainelDia(date) {
     card.className = 'evento-card-painel';
     card.style.borderLeftColor = COR_TAREFA;
     card.innerHTML = '<div class="evento-card-hora" style="color:' + COR_TAREFA + ';">Prazo</div>' +
-      '<div class="evento-card-titulo">' + (t.titulo || 'Tarefa') + '</div>' +
-      '<div class="evento-card-detalhe">' + (t.tipo || 'Tarefa pessoal') + '</div>';
+      '<div class="evento-card-titulo">' + escaparHtml(t.titulo || 'Tarefa') + '</div>' +
+      '<div class="evento-card-detalhe">' + escaparHtml(t.tipo || 'Tarefa pessoal') + '</div>';
     card.addEventListener('click', function() { abrirModalTarefa(t); });
     lista.appendChild(card);
   });
@@ -1446,8 +1640,8 @@ function abrirPainelDia(date) {
     card.className = 'evento-card-painel';
     card.style.borderLeftColor = cor;
     card.innerHTML = '<div class="evento-card-hora" style="color:' + cor + ';">' + formatarHora(c.data_hora_inicio) + (c.data_hora_fim ? ' - ' + formatarHora(c.data_hora_fim) : '') + '</div>' +
-      '<div class="evento-card-titulo">' + (c.titulo || 'Compromisso') + '</div>' +
-      '<div class="evento-card-detalhe">' + nomeDoTipo(c.tipo) + (c.local_ou_link ? ' &middot; ' + c.local_ou_link : '') + '</div>';
+      '<div class="evento-card-titulo">' + escaparHtml(rotuloEvento(c)) + marcasEvento(c) + '</div>' +
+      '<div class="evento-card-detalhe">' + escaparHtml(nomeDoTipo(c.tipo)) + (c.local_ou_link ? ' &middot; ' + escaparHtml(c.local_ou_link) : '') + '</div>';
     card.addEventListener('click', function() { document.getElementById('painelDiaOverlay').classList.remove('aberto'); abrirModalCompromisso(c); });
     marcarEstadoEvento(card, c);
     lista.appendChild(card);
@@ -1673,12 +1867,22 @@ function limparModalComp() {
   document.getElementById('btnExcluirComp').style.display = 'none';
   document.getElementById('btnSalvarComp').style.display  = 'block';
   setCompReadOnly(false);
+  compAbertoAg = null;
+  document.getElementById('avisoSerie').hidden = true;
+  document.getElementById('compRepete').value = 'nao';
+  document.getElementById('compRepeteAte').value = '';
+  document.getElementById('campoRepeteAte').hidden = true;
+  // evento novo: particular na Minha agenda; na Agenda do escritório, já vai para o escritório
+  definirVisibilidade(escopoAgenda === 'escritorio' ? 'escritorio' : 'particular');
+  atualizarRepeticaoUI();
 }
 
 function setCompReadOnly(ro) {
-  ['compTitulo','compInicio','compFim','compLocal','compObservacao','compProcessoBusca'].forEach(function(id) {
+  ['compTitulo','compInicio','compFim','compLocal','compObservacao','compProcessoBusca','compRepete','compRepeteAte'].forEach(function(id) {
     document.getElementById(id).disabled = ro;
   });
+  compSomenteLeitura = !!ro;
+  atualizarVisibilidadeUI();
 }
 
 function abrirModalNovoCompromisso() {
@@ -1702,18 +1906,35 @@ function abrirModalNovoComDataHora(dataHora) {
 function abrirModalCompromisso(comp) {
   limparModalComp();
   editandoId = comp.id;
-  var eEuCriador = comp.criado_por_id === meuPerfilId || comp.responsavel_id === meuPerfilId;
+  compAbertoAg = comp;
+  // evento que se repete: a janela mostra a série (início, fim e repetição); concluir vale só para a data clicada
+  var serie = comp._serie || comp;
+  // edita: quem criou, a pessoa da agenda e, nos eventos do escritório, quem tem "editar eventos do escritório" (Jurídico)
+  var eEuCriador = comp.criado_por_id === meuPerfilId || comp.responsavel_id === meuPerfilId || (comp.visibilidade === 'escritorio' && podeEditarEscritorio);
 
   document.getElementById('modalCompTitulo').textContent = eEuCriador ? 'Editar Compromisso' : 'Compromisso';
   tipoSelecionado = comp.tipo;
   document.getElementById('dropTipoTexto').textContent = nomeDoTipo(comp.tipo) || comp.tipo || 'Selecionar tipo...';
   document.getElementById('compTitulo').value           = comp.titulo || '';
-  document.getElementById('compInicio').value           = toLocalDatetimeValue(new Date(comp.data_hora_inicio));
-  document.getElementById('compFim').value              = comp.data_hora_fim ? toLocalDatetimeValue(new Date(comp.data_hora_fim)) : '';
+  document.getElementById('compInicio').value           = toLocalDatetimeValue(new Date(serie.data_hora_inicio));
+  document.getElementById('compFim').value              = serie.data_hora_fim ? toLocalDatetimeValue(new Date(serie.data_hora_fim)) : '';
+  document.getElementById('compRepete').value           = serie.repete || 'nao';
+  document.getElementById('compRepeteAte').value        = serie.repete_ate || '';
+  document.getElementById('campoRepeteAte').hidden      = !serie.repete || serie.repete === 'nao';
+  definirVisibilidade(serie.visibilidade || 'particular');
+  atualizarRepeticaoUI();
+  if (comp._serie) {
+    var avS = document.getElementById('avisoSerie');
+    avS.textContent = 'Evento que se repete ' + rotuloRepete(serie) + ', desde ' + new Date(serie.data_hora_inicio).toLocaleDateString('pt-BR') +
+      (serie.repete_ate ? ' até ' + serie.repete_ate.split('-').reverse().join('/') : '') + '. Você abriu a data de ' + new Date(comp.data_hora_inicio).toLocaleDateString('pt-BR') +
+      ': o que mudar aqui vale para todas as datas; "concluído" vale só para esta.';
+    avS.hidden = false;
+  }
   document.getElementById('compLocal').value            = comp.local_ou_link || '';
   document.getElementById('compObservacao').value       = comp.observacao || '';
   // processo
   document.getElementById('compProcessoId').value   = comp.processo_id || '';
+  atualizarVisibilidadeUI();
 
   popularDropdownTipo(!eEuCriador);
 
@@ -1746,6 +1967,11 @@ function abrirModalCompromisso(comp) {
 }
 
 document.getElementById('btnNovoCompromisso').addEventListener('click', abrirModalNovoCompromisso);
+document.querySelectorAll('#segVisibilidade [data-vis]').forEach(function(b) {
+  b.addEventListener('click', function() { if (!b.disabled) definirVisibilidade(b.dataset.vis); });
+});
+document.getElementById('compRepete').addEventListener('change', atualizarRepeticaoUI);
+document.getElementById('compInicio').addEventListener('change', atualizarRepeticaoUI);
 
 document.getElementById('btnFecharModalComp').addEventListener('click', function() {
   document.getElementById('modalCompromisso').classList.remove('aberto');
@@ -1781,6 +2007,32 @@ document.getElementById('btnSalvarComp').addEventListener('click', async functio
   };
   var selResp = document.getElementById('compResponsavel');
   if (document.getElementById('campoAtribuir').style.display !== 'none' && selResp.value) payload.responsavel_id = selResp.value;
+  payload.visibilidade = procId ? 'escritorio' : visSelecionada;
+  payload.repete = document.getElementById('compRepete').value || 'nao';
+  payload.repete_ate = payload.repete !== 'nao' ? (document.getElementById('compRepeteAte').value || null) : null;
+  if (payload.repete_ate && payload.repete_ate < inicio.slice(0, 10)) { showToast('A data "Até" da repetição precisa ser depois do início.', 'erro'); return; }
+
+  // Horário ocupado: confere a agenda da pessoa (particulares de outra pessoa aparecem só como "Compromisso particular")
+  var serieAberta = compAbertoAg ? (compAbertoAg._serie || compAbertoAg) : null;
+  var pessoaConf = payload.responsavel_id || (serieAberta && serieAberta.responsavel_id) || meuPerfilId;
+  var iniConf = new Date(inicio), fimConf = fim ? new Date(fim) : new Date(iniConf.getTime() + 3600000);
+  // editando sem mudar data, hora nem pessoa: não confere de novo
+  var mesmoHorario = !!serieAberta && new Date(serieAberta.data_hora_inicio).getTime() === iniConf.getTime() &&
+    (serieAberta.data_hora_fim ? new Date(serieAberta.data_hora_fim).getTime() : null) === (fim ? fimConf.getTime() : null) &&
+    (serieAberta.responsavel_id || meuPerfilId) === pessoaConf;
+  if (!mesmoHorario) {
+    try {
+      var rConf = await _sb.rpc('agenda_conflitos', { p_inicio: iniConf.toISOString(), p_fim: fimConf.toISOString(), p_pessoa: pessoaConf, p_ignorar: editandoId || null });
+      if (!rConf.error && Array.isArray(rConf.data) && rConf.data.length) {
+        var linhasConf = rConf.data.slice(0, 5).map(function(x) {
+          return '• ' + new Date(x.inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ', ' + formatarHora(x.inicio) + ' às ' + formatarHora(x.fim) + ': ' + x.titulo + (x.pessoa ? ' (' + String(x.pessoa).split(' ')[0] + ')' : '');
+        }).join('\n');
+        var textoConf = (pessoaConf === meuPerfilId ? 'Você já tem compromisso nesse horário:' : 'A pessoa já tem compromisso nesse horário:') + '\n' + linhasConf + (rConf.data.length > 5 ? '\n…' : '') + '\n\nMarcar mesmo assim?';
+        var seguir = window.sagaConfirmar ? await window.sagaConfirmar('Horário ocupado', textoConf, 'Marcar mesmo assim', false) : window.confirm(textoConf);
+        if (!seguir) return;
+      }
+    } catch(eConf) { /* sem a conferência, segue */ }
+  }
 
   document.getElementById('btnSalvarComp').disabled = true;
   document.getElementById('btnSalvarComp').textContent = 'Salvando...';
@@ -1794,7 +2046,7 @@ document.getElementById('btnSalvarComp').addEventListener('click', async functio
       r = await _sb.from('compromissos').insert(payload);
     }
     if (r.error) throw r.error;
-    showToast(editandoId ? 'Compromisso atualizado.' : 'Compromisso criado.', 'sucesso');
+    showToast(editandoId ? 'Compromisso atualizado.' : (payload.visibilidade === 'particular' && escopoAgenda === 'escritorio' ? 'Compromisso particular criado: ele aparece em "Minha agenda".' : 'Compromisso criado.'), 'sucesso');
     document.getElementById('modalCompromisso').classList.remove('aberto');
     await carregarEventos();
     if (document.getElementById('painelDiaOverlay').classList.contains('aberto') && painelDiaAtual) {
@@ -1846,6 +2098,7 @@ document.getElementById('compProcessoBusca').addEventListener('input', function(
   if (val.length < 2) {
     document.getElementById('compProcessoId').value = '';
     document.getElementById('typeaheadProcesso').classList.remove('aberto');
+    atualizarVisibilidadeUI();
     return;
   }
   _debounceTimer = setTimeout(function() { buscarProcessos(val); }, 380);
@@ -1864,12 +2117,13 @@ async function buscarProcessos(termo) {
       var nomeCliente = p.pessoas && p.pessoas.nome_completo ? p.pessoas.nome_completo : '';
       var opt = document.createElement('div');
       opt.className = 'typeahead-opcao';
-      opt.innerHTML = (p.numero_processo_cnj ? (window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj) : 'N/D') + '<small>' + nomeCliente + '</small>';
+      opt.innerHTML = escaparHtml(p.numero_processo_cnj ? (window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj) : 'N/D') + '<small>' + escaparHtml(nomeCliente) + '</small>';
       opt.addEventListener('click', function() {
         processoIdSelecionado = p.id;
         document.getElementById('compProcessoId').value     = p.id;
         document.getElementById('compProcessoBusca').value  = (p.numero_processo_cnj || '') + (nomeCliente ? ' - ' + nomeCliente : '');
         lista.classList.remove('aberto');
+        atualizarVisibilidadeUI();
       });
       lista.appendChild(opt);
     });
@@ -1982,12 +2236,15 @@ atualizarPeriodoTexto();
       $('pedidoMotivo').style.display = souResp ? '' : 'none';
       $('btnPedidoAceitar').style.display = $('btnPedidoRecusar').style.display = souResp ? '' : 'none';
     }
-    var podeConcluir = comp && (euCriei || souResp) && !pend;
+    var podeConcluir = comp && (euCriei || souResp || (comp.visibilidade === 'escritorio' && podeEditarEscritorio)) && !pend;
     $('blocoConclusao').style.display = podeConcluir ? '' : 'none';
     if (podeConcluir) {
+      var ehData = !!comp._serie;
       $('compConcluido').checked = !!comp.concluido;
-      $('compConclusaoTexto').value = comp.comentario_conclusao || '';
-      $('conclusaoInfo').textContent = comp.concluido && comp.concluido_em ? 'Concluído em ' + new Date(comp.concluido_em).toLocaleString('pt-BR') : '';
+      $('compConcluido').parentNode.lastChild.textContent = ehData ? ' Marcar esta data como concluída (risca só ela na agenda)' : ' Marcar como concluído (risca o evento na agenda)';
+      $('conclusaoCampos').style.display = ehData ? 'none' : '';
+      $('compConclusaoTexto').value = ehData ? '' : (comp.comentario_conclusao || '');
+      $('conclusaoInfo').textContent = !ehData && comp.concluido && comp.concluido_em ? 'Concluído em ' + new Date(comp.concluido_em).toLocaleString('pt-BR') : '';
     }
   }
   var _abrir = abrirModalCompromisso, _novo = abrirModalNovoCompromisso, _novoDH = abrirModalNovoComDataHora;
@@ -2001,7 +2258,9 @@ atualizarPeriodoTexto();
   $('btnSalvarConclusao').addEventListener('click', async function(){
     if (!compAtual) return;
     var b = this; b.disabled = true;
-    var r = await _sb.rpc('agenda_concluir', { p_id: compAtual.id, p_concluido: $('compConcluido').checked, p_comentario: $('compConclusaoTexto').value || null });
+    var r = compAtual._serie
+      ? await _sb.rpc('agenda_concluir_ocorrencia', { p_id: compAtual.id, p_data: compAtual._dia, p_concluido: $('compConcluido').checked })
+      : await _sb.rpc('agenda_concluir', { p_id: compAtual.id, p_concluido: $('compConcluido').checked, p_comentario: $('compConclusaoTexto').value || null });
     b.disabled = false;
     if (r.error) { showToast(r.error.message || 'Não foi possível salvar a conclusão.', 'erro'); return; }
     showToast($('compConcluido').checked ? 'Evento concluído.' : 'Evento reaberto.', 'sucesso');
