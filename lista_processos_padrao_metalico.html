@@ -725,6 +725,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_xlsx.js?v=202611082339"></script>
 <script src="saga_fichas.js?v=202611082339"></script>
 <script src="saga_planilha.js?v=202611082339"></script>
+<script src="saga_ficha_lado.js?v=202611082339"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -2063,7 +2064,24 @@ function restaurarRolagem(pos){
   },120);
 }
 window.addEventListener('pagehide',guardarPosicao);
-function verFicha(id){guardarPosicao();window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id;}
+// Ficha ao lado (09/11): em tela larga, o clique no nome abre a ficha num painel à direita, sem sair da lista
+function verFicha(id){
+  if(window.SagaFichaLado&&SagaFichaLado.abrir(id))return;
+  guardarPosicao();window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id;
+}
+// Recarrega a lista sem o "carregando" (ao fechar a ficha ao lado: o que foi mudado lá aparece aqui)
+async function recarregarEmSilencio(){
+  if(!state.permissoes||!state.permissoes.visualizar)return;
+  var pedido=state.pedidoProcessos=(state.pedidoProcessos||0)+1;invalidarBaseProcessos();
+  var filtros={busca:(state.busca||'').trim(),area:state.filtroArea,tese:state.filtroTese&&state.filtroTese.id,de:state.filtroPeriodoDe,ate:state.filtroPeriodoAte};
+  try{var linhas=await lerBaseProcessos(filtros);if(pedido!==state.pedidoProcessos)return;state.baseProcessos=linhas;}catch(e){return;}
+  if(state.view==='lista')renderLista();else renderKanban();
+}
+if(window.SagaFichaLado)SagaFichaLado.configurar({
+  nomeDe:function(id){var p=(state.baseProcessos||[]).find(function(x){return String(x.id)===String(id);});if(!p)return '';if(p.sigilo&&!(state.permissoes||{}).editar_dados)return '••••';return (p.pessoa||{}).nome_completo||'';},
+  telaCheia:function(id){guardarPosicao();window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id;},
+  aoFechar:function(){recarregarEmSilencio();}
+});
 function editarProcesso(id){guardarPosicao();window.location.href='ficha_cliente_padrao_metalico_FINAL.html?processo_id='+id+'&modo=editar';}
 function confirmarExclusao(id){
   state.processoParaExcluir=id;

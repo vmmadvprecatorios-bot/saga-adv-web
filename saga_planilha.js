@@ -172,7 +172,7 @@ window.SagaPlanilha=(function(){
   }
   // ---------- largura das colunas (arrastar a borda do cabeçalho; vale só para você) ----------
   var CHAVE_LARG=function(){return 'saga-planilha-larg-'+FASE_FIXA+'-'+(state.meuInternoId||'');};
-  var larguras=null,sel=null;
+  var larguras=null,sel=null,faixaFim=null,copiando=false,chipFaixa=null;
   function lerLarguras(){if(!larguras){try{larguras=JSON.parse(localStorage.getItem(CHAVE_LARG())||'{}')||{};}catch(e){larguras={};}}return larguras;}
   function guardarLarguras(){try{localStorage.setItem(CHAVE_LARG(),JSON.stringify(larguras||{}));}catch(e){}}
   function idCss(id){return String(id).replace(/["\\]/g,'');}
@@ -238,7 +238,10 @@ window.SagaPlanilha=(function(){
         '<div class="sp-menu-tit">Altura das linhas</div>'+
         '<div class="sp-aj-alturas">'+[['compacta','Compacta'],['normal','Normal'],['confortavel','Confortável'],['auto','Ao conteúdo']].map(function(o){return '<button type="button" class="sp-pill'+(a.modo===o[0]?' ativo':'')+'" data-alt="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
         '<label class="sp-aj-fino">Ajuste fino <input type="range" min="26" max="90" step="2" value="'+px+'" data-alt-px aria-label="Altura das linhas em pixels"'+(a.modo==='auto'?' disabled':'')+'><span>'+(a.modo==='auto'?'automática':px+' px')+'</span></label>'+
-        '<p class="sp-ajuda" style="margin:2px 4px 4px">"Ao conteúdo" quebra o texto em várias linhas para caber tudo, como o Autoajuste do Excel.</p>';
+        '<p class="sp-ajuda" style="margin:2px 4px 4px">"Ao conteúdo" quebra o texto em várias linhas para caber tudo, como o Autoajuste do Excel.</p>'+
+        (window.SagaFichaLado?'<div class="sp-menu-tit">Ao clicar no nome do cliente</div>'+
+          '<div class="sp-aj-alturas">'+[['lado','Ficha ao lado da lista'],['cheia','Ficha em tela cheia']].map(function(o){var on=(SagaFichaLado.preferido()?'lado':'cheia')===o[0];return '<button type="button" class="sp-pill'+(on?' ativo active':'')+'" data-ficha-modo="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
+          '<p class="sp-ajuda" style="margin:2px 4px 4px">Ao lado: a lista continua na tela e as setas ↑ ↓ passam de um cliente para o outro. No celular abre sempre em tela cheia.</p>':'');
     };
     desenhar();
     document.body.appendChild(m);menuAberto=m;
@@ -248,6 +251,7 @@ window.SagaPlanilha=(function(){
       if(t.dataset.aj==='todas'){ajustarTodasAoConteudo();aviso('Colunas ajustadas ao conteúdo.');return;}
       if(t.dataset.aj==='padrao'){larguraPadrao();aviso('Larguras das colunas voltaram ao original.');return;}
       if(t.dataset.alt){guardarAltura({modo:t.dataset.alt});aplicarAltura();desenhar();}
+      if(t.dataset.fichaModo&&window.SagaFichaLado){SagaFichaLado.definir(t.dataset.fichaModo==='lado');m.querySelectorAll('[data-ficha-modo]').forEach(function(b){var on=b===t;b.classList.toggle('ativo',on);b.classList.toggle('active',on);});if(t.dataset.fichaModo==='cheia'&&SagaFichaLado.aberto())SagaFichaLado.fechar();}
     });
     m.addEventListener('input',function(e){var i=e.target.closest('[data-alt-px]');if(!i)return;guardarAltura({modo:'manual',px:Number(i.value)});aplicarAltura();var sp=i.parentNode.querySelector('span');if(sp)sp.textContent=i.value+' px';m.querySelectorAll('[data-alt]').forEach(function(b){b.classList.remove('ativo');});});
   }
@@ -288,10 +292,13 @@ window.SagaPlanilha=(function(){
   }
   function selecionar(td,rolar){
     document.querySelectorAll('.sp-tabela td.sp-sel').forEach(function(x){x.classList.remove('sp-sel');});
-    pintarCruz(null);
-    if(!td){sel=null;return;}
-    sel={proc:td.closest('tr').dataset.spProc,col:td.dataset.spCel};td.classList.add('sp-sel');pintarCruz(td);
-    if(rolar){
+    pintarCruz(null);faixaFim=null;
+    if(!td){sel=null;pintarFaixa();return;}
+    sel={proc:td.closest('tr').dataset.spProc,col:td.dataset.spCel};td.classList.add('sp-sel');pintarCruz(td);pintarFaixa();
+    if(rolar)rolarPara(td);
+  }
+  function rolarPara(td){
+    {
       var sc=td.closest('.tabela-scroll'),r=td.getBoundingClientRect();
       if(sc){var rs=sc.getBoundingClientRect(),fx=sc.querySelector('thead th.sp-fixa-ult'),esq=rs.left+(fx&&!td.classList.contains('sp-fixa')?fx.getBoundingClientRect().right-rs.left:0);
         if(r.left<esq)sc.scrollLeft-=esq-r.left+8;else if(r.right>rs.right)sc.scrollLeft+=r.right-rs.right+8;
@@ -300,7 +307,7 @@ window.SagaPlanilha=(function(){
       r=td.getBoundingClientRect();if(r.top<70||r.bottom>innerHeight)td.scrollIntoView({block:'nearest'});
     }
   }
-  function restaurarSelecao(){var td=celulaSel();if(td){td.classList.add('sp-sel');pintarCruz(td);}}
+  function restaurarSelecao(){var td=celulaSel();if(td){td.classList.add('sp-sel');pintarCruz(td);}pintarFaixa();}
   // destaque em cruz, como no Excel: a linha e a coluna da célula selecionada ficam com um tom suave
   function pintarCruz(td){
     document.querySelectorAll('.sp-tabela .sp-cruz-l,.sp-tabela .sp-cruz-c').forEach(function(x){x.classList.remove('sp-cruz-l','sp-cruz-c');});
@@ -322,25 +329,115 @@ window.SagaPlanilha=(function(){
     if(!alvo||alvo===tr)return true;
     var n=alvo.querySelector('td[data-sp-cel="'+idCss(sel.col)+'"]');if(n)selecionar(n,true);return true;
   }
+  // ---------- faixa na mesma coluna (Shift+setas, Shift+clique) e "copiar para baixo" (Ctrl+D), como no Excel ----------
+  var NAO_COPIA=['pessoa.nome','pessoa.cpf','processo.numero'];   // cada linha tem o seu: copiar para baixo trocaria o cliente/processo
+  function linhasVisiveis(){var tb=document.getElementById('tbodyPrincipal');return tb?Array.prototype.filter.call(tb.children,function(x){return x.matches('tr[data-sp-proc]')&&x.querySelector('td[data-sp-cel]');}):[];}
+  function indiceLinha(ls,id){for(var i=0;i<ls.length;i++)if(ls[i].dataset.spProc===id)return i;return -1;}
+  function faixaCelulas(){
+    var td=celulaSel();if(!td)return [];
+    if(!faixaFim||faixaFim===sel.proc)return [td];
+    var ls=linhasVisiveis(),a=ls.indexOf(td.closest('tr')),b=indiceLinha(ls,faixaFim);
+    if(a<0||b<0)return [td];
+    var out=[];for(var k=Math.min(a,b);k<=Math.max(a,b);k++){var c=ls[k].querySelector('td[data-sp-cel="'+idCss(sel.col)+'"]');if(c)out.push(c);}
+    return out;
+  }
+  function estenderFaixa(d,ate){
+    var td=celulaSel();if(!td)return;
+    var ls=linhasVisiveis(),i=indiceLinha(ls,faixaFim||sel.proc);if(i<0)return;
+    var j=ate?(d>0?ls.length-1:0):Math.max(0,Math.min(ls.length-1,i+d));
+    faixaFim=ls[j].dataset.spProc;pintarFaixa();
+    var alvo=ls[j].querySelector('td[data-sp-cel="'+idCss(sel.col)+'"]');if(alvo)rolarPara(alvo);
+  }
+  function pintarFaixa(){
+    document.querySelectorAll('.sp-tabela td.sp-faixa').forEach(function(x){x.classList.remove('sp-faixa','sp-faixa-topo','sp-faixa-fim');});
+    var cs=faixaCelulas();
+    if(cs.length>1){cs.forEach(function(c){c.classList.add('sp-faixa');});cs[0].classList.add('sp-faixa-topo');cs[cs.length-1].classList.add('sp-faixa-fim');}
+    mostrarChipFaixa(cs);
+  }
+  // botãozinho que aparece embaixo da faixa (para quem não sabe o Ctrl+D)
+  function mostrarChipFaixa(cs){
+    var c=sel&&cols.find(function(x){return x.id===sel.col;});
+    var pode=cs.length>1&&c&&NAO_COPIA.indexOf(c.campo_sistema)===-1&&cs.slice(1).some(function(td){return td.classList.contains('sp-editavel');});
+    if(!pode){
+      if(chipFaixa){var v=chipFaixa;chipFaixa=null;if(sagaSemMov())v.remove();else v.animate([{opacity:1},{opacity:0,transform:'translateY(4px)'}],{duration:200,easing:'cubic-bezier(.22,.78,.25,1)'}).onfinish=function(){v.remove();};}
+      return;}
+    if(!chipFaixa){
+      // caixinha sólida (o botão do sistema é translúcido e ficaria por cima do texto da planilha)
+      chipFaixa=document.createElement('div');chipFaixa.className='sp-faixa-acao';
+      chipFaixa.innerHTML='<button type="button" class="btn-secondary sp-btn"></button>';
+      chipFaixa.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();});
+      chipFaixa.querySelector('button').onclick=function(){copiarParaBaixo();};document.body.appendChild(chipFaixa);
+    }
+    chipFaixa.querySelector('button').innerHTML='⬇ Copiar o de cima para '+(cs.length-1)+' célula'+(cs.length>2?'s':'')+' <span class="sp-tecla">Ctrl+D</span>';
+    posicionarChip();
+  }
+  function posicionarChip(){
+    if(!chipFaixa)return;var cs=faixaCelulas();if(cs.length<2||!cs[0].offsetParent){chipFaixa.style.visibility='hidden';return;}
+    var r=cs[cs.length-1].getBoundingClientRect(),r0=cs[0].getBoundingClientRect(),w=chipFaixa.offsetWidth||220,hh=chipFaixa.offsetHeight||30;
+    var top=r.bottom+6;if(top+hh>window.innerHeight-8)top=Math.max(r0.top+4,window.innerHeight-hh-14);   // a faixa passa da tela: fica no pé da tela, sobre a própria coluna
+    chipFaixa.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';chipFaixa.style.top=top+'px';
+    chipFaixa.style.visibility=(r.bottom<0&&r0.top<0)||(r.top>window.innerHeight)?'hidden':'';
+  }
+  function sagaSemMov(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+  function vazioDe(v){return v==null||v===''||(Array.isArray(v)&&!v.length);}
+  async function copiarParaBaixo(){
+    if(copiando||editando)return;
+    var td=celulaSel();if(!td)return;
+    var c=cols.find(function(x){return x.id===sel.col;});if(!c)return;
+    if(NAO_COPIA.indexOf(c.campo_sistema)!==-1){aviso('A coluna "'+h(nomeCol(c))+'" não se copia para baixo: cada linha tem o seu.',true);return;}
+    var cs=faixaCelulas(),fonte,alvos;
+    if(cs.length>1){fonte=cs[0];alvos=cs.slice(1);}
+    else{var ls=linhasVisiveis(),i=ls.indexOf(td.closest('tr'));if(i<=0){aviso('Não há célula acima para copiar.',true);return;}
+      fonte=ls[i-1].querySelector('td[data-sp-cel="'+idCss(sel.col)+'"]');alvos=[td];}
+    var pf=fonte&&processo(fonte.closest('tr').dataset.spProc);if(!pf)return;
+    if(pf.sigilo&&!state.permissoes.editar_dados){aviso('A linha de cima está em sigilo.',true);return;}
+    var valor=bruto(pf,c),vazio=vazioDe(valor),txt=vazio?'':exibir(c,texto(pf,c));
+    var bloqueadas=0,lista=[];
+    alvos.forEach(function(x){var p=processo(x.closest('tr').dataset.spProc);if(!p)return;if(!editavel(p,c)){bloqueadas++;return;}
+      var atual=bruto(p,c);if(JSON.stringify(vazioDe(atual)?null:atual)===JSON.stringify(vazio?null:valor))return;lista.push({td:x,p:p});});
+    if(!lista.length){aviso(bloqueadas?'Você não pode mudar essas células.':'Nada a mudar: as células já têm esse valor.',!!bloqueadas);return;}
+    if(vazio||lista.length>10){
+      var pergunta=(vazio?'Apagar o valor de ':'Copiar "'+String(txt).slice(0,60)+'" para ')+lista.length+' célula(s) da coluna '+nomeCol(c)+'?';
+      var ok=window.sagaConfirmar?await sagaConfirmar('Copiar para baixo',pergunta,vazio?'Apagar':'Copiar',vazio):true;if(!ok)return;
+    }
+    copiando=true;var feitas=0,erros=0;
+    lista.forEach(function(o){o.td.classList.add('sp-salvando');});
+    for(var k=0;k<lista.length;k+=4){   // de 4 em 4: rápido sem sobrecarregar
+      await Promise.all(lista.slice(k,k+4).map(function(o){return gravar(o.p,c,vazio?null:valor).then(function(){feitas++;},function(){erros++;});}));
+    }
+    copiando=false;
+    redesenhar();
+    if(erros)aviso(feitas+' célula(s) copiada(s); '+erros+' não puderam ser gravadas.',true);
+    else aviso((vazio?'Valor apagado em ':'Copiado para ')+feitas+' célula(s)'+(bloqueadas?' ('+bloqueadas+' sem permissão ficaram como estavam)':'')+'.');
+  }
   function textoDaCelula(td){return td.getAttribute('title')||td.innerText||'';}
   function ligarTeclado(tabela){
     tabela.addEventListener('click',function(e){
       var td=e.target.closest('td[data-sp-cel]');
       if(!td||e.target.closest('a,button,input,select,.sp-editor'))return;
+      if(e.shiftKey&&sel&&td.dataset.spCel===sel.col&&celulaSel()){faixaFim=td.closest('tr').dataset.spProc;pintarFaixa();return;}
       selecionar(td,false);
     });
-    document.addEventListener('mousedown',function(e){if(sel&&!e.target.closest('#listaView table')&&!e.target.closest('.sp-menu,.modal-overlay,.toast,.sp-foco-menu,[data-foco]'))selecionar(null);});
+    tabela.addEventListener('mousedown',function(e){if(e.shiftKey&&e.target.closest('td[data-sp-cel]'))e.preventDefault();});
+    document.addEventListener('scroll',function(){if(chipFaixa)posicionarChip();},true);
+    window.addEventListener('resize',function(){if(chipFaixa)posicionarChip();});
+    document.addEventListener('mousedown',function(e){if(sel&&!e.target.closest('#listaView table')&&!e.target.closest('.sp-menu,.modal-overlay,.toast,.sp-foco-menu,[data-foco],.sp-faixa-acao,#sagaConfirma'))selecionar(null);});
     document.addEventListener('keydown',function(e){
       if(!sel||editando||menuAberto||e.altKey)return;
       var t=e.target;if(t&&(t.closest('input,textarea,select,[contenteditable="true"]')))return;
       if(document.querySelector('.modal-overlay.ativo,.sp-ov'))return;
       var td=celulaSel();if(!td){sel=null;return;}
       var k=e.key,feito=true;
-      if((e.ctrlKey||e.metaKey)&&(k==='c'||k==='C')){var txt=textoDaCelula(td);if(txt&&txt!=='—'&&navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){aviso('Copiado: '+h(txt.length>40?txt.slice(0,40)+'…':txt));},function(){});}}
+      if((e.ctrlKey||e.metaKey)&&(k==='c'||k==='C')){
+        var fx=faixaCelulas(),txt=fx.length>1?fx.map(function(x){var t=textoDaCelula(x);return t==='—'?'':t;}).join('\n'):textoDaCelula(td);
+        if(txt&&txt!=='—'&&navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){aviso(fx.length>1?fx.length+' células copiadas.':'Copiado: '+h(txt.length>40?txt.slice(0,40)+'…':txt));},function(){});}}
+      else if((e.ctrlKey||e.metaKey)&&(k==='d'||k==='D'))copiarParaBaixo();
+      else if((e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='ArrowDown'||k==='ArrowUp'))estenderFaixa(k==='ArrowDown'?1:-1,true);
       else if((e.ctrlKey||e.metaKey)&&/^Arrow/.test(k)){if(k==='ArrowDown')moverSel(1,0,true);else if(k==='ArrowUp')moverSel(-1,0,true);else if(k==='ArrowRight')moverSel(0,1,true);else moverSel(0,-1,true);}
       else if((e.ctrlKey||e.metaKey)&&(k==='Home'||k==='End')){var linhasT=Array.prototype.filter.call(td.closest('tbody').children,function(x){return x.querySelector('td[data-sp-cel]');});var lin=k==='Home'?linhasT[0]:linhasT[linhasT.length-1];var cs=lin&&lin.querySelectorAll('td[data-sp-cel]');if(cs&&cs.length)selecionar(k==='Home'?cs[0]:cs[cs.length-1],true);}
       else if(e.ctrlKey||e.metaKey)feito=false;
       else if(k==='Home'||k==='End'){var csH=td.closest('tr').querySelectorAll('td[data-sp-cel]');selecionar(k==='Home'?csH[0]:csH[csH.length-1],true);}
+      else if(e.shiftKey&&(k==='ArrowDown'||k==='ArrowUp'))estenderFaixa(k==='ArrowDown'?1:-1);
       else if(k==='ArrowDown')moverSel(1,0);else if(k==='ArrowUp')moverSel(-1,0);
       else if(k==='ArrowRight')moverSel(0,1);else if(k==='ArrowLeft')moverSel(0,-1);
       else if(k==='Tab')moverSel(0,e.shiftKey?-1:1);
@@ -357,7 +454,7 @@ window.SagaPlanilha=(function(){
   function aposEditar(tecla){
     if(tecla==='Enter')moverSel(1,0);else if(tecla==='Tab')moverSel(0,1);else if(tecla==='ShiftTab')moverSel(0,-1);else restaurarSelecao();
   }
-  function redesenhar(){renderBarra();if(state.view==='lista')renderLista();else renderKanban();if(typeof atualizarContagem==='function')atualizarContagem();try{pintarLote();}catch(e){}}
+  function redesenhar(){renderBarra();if(state.view==='lista')renderLista();else renderKanban();if(typeof atualizarContagem==='function')atualizarContagem();try{pintarLote();}catch(e){}if(state.view!=='lista')pintarFaixa();}
   // Celular: cada processo vira um cartão com as colunas visíveis da planilha (a tabela larga fica opcional)
   function cartoesHtml(lista){
     var cs=visiveis(),hoje=hojeISO();
@@ -917,6 +1014,9 @@ window.SagaPlanilha=(function(){
       '.sp-tabela{--sp-foco:var(--sp-foco-escolhido,var(--gold));--sp-foco-a:12%;--sp-foco-b:20%}'+
       'body:not([data-theme="light"]) .sp-tabela{--sp-foco:var(--sp-foco-escolhido,var(--gold-light,var(--gold)));--sp-foco-a:17%;--sp-foco-b:28%}'+
       '.sp-tabela td.sp-sel{box-shadow:inset 0 0 0 2px var(--sp-foco)!important;border-radius:3px}'+
+      '.sp-tabela td.sp-faixa{background:color-mix(in srgb,var(--sp-foco) 13%,transparent)!important;box-shadow:inset 2px 0 0 var(--sp-foco),inset -2px 0 0 var(--sp-foco)}.sp-tabela td.sp-faixa-topo{box-shadow:inset 2px 0 0 var(--sp-foco),inset -2px 0 0 var(--sp-foco),inset 0 2px 0 var(--sp-foco)}.sp-tabela td.sp-faixa-fim{box-shadow:inset 2px 0 0 var(--sp-foco),inset -2px 0 0 var(--sp-foco),inset 0 -2px 0 var(--sp-foco)}'+
+      '.sp-faixa-acao{position:fixed;z-index:140;padding:3px;border-radius:11px;background:var(--panel-solid,#212e44);border:1px solid var(--border-soft);box-shadow:0 8px 22px rgba(0,0,0,.3);animation:spChipEntra .26s cubic-bezier(.22,.78,.25,1)}.sp-faixa-acao .sp-btn{font-size:11.5px;padding:5px 10px;border-radius:8px;white-space:nowrap}.sp-tecla{font-size:10px;border:1px solid var(--border);border-radius:4px;padding:0 4px;margin-left:6px;color:var(--muted)}'+
+      '@keyframes spChipEntra{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}'+
       // a cor da linha fica por cima do fundo zebrado do tema (camada de imagem), sem apagar o zebrado
       '.sp-tabela .sp-cruz-l,.sp-tabela .sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--sp-foco) var(--sp-foco-a),transparent),color-mix(in srgb,var(--sp-foco) var(--sp-foco-a),transparent))!important;transition:background-image .2s cubic-bezier(.22,.78,.25,1)}'+
       '.sp-tabela .sp-cruz-l.sp-cruz-c{background-image:linear-gradient(color-mix(in srgb,var(--sp-foco) var(--sp-foco-b),transparent),color-mix(in srgb,var(--sp-foco) var(--sp-foco-b),transparent))!important}'+

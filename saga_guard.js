@@ -8,6 +8,10 @@
   var LOGIN='login_padrao_metalico.html';
   var CHAVE='sb-fmoskdxgjulagedzjxxk-auth-token';
   var html=document.documentElement;
+  // Ficha ao lado (09/11): a tela aberta dentro do painel da Lista (?ao_lado=1) aparece sem a barra do topo,
+  // o menu lateral e o botão Voltar; ir para outra tela troca a tela inteira, não o painel.
+  var aoLado=window.top!==window&&/[?&]ao_lado=1(&|$)/.test(location.search);
+  if(aoLado)html.classList.add('saga-ao-lado');
 
   // Efeitos de movimento: ligados para TODOS os perfis e aparelhos (antes o SAGA desligava sozinho quando o
   // computador ou celular estava com 'reduzir movimento' / 'mostrar animacoes' desligado). So desliga se a pessoa
@@ -79,7 +83,9 @@
     '::view-transition-new(saga-lateral),::view-transition-new(saga-topo){animation:sagaMenuNovo .35s linear both;mix-blend-mode:normal;}'+
     '#sidebarSaga,#topbarSaga{font-family:Montserrat,Arial,sans-serif;}'+
     // Enquanto a tela monta, os menus nao animam nada (evita a tremida do menu lateral)
-    'html.saga-fixando #sidebarSaga,html.saga-fixando #sidebarSaga *,html.saga-fixando #topbarSaga,html.saga-fixando #topbarSaga *{transition:none !important;animation:none !important;}';
+    'html.saga-fixando #sidebarSaga,html.saga-fixando #sidebarSaga *,html.saga-fixando #topbarSaga,html.saga-fixando #topbarSaga *{transition:none !important;animation:none !important;}'+
+    (aoLado?'html.saga-ao-lado #topbarSaga,html.saga-ao-lado #sidebarSaga,html.saga-ao-lado .page-toolbar,html.saga-ao-lado #prototypeNav,html.saga-ao-lado #overlay{display:none !important;}'+
+      'html.saga-ao-lado .app{display:block !important;}html.saga-ao-lado .conteudo{padding:12px 14px 40px !important;}':'');
   (document.head||html).appendChild(estilo);
   html.classList.add('saga-entrando','saga-carregando','saga-fixando');
 
@@ -632,6 +638,16 @@
     try{menu=deslizarMenu(url);}catch(e){}
     setTimeout(function(){location.href=url;},Math.max(Math.min(total,150),menu));
   };
+  if(aoLado){
+    window.sagaIrPara=function(url){if(!url)return;try{if(window.top.sagaIrPara){window.top.sagaIrPara(url);return;}window.top.location.href=url;}catch(e){location.href=url;}};
+    // Esc fecha o painel quando não há janela aberta na ficha nem campo sendo digitado (checado antes de a ficha tratar o Esc)
+    document.addEventListener('keydown',function(e){
+      if(e.key!=='Escape')return;
+      var t=e.target;if(t&&t.closest&&t.closest('input,textarea,select,[contenteditable="true"]'))return;
+      if(document.querySelector('.modal-overlay.open,.modal-overlay.ativo,.sp-ov,.sp-menu,#sagaConfirma,.dropdown-modelos.aberto'))return;
+      try{window.parent.postMessage({saga:'ficha-lado-fechar'},location.origin);}catch(x){}
+    },true);
+  }
 
   // Menu lateral parado: ao clicar, so o destaque muda de item, sem movimento
   function deslizarMenu(url){
