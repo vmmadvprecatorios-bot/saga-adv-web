@@ -473,3 +473,19 @@ body{--aviso-forte:#c4585c;--aviso-suave-bg:rgba(229,72,77,.18);--aviso-suave-tx
 body[data-theme="light"]{--aviso-forte:#c24c52;--aviso-suave-bg:rgba(196,57,63,.12);--aviso-suave-txt:#b23a40}
 html[data-cor="grafite"] body{--aviso-forte:#9C7A43;--aviso-suave-bg:color-mix(in srgb,#C9A96E 22%,transparent);--aviso-suave-txt:#E3C99A}
 html[data-cor="grafite"] body[data-theme="light"]{--aviso-forte:#9C7A43;--aviso-suave-bg:#9C7A43;--aviso-suave-txt:#fff}
+
+/* Regra de 09/11 (Dr. Victor): colaborador NÃO apaga nada (nem o que ele escreveu); edita, e tudo fica no registro de alterações.
+   Os botões de excluir, apagar e remover só aparecem para o administrador geral: o saga_ui.js marca html.saga-pode-apagar quando
+   confirma que é ele (o banco recusa de qualquer jeito, bloco 128). Botão novo de apagar: acrescentar o seletor aqui. */
+html:not(.saga-pode-apagar) :is(
+  #btnExcluirTarefaModal, .btn-acao-linha.acao-excluir,
+  #btnExcluirComp,
+  .nota [data-a="del"], .nota-lin [data-a="del"], #btDel,
+  .btn-acao-msg[title="Excluir"], [onclick^="pedirApagarGrupo"], [onclick*="pedirApagarConversa"],
+  .btn-tel-icon.excluir, #btnExcluirRetorno, #btnDeleteProcess, .pasta-menu-pop [data-acao="remover"], [data-rm][title="Retirar do processo"],
+  [onclick^="confirmarExclusao"],
+  #mcExcluir, #mvExcluir, [data-rem], #mlExcluir, [data-remover],
+  [data-excluir-post], [data-excluir-prod], [data-rad-del],
+  [data-rmjorn], [data-ferrm], .cat-btn-excluir, .si-btn[data-excluir],
+  #btnRemover, #areasLista [data-rm]
+){display:none!important}

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090118"></script>
+<script src="saga_guard.js?v=202611090120"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Registro de atividades</title>
@@ -55,13 +55,21 @@ html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafit
 .oque .campos span{font-size:10.5px;padding:1px 7px;border-radius:7px;border:1px solid var(--border-soft);color:var(--muted)}
 .oque .cli{display:inline-block;margin-top:4px;font-size:11px;color:var(--gold-light);cursor:pointer;text-decoration:none}
 .oque .cli:hover{text-decoration:underline}
+.ver-mudou{display:inline-block;margin:4px 0 0 10px;border:0;background:none;color:var(--gold-light);font:inherit;font-size:11px;cursor:pointer;padding:0}
+.ver-mudou:hover{text-decoration:underline}
+.mudou{margin-top:6px;border:1px solid var(--border-soft);border-radius:10px;overflow:auto;max-width:100%}
+.mudou table{width:100%;border-collapse:collapse;font-size:11.5px}
+.mudou th{text-align:left;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border-soft);font-weight:600}
+.mudou td{padding:6px 8px;border-bottom:1px solid var(--border-soft);vertical-align:top;overflow-wrap:anywhere}
+.mudou tr:last-child td{border-bottom:0}
+.mudou td:first-child{color:var(--muted);white-space:nowrap}
 .mais{display:flex;justify-content:center;margin:14px 0}
 .btn[hidden],.filtros[hidden]{display:none}
 @keyframes evEntra{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 html.sem-movimento .ev{animation:none}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.ev{grid-template-columns:44px minmax(0,1fr);gap:4px 10px}.ev .quem{grid-column:2}.ev .acao{grid-column:2}.ev .oque{grid-column:1/-1}.busca{min-width:0}.sel{max-width:none;flex:1 1 45%}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611090118">
+<link rel="stylesheet" href="saga_tema.css?v=202611090120">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -72,7 +80,7 @@ html.sem-movimento .ev{animation:none}
   <div class="page-head">
     <div>
       <h1>Registro de atividades</h1>
-      <p>Tudo o que foi feito no SAGA: quem fez, quando e o quê (criou, alterou ou excluiu), em processos, clientes, tarefas, intimações, agenda, comentários, financeiro, documentos e catálogos. Só o administrador geral vê esta tela. Notas e Chat ficam de fora por privacidade; o Ponto tem registro próprio.</p>
+      <p>Tudo o que foi feito no SAGA: quem fez, quando e o quê (criou, alterou ou excluiu), em processos, clientes, tarefas, intimações, agenda, comentários, financeiro, documentos e catálogos. Só o administrador geral vê esta tela. Edições e exclusões de Notas e do Chat também entram. Em cada alteração dá para ver o antes e o depois, e o que foi apagado fica guardado. O Ponto tem registro próprio.</p>
     </div>
     <div class="botoes"><button class="btn" type="button" id="btnAtualizar">Atualizar</button></div>
   </div>
@@ -97,7 +105,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611090118"></script>
+<script src="saga_ui.js?v=202611090120"></script>
 <script>
 /* =====================================================================
    SAGA · Registro de atividades (T88): lê atividades_log (bloco 120); só o administrador geral
@@ -105,12 +113,36 @@ window._sb=_sb;
 var A={linhas:[],usuarios:{},pessoas:{},pagina:0,acabou:false,pedido:0,filtroProcesso:null};
 var POR_PAGINA=200;
 var CORES={criou:'#16a34a',alterou:'#2563eb',excluiu:'#e5484d'};
-var MODULOS=['Processos','Clientes','Tarefas','Intimações','Agenda','Comentários','Financeiro','Documentos','Teses','Catálogos','Biblioteca','Marketing','Treinamentos','Colaboradores'];
+var MODULOS=['Processos','Clientes','Tarefas','Intimações','Agenda','Comentários','Financeiro','Documentos','Teses','Catálogos','Biblioteca','Marketing','Treinamentos','Colaboradores','Chat','Notas'];
 var NOMES_CAMPOS={status_id:'Status',responsavel_id:'Responsável',captador_id:'Captador',data_prazo:'Prazo',hora_prazo:'Hora do prazo',concluida:'Concluída',concluida_em:'Data de conclusão',titulo:'Título',descricao:'Descrição',campos:'Dados da planilha',valor_causa:'Valor da causa',valor_precatorio_origem:'Valor do precatório',numero_processo_cnj:'Número do processo',tese_id:'Tipo de ação',area_direito_id:'Área',situacao_acao_id:'Situação da ação',nome_completo:'Nome',cpf:'CPF',excluido_logico:'Excluído',etiqueta_id:'Etiqueta',cor_etiqueta:'Cor da etiqueta',coluna_id:'Coluna',prazo:'Prazo',situacao:'Situação',triagem:'Triagem',etiqueta:'Etiqueta',processo_id:'Processo',pessoa_id:'Cliente',prioridade:'Prioridade',status:'Status',conteudo:'Texto',data_inicio:'Início',data_fim:'Fim',nome:'Nome',ativo:'Ativo',opcoes:'Opções',itens:'Itens',telefone:'Telefone',email:'E-mail',logradouro:'Endereço',numero:'Número',cep:'CEP',cidade:'Cidade',uf:'UF',sigilo:'Sigilo',tipo_acao:'Tipo de ação',subtarefas:'Subtarefas',valor:'Valor',data_vencimento:'Vencimento',data_pagamento:'Pagamento',pago:'Pago'};
 function $(id){return document.getElementById(id);}
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
 function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+// Antes e depois (bloco 128, regra de 09/11: colaborador não apaga; toda edição fica registrada com o valor anterior)
+var CAMPOS_FORA=['id','criado_em','atualizado_em','criado_por_id','ordem'];
+function valorTxt(v){
+  if(v==null||v==='')return '—';
+  if(typeof v==='boolean')return v?'Sim':'Não';
+  if(typeof v==='number')return String(v).replace('.',',');
+  if(typeof v==='object'){var j=JSON.stringify(v);return j.length>300?j.slice(0,300)+'…':j;}
+  var t=String(v);
+  if(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(t))return 'código …'+t.slice(-4);
+  if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(t)){var d=new Date(t);if(!isNaN(d))return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);}
+  if(/^\d{4}-\d{2}-\d{2}$/.test(t))return t.split('-').reverse().join('/');
+  t=t.replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
+  return t.length>300?t.slice(0,300)+'…':(t||'—');
+}
+function mudouHtml(l){
+  var a=l.antes||{},d=l.depois||{},cs=Object.keys(l.depois?d:a).filter(function(c){return CAMPOS_FORA.indexOf(c)<0;});
+  if(!cs.length)return '';
+  var apagado=!l.depois;
+  return '<button type="button" class="ver-mudou" data-ver="'+esc(l.id)+'" aria-expanded="false">'+(apagado?'Ver o que foi apagado':'Ver antes e depois')+' ▾</button>'+
+    '<div class="mudou" id="mudou'+esc(l.id)+'" hidden><table><thead><tr><th>Campo</th><th>'+(apagado?'Como estava':'Antes')+'</th>'+(apagado?'':'<th>Depois</th>')+'</tr></thead><tbody>'+
+    cs.slice(0,24).map(function(c){return '<tr><td>'+esc(nomeCampo(c))+'</td><td>'+esc(valorTxt(a[c]))+'</td>'+(apagado?'':'<td>'+esc(valorTxt(d[c]))+'</td>')+'</tr>';}).join('')+
+    '</tbody></table></div>';
+}
+Object.assign(NOMES_CAMPOS,{arquivada:'Arquivada',fixada:'Fixada',editada:'Editada',excluido_logico:'Excluído',ativo:'Ativo',conteudo:'Texto',texto:'Texto',nome_completo:'Nome',numero_processo_cnj:'Número do processo',pessoa_id:'Cliente',processo_id:'Processo',etiqueta_id:'Etiqueta',cor:'Cor',itens:'Itens'});
 function nomeCampo(c){return NOMES_CAMPOS[c]||String(c).replace(/_id$/,'').replace(/_/g,' ');}
 function diaChave(iso){return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(iso));}
 function diaExtenso(iso){var t=new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(iso));var h=diaChave(new Date().toISOString());return diaChave(iso)===h?'Hoje · '+t:t;}
@@ -121,7 +153,7 @@ function linkFicha(l){if(!l.pessoa_id)return '';var p=A.pessoas[l.pessoa_id];var
 async function buscar(maisUma){
   var pedido=++A.pedido;
   if(!maisUma){A.pagina=0;A.linhas=[];A.acabou=false;}
-  var q=_sb.from('atividades_log').select('id,quando,usuario_id,tabela,modulo,registro_id,acao,processo_id,pessoa_id,resumo,campos').order('quando',{ascending:false}).order('id',{ascending:false});
+  var q=_sb.from('atividades_log').select('id,quando,usuario_id,tabela,modulo,registro_id,acao,processo_id,pessoa_id,resumo,campos,antes,depois').order('quando',{ascending:false}).order('id',{ascending:false});
   var f={pessoa:$('fPessoa').value,modulo:$('fModulo').value,acao:$('fAcao').value,periodo:$('fPeriodo').value,busca:$('fBusca').value.trim()};
   if(f.pessoa==='__sistema')q=q.is('usuario_id',null);else if(f.pessoa)q=q.eq('usuario_id',f.pessoa);
   if(f.modulo)q=q.eq('modulo',f.modulo);
@@ -160,7 +192,7 @@ function desenhar(){
       '<span class="acao" style="--c:'+(CORES[l.acao]||'#8a94a8')+'">'+esc(l.acao.charAt(0).toUpperCase()+l.acao.slice(1))+'</span>'+
       '<span class="oque"><span class="res">'+esc(l.resumo||'(sem descrição)')+'</span>'+
       (campos.length?'<span class="campos">'+campos.map(function(c){return '<span>'+esc(nomeCampo(c))+'</span>';}).join('')+((l.campos||[]).length>8?'<span>+'+((l.campos||[]).length-8)+'</span>':'')+'</span>':'')+
-      linkFicha(l)+'</span></div>';
+      linkFicha(l)+mudouHtml(l)+'</span></div>';
   });
   if(dia)html+='</div>';
   area.innerHTML=html;
@@ -172,6 +204,13 @@ function ligar(){
   $('fBusca').addEventListener('input',function(){clearTimeout(tm);tm=setTimeout(function(){buscar(false);},350);});
   ['fPessoa','fModulo','fAcao','fPeriodo'].forEach(function(id){$(id).addEventListener('change',function(){buscar(false);});});
   $('btnMais').addEventListener('click',function(){A.pagina++;buscar(true);});
+  // abre e fecha o antes/depois com o movimento do sistema
+  $('area').addEventListener('click',function(e){
+    var b=e.target.closest('[data-ver]');if(!b)return;
+    var box=document.getElementById('mudou'+b.dataset.ver);if(!box)return;
+    var abrir=box.hidden;b.setAttribute('aria-expanded',String(abrir));b.textContent=b.textContent.replace(/[▾▴]$/,abrir?'▴':'▾');
+    if(window.sagaRecolher)sagaRecolher(box,!abrir);else box.hidden=!abrir;
+  });
   $('btnAtualizar').addEventListener('click',function(){buscar(false);});
   document.addEventListener('saga-atualizar',function(){buscar(false);});
 }
