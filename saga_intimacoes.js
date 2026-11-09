@@ -910,7 +910,7 @@
     if(i.prazo||i.concluida||i.triagem)return;
     await SagaPrazos.carregar(S.sb);if(S.aberta!==i.id||i.prazo)return;
     var g=SagaPrazos.sugerir({texto:texto,tipo:i.tipo_documento||i.tipo_comunicacao,orgao:i.orgao,disponibilizacao:i.data_disponibilizacao});
-    S.sugestao=Object.assign({id:i.id},g);
+    S.sugestao=Object.assign({id:i.id},g);mostrarSugProv(i);
     w.innerHTML='<div class="si-sug-prazo" role="status"><div class="si-sug-tit">Prazo sugerido pelo SAGA</div>'+
       '<div class="si-sug-data">Vence '+esc(SagaPrazos.dataBR(g.vencimento))+' · '+g.dias+' dias úteis</div>'+
       '<div class="si-sub" style="margin:0">Motivo: '+esc(g.motivo)+'. Disponibilizada em '+dataBR(i.data_disponibilizacao)+', publicada em '+esc(SagaPrazos.dataBR(g.publicacao))+'; contagem sem sábados, domingos, feriados do escritório e recesso (20/12 a 20/01). Confira feriados e suspensões do tribunal.</div>'+
@@ -942,7 +942,14 @@
     var t=document.getElementById('siTexto');t.textContent='Carregando o texto...';
     var r2=await S.sb.from('intimacoes').select('texto').eq('id',i.id).maybeSingle();
     if(S.aberta===i.id)t.innerHTML=r2.data&&r2.data.texto?destacar(r2.data.texto):'<span class="si-sub">Sem texto.</span>';
-    if(S.aberta===i.id&&window.SagaPrazos){S.prazoTexto=SagaPrazos.prazoDoTexto(r2.data&&r2.data.texto);ligarPrazos();sugerirPrazo(i,(r2.data&&r2.data.texto)||i.resumo||'');}
+    if(S.aberta===i.id&&window.SagaPrazos){
+      var txt=(r2.data&&r2.data.texto)||i.resumo||'';
+      S.prazoTexto=SagaPrazos.prazoDoTexto(r2.data&&r2.data.texto);ligarPrazos();
+      // o que fazer (providência e etiqueta da tarefa), sugerido pelo texto: aparece na triagem e no Criar tarefa
+      var ps=SagaPrazos.providencia&&SagaPrazos.providencia({texto:txt,tipo:i.tipo_documento||i.tipo_comunicacao,orgao:i.orgao});
+      S.provSug=ps?Object.assign({id:i.id},ps):null;mostrarSugProv(i);
+      sugerirPrazo(i,txt);
+    }
     carregarHistorico(i.id);
   }
   function preencherJanela(i){
@@ -961,7 +968,7 @@
     document.getElementById('siColuna').innerHTML=opcoesSituacao(situacaoDe(i).chave);
     document.getElementById('siColuna').disabled=!S.pode.editar;
     document.getElementById('siPrazo').value=i.prazo||'';
-    S.prazoTexto=null;S.sugestao=null;document.getElementById('siSugPrazo').replaceChildren();ligarPrazos();
+    S.prazoTexto=null;S.sugestao=null;if(S.provSug&&S.provSug.id!==i.id)S.provSug=null;document.getElementById('siSugPrazo').replaceChildren();ligarPrazos();
     definirEtiqueta(i.etiqueta||'',i.etiqueta_cor||(i.etiqueta?corEtiqueta(i.etiqueta):'#e5484d'));
     var partes=(i.partes||[]).map(function(p){return '<span class="si-cli">'+esc(p.nome)+'</span>'+(p.polo?' <span class="si-sub" style="display:inline">('+(p.polo==='A'?'polo ativo':p.polo==='P'?'polo passivo':esc(p.polo))+')</span>':'');}).join('<br>');
     var advs=(i.advogados||[]).map(function(a){return esc(a.nome)+' (OAB '+esc(a.numero_oab)+'/'+esc(a.uf_oab)+')';}).join('<br>');
@@ -1158,20 +1165,37 @@
     }
     if(!S.pode.editar){w.innerHTML='<div class="si-sub">Ainda não triada.</div>';return;}
     w.innerHTML='<div class="si-proc-box falta"><b>O que fazer com esta intimação?</b><div class="si-sub">Tem algo a fazer (ex.: réplica)? Crie a tarefa. Não exige nada do escritório? Dê por vista. As duas saem das abertas e ficam registradas'+(i.processo_id?' na ficha do cliente':'')+'.</div>'+
+      '<div id="siTriSug"></div>'+
       '<div class="si-acoes" style="margin-top:8px"><button class="si-btn pri sm" type="button" data-tri="tarefa">Criar tarefa</button><button class="si-btn sm" type="button" data-tri="vista">Vista (nada a fazer)</button></div><div id="siTriForm"></div></div>';
     w.onclick=function(e){var b=e.target.closest('[data-tri]');if(!b)return;if(b.dataset.tri==='tarefa')formTarefa(i);else formVista(i);};
+    mostrarSugProv(i);
+  }
+  // "Sugestão do SAGA: Fazer réplica, até 01/12" na caixa da triagem (o advogado confere no Criar tarefa)
+  function mostrarSugProv(i){
+    var w=document.getElementById('siTriSug');if(!w)return;
+    var s=S.provSug&&S.provSug.id===i.id&&!i.etiqueta?S.provSug:null;
+    if(!s||i.triagem){w.replaceChildren();return;}
+    var pz=i.prazo||(S.sugestao&&S.sugestao.id===i.id?S.sugestao.vencimento:null);
+    var novo=!w.firstElementChild;
+    w.innerHTML='<div class="si-sub si-tri-sug" style="margin-top:7px">Sugestão do SAGA: <b>'+esc(s.titulo)+'</b>'+(pz&&window.SagaPrazos?', até '+esc(SagaPrazos.dataBR(pz)):'')+' ('+esc(s.motivo)+'). Em Criar tarefa já vem preenchido; é só conferir.</div>';
+    if(novo&&window.sagaRecolher){var c=w.firstElementChild;c.hidden=true;window.sagaRecolher(c,false);}
   }
   function camposTarefa(i,comResponsavel){
     var p=i.processo_id&&S.processos[i.processo_id],padrao=(p&&p.responsavel_id)||i.responsavel_id||advogadosDe(i)[0]||S.meuId;
-    var titulo=(i.etiqueta||'Providenciar')+' · '+cnj(i);
-    return '<div class="si-campo" style="margin-top:10px"><label for="siTrTit">O que fazer</label><input id="siTrTit" maxlength="200" value="'+esc(titulo)+'"></div>'+
+    var sug=!i.etiqueta&&S.provSug&&S.provSug.id===i.id?S.provSug:null;
+    var titulo=(i.etiqueta||(sug?sug.titulo:'Providenciar'))+' · '+cnj(i);
+    return '<div class="si-campo" style="margin-top:10px"><label for="siTrTit">O que fazer</label><input id="siTrTit" maxlength="200" value="'+esc(titulo)+'">'+
+      (sug?'<div class="si-sub" style="margin:3px 0 0">Sugerido pelo SAGA: '+esc(sug.motivo)+(sug.etiqueta?'; etiqueta '+esc(sug.etiqueta):'')+'. Pode mudar.</div>':'')+'</div>'+
       '<div class="si-g2"><div class="si-campo"><label for="siTrPrazo">Prazo</label><input id="siTrPrazo" type="date" value="'+esc(i.prazo||'')+'"></div>'+
       (comResponsavel?'<div class="si-campo"><label for="siTrResp">Responsável</label><select id="siTrResp">'+S.usuarios.filter(function(u){return u.ativo&&u.auth_user_id;}).map(function(u){return '<option value="'+esc(u.id)+'"'+(u.id===padrao?' selected':'')+'>'+esc(u.nome_completo)+'</option>';}).join('')+'</select></div>':'')+'</div>'+
       '<div class="si-campo"><label>Etiqueta da tarefa</label><div id="siTrEtiqueta"></div></div>'+
       '<div class="si-campo"><label for="siTrDesc">Detalhes (opcional)</label><textarea id="siTrDesc" placeholder="Descreva a providência necessária"></textarea></div>';
   }
   function montarEtiquetaTarefa(i,rascunho){
-    var selecionada=rascunho?rascunho.etiqueta:catalogoEtiquetas.todas().find(function(e){return e.ativo===true&&!e.reserva&&e.nome.trim().toLocaleLowerCase('pt-BR')===String(i.etiqueta||'').trim().toLocaleLowerCase('pt-BR');})||null;
+    var chave=function(n){return String(n||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('pt-BR');};
+    var achar=function(nome){return nome?catalogoEtiquetas.todas().find(function(e){return e.ativo===true&&!e.reserva&&chave(e.nome)===chave(nome);})||null:null;};
+    var sug=S.provSug&&S.provSug.id===i.id?S.provSug:null;
+    var selecionada=rascunho?rascunho.etiqueta:(achar(i.etiqueta)||(!i.etiqueta&&sug?achar(sug.etiqueta):null));
     catalogoEtiquetas.montar(document.getElementById('siTrEtiqueta'),{valor:function(){return selecionada;},escolher:function(e){selecionada=e;}});
     return function(){return selecionada;};
   }

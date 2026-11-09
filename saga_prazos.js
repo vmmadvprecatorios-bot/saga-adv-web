@@ -59,6 +59,34 @@
     return {dias:n,motivo:motivo,doTexto:motivo==='prazo escrito na intimação',publicacao:r.publicacao,vencimento:r.vencimento};
   }
 
+  // Sugere a providência (o que fazer) e a etiqueta da tarefa pelo texto da intimação (09/11, GR3). null = nada claro.
+  // As etiquetas são as do catálogo de tarefas (Réplica, Contrarrazões, Manifestação, Recurso, Apelação, Agravo, Audiência,
+  // Pagamento, Ciência, Cumprimento de sentença...); se o nome não existir no catálogo, fica só o "O que fazer".
+  // A providência do processo nasce da etiqueta da tarefa ("Fazer réplica"; ao concluir, "Concluída: Réplica").
+  function providencia(o){
+    o=o||{};var t=String(o.texto||''),tipo=String(o.tipo||'').toLowerCase();
+    var jef=/juizado/i.test(String(o.orgao||''))||/juizado especial/i.test(t.slice(0,800));
+    var R=function(etiqueta,titulo,motivo){return {etiqueta:etiqueta,titulo:titulo,motivo:motivo};};
+    if(/embargos de declara/i.test(t)&&/(contrarraz|manifest|resposta)/i.test(t))return R('Contrarrazões','Responder aos embargos de declaração','o texto pede resposta aos embargos de declaração');
+    if(/contrarraz/i.test(t))return R('Contrarrazões','Apresentar contrarrazões','o texto pede contrarrazões');
+    if(/r[ée]plica|sobre a contesta[çc][ãa]o|manifest[a-zà-ú]*[^.]{0,60}contesta[çc][ãa]o/i.test(t))return R('Réplica','Fazer réplica','o texto pede manifestação sobre a contestação');
+    if(/(laudo|per[íi]cia|pericial)/i.test(t)&&/manifest/i.test(t))return R('Manifestação','Manifestar sobre o laudo','o texto pede manifestação sobre o laudo');
+    if(/impugna[çc][ãa]o/i.test(t)&&/manifest/i.test(t))return R('Manifestação','Manifestar sobre a impugnação','o texto pede manifestação sobre a impugnação');
+    if(/c[áa]lculo/i.test(t)&&/(manifest|concord|impugn)/i.test(t))return R('Manifestação','Manifestar sobre os cálculos','o texto pede manifestação sobre os cálculos');
+    if(/emend[a-z]* (?:a |à )?(?:peti[çc][ãa]o )?inicial/i.test(t))return R('Manifestação','Emendar a inicial','o texto pede emenda da inicial');
+    if(/especifi[a-z]* (?:as )?provas/i.test(t))return R('Manifestação','Especificar provas','o texto pede especificação de provas');
+    if(/audi[êe]ncia/i.test(t)&&/(design|redesign|marcad|pauta)/i.test(t))return R('Audiência','Preparar a audiência','o texto marca audiência');
+    if(/alvar[áa]|levantamento d/i.test(t))return R('Pagamento','Levantar o valor (alvará)','o texto fala de alvará ou levantamento');
+    if(/(?:junt(?!e-se)|apresent|traz)[a-z]*\b[^.]{0,60}\bdocumento/i.test(t))return R('Manifestação','Juntar documentos','o texto pede documentos');
+    if(/cumprimento de senten[çc]a/i.test(t)&&/(requer|requeira|promov|inici)/i.test(t))return R('Cumprimento de sentença','Iniciar o cumprimento de sentença','o texto fala em iniciar o cumprimento de sentença');
+    if(/senten[çc]a/.test(tipo))return R(jef?'Recurso':'Apelação',jef?'Analisar a sentença (recurso inominado)':'Analisar a sentença (apelação)','intimação de sentença');
+    if(/ac[óo]rd[ãa]o/.test(tipo))return R('Recurso','Analisar o acórdão (recurso)','intimação de acórdão');
+    if(/decis[ãa]o/.test(tipo)&&!jef)return R('Agravo','Analisar a decisão (agravo)','intimação de decisão');
+    if(/manifest/i.test(t))return R('Manifestação','Manifestar nos autos','o texto pede manifestação');
+    if(/ci[êe]ncia/i.test(t))return R('Ciência','Dar ciência','o texto dá ciência');
+    return null;
+  }
+
   function estilos(){
     if(document.getElementById('sagaPrazosCss'))return;
     var s=document.createElement('style');s.id='sagaPrazosCss';
@@ -108,5 +136,5 @@
     desenhar();carregar(cfg.sb||global._sb).then(mostrarInfo);
     return {redesenhar:function(){aplicado=null;desenhar();carregar(cfg.sb||global._sb).then(mostrarInfo);}};
   }
-  global.SagaPrazos={ligar:ligar,carregar:carregar,sugerir:sugerir,dataBR:br,somar:somar,prazoIntimacao:prazoIntimacao,prazoDoTexto:prazoDoTexto,diaUtil:function(s,opc){return util(data(s),opc);}};
+  global.SagaPrazos={ligar:ligar,carregar:carregar,sugerir:sugerir,providencia:providencia,dataBR:br,somar:somar,prazoIntimacao:prazoIntimacao,prazoDoTexto:prazoDoTexto,diaUtil:function(s,opc){return util(data(s),opc);}};
 })(window);
