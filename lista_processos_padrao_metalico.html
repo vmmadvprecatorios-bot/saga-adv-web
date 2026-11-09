@@ -232,7 +232,11 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 .quantidade-custom-wrap input::placeholder{color:#5f6f8c;}
 .btn-aplicar-qtd{background:color-mix(in srgb,var(--gold) 15%,transparent);color:var(--gold-light);font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:5px;cursor:pointer;transition:background .18s;}
 .btn-aplicar-qtd:hover{background:color-mix(in srgb,var(--gold) 28%,transparent);}
-.paginacao{display:flex;gap:6px;align-items:center;}
+.paginacao{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+/* 09/11 (Dr. Victor): escolher qualquer página, da 1 até a última */
+.pag-ir{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);margin-left:6px;white-space:nowrap}
+.pag-select{height:28px;padding:0 6px;border-radius:6px;border:1px solid var(--border-soft);background:var(--panel);color:var(--text);font:inherit;font-size:12px;cursor:pointer}
+.pag-select:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
 .pag-btn{min-width:28px;height:28px;padding:0 6px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--panel);cursor:pointer;font-size:11px;transition:background .15s;border:none;}
 .pag-btn:hover:not(:disabled){background:var(--panel-2);}
 .pag-btn.ativo{background:linear-gradient(135deg,var(--gold-light),var(--gold));color:var(--navy-1);font-weight:600;}
@@ -2022,6 +2026,9 @@ function renderPaginacao(){
   for(var i=ini;i<=fim;i++)h+='<button class="pag-btn '+(i===pg?'ativo':'')+'" onclick="irPagina('+i+')">'+i+'</button>';
   if(fim<totalPags){if(fim<totalPags-1)h+='<span class="pag-btn" style="cursor:default">...</span>';h+='<button class="pag-btn" onclick="irPagina('+totalPags+')">'+totalPags+'</button>';}
   h+='<button class="pag-btn" onclick="irPagina('+(pg+1)+')" '+(pg===totalPags?'disabled':'')+'>&#8250;</button>';
+  // menu com todas as páginas (1 até a última) para ir direto a qualquer uma
+  var ops='';for(var k=1;k<=totalPags;k++)ops+='<option value="'+k+'"'+(k===pg?' selected':'')+'>'+k.toLocaleString('pt-BR')+'</option>';
+  h+='<label class="pag-ir">Página <select class="pag-select" aria-label="Ir para a página" onchange="irPagina(Number(this.value))">'+ops+'</select> de '+totalPags.toLocaleString('pt-BR')+'</label>';
   document.getElementById('paginacao').innerHTML=h;
 }
 // Trocar de página ou de quantidade por página: só redesenha a tabela e mantém a tela onde está (antes subia para o topo)

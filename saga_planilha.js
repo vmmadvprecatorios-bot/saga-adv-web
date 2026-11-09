@@ -541,26 +541,35 @@ window.SagaPlanilha=(function(){
       (ocultavel(c)?'<button type="button" class="sp-op" data-ocultar>Ocultar esta coluna</button>':'')+
       '<div class="sp-sep"></div><div class="sp-rapidos"><button type="button" class="sp-op" data-so="vazias">Só as vazias</button><button type="button" class="sp-op" data-so="preenchidas">Só as preenchidas</button></div><input type="search" class="sp-busca" placeholder="Pesquisar">'+
       '<label class="sp-item sp-todos"><input type="checkbox" data-todos> <b>(Selecionar tudo)</b></label>'+
-      '<div class="sp-lista">'+itens.map(function(i){return '<label class="sp-item"><input type="checkbox" value="'+h(i.k)+'"'+(!atual||atual.has(i.k)?' checked':'')+'> <span>'+h(i.t)+'</span><em>'+i.n+'</em></label>';}).join('')+'</div>'+
+      '<div class="sp-lista"></div><div class="sp-lista-mais" hidden></div>'+
       '<div class="sp-menu-acoes"><button type="button" class="btn-secondary sp-limpar">Limpar filtro</button><button type="button" class="btn-primary sp-ok">OK</button></div>';
     document.body.appendChild(m);menuAberto=m;
     var r=ancora.getBoundingClientRect(),w=Math.min(300,window.innerWidth-16);
     m.style.width=w+'px';m.style.left=Math.max(8,Math.min(r.left,window.innerWidth-w-8))+'px';caberNaTela(m,r);
-    var checks=function(){return Array.from(m.querySelectorAll('.sp-lista input'));};
-    var todos=m.querySelector('[data-todos]');
-    var sincTodos=function(){var vis=checks().filter(function(i){return !i.closest('label').hidden;});todos.checked=vis.length&&vis.every(function(i){return i.checked;});};
-    sincTodos();
-    todos.onchange=function(){checks().forEach(function(i){if(!i.closest('label').hidden)i.checked=todos.checked;});};
-    m.querySelector('.sp-lista').onchange=sincTodos;
-    m.querySelector('.sp-busca').oninput=function(){var q=norm(this.value);checks().forEach(function(i){var l=i.closest('label');l.hidden=q&&norm(l.textContent).indexOf(q)===-1;});sincTodos();};
+    // 09/11: colunas com milhares de valores (nome, CPF, código...) mostram só os 1.000 primeiros, como o Excel;
+    // a pesquisa procura em todos e o que se marca vale para todos (as marcações ficam guardadas fora da tela)
+    var MAX_ITENS=1000,marc=new Set(itens.filter(function(i){return !atual||atual.has(i.k);}).map(function(i){return i.k;}));
+    itens.forEach(function(i){i.nt=norm(i.t);});
+    var lista=m.querySelector('.sp-lista'),mais=m.querySelector('.sp-lista-mais'),todos=m.querySelector('[data-todos]'),buscaEl=m.querySelector('.sp-busca');
+    var visiveis=function(){var q=norm(buscaEl.value);return q?itens.filter(function(i){return i.nt.indexOf(q)!==-1;}):itens;};
+    var sincTodos=function(){var v=visiveis();todos.checked=!!v.length&&v.every(function(i){return marc.has(i.k);});};
+    var desenhar=function(){var v=visiveis();
+      lista.innerHTML=v.slice(0,MAX_ITENS).map(function(i){return '<label class="sp-item"><input type="checkbox" value="'+h(i.k)+'"'+(marc.has(i.k)?' checked':'')+'> <span>'+h(i.t)+'</span><em>'+i.n+'</em></label>';}).join('');
+      mais.hidden=v.length<=MAX_ITENS;mais.textContent=v.length>MAX_ITENS?'Mostrando '+MAX_ITENS.toLocaleString('pt-BR')+' de '+v.length.toLocaleString('pt-BR')+'. Pesquise para achar os outros.':'';
+      sincTodos();};
+    desenhar();
+    todos.onchange=function(){visiveis().forEach(function(i){if(todos.checked)marc.add(i.k);else marc.delete(i.k);});lista.querySelectorAll('input').forEach(function(x){x.checked=todos.checked;});};
+    lista.onchange=function(e){var x=e.target;if(!x||x.type!=='checkbox')return;if(x.checked)marc.add(x.value);else marc.delete(x.value);sincTodos();};
+    buscaEl.oninput=desenhar;
     m.querySelectorAll('[data-so]').forEach(function(b){b.onclick=function(){var vaz=b.dataset.so==='vazias';filtros[c.id]=new Set(itens.filter(function(i){return vaz?i.k===VAZIO:i.k!==VAZIO;}).map(function(i){return i.k;}));if(!filtros[c.id].size&&vaz)filtros[c.id]=new Set([VAZIO]);fecharMenu();aplicar();};});
     m.querySelectorAll('[data-ord]').forEach(function(b){b.onclick=function(){ordem={coluna:c.id,direcao:b.dataset.ord};fecharMenu();aplicar();};});
     var oc=m.querySelector('[data-ocultar]');if(oc)oc.onclick=function(){ocultas[c.id]=true;delete filtros[c.id];fecharMenu();aplicar();};
     m.querySelector('.sp-limpar').onclick=function(){delete filtros[c.id];if(ordem&&ordem.coluna===c.id)ordem=null;fecharMenu();aplicar();};
     m.querySelector('.sp-ok').onclick=function(){
-      var busca=m.querySelector('.sp-busca').value.trim();
-      var marcados=checks().filter(function(i){return i.checked&&(!busca||!i.closest('label').hidden);}).map(function(i){return i.value;});
-      if(marcados.length===checks().length&&!busca)delete filtros[c.id];else filtros[c.id]=new Set(marcados);
+      var busca=buscaEl.value.trim();
+      // com pesquisa: só o que aparece na pesquisa e está marcado (como o Excel); sem pesquisa: tudo o que está marcado
+      var marcados=(busca?visiveis():itens).filter(function(i){return marc.has(i.k);}).map(function(i){return i.k;});
+      if(marcados.length===itens.length&&!busca)delete filtros[c.id];else filtros[c.id]=new Set(marcados);
       fecharMenu();aplicar();
     };
     m.querySelector('.sp-busca').focus();
@@ -972,7 +981,7 @@ window.SagaPlanilha=(function(){
       '.sp-menu-tit{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:2px 4px 6px}'+
       '.sp-op{text-align:left;border:0;background:none;color:var(--text);font:inherit;font-size:12px;padding:7px 8px;border-radius:7px;cursor:pointer}.sp-op:hover{background:color-mix(in srgb,var(--gold) 12%,transparent)}'+
       '.sp-sep{height:1px;background:var(--border-soft);margin:4px 0}.sp-busca{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font:inherit;font-size:12px}'+
-      '.sp-lista{overflow:auto;max-height:220px;display:flex;flex-direction:column;overscroll-behavior:contain}.sp-item{display:flex;align-items:center;gap:7px;font-size:12px;padding:5px 6px;border-radius:6px;cursor:pointer}.sp-item:hover{background:color-mix(in srgb,var(--text) 5%,transparent)}.sp-item span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-item em{font-style:normal;color:var(--muted);font-size:10.5px}.sp-item[hidden]{display:none}'+
+      '.sp-lista{overflow:auto;max-height:220px;display:flex;flex-direction:column;overscroll-behavior:contain}.sp-lista-mais{font-size:11.5px;color:var(--muted);padding:6px 6px 2px;line-height:1.35}.sp-item{display:flex;align-items:center;gap:7px;font-size:12px;padding:5px 6px;border-radius:6px;cursor:pointer}.sp-item:hover{background:color-mix(in srgb,var(--text) 5%,transparent)}.sp-item span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-item em{font-style:normal;color:var(--muted);font-size:10.5px}.sp-item[hidden]{display:none}'+
       '.sp-menu-acoes{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}'+
       '#spBarra{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px}.sp-pills{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border-soft);border-radius:9px;padding:3px}'+
       '.sp-pill{border:0;background:none;color:var(--muted);font:inherit;font-size:11.5px;font-weight:600;padding:6px 11px;border-radius:7px;cursor:pointer}.sp-pill.ativo{background:var(--gold);color:#fff}.sp-pill:active{transform:scale(.96)}'+

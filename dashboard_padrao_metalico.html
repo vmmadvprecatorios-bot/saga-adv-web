@@ -1135,13 +1135,21 @@ function filtrarConsultaRoscaDashboard(q, f, campoData, equipe) {
   return q;
 }
 // Conta todos os registros visíveis, inclusive quando o servidor limita cada resposta.
+// 09/11: com a Captação importada são 17 mil processos; as páginas de 500 agora vêm de 6 em 6 ao mesmo tempo
+// (antes: uma depois da outra, 36 pedidos em fila). Uma página com menos de 500 linhas é a última.
 async function lerPaginasRoscaDashboard(consulta, carga, chave) {
-  var lista = [], inicio = 0;
+  var lista = [], inicio = 0, TAM = 500, JUNTAS = 6;
   while (cargaDashboardAtual(carga)) {
-    var r = await consulta().order(chave || 'id').range(inicio, inicio + 499);
-    if (r.error || !Array.isArray(r.data)) throw r.error || new Error('Leitura indisponível.');
-    if (!r.data.length) return lista;
-    lista = lista.concat(r.data); inicio += r.data.length;
+    var pedidos = [];
+    for (var k = 0; k < JUNTAS; k++) pedidos.push(consulta().order(chave || 'id').range(inicio + k * TAM, inicio + (k + 1) * TAM - 1));
+    var rs = await Promise.all(pedidos);
+    for (var j = 0; j < rs.length; j++) {
+      var r = rs[j];
+      if (r.error || !Array.isArray(r.data)) throw r.error || new Error('Leitura indisponível.');
+      lista = lista.concat(r.data);
+      if (r.data.length < TAM) return lista;
+    }
+    inicio += JUNTAS * TAM;
   }
   return [];
 }

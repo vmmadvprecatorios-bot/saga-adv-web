@@ -426,10 +426,23 @@ function renderGraficosFinanceiro(){
 }
 
 /* ------------------------- CARREGAMENTO ------------------------- */
+// 09/11: com a Captação importada (17 mil contatos) o servidor devolvia só os 1.000 primeiros.
+// O Financeiro lê os processos do Jurídico e os que já têm honorário, de 1.000 em 1.000.
+async function lerTodasAsPaginas(montar){
+  var linhas=[],inicio=0;
+  while(true){
+    var r=await montar().range(inicio,inicio+999);
+    if(r.error)return r;
+    var lote=r.data||[];Array.prototype.push.apply(linhas,lote);
+    // para só na página vazia: se o servidor devolver menos por vez, nada fica para trás
+    if(!lote.length)return {data:linhas,error:null};
+    inicio+=lote.length;
+  }
+}
 async function carregarTudo(){
   if(!state.podeVer)return;
   var r=await Promise.all([
-    _sb.from('vw_financeiro_processos').select('*').order('cliente'),
+    lerTodasAsPaginas(function(){return _sb.from('vw_financeiro_processos').select('*').or('fase.eq.juridico,etapa.neq.sem_percentual').order('cliente').order('processo_id');}),
     _sb.from('financeiro_lancamentos').select('*').order('data_lancamento',{ascending:false}),
     _sb.from('financeiro_rateio').select('*').order('criado_em'),
     _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo'),
