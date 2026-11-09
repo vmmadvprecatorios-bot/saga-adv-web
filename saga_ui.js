@@ -596,6 +596,9 @@
     +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Teses e oportunidades</div>'
+    +'<div class="nav-item" data-tela="clientes_perfil" onclick="sagaIrPara(\'clientes_perfil.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 20a6.5 6.5 0 0 1 10.5-5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17.5" cy="16.5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.7 18.7L22 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Clientes por perfil</div>'
     +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicação</div><div class="nav-grupo" data-grupo="comunicacao">'
     +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
@@ -945,7 +948,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',teses:'Teses e oportunidades',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   var _colaboradoresAtivos=null;
@@ -1568,6 +1571,7 @@
     processos:['processos.visualizar'],processos_juridico:['processos.visualizar'],processos_captacao:['processos.visualizar'],
     cartas:['pessoas.visualizar'],
     teses:['teses.visualizar'],
+    clientes_perfil:['pessoas.visualizar','processos.visualizar'],
     agenda:['compromissos.visualizar'],
     tarefas:['tarefas.visualizar'],
     chat:['chat.usar'],

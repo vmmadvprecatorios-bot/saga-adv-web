@@ -255,6 +255,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .tag-ger-linha{display:flex;align-items:center;gap:6px;margin-bottom:5px}.tag-ger-linha input[type=color]{width:28px;height:28px;padding:2px;border:1px solid var(--border-soft);border-radius:7px;background:none;cursor:pointer;flex:0 0 auto}.tag-ger-linha input[type=text]{flex:1;min-width:0;height:30px;padding:0 9px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:11.5px}
 .tag-ger-linha button{height:28px;min-width:28px;border:1px solid var(--border-soft);border-radius:7px;background:var(--panel);color:var(--text);cursor:pointer;font-size:11px}.tag-ger-linha button:disabled{opacity:.35;cursor:default}.tag-ger-nova{border:1px dashed var(--border);background:none;color:var(--gold-light);border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
 .ficha-titulo .cpf-info{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px}.ficha-titulo .cpf-info>span{display:inline-flex;align-items:center;min-width:0}.ficha-titulo .end-linha{overflow-wrap:anywhere}.ficha-titulo .end-vazio{color:var(--muted)}.ficha-titulo .end-incluir{margin-left:6px;padding:2px 8px;border:1px dashed var(--border);border-radius:7px;background:none;color:var(--gold-light);font:inherit;font-size:11px;cursor:pointer}.ficha-titulo .end-incluir:active{transform:scale(.95)}
+/* Perfil do cliente (bloco 138): situação funcional, órgão, cargo... para achar teses novas em "Clientes por perfil" */
+.pf-titulo{margin:16px 0 4px;padding-top:12px;border-top:1px solid var(--border-soft);font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)}
+.pf-ajuda{font-size:10.5px;color:var(--muted);margin:0 0 10px;line-height:1.45}
+.pf-grade{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.pf-grade .form-field select,#clienteModal .form-field select{width:100%;outline:0;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text);font:inherit;font-size:11px;padding:9px 8px}
+#clienteModal .form-field select:focus{border-color:var(--gold)}
+#clienteModal .modal{max-height:calc(100vh - 32px);display:flex;flex-direction:column}#clienteModal .modal-body{overflow-y:auto}
+.ficha-mini-tag.pf{background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--text);font-weight:600}
+@media(max-width:520px){.pf-grade{grid-template-columns:1fr}}
 /* Resumo do agente de petições (ponte Obsidian -> SAGA, bloco 123) */
 .ra-cab{display:flex;align-items:center;justify-content:space-between;gap:10px}.ra-quando{font-size:10.5px;color:var(--muted);font-weight:500;letter-spacing:0;text-transform:none}
 .ra-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px}
@@ -434,7 +443,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
   </main>
 </div>
 
-<div class="modal-overlay" id="clienteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="tituloClienteModal">Editar dados do cliente</h3><p id="subClienteModal">Atualize os dados cadastrais desta pessoa.</p></div><button class="modal-close" data-close-modal="clienteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="ecNome">Nome completo</label><input id="ecNome" type="text" placeholder="Nome completo"></div><div class="form-field"><label for="ecCpf">CPF</label><input id="ecCpf" type="text" placeholder="000.000.000-00"></div><div class="form-field"><label>Situação vital</label><div id="ecSituacaoSelect"></div></div><div class="form-field" id="ecDataFalecimentoWrap" style="display:none"><label for="ecDataFalecimento">Data de falecimento</label><input id="ecDataFalecimento" type="date"></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="clienteModal">Cancelar</button><button class="btn-primary" id="saveClienteButton">Salvar dados</button></div></div></div>
+<div class="modal-overlay" id="clienteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="tituloClienteModal">Editar dados do cliente</h3><p id="subClienteModal">Atualize os dados cadastrais desta pessoa.</p></div><button class="modal-close" data-close-modal="clienteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="ecNome">Nome completo</label><input id="ecNome" type="text" placeholder="Nome completo"></div><div class="form-field"><label for="ecCpf">CPF</label><input id="ecCpf" type="text" placeholder="000.000.000-00"></div><div class="form-field"><label>Situação vital</label><div id="ecSituacaoSelect"></div></div><div class="form-field" id="ecDataFalecimentoWrap" style="display:none"><label for="ecDataFalecimento">Data de falecimento</label><input id="ecDataFalecimento" type="date"></div><div class="pf-titulo">Perfil do cliente</div><p class="pf-ajuda">Serve para achar este cliente em "Clientes por perfil" e oferecer teses novas. O agente de petições também preenche.</p><div class="pf-grade"><div class="form-field"><label for="ecPfSit">Situação funcional</label><select id="ecPfSit"></select></div><div class="form-field"><label for="ecPfOrgao">Órgão</label><input id="ecPfOrgao" type="text" maxlength="120" list="ecPfListaOrgaos" autocomplete="off" placeholder="Ex.: UFAL, INSS, FUNASA"><datalist id="ecPfListaOrgaos"></datalist></div><div class="form-field"><label for="ecPfCargo">Cargo</label><input id="ecPfCargo" type="text" maxlength="120" autocomplete="off" placeholder="Ex.: Professor"></div><div class="form-field"><label for="ecPfProfissao">Profissão</label><input id="ecPfProfissao" type="text" maxlength="120" autocomplete="off"></div><div class="form-field"><label for="ecPfMatricula">Matrícula</label><input id="ecPfMatricula" type="text" maxlength="40" autocomplete="off"></div><div class="form-field"><label for="ecPfNasc">Data de nascimento</label><input id="ecPfNasc" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off"></div><div class="form-field"><label for="ecPfIngresso">Ingresso no serviço público</label><input id="ecPfIngresso" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa ou o ano" autocomplete="off"></div><div class="form-field"><label for="ecPfApos">Aposentadoria</label><input id="ecPfApos" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa ou o ano" autocomplete="off"></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="clienteModal">Cancelar</button><button class="btn-primary" id="saveClienteButton">Salvar dados</button></div></div></div>
 <div class="modal-overlay" id="tagModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Nova etiqueta</h3><p>Adicione uma etiqueta de organização à ficha da cliente.</p></div><button class="modal-close" data-close-modal="tagModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="tagSelect">Etiqueta</label><div class="tag-escolha"><span class="tag-escolha-cor" id="tagCorPreview"></span><select id="tagSelect"></select></div></div><div id="tagOutraWrap" hidden><div class="form-field"><label for="tagInput">Nome da etiqueta</label><input id="tagInput" type="text" placeholder="Ex.: Prioridade de análise"></div><div class="form-field"><label for="tagGrupoNova">Grupo</label><select id="tagGrupoNova"><option value="captacao">Captação</option><option value="processual" selected>Processual</option><option value="financeiro">Financeiro</option><option value="urgencia">Urgência</option></select></div><div class="form-field"><label for="tagColorInput">Cor da etiqueta</label><input id="tagColorInput" type="color" value="#4b8af5" style="width:100%;height:40px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer"></div><div id="tagSalvarCatalogoWrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;font-weight:500"><input type="checkbox" id="tagSalvarCatalogo" style="accent-color:var(--gold)"> Guardar no menu para usar de novo</label></div></div><div id="tagGerenciarWrap" hidden><button type="button" class="tag-gerenciar-btn" id="tagGerenciarBtn">Gerenciar etiquetas (criar, renomear, cor, ordem, remover)</button><div id="tagGerenciar" hidden></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="tagModal">Cancelar</button><button class="btn-primary" id="saveTagButton">Adicionar etiqueta</button></div></div></div>
 <div class="modal-overlay" id="pastaModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="pastaModalTitulo">Nova pasta</h3><p id="pastaModalSub">Organize os documentos do cliente.</p></div><button class="modal-close" data-close-modal="pastaModal">✕</button></div><div class="modal-body"><div class="form-field" id="pastaCampoNome"><label for="pastaNome">Nome da pasta</label><input id="pastaNome" type="text" maxlength="120" placeholder="Ex.: Documentos pessoais" autocomplete="off"></div><div class="form-field" id="pastaCampoDestino"><label for="pastaDestino" id="pastaDestinoRotulo">Colocar dentro de</label><select id="pastaDestino" class="pasta-select"></select></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="pastaModal">Cancelar</button><button class="btn-primary" id="pastaSalvar">Salvar</button></div></div></div>
 <div class="modal-overlay" id="deleteProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir processo</h3><p>O processo será removido do sistema e deixará de aparecer nesta ficha.</p></div><button class="modal-close" data-close-modal="deleteProcessModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja realmente excluir o processo <strong id="deleteProcessLabel" style="color:var(--text)"></strong>? Os comentários, documentos e tarefas vinculados deixarão de ser exibidos.</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="deleteProcessModal">Cancelar</button><button class="btn-danger" id="deleteProcessButton">Excluir processo</button></div></div></div>
@@ -2895,6 +2904,10 @@ function renderHeaderCliente(){
     badge.className='ficha-mini-tag';
     badge.textContent='Situação vital: '+rotulo+falecimento;
     meta.appendChild(badge);
+    // Perfil do cliente (bloco 138): aparece ao lado, para a equipe ver de cara quem é o cliente
+    etiquetasPerfil(state.pessoaRow||state.pessoaAtual).forEach(txt=>{
+      const tg=document.createElement('span');tg.className='ficha-mini-tag pf';tg.title='Perfil do cliente (Editar dados do cliente)';tg.textContent=txt;meta.appendChild(tg);
+    });
   }
 
   const btnEditar=document.getElementById('btnEditarCliente');
@@ -3653,6 +3666,82 @@ async function registrarMencoes(comentarioId,texto){
   return [];
 }
 
+/* ---------- Perfil do cliente (bloco 138): pessoas.dados_extra.perfil ----------
+   Mesmas chaves que o agente de petições manda pela ponte; a tela "Clientes por perfil" filtra por elas. */
+const PF_CAMPOS=[['situacao_funcional','ecPfSit'],['orgao','ecPfOrgao'],['cargo','ecPfCargo'],['profissao','ecPfProfissao'],['matricula','ecPfMatricula'],['data_nascimento','ecPfNasc'],['data_ingresso','ecPfIngresso'],['data_aposentadoria','ecPfApos']];
+function perfilDe(row){const e=row&&row.dados_extra;const p=e&&typeof e==='object'&&!Array.isArray(e)?e.perfil:null;return p&&typeof p==='object'&&!Array.isArray(p)?p:{};}
+function pfNorm(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();}
+function pfDataBr(v){const s=String(v||'').trim();const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:s;}
+function pfIdade(v){const s=String(v||'').trim();let m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/),d=null;if(m)d=new Date(+m[3],+m[2]-1,+m[1]);else{m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)d=new Date(+m[1],+m[2]-1,+m[3]);}
+  if(!d||isNaN(d))return null;const h=new Date();let i=h.getFullYear()-d.getFullYear();if(h.getMonth()<d.getMonth()||(h.getMonth()===d.getMonth()&&h.getDate()<d.getDate()))i--;return i>=0&&i<130?i:null;}
+function pfAno(v){const s=String(v||'');const m=s.match(/(?:^|\D)((?:19|20)\d{2})(?:\D|$)/);return m?m[1]:'';}
+function pfPodeGerenciar(){if(state.ehAdmin===true)return true;try{const g=JSON.parse(localStorage.getItem('saga-permissoes')||'null');return !!(g&&Array.isArray(g.perms)&&g.perms.indexOf('etiquetas.gerenciar')>=0);}catch(e){return false;}}
+// dd/mm/aaaa enquanto digita; nos campos que aceitam só o ano, "1985" fica "1985" ao sair do campo
+function pfMascaraData(input,aceitaAno){
+  if(!input||input.dataset.pfMask)return;input.dataset.pfMask='1';
+  input.addEventListener('input',()=>{const d=input.value.replace(/\D/g,'').slice(0,8);let r=d;if(d.length>2)r=d.slice(0,2)+'/'+d.slice(2);if(d.length>4)r=d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4);input.value=r;});
+  if(aceitaAno)input.addEventListener('blur',()=>{const d=input.value.replace(/\D/g,'');if(d.length===4&&/^(19|20)\d\d$/.test(d))input.value=d;});
+}
+let pfOrgaosCarregados=false;
+async function preencherPerfilModal(row){
+  const pf=perfilDe(row);
+  const sel=document.getElementById('ecPfSit');if(!sel)return;
+  PF_CAMPOS.forEach(([k,id])=>{if(id==='ecPfSit')return;const el=document.getElementById(id);if(el)el.value=/^data_/.test(k)?pfDataBr(pf[k]):(pf[k]||'');});
+  pfMascaraData(document.getElementById('ecPfNasc'),false);
+  pfMascaraData(document.getElementById('ecPfIngresso'),true);
+  pfMascaraData(document.getElementById('ecPfApos'),true);
+  const atual=String(pf.situacao_funcional||'').trim();
+  sel.innerHTML='<option value="">Não informado</option>'+(atual?'<option value="'+esc(atual)+'">'+esc(atual)+'</option>':'');sel.value=atual;
+  const r=await _sb.from('etiquetas_catalogo').select('id,nome,ordem').eq('categoria','perfil_situacao_funcional').eq('ativo',true).order('ordem');
+  const ops=(r.data||[]);
+  // o agente costuma mandar em minúsculas ("aposentado"): casa com a opção do menu
+  const casada=ops.find(o=>pfNorm(o.nome)===pfNorm(atual))||ops.find(o=>atual&&pfNorm(o.nome).slice(0,8)===pfNorm(atual).slice(0,8));
+  const escolhido=casada?casada.nome:atual;
+  sel.innerHTML='<option value="">Não informado</option>'+ops.map(o=>'<option value="'+esc(o.nome)+'">'+esc(o.nome)+'</option>').join('')+
+    (atual&&!casada?'<option value="'+esc(atual)+'">'+esc(atual)+'</option>':'')+(pfPodeGerenciar()?'<option value="__nova">+ Nova opção…</option>':'');
+  sel.value=escolhido;sel.dataset.ant=escolhido;
+  if(!sel.dataset.pfLigado){sel.dataset.pfLigado='1';sel.addEventListener('change',async()=>{
+    if(sel.value!=='__nova'){sel.dataset.ant=sel.value;return;}
+    const nome=(window.prompt('Nome da nova situação funcional (ex.: Anistiado):')||'').trim();
+    if(!nome){sel.value=sel.dataset.ant||'';return;}
+    const existe=Array.from(sel.options).find(o=>o.value!=='__nova'&&pfNorm(o.value)===pfNorm(nome));
+    if(existe){sel.value=existe.value;sel.dataset.ant=existe.value;return;}
+    const ordem=Array.from(sel.options).length;
+    const ins=await _sb.from('etiquetas_catalogo').insert({categoria:'perfil_situacao_funcional',nome:nome,cor:'#64748b',ordem:ordem}).select('id').single();
+    if(ins.error){showToast('Não foi possível criar a opção: '+ins.error.message,'error');sel.value=sel.dataset.ant||'';return;}
+    const op=document.createElement('option');op.value=nome;op.textContent=nome;sel.insertBefore(op,sel.querySelector('option[value="__nova"]'));
+    sel.value=nome;sel.dataset.ant=nome;showToast('Opção "'+nome+'" criada.','success');
+  });}
+  if(!pfOrgaosCarregados){pfOrgaosCarregados=true;
+    _sb.rpc('clientes_perfil_opcoes').then(o=>{const l=document.getElementById('ecPfListaOrgaos');if(l&&o.data)l.innerHTML=(o.data.orgao||[]).map(x=>'<option value="'+esc(x.nome)+'"></option>').join('');}).catch(()=>{});}
+}
+// Lê os campos do perfil; devolve null (e avisa) se uma data estiver pela metade
+function lerPerfilModal(){
+  const out={};
+  for(const [k,id] of PF_CAMPOS){
+    const el=document.getElementById(id);if(!el)continue;
+    let v=String(el.value||'').trim();if(v==='__nova')v='';
+    if(!v)continue;
+    if(k==='data_nascimento'&&!/^\d{2}\/\d{2}\/\d{4}$/.test(v)){showToast('Complete a data de nascimento (dd/mm/aaaa).','warning');el.focus();return null;}
+    if((k==='data_ingresso'||k==='data_aposentadoria')&&!/^\d{2}\/\d{2}\/\d{4}$/.test(v)&&!/^(19|20)\d{2}$/.test(v.replace(/\D/g,''))){showToast('Use a data completa (dd/mm/aaaa) ou só o ano.','warning');el.focus();return null;}
+    if((k==='data_ingresso'||k==='data_aposentadoria')&&!/\//.test(v))v=v.replace(/\D/g,'');
+    out[k]=v;
+  }
+  return out;
+}
+// Etiquetas do perfil no topo da ficha
+function etiquetasPerfil(row){
+  const pf=perfilDe(row);const t=[];
+  const cap=s=>{s=String(s||'').trim();return s?s.charAt(0).toUpperCase()+s.slice(1):'';};
+  if(pf.situacao_funcional)t.push(cap(pf.situacao_funcional));
+  if(pf.orgao)t.push(String(pf.orgao));
+  if(pf.cargo||pf.profissao)t.push(cap(pf.cargo||pf.profissao));
+  const idade=pfIdade(pf.data_nascimento);if(idade!=null)t.push(idade+' anos');
+  const ing=pfAno(pf.data_ingresso);if(ing)t.push('Ingresso '+ing);
+  const apo=pfAno(pf.data_aposentadoria);if(apo)t.push('Aposentadoria '+apo);
+  return t;
+}
+
 /* ---------- Modal de dados do cliente (editar / nova pessoa) ---------- */
 function preencherModalCliente(modo){
   const titulo=document.getElementById('tituloClienteModal');
@@ -3660,7 +3749,7 @@ function preencherModalCliente(modo){
   const botao=document.getElementById('saveClienteButton');
   const dados=modo==='editar'?state.pessoaRow:{};
   document.getElementById('ecNome').value=dados.nome_completo||'';
-  document.getElementById('ecCpf').value=dados.cpf||'';
+  document.getElementById('ecCpf').value=dados.cpf&&String(dados.cpf).replace(/\D/g,'').length===11?mascaraCpf(dados.cpf):(dados.cpf||'');
   const situacao=dados.situacao_vital||'vivo';
   document.getElementById('ecSituacaoSelect').innerHTML=customSelectMarkup('ecSituacao',situacao,[['vivo','Vivo'],['falecido','Falecido'],['nao_informado','Não informado']]);
   bindCustomSelects(document.getElementById('clienteModal'));
@@ -3677,6 +3766,7 @@ function preencherModalCliente(modo){
     });
   }
   attachCpfMask(document.getElementById('ecCpf'));
+  preencherPerfilModal(modo==='editar'?state.pessoaRow:null);
   if(modo==='editar'){titulo.textContent='Editar dados do cliente';sub.textContent='Atualize os dados cadastrais desta pessoa.';botao.textContent='Salvar dados';}
   else{titulo.textContent='Nova pessoa';sub.textContent='Cadastre uma nova pessoa no sistema. O CPF é único por pessoa.';botao.textContent='Cadastrar pessoa';}
   document.getElementById('clienteModal').dataset.modo=modo;
@@ -3691,6 +3781,8 @@ async function salvarModalCliente(){
   if(cpf&&cpf.length!==11){showToast('Informe um CPF válido com 11 dígitos, ou deixe o campo em branco.','warning');return;}
   const situacaoVital=document.getElementById('ecSituacao').value||'vivo';
   const dataFalecimentoInput=document.getElementById('ecDataFalecimento');
+  const perfilNovo=lerPerfilModal();
+  if(perfilNovo===null)return;
   const payload={
     nome_completo:nome,
     cpf:cpf||null,
@@ -3698,6 +3790,14 @@ async function salvarModalCliente(){
     data_falecimento:situacaoVital==='falecido'?((dataFalecimentoInput&&dataFalecimentoInput.value)||null):null
   };
   if(modo==='editar'){
+    // Perfil: lê o dados_extra atual (o agente pode ter mandado algo enquanto a janela estava aberta) e troca só os campos do perfil
+    const leitura=await _sb.from('pessoas').select('dados_extra').eq('id',state.pessoaRow.id).maybeSingle();
+    if(leitura.error){showToast('Não foi possível salvar os dados. Tente de novo.','error');return;}
+    const extraAtual=leitura.data&&leitura.data.dados_extra&&typeof leitura.data.dados_extra==='object'&&!Array.isArray(leitura.data.dados_extra)?Object.assign({},leitura.data.dados_extra):{};
+    const perfilAntigo=perfilDe({dados_extra:extraAtual});
+    const perfilJunto=Object.assign({},perfilAntigo);
+    PF_CAMPOS.forEach(([k])=>{if(perfilNovo[k])perfilJunto[k]=perfilNovo[k];else delete perfilJunto[k];});
+    if(JSON.stringify(perfilJunto)!==JSON.stringify(perfilAntigo)){extraAtual.perfil=perfilJunto;payload.dados_extra=extraAtual;}
     payload.atualizado_em=new Date().toISOString();
     const r=await _sb.from('pessoas').update(payload).eq('id',state.pessoaRow.id);
     if(r.error){
@@ -3719,6 +3819,7 @@ async function salvarModalCliente(){
       }
     }
     payload.criado_por_id=state.usuario.internoId;
+    if(Object.keys(perfilNovo).length)payload.dados_extra={perfil:perfilNovo};
     const r=await _sb.from('pessoas').insert(payload).select('id').single();
     if(r.error){
       if(String(r.error.code)==='23505'){showToast('Já existe uma pessoa cadastrada com este CPF.','warning');return;}
