@@ -3,6 +3,21 @@
 // Chamar (apos criar o cliente _sb do Supabase): SagaUI.carregar('nome-tela');
 // A sidebar e a topbar sao embutidas neste arquivo (nao dependem de fetch).
 (function(global){
+  // Formatos de exibição (regra de 04/11: todo dado com formato aparece no padrão, venha o banco com ou sem pontuação).
+  // Uso: sagaFmt.cpf(v), sagaFmt.cnj(v), sagaFmt.tel(v), sagaFmt.cep(v), sagaFmt.moeda(v). Se o número não tiver
+  // o tamanho esperado, devolve o texto como veio (não esconde dado estranho).
+  global.sagaFmt=(function(){
+    function dig(v){return String(v==null?'':v).replace(/\D/g,'');}
+    function pad(d,p){var r='',i=0;for(var k=0;k<p.length&&i<d.length;k++){if(p[k]==='#')r+=d[i++];else r+=p[k];}return r;}
+    function cru(v){return v==null?'':String(v);}
+    return {
+      cpf:function(v){var d=dig(v);if(d.length===11)return pad(d,'###.###.###-##');if(d.length===14)return pad(d,'##.###.###/####-##');return cru(v);},
+      cnj:function(v){var d=dig(v);return d.length===20?pad(d,'#######-##.####.#.##.####'):cru(v);},
+      tel:function(v){var d=dig(v);if(d.length>11&&d.indexOf('55')===0)d=d.slice(2);if(d.length===11)return pad(d,'(##) #####-####');if(d.length===10)return pad(d,'(##) ####-####');return cru(v);},
+      cep:function(v){var d=dig(v);return d.length===8?pad(d,'#####-###'):cru(v);},
+      moeda:function(v){if(v==null||v==='')return '';var n=Number(v);return isFinite(n)?n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):cru(v);}
+    };
+  })();
   // Confirmacao no padrao do SAGA (no lugar do confirm() do navegador). Devolve uma Promise<boolean>.
   // true só para o administrador geral (regra de 09/11: colaborador não apaga nada)
   global.sagaPodeApagar=function(){return document.documentElement.classList.contains('saga-pode-apagar');};
@@ -1354,11 +1369,11 @@
       var html='';
       if(pessoas.length){
         html+='<div class="pop-title">Pessoas</div>';
-        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?'CPF '+esc(p.cpf):'Sem CPF')+'</div></div></div>';}).join('');
+        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?(String(p.cpf).replace(/\D/g,'').length===14?'CNPJ ':'CPF ')+esc(global.sagaFmt.cpf(p.cpf)):'Sem CPF')+'</div></div></div>';}).join('');
       }
       if(processos.length){
         html+='<div class="pop-title">Processos</div>';
-        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(pr.numero_processo_cnj):'Sem numero CNJ')+'</div></div></div>';}).join('');
+        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(global.sagaFmt.cnj(pr.numero_processo_cnj)):'Sem número do processo')+'</div></div></div>';}).join('');
       }
       if(colaboradores.length){
         html+='<div class="pop-title">Colaboradores</div>';

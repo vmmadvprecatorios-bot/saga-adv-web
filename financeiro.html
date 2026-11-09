@@ -504,7 +504,7 @@ function renderProcessos(){
     var E=ETAPAS[p.etapa]||ETAPAS.sem_percentual;
     return '<tr data-proc="'+esc(p.processo_id)+'">'+
       '<td><div class="cli">'+esc(p.cliente)+'</div><div class="sub">'+esc(mascaraCpf(p.cpf))+'</div></td>'+
-      '<td>'+(p.tese?etq(p.tese,p.tese_cor):'')+'<div class="sub">'+esc(p.numero_processo_cnj||'Sem número')+'</div></td>'+
+      '<td>'+(p.tese?etq(p.tese,p.tese_cor):'')+'<div class="sub">'+esc(p.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj):'Sem número')+'</div></td>'+
       '<td class="num">'+moeda(p.valor_causa)+'</td>'+
       '<td class="num">'+(p.percentual_honorarios==null?'—':Number(p.percentual_honorarios).toLocaleString('pt-BR')+'%')+'</td>'+
       '<td class="num">'+moeda(p.valor_expectativa)+'</td>'+
@@ -522,7 +522,7 @@ function abrirProcesso(id){
   state.procAberto=p;
   state.rateioModal=state.rateios.filter(function(r){return r.processo_id===id;}).map(function(r){return Object.assign({},r);});
   document.getElementById('mpTitulo').textContent=p.cliente;
-  document.getElementById('mpSub').textContent=(p.tese||'Sem tipo de ação')+' · '+(p.numero_processo_cnj||'Sem número')+(p.status?' · '+p.status:'');
+  document.getElementById('mpSub').textContent=(p.tese||'Sem tipo de ação')+' · '+(p.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj):'Sem número')+(p.status?' · '+p.status:'');
   document.getElementById('mpValorCausa').value=p.valor_causa==null?'Não informado':moeda(p.valor_causa);
   document.getElementById('mpPercentual').value=p.percentual_honorarios==null?'':String(p.percentual_honorarios).replace('.',',');
   document.getElementById('mpSentenca').value=numeroParaMoedaCampo(p.valor_honorarios_sentenca);
@@ -639,7 +639,7 @@ function renderLancamentos(){
   tb.querySelectorAll('[data-lanc]').forEach(function(tr){tr.addEventListener('click',function(){abrirLancamento(tr.dataset.lanc);});});
 }
 function opcoesProcessos(){
-  return '<option value="">Nenhum (lançamento do escritório)</option>'+state.processos.map(function(p){return '<option value="'+esc(p.processo_id)+'">'+esc(p.cliente+' · '+(p.tese||'')+(p.numero_processo_cnj?' · '+p.numero_processo_cnj:''))+'</option>';}).join('');
+  return '<option value="">Nenhum (lançamento do escritório)</option>'+state.processos.map(function(p){return '<option value="'+esc(p.processo_id)+'">'+esc(p.cliente+' · '+(p.tese||'')+(p.numero_processo_cnj?' · '+(window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj):''))+'</option>';}).join('');
 }
 // Categoria do lançamento: menu do catálogo (etiquetas_catalogo, lista 'lancamento_categoria'; bloco 117)
 var catalogoCategorias=null,widgetCategoria=null;

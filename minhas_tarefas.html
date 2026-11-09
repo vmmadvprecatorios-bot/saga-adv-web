@@ -2342,7 +2342,7 @@ function montarProcessoVinculado(p){
   if(!p) return null;
   return {
     id: p.id,
-    numero: p.numero_processo_cnj || 'Sem número',
+    numero: p.numero_processo_cnj ? (window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj) : 'Sem número',
     cliente: (p.pessoa && p.pessoa.nome_completo) || 'Cliente não informado',
     tribunal: tribunalDoNumero(p.numero_processo_cnj),
     fase: (p.status && p.status.nome) || (p.tese && p.tese.nome) || 'Sem fase'

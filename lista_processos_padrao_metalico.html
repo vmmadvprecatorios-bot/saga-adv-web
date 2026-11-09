@@ -2222,7 +2222,7 @@ async function mostrarProcessosDaPessoa(pid){
   if(!state.novoPessoa||state.novoPessoa.id!==pid)return;
   var l=(r.data||[]).filter(function(x){return !x.excluido_logico;});
   if(!l.length)return;
-  el.innerHTML='Esta pessoa já tem <b>'+l.length+' processo'+(l.length>1?'s':'')+'</b>: '+l.slice(0,4).map(function(x){return esc((x.tese&&x.tese.nome?x.tese.nome+' · ':'')+(x.numero_processo_cnj||'(sem número)'));}).join('; ')+(l.length>4?'…':'')+'. O novo processo será mais um cartão na mesma ficha. <a href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(pid)+'" target="_blank" rel="noopener">Abrir a ficha</a>';
+  el.innerHTML='Esta pessoa já tem <b>'+l.length+' processo'+(l.length>1?'s':'')+'</b>: '+l.slice(0,4).map(function(x){return esc((x.tese&&x.tese.nome?x.tese.nome+' · ':'')+(x.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(x.numero_processo_cnj):x.numero_processo_cnj):'(sem número)'));}).join('; ')+(l.length>4?'…':'')+'. O novo processo será mais um cartão na mesma ficha. <a href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(pid)+'" target="_blank" rel="noopener">Abrir a ficha</a>';
   el.hidden=false;
 }
 async function salvarNovoProcesso(){

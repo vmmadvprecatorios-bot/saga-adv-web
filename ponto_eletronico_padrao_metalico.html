@@ -1739,7 +1739,7 @@ function prepararAtividades(){
       var dig=q.replace(/\D/g,''),f='nome_completo.ilike.%'+q.replace(/[,%()]/g,' ')+'%'+(dig.length>=3?',cpf.ilike.%'+dig+'%':'');
       var r=await _sb.from('pessoas').select('id,nome_completo,cpf').or(f).order('nome_completo').limit(8);
       var l=r.data||[];
-      sug.innerHTML=l.length?l.map(function(p){return '<button type="button" data-pessoa="'+p.id+'" data-nome="'+esc(p.nome_completo)+'">'+esc(p.nome_completo)+(p.cpf?' <span class="sub">'+esc(p.cpf)+'</span>':'')+'</button>';}).join(''):'<div class="sub" style="padding:8px 11px">Nenhum cliente encontrado.</div>';
+      sug.innerHTML=l.length?l.map(function(p){return '<button type="button" data-pessoa="'+p.id+'" data-nome="'+esc(p.nome_completo)+'">'+esc(p.nome_completo)+(p.cpf?' <span class="sub">'+esc((window.sagaFmt?sagaFmt.cpf(p.cpf):p.cpf))+'</span>':'')+'</button>';}).join(''):'<div class="sub" style="padding:8px 11px">Nenhum cliente encontrado.</div>';
       sug.style.display='block';
     },250);
   });

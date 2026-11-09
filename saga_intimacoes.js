@@ -1021,7 +1021,7 @@
       g.sugestoes.replaceChildren();
       if(r.error){g.sugestoes.textContent='Não foi possível buscar clientes. Tente novamente no campo.';return;}
       (r.data||[]).forEach(function(p){
-        var b=document.createElement('button');b.type='button';b.className='si-btn sm';b.textContent='Usar cliente existente: '+p.nome_completo+(p.cpf?' · CPF '+p.cpf:'');
+        var b=document.createElement('button');b.type='button';b.className='si-btn sm';b.textContent='Usar cliente existente: '+p.nome_completo+(p.cpf?' · CPF '+(window.sagaFmt?sagaFmt.cpf(p.cpf):p.cpf):'');
         b.onclick=function(){g.busca++;clearTimeout(g.timer);g.pessoaId=p.id;g.nome=p.nome_completo;g.input.value=g.nome;g.sugestoes.textContent='✓ Usando cliente já cadastrado. Edite o nome para desfazer.';};g.sugestoes.appendChild(b);
       });
       if(!(r.data||[]).length)g.sugestoes.textContent='Nenhum cliente parecido encontrado. Será usado um novo cadastro se o processo não existir.';
@@ -1302,7 +1302,7 @@
       if(v.length<3){s.innerHTML='';return;}
       var r=await S.sb.from('pessoas').select('id,nome_completo,cpf').ilike('nome_completo','%'+v+'%').limit(6);
       if(pedido!==buscaCliente||!s.isConnected)return;
-      s.innerHTML=(r.data||[]).length?'<div class="si-sub">Já existe no SAGA? Clique para usar o cliente cadastrado:</div>'+(r.data||[]).map(function(p){return '<button type="button" data-pes="'+esc(p.id)+'">'+esc(p.nome_completo)+(p.cpf?' · CPF '+esc(p.cpf):'')+'</button>';}).join(''):'<div class="si-sub">Cliente novo: será cadastrado com este nome.</div>';
+      s.innerHTML=(r.data||[]).length?'<div class="si-sub">Já existe no SAGA? Clique para usar o cliente cadastrado:</div>'+(r.data||[]).map(function(p){return '<button type="button" data-pes="'+esc(p.id)+'">'+esc(p.nome_completo)+(p.cpf?' · CPF '+esc((window.sagaFmt?sagaFmt.cpf(p.cpf):p.cpf)):'')+'</button>';}).join(''):'<div class="si-sub">Cliente novo: será cadastrado com este nome.</div>';
     }
     document.getElementById('siIncCli').addEventListener('input',function(){escolhida=null;buscaCliente++;clearTimeout(tm);tm=setTimeout(sugerir,250);});
     document.getElementById('siIncSug').addEventListener('click',function(e){var b=e.target.closest('[data-pes]');if(!b)return;buscaCliente++;clearTimeout(tm);escolhida=b.dataset.pes;document.getElementById('siIncCli').value=b.textContent.split(' · ')[0];this.innerHTML='<div class="si-sub">✓ Usando o cliente já cadastrado.</div>';});
@@ -1352,7 +1352,7 @@
       if(/[a-zà-ÿ]/i.test(t))cs.push(S.sb.from('pessoas').select('id').ilike('nome_completo','%'+t+'%').limit(10).then(function(r){var ids=(r.data||[]).map(function(p){return p.id;});if(!ids.length)return {data:[]};return S.sb.from('processos').select('id,numero_processo_cnj,pessoa:pessoas(nome_completo)').eq('excluido_logico',false).in('pessoa_id',ids).limit(20);}));
       (await Promise.all(cs)).forEach(function(r){(r.data||[]).forEach(function(p){ach[p.id]=p;});});
       var l=Object.values(ach);
-      w.innerHTML=l.length?l.map(function(p){return '<button type="button" data-proc="'+esc(p.id)+'"><span class="si-cli">'+esc(p.pessoa?p.pessoa.nome_completo:'Cliente')+'</span><div class="si-sub">'+esc(p.numero_processo_cnj||'Sem número')+'</div></button>';}).join(''):'<div class="si-sub">Nenhum processo encontrado.</div>';
+      w.innerHTML=l.length?l.map(function(p){return '<button type="button" data-proc="'+esc(p.id)+'"><span class="si-cli">'+esc(p.pessoa?p.pessoa.nome_completo:'Cliente')+'</span><div class="si-sub">'+esc(p.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj):'Sem número')+'</div></button>';}).join(''):'<div class="si-sub">Nenhum processo encontrado.</div>';
     }
     document.getElementById('siLigBusca').addEventListener('input',function(){clearTimeout(tm);tm=setTimeout(buscar,250);});
     document.getElementById('siLigRes').addEventListener('click',async function(e){

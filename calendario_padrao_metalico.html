@@ -1864,7 +1864,7 @@ async function buscarProcessos(termo) {
       var nomeCliente = p.pessoas && p.pessoas.nome_completo ? p.pessoas.nome_completo : '';
       var opt = document.createElement('div');
       opt.className = 'typeahead-opcao';
-      opt.innerHTML = (p.numero_processo_cnj || 'N/D') + '<small>' + nomeCliente + '</small>';
+      opt.innerHTML = (p.numero_processo_cnj ? (window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj) : 'N/D') + '<small>' + nomeCliente + '</small>';
       opt.addEventListener('click', function() {
         processoIdSelecionado = p.id;
         document.getElementById('compProcessoId').value     = p.id;
