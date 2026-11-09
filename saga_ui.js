@@ -130,7 +130,7 @@
       '#topbarSaga .dot.online{background:#5dd8a0 !important;box-shadow:0 0 7px #5dd8a0 !important;}'+
       '#topbarSaga .icon-btn{width:36px !important;height:36px !important;display:grid !important;place-items:center !important;border-radius:10px !important;border:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;background:rgba(255,255,255,.045) !important;position:relative !important;}'+
       '[data-theme="light"] #topbarSaga .icon-btn{border-color:rgba(19,38,66,.18) !important;background:rgba(255,255,255,.74) !important;}'+
-      '#topbarSaga .notif-count{position:absolute !important;right:-3px !important;top:-3px !important;min-width:13px !important;height:13px !important;padding:0 3px !important;border-radius:7px !important;background:#d9534f !important;color:#fff !important;font-size:8px !important;line-height:1 !important;letter-spacing:0 !important;display:grid !important;place-items:center !important;font-weight:600 !important;}'+
+      '#topbarSaga .notif-count{position:absolute !important;right:-3px !important;top:-3px !important;min-width:13px !important;height:13px !important;padding:0 3px !important;border-radius:7px !important;background:var(--aviso-forte,#c4585c) !important;color:#fff !important;font-size:8px !important;line-height:1 !important;letter-spacing:0 !important;display:grid !important;place-items:center !important;font-weight:600 !important;}'+
       '#topbarSaga .theme-toggle{width:70px !important;height:32px !important;padding:3px !important;border-radius:18px !important;border:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;background:rgba(255,255,255,.045) !important;position:relative !important;display:flex !important;justify-content:space-between !important;align-items:center !important;}'+
       '[data-theme="light"] #topbarSaga .theme-toggle{border-color:rgba(19,38,66,.18) !important;background:rgba(255,255,255,.74) !important;}'+
       '#topbarSaga .theme-toggle svg{z-index:2 !important;width:15px !important;height:15px !important;}'+
@@ -151,7 +151,9 @@
       /* Janelas do topo (busca, sino, online): letra fina e sem excesso */
       '#topbarSaga #notifPop,#topbarSaga #presencePop,#topbarSaga #globalSearchPop{padding:6px !important;border-radius:12px !important;box-shadow:0 14px 34px rgba(0,0,0,.28) !important;max-height:min(440px,70vh) !important;overflow-y:auto !important;font-family:Montserrat,Arial,sans-serif !important;}'+
       '#topbarSaga #notifPop .pop-title,#topbarSaga #presencePop .pop-title,#topbarSaga #globalSearchPop .pop-title{padding:8px 8px 4px !important;font-size:9px !important;font-weight:500 !important;letter-spacing:1.2px !important;}'+
-      '#topbarSaga .notification-item{gap:10px !important;padding:8px !important;border-radius:8px !important;}'+
+      '#topbarSaga .notification-item{display:flex !important;align-items:center !important;gap:10px !important;padding:8px !important;border-radius:8px !important;}'+
+      '#topbarSaga .notification-item+.notification-item{border-top:1px solid color-mix(in srgb,var(--text) 7%,transparent) !important;border-top-left-radius:0 !important;border-top-right-radius:0 !important;}'+
+      'body:not([data-theme="light"]) #topbarSaga :is(#notifPop,#presencePop,#globalSearchPop,#avatarPop){border-color:color-mix(in srgb,var(--text) 18%,transparent) !important;box-shadow:0 18px 46px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.25) !important;background:linear-gradient(145deg,color-mix(in srgb,var(--panel-solid,#1b2540) 86%,var(--text,#e7eaf0)),color-mix(in srgb,var(--panel-solid,#11182c) 95%,var(--text,#e7eaf0))) !important;}'+
       '#topbarSaga .notification-text{font-size:11px !important;font-weight:400 !important;line-height:1.4 !important;}'+
       '#topbarSaga .notification-time{font-size:9px !important;margin-top:2px !important;opacity:.8;}'+
       '#topbarSaga .pop-row{padding:7px 8px !important;border-radius:8px !important;font-weight:400 !important;}'+
@@ -1051,7 +1053,8 @@
     agenda_resposta:{titulo:'Resposta da agenda',tela:'calendario_padrao_metalico.html'},
     movimentacao_cnj:{titulo:'Intimação',tela:'monitoramento_multi_oab.html'},
     tese_atualizacao:{titulo:'Atualização de tese',tela:'teses.html'},
-    radar_novo:{titulo:'Radar de oportunidades',tela:'teses.html?aba=radar'}
+    radar_novo:{titulo:'Radar de oportunidades',tela:'teses.html?aba=radar'},
+    seguranca:{titulo:'Segurança',tela:'registro_atividades.html'}
   };
   function infoNotif(n){
     var t=TIPOS_NOTIF[n.tipo];
@@ -1072,6 +1075,7 @@
     {chave:'parados',titulo:'Processos parados e retornos',tipos:['processo_parado','nao_protocolado','retorno_juridico','resumo_semanal'],tela:'lista_processos_padrao_metalico.html?fase=juridico',um:'processo parado',varios:'processos parados',cor:'#d6452d'},
     {chave:'teses',titulo:'Teses e radar',tipos:['tese_atualizacao','radar_novo'],tela:'teses.html',um:'aviso de teses e radar',varios:'avisos de teses e radar',cor:'#0ea5e9'},
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
+    {chave:'seguranca',titulo:'Segurança',tipos:['seguranca'],tela:null,um:'alerta de segurança',varios:'alertas de segurança',cor:'#e5484d'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   function grupoDoTipo(tipo){

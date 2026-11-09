@@ -466,3 +466,10 @@ body[data-theme="light"]{
 :is(.person-avatar,.avatar-lg,.small-avatar):not(:has(img)){color:#13233a!important;text-shadow:none!important}
 /* etiquetas coloridas de texto (roxo, azul) ficam mais claras no modo escuro */
 body:not([data-theme="light"]) :is(.se-tag,.si-tag){color:color-mix(in srgb,var(--c,var(--gold)) 62%,#ffffff)!important}
+
+/* Avisos discretos (T58, 09/11): bolinhas e contadores em tom suave, no padrão do SAGA (o menu lateral já usava assim).
+   --aviso-forte: bolinha pequena e cheia (sino); --aviso-suave-*: contadores maiores (Chat, pedidos da Agenda). */
+body{--aviso-forte:#c4585c;--aviso-suave-bg:rgba(229,72,77,.18);--aviso-suave-txt:#ff9b9e}
+body[data-theme="light"]{--aviso-forte:#c24c52;--aviso-suave-bg:rgba(196,57,63,.12);--aviso-suave-txt:#b23a40}
+html[data-cor="grafite"] body{--aviso-forte:#9C7A43;--aviso-suave-bg:color-mix(in srgb,#C9A96E 22%,transparent);--aviso-suave-txt:#E3C99A}
+html[data-cor="grafite"] body[data-theme="light"]{--aviso-forte:#9C7A43;--aviso-suave-bg:#9C7A43;--aviso-suave-txt:#fff}
