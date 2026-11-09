@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611082339"></script>
+<script src="saga_guard.js?v=202611090028"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -254,6 +254,21 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .tag-ger-linha{display:flex;align-items:center;gap:6px;margin-bottom:5px}.tag-ger-linha input[type=color]{width:28px;height:28px;padding:2px;border:1px solid var(--border-soft);border-radius:7px;background:none;cursor:pointer;flex:0 0 auto}.tag-ger-linha input[type=text]{flex:1;min-width:0;height:30px;padding:0 9px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-size:11.5px}
 .tag-ger-linha button{height:28px;min-width:28px;border:1px solid var(--border-soft);border-radius:7px;background:var(--panel);color:var(--text);cursor:pointer;font-size:11px}.tag-ger-linha button:disabled{opacity:.35;cursor:default}.tag-ger-nova{border:1px dashed var(--border);background:none;color:var(--gold-light);border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
 .ficha-titulo .cpf-info{display:flex;flex-wrap:wrap;align-items:center;gap:2px 14px}.ficha-titulo .cpf-info>span{display:inline-flex;align-items:center;min-width:0}.ficha-titulo .end-linha{overflow-wrap:anywhere}.ficha-titulo .end-vazio{color:var(--muted)}.ficha-titulo .end-incluir{margin-left:6px;padding:2px 8px;border:1px dashed var(--border);border-radius:7px;background:none;color:var(--gold-light);font:inherit;font-size:11px;cursor:pointer}.ficha-titulo .end-incluir:active{transform:scale(.95)}
+/* Resumo do agente de petições (ponte Obsidian -> SAGA, bloco 123) */
+.ra-cab{display:flex;align-items:center;justify-content:space-between;gap:10px}.ra-quando{font-size:10.5px;color:var(--muted);font-weight:500;letter-spacing:0;text-transform:none}
+.ra-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:10px}
+.ra-cartao{border:1px solid var(--border-soft);border-radius:12px;padding:10px 12px;background:color-mix(in srgb,var(--panel) 92%,var(--text) 3%);min-width:0}
+.ra-cartao b{display:block;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;font-weight:600}
+.ra-cartao p{margin:0;font-size:12.5px;line-height:1.5;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.ra-cartao.destaque{border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 9%,transparent)}
+.ra-prazo{display:inline-block;margin-top:6px;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);color:var(--text)}
+#resumoAgenteMais{display:inline-flex;align-items:center;height:30px;padding:0 13px;border-radius:999px;font-size:11.5px;border:1px solid var(--border-soft);cursor:pointer}.ra-detalhe{margin-top:10px}.ra-detalhe h4{margin:14px 0 6px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.ra-detalhe .ra-texto{font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);margin:0}
+.ra-linha{list-style:none;margin:0 0 0 5px;padding:0 0 0 14px;border-left:2px solid var(--border-soft)}
+.ra-linha li{position:relative;margin:0 0 8px;font-size:12.5px;line-height:1.45;color:var(--text)}
+.ra-linha li::before{content:"";position:absolute;left:-19px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.ra-linha .ra-data{font-variant-numeric:tabular-nums;color:var(--muted);margin-right:6px}.ra-linha .ra-fonte{color:var(--muted);font-size:11px}
+.ra-pecas{width:100%;border-collapse:collapse;font-size:12px}.ra-pecas td{padding:6px 4px;border-bottom:1px solid var(--border-soft);vertical-align:top;color:var(--text)}.ra-pecas td:first-child{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums}
 </style>
 
 <style id="location-contact-workflow-styles">
@@ -312,15 +327,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611082339"></script>
-<script src="saga_fichas.js?v=202611082339"></script>
-<script src="saga_teses.js?v=202611082339"></script>
-<script src="saga_mencoes.js?v=202611082339"></script>
-<script src="saga_texto.js?v=202611082339"></script>
-<script src="saga_partes.js?v=202611082339"></script>
-<script src="saga_etiquetas.js?v=202611082339"></script>
-<script src="saga_planilha.js?v=202611082339"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611082339">
+<script src="saga_ui.js?v=202611090028"></script>
+<script src="saga_fichas.js?v=202611090028"></script>
+<script src="saga_teses.js?v=202611090028"></script>
+<script src="saga_mencoes.js?v=202611090028"></script>
+<script src="saga_texto.js?v=202611090028"></script>
+<script src="saga_partes.js?v=202611090028"></script>
+<script src="saga_etiquetas.js?v=202611090028"></script>
+<script src="saga_planilha.js?v=202611090028"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611090028">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -355,6 +370,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
             <div class="process-summary" id="processStatusTags"></div>
             <div class="process-data-title" id="processDataHeading"></div>
             <div class="grid-dados" id="processDataGrid"></div>
+          </section>
+
+          <section class="secao" id="secaoResumoAgente" hidden>
+            <div class="secao-titulo ra-cab"><span style="display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Resumo do agente de petições</span><span class="ra-quando" id="resumoAgenteQuando"></span></div>
+            <div id="resumoAgenteCorpo"></div>
           </section>
 
           <section class="secao">
@@ -1737,7 +1757,51 @@ function renderPartes(){
     aoMudar:()=>{recarregarProcessoAtivo();}});
 }
 function prepararMencoes(){const proc=getActiveProcess(),campo=document.getElementById('commentInput');if(proc&&campo&&campo._sagaTexto&&window.SagaMencoes)SagaMencoes.anexar(campo,{sb:_sb,tabela:'processos',registroId:proc.id});}
-function renderActiveProcess(){prepararMencoes();renderProcessTabs();renderProcessHeader();renderProcessData();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
+// Resumo do agente de petições: o que o agente gravou no Obsidian e mandou ao SAGA (bloco 123)
+async function carregarResumoAgente(pid){
+  try{
+    const r=await _sb.from('processos_obsidian').select('*').eq('processo_id',pid).maybeSingle();
+    return r.error?null:(r.data||null);
+  }catch(e){return null;}
+}
+function dataCurtaAgente(v){
+  const t=String(v||'').trim();const m=t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m?m[3]+'/'+m[2]+'/'+m[1]:t;
+}
+function renderResumoAgente(){
+  const sec=document.getElementById('secaoResumoAgente');if(!sec)return;
+  const process=getActiveProcess();const ra=process&&process.resumoAgente;
+  if(!ra){sec.hidden=true;return;}
+  const cartao=(titulo,texto,extra,cls)=>texto||extra?'<div class="ra-cartao'+(cls?' '+cls:'')+'"><b>'+esc(titulo)+'</b>'+(texto?'<p>'+esc(texto)+'</p>':'')+(extra||'')+'</div>':'';
+  const prazo=ra.prazo?'<span class="ra-prazo">Prazo: '+esc(dataCurtaAgente(ra.prazo))+'</span>':'';
+  const linha=Array.isArray(ra.linha_tempo)?ra.linha_tempo:[];
+  const pecas=Array.isArray(ra.pecas)?ra.pecas:[];
+  const outros=Array.isArray(ra.outros)?ra.outros:[];
+  const info=[ra.tese,ra.status_ficha,ra.tribunal,ra.justica].filter(Boolean).map(esc).join(' · ');
+  let det='';
+  if(info)det+='<h4>Classificação</h4><p class="ra-texto">'+info+'</p>';
+  if(ra.resumo)det+='<h4>Resumo do caso</h4><p class="ra-texto">'+esc(ra.resumo)+'</p>';
+  if(ra.estrategia)det+='<h4>Estratégia e decisões</h4><p class="ra-texto">'+esc(ra.estrategia)+'</p>';
+  if(ra.pendencias)det+='<h4>Pendências e dúvidas</h4><p class="ra-texto">'+esc(ra.pendencias)+'</p>';
+  if(linha.length)det+='<h4>Linha do tempo</h4><ul class="ra-linha">'+linha.map(e=>'<li><span class="ra-data">'+esc(dataCurtaAgente(e&&e.data))+'</span>'+esc(e&&e.evento)+(e&&e.fonte?' <span class="ra-fonte">('+esc(e.fonte)+')</span>':'')+'</li>').join('')+'</ul>';
+  if(pecas.length)det+='<h4>Peças</h4><table class="ra-pecas"><tbody>'+pecas.map(p=>'<tr><td>'+esc(dataCurtaAgente(p&&p.data))+'</td><td>'+esc(p&&(p.peca||p.titulo))+'</td><td>'+esc(p&&p.situacao)+'</td></tr>').join('')+'</tbody></table>';
+  outros.forEach(o=>{if(o&&(o.texto||o.titulo))det+='<h4>'+esc(o.titulo||'Outras informações')+'</h4><p class="ra-texto">'+esc(o.texto)+'</p>';});
+  const aberto=state.resumoAgenteAberto===true;
+  document.getElementById('resumoAgenteQuando').textContent=(ra.ficha_atualizada_em?'ficha de '+dataCurtaAgente(ra.ficha_atualizada_em)+' · ':'')+'recebida em '+new Date(ra.recebido_em).toLocaleDateString('pt-BR');
+  document.getElementById('resumoAgenteCorpo').innerHTML=
+    '<div class="ra-grade">'+cartao('Situação atual',ra.situacao,'')+cartao('Próximo passo',ra.proximo_passo,prazo,'destaque')+'</div>'+
+    (det?'<button type="button" class="btn-secundario" id="resumoAgenteMais" aria-expanded="'+aberto+'">'+(aberto?'Esconder detalhes':'Ver resumo completo')+'</button><div class="ra-detalhe" id="resumoAgenteDetalhe"'+(aberto?'':' hidden')+'>'+det+'</div>':'');
+  sec.hidden=false;
+  const btn=document.getElementById('resumoAgenteMais');
+  if(btn)btn.addEventListener('click',()=>{
+    state.resumoAgenteAberto=!state.resumoAgenteAberto;
+    btn.textContent=state.resumoAgenteAberto?'Esconder detalhes':'Ver resumo completo';
+    btn.setAttribute('aria-expanded',String(state.resumoAgenteAberto));
+    const d=document.getElementById('resumoAgenteDetalhe');
+    if(window.sagaRecolher)window.sagaRecolher(d,!state.resumoAgenteAberto);else d.hidden=!state.resumoAgenteAberto;
+  });
+}
+function renderActiveProcess(){prepararMencoes();renderProcessTabs();renderProcessHeader();renderProcessData();renderResumoAgente();renderChecklists();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
 
 async function addChecklistFromTemplate(templateId){
   if(!podeEditarChecklists())return false;
@@ -3143,8 +3207,10 @@ async function carregarDetalhesProcesso(pid){
       carregarTarefas(pid),
       carregarCompromissos(pid),
       carregarIntimacoesProcesso(pid),
-      carregarHistoricoStatus(pid)
+      carregarHistoricoStatus(pid),
+      carregarResumoAgente(pid)
     ]);
+    processo.resumoAgente=dados[6];
     processo.intimacoes=dados[4];
     processo.timeline=dados[0].concat(dados[5]).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
     processo.documentos=dados[1];
@@ -4388,7 +4454,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611082339"></script>
-<script src="saga_ficha_atividades.js?v=202611082339"></script>
+<script src="saga_localizacao.js?v=202611090028"></script>
+<script src="saga_ficha_atividades.js?v=202611090028"></script>
 </body>
 </html>
