@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611091226"></script>
+<script src="saga_guard.js?v=202611091326"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV Sistema | Dashboard</title>
@@ -497,8 +497,9 @@
   #roscasDashboard{--prazo-azul:#2068d5;--prazo-amarelo:#ffd21c;--prazo-laranja:#ff851b;--prazo-vermelho:#dc2038;--prazo-vermelho-escuro:#8f102d;}
   [data-theme="light"] #roscasDashboard{--prazo-azul:#155bc0;--prazo-amarelo:#f2c400;--prazo-laranja:#c24100;--prazo-vermelho:#c91c30;--prazo-vermelho-escuro:#780d22;}
   @media (min-resolution:100000dppx){.barra-tese-fill,.linha-uf-fill,.dashboard-grafico-atualizado{transition:none;}}
+.kpi-sub{font-size:10.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums;min-height:14px}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611091226">
+<link rel="stylesheet" href="saga_tema.css?v=202611091326">
 </head>
 <body data-theme="dark">
 
@@ -558,6 +559,7 @@
         </div>
         <div class="kpi-valor skeleton-anim" id="kpi1valor">000</div>
         <div class="kpi-label">Processos ativos</div>
+        <div class="kpi-sub" id="kpi1sub"></div>
       </div>
       <div class="card-kpi">
         <div class="kpi-topo">
@@ -702,8 +704,8 @@
 
 <!-- SUPABASE SDK -->
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611091226"></script>
-<script src="saga_roscas.js?v=202611091226"></script>
+<script src="saga_ui.js?v=202611091326"></script>
+<script src="saga_roscas.js?v=202611091326"></script>
 
 <script>
 // ================================================================
@@ -1292,11 +1294,16 @@ async function carregarKPIs() {
   try {
     var hoje = new Date().toISOString().split('T')[0];
 
-    // Montar filtros base para processos
-    var qBase = _sb.from('processos').select('*', { count: 'exact', head: true }).eq('excluido_logico', false);
-    if (filtros.responsaveisIds.length > 0) qBase = qBase.in('responsavel_id', filtros.responsaveisIds);
-    if (filtros.dataInicio) qBase = qBase.gte('criado_em', filtros.dataInicio + 'T00:00:00');
-    if (filtros.dataFim)    qBase = qBase.lte('criado_em', filtros.dataFim + 'T23:59:59');
+    // Processos do Jurídico por andamento (bloco 131): ativo, encerrado (situação "Encerrada"/"Inviável") e sacado
+    // (valor recebido no Financeiro). As fichas da Captação não entram. Um processo fica num grupo só.
+    var contarGrupo = function(grupo) {
+      var q = _sb.from('vw_processos_andamento').select('processo_id', { count: 'exact', head: true }).eq('grupo', grupo);
+      if (filtros.responsaveisIds.length > 0) q = q.in('responsavel_id', filtros.responsaveisIds);
+      if (filtros.dataInicio) q = q.gte('criado_em', filtros.dataInicio + 'T00:00:00');
+      if (filtros.dataFim)    q = q.lte('criado_em', filtros.dataFim + 'T23:59:59');
+      return q;
+    };
+    var qBase = contarGrupo('ativo'), qEncerrados = contarGrupo('encerrado'), qSacados = contarGrupo('sacado');
 
     var qVencidos = _sb.from('processos').select('*', { count: 'exact', head: true })
       .eq('excluido_logico', false)
@@ -1311,7 +1318,7 @@ async function carregarKPIs() {
       .eq('usuario_id', meuPerfilId)
       .eq('lida', false);
 
-    var results = await Promise.all([qBase, qVencidos, qTarefas, qNotif]);
+    var results = await Promise.all([qBase, qVencidos, qTarefas, qNotif, qEncerrados, qSacados]);
 
     if (!cargaDashboardAtual(carga)) return;
 
@@ -1327,7 +1334,10 @@ async function carregarKPIs() {
 
     // Badges
     var b1 = document.getElementById('kpi1badge');
-    b1.className = 'kpi-variacao ok'; b1.textContent = 'ativos';
+    b1.className = 'kpi-variacao ok'; b1.textContent = 'Jurídico';
+    var totalEncerrados = results[4].count || 0, totalSacados = results[5].count || 0;
+    var sub1 = document.getElementById('kpi1sub');
+    if (sub1) sub1.textContent = numBR(totalEncerrados) + (totalEncerrados === 1 ? ' encerrado' : ' encerrados') + ' · ' + numBR(totalSacados) + (totalSacados === 1 ? ' sacado' : ' sacados');
 
     var b2 = document.getElementById('kpi2badge');
     if (totalVencidos > 0) { b2.className = 'kpi-variacao alerta'; b2.textContent = 'urgente'; }
