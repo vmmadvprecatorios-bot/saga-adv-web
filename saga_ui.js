@@ -4,6 +4,8 @@
 // A sidebar e a topbar sao embutidas neste arquivo (nao dependem de fetch).
 (function(global){
   // Confirmacao no padrao do SAGA (no lugar do confirm() do navegador). Devolve uma Promise<boolean>.
+  // true só para o administrador geral (regra de 09/11: colaborador não apaga nada)
+  global.sagaPodeApagar=function(){return document.documentElement.classList.contains('saga-pode-apagar');};
   global.sagaConfirmar=function(titulo,texto,botao,perigo){
     return new Promise(function(ok){
       var antigo=document.getElementById('sagaConfirma');if(antigo)antigo.remove();
@@ -906,6 +908,8 @@
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
       _perfilAtual=r.data;
+      // Regra de 09/11 (Dr. Victor): só o administrador geral apaga, exclui ou remove; para os outros os botões somem (o banco também recusa)
+      document.documentElement.classList.toggle('saga-pode-apagar',!!r.data.eh_administrador);
       var av=document.getElementById('avatarTop');if(av)definirIniciaisAvatar(av,iniciais(r.data.nome_completo));try{localStorage.setItem('saga-iniciais',iniciais(r.data.nome_completo));}catch(e){}
       mostrarFotoAvatar(r.data.foto_url);
       // tamanho da letra escolhido nas Configuracoes vale em qualquer aparelho
