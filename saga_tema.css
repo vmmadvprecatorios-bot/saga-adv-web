@@ -480,7 +480,7 @@ html[data-cor="grafite"] body[data-theme="light"]{--aviso-forte:#9C7A43;--aviso-
 html:not(.saga-pode-apagar) :is(
   #btnExcluirTarefaModal, .btn-acao-linha.acao-excluir,
   #btnExcluirComp,
-  .nota [data-a="del"], .nota-lin [data-a="del"], #btDel,
+  .nota [data-a="del"]:not(.nota-pessoal), .nota-lin [data-a="del"]:not(.nota-pessoal), #btDel:not(.nota-pessoal),
   .btn-acao-msg[title="Excluir"], [onclick^="pedirApagarGrupo"], [onclick*="pedirApagarConversa"],
   .btn-tel-icon.excluir, #btnExcluirRetorno, #btnDeleteProcess, .pasta-menu-pop [data-acao="remover"], [data-rm][title="Retirar do processo"],
   [onclick^="confirmarExclusao"],

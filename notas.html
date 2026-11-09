@@ -281,6 +281,8 @@ function primeiro(id){return String(nomeDe(id)).split(' ')[0];}
 function ehMinha(n){return n.dono_id===S.eu;}
 function podeEditar(n){return ehMinha(n)||((S.comp[n.id]||[]).some(function(c){return c.usuario_id===S.eu&&c.pode_editar;}));}
 function compCom(n){return (S.comp[n.id]||[]).filter(function(c){return c.usuario_id!==S.eu;});}
+// Nota pessoal (regra de 09/11): minha, não compartilhada e sem cliente/processo; só essa o colaborador apaga (as outras, só o administrador)
+function ehPessoal(n){return !!n&&ehMinha(n)&&!n.pessoa_id&&!n.processo_id&&!compCom(n).length;}
 function urlSegura(u){u=String(u||'').trim();if(!u)return '';if(!/^[a-z][a-z0-9+.-]*:/i.test(u))u='https://'+u;return /^https?:\/\//i.test(u)?u:'';}
 function copiar(texto,rotulo){
   var ok=function(){toast((rotulo||'Texto')+(rotulo==='Senha'?' copiada.':' copiado.'),'sucesso');};
@@ -350,7 +352,7 @@ function desenharEtiquetas(){
 }
 function acoesHtml(n){
   return ehMinha(n)?
-    '<button type="button" data-a="fixar" title="'+(n.fixada?'Desafixar':'Fixar no topo')+'">'+(n.fixada?'📌':'📍')+'</button><button type="button" data-a="comp" title="Compartilhar">👥</button><button type="button" data-a="arq" title="'+(n.arquivada?'Desarquivar':'Arquivar')+'">🗂</button><button type="button" data-a="del" title="Apagar">🗑</button>':
+    '<button type="button" data-a="fixar" title="'+(n.fixada?'Desafixar':'Fixar no topo')+'">'+(n.fixada?'📌':'📍')+'</button><button type="button" data-a="comp" title="Compartilhar">👥</button><button type="button" data-a="arq" title="'+(n.arquivada?'Desarquivar':'Arquivar')+'">🗂</button><button type="button" data-a="del" title="Apagar"'+(ehPessoal(n)?' class="nota-pessoal"':'')+'>🗑</button>':
     '<button type="button" data-a="sair" title="Parar de ver esta nota">🚪</button>';
 }
 function previaNota(n){
@@ -683,7 +685,7 @@ function abrirNota(n,tipo){
   if(!S.semVinculo&&(dono||e.pessoa_id||e.processo_id))etq+='<div class="campo"><label>Cliente ou processo (opcional)</label><div class="vinc-ed" id="edVinc"></div></div>';
   m.innerHTML='<div class="md-cab"><input type="text" id="edTitulo" placeholder="'+(e.tipo==='senha'?'Título da nota (ex.: Acessos dos tribunais)':e.tipo==='emails'?'Título (ex.: E-mails funcionais da equipe)':e.tipo==='telefones'?'Título (ex.: Telefones do escritório)':'Título')+'" maxlength="200"'+(pode?'':' readonly')+'><span class="tipo" style="font-size:10px;font-weight:700;color:var(--muted)">'+TIPO_NOME[e.tipo].toUpperCase()+'</span>'+corBtn+'</div>'+
     '<div class="md-corpo">'+corpo+etq+(pode?'':'<div class="somente-leitura-aviso">Você pode ver esta nota, mas não alterá-la.</div>')+'</div>'+
-    '<div class="md-rod"><div class="esq">'+(dono&&!novo?'<button class="btn" type="button" id="btComp">👥 Compartilhar</button><button class="btn" type="button" id="btArq">'+(n.arquivada?'Desarquivar':'Arquivar')+'</button><button class="btn perigo" type="button" id="btDel">Apagar</button>':'')+(!dono?'<button class="btn" type="button" id="btSair">Parar de ver</button>':'')+'</div>'+
+    '<div class="md-rod"><div class="esq">'+(dono&&!novo?'<button class="btn" type="button" id="btComp">👥 Compartilhar</button><button class="btn" type="button" id="btArq">'+(n.arquivada?'Desarquivar':'Arquivar')+'</button><button class="btn perigo'+(ehPessoal(n)?' nota-pessoal':'')+'" type="button" id="btDel">Apagar</button>':'')+(!dono?'<button class="btn" type="button" id="btSair">Parar de ver</button>':'')+'</div>'+
     '<div class="dir"><button class="btn" type="button" id="btFechar">'+(pode?'Cancelar':'Fechar')+'</button>'+(pode?'<button class="btn prim" type="button" id="btSalvar">Salvar</button>':'')+'</div></div>';
   $('edTitulo').value=e.titulo;
   var ta=$('edTexto');if(ta){if(window.SagaTexto){var ed=SagaTexto.ligar(ta);if(!pode&&ed)ed.leitura(true);}ta.value=e.conteudo;}
