@@ -372,7 +372,7 @@ body[data-theme="light"]{
   --sb-escolha:color-mix(in srgb,var(--gold) 16%,transparent);--sb-escolha-borda:color-mix(in srgb,var(--gold) 50%,transparent);
 }
 :is(.btn-secondary,.btn-secundario,.si-btn,.btn,.btn-hoje,.btn-voltar-biblioteca,.btn-marcar-todas,.btn-cancelar-tf,
-  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm,.kanban-mais):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
   .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
   .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
   .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,
@@ -383,7 +383,7 @@ body[data-theme="light"]{
   transition:background-color .25s cubic-bezier(.22,.78,.25,1),border-color .25s cubic-bezier(.22,.78,.25,1),color .25s cubic-bezier(.22,.78,.25,1),transform .2s cubic-bezier(.22,.78,.25,1);
 }
 :is(.btn-secondary,.btn-secundario,.si-btn,.btn,.btn-hoje,.btn-voltar-biblioteca,.btn-marcar-todas,.btn-cancelar-tf,
-  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
+  .btn-cancelar,.sr-toggle,.tr-toggle,.pr-toggle,.pn-tog,.btn-icon,.btn-sm,.kanban-mais):not(:is(.btn-primary,.btn-primario,.dourado-metalico,.btn-novo,.btn-novo-comp,.btn-novo-chat,.btn-aplicar-filtros,
   .btn-aplicar-multi,.btn-aplicar-multi-filtro,.btn-aplicar-periodo,.btn-confirmar,.btn-confirmar-bib,.btn-confirmar-dash,
   .btn-confirmar-mkt,.btn-confirmar-tf,.btn-edicao-salvar,.btn-enviar-comentario,.btn-gen-confirmar,.btn-inline-save,
   .btn-pequeno,.btn-salvar-legenda,.btn-salvar-modal,.btn-upload,.btn-ouro,.si-btn.pri,.btn.prim,.btn-dourado,.pn-salvar,

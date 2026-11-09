@@ -126,7 +126,8 @@ window.SagaPlanilha=(function(){
     if(!pronta)return true;
     if(minhas&&String(p.captador_id||'')!==String(state.meuInternoId||''))return false;
     if(retorno){var cr=colPorChave('captacao.data_retorno'),dr=cr&&(p.campos||{})[cr.id],hoje=hojeISO(),em7=hojeISO(new Date(Date.now()+7*864e5));
-      if(!dr)return false;dr=String(dr).slice(0,10);
+      // quem está em "Sem sucesso" não conta nos retornos (como no aviso do sino; 09/11)
+      if(!dr||statusDe(p).etapa==='Sem sucesso')return false;dr=String(dr).slice(0,10);
       if(retorno==='hoje'&&dr!==hoje)return false;if(retorno==='atrasados'&&!(dr<hoje))return false;if(retorno==='semana'&&!(dr>hoje&&dr<=em7))return false;}
     if(protocolo){var ok=idsProtocolada().indexOf(String(p.situacao_acao_id||''))!==-1;if(protocolo==='sim'&&!ok)return false;if(protocolo==='nao'&&ok)return false;}
     for(var id in filtros){
@@ -477,7 +478,7 @@ window.SagaPlanilha=(function(){
         var t=sig&&c.campo_sistema!=='pessoa.nome'?'••••':exibir(c,texto(p,c)),cor=sig?null:corDe(p,c),conteudo;
         if(!t&&!(c.tipo==='link'))return '';
         if(c.tipo==='link'&&!sig&&Array.isArray(v))conteudo=v.map(function(l){var u=/^https?:\/\//i.test(l.url||'')?l.url:'';return u?'<a href="'+h(u)+'" target="_blank" rel="noopener noreferrer" class="sp-link" onclick="event.stopPropagation()">'+h(l.texto||l.url)+'</a>':'';}).join(' · ');
-        else if(c.chave==='captacao.data_retorno'&&!sig){var iso=String(v).slice(0,10),cl=iso<hoje?'atrasado':iso===hoje?'hoje':'';conteudo='<span class="sp-ret '+cl+'">'+h(t)+(cl==='atrasado'?' · atrasado':cl==='hoje'?' · hoje':'')+'</span>';}
+        else if(c.chave==='captacao.data_retorno'&&!sig){var iso=String(v).slice(0,10),cl=statusDe(p).etapa==='Sem sucesso'?'':iso<hoje?'atrasado':iso===hoje?'hoje':'';conteudo='<span class="sp-ret '+cl+'">'+h(t)+(cl==='atrasado'?' · atrasado':cl==='hoje'?' · hoje':'')+'</span>';}
         else if(cor)conteudo='<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>';
         else conteudo=h(t);
         return '<div class="sp-cc-campo"><span class="sp-cc-rot">'+h(nomeCol(c))+'</span><span class="sp-cc-val">'+conteudo+'</span></div>';
@@ -1315,6 +1316,9 @@ window.SagaPlanilha=(function(){
     var atual=statusDe(p).etapa,novo=((state.statusList||[]).find(function(s){return String(s.id)===String(statusId);})||{}).etapa;
     return !!atual&&atual===novo;
   }
+  // 50 cartões por coluna com "Mostrar mais" (ajudantes da tela: kanbanFatia e kanbanMaisHtml, 09/11)
+  function fatiar(ch,lista){return typeof kanbanFatia==='function'?kanbanFatia(ch,lista):{vis:lista,resto:0};}
+  function maisHtml(ch,resto){return typeof kanbanMaisHtml==='function'?kanbanMaisHtml(ch,resto):'';}
   function renderFunil(kv){
     var etapas=etapasFunil();if(!etapas.length)return false;
     var cRet=colPorChave('captacao.data_retorno'),cTipo=cols.find(function(c){return c.campo_sistema==='processo.tese';}),cTrf=cols.find(function(c){return c.nome==='Competência'&&!c.campo_sistema;});
@@ -1326,7 +1330,7 @@ window.SagaPlanilha=(function(){
       var sig=!!p.sigilo&&!state.permissoes.editar_dados,pe=p.pessoa||{},st=statusDe(p),r=ret(p);
       var whats=String(pe.telefone_whatsapp||'').replace(/\D/g,'');
       var tipo=cTipo?texto(p,cTipo):'',trf=cTrf?texto(p,cTrf):'',cap=nomeUsuario(p.captador_id);
-      var classeRet=!r?'':r<hoje?'atrasado':r===hoje?'hoje':'';
+      var classeRet=!r||st.etapa==='Sem sucesso'?'':r<hoje?'atrasado':r===hoje?'hoje':'';
       return '<div class="card-kanban sp-card" data-processo-id="'+h(p.id)+'" draggable="'+(pode?'true':'false')+'" onclick="verFicha(\''+h(p.id)+'\')">'+
         '<div class="card-nome">'+h(sig?'••••':(pe.nome_completo||'N/D'))+'</div>'+
         '<div class="sp-card-status"><i style="background:'+h(st.cor||'#8a94a8')+'"></i>'+h(st.nome||'')+'</div>'+
@@ -1337,13 +1341,14 @@ window.SagaPlanilha=(function(){
         (whats.length>=10&&!sig?'<a class="card-whats-mini" href="https://wa.me/55'+h(whats)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir WhatsApp">WhatsApp</a>':'')+'</div></div>';
     };
     var ordenar=function(a,b){var ra=ret(a),rb=ret(b);if(ra&&rb&&ra!==rb)return ra<rb?-1:1;if(ra&&!rb)return -1;if(rb&&!ra)return 1;return String((a.pessoa||{}).nome_completo||'').localeCompare(String((b.pessoa||{}).nome_completo||''),'pt-BR');};
+    var foraFatia=fatiar('etapa:__fora',fora);
     kv.innerHTML='<div class="quadro-kanban sp-funil">'+grupos.map(function(g,i){
-      var pct=total?Math.round(g.itens.length*100/total):0;
+      var pct=total?Math.round(g.itens.length*100/total):0,ch='etapa:'+g.e.nome,fat=fatiar(ch,g.itens.sort(ordenar));
       return '<div class="coluna-kanban" data-coluna-id="'+h(g.e.status[0].id)+'">'+
         '<div class="coluna-cabecalho"><span class="coluna-cor-dot" style="background:'+h(g.e.cor)+'"></span><div class="coluna-titulo">'+h(g.e.nome)+'</div><span class="coluna-contagem">'+g.itens.length+'</span><span class="sp-pct" title="do total">'+pct+'%</span></div>'+
         '<div class="sp-funil-barra"><i style="width:'+pct+'%;background:'+h(g.e.cor)+'"></i></div>'+
-        '<div class="coluna-corpo" data-status-id="'+h(g.e.status[0].id)+'">'+g.itens.sort(ordenar).map(cartao).join('')+'</div></div>';
-    }).join('')+(fora.length?'<div class="coluna-kanban"><div class="coluna-cabecalho"><div class="coluna-titulo">Sem etapa</div><span class="coluna-contagem">'+fora.length+'</span></div><div class="coluna-corpo" data-status-id="'+h(etapas[0].status[0].id)+'">'+fora.map(cartao).join('')+'</div></div>':'')+'</div>';
+        '<div class="coluna-corpo" data-status-id="'+h(g.e.status[0].id)+'" data-kanban-chave="'+h(ch)+'">'+fat.vis.map(cartao).join('')+'</div>'+maisHtml(ch,fat.resto)+'</div>';
+    }).join('')+(fora.length?'<div class="coluna-kanban"><div class="coluna-cabecalho"><div class="coluna-titulo">Sem etapa</div><span class="coluna-contagem">'+fora.length+'</span></div><div class="coluna-corpo" data-status-id="'+h(etapas[0].status[0].id)+'" data-kanban-chave="etapa:__fora">'+foraFatia.vis.map(cartao).join('')+'</div>'+maisHtml('etapa:__fora',foraFatia.resto)+'</div>':'')+'</div>';
     if(pode&&typeof ativarArrasteKanban==='function')ativarArrasteKanban(kv);
     // cascata das colunas só quando o funil aparece pela primeira vez (não a cada filtro ou redesenho: fazia o quadro tremer)
     var entraFunil=!kv.__funilJaMostrado;kv.__funilJaMostrado=true;
@@ -1457,6 +1462,7 @@ window.SagaPlanilha=(function(){
     var ord=function(a,b){return String((a.pessoa||{}).nome_completo||'').localeCompare(String((b.pessoa||{}).nome_completo||''),'pt-BR');};
     kv.innerHTML='<div class="quadro-kanban sp-funil sp-kb">'+grupos.filter(function(g){return !(g.vazio&&!(porG[g.k]||[]).length&&tipoGrupo(c)!=='simnao');}).map(function(g){
       var todos=(porG[g.k]||[]),vis=todos.filter(function(p){return passaGrupo(p,g.k);}),nf=Object.keys(filtrosDoGrupo(g.k)).filter(function(id){return (filtrosDoGrupo(g.k)[id]||[]).length;}).length;
+      var ch='grupo:'+c.id+':'+g.k,fat=fatiar(ch,vis.sort(ord));
       var pct=total?Math.round(todos.length*100/total):0,cor=g.cor||(g.vazio?'#8a94a8':'var(--gold)');
       var chips=Object.keys(filtrosDoGrupo(g.k)).map(function(id){var cc=cols.find(function(x){return x.id===id;});var vs=filtrosDoGrupo(g.k)[id];if(!cc||!vs.length)return '';
         var nomes=vs.map(function(v){if(v===VAZIO)return '(vazio)';var pp=(state.baseProcessos||[]).find(function(p){return chave(p,cc)===v;});return pp?texto(pp,cc):v;});
@@ -1467,7 +1473,7 @@ window.SagaPlanilha=(function(){
           (podeNovoNaColuna(c)?'<button type="button" class="sp-kb-novo" data-kb-novo="'+h(g.k)+'" title="Novo processo nesta coluna" aria-label="Novo processo em '+h(g.nome)+'">+</button>':'')+'</div>'+
         '<div class="sp-funil-barra"><i style="width:'+pct+'%;background:'+h(cor)+'"></i></div>'+
         (chips?'<div class="sp-kb-chips">'+chips+'<button type="button" class="sp-kb-limpar" data-kb-limpar="'+h(g.k)+'">limpar</button></div>':'')+
-        '<div class="coluna-corpo" data-sp-grupo="'+h(g.k)+'">'+vis.sort(ord).map(function(p){return cartaoGenerico(p,c);}).join('')+(vis.length?'':'<div class="sp-kb-nada">'+(todos.length?'Nenhum cartão com estes filtros.':'Nenhum processo.')+'</div>')+'</div></div>';
+        '<div class="coluna-corpo" data-sp-grupo="'+h(g.k)+'" data-kanban-chave="'+h(ch)+'">'+fat.vis.map(function(p){return cartaoGenerico(p,c);}).join('')+(vis.length?'':'<div class="sp-kb-nada">'+(todos.length?'Nenhum cartão com estes filtros.':'Nenhum processo.')+'</div>')+'</div>'+maisHtml(ch,fat.resto)+'</div>';
     }).join('')+'</div>';
     kv.querySelectorAll('[data-kb-filtro]').forEach(function(b){b.onclick=function(e){e.stopPropagation();menuFiltroGrupo(b,b.dataset.kbFiltro,c);};});
     kv.querySelectorAll('[data-kb-novo]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var g=grupos.find(function(x){return x.k===b.dataset.kbNovo;});novoNaColuna(c,b.dataset.kbNovo,g?g.nome:'');};});
@@ -1490,8 +1496,11 @@ window.SagaPlanilha=(function(){
     var corpo=document.querySelector('[data-sp-grupo="'+(window.CSS&&CSS.escape?CSS.escape(k):k)+'"]'),card=document.querySelector('.card-kanban[data-processo-id="'+pid+'"]');
     var movido=false;
     if(corpo&&card){
+      var colAntes=card.closest('.coluna-kanban');
       if(proximo&&proximo.parentNode===corpo)corpo.insertBefore(card,proximo);else corpo.appendChild(card);
-      document.querySelectorAll('.coluna-kanban').forEach(function(col){var cc=col.querySelector('.coluna-corpo'),ct=col.querySelector('.coluna-contagem');if(cc&&ct)ct.textContent=cc.querySelectorAll('.card-kanban').length;});
+      // a coluna mostra só parte dos cartões (50 por vez): o número do cabeçalho anda de um em um
+      var colDepois=corpo.closest('.coluna-kanban');
+      if(colAntes!==colDepois&&typeof kanbanAjustarContagem==='function'){kanbanAjustarContagem(colAntes,-1);kanbanAjustarContagem(colDepois,1);}
       var col=corpo.closest('.coluna-kanban');if(col){col.classList.add('recebeu-card');setTimeout(function(){col.classList.remove('recebeu-card');},650);}
       card.classList.add('pousando');setTimeout(function(){card.classList.remove('pousando');},450);
       movido=true;

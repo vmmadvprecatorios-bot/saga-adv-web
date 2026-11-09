@@ -259,6 +259,9 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 .coluna-titulo{font-size:12.5px;font-weight:600;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .coluna-contagem{font-size:10.5px;color:var(--muted);background:var(--panel-2);padding:2px 8px;border-radius:10px;font-weight:600;}
 .coluna-corpo{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:80px;transition:background .2s ease;}
+/* "Mostrar mais" no pé de cada coluna do Kanban (50 cartões por vez; cores na lista de botões secundários do saga_tema.css) */
+.kanban-mais{flex:0 0 auto;margin:0 12px 12px;padding:7px 10px;border:1px solid var(--border-soft);border-radius:10px;font:inherit;font-size:12px;cursor:pointer;text-align:center}
+.kanban-mais span{color:var(--muted);font-weight:400}
 .coluna-corpo:empty::after{content:'Solte aqui';display:flex;align-items:center;justify-content:center;height:60px;font-size:11px;color:var(--muted);font-style:italic;border:1px dashed var(--panel-2);border-radius:9px;}
 .card-kanban{background:var(--panel);border:1px solid var(--border-soft);border-radius:11px;padding:13px 14px;cursor:grab;transition:transform .22s cubic-bezier(0.34,1.56,0.64,1),box-shadow .22s ease,border-color .22s ease,opacity .18s ease;will-change:transform;}
 [data-theme="light"] .card-kanban{background:rgba(255,255,255,.88);}
@@ -1423,35 +1426,51 @@ function prepararVisaoProcessos(){
   var todos=(state.baseProcessos||[]).filter(function(p){return processoNoEscopo(p);});
   if(window.SagaPlanilha)todos=SagaPlanilha.ordenar(todos);
   state.totalProcessos=todos.length;
-  if(state.pageSize!=='todos')state.page=Math.max(1,Math.min(state.page,Math.ceil(todos.length/state.pageSize)||1));
-  state.processos=state.view==='kanban'||state.pageSize==='todos'?todos:todos.slice((state.page-1)*state.pageSize,state.page*state.pageSize);
+  var ps=porPagina();
+  if(ps!=='todos')state.page=Math.max(1,Math.min(state.page,Math.ceil(todos.length/ps)||1));
+  state.processos=state.view==='kanban'||ps==='todos'?todos:todos.slice((state.page-1)*ps,state.page*ps);
 }
+// "Todos" (ou um número grande) com milhares de linhas travaria a tela: passa a mostrar de 1.000 em 1.000, com páginas
+var MAX_POR_PAGINA=1000;
+function porPagina(){var ps=state.pageSize,t=state.totalProcessos||0;if(ps==='todos')return t>MAX_POR_PAGINA?MAX_POR_PAGINA:'todos';return Math.min(Number(ps)||20,MAX_POR_PAGINA);}
 function invalidarBaseProcessos(){state.cacheProcessos=null;cacheProvidencias=null;pedidoProvidencias++;}
+// 09/11: a Captação passa de 17 mil linhas. Cada tela baixa só os processos da sua área (Jurídico ou Captação,
+// filtro feito no banco) e em partes de 1.000, quatro ao mesmo tempo (antes: tudo, uma parte depois da outra).
+var LEITURA_LOTE=1000,LEITURA_PARALELO=4;
 async function lerBaseProcessos(f){
-  var chave=JSON.stringify(f);
+  var chave=JSON.stringify(f)+'|'+FASE_FIXA;
   if(state.cacheProcessos&&state.cacheProcessos.chave===chave)return state.cacheProcessos.promessa;
   var cache={chave:chave};state.cacheProcessos=cache;
   cache.promessa=(async function(){
     var pessoaIds=null;
     if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
-    var SELECT='id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
-      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id(id,nome,cor,fase,ordem,etapa),responsavel:usuarios!responsavel_id(id,nome_completo)';
-    var linhas=[],inicio=0;
-    while(true){
-      var q=_sb.from('processos').select(SELECT,{count:'exact'}).eq('excluido_logico',false);
+    var montarSelect=function(){return 'id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
+      'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id'+(FASE_FIXA?'!inner':'')+'(id,nome,cor,fase,ordem,etapa),responsavel:usuarios!responsavel_id(id,nome_completo)';};
+    var consulta=function(inicio,passo,contar){
+      var q=_sb.from('processos').select(montarSelect(),contar?{count:'exact'}:undefined).eq('excluido_logico',false);
+      if(FASE_FIXA)q=q.eq('status.fase',FASE_FIXA);
       if(f.area!=='*')q=f.area?q.eq('area_direito_id',f.area):q.is('area_direito_id',null);
       if(f.tese)q=q.eq('tese_id',f.tese);
       if(f.de)q=q.gte('data_inicio',f.de);if(f.ate)q=q.lte('data_inicio',f.ate);
       if(f.busca){if(pessoaIds&&pessoaIds.length)q=q.or('pessoa_id.in.('+pessoaIds.join(',')+'),numero_processo_cnj.ilike.%'+f.busca+'%');else q=q.ilike('numero_processo_cnj','%'+f.busca+'%');}
-      var r=await q.order('criado_em',{ascending:false}).order('id').range(inicio,inicio+999);
-      // bloco 118 ainda não aplicado: a coluna providencia_* não existe; lê sem ela
-      if(r.error&&window._temProvidencia!==false&&/providencia/i.test(r.error.message||'')){window._temProvidencia=false;SELECT=SELECT.replace('providencia_atual,providencia_prazo,','');linhas=[];inicio=0;continue;}
-      if(r.error)throw r.error;
-      var lote=r.data||[];linhas=linhas.concat(lote);inicio+=lote.length;
-      if(typeof r.count==='number'&&inicio>=r.count)break;
-      if(!lote.length){if(r.count>inicio)throw new Error('A leitura dos processos ficou incompleta.');break;}
-    }
-    return linhas;
+      return q.order('criado_em',{ascending:false}).order('id').range(inicio,inicio+passo-1);
+    };
+    var r=await consulta(0,LEITURA_LOTE,true);
+    // bloco 118 ainda não aplicado: a coluna providencia_* não existe; lê sem ela
+    if(r.error&&window._temProvidencia!==false&&/providencia/i.test(r.error.message||'')){window._temProvidencia=false;r=await consulta(0,LEITURA_LOTE,true);}
+    if(r.error)throw r.error;
+    var linhas=(r.data||[]).slice(),total=typeof r.count==='number'?r.count:linhas.length;
+    // o servidor pode devolver menos que o pedido por vez: o tamanho de cada parte segue o que veio na primeira
+    var passo=Math.max(1,Math.min(LEITURA_LOTE,linhas.length||LEITURA_LOTE)),inicios=[];
+    for(var i=linhas.length;linhas.length&&i<total;i+=passo)inicios.push(i);
+    var partes=new Array(inicios.length),prox=0;
+    var trabalhar=async function(){while(prox<inicios.length){var k=prox++;var rr=await consulta(inicios[k],passo,false);if(rr.error)throw rr.error;partes[k]=rr.data||[];}};
+    var equipe=[];for(var j=0;j<Math.min(LEITURA_PARALELO,inicios.length);j++)equipe.push(trabalhar());
+    await Promise.all(equipe);
+    partes.forEach(function(p){Array.prototype.push.apply(linhas,p);});
+    // sem repetidos (se alguém cadastrou um processo no meio da leitura, a ordem anda uma casa)
+    var vistos=new Set();
+    return linhas.filter(function(p){if(vistos.has(p.id))return false;vistos.add(p.id);return true;});
   })().catch(function(e){if(state.cacheProcessos===cache)state.cacheProcessos=null;throw e;});
   return cache.promessa;
 }
@@ -1472,15 +1491,18 @@ function seloProvidencia(pid){
 }
 function providenciaHtml(p){return '<div class="proxima-providencia" data-providencia-processo="'+esc(p.id)+'">'+seloProvidencia(p.id)+'</div>';}
 async function carregarProvidenciasVisiveis(){
-  var ids=state.processos.map(function(p){return p.id;}).sort(),chave=JSON.stringify(ids);
+  // só os processos que estão desenhados na tela (página da lista ou cartões visíveis do Kanban), em lotes de 150:
+  // com milhares de processos, um pedido só com todos os números ficava grande demais para o servidor
+  var ids=Array.from(new Set(Array.prototype.map.call(document.querySelectorAll('[data-providencia-processo]'),function(el){return el.getAttribute('data-providencia-processo');}))).filter(Boolean).sort(),chave=JSON.stringify(ids);
   if(!ids.length)return;
   if(cacheProvidencias&&cacheProvidencias.chave===chave)return;
   var pedido=++pedidoProvidencias;cacheProvidencias={chave:chave,tarefas:[]};
   try{
     if(!catalogoProvidencias)catalogoProvidencias=SagaEtiquetas.criar({sb:_sb,admin:false});
-    var r=await Promise.all([_sb.from('tarefas').select('id,processo_id,titulo,data_prazo,concluida,concluida_em,etiqueta_id,prioridade').in('processo_id',ids),catalogoProvidencias.carregar()]);
+    var lotes=[];for(var i=0;i<ids.length;i+=150)lotes.push(ids.slice(i,i+150));
+    var r=await Promise.all([Promise.all(lotes.map(function(l){return _sb.from('tarefas').select('id,processo_id,titulo,data_prazo,concluida,concluida_em,etiqueta_id,prioridade').in('processo_id',l);})),catalogoProvidencias.carregar()]);
     if(pedido!==pedidoProvidencias)return;
-    cacheProvidencias.tarefas=r[0].error?[]:r[0].data||[];
+    cacheProvidencias.tarefas=[];r[0].forEach(function(x){if(!x.error)Array.prototype.push.apply(cacheProvidencias.tarefas,x.data||[]);});
   }catch(e){if(pedido!==pedidoProvidencias)return;cacheProvidencias.tarefas=[];}
   document.querySelectorAll('[data-providencia-processo]').forEach(function(el){el.innerHTML=seloProvidencia(el.dataset.providenciaProcesso);});
 }
@@ -1501,7 +1523,7 @@ async function carregarProcessos(){
   if(state.view==='lista')renderLista();else renderKanban();
   atualizarContagem();
 }
-function aplicarFiltros(){state.page=1;sincronizarUI();salvarPreferencias();carregarProcessos();}
+function aplicarFiltros(){state.page=1;state.kanbanMostrar={};sincronizarUI();salvarPreferencias();carregarProcessos();}
 function aplicarFiltroPeriodo(){
   state.filtroPeriodoDe=document.getElementById('inputPeriodoDe').value||null;
   state.filtroPeriodoAte=document.getElementById('inputPeriodoAte').value||null;
@@ -1664,6 +1686,25 @@ function ordenarCardsColuna(cards,criterio,direcao){
     return 0;
   });
 }
+// 09/11: com milhares de cartões o Kanban travava. Cada coluna mostra 50 e o "Mostrar mais" traz mais 50
+// (o número do cabeçalho continua contando todos). Vale para os três Kanbans: status, funil da Captação e "Organizar por".
+var KANBAN_LOTE=50;
+function kanbanFatia(chave,lista){var n=(state.kanbanMostrar&&state.kanbanMostrar[chave])||KANBAN_LOTE;return {vis:lista.slice(0,n),resto:Math.max(0,lista.length-n)};}
+function kanbanMaisHtml(chave,resto){if(!resto)return '';return '<button type="button" class="kanban-mais" data-kanban-mais="'+esc(chave)+'">Mostrar mais '+Math.min(KANBAN_LOTE,resto)+'<span> · faltam '+resto.toLocaleString('pt-BR')+'</span></button>';}
+function kanbanMostrarMais(chave){
+  state.kanbanMostrar=state.kanbanMostrar||{};
+  var antes=state.kanbanMostrar[chave]||KANBAN_LOTE;
+  state.kanbanMostrar[chave]=antes+KANBAN_LOTE;
+  renderKanban();
+  // os cartões novos entram com o movimento do sistema (a chavinha "Efeitos de movimento" desliga)
+  var sel='#kanbanView [data-kanban-chave="'+(window.CSS&&CSS.escape?CSS.escape(chave):String(chave).replace(/"/g,''))+'"]',corpo=document.querySelector(sel);
+  if(!corpo||(window.sagaMq?sagaMq():{matches:false}).matches)return;
+  var cards=corpo.querySelectorAll('.card-kanban');
+  for(var i=antes;i<cards.length;i++)if(cards[i].animate)cards[i].animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:320,delay:Math.min(i-antes,12)*18,easing:'cubic-bezier(.22,.78,.25,1)',fill:'backwards'});
+}
+document.getElementById('kanbanView').addEventListener('click',function(e){var b=e.target.closest('[data-kanban-mais]');if(!b)return;e.stopPropagation();kanbanMostrarMais(b.getAttribute('data-kanban-mais'));});
+// cartão que muda de coluna: o número do cabeçalho anda de um em um ("12 de 40" também)
+function kanbanAjustarContagem(col,delta){var ct=col&&col.querySelector('.coluna-contagem');if(!ct)return;ct.textContent=ct.textContent.replace(/\d[\d.]*/g,function(n){return String(Math.max(0,parseInt(n.replace(/\./g,''),10)+delta));});}
 // Redesenhar o Kanban mantém a rolagem (para o lado, de cada coluna e da página): antes voltava ao começo ao soltar um cartão
 function renderKanban(){
   var kv=document.getElementById('kanbanView'),pos=null;
@@ -1704,8 +1745,8 @@ function renderKanbanInterno(){
   var colunas=statusVisiveis.map(function(s){
     var gr=grupos[s.id];var cor=s.cor||'#9aa8c2';
     var pref=state.prefsOrdenacaoKanban[s.id]||{criterio:'padrao',direcao:'asc'};
-    var lista=ordenarCardsColuna(gr.processos,pref.criterio,pref.direcao);
-    var cards=lista.map(function(p){
+    var fatia=kanbanFatia(s.id,ordenarCardsColuna(gr.processos,pref.criterio,pref.direcao));
+    var cards=fatia.vis.map(function(p){
       var sig=!!p.sigilo;var pe=p.pessoa||{};var te=p.tese||{};var re=p.responsavel||{};
       var whats=pe.telefone_whatsapp&&String(pe.telefone_whatsapp).replace(/\D/g,'');
       var whatsHtml=(whats&&whats.length>=10)?'<a class="card-whats-mini" href="https://wa.me/55'+whats+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir WhatsApp"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15L2 22l5.2-1.4A10 10 0 1012 2z"/></svg></a>':'';
@@ -1742,7 +1783,7 @@ function renderKanbanInterno(){
       +'</div></div>';
     return '<div class="coluna-kanban" data-coluna-id="'+esc(s.id)+'">'
       +'<div class="coluna-cabecalho"><span class="coluna-cor-dot" style="background:'+cor+'"></span><div class="coluna-titulo">'+esc(s.nome)+'</div><span class="coluna-contagem">'+gr.processos.length+'</span>'+menuOrdenar+'</div>'
-      +'<div class="coluna-corpo" data-status-id="'+esc(s.id)+'">'+cards+'</div></div>';
+      +'<div class="coluna-corpo" data-status-id="'+esc(s.id)+'" data-kanban-chave="'+esc(s.id)+'">'+cards+'</div>'+kanbanMaisHtml(s.id,fatia.resto)+'</div>';
   }).join('');
   kv.innerHTML='<div class="quadro-kanban">'+colunas+'</div>';
   if(podeArrastar)ativarArrasteKanban(kv);
@@ -1927,15 +1968,12 @@ async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proxi
   var corpo=document.querySelector('.coluna-corpo[data-status-id="'+novoStatusId+'"]');
   var cardMovido=document.querySelector('.card-kanban[data-processo-id="'+processoId+'"]');
   if(corpo&&cardMovido){
+    var colOrigem=cardMovido.closest('.coluna-kanban');
     if(proximoIrmao&&proximoIrmao.parentNode===corpo)corpo.insertBefore(cardMovido,proximoIrmao);
     else corpo.appendChild(cardMovido);
-    var contagem=corpo.querySelectorAll('.card-kanban').length;
-    document.querySelectorAll('.coluna-kanban').forEach(function(col){
-      var idCol=col.getAttribute('data-coluna-id');
-      var corpoCol=col.querySelector('.coluna-corpo');
-      var cont=col.querySelector('.coluna-contagem');
-      if(cont&&corpoCol)cont.textContent=corpoCol.querySelectorAll('.card-kanban').length;
-    });
+    // a coluna mostra só parte dos cartões: o número do cabeçalho anda de um em um (não conta os cartões na tela)
+    var colDestino=corpo.closest('.coluna-kanban');
+    if(colOrigem!==colDestino){kanbanAjustarContagem(colOrigem,-1);kanbanAjustarContagem(colDestino,1);}
     if(mudouColuna){
       var colunaNova=corpo.closest('.coluna-kanban');
       colunaNova.classList.add('recebeu-card');
@@ -1965,7 +2003,7 @@ async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proxi
 
 // Contagem / Paginacao
 function atualizarContagem(){
-  var total=state.totalProcessos,ps=state.pageSize,pg=state.page;
+  var total=state.totalProcessos,ps=porPagina(),pg=state.page;
   var from=state.view==='kanban'||ps==='todos'?Math.min(1,total):Math.min((pg-1)*ps+1,total||0);
   var to=state.view==='kanban'||ps==='todos'?total:Math.min(pg*ps,total||0);
   var extra='';
@@ -1974,8 +2012,8 @@ function atualizarContagem(){
   document.getElementById('contagem').innerHTML='Exibindo <strong>'+from.toLocaleString('pt-BR')+'-'+to.toLocaleString('pt-BR')+'</strong> de <strong>'+((total||0)).toLocaleString('pt-BR')+'</strong>'+extra;
 }
 function renderPaginacao(){
-  if(state.pageSize==='todos'||!state.totalProcessos){document.getElementById('paginacao').innerHTML='';return;}
-  var total=state.totalProcessos,ps=state.pageSize,pg=state.page;
+  if(porPagina()==='todos'||!state.totalProcessos){document.getElementById('paginacao').innerHTML='';return;}
+  var total=state.totalProcessos,ps=porPagina(),pg=state.page;
   var totalPags=Math.ceil(total/ps);
   if(totalPags<=1){document.getElementById('paginacao').innerHTML='';return;}
   var h='<button class="pag-btn" onclick="irPagina('+(pg-1)+')" '+(pg===1?'disabled':'')+'>&#8249;</button>';
@@ -1996,7 +2034,7 @@ function redesenharNoLugar(semSegurarAltura){
   window.scrollTo(0,y);if(main)main.scrollTop=ym;
   requestAnimationFrame(function(){window.scrollTo(0,y);if(main)main.scrollTop=ym;});
 }
-function irPagina(p){if(p<1||p>Math.ceil(state.totalProcessos/state.pageSize))return;state.page=p;redesenharNoLugar();}
+function irPagina(p){var ps=porPagina();if(p<1||(ps!=='todos'&&p>Math.ceil(state.totalProcessos/ps)))return;state.page=p;redesenharNoLugar();}
 function alterarPageSize(ps){
   state.pageSize=ps;state.page=1;
   document.querySelectorAll('.pill-quantidade').forEach(function(p){p.classList.toggle('ativo',p.getAttribute('data-qtd')==ps||(p.getAttribute('data-qtd')==='todos'&&ps==='todos'));});
