@@ -115,10 +115,19 @@
   var pendentes=0,ultimaBusca=0;
   if(window.fetch){
     var fetchOriginal=window.fetch;
-    window.fetch=function(){
+    // 09/11: ao voltar de página (botão do mouse ou seta do navegador) o Chrome devolvia respostas ANTIGAS do banco
+    // guardadas na memória dele (ex.: o perfil com a cor de antes da troca: o tema salvo como Grafite voltava para o Azul).
+    // Toda busca ao banco (Supabase) vai sempre ao servidor e a resposta não fica guardada no computador.
+    var BANCO=/^https:\/\/[a-z0-9-]+\.supabase\.co\//i;
+    window.fetch=function(entrada,opcoes){
       pendentes++;ultimaBusca=Date.now();
       function fim(){pendentes=Math.max(0,pendentes-1);ultimaBusca=Date.now();}
-      try{return fetchOriginal.apply(this,arguments).then(function(r){fim();return r;},function(e){fim();throw e;});}
+      var args=arguments;
+      try{
+        var url=typeof entrada==='string'?entrada:(entrada&&entrada.url)||String(entrada||'');
+        if(BANCO.test(url)&&!(opcoes&&opcoes.cache))args=[entrada,Object.assign({},opcoes||{},{cache:'no-store'})];
+      }catch(e){}
+      try{return fetchOriginal.apply(this,args).then(function(r){fim();return r;},function(e){fim();throw e;});}
       catch(e){fim();throw e;}
     };
   }

@@ -11,7 +11,7 @@
    ===================================================================== */
 window.SagaPlanilha=(function(){
   'use strict';
-  var cols=[],situacoes=[],pronta=false,filtros={},faixas={},ordem=null,protocolo='',retorno='',minhas=false,ocultas=null,editando=false,menuAberto=null;
+  var cols=[],situacoes=[],sacados=new Set(),pronta=false,filtros={},faixas={},ordem=null,protocolo='',retorno='',minhas=false,ocultas=null,editando=false,menuAberto=null;
   var CHAVE=function(){return 'saga-planilha2-'+FASE_FIXA+'-'+(state.meuInternoId||'');};
   // Nome e ordem próprios da Captação (planilha de captação do escritório)
   function nomeCol(c,fase){return (fase||(typeof FASE_FIXA!=='undefined'?FASE_FIXA:''))==='captacao'&&c.nome_captacao?c.nome_captacao:c.nome;}
@@ -32,6 +32,10 @@ window.SagaPlanilha=(function(){
   function nomeArea(id){try{var a=(catalogoTeses.todasAreas()||[]).find(function(x){return String(x.id)===String(id);});return a?a.nome:'';}catch(e){return '';}}
   function situacao(id){return situacoes.find(function(s){return String(s.id)===String(id);});}
   function idsProtocolada(){return situacoes.filter(function(s){return s.conta_protocolada;}).map(function(s){return String(s.id);});}
+  function idsEncerrada(){return situacoes.filter(function(s){return s.conta_encerrada;}).map(function(s){return String(s.id);});}
+  // Grupo do processo no Jurídico (09/11, mesma regra da vw_processos_andamento): sacado (o recebido no Financeiro cobre o esperado)
+  // > encerrado (situação Encerrada ou Inviável) > ativo. Cada processo fica em um grupo só.
+  function grupoDe(p){if(sacados.has(String(p.id)))return 'sacado';return idsEncerrada().indexOf(String(p.situacao_acao_id||''))!==-1?'encerrado':'ativo';}
 
   // Valor guardado (para filtrar e editar) e texto mostrado
   function bruto(p,c){
@@ -131,7 +135,9 @@ window.SagaPlanilha=(function(){
       // quem está em "Sem sucesso" não conta nos retornos (como no aviso do sino; 09/11)
       if(!dr||statusDe(p).etapa==='Sem sucesso')return false;dr=String(dr).slice(0,10);
       if(retorno==='hoje'&&dr!==hoje)return false;if(retorno==='atrasados'&&!(dr<hoje))return false;if(retorno==='semana'&&!(dr>hoje&&dr<=em7))return false;}
-    if(protocolo){var ok=idsProtocolada().indexOf(String(p.situacao_acao_id||''))!==-1;if(protocolo==='sim'&&!ok)return false;if(protocolo==='nao'&&ok)return false;}
+    if(protocolo){var gp=grupoDe(p);
+      if(protocolo==='encerrado'||protocolo==='sacado'){if(gp!==protocolo)return false;}
+      else{if(gp!=='ativo')return false;var ok=idsProtocolada().indexOf(String(p.situacao_acao_id||''))!==-1;if(protocolo==='sim'&&!ok)return false;if(protocolo==='nao'&&ok)return false;}}
     for(var id in filtros){
       if(id===ignorarCol)continue;
       var c=cols.find(function(x){return x.id===id;});if(!c)continue;
@@ -942,7 +948,7 @@ window.SagaPlanilha=(function(){
       try{await catalogoTeses.carregar();}catch(e){}renderAbas();return id;};
     if(c.campo_sistema==='processo.situacao_acao'&&adm)return async function(nome){
       var id=await rpcOk('catalogo_salvar',{p_categoria:'situacao_acao',p_id:null,p_nome:nome,p_cor:'#7da0ca',p_ativo:true,p_conta_protocolada:false});
-      var r=await _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada').eq('categoria','situacao_acao').order('ordem');if(!r.error)situacoes=r.data||[];
+      var r=await _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada,conta_encerrada').eq('categoria','situacao_acao').order('ordem');if(!r.error)situacoes=r.data||[];
       return id;};
     if(c.campo_sistema==='processo.status'&&(adm||state.podeGerenciarColunas))return async function(nome){
       var lista=state.statusList||[],ordem=lista.reduce(function(m,s){return Math.max(m,s.ordem||0);},0)+1;
@@ -1095,7 +1101,7 @@ window.SagaPlanilha=(function(){
     b.innerHTML=(capt?'<div class="sp-pills" role="group" aria-label="Data de retorno">'+[['','Todos os retornos'],['hoje','Retorno hoje'],['atrasados','Atrasados'],['semana','Próximos 7 dias']].map(function(o){return '<button type="button" class="sp-pill'+(retorno===o[0]?' ativo':'')+'" data-retorno="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
         '<button type="button" class="sp-pill sp-pill-solta'+(minhas?' ativo':'')+'" data-minhas aria-pressed="'+minhas+'">Minhas fichas</button>'+
         (state.permissoes&&state.permissoes.criar?'<button type="button" class="btn-secondary sp-btn" data-importar title="Colar do Excel ou escolher um arquivo .xlsx/.csv">Importar planilha</button>':'')+'<button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
-      '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos'],['sim','Protocolados'],['nao','Não protocolados']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
+      '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos','Todos os processos do Jurídico'],['sim','Protocolados','Ativos e já protocolados'],['nao','Não protocolados','Ativos e ainda não protocolados'],['encerrado','Encerrados','Situação Encerrada ou Inviável (o valor a receber continua até o saque)'],['sacado','Sacados','O valor recebido no Financeiro cobre o esperado']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'" title="'+o[2]+'">'+o[1]+'</button>';}).join('')+'</div>'+
         (state.permissoes&&state.permissoes.criar?'<button type="button" class="btn-secondary sp-btn" data-importar title="Colar do Excel ou escolher um arquivo .xlsx/.csv">Importar planilha</button>':''))+
       '<div class="sp-pills sp-modo-cel" role="group" aria-label="Como mostrar no celular"><button type="button" class="sp-pill'+(verTabelaNoCelular()?' ativo':'')+'" data-modo="tabela">Planilha</button><button type="button" class="sp-pill'+(verTabelaNoCelular()?'':' ativo')+'" data-modo="cartoes">Cartões</button></div>'+
       '<button type="button" class="btn-secondary sp-btn" data-foco title="Cor do destaque da célula, da linha e da coluna selecionadas"><span class="sp-foco-bola"></span> Foco</button>'+
@@ -1270,9 +1276,11 @@ window.SagaPlanilha=(function(){
     estilos();
     try{
       var res=await Promise.all([carregarColunas(),
-        _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada').eq('categoria','situacao_acao').order('ordem'),
-        _sb.rpc('pode_gerenciar_colunas')]);
+        _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada,conta_encerrada').eq('categoria','situacao_acao').order('ordem'),
+        _sb.rpc('pode_gerenciar_colunas'),
+        FASE_FIXA==='juridico'?_sb.from('vw_processos_andamento').select('processo_id').eq('grupo','sacado'):null]);
       situacoes=(res[1]&&res[1].data)||[];SagaPlanilha._gerenciar=!!(res[2]&&res[2].data===true)||!!state.admin;
+      sacados=new Set(((res[3]&&!res[3].error&&res[3].data)||[]).map(function(x){return String(x.processo_id);}));
     }catch(e){console.warn('Planilha: sem colunas do banco',e);return false;}
     if(!cols.length)return false;
     lerPreferencias();
@@ -1762,7 +1770,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       _sb.from('teses').select('id,nome,ativo').order('nome'),
       _sb.from('areas_direito').select('id,nome,ativo,ordem').order('ordem'),
       _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo'),
-      _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada').eq('categoria','situacao_acao').order('ordem'),
+      _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada,conta_encerrada').eq('categoria','situacao_acao').order('ordem'),
       _sb.rpc('pode_gerenciar_colunas')]);
     catFicha={status:r[0].data||[],teses:r[1].data||[],areas:r[2].data||[],usuarios:r[3].data||[],gerenciar:r[5]&&r[5].data===true};
     situacoes=r[4].data||situacoes;
