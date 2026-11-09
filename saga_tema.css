@@ -262,6 +262,8 @@ html[data-cor="grafite"] body[data-theme="light"]{
 /* fundo da página */
 html[data-cor="grafite"]:has(> body[data-theme="dark"]),html[data-cor="grafite"] body[data-theme="dark"]{background:radial-gradient(1200px 640px at 70% -10%,#2A2A2A,#1A1A1A 55%,#161616) fixed!important}
 html[data-cor="grafite"]:has(> body[data-theme="light"]),html[data-cor="grafite"] body[data-theme="light"]{background:linear-gradient(180deg,#F5F4F1,#EFEDE9) fixed!important}
+/* (09/11) Janela embutida (ex.: tarefa aberta pela ficha): o fundo fica transparente em todas as cores e modos, para a tela de trás aparecer escurecida */
+html.saga-embed,html.saga-embed[data-cor],html.saga-embed[data-cor]:has(> body[data-theme]),html.saga-embed body,html.saga-embed[data-cor] body[data-theme]{background:transparent!important}
 /* menus: escuro em grafite; claro em off-white */
 html[data-cor="grafite"] body[data-theme="dark"] #topbarSaga{background:#1E1E1E!important;border-bottom-color:rgba(255,255,255,.07)!important}
 html[data-cor="grafite"] body[data-theme="dark"] #sidebarSaga{background:#1C1C1C!important;border-right-color:rgba(255,255,255,.07)!important}
