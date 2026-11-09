@@ -310,8 +310,10 @@
   }
   // Janelas que aparecem (online agora, notificacoes, cadastros, menus suspensos, avisos): surgem suaves, na curva do sistema
   var visivelAntes=new WeakMap();
+  // (09/11) data-saga-movimento-proprio: a camada cuida do próprio movimento (ex.: tarefa embutida na ficha);
+  // o saga_guard não anima nem faz a cópia que some por cima (fazia o fundo "voltar" e piscar ao fechar)
   function ehJanela(el){
-    if(!el||el.nodeType!==1||el.id==='sagaCarregando'||el.getAttribute('aria-hidden')==='true')return false;
+    if(!el||el.nodeType!==1||el.id==='sagaCarregando'||el.getAttribute('aria-hidden')==='true'||el.closest('[data-saga-movimento-proprio]'))return false;
     if(/^(SCRIPT|STYLE|LINK|svg|path|INPUT|SELECT|OPTION|TEXTAREA|IMG|BR)$/i.test(el.tagName))return false;
     if(el.closest('#sidebarSaga,.leaflet-container'))return false;
     var cs=getComputedStyle(el),p=cs.position;
@@ -412,7 +414,7 @@
     if(!el||el.nodeType!==1||!el.isConnected||el.getAttribute('aria-hidden')==='true')return false;
     if(/^(SCRIPT|STYLE|LINK|BUTTON|INPUT|SELECT|OPTION|TEXTAREA|svg|path|TR|TD|TH|TBODY|THEAD|LI|SPAN|B|I|LABEL)$/i.test(el.tagName))return false;
     if(el.closest('[class*="modal"],.mo,.si-ov,[role="dialog"],[class*="popover"],[class*="dropdown"],[class*="menu"]'))return false; // dentro de janela/menu: o saga_guard já anima a janela
-    if(el.closest('#sidebarSaga,#topbarSaga,.leaflet-container')||ehJanela(el))return false;
+    if(el.closest('#sidebarSaga,#topbarSaga,.leaflet-container,[data-saga-movimento-proprio]')||ehJanela(el))return false;
     var cs=getComputedStyle(el);if(cs.display==='none'||cs.visibility==='hidden')return false;
     var r=el.getBoundingClientRect();
     return r.width>=150&&r.height>=56;
