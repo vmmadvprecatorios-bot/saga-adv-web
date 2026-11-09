@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090208"></script>
+<script src="saga_guard.js?v=202611090232"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -1735,7 +1735,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611090208">
+<link rel="stylesheet" href="saga_tema.css?v=202611090232">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -1743,7 +1743,7 @@ html.saga-embed, html.saga-embed body{background:transparent !important}
 html.saga-embed body > *:not(#modalTarefa):not(#sagaConfirma):not(#toastContainer):not(script):not(style){display:none !important}
 html.saga-embed #secaoComentariosTarefa{display:none !important}
 [data-theme="light"]{ --prio-baixa:#5f7089; --prio-media:#2f6cd6; --prio-alta:#6a4fd6; --prio-urgente:#d63f66; }
-html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
+html.saga-embed #modalTarefa{background:transparent}
 </style>
 </head>
 <body data-theme="dark">
@@ -2047,7 +2047,7 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
 
     <div class="campo-tf">
       <label for="inputTituloTarefa">Titulo</label>
-      <input type="text" id="inputTituloTarefa" placeholder="Ex: Protocolar peticao de cumprimento de sentenca">
+      <input type="text" id="inputTituloTarefa" autocomplete="off" placeholder="Ex: Protocolar peticao de cumprimento de sentenca">
     </div>
 
     <div class="campo-tf">
@@ -2060,7 +2060,7 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
       <div class="subsecao-processo-vinculado" id="subsecaoProcessoVinculado">
         <div class="campo-tf" style="position:relative; margin-bottom:8px;">
           <label for="inputBuscaProcesso">Buscar processo (numero ou cliente)</label>
-          <input type="text" id="inputBuscaProcesso" placeholder="Digite o numero do processo ou nome do cliente...">
+          <input type="text" id="inputBuscaProcesso" autocomplete="off" placeholder="Digite o numero do processo ou nome do cliente...">
           <div class="resultado-autocomplete" id="resultadoAutocompleteProcesso"></div>
         </div>
         <div class="processo-selecionado-readonly" id="processoSelecionadoReadonly" style="display:none;">
@@ -2272,11 +2272,11 @@ html.saga-embed #modalTarefa{background:rgba(8,14,24,.55)}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611090208"></script>
-<script src="saga_etiquetas.js?v=202611090208"></script>
-<script src="saga_mencoes.js?v=202611090208"></script>
-<script src="saga_prazos.js?v=202611090208"></script>
-<script src="saga_texto.js?v=202611090208"></script>
+<script src="saga_ui.js?v=202611090232"></script>
+<script src="saga_etiquetas.js?v=202611090232"></script>
+<script src="saga_mencoes.js?v=202611090232"></script>
+<script src="saga_prazos.js?v=202611090232"></script>
+<script src="saga_texto.js?v=202611090232"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -4532,7 +4532,8 @@ function abrirModalTarefa(idTarefa, colunaPreSelecionada){
 
   if(menuEtiquetaTarefa) menuEtiquetaTarefa.atualizar();
   modalTarefaEl.classList.add('aberto');
-  if(!estadoModalTarefa.somenteLeitura) document.getElementById('inputTituloTarefa').focus();
+  // dentro da ficha (janela embutida) não entra com o cursor no Título: a pessoa clica onde quiser
+  if(!estadoModalTarefa.somenteLeitura && !document.documentElement.classList.contains('saga-embed')) document.getElementById('inputTituloTarefa').focus();
 }
 
 document.getElementById('btnNovaTarefa').addEventListener('click', function(){ abrirModalTarefa(null); });
@@ -5125,6 +5126,13 @@ async function iniciarMinhasTarefas(){
     var pidEmbed = qsTI.get('processo');
     var avisarFicha = function(aberto){ try{ parent.postMessage({ saga:'tarefa-embed', aberto:aberto }, location.origin); }catch(e){} };
     new MutationObserver(function(){ if(!modalTarefaEl.classList.contains('aberto')) avisarFicha(false); }).observe(modalTarefaEl, { attributes:true, attributeFilter:['class'] });
+    // Fechar/Cancelar/clique fora: a ficha some com a janela inteira de uma vez (antes a janela sumia por dentro e
+    // depois o fundo escuro, e piscava)
+    var pedirFechar = function(e){ e.preventDefault(); e.stopImmediatePropagation(); try{ parent.postMessage({ saga:'tarefa-embed', fechar:true }, location.origin); }catch(_){ modalTarefaEl.classList.remove('aberto'); } };
+    document.addEventListener('click', function(e){
+      if(!modalTarefaEl.classList.contains('aberto')) return;
+      if(e.target.closest('#btnFecharModalTarefa,#btnCancelarModalTarefa') || e.target === modalTarefaEl) pedirFechar(e);
+    }, true);
     abrirModalTarefa(null);
     if(pidEmbed){
       var rp = await _sb.from('processos').select(SELECT_PROCESSO).eq('id', pidEmbed).maybeSingle();
@@ -5135,6 +5143,10 @@ async function iniciarMinhasTarefas(){
         selecionarProcessoNoModal(proc);
       }
     }
+    // ninguém entra com foco nem lista de sugestões aberta
+    try{ if(document.activeElement && document.activeElement !== document.body) document.activeElement.blur(); }catch(_){}
+    var acp = document.getElementById('resultadoAutocompleteProcesso'); if(acp) acp.classList.remove('visivel');
+    avisarFicha(true); // pronta: a ficha mostra a janela (até aqui ela carrega escondida)
   }
 }
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611090208"></script>
+<script src="saga_guard.js?v=202611090232"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -340,15 +340,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611090208"></script>
-<script src="saga_fichas.js?v=202611090208"></script>
-<script src="saga_teses.js?v=202611090208"></script>
-<script src="saga_mencoes.js?v=202611090208"></script>
-<script src="saga_texto.js?v=202611090208"></script>
-<script src="saga_partes.js?v=202611090208"></script>
-<script src="saga_etiquetas.js?v=202611090208"></script>
-<script src="saga_planilha.js?v=202611090208"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611090208">
+<script src="saga_ui.js?v=202611090232"></script>
+<script src="saga_fichas.js?v=202611090232"></script>
+<script src="saga_teses.js?v=202611090232"></script>
+<script src="saga_mencoes.js?v=202611090232"></script>
+<script src="saga_texto.js?v=202611090232"></script>
+<script src="saga_partes.js?v=202611090232"></script>
+<script src="saga_etiquetas.js?v=202611090232"></script>
+<script src="saga_planilha.js?v=202611090232"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611090232">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -2209,7 +2209,7 @@ async function carregarNotasFicha(pessoaId){
   document.getElementById('btnNovaNotaFicha').onclick=()=>{const proc=getActiveProcess();const url='notas.html?nova=texto&pessoa_id='+encodeURIComponent(pessoaId)+(proc&&proc.id?'&processo_id='+encodeURIComponent(proc.id):'');if(window.sagaIrPara)sagaIrPara(url);else location.href=url;};
   box.onclick=ev=>{const a=ev.target.closest('a[data-nota-ficha]');if(!a)return;ev.preventDefault();if(window.sagaIrPara)sagaIrPara(a.getAttribute('href'));else location.href=a.getAttribute('href');};
 }
-function setupInteractions(){document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.getElementById('dropdownModelos').addEventListener('click',ev=>{const b=ev.target.closest('[data-checklist-template]');if(b){addChecklistFromTemplate(b.dataset.checklistTemplate);return;}if(ev.target.closest('[data-gerenciar-modelos]')){document.getElementById('dropdownModelos').classList.remove('aberto');abrirGerenciarModelos();}});document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('btnAnexarDocumento').addEventListener('click',()=>{state.pastaAlvoUpload=null;},true);document.getElementById('documentInput').addEventListener('change',async event=>{const arquivos=Array.from(event.target.files||[]);for(const file of arquivos)await enviarDocumento(file);event.target.value='';state.pastaAlvoUpload=null;});document.getElementById('btnNovaPasta').addEventListener('click',()=>abrirModalPasta('nova',{paiId:null}));document.getElementById('pastaSalvar').addEventListener('click',salvarModalPasta);document.getElementById('pastaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();salvarModalPasta();}});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirNovaTarefaCompleta());document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
+function setupInteractions(){document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.getElementById('dropdownModelos').addEventListener('click',ev=>{const b=ev.target.closest('[data-checklist-template]');if(b){addChecklistFromTemplate(b.dataset.checklistTemplate);return;}if(ev.target.closest('[data-gerenciar-modelos]')){document.getElementById('dropdownModelos').classList.remove('aberto');abrirGerenciarModelos();}});document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('btnAnexarDocumento').addEventListener('click',()=>{state.pastaAlvoUpload=null;},true);document.getElementById('documentInput').addEventListener('change',async event=>{const arquivos=Array.from(event.target.files||[]);for(const file of arquivos)await enviarDocumento(file);event.target.value='';state.pastaAlvoUpload=null;});document.getElementById('btnNovaPasta').addEventListener('click',()=>abrirModalPasta('nova',{paiId:null}));document.getElementById('pastaSalvar').addEventListener('click',salvarModalPasta);document.getElementById('pastaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();salvarModalPasta();}});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirNovaTarefaCompleta());document.getElementById('btnAddTask').addEventListener('mouseenter',()=>{if(perms.tarefasCriar===true)prepararTarefaEmbutida();},{once:false});document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
 
 
 /* Localização, importação externa e teses globais */
@@ -3229,22 +3229,59 @@ function renderTaskResponsavelSelect(responsavelId){
 
 /* Nova tarefa: abre o mesmo formulário completo de Minhas Tarefas (subtarefas, anexos, compartilhar, etiqueta...),
    já ligado ao processo desta ficha. Ao fechar, a ficha recarrega e a tarefa aparece no bloco Tarefas. */
-function abrirNovaTarefaCompleta(){
+// "+ Adicionar tarefa" (09/11): a janela completa de Minhas Tarefas carrega ESCONDIDA (começa já ao passar o mouse no botão);
+// na hora do clique aparece o fundo escurecido com "Abrindo a tarefa…" e a janela entra suave quando está pronta.
+const TAREFA_CURVA='cubic-bezier(.22,.78,.25,1)';
+function tarefaSemMov(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+function prepararTarefaEmbutida(){
   const processo=getActiveProcess();
-  if(!processo)return;
-  if(document.getElementById('faTarefaEmbutida'))return;
-  const ov=document.createElement('div');
-  ov.id='faTarefaEmbutida';
-  ov.style.cssText='position:fixed;inset:0;z-index:9000;background:transparent';
+  if(!processo)return null;
+  let ov=document.getElementById('faTarefaEmbutida');
+  if(ov&&ov.dataset.processo===String(processo.id))return ov;
+  if(ov)ov.remove();
+  ov=document.createElement('div');
+  ov.id='faTarefaEmbutida';ov.setAttribute('data-saga-movimento-proprio','');ov.dataset.processo=String(processo.id);ov.dataset.pronta='';ov.dataset.visivel='';
+  ov.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(8,14,24,.55);opacity:0;pointer-events:none;visibility:hidden;transition:opacity 260ms '+TAREFA_CURVA;
+  const espera=document.createElement('div');
+  espera.className='fa-tarefa-espera';
+  espera.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:14px;border:1px solid var(--border-soft);background:var(--panel-solid);color:var(--text);font-size:12px;box-shadow:var(--shadow);transition:opacity 200ms ease';
+  espera.innerHTML='<span style="width:14px;height:14px;border-radius:50%;border:2px solid color-mix(in srgb,var(--gold) 30%,transparent);border-top-color:var(--gold);animation:faGira .8s linear infinite"></span>Abrindo a tarefa…';
   const frame=document.createElement('iframe');
   frame.title='Nova tarefa';
-  frame.style.cssText='width:100%;height:100%;border:0;background:transparent';
-  frame.src='minhas_tarefas.html?embed=1&processo='+encodeURIComponent(processo.id);
-  ov.appendChild(frame);
+  frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;opacity:0;transition:opacity 280ms '+TAREFA_CURVA;
+  // pede a página com a versão atual dos arquivos (o Ctrl+Shift+R não atualiza o que abre por dentro; sem isso o navegador podia usar a versão antiga por até 10 min)
+  const versao=((document.querySelector('script[src*="saga_ui.js?v="]')||{}).src||'').split('?v=')[1]||'';
+  frame.src='minhas_tarefas.html?embed=1&processo='+encodeURIComponent(processo.id)+(versao?'&v='+encodeURIComponent(versao):'');
+  ov.appendChild(espera);ov.appendChild(frame);
+  if(!document.getElementById('faGiraCss')){const st=document.createElement('style');st.id='faGiraCss';st.textContent='@keyframes faGira{to{transform:rotate(360deg)}}';document.head.appendChild(st);}
   document.body.appendChild(ov);
-  const fechar=()=>{window.removeEventListener('message',ouvir);ov.remove();recarregarProcessoAtivo();};
-  const ouvir=ev=>{if(ev.origin===location.origin&&ev.source===frame.contentWindow&&ev.data&&ev.data.saga==='tarefa-embed'&&ev.data.aberto===false)fechar();};
+  const mostrarJanela=()=>{ov.dataset.pronta='1';if(ov.dataset.visivel!=='1')return;espera.style.opacity='0';frame.style.opacity='1';};
+  const fechar=()=>{
+    window.removeEventListener('message',ouvir);
+    const fim=()=>{ov.remove();recarregarProcessoAtivo();};
+    ov.style.pointerEvents='none';
+    if(tarefaSemMov()){fim();return;}
+    ov.style.opacity='0';setTimeout(fim,290);
+  };
+  const ouvir=ev=>{
+    if(ev.origin!==location.origin||ev.source!==frame.contentWindow||!ev.data||ev.data.saga!=='tarefa-embed')return;
+    if(ev.data.aberto===true)mostrarJanela();
+    else if((ev.data.fechar===true||ev.data.aberto===false)&&ov.dataset.visivel==='1'&&!ov.dataset.fechando){ov.dataset.fechando='1';fechar();}
+  };
   window.addEventListener('message',ouvir);
+  ov._mostrarJanela=mostrarJanela;
+  // se a tela demorar demais para avisar, mostra assim mesmo
+  ov._reserva=setTimeout(()=>{if(ov.dataset.visivel==='1'&&ov.dataset.pronta!=='1')mostrarJanela();},9000);
+  return ov;
+}
+function abrirNovaTarefaCompleta(){
+  const ov=prepararTarefaEmbutida();
+  if(!ov||ov.dataset.visivel==='1')return;
+  ov.dataset.visivel='1';
+  ov.style.visibility='visible';ov.style.pointerEvents='auto';
+  if(tarefaSemMov())ov.style.transition='none';
+  requestAnimationFrame(()=>{ov.style.opacity='1';});
+  if(ov.dataset.pronta==='1')ov._mostrarJanela();
 }
 function abrirModalTarefa(tarefaId){
   const process=getActiveProcess();
@@ -4544,7 +4581,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611090208"></script>
-<script src="saga_ficha_atividades.js?v=202611090208"></script>
+<script src="saga_localizacao.js?v=202611090232"></script>
+<script src="saga_ficha_atividades.js?v=202611090232"></script>
 </body>
 </html>

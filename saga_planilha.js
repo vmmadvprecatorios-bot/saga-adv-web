@@ -168,7 +168,7 @@ window.SagaPlanilha=(function(){
       return '<tr data-sp-proc="'+h(p.id)+'"><td onclick="event.stopPropagation()"><input type="checkbox" class="chk-linha" value="'+h(p.id)+'"></td>'+cs.map(function(c){
         var t=sig&&c.campo_sistema!=='pessoa.nome'?'••••':exibir(c,texto(p,c)),cor=sig?null:corDe(p,c),v=bruto(p,c);
         var conteudo;
-        if(c.campo_sistema==='pessoa.nome')conteudo='<span class="nome-cliente sp-link-ficha">'+h(t||'N/D')+'</span>';
+        if(c.campo_sistema==='pessoa.nome')conteudo='<a class="nome-cliente sp-link-ficha" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+h(p.id)+'">'+h(t||'N/D')+'</a>';
         else if(c.tipo==='link'&&!sig&&Array.isArray(v))conteudo=v.map(function(l){var u=/^https?:\/\//i.test(l.url||'')?l.url:'';return u?'<a href="'+h(u)+'" target="_blank" rel="noopener noreferrer" class="sp-link" onclick="event.stopPropagation()">'+h(l.texto||l.url)+'</a>':'';}).join(' · ');
         else if(cor&&t)conteudo='<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>';
         else conteudo=h(t)||'<span class="sp-vazio">—</span>';
@@ -974,7 +974,7 @@ window.SagaPlanilha=(function(){
       '.sp-th{display:flex;align-items:center;gap:6px;width:100%;padding:13px 14px;border:0;background:none;color:inherit;font:inherit;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;text-align:left}'+
       '.sp-th:hover,.sp-th.ativo{color:var(--gold-light)}.sp-funil{opacity:.7;font-size:10px}.sp-th:active{transform:scale(.97)}'+
       '.sp-tabela td{max-width:260px;overflow:hidden;text-overflow:ellipsis}.sp-tabela td.sp-editavel{cursor:cell}.sp-tabela td.sp-editavel:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 35%,transparent)}'+
-      '.sp-tabela td.sp-salvando{opacity:.5}.sp-vazio{color:var(--muted)}.sp-link{color:var(--gold-light);text-decoration:underline}.sp-link-ficha{cursor:pointer}.sp-link-ficha:hover{text-decoration:underline}'+
+      '.sp-tabela td.sp-salvando{opacity:.5}.sp-vazio{color:var(--muted)}.sp-link{color:var(--gold-light);text-decoration:underline}.sp-link-ficha{cursor:pointer;color:inherit;text-decoration:none}.sp-link-ficha:hover{text-decoration:underline}'+
       '.sp-hon{display:flex;align-items:center;gap:4px;min-width:170px}.sp-hon .sp-editor{min-width:0;flex:1}.sp-hon-modo{flex:0 0 auto;height:28px;min-width:34px;padding:0 6px;border-radius:7px;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--text);font:inherit;font-size:11px;font-weight:600;cursor:pointer}.sp-hon-modo:hover{border-color:var(--gold)}.sp-hon-dica{flex:0 0 auto;font-size:10px;color:var(--muted);white-space:nowrap}'+
       '.sp-editor{width:100%;min-width:140px;background:var(--panel);color:var(--text);border:1px solid var(--gold);border-radius:7px;padding:6px 8px;font:inherit;font-size:12px}'+
       '.sp-menu{position:fixed;z-index:3000;background:var(--panel-solid,var(--panel));border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.35);padding:10px;max-height:min(480px,80vh);display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(16px)}'+
@@ -1086,9 +1086,11 @@ window.SagaPlanilha=(function(){
     tabela.addEventListener('click',function(e){
       if(e.target.id==='chkTodos'){var marcado=e.target.checked;tabela.querySelectorAll('.chk-linha').forEach(function(c){c.checked=marcado;});return;}
       var th=e.target.closest('[data-sp-menu]');if(th){e.stopPropagation();var c=cols.find(function(x){return x.id===th.dataset.spMenu;});if(c)abrirMenu(c,th);return;}
+      // nome do cliente: link de verdade; clique normal abre a ficha na tela inteira, Ctrl/Cmd/Shift+clique fica com o navegador (aba nova)
+      var lk=e.target.closest('.sp-link-ficha');
+      if(lk){if(e.ctrlKey||e.metaKey||e.shiftKey)return;e.preventDefault();var trl=lk.closest('tr[data-sp-proc]');if(trl)verFicha(trl.dataset.spProc);return;}
       if(e.target.closest('.sp-editor,a,button,input'))return;
       var tr=e.target.closest('tr[data-sp-proc]');if(!tr)return;
-      if(e.target.closest('.sp-link-ficha'))verFicha(tr.dataset.spProc);
     });
     tabela.addEventListener('dblclick',function(e){var td=e.target.closest('td[data-sp-cel]');if(td&&!e.target.closest('a'))editar(td);});
     ligarRedimensionar(tabela);ligarTeclado(tabela);
