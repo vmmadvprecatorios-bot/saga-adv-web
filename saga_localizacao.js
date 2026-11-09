@@ -38,7 +38,7 @@
     L.pessoa=pid;L.alvos=a.data||[];L.contatos=c.data||[];L.hist=h.data||[];L.cat=k.data||[];
     const [cf,pb]=await Promise.all([
       _sb.from('cartas_fila').select('id,contato_id,status').eq('pessoa_id',pid).in('status',['a_enviar','impressa']),
-      _sb.from('pedidos_busca').select('id,alvo_id,nome,cpf,parentesco,fontes,observacao,urgente,situacao,pedido_por_id,criado_em,atendido_por_id,iniciado_em,concluido_em,resposta,arquivos,conferido_em,conferido_por_id').eq('pessoa_id',pid).order('criado_em',{ascending:false}).limit(40)
+      _sb.from('pedidos_busca').select('id,alvo_id,nome,cpf,parentesco,fontes,observacao,urgente,situacao,pedido_por_id,criado_em,atendido_por_id,iniciado_em,concluido_em,resposta,leituras,conferido_em,conferido_por_id').eq('pessoa_id',pid).order('criado_em',{ascending:false}).limit(40)
     ]);
     L.cartas=cf.error?[]:(cf.data||[]);
     L.pedidos=pb.error?[]:(pb.data||[]);
@@ -65,7 +65,7 @@
     root.innerHTML='<div class="loc2">'
       +'<div class="loc2-topo"><div><h2>Localização</h2><p>'+(total?e(resumo):'Nenhum contato ainda. Leia a consulta (PDF ou texto) ou adicione à mão.')+'</p></div>'
       +'<div class="loc2-topo-botoes">'+(ed?'<button type="button" class="btn-primary" data-l="ler">Ler consulta (PDF ou texto)</button>':'')
-      +(state.usuario&&state.usuario.internoId?'<button type="button" class="btn-secondary" data-l="pedir" title="Quem atende (Administrativo) faz a consulta na Lemit / Data Solution e devolve o PDF para você conferir aqui">Pedir busca</button>':'')
+      +(state.usuario&&state.usuario.internoId?'<button type="button" class="btn-secondary" data-l="pedir" title="Quem atende (Administrativo) faz a consulta na Lemit / Data Solution e devolve as informações para você conferir aqui (o PDF não fica guardado)">Pedir busca</button>':'')
       +(ed?'<button type="button" class="btn-secondary" data-l="parente">+ Parente</button>':'')+'</div></div>'
       +alvos.map(desenharAlvo).join('')
       +desenharPedidos()
@@ -87,13 +87,14 @@
   }
   function pedidoHtml(p){
     const eu=state.usuario&&state.usuario.internoId,ed=podeEditar();
-    const arqs=(p.arquivos||[]).filter(a=>!a.descartado);
+    const lidas=(p.leituras||[]).filter(a=>!a.descartado);
     let acoes='';
-    if(p.situacao==='pronto')arqs.forEach(a=>{
-      const rot=arqs.length>1?' · '+e(a.fonte||a.nome||'PDF'):'';
-      if(ed)acoes+='<button type="button" class="loc2-acao loc2-pb-ler" data-l="pb-ler" data-id="'+e(p.id)+'" data-cam="'+e(a.caminho)+'">Ler e conferir'+rot+'</button>';
-      acoes+='<button type="button" class="loc2-acao" data-l="pb-ver" data-id="'+e(p.id)+'" data-cam="'+e(a.caminho)+'">Ver PDF'+rot+'</button>';
+    if(p.situacao==='pronto')lidas.filter(a=>a.dados).forEach(a=>{
+      const rot=lidas.length>1?' · '+e(a.fonte||'leitura'):'';
+      acoes+=ed?'<button type="button" class="loc2-acao loc2-pb-ler" data-l="pb-ler" data-id="'+e(p.id)+'" data-leitura="'+e(a.id)+'">Conferir e gravar'+rot+'</button>'
+               :'<button type="button" class="loc2-acao" data-l="pb-info" data-id="'+e(p.id)+'" data-leitura="'+e(a.id)+'">Ver as informações'+rot+'</button>';
     });
+    const resumoLidas=lidas.length?lidas.map(a=>e(a.fonte||'Leitura')+': '+e(resumoLeitura(a.resumo))).join(' · '):'';
     if(pbAberto(p)&&(p.pedido_por_id===eu||state.ehAdmin===true))acoes+='<button type="button" class="loc2-acao perigo" data-l="pb-cancelar" data-id="'+e(p.id)+'">Cancelar pedido</button>';
     if((p.situacao==='pronto'||p.situacao==='nao_encontrado')&&(p.pedido_por_id===eu||ed))acoes+='<button type="button" class="loc2-acao" data-l="pb-devolver" data-id="'+e(p.id)+'" title="A consulta veio errada ou incompleta: o pedido volta para quem atende">Devolver</button>';
     const meta=['Pedido por '+nomeUsuario(p.pedido_por_id)+' em '+dataHora(p.criado_em),
@@ -102,7 +103,8 @@
       +'<div class="loc2-contato-linha"><div class="loc2-valor"><b>'+e(p.nome)+' <small>'+e(p.alvo_id?(p.parentesco||'Parente'):'Cliente')+'</small>'+(p.urgente&&pbAberto(p)?' <span class="loc2-selo np">urgente</span>':'')+'</b>'
       +'<small>'+e(meta)+'</small>'+(p.observacao?'<small>Pedido: '+e(p.observacao)+'</small>':'')
       +(p.resposta?'<small class="loc2-pb-resp">'+(p.situacao==='nao_encontrado'?'Sem resultado: ':'Recado: ')+e(p.resposta)+'</small>':'')
-      +(p.conferido_em?'<small class="loc2-pb-ok">Conferido por '+e(nomeUsuario(p.conferido_por_id))+' em '+e(dataHora(p.conferido_em))+'</small>':'')+'</div>'
+      +(resumoLidas&&p.situacao!=='a_fazer'?'<small>Lido: '+resumoLidas+'</small>':'')
+      +(p.conferido_em?'<small class="loc2-pb-ok">Conferido por '+e(nomeUsuario(p.conferido_por_id))+' em '+e(dataHora(p.conferido_em))+' (as informações ficaram só na Localização)</small>':'')+'</div>'
       +'<span class="loc2-pb-chip st-'+e(p.situacao)+'">'+e(SIT_PB[p.situacao]||p.situacao)+(p.situacao==='pronto'&&!p.conferido_em?' · conferir':'')+'</span></div>'
       +(acoes?'<div class="loc2-acoes">'+acoes+'</div>':'')+'</article>';
   }
@@ -124,7 +126,7 @@
       +'<div class="loc2-pb-bloco"><b class="loc2-pb-tit">Onde buscar</b><div class="loc2-pb-fontes" id="loc2PbFontes">'+fontesHtml()+'</div></div>'
       +'<div class="form-field"><label>Recado para quem vai buscar (opcional)</label><textarea id="loc2PbObs" rows="2" maxlength="1000" placeholder="Ex.: o número antigo não atende; procurar telefone atualizado"></textarea></div>'
       +'<div class="loc2-pb-bloco"><label class="loc2-rev-item"><input type="checkbox" id="loc2PbUrg"><span>Urgente <small>aparece primeiro para quem atende</small></span></label></div>';
-    const d=janela('Pedir busca','O pedido vai para a tela "Pedidos de busca". Quando o PDF voltar, você recebe o aviso no sino e confere aqui na Localização.',corpo,'Pedir',async d=>{
+    const d=janela('Pedir busca','O pedido vai para a tela "Pedidos de busca". Quando a busca voltar, você recebe o aviso no sino e confere as informações aqui na Localização (o PDF não fica guardado).',corpo,'Pedir',async d=>{
       const alvos=Array.from(d.querySelectorAll('[data-pb-alvo]:checked')).map(i=>i.dataset.pbAlvo);
       const fontes=Array.from(d.querySelectorAll('[data-pb-fonte]:checked')).map(i=>i.dataset.pbFonte);
       if(!alvos.length){showToast('Marque de quem é a busca.','warning');return false;}
@@ -150,26 +152,17 @@
       box.innerHTML=fontesHtml(marc);
     });
   }
-  async function baixarArquivoPedido(p,caminho){
-    const a=(p.arquivos||[]).find(x=>x.caminho===caminho)||(p.arquivos||[]).filter(x=>!x.descartado).slice(-1)[0];
-    if(!a){showToast('Este pedido não tem PDF.','warning');return null;}
-    const r=await _sb.storage.from('buscas-consultas').download(a.caminho);
-    if(r.error||!r.data){showToast('Não foi possível abrir o PDF: '+e((r.error&&r.error.message)||'sem acesso'),'error');return null;}
-    const nome=a.nome||'consulta.pdf';
-    return new File([r.data],nome,{type:/\.txt$/i.test(nome)?'text/plain':'application/pdf'});
+  function leituraDoPedido(p,leituraId){
+    const lidas=(p.leituras||[]).filter(a=>!a.descartado&&a.dados);
+    return lidas.find(a=>a.id===leituraId)||lidas[lidas.length-1]||null;
   }
-  async function lerPedido(id,caminho){
+  function lerPedido(id,leituraId,somenteVer){
     const p=(L.pedidos||[]).find(x=>x.id===id);if(!p)return;
     if(p.alvo_id&&!L.alvos.some(a=>a.id===p.alvo_id)){showToast('O parente deste pedido saiu da lista. Inclua-o de novo antes de conferir.','warning');return;}
-    const arquivo=await baixarArquivoPedido(p,caminho);if(!arquivo)return;
-    abrirLeitura(p.alvo_id||'',{pedido:p,arquivo:arquivo});
-  }
-  async function verPdfPedido(id,caminho){
-    const p=(L.pedidos||[]).find(x=>x.id===id);if(!p)return;
-    const janelaNova=window.open('','_blank');
-    const r=await _sb.storage.from('buscas-consultas').createSignedUrl(caminho,600);
-    if(r.error||!r.data||!r.data.signedUrl){if(janelaNova)janelaNova.close();showToast('Não foi possível abrir o PDF: '+e((r.error&&r.error.message)||'sem acesso'),'error');return;}
-    if(janelaNova)janelaNova.location.href=r.data.signedUrl;else location.href=r.data.signedUrl;
+    const a=leituraDoPedido(p,leituraId);
+    if(!a){showToast(p.conferido_em?'Esta busca já foi conferida: as informações estão na Localização.':'Esta busca não tem informações para conferir.','info');return;}
+    const dados=Object.assign({telefone:[],email:[],endereco:[],parentes:[],ficha:{}},a.dados);
+    abrirLeitura(p.alvo_id||'',{pedido:p,dados:dados,somenteVer:!!somenteVer});
   }
   async function cancelarPedido(id){
     const p=(L.pedidos||[]).find(x=>x.id===id);if(!p)return;
@@ -199,8 +192,8 @@
     if(!p){showToast('Pedido de busca não encontrado.','warning');return;}
     L.pbDestaque=id;desenhar();
     const el=document.querySelector('[data-pb="'+id+'"]');if(el)el.scrollIntoView({behavior:window.sagaMq&&sagaMq().matches?'auto':'smooth',block:'center'});
-    const arqs=(p.arquivos||[]).filter(x=>!x.descartado);
-    if(p.situacao==='pronto'&&!p.conferido_em&&podeEditar()&&arqs.length===1)lerPedido(id,arqs[0].caminho);
+    const lidas=(p.leituras||[]).filter(x=>!x.descartado&&x.dados);
+    if(p.situacao==='pronto'&&!p.conferido_em&&podeEditar()&&lidas.length===1)lerPedido(id,lidas[0].id,false);
   }
   function desenharAlvo(al){
     const lista=L.contatos.filter(c=>(c.alvo_id||null)===al.id);
@@ -314,8 +307,8 @@
         const id=el.dataset.id;
         if(a==='ler')abrirLeitura();
         else if(a==='pedir')abrirPedirBusca(null);
-        else if(a==='pb-ler')lerPedido(id,el.dataset.cam);
-        else if(a==='pb-ver')verPdfPedido(id,el.dataset.cam);
+        else if(a==='pb-ler')lerPedido(id,el.dataset.leitura,false);
+        else if(a==='pb-info')lerPedido(id,el.dataset.leitura,true);
         else if(a==='pb-cancelar')cancelarPedido(id);
         else if(a==='pb-devolver')devolverPedido(id);
         else if(a==='pb-todos'){L.pbTodos=!L.pbTodos;desenhar();}
@@ -553,9 +546,15 @@
   }
 
   /* ---------------- leitura da consulta (PDF ou texto) ---------------- */
+  // a ficha tem o carregador do pdf.js; nas outras telas (ex.: Pedidos de busca) usa este, com a mesma versão guardada no site
+  const PDFJS_LOC='vendor/pdfjs-4.10.38/';let _pdfjsLoc=null;
+  function pdfjsCarregar(){
+    if(typeof carregarPdfjs==='function')return carregarPdfjs();
+    if(!_pdfjsLoc)_pdfjsLoc=import('./'+PDFJS_LOC+'pdf.min.mjs').then(m=>{m.GlobalWorkerOptions.workerSrc=new URL(PDFJS_LOC+'pdf.worker.min.mjs',location.href).href;return m;}).catch(er=>{_pdfjsLoc=null;throw er;});
+    return _pdfjsLoc;
+  }
   async function textoDoPdf(arquivo){
-    if(typeof carregarPdfjs!=='function')throw new Error('Leitor de PDF indisponível.');
-    const pdfjs=await carregarPdfjs();
+    const pdfjs=await pdfjsCarregar();
     const pdf=await pdfjs.getDocument({data:new Uint8Array(await arquivo.arrayBuffer()),isEvalSupported:false}).promise;
     const linhas=[];
     for(let n=1;n<=pdf.numPages;n++){
@@ -612,8 +611,7 @@
   }
   /* ---------- leitores próprios da Lemit e da Data Solution (pelas colunas da tabela do PDF) ---------- */
   async function itensDoPdf(arquivo){
-    if(typeof carregarPdfjs!=='function')throw new Error('Leitor de PDF indisponível.');
-    const pdfjs=await carregarPdfjs();
+    const pdfjs=await pdfjsCarregar();
     const pdf=await pdfjs.getDocument({data:new Uint8Array(await arquivo.arrayBuffer()),isEvalSupported:false}).promise;
     const itens=[];
     for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n);const tc=await pg.getTextContent();
@@ -780,10 +778,30 @@
     r.ficha=dadosDaFicha(r);
     return r;
   }
+  // Lê o PDF (ou .txt) no próprio navegador. O arquivo não sai do computador de quem lê.
+  async function lerArquivo(arquivo){
+    let texto='',dados=null;
+    if(arquivo&&!/\.txt$/i.test(arquivo.name)){const itens=await itensDoPdf(arquivo);texto=textoDosItens(itens);if(texto.trim())dados=lerConsulta(itens);}
+    else if(arquivo)texto=await arquivo.text();
+    if(!texto||!texto.trim())throw new Error('Este PDF parece ser uma imagem (sem texto para ler).');
+    if(!dados){dados=extrair(texto);dados.fonte=detectarFonte(texto);dados.ficha={};}
+    return dados;
+  }
+  // O que vai para o pedido: só telefones, e-mails, endereços, parentes e os dados da ficha (nada de renda, score...)
+  function paraPedido(dados){
+    const f=(dados&&dados.ficha)||{};const fic={};
+    ['nome','cpf','data_nascimento','idade','nome_mae','falecido','aposentado','profissao','historico'].forEach(k=>{if(f[k]!=null&&f[k]!=='')fic[k]=f[k];});
+    const lista=k=>Array.isArray(dados&&dados[k])?dados[k]:[];
+    return {fonte:(dados&&dados.fonte)||'Outra',telefone:lista('telefone'),email:lista('email'),endereco:lista('endereco'),parentes:lista('parentes'),ficha:fic};
+  }
+  function resumoLeitura(r){
+    if(!r)return '';const n=(k,um,varios)=>{const v=Number(r[k]||0);return v?v+' '+(v===1?um:varios):'';};
+    return [n('telefone','telefone','telefones'),n('email','e-mail','e-mails'),n('endereco','endereço','endereços'),n('parentes','parente','parentes'),n('ficha','dado da ficha','dados da ficha')].filter(Boolean).join(', ')||'nada lido';
+  }
   function abrirLeitura(alvoInicial,opcoes){
     opcoes=opcoes||{};const ped=opcoes.pedido||null;
     const opAlvo='<option value="">'+e((state.cliente&&state.cliente.nome)||'Cliente')+' (o próprio cliente)</option>'+L.alvos.map(a=>'<option value="'+e(a.id)+'"'+(a.id===alvoInicial?' selected':'')+'>'+e(alvoRotulo(a.id))+'</option>').join('')+'<option value="__novo">+ Novo parente...</option>';
-    const sub=ped?'Busca pedida por '+nomeUsuario(ped.pedido_por_id)+(ped.atendido_por_id?' e feita por '+nomeUsuario(ped.atendido_por_id):'')+'. Confira e grave só o que estiver certo.'
+    const sub=ped?'Busca pedida por '+nomeUsuario(ped.pedido_por_id)+(ped.atendido_por_id?' e feita por '+nomeUsuario(ped.atendido_por_id):'')+'. São as informações lidas do PDF (o PDF não fica guardado). '+(opcoes.somenteVer?'Para gravar na ficha, peça a quem edita clientes.':'Confira e grave só o que estiver certo.')
                  :'O SAGA lê o PDF aqui no navegador e não guarda o arquivo: ficam só os dados que você confirmar.';
     const d=janela(ped?'Conferir a busca de '+ped.nome:'Ler consulta de localização',sub,
       '<div class="loc2-ler-grade"><div class="form-field"><label>De quem é esta consulta?</label><select id="loc2LAlvo" class="pasta-select"'+(ped?' disabled':'')+'>'+opAlvo+'</select></div>'
@@ -822,7 +840,8 @@
       }catch(erro){showToast('Não foi possível ler: '+e(erro.message||''),'error');salvarBtn.textContent='Ler';}
       finally{salvarBtn.disabled=false;if(!revisao)salvarBtn.textContent='Ler';}
     },true);
-    if(opcoes.arquivo){escolher(opcoes.arquivo);setTimeout(()=>salvarBtn.click(),60);}
+    if(opcoes.dados){revisao=opcoes.dados;mostrarRevisao(d,revisao);salvarBtn.textContent='Gravar selecionados';if(opcoes.somenteVer)salvarBtn.remove();}
+    else if(opcoes.arquivo){escolher(opcoes.arquivo);setTimeout(()=>salvarBtn.click(),60);}
   }
   /* "Dados da ficha": o que a consulta diz da própria pessoa e que ainda está VAZIO na ficha (nada é trocado sem a pessoa ver) */
   function perfilFicha(){const x=state.pessoaRow&&state.pessoaRow.dados_extra;const p=x&&typeof x==='object'&&!Array.isArray(x)?x.perfil:null;return p&&typeof p==='object'&&!Array.isArray(p)?p:{};}
@@ -1009,6 +1028,6 @@
   +'@media(max-width:760px){.loc2-contato-linha{flex-direction:column}.loc2-status{max-width:100%}.loc2-end-grade{grid-template-columns:1fr 1fr}.loc2-alvo-conta{display:none}}';
   document.head.appendChild(css);
 
-  window.SagaLocalizacao={render:render,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,lerConsulta:lerConsulta,itensDoPdf:itensDoPdf,abrirPedido:abrirPedido,lerPedido:lerPedido,pedirBusca:abrirPedirBusca,_L:L};
+  window.SagaLocalizacao={render:render,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,lerConsulta:lerConsulta,itensDoPdf:itensDoPdf,abrirPedido:abrirPedido,lerPedido:lerPedido,pedirBusca:abrirPedirBusca,lerArquivo:lerArquivo,paraPedido:paraPedido,resumoLeitura:resumoLeitura,fone:fone,cpfFmt:cpfFmt,cepFmt:cepFmt,_L:L};
   window.renderLocalizationView=render;
 })();

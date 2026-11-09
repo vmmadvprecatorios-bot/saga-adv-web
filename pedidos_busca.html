@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611091846"></script>
+<script src="saga_guard.js?v=202611092006"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Pedidos de busca</title>
@@ -78,10 +78,16 @@ a.pb-link{color:var(--text);font-weight:600;text-decoration:none}a.pb-link:hover
 .md-corpo textarea:focus{border-color:var(--gold)}
 .md-rod{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px 16px;border-top:1px solid var(--border-soft);flex-wrap:wrap}
 .md-rod .btn{height:36px;padding:0 15px;font-size:12px}
+.md.larga{max-width:720px}
+.pb-info h4{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:2px 0 6px}
+.pb-info ul{list-style:none;display:flex;flex-direction:column;gap:4px;margin:0 0 6px}
+.pb-info li{padding:6px 9px;border:1px solid var(--border-soft);border-radius:8px;font-size:12px}
+.pb-info li small{color:var(--muted);font-size:10.5px}
+.pb-alerta{padding:9px 11px;border:1px solid color-mix(in srgb,#d97706 50%,transparent);border-radius:10px;background:color-mix(in srgb,#d97706 10%,transparent);font-size:12px}
 @media(max-width:1100px){.quadro{grid-template-columns:repeat(2,minmax(240px,1fr))}}
 @media(max-width:700px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.quadro{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611091846">
+<link rel="stylesheet" href="saga_tema.css?v=202611092006">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -92,7 +98,7 @@ a.pb-link{color:var(--text);font-weight:600;text-decoration:none}a.pb-link:hover
   <div class="page-head">
     <div>
       <h1>Pedidos de busca</h1>
-      <p id="pbAjuda">Pedidos de consulta (Lemit, Data Solution) feitos nas fichas, em Localização &gt; Pedir busca. Quem atende pega o pedido, faz a consulta, anexa o PDF e devolve: quem pediu recebe o aviso no sino e confere os dados na ficha.</p>
+      <p id="pbAjuda">Pedidos de consulta (Lemit, Data Solution) feitos nas fichas, em Localização &gt; Pedir busca. Quem atende pega o pedido, faz a consulta e lê o PDF aqui (o PDF não fica guardado: só as informações vão para o pedido); quem pediu recebe o aviso no sino e confere na ficha.</p>
     </div>
   </div>
   <div class="barra">
@@ -110,6 +116,12 @@ a.pb-link{color:var(--text);font-weight:600;text-decoration:none}a.pb-link:hover
   <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="pbJOk"></button></div>
 </div></div>
 
+<div class="mo" id="pbLeitura" role="dialog" aria-modal="true" aria-labelledby="pbLTitulo"><div class="md larga">
+  <div class="md-cab"><div><h2 id="pbLTitulo">Informações lidas</h2><p id="pbLSub"></p></div><button class="md-x" type="button" data-fechar-l aria-label="Fechar">✕</button></div>
+  <div class="md-corpo" id="pbLCorpo"></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar-l id="pbLCancelar">Cancelar</button><button class="btn btn-ouro" type="button" id="pbLOk">Guardar as informações no pedido</button></div>
+</div></div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
@@ -119,17 +131,19 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611091846"></script>
+<script src="saga_ui.js?v=202611092006"></script>
+<script src="saga_localizacao.js?v=202611092006"></script>
 <script>
 /* =====================================================================
    SAGA · Pedidos de busca (bloco 140, 09/11). Quem pede: qualquer pessoa, na ficha (Localização > Pedir busca).
    Quem atende: permissão buscas.atender (perfil Administrativo; liberável no Painel de permissões).
-   Tudo grava pelas funções do banco (pedido_busca_*); o PDF fica no lugar privado buscas-consultas.
+   Tudo grava pelas funções do banco (pedido_busca_*). O PDF NÃO é guardado (bloco 141, pedido do Dr. Victor): quem atende
+   lê o PDF aqui no navegador (o mesmo leitor da ficha) e só as informações lidas vão para o pedido.
    ===================================================================== */
-var B={pedidos:[],pessoas:{},usuarios:{},eu:null,atender:false,verTodos:false,admin:false,visao:'meus',busca:'',destaque:null,antes:{},alvoUpload:null,janelaOk:null};
+var B={pedidos:[],pessoas:{},usuarios:{},eu:null,atender:false,verTodos:false,admin:false,visao:'meus',busca:'',destaque:null,antes:{},alvoUpload:null,janelaOk:null,leituraOk:null};
 var COLUNAS=[['a_fazer','A fazer'],['em_andamento','Em andamento'],['pronto','Prontos'],['fim','Sem resultado e cancelados']];
 var SIT={a_fazer:'A fazer',em_andamento:'Em andamento',pronto:'Pronto',nao_encontrado:'Sem resultado',cancelado:'Cancelado'};
-var CAMPOS='id,pessoa_id,alvo_id,nome,cpf,parentesco,fontes,observacao,urgente,situacao,pedido_por_id,criado_em,atendido_por_id,iniciado_em,concluido_em,resposta,arquivos,conferido_em,conferido_por_id';
+var CAMPOS='id,pessoa_id,alvo_id,nome,cpf,parentesco,fontes,observacao,urgente,situacao,pedido_por_id,criado_em,atendido_por_id,iniciado_em,concluido_em,resposta,leituras,conferido_em,conferido_por_id';
 function $(id){return document.getElementById(id);}
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4800);}
@@ -141,7 +155,7 @@ function quando(iso){if(!iso)return '';var d=new Date(iso),min=Math.round((Date.
   if(min<1)return 'agora';if(min<60)return 'há '+min+' min';var h=Math.round(min/60);if(h<24)return 'há '+h+' h';
   return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
 function kb(n){return n?Math.max(1,Math.round(n/1024))+' KB':'';}
-function ativos(p){return (p.arquivos||[]).filter(function(a){return !a.descartado;});}
+function ativos(p){return (p.leituras||[]).filter(function(a){return !a.descartado&&a.dados;});}
 function urlFicha(p){return 'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(p.pessoa_id)+'&aba=localizacao&pedido_busca='+encodeURIComponent(p.id);}
 
 /* ---------- dados ---------- */
@@ -194,7 +208,6 @@ function desenhar(){
 function cartao(p){
   var pe=B.pessoas[p.pessoa_id]||{},meu=p.pedido_por_id===B.eu,aberto=p.situacao==='a_fazer'||p.situacao==='em_andamento';
   var novo=B.antes[p.id]!==undefined&&B.antes[p.id]!==p.situacao;
-  var arqs=p.arquivos||[];
   var h='<article class="pb-card st-'+esc(p.situacao)+(novo?' novo':'')+(p.id===B.destaque?' destaque':'')+'" data-id="'+esc(p.id)+'">';
   h+='<div class="pb-chips">'+(p.urgente&&aberto?'<span class="pb-chip urgente">Urgente</span>':'')+(p.fontes||[]).map(function(f){return '<span class="pb-chip">'+esc(f)+'</span>';}).join('')
     +(p.situacao==='pronto'?(p.conferido_em?'<span class="pb-chip ok">Conferido</span>':'<span class="pb-chip">Aguardando conferência</span>'):'')
@@ -207,28 +220,29 @@ function cartao(p){
   h+='<div class="pb-meta">Pedido por '+esc(nomeUsu(p.pedido_por_id)||'—')+' · '+esc(quando(p.criado_em))+'</div>';
   if(p.atendido_por_id&&p.situacao==='em_andamento')h+='<div class="pb-meta">Com '+esc(nomeUsu(p.atendido_por_id))+(p.iniciado_em?' desde '+esc(quando(p.iniciado_em)):'')+'</div>';
   else if(p.atendido_por_id&&!aberto)h+='<div class="pb-meta">Atendido por '+esc(nomeUsu(p.atendido_por_id))+' · '+esc(quando(p.concluido_em))+'</div>';
-  if(arqs.length){
-    h+='<div class="pb-arqs">'+arqs.map(function(a){
+  var lidas=p.leituras||[];
+  if(lidas.length){
+    h+='<div class="pb-arqs">'+lidas.map(function(a){
       var podeTirar=B.atender&&aberto&&!a.descartado;
-      return '<div class="pb-arq'+(a.descartado?' fora':'')+'" title="'+(a.descartado?'Marcado para não usar':'Enviado por '+esc(nomeUsu(a.enviado_por_id))+' '+esc(quando(a.enviado_em)))+'"><span>📄</span><b>'+esc(a.nome||'consulta.pdf')+'</b><small class="pb-meta">'+esc([a.fonte,kb(a.tamanho)].filter(Boolean).join(' · '))+'</small>'
-        +(!a.descartado?'<button type="button" data-acao="ver" data-cam="'+esc(a.caminho)+'">Ver</button>':'')
-        +(podeTirar?'<button type="button" data-acao="nao-usar" data-cam="'+esc(a.caminho)+'" title="Anexado por engano: some para quem pediu (o arquivo fica guardado)">Não usar</button>':'')+'</div>';
+      return '<div class="pb-arq'+(a.descartado?' fora':'')+'" title="'+(a.descartado?'Marcada para não usar: as informações foram descartadas':'Lida por '+esc(nomeUsu(a.lido_por_id))+' '+esc(quando(a.lido_em)))+'"><span>📄</span><b>'+esc((a.fonte||'Leitura')+' · '+(a.arquivo_nome||'consulta'))+'</b><small class="pb-meta">'+esc(SagaLocalizacao.resumoLeitura(a.resumo))+(a.dados||a.descartado?'':' · já conferido')+'</small>'
+        +(a.dados?'<button type="button" data-acao="ver" data-leitura="'+esc(a.id)+'">Ver</button>':'')
+        +(podeTirar?'<button type="button" data-acao="nao-usar" data-leitura="'+esc(a.id)+'" title="Leitura errada (ex.: outra pessoa): as informações dela são descartadas">Não usar</button>':'')+'</div>';
     }).join('')+'</div>';
   }
   if(p.resposta&&!aberto)h+='<div class="pb-resp">'+(p.situacao==='nao_encontrado'?'Sem resultado: ':'Recado: ')+esc(p.resposta)+'</div>';
   var ac='';
-  if(B.atender&&p.situacao==='a_fazer')ac+='<button type="button" class="btn btn-ouro" data-acao="pegar">Pegar</button><button type="button" class="btn" data-acao="anexar">Anexar PDF</button>';
+  if(B.atender&&p.situacao==='a_fazer')ac+='<button type="button" class="btn btn-ouro" data-acao="pegar">Pegar</button><button type="button" class="btn" data-acao="ler">Ler PDF da consulta</button>';
   if(B.atender&&p.situacao==='em_andamento'){
     if(p.atendido_por_id&&p.atendido_por_id!==B.eu)ac+='<button type="button" class="btn" data-acao="pegar">Pegar para mim</button>';
-    ac+='<button type="button" class="btn" data-acao="anexar">Anexar PDF</button>'
-      +'<button type="button" class="btn btn-ouro" data-acao="pronto"'+(ativos(p).length?'':' disabled title="Anexe o PDF da consulta antes"')+'>Devolver pronto</button>'
+    ac+='<button type="button" class="btn" data-acao="ler">Ler PDF da consulta</button>'
+      +'<button type="button" class="btn btn-ouro" data-acao="pronto"'+(ativos(p).length?'':' disabled title="Leia o PDF da consulta antes"')+'>Devolver pronto</button>'
       +'<button type="button" class="btn" data-acao="nao-encontrado">Não encontrado</button>'
       +(p.atendido_por_id===B.eu?'<button type="button" class="btn" data-acao="soltar" title="Volta para A fazer, para outra pessoa pegar">Soltar</button>':'');
   }
   if(aberto&&(meu||B.admin))ac+='<button type="button" class="btn perigo" data-acao="cancelar">Cancelar pedido</button>';
   if(meu&&p.situacao==='pronto'&&!p.conferido_em)ac+='<a class="btn btn-ouro pb-link" href="'+esc(urlFicha(p))+'">Conferir na ficha</a>';
   if(ac)h+='<div class="pb-acoes">'+ac+'</div>';
-  if(B.atender&&aberto)h+='<div class="pb-dica">Dá para soltar o PDF aqui em cima do cartão.</div>';
+  if(B.atender&&aberto)h+='<div class="pb-dica">Dá para soltar o PDF aqui em cima do cartão. Ele é lido no seu computador e não fica guardado.</div>';
   return h+'</article>';
 }
 
@@ -247,32 +261,59 @@ function janelaTexto(titulo,sub,rotulo,botao,obrigatorio,aoOk){
   $('pbJanela').classList.add('aberto');setTimeout(function(){$('pbJTexto').focus();},80);
 }
 function fecharJanela(){$('pbJanela').classList.remove('aberto');B.janelaOk=null;}
-function fonteDoNome(nome,p){
-  if(/lemit/i.test(nome))return 'Lemit';if(/date.?solu|data.?solu|dataadv/i.test(nome))return 'Data Solution';
-  return (p.fontes||[]).length===1?p.fontes[0]:null;
+function infoHtml(d){
+  var SL=SagaLocalizacao,sec=function(t,itens){return itens.length?'<div class="pb-info"><h4>'+t+' ('+itens.length+')</h4><ul>'+itens.join('')+'</ul></div>':'';};
+  var tel=(d.telefone||[]).map(function(o){return '<li>'+esc(SL.fone(o.valor))+(o.whatsapp?' <span class="pb-chip ok">WhatsApp</span>':'')+(o.nao_perturbe?' <span class="pb-chip urgente">Não perturbe</span>':'')+(o.qualidade?' <span class="pb-chip">'+esc(o.qualidade)+'</span>':'')+'</li>';});
+  var em=(d.email||[]).map(function(o){return '<li>'+esc(o.valor)+'</li>';});
+  var en=(d.endereco||[]).map(function(o){return '<li>'+esc(o.valor||[o.logradouro,o.numero].filter(Boolean).join(', '))+'</li>';});
+  var pa=(d.parentes||[]).map(function(o){return '<li>'+esc(o.nome)+' <small>'+esc([o.grau,o.idade?o.idade+' anos':'',o.cpf?'CPF '+SL.cpfFmt(o.cpf):''].filter(Boolean).join(' · '))+'</small></li>';});
+  var f=d.ficha||{},fi=[];
+  if(f.data_nascimento)fi.push('<li>Data de nascimento: '+esc(f.data_nascimento)+'</li>');
+  if(f.nome_mae)fi.push('<li>Nome da mãe: '+esc(f.nome_mae)+'</li>');
+  if(f.falecido===true)fi.push('<li><b>Falecido(a)</b>, segundo a consulta</li>');else if(f.falecido===false)fi.push('<li>Sem registro de óbito na consulta</li>');
+  if(f.aposentado)fi.push('<li>Aposentado: '+(f.aposentado==='possivel'?'possível':'sim')+'</li>');
+  if(f.profissao)fi.push('<li>Profissão: '+esc(f.profissao)+'</li>');
+  (f.historico||[]).forEach(function(v){fi.push('<li>Vínculo: '+esc(v.orgao||v.fantasia||'')+(v.cargo?' · '+esc(v.cargo):'')+'</li>');});
+  return (sec('Telefones',tel)+sec('E-mails',em)+sec('Endereços',en)+sec('Parentes',pa)+sec('Dados da pessoa',fi))||'<p class="pb-meta">Nada lido.</p>';
 }
-async function anexar(p,arquivos){
-  var enviados=0;
-  for(var i=0;i<arquivos.length;i++){
-    var f=arquivos[i];
-    if(!/\.(pdf|txt)$/i.test(f.name)&&!/pdf|text\/plain/.test(f.type||'')){toast('"'+esc(f.name)+'" não é PDF: anexe o PDF da consulta.','warning');continue;}
-    if(f.size>20*1024*1024){toast('"'+esc(f.name)+'" passa de 20 MB.','warning');continue;}
-    var seguro=f.name.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9._-]+/g,'_').slice(-80);
-    var caminho=p.id+'/'+Date.now()+'_'+seguro;
-    var up=await _sb.storage.from('buscas-consultas').upload(caminho,f,{contentType:/\.txt$/i.test(f.name)?'text/plain':'application/pdf',upsert:false});
-    if(up.error){toast('Não foi possível enviar "'+esc(f.name)+'": '+esc(up.error.message||''),'error');continue;}
-    var r=await _sb.rpc('pedido_busca_anexar',{p_id:p.id,p_caminho:caminho,p_nome:f.name,p_tamanho:f.size,p_fonte:fonteDoNome(f.name,p)});
-    if(r.error){toast('O arquivo subiu, mas não entrou no pedido: '+esc(r.error.message||''),'error');continue;}
-    enviados++;
-  }
-  if(enviados)toast(enviados===1?'PDF anexado. Agora é só "Devolver pronto".':enviados+' PDFs anexados. Agora é só "Devolver pronto".','success');
-  await carregar();
+function avisoPessoaPedido(p,d){
+  var f=d.ficha||{},av=[];
+  if(f.cpf&&dig(p.cpf).length===11&&dig(f.cpf)!==dig(p.cpf))av.push('o CPF do PDF ('+cpfFmt(f.cpf)+') é diferente do CPF do pedido ('+cpfFmt(p.cpf)+')');
+  else if(f.nome&&norm(f.nome).replace(/\s+/g,' ').trim()!==norm(p.nome).replace(/\s+/g,' ').trim())av.push('o nome no PDF é "'+f.nome+'" e no pedido é "'+p.nome+'"');
+  return av.length?'<div class="pb-alerta">Atenção: '+esc(av.join('; '))+'. Confira se buscou a pessoa certa.</div>':'';
 }
-async function verArquivo(caminho){
-  var nova=window.open('','_blank');
-  var r=await _sb.storage.from('buscas-consultas').createSignedUrl(caminho,600);
-  if(r.error||!r.data||!r.data.signedUrl){if(nova)nova.close();toast('Não foi possível abrir o PDF: '+esc((r.error&&r.error.message)||'sem acesso'),'error');return;}
-  if(nova)nova.location.href=r.data.signedUrl;else location.href=r.data.signedUrl;
+function abrirJanelaLeitura(titulo,sub,corpo,podeGuardar){
+  $('pbLTitulo').textContent=titulo;$('pbLSub').textContent=sub;$('pbLCorpo').innerHTML=corpo;
+  $('pbLOk').hidden=!podeGuardar;$('pbLCancelar').textContent=podeGuardar?'Cancelar':'Fechar';
+  $('pbLeitura').classList.add('aberto');
+}
+function fecharLeitura(){$('pbLeitura').classList.remove('aberto');B.leituraOk=null;}
+// lê o PDF aqui no navegador; mostra o que achou; com o "Guardar", vão para o pedido só as informações
+async function lerParaPedido(p,arquivos){
+  var f=arquivos[0];if(!f||!p)return;
+  if(arquivos.length>1)toast('Leia um PDF de cada vez (Lemit e Data Solution separados).','warning');
+  if(!/\.(pdf|txt)$/i.test(f.name)&&!/pdf|text\/plain/.test(f.type||'')){toast('"'+esc(f.name)+'" não é PDF: use o PDF da consulta.','warning');return;}
+  toast('Lendo o PDF aqui no seu computador...','info');
+  var dados;
+  try{dados=SagaLocalizacao.paraPedido(await SagaLocalizacao.lerArquivo(f));}
+  catch(er){toast('Não foi possível ler: '+esc(er.message||''),'error');return;}
+  var nomeArq=f.name;
+  abrirJanelaLeitura('Informações lidas: '+p.nome,(dados.fonte||'Consulta')+' · '+nomeArq+'. O PDF não é guardado: vão para o pedido só estas informações, e quem pediu confere e grava na ficha.',
+    avisoPessoaPedido(p,dados)+infoHtml(dados),true);
+  B.leituraOk=async function(){
+    $('pbLOk').disabled=true;
+    var r=await _sb.rpc('pedido_busca_registrar_leitura',{p_id:p.id,p_leitura:{arquivo_nome:nomeArq,dados:dados}});
+    $('pbLOk').disabled=false;
+    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    fecharLeitura();toast('Informações guardadas no pedido (o PDF não foi guardado). Agora é só "Devolver pronto".','success');
+    await carregar();
+  };
+}
+function verLeitura(p,leituraId){
+  var a=(p.leituras||[]).find(function(x){return x.id===leituraId;});
+  if(!a||!a.dados){toast('Estas informações já foram conferidas ou descartadas.','info');return;}
+  abrirJanelaLeitura('Informações lidas: '+p.nome,(a.fonte||'Consulta')+' · lida por '+nomeUsu(a.lido_por_id)+' '+quando(a.lido_em)+'. O PDF não foi guardado.',
+    avisoPessoaPedido(p,a.dados)+infoHtml(a.dados),false);
 }
 async function acao(btn){
   var card=btn.closest('[data-id]');if(!card)return;var p=pedido(card.dataset.id);if(!p)return;var a=btn.dataset.acao;
@@ -281,11 +322,11 @@ async function acao(btn){
     await rpc('pedido_busca_pegar',{p_id:p.id},'Pedido com você. Faça a consulta e anexe o PDF.');
   }
   else if(a==='soltar')await rpc('pedido_busca_soltar',{p_id:p.id},'Pedido devolvido para "A fazer".');
-  else if(a==='anexar'){B.alvoUpload=p.id;$('pbArquivo').value='';$('pbArquivo').click();}
-  else if(a==='ver')verArquivo(btn.dataset.cam);
+  else if(a==='ler'){B.alvoUpload=p.id;$('pbArquivo').value='';$('pbArquivo').click();}
+  else if(a==='ver')verLeitura(p,btn.dataset.leitura);
   else if(a==='nao-usar'){
-    if(!(await sagaConfirmar('Não usar este arquivo?','Ele some para quem pediu, mas continua guardado no pedido.','Não usar',false)))return;
-    await rpc('pedido_busca_arquivo_nao_usar',{p_id:p.id,p_caminho:btn.dataset.cam},'Arquivo marcado para não usar.');
+    if(!(await sagaConfirmar('Não usar esta leitura?','As informações desta leitura são descartadas (ex.: o PDF era de outra pessoa). Depois é só ler o PDF certo.','Não usar',false)))return;
+    await rpc('pedido_busca_leitura_nao_usar',{p_id:p.id,p_leitura_id:btn.dataset.leitura},'Leitura descartada.');
   }
   else if(a==='pronto')janelaTexto('Devolver pronto','Quem pediu ('+nomeUsu(p.pedido_por_id)+') recebe o aviso no sino para conferir na ficha.','Recado para quem pediu','Devolver pronto',false,function(t){return rpc('pedido_busca_concluir',{p_id:p.id,p_resposta:t||null},'Busca devolvida. Quem pediu foi avisado.');});
   else if(a==='nao-encontrado')janelaTexto('Não encontrado','Quem pediu recebe o aviso com o motivo.','Motivo','Responder',true,function(t){return rpc('pedido_busca_nao_encontrado',{p_id:p.id,p_motivo:t},'Resposta enviada a quem pediu.');});
@@ -305,20 +346,23 @@ function ligar(){
     if(l){if(e.ctrlKey||e.metaKey||e.shiftKey||e.button!==0)return;e.preventDefault();if(window.sagaIrPara)sagaIrPara(l.getAttribute('href'));else location.href=l.getAttribute('href');return;}
     var b=e.target.closest('[data-acao]');if(b&&!b.disabled)acao(b);
   });
-  $('pbArquivo').addEventListener('change',function(){var p=pedido(B.alvoUpload);var fs=Array.from(this.files||[]);if(p&&fs.length)anexar(p,fs);});
+  $('pbArquivo').addEventListener('change',function(){var p=pedido(B.alvoUpload);var fs=Array.from(this.files||[]);if(p&&fs.length)lerParaPedido(p,fs);});
   // soltar o PDF em cima do cartão (quem atende, pedido aberto)
   var alvoDe=function(e){var c=e.target.closest&&e.target.closest('.pb-card');if(!c||!B.atender)return null;var p=pedido(c.dataset.id);return p&&(p.situacao==='a_fazer'||p.situacao==='em_andamento')?c:null;};
   $('pbQuadro').addEventListener('dragover',function(e){var c=alvoDe(e);if(!c)return;e.preventDefault();c.classList.add('solta');});
   $('pbQuadro').addEventListener('dragleave',function(e){var c=alvoDe(e);if(c&&!c.contains(e.relatedTarget))c.classList.remove('solta');});
-  $('pbQuadro').addEventListener('drop',function(e){var c=alvoDe(e);if(!c)return;e.preventDefault();c.classList.remove('solta');var fs=Array.from((e.dataTransfer&&e.dataTransfer.files)||[]);if(fs.length)anexar(pedido(c.dataset.id),fs);});
+  $('pbQuadro').addEventListener('drop',function(e){var c=alvoDe(e);if(!c)return;e.preventDefault();c.classList.remove('solta');var fs=Array.from((e.dataTransfer&&e.dataTransfer.files)||[]);if(fs.length)lerParaPedido(pedido(c.dataset.id),fs);});
   $('pbJOk').addEventListener('click',function(){if(B.janelaOk)B.janelaOk();});
   document.querySelectorAll('#pbJanela [data-fechar]').forEach(function(b){b.addEventListener('click',fecharJanela);});
   $('pbJanela').addEventListener('click',function(e){if(e.target===this)fecharJanela();});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('pbJanela').classList.contains('aberto'))fecharJanela();});
+  document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;if($('pbJanela').classList.contains('aberto'))fecharJanela();if($('pbLeitura').classList.contains('aberto'))fecharLeitura();});
+  $('pbLOk').addEventListener('click',function(){if(B.leituraOk)B.leituraOk();});
+  document.querySelectorAll('#pbLeitura [data-fechar-l]').forEach(function(b){b.addEventListener('click',fecharLeitura);});
+  $('pbLeitura').addEventListener('click',function(e){if(e.target===this)fecharLeitura();});
   document.addEventListener('saga-atualizar',carregar);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)carregar();});
   window.addEventListener('pageshow',function(ev){if(ev.persisted)carregar();});
-  setInterval(function(){if(!document.hidden&&!$('pbJanela').classList.contains('aberto'))carregar();},60000);
+  setInterval(function(){if(!document.hidden&&!$('pbJanela').classList.contains('aberto')&&!$('pbLeitura').classList.contains('aberto'))carregar();},60000);
 }
 async function init(){
   ligar();
@@ -330,7 +374,7 @@ async function init(){
   (res[2].data||[]).forEach(function(u){B.usuarios[u.id]=u.nome_completo;});B.eu=res[3].data?res[3].data.id:null;
   var salvo=null;try{salvo=localStorage.getItem('saga-buscas-visao');}catch(er){}
   B.visao=(B.atender||B.verTodos)?(salvo==='meus'?'meus':'todos'):'meus';
-  if(!B.atender)$('pbAjuda').textContent='Os seus pedidos de busca (Lemit, Data Solution). Para pedir, abra a ficha do cliente > Localização > Pedir busca. Quando o PDF voltar, você recebe o aviso no sino e confere os dados na ficha.';
+  if(!B.atender)$('pbAjuda').textContent='Os seus pedidos de busca (Lemit, Data Solution). Para pedir, abra a ficha do cliente > Localização > Pedir busca. Quando a busca voltar, você recebe o aviso no sino e confere as informações na ficha (o PDF não fica guardado).';
   var q=new URLSearchParams(location.search).get('pedido');if(q){B.destaque=q;}
   desenharVisoes();
   await carregar();
