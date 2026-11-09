@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611091520"></script>
+<script src="saga_guard.js?v=202611091846"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -349,15 +349,15 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611091520"></script>
-<script src="saga_fichas.js?v=202611091520"></script>
-<script src="saga_teses.js?v=202611091520"></script>
-<script src="saga_mencoes.js?v=202611091520"></script>
-<script src="saga_texto.js?v=202611091520"></script>
-<script src="saga_partes.js?v=202611091520"></script>
-<script src="saga_etiquetas.js?v=202611091520"></script>
-<script src="saga_planilha.js?v=202611091520"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611091520">
+<script src="saga_ui.js?v=202611091846"></script>
+<script src="saga_fichas.js?v=202611091846"></script>
+<script src="saga_teses.js?v=202611091846"></script>
+<script src="saga_mencoes.js?v=202611091846"></script>
+<script src="saga_texto.js?v=202611091846"></script>
+<script src="saga_partes.js?v=202611091846"></script>
+<script src="saga_etiquetas.js?v=202611091846"></script>
+<script src="saga_planilha.js?v=202611091846"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611091846">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -443,7 +443,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
   </main>
 </div>
 
-<div class="modal-overlay" id="clienteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="tituloClienteModal">Editar dados do cliente</h3><p id="subClienteModal">Atualize os dados cadastrais desta pessoa.</p></div><button class="modal-close" data-close-modal="clienteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="ecNome">Nome completo</label><input id="ecNome" type="text" placeholder="Nome completo"></div><div class="form-field"><label for="ecCpf">CPF</label><input id="ecCpf" type="text" placeholder="000.000.000-00"></div><div class="form-field"><label>Situação vital</label><div id="ecSituacaoSelect"></div></div><div class="form-field" id="ecDataFalecimentoWrap" style="display:none"><label for="ecDataFalecimento">Data de falecimento</label><input id="ecDataFalecimento" type="date"></div><div class="pf-titulo">Perfil do cliente</div><p class="pf-ajuda">Serve para achar este cliente em "Clientes por perfil" e oferecer teses novas. O agente de petições também preenche.</p><div class="pf-grade"><div class="form-field"><label for="ecPfSit">Situação funcional</label><select id="ecPfSit"></select></div><div class="form-field"><label for="ecPfOrgao">Órgão</label><input id="ecPfOrgao" type="text" maxlength="120" list="ecPfListaOrgaos" autocomplete="off" placeholder="Ex.: UFAL, INSS, FUNASA"><datalist id="ecPfListaOrgaos"></datalist></div><div class="form-field"><label for="ecPfCargo">Cargo</label><input id="ecPfCargo" type="text" maxlength="120" autocomplete="off" placeholder="Ex.: Professor"></div><div class="form-field"><label for="ecPfProfissao">Profissão</label><input id="ecPfProfissao" type="text" maxlength="120" autocomplete="off"></div><div class="form-field"><label for="ecPfMatricula">Matrícula</label><input id="ecPfMatricula" type="text" maxlength="40" autocomplete="off"></div><div class="form-field"><label for="ecPfNasc">Data de nascimento</label><input id="ecPfNasc" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off"></div><div class="form-field"><label for="ecPfIngresso">Ingresso no serviço público</label><input id="ecPfIngresso" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa ou o ano" autocomplete="off"></div><div class="form-field"><label for="ecPfApos">Aposentadoria</label><input id="ecPfApos" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa ou o ano" autocomplete="off"></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="clienteModal">Cancelar</button><button class="btn-primary" id="saveClienteButton">Salvar dados</button></div></div></div>
+<div class="modal-overlay" id="clienteModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="tituloClienteModal">Editar dados do cliente</h3><p id="subClienteModal">Atualize os dados cadastrais desta pessoa.</p></div><button class="modal-close" data-close-modal="clienteModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="ecNome">Nome completo</label><input id="ecNome" type="text" placeholder="Nome completo"></div><div class="form-field"><label for="ecCpf">CPF</label><input id="ecCpf" type="text" placeholder="000.000.000-00"></div><div class="form-field"><label for="ecPfMae">Nome da mãe</label><input id="ecPfMae" type="text" maxlength="160" autocomplete="off" placeholder="Como está no documento (a consulta Lemit / Data Solution preenche)"></div><div class="form-field"><label>Situação vital</label><div id="ecSituacaoSelect"></div></div><div class="form-field" id="ecDataFalecimentoWrap" style="display:none"><label for="ecDataFalecimento">Data de falecimento</label><input id="ecDataFalecimento" type="date"></div><div class="pf-titulo">Perfil do cliente</div><p class="pf-ajuda">Serve para achar este cliente em "Clientes por perfil" e oferecer teses novas. O agente de petições também preenche.</p><div class="pf-grade"><div class="form-field"><label for="ecPfSit">Situação funcional</label><select id="ecPfSit"></select></div><div class="form-field"><label for="ecPfOrgao">Órgão</label><input id="ecPfOrgao" type="text" maxlength="120" list="ecPfListaOrgaos" autocomplete="off" placeholder="Ex.: UFAL, INSS, FUNASA"><datalist id="ecPfListaOrgaos"></datalist></div><div class="form-field"><label for="ecPfCargo">Cargo</label><input id="ecPfCargo" type="text" maxlength="120" autocomplete="off" placeholder="Ex.: Professor"></div><div class="form-field"><label for="ecPfProfissao">Profissão</label><input id="ecPfProfissao" type="text" maxlength="120" autocomplete="off"></div><div class="form-field"><label for="ecPfMatricula">Matrícula</label><input id="ecPfMatricula" type="text" maxlength="40" autocomplete="off"></div><div class="form-field"><label for="ecPfNasc">Data de nascimento</label><input id="ecPfNasc" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" autocomplete="off"></div><div class="form-field"><label for="ecPfIngresso">Ingresso no serviço público</label><input id="ecPfIngresso" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa ou o ano" autocomplete="off"></div><div class="form-field"><label for="ecPfApos">Aposentadoria</label><input id="ecPfApos" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa ou o ano" autocomplete="off"></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="clienteModal">Cancelar</button><button class="btn-primary" id="saveClienteButton">Salvar dados</button></div></div></div>
 <div class="modal-overlay" id="tagModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Nova etiqueta</h3><p>Adicione uma etiqueta de organização à ficha da cliente.</p></div><button class="modal-close" data-close-modal="tagModal">✕</button></div><div class="modal-body"><div class="form-field"><label for="tagSelect">Etiqueta</label><div class="tag-escolha"><span class="tag-escolha-cor" id="tagCorPreview"></span><select id="tagSelect"></select></div></div><div id="tagOutraWrap" hidden><div class="form-field"><label for="tagInput">Nome da etiqueta</label><input id="tagInput" type="text" placeholder="Ex.: Prioridade de análise"></div><div class="form-field"><label for="tagGrupoNova">Grupo</label><select id="tagGrupoNova"><option value="captacao">Captação</option><option value="processual" selected>Processual</option><option value="financeiro">Financeiro</option><option value="urgencia">Urgência</option></select></div><div class="form-field"><label for="tagColorInput">Cor da etiqueta</label><input id="tagColorInput" type="color" value="#4b8af5" style="width:100%;height:40px;padding:4px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);cursor:pointer"></div><div id="tagSalvarCatalogoWrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:10px;font-weight:500"><input type="checkbox" id="tagSalvarCatalogo" style="accent-color:var(--gold)"> Guardar no menu para usar de novo</label></div></div><div id="tagGerenciarWrap" hidden><button type="button" class="tag-gerenciar-btn" id="tagGerenciarBtn">Gerenciar etiquetas (criar, renomear, cor, ordem, remover)</button><div id="tagGerenciar" hidden></div></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="tagModal">Cancelar</button><button class="btn-primary" id="saveTagButton">Adicionar etiqueta</button></div></div></div>
 <div class="modal-overlay" id="pastaModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3 id="pastaModalTitulo">Nova pasta</h3><p id="pastaModalSub">Organize os documentos do cliente.</p></div><button class="modal-close" data-close-modal="pastaModal">✕</button></div><div class="modal-body"><div class="form-field" id="pastaCampoNome"><label for="pastaNome">Nome da pasta</label><input id="pastaNome" type="text" maxlength="120" placeholder="Ex.: Documentos pessoais" autocomplete="off"></div><div class="form-field" id="pastaCampoDestino"><label for="pastaDestino" id="pastaDestinoRotulo">Colocar dentro de</label><select id="pastaDestino" class="pasta-select"></select></div></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="pastaModal">Cancelar</button><button class="btn-primary" id="pastaSalvar">Salvar</button></div></div></div>
 <div class="modal-overlay" id="deleteProcessModal"><div class="modal"><div class="modal-head"><div class="modal-title-stack"><h3>Excluir processo</h3><p>O processo será removido do sistema e deixará de aparecer nesta ficha.</p></div><button class="modal-close" data-close-modal="deleteProcessModal">✕</button></div><div class="modal-body"><p style="font-size:11px;color:var(--muted);line-height:1.55">Deseja realmente excluir o processo <strong id="deleteProcessLabel" style="color:var(--text)"></strong>? Os comentários, documentos e tarefas vinculados deixarão de ser exibidos.</p></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="deleteProcessModal">Cancelar</button><button class="btn-danger" id="deleteProcessButton">Excluir processo</button></div></div></div>
@@ -3668,7 +3668,7 @@ async function registrarMencoes(comentarioId,texto){
 
 /* ---------- Perfil do cliente (bloco 138): pessoas.dados_extra.perfil ----------
    Mesmas chaves que o agente de petições manda pela ponte; a tela "Clientes por perfil" filtra por elas. */
-const PF_CAMPOS=[['situacao_funcional','ecPfSit'],['orgao','ecPfOrgao'],['cargo','ecPfCargo'],['profissao','ecPfProfissao'],['matricula','ecPfMatricula'],['data_nascimento','ecPfNasc'],['data_ingresso','ecPfIngresso'],['data_aposentadoria','ecPfApos']];
+const PF_CAMPOS=[['situacao_funcional','ecPfSit'],['orgao','ecPfOrgao'],['cargo','ecPfCargo'],['profissao','ecPfProfissao'],['matricula','ecPfMatricula'],['data_nascimento','ecPfNasc'],['data_ingresso','ecPfIngresso'],['data_aposentadoria','ecPfApos'],['nome_mae','ecPfMae']];
 function perfilDe(row){const e=row&&row.dados_extra;const p=e&&typeof e==='object'&&!Array.isArray(e)?e.perfil:null;return p&&typeof p==='object'&&!Array.isArray(p)?p:{};}
 function pfNorm(t){return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();}
 function pfDataBr(v){const s=String(v||'').trim();const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:s;}
@@ -4650,7 +4650,9 @@ async function init(){
     if(pessoaId){
       await carregarFicha(pessoaId,processoIdUrl||null);
       // vindo da tela Cartas: abre direto a Localização
-      if(params.get('aba')==='localizacao'&&typeof activateLocation==='function')activateLocation();
+      if((params.get('aba')==='localizacao'||params.get('pedido_busca'))&&typeof activateLocation==='function')activateLocation();
+      // vindo do sino ("Busca pronta", bloco 140): destaca o pedido e abre o leitor com o PDF da consulta
+      if(params.get('pedido_busca')&&window.SagaLocalizacao&&SagaLocalizacao.abrirPedido)SagaLocalizacao.abrirPedido(params.get('pedido_busca'));
       return;
     }
     // Lista de processos, Kanban e busca do topo abrem a ficha pelo processo:
@@ -4682,7 +4684,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611091520"></script>
-<script src="saga_ficha_atividades.js?v=202611091520"></script>
+<script src="saga_localizacao.js?v=202611091846"></script>
+<script src="saga_ficha_atividades.js?v=202611091846"></script>
 </body>
 </html>

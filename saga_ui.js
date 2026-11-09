@@ -583,6 +583,9 @@
     +'<div class="nav-item" data-tela="cartas" onclick="sagaIrPara(\'cartas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Cartas</div>'
+    +'<div class="nav-item" data-tela="buscas" onclick="sagaIrPara(\'pedidos_busca.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M15.4 15.4L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10.5" cy="9" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7.2 14a3.6 3.6 0 0 1 6.6 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+    +'Pedidos de busca<span class="nav-badge-chat nav-badge-dia" id="navBadgeBuscas" style="display:none" title="Pedidos de busca a fazer"></span></div>'
     +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
@@ -950,7 +953,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   var _colaboradoresAtivos=null;
@@ -1084,6 +1087,7 @@
     seguranca:{titulo:'Segurança',tela:'registro_atividades.html'}
   };
   function infoNotif(n){
+    if(n&&n.referencia_tabela==='pedidos_busca')return {titulo:'Pedido de busca',tela:'pedidos_busca.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1103,8 +1107,14 @@
     {chave:'teses',titulo:'Teses e radar',tipos:['tese_atualizacao','radar_novo'],tela:'teses.html',um:'aviso de teses e radar',varios:'avisos de teses e radar',cor:'#0ea5e9'},
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'seguranca',titulo:'Segurança',tipos:['seguranca'],tela:null,um:'alerta de segurança',varios:'alertas de segurança',cor:'#e5484d'},
+    {chave:'buscas',titulo:'Pedidos de busca',tipos:[],tela:'pedidos_busca.html',um:'aviso de busca',varios:'avisos de busca',cor:'#0ea5e9'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
+  // Pedidos de busca (bloco 140) chegam com o tipo 'outro' e a referência 'pedidos_busca': têm grupo próprio no sino
+  function grupoDe(n){
+    if(n&&n.referencia_tabela==='pedidos_busca'){for(var i=0;i<GRUPOS_NOTIF.length;i++){if(GRUPOS_NOTIF[i].chave==='buscas')return GRUPOS_NOTIF[i];}}
+    return grupoDoTipo(n&&n.tipo);
+  }
   function grupoDoTipo(tipo){
     for(var i=0;i<GRUPOS_NOTIF.length-1;i++){if(GRUPOS_NOTIF[i].tipos.indexOf(tipo)!==-1)return GRUPOS_NOTIF[i];}
     return GRUPOS_NOTIF[GRUPOS_NOTIF.length-1];
@@ -1184,7 +1194,7 @@
   }
   function agruparNotif(lista){
     var mapa={};
-    lista.forEach(function(n){var g=grupoDoTipo(n.tipo);if(_avisosDesligados.indexOf(g.chave)>=0)return;(mapa[g.chave]=mapa[g.chave]||{grupo:g,itens:[]}).itens.push(n);});
+    lista.forEach(function(n){var g=grupoDe(n);if(_avisosDesligados.indexOf(g.chave)>=0)return;(mapa[g.chave]=mapa[g.chave]||{grupo:g,itens:[]}).itens.push(n);});
     return GRUPOS_NOTIF.filter(function(g){return mapa[g.chave];}).map(function(g){return mapa[g.chave];});
   }
   async function marcarLidas(ids){
@@ -1204,6 +1214,18 @@
   async function abrirNotificacao(n,idsParaMarcar){
     await marcarLidas(idsParaMarcar||(n.lida?[]:[n.id]));
     if(n.tipo==='distribuicao'){global.sagaIrPara('lista_processos_padrao_metalico.html?fase=captacao');return;}
+    if(n.referencia_tabela==='pedidos_busca'){
+      try{
+        var pb=n.referencia_id?await global._sb.from('pedidos_busca').select('id,pessoa_id,situacao,pedido_por_id').eq('id',n.referencia_id).maybeSingle():null;
+        if(pb&&pb.data){
+          var meu=_perfilAtual&&pb.data.pedido_por_id===_perfilAtual.id;
+          if(meu&&(pb.data.situacao==='pronto'||pb.data.situacao==='nao_encontrado'))global.sagaIrPara('ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(pb.data.pessoa_id)+'&aba=localizacao&pedido_busca='+encodeURIComponent(pb.data.id));
+          else global.sagaIrPara('pedidos_busca.html?pedido='+encodeURIComponent(pb.data.id));
+          return;
+        }
+      }catch(e){}
+      global.sagaIrPara('pedidos_busca.html');return;
+    }
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{
       var d=await global._sb.rpc('destino_notificacao',{p_id:n.id});
@@ -1262,9 +1284,9 @@
   async function contarNaoLidas(){
     if(!global._sb||!_perfilAtual)return;
     try{
-      var r=await global._sb.from('notificacoes').select('tipo').eq('usuario_id',_perfilAtual.id).eq('lida',false).limit(1000);
+      var r=await global._sb.from('notificacoes').select('tipo,referencia_tabela').eq('usuario_id',_perfilAtual.id).eq('lida',false).limit(1000);
       if(r.error)return;
-      var g={};(r.data||[]).forEach(function(n){var k=grupoDoTipo(n.tipo).chave;if(_avisosDesligados.indexOf(k)<0)g[k]=1;});
+      var g={};(r.data||[]).forEach(function(n){var k=grupoDe(n).chave;if(_avisosDesligados.indexOf(k)<0)g[k]=1;});
       atualizarBadgeNotif(Object.keys(g).length);
     }catch(e){}
   }
@@ -1547,6 +1569,11 @@
         tf.classList.toggle('atrasada',atr>0);
         tf.title=(hoje?hoje+' para hoje':'')+(hoje&&atr?' e ':'')+(atr?atr+' atrasada'+(atr>1?'s':''):'');
       }
+      var bb=document.getElementById('navBadgeBuscas');
+      if(bb&&_minhasPermissoes&&_minhasPermissoes.indexOf('buscas.atender')>=0){
+        var rb=await global._sb.from('pedidos_busca').select('id',{count:'exact',head:true}).eq('situacao','a_fazer');
+        if(!rb.error){var nb=rb.count||0;bb.textContent=nb>99?'99+':String(nb);bb.style.display=nb>0?'':'none';bb.title=nb+' pedido(s) de busca a fazer';}
+      }
       guardarNumerosMoldura();
     }catch(e){}
   }
@@ -1719,7 +1746,7 @@
       ev.preventDefault();global.sagaIrPara(a.getAttribute('href'));
     });
   }
-  var IDS_NUMEROS=['navBadgeChat','navBadgeAgenda','navBadgeTarefas','notifCount','onlineText'];
+  var IDS_NUMEROS=['navBadgeChat','navBadgeAgenda','navBadgeTarefas','navBadgeBuscas','notifCount','onlineText'];
   function guardarNumerosMoldura(){
     var g={};
     IDS_NUMEROS.forEach(function(id){var el=document.getElementById(id);if(el)g[id]={t:el.textContent,o:el.style.display==='none',a:el.classList.contains('atrasada')};});
