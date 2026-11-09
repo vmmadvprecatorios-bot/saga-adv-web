@@ -458,6 +458,7 @@
         </button>
       </div>
       <button class="btn-hoje" id="btnHoje">Hoje</button>
+      <select class="sel-pessoa-ag" id="filtroPerfilAg" hidden aria-label="Ver os eventos de um perfil (Jurídico, Captação...)" title="Evento ligado a processo segue a fase do processo (Jurídico ou Captação); sem processo, segue o perfil da pessoa da agenda"><option value="">Todos os perfis</option></select>
       <select class="sel-pessoa-ag" id="filtroPessoaAg" hidden aria-label="Ver os eventos de uma pessoa"><option value="">Todas as pessoas</option></select>
       <button class="btn-novo-comp" id="btnNovoCompromisso">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
@@ -691,6 +692,10 @@ var anoSeletorRapido = dataAtual.getFullYear();
 // Agenda do escritório (09/11): qual agenda está aberta, filtro de pessoa e quem pode editar os eventos do escritório
 var escopoAgenda = (function(){ try { return localStorage.getItem('saga-agenda-escopo') === 'escritorio' ? 'escritorio' : 'minha'; } catch(e) { return 'minha'; } })();
 var filtroPessoaAg = '';
+// 09/11 (Dr. Victor): filtro por perfil na agenda do escritório (ex.: esconder os retornos da Captação e ver só o Jurídico)
+var filtroPerfilAg = '';
+var perfisPessoaAg = new Map(); // id do colaborador -> nomes dos perfis dele
+var ORDEM_PERFIS_AG = ['Jurídico', 'Captação', 'Administrativo', 'Financeiro', 'Marketing', 'Estagiário'];
 var podeEditarEscritorio = false;
 var visSelecionada = 'particular';
 var compAbertoAg = null; // compromisso aberto na janela (num evento que se repete: a data clicada, com _serie)
@@ -848,6 +853,14 @@ async function inicializar() {
     nomesRoscasAgenda.set(meuPerfilId,meuNome);
     // quem tem "editar eventos do escritório" (Jurídico; o administrador tem todas)
     try { var pm = await _sb.rpc('minhas_permissoes'); podeEditarEscritorio = !pm.error && Array.isArray(pm.data) && pm.data.indexOf('compromissos.editar_escritorio') >= 0; } catch(e) {}
+    // perfil de cada colaborador (Jurídico, Captação...), para o filtro da agenda do escritório
+    try {
+      var up = await _sb.from('usuarios_papeis').select('usuario_id, papel:papeis(nome)');
+      (up.data || []).forEach(function(r) {
+        var n = r.papel && r.papel.nome; if (!n) return;
+        var l = perfisPessoaAg.get(r.usuario_id) || []; if (l.indexOf(n) < 0) l.push(n); perfisPessoaAg.set(r.usuario_id, l);
+      });
+    } catch(e) {}
     prepararEscopoAgenda(pessoas.data || []);
     // Veio de uma notificacao: abre o dia do compromisso e o compromisso
     var paramsUrl = new URLSearchParams(location.search);
@@ -944,7 +957,8 @@ async function carregarEventos(transicao) {
     // Minha agenda: o que eu criei ou é para mim (particular ou do escritório). Agenda do escritório: os eventos que todos veem.
     // Eventos que se repetem vêm à parte (começaram antes do período) e viram uma data por repetição.
     var baseComp = function() {
-      var q = _sb.from('compromissos').select(COLUNAS_COMP);
+      // na agenda do escritório vem junto a fase do processo ligado (para o filtro por perfil)
+      var q = _sb.from('compromissos').select(COLUNAS_COMP + (escopoAgenda === 'escritorio' ? ', proc_area:processos!processo_id(status_funil!status_id(fase))' : ''));
       if (escopoAgenda === 'escritorio') {
         q = q.eq('visibilidade', 'escritorio');
         if (filtroPessoaAg) q = q.or('criado_por_id.eq.' + filtroPessoaAg + ',responsavel_id.eq.' + filtroPessoaAg);
@@ -961,6 +975,8 @@ async function carregarEventos(transicao) {
     if (versao !== versaoCarregamentoCalendario) return;
     var novosCompromissos = (rComp.data || []).concat(expandirRepeticoes(rsComp[1].data || [], inicio, fim))
       .sort(function(a, b) { return String(a.data_hora_inicio).localeCompare(String(b.data_hora_inicio)); });
+    if (escopoAgenda === 'escritorio' && filtroPerfilAg)
+      novosCompromissos = novosCompromissos.filter(function(c) { return perfisDoEventoAg(c).indexOf(filtroPerfilAg) >= 0; });
 
     var rTar = escopoAgenda === 'escritorio' ? { data: [] } : await _sb.from('tarefas')
       .select('id, titulo, tipo, data_prazo, responsavel_id, concluida')
@@ -1058,11 +1074,40 @@ function mostrarSuave(el, mostrar) {
   el.hidden = !mostrar;
   if (mostrar && !movimentoCalendarioReduzido.matches && el.animate) el.animate([{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { duration: 240, easing: 'cubic-bezier(.22,.78,.25,1)' });
 }
+// Perfil de uma pessoa para o filtro (o administrador geral conta como Jurídico)
+function perfisDaPessoaAg(id) {
+  return (perfisPessoaAg.get(id) || []).map(function(n) { return n === 'Administrador' ? 'Jurídico' : n; });
+}
+// Perfil do evento: ligado a processo → a fase do processo (Jurídico ou Captação), seja quem for que marcou
+// (ex.: os retornos da Captação); sem processo → o perfil da pessoa da agenda
+function perfisDoEventoAg(c) {
+  var fase = c.proc_area && c.proc_area.status_funil && c.proc_area.status_funil.fase;
+  if (fase === 'juridico') return ['Jurídico'];
+  if (fase === 'captacao') return ['Captação'];
+  return perfisDaPessoaAg(c.responsavel_id || c.criado_por_id);
+}
+function ordemPerfilAg(n) { var i = ORDEM_PERFIS_AG.indexOf(n); return i < 0 ? 99 : i; }
 function prepararEscopoAgenda(pessoas) {
+  pessoas = pessoas.filter(function(u) { return u.nome_completo; });
+  // Perfis em ordem lógica (Jurídico e Captação primeiro); os outros só se houver alguém neles
+  var perfis = ['Jurídico', 'Captação'];
+  pessoas.forEach(function(u) { perfisDaPessoaAg(u.id).forEach(function(n) { if (perfis.indexOf(n) < 0) perfis.push(n); }); });
+  perfis.sort(function(a, b) { return ordemPerfilAg(a) - ordemPerfilAg(b) || a.localeCompare(b, 'pt-BR'); });
+  var selPerfil = document.getElementById('filtroPerfilAg');
+  selPerfil.innerHTML = '<option value="">Todos os perfis</option>' + perfis.map(function(n) {
+    return '<option value="' + escaparHtml(n) + '">' + escaparHtml(n) + '</option>'; }).join('');
+  selPerfil.addEventListener('change', function() { filtroPerfilAg = selPerfil.value; carregarEventos('visao'); });
+  // Pessoas separadas por perfil (cada uma no seu primeiro perfil); quem não tem perfil vai no fim
+  var grupos = {};
+  pessoas.forEach(function(u) {
+    var ps = perfisDaPessoaAg(u.id).sort(function(a, b) { return ordemPerfilAg(a) - ordemPerfilAg(b); });
+    var g = ps[0] || 'Sem perfil'; (grupos[g] = grupos[g] || []).push(u);
+  });
   var sel = document.getElementById('filtroPessoaAg');
-  sel.innerHTML = '<option value="">Todas as pessoas</option>' + pessoas.filter(function(u) { return u.nome_completo; })
-    .sort(function(a, b) { return a.nome_completo.localeCompare(b.nome_completo, 'pt-BR'); })
-    .map(function(u) { return '<option value="' + escaparHtml(u.id) + '">' + escaparHtml(u.nome_completo) + '</option>'; }).join('');
+  sel.innerHTML = '<option value="">Todas as pessoas</option>' + perfis.concat(['Sem perfil']).filter(function(g) { return grupos[g]; }).map(function(g) {
+    return '<optgroup label="' + escaparHtml(g) + '">' + grupos[g].sort(function(a, b) { return a.nome_completo.localeCompare(b.nome_completo, 'pt-BR'); })
+      .map(function(u) { return '<option value="' + escaparHtml(u.id) + '">' + escaparHtml(u.nome_completo) + '</option>'; }).join('') + '</optgroup>';
+  }).join('');
   sel.addEventListener('change', function() { filtroPessoaAg = sel.value; carregarEventos('visao'); });
   ['btnEscopoMinha', 'btnEscopoEscritorio'].forEach(function(id) {
     var b = document.getElementById(id);
@@ -1073,6 +1118,7 @@ function prepararEscopoAgenda(pessoas) {
 function aplicarEscopoAgendaUI() {
   document.getElementById('btnEscopoMinha').className = 'btn-view' + (escopoAgenda === 'minha' ? ' ativo' : '');
   document.getElementById('btnEscopoEscritorio').className = 'btn-view' + (escopoAgenda === 'escritorio' ? ' ativo' : '');
+  mostrarSuave(document.getElementById('filtroPerfilAg'), escopoAgenda === 'escritorio');
   mostrarSuave(document.getElementById('filtroPessoaAg'), escopoAgenda === 'escritorio');
   document.getElementById('subMinha').hidden = escopoAgenda !== 'minha';
   document.getElementById('subEscritorio').hidden = escopoAgenda !== 'escritorio';
