@@ -1688,7 +1688,7 @@ async function carregarEnvios(){
 
 // ===== Atividades (T13) =====
 var CANAIS=['WhatsApp','Ligação','E-mail','Carta','Atendimento presencial','Campanha de marketing','Reunião','Pesquisa','Outro'];
-var CORES_ORIGEM={'Ponto':'#4f7de0','Chat':'#8b5cf6','Tarefa':'#2fae7a','Agenda':'#e0a93b','Cliente':'#14b8a6','Documento':'#64748b','Processo':'#0ea5e9','Financeiro':'#16a34a','Marketing':'#ec4899','Comentário no processo':'#0ea5e9','Relatório do dia':'#a16207'};
+var CORES_ORIGEM={'Ponto':'#4f7de0','Chat':'#8b5cf6','Tarefa':'#2fae7a','Agenda':'#e0a93b','Cliente':'#14b8a6','Documento':'#64748b','Processo':'#0ea5e9','Financeiro':'#16a34a','Marketing':'#ec4899','Comentário no processo':'#0ea5e9','Relatório do dia':'#a16207','Intimação':'#f97316','Treinamentos':'#a855f7','Configuração':'#94a3b8','Biblioteca':'#78716c'};
 var ROTULOS_PONTO=[['Entrada','Início pausa 1','Fim pausa 1','Início pausa 2','Fim pausa 2','Início pausa 3','Fim pausa 3','Saída'],['Início 1','Fim 1','Início 2','Fim 2','Início 3','Fim 3','Início 4','Fim 4']];
 function horaDe(ts){return new Intl.DateTimeFormat('pt-BR',{timeZone:TZ,hour:'2-digit',minute:'2-digit'}).format(new Date(ts));}
 function minutosEntre(a,b){return Math.round((new Date(b)-new Date(a))/60000);}
