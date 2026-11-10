@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611101436"></script>
+<script src="saga_guard.js?v=202611101837"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Marketing</title>
@@ -315,8 +315,78 @@ html.saga-sem-movimento .pino.novo{animation:none}
 .mc-link .acoes a{text-decoration:none;display:inline-flex;align-items:center}
 .org-sec{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold);margin:16px 0 8px}
 .org-sec:first-child{margin-top:0}
+
+/* Painel do marketing (bloco 150): robô do Meta, números por mês, campanhas, teses e anúncios */
+.mp{--mp-barra:#4b8af5;display:flex;flex-direction:column;gap:16px}
+body[data-theme="light"] .mp{--mp-barra:#2F6CD6}
+.mp-robo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--border-soft);border-radius:var(--radius);background:var(--panel);font-size:12px;color:var(--muted);line-height:1.5}
+.mp-robo .luz{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--muted)}
+.mp-robo.ok .luz{background:var(--success)}.mp-robo.erro .luz{background:var(--danger)}
+.mp-robo.desligado .luz{background:transparent;border:1.5px solid var(--muted)}
+.mp-robo b{color:var(--text);font-weight:600}
+.mp-robo .txt{flex:1;min-width:220px}
+.mp-robo .acoes{display:flex;gap:8px;flex-wrap:wrap}
+.mp-bloco{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:16px 16px 14px;min-width:0}
+.mp-bloco-cab{display:flex;align-items:flex-end;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin-bottom:12px}
+.mp-bloco-cab>div:first-child{min-width:0;flex:1 1 280px}
+.mp-bloco h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.15}
+.mp-bloco .sub2{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45;max-width:760px}
+.mp .kpis{margin-bottom:0}
+.mp .mp-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mp .kpi-card .kpi-value{font-weight:600}
+.mp-graf{position:relative;height:210px;margin-bottom:12px}
+.mp-graf svg{display:block;width:100%;height:100%;overflow:visible}
+.mp-graf .grade{stroke:var(--border-soft);stroke-width:1}
+.mp-graf text{pointer-events:none;font-family:Montserrat,Arial,sans-serif}
+.mp-graf .eixo{fill:var(--muted);font-size:10px}
+.mp-graf .valor{fill:var(--text);font-size:10.5px;font-weight:600}
+.mp-graf .col{fill:var(--mp-barra);pointer-events:none;transform-box:fill-box;transform-origin:50% 100%;transition:opacity .2s var(--curva)}
+.mp-graf .alvo{fill:transparent;outline:none}
+.mp-graf .alvo:hover+.col,.mp-graf .alvo:focus-visible+.col{opacity:.72}
+.mp-dica{position:absolute;pointer-events:none;z-index:5;min-width:170px;padding:9px 11px;border-radius:10px;background:var(--panel-solid,var(--panel));border:1px solid var(--border);box-shadow:var(--shadow);font-size:11px;color:var(--muted);opacity:0;transform:translateY(4px);transition:opacity .2s var(--curva),transform .2s var(--curva)}
+.mp-dica.vis{opacity:1;transform:none}
+.mp-dica b{display:block;color:var(--text);font-size:14px;font-weight:600}
+.mp-dica .lin{display:flex;justify-content:space-between;gap:14px;margin-top:2px}
+.mp-dica .lin span:last-child{color:var(--text);font-variant-numeric:tabular-nums}
+.mp table{min-width:760px}
+.mp table.estreita{min-width:520px}
+.mp .tabela-wrap tbody tr{cursor:default}
+.mp tr.total td{font-weight:600;border-top:1px solid var(--border)}
+.mp .meta-lig{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+.mp .meta-lig i{font-style:normal;color:var(--text)}
+.mp .sel-lig{height:30px;max-width:230px;width:100%;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);font-size:11px;padding:0 6px}
+.mp .selo-sit{font-size:9.5px;font-weight:600;letter-spacing:.3px;padding:1px 7px;border-radius:7px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.mp .selo-sit.ativo{color:var(--success);border-color:color-mix(in srgb,var(--success) 40%,transparent)}
+.mp .seg{max-width:100%;overflow-x:auto}
+.mp-rank{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.mp-anuncio{display:grid;grid-template-columns:76px minmax(0,1fr);gap:11px;padding:11px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-2);min-width:0}
+.mp-anuncio .mini{width:76px;height:76px;border-radius:9px;overflow:hidden;background:color-mix(in srgb,var(--text) 7%,transparent);display:flex;align-items:center;justify-content:center;color:var(--muted);position:relative}
+.mp-anuncio .mini img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.mp-anuncio .mini svg{width:26px;height:26px}
+.mp-anuncio .pos{position:absolute;left:4px;top:4px;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:var(--panel-solid,var(--panel));color:var(--text);z-index:1}
+.mp-anuncio h4{font-size:12.5px;font-weight:600;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.mp-anuncio .de{font-size:10.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-anuncio .nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px 8px;margin-top:8px}
+.mp-anuncio .nums div{min-width:0}
+.mp-anuncio .nums span{display:block;font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-anuncio .nums b{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mp-anuncio .lk{font-size:10.5px;margin-top:7px;display:inline-block;color:var(--gold);text-decoration:underline}
+.mp-vazio{padding:22px 10px;text-align:center;color:var(--muted);font-size:12px}
+.mp-nota{font-size:10.5px;color:var(--muted);line-height:1.5;max-width:900px}
+.rb-situacao{border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;background:var(--panel-2)}
+.rb-situacao b{color:var(--text)}
+.rb-como{margin:8px 0 14px}
+.rb-passos{margin:0 0 0 18px;font-size:12px;line-height:1.55;color:var(--text)}
+.rb-passos li{margin-bottom:6px}
+.rb-passos b{font-weight:600}
+.rb-passos .sub{display:block}
+.rb-ligado{display:flex;align-items:center;gap:8px;font-size:12px;margin:2px 0 6px;cursor:pointer}
+.rb-res{font-size:12px;margin-top:8px;line-height:1.45;min-height:1em}
+.rb-res.ok{color:var(--success)}.rb-res.erro{color:var(--danger)}
+.gasto-linha .nao-soma{font-size:9.5px;font-weight:500;color:var(--muted);border:1px dashed var(--border-soft);border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+@media(max-width:700px){.mp-graf{height:180px}.mp-rank{grid-template-columns:1fr}.mp-robo .acoes{width:100%}.mp .mp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611101436">
+<link rel="stylesheet" href="saga_tema.css?v=202611101837">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -353,6 +423,7 @@ html.saga-sem-movimento .pino.novo{animation:none}
   <div class="tabs" id="abas">
     <button class="tab-btn active" data-aba="artes" type="button">Artes e vídeos <span class="qtd" id="qtdArtes">0</span></button>
     <button class="tab-btn" data-aba="campanhas" type="button">Campanhas <span class="qtd" id="qtdCampanhas">0</span></button>
+    <button class="tab-btn" data-aba="painel" type="button">Painel</button>
   </div>
 
   <section class="tab-pane ativo" id="aba-artes">
@@ -374,6 +445,10 @@ html.saga-sem-movimento .pino.novo{animation:none}
       <button class="btn-secondary btn-sm" id="btnOrigens" type="button" hidden>Origens dos clientes</button>
     </div>
     <div id="vistaCampanhas"></div>
+  </section>
+
+  <section class="tab-pane" id="aba-painel">
+    <div class="mp" id="painelMkt"></div>
   </section>
 </main>
 </div>
@@ -515,6 +590,33 @@ html.saga-sem-movimento .pino.novo{animation:none}
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalTema" type="button">Cancelar</button><button class="btn-primary" id="mtSalvar" type="button">Salvar pasta</button></div>
 </div></div>
 
+<!-- Robô do Meta (bloco 150): só o administrador geral -->
+<div class="modal-overlay" id="modalRoboMeta"><div class="modal">
+  <div class="modal-head"><div><h2>Robô do Meta</h2><p>Traz sozinho, todo dia às 6h35, os números dos anúncios do Instagram e do Facebook.</p></div><button class="modal-close" data-fechar="modalRoboMeta" type="button" aria-label="Fechar">✕</button></div>
+  <div class="modal-body">
+    <div class="rb-situacao" id="rbSituacao"></div>
+    <button class="lnk" type="button" id="rbComoBtn" aria-controls="rbComo" aria-expanded="false">Como gerar a chave de leitura (uma vez só)</button>
+    <div class="rb-como" id="rbComo" hidden>
+      <ol class="rb-passos">
+        <li>Entre em <b>business.facebook.com</b> com a conta que administra os anúncios do escritório e abra <b>Configurações do negócio</b> (a engrenagem).</li>
+        <li>Em <b>Usuários &gt; Usuários do sistema</b>, clique em <b>Adicionar</b>, dê o nome <b>SAGA</b> e escolha a função <b>Funcionário</b>.</li>
+        <li>Com o SAGA selecionado, clique em <b>Atribuir ativos &gt; Contas de anúncios</b>, marque a conta do escritório e ligue só <b>Ver desempenho</b>. Salve.</li>
+        <li>Ainda no SAGA, clique em <b>Gerar novo token</b>: escolha o aplicativo do escritório, a validade <b>Nunca</b> e marque <b>ads_read</b> e <b>read_insights</b>.<span class="sub">Sem aplicativo? Crie um em developers.facebook.com &gt; Meus apps &gt; Criar app (tipo “Negócios”, ligado ao portfólio do escritório) e volte a este passo.</span></li>
+        <li>Copie a chave que aparecer (é longa e começa com “EAA”), cole no campo abaixo e clique em <b>Salvar e testar</b>.</li>
+      </ol>
+    </div>
+    <div class="campo"><label for="rbChave">Chave de leitura do Meta</label><input id="rbChave" type="password" autocomplete="new-password" spellcheck="false" placeholder="Cole aqui a chave (começa com EAA)"><span class="ajuda">Fica guardada no cofre do banco; ninguém consegue ver depois, nem na tela. Deixe em branco para manter a atual.</span></div>
+    <div class="campo"><label for="rbContas">Conta de anúncios</label><input id="rbContas" inputmode="numeric" autocomplete="off" placeholder="1115080162881024"><span class="ajuda">O número da conta no Gerenciador de Anúncios (só os números). Mais de uma: separe com vírgula.</span></div>
+    <label class="rb-ligado"><input type="checkbox" id="rbAtivo"> Robô ligado (atualiza todo dia às 6h35)</label>
+    <div class="rb-res" id="rbRes" role="status"></div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn-secondary" type="button" data-fechar="modalRoboMeta">Fechar</button>
+    <button class="btn-secondary" type="button" id="rbSalvar">Salvar</button>
+    <button class="btn-primary" type="button" id="rbTestar">Salvar e testar</button>
+  </div>
+</div></div>
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
@@ -524,11 +626,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611101436"></script>
-<script src="saga_texto.js?v=202611101436"></script>
-<script src="saga_roscas.js?v=202611101436"></script>
-<script src="saga_origem.js?v=202611101436"></script>
-<script src="saga_mencoes.js?v=202611101436"></script>
+<script src="saga_ui.js?v=202611101837"></script>
+<script src="saga_texto.js?v=202611101837"></script>
+<script src="saga_roscas.js?v=202611101837"></script>
+<script src="saga_origem.js?v=202611101837"></script>
+<script src="saga_mencoes.js?v=202611101837"></script>
+<script src="saga_pdf.js?v=202611101837"></script>
 <script>
 /* =====================================================================
    MARKETING (dados reais do banco; bloco 144, 10/11/2026)
@@ -563,10 +666,12 @@ var ICO={
   lista:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 7h11M9 12h11M9 17h11M4.5 7h.01M4.5 12h.01M4.5 17h.01"/></svg>'
 };
 var state={campanhas:[],gastos:[],materiais:[],usuarios:[],temas:[],teses:[],canais:[],comentarios:[],urls:{},meuId:null,
-  periodo:'ano',busca:'',aba:'artes',visaoArt:'quadros',tamArt:'m',filtroSit:'todos',pasta:{tipo:'tudo'},visaoCamp:'kanban',filtroCampTema:'',
+  periodo:'3m',busca:'',aba:'artes',visaoArt:'quadros',tamArt:'m',filtroSit:'todos',pasta:{tipo:'tudo'},visaoCamp:'kanban',filtroCampTema:'',
   itens:[],matAberto:null,pino:null,marcando:false,tkArtes:0,temaEditando:null,temaRetorno:null,
   pode:{verCampanhas:false,verMateriais:false,criar:false,editar:false,matCriar:false,matAprovar:false,temaCriar:false,temaEditar:false,opcoes:false},
-  fontesRoscas:{},editando:null,gastosModal:[],gastosRemovidos:[]};
+  fontesRoscas:{},editando:null,gastosModal:[],gastosRemovidos:[],
+  // painel (bloco 150)
+  painelOk:false,painelErro:'',robo:null,metaCampanhas:[],metaAnuncios:[],anunciosMes:[],contatosMes:[],origensMes:[],painelLinhas:[],rankOrdem:'conversas'};
 
 /* ---------- utilidades ---------- */
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
@@ -621,12 +726,11 @@ function lerGuardado(k){try{return localStorage.getItem(k);}catch(e){return null
 
 /* ---------- período, investimento e roscas ---------- */
 function dentroDoPeriodo(data){
-  if(state.periodo==='tudo')return true;if(!data)return false;var h=hojeISO();
-  return state.periodo==='mes'?String(data).slice(0,7)===h.slice(0,7):String(data).slice(0,4)===h.slice(0,4);
-}
-function investido(campId,soPeriodo){
-  return state.gastos.filter(function(g){return g.campanha_id===campId&&g.status_pagamento!=='previsto'&&(!soPeriodo||dentroDoPeriodo(g.data_lancamento));})
-    .reduce(function(s,g){return s+Number(g.valor||0);},0);
+  if(state.periodo==='tudo')return true;if(!data)return false;
+  var m=String(data).slice(0,7),h=hojeISO().slice(0,7);
+  if(state.periodo==='mes')return m===h;
+  if(state.periodo==='3m')return m>=somaMes(h,-2)&&m<=h;   // este mês e os dois anteriores
+  return m.slice(0,4)===h.slice(0,4);
 }
 function campanhasFiltradas(){
   var b=state.busca.trim().toLowerCase(),ft=state.filtroCampTema;
@@ -642,7 +746,7 @@ function dadosGraficosMarketing(){
   if(state.pode.verCampanhas&&fontes.campanhas){
     if(fontes.gastos)grupos.push({id:'gastos',titulo:'Gasto por campanha',moeda:true,
       dica:'Gastos realizados ou em curso no período e na busca atuais. Clique para destacar.',
-      itens:SagaRoscas.topo(campanhas.map(function(c){return {id:c.id,nome:c.nome,valor:investido(c.id,true)};}),6,'Outras')});
+      itens:SagaRoscas.topo(campanhas.map(function(c){return {id:c.id,nome:c.nome,valor:investido(c.id,true)};}).concat(metaSoltasIds().length?[{id:'_meta',nome:'Meta sem campanha do SAGA',valor:somaMeta(metaSoltasIds(),true).gasto}]:[]),6,'Outras')});
     if(state.resultadosOrigens&&state.resultadosOrigens.length)grupos.push({id:'origens',titulo:'Origem dos clientes',rotulo:'fichas',
       dica:'De onde vieram os clientes: fichas da Captação e do Jurídico com a origem marcada ('+state.semOrigem+' ainda sem origem).',
       itens:state.resultadosOrigens.map(function(o){return {id:o.origem_id,nome:o.nome,cor:o.cor,valor:Number(o.contatos||0)};})});
@@ -684,7 +788,8 @@ async function carregarTudo(){
     _sb.from('etiquetas_catalogo').select('id,nome,cor,ordem,ativo,categoria').eq('categoria','mkt_canal').order('ordem').order('nome'),
     _sb.from('teses').select('id,nome,cor,ativo').order('nome'),
     state.pode.verCampanhas?_sb.rpc('marketing_resultados'):vazio,
-    window.SagaOrigem?SagaOrigem.carregar(true):null
+    window.SagaOrigem?SagaOrigem.carregar(true):null,
+    state.pode.verCampanhas?_sb.rpc('marketing_painel'):vazio
   ]);
   if(r[0].error){showToast('Erro ao carregar campanhas: '+esc(r[0].error.message),'error');return;}
   if(r[2].error){showToast('Erro ao carregar as artes: '+esc(r[2].error.message),'error');}
@@ -698,24 +803,30 @@ async function carregarTudo(){
   state.resultados={};state.resultadosOrigens=[];state.semOrigem=0;state.mostraValores=false;
   if(rr){(rr.campanhas||[]).forEach(function(x){state.resultados[x.campanha_id]=x;});state.resultadosOrigens=rr.origens||[];state.semOrigem=Number(rr.sem_origem||0);state.mostraValores=!!rr.mostra_valores;}
   state.fontesRoscas={campanhas:!r[0].error,gastos:!r[1].error,materiais:!r[2].error};
+  // 10/11 (bloco 150): números do Meta por mês, contatos por campanha e a situação do robô
+  var pn=r[10]&&!r[10].error&&r[10].data&&!Array.isArray(r[10].data)?r[10].data:null;
+  state.painelOk=!!pn;state.painelErro=r[10]&&r[10].error?erroTexto(r[10].error):'';
+  state.robo=pn?pn.robo:null;state.metaCampanhas=pn?pn.meta_campanhas||[]:[];state.metaAnuncios=pn?pn.anuncios||[]:[];
+  state.anunciosMes=pn?pn.anuncios_mes||[]:[];state.contatosMes=pn?pn.contatos_mes||[]:[];state.origensMes=pn?pn.origens_mes||[]:[];
+  if(pn)state.mostraValores=!!pn.mostra_valores;
   var p=state.pasta;
   if(p.tipo==='tema'&&!temasAtivos().some(function(t){return t.id===p.id;}))state.pasta={tipo:'tudo'};
   if(p.tipo==='camp'&&!campDe(p.id))state.pasta={tipo:'tudo'};
   renderTudo();
 }
 function renderTudo(){
-  renderKpis();renderPastas();renderArtes();renderCampanhas();
+  renderKpis();renderPastas();renderArtes();renderCampanhas();renderPainel();
   document.getElementById('qtdCampanhas').textContent=state.campanhas.length;
   document.getElementById('qtdArtes').textContent=state.materiais.length;
 }
 function renderKpis(){
   renderGraficosMarketing();
   var ativas=state.campanhas.filter(function(c){return c.status==='em_andamento';});
-  var invPer=state.gastos.filter(function(g){return g.status_pagamento!=='previsto'&&dentroDoPeriodo(g.data_lancamento);}).reduce(function(s,g){return s+Number(g.valor||0);},0);
+  var invPer=investidoTotal(true);
   var orcAtivas=ativas.reduce(function(s,c){return s+Number(c.orcamento_previsto||0);},0);
   var pend=state.materiais.filter(function(m){return m.status_fluxo==='em_revisao';}).length;
-  var rot={mes:'neste mês',ano:'neste ano',tudo:'no total'}[state.periodo];
-  var cards=[['Investido '+rot,moeda(invPer),'Gastos realizados ou em curso','#4b8af5',''],
+  var rot=rotuloPeriodo();
+  var cards=[['Investido '+rot,moeda(invPer),'Anúncios do Meta e gastos lançados','#4b8af5',''],
     ['Orçamento das campanhas ativas',moeda(orcAtivas),ativas.length+' em andamento','#2fae7a',''],
     ['Campanhas',String(state.campanhas.length),STATUS.map(function(s){return state.campanhas.filter(function(c){return c.status===s.id;}).length+' '+s.nome.toLowerCase();}).join(' · '),'#8a94a8',''],
     [ehAprovador()?'Artes para você aprovar':'Artes aguardando aprovação',String(pend),pend?'Clique para ver':'Nada pendente','#e0a93b','aguardando']];
@@ -1420,19 +1531,21 @@ function abrirCampanha(id,pre){
   abrirModal('modalCampanha');
 }
 function renderGastosModal(){
-  var inv=state.gastosModal.filter(function(g){return g.status_pagamento!=='previsto';}).reduce(function(s,g){return s+Number(g.valor||0);},0);
+  var cMeta=state.editando,idsMeta=cMeta?metaIdsDa(cMeta.id):[],temMeta=idsMeta.length>0,gastoMetaTot=temMeta?somaMeta(idsMeta,false).gasto:0;
+  var notaMeta=temMeta?'<div class="sub" style="margin-top:6px">Inclui '+moeda(gastoMetaTot)+' dos anúncios do Meta (automático): '+esc(idsMeta.map(function(id){var m=metaCampDe(id);return m?m.nome||id:id;}).join(' · '))+'. Lançamentos de Anúncios e Impulsionamento desta campanha não somam de novo.</div>':'';
+  var inv=state.gastosModal.filter(function(g){return g.status_pagamento!=='previsto'&&!(temMeta&&ehGastoAnuncio(g));}).reduce(function(s,g){return s+Number(g.valor||0);},0)+gastoMetaTot;
   var prev=state.gastosModal.filter(function(g){return g.status_pagamento==='previsto';}).reduce(function(s,g){return s+Number(g.valor||0);},0);
   var orc=moedaParaNumero(document.getElementById('mcOrcamento').value);
   document.getElementById('mcResumo').innerHTML='<div><span>Orçamento</span><b>'+moeda(orc)+'</b></div><div><span>Investido</span><b>'+moeda(inv)+'</b></div><div><span>Saldo</span><b class="'+(orc!=null&&inv>orc?'neg':'')+'">'+(orc!=null?moeda(orc-inv):'—')+'</b></div>';
   var el=document.getElementById('mcGastos');
-  if(!state.gastosModal.length){el.innerHTML='<div class="sub" style="padding:4px 0">Nenhum gasto lançado.</div>';return;}
+  if(!state.gastosModal.length){el.innerHTML='<div class="sub" style="padding:4px 0">Nenhum gasto lançado.</div>'+notaMeta;return;}
   el.innerHTML=state.gastosModal.map(function(g,i){
-    return '<div class="gasto-linha"><div><b>'+esc(g.categoria_gasto)+'</b><div class="sub">'+esc(g.descricao||'')+' · '+dataBR(g.data_lancamento)+'</div></div>'
+    return '<div class="gasto-linha"><div><b>'+esc(g.categoria_gasto)+'</b>'+(temMeta&&ehGastoAnuncio(g)&&g.status_pagamento!=='previsto'?'<span class="nao-soma" title="A campanha está ligada ao Meta: o gasto com anúncios vem sozinho do Meta.">não soma: vem do Meta</span>':'')+'<div class="sub">'+esc(g.descricao||'')+' · '+dataBR(g.data_lancamento)+'</div></div>'
       +'<div class="num" style="font-weight:700">'+moeda(g.valor)+'</div>'
       +'<select data-sit="'+i+'" style="height:30px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);font-size:11px;padding:0 6px"'+(state.pode.editar?'':' disabled')+'>'
       +[['previsto','Previsto'],['em_curso','Em curso'],['realizado','Pago']].map(function(o){return '<option value="'+o[0]+'"'+(g.status_pagamento===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'
       +(state.pode.editar?'<button class="btn-secondary btn-sm" data-rem="'+i+'" type="button">Remover</button>':'<span></span>')+'</div>';
-  }).join('')+(prev?'<div class="sub" style="margin-top:6px">Previsto (ainda não gasto): '+moeda(prev)+'</div>':'');
+  }).join('')+(prev?'<div class="sub" style="margin-top:6px">Previsto (ainda não gasto): '+moeda(prev)+'</div>':'')+notaMeta;
   el.querySelectorAll('[data-sit]').forEach(function(s){s.addEventListener('change',function(){state.gastosModal[+s.dataset.sit].status_pagamento=s.value;renderGastosModal();});});
   el.querySelectorAll('[data-rem]').forEach(function(b){b.addEventListener('click',function(){var g=state.gastosModal.splice(+b.dataset.rem,1)[0];if(g.id)state.gastosRemovidos.push(g.id);renderGastosModal();});});
 }
@@ -1598,15 +1711,418 @@ function renderGerOrigens(){
   el.innerHTML=bloco(true,'Redes sociais (e Google)','origem_rede')+bloco(false,'Outras origens','origem_outra');
 }
 
+/* ---------- painel do marketing (bloco 150): robô do Meta, números do período, campanhas, teses e anúncios ---------- */
+var ICO_ANUNCIO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M20 16l-5-5-8 8"/></svg>';
+var MESES_CURTOS=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+var MESES_LONGOS=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+var OBJETIVOS={MESSAGES:'Mensagens',OUTCOME_ENGAGEMENT:'Engajamento',POST_ENGAGEMENT:'Engajamento',OUTCOME_SALES:'Vendas',CONVERSIONS:'Conversões',LINK_CLICKS:'Cliques no link',OUTCOME_TRAFFIC:'Tráfego',OUTCOME_LEADS:'Cadastros',LEAD_GENERATION:'Cadastros',OUTCOME_AWARENESS:'Reconhecimento',REACH:'Alcance',BRAND_AWARENESS:'Reconhecimento',VIDEO_VIEWS:'Visualizações de vídeo',OUTCOME_APP_PROMOTION:'Aplicativo'};
+var SITUACOES_META={ACTIVE:'Ativa',PAUSED:'Pausada',CAMPAIGN_PAUSED:'Pausada',ADSET_PAUSED:'Pausada',ARCHIVED:'Arquivada',DELETED:'Excluída',IN_PROCESS:'Em análise',WITH_ISSUES:'Com problema',PENDING_REVIEW:'Em análise',DISAPPROVED:'Reprovada'};
+function somaMes(m,n){var a=+m.slice(0,4),b=+m.slice(5,7)-1+n;a+=Math.floor(b/12);b=((b%12)+12)%12;return a+'-'+('0'+(b+1)).slice(-2);}
+function mesAtual(){return hojeISO().slice(0,7);}
+function mesNoPeriodo(mes){return !!mes&&dentroDoPeriodo(mes+'-01');}
+function nomeMes(m,longo){var i=+m.slice(5,7)-1;return longo?MESES_LONGOS[i]+' de '+m.slice(0,4):MESES_CURTOS[i]+'/'+m.slice(2,4);}
+function rotuloPeriodo(){return {mes:'neste mês','3m':'nos últimos 3 meses',ano:'neste ano',tudo:'no total'}[state.periodo]||'';}
+function nomePeriodo(){var m=mesAtual();return {mes:nomeMes(m,true),'3m':nomeMes(somaMes(m,-2),true)+' a '+nomeMes(m,true),ano:'ano de '+m.slice(0,4),tudo:'todo o período'}[state.periodo]||'';}
+function num0(n){return Math.round(Number(n||0)).toLocaleString('pt-BR');}
+function pct(a,b){return b>0?(a/b*100).toLocaleString('pt-BR',{maximumFractionDigits:1})+'%':'—';}
+function dataHoraCurta(ts){if(!ts)return '';var d=new Date(ts);return d.toLocaleDateString('pt-BR',{timeZone:'America/Maceio',day:'2-digit',month:'2-digit'})+' às '+d.toLocaleTimeString('pt-BR',{timeZone:'America/Maceio',hour:'2-digit',minute:'2-digit'});}
+// lançamento à mão de anúncio/impulsionamento: quando a campanha está ligada ao Meta, esse dinheiro já vem do Meta (não soma duas vezes)
+function ehGastoAnuncio(g){return /^(an[uú]ncios|impulsionamento)$/i.test(String(g.categoria_gasto||'').trim());}
+function metaCampDe(id){return state.metaCampanhas.find(function(m){return m.id===id;})||null;}
+function anuncioDe(id){return state.metaAnuncios.find(function(a){return a.id===id;})||null;}
+function metaIdsDa(campId){return state.metaCampanhas.filter(function(m){return m.campanha_id===campId;}).map(function(m){return m.id;});}
+function metaSoltasIds(){return state.metaCampanhas.filter(function(m){return !m.campanha_id||!campDe(m.campanha_id);}).map(function(m){return m.id;});}
+// números do Meta somados: ids = campanhas do Meta (null = todas); soPeriodo = só os meses do período; mes = um mês só
+function somaMeta(ids,soPeriodo,mes){
+  var t={gasto:0,impressoes:0,alcance:0,cliques:0,cliques_link:0,conversas:0,leads:0};
+  if(ids&&!ids.length)return t;
+  state.anunciosMes.forEach(function(x){
+    if(ids&&ids.indexOf(x.campanha_meta_id)===-1)return;
+    if(mes?x.mes!==mes:(soPeriodo&&!mesNoPeriodo(x.mes)))return;
+    for(var k in t)t[k]+=Number(x[k]||0);
+  });
+  return t;
+}
+function somaContatos(campId,soPeriodo,mes){
+  var t={contatos:0,clientes:0,fecharam:0,no_juridico:0,sem_sucesso:0,honorarios:0};
+  state.contatosMes.forEach(function(x){
+    if(campId!==undefined&&x.campanha_id!==campId)return;
+    if(mes?x.mes!==mes:(soPeriodo&&!mesNoPeriodo(x.mes)))return;
+    for(var k in t)t[k]+=Number(x[k]||0);
+  });
+  return t;
+}
+function gastoManual(campId,soPeriodo,mes,semAnuncio){
+  return state.gastos.filter(function(g){
+    if(campId!==undefined&&g.campanha_id!==campId)return false;
+    if(g.status_pagamento==='previsto')return false;
+    if(mes?String(g.data_lancamento||'').slice(0,7)!==mes:(soPeriodo&&!dentroDoPeriodo(g.data_lancamento)))return false;
+    return !(semAnuncio&&ehGastoAnuncio(g));
+  }).reduce(function(s,g){return s+Number(g.valor||0);},0);
+}
+// investido na campanha = gastos lançados + anúncios do Meta ligados a ela (sem contar o mesmo anúncio duas vezes)
+function investido(campId,soPeriodo,mes){
+  var ids=metaIdsDa(campId),temMeta=ids.length>0;
+  return gastoManual(campId,soPeriodo,mes,temMeta)+(temMeta?somaMeta(ids,soPeriodo,mes).gasto:0);
+}
+function investidoTotal(soPeriodo,mes){
+  var t=state.campanhas.reduce(function(s,c){return s+investido(c.id,soPeriodo,mes);},0);
+  var soltas=metaSoltasIds();
+  return t+(soltas.length?somaMeta(soltas,soPeriodo,mes).gasto:0);
+}
+function ultimoMesComGasto(){var m='';state.anunciosMes.forEach(function(x){if(Number(x.gasto)>0&&x.mes>m)m=x.mes;});return m;}
+function mesesDoPeriodo(){
+  var fim=mesAtual(),ini;
+  if(state.periodo==='mes')ini=fim;
+  else if(state.periodo==='3m')ini=somaMes(fim,-2);
+  else if(state.periodo==='ano')ini=fim.slice(0,4)+'-01';
+  else{
+    var todos=[].concat(state.anunciosMes.filter(function(x){return Number(x.impressoes)>0;}).map(function(x){return x.mes;}),
+      state.contatosMes.map(function(x){return x.mes;}),
+      state.gastos.filter(function(g){return g.status_pagamento!=='previsto';}).map(function(g){return String(g.data_lancamento||'').slice(0,7);})).filter(Boolean).sort();
+    ini=todos[0]||fim;if(ini>fim)ini=fim;
+  }
+  var out=[];for(var m=ini;m<=fim&&out.length<60;m=somaMes(m,1))out.push(m);
+  return out;
+}
+function linhasMes(){
+  return mesesDoPeriodo().map(function(m){
+    var meta=somaMeta(null,false,m),ct=somaContatos(undefined,false,m);
+    return {mes:m,investido:investidoTotal(false,m),meta:meta.gasto,impressoes:meta.impressoes,cliques:meta.cliques,conversas:meta.conversas,contatos:ct.contatos,fecharam:ct.fecharam};
+  });
+}
+
+/* faixa do robô */
+function htmlRobo(){
+  var r=state.robo||{},u=r.ultima,k=r.ultima_ok,cls,txt,ult=ultimoMesComGasto();
+  var quando=k?dataHoraCurta(k.fim||k.inicio):'';
+  if(!r.configurado){cls='desligado';txt='<b>Robô do Meta ainda não ligado.</b> '+(k?'Os números do Meta abaixo foram trazidos em '+quando+'. ':'Ainda não há números do Meta. ')+(r.sou_admin?'Para atualizar sozinho todo dia, clique em “Robô do Meta” e cole a chave de leitura.':'Para atualizar sozinho todo dia, o administrador cola a chave de leitura do Meta.');}
+  else if(!r.ativo){cls='desligado';txt='<b>Robô do Meta desligado pelo administrador.</b>'+(k?' Última atualização: '+quando+'.':'');}
+  else if(u&&!u.ok){cls='erro';txt='<b>A última atualização do Meta não deu certo</b> ('+dataHoraCurta(u.inicio)+'): '+esc(u.erro||'sem detalhe')+(k?' Números até '+quando+'.':'');}
+  else{cls='ok';txt='<b>Robô do Meta ligado:</b> traz os números sozinho todo dia às 6h35.'+(k?' Última atualização: '+quando+'.':'');}
+  if(ult)txt+=' Último mês com anúncio no ar: '+nomeMes(ult,true)+'.';
+  var ac='';
+  if(r.configurado&&r.ativo&&r.pode_atualizar)ac+='<button class="btn-secondary btn-sm" type="button" data-mp="atualizar">Atualizar agora</button>';
+  if(r.sou_admin)ac+='<button class="btn-secondary btn-sm" type="button" data-mp="robo">Robô do Meta</button>';
+  if(window.SagaPdf)ac+='<button class="btn-secondary btn-sm" type="button" data-mp="pdf">PDF</button>';
+  return '<div class="mp-robo '+cls+'"><span class="luz" aria-hidden="true"></span><div class="txt">'+txt+'</div>'+(ac?'<div class="acoes">'+ac+'</div>':'')+'</div>';
+}
+
+/* números do período */
+function htmlKpisPainel(){
+  var meta=somaMeta(null,true),inv=investidoTotal(true),outros=Math.max(0,inv-meta.gasto),ct=somaContatos(undefined,true);
+  var cards=[
+    ['Investido '+rotuloPeriodo(),moeda(inv),moeda(meta.gasto)+' no Meta · '+moeda(outros)+' em outros gastos'],
+    ['Conversas iniciadas',num0(meta.conversas),'pelos anúncios do Meta (WhatsApp, Direct, Messenger)'],
+    ['Contatos no SAGA',num0(ct.contatos),'fichas com a campanha na origem'],
+    ['Clientes que fecharam',num0(ct.fecharam),'documentação pedida, em mãos ou no Jurídico'],
+    ['Custo por conversa',meta.conversas>0?moeda(meta.gasto/meta.conversas):'—','investido no Meta ÷ conversas'],
+    ['Custo por cliente',ct.fecharam>0?moeda(inv/ct.fecharam):'—','investido ÷ clientes que fecharam']];
+  return '<div class="kpis mp-kpis">'+cards.map(function(c){return '<div class="kpi-card"><div class="rotulo">'+esc(c[0])+'</div><div class="kpi-value">'+esc(c[1])+'</div><div class="meta">'+esc(c[2])+'</div></div>';}).join('')+'</div>';
+}
+
+/* mês a mês: gráfico (só com 2 meses ou mais) e a tabela, que traz tudo */
+function htmlMesAMes(linhas){
+  var tot=linhas.reduce(function(s,l){['investido','meta','impressoes','cliques','conversas','contatos','fecharam'].forEach(function(k){s[k]+=l[k];});return s;},{investido:0,meta:0,impressoes:0,cliques:0,conversas:0,contatos:0,fecharam:0});
+  var linha=function(l,rot,forte){return '<tr'+(forte?' class="total"':'')+'><td>'+rot+'</td><td class="num">'+moeda(l.investido)+'</td><td class="num">'+moeda(l.meta)+'</td><td class="num">'+num0(l.impressoes)+'</td><td class="num">'+num0(l.cliques)+'</td><td class="num">'+num0(l.conversas)+'</td><td class="num">'+num0(l.contatos)+'</td><td class="num">'+num0(l.fecharam)+'</td><td class="num">'+(l.fecharam>0?moeda(l.investido/l.fecharam):'—')+'</td></tr>';};
+  return '<section class="mp-bloco"><div class="mp-bloco-cab"><div><h3>Investimento mês a mês</h3><div class="sub2">Tudo o que foi investido em cada mês (anúncios do Meta + outros gastos lançados) e o que voltou em conversas, contatos e clientes.</div></div></div>'
+    +(linhas.length>1?'<div class="mp-graf" id="mpGraf" role="img" aria-label="Investido por mês, de '+esc(nomeMes(linhas[0].mes,true))+' a '+esc(nomeMes(linhas[linhas.length-1].mes,true))+'. Os valores estão na tabela logo abaixo."></div>':'')
+    +'<div class="tabela-wrap"><table><thead><tr><th>Mês</th><th class="num">Investido</th><th class="num">No Meta</th><th class="num">Impressões</th><th class="num">Cliques</th><th class="num">Conversas</th><th class="num">Contatos</th><th class="num">Fecharam</th><th class="num">Custo por cliente</th></tr></thead><tbody>'
+    +linhas.slice().reverse().map(function(l){return linha(l,esc(nomeMes(l.mes,true)),false);}).join('')
+    +(linhas.length>1?linha(tot,'<b>Total</b>',true):'')+'</tbody></table></div></section>';
+}
+function passoBonito(max){
+  if(max<=0)return 1;var bruto=max/4,p=Math.pow(10,Math.floor(Math.log10(bruto))),f=bruto/p;
+  return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p;
+}
+function moedaEixo(n){return n>=1000?'R$ '+(n/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':'R$ '+n.toLocaleString('pt-BR',{maximumFractionDigits:0});}
+function desenharGraficoMes(){
+  var el=document.getElementById('mpGraf');
+  if(!el||!el.isConnected||!el.offsetParent)return;
+  var linhas=state.painelLinhas||[];if(linhas.length<2){el.remove();return;}
+  var W=Math.max(280,el.clientWidth),H=el.clientHeight||210,esq=58,dir=8,topo=22,base=26,ph=H-topo-base,n=linhas.length,banda=(W-esq-dir)/n;
+  var max=Math.max.apply(null,linhas.map(function(l){return l.investido;})),passo=passoBonito(max),teto=Math.max(passo,Math.ceil(max/passo)*passo);
+  var y=function(v){return topo+ph-(v/teto)*ph;};
+  var ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('aria-hidden','true');
+  var add=function(pai,tag,at){var e=document.createElementNS(ns,tag);for(var k in at)e.setAttribute(k,at[k]);pai.appendChild(e);return e;};
+  for(var v=0;v<=teto+1e-9;v+=passo){
+    var yy=Math.round(y(v))+.5;add(svg,'line',{x1:esq,x2:W-dir,y1:yy,y2:yy,'class':'grade'});
+    add(svg,'text',{x:esq-8,y:yy+3.5,'text-anchor':'end','class':'eixo'}).textContent=moedaEixo(v);
+  }
+  var cada=n>24?3:n>12?2:1,iMax=0;linhas.forEach(function(l,i){if(l.investido>linhas[iMax].investido)iMax=i;});
+  var mov=!reduzido(),barras=[];
+  linhas.forEach(function(l,i){
+    var x0=esq+i*banda,w=Math.min(24,Math.max(6,banda*.56)),x=x0+(banda-w)/2,h=Math.max(0,y(0)-y(l.investido)),yb=y(0);
+    if((n-1-i)%cada===0)add(svg,'text',{x:x0+banda/2,y:H-8,'text-anchor':'middle','class':'eixo'}).textContent=nomeMes(l.mes,false);
+    var hit=add(svg,'rect',{x:x0,y:topo,width:banda,height:ph,'class':'alvo',tabindex:'0','data-i':String(i)});
+    hit.setAttribute('aria-label',nomeMes(l.mes,true)+': '+moeda(l.investido));
+    if(h>0.5){
+      var r=Math.min(4,w/2,h),top=yb-h;
+      var p=add(svg,'path',{'class':'col',d:'M'+x+','+yb+'L'+x+','+(top+r)+'Q'+x+','+top+' '+(x+r)+','+top+'L'+(x+w-r)+','+top+'Q'+(x+w)+','+top+' '+(x+w)+','+(top+r)+'L'+(x+w)+','+yb+'Z'});
+      if(mov){p.style.transform='scaleY(0)';barras.push(p);}
+      if(i===iMax||i===n-1)add(svg,'text',{x:x+w/2,y:top-6,'text-anchor':'middle','class':'valor'}).textContent=moedaEixo(Math.round(l.investido));
+    }
+  });
+  el.innerHTML='';el.appendChild(svg);
+  var dica=document.createElement('div');dica.className='mp-dica';el.appendChild(dica);
+  if(barras.length)requestAnimationFrame(function(){barras.forEach(function(b,i){b.style.transition='transform 420ms cubic-bezier(.22,.78,.25,1) '+Math.min(i*25,240)+'ms';b.style.transform='scaleY(1)';});});
+  var mostrar=function(i){
+    var l=linhas[i];if(!l)return;dica.textContent='';
+    var b=document.createElement('b');b.textContent=moeda(l.investido);dica.appendChild(b);
+    var t=document.createElement('div');t.textContent='Investido em '+nomeMes(l.mes,true);t.style.marginBottom='5px';dica.appendChild(t);
+    [['No Meta',moeda(l.meta)],['Conversas',num0(l.conversas)],['Contatos no SAGA',num0(l.contatos)],['Fecharam',num0(l.fecharam)]].forEach(function(par){
+      var d=document.createElement('div');d.className='lin';var a=document.createElement('span');a.textContent=par[0];var c=document.createElement('span');c.textContent=par[1];d.appendChild(a);d.appendChild(c);dica.appendChild(d);
+    });
+    var cx=esq+i*banda+banda/2,larg=dica.offsetWidth||170,left=Math.min(Math.max(4,cx-larg/2),W-larg-4);
+    dica.style.left=left+'px';dica.style.top='4px';dica.classList.add('vis');
+  };
+  svg.addEventListener('pointermove',function(e){var a=e.target.closest&&e.target.closest('.alvo');if(a)mostrar(+a.getAttribute('data-i'));});
+  svg.addEventListener('pointerleave',function(){dica.classList.remove('vis');});
+  svg.addEventListener('focusin',function(e){var a=e.target.closest&&e.target.closest('.alvo');if(a)mostrar(+a.getAttribute('data-i'));});
+  svg.addEventListener('focusout',function(){dica.classList.remove('vis');});
+}
+
+/* por campanha do SAGA */
+function htmlCampanhasPainel(){
+  var linhas=state.campanhas.map(function(c){var ids=metaIdsDa(c.id);return {c:c,ids:ids,meta:somaMeta(ids,true),inv:investido(c.id,true),ct:somaContatos(c.id,true)};})
+    .filter(function(x){return x.inv>0||x.ct.contatos>0||x.meta.impressoes>0||x.c.status==='em_andamento';})
+    .sort(function(a,b){return b.inv-a.inv||b.ct.contatos-a.ct.contatos||String(a.c.nome).localeCompare(String(b.c.nome),'pt-BR');});
+  var vals=state.mostraValores;
+  var corpo=linhas.length?linhas.map(function(x){
+    var c=x.c,t=temaDe(c.tema_id),tese=t&&t.tese_id?teseDe(t.tese_id):null,nomesMeta=x.ids.map(function(id){var m=metaCampDe(id);return m?m.nome||('Campanha '+id):id;});
+    return '<tr><td><div class="cli">'+esc(c.nome)+(c.codigo?'<span class="cod">'+esc(c.codigo)+'</span>':'')+'</div>'
+      +'<div class="sub">'+esc(statusInfo(c.status).nome)+(t?' · '+esc(t.nome):'')+(tese?' · '+esc(tese.nome):'')+'</div>'
+      +(nomesMeta.length?'<div class="meta-lig">Meta: <i>'+esc(nomesMeta.join(' · '))+'</i></div>':'')+'</td>'
+      +'<td class="num">'+moeda(x.inv)+'</td><td class="num">'+(x.ids.length?num0(x.meta.conversas):'—')+'</td><td class="num">'+num0(x.ct.contatos)+'</td><td class="num">'+num0(x.ct.fecharam)+'</td>'
+      +'<td class="num">'+(x.inv>0&&x.ct.contatos>0?moeda(x.inv/x.ct.contatos):'—')+'</td><td class="num">'+(x.inv>0&&x.ct.fecharam>0?moeda(x.inv/x.ct.fecharam):'—')+'</td>'
+      +(vals?'<td class="num">'+(x.ct.honorarios>0?moeda(x.ct.honorarios):'—')+'</td>':'')+'</tr>';
+  }).join(''):'<tr><td colspan="'+(vals?8:7)+'" class="vazio">Nenhuma campanha do SAGA com gasto ou contato '+esc(rotuloPeriodo())+'.</td></tr>';
+  return '<section class="mp-bloco"><div class="mp-bloco-cab"><div><h3>Por campanha do SAGA</h3><div class="sub2">Contatos e clientes vêm da origem marcada na ficha (Como chegou). O gasto junta os anúncios do Meta ligados à campanha e os outros gastos lançados nela.</div></div></div>'
+    +'<div class="tabela-wrap"><table><thead><tr><th>Campanha</th><th class="num">Investido</th><th class="num">Conversas</th><th class="num">Contatos</th><th class="num">Fecharam</th><th class="num">Por contato</th><th class="num">Por cliente</th>'+(vals?'<th class="num">Honorários esperados</th>':'')+'</tr></thead><tbody>'+corpo+'</tbody></table></div></section>';
+}
+
+/* campanhas do Meta (com a ligação à campanha do SAGA) */
+function htmlMetaPainel(){
+  var pode=!!(state.robo&&state.robo.pode_atualizar);
+  var linhas=state.metaCampanhas.map(function(m){return {m:m,t:somaMeta([m.id],true)};})
+    .filter(function(x){return x.t.impressoes>0||x.m.situacao==='ACTIVE';})
+    .sort(function(a,b){return b.t.gasto-a.t.gasto||String(a.m.nome).localeCompare(String(b.m.nome),'pt-BR');});
+  var opcoes=state.campanhas.slice().sort(function(a,b){return String(a.nome).localeCompare(String(b.nome),'pt-BR');});
+  var corpo=linhas.length?linhas.map(function(x){
+    var m=x.m,saga=m.campanha_id?campDe(m.campanha_id):null,sit=SITUACOES_META[m.situacao]||m.situacao||'';
+    var lig=pode?'<select class="sel-lig" data-ligar="'+esc(m.id)+'" aria-label="Campanha do SAGA ligada a esta campanha do Meta"><option value="">Sem ligação</option>'
+        +opcoes.map(function(c){return '<option value="'+esc(c.id)+'"'+(c.id===m.campanha_id?' selected':'')+'>'+esc(c.nome)+(c.codigo?' ('+esc(c.codigo)+')':'')+'</option>';}).join('')+'</select>'
+      :(saga?esc(saga.nome):'<span class="sub">Sem ligação</span>');
+    return '<tr><td><div class="cli">'+esc(m.nome||('Campanha '+m.id))+'</div><div class="sub">'+(sit?'<span class="selo-sit'+(m.situacao==='ACTIVE'?' ativo':'')+'">'+esc(sit)+'</span> ':'')+esc(OBJETIVOS[m.objetivo]||m.objetivo||'')
+      +(m.campanha_id&&m.ligada_auto?' · ligada pelo código':'')+'</div></td>'
+      +'<td class="num">'+moeda(x.t.gasto)+'</td><td class="num">'+num0(x.t.impressoes)+'</td><td class="num">'+num0(x.t.cliques)+'</td><td class="num">'+num0(x.t.conversas)+'</td>'
+      +'<td class="num">'+(x.t.conversas>0?moeda(x.t.gasto/x.t.conversas):'—')+'</td><td>'+lig+'</td></tr>';
+  }).join(''):'<tr><td colspan="7" class="vazio">Nenhum anúncio do Meta rodou '+esc(rotuloPeriodo())+'.</td></tr>';
+  return '<section class="mp-bloco"><div class="mp-bloco-cab"><div><h3>Campanhas do Meta</h3><div class="sub2">O que o Meta mostra de cada campanha no período. Ponha o código da campanha do SAGA no nome da campanha do Meta (ex.: “IR27 - Imposto de renda”) e ela se liga sozinha; ou escolha ao lado.</div></div></div>'
+    +'<div class="tabela-wrap"><table><thead><tr><th>Campanha do Meta</th><th class="num">Investido</th><th class="num">Impressões</th><th class="num">Cliques</th><th class="num">Conversas</th><th class="num">Por conversa</th><th>Campanha do SAGA</th></tr></thead><tbody>'+corpo+'</tbody></table></div></section>';
+}
+
+/* por tese (pela pasta da campanha) */
+function htmlTesesPainel(){
+  var grupos={};
+  state.campanhas.forEach(function(c){
+    var t=temaDe(c.tema_id),tese=t&&t.tese_id?teseDe(t.tese_id):null,chave=tese?tese.id:'_sem';
+    var g=grupos[chave]||(grupos[chave]={nome:tese?tese.nome:'Sem tese (campanha sem pasta com tese)',inv:0,conversas:0,contatos:0,fecharam:0});
+    var ct=somaContatos(c.id,true);g.inv+=investido(c.id,true);g.conversas+=somaMeta(metaIdsDa(c.id),true).conversas;g.contatos+=ct.contatos;g.fecharam+=ct.fecharam;
+  });
+  var soltas=metaSoltasIds();
+  if(soltas.length){var s=somaMeta(soltas,true);if(s.gasto>0||s.conversas>0)grupos._meta={nome:'Anúncios do Meta sem campanha do SAGA',inv:s.gasto,conversas:s.conversas,contatos:0,fecharam:0,soMeta:true};}
+  var lista=Object.keys(grupos).map(function(k){return grupos[k];}).filter(function(g){return g.inv>0||g.contatos>0||g.conversas>0;}).sort(function(a,b){return b.inv-a.inv;});
+  var corpo=lista.length?lista.map(function(g){
+    return '<tr><td><div class="cli">'+esc(g.nome)+'</div></td><td class="num">'+moeda(g.inv)+'</td><td class="num">'+num0(g.conversas)+'</td><td class="num">'+(g.soMeta?'—':num0(g.contatos))+'</td><td class="num">'+(g.soMeta?'—':num0(g.fecharam))+'</td><td class="num">'+(!g.soMeta&&g.inv>0&&g.fecharam>0?moeda(g.inv/g.fecharam):'—')+'</td></tr>';
+  }).join(''):'<tr><td colspan="6" class="vazio">Nada investido '+esc(rotuloPeriodo())+'.</td></tr>';
+  return '<section class="mp-bloco"><div class="mp-bloco-cab"><div><h3>Por tese</h3><div class="sub2">A tese vem da pasta da campanha (Pasta &gt; tese). Anúncio do Meta ainda sem campanha do SAGA aparece à parte.</div></div></div>'
+    +'<div class="tabela-wrap"><table class="estreita"><thead><tr><th>Tese</th><th class="num">Investido</th><th class="num">Conversas</th><th class="num">Contatos</th><th class="num">Fecharam</th><th class="num">Custo por cliente</th></tr></thead><tbody>'+corpo+'</tbody></table></div></section>';
+}
+
+/* ranking dos anúncios (criativos) */
+function anunciosDoPeriodo(){
+  var por={};
+  state.anunciosMes.forEach(function(x){
+    if(!mesNoPeriodo(x.mes))return;
+    var a=por[x.anuncio_id]||(por[x.anuncio_id]={id:x.anuncio_id,camp:x.campanha_meta_id,gasto:0,impressoes:0,cliques:0,cliques_link:0,conversas:0,leads:0});
+    ['gasto','impressoes','cliques','cliques_link','conversas','leads'].forEach(function(k){a[k]+=Number(x[k]||0);});
+  });
+  var lista=Object.keys(por).map(function(k){return por[k];}).filter(function(a){return a.impressoes>0;});
+  var o=state.rankOrdem,cpc=function(a){return a.conversas>0?a.gasto/a.conversas:Infinity;};
+  lista.sort(function(a,b){
+    if(o==='custo')return cpc(a)-cpc(b)||b.cliques-a.cliques;
+    if(o==='cliques')return b.cliques-a.cliques||b.conversas-a.conversas;
+    if(o==='gasto')return b.gasto-a.gasto;
+    return b.conversas-a.conversas||b.cliques-a.cliques||a.gasto-b.gasto;
+  });
+  return lista;
+}
+function htmlRankingLista(){
+  var lista=anunciosDoPeriodo().slice(0,24);
+  if(!lista.length)return '<div class="mp-vazio">Nenhum anúncio do Meta rodou '+esc(rotuloPeriodo())+'.</div>';
+  return lista.map(function(a,i){
+    var an=anuncioDe(a.id)||{},mc=metaCampDe(a.camp)||{},saga=mc.campanha_id?campDe(mc.campanha_id):null;
+    var img=linkSeguro(an.imagem_url)||linkSeguro(an.miniatura_url),post=linkSeguro(an.link_post);
+    var n=function(r,v){return '<div><span>'+r+'</span><b>'+v+'</b></div>';};
+    return '<article class="mp-anuncio"><div class="mini">'+ICO_ANUNCIO+(img?'<img data-mini src="'+esc(img)+'" alt="" loading="lazy" referrerpolicy="no-referrer">':'')+'<span class="pos">'+(i+1)+'º</span></div>'
+      +'<div style="min-width:0"><h4 title="'+esc(an.nome||'')+'">'+esc(an.nome||('Anúncio '+a.id))+'</h4>'
+      +'<div class="de" title="'+esc((mc.nome||'')+(saga?' · '+saga.nome:''))+'">'+esc(mc.nome||'')+(saga?' · '+esc(saga.nome):'')+'</div>'
+      +'<div class="nums">'+n('Investido',moeda(a.gasto))+n('Conversas',num0(a.conversas))+n('Por conversa',a.conversas>0?moeda(a.gasto/a.conversas):'—')
+      +n('Impressões',num0(a.impressoes))+n('Cliques',num0(a.cliques))+n('Taxa de clique',pct(a.cliques,a.impressoes))+'</div>'
+      +(post?'<a class="lk" href="'+esc(post)+'" target="_blank" rel="noopener">Ver o post</a>':'')+'</div></article>';
+  }).join('');
+}
+function htmlRanking(){
+  var ops=[['conversas','Mais conversas'],['custo','Menor custo por conversa'],['cliques','Mais cliques'],['gasto','Maior gasto']];
+  return '<section class="mp-bloco"><div class="mp-bloco-cab"><div><h3>Ranking dos anúncios</h3><div class="sub2">Cada arte, vídeo ou carrossel que rodou no Meta '+esc(rotuloPeriodo())+'.</div></div>'
+    +'<div class="seg mp-seg" id="mpRankOrdem" aria-label="Ordem do ranking">'+ops.map(function(o){return '<button type="button" data-rank="'+o[0]+'"'+(o[0]===state.rankOrdem?' class="active"':'')+'>'+o[1]+'</button>';}).join('')+'</div></div>'
+    +'<div class="mp-rank" id="mpRankLista">'+htmlRankingLista()+'</div></section>';
+}
+
+/* origem dos contatos */
+function htmlOrigensPainel(){
+  var por={};
+  state.origensMes.forEach(function(x){if(!mesNoPeriodo(x.mes))return;var o=por[x.origem_id]||(por[x.origem_id]={id:x.origem_id,contatos:0,fecharam:0});o.contatos+=Number(x.contatos||0);o.fecharam+=Number(x.fecharam||0);});
+  var lista=Object.keys(por).map(function(k){return por[k];}).sort(function(a,b){return b.contatos-a.contatos;});
+  if(!lista.length)return '';
+  var ops=window.SagaOrigem?SagaOrigem.dados().origens:[],nome=function(id){var o=ops.find(function(x){return x.id===id;})||(state.resultadosOrigens||[]).find(function(x){return x.origem_id===id;});return o?o.nome:'Origem';};
+  return '<section class="mp-bloco"><div class="mp-bloco-cab"><div><h3>De onde vieram os contatos</h3><div class="sub2">Fichas (Captação e Jurídico) criadas '+esc(rotuloPeriodo())+' com a origem marcada.</div></div></div>'
+    +'<div class="tabela-wrap"><table class="estreita"><thead><tr><th>Origem</th><th class="num">Contatos</th><th class="num">Fecharam</th><th class="num">Fecharam (%)</th></tr></thead><tbody>'
+    +lista.map(function(o){return '<tr><td>'+esc(nome(o.id))+'</td><td class="num">'+num0(o.contatos)+'</td><td class="num">'+num0(o.fecharam)+'</td><td class="num">'+pct(o.fecharam,o.contatos)+'</td></tr>';}).join('')
+    +'</tbody></table></div></section>';
+}
+
+function renderPainel(){
+  var el=document.getElementById('painelMkt');if(!el)return;
+  if(!state.pode.verCampanhas){el.innerHTML='<div class="panel vazio">Você não tem permissão para ver o painel do marketing.</div>';return;}
+  if(!state.painelOk){el.innerHTML='<div class="panel vazio">'+(state.painelErro?'Não consegui carregar o painel: '+esc(state.painelErro):'Carregando o painel...')+'</div>';return;}
+  state.painelLinhas=linhasMes();
+  el.innerHTML=htmlRobo()+htmlKpisPainel()+htmlMesAMes(state.painelLinhas)+htmlCampanhasPainel()+htmlMetaPainel()+htmlTesesPainel()+htmlRanking()+htmlOrigensPainel()
+    +'<p class="mp-nota">Conversas: quantas pessoas começaram uma conversa (WhatsApp, Direct ou Messenger) depois de ver o anúncio, segundo o Meta. Contatos e clientes: fichas do SAGA com a campanha marcada em “Como chegou”. Quando a campanha do SAGA está ligada ao Meta, o gasto com anúncios vem sozinho do Meta e os lançamentos de “Anúncios” e “Impulsionamento” dela não somam de novo.</p>';
+  ligarMiniaturas(el);
+  desenharGraficoMes();
+}
+function ligarMiniaturas(el){el.querySelectorAll('img[data-mini]').forEach(function(i){i.addEventListener('error',function(){i.remove();},{once:true});});}
+function painelVisivel(){var p=document.getElementById('aba-painel');return !!(p&&p.classList.contains('ativo'));}
+
+/* ações do painel */
+async function respostaRobo(r){
+  var d=r.data||{};
+  if(r.error&&!d.mensagem){try{var ctx=r.error.context;d=ctx&&ctx.json?await ctx.json():d;}catch(e){}}
+  return {ok:!!d.ok,mensagem:d.mensagem||(r.error&&r.error.message)||'Pronto.',d:d};
+}
+async function atualizarMeta(btn){
+  btn.disabled=true;var antes=btn.textContent;btn.textContent='Atualizando...';
+  try{var x=await respostaRobo(await _sb.functions.invoke('meta-anuncios',{body:{acao:'atualizar'}}));showToast(esc(x.mensagem),x.ok?'success':'error');}
+  catch(e){showToast(esc(e.message||'Não consegui falar com o robô.'),'error');}
+  btn.disabled=false;btn.textContent=antes;
+  await carregarTudo();
+}
+async function ligarMeta(sel){
+  var id=sel.dataset.ligar,v=sel.value||null;sel.disabled=true;
+  var r=await _sb.rpc('meta_campanha_ligar',{p_meta_id:id,p_campanha:v});
+  sel.disabled=false;
+  if(r.error){showToast('Não consegui ligar: '+esc(erroTexto(r.error)),'error');renderPainel();return;}
+  var m=metaCampDe(id);if(m){m.campanha_id=v;m.ligacao_manual=true;m.ligada_auto=false;}
+  showToast(v?'Campanha do Meta ligada à campanha do SAGA.':'Ligação desfeita: o gasto dela fica fora da campanha do SAGA.','success');
+  renderKpis();renderCampanhas();renderPainel();
+}
+function trocarOrdemRanking(b){
+  if(!b||b.dataset.rank===state.rankOrdem)return;
+  state.rankOrdem=b.dataset.rank;guardar('saga-mkt-ranking',state.rankOrdem);
+  b.parentNode.querySelectorAll('[data-rank]').forEach(function(x){x.classList.toggle('active',x===b);});
+  var lista=document.getElementById('mpRankLista');if(!lista)return;
+  // o destaque desliza primeiro; a lista troca quando o deslize termina
+  setTimeout(function(){
+    if(reduzido()){lista.innerHTML=htmlRankingLista();ligarMiniaturas(lista);return;}
+    lista.style.transition='opacity 200ms cubic-bezier(.22,.78,.25,1)';lista.style.opacity='0';
+    setTimeout(function(){lista.innerHTML=htmlRankingLista();ligarMiniaturas(lista);lista.style.opacity='1';setTimeout(function(){lista.style.transition='';},220);},200);
+  },reduzido()?0:220);
+}
+function painelPdf(){
+  if(!window.SagaPdf)return;
+  var meta=somaMeta(null,true),inv=investidoTotal(true),ct=somaContatos(undefined,true),linhas=state.painelLinhas||linhasMes();
+  var k='<div class="kpis"><div class="forte"><span>Investido</span><b>'+moeda(inv)+'</b></div><div><span>No Meta</span><b>'+moeda(meta.gasto)+'</b></div><div><span>Conversas</span><b>'+num0(meta.conversas)+'</b></div>'
+    +'<div><span>Contatos no SAGA</span><b>'+num0(ct.contatos)+'</b></div><div><span>Fecharam</span><b>'+num0(ct.fecharam)+'</b></div>'
+    +'<div><span>Custo por conversa</span><b>'+(meta.conversas>0?moeda(meta.gasto/meta.conversas):'—')+'</b></div><div><span>Custo por cliente</span><b>'+(ct.fecharam>0?moeda(inv/ct.fecharam):'—')+'</b></div></div>';
+  var tab=function(cab,linhasHtml){return '<table class="tab"><thead><tr>'+cab.map(function(c){return '<th'+(c[1]?' class="num"':'')+'>'+c[0]+'</th>';}).join('')+'</tr></thead><tbody>'+linhasHtml+'</tbody></table>';};
+  var mes=tab([['Mês'],['Investido',1],['No Meta',1],['Impressões',1],['Cliques',1],['Conversas',1],['Contatos',1],['Fecharam',1],['Custo por cliente',1]],
+    linhas.slice().reverse().map(function(l){return '<tr><td>'+esc(nomeMes(l.mes,true))+'</td><td class="num">'+moeda(l.investido)+'</td><td class="num">'+moeda(l.meta)+'</td><td class="num">'+num0(l.impressoes)+'</td><td class="num">'+num0(l.cliques)+'</td><td class="num">'+num0(l.conversas)+'</td><td class="num">'+num0(l.contatos)+'</td><td class="num">'+num0(l.fecharam)+'</td><td class="num">'+(l.fecharam>0?moeda(l.investido/l.fecharam):'—')+'</td></tr>';}).join(''));
+  var camp=state.campanhas.map(function(c){var ids=metaIdsDa(c.id);return {c:c,meta:somaMeta(ids,true),inv:investido(c.id,true),ct:somaContatos(c.id,true),temMeta:ids.length>0};})
+    .filter(function(x){return x.inv>0||x.ct.contatos>0;}).sort(function(a,b){return b.inv-a.inv;});
+  var campHtml=camp.length?tab([['Campanha'],['Investido',1],['Conversas',1],['Contatos',1],['Fecharam',1],['Por cliente',1]],camp.map(function(x){return '<tr><td>'+esc(x.c.nome)+'</td><td class="num">'+moeda(x.inv)+'</td><td class="num">'+(x.temMeta?num0(x.meta.conversas):'—')+'</td><td class="num">'+num0(x.ct.contatos)+'</td><td class="num">'+num0(x.ct.fecharam)+'</td><td class="num">'+(x.ct.fecharam>0?moeda(x.inv/x.ct.fecharam):'—')+'</td></tr>';}).join('')):'<p class="nada">Nenhuma campanha do SAGA com gasto ou contato no período.</p>';
+  var metaL=state.metaCampanhas.map(function(m){return {m:m,t:somaMeta([m.id],true)};}).filter(function(x){return x.t.impressoes>0;}).sort(function(a,b){return b.t.gasto-a.t.gasto;});
+  var metaHtml=metaL.length?tab([['Campanha do Meta'],['Investido',1],['Impressões',1],['Cliques',1],['Conversas',1],['Campanha do SAGA']],metaL.map(function(x){var s=x.m.campanha_id?campDe(x.m.campanha_id):null;return '<tr><td>'+esc(x.m.nome||x.m.id)+'</td><td class="num">'+moeda(x.t.gasto)+'</td><td class="num">'+num0(x.t.impressoes)+'</td><td class="num">'+num0(x.t.cliques)+'</td><td class="num">'+num0(x.t.conversas)+'</td><td>'+(s?esc(s.nome):'—')+'</td></tr>';}).join('')):'<p class="nada">Nenhum anúncio do Meta rodou no período.</p>';
+  var rank=anunciosDoPeriodo().slice(0,10);
+  var rankHtml=rank.length?tab([['#'],['Anúncio'],['Investido',1],['Impressões',1],['Cliques',1],['Conversas',1],['Por conversa',1]],rank.map(function(a,i){var an=anuncioDe(a.id)||{};return '<tr><td>'+(i+1)+'º</td><td>'+esc(an.nome||a.id)+'</td><td class="num">'+moeda(a.gasto)+'</td><td class="num">'+num0(a.impressoes)+'</td><td class="num">'+num0(a.cliques)+'</td><td class="num">'+num0(a.conversas)+'</td><td class="num">'+(a.conversas>0?moeda(a.gasto/a.conversas):'—')+'</td></tr>';}).join('')):'<p class="nada">Sem anúncios no período.</p>';
+  SagaPdf.imprimir({titulo:'Painel do marketing',subtitulo:'Período: '+nomePeriodo(),arquivo:'painel-marketing-'+hojeISO(),paisagem:true,
+    paginas:[k+'<div class="secao">Mês a mês</div>'+mes+'<div class="secao">Por campanha do SAGA</div>'+campHtml+'<div class="secao">Campanhas do Meta</div>'+metaHtml+'<div class="secao">Ranking dos anúncios (10 primeiros, ordem: '+esc({conversas:'mais conversas',custo:'menor custo por conversa',cliques:'mais cliques',gasto:'maior gasto'}[state.rankOrdem]||'')+')</div>'+rankHtml]});
+}
+
+/* janela "Robô do Meta" (só o administrador geral) */
+function abrirRobo(){
+  var r=state.robo||{},k=r.ultima_ok;
+  document.getElementById('rbSituacao').innerHTML=r.configurado
+    ?'<b>Chave gravada</b>'+(r.chave_final?' (termina em …'+esc(r.chave_final)+')':'')+(r.chave_em?' em '+esc(dataHoraCurta(r.chave_em)):'')+'. '+(r.ativo?'Robô ligado: atualiza todo dia às 6h35.':'Robô desligado.')+(k?' Última atualização boa: '+esc(dataHoraCurta(k.fim||k.inicio))+'.':'')
+    :'<b>Ainda sem chave.</b> Com a chave, o SAGA traz sozinho, todo dia às 6h35, o gasto, as impressões, os cliques e as conversas de cada anúncio. A chave só LÊ os números: não cria, não pausa e não gasta nada nos anúncios.';
+  document.getElementById('rbChave').value='';
+  document.getElementById('rbContas').value=(r.contas||[]).join(', ');
+  document.getElementById('rbAtivo').checked=r.ativo!==false;
+  var res=document.getElementById('rbRes');res.textContent='';res.className='rb-res';
+  var como=document.getElementById('rbComo');como.hidden=!!r.configurado;document.getElementById('rbComoBtn').setAttribute('aria-expanded',String(!como.hidden));
+  abrirModal('modalRoboMeta');
+}
+async function salvarRobo(testar){
+  var chave=document.getElementById('rbChave').value.trim(),res=document.getElementById('rbRes');
+  var contas=document.getElementById('rbContas').value.split(/[,;\s]+/).map(function(s){return s.replace(/\D/g,'');}).filter(Boolean);
+  if(!contas.length){showToast('Informe a conta de anúncios (só os números).','error');return;}
+  if(testar&&!chave&&!(state.robo&&state.robo.configurado)){showToast('Cole a chave do Meta antes de testar.','error');document.getElementById('rbChave').focus();return;}
+  var bs=[document.getElementById('rbSalvar'),document.getElementById('rbTestar')];bs.forEach(function(b){b.disabled=true;});
+  res.className='rb-res';res.textContent=testar?'Salvando e conferindo com o Meta (pode levar alguns segundos)...':'Salvando...';
+  try{
+    var r=await _sb.rpc('meta_config_salvar',{p_chave:chave||null,p_contas:contas,p_ativo:document.getElementById('rbAtivo').checked});
+    if(r.error)throw new Error(erroTexto(r.error));
+    document.getElementById('rbChave').value='';
+    state.robo=Object.assign({},state.robo||{},r.data||{});
+    if(testar){
+      var x=await respostaRobo(await _sb.functions.invoke('meta-anuncios',{body:{acao:'testar'}}));
+      var contasTxt=(x.d.contas||[]).filter(function(c){return !c.erro;}).map(function(c){return c.nome+(c.moeda?' ('+c.moeda+')':'');}).join(', ');
+      res.className='rb-res '+(x.ok?'ok':'erro');res.textContent=x.mensagem+(x.ok&&contasTxt?' Conta: '+contasTxt+'.':'');
+    }else{res.className='rb-res ok';res.textContent='Salvo.';}
+  }catch(e){res.className='rb-res erro';res.textContent=e.message||'Não consegui salvar.';}
+  bs.forEach(function(b){b.disabled=false;});
+  await carregarTudo();
+}
+function ligarPainel(){
+  var el=document.getElementById('painelMkt');
+  el.addEventListener('click',function(e){
+    var b=e.target.closest('[data-mp]');
+    if(b){if(b.dataset.mp==='atualizar')atualizarMeta(b);else if(b.dataset.mp==='robo')abrirRobo();else if(b.dataset.mp==='pdf')painelPdf();return;}
+    var o=e.target.closest('[data-rank]');if(o)trocarOrdemRanking(o);
+  });
+  el.addEventListener('change',function(e){var s=e.target.closest('select[data-ligar]');if(s)ligarMeta(s);});
+  document.getElementById('rbSalvar').addEventListener('click',function(){salvarRobo(false);});
+  document.getElementById('rbTestar').addEventListener('click',function(){salvarRobo(true);});
+  document.getElementById('rbComoBtn').addEventListener('click',function(){
+    var c=document.getElementById('rbComo'),abrir=c.hidden;this.setAttribute('aria-expanded',String(abrir));
+    if(window.sagaRecolher)sagaRecolher(c,!abrir);else c.hidden=!abrir;
+  });
+  var tr=null;window.addEventListener('resize',function(){clearTimeout(tr);tr=setTimeout(function(){if(painelVisivel())desenharGraficoMes();},200);});
+}
+
 /* ---------- abas, filtros, menu "+ Novo" e início ---------- */
-function trocarAba(aba){
+function trocarAba(aba,naoGuardar){
   state.aba=aba;
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
+  if(!naoGuardar)guardar('saga-mkt-aba',aba);
+  if(aba==='painel')desenharGraficoMes();
 }
 function renderPeriodo(){
   var el=document.getElementById('pillsPeriodo');
-  el.innerHTML=[['mes','Este mês'],['ano','Este ano'],['tudo','Tudo']].map(function(o){return '<button class="pill'+(o[0]===state.periodo?' active':'')+'" data-v="'+o[0]+'" type="button">'+o[1]+'</button>';}).join('');
+  el.innerHTML=[['mes','Este mês'],['3m','Últimos 3 meses'],['ano','Este ano'],['tudo','Tudo']].map(function(o){return '<button class="pill'+(o[0]===state.periodo?' active':'')+'" data-v="'+o[0]+'" type="button">'+o[1]+'</button>';}).join('');
 }
 function ligarMenuNovo(){
   var btn=document.getElementById('btnNovo'),menu=document.getElementById('menuNovo');
@@ -1621,11 +2137,12 @@ function ligarMenuNovo(){
 function ligarEventos(){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.addEventListener('click',function(){trocarAba(b.dataset.aba);});});
   document.querySelectorAll('[data-fechar]').forEach(function(b){b.addEventListener('click',function(){fecharModal(b.dataset.fechar);if(b.dataset.fechar==='modalOpcoes')aoFecharOpcoes();if(b.dataset.fechar==='modalVerMaterial'){state.pino=null;state.marcando=false;}});});
-  document.getElementById('pillsPeriodo').addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;state.periodo=b.dataset.v;renderPeriodo();renderKpis();});
+  document.getElementById('pillsPeriodo').addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;state.periodo=b.dataset.v;renderPeriodo();renderKpis();renderPainel();});
   var tb=null;document.getElementById('busca').addEventListener('input',function(e){clearTimeout(tb);var v=e.target.value;tb=setTimeout(function(){state.busca=v;renderArtes();renderCampanhas();renderGraficosMarketing();},160);});
   document.getElementById('kpis').addEventListener('click',function(e){var k=e.target.closest('[data-ir]');if(!k)return;trocarAba('artes');escolherPasta(k.dataset.ir);});
   document.getElementById('kpis').addEventListener('keydown',function(e){if(e.key==='Enter'){var k=e.target.closest('[data-ir]');if(k)k.click();}});
   document.getElementById('btnAtualizar').addEventListener('click',carregarTudo);
+  ligarPainel();
   // pastas
   document.getElementById('mkPastas').addEventListener('click',function(e){
     var b=e.target.closest('[data-pasta]');if(b){escolherPasta(b.dataset.pasta);return;}
@@ -1778,6 +2295,7 @@ async function init(){
   var tm=lerGuardado('saga-mkt-tam');if(tm==='p'||tm==='m'||tm==='g')state.tamArt=tm;
   var vc=lerGuardado('saga-mkt-visao-camp');if(vc==='kanban'||vc==='lista')state.visaoCamp=vc;
   var pg=lerGuardado('saga-mkt-pasta');if(pg)state.pasta=lerChave(pg);
+  var ro=lerGuardado('saga-mkt-ranking');if(ro==='conversas'||ro==='custo'||ro==='cliques'||ro==='gasto')state.rankOrdem=ro;
   ligarEventos();ligarOrigemCampanha();renderPeriodo();
   await SagaUI.carregar('marketing');
   var s=await _sb.auth.getSession();
@@ -1797,12 +2315,14 @@ async function init(){
   document.querySelector('[data-novo="campanha"]').hidden=!state.pode.criar;
   document.querySelector('[data-novo="pasta"]').hidden=!state.pode.temaCriar;
   document.getElementById('novasWrap').hidden=!(state.pode.matCriar||state.pode.criar||state.pode.temaCriar);
-  if(!state.pode.verCampanhas)document.querySelector('[data-aba="campanhas"]').hidden=true;
+  if(!state.pode.verCampanhas){document.querySelector('[data-aba="campanhas"]').hidden=true;document.querySelector('[data-aba="painel"]').hidden=true;}
   var qs=new URLSearchParams(location.search),alvo=qs.get('material')||qs.get('id'),aba=qs.get('aba');
   if(qs.get('pasta'))state.pasta={tipo:'tema',id:qs.get('pasta')};
   if(qs.get('campanha'))state.pasta={tipo:'camp',id:qs.get('campanha')};
-  if(aba==='campanhas'&&state.pode.verCampanhas)trocarAba('campanhas');
-  else trocarAba(state.pode.verMateriais?'artes':'campanhas');
+  var abaGuardada=lerGuardado('saga-mkt-aba');
+  if(!aba&&(abaGuardada==='artes'||abaGuardada==='campanhas'||abaGuardada==='painel'))aba=abaGuardada;
+  if((aba==='campanhas'||aba==='painel')&&state.pode.verCampanhas)trocarAba(aba,true);
+  else trocarAba(state.pode.verMateriais?'artes':'campanhas',true);
   if(!state.pode.verMateriais)document.querySelector('[data-aba="artes"]').hidden=true;
   await carregarTudo();
   if(alvo){trocarAba('artes');abrirMaterial(alvo);}

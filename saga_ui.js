@@ -1102,6 +1102,7 @@
     if(n&&n.referencia_tabela==='pedidos_busca')return {titulo:'Pedido de busca',tela:'pedidos_busca.html'};
     if(n&&n.referencia_tabela==='sugestoes')return {titulo:'Sugestão de melhoria',tela:'sugestoes.html'};
     if(n&&n.referencia_tabela==='ponto')return {titulo:'Ponto',tela:'ponto_eletronico_padrao_metalico.html'};
+    if(n&&n.referencia_tabela==='meta_anuncios')return {titulo:'Robô do Meta',tela:'marketing_campanhas_padrao_metalico.html?aba=painel'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1115,7 +1116,7 @@
     {chave:'agenda',titulo:'Agenda',tipos:['compromisso_hoje','agenda_atribuida','agenda_solicitacao','agenda_resposta'],tela:'calendario_padrao_metalico.html',um:'aviso da agenda',varios:'avisos da agenda',cor:'#3b82f6'},
     {chave:'mencao',titulo:'Menções',tipos:['mencao'],tela:null,um:'menção em comentário',varios:'menções em comentários',cor:'#8b5cf6'},
     {chave:'intimacoes',titulo:'Intimações',tipos:['movimentacao_cnj'],tela:'monitoramento_multi_oab.html',um:'intimação nova',varios:'intimações novas',cor:'#14b8a6'},
-    {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso de material',varios:'avisos de materiais',cor:'#f97316'},
+    {chave:'marketing',titulo:'Marketing',tipos:['aprovacao'],tela:'marketing_campanhas_padrao_metalico.html?aba=materiais',um:'aviso do marketing',varios:'avisos do marketing',cor:'#f97316'},
     {chave:'captacao',titulo:'Captação',tipos:['distribuicao','retorno_captacao','acompanhamento'],tela:'lista_processos_padrao_metalico.html?fase=captacao',um:'aviso de fichas',varios:'avisos de fichas',cor:'#14b8a6'},
     {chave:'parados',titulo:'Processos parados e retornos',tipos:['processo_parado','nao_protocolado','retorno_juridico','resumo_semanal'],tela:'lista_processos_padrao_metalico.html?fase=juridico',um:'processo parado',varios:'processos parados',cor:'#d6452d'},
     {chave:'teses',titulo:'Teses e radar',tipos:['tese_atualizacao','radar_novo'],tela:'teses.html',um:'aviso de teses e radar',varios:'avisos de teses e radar',cor:'#0ea5e9'},
@@ -1133,6 +1134,8 @@
     // Lembrete da saída do ponto (bloco 146): tipo 'outro' com a referência 'ponto'
     if(n&&n.referencia_tabela==='ponto'){for(var q=0;q<GRUPOS_NOTIF.length;q++){if(GRUPOS_NOTIF[q].chave==='ponto')return GRUPOS_NOTIF[q];}}
     if(n&&n.referencia_tabela==='sugestoes'){for(var k=0;k<GRUPOS_NOTIF.length;k++){if(GRUPOS_NOTIF[k].chave==='sugestoes')return GRUPOS_NOTIF[k];}}
+    // Robô do Meta (bloco 150): tipo 'outro' com a referência 'meta_anuncios', vai para o grupo do Marketing
+    if(n&&n.referencia_tabela==='meta_anuncios'){for(var mk=0;mk<GRUPOS_NOTIF.length;mk++){if(GRUPOS_NOTIF[mk].chave==='marketing')return GRUPOS_NOTIF[mk];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1247,6 +1250,7 @@
       global.sagaIrPara('pedidos_busca.html');return;
     }
     if(n.referencia_tabela==='ponto'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html');return;}
+    if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     if(n.referencia_tabela==='sugestoes'){global.sagaIrPara('sugestoes.html'+(n.referencia_id?'?id='+encodeURIComponent(n.referencia_id):''));return;}
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{

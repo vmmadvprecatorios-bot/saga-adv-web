@@ -496,3 +496,6 @@ html:not(.saga-pode-apagar) :is(
 select option,select optgroup{background:var(--panel-solid);color:var(--text)}
 select option:checked{background:color-mix(in srgb,var(--gold) 22%,var(--panel-solid));color:var(--text)}
 select option:disabled{color:var(--muted)}
+/* Painel do marketing (bloco 150): cor das barras do gráfico no tema Grafite */
+html[data-cor="grafite"] body[data-theme="dark"] .mp{--mp-barra:#8FA3B8}
+html[data-cor="grafite"] body[data-theme="light"] .mp{--mp-barra:#4E6378}
