@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611101334"></script>
+<script src="saga_guard.js?v=202611101436"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV Sistema | Calendario</title>
@@ -411,7 +411,7 @@
   .aviso-serie{font-size:11.5px;color:var(--muted);background:color-mix(in srgb,var(--gold) 8%,transparent);border:1px solid color-mix(in srgb,var(--gold) 25%,transparent);border-radius:9px;padding:9px 11px;margin:0 0 12px;line-height:1.45;}
   .aviso-serie[hidden]{display:none;}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611101334">
+<link rel="stylesheet" href="saga_tema.css?v=202611101436">
 </head>
 <body data-theme="dark">
 
@@ -464,8 +464,8 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
         Novo Compromisso
       </button>
-      <button class="btn-hoje" id="btnMarcarAtendimento" title="Ver horários de atendimento livres e pedir uma reunião">Marcar atendimento</button>
-      <button class="btn-hoje" id="btnMeusHorarios" style="display:none;" title="Definir seus horários de atendimento e responder pedidos">Meus horários <span class="badge-pedidos" id="badgePedidos" style="display:none;">0</span></button>
+      <button class="btn-hoje" id="btnMarcarAtendimento" title="Marcar um atendimento com cliente: horários livres de quem atende, presencial ou por vídeo (WhatsApp ou Google Meet)">Marcar atendimento</button>
+      <button class="btn-hoje" id="btnMeusHorarios" style="display:none;" title="Seus horários fixos de atendimento (dias, horas e duração de cada reunião)">Meus horários <span class="badge-pedidos" id="badgePedidos" style="display:none;">0</span></button>
     </div>
 
     <div class="legenda-calendario" id="legendaCalendario"></div>
@@ -520,6 +520,7 @@
     </div>
     <div class="aviso-leitura" id="avisoLeitura" style="display:none;">Você está vendo um compromisso de outro colaborador. Só quem criou, a pessoa da agenda e o Jurídico (nos eventos do escritório) podem mudar.</div>
     <div class="aviso-serie" id="avisoSerie" hidden></div>
+    <div class="campo-modal sat-evento" id="satEvento" hidden></div>
     <div class="campo-modal">
       <label>Titulo</label>
       <input type="text" id="compTitulo" placeholder="Ex.: Audiencia - Cliente Fulano" maxlength="200">
@@ -654,9 +655,10 @@
 <div id="toast-container"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611101334"></script>
-<script src="saga_roscas.js?v=202611101334"></script>
-<script src="saga_texto.js?v=202611101334"></script>
+<script src="saga_ui.js?v=202611101436"></script>
+<script src="saga_roscas.js?v=202611101436"></script>
+<script src="saga_texto.js?v=202611101436"></script>
+<script src="saga_atendimentos.js?v=202611101436"></script>
 <script>
 // ================================================================
 // VMMADV - Calendario Conectado ao Supabase
@@ -668,7 +670,7 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ---- TIPOS PADRAO ----
-var TIPOS_PADRAO = ['Audiencia','Reuniao','Prazo Processual','Despacho','Pericia','Outros'];
+var TIPOS_PADRAO = ['Audiencia','Reuniao','Prazo Processual','Despacho','Pericia','Outros','Atendimento'];
 var CORES_PADRAO = ['#6fa3d8','#5dd8a0','#e85d5d','#e8b84c','#4b8af5','#8b93a8','#a78bfa','#f97316'];
 var COR_TAREFA  = '#e8b84c'; // var(--warning)
 
@@ -699,7 +701,7 @@ var ORDEM_PERFIS_AG = ['Jurídico', 'Captação', 'Administrativo', 'Financeiro'
 var podeEditarEscritorio = false;
 var visSelecionada = 'particular';
 var compAbertoAg = null; // compromisso aberto na janela (num evento que se repete: a data clicada, com _serie)
-var COLUNAS_COMP = 'id, titulo, tipo, data_hora_inicio, data_hora_fim, local_ou_link, observacao, criado_por_id, processo_id, responsavel_id, concluido, concluido_em, comentario_conclusao, situacao, visibilidade, repete, repete_ate, ocorrencias_concluidas';
+var COLUNAS_COMP = 'id, titulo, tipo, data_hora_inicio, data_hora_fim, local_ou_link, observacao, criado_por_id, processo_id, responsavel_id, concluido, concluido_em, comentario_conclusao, situacao, visibilidade, repete, repete_ate, ocorrencias_concluidas, pessoa_id, modalidade, canal, contato_telefone, contato_email, atendimento_resposta_id';
 
 var NOMES_MESES  = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 var NOMES_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
@@ -2292,6 +2294,27 @@ atualizarPeriodoTexto();
       $('compConclusaoTexto').value = ehData ? '' : (comp.comentario_conclusao || '');
       $('conclusaoInfo').textContent = !ehData && comp.concluido && comp.concluido_em ? 'Concluído em ' + new Date(comp.concluido_em).toLocaleString('pt-BR') : '';
     }
+    // atendimento com cliente (T141, bloco 149): forma, atalhos (WhatsApp / Meet) e a conversa, a mesma da ficha do cliente.
+    // Tipo, repetição e "quem vê" ficam fixos (Atendimento, não repete, agenda do escritório); concluir é pela conversa.
+    var ehAt = !!(comp && comp.modalidade);
+    if (ehAt) $('modalCompTitulo').textContent = 'Atendimento';
+    var cTipo = $('dropdownTipo') && $('dropdownTipo').closest('.campo-modal'), cRep = $('compRepete') && $('compRepete').closest('.grid-2-campos');
+    if (cTipo) cTipo.style.display = ehAt ? 'none' : '';
+    if (cRep) cRep.style.display = ehAt ? 'none' : '';
+    $('campoVisibilidade').style.display = ehAt ? 'none' : '';
+    var sat = $('satEvento');
+    if (sat) {
+      sat.hidden = !ehAt; sat.innerHTML = '';
+      if (ehAt && window.SagaAtendimentos) {
+        $('blocoConclusao').style.display = 'none';
+        sat.innerHTML = '<div class="sub-conclusao">Carregando o atendimento…</div>';
+        SagaAtendimentos.carregar(comp.id).then(function(at){
+          if (compAtual !== comp) return;
+          if (!at) { sat.innerHTML = '<div class="sub-conclusao">Não foi possível carregar o atendimento.</div>'; return; }
+          SagaAtendimentos.bloco(sat, at, { mostrarCliente: true, onMudou: function(){ carregarEventos(); } });
+        }).catch(function(){ sat.innerHTML = '<div class="sub-conclusao">Não foi possível carregar o atendimento.</div>'; });
+      }
+    }
   }
   var _abrir = abrirModalCompromisso, _novo = abrirModalNovoCompromisso, _novoDH = abrirModalNovoComDataHora;
   abrirModalCompromisso = function(c){ _abrir(c); prepararBlocos(c); };
@@ -2319,160 +2342,29 @@ atualizarPeriodoTexto();
     if (r.error) { showToast(r.error.message || 'Não foi possível responder.', 'erro'); return; }
     showToast(aceitar ? 'Atendimento confirmado.' : 'Pedido recusado.', 'sucesso');
     $('modalCompromisso').classList.remove('aberto');
-    await carregarEventos(); atualizarPedidos();
+    await carregarEventos();
   }
   $('btnPedidoAceitar').addEventListener('click', function(){ responder(true); });
   $('btnPedidoRecusar').addEventListener('click', function(){ responder(false); });
 
-  // ---------- janelas novas ----------
-  function janela(id, titulo, corpo){
-    var ov = document.createElement('div'); ov.className = 'modal-overlay'; ov.id = id;
-    ov.innerHTML = '<div class="modal-comp agd-modal"><div class="modal-comp-header"><h3>' + esc(titulo) + '</h3><button class="btn-fechar-modal" aria-label="Fechar">✕</button></div><div class="agd-corpo">' + corpo + '</div></div>';
-    document.body.appendChild(ov);
-    var fechar = function(){ ov.classList.remove('aberto'); };
-    ov.querySelector('.btn-fechar-modal').addEventListener('click', fechar);
-    ov.addEventListener('click', function(e){ if (e.target === ov) fechar(); });
-    return ov;
-  }
-
-  // ----- marcar atendimento (qualquer colaborador) -----
-  var A = { ov: null, atendente: null, semana: 0, slot: null };
-  async function abrirAtendimento(){
-    if (!A.ov) {
-      A.ov = janela('modalAtendimento', 'Marcar atendimento',
-        '<div class="agd-linha"><select id="agdAtendente" aria-label="Quem atende"></select>' +
-        '<button class="btn-hoje" id="agdAnt" type="button">‹ Semana anterior</button><button class="btn-hoje" id="agdProx" type="button">Próxima semana ›</button></div>' +
-        '<div id="agdSlots"><div class="agd-dia">Carregando…</div></div>' +
-        '<div class="campo-modal" style="margin-top:12px"><label for="agdAssunto">Assunto (cliente e motivo)</label><input type="text" id="agdAssunto" placeholder="Ex.: Maria da Silva, processo 0001234, assinatura do contrato"></div>' +
-        '<div class="campo-modal"><label for="agdObs">Observação (opcional)</label><textarea id="agdObs" placeholder="Telefone do cliente, documentos, detalhes..."></textarea></div>' +
-        '<div class="modal-botoes"><button class="btn-cancelar-modal" id="agdCancelar" type="button">Cancelar</button><button class="btn-salvar-modal" id="agdSolicitar" type="button" disabled>Solicitar este horário</button></div>');
-      A.ov.querySelector('#agdCancelar').addEventListener('click', function(){ A.ov.classList.remove('aberto'); });
-      A.ov.querySelector('#agdAtendente').addEventListener('change', function(){ A.atendente = this.value; A.semana = 0; A.slot = null; carregarSlots(); });
-      A.ov.querySelector('#agdAnt').addEventListener('click', function(){ if (A.semana > 0) { A.semana--; A.slot = null; carregarSlots(); } });
-      A.ov.querySelector('#agdProx').addEventListener('click', function(){ A.semana++; A.slot = null; carregarSlots(); });
-      A.ov.querySelector('#agdSolicitar').addEventListener('click', solicitar);
-      if (window.SagaTexto) SagaTexto.ligar(A.ov.querySelector('#agdObs'));
-    }
-    A.ov.classList.add('aberto');
-    var r = await _sb.rpc('agenda_atendentes');
-    var sel = A.ov.querySelector('#agdAtendente');
-    var lista = r.data || [];
-    sel.innerHTML = lista.length ? lista.map(function(a){ return '<option value="' + esc(a.id) + '">' + esc(a.nome) + '</option>'; }).join('') : '<option value="">Ninguém atende clientes ainda</option>';
-    if (lista.length) { A.atendente = A.atendente && lista.some(function(a){ return a.id === A.atendente; }) ? A.atendente : lista[0].id; sel.value = A.atendente; carregarSlots(); }
-    else A.ov.querySelector('#agdSlots').innerHTML = '<div class="agd-dia">Peça ao administrador para ligar "Atende clientes" no Painel de Permissões.</div>';
-  }
-  async function carregarSlots(){
-    var box = A.ov.querySelector('#agdSlots'); box.innerHTML = '<div class="agd-dia">Carregando…</div>';
-    A.ov.querySelector('#agdSolicitar').disabled = true;
-    var de = new Date(); de.setHours(0,0,0,0); de.setDate(de.getDate() + A.semana * 7);
-    var ate = new Date(de); ate.setDate(ate.getDate() + 7);
-    var r = await _sb.rpc('agenda_horarios_do_atendente', { p_usuario: A.atendente, p_de: de.toISOString(), p_ate: ate.toISOString() });
-    if (r.error) { box.innerHTML = '<div class="agd-dia">Não foi possível carregar os horários.</div>'; return; }
-    var dias = {}, ordem = [];
-    (r.data || []).forEach(function(h){ var k = chaveDia(h.inicio); if (!dias[k]) { dias[k] = []; ordem.push(k); } dias[k].push(h); });
-    if (!ordem.length) { box.innerHTML = '<div class="agd-dia">Nenhum horário de atendimento definido nesta semana.</div>'; return; }
-    box.innerHTML = ordem.map(function(k){
-      return '<div class="agd-dia">' + esc(diaTxt(dias[k][0].inicio)) + '</div><div class="agd-slots">' + dias[k].map(function(h){
-        var rot = h.situacao === 'livre' ? 'livre' : h.situacao === 'solicitado' ? 'solicitado' : 'ocupado';
-        return '<button type="button" class="agd-slot ' + rot + '" data-id="' + esc(h.id) + '" ' + (rot === 'livre' ? '' : 'disabled') + ' title="' + (rot === 'livre' ? 'Livre' : rot === 'solicitado' ? 'Já tem um pedido' : 'Ocupado') + '">' + esc(hora(h.inicio)) + '</button>';
-      }).join('') + '</div>';
-    }).join('');
-    box.querySelectorAll('.agd-slot.livre').forEach(function(b){ b.addEventListener('click', function(){
-      box.querySelectorAll('.agd-slot.sel').forEach(function(x){ x.classList.remove('sel'); });
-      b.classList.add('sel'); A.slot = b.dataset.id; A.ov.querySelector('#agdSolicitar').disabled = false;
-    }); });
-  }
-  async function solicitar(){
-    var assunto = A.ov.querySelector('#agdAssunto').value.trim();
-    if (!A.slot) { showToast('Escolha um horário livre.', 'erro'); return; }
-    if (!assunto) { showToast('Escreva o assunto do atendimento.', 'erro'); A.ov.querySelector('#agdAssunto').focus(); return; }
-    var b = A.ov.querySelector('#agdSolicitar'); b.disabled = true;
-    var r = await _sb.rpc('agenda_solicitar', { p_horario: A.slot, p_titulo: assunto, p_processo: null, p_obs: A.ov.querySelector('#agdObs').value.trim() || null });
-    if (r.error) { showToast(r.error.message || 'Não foi possível solicitar.', 'erro'); carregarSlots(); return; }
-    showToast('Pedido enviado. A pessoa será avisada para confirmar.', 'sucesso');
-    A.ov.querySelector('#agdAssunto').value = ''; A.ov.querySelector('#agdObs').value = ''; A.slot = null;
-    A.ov.classList.remove('aberto');
-    await carregarEventos();
-  }
-  $('btnMarcarAtendimento').addEventListener('click', abrirAtendimento);
-
-  // ----- meus horários (quem atende) -----
-  var M = { ov: null };
-  async function abrirMeusHorarios(){
-    if (!M.ov) {
-      var dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(function(n, i){ return '<label><input type="checkbox" class="mhDia" value="' + i + '"' + (i >= 1 && i <= 5 ? ' checked' : '') + '> ' + n + '</label>'; }).join('');
-      M.ov = janela('modalMeusHorarios', 'Meus horários de atendimento',
-        '<div class="agd-dia">Pedidos aguardando sua resposta</div><div id="mhPedidos"></div>' +
-        '<div class="agd-dia">Criar horários</div>' +
-        '<div class="agd-dias">' + dias + '</div>' +
-        '<div class="agd-linha"><label>De <input type="time" id="mhIni" value="09:00"></label><label>até <input type="time" id="mhFim" value="12:00"></label><label>cada atendimento <input type="number" id="mhDur" value="30" min="10" max="240" style="width:70px"> min</label></div>' +
-        '<div class="agd-linha"><label>Do dia <input type="date" id="mhDe"></label><label>ao dia <input type="date" id="mhAte"></label><button class="btn-salvar-modal" id="mhGerar" type="button">Criar horários</button></div>' +
-        '<div class="agd-dia">Meus próximos horários (30 dias)</div><div id="mhLista"></div>');
-      var hj = new Date(); hj.setDate(hj.getDate() + 1); var fim = new Date(hj); fim.setDate(fim.getDate() + 27);
-      var iso = function(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
-      M.ov.querySelector('#mhDe').value = iso(hj); M.ov.querySelector('#mhAte').value = iso(fim);
-      M.ov.querySelector('#mhGerar').addEventListener('click', async function(){
-        var dd = Array.from(M.ov.querySelectorAll('.mhDia:checked')).map(function(c){ return Number(c.value); });
-        if (!dd.length) { showToast('Marque pelo menos um dia da semana.', 'erro'); return; }
-        var b = this; b.disabled = true;
-        var r = await _sb.rpc('agenda_gerar_horarios', { p_dias: dd, p_hora_ini: M.ov.querySelector('#mhIni').value, p_hora_fim: M.ov.querySelector('#mhFim').value, p_duracao: Number(M.ov.querySelector('#mhDur').value), p_de: M.ov.querySelector('#mhDe').value, p_ate: M.ov.querySelector('#mhAte').value });
-        b.disabled = false;
-        if (r.error) { showToast(r.error.message || 'Não foi possível criar.', 'erro'); return; }
-        showToast(r.data + ' horário(s) criado(s).', 'sucesso'); listarMeus();
-      });
-    }
-    M.ov.classList.add('aberto');
-    listarPedidos(); listarMeus();
-  }
-  async function listarPedidos(){
-    await carregarColegas();
-    var r = await _sb.from('compromissos').select('id, titulo, data_hora_inicio, observacao, criado_por_id').eq('responsavel_id', meuPerfilId).eq('situacao', 'solicitado').order('data_hora_inicio');
-    var lista = r.data || [], box = M.ov ? M.ov.querySelector('#mhPedidos') : null;
-    var bd = $('badgePedidos'); bd.textContent = lista.length; bd.style.display = lista.length ? '' : 'none';
-    if (!box) return;
-    if (!lista.length) { box.innerHTML = '<div class="sub-conclusao">Nenhum pedido pendente.</div>'; return; }
-    box.innerHTML = lista.map(function(p){
-      return '<div class="agd-ped" data-id="' + esc(p.id) + '"><b>' + esc(diaTxt(p.data_hora_inicio)) + ' às ' + esc(hora(p.data_hora_inicio)) + '</b> · de ' + esc(nomeDe(p.criado_por_id)) + '<br>' + esc(p.titulo) + (p.observacao ? '<br><span class="sub-conclusao">' + (window.SagaTexto ? SagaTexto.html(p.observacao) : esc(p.observacao)) + '</span>' : '') +
-        '<input type="text" class="mhMotivo" placeholder="Motivo, se for recusar (opcional)" style="width:100%;margin-top:6px"><div class="linha-acoes"><button type="button" class="btn-salvar-modal" data-ac="1">Confirmar</button><button type="button" class="btn-excluir-modal" data-ac="0">Recusar</button></div></div>';
-    }).join('');
-    box.querySelectorAll('.agd-ped').forEach(function(card){
-      card.querySelectorAll('button').forEach(function(b){ b.addEventListener('click', async function(){
-        b.disabled = true;
-        var r2 = await _sb.rpc('agenda_responder', { p_compromisso: card.dataset.id, p_aceitar: b.dataset.ac === '1', p_motivo: card.querySelector('.mhMotivo').value || null });
-        if (r2.error) { showToast(r2.error.message || 'Não foi possível responder.', 'erro'); b.disabled = false; return; }
-        showToast(b.dataset.ac === '1' ? 'Atendimento confirmado.' : 'Pedido recusado.', 'sucesso');
-        listarPedidos(); listarMeus(); carregarEventos();
-      }); });
-    });
-  }
-  async function listarMeus(){
-    var box = M.ov.querySelector('#mhLista'), de = new Date(), ate = new Date(); ate.setDate(ate.getDate() + 30);
-    var r = await _sb.rpc('agenda_horarios_do_atendente', { p_usuario: meuPerfilId, p_de: de.toISOString(), p_ate: ate.toISOString() });
-    var lista = r.data || [];
-    if (!lista.length) { box.innerHTML = '<div class="sub-conclusao">Você ainda não criou horários.</div>'; return; }
-    var dias = {}, ordem = [];
-    lista.forEach(function(h){ var k = chaveDia(h.inicio); if (!dias[k]) { dias[k] = []; ordem.push(k); } dias[k].push(h); });
-    box.innerHTML = '<div class="sub-conclusao">Clique num horário livre para apagá-lo.</div>' + ordem.map(function(k){
-      return '<div class="agd-dia">' + esc(diaTxt(dias[k][0].inicio)) + '</div><div class="agd-slots">' + dias[k].map(function(h){
-        return '<button type="button" class="agd-slot ' + (h.situacao === 'livre' ? 'livre' : h.situacao === 'solicitado' ? 'solicitado' : 'ocupado') + '" data-id="' + esc(h.id) + '" ' + (h.situacao === 'livre' ? '' : 'disabled') + '>' + esc(hora(h.inicio)) + '</button>';
-      }).join('') + '</div>';
-    }).join('');
-    box.querySelectorAll('.agd-slot.livre').forEach(function(b){ b.addEventListener('click', async function(){
-      var r2 = await _sb.rpc('agenda_remover_horarios', { p_ids: [b.dataset.id] });
-      if (r2.error) { showToast('Não foi possível apagar.', 'erro'); return; }
-      b.remove();
-    }); });
-  }
-  $('btnMeusHorarios').addEventListener('click', abrirMeusHorarios);
-  async function atualizarPedidos(){ if (!souAtendente) return; if (M.ov) { listarPedidos(); } else { await carregarColegas(); var r = await _sb.from('compromissos').select('id', { count: 'exact', head: true }).eq('responsavel_id', meuPerfilId).eq('situacao', 'solicitado'); var n = r.count || 0, bd = $('badgePedidos'); bd.textContent = n; bd.style.display = n ? '' : 'none'; } }
-
-  // espera o login terminar e mostra os botões de quem atende
+  // ---------- agenda de atendimentos (T141, bloco 149): janelas no saga_atendimentos.js ----------
+  // Marcar: cliente cadastrado obrigatório, quem atende, horários livres da pessoa, presencial ou telepresencial
+  // (WhatsApp exige o telefone do cliente; Google Meet, o e-mail). Meus horários: a grade fixa de cada semana.
+  if (window.SagaAtendimentos) SagaAtendimentos.configurar({ toast: function(m, t){ showToast(esc(m), t === 'ok' ? 'sucesso' : t === 'erro' ? 'erro' : 'info'); } });
+  $('btnMarcarAtendimento').addEventListener('click', function(){
+    if (!window.SagaAtendimentos) return;
+    SagaAtendimentos.marcar({ aoSalvar: function(){ carregarEventos(); } });
+  });
+  $('btnMeusHorarios').addEventListener('click', function(){
+    if (window.SagaAtendimentos) SagaAtendimentos.horarios({ aoSalvar: function(){ carregarEventos(); } });
+  });
+  // espera o login terminar: "Meus horários" aparece para quem atende clientes e para o administrador
   var tentativas = 0, espera = setInterval(async function(){
     if (meuPerfilId) {
       clearInterval(espera);
-      var r = await _sb.rpc('agenda_sou_atendente');
-      souAtendente = r.data === true;
-      if (souAtendente) { $('btnMeusHorarios').style.display = ''; atualizarPedidos(); }
+      var r = await _sb.rpc('agenda_sou_atendente'), ra = await _sb.rpc('eh_admin_sistema');
+      souAtendente = r.data === true || ra.data === true;
+      if (souAtendente) $('btnMeusHorarios').style.display = '';
     } else if (++tentativas > 80) clearInterval(espera);
   }, 250);
 })();

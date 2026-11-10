@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611101334"></script>
+<script src="saga_guard.js?v=202611101436"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -359,18 +359,19 @@ span.ps-origem-btn{cursor:default}
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611101334"></script>
-<script src="saga_fichas.js?v=202611101334"></script>
-<script src="saga_teses.js?v=202611101334"></script>
-<script src="saga_mencoes.js?v=202611101334"></script>
-<script src="saga_texto.js?v=202611101334"></script>
-<script src="saga_partes.js?v=202611101334"></script>
-<script src="saga_etiquetas.js?v=202611101334"></script>
-<script src="saga_origem.js?v=202611101334"></script>
-<script src="saga_planilha.js?v=202611101334"></script>
-<script src="saga_recursos.js?v=202611101334"></script>
-<script src="saga_tribunais.js?v=202611101334"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611101334">
+<script src="saga_ui.js?v=202611101436"></script>
+<script src="saga_fichas.js?v=202611101436"></script>
+<script src="saga_teses.js?v=202611101436"></script>
+<script src="saga_mencoes.js?v=202611101436"></script>
+<script src="saga_texto.js?v=202611101436"></script>
+<script src="saga_partes.js?v=202611101436"></script>
+<script src="saga_etiquetas.js?v=202611101436"></script>
+<script src="saga_origem.js?v=202611101436"></script>
+<script src="saga_planilha.js?v=202611101436"></script>
+<script src="saga_recursos.js?v=202611101436"></script>
+<script src="saga_tribunais.js?v=202611101436"></script>
+<script src="saga_atendimentos.js?v=202611101436"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611101436">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -420,6 +421,11 @@ span.ps-origem-btn{cursor:default}
               <button class="btn-add-checklist" id="btnAddChecklist">+ Adicionar Checklist</button>
               <div class="dropdown-modelos" id="dropdownModelos"></div>
             </div>
+          </section>
+
+          <section class="secao" id="secaoAtendimentos" hidden>
+            <div class="secao-titulo secao-titulo-actions"><span style="display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Atendimentos</span><button class="sat-b btn-sm peq" type="button" id="btnMarcarAtendimentoFicha" title="Marcar um atendimento com este cliente (presencial, WhatsApp ou Google Meet)">+ Marcar atendimento</button></div>
+            <div id="atendimentosFicha"></div>
           </section>
 
           <section class="secao" id="secaoHistorico">
@@ -3440,6 +3446,24 @@ async function carregarDetalhesProcesso(pid){
     return null;
   }
 }
+/* ---------- Atendimentos do cliente (T141, bloco 149): a mesma conversa da agenda; responder aqui = responder no evento ---------- */
+if(window.SagaAtendimentos)SagaAtendimentos.configurar({toast:(m,t)=>showToast(esc(m),t==='ok'?'success':t==='erro'?'error':'warning')});
+function renderAtendimentosFicha(forcar){
+  const sec=document.getElementById('secaoAtendimentos'),el=document.getElementById('atendimentosFicha');
+  if(!sec||!el)return;
+  const p=state.pessoaRow;
+  if(!window.SagaAtendimentos||!p||!perms.compromissosVisualizar){sec.hidden=true;return;}
+  sec.hidden=false;
+  const btn=document.getElementById('btnMarcarAtendimentoFicha');if(btn)btn.hidden=perms.compromissosCriar!==true;
+  if(!forcar&&el.dataset.pessoa===p.id)return;
+  el.dataset.pessoa=p.id;
+  SagaAtendimentos.listaFicha(el,{pessoaId:p.id,pessoaNome:p.nome_completo});
+}
+function marcarAtendimentoFicha(){
+  const p=state.pessoaRow;if(!p||!window.SagaAtendimentos)return;
+  SagaAtendimentos.marcar({pessoaId:p.id,pessoaNome:p.nome_completo,processoId:state.activeProcessId||null,aoSalvar:()=>renderAtendimentosFicha(true)});
+}
+document.getElementById('btnMarcarAtendimentoFicha').addEventListener('click',marcarAtendimentoFicha);
 async function carregarFicha(pessoaId,processoIdInicial){
   mostrarVistaFicha();
   if(!perms.pessoasVisualizar){
@@ -3466,6 +3490,7 @@ async function carregarFicha(pessoaId,processoIdInicial){
     if(state.activeProcessId)await carregarDetalhesProcesso(state.activeProcessId);
     state.activeView='process';
     renderActiveProcess();
+    renderAtendimentosFicha();
     return true;
   }catch(erro){
     showToast('Não foi possível carregar os dados desta pessoa.','error');
@@ -4757,7 +4782,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611101334"></script>
-<script src="saga_ficha_atividades.js?v=202611101334"></script>
+<script src="saga_localizacao.js?v=202611101436"></script>
+<script src="saga_ficha_atividades.js?v=202611101436"></script>
 </body>
 </html>
