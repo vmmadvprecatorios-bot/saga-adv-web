@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611102339"></script>
+<script src="saga_guard.js?v=202611102356"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Teses e oportunidades</title>
@@ -23,6 +23,12 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .btn-ouro{background:var(--gold);border-color:var(--gold);color:#fff}.btn-ouro:hover{background:var(--gold-light);border-color:var(--gold-light)}
 a.btn{text-decoration:none;color:inherit}
 .btn-sm{height:30px;padding:0 11px;font-size:11.5px;border-radius:9px}
+/* T132: achar clientes para uma tese */
+.btn-clientes svg{flex:0 0 auto}
+a.btn[aria-disabled="true"]{opacity:.45;pointer-events:none}
+.tese-acoes{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;margin:0 0 12px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel)}
+.tese-acoes span{font-size:12.5px;color:var(--muted);line-height:1.5}.tese-acoes b{color:var(--text);font-weight:600}
+.cartao-tese .btn-clientes{align-self:flex-start;margin-top:2px}
 .btn-perigo:hover{border-color:color-mix(in srgb,var(--text) 55%,transparent);background:color-mix(in srgb,var(--text) 8%,var(--panel))}
 html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafite"] body[data-theme="dark"] .pill.active,html[data-cor="grafite"] body[data-theme="dark"] .vis button.active{color:#1A1A1A}
 .abas{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel);flex-wrap:wrap}
@@ -192,7 +198,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
 .opc-linha{display:flex;align-items:center;gap:8px;margin-bottom:6px}.opc-linha input[type=text]{flex:1;min-width:0;height:32px;border-radius:8px;border:1px solid var(--border-soft);background:var(--panel);padding:0 9px;font-size:12px}.opc-linha input[type=color]{width:32px;height:30px;border:1px solid var(--border-soft);border-radius:7px;background:none;padding:0}
 @media(max-width:860px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.atu-grade{grid-template-columns:1fr}.teses-lista{position:static;flex-direction:row;overflow-x:auto;max-height:none}.teses-tit{display:none}.tese-item{flex:0 0 auto}.grade2,.grade3,.blocos,.agenda{grid-template-columns:1fr}.vis button span{display:none}.rad{grid-template-columns:1fr}.rad .acoes{justify-content:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611102339">
+<link rel="stylesheet" href="saga_tema.css?v=202611102356">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -255,8 +261,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611102339"></script>
-<script src="saga_texto.js?v=202611102339"></script>
+<script src="saga_ui.js?v=202611102356"></script>
+<script src="saga_texto.js?v=202611102356"></script>
 <script>
 /* =====================================================================
    SAGA · Teses e oportunidades (blocos 110 e 111)
@@ -299,6 +305,29 @@ function semMov(){try{return localStorage.getItem('saga-movimento')==='reduzido'
 // Só mostra/esconde: o saga_guard.js já anima toda janela que abre e fecha (animar aqui também fazia a janela sumir, voltar e sumir de novo)
 function abrir(id){$(id).classList.add('aberto');}
 function fechar(id){var m=$(id);if(m)m.classList.remove('aberto');}
+/* ---------- T132: achar clientes para uma tese ----------
+   Abre Clientes por perfil (clientes_perfil.html?tese=<id>) com os clientes do Jurídico que ainda não têm a tese.
+   Só aparece para quem pode ver a tela Clientes por perfil. */
+var PODE_CLIENTES=false;
+var ICO_CLI='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 20a6.5 6.5 0 0 1 10.5-5.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="17.5" cy="16.5" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M19.7 18.7L22 21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+function urlClientes(id){return 'clientes_perfil.html?tese='+encodeURIComponent(id);}
+function irPara(url){if(window.sagaIrPara)sagaIrPara(url);else location.href=url;}
+function btnClientes(id,texto,classe){
+  if(!PODE_CLIENTES||!id||id==='__geral')return '';
+  return '<a class="btn btn-sm btn-clientes'+(classe?' '+classe:'')+'" href="'+urlClientes(id)+'" data-clientes-tese="'+esc(id)+'" title="Abre Clientes por perfil com os clientes que ainda não têm esta tese">'+ICO_CLI+'<span>'+esc(texto||'Achar clientes para esta tese')+'</span></a>';
+}
+function abrirEscolhaTese(){
+  var lista=T.teses.filter(function(t){return t.ativo!==false;});
+  var atual=T.tese&&T.tese!=='__geral'?T.tese:'';
+  $('mdConf').innerHTML='<div class="md-cab"><div><h2>Achar clientes para uma tese</h2><p>Abre "Clientes por perfil" com os clientes do Jurídico que ainda não têm a tese escolhida. Lá dá para afinar pelo perfil (situação funcional, órgão, idade...).</p></div><button class="md-x" type="button" data-fechar="moConf" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo"><div class="campo"><label for="escTese">Tese (tipo de ação)</label><select id="escTese"><option value="">Escolha a tese…</option>'+lista.map(function(t){return '<option value="'+esc(t.id)+'"'+(t.id===atual?' selected':'')+'>'+esc(t.nome)+'</option>';}).join('')+'</select></div></div>'+
+    '<div class="md-rod"><button class="btn" type="button" data-fechar="moConf">Cancelar</button><a class="btn btn-ouro btn-clientes" id="escIr" href="clientes_perfil.html" data-clientes-tese="">'+ICO_CLI+'<span>Achar clientes</span></a></div>';
+  abrir('moConf');
+  var sel=$('escTese'),ir=$('escIr');
+  function estado(){var v=sel.value;ir.setAttribute('href',v?urlClientes(v):'clientes_perfil.html');ir.setAttribute('data-clientes-tese',v);if(v)ir.removeAttribute('aria-disabled');else ir.setAttribute('aria-disabled','true');}
+  sel.addEventListener('change',estado);estado();
+  setTimeout(function(){sel.focus();},60);
+}
 function opcoes(cat){return T.cat.filter(function(c){return c.categoria===cat&&c.ativo;}).sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});}
 function catPorId(id){return T.cat.find(function(c){return c.id===id;});}
 function nomeTese(id){var t=T.teses.find(function(x){return x.id===id;});return t?t.nome:'';}
@@ -350,7 +379,9 @@ function desenharBotoes(){
   else if(T.aba==='prateleira'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo produto</button>';
   else if(T.aba==='radar'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo item no radar</button>';
   if(p.admin&&T.aba!=='radar')b='<button class="btn" type="button" id="btnOpcoes">Organizar situações</button>'+b;
+  if(PODE_CLIENTES&&T.aba!=='radar')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
   $('botoesTopo').innerHTML=b;
+  var ac=$('btnAcharClientes');if(ac)ac.onclick=abrirEscolhaTese;
   var n=$('btnNovo');if(n)n.onclick=function(){if(T.aba==='atualizacoes')formPost(null);else if(T.aba==='prateleira')formProduto(null);else formRadar(null);};
   var o=$('btnOpcoes');if(o)o.onclick=function(){organizarOpcoes(T.aba==='atualizacoes'?'tese_situacao':'produto_situacao');};
   var novas=T.posts.filter(function(x){return x.ativo&&!T.lidos[x.id]&&x.autor_id!==T.eu;}).length;
@@ -394,7 +425,8 @@ function htmlBlog(lista){
       '<div class="post-topo">'+selo(catPorId(p.situacao_id))+'<span class="etq-tese">'+esc(nomeTese(p.tese_id)||'Geral')+'</span>'+(p.fixada?'<span title="Fixada no topo">📌</span>':'')+(novo?'<span class="marca-novo">Novo</span>':'')+(p.ativo?'':'<span class="marca-novo" style="color:var(--muted)">Arquivada</span>')+'</div>'+
       '<h3>'+esc(p.titulo)+'</h3><div class="previa">'+esc(puro(p.corpo).slice(0,320))+'</div>'+
       '<div class="rodape"><span>'+esc(nomePessoa(p.autor_id)||'Escritório')+' · '+dataBR(p.criado_em)+(p.atualizado_em&&p.atualizado_em.slice(0,16)!==p.criado_em.slice(0,16)?' · editada '+dataBR(p.atualizado_em):'')+'</span><span class="acoes">'+acoesPost(p)+'</span></div></article>';}).join('');
-  return '<div class="atu-grade">'+lado+'<div class="posts">'+posts+'</div></div>';
+  var barra=(T.tese&&T.tese!=='__geral'&&PODE_CLIENTES)?'<div class="tese-acoes"><span>Tese <b>'+esc(nomeTese(T.tese))+'</b>: veja entre os clientes quem ainda não tem esta tese.</span>'+btnClientes(T.tese)+'</div>':'';
+  return '<div class="atu-grade">'+lado+'<div class="posts">'+barra+posts+'</div></div>';
 }
 function htmlTempo(lista){
   var h='',mes='';
@@ -411,7 +443,7 @@ function htmlPorTese(){
   var ks=Object.keys(grupos).sort(function(a,b){return (grupos[a][0].criado_em<grupos[b][0].criado_em)?1:-1;});
   ks.forEach(function(k){grupos[k].sort(function(a,b){return a.criado_em<b.criado_em?1:-1;});});
   return '<div class="grade-teses">'+ks.map(function(k){var g=grupos[k],u=g[0],novo=g.some(ehNovo);
-    return '<div class="cartao-tese" data-ir-tese="'+esc(k)+'"><h3>'+(novo?'<i title="Tem atualização nova"></i>':'')+esc(k==='__geral'?'Geral (escritório)':nomeTese(k))+'</h3>'+selo(catPorId(u.situacao_id))+'<div class="ult"><b style="color:var(--text)">'+esc(u.titulo)+'</b><br>'+esc(puro(u.corpo).slice(0,140))+'</div><div class="n">'+g.length+(g.length===1?' atualização':' atualizações')+' · última em '+dataBR(u.criado_em)+'</div></div>';}).join('')+'</div>';
+    return '<div class="cartao-tese" data-ir-tese="'+esc(k)+'"><h3>'+(novo?'<i title="Tem atualização nova"></i>':'')+esc(k==='__geral'?'Geral (escritório)':nomeTese(k))+'</h3>'+selo(catPorId(u.situacao_id))+'<div class="ult"><b style="color:var(--text)">'+esc(u.titulo)+'</b><br>'+esc(puro(u.corpo).slice(0,140))+'</div><div class="n">'+g.length+(g.length===1?' atualização':' atualizações')+' · última em '+dataBR(u.criado_em)+'</div>'+btnClientes(k,'Achar clientes')+'</div>';}).join('')+'</div>';
 }
 function htmlListaAtu(lista){
   var campos={data:function(p){return p.criado_em;},tese:function(p){return nomeTese(p.tese_id)||'Geral';},sit:function(p){var c=catPorId(p.situacao_id);return c?c.nome:'';},tit:function(p){return p.titulo;},autor:function(p){return nomePessoa(p.autor_id);}};
@@ -423,7 +455,7 @@ async function lerPost(id){
   var p=T.posts.find(function(x){return x.id===id;});if(!p)return;
   $('mdLer').innerHTML='<div class="md-cab"><div><div class="post-topo">'+selo(catPorId(p.situacao_id))+'<span class="etq-tese">'+esc(nomeTese(p.tese_id)||'Geral')+'</span></div><h2>'+esc(p.titulo)+'</h2><div class="meta">'+esc(nomePessoa(p.autor_id)||'Escritório')+' · '+dataBR(p.criado_em)+'</div></div><button class="md-x" type="button" data-fechar="moLer" aria-label="Fechar">✕</button></div>'+
     '<div class="md-corpo"><div class="corpo">'+(window.SagaTexto?SagaTexto.html(p.corpo):esc(p.corpo))+'</div>'+(p.link?'<a class="lnk" href="'+esc(p.link)+'" target="_blank" rel="noopener noreferrer">Abrir a fonte (decisão, notícia, informativo)</a>':'')+'</div>'+
-    '<div class="md-rod"><span class="esq">'+acoesPost(p)+'</span><button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
+    '<div class="md-rod"><span class="esq">'+acoesPost(p)+'</span>'+btnClientes(p.tese_id)+'<button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
   abrir('moLer');
   if(!T.lidos[p.id]&&p.autor_id!==T.eu){T.lidos[p.id]=1;await _sb.from('teses_leituras').insert({atualizacao_id:p.id});desenharAtu();desenharBotoes();}
 }
@@ -523,7 +555,7 @@ function abrirPasta(id){
     '<div class="md-corpo"><div class="blocos">'+bl('Resumo da tese',p.resumo)+bl('Quem tem direito (público)',p.publico)+bl('Documentos necessários',p.documentos)+bl('Fundamento e jurisprudência',p.fundamento)+'</div>'+
     ((p.resumo||p.publico||p.documentos||p.fundamento)?'':'<div class="vazio" style="padding:16px">Ainda sem descrição.'+(T.perm.editar?' Clique em Editar para preencher.':'')+'</div>')+
     '<div><div class="bloco"><b>Arquivos da pasta (imagens, documentos, vídeos)</b></div><div id="pastaArqs"></div></div></div>'+
-    '<div class="md-rod"><span class="esq">'+(T.perm.editar?'<button class="btn" type="button" data-editar-prod="'+p.id+'">Editar</button>':'')+(T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span><button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
+    '<div class="md-rod"><span class="esq">'+(T.perm.editar?'<button class="btn" type="button" data-editar-prod="'+p.id+'">Editar</button>':'')+(T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span>'+btnClientes(p.tese_id)+'<button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
   abrir('moLer');desenharArquivos(p.id);
 }
 function tipoArq(a){var t=a.tipo||'';if(/^image\//.test(t))return 'img';if(/^video\//.test(t))return 'video';if(t==='application/pdf'||/\.pdf$/i.test(a.nome))return 'pdf';return 'doc';}
@@ -791,6 +823,14 @@ function trocarAba(a){
   desenharBotoes();desenharVisoes();
 }
 function ligar(){
+  // T132: link "Achar clientes": clique normal troca de tela com o movimento do sistema; Ctrl+clique abre em outra aba
+  document.addEventListener('click',function(e){
+    var a=e.target.closest&&e.target.closest('a[data-clientes-tese]');if(!a)return;
+    e.stopPropagation();
+    if(a.getAttribute('aria-disabled')==='true'){e.preventDefault();return;}
+    if(e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||e.button!==0)return;
+    e.preventDefault();var m=a.closest('.mo');if(m)fechar(m.id);irPara(a.getAttribute('href'));
+  },true);
   $('abas').addEventListener('click',function(e){var b=e.target.closest('[data-aba]');if(b)trocarAba(b.dataset.aba);});
   $('visoes').addEventListener('click',function(e){var b=e.target.closest('[data-vis]');if(!b)return;T.vis[T.aba]=b.dataset.vis;guardarVis();desenharVisoes();if(T.aba==='atualizacoes')desenharAtu();else if(T.aba==='prateleira')desenharProdutos();else desenharRadar();});
   // ordenar tabelas
@@ -851,6 +891,7 @@ function ligar(){
 async function init(){
   lerVis();ligar();
   await SagaUI.carregar('teses');
+  PODE_CLIENTES=!!(window.SagaUI&&SagaUI.podeVerTela&&SagaUI.podeVerTela('clientes_perfil'));
   var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
   var r=await Promise.all([_sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle(),_sb.rpc('teses_minhas_permissoes')]);
   T.eu=r[0].data&&r[0].data.id;if(r[1].data)T.perm=r[1].data;

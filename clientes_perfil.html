@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611102339"></script>
+<script src="saga_guard.js?v=202611102356"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Clientes por perfil</title>
@@ -101,6 +101,10 @@ table.tb{width:100%;border-collapse:collapse;font-size:12px}
 .toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
 .toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
 .toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}
+/* T132: vindo de Teses e oportunidades (clientes que ainda não têm a tese) */
+.ctx-tese{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;margin:0 0 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);background:color-mix(in srgb,var(--gold) 9%,var(--panel));font-size:12.5px;line-height:1.5}
+.ctx-tese b{font-weight:600}
+.ctx-tese .btn{height:30px;padding:0 11px;font-size:11.5px;border-radius:9px;flex:0 0 auto}
 @media(max-width:1180px){.filtros{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:900px){.filtros{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){
@@ -115,7 +119,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:12px}
   .tb td[data-r]::before{content:attr(data-r);display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611102339">
+<link rel="stylesheet" href="saga_tema.css?v=202611102356">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -130,6 +134,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:12px}
     </div>
     <div class="botoes"><button class="btn" type="button" id="btnLimpar">Limpar filtros</button><button class="btn" type="button" id="btnPdf">Salvar em PDF</button></div>
   </div>
+  <div class="ctx-tese" id="ctxTese" role="status" hidden></div>
   <div class="barra">
     <div class="pills" id="pillsQuem" role="group" aria-label="Quais clientes">
       <button class="pill active" type="button" data-quem="perfil">Com perfil preenchido<b id="nPerfil"></b></button>
@@ -179,8 +184,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611102339"></script>
-<script src="saga_pdf.js?v=202611102339"></script>
+<script src="saga_ui.js?v=202611102356"></script>
+<script src="saga_pdf.js?v=202611102356"></script>
 <script>
 /* =====================================================================
    SAGA · Clientes por perfil (bloco 138): clientes_perfil_opcoes / clientes_perfil_buscar
@@ -261,6 +266,43 @@ async function carregarOpcoes(){
   $('listaCargos').innerHTML=(o.cargo||[]).map(function(x){return '<option value="'+esc(x.nome)+'"></option>';}).join('');
 }
 
+/* ---------- T132: vindo de Teses e oportunidades ----------
+   clientes_perfil.html?tese=<id> abre "Ainda não tem a tese" com todos os clientes do Jurídico.
+   Também aceita nao=<ids>, tem=<ids> (separados por vírgula), fase=todas|juridico|captacao e quem=perfil|todos. */
+var UUID=/^[0-9a-f-]{36}$/i;
+function idsDe(v){return String(v||'').split(',').map(function(x){return x.trim();}).filter(function(x){return UUID.test(x);});}
+async function aplicarParametros(){
+  var q=new URLSearchParams(location.search),tese=idsDe(q.get('tese'))[0]||null;
+  var nao=idsDe(q.get('nao')),tem=idsDe(q.get('tem')),fase=q.get('fase'),quem=q.get('quem');
+  if(tese){if(nao.indexOf(tese)<0)nao.push(tese);quem=quem||'todos';fase=fase||'juridico';C.teseOrigem=tese;}
+  if(!nao.length&&!tem.length&&!fase&&!quem)return;
+  // tese que não está na lista (desativada e sem processo): busca o nome para o menu e o resumo mostrarem
+  var itens=MM.mmNao?MM.mmNao.itens:[];
+  var faltam=nao.concat(tem).filter(function(id){return !itens.some(function(x){return x.v===id;});});
+  if(faltam.length){
+    var r=await _sb.from('teses').select('id,nome').in('id',faltam);
+    (r.data||[]).forEach(function(t){itens.push({v:t.id,nome:t.nome,n:0});if(MM.mmTem&&MM.mmTem.itens!==itens)MM.mmTem.itens.push({v:t.id,nome:t.nome,n:0});if(C.opcoes)(C.opcoes.teses=C.opcoes.teses||[]).push({id:t.id,nome:t.nome,n:0});});
+  }
+  C.sel.nao=nao;C.sel.tem=tem;
+  if(['todas','juridico','captacao'].indexOf(fase)>=0){C.fase=fase;$('pillsFase').querySelectorAll('.pill').forEach(function(x){x.classList.toggle('active',x.dataset.fase===fase);});}
+  if(['perfil','todos'].indexOf(quem)>=0){C.quem=quem;$('pillsQuem').querySelectorAll('.pill').forEach(function(x){x.classList.toggle('active',x.dataset.quem===quem);});}
+  if(MM.mmNao)MM.mmNao.rotulo();if(MM.mmTem)MM.mmTem.rotulo();
+  marcarBotaoFiltros();desenharCtxTese();
+}
+function desenharCtxTese(){
+  var el=$('ctxTese');if(!el)return;
+  var id=C.teseOrigem,mostrar=!!(id&&C.sel.nao.indexOf(id)>=0);
+  if(mostrar){
+    var it=((MM.mmNao&&MM.mmNao.itens)||[]).find(function(x){return x.v===id;}),nome=it?it.nome:'escolhida';
+    var onde=C.fase==='juridico'?'do Jurídico':C.fase==='captacao'?'da Captação':'do Jurídico e da Captação';
+    el.innerHTML='<span>Clientes '+onde+(C.quem==='perfil'?' com perfil preenchido':'')+' que <b>ainda não têm a tese '+esc(nome)+'</b>. Use os filtros de perfil (situação funcional, órgão, idade...) para achar quem pode ter direito.</span>'+
+      '<button class="btn" type="button" id="ctxTirar">Ver sem esta tese</button>';
+    $('ctxTirar').onclick=function(){C.sel.nao=C.sel.nao.filter(function(x){return x!==id;});if(MM.mmNao)MM.mmNao.rotulo();mudou(0);};
+  }
+  if(mostrar===!el.hidden&&!el._recolhendo)return;
+  if(window.sagaRecolher)window.sagaRecolher(el,!mostrar);else el.hidden=!mostrar;
+}
+
 /* ---------- busca ---------- */
 function filtros(){
   return {
@@ -275,7 +317,7 @@ function marcarBotaoFiltros(){var k=filtrosAtivos();$('nFiltros').textContent=k?
 var celular=window.matchMedia('(max-width:760px)');
 function ajustarFiltrosCelular(){var sec=$('filtros');if(celular.matches){if(!sec.dataset.mexido)sec.hidden=true;}else{sec.hidden=false;}var ab=!sec.hidden;$('btnFiltros').setAttribute('aria-expanded',String(ab));$('btnFiltros').firstChild.textContent=ab?'Esconder filtros':'Mostrar filtros';}
 var tmBusca=null;
-function mudou(atraso){marcarBotaoFiltros();clearTimeout(tmBusca);tmBusca=setTimeout(function(){C.pagina=1;buscar();},atraso==null?250:atraso);}
+function mudou(atraso){marcarBotaoFiltros();desenharCtxTese();clearTimeout(tmBusca);tmBusca=setTimeout(function(){C.pagina=1;buscar();},atraso==null?250:atraso);}
 async function buscar(){
   var meu=++C.pedido;var area=$('area');area.classList.add('carregando');
   var p=filtros();p.pagina=C.pagina;p.limite=C.limite;
@@ -470,6 +512,7 @@ async function init(){
   if(!C.gerencia){var adm=await _sb.rpc('eh_admin_sistema');C.gerencia=adm.data===true;}
   $('btnOpcoesSit').hidden=!C.gerencia;
   await carregarOpcoes();
+  await aplicarParametros();
   await buscar();
 }
 init().catch(function(e){toast('Erro ao abrir: '+(e.message||''),'error');});

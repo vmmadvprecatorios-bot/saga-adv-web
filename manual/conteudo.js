@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.0",
+  versao: "1.1",
   data: "10/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.1", data: "10/11/2026", mudou: "Teses e oportunidades: botão \"Achar clientes para esta tese\"; Clientes por perfil abre já filtrado pela tese." },
     { versao: "1.0", data: "10/11/2026", mudou: "Primeira versão: todas as telas e regras do SAGA até esta data." }
   ],
 
@@ -564,26 +565,29 @@ window.SAGA_MANUAL = {
           atencao: ["Renda, score, consumo, veículos e empresas NÃO entram no SAGA (LGPD)."]
         },
         { id: "teses", titulo: "Teses e oportunidades",
-          quando: "Para acompanhar as teses do escritório e as oportunidades de ação.",
+          quando: "Para acompanhar as teses do escritório e as oportunidades de ação, e para achar os clientes a quem oferecer uma tese.",
           passos: [
             "**Atualizações de teses**: novidades de cada tese (julgamentos, mudanças), em Blog, Linha do tempo, Por tese ou Lista.",
             "**Prateleira de produtos**: os produtos jurídicos que o escritório oferece.",
             "**Radar de oportunidades**: teses que podem render ações novas.",
+            "[[Achar clientes para uma tese]]: escolha a tese e o SAGA abre **Clientes por perfil** com os clientes do Jurídico que ainda não têm essa tese. O mesmo botão aparece na tese escolhida no Blog, em cada cartão do \"Por tese\", na leitura de uma atualização e na pasta do produto.",
             "Quem pode publica com [[+ Nova atualização]]."
           ],
           img: "teses",
-          marcas: ["Atualizações de teses.", "Prateleira de produtos.", "Radar de oportunidades.", "Nova atualização."]
+          marcas: ["Atualizações de teses.", "Prateleira de produtos.", "Radar de oportunidades.", "Achar clientes para uma tese.", "Nova atualização."],
+          dicas: ["Ctrl+clique no botão abre os clientes em outra aba, e a tela de Teses continua aberta."]
         },
         { id: "perfil", titulo: "Clientes por perfil",
           quando: "Para achar clientes de um perfil (ex.: servidores aposentados de um órgão) e oferecer uma tese que eles ainda não têm.",
           passos: [
-            "Abra **Clientes por perfil**.",
+            "Abra **Clientes por perfil**, ou venha de **Teses e oportunidades** pelo botão [[Achar clientes para esta tese]]: a tela já abre com os clientes do Jurídico que ainda não têm a tese, e um aviso no alto diz qual é o filtro.",
             "Filtre por situação funcional, órgão, cargo, UF, idade, ano de ingresso e de aposentadoria.",
-            "Use **Já tem a tese** e **Ainda não tem a tese** para achar quem pode receber a oferta.",
+            "Use **Já tem a tese** e **Ainda não tem a tese** para achar quem pode receber a oferta. **Com perfil preenchido** ou **Todos os clientes**, e **Jurídico**, **Captação** ou os dois, mudam de onde vêm os clientes.",
+            "[[Ver sem esta tese]] tira o filtro da tese; [[Limpar filtros]] volta tudo ao começo.",
             "[[Salvar em PDF]] para levar a lista."
           ],
           img: "clientes_perfil",
-          marcas: ["Nome ou CPF.", "Ainda não tem a tese.", "Salvar em PDF."]
+          marcas: ["Aviso: de qual tese são os clientes mostrados.", "Ainda não tem a tese.", "Jurídico, Captação ou os dois.", "Salvar em PDF."]
         }
       ]
     },
