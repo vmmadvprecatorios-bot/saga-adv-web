@@ -654,14 +654,14 @@
     +'<div class="top-center">'
     +'<label class="quick-search" aria-label="Busca global">'
     +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
-    +'<input id="globalSearch" placeholder="Buscar processos, pessoas, colaboradores..." autocomplete="off">'
+    +'<input id="globalSearch" placeholder="Buscar cliente, CPF, processo, telefone, e-mail..." autocomplete="off">'
     +'<div class="popover global-search-pop" id="globalSearchPop"></div>'
     +'</label>'
     +'<button class="icon-btn busca-cel-fechar" id="buscaCelFechar" type="button" aria-label="Fechar a busca"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>'
     +'</div>'
     +'<div class="top-right">'
     // lupa do celular: abre a busca por cima da barra (a barra de busca fica escondida no celular)
-    +'<button class="icon-btn busca-cel-btn" id="buscaCelBtn" type="button" aria-label="Buscar processos, pessoas e colaboradores" title="Buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>'
+    +'<button class="icon-btn busca-cel-btn" id="buscaCelBtn" type="button" aria-label="Buscar cliente, processo, telefone ou e-mail" title="Buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.7"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>'
     +'<div class="presence-wrap">'
     +'<button class="presence-btn" id="presenceBtn" type="button"><span class="dot online"></span><span id="onlineText">Carregando...</span></button>'
     +'<div class="popover" id="presencePop"></div>'
@@ -1405,17 +1405,26 @@
         function(){return global._sb.from('usuarios').select('id,nome_completo,email').or('nome_completo.ilike.'+like+',email.ilike.'+like).eq('ativo',true).limit(5);}
       ];
       // Banco (bloco 83): sem acento ("Graca" acha "Graça") e, com 1-2 letras, pelo começo de cada palavra; se faltar, usa a busca antiga
-      var pessoas,processos,colaboradores;
+      var pessoas,processos,colaboradores,contatos=[];
       var rb=await global._sb.rpc('busca_global',{p_termo:termo});
       if(minhaBusca!==_buscaAtual)return;
       if(!rb.error&&rb.data){
-        pessoas=rb.data.pessoas||[];processos=rb.data.processos||[];colaboradores=rb.data.usuarios||[];
+        pessoas=rb.data.pessoas||[];processos=rb.data.processos||[];colaboradores=rb.data.usuarios||[];contatos=rb.data.contatos||[];
       }else{
         var res=await Promise.all(promessas.map(function(f){return f();}));
         if(minhaBusca!==_buscaAtual)return;
         pessoas=(res[0].data||[]);processos=(res[1].data||[]);colaboradores=(res[2].data||[]);
       }
       var html='';
+      // (10/11, bloco 145) telefone, e-mail ou endereço achado nos contatos, na Localização, no histórico ou nos comentários
+      if(contatos.length){
+        var corDe={dados:'var(--gold)',localizacao:'#2fae7a',comentarios:'#4b8af5'};
+        html+='<div class="pop-title">Achado em contatos e anotações</div>';
+        html+=contatos.map(function(c){
+          var url='ficha_cliente_padrao_metalico_FINAL.html?'+(c.aba==='comentarios'&&c.processo_id?'processo_id='+encodeURIComponent(c.processo_id):'pessoa_id='+encodeURIComponent(c.pessoa_id)+(c.aba==='localizacao'?'&aba=localizacao':''));
+          return '<div class="pop-row" onclick="sagaIrPara(\''+esc(url)+'\')" title="'+esc((c.onde||'')+': '+(c.valor||''))+'"><span class="online-dot" style="background:'+(corDe[c.aba]||'var(--gold)')+'"></span><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600">'+esc(c.nome_completo||'Cliente')+'</div><div style="font-size:9px;color:var(--muted)">'+esc(c.onde||'')+'</div>'+(c.valor?'<div style="font-size:9.5px;color:var(--text);opacity:.85;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.valor)+'</div>':'')+'</div></div>';
+        }).join('');
+      }
       if(pessoas.length){
         html+='<div class="pop-title">Pessoas</div>';
         html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?(String(p.cpf).replace(/\D/g,'').length===14?'CNPJ ':'CPF ')+esc(global.sagaFmt.cpf(p.cpf)):'Sem CPF')+'</div></div></div>';}).join('');
@@ -1428,7 +1437,7 @@
         html+='<div class="pop-title">Colaboradores</div>';
         html+=colaboradores.map(function(u){return '<div class="pop-row" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(u.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+esc(u.email||'')+'</div></div></div>';}).join('');
       }
-      if(!html)html='<div style="padding:14px;font-size:10.5px;color:var(--muted);text-align:center">Nenhum resultado.</div>';
+      if(!html)html='<div style="padding:14px;font-size:10.5px;color:var(--muted);text-align:center">Nenhum resultado.<div style="margin-top:6px;font-size:9.5px;line-height:1.4">Dá para buscar pelo nome, CPF, número do processo, telefone (com ou sem DDD), e-mail ou CEP. Para endereço, comece com rua, av., quadra...</div></div>';
       pop.innerHTML=html;
     }catch(e){
       if(minhaBusca!==_buscaAtual)return;
