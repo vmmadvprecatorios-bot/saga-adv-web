@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611101316"></script>
+<script src="saga_guard.js?v=202611101334"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Processos em Andamento</title>
@@ -464,7 +464,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
   [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
 .proxima-providencia{margin-top:6px;min-width:0;max-width:100%}.providencia-link{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;max-width:100%;border:1px solid var(--border-soft);border-left:4px solid var(--prazo-cor,var(--muted));border-radius:7px;padding:5px 7px;background:var(--panel);color:var(--text);font-size:10px;line-height:1.5;text-decoration:none;overflow-wrap:anywhere}.providencia-link:active{transform:scale(.98)}.providencia-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.providencia-prazo{background:var(--prazo-cor,var(--panel-2));color:var(--prazo-texto,var(--muted));border-radius:4px;padding:1px 4px}.providencia-link[data-situacao-prazo="muito-atrasada"]{outline:1px solid var(--prazo-muito-contorno)}.providencia-concluida{color:var(--muted);border-left-width:1px}.providencia-mais{color:var(--muted);font-weight:700}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611101316">
+<link rel="stylesheet" href="saga_tema.css?v=202611101334">
 </head>
 <body data-theme="dark">
 
@@ -546,6 +546,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
       </div>
       <div id="previaHonorarios" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
       <div class="form-field" id="novoExtras" style="margin-top:13px"></div>
+      <div class="form-field" id="novoOrigemCampo" style="margin-top:13px"><label>De onde veio o cliente? <span style="font-weight:400;color:var(--muted)">(opcional)</span></label><div id="novoOrigem"></div></div>
     </div>
     <div class="modal-foot"><button class="btn-secondary" onclick="closeModal('modalNovoProcesso')">Cancelar</button><button class="btn-primary" onclick="salvarNovoProcesso()">Salvar processo</button></div>
   </div>
@@ -723,17 +724,18 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611101316"></script>
-<script src="saga_teses.js?v=202611101316"></script>
-<script src="saga_etiquetas.js?v=202611101316"></script>
-<script src="saga_partes.js?v=202611101316"></script>
-<script src="saga_roscas.js?v=202611101316"></script>
-<script src="saga_paineis.js?v=202611101316"></script>
-<script src="saga_xlsx.js?v=202611101316"></script>
-<script src="saga_fichas.js?v=202611101316"></script>
-<script src="saga_planilha.js?v=202611101316"></script>
-<script src="saga_recursos.js?v=202611101316"></script>
-<script src="saga_tribunais.js?v=202611101316"></script>
+<script src="saga_ui.js?v=202611101334"></script>
+<script src="saga_teses.js?v=202611101334"></script>
+<script src="saga_etiquetas.js?v=202611101334"></script>
+<script src="saga_partes.js?v=202611101334"></script>
+<script src="saga_roscas.js?v=202611101334"></script>
+<script src="saga_paineis.js?v=202611101334"></script>
+<script src="saga_xlsx.js?v=202611101334"></script>
+<script src="saga_fichas.js?v=202611101334"></script>
+<script src="saga_origem.js?v=202611101334"></script>
+<script src="saga_planilha.js?v=202611101334"></script>
+<script src="saga_recursos.js?v=202611101334"></script>
+<script src="saga_tribunais.js?v=202611101334"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -1449,7 +1451,7 @@ async function lerBaseProcessos(f){
     // 10/11 (bloco 142): o número de um recurso (agravo, apelação...) também acha o processo
     var recIds=[],dgBusca=f.busca?f.busca.replace(/\D/g,''):'';
     if(dgBusca.length>=6){try{var rr=await _sb.from('processos_recursos').select('processo_id').eq('ativo',true).ilike('numero_digitos','%'+dgBusca+'%').limit(300);if(!rr.error)recIds=Array.from(new Set((rr.data||[]).map(function(x){return x.processo_id;})));}catch(e){}}
-    var montarSelect=function(){return 'id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
+    var montarSelect=function(){return 'id,area_direito_id,origem_id,campanha_origem_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
       'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id'+(FASE_FIXA?'!inner':'')+'(id,nome,cor,fase,ordem,etapa),responsavel:usuarios!responsavel_id(id,nome_completo)';};
     var consulta=function(inicio,passo,contar){
       var q=_sb.from('processos').select(montarSelect(),contar?{count:'exact'}:undefined).eq('excluido_logico',false);
@@ -2198,6 +2200,10 @@ async function executarAtribuicao(){
 // Novo Processo
 function abrirNovoProcesso(){
   if(window.SagaPlanilha&&SagaPlanilha.esquecerNovoNaColuna)SagaPlanilha.esquecerNovoNaColuna();
+  // 10/11 (bloco 148): de onde veio o cliente (rede social, indicação...) e a campanha; o código da campanha na 1ª mensagem marca tudo
+  state.novoOrigemForm=null;
+  var elOr=document.getElementById('novoOrigem');
+  if(elOr&&window.SagaOrigem){elOr.innerHTML='<div style="font-size:12px;color:var(--muted)">Carregando...</div>';SagaOrigem.carregar().then(function(){state.novoOrigemForm=SagaOrigem.formulario(elOr,{id:'Novo',admin:!!state.admin});});}
   state.novoArea=null;state.novoPessoa=null;state.novoTese=null;state.novoStatus=null;state.novoTipo=null;
   document.getElementById('inputNovoPessoa').value='';
   document.getElementById('pessoaSelecionadaInfo').style.display='none';
@@ -2299,6 +2305,7 @@ async function salvarNovoProcesso(){
   // "+" no título da coluna do Kanban: o processo nasce já naquela coluna
   var naColuna=window.SagaPlanilha&&SagaPlanilha.dadosNovoNaColuna?SagaPlanilha.dadosNovoNaColuna():null;
   if(naColuna){if(naColuna.campos)dados.campos=Object.assign({},dados.campos||{},naColuna.campos);else if(naColuna.campo)dados[naColuna.campo]=naColuna.valor;}
+  if(state.novoOrigemForm){var og;try{og=state.novoOrigemForm.ler();}catch(e){showToast(e.message,'warning');return;}if(og.origem_id)dados.origem_id=og.origem_id;if(og.campanha_id)dados.campanha_origem_id=og.campanha_id;}
   var r=await _sb.from('processos').insert(dados).select('id').single();
   if(r.error){
     if(r.error.code==='23505')showToast('Esta pessoa já possui um processo com esse tipo de ação.','warning');

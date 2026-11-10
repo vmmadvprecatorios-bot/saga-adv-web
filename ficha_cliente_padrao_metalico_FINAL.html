@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611101316"></script>
+<script src="saga_guard.js?v=202611101334"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -291,6 +291,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 .ag-cancelar{margin-top:4px;font-size:10px;color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:0;padding:0}
 .ag-vazio{font-size:10.5px;color:var(--muted)}
 #pedirAgenteTipo{width:100%;outline:0;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text);font:inherit;font-size:11.5px;padding:9px 10px}
+/* Origem do cliente (bloco 148): "Como chegou" no topo de cada processo */
+.ps-origem{margin-top:8px}
+.ps-origem-btn{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font:inherit;font-size:12px;color:var(--text);background:var(--sb-sec);border:1px solid var(--sb-sec-borda);border-radius:999px;padding:4px 12px;cursor:pointer;text-align:left;max-width:100%;line-height:1.4}
+button.ps-origem-btn:hover{background:var(--sb-sec-hover)}
+span.ps-origem-btn{cursor:default}
+.ps-origem-rot{color:var(--muted)}
+.ps-origem-btn i{color:var(--muted);font-style:normal}
+.ps-origem-acao{color:var(--gold);font-weight:600;margin-left:2px}
+.origem-todos{display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:12.5px;color:var(--text);cursor:pointer;line-height:1.4}
+.origem-todos input{margin-top:2px}
 </style>
 
 <style id="location-contact-workflow-styles">
@@ -349,17 +359,18 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611101316"></script>
-<script src="saga_fichas.js?v=202611101316"></script>
-<script src="saga_teses.js?v=202611101316"></script>
-<script src="saga_mencoes.js?v=202611101316"></script>
-<script src="saga_texto.js?v=202611101316"></script>
-<script src="saga_partes.js?v=202611101316"></script>
-<script src="saga_etiquetas.js?v=202611101316"></script>
-<script src="saga_planilha.js?v=202611101316"></script>
-<script src="saga_recursos.js?v=202611101316"></script>
-<script src="saga_tribunais.js?v=202611101316"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611101316">
+<script src="saga_ui.js?v=202611101334"></script>
+<script src="saga_fichas.js?v=202611101334"></script>
+<script src="saga_teses.js?v=202611101334"></script>
+<script src="saga_mencoes.js?v=202611101334"></script>
+<script src="saga_texto.js?v=202611101334"></script>
+<script src="saga_partes.js?v=202611101334"></script>
+<script src="saga_etiquetas.js?v=202611101334"></script>
+<script src="saga_origem.js?v=202611101334"></script>
+<script src="saga_planilha.js?v=202611101334"></script>
+<script src="saga_recursos.js?v=202611101334"></script>
+<script src="saga_tribunais.js?v=202611101334"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611101334">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -502,6 +513,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 </div>
 
 <div class="modal-overlay" id="contatoClienteModal"><div class="modal"><div class="modal-head"><h3>Registrar contato com a cliente</h3><button class="modal-close" data-close-modal="contatoClienteModal" aria-label="Fechar">✕</button></div><div class="modal-body"><input type="hidden" id="contatoProcessoId"><label class="form-field action-field" for="contatoTexto">O que foi conversado<textarea id="contatoTexto" rows="3" maxlength="2000"></textarea></label><label class="form-field action-field">Situação após o contato, opcional<div id="contatoSituacaoRoot"></div></label></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="contatoClienteModal">Cancelar</button><button class="btn-primary" id="salvarContatoCliente">Salvar contato</button></div></div></div>
+<div class="modal-overlay" id="origemClienteModal"><div class="modal"><div class="modal-head"><h3>De onde veio este cliente?</h3><button class="modal-close" data-close-modal="origemClienteModal" aria-label="Fechar">✕</button></div><div class="modal-body"><input type="hidden" id="origemProcessoId"><div id="origemFormRoot"></div><label class="origem-todos" id="origemTodosWrap" hidden><input type="checkbox" id="origemTodos"><span id="origemTodosTxt"></span></label></div><div class="modal-foot"><button class="btn-secondary" data-close-modal="origemClienteModal">Cancelar</button><button class="btn-primary" id="salvarOrigemCliente">Salvar</button></div></div></div>
 <div class="toast-area" id="toastArea"></div>
 
 <script>
@@ -792,7 +804,45 @@ async function mudarFaseProcesso(fase){
   if(typeof renderProcessTabs==='function')renderProcessTabs();
   showToast('Processo levado para '+rot+'.','success');
 }
-function renderProcessHeader(){const process=getActiveProcess();const root=document.getElementById('processStatusTags');const podeEditarTags=perms.processosEditar===true;root.innerHTML='<div class="process-summary-copy"><strong>Processo de '+esc(catalogoTeses?catalogoTeses.texto(process.teseId,process.areaDireitoId):process.tese)+'</strong><span>Os dados abaixo pertencem exclusivamente a este processo.</span>'+(window.SagaTribunais&&SagaTribunais.tribunal(process.cnj)&&!(process.sigilo&&perms.processosEditarDados!==true)?'<div class="ps-trib" style="margin-top:8px">'+SagaTribunais.icone(process.cnj,{botao:true})+'</div>':'')+'</div><div class="process-summary-tags"><div class="linha-proc-1">'+chaveFaseHtml(process)+situacaoHeaderHtml(process)+'</div><div class="linha-proc-2"><span class="badge-status-grande status-'+process.statusTone+'">'+esc(process.status)+'</span>'+process.tags.map((tag,indice)=>{const texto=typeof tag==='string'?tag:(tag&&tag.texto?tag.texto:'');const cor=tag&&typeof tag==='object'&&tag.cor?tag.cor:'';const estilo=cor?' style="border:1px solid color-mix(in srgb,'+esc(cor)+' 45%,transparent);background:color-mix(in srgb,'+esc(cor)+' 16%,transparent);color:'+esc(cor)+'"':'';const remover=podeEditarTags?'<button data-tag-remove="'+indice+'" type="button" aria-label="Remover etiqueta" title="Remover etiqueta" style="margin-left:5px;font-weight:700;color:inherit;opacity:.65;line-height:1">×</button>':'';return '<span class="ficha-mini-tag"'+estilo+'>'+esc(texto)+remover+'</span>';}).join('')+(podeEditarTags?'<button class="btn-add-tag" id="btnAddTag">+ etiqueta</button>':'')+'</div></div>';bindSituacaoHeader(process);const btnAddTag=document.getElementById('btnAddTag');if(btnAddTag)btnAddTag.addEventListener('click',abrirModalNovaEtiqueta);root.querySelectorAll('[data-fase]').forEach(b=>b.addEventListener('click',()=>mudarFaseProcesso(b.dataset.fase)));root.querySelectorAll('[data-tag-remove]').forEach(button=>button.addEventListener('click',async()=>{const processoAtual=getActiveProcess();if(!processoAtual)return;processoAtual.tags.splice(Number(button.dataset.tagRemove),1);const salvo=await salvarEtiquetasDaPessoa();renderProcessHeader();if(salvo)showToast('Etiqueta removida do processo.','info');}));}
+// Origem do cliente (bloco 148): "Como chegou" no topo de cada processo; a janela pergunta se veio das redes sociais,
+// de qual rede e de qual campanha (o código da campanha na 1ª mensagem do cliente marca tudo sozinho)
+function origemProcessoHtml(p){
+  if(!window.SagaOrigem||!p)return '';
+  if(!SagaOrigem.pronto()){SagaOrigem.carregar().then(()=>{if(getActiveProcess())renderProcessHeader();});return '';}
+  const txt=SagaOrigem.texto(p.origemId,p.campanhaOrigemId),pode=perms.processosEditar===true;
+  if(!txt&&!pode)return '';
+  return '<div class="ps-origem">'+(pode?'<button type="button" class="ps-origem-btn" id="btnOrigemProc" title="De onde veio este cliente: rede social, indicação, campanha">':'<span class="ps-origem-btn">')
+    +'<span class="ps-origem-rot">Como chegou:</span>'+(txt?'<b>'+esc(txt)+'</b>':'<i>não informado</i>')
+    +(pode?'<span class="ps-origem-acao">'+(txt?'Alterar':'Marcar')+'</span></button>':'</span>')+'</div>';
+}
+async function abrirOrigemProcesso(){
+  const p=getActiveProcess();if(!p||!window.SagaOrigem)return;
+  if(state.adminSistema===undefined){try{const a=await _sb.rpc('eh_admin_sistema');state.adminSistema=a.data===true;}catch(e){}}
+  await SagaOrigem.carregar();
+  document.getElementById('origemProcessoId').value=p.id;
+  state.origemForm=SagaOrigem.formulario(document.getElementById('origemFormRoot'),{id:'Ficha',origemId:p.origemId,campanhaId:p.campanhaOrigemId,admin:state.adminSistema===true});
+  const outros=state.processos.filter(x=>x.id!==p.id&&!x.origemId&&!x.campanhaOrigemId);
+  document.getElementById('origemTodosWrap').hidden=!outros.length;document.getElementById('origemTodos').checked=false;
+  document.getElementById('origemTodosTxt').textContent='Usar o mesmo nos outros '+outros.length+' processo(s) deste cliente que ainda estão sem origem';
+  openModal('origemClienteModal');
+}
+async function salvarOrigemProcesso(){
+  const pid=document.getElementById('origemProcessoId').value;let v;
+  try{v=state.origemForm.ler();}catch(e){showToast(esc(e.message),'warning');return;}
+  const btn=document.getElementById('salvarOrigemCliente');btn.disabled=true;
+  try{
+    const ids=[pid];
+    if(document.getElementById('origemTodos').checked)state.processos.forEach(x=>{if(x.id!==pid&&!x.origemId&&!x.campanhaOrigemId)ids.push(x.id);});
+    for(const id of ids){
+      const r=await _sb.rpc('processo_origem_salvar',{p_processo:id,p_origem:v.origem_id,p_campanha:v.campanha_id});if(r.error)throw r.error;
+      const p=state.processos.find(x=>x.id===id);if(p){p.origemId=(r.data&&r.data.origem_id)||null;p.campanhaOrigemId=(r.data&&r.data.campanha_origem_id)||null;}
+    }
+    closeModal('origemClienteModal');renderProcessHeader();
+    showToast(ids.length>1?'Origem salva em '+ids.length+' processos.':'Origem do cliente salva.','success');
+  }catch(e){showToast('Não foi possível salvar. '+esc(e.message||'Tente novamente.'),'error');}
+  finally{btn.disabled=false;}
+}
+function renderProcessHeader(){const process=getActiveProcess();const root=document.getElementById('processStatusTags');const podeEditarTags=perms.processosEditar===true;root.innerHTML='<div class="process-summary-copy"><strong>Processo de '+esc(catalogoTeses?catalogoTeses.texto(process.teseId,process.areaDireitoId):process.tese)+'</strong><span>Os dados abaixo pertencem exclusivamente a este processo.</span>'+(window.SagaTribunais&&SagaTribunais.tribunal(process.cnj)&&!(process.sigilo&&perms.processosEditarDados!==true)?'<div class="ps-trib" style="margin-top:8px">'+SagaTribunais.icone(process.cnj,{botao:true})+'</div>':'')+origemProcessoHtml(process)+'</div><div class="process-summary-tags"><div class="linha-proc-1">'+chaveFaseHtml(process)+situacaoHeaderHtml(process)+'</div><div class="linha-proc-2"><span class="badge-status-grande status-'+process.statusTone+'">'+esc(process.status)+'</span>'+process.tags.map((tag,indice)=>{const texto=typeof tag==='string'?tag:(tag&&tag.texto?tag.texto:'');const cor=tag&&typeof tag==='object'&&tag.cor?tag.cor:'';const estilo=cor?' style="border:1px solid color-mix(in srgb,'+esc(cor)+' 45%,transparent);background:color-mix(in srgb,'+esc(cor)+' 16%,transparent);color:'+esc(cor)+'"':'';const remover=podeEditarTags?'<button data-tag-remove="'+indice+'" type="button" aria-label="Remover etiqueta" title="Remover etiqueta" style="margin-left:5px;font-weight:700;color:inherit;opacity:.65;line-height:1">×</button>':'';return '<span class="ficha-mini-tag"'+estilo+'>'+esc(texto)+remover+'</span>';}).join('')+(podeEditarTags?'<button class="btn-add-tag" id="btnAddTag">+ etiqueta</button>':'')+'</div></div>';bindSituacaoHeader(process);const btnOrigem=document.getElementById('btnOrigemProc');if(btnOrigem)btnOrigem.onclick=abrirOrigemProcesso;const btnAddTag=document.getElementById('btnAddTag');if(btnAddTag)btnAddTag.addEventListener('click',abrirModalNovaEtiqueta);root.querySelectorAll('[data-fase]').forEach(b=>b.addEventListener('click',()=>mudarFaseProcesso(b.dataset.fase)));root.querySelectorAll('[data-tag-remove]').forEach(button=>button.addEventListener('click',async()=>{const processoAtual=getActiveProcess();if(!processoAtual)return;processoAtual.tags.splice(Number(button.dataset.tagRemove),1);const salvo=await salvarEtiquetasDaPessoa();renderProcessHeader();if(salvo)showToast('Etiqueta removida do processo.','info');}));}
 function customSelectMarkup(inputId,value,options){const selected=options.find(option=>option[0]===value)||options[0];return '<input class="custom-select-hidden" id="'+inputId+'" value="'+esc(value)+'"><div class="custom-select" data-select-input="'+inputId+'"><button class="custom-select-trigger" type="button"><span>'+esc(selected[1])+'</span><i class="select-caret"></i></button><div class="custom-select-menu">'+options.map(option=>'<button class="custom-select-option '+(option[0]===value?'selected':'')+'" type="button" data-select-value="'+esc(option[0])+'" data-select-label="'+esc(option[1])+'">'+esc(option[1])+'</button>').join('')+'</div></div>'}
 function renderClientContacts(){
   const client=state.cliente;
@@ -2234,7 +2284,7 @@ async function carregarNotasFicha(pessoaId){
   document.getElementById('btnNovaNotaFicha').onclick=()=>{const proc=getActiveProcess();const url='notas.html?nova=texto&pessoa_id='+encodeURIComponent(pessoaId)+(proc&&proc.id?'&processo_id='+encodeURIComponent(proc.id):'');if(window.sagaIrPara)sagaIrPara(url);else location.href=url;};
   box.onclick=ev=>{const a=ev.target.closest('a[data-nota-ficha]');if(!a)return;ev.preventDefault();if(window.sagaIrPara)sagaIrPara(a.getAttribute('href'));else location.href=a.getAttribute('href');};
 }
-function setupInteractions(){document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.getElementById('dropdownModelos').addEventListener('click',ev=>{const b=ev.target.closest('[data-checklist-template]');if(b){addChecklistFromTemplate(b.dataset.checklistTemplate);return;}if(ev.target.closest('[data-gerenciar-modelos]')){document.getElementById('dropdownModelos').classList.remove('aberto');abrirGerenciarModelos();}});document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('btnAnexarDocumento').addEventListener('click',()=>{state.pastaAlvoUpload=null;},true);document.getElementById('documentInput').addEventListener('change',async event=>{const arquivos=Array.from(event.target.files||[]);for(const file of arquivos)await enviarDocumento(file);event.target.value='';state.pastaAlvoUpload=null;});document.getElementById('btnNovaPasta').addEventListener('click',()=>abrirModalPasta('nova',{paiId:null}));document.getElementById('pastaSalvar').addEventListener('click',salvarModalPasta);document.getElementById('pastaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();salvarModalPasta();}});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirNovaTarefaCompleta());document.getElementById('btnAddTask').addEventListener('mouseenter',()=>{if(perms.tarefasCriar===true)prepararTarefaEmbutida();},{once:false});document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
+function setupInteractions(){document.getElementById('salvarOrigemCliente').onclick=salvarOrigemProcesso;document.getElementById('salvarContatoCliente').onclick=()=>{const texto=document.getElementById('contatoTexto').value.trim();if(!texto){showToast('Descreva o contato antes de salvar.','warning');return;}salvarSituacaoAcao(document.getElementById('contatoProcessoId').value,document.getElementById('contatoSituacao').value||null,texto,document.getElementById('salvarContatoCliente'));};document.getElementById('btnVoltar').addEventListener('click',voltarTelaAnterior);document.getElementById('btnAddChecklist').addEventListener('click',event=>{event.stopPropagation();document.getElementById('dropdownModelos').classList.toggle('aberto');});document.getElementById('dropdownModelos').addEventListener('click',ev=>{const b=ev.target.closest('[data-checklist-template]');if(b){addChecklistFromTemplate(b.dataset.checklistTemplate);return;}if(ev.target.closest('[data-gerenciar-modelos]')){document.getElementById('dropdownModelos').classList.remove('aberto');abrirGerenciarModelos();}});document.getElementById('btnAnexarDocumento').addEventListener('click',()=>document.getElementById('documentInput').click());document.getElementById('btnAnexarDocumento').addEventListener('click',()=>{state.pastaAlvoUpload=null;},true);document.getElementById('documentInput').addEventListener('change',async event=>{const arquivos=Array.from(event.target.files||[]);for(const file of arquivos)await enviarDocumento(file);event.target.value='';state.pastaAlvoUpload=null;});document.getElementById('btnNovaPasta').addEventListener('click',()=>abrirModalPasta('nova',{paiId:null}));document.getElementById('pastaSalvar').addEventListener('click',salvarModalPasta);document.getElementById('pastaNome').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();salvarModalPasta();}});document.getElementById('btnMention').addEventListener('click',event=>{event.stopPropagation();document.getElementById('mentionMenu').classList.toggle('aberto');});document.querySelectorAll('[data-mention]').forEach(button=>button.addEventListener('click',()=>{const input=document.getElementById('commentInput');input.value=(input.value+' '+button.dataset.mention+' ').replace(/^\s+/,'');input.focus();document.getElementById('mentionMenu').classList.remove('aberto');}));document.getElementById('btnEnviarComentario').addEventListener('click',submitComment);document.getElementById('btnAddTask').addEventListener('click',()=>abrirNovaTarefaCompleta());document.getElementById('btnAddTask').addEventListener('mouseenter',()=>{if(perms.tarefasCriar===true)prepararTarefaEmbutida();},{once:false});document.getElementById('btnVerMovimentacoes').addEventListener('click',()=>{if(state.activeProcessId)sagaIrPara('monitoramento_multi_oab.html?processo_id='+encodeURIComponent(state.activeProcessId));});document.getElementById('saveTagButton').addEventListener('click',saveTag);document.getElementById('saveChecklistItemButton').addEventListener('click',saveChecklistItem);document.getElementById('saveCustomChecklistButton').addEventListener('click',saveCustomChecklist);document.getElementById('saveReturnButton').addEventListener('click',saveReturn);document.getElementById('saveTaskButton').addEventListener('click',saveTask);document.getElementById('saveCommentEditButton').addEventListener('click',saveCommentEdit);document.getElementById('deleteCommentButton').addEventListener('click',removeComment);document.getElementById('deleteProcessButton').addEventListener('click',excluirProcessoAtivo);document.getElementById('saveNewProcessButton').addEventListener('click',createNewProcess);document.getElementById('saveNewThesisButton').addEventListener('click',saveNewThesis);document.querySelectorAll('[data-close-modal]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.closeModal==='taskModal')state.tarefaEmEdicaoId=null;closeModal(button.dataset.closeModal);}));document.querySelectorAll('.modal-overlay').forEach(overlay=>overlay.addEventListener('click',event=>{if(event.target===overlay)closeModal(overlay.id);}));}
 
 
 /* Localização, importação externa e teses globais */
@@ -2954,7 +3004,7 @@ function renderHeaderCliente(){
   }
 
 }
-const SELECT_PROCESSO='id,pessoa_id,tese_id,area_direito_id,status_id,situacao_acao_id,responsavel_id,numero_processo_cnj,tipo_acao,valor_precatorio_origem,valor_causa,data_inicio,data_prazo,excluido_logico,excluido_por_id,excluido_em,criado_por_id,criado_em,atualizado_em,campanha_origem_id,status_portal_id,sigilo';
+const SELECT_PROCESSO='id,pessoa_id,origem_id,tese_id,area_direito_id,status_id,situacao_acao_id,responsavel_id,numero_processo_cnj,tipo_acao,valor_precatorio_origem,valor_causa,data_inicio,data_prazo,excluido_logico,excluido_por_id,excluido_em,criado_por_id,criado_em,atualizado_em,campanha_origem_id,status_portal_id,sigilo';
 function mapearProcesso(row){
   const teseRow=(state.teses||[]).find(item=>item.id===row.tese_id);
   const responsavelRow=(state.responsaveis||[]).find(item=>item.id===row.responsavel_id);
@@ -2963,6 +3013,8 @@ function mapearProcesso(row){
     id:row.id,
     pessoaId:row.pessoa_id,
     situacaoAcaoId:row.situacao_acao_id||null,
+    origemId:row.origem_id||null,
+    campanhaOrigemId:row.campanha_origem_id||null,
     tese:teseRow?teseRow.nome:'Tipo de ação não identificado',
     teseId:row.tese_id,
     areaDireitoId:row.area_direito_id||null,
@@ -4705,7 +4757,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611101316"></script>
-<script src="saga_ficha_atividades.js?v=202611101316"></script>
+<script src="saga_localizacao.js?v=202611101334"></script>
+<script src="saga_ficha_atividades.js?v=202611101334"></script>
 </body>
 </html>
