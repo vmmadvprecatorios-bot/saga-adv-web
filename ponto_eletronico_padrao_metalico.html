@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611101235"></script>
+<script src="saga_guard.js?v=202611101334"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -230,7 +230,7 @@ tr.apagado td{color:var(--muted)}
   }
   #roscasMeuPonto .centro .n{font-size:15px}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611101235">
+<link rel="stylesheet" href="saga_tema.css?v=202611101334">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -425,6 +425,8 @@ tr.apagado td{color:var(--muted)}
         <div class="campo"><label>Tolerância de atraso (min)</label><input id="cfTol" type="number" min="0" max="60"></div>
         <div class="campo"><label>Ocorrências para alerta no mês</label><input id="cfLimite" type="number" min="1" max="31"></div>
         <div class="campo"><label>Alerta de intervalo sem atividade (min)</label><input id="cfIntervalo" type="number" min="5" max="240"></div>
+        <div class="campo"><label title="Aviso no sino para quem bateu a entrada e não bateu a saída. 0 desliga.">Lembrete da saída: min depois do horário</label><input id="cfLembSaida" type="number" min="0" max="240"></div>
+        <div class="campo"><label title="Diretoria (horário livre): aviso no sino neste horário, se houver período iniciado e não encerrado. Em branco desliga.">Lembrete da Diretoria (horário)</label><input id="cfLembLivre" type="time"></div>
         <div class="campo"><label>Dia do fechamento</label><input id="cfFech" type="number" min="1" max="31"></div>
         <div class="campo"><label>Hora do relatório diário</label><input id="cfHora" type="number" min="0" max="23"></div>
         <div class="campo"><label>Relatório semanal</label><select id="cfSemanal"><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></div>
@@ -609,12 +611,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611101235"></script>
-<script src="saga_texto.js?v=202611101235"></script>
+<script src="saga_ui.js?v=202611101334"></script>
+<script src="saga_texto.js?v=202611101334"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611101235"></script>
-<script src="saga_roscas.js?v=202611101235"></script>
-<script src="saga_pdf.js?v=202611101235"></script>
+<script src="ponto_calculo.js?v=202611101334"></script>
+<script src="saga_roscas.js?v=202611101334"></script>
+<script src="saga_pdf.js?v=202611101334"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -1508,6 +1510,8 @@ async function renderConfig(){
   document.getElementById('cfInicio').value=c.inicio_contagem||'';
   document.getElementById('cfTol').value=c.tolerancia_min;document.getElementById('cfLimite').value=c.limite_alerta;
   document.getElementById('cfIntervalo').value=c.intervalo_alerta_min||30;
+  document.getElementById('cfLembSaida').value=c.lembrete_saida_min==null?15:c.lembrete_saida_min;
+  var ll=c.lembrete_livre_min==null?1140:c.lembrete_livre_min;document.getElementById('cfLembLivre').value=ll>0?String(Math.floor(ll/60)).padStart(2,'0')+':'+String(ll%60).padStart(2,'0'):'';
   document.getElementById('cfEmDiario').checked=c.email_diario===true;document.getElementById('cfEmSemanal').checked=c.email_semanal===true;document.getElementById('cfEmFech').checked=c.email_fechamento!==false;
   document.getElementById('cfFech').value=c.dia_fechamento||25;document.getElementById('cfHora').value=c.hora_relatorio==null?19:c.hora_relatorio;
   document.getElementById('cfSemanal').value=String(c.dia_semanal||5);
@@ -1634,7 +1638,7 @@ async function salvarConfig(){
   var ruim=em.concat(ex).filter(function(e){return !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);});
   if(ruim.length){showToast('E-mail inválido: '+esc(ruim.join(', ')),'error');return;}
   if(!(num('cfFech')>=1&&num('cfFech')<=31)){showToast('Dia do fechamento entre 1 e 31.','error');return;}
-  var dados={inicio_contagem:document.getElementById('cfInicio').value||null,tolerancia_min:num('cfTol')||0,limite_alerta:num('cfLimite')||1,intervalo_alerta_min:Math.min(240,Math.max(5,num('cfIntervalo')||30)),dia_fechamento:num('cfFech'),
+  var dados={inicio_contagem:document.getElementById('cfInicio').value||null,tolerancia_min:num('cfTol')||0,limite_alerta:num('cfLimite')||1,intervalo_alerta_min:Math.min(240,Math.max(5,num('cfIntervalo')||30)),lembrete_saida_min:Math.min(240,Math.max(0,num('cfLembSaida')||0)),lembrete_livre_min:(function(v){var m=/^(\d{1,2}):(\d{2})$/.exec(v||'');return m?Math.min(1439,(+m[1])*60+(+m[2])):0;})(document.getElementById('cfLembLivre').value),dia_fechamento:num('cfFech'),
     hora_relatorio:num('cfHora'),dia_semanal:num('cfSemanal'),emails_gestor:em,emails_extras:ex,exigir_local:document.getElementById('cfLocal').checked,
     email_diario:document.getElementById('cfEmDiario').checked,email_semanal:document.getElementById('cfEmSemanal').checked,email_fechamento:document.getElementById('cfEmFech').checked,atualizado_em:new Date().toISOString()};
   var btn=document.getElementById('cfSalvar');btn.disabled=true;

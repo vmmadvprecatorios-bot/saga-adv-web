@@ -1101,6 +1101,7 @@
   function infoNotif(n){
     if(n&&n.referencia_tabela==='pedidos_busca')return {titulo:'Pedido de busca',tela:'pedidos_busca.html'};
     if(n&&n.referencia_tabela==='sugestoes')return {titulo:'Sugestão de melhoria',tela:'sugestoes.html'};
+    if(n&&n.referencia_tabela==='ponto')return {titulo:'Ponto',tela:'ponto_eletronico_padrao_metalico.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1121,6 +1122,7 @@
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'seguranca',titulo:'Segurança',tipos:['seguranca'],tela:null,um:'alerta de segurança',varios:'alertas de segurança',cor:'#e5484d'},
     {chave:'buscas',titulo:'Pedidos de busca',tipos:[],tela:'pedidos_busca.html',um:'aviso de busca',varios:'avisos de busca',cor:'#0ea5e9'},
+    {chave:'ponto',titulo:'Ponto',tipos:[],tela:'ponto_eletronico_padrao_metalico.html',um:'lembrete do ponto',varios:'lembretes do ponto',cor:'#d97706'},
     {chave:'sugestoes',titulo:'Sugestões de melhoria',tipos:[],tela:'sugestoes.html',um:'aviso de sugestão',varios:'avisos de sugestões',cor:'#c9a84c'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
@@ -1128,6 +1130,8 @@
   function grupoDe(n){
     if(n&&n.referencia_tabela==='pedidos_busca'){for(var i=0;i<GRUPOS_NOTIF.length;i++){if(GRUPOS_NOTIF[i].chave==='buscas')return GRUPOS_NOTIF[i];}}
     // Sugestões de melhoria (bloco 145): tipo 'outro' com a referência 'sugestoes', grupo próprio no sino
+    // Lembrete da saída do ponto (bloco 146): tipo 'outro' com a referência 'ponto'
+    if(n&&n.referencia_tabela==='ponto'){for(var q=0;q<GRUPOS_NOTIF.length;q++){if(GRUPOS_NOTIF[q].chave==='ponto')return GRUPOS_NOTIF[q];}}
     if(n&&n.referencia_tabela==='sugestoes'){for(var k=0;k<GRUPOS_NOTIF.length;k++){if(GRUPOS_NOTIF[k].chave==='sugestoes')return GRUPOS_NOTIF[k];}}
     return grupoDoTipo(n&&n.tipo);
   }
@@ -1242,6 +1246,7 @@
       }catch(e){}
       global.sagaIrPara('pedidos_busca.html');return;
     }
+    if(n.referencia_tabela==='ponto'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html');return;}
     if(n.referencia_tabela==='sugestoes'){global.sagaIrPara('sugestoes.html'+(n.referencia_id?'?id='+encodeURIComponent(n.referencia_id):''));return;}
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{
