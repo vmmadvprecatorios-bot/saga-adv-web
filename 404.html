@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script>
+// Página "não encontrada" (o GitHub Pages e a Vercel mostram esta página para endereço que não existe).
+// 1) Pedido de autorização do Claude (T66) que chegou num endereço torto, por exemplo quando o Site URL do Supabase
+//    termina com o nome de uma tela: vai para a página certa, com o mesmo ?authorization_id=.
+// 2) Qualquer outro endereço: mostra o aviso e o caminho para o login.
+(function(){try{
+  var p=location.pathname, i=p.indexOf('/saga-adv-web/'), base=i>=0?p.slice(0,i+14):'/';
+  if(/\/autorizar_conector\.html\/?$/.test(p)&&p!==base+'autorizar_conector.html'){location.replace(base+'autorizar_conector.html'+location.search);return;}
+  var b=document.createElement('base');b.href=base;document.head.appendChild(b);
+  var t=localStorage.getItem('saga-tema')||'dark',c=localStorage.getItem('saga-cor')||'azul';
+  if(c&&c!=='azul')document.documentElement.setAttribute('data-cor',c);
+  if(localStorage.getItem('saga-movimento')==='reduzido')document.documentElement.classList.add('sem-movimento');
+  document.documentElement.setAttribute('data-tema-404',t==='light'?'light':'dark');
+  document.documentElement.style.background=c==='grafite'?(t==='light'?'#F3F2EF':'#1A1A1A'):(t==='light'?'#f3f5f8':'#172234');
+}catch(e){}})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>VMMADV | Página não encontrada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--curva:cubic-bezier(.22,.78,.25,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.cartao{width:100%;max-width:460px;background:var(--panel-solid,var(--panel));border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:26px 26px 22px;opacity:0;transform:translateY(10px);transition:opacity .32s var(--curva),transform .32s var(--curva)}
+.cartao.visivel{opacity:1;transform:none}
+html.sem-movimento .cartao{transition:none}
+.marca{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:14px}
+.marca .ponto{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1.15;margin-bottom:8px}
+p{font-size:13px;color:var(--muted);line-height:1.55;word-break:break-word}
+p b{color:var(--text);font-weight:600}
+.botoes{display:flex;justify-content:flex-end;margin-top:20px}
+.btn-primary{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:10px;font-size:13px;text-decoration:none;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 16%,var(--panel));color:var(--text);transition:background .2s var(--curva)}
+.btn-primary:hover{background:color-mix(in srgb,var(--gold) 24%,var(--panel))}
+@media(max-width:520px){.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes .btn-primary{width:100%}}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611101837">
+</head>
+<body>
+<main class="cartao" id="cartao">
+  <div class="marca"><span class="ponto" aria-hidden="true"></span>SAGA · Victor Morais Advocacia</div>
+  <h1>Página não encontrada</h1>
+  <p>O endereço <b id="endereco"></b> não existe no SAGA. Pode ser um link antigo ou digitado com erro.</p>
+  <div class="botoes"><a class="btn-primary" href="login_padrao_metalico.html">Ir para o SAGA</a></div>
+</main>
+<script>
+document.body.setAttribute('data-theme', document.documentElement.getAttribute('data-tema-404') || 'dark');
+document.getElementById('endereco').textContent = location.pathname.split('/').filter(Boolean).pop() || location.pathname;
+requestAnimationFrame(function(){ document.getElementById('cartao').classList.add('visivel'); });
+</script>
+</body>
+</html>
