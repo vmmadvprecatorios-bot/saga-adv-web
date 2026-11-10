@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611092006"></script>
+<script src="saga_guard.js?v=202611100112"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -349,15 +349,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611092006"></script>
-<script src="saga_fichas.js?v=202611092006"></script>
-<script src="saga_teses.js?v=202611092006"></script>
-<script src="saga_mencoes.js?v=202611092006"></script>
-<script src="saga_texto.js?v=202611092006"></script>
-<script src="saga_partes.js?v=202611092006"></script>
-<script src="saga_etiquetas.js?v=202611092006"></script>
-<script src="saga_planilha.js?v=202611092006"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611092006">
+<script src="saga_ui.js?v=202611100112"></script>
+<script src="saga_fichas.js?v=202611100112"></script>
+<script src="saga_teses.js?v=202611100112"></script>
+<script src="saga_mencoes.js?v=202611100112"></script>
+<script src="saga_texto.js?v=202611100112"></script>
+<script src="saga_partes.js?v=202611100112"></script>
+<script src="saga_etiquetas.js?v=202611100112"></script>
+<script src="saga_planilha.js?v=202611100112"></script>
+<script src="saga_recursos.js?v=202611100112"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611100112">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -392,6 +393,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,[tabindex]:focus
             <div class="process-summary" id="processStatusTags"></div>
             <div class="process-data-title" id="processDataHeading"></div>
             <div class="grid-dados" id="processDataGrid"></div>
+            <div id="processRecursos"></div>
           </section>
 
           <section class="secao" id="secaoResumoAgente" hidden>
@@ -1883,7 +1885,20 @@ function renderResumoAgente(){
     if(window.sagaRecolher)window.sagaRecolher(d,!state.resumoAgenteAberto);else d.hidden=!state.resumoAgenteAberto;
   });
 }
-function renderActiveProcess(){prepararMencoes();renderProcessTabs();renderProcessHeader();renderProcessData();renderResumoAgente();renderChecklists();ligarPedidoAgente();renderAgente();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
+// Recursos do processo (bloco 142): quadro dentro de "Dados do Processo", selo na aba e "+ Recurso" na barra
+function contextoRecursos(){
+  return {sb:_sb,processoId:state.activeProcessId,podeEditar:perms.processosEditar===true,
+    podeGerenciar:state.ehAdmin===true||perms.pessoasEtiquetasGerenciar===true,
+    processos:state.processos.map(p=>{const n=p.cnj&&p.cnj!=='Não informado'?p.cnj:'';return {id:p.id,rotulo:p.tese+(n?' · '+n:' · sem número'),numero:n};}),
+    // depois de gravar: barra e quadro na hora; depois relê o processo (as intimações do recurso passam a aparecer nele)
+    aoMudar:()=>{renderProcessTabs();renderRecursos();recarregarProcessoAtivo();}};
+}
+function renderRecursos(){
+  const raiz=document.getElementById('processRecursos');
+  if(!raiz||!window.SagaRecursos)return;
+  SagaRecursos.quadro(raiz,getActiveProcess(),contextoRecursos());
+}
+function renderActiveProcess(){prepararMencoes();renderProcessTabs();renderProcessHeader();renderProcessData();renderRecursos();renderResumoAgente();renderChecklists();ligarPedidoAgente();renderAgente();renderDocuments();renderTimeline();renderReturn();renderResponsible();renderTasks();renderPartes();}
 
 async function addChecklistFromTemplate(templateId){
   if(!podeEditarChecklists())return false;
@@ -2262,12 +2277,16 @@ function renderProcessTabs(){
   const root=document.getElementById('processTabs');
   if(!root)return;
   renderActionSummary();
-  const abas=state.processos.map(process=>'<button class="process-tab status-'+process.statusTone+' '+(process.id===state.activeProcessId&&state.activeView!=='location'?'active':'')+'" type="button" data-process-tab="'+esc(process.id)+'">'+situacaoBadge(process,true)+esc(process.tese)+(process.parteInfo?' <small style="opacity:.7">· '+esc(process.parteInfo.papel||'parte')+'</small>':'')+'</button>').join('');
+  const abas=state.processos.map(process=>'<button class="process-tab status-'+process.statusTone+' '+(process.id===state.activeProcessId&&state.activeView!=='location'?'active':'')+'" type="button" data-process-tab="'+esc(process.id)+'">'+situacaoBadge(process,true)+esc(process.tese)+(process.parteInfo?' <small style="opacity:.7">· '+esc(process.parteInfo.papel||'parte')+'</small>':'')+(window.SagaRecursos?SagaRecursos.seloAba(process.id):'')+'</button>').join('');
   const criar=perms.processosCriar?'<button class="btn-new-process" id="btnNewProcess" type="button">+ Novo Processo</button>':'';
+  // 10/11 (bloco 142): recurso (agravo, apelação...) fica dentro do processo, com o número próprio
+  const recBtn=perms.processosEditar===true&&window.SagaRecursos&&state.processos.length?'<button class="btn-new-process" id="btnNovoRecurso" type="button" title="Cadastrar um recurso (agravo, apelação, embargos...) dentro de um processo deste cliente">+ Recurso</button>':'';
   root.innerHTML=abas||'<span class="ficha-mini-tag">Nenhum processo vinculado a esta pessoa.</span>';
   // 09/11 (vistoria): a Localização (telefones, e-mails, endereços, parentes e leitura das consultas) voltou a ter botão na ficha
   const loc='<button class="process-tab location-tab'+(state.activeView==='location'?' active':'')+'" type="button" id="btnLocalizacao" title="Telefones, e-mails, endereços e parentes do cliente"><span class="location-tab-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" stroke="currentColor" stroke-width="1.6"/></svg></span>Localização</button>';
-  root.insertAdjacentHTML('beforeend',loc+criar);
+  root.insertAdjacentHTML('beforeend',loc+criar+recBtn);
+  const btnRec=document.getElementById('btnNovoRecurso');
+  if(btnRec)btnRec.addEventListener('click',()=>SagaRecursos.abrirNovo(contextoRecursos()));
   const btnLoc=document.getElementById('btnLocalizacao');
   if(btnLoc)btnLoc.addEventListener('click',()=>{if(state.activeView!=='location')activateLocation();});
   root.querySelectorAll('[data-process-tab]').forEach(button=>button.addEventListener('click',()=>activateProcess(button.dataset.processTab)));
@@ -3007,6 +3026,7 @@ async function carregarProcessosDaPessoa(pessoaId){
     }catch(e){}
     state.processos=linhas.map(row=>{const proc=mapearProcesso(row);const info=papeis.get(row.id);proc.parteInfo=info&&!info.principal?{papel:info.papel,herdeiroDe:info.herdeiro_de}:null;return proc;});
     await carregarHonorariosDosProcessos(state.processos);
+    if(window.SagaRecursos){try{await SagaRecursos.carregar(_sb,state.processos.map(p=>p.id));}catch(e){}}
     if(!state.processos.some(proc=>proc.id===state.activeProcessId))state.activeProcessId=state.processos[0]?state.processos[0].id:null;
     return state.processos;
   }catch(erro){
@@ -4684,7 +4704,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611092006"></script>
-<script src="saga_ficha_atividades.js?v=202611092006"></script>
+<script src="saga_localizacao.js?v=202611100112"></script>
+<script src="saga_ficha_atividades.js?v=202611100112"></script>
 </body>
 </html>

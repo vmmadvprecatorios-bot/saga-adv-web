@@ -318,7 +318,7 @@
   async function carregar(){
     var sb=S.sb;
     var r=await Promise.all([
-      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id,processo_candidatos').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
+      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id,processo_candidatos,recurso_id').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
       sb.from('intimacoes_colunas').select('*').order('ordem').order('criado_em'),
       sb.from('monitoramento_config').select('*').eq('tipo_alvo','oab').order('criado_em'),
       sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab,possui_registro_oab').order('nome_completo'),
@@ -335,6 +335,15 @@
       var p=await sb.from('processos').select('id,numero_processo_cnj,pessoa_id,responsavel_id,pessoa:pessoas(nome_completo)').in('id',ids);(p.data||[]).forEach(function(x){S.processos[x.id]=x;});
       await carregarPartes(ids);
     }
+    // 10/11 (bloco 142): intimação de um recurso (agravo, apelação...) cai no processo principal; o cartão diz qual recurso
+    S.recursos={};
+    var rids=[...new Set(S.itens.map(function(i){return i.recurso_id;}).filter(Boolean))];
+    if(rids.length){try{
+      var rr=await Promise.all([sb.from('processos_recursos').select('id,processo_id,numero,tipo_id').in('id',rids),
+        sb.from('etiquetas_catalogo').select('id,nome,cor').eq('categoria','recurso_tipo')]);
+      var tiposRec={};(rr[1].data||[]).forEach(function(t){tiposRec[t.id]=t;});
+      (rr[0].data||[]).forEach(function(x){x.tipo=tiposRec[x.tipo_id]||null;S.recursos[x.id]=x;});
+    }catch(e){}}
     S.carregado=true;
     return true;
   }
@@ -513,6 +522,7 @@
       '<div class="si-just">'+esc(j.rotulo)+'</div>'+
       htmlAdvogados(i)+
       '<div class="si-proc"><span>'+esc(cnj(i))+'</span><button class="si-copiar" type="button" data-copiar="'+esc(cnj(i))+'" title="Copiar o número do processo">'+ICO_COPIAR+'</button></div>'+
+      htmlRecurso(i)+
       '<div class="si-cli">'+esc(cli||partesAtivas(i)||'Parte não identificada')+'</div>'+
       '<div class="si-doc">'+esc([i.tipo_documento,i.orgao].filter(Boolean).join(' · '))+'</div>'+
       (i.resumo&&!opc.compacto?'<div class="si-res">'+esc(i.resumo)+'</div>':'')+
@@ -523,6 +533,15 @@
         (i.processo_id?'<span class="si-tag" style="--c:#2fae7a">Na ficha do cliente</span>':'<span class="si-tag" style="--c:#8b5cf6">Fora do SAGA</span>')+
       '</div>';
     return el;
+  }
+  // 10/11 (bloco 142): "Agravo de instrumento do processo 0000000-00..." embaixo do número do recurso
+  function htmlRecurso(i){
+    var rec=i.recurso_id&&S.recursos&&S.recursos[i.recurso_id];if(!rec)return '';
+    var pr=S.processos&&S.processos[i.processo_id],num=pr&&pr.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(pr.numero_processo_cnj):pr.numero_processo_cnj):'';
+    var cor=rec.tipo&&/^#[0-9a-f]{6}$/i.test(rec.tipo.cor||'')?rec.tipo.cor:'#c0841a';
+    return '<div class="si-rec" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px;font-size:10.5px;color:var(--muted)">'
+      +'<span class="si-tag" style="--c:'+esc(cor)+'">'+esc(rec.tipo?rec.tipo.nome:'Recurso')+'</span>'
+      +(num?'<span>do processo '+esc(num)+'</span>':'')+'</div>';
   }
   function ligarCartoes(raiz){
     raiz.addEventListener('click',function(e){

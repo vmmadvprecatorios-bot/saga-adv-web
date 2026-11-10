@@ -297,12 +297,15 @@ window.SagaPlanilha=(function(){
         else if(c.tipo==='link'&&!sig&&Array.isArray(v))conteudo=v.map(function(l){var u=/^https?:\/\//i.test(l.url||'')?l.url:'';return u?'<a href="'+h(u)+'" target="_blank" rel="noopener noreferrer" class="sp-link" onclick="event.stopPropagation()">'+h(l.texto||l.url)+'</a>':'';}).join(' · ');
         else if(cor&&t)conteudo='<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>';
         else conteudo=h(t)||'<span class="sp-vazio">—</span>';
+        // 10/11 (bloco 142): selo curto do recurso (AI, AP...) antes do número; os detalhes aparecem ao passar o mouse
+        if(c.campo_sistema==='processo.numero'&&!sig&&window.SagaRecursos)conteudo='<span class="rec-pl" data-rec-proc="'+h(p.id)+'"></span>'+conteudo;
         return '<td data-sp-cel="'+h(c.id)+'" class="'+(editavel(p,c)?'sp-editavel':'')+'" title="'+h(t)+'">'+conteudo+'</td>';
       }).join('')+'<td>'+acoesBtns(p)+'</td></tr>';
     }).join('');
     tb.querySelectorAll('tr[data-sp-proc]').forEach(function(tr){tr.onclick=null;});
     renderTotais(tabela,cs,lista);aplicarLarguras();aplicarAltura();atualizarFixas();restaurarSelecao();
     ligarArrastarColunas(thead);restaurarMarcados();
+    if(window.SagaRecursos)SagaRecursos.preencherPlanilha(tb,_sb);
     var kp=document.getElementById('spKanbanPor');if(kp)kp.style.display='none';
   }
   // ---------- largura das colunas (arrastar a borda do cabeçalho; vale só para você) ----------

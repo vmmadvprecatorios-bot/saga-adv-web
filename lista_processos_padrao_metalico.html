@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611092006"></script>
+<script src="saga_guard.js?v=202611100112"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Processos em Andamento</title>
@@ -464,7 +464,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
   [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
 .proxima-providencia{margin-top:6px;min-width:0;max-width:100%}.providencia-link{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;max-width:100%;border:1px solid var(--border-soft);border-left:4px solid var(--prazo-cor,var(--muted));border-radius:7px;padding:5px 7px;background:var(--panel);color:var(--text);font-size:10px;line-height:1.5;text-decoration:none;overflow-wrap:anywhere}.providencia-link:active{transform:scale(.98)}.providencia-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.providencia-prazo{background:var(--prazo-cor,var(--panel-2));color:var(--prazo-texto,var(--muted));border-radius:4px;padding:1px 4px}.providencia-link[data-situacao-prazo="muito-atrasada"]{outline:1px solid var(--prazo-muito-contorno)}.providencia-concluida{color:var(--muted);border-left-width:1px}.providencia-mais{color:var(--muted);font-weight:700}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611092006">
+<link rel="stylesheet" href="saga_tema.css?v=202611100112">
 </head>
 <body data-theme="dark">
 
@@ -723,15 +723,16 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611092006"></script>
-<script src="saga_teses.js?v=202611092006"></script>
-<script src="saga_etiquetas.js?v=202611092006"></script>
-<script src="saga_partes.js?v=202611092006"></script>
-<script src="saga_roscas.js?v=202611092006"></script>
-<script src="saga_paineis.js?v=202611092006"></script>
-<script src="saga_xlsx.js?v=202611092006"></script>
-<script src="saga_fichas.js?v=202611092006"></script>
-<script src="saga_planilha.js?v=202611092006"></script>
+<script src="saga_ui.js?v=202611100112"></script>
+<script src="saga_teses.js?v=202611100112"></script>
+<script src="saga_etiquetas.js?v=202611100112"></script>
+<script src="saga_partes.js?v=202611100112"></script>
+<script src="saga_roscas.js?v=202611100112"></script>
+<script src="saga_paineis.js?v=202611100112"></script>
+<script src="saga_xlsx.js?v=202611100112"></script>
+<script src="saga_fichas.js?v=202611100112"></script>
+<script src="saga_planilha.js?v=202611100112"></script>
+<script src="saga_recursos.js?v=202611100112"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -1444,6 +1445,9 @@ async function lerBaseProcessos(f){
   cache.promessa=(async function(){
     var pessoaIds=null;
     if(f.busca){var rp=await _sb.from('pessoas').select('id').or('nome_completo.ilike.%'+f.busca+'%,cpf.ilike.%'+f.busca+'%').limit(500);if(rp.error)throw rp.error;pessoaIds=(rp.data||[]).map(function(p){return p.id;});}
+    // 10/11 (bloco 142): o número de um recurso (agravo, apelação...) também acha o processo
+    var recIds=[],dgBusca=f.busca?f.busca.replace(/\D/g,''):'';
+    if(dgBusca.length>=6){try{var rr=await _sb.from('processos_recursos').select('processo_id').eq('ativo',true).ilike('numero_digitos','%'+dgBusca+'%').limit(300);if(!rr.error)recIds=Array.from(new Set((rr.data||[]).map(function(x){return x.processo_id;})));}catch(e){}}
     var montarSelect=function(){return 'id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
       'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id'+(FASE_FIXA?'!inner':'')+'(id,nome,cor,fase,ordem,etapa),responsavel:usuarios!responsavel_id(id,nome_completo)';};
     var consulta=function(inicio,passo,contar){
@@ -1452,7 +1456,12 @@ async function lerBaseProcessos(f){
       if(f.area!=='*')q=f.area?q.eq('area_direito_id',f.area):q.is('area_direito_id',null);
       if(f.tese)q=q.eq('tese_id',f.tese);
       if(f.de)q=q.gte('data_inicio',f.de);if(f.ate)q=q.lte('data_inicio',f.ate);
-      if(f.busca){if(pessoaIds&&pessoaIds.length)q=q.or('pessoa_id.in.('+pessoaIds.join(',')+'),numero_processo_cnj.ilike.%'+f.busca+'%');else q=q.ilike('numero_processo_cnj','%'+f.busca+'%');}
+      if(f.busca){
+        var ors=[];if(pessoaIds&&pessoaIds.length)ors.push('pessoa_id.in.('+pessoaIds.join(',')+')');
+        ors.push('numero_processo_cnj.ilike.%'+f.busca+'%');
+        if(recIds.length)ors.push('id.in.('+recIds.join(',')+')');
+        q=ors.length>1?q.or(ors.join(',')):q.ilike('numero_processo_cnj','%'+f.busca+'%');
+      }
       return q.order('criado_em',{ascending:false}).order('id').range(inicio,inicio+passo-1);
     };
     var r=await consulta(0,LEITURA_LOTE,true);
