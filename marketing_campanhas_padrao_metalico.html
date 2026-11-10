@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611101149"></script>
+<script src="saga_guard.js?v=202611101234"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Marketing</title>
@@ -134,28 +134,24 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 .seg button{height:28px;padding:0 11px;border-radius:8px;font-size:11.5px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;border:1px solid transparent;white-space:nowrap}
 .seg button svg{width:13px;height:13px}
 .mk-select{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:9px;background:var(--panel);font-size:11.5px;color:var(--text);max-width:100%}
-.mk-art{display:grid;grid-template-columns:236px minmax(0,1fr);gap:16px;align-items:start}
-.mk-pastas{position:sticky;top:78px;background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:10px 8px;max-height:calc(100vh - 100px);overflow:auto}
-.mk-pastas h3{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:4px 8px 8px}
-.pasta-item{display:flex;align-items:center;gap:9px;width:100%;min-height:34px;padding:6px 9px;border-radius:9px;font-size:12px;color:var(--text);text-align:left;border:1px solid transparent;transition:background-color .22s var(--curva),border-color .22s var(--curva)}
-.pasta-item:hover{background:color-mix(in srgb,var(--gold) 7%,transparent)}
-.pasta-item.active{background:var(--sb-escolha,color-mix(in srgb,var(--gold) 14%,transparent));border-color:var(--sb-escolha-borda,color-mix(in srgb,var(--gold) 40%,transparent));font-weight:600}
-.pasta-item .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pasta-item .n{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
-.pasta-item.destaque .n{color:var(--text);background:color-mix(in srgb,#e0a93b 24%,transparent);padding:0 7px;border-radius:9px;font-weight:700}
-.pasta-item .ico{display:inline-flex;width:14px;justify-content:center;color:var(--muted);flex:0 0 auto}
-.pasta-item .ico svg{width:14px;height:14px}
+/* pastas numa faixa no topo (10/11, Dr. Victor: "joga só ela para cima"); campanhas da pasta na faixa de baixo */
+.mk-faixa{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;padding:2px 2px 10px;margin-bottom:4px;scrollbar-width:thin}
+.mk-faixa.sub{padding-top:0;margin-top:-2px}
+.mk-rot{flex:0 0 auto;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.pasta-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);font-size:12px;color:var(--text);white-space:nowrap;transition:background-color .22s var(--curva),border-color .22s var(--curva)}
+.pasta-chip:hover{border-color:color-mix(in srgb,var(--gold) 45%,var(--border-soft))}
+.pasta-chip.active{background:var(--sb-escolha,color-mix(in srgb,var(--gold) 14%,transparent));border-color:var(--sb-escolha-borda,color-mix(in srgb,var(--gold) 40%,transparent));font-weight:600}
+.pasta-chip .n{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pasta-chip.destaque .n{color:var(--text);background:color-mix(in srgb,#e0a93b 24%,transparent);padding:0 7px;border-radius:9px;font-weight:700}
+.pasta-chip .ico{display:inline-flex;color:var(--muted)}.pasta-chip .ico svg{width:13px;height:13px}
+.mk-faixa.sub .pasta-chip{height:28px;padding:0 10px;font-size:11.5px;border-radius:9px}
+.mk-faixa .sep{flex:0 0 auto;width:1px;height:22px;background:var(--border-soft);margin:0 4px}
+.pasta-acao{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 11px;border-radius:10px;border:1px dashed var(--border-soft);font-size:11.5px;color:var(--muted);white-space:nowrap;transition:color .2s var(--curva),border-color .2s var(--curva)}
+.pasta-acao:hover{color:var(--text);border-color:var(--gold)}
+.pasta-acao svg{width:13px;height:13px}
 .bolinha{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--c,#c9a84c);flex:0 0 auto}
-.bolinha.camp{width:7px;height:7px;border-radius:50%;opacity:.85;margin:0 1px 0 3px}
+.bolinha.camp{width:7px;height:7px;border-radius:50%;opacity:.85}
 .bolinha.grande{width:14px;height:14px;border-radius:4px}
-.pasta-sub{margin:1px 0 4px 14px;padding-left:6px;border-left:1px solid var(--border-soft)}
-.pasta-sub .pasta-item{min-height:30px;font-size:11.5px}
-.mk-pastas-pe{display:flex;flex-direction:column;gap:2px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-soft)}
-.mk-pastas-pe button{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;font-size:11.5px;color:var(--muted);text-align:left;transition:background-color .2s var(--curva),color .2s var(--curva)}
-.mk-pastas-pe button:hover{color:var(--text);background:color-mix(in srgb,var(--gold) 7%,transparent)}
-.mk-sel-pasta{display:none;align-items:center;gap:8px;margin-bottom:10px}
-.mk-sel-pasta label{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
-.mk-sel-pasta select{flex:1;min-width:0;height:38px}
 .mk-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .mk-cab-txt{min-width:0;flex:1}
 .mk-cab h2{font-family:'Cormorant Garamond',serif;font-size:25px;font-weight:600;line-height:1.15;display:flex;align-items:center;gap:9px}
@@ -191,7 +187,7 @@ html.saga-sem-movimento .mq-card:hover{transform:none}
 .mq-com svg{width:12px;height:12px}
 .mq-grade.p .mq-corpo{padding:8px 9px}
 .mq-grade.p .mq-obs,.mq-grade.p .mq-pe,.mq-grade.p .mq-sub+.mq-sub{display:none}
-.mk-kanban{display:grid;grid-template-columns:repeat(var(--cols,5),minmax(205px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.mk-kanban{display:grid;grid-template-columns:repeat(var(--cols,5),minmax(168px,1fr));gap:10px;overflow-x:auto;padding-bottom:8px}
 .mk-kanban .coluna{min-height:120px}
 .mk-kanban .mq-card{margin-bottom:10px;background:var(--panel-2)}
 .mk-kanban .mq-thumb{aspect-ratio:16/10}
@@ -285,9 +281,6 @@ html.saga-sem-movimento .pino.novo{animation:none}
 .ger-vazio{padding:14px 0;color:var(--muted);font-size:12px}
 
 @media(max-width:900px){
-  .mk-art{grid-template-columns:minmax(0,1fr)}
-  .mk-pastas{display:none}
-  .mk-sel-pasta{display:flex}
   .mv-grid{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-width:760px){
@@ -312,7 +305,7 @@ html.saga-sem-movimento .pino.novo{animation:none}
   .menu-nova{left:0;right:0;width:auto;transform-origin:top center}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611101149">
+<link rel="stylesheet" href="saga_tema.css?v=202611101234">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -352,19 +345,15 @@ html.saga-sem-movimento .pino.novo{animation:none}
   </div>
 
   <section class="tab-pane ativo" id="aba-artes">
-    <div class="mk-art">
-      <aside class="mk-pastas" id="mkPastas" aria-label="Pastas do marketing"></aside>
-      <div class="mk-main">
-        <div class="mk-sel-pasta"><label for="selPasta">Pasta</label><select id="selPasta" class="mk-select"></select></div>
-        <div class="mk-cab" id="mkCab"></div>
-        <div class="mk-barra">
-          <div class="seg" id="segVisao" aria-label="Forma de ver as artes"></div>
-          <div class="pills" id="pillsSit" aria-label="Situação"></div>
-          <div class="seg seg-tam" id="segTam" aria-label="Tamanho dos quadros"></div>
-        </div>
-        <div id="gradeArtes"></div>
-      </div>
+    <nav class="mk-faixa" id="mkPastas" aria-label="Pastas do marketing"></nav>
+    <nav class="mk-faixa sub" id="mkSub" aria-label="Campanhas da pasta" hidden></nav>
+    <div class="mk-cab" id="mkCab"></div>
+    <div class="mk-barra">
+      <div class="seg" id="segVisao" aria-label="Forma de ver as artes"></div>
+      <div class="pills" id="pillsSit" aria-label="Situação"></div>
+      <div class="seg seg-tam" id="segTam" aria-label="Tamanho dos quadros"></div>
     </div>
+    <div id="gradeArtes"></div>
   </section>
 
   <section class="tab-pane" id="aba-campanhas">
@@ -508,10 +497,10 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611101149"></script>
-<script src="saga_texto.js?v=202611101149"></script>
-<script src="saga_roscas.js?v=202611101149"></script>
-<script src="saga_mencoes.js?v=202611101149"></script>
+<script src="saga_ui.js?v=202611101234"></script>
+<script src="saga_texto.js?v=202611101234"></script>
+<script src="saga_roscas.js?v=202611101234"></script>
+<script src="saga_mencoes.js?v=202611101234"></script>
 <script>
 /* =====================================================================
    MARKETING (dados reais do banco; bloco 144, 10/11/2026)
@@ -715,42 +704,41 @@ function bateBusca(m){
   var t=temaDe(m.tema_id),c=campDe(m.campanha_id);
   return (m.nome_arquivo+' '+(m.legenda||'')+' '+(t?t.nome:'')+' '+(c?c.nome:'')+' '+nomeUsuario(m.usuario_id)).toLowerCase().indexOf(b)!==-1;
 }
-function itemPasta(p,nome,n,ico,extra){
-  var k=chavePasta(p),ativo=k===chavePasta(state.pasta);
-  return '<button class="pasta-item'+(ativo?' active':'')+(extra?' '+extra:'')+'" type="button" data-pasta="'+esc(k)+'" title="'+esc(nome)+'"><span class="ico">'+ico+'</span><span class="t">'+esc(nome)+'</span><span class="n">'+n+'</span></button>';
+function chipPasta(p,nome,n,o){
+  o=o||{};var k=chavePasta(p),atual=state.pasta,campAtual=atual.tipo==='camp'?campDe(atual.id):null;
+  var ativo=k===chavePasta(atual);
+  if(!ativo&&!o.sub&&campAtual){ // campanha escolhida: a pasta dela fica marcada na faixa de cima
+    if(p.tipo==='tema'&&campAtual.tema_id===p.id&&temaAtivoId(p.id))ativo=true;
+    if(p.tipo==='sem'&&!temaAtivoId(campAtual.tema_id))ativo=true;
+  }
+  return '<button class="pasta-chip'+(ativo?' active':'')+(o.extra?' '+o.extra:'')+'" type="button" data-pasta="'+esc(k)+'" title="'+esc(nome)+'">'
+    +(o.ico?'<span class="ico">'+o.ico+'</span>':'')+(o.cor?'<span class="bolinha'+(o.sub?' camp':'')+'" style="--c:'+esc(o.cor)+'"></span>':'')
+    +'<span class="t">'+esc(nome)+'</span><span class="n">'+n+'</span></button>';
 }
 function renderPastas(){
   if(!state.pode.verMateriais)return;
-  var el=document.getElementById('mkPastas'),p=state.pasta,campAtual=p.tipo==='camp'?campDe(p.id):null;
+  var el=document.getElementById('mkPastas'),sub=document.getElementById('mkSub'),p=state.pasta,campAtual=p.tipo==='camp'?campDe(p.id):null;
   var pend=state.materiais.filter(function(m){return m.status_fluxo==='em_revisao';}).length;
-  var h='<h3>Pastas</h3>'+itemPasta({tipo:'tudo'},'Tudo',state.materiais.length,ICO.tudo)
-    +itemPasta({tipo:'aguardando'},ehAprovador()?'Para aprovar':'Aguardando aprovação',pend,ICO.relogio,pend?'destaque':'');
-  function subCampanhas(lista,cor){
-    if(!lista.length)return '';
-    return '<div class="pasta-sub">'+lista.map(function(c){return itemPasta({tipo:'camp',id:c.id},c.nome,state.materiais.filter(function(m){return m.campanha_id===c.id;}).length,'<span class="bolinha camp" style="--c:'+esc(cor)+'"></span>');}).join('')+'</div>';
-  }
-  temasAtivos().forEach(function(t){
-    var n=state.materiais.filter(function(m){return m.tema_id===t.id;}).length;
-    var aberto=(p.tipo==='tema'&&p.id===t.id)||(campAtual&&campAtual.tema_id===t.id);
-    h+=itemPasta({tipo:'tema',id:t.id},t.nome,n,'<span class="bolinha" style="--c:'+esc(t.cor||'#c9a84c')+'"></span>');
-    if(aberto)h+=subCampanhas(state.campanhas.filter(function(c){return c.tema_id===t.id;}),t.cor||'#c9a84c');
-  });
-  var sem=state.materiais.filter(function(m){return !temaAtivoId(m.tema_id);}).length,campsSem=state.campanhas.filter(function(c){return !c.tema_id||!temasAtivos().some(function(t){return t.id===c.tema_id;});});
-  h+=itemPasta({tipo:'sem'},'Sem pasta',sem,ICO.sem);
-  if(p.tipo==='sem'||(campAtual&&campsSem.indexOf(campAtual)>=0))h+=subCampanhas(campsSem,'#8a94a8');
-  var pe='';
-  if(state.pode.temaCriar)pe+='<button type="button" data-acao-pasta="nova">'+'<span class="ico" style="display:inline-flex;width:14px">'+ICO.mais+'</span>Nova pasta</button>';
-  if(state.pode.temaEditar&&temasAtivos().length)pe+='<button type="button" data-acao-pasta="organizar"><span class="ico" style="display:inline-flex;width:14px">'+ICO.organizar+'</span>Organizar pastas</button>';
-  if(pe)h+='<div class="mk-pastas-pe">'+pe+'</div>';
+  var sem=state.materiais.filter(function(m){return !temaAtivoId(m.tema_id);}).length;
+  var campsSem=state.campanhas.filter(function(c){return !temaAtivoId(c.tema_id);});
+  var h='<span class="mk-rot">Pastas</span>'+chipPasta({tipo:'tudo'},'Tudo',state.materiais.length,{ico:ICO.tudo})
+    +chipPasta({tipo:'aguardando'},ehAprovador()?'Para aprovar':'Aguardando aprovação',pend,{ico:ICO.relogio,extra:pend?'destaque':''})
+    +'<span class="sep"></span>';
+  temasAtivos().forEach(function(t){h+=chipPasta({tipo:'tema',id:t.id},t.nome,state.materiais.filter(function(m){return m.tema_id===t.id;}).length,{cor:t.cor||'#c9a84c'});});
+  h+=chipPasta({tipo:'sem'},'Sem pasta',sem,{ico:ICO.sem});
+  if(state.pode.temaCriar||(state.pode.temaEditar&&temasAtivos().length))h+='<span class="sep"></span>';
+  if(state.pode.temaCriar)h+='<button class="pasta-acao" type="button" data-acao-pasta="nova">'+ICO.mais+'Nova pasta</button>';
+  if(state.pode.temaEditar&&temasAtivos().length)h+='<button class="pasta-acao" type="button" data-acao-pasta="organizar">'+ICO.organizar+'Organizar</button>';
   el.innerHTML=h;
-  // celular: menu suspenso com as mesmas pastas
-  var sel=document.getElementById('selPasta'),o='<option value="tudo">Tudo ('+state.materiais.length+')</option><option value="aguardando">'+(ehAprovador()?'Para aprovar':'Aguardando aprovação')+' ('+pend+')</option>';
-  temasAtivos().forEach(function(t){
-    var cs=state.campanhas.filter(function(c){return c.tema_id===t.id;});
-    o+='<optgroup label="'+esc(t.nome)+'"><option value="tema:'+esc(t.id)+'">'+esc(t.nome)+' (todas)</option>'+cs.map(function(c){return '<option value="camp:'+esc(c.id)+'">'+esc(c.nome)+'</option>';}).join('')+'</optgroup>';
-  });
-  o+='<optgroup label="Sem pasta"><option value="sem">Sem pasta ('+sem+')</option>'+campsSem.map(function(c){return '<option value="camp:'+esc(c.id)+'">'+esc(c.nome)+'</option>';}).join('')+'</optgroup>';
-  sel.innerHTML=o;sel.value=chavePasta(state.pasta);
+  // faixa de baixo: as campanhas da pasta escolhida
+  var temaSel=p.tipo==='tema'?p.id:p.tipo==='sem'?'__sem':campAtual?(temaAtivoId(campAtual.tema_id)?campAtual.tema_id:'__sem'):null;
+  var cs=temaSel==='__sem'?campsSem:temaSel?state.campanhas.filter(function(c){return c.tema_id===temaSel;}):[];
+  if(!cs.length){sub.hidden=true;sub.innerHTML='';return;}
+  var t=temaSel==='__sem'?null:temaDe(temaSel),cor=t&&t.cor||'#8a94a8';
+  var total=temaSel==='__sem'?sem:state.materiais.filter(function(m){return m.tema_id===temaSel;}).length;
+  sub.innerHTML='<span class="mk-rot">Campanhas</span>'+chipPasta(temaSel==='__sem'?{tipo:'sem'}:{tipo:'tema',id:temaSel},'Todas',total,{sub:true})
+    +cs.map(function(c){return chipPasta({tipo:'camp',id:c.id},c.nome,state.materiais.filter(function(m){return m.campanha_id===c.id;}).length,{sub:true,cor:cor});}).join('');
+  sub.hidden=false;
 }
 function escolherPasta(k){
   state.pasta=lerChave(k);guardar('saga-mkt-pasta',chavePasta(state.pasta));
@@ -1483,7 +1471,7 @@ function ligarEventos(){
     var a=e.target.closest('[data-acao-pasta]');if(!a)return;
     if(a.dataset.acaoPasta==='nova')abrirTema(null);else{renderGerPastas();abrirModal('modalPastas');}
   });
-  document.getElementById('selPasta').addEventListener('change',function(){escolherPasta(this.value);});
+  document.getElementById('mkSub').addEventListener('click',function(e){var b=e.target.closest('[data-pasta]');if(b)escolherPasta(b.dataset.pasta);});
   document.getElementById('mkCab').addEventListener('click',function(e){
     var b=e.target.closest('[data-cab]');if(!b)return;var p=state.pasta;
     if(b.dataset.cab==='editar-pasta')abrirTema(p.id);
