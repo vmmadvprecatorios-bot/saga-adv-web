@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script>
+// Tema e cor escolhidos no SAGA, antes de qualquer coisa aparecer
+(function(){try{var t=localStorage.getItem('saga-tema')||'dark',c=localStorage.getItem('saga-cor')||'azul';
+if(c&&c!=='azul')document.documentElement.setAttribute('data-cor',c);
+document.documentElement.style.background=c==='grafite'?(t==='light'?'#F3F2EF':'#1A1A1A'):(t==='light'?'#f3f5f8':'#172234');}catch(e){}})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>VMMADV | Ligar o SAGA ao Claude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--radius:16px;--curva:cubic-bezier(.22,.78,.25,1)}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.cartao{width:100%;max-width:520px;background:var(--panel-solid,var(--panel));border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);padding:26px 26px 22px;opacity:0;transform:translateY(10px);transition:opacity 360ms var(--curva),transform 360ms var(--curva)}
+.cartao.visivel{opacity:1;transform:none}
+html.sem-movimento .cartao{transition:none}
+.marca{display:flex;align-items:center;gap:10px;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:14px}
+.marca .ponto{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-height:1.15;margin-bottom:8px}
+.sub{font-size:13px;color:var(--muted);line-height:1.55}
+.sub b{color:var(--text);font-weight:600}
+.lista{margin:16px 0 4px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.lista li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;font-size:13px;line-height:1.5;align-items:start}
+.lista li svg{width:18px;height:18px;margin-top:1px}
+.lista li.sim svg{color:var(--success)}
+.lista li.nao svg{color:var(--muted)}
+.quadro{border:1px solid var(--border-soft);border-radius:12px;padding:10px 12px;background:var(--panel-2);font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5;word-break:break-word}
+.quadro b{color:var(--text);font-weight:600}
+.alerta{border-color:color-mix(in srgb,var(--danger) 45%,transparent);color:var(--text);background:color-mix(in srgb,var(--danger) 9%,transparent)}
+.botoes{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.btn-secondary,.btn-primary{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:10px;font-size:13px}
+.btn-secondary{border:1px solid var(--border);background:var(--panel);color:var(--text)}
+.btn-primary{border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 16%,var(--panel));color:var(--text)}
+.btn-primary:disabled,.btn-secondary:disabled{opacity:.55;cursor:wait}
+.rodape{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5}
+.carregando{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
+.roda{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:gira .8s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+@media(max-width:520px){.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes{flex-direction:column-reverse}.botoes button{width:100%}}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611101837">
+</head>
+<body>
+<main class="cartao" id="cartao" aria-live="polite">
+  <div class="marca"><span class="ponto" aria-hidden="true"></span>SAGA · Victor Morais Advocacia</div>
+  <div id="conteudo"><div class="carregando"><span class="roda" aria-hidden="true"></span>Conferindo o pedido...</div></div>
+</main>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+// Página de autorização do conector do SAGA no Claude (T66, bloco 151, 10/11/2026).
+// O Supabase (Authentication > OAuth Server, caminho /autorizar_conector.html) manda a pessoa para cá com ?authorization_id=.
+// Sem login, vai para o login do SAGA e volta para cá. Só aceita pedidos do Claude (claude.ai / claude.com).
+var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var ID = '';
+try { ID = new URLSearchParams(location.search).get('authorization_id') || ''; } catch (e) {}
+var tema = 'dark';
+try { tema = localStorage.getItem('saga-tema') || 'dark'; if (localStorage.getItem('saga-movimento') === 'reduzido') document.documentElement.classList.add('sem-movimento'); } catch (e) {}
+document.body.setAttribute('data-theme', tema === 'light' ? 'light' : 'dark');
+
+var ICO_SIM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>';
+var ICO_NAO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function esc(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+function $(id) { return document.getElementById(id); }
+// troca suave do conteúdo do cartão (some e volta)
+function mostrar(html) {
+  var c = $('cartao'), sem = document.documentElement.classList.contains('sem-movimento');
+  if (sem || !c.classList.contains('visivel')) { $('conteudo').innerHTML = html; requestAnimationFrame(function () { c.classList.add('visivel'); }); return; }
+  c.classList.remove('visivel');
+  setTimeout(function () { $('conteudo').innerHTML = html; c.classList.add('visivel'); }, 240);
+}
+function erro(texto) {
+  mostrar('<h1>Não deu para continuar</h1><p class="sub">' + esc(texto) + '</p><p class="rodape">Volte ao Claude e tente conectar o SAGA de novo. Se o problema continuar, avise o administrador.</p>');
+}
+function hostDe(u) { try { return new URL(u).hostname.toLowerCase(); } catch (e) { return ''; } }
+function doClaude(host) { return /(^|\.)claude\.(ai|com)$/.test(host); }
+
+async function iniciar() {
+  if (!/^[A-Za-z0-9_-]{8,200}$/.test(ID)) { erro('Este link de autorização está incompleto.'); return; }
+  var s = await _sb.auth.getSession();
+  if (!s.data || !s.data.session) {
+    location.replace('login_padrao_metalico.html?voltar=' + encodeURIComponent('autorizar_conector.html?authorization_id=' + ID));
+    return;
+  }
+  var eu = await _sb.from('usuarios').select('id,nome_completo,ativo').eq('auth_user_id', s.data.session.user.id).maybeSingle();
+  if (!eu.data || eu.data.ativo === false) { erro('Esta conta não faz parte da equipe do escritório (ou está desligada).'); return; }
+  var pode = await _sb.rpc('conector_pode_usar');
+  var d = await _sb.auth.oauth.getAuthorizationDetails(ID);
+  if (d.error || !d.data) { erro('O pedido de autorização venceu ou não foi encontrado (' + ((d.error && d.error.message) || 'sem detalhe') + ').'); return; }
+  // já autorizado antes: o Supabase manda direto de volta
+  if (!d.data.authorization_id && d.data.redirect_url) { location.replace(d.data.redirect_url); return; }
+  var cliente = d.data.client || {}, app = cliente.name || cliente.client_name || 'Aplicativo', destino = d.data.redirect_uri || '', host = hostDe(destino);
+  var nome = (eu.data.nome_completo || '').split(' ')[0];
+  if (!doClaude(host)) {
+    mostrar('<h1>Pedido recusado por segurança</h1><p class="sub">O SAGA só se liga ao <b>Claude</b>. Este pedido vem de <b>' + esc(app) + '</b> e iria para <b>' + esc(host || 'endereço desconhecido') + '</b>.</p>'
+      + '<div class="quadro alerta">Se você não pediu isso, apenas feche esta página. Nada foi liberado.</div>'
+      + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Recusar e voltar</button></div>');
+    setTimeout(function () { $('btRecusar').onclick = recusar; }, 260);
+    return;
+  }
+  if (pode.data !== true) {
+    mostrar('<h1>Sem permissão para usar o SAGA no Claude</h1><p class="sub">' + esc(nome) + ', a sua conta ainda não pode usar o SAGA dentro do Claude. Peça ao administrador (Painel de permissões &gt; <b>SAGA no Claude</b>).</p>'
+      + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Voltar ao Claude</button></div>');
+    setTimeout(function () { $('btRecusar').onclick = recusar; }, 260);
+    return;
+  }
+  mostrar('<h1>Ligar o SAGA ao Claude?</h1>'
+    + '<p class="sub"><b>' + esc(app) + '</b> quer usar o SAGA com a sua conta (<b>' + esc(eu.data.nome_completo || '') + '</b>).</p>'
+    + '<ul class="lista">'
+    + '<li class="sim">' + ICO_SIM + '<span>O Claude poderá <b>consultar</b> clientes, processos, intimações, tarefas, agenda e os resumos do escritório e do marketing.</span></li>'
+    + '<li class="sim">' + ICO_SIM + '<span>Só aparece o que <b>você já pode ver</b> no SAGA; os valores, só se você vê o Financeiro.</span></li>'
+    + '<li class="sim">' + ICO_SIM + '<span>Cada consulta fica no <b>Registro de atividades</b>.</span></li>'
+    + '<li class="nao">' + ICO_NAO + '<span>Ele <b>não muda nada</b>: não cria, não edita e não apaga (por enquanto, só consultas).</span></li>'
+    + '</ul>'
+    + '<div class="quadro">Depois de autorizar, você volta para o Claude (<b>' + esc(host) + '</b>). Para desligar, remova o conector nas configurações do Claude.</div>'
+    + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Recusar</button><button class="btn-primary" type="button" id="btAutorizar">Autorizar</button></div>');
+  setTimeout(function () { $('btRecusar').onclick = recusar; $('btAutorizar').onclick = function () { aprovar(app); }; }, 260);
+}
+function travar() { document.querySelectorAll('.botoes button').forEach(function (b) { b.disabled = true; }); }
+async function aprovar(app) {
+  travar();
+  var r = await _sb.auth.oauth.approveAuthorization(ID, { skipBrowserRedirect: true });
+  if (r.error || !r.data || !r.data.redirect_url) { erro('Não consegui autorizar: ' + ((r.error && r.error.message) || 'sem resposta do servidor.')); return; }
+  try { await _sb.rpc('conector_registrar', { p_ferramenta: 'autorizou o conector', p_resumo: app, p_acao: 'autorizou' }); } catch (e) {}
+  mostrar('<h1>Pronto!</h1><p class="sub">O SAGA está ligado ao Claude. Voltando para o Claude...</p>');
+  setTimeout(function () { location.replace(r.data.redirect_url); }, 700);
+}
+async function recusar() {
+  travar();
+  var r = await _sb.auth.oauth.denyAuthorization(ID, { skipBrowserRedirect: true });
+  if (r.data && r.data.redirect_url) { location.replace(r.data.redirect_url); return; }
+  mostrar('<h1>Pedido recusado</h1><p class="sub">Nada foi liberado. Pode fechar esta página.</p>');
+}
+iniciar().catch(function (e) { erro((e && e.message) || 'Erro inesperado.'); });
+</script>
+</body>
+</html>

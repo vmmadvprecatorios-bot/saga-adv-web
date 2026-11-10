@@ -489,8 +489,23 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
   }
 })();
 
-// Primeira tela depois de entrar: sempre o Ponto (regra do escritório, 09/11); aqui só se aproveita para trazer o tamanho da letra
+// Volta para a autorização do conector do SAGA no Claude (bloco 151): só esse destino (nunca endereço de fora).
+// Guardado na aba para sobreviver à ida e volta do login com o Google.
+function destinoVolta() {
+  var v = '';
+  try { v = new URLSearchParams(window.location.search).get('voltar') || sessionStorage.getItem('saga-voltar') || ''; } catch (e) {}
+  if (/^autorizar_conector\.html\?authorization_id=[A-Za-z0-9_-]{8,200}$/.test(v)) { try { sessionStorage.setItem('saga-voltar', v); } catch (e) {} return v; }
+  return '';
+}
+destinoVolta();
 async function telaInicial() {
+  var volta = destinoVolta();
+  var destino = await telaInicialPadrao();
+  if (volta) { try { sessionStorage.removeItem('saga-voltar'); } catch (e) {} return volta; }
+  return destino;
+}
+// Primeira tela depois de entrar: sempre o Ponto (regra do escritório, 09/11); aqui só se aproveita para trazer o tamanho da letra
+async function telaInicialPadrao() {
   try {
     var s = await _sb.auth.getSession();
     var id = s.data && s.data.session && s.data.session.user.id;

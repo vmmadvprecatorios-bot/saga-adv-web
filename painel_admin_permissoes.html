@@ -169,6 +169,7 @@ const moduleList = [
   {key:'agente',       name:'Agente de petições',     short:'AG'},
   {key:'buscas',       name:'Pedidos de busca',       short:'PB'},
   {key:'sugestoes',    name:'Sugestões de melhoria',  short:'SM'},
+  {key:'conector_claude',name:'SAGA no Claude',        short:'IA'},
   {key:'financeiro',   name:'Financeiro',             short:'FI'},
   {key:'colaboradores',name:'Colaboradores',          short:'CO'},
   {key:'configuracoes',name:'Configurações',          short:'CF'}
@@ -224,6 +225,13 @@ const NIVEL_ACTIONS = {
   sugestoes:    {
     editar:     [['sugestoes','responder']],
     admin_total:[['sugestoes','responder']]
+  },
+  // SAGA no Claude (bloco 151): Visualizar = usa o conector do SAGA no Claude (só consultas, com as permissões da própria pessoa)
+  conector_claude: {
+    visualizar: [['conector_claude','usar']],
+    comentar:   [['conector_claude','usar']],
+    editar:     [['conector_claude','usar']],
+    admin_total:[['conector_claude','usar']]
   },
   colaboradores:{
     visualizar: [['colaboradores','visualizar']],
