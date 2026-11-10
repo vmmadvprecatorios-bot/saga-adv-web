@@ -903,9 +903,9 @@
       btnSair.dataset.ligado='true';
       btnSair.addEventListener('click',function(e){
         e.stopPropagation();
-        sagaLogout();
+        sairComLembrete();
       });
-      btnSair.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();sagaLogout();}});
+      btnSair.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();sairComLembrete();}});
     }
     var btnRefresh=document.getElementById('refreshBtn');
     if(btnRefresh&&!btnRefresh.dataset.ligado){
@@ -1814,6 +1814,96 @@
   // continua parada, e na troca de tela so o conteudo muda (os menus nao piscam nem somem).
   try{if(document.readyState==='loading'&&!document.getElementById('sagaFimDaTela'))document.write('<span id="sagaFimDaTela" hidden></span>');}catch(e){}
 
+
+  // ===== Lembrete do ponto (10/11, pedido do Dr. Victor) =====
+  // Quem bateu a entrada e ainda não bateu a saída é lembrado:
+  //  (1) ao fechar a ÚLTIMA aba do SAGA (ou a janela inteira): o navegador pergunta antes de fechar
+  //      (o texto desse aviso é do próprio navegador; ele não deixa o site escrever a mensagem).
+  //      Se a pessoa escolher ficar, o SAGA mostra o lembrete e o botão "Bater o ponto agora".
+  //  (2) no "Sair do sistema" do menu da foto.
+  // Trocar de tela dentro do sistema, recarregar ou voltar NÃO avisa. A aba mais antiga também lembra
+  // (ao fechar a janela inteira todas fecham juntas). Diretoria (horário livre): lembra enquanto houver período iniciado.
+  var _ponto={aberto:false,livre:false,colab:null,conferido:0},_abaId=null,_navegando=0;
+  var CHAVE_ABAS='saga-abas-abertas',ABA_VIVA_MS=180000;
+  function hojeLocal(){try{return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Maceio',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}catch(e){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}}
+  async function conferirPonto(){
+    if(!global._sb||!_perfilAtual)return _ponto.aberto;
+    try{
+      if(!_ponto.colab){
+        var c=await global._sb.rpc('ponto_meu_colaborador');
+        if(c.error||!c.data){_ponto.aberto=false;return false;}
+        _ponto.colab=c.data;
+        var pc=await global._sb.from('ponto_colaboradores').select('regime').eq('id',c.data).maybeSingle();
+        if(pc.data&&pc.data.regime){var rg=await global._sb.from('ponto_regimes').select('livre').eq('nome',pc.data.regime).maybeSingle();_ponto.livre=!!(rg.data&&rg.data.livre);}
+      }
+      var r=await global._sb.from('ponto_marcacoes').select('slot').eq('colaborador_id',_ponto.colab).eq('data',hojeLocal());
+      if(r.error)return _ponto.aberto;
+      var tem={};(r.data||[]).forEach(function(m){tem[m.slot]=true;});
+      var aberto=false;
+      if(_ponto.livre){for(var i=0;i<8;i+=2)if(tem[i]&&!tem[i+1])aberto=true;}
+      else aberto=!!tem[0]&&!tem[7];
+      _ponto.aberto=aberto;_ponto.conferido=Date.now();
+    }catch(e){}
+    return _ponto.aberto;
+  }
+  function lerAbas(){try{return JSON.parse(localStorage.getItem(CHAVE_ABAS)||'{}')||{};}catch(e){return {};}}
+  function gravarAbas(a){try{localStorage.setItem(CHAVE_ABAS,JSON.stringify(a));}catch(e){}}
+  function marcarAba(){var a=lerAbas(),agora=Date.now();Object.keys(a).forEach(function(k){if(agora-a[k].v>ABA_VIVA_MS)delete a[k];});a[_abaId]={c:(a[_abaId]&&a[_abaId].c)||agora,v:agora};gravarAbas(a);}
+  function tirarAba(){var a=lerAbas();delete a[_abaId];gravarAbas(a);}
+  // lembra se for a única aba do SAGA aberta, ou a mais antiga (fechar a janela inteira fecha todas de uma vez)
+  function abaQueLembra(){
+    var a=lerAbas(),agora=Date.now(),eu=a[_abaId],outras=0,maisAntiga=true;
+    Object.keys(a).forEach(function(k){if(k===_abaId||agora-a[k].v>ABA_VIVA_MS)return;outras++;if(eu&&(a[k].c<eu.c||(a[k].c===eu.c&&k<_abaId)))maisAntiga=false;});
+    return outras===0||maisAntiga;
+  }
+  function irParaPonto(){var p='ponto_eletronico_padrao_metalico.html';if(location.pathname.indexOf(p)>=0){var b=document.querySelector('.btn-ponto[data-botao="saida"],.btn-ponto[data-botao="encerrar"]');if(b){b.scrollIntoView({block:'center'});b.focus();}return;}global.sagaIrPara(p);}
+  function lembrarPontoNaTela(){
+    if(document.getElementById('sagaLembretePonto'))return;
+    var d=document.createElement('div');d.id='sagaLembretePonto';d.setAttribute('role','alertdialog');
+    d.style.cssText='position:fixed;right:18px;bottom:18px;z-index:5200;max-width:360px;padding:16px 18px;border-radius:14px;border:1px solid var(--gold,#2f6cd6);background:var(--panel-solid,#1c2638);color:var(--text,#e8edf5);box-shadow:0 20px 50px rgba(0,0,0,.4);font-size:12.5px;line-height:1.5;opacity:0;transform:translateY(10px);transition:opacity .3s cubic-bezier(.22,.78,.25,1),transform .3s cubic-bezier(.22,.78,.25,1)';
+    d.innerHTML='<div style="font-family:\'Cormorant Garamond\',serif;font-size:20px;font-weight:700;margin-bottom:4px">Seu ponto ainda está aberto</div>'
+      +'<div style="color:var(--muted,#a3afc2);margin-bottom:12px">Você bateu a entrada hoje e ainda não bateu a '+(_ponto.livre?'saída (Encerrar)':'saída')+'. Vai embora? Bata o ponto antes de fechar.</div>'
+      +'<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" data-x style="height:32px;padding:0 13px;border-radius:9px;border:1px solid var(--border,rgba(255,255,255,.16));background:transparent;color:var(--text,#e8edf5);font:inherit;font-size:12px;cursor:pointer">Agora não</button><button type="button" data-ir style="height:32px;padding:0 13px;border-radius:9px;border:1px solid var(--gold,#2f6cd6);background:color-mix(in srgb,var(--gold,#2f6cd6) 22%,transparent);color:var(--text,#e8edf5);font:inherit;font-size:12px;cursor:pointer">Bater o ponto agora</button></div>';
+    var fechar=function(){d.style.opacity='0';d.style.transform='translateY(10px)';setTimeout(function(){d.remove();},320);};
+    d.querySelector('[data-x]').onclick=fechar;
+    d.querySelector('[data-ir]').onclick=function(){fechar();irParaPonto();};
+    document.body.appendChild(d);requestAnimationFrame(function(){d.style.opacity='1';d.style.transform='none';});
+  }
+  async function sairComLembrete(){
+    fecharTodosPopovers();
+    if(await conferirPonto()){
+      var bater=await global.sagaConfirmar('Seu ponto ainda está aberto','Você bateu a entrada hoje e ainda não bateu a saída. Quer bater o ponto antes de sair do sistema?','Bater o ponto agora',false);
+      if(bater){irParaPonto();return;}
+      if(!(await global.sagaConfirmar('Sair sem bater o ponto?','O ponto de hoje fica sem a saída e vai precisar de justificativa depois.','Sair assim mesmo')))return;
+    }
+    _navegando=Date.now();
+    global.sagaLogout();
+  }
+  function ligarLembretePonto(){
+    if(window.top!==window||!global._sb||!_perfilAtual||_abaId)return;
+    _abaId=Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+    marcarAba();setInterval(marcarAba,30000);
+    document.addEventListener('visibilitychange',function(){if(!document.hidden){marcarAba();if(Date.now()-_ponto.conferido>60000)conferirPonto();}});
+    global.addEventListener('pagehide',tirarAba);
+    global.addEventListener('pageshow',function(ev){if(ev.persisted){marcarAba();conferirPonto();}});
+    // bateu o ponto em outra aba: confere de novo aqui
+    global.addEventListener('storage',function(e){if(e.key==='saga-ponto-mudou')conferirPonto();});
+    conferirPonto();setInterval(conferirPonto,120000);
+    // navegação dentro do sistema (troca de tela, recarregar, voltar) não é "fechar"
+    if(global.navigation&&global.navigation.addEventListener)global.navigation.addEventListener('navigate',function(){_navegando=Date.now();});
+    // F5 / Ctrl+R (recarregar pelo teclado) também não é fechar
+    document.addEventListener('keydown',function(e){if(e.key==='F5'||((e.ctrlKey||e.metaKey)&&(e.key==='r'||e.key==='R')))_navegando=Date.now();},true);
+    document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href]');if(a&&!a.target&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)_navegando=Date.now();},true);
+    var irOriginal=global.sagaIrPara;global.sagaIrPara=function(u){_navegando=Date.now();return irOriginal.apply(this,arguments);};
+    global.addEventListener('beforeunload',function(e){
+      if(!_ponto.aberto||Date.now()-_navegando<4000||!abaQueLembra())return;
+      e.preventDefault();e.returnValue='';
+      // se a pessoa escolher ficar, a página continua viva e mostra o lembrete com o botão do ponto
+      setTimeout(function(){lembrarPontoNaTela();},800);
+      return '';
+    });
+  }
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sem login valido: vai para o login sem mostrar nada da tela (saga_guard.js a mantem escondida)
@@ -1841,13 +1931,14 @@
     contarNaoLidas();
     carregarFotosEquipe();
     ligarContadorChat();
+    ligarLembretePonto();
     document.dispatchEvent(new CustomEvent('saga-ui-pronto',{detail:{telaAtiva:telaAtiva}}));
   }
 
   // 09/11: página devolvida pela memória do navegador (botão voltar): confere de novo no banco a cor, a letra e o perfil
   global.addEventListener('pageshow',function(ev){if(ev.persisted&&_perfilAtual)carregarPerfil();});
 
-  global.SagaUI={abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={conferirPonto:function(){try{localStorage.setItem('saga-ponto-mudou',String(Date.now()));}catch(e){}return conferirPonto();},abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);
 
 /* Copiar com um clique (07/11): qualquer botão com data-copiar="texto" (e data-copiar-rotulo="CPF") copia o texto.
