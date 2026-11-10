@@ -244,9 +244,65 @@ async function marcarEnviado(tipo: string, chave: string, detalhe: string) {
 }
 const prefixo = (previa?: boolean) => previa ? "[SAGA · PRÉVIA] Ponto" : "[SAGA] Ponto";
 
+/* ---------- justificativas, abonos e pendencias ---------- */
+const SIT_ABONOS = ["Atestado médico", "Falta abonada", "Falta justificada", "Folga compensatória", "Folga concedida", "Férias", "Licença", "Home office"];
+// deno-lint-ignore no-explicit-any
+async function justificativas(ini: string, fim: string): Promise<Record<string, any[]>> {
+  const r = await admin.from("ponto_justificativas").select("colaborador_id,data,tipo,status,horas_abonar_min").gte("data", ini).lte("data", fim);
+  // deno-lint-ignore no-explicit-any
+  const m: Record<string, any[]> = {};
+  // deno-lint-ignore no-explicit-any
+  (r.data || []).forEach((j: any) => { (m[j.colaborador_id + "|" + j.data] ||= []).push(j); });
+  return m;
+}
+// deno-lint-ignore no-explicit-any
+const justDe = (J: Record<string, any[]>, id: string, k: string) => J[id + "|" + k] || [];
+// deno-lint-ignore no-explicit-any
+function textoJust(lista: any[]) {
+  return lista.map((j) => `${j.tipo} (${j.status === "aprovada" ? "aprovada" : j.status === "recusada" ? "recusada" : "aguardando aprovação"})`).join("; ");
+}
+// Para cada pessoa: dias do periodo com falta ou marcacao incompleta SEM abono/justificativa aprovada (pendentes)
+// e dias abonados/justificados (resolvidos). dias = lista do calcularMes.
+// deno-lint-ignore no-explicit-any
+function pendencias(pessoas: { nome: string; id: string; dias: any[] }[], ini: string, fim: string, J: Record<string, any[]>) {
+  const pend: string[] = [], resolv: string[] = [], aguard: string[] = [];
+  for (const p of pessoas) {
+    const pp: string[] = [], rr: string[] = [], aa: string[] = [];
+    for (const x of p.dias) {
+      if (x.key < ini || x.key > fim) continue;
+      const js = justDe(J, p.id, x.key), aprov = js.some((j) => j.status === "aprovada"), espera = js.some((j) => j.status === "pendente");
+      if (SIT_ABONOS.includes(x.sit) || x.d.status === "Abonado" || x.abonoManual > 0) rr.push(`${brCurto(x.key)} ${x.d.status === "Abonado" || SIT_ABONOS.includes(x.sit) ? x.sit.toLowerCase() : "abono de " + PC.hhmm(x.abonoManual)}`);
+      else if ((x.d.falta || x.d.incompleta) && !aprov) {
+        const o = `${brCurto(x.key)} ${x.d.falta ? "falta" : "marcação incompleta"}`;
+        if (espera) aa.push(o); else pp.push(o);
+      }
+    }
+    if (pp.length) pend.push(`${p.nome}: ${pp.join(", ")}`);
+    if (aa.length) aguard.push(`${p.nome}: ${aa.join(", ")}`);
+    if (rr.length) resolv.push(`${p.nome}: ${rr.join(", ")}`);
+  }
+  return { pend, aguard, resolv };
+}
+function pendenciasHtml(titulo: string, r: { pend: string[]; aguard: string[]; resolv: string[] }) {
+  const item = (rot: string, cor: string, l: string[]) => l.length ? `<div style="margin:8px 0 10px"><span style="display:inline-block;padding:1px 8px;border-radius:999px;background:${cor};font-size:11px;font-weight:700">${rot}</span>` +
+    l.map((t) => { const i = t.indexOf(": "); return `<div style="margin:4px 0 0 4px;padding-left:10px;border-left:3px solid ${cor}"><b>${esc(t.slice(0, i))}</b>: ${esc(t.slice(i + 2))}</div>`; }).join("") + "</div>" : "";
+  const corpo = item("SEM ABONO NEM JUSTIFICATIVA", "#FDE2E2", r.pend) + item("JUSTIFICATIVA AGUARDANDO APROVAÇÃO", "#FEF9C3", r.aguard) + item("ABONADOS / JUSTIFICADOS", "#DCFCE7", r.resolv);
+  return secao(titulo, "Faltas e marcações incompletas que ainda contam contra a pessoa, as que aguardam a sua aprovação e o que já foi abonado (atestado, abono, folga).") +
+    `<div style="font-family:${FONTE};font-size:13px;color:${TINTA}">${corpo || `<span style="color:#065F46">✔ Nenhuma falta ou marcação incompleta no período.</span>`}</div>`;
+}
+function legendaCores() {
+  const it = (t: string) => { const c = COR_STATUS[t]; return `<span style="display:inline-block;padding:1px 8px;margin:2px 4px 2px 0;border-radius:999px;background:${c[0]};color:${c[1]};font-size:11px;font-weight:600">${esc(t)}</span>`; };
+  return `<div style="font-family:${FONTE};font-size:11.5px;color:${SUAVE};margin-top:6px">Cores: ${["Carga cumprida", "Horas positivas", "Em andamento", "Marcação incompleta", "Horas negativas", "Falta", "Abonado", "Folga concedida"].map(it).join("")}</div>`;
+}
+function linhaCor(l: string[], status: string) {
+  const c = COR_STATUS[status];
+  return c ? l.map((x, i) => i === 0 ? `<div style="border-left:4px solid ${c[1]};padding-left:8px;margin-left:-10px">${x}</div>` : x) : l;
+}
+
 /* ---------- relatorios ---------- */
 async function relatorioDiario(b: Base, diaKey: string, hoje: string, previa?: boolean, cap?: { e: Captura }) {
   const dados = await coletarMes(b, diaKey.slice(0, 7), hoje);
+  const J = await justificativas(diaKey.slice(0, 8) + "01", diaKey);
   const linhas: { ordem: number; l: string[] }[] = [], diretoria: string[][] = [];
   let presentes = 0, previstos = 0, horas = 0;
   const faltas: string[] = [], atrasos: string[] = [], antec: string[] = [], incompletas: string[] = [], abertos: string[] = [], pausas: string[] = [];
@@ -277,9 +333,16 @@ async function relatorioDiario(b: Base, diaKey: string, hoje: string, previa?: b
     const p = [];
     for (let i = 1; i <= 5; i += 2) if (mk[i] !== null) p.push(hm(mk[i]) + "–" + (mk[i + 1] !== null ? hm(mk[i + 1]) : "…"));
     const grave = d.falta || d.incompleta || d.fAtraso || d.fAntec || d.fPausa ? 0 : 1;
-    linhas.push({ ordem: grave, l: [`<b>${esc(nome)}</b><div style="font-size:11.5px;color:${SUAVE}">${esc(x.c.regime || "")} · ${PC.hhmm(dia.cj.entrada)} às ${PC.hhmm(dia.cj.saida)}</div>`,
-      mk[0] !== null ? hm(mk[0]) : "-", mk[7] !== null ? hm(mk[7]) : "-", p.join("<br>") || "-", hmEmail(d.trab) || "-", saldoEmail(d.saldo),
-      selo(d.status || dia.sit), `<span style="font-size:12px;color:${SUAVE}">${esc((d.ocorr || []).join("; "))}</span>`] });
+    const tol = Number(b.cfg.tolerancia_min || 0), corDif = (v: number) => v > tol ? "#B91C1C" : "#A16207";
+    const entrada = mk[0] !== null ? `<b>${hm(mk[0])}</b>` + (d.atraso ? `<div style="font-size:11.5px;color:${corDif(d.atraso)}">atraso ${d.atraso} min${d.atraso <= tol ? " (tolerância)" : ""}</div>` : "") : `<span style="color:${SUAVE}">-</span>`;
+    const saida = mk[7] !== null ? `<b>${hm(mk[7])}</b>` + (d.antec ? `<div style="font-size:11.5px;color:${corDif(d.antec)}">saiu ${d.antec} min antes${d.antec <= tol ? " (tolerância)" : ""}</div>` : "") : `<span style="color:${SUAVE}">-</span>`;
+    const pausasTxt = p.length ? p.join("<br>") + `<div style="font-size:11.5px;color:${SUAVE}">total ${hmEmail(d.pausas) || "00:00"}${d.pausaRem ? " · remunerada " + PC.hhmm(d.pausaRem) : ""}</div>` : "-";
+    const manual = SIT_ABONOS.includes(dia.sit) ? `<div style="margin-top:3px">${selo(dia.sit === "Atestado médico" || dia.sit === "Falta abonada" ? "Abonado" : "Folga concedida").replace(/>[^<]+</, ">" + esc(dia.sit) + "<")}</div>` : "";
+    const js = justDe(J, x.c.id, diaKey);
+    const obs = [(d.ocorr || []).join("; "), js.length ? "Justificativa: " + textoJust(js) : "", dia.observacao || ""].filter(Boolean).join("<br>");
+    linhas.push({ ordem: grave, l: linhaCor([`<b>${esc(nome)}</b><div style="font-size:11.5px;color:${SUAVE}">${esc(x.c.regime || "")}</div>`,
+      `${PC.hhmm(dia.cj.entrada)} às ${PC.hhmm(dia.cj.saida)}<div style="font-size:11.5px;color:${SUAVE}">carga ${hmEmail(d.carga ?? dia.cj.carga) || "-"}</div>`,
+      entrada, saida, pausasTxt, hmEmail(d.trab) || "-", saldoEmail(d.saldo), selo(d.status || dia.sit) + manual, `<span style="font-size:12px;color:${SUAVE}">${obs}</span>`], d.status) });
   }
   if (!linhas.length && !diretoria.length) return { enviado: false, msg: `Nada a relatar em ${br(diaKey)} (dia sem expediente e sem registros).` };
   const pj = await admin.from("ponto_justificativas").select("id", { count: "exact", head: true }).eq("status", "pendente");
@@ -292,8 +355,12 @@ async function relatorioDiario(b: Base, diaKey: string, hoje: string, previa?: b
   ]);
   corpo += secao("Pontos de atenção") + atencao([["Faltas", faltas], ["Atrasos acima da tolerância", atrasos], ["Saídas antecipadas", antec], ["Pausas excedidas", pausas],
     ["Marcação incompleta", incompletas], ["Ponto ainda aberto", abertos], ["Justificativas para aprovar", pend ? [`${pend} pendente(s) na aba Justificativas`] : []]]);
-  if (linhas.length) corpo += secao("Equipe", "Quem tem ocorrência aparece primeiro.") + tabela(["Colaborador", "Entrada", "Saída", "Pausas", "Trabalhadas", "Saldo do dia", "Situação", "Observações"], linhas.map((x) => x.l), ["left", "center", "center", "center", "center", "center", "center", "left"]);
+  if (linhas.length) corpo += secao("Equipe", "Quem tem ocorrência aparece primeiro. Atrasos e saídas antecipadas contam como ocorrência só acima da tolerância de " + esc(b.cfg.tolerancia_min) + " min.") +
+    tabela(["Colaborador", "Previsto", "Entrada", "Saída", "Pausas", "Trabalhadas", "Saldo do dia", "Situação", "Observações e justificativas"], linhas.map((x) => x.l), ["left", "center", "center", "center", "center", "center", "center", "center", "left"]) + legendaCores();
   if (diretoria.length) corpo += secao("Diretoria (horário livre)") + tabela(["Nome", "Períodos", "Horas no dia", "Situação"], diretoria);
+  // deno-lint-ignore no-explicit-any
+  const comHorario = dados.filter((x: any) => !x.livre).map((x: any) => ({ nome: String(x.c.nome), id: x.c.id, dias: x.calc.dias }));
+  if (comHorario.length) corpo += pendenciasHtml(`Pendências do mês (01/${diaKey.slice(5, 7)} a ${brCurto(diaKey)})`, pendencias(comHorario, diaKey.slice(0, 8) + "01", diaKey, J));
   corpo += semLoginHtml(b);
   const para = destinatarios(b, false);
   const nomeDia = PC.NOMES_DIA[PC.diaSemana(diaKey)];
@@ -322,13 +389,23 @@ async function relatorioSemanal(b: Base, fimKey: string, hoje: string, previa?: 
   const alerta: string[] = [], negativo: string[] = [];
   for (const id of Object.keys(porId)) {
     const x = porId[id], s = PC.somarPeriodo(x.dias, iniKey, fimKey), nome = String(x.c.nome);
-    if (x.livre) { if (s.trab) diretoria.push([`<b>${esc(nome)}</b>`, String(s.diasTrab), hmEmail(s.trab)]); continue; }
+    if (x.livre) {
+      if (s.trab) {
+        diretoria.push([`<b>${esc(nome)}</b>`, String(s.diasTrab), hmEmail(s.trab)]);
+        grade.push([`<b>${esc(nome)}</b><div style="font-size:11px;color:${SUAVE}">Diretoria</div>`].concat(diasSemana.map((k) => {
+          // deno-lint-ignore no-explicit-any
+          const dia = x.dias.find((y: any) => y.key === k);
+          return dia && dia.d.trab ? `<span style="display:inline-block;min-width:46px;padding:3px 6px;border-radius:7px;background:#EEF2FF;color:#3730A3;font-size:11.5px;font-weight:600">${PC.hhmm(dia.d.trab)}</span>` : `<span style="color:#CBD5E1">·</span>`;
+        })));
+      }
+      continue;
+    }
     if (!s.carga && !s.trab) continue;
     const m = PC.somarPeriodo(x.mesAtual || [], fimKey.slice(0, 8) + "01", fimKey), ocorr = s.atrasos + s.antec + s.pausas;
     horas += s.trab; saldoEq += s.saldo; faltasEq += s.faltas; ocorrEq += ocorr + s.incompletas;
     if (s.faltas || ocorr >= b.cfg.limite_alerta) alerta.push(nome);
     if (s.saldo < 0) negativo.push(`${nome} (${PC.hhmm(s.saldo)})`);
-    linhas.push({ ordem: s.faltas || ocorr >= b.cfg.limite_alerta ? 0 : s.saldo < 0 ? 1 : 2, l: [`<b>${esc(nome)}</b>`, hmEmail(s.carga), hmEmail(s.trab), saldoEmail(s.saldo),
+    linhas.push({ ordem: s.faltas || ocorr >= b.cfg.limite_alerta ? 0 : s.saldo < 0 ? 1 : 2, l: [`<b>${esc(nome)}</b>`, String(s.diasTrab), hmEmail(s.carga), hmEmail(s.trab), hmEmail(s.abono) || "-", saldoEmail(s.saldo),
       String(s.atrasos), String(s.antec), String(s.pausas), String(s.faltas), String(s.incompletas), saldoEmail(m.saldo)] });
     // quadro da semana dia a dia
     grade.push([`<b>${esc(nome)}</b>`].concat(diasSemana.map((k) => {
@@ -348,8 +425,12 @@ async function relatorioSemanal(b: Base, fimKey: string, hoje: string, previa?: 
   if (grade.length) corpo += secao("A semana dia a dia", "Horas trabalhadas em cada dia; a cor segue a situação do dia.") +
     tabela(["Colaborador"].concat(diasSemana.map((k) => `${DIAS_CURTOS[PC.diaSemana(k)]} ${brCurto(k)}`)), grade);
   if (linhas.length) corpo += secao("Totais da semana", `Atrasos, saídas e pausas contam só acima da tolerância de ${esc(b.cfg.tolerancia_min)} min.`) +
-    tabela(["Colaborador", "Carga", "Trabalhadas", "Saldo da semana", "Atrasos", "Saídas antes", "Pausas excedidas", "Faltas", "Incompletas", "Saldo do mês"], linhas.map((x) => x.l));
+    tabela(["Colaborador", "Dias trabalhados", "Carga", "Trabalhadas", "Abonadas", "Saldo da semana", "Atrasos", "Saídas antes", "Pausas excedidas", "Faltas", "Incompletas", "Saldo do mês"], linhas.map((x) => x.l));
   if (diretoria.length) corpo += secao("Diretoria (horário livre)") + tabela(["Nome", "Dias com registro", "Horas na semana"], diretoria);
+  const J = await justificativas(iniKey, fimKey);
+  // deno-lint-ignore no-explicit-any
+  const comHorario = Object.keys(porId).map((id) => porId[id]).filter((x: any) => !x.livre).map((x: any) => ({ nome: String(x.c.nome), id: x.c.id, dias: x.dias }));
+  if (comHorario.length) corpo += pendenciasHtml("Pendências da semana", pendencias(comHorario, iniKey, fimKey, J));
   corpo += semLoginHtml(b);
   await enviar(b, destinatarios(b, false), `${prefixo(previa)} · Semanal · ${brCurto(iniKey)} a ${br(fimKey)}`,
     moldeEmail(b, "Relatório semanal", "Ponto da semana", `${br(iniKey)} a ${br(fimKey)}`, corpo), cap);
@@ -385,6 +466,9 @@ async function fechamentoMensal(b: Base, k: string, hoje: string) {
   corpo += secao("Pontos de atenção") + atencao([["Descontar na folha", descontar], ["Em alerta (faltas ou ocorrências)", alerta]]);
   if (equipe.length) corpo += secao("Fechamento por colaborador") + tabela(["Colaborador", "Carga", "Trabalhadas", "Abonadas", "Saldo do período", "Saldo anterior", "Saldo total", "Descontar na folha", "Compensar até o fim do mês", "Excedente desconsiderado", "Faltas", "Ocorrências", "Perfil"], equipe);
   if (diretoria.length) corpo += secao("Diretoria (horário livre)") + tabela(["Nome", "Dias com registro", "Horas no período"], diretoria);
+  const J = await justificativas(`${k}-01`, fechKey);
+  // deno-lint-ignore no-explicit-any
+  corpo += pendenciasHtml("Dias do período sem abono", pendencias(out.map(({ x }: any) => ({ nome: String(x.c.nome), id: x.c.id, dias: x.calc.dias })), `${k}-01`, fechKey, J));
   corpo += `<p style="font-family:${FONTE};font-size:12px;color:${SUAVE};margin-top:14px">Regras: horas negativas são descontadas na folha; horas positivas valem até 1 dia de carga e devem ser compensadas até o fim do mês ` +
     "(saída mais cedo ou folga, de preferência na última sexta-feira); o que passar de 1 dia é desconsiderado. Os valores ficam gravados na aba Banco de horas do Ponto.</p>";
   corpo += semLoginHtml(b);
