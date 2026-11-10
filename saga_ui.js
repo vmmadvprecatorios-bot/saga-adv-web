@@ -1609,7 +1609,7 @@
     dashboard:['dashboard.visualizar'],
     biblioteca:['biblioteca.visualizar'],
     financeiro:['financeiro.visualizar'],
-    marketing:['campanhas.visualizar','materiais_marketing.visualizar'],
+    marketing:['campanhas.visualizar','materiais_marketing.visualizar','materiais_marketing.aprovar'],
     monitoramento:['movimentacoes_cnj.visualizar','movimentacoes_cnj.editar','monitoramento_oab.visualizar','monitoramento_oab.gerenciar'],
     permissoes:['permissoes.gerenciar'],
     atividades:['permissoes.gerenciar'],
