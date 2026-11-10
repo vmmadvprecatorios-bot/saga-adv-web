@@ -464,6 +464,7 @@
         '<div class="si-seg" data-seg="conclusao" aria-label="Conclusão"><button type="button" data-v="abertas" class="'+(f.conclusao==='abertas'?'active':'')+'">Abertas</button><button type="button" data-v="concluidas" class="'+(f.conclusao==='concluidas'?'active':'')+'">Concluídas</button><button type="button" data-v="todas" class="'+(f.conclusao==='todas'?'active':'')+'">Todas</button></div>'+
         '<select data-f="periodo" title="Período">'+[['hoje','Disponibilizadas hoje'],['7','Últimos 7 dias'],['30','Últimos 30 dias'],['tudo','Todo o período']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===f.periodo?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
         '<input data-f="busca" placeholder="Processo, parte, vara, etiqueta ou texto..." value="'+esc(f.busca)+'">'+
+        '<button class="si-btn" type="button" data-acao="andamentos" title="Andamentos dos processos do Jurídico trazidos do CNJ (DataJud)">Andamentos do CNJ</button>'+
         (S.pode.criarProc?'<button class="si-btn pri" type="button" data-acao="lote">Trazer para o SAGA em lote</button>':'')+
         (S.pode.gerenciar?'<button class="si-btn" type="button" data-acao="links">Links dos tribunais</button><button class="si-btn" type="button" data-acao="oabs">OABs monitoradas</button><button class="si-btn pri" type="button" data-acao="buscar">Buscar agora</button>':'')+
       '</div>'+
@@ -492,6 +493,7 @@
       if(a.dataset.acao==='lote')abrirLote();
       else if(a.dataset.acao==='oabs')abrirOabs();
       else if(a.dataset.acao==='links')abrirLinks();
+      else if(a.dataset.acao==='andamentos'){if(window.SagaAndamentos)window.SagaAndamentos.janela({sb:S.sb});}
       else if(a.dataset.acao==='buscar')buscarAgora(null,a);
       else if(a.dataset.acao==='ordem-padrao'){try{localStorage.removeItem(chaveOrdem());}catch(x){}mudou();toast('Ordem padrão dos tribunais restaurada.','sucesso');}
       else if(a.dataset.acao==='so-novas'){S.f.situacao=S.f.situacao==='nova'?'':'nova';guardarFiltros();mudou();}

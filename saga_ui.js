@@ -1103,6 +1103,7 @@
     if(n&&n.referencia_tabela==='sugestoes')return {titulo:'Sugestão de melhoria',tela:'sugestoes.html'};
     if(n&&n.referencia_tabela==='ponto')return {titulo:'Ponto',tela:'ponto_eletronico_padrao_metalico.html'};
     if(n&&n.referencia_tabela==='meta_anuncios')return {titulo:'Robô do Meta',tela:'marketing_campanhas_padrao_metalico.html?aba=painel'};
+    if(n&&n.referencia_tabela==='datajud')return {titulo:'Andamento do processo',tela:'monitoramento_multi_oab.html?andamentos=1'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1125,6 +1126,7 @@
     {chave:'buscas',titulo:'Pedidos de busca',tipos:[],tela:'pedidos_busca.html',um:'aviso de busca',varios:'avisos de busca',cor:'#0ea5e9'},
     {chave:'ponto',titulo:'Ponto',tipos:[],tela:'ponto_eletronico_padrao_metalico.html',um:'lembrete do ponto',varios:'lembretes do ponto',cor:'#d97706'},
     {chave:'sugestoes',titulo:'Sugestões de melhoria',tipos:[],tela:'sugestoes.html',um:'aviso de sugestão',varios:'avisos de sugestões',cor:'#c9a84c'},
+    {chave:'andamentos',titulo:'Andamentos do CNJ',tipos:[],tela:'monitoramento_multi_oab.html?andamentos=1',um:'andamento novo',varios:'andamentos novos',cor:'#0891b2'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   // Pedidos de busca (bloco 140) chegam com o tipo 'outro' e a referência 'pedidos_busca': têm grupo próprio no sino
@@ -1136,6 +1138,8 @@
     if(n&&n.referencia_tabela==='sugestoes'){for(var k=0;k<GRUPOS_NOTIF.length;k++){if(GRUPOS_NOTIF[k].chave==='sugestoes')return GRUPOS_NOTIF[k];}}
     // Robô do Meta (bloco 150): tipo 'outro' com a referência 'meta_anuncios', vai para o grupo do Marketing
     if(n&&n.referencia_tabela==='meta_anuncios'){for(var mk=0;mk<GRUPOS_NOTIF.length;mk++){if(GRUPOS_NOTIF[mk].chave==='marketing')return GRUPOS_NOTIF[mk];}}
+    // Andamentos do CNJ (bloco 152): tipo 'outro' com a referência 'datajud', grupo próprio no sino
+    if(n&&n.referencia_tabela==='datajud'){for(var dj=0;dj<GRUPOS_NOTIF.length;dj++){if(GRUPOS_NOTIF[dj].chave==='andamentos')return GRUPOS_NOTIF[dj];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1251,6 +1255,8 @@
     }
     if(n.referencia_tabela==='ponto'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
+    // andamento novo: abre a ficha no processo, já no quadro dos andamentos; aviso do robô (sem processo): a janela dos andamentos
+    if(n.referencia_tabela==='datajud'){global.sagaIrPara(n.referencia_id?'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+encodeURIComponent(n.referencia_id)+'&foco=andamentos':'monitoramento_multi_oab.html?andamentos=1');return;}
     if(n.referencia_tabela==='sugestoes'){global.sagaIrPara('sugestoes.html'+(n.referencia_id?'?id='+encodeURIComponent(n.referencia_id):''));return;}
     // Leva direto ao item: tarefa aberta, compromisso no dia, conversa do chat, comentarios do processo
     try{
