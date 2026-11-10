@@ -1900,6 +1900,8 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       if(!editando&&window.sagaIconeCopiar){
         var puro=c?(c.tipo==='link'||(sig&&c.campo_sistema!=='pessoa.nome')?'':textoLinha(row,c,valorLinha(row,c))):(x.texto||'');
         if(puro&&!/^(não informad[oa]|n\/d|—|-)$/i.test(String(puro).trim()))copiar=sagaIconeCopiar(puro,rotulo(id));
+        // 09/11 (Dr. Victor): ao lado do copiar do número, o botãozinho que abre a consulta no site do tribunal
+        if(copiar&&c&&c.campo_sistema==='processo.numero'&&window.SagaTribunais)copiar='<span style="display:inline-block;white-space:nowrap">'+copiar+SagaTribunais.icone(puro)+'</span>';
       }
       return '<div class="campo-dado'+(tudo?' sp-tudo-item':'')+'" data-sp-campo="'+h(id)+'"><div class="campo-dado-label">'+(tudo?'<span class="sp-num">'+num+'</span>':'')+h(rotulo(id))+ferr+'</div><div class="campo-dado-valor" data-sp-ficha="'+h(id)+'">'+(editavelAqui?'':valor+copiar)+'</div></div>';
     };

@@ -205,7 +205,7 @@
       +'<div class="rec-l1"><span class="rec-sigla">'+e(sigla(t))+'</span><b>'+e(t?t.nome:'Recurso')+'</b>'
         +(r.quem_recorreu==='outra_parte'?'<span class="rec-quem">da outra parte</span>':'')
         +(s?'<span class="rec-sit" style="--s:'+e(cor(s))+'"><i></i>'+e(s.nome)+'</span>':'')+'</div>'
-      +'<div class="rec-num">'+(r.numero?'<span>'+e(r.numero)+'</span><button type="button" class="rec-copiar" data-rec="copiar" data-num="'+e(r.numero)+'" title="Copiar o número do recurso" aria-label="Copiar o número do recurso">'+ICO_COPIAR+'</button>'
+      +'<div class="rec-num">'+(r.numero?'<span>'+e(r.numero)+'</span><button type="button" class="rec-copiar" data-rec="copiar" data-num="'+e(r.numero)+'" title="Copiar o número do recurso" aria-label="Copiar o número do recurso">'+ICO_COPIAR+'</button>'+(global.SagaTribunais?global.SagaTribunais.icone(r.numero):'')
         :'<span class="rec-sem">Usa o mesmo número do processo</span>')+'</div>'
       +(local?'<div class="rec-l2">'+e(local)+'</div>':'')
       +(r.interposto_em?'<div class="rec-l3">Protocolado em '+e(dataBR(r.interposto_em))+'</div>':'')
