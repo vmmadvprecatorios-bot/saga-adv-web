@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<title>POP-SAGA-001 · Manual do SAGA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Modelo do PDF do POP (manual/POP_SAGA_ADV.pdf). Gerar com: node ferramentas/gerar_pop.js
+     O conteúdo vem de manual/conteudo.js (o mesmo da tela manual.html). Visual dos PDFs do SAGA (saga_pdf.js): página branca, marinho #1f3e6d. -->
+<style>
+@page{size:A4;margin:19mm 15mm 17mm 15mm;
+  @top-left{content:var(--cab-esq,"");font-family:Montserrat,Arial,sans-serif;font-size:7.5pt;color:#5f6f86;vertical-align:bottom;padding-bottom:3mm}
+  @top-right{content:var(--cab-dir,"");font-family:Montserrat,Arial,sans-serif;font-size:7.5pt;color:#5f6f86;vertical-align:bottom;padding-bottom:3mm}
+  @bottom-center{content:"Página " counter(page) " de " counter(pages);font-family:Montserrat,Arial,sans-serif;font-size:7.5pt;color:#5f6f86;vertical-align:top;padding-top:3mm}
+}
+@page capa{margin:0;@top-left{content:none}@top-right{content:none}@bottom-center{content:none}}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fff}
+body{font-family:Montserrat,Arial,sans-serif;color:#13233a;font-size:9.6pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+b{font-weight:600}
+.bt{display:inline-block;padding:0 5px;border:1px solid #b9c8de;border-radius:4px;background:#f3f6fa;font-size:8.6pt;font-weight:500;line-height:1.45;white-space:nowrap}
+
+/* capa */
+.capa{page:capa;break-after:page;width:210mm;height:297mm;position:relative;overflow:hidden;color:#fff;
+  background:linear-gradient(160deg,#0f1d33 0%,#1f3e6d 58%,#2c5592 100%)}
+.capa .faixa{position:absolute;left:0;top:0;bottom:0;width:9mm;background:linear-gradient(180deg,#c9a84c,#e6d3a0)}
+.capa .arco{position:absolute;right:-60mm;top:-40mm;width:190mm;height:190mm;border-radius:50%;border:1px solid rgba(255,255,255,.10)}
+.capa .arco.dois{right:-30mm;top:-10mm;width:130mm;height:130mm;border-color:rgba(201,168,76,.22)}
+.capa .dentro{position:absolute;left:28mm;right:24mm;top:34mm;bottom:26mm;display:flex;flex-direction:column}
+.capa .marca{font-family:'Cormorant Garamond',Georgia,serif;font-size:26pt;font-weight:700;letter-spacing:.5px}
+.capa .marca em{font-style:normal;color:#e6d3a0}
+.capa .esc{font-size:8pt;letter-spacing:2.2px;text-transform:uppercase;color:#c8d4e6;margin-top:2mm}
+.capa .tipo{margin-top:52mm;font-size:9.5pt;letter-spacing:2.4px;text-transform:uppercase;color:#e6d3a0;font-weight:600}
+.capa h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:50pt;font-weight:600;line-height:1.02;margin-top:5mm}
+.capa .sub{font-size:12pt;color:#dbe4f1;margin-top:6mm;max-width:130mm;line-height:1.45}
+.capa .dados{margin-top:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4mm 10mm;border-top:1px solid rgba(255,255,255,.22);padding-top:7mm;max-width:150mm}
+.capa .dados div span{display:block;font-size:7pt;letter-spacing:1.4px;text-transform:uppercase;color:#a9b8cf}
+.capa .dados div b{display:block;font-size:10.5pt;font-weight:600;margin-top:1mm}
+.capa .rodape{margin-top:9mm;font-size:7.5pt;color:#a9b8cf;letter-spacing:.4px}
+
+/* páginas */
+.pagina{break-before:page}
+h2.cap{break-inside:avoid;font-family:'Cormorant Garamond',Georgia,serif;font-size:21pt;font-weight:600;color:#13233a;line-height:1.15;padding-bottom:2.5mm;border-bottom:2px solid #1f3e6d;margin-bottom:5mm;break-after:avoid}
+h2.cap .n{color:#2c5592;margin-right:3mm}
+h3.tit{font-size:7.6pt;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#1f3e6d;margin:6mm 0 2.5mm;break-after:avoid}
+p{margin:0 0 2.5mm}
+.resumo{color:#4a5a72;font-size:9.6pt;margin:-1mm 0 4mm}
+.quem{display:inline-block;font-size:7.6pt;color:#1f3e6d;border:1px solid #b9c8de;background:#f3f6fa;border-radius:20px;padding:.6mm 3mm;margin:0 0 4mm}
+table.tab{width:100%;border-collapse:collapse;font-size:8.8pt;margin:1mm 0 3mm}
+table.tab thead{display:table-header-group}
+table.tab tr{break-inside:avoid}
+table.tab th{background:#1f3e6d;color:#fff;font-weight:600;font-size:7pt;letter-spacing:.6px;text-transform:uppercase;text-align:left;padding:1.6mm 2.2mm;border:1px solid #1f3e6d}
+table.tab td{padding:1.6mm 2.2mm;border:1px solid #dbe3ee;vertical-align:top}
+table.tab tbody tr:nth-child(even) td{background:#eef2f7}
+table.tab td.t{font-weight:600;width:42mm}
+ul.regras{list-style:none}
+ul.regras li{position:relative;padding:2mm 3mm 2mm 7mm;border:1px solid #dbe3ee;border-radius:2mm;margin-bottom:2mm;break-inside:avoid;background:#fbfcfe}
+ul.regras li::before{content:"";position:absolute;left:2.6mm;top:3.6mm;width:1.8mm;height:1.8mm;border-radius:50%;background:#c9a84c}
+.sumario{columns:2;column-gap:10mm;font-size:9.4pt}
+.sumario div{break-inside:avoid;margin-bottom:2.5mm}
+.sumario .c{font-weight:600}
+.sumario .s{color:#4a5a72;font-size:8.6pt;padding-left:5mm;line-height:1.45}
+
+/* procedimentos */
+.sec{margin:0 0 7mm}
+.sec .cab{break-inside:avoid;break-after:avoid}
+.sec h4{font-size:12pt;font-weight:600;color:#13233a;margin:0 0 2mm;display:flex;gap:2.5mm;align-items:baseline}
+.sec h4 .n{font-size:9pt;color:#2c5592;font-variant-numeric:tabular-nums}
+.quando{border-left:2.4px solid #c9a84c;background:#fbf6e8;padding:2mm 3.2mm;border-radius:0 1.6mm 1.6mm 0;margin:0 0 3mm;font-size:9.2pt}
+ol.passos{list-style:none;counter-reset:p}
+ol.passos li{counter-increment:p;position:relative;padding-left:7.5mm;margin-bottom:1.6mm;break-inside:avoid}
+ol.passos li::before{content:counter(p);position:absolute;left:0;top:.2mm;width:4.8mm;height:4.8mm;border-radius:50%;background:#e3ebf6;border:1px solid #b9c8de;color:#1f3e6d;font-size:7.4pt;font-weight:700;display:flex;align-items:center;justify-content:center}
+figure{break-inside:avoid;margin:3.5mm auto 0;width:152mm}
+figure img{display:block;width:100%;height:auto;border:1px solid #cdd7e5;border-radius:2mm}
+ol.legenda{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:1.2mm 6mm;margin:2.5mm 0 0;font-size:8.5pt;break-inside:avoid}
+ol.legenda li{display:flex;gap:2mm;align-items:flex-start;line-height:1.4}
+ol.legenda .num{flex:0 0 4.6mm;height:4.6mm;border-radius:50%;background:#ea580c;color:#fff;font-size:7pt;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:.2mm}
+.nota{margin-top:3mm;padding:2mm 3.2mm;border-radius:1.6mm;font-size:8.9pt;break-inside:avoid}
+.nota .r{font-size:7pt;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:.6mm}
+.nota.dica{background:#ecf7ef;border:1px solid #b8dfc3}.nota.dica .r{color:#1b7a3a}
+.nota.atencao{background:#fdf0ee;border:1px solid #f1c4bd}.nota.atencao .r{color:#b42318}
+.nota p{margin:0 0 1mm}.nota p:last-child{margin:0}
+.capitulo{margin-top:9mm}.capitulo.nova{break-before:page;margin-top:0}
+.duvida{break-inside:avoid;margin-bottom:3mm;padding-bottom:3mm;border-bottom:1px solid #e3e9f1}
+.duvida b{display:block;margin-bottom:.8mm}
+.assina{margin-top:12mm;display:grid;grid-template-columns:1fr 1fr;gap:14mm;break-inside:avoid}
+.assina div{border-top:1px solid #13233a;padding-top:2mm;font-size:8.6pt;color:#4a5a72}
+.assina b{display:block;color:#13233a;font-size:9.2pt}
+</style>
+</head>
+<body>
+<div id="doc"></div>
+<script src="conteudo.js"></script>
+<script>
+(function(){
+  var M=window.SAGA_MANUAL;
+  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+  function fmt(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[\[(.+?)\]\]/g,'<span class="bt">$1</span>');}
+  // cabeçalho e rodapé das páginas (a capa não tem)
+  var st=document.createElement('style');
+  st.textContent=':root{--cab-esq:"'+(M.escritorio||'').replace(/"/g,'')+' · '+(M.titulo||'')+'";--cab-dir:"'+(M.codigo||'')+' · versão '+(M.versao||'')+' · '+(M.data||'')+'"}';
+  document.head.appendChild(st);
+  var h='';
+  // ---------- capa ----------
+  h+='<section class="capa"><div class="faixa"></div><div class="arco"></div><div class="arco dois"></div><div class="dentro">'
+    +'<div class="marca">VMM<em>ADV</em></div><div class="esc">'+esc(M.escritorio)+'</div>'
+    +'<div class="tipo">Procedimento Operacional Padrão</div><h1>'+esc(M.titulo)+'</h1>'
+    +'<div class="sub">'+esc(M.subtitulo)+': o passo a passo de cada tela do SAGA, com os prints marcados, e as regras do escritório que o sistema segue.</div>'
+    +'<div class="dados"><div><span>Código</span><b>'+esc(M.codigo)+'</b></div><div><span>Versão</span><b>'+esc(M.versao)+' · '+esc(M.data)+'</b></div>'
+    +'<div><span>Aplica-se a</span><b>Toda a equipe do escritório</b></div><div><span>Aprovado por</span><b>'+esc(M.aprovacao)+'</b></div></div>'
+    +'<div class="rodape">Documento interno do escritório. Prints feitos no sistema de teste, com dados inventados.</div>'
+    +'</div></section>';
+  // ---------- sumário e revisões ----------
+  var P=M.pop||{},caps=M.capitulos||[];
+  h+='<section><h2 class="cap">Sumário</h2><div class="sumario">'
+    +'<div class="c">1. Objetivo</div><div class="c">2. A quem se aplica</div><div class="c">3. Responsabilidades</div><div class="c">4. Palavras usadas no SAGA</div><div class="c">5. Regras gerais</div>'
+    +'<div><div class="c">6. Procedimentos</div>'+caps.map(function(c,i){return '<div class="s">6.'+(i+1)+' '+esc(c.titulo)+'</div>';}).join('')+'</div>'
+    +'<div class="c">7. Dúvidas frequentes</div><div class="c">8. Registros e controle</div><div class="c">9. Revisão deste POP</div></div>'
+    +'<h3 class="tit">Controle de revisões</h3><table class="tab"><thead><tr><th style="width:18mm">Versão</th><th style="width:26mm">Data</th><th>O que mudou</th></tr></thead><tbody>'
+    +(M.revisoes||[]).map(function(r){return '<tr><td>'+esc(r.versao)+'</td><td>'+esc(r.data)+'</td><td>'+fmt(r.mudou)+'</td></tr>';}).join('')+'</tbody></table>'
+    +'<h3 class="tit">Como usar este documento</h3><p>Procure no sumário a tela ou a tarefa. Cada procedimento diz <b>quando usar</b>, o <b>passo a passo</b> e traz o print da tela com números: a lista embaixo do print explica cada número. O mesmo conteúdo está no sistema, em <b>Comunicação &gt; Manual do SAGA</b>, com busca.</p>'
+    +'</section>';
+  // ---------- 1 a 5 ----------
+  h+='<section class="pagina"><h2 class="cap"><span class="n">1</span>Objetivo</h2><p>'+fmt(P.objetivo)+'</p>'
+    +'<h2 class="cap" style="margin-top:8mm"><span class="n">2</span>A quem se aplica</h2><p>'+fmt(P.aplicacao)+'</p>'
+    +'<h2 class="cap" style="margin-top:8mm"><span class="n">3</span>Responsabilidades</h2><table class="tab"><thead><tr><th>Quem</th><th>Responsabilidade</th></tr></thead><tbody>'
+    +(P.responsabilidades||[]).map(function(r){return '<tr><td class="t">'+esc(r[0])+'</td><td>'+fmt(r[1])+'</td></tr>';}).join('')+'</tbody></table></section>';
+  h+='<section class="pagina"><h2 class="cap"><span class="n">4</span>Palavras usadas no SAGA</h2><table class="tab"><thead><tr><th>Palavra</th><th>O que quer dizer</th></tr></thead><tbody>'
+    +(P.definicoes||[]).map(function(r){return '<tr><td class="t">'+esc(r[0])+'</td><td>'+fmt(r[1])+'</td></tr>';}).join('')+'</tbody></table>'
+    +'<h2 class="cap" style="margin-top:8mm"><span class="n">5</span>Regras gerais</h2><ul class="regras">'+(P.regras||[]).map(function(r){return '<li>'+fmt(r)+'</li>';}).join('')+'</ul></section>';
+  // ---------- 6 procedimentos ----------
+  caps.forEach(function(c,ci){
+    h+='<section class="capitulo'+(ci===0?' nova':'')+'"><h2 class="cap"><span class="n">6.'+(ci+1)+'</span>'+esc(c.titulo)+'</h2>'
+      +(c.quem?'<div class="quem">Quem usa: '+esc(c.quem)+'</div>':'')+(c.resumo?'<p class="resumo">'+fmt(c.resumo)+'</p>':'');
+    (c.secoes||[]).forEach(function(s,si){
+      h+='<div class="sec"><div class="cab"><h4><span class="n">6.'+(ci+1)+'.'+(si+1)+'</span>'+esc(s.titulo)+'</h4>'
+        +(s.quando?'<div class="quando"><b>Quando usar:</b> '+fmt(s.quando)+'</div>':'')+'</div>';
+      if(s.passos&&s.passos.length)h+='<ol class="passos">'+s.passos.map(function(p){return '<li>'+fmt(p)+'</li>';}).join('')+'</ol>';
+      if(s.img){
+        h+='<figure><img src="img/'+encodeURIComponent(s.img)+'.jpg" alt="">';
+        if(s.marcas&&s.marcas.length)h+='<ol class="legenda">'+s.marcas.map(function(m,i){return '<li><span class="num">'+(i+1)+'</span><span>'+fmt(m)+'</span></li>';}).join('')+'</ol>';
+        h+='</figure>';
+      }
+      if(s.dicas&&s.dicas.length)h+='<div class="nota dica"><span class="r">Dica</span>'+s.dicas.map(function(t){return '<p>'+fmt(t)+'</p>';}).join('')+'</div>';
+      if(s.atencao&&s.atencao.length)h+='<div class="nota atencao"><span class="r">Atenção</span>'+s.atencao.map(function(t){return '<p>'+fmt(t)+'</p>';}).join('')+'</div>';
+      h+='</div>';
+    });
+    h+='</section>';
+  });
+  // ---------- 7 a 9 ----------
+  h+='<section class="capitulo nova"><h2 class="cap"><span class="n">7</span>Dúvidas frequentes</h2>'
+    +(M.duvidas||[]).map(function(d){return '<div class="duvida"><b>'+esc(d[0])+'</b>'+fmt(d[1])+'</div>';}).join('')
+    +'<h2 class="cap" style="margin-top:8mm"><span class="n">8</span>Registros e controle</h2>'
+    +'<p>Tudo o que é feito no SAGA fica no <b>Registro de atividades</b>: quem fez, quando e o que mudou (valor antes e depois). Contatos com clientes ficam no histórico da ficha; tarefas, prazos e intimações ficam nas próprias telas. O administrador acompanha o registro e os painéis (Dashboard, Ponto, Financeiro, Marketing).</p>'
+    +'<h2 class="cap" style="margin-top:8mm"><span class="n">9</span>Revisão deste POP</h2>'
+    +'<p>Este POP é revisado a cada recurso novo do SAGA. A versão em vigor é sempre a da tela <b>Manual do SAGA</b>; este PDF é gerado a partir dela. Cada revisão entra no Controle de revisões, com a data e o que mudou. Dúvidas ou sugestões: <b>Sugestões de melhoria</b>.</p>'
+    +'<div class="assina"><div><b>'+esc(M.aprovacao)+'</b>Aprovação · '+esc(M.data)+'</div><div><b>Equipe do escritório</b>Ciência</div></div>'
+    +'</section>';
+  document.getElementById('doc').innerHTML=h;
+  // avisa o gerador quando as fontes e os prints terminaram de carregar
+  var imgs=[].slice.call(document.images);
+  Promise.all([document.fonts?document.fonts.ready:Promise.resolve()].concat(imgs.map(function(i){return i.complete?Promise.resolve():new Promise(function(ok){i.onload=i.onerror=ok;});})))
+    .then(function(){window.__popPronto=true;});
+})();
+</script>
+</body>
+</html>

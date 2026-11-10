@@ -614,6 +614,9 @@
     +'<div class="nav-item" data-tela="sugestoes" onclick="sagaIrPara(\'sugestoes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Sugestões de melhoria</div>'
+    +'<div class="nav-item" data-tela="manual" onclick="sagaIrPara(\'manual.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5zM9 7.5h7M9 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Manual do SAGA</div>'
     +'</div><div class="nav-section" data-grupo="gestao" role="button" tabindex="0" aria-expanded="true">Gestão</div><div class="nav-grupo" data-grupo="gestao">'
     +'<div class="nav-item" data-tela="colaboradores" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/></svg>'
@@ -683,6 +686,7 @@
     +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=preferencias" data-ir="configuracoes_padrao_metalico.html?aba=preferencias"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="6" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="12" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.6"/></svg><span>Preferências</span></a>'
     +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=seguranca" data-ir="configuracoes_padrao_metalico.html?aba=seguranca"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Segurança e aparelhos</span></a>'
     // "Efeitos de movimento" fica só em Configurações > Preferências (pedido do Dr. Victor, 08/11)
+    +'<div class="pop-row pop-row-link" data-acao="manual" role="menuitem" tabindex="0" title="Abre o manual no capítulo da tela em que você está"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5zM9 7.5h7M9 11h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Manual do SAGA</span></div>'
     +'<div class="pop-row pop-row-link" data-acao="sugerir" role="menuitem" tabindex="0" title="Abre uma sugestão já na aba em que você está"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sugerir uma melhoria</span></div>'
     +'<div class="pop-divisor"></div>'
     +'<div class="pop-row pop-row-sair" data-acao="sair" role="menuitem" tabindex="0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sair do sistema</span></div>'
@@ -898,6 +902,14 @@
       btnSug.addEventListener('click',irSug);
       btnSug.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();irSug(e);}});
     }
+    // (10/11) "Manual do SAGA": abre o manual já no capítulo da tela em que a pessoa está
+    var btnMan=document.querySelector('#avatarPop [data-acao="manual"]');
+    if(btnMan&&!btnMan.dataset.ligado){
+      btnMan.dataset.ligado='true';
+      var irMan=function(e){e.stopPropagation();fecharTodosPopovers();global.sagaIrPara('manual.html'+(_telaAtual&&_telaAtual!=='manual'?'?tela='+encodeURIComponent(_telaAtual):''));};
+      btnMan.addEventListener('click',irMan);
+      btnMan.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();irMan(e);}});
+    }
     var btnSair=document.querySelector('[data-acao="sair"]');
     if(btnSair&&!btnSair.dataset.ligado){
       btnSair.dataset.ligado='true';
@@ -965,7 +977,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   var _colaboradoresAtivos=null;

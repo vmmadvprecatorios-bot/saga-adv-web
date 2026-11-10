@@ -1,9 +1,10 @@
 # Troca o número de versão (?v=AAAAMMDDHHMM) dos arquivos do sistema em todas as telas.
 # Lê cada arquivo inteiro ANTES de reescrever (o comando antigo de uma linha apagava as telas).
+# Inclui o texto do Manual do SAGA (manual/conteudo.js), para o manual novo não ficar preso na memória do navegador.
 import re, glob, time, sys, os
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 v = time.strftime('%Y%m%d%H%M')
-padrao = re.compile(r'((?:src|href)=")((?:saga_[a-z_]+|ponto_calculo)\.(?:js|css))(?:\?v=\d+)?(")')
+padrao = re.compile(r'((?:src|href)=")((?:saga_[a-z_]+|ponto_calculo|manual/conteudo)\.(?:js|css))(?:\?v=\d+)?(")')
 for f in glob.glob('*.html'):
     with open(f, encoding='utf-8') as a:
         s = a.read()
