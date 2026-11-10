@@ -23,6 +23,8 @@ window.SagaPlanilha=(function(){
   var VAZIO='__saga_vazio__',VAZIO_ANTIGO='\u0000vazio';
   function trocaVazioAntigo(lista){return (lista||[]).map(function(v){return v===VAZIO_ANTIGO||v==='\ufffdvazio'?VAZIO:v;});}
   var SISTEMA_SO_LEITURA=['processo.fase','processo.criado_em','processo.atualizado_em','processo.providencia'];
+  // colunas preenchidas sozinhas pelo sistema (não se edita na planilha nem se arrasta no Kanban)
+  var COLUNAS_AUTOMATICAS=['captacao.carta'];
   // Colunas que só fazem sentido numa fase
   var SO_CAPTACAO=['processo.captador'];
 
@@ -627,6 +629,7 @@ window.SagaPlanilha=(function(){
     if(!state.permissoes.editar)return false;
     if(p.sigilo&&!state.permissoes.editar_dados)return false;
     if(SISTEMA_SO_LEITURA.indexOf(c.campo_sistema)!==-1)return false;
+    if(COLUNAS_AUTOMATICAS.indexOf(c.chave)!==-1)return false;   // 10/11 (bloco 143): coluna Carta vem da tela Cartas
     if(['processo.numero','processo.tese','processo.responsavel','processo.valor_causa','processo.valor_precatorio'].indexOf(c.campo_sistema)!==-1&&!state.permissoes.editar_dados)return false;
     return true;
   }
@@ -1623,7 +1626,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     g.push({k:VAZIO,nome:t==='simnao'?'Não informado':'Sem '+nomeCol(c).toLowerCase(),vazio:true});
     return g;
   }
-  function podeSoltar(c){return tipoGrupo(c)==='opcao'||tipoGrupo(c)==='simnao';}
+  function podeSoltar(c){return COLUNAS_AUTOMATICAS.indexOf(c.chave)===-1&&(tipoGrupo(c)==='opcao'||tipoGrupo(c)==='simnao');}
   // "+" no título da coluna do Kanban: abre o Novo Processo e o processo nasce já com o valor daquela coluna
   var CAMPO_NOVO={'processo.status':'status_id','processo.tese':'tese_id','processo.area':'area_direito_id','processo.situacao_acao':'situacao_acao_id','processo.responsavel':'responsavel_id','processo.captador':'captador_id'};
   var pendenteNovo=null;
@@ -1864,7 +1867,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
         if(capt&&c.ordem_captacao==null&&c.ordem<100){var v0=valorLinha(row,c);return !(v0==null||v0===''||(Array.isArray(v0)&&!v0.length));}
         return true;}).sort(function(a,b){return ordemCol(a,row.fase)-ordemCol(b,row.fase);});
     var sensiveis=['processo.numero','processo.tese','processo.responsavel','processo.valor_causa','processo.valor_precatorio'];
-    var podeEd=function(c){if(!opts.podeEditar||sig)return false;if(SISTEMA_SO_LEITURA.indexOf(c.campo_sistema)!==-1)return false;if(sensiveis.indexOf(c.campo_sistema)!==-1&&!opts.podeEditarDados)return false;return true;};
+    var podeEd=function(c){if(!opts.podeEditar||sig)return false;if(SISTEMA_SO_LEITURA.indexOf(c.campo_sistema)!==-1||COLUNAS_AUTOMATICAS.indexOf(c.chave)!==-1)return false;if(sensiveis.indexOf(c.campo_sistema)!==-1&&!opts.podeEditarDados)return false;return true;};
     var extras=(opts.extras||[]).map(function(x){return {id:x.id,nome:x.nome,texto:x.texto||'',tipo:x.tipo,valor:x.valor,editavel:!!x.editavel&&!sig};});
     var campos={};cs.forEach(function(c){campos[c.id]={c:c};});extras.forEach(function(x){campos[x.id]={x:x};});
     // Resumo: só os campos escolhidos, na ordem escolhida; "Todos os dados" tem sempre todos, numerados na ordem da planilha
