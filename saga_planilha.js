@@ -33,6 +33,12 @@ window.SagaPlanilha=(function(){
   function nomeUsuario(id){var u=(state.responsaveis||[]).find(function(x){return String(x.id)===String(id);});return u?u.nome_completo:'';}
   function nomeArea(id){try{var a=(catalogoTeses.todasAreas()||[]).find(function(x){return String(x.id)===String(id);});return a?a.nome:'';}catch(e){return '';}}
   function situacao(id){return situacoes.find(function(s){return String(s.id)===String(id);});}
+  // Origem do cliente e campanha (bloco 148): nomes e menus vêm do SagaOrigem (origem_opcoes; quem não vê o Marketing também recebe os nomes)
+  function ori(){return window.SagaOrigem||null;}
+  function nomeOrigemCli(id){var o=ori();return o?o.nomeOrigem(id):'';}
+  function nomeCampanhaCli(id){var o=ori();return o?o.nomeCampanha(id):'';}
+  function opcoesOrigemCli(atual){var o=ori();if(!o)return [];return o.dados().origens.filter(function(x){return x.ativo!==false||String(x.id)===String(atual||'');}).map(function(x){return {id:x.id,nome:x.nome};});}
+  function opcoesCampanhaCli(){var o=ori();if(!o)return [];return o.campanhasMenu().map(function(c){return {id:c.id,nome:o.rotuloCampanha(c)};});}
   function idsProtocolada(){return situacoes.filter(function(s){return s.conta_protocolada;}).map(function(s){return String(s.id);});}
   function idsEncerrada(){return situacoes.filter(function(s){return s.conta_encerrada;}).map(function(s){return String(s.id);});}
   // Grupo do processo no Jurídico (09/11, mesma regra da vw_processos_andamento): sacado (o recebido no Financeiro cobre o esperado)
@@ -63,6 +69,8 @@ window.SagaPlanilha=(function(){
       case 'processo.atualizado_em':return p.atualizado_em&&String(p.atualizado_em).slice(0,10);
       case 'processo.ultima_movimentacao':return p.ultima_movimentacao_em&&String(p.ultima_movimentacao_em).slice(0,10);
       case 'processo.providencia':return p.providencia_atual;
+      case 'processo.origem':return p.origem_id;
+      case 'processo.campanha':return p.campanha_origem_id;
     }
     return (p.campos||{})[c.id];
   }
@@ -76,6 +84,8 @@ window.SagaPlanilha=(function(){
       case 'processo.fase':return v==='juridico'?'Jurídico':v==='captacao'?'Captação':v;
       case 'processo.responsavel':case 'processo.captador':return nomeUsuario(v)||'';
       case 'processo.situacao_acao':return (situacao(v)||{}).nome||'';
+      case 'processo.origem':return nomeOrigemCli(v)||'';
+      case 'processo.campanha':return nomeCampanhaCli(v)||'';
       case 'processo.providencia':return v+(p&&p.providencia_prazo?' · até '+String(p.providencia_prazo).slice(0,10).split('-').reverse().slice(0,2).join('/'):'');
       case 'pessoa.situacao_vital':return v==='vivo'?'Vivo':v==='falecido'?'Falecido':v;
       case 'pessoa.cpf':return window.sagaFmt?sagaFmt.cpf(v):String(v);
@@ -929,6 +939,8 @@ window.SagaPlanilha=(function(){
     if(c.campo_sistema==='processo.area'){try{return (catalogoTeses.todasAreas()||[]).filter(function(a){return a.ativo!==false;}).map(function(a){return {id:a.id,nome:a.nome};});}catch(e){return [];}}
     if(c.campo_sistema==='processo.situacao_acao')return situacoes.filter(function(s){return s.ativo!==false;}).map(function(s){return {id:s.id,nome:s.nome};});
     if(c.campo_sistema==='pessoa.situacao_vital')return [{id:'vivo',nome:'Vivo'},{id:'falecido',nome:'Falecido'}];
+    if(c.campo_sistema==='processo.origem')return opcoesOrigemCli();
+    if(c.campo_sistema==='processo.campanha')return opcoesCampanhaCli();
     if(c.tipo==='usuario')return (state.responsaveis||[]).map(function(u){return {id:u.id,nome:u.nome_completo};});
     if(c.tipo==='opcao')return opcoesDaColuna(c);
     return null;
@@ -979,6 +991,9 @@ window.SagaPlanilha=(function(){
       case 'processo.captador':p.captador_id=r;break;case 'processo.situacao_acao':p.situacao_acao_id=r;break;
       case 'processo.valor_causa':p.valor_causa=r;break;case 'processo.valor_precatorio':p.valor_precatorio_origem=r;break;
       case 'processo.ultima_movimentacao':p.ultima_movimentacao_em=r;break;
+      case 'processo.origem':p.origem_id=r;break;
+      // a campanha traz a rede principal dela quando a origem está vazia (o banco faz o mesmo)
+      case 'processo.campanha':p.campanha_origem_id=r;if(r&&!p.origem_id&&ori()){var cc=ori().campanha(r);if(cc&&cc.origem_id)p.origem_id=cc.origem_id;}break;
     }
     if(typeof invalidarBaseProcessos==='function'){var base=state.baseProcessos;invalidarBaseProcessos();state.baseProcessos=base;}
   }
@@ -1284,7 +1299,8 @@ window.SagaPlanilha=(function(){
       var res=await Promise.all([carregarColunas(),
         _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada,conta_encerrada').eq('categoria','situacao_acao').order('ordem'),
         _sb.rpc('pode_gerenciar_colunas'),
-        FASE_FIXA==='juridico'?_sb.from('vw_processos_andamento').select('processo_id').eq('grupo','sacado'):null]);
+        FASE_FIXA==='juridico'?_sb.from('vw_processos_andamento').select('processo_id').eq('grupo','sacado'):null,
+        window.SagaOrigem?SagaOrigem.carregar():null]);
       situacoes=(res[1]&&res[1].data)||[];SagaPlanilha._gerenciar=!!(res[2]&&res[2].data===true)||!!state.admin;
       sacados=new Set(((res[3]&&!res[3].error&&res[3].data)||[]).map(function(x){return String(x.processo_id);}));
     }catch(e){console.warn('Planilha: sem colunas do banco',e);return false;}
@@ -1595,7 +1611,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     if(!c||!c.ativo)return false;
     if(['pessoa.nome','pessoa.cpf','processo.numero','pessoa.telefone','pessoa.email','processo.criado_em','processo.atualizado_em'].indexOf(c.campo_sistema)>=0)return false;
     if(c.campo_sistema==='processo.fase')return false;
-    return ['opcao','sim_nao','usuario','moeda','numero','data'].indexOf(c.tipo)>=0||['processo.status','processo.tese','processo.area','processo.situacao_acao','processo.responsavel','processo.captador','pessoa.uf','pessoa.situacao_vital','processo.valor_causa','processo.valor_precatorio','processo.ultima_movimentacao'].indexOf(c.campo_sistema)>=0;
+    return ['opcao','sim_nao','usuario','moeda','numero','data'].indexOf(c.tipo)>=0||['processo.status','processo.tese','processo.area','processo.situacao_acao','processo.responsavel','processo.captador','pessoa.uf','pessoa.situacao_vital','processo.valor_causa','processo.valor_precatorio','processo.ultima_movimentacao','processo.origem','processo.campanha'].indexOf(c.campo_sistema)>=0;
   }
   function tipoGrupo(c){
     if(c.tipo==='moeda'||c.tipo==='numero'||c.campo_sistema==='processo.valor_causa'||c.campo_sistema==='processo.valor_precatorio')return 'faixa';
@@ -1619,7 +1635,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     else if(t==='mes'){var ms={};lista.forEach(function(p){var k=chaveGrupo(p,c);if(k!==VAZIO)ms[k]=1;});g=Object.keys(ms).sort().reverse().map(function(k){return {k:k,nome:MESES[Number(k.slice(5,7))-1]+' de '+k.slice(0,4)};});}
     else{
       var ops=opsCache[c.id]||[];
-      g=ops.map(function(o){var cor=null;if(c.campo_sistema==='processo.status'){var st=(state.statusList||[]).find(function(x){return String(x.id)===String(o.id);});cor=st&&st.cor;}else if(c.campo_sistema==='processo.situacao_acao'){cor=(situacao(o.id)||{}).cor;}else if(c.tipo==='opcao'&&!c.campo_sistema){var oo=(c.opcoes||[]).find(function(x){return String(x.id)===String(o.id);});cor=oo&&oo.cor;}else if(c.campo_sistema==='processo.tese'){var te=(state.teses||[]).find(function(x){return String(x.id)===String(o.id);});cor=te&&te.cor;}return {k:String(o.id),nome:o.nome,cor:cor};});
+      g=ops.map(function(o){var cor=null;if(c.campo_sistema==='processo.status'){var st=(state.statusList||[]).find(function(x){return String(x.id)===String(o.id);});cor=st&&st.cor;}else if(c.campo_sistema==='processo.situacao_acao'){cor=(situacao(o.id)||{}).cor;}else if(c.tipo==='opcao'&&!c.campo_sistema){var oo=(c.opcoes||[]).find(function(x){return String(x.id)===String(o.id);});cor=oo&&oo.cor;}else if(c.campo_sistema==='processo.origem'){var og=ori()&&ori().origem(o.id);cor=og&&og.cor;}else if(c.campo_sistema==='processo.tese'){var te=(state.teses||[]).find(function(x){return String(x.id)===String(o.id);});cor=te&&te.cor;}return {k:String(o.id),nome:o.nome,cor:cor};});
       // valores antigos que não estão mais no menu também ganham coluna
       var ja={};g.forEach(function(x){ja[x.k]=1;});lista.forEach(function(p){var k=chaveGrupo(p,c);if(k!==VAZIO&&!ja[k]){ja[k]=1;g.push({k:k,nome:texto(p,c)||k});}});
     }
@@ -1628,7 +1644,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
   }
   function podeSoltar(c){return COLUNAS_AUTOMATICAS.indexOf(c.chave)===-1&&(tipoGrupo(c)==='opcao'||tipoGrupo(c)==='simnao');}
   // "+" no título da coluna do Kanban: abre o Novo Processo e o processo nasce já com o valor daquela coluna
-  var CAMPO_NOVO={'processo.status':'status_id','processo.tese':'tese_id','processo.area':'area_direito_id','processo.situacao_acao':'situacao_acao_id','processo.responsavel':'responsavel_id','processo.captador':'captador_id'};
+  var CAMPO_NOVO={'processo.status':'status_id','processo.tese':'tese_id','processo.area':'area_direito_id','processo.situacao_acao':'situacao_acao_id','processo.responsavel':'responsavel_id','processo.captador':'captador_id','processo.origem':'origem_id','processo.campanha':'campanha_origem_id'};
   var pendenteNovo=null;
   function podeNovoNaColuna(c){return !!(state.permissoes&&state.permissoes.criar)&&podeSoltar(c)&&(!c.campo_sistema||!!CAMPO_NOVO[c.campo_sistema])&&typeof abrirNovoProcesso==='function';}
   function novoNaColuna(c,k,nome){
@@ -1777,7 +1793,8 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       _sb.from('areas_direito').select('id,nome,ativo,ordem').order('ordem'),
       _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo'),
       _sb.from('etiquetas_catalogo').select('id,nome,cor,ativo,ordem,conta_protocolada,conta_encerrada').eq('categoria','situacao_acao').order('ordem'),
-      _sb.rpc('pode_gerenciar_colunas')]);
+      _sb.rpc('pode_gerenciar_colunas'),
+      window.SagaOrigem?SagaOrigem.carregar():null]);
     catFicha={status:r[0].data||[],teses:r[1].data||[],areas:r[2].data||[],usuarios:r[3].data||[],gerenciar:r[5]&&r[5].data===true};
     situacoes=r[4].data||situacoes;
     return catFicha;
@@ -1785,8 +1802,8 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
   var CAMPO_LINHA={'pessoa.nome':'nome','pessoa.cpf':'cpf','pessoa.uf':'uf','pessoa.situacao_vital':'situacao_vital','pessoa.telefone':'telefone','pessoa.email':'email',
     'processo.numero':'numero','processo.area':'area_id','processo.tese':'tese_id','processo.status':'status_id','processo.fase':'fase','processo.responsavel':'responsavel_id',
     'processo.captador':'captador_id','processo.situacao_acao':'situacao_acao_id','processo.valor_causa':'valor_causa','processo.valor_precatorio':'valor_precatorio',
-    'processo.criado_em':'criado_em','processo.atualizado_em':'atualizado_em','processo.ultima_movimentacao':'ultima_movimentacao'};
-  var ROTULO_LINHA={'processo.area':'area','processo.tese':'tese','processo.status':'status','processo.responsavel':'responsavel','processo.captador':'captador','processo.situacao_acao':'situacao_acao'};
+    'processo.criado_em':'criado_em','processo.atualizado_em':'atualizado_em','processo.ultima_movimentacao':'ultima_movimentacao','processo.origem':'origem_id','processo.campanha':'campanha_id'};
+  var ROTULO_LINHA={'processo.area':'area','processo.tese':'tese','processo.status':'status','processo.responsavel':'responsavel','processo.captador':'captador','processo.situacao_acao':'situacao_acao','processo.origem':'origem','processo.campanha':'campanha'};
   function valorLinha(row,c){
     if(!c.campo_sistema)return (row.campos||{})[c.id];
     var v=row[CAMPO_LINHA[c.campo_sistema]];
@@ -1933,6 +1950,8 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
         if(c.campo_sistema==='processo.area')return cat.areas.filter(function(a){return a.ativo!==false;}).map(function(a){return {id:a.id,nome:a.nome};});
         if(c.campo_sistema==='processo.situacao_acao')return situacoes.filter(function(s){return s.ativo!==false;}).map(function(s){return {id:s.id,nome:s.nome};});
         if(c.campo_sistema==='pessoa.situacao_vital')return [{id:'vivo',nome:'Vivo'},{id:'falecido',nome:'Falecido'}];
+        if(c.campo_sistema==='processo.origem')return opcoesOrigemCli(valorLinha(row,c));
+        if(c.campo_sistema==='processo.campanha')return opcoesCampanhaCli();
         if(c.tipo==='usuario')return cat.usuarios.map(function(u){return {id:u.id,nome:u.nome_completo};});
         if(c.tipo==='opcao')return opcoesDaColuna(c);
         return null;

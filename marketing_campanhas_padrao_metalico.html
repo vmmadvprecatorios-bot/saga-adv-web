@@ -304,6 +304,17 @@ html.saga-sem-movimento .pino.novo{animation:none}
   .novas .btn-nova{width:100%;justify-content:center}
   .menu-nova{left:0;right:0;width:auto;transform-origin:top center}
 }
+/* Origem dos clientes e link do WhatsApp da campanha (bloco 148) */
+.camp-card .cod,.cli .cod{font-family:ui-monospace,Menlo,monospace;font-size:10px;font-weight:500;padding:1px 6px;border-radius:6px;border:1px solid var(--border-soft);color:var(--muted);margin-left:6px;vertical-align:middle;letter-spacing:.3px}
+.linha-res{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:11px;color:var(--muted);margin-top:8px}
+.linha-res b{color:var(--text);font-weight:600}
+.mc-link{border:1px dashed var(--border-soft);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--muted);margin:0 0 12px;display:flex;flex-direction:column;gap:8px;line-height:1.45}
+.mc-link .msg{color:var(--text);background:var(--panel-2);border-radius:8px;padding:8px 10px;white-space:pre-wrap;word-break:break-word}
+.mc-link .url{font-family:ui-monospace,Menlo,monospace;font-size:11px;word-break:break-all;color:var(--text)}
+.mc-link .acoes{display:flex;gap:8px;flex-wrap:wrap}
+.mc-link .acoes a{text-decoration:none;display:inline-flex;align-items:center}
+.org-sec{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold);margin:16px 0 8px}
+.org-sec:first-child{margin-top:0}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611101235">
 </head>
@@ -360,6 +371,7 @@ html.saga-sem-movimento .pino.novo{animation:none}
     <div class="mk-barra">
       <div class="seg" id="segCamp" aria-label="Forma de ver as campanhas"></div>
       <select id="filtroCampTema" class="mk-select" aria-label="Pasta das campanhas"></select>
+      <button class="btn-secondary btn-sm" id="btnOrigens" type="button" hidden>Origens dos clientes</button>
     </div>
     <div id="vistaCampanhas"></div>
   </section>
@@ -385,6 +397,14 @@ html.saga-sem-movimento .pino.novo{animation:none}
       <div class="campo"><label for="mcFim">Fim</label><input id="mcFim" inputmode="numeric" placeholder="dd/mm/aaaa" maxlength="10"></div>
     </div>
     <div class="campo"><label for="mcObs">Observação</label><textarea id="mcObs" placeholder="Público, canais, metas..."></textarea></div>
+    <div class="secao">Link do WhatsApp e origem dos clientes</div>
+    <div class="grid2">
+      <div class="campo"><label for="mcRede">Rede principal</label><select id="mcRede"></select></div>
+      <div class="campo"><label for="mcCodigo">Código da campanha</label><input id="mcCodigo" maxlength="12" autocomplete="off" placeholder="Gerado ao salvar (ex.: IR27)"></div>
+    </div>
+    <div class="campo"><label for="mcWhats">WhatsApp que recebe os contatos</label><input id="mcWhats" inputmode="numeric" maxlength="16" placeholder="(82) 9 9999-9999" autocomplete="off"></div>
+    <div class="campo"><label for="mcMensagem">Mensagem pronta (o cliente só aperta Enviar)</label><textarea id="mcMensagem" rows="2" maxlength="500" placeholder="Olá! Vi o anúncio do escritório e quero saber se tenho direito."></textarea></div>
+    <div class="mc-link" id="mcLink"></div>
     <div id="mcGastosWrap" style="display:none">
       <div class="secao">Gastos da campanha</div>
       <div id="mcGastos"></div>
@@ -474,6 +494,13 @@ html.saga-sem-movimento .pino.novo{animation:none}
   <div class="modal-foot"><button class="btn-primary" data-fechar="modalOpcoes" type="button">Pronto</button></div>
 </div></div>
 
+<!-- Origens dos clientes (bloco 148) -->
+<div class="modal-overlay" id="modalOrigens"><div class="modal small">
+  <div class="modal-head"><div><h2>Origens dos clientes</h2><p>As opções de "Como chegou" na ficha e na planilha. Renomeie, mude a cor, troque a ordem ou remova. Remover só tira do menu: as fichas que já usam continuam mostrando o nome.</p></div><button class="modal-close" data-fechar="modalOrigens" type="button" aria-label="Fechar">✕</button></div>
+  <div class="modal-body"><div id="moOrigens"></div></div>
+  <div class="modal-foot"><button class="btn-primary" data-fechar="modalOrigens" type="button">Pronto</button></div>
+</div></div>
+
 <!-- Pasta (nova ou editar) -->
 <div class="modal-overlay" id="modalTema"><div class="modal small">
   <div class="modal-head"><div><h2 id="mtTitulo">Nova pasta</h2><p>A pasta de um tema (ex.: Imposto de renda) junta as campanhas e as artes desse tema, as de hoje e as próximas.</p></div><button class="modal-close" data-fechar="modalTema" type="button" aria-label="Fechar">✕</button></div>
@@ -500,6 +527,7 @@ window._sb=_sb;
 <script src="saga_ui.js?v=202611101235"></script>
 <script src="saga_texto.js?v=202611101235"></script>
 <script src="saga_roscas.js?v=202611101235"></script>
+<script src="saga_origem.js?v=202611101235"></script>
 <script src="saga_mencoes.js?v=202611101235"></script>
 <script>
 /* =====================================================================
@@ -615,6 +643,9 @@ function dadosGraficosMarketing(){
     if(fontes.gastos)grupos.push({id:'gastos',titulo:'Gasto por campanha',moeda:true,
       dica:'Gastos realizados ou em curso no período e na busca atuais. Clique para destacar.',
       itens:SagaRoscas.topo(campanhas.map(function(c){return {id:c.id,nome:c.nome,valor:investido(c.id,true)};}),6,'Outras')});
+    if(state.resultadosOrigens&&state.resultadosOrigens.length)grupos.push({id:'origens',titulo:'Origem dos clientes',rotulo:'fichas',
+      dica:'De onde vieram os clientes: fichas da Captação e do Jurídico com a origem marcada ('+state.semOrigem+' ainda sem origem).',
+      itens:state.resultadosOrigens.map(function(o){return {id:o.origem_id,nome:o.nome,cor:o.cor,valor:Number(o.contatos||0)};})});
     grupos.push({id:'campanhas',titulo:'Campanhas por situação',rotulo:'campanhas',
       dica:'Campanhas na busca atual. Clique para destacar.',
       itens:STATUS.map(function(s){return {id:s.id,nome:s.nome,cor:s.cor,valor:campanhas.filter(function(c){return c.status===s.id;}).length};})});
@@ -651,7 +682,9 @@ async function carregarTudo(){
     state.pode.verMateriais?_sb.from('materiais_marketing_comentarios').select('*').order('criado_em'):vazio,
     _sb.from('marketing_temas').select('*').order('ordem').order('nome'),
     _sb.from('etiquetas_catalogo').select('id,nome,cor,ordem,ativo,categoria').eq('categoria','mkt_canal').order('ordem').order('nome'),
-    _sb.from('teses').select('id,nome,cor,ativo').order('nome')
+    _sb.from('teses').select('id,nome,cor,ativo').order('nome'),
+    state.pode.verCampanhas?_sb.rpc('marketing_resultados'):vazio,
+    window.SagaOrigem?SagaOrigem.carregar(true):null
   ]);
   if(r[0].error){showToast('Erro ao carregar campanhas: '+esc(r[0].error.message),'error');return;}
   if(r[2].error){showToast('Erro ao carregar as artes: '+esc(r[2].error.message),'error');}
@@ -660,6 +693,10 @@ async function carregarTudo(){
   state.temas=r[5].error?[]:(r[5].data||[]);
   state.canais=r[6].error?[]:(r[6].data||[]).filter(function(c){return !c.categoria||c.categoria==='mkt_canal';});
   state.teses=r[7].error?[]:(r[7].data||[]);
+  // 10/11 (bloco 148): contatos, quem fechou e custo por campanha; origem dos clientes
+  var rr=r[8]&&!r[8].error&&r[8].data&&!Array.isArray(r[8].data)?r[8].data:null;
+  state.resultados={};state.resultadosOrigens=[];state.semOrigem=0;state.mostraValores=false;
+  if(rr){(rr.campanhas||[]).forEach(function(x){state.resultados[x.campanha_id]=x;});state.resultadosOrigens=rr.origens||[];state.semOrigem=Number(rr.sem_origem||0);state.mostraValores=!!rr.mostra_valores;}
   state.fontesRoscas={campanhas:!r[0].error,gastos:!r[1].error,materiais:!r[2].error};
   var p=state.pasta;
   if(p.tipo==='tema'&&!temasAtivos().some(function(t){return t.id===p.id;}))state.pasta={tipo:'tudo'};
@@ -1309,11 +1346,12 @@ function cartaoCampanha(c){
   var inv=investido(c.id,false),orc=Number(c.orcamento_previsto||0),pct=orc?Math.min(100,inv/orc*100):0;
   var cls=orc&&inv>orc?'estourou':(pct>=80?'alerta':'');
   var resp=nomeUsuario(c.responsavel_id),t=temaDe(c.tema_id),na=state.materiais.filter(function(m){return m.campanha_id===c.id;}).length;
-  return '<div class="camp-card" data-camp="'+esc(c.id)+'"><h4>'+esc(c.nome)+'</h4>'
+  return '<div class="camp-card" data-camp="'+esc(c.id)+'"><h4>'+esc(c.nome)+(c.codigo?'<span class="cod" title="Código da campanha (vai no fim da mensagem do WhatsApp)">'+esc(c.codigo)+'</span>':'')+'</h4>'
     +(t?'<div class="tema"><span class="bolinha" style="--c:'+esc(t.cor||'#c9a84c')+'"></span>'+esc(t.nome)+'</div>':'')
     +'<div class="sub">'+(c.data_inicio||c.data_fim?dataBR(c.data_inicio)+' a '+dataBR(c.data_fim):'Sem período definido')+'</div>'
     +'<div class="linha-orc"><span>Investido / orçamento</span><b>'+moeda(inv)+' / '+(orc?moeda(orc):'—')+'</b></div>'
     +(orc?'<div class="barra"><i class="'+cls+'" style="width:'+pct.toFixed(0)+'%"></i></div>':'')
+    +linhaResultados(c)
     +'<div class="resp">'+(resp?'<span class="mini" data-saga-nome="'+esc(resp)+'">'+esc(iniciais(resp))+'</span>'+esc(resp.split(' ')[0]):'Sem responsável')+(state.pode.verMateriais?'<span class="artes">'+na+' arte'+(na===1?'':'s')+'</span>':'')+'</div></div>';
 }
 function renderCampanhas(){
@@ -1324,13 +1362,15 @@ function renderCampanhas(){
   var lista=campanhasFiltradas(),el=document.getElementById('vistaCampanhas');
   if(!state.pode.verCampanhas){el.innerHTML='<div class="panel vazio">Você não tem permissão para ver as campanhas.</div>';return;}
   if(state.visaoCamp==='lista'){
-    el.innerHTML='<div class="tabela-wrap"><table><thead><tr><th>Campanha</th><th>Pasta</th><th>Status</th><th>Responsável</th><th>Período</th><th class="num">Orçamento</th><th class="num">Investido</th><th class="num">Saldo</th></tr></thead><tbody>'
+    el.innerHTML='<div class="tabela-wrap"><table><thead><tr><th>Campanha</th><th>Pasta</th><th>Status</th><th>Responsável</th><th>Período</th><th class="num">Orçamento</th><th class="num">Investido</th><th class="num">Saldo</th><th class="num">Contatos</th><th class="num">Fecharam</th><th class="num">Custo por cliente</th></tr></thead><tbody>'
       +(lista.length?lista.map(function(c){
         var s=statusInfo(c.status),inv=investido(c.id,false),orc=c.orcamento_previsto,t=temaDe(c.tema_id);
-        return '<tr data-camp="'+esc(c.id)+'"><td><div class="cli">'+esc(c.nome)+'</div></td><td>'+(t?'<span class="bolinha" style="--c:'+esc(t.cor||'#c9a84c')+'"></span> '+esc(t.nome):'<span class="sub">—</span>')+'</td><td>'+etq(s.nome,s.cor)+'</td><td>'+esc(nomeUsuario(c.responsavel_id)||'—')+'</td>'
+        var rs=(state.resultados||{})[c.id]||{},fe=Number(rs.fecharam||0);
+        return '<tr data-camp="'+esc(c.id)+'"><td><div class="cli">'+esc(c.nome)+(c.codigo?'<span class="cod">'+esc(c.codigo)+'</span>':'')+'</div></td><td>'+(t?'<span class="bolinha" style="--c:'+esc(t.cor||'#c9a84c')+'"></span> '+esc(t.nome):'<span class="sub">—</span>')+'</td><td>'+etq(s.nome,s.cor)+'</td><td>'+esc(nomeUsuario(c.responsavel_id)||'—')+'</td>'
           +'<td>'+dataBR(c.data_inicio)+' a '+dataBR(c.data_fim)+'</td><td class="num">'+moeda(orc)+'</td><td class="num">'+moeda(inv)+'</td>'
-          +'<td class="num '+(orc!=null&&inv>orc?'neg':'')+'">'+(orc!=null?moeda(orc-inv):'—')+'</td></tr>';
-      }).join(''):'<tr><td colspan="8" class="vazio">'+(state.campanhas.length?'Nenhuma campanha neste filtro.':'Nenhuma campanha cadastrada. Use "+ Novo" &gt; "Campanha".')+'</td></tr>')+'</tbody></table></div>';
+          +'<td class="num '+(orc!=null&&inv>orc?'neg':'')+'">'+(orc!=null?moeda(orc-inv):'—')+'</td>'
+          +'<td class="num">'+Number(rs.contatos||0)+'</td><td class="num">'+fe+'</td><td class="num">'+(inv>0&&fe>0?moeda(inv/fe):'—')+'</td></tr>';
+      }).join(''):'<tr><td colspan="11" class="vazio">'+(state.campanhas.length?'Nenhuma campanha neste filtro.':'Nenhuma campanha cadastrada. Use "+ Novo" &gt; "Campanha".')+'</td></tr>')+'</tbody></table></div>';
   }else{
     el.innerHTML='<div class="kanban">'+STATUS.map(function(s){
       var cs=lista.filter(function(c){return c.status===s.id;});
@@ -1342,6 +1382,7 @@ function preencherSelects(c){
   document.getElementById('mcStatus').innerHTML=STATUS.map(function(s){return '<option value="'+s.id+'">'+esc(s.nome)+'</option>';}).join('');
   document.getElementById('mcResp').innerHTML='<option value="">Sem responsável</option>'+state.usuarios.filter(function(u){return u.ativo!==false||(c&&u.id===c.responsavel_id);}).map(function(u){return '<option value="'+esc(u.id)+'">'+esc(u.nome_completo)+'</option>';}).join('');
   document.getElementById('mcTema').innerHTML=opcoesTemas(c?c.tema_id:null,true,true);
+  document.getElementById('mcRede').innerHTML=opcoesRede(c&&c.origem_id);
 }
 function abrirCampanha(id,pre){
   var c=id?campDe(id):null;
@@ -1358,6 +1399,14 @@ function abrirCampanha(id,pre){
   document.getElementById('mcOrcamento').value=c?numeroParaMoedaCampo(c.orcamento_previsto):'';
   if(window.SagaTexto)SagaTexto.ligar(document.getElementById('mcObs'));
   document.getElementById('mcObs').value=c&&c.observacao||'';
+  // link do WhatsApp (bloco 148): campanha nova já vem com o número da última campanha que tinha um
+  var ultimo=state.campanhas.find(function(x){return x.whatsapp_numero;});
+  document.getElementById('mcRede').value=c&&c.origem_id||'';
+  document.getElementById('mcCodigo').value=c&&c.codigo||'';
+  document.getElementById('mcWhats').value=mascaraTel(c?c.whatsapp_numero:(ultimo&&ultimo.whatsapp_numero));
+  document.getElementById('mcMensagem').value=c?(c.whatsapp_mensagem||''):'Olá! Vi o anúncio do escritório e quero saber se tenho direito.';
+  state.redeAnterior=document.getElementById('mcRede').value;
+  renderLinkCampanha();
   document.getElementById('gnData').value=isoParaBR(hojeISO());
   var podeSalvar=c?state.pode.editar:state.pode.criar;
   document.querySelectorAll('#modalCampanha input,#modalCampanha select,#modalCampanha textarea').forEach(function(i){i.disabled=!podeSalvar;});
@@ -1404,6 +1453,12 @@ async function salvarCampanha(){
   var tema=document.getElementById('mcTema').value||null;if(tema==='__nova')tema=null;
   var dados={nome:nome,status:document.getElementById('mcStatus').value,responsavel_id:document.getElementById('mcResp').value||null,tema_id:tema,
     data_inicio:di.iso,data_fim:df.iso,orcamento_previsto:moedaParaNumero(document.getElementById('mcOrcamento').value),observacao:document.getElementById('mcObs').value.trim()||null};
+  var rede=document.getElementById('mcRede').value,wz=(document.getElementById('mcWhats').value||'').replace(/\D/g,'');
+  if(wz&&!(wz.length===10||wz.length===11)){showToast('O WhatsApp precisa do DDD e do número (ex.: 82 99999-9999).','error');return;}
+  dados.origem_id=rede&&rede!=='__gerenciar'?rede:null;
+  dados.codigo=(document.getElementById('mcCodigo').value||'').trim()||null;
+  dados.whatsapp_numero=wz||null;
+  dados.whatsapp_mensagem=(document.getElementById('mcMensagem').value||'').trim()||null;
   var btn=document.getElementById('mcSalvar');btn.disabled=true;
   try{
     var id;
@@ -1435,6 +1490,112 @@ async function excluirCampanha(){
   var r=await _sb.from('campanhas').delete().eq('id',c.id).select('id');
   if(r.error||!r.data||!r.data.length){showToast('Não foi possível excluir'+(r.error?': '+esc(erroTexto(r.error)):'.'),'error');return;}
   fecharModal('modalCampanha');showToast('Campanha excluída.','success');await carregarTudo();
+}
+
+/* ---------- origem dos clientes e link do WhatsApp da campanha (bloco 148) ---------- */
+function mascaraTel(v){
+  var d=String(v||'').replace(/\D/g,'');if(d.length>11&&d.indexOf('55')===0)d=d.slice(2);d=d.slice(0,11);
+  if(!d)return '';if(d.length<=2)return '('+d;if(d.length<=6)return '('+d.slice(0,2)+') '+d.slice(2);
+  if(d.length<=10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);
+  return '('+d.slice(0,2)+') '+d.slice(2,3)+' '+d.slice(3,7)+'-'+d.slice(7);
+}
+function opcoesRede(atual){
+  var o=window.SagaOrigem?SagaOrigem.dados().origens:[];
+  var grupo=function(rede,rot){var l=o.filter(function(x){return !!x.rede===rede&&(x.ativo!==false||x.id===atual);});
+    return l.length?'<optgroup label="'+rot+'">'+l.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>';}).join('')+'</optgroup>':'';};
+  return '<option value="">Nenhuma</option>'+grupo(true,'Redes sociais')+grupo(false,'Outras origens')+(state.pode.opcoes?'<option value="__gerenciar">Gerenciar as origens...</option>':'');
+}
+function linhaResultados(c){
+  var x=state.resultados&&state.resultados[c.id];if(!x)return '';
+  var gasto=investido(c.id,false),ct=Number(x.contatos||0),fe=Number(x.fecharam||0);
+  return '<div class="linha-res" title="Contatos: fichas (Captação e Jurídico) com esta campanha na origem. Fecharam: documentação pedida, documentos em mãos ou já no Jurídico.">'
+    +'<span>Contatos <b>'+ct+'</b></span><span>Fecharam <b>'+fe+'</b></span>'
+    +(gasto>0&&ct>0?'<span>Por contato <b>'+moeda(gasto/ct)+'</b></span>':'')
+    +(gasto>0&&fe>0?'<span>Por cliente <b>'+moeda(gasto/fe)+'</b></span>':'')
+    +(state.mostraValores&&Number(x.honorarios_esperados)>0?'<span>Honorários esperados <b>'+moeda(x.honorarios_esperados)+'</b></span>':'')+'</div>';
+}
+function renderLinkCampanha(){
+  var el=document.getElementById('mcLink');if(!el||!window.SagaOrigem)return;
+  var c=state.editando,cod=(document.getElementById('mcCodigo').value||'').trim().toUpperCase()||(c&&c.codigo)||'';
+  var tmp={whatsapp_numero:document.getElementById('mcWhats').value,whatsapp_mensagem:document.getElementById('mcMensagem').value,codigo:cod||'CÓDIGO'};
+  var n=SagaOrigem.numeroWhats(tmp.whatsapp_numero);
+  if(n.length<12){el.innerHTML='Informe o WhatsApp que recebe os contatos para gerar o <b>link da campanha</b>: o cliente clica no anúncio e o WhatsApp abre com a mensagem pronta e o código da campanha no fim. Na ficha, em <b>Como chegou</b>, a equipe cola a mensagem e a campanha e a rede ficam marcadas sozinhas.';return;}
+  var url=SagaOrigem.linkWhats(tmp);
+  el.innerHTML='<div>O cliente vai mandar:</div><div class="msg">'+esc(SagaOrigem.mensagemCompleta(tmp))+'</div>'
+    +(cod?'<div class="url">'+esc(url)+'</div>':'<div>O código da campanha é criado ao salvar; depois disso o link fica pronto para copiar.</div>')
+    +'<div class="acoes"><button class="btn-secondary btn-sm" type="button" id="mcCopiarLink"'+(cod?'':' disabled')+'>Copiar link</button>'
+    +(cod?'<a class="btn-secondary btn-sm" href="'+esc(url)+'" target="_blank" rel="noopener">Testar no WhatsApp</a>':'')+'</div>'
+    +'<div>Use o link no anúncio, na bio do Instagram ou no botão do post. Ao responder, a equipe cola a mensagem na ficha do cliente (Como chegou).</div>';
+  var b=document.getElementById('mcCopiarLink');
+  if(b&&cod)b.onclick=function(){
+    if(typeof window.sagaCopiar==='function')window.sagaCopiar(url,'Link da campanha');
+    else if(navigator.clipboard)navigator.clipboard.writeText(url).then(function(){showToast('Link copiado.','success');},function(){window.prompt('Copie o link:',url);});
+    else window.prompt('Copie o link:',url);
+  };
+}
+function ligarOrigemCampanha(){
+  var w=document.getElementById('mcWhats'),m=document.getElementById('mcMensagem'),cd=document.getElementById('mcCodigo'),rd=document.getElementById('mcRede');
+  w.addEventListener('input',function(){var fim=w.value.length-w.selectionEnd;w.value=mascaraTel(w.value);var pos=Math.max(0,w.value.length-fim);try{w.setSelectionRange(pos,pos);}catch(e){}renderLinkCampanha();});
+  m.addEventListener('input',renderLinkCampanha);
+  cd.addEventListener('input',function(){var p=cd.selectionEnd;cd.value=cd.value.toUpperCase().replace(/[^A-Z0-9-]/g,'');try{cd.setSelectionRange(p,p);}catch(e){}renderLinkCampanha();});
+  rd.addEventListener('change',function(){if(rd.value==='__gerenciar'){rd.value=state.redeAnterior||'';abrirOrigens();return;}state.redeAnterior=rd.value;});
+  document.getElementById('btnOrigens').addEventListener('click',abrirOrigens);
+  var lista=document.getElementById('moOrigens');
+  lista.addEventListener('change',async function(e){
+    var linha=e.target.closest('[data-orid]');if(!linha)return;var campo=e.target.dataset.r,id=linha.dataset.orid;
+    if(campo==='nome'){var nome=e.target.value.trim();if(!nome){showToast('Escreva o nome.','warning');renderGerOrigens();return;}await salvarOrigem(id,{nome:nome.slice(0,60)});}
+    if(campo==='cor')await salvarOrigem(id,{cor:e.target.value});
+  });
+  lista.addEventListener('click',async function(e){
+    var nova=e.target.closest('[data-r-nova]');
+    if(nova){
+      var nome=(window.prompt('Nome da nova opção:')||'').trim();if(!nome)return;
+      var cat=nova.dataset.rNova,os=SagaOrigem.dados().origens.filter(function(x){return x.categoria===cat;});
+      if(os.some(function(x){return x.ativo!==false&&x.nome.toLowerCase()===nome.toLowerCase();})){showToast('Já existe uma opção com esse nome.','warning');return;}
+      var ordem=os.reduce(function(mx,x){return Math.max(mx,x.ordem||0);},0)+1;
+      var r=await _sb.from('etiquetas_catalogo').insert({categoria:cat,nome:nome.slice(0,60),cor:'#8a94a8',ordem:ordem,ativo:true}).select('id');
+      if(r.error){showToast('Não foi possível criar: '+esc(erroTexto(r.error)),'error');return;}
+      await recarregarOrigens();return;
+    }
+    var b=e.target.closest('button[data-r]');if(!b)return;
+    var linha=b.closest('[data-orid]'),id=linha.dataset.orid,o=SagaOrigem.origem(id);if(!o)return;
+    if(b.dataset.r==='tira'){
+      if(!(await sagaConfirmar('Remover do menu','Tirar "'+o.nome+'" do menu de origens? As fichas que já usam continuam mostrando o nome.','Remover')))return;
+      await salvarOrigem(id,{ativo:false});return;
+    }
+    var irmas=SagaOrigem.dados().origens.filter(function(x){return x.categoria===o.categoria&&x.ativo!==false;}),i=irmas.indexOf(o),j=i+(b.dataset.r==='sobe'?-1:1);
+    if(i<0||j<0||j>=irmas.length)return;
+    var a=irmas[i],c=irmas[j],oa=a.ordem||i+1,oc=c.ordem||j+1;if(oa===oc){oa=i+1;oc=j+1;}
+    var r1=await _sb.from('etiquetas_catalogo').update({ordem:oc}).eq('id',a.id).select('id');
+    var r2=await _sb.from('etiquetas_catalogo').update({ordem:oa}).eq('id',c.id).select('id');
+    if(r1.error||r2.error){showToast('Não foi possível mudar a ordem.','error');}
+    await recarregarOrigens();
+  });
+}
+async function abrirOrigens(){
+  if(!state.pode.opcoes||!window.SagaOrigem)return;
+  await SagaOrigem.carregar(true);renderGerOrigens();abrirModal('modalOrigens');
+}
+async function recarregarOrigens(){
+  await SagaOrigem.carregar(true);renderGerOrigens();
+  var sel=document.getElementById('mcRede');if(sel){var v=sel.value;sel.innerHTML=opcoesRede(v);sel.value=v;if(sel.value!==v)sel.value='';}
+}
+async function salvarOrigem(id,campos){
+  var r=await _sb.from('etiquetas_catalogo').update(campos).eq('id',id).select('id');
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível salvar'+(r.error?': '+esc(erroTexto(r.error)):'.'),'error');}
+  await recarregarOrigens();
+}
+function renderGerOrigens(){
+  var el=document.getElementById('moOrigens'),o=window.SagaOrigem?SagaOrigem.dados().origens:[];
+  var bloco=function(rede,rot,cat){
+    var l=o.filter(function(x){return !!x.rede===rede&&x.ativo!==false;});
+    return '<div class="org-sec">'+rot+'</div>'+(l.length?l.map(function(x,i){
+      return '<div class="ger-linha sem-tese" data-orid="'+esc(x.id)+'"><input type="color" data-r="cor" value="'+esc(/^#[0-9a-f]{6}$/i.test(x.cor||'')?x.cor:'#8a94a8')+'" aria-label="Cor"><input type="text" data-r="nome" maxlength="60" value="'+esc(x.nome)+'" aria-label="Nome">'
+        +'<button type="button" data-r="sobe" title="Subir"'+(i===0?' disabled':'')+'>↑</button><button type="button" data-r="desce" title="Descer"'+(i===l.length-1?' disabled':'')+'>↓</button>'
+        +'<button type="button" data-r="tira" data-remover title="Remover do menu (só desativa)" style="color:var(--danger)">✕</button></div>';
+    }).join(''):'<div class="ger-vazio">Nenhuma opção.</div>')+'<button class="btn-secondary btn-sm" type="button" data-r-nova="'+cat+'" style="margin-top:8px">+ Nova opção</button>';
+  };
+  el.innerHTML=bloco(true,'Redes sociais (e Google)','origem_rede')+bloco(false,'Outras origens','origem_outra');
 }
 
 /* ---------- abas, filtros, menu "+ Novo" e início ---------- */
@@ -1617,7 +1778,7 @@ async function init(){
   var tm=lerGuardado('saga-mkt-tam');if(tm==='p'||tm==='m'||tm==='g')state.tamArt=tm;
   var vc=lerGuardado('saga-mkt-visao-camp');if(vc==='kanban'||vc==='lista')state.visaoCamp=vc;
   var pg=lerGuardado('saga-mkt-pasta');if(pg)state.pasta=lerChave(pg);
-  ligarEventos();renderPeriodo();
+  ligarEventos();ligarOrigemCampanha();renderPeriodo();
   await SagaUI.carregar('marketing');
   var s=await _sb.auth.getSession();
   if(!s.data||!s.data.session){window.location.href='login_padrao_metalico.html';return;}
@@ -1631,6 +1792,7 @@ async function init(){
   }
   state.pode={verCampanhas:ok(0),verMateriais:ok(5)||ok(4),criar:ok(1),editar:ok(2),matCriar:ok(3),matAprovar:ok(4),
     temaCriar:ok(1)||ok(3),temaEditar:ok(2)||ok(3),opcoes:ok(6)};
+  document.getElementById('btnOrigens').hidden=!state.pode.opcoes;
   document.querySelector('[data-novo="material"]').hidden=!state.pode.matCriar;
   document.querySelector('[data-novo="campanha"]').hidden=!state.pode.criar;
   document.querySelector('[data-novo="pasta"]').hidden=!state.pode.temaCriar;

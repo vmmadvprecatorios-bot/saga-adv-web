@@ -546,6 +546,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
       </div>
       <div id="previaHonorarios" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
       <div class="form-field" id="novoExtras" style="margin-top:13px"></div>
+      <div class="form-field" id="novoOrigemCampo" style="margin-top:13px"><label>De onde veio o cliente? <span style="font-weight:400;color:var(--muted)">(opcional)</span></label><div id="novoOrigem"></div></div>
     </div>
     <div class="modal-foot"><button class="btn-secondary" onclick="closeModal('modalNovoProcesso')">Cancelar</button><button class="btn-primary" onclick="salvarNovoProcesso()">Salvar processo</button></div>
   </div>
@@ -731,6 +732,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <script src="saga_paineis.js?v=202611101235"></script>
 <script src="saga_xlsx.js?v=202611101235"></script>
 <script src="saga_fichas.js?v=202611101235"></script>
+<script src="saga_origem.js?v=202611101235"></script>
 <script src="saga_planilha.js?v=202611101235"></script>
 <script src="saga_recursos.js?v=202611101235"></script>
 <script src="saga_tribunais.js?v=202611101235"></script>
@@ -1449,7 +1451,7 @@ async function lerBaseProcessos(f){
     // 10/11 (bloco 142): o número de um recurso (agravo, apelação...) também acha o processo
     var recIds=[],dgBusca=f.busca?f.busca.replace(/\D/g,''):'';
     if(dgBusca.length>=6){try{var rr=await _sb.from('processos_recursos').select('processo_id').eq('ativo',true).ilike('numero_digitos','%'+dgBusca+'%').limit(300);if(!rr.error)recIds=Array.from(new Set((rr.data||[]).map(function(x){return x.processo_id;})));}catch(e){}}
-    var montarSelect=function(){return 'id,area_direito_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
+    var montarSelect=function(){return 'id,area_direito_id,origem_id,campanha_origem_id,numero_processo_cnj,tipo_acao,valor_causa,data_inicio,data_prazo,sigilo,responsavel_id,pessoa_id,status_id,tese_id,campos,captador_id,situacao_acao_id,ultima_movimentacao_em,valor_precatorio_origem,criado_em,atualizado_em,'+(window._temProvidencia===false?'':'providencia_atual,providencia_prazo,')+
       'pessoa:pessoas!pessoa_id(id,nome_completo,cpf,uf,telefone_whatsapp,email,situacao_vital),tese:teses!tese_id(id,nome,cor),status:status_funil!status_id'+(FASE_FIXA?'!inner':'')+'(id,nome,cor,fase,ordem,etapa),responsavel:usuarios!responsavel_id(id,nome_completo)';};
     var consulta=function(inicio,passo,contar){
       var q=_sb.from('processos').select(montarSelect(),contar?{count:'exact'}:undefined).eq('excluido_logico',false);
@@ -2198,6 +2200,10 @@ async function executarAtribuicao(){
 // Novo Processo
 function abrirNovoProcesso(){
   if(window.SagaPlanilha&&SagaPlanilha.esquecerNovoNaColuna)SagaPlanilha.esquecerNovoNaColuna();
+  // 10/11 (bloco 148): de onde veio o cliente (rede social, indicação...) e a campanha; o código da campanha na 1ª mensagem marca tudo
+  state.novoOrigemForm=null;
+  var elOr=document.getElementById('novoOrigem');
+  if(elOr&&window.SagaOrigem){elOr.innerHTML='<div style="font-size:12px;color:var(--muted)">Carregando...</div>';SagaOrigem.carregar().then(function(){state.novoOrigemForm=SagaOrigem.formulario(elOr,{id:'Novo',admin:!!state.admin});});}
   state.novoArea=null;state.novoPessoa=null;state.novoTese=null;state.novoStatus=null;state.novoTipo=null;
   document.getElementById('inputNovoPessoa').value='';
   document.getElementById('pessoaSelecionadaInfo').style.display='none';
@@ -2299,6 +2305,7 @@ async function salvarNovoProcesso(){
   // "+" no título da coluna do Kanban: o processo nasce já naquela coluna
   var naColuna=window.SagaPlanilha&&SagaPlanilha.dadosNovoNaColuna?SagaPlanilha.dadosNovoNaColuna():null;
   if(naColuna){if(naColuna.campos)dados.campos=Object.assign({},dados.campos||{},naColuna.campos);else if(naColuna.campo)dados[naColuna.campo]=naColuna.valor;}
+  if(state.novoOrigemForm){var og;try{og=state.novoOrigemForm.ler();}catch(e){showToast(e.message,'warning');return;}if(og.origem_id)dados.origem_id=og.origem_id;if(og.campanha_id)dados.campanha_origem_id=og.campanha_id;}
   var r=await _sb.from('processos').insert(dados).select('id').single();
   if(r.error){
     if(r.error.code==='23505')showToast('Esta pessoa já possui um processo com esse tipo de ação.','warning');
