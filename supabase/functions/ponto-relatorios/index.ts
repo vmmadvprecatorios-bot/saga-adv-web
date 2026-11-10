@@ -1,10 +1,13 @@
 // Ponto: relatorios por e-mail e banco de horas automatico (T03).
 // Copia do Apps Script da planilha "Painel do Ponto": relatorioDiario_, relatorioSemanal_,
 // fechamentoMensal_ e transportarSaldos_. O calculo vem de ponto_calculo.js (o mesmo da tela).
+// 10/11/2026 (pedido do Dr. Victor): e-mails com visual PROPRIO do SAGA (assunto comecando com "[SAGA]",
+// faixa "Relatório do SAGA", pontos de atencao com nomes, quadro da semana dia a dia e a lista de quem
+// ainda nao bate o ponto no SAGA), para distinguir dos e-mails da planilha do Google e desligar a planilha depois.
 //
 // Chamadas:
 //  - rotina (a cada hora, pelo agendador do banco): cabecalho x-saga-chave = chave do cofre do banco (saga_chave_rotina)
-//  - manual (gestor logado, pela tela): acao "teste" | "diario" | "semanal"
+//  - manual (gestor logado, pela tela, ou o servidor com a chave): acao "teste" | "diario" | "semanal" (previa:true marca o assunto)
 // Envio pelo Gmail do administrador geral: segredos GMAIL_USUARIO e GMAIL_SENHA_APP.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
@@ -14,10 +17,15 @@ import "./ponto_calculo.js";
 const PC: any = (globalThis as any).PontoCalculo;
 const TZ = "America/Maceio";
 const NOMES_MES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-const CORES_STATUS_EMAIL: Record<string, string> = {
-  "Falta": "#EBC4C4", "Horas negativas": "#F4D6D6", "Marcação incompleta": "#FBE3D6", "Falta justificada": "#FBE3D6",
-  "Carga cumprida": "#DCEFD9", "Horas positivas": "#C3E3BE", "Trabalho fora do expediente": "#C3E3BE", "Registrado": "#DCEFD9",
-  "Abonado": "#D5EEF2", "Folga compensatória": "#D5EEF2", "Folga concedida": "#E7DEFB", "Em andamento": "#F7EDC4", "Aguardando entrada": "#F7EDC4",
+const DIAS_CURTOS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const URL_PADRAO = "https://vmmadvprecatorios-bot.github.io/saga-adv-web";
+// Paleta do SAGA nos e-mails (diferente da planilha, que usa cabeçalho #1F2A44 e fonte Calibri)
+const AZUL = "#13233A", AZUL2 = "#2F6CD6", OURO = "#C9A84C", TINTA = "#1E293B", SUAVE = "#64748B", LINHA = "#E2E8F0", FUNDO = "#F4F6FA";
+const FONTE = "'Segoe UI',Montserrat,Helvetica,Arial,sans-serif";
+const COR_STATUS: Record<string, [string, string]> = {
+  "Falta": ["#FDE2E2", "#B91C1C"], "Horas negativas": ["#FDECEC", "#B91C1C"], "Marcação incompleta": ["#FFEDD5", "#C2410C"], "Falta justificada": ["#FFEDD5", "#C2410C"],
+  "Carga cumprida": ["#DCFCE7", "#15803D"], "Horas positivas": ["#D1FAE5", "#047857"], "Trabalho fora do expediente": ["#D1FAE5", "#047857"], "Registrado": ["#DCFCE7", "#15803D"],
+  "Abonado": ["#E0F2FE", "#0369A1"], "Folga compensatória": ["#E0F2FE", "#0369A1"], "Folga concedida": ["#EDE9FE", "#6D28D9"], "Em andamento": ["#FEF9C3", "#A16207"], "Aguardando entrada": ["#FEF9C3", "#A16207"],
 };
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -42,6 +50,7 @@ function minutosLocal(iso: string) {
 }
 const dataLocalDe = (ts: string | null) => ts ? new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ts)) : "";
 const br = (k: string) => k.slice(8, 10) + "/" + k.slice(5, 7) + "/" + k.slice(0, 4);
+const brCurto = (k: string) => k.slice(8, 10) + "/" + k.slice(5, 7);
 const partesMes = (k: string) => { const p = k.split("-").map(Number); return { a: p[0], m: p[1] }; };
 const mesAnterior = (k: string) => { const p = partesMes(k); return p.m === 1 ? `${p.a - 1}-12` : `${p.a}-${dois(p.m - 1)}`; };
 const fimKeyDe = (k: string) => { const p = partesMes(k); return `${k}-${dois(PC.diasNoMes(p.a, p.m))}`; };
@@ -49,9 +58,9 @@ function somaDias(key: string, n: number) { const d = new Date(key + "T12:00:00Z
 
 /* ---------- dados ---------- */
 // deno-lint-ignore no-explicit-any
-type Base = { cfg: any; regimes: Record<string, any>; feriados: Record<string, any>; colabs: any[]; jornadas: any[]; nome: string; url: string };
+type Base = { cfg: any; regimes: Record<string, any>; feriados: Record<string, any>; colabs: any[]; jornadas: any[]; nome: string; url: string; semLogin: string[] };
 async function carregarBase(): Promise<Base> {
-  const [cfg, reg, fer, col, jor, sis] = await Promise.all([
+  const [cfg, reg, fer, col, jor, sis, todos] = await Promise.all([
     admin.from("ponto_config").select("*").maybeSingle(),
     admin.from("ponto_regimes").select("*"),
     admin.from("ponto_feriados").select("*"),
@@ -59,14 +68,18 @@ async function carregarBase(): Promise<Base> {
     admin.from("ponto_colaboradores").select("*, usuarios!inner(auth_user_id)").not("usuarios.auth_user_id", "is", null).order("codigo"),
     admin.from("ponto_jornadas").select("*"),
     admin.from("configuracoes_sistema").select("nome_escritorio,extra").maybeSingle(),
+    admin.from("ponto_colaboradores").select("id,nome,demissao,usuarios(auth_user_id)").order("nome"),
   ]);
   // deno-lint-ignore no-explicit-any
   const regimes: Record<string, any> = {}; (reg.data || []).forEach((r: any) => regimes[r.nome] = r);
   // deno-lint-ignore no-explicit-any
   const feriados: Record<string, any> = {}; (fer.data || []).forEach((f: any) => feriados[f.data] = { desc: f.descricao, facultativo: /facultativo/i.test(f.abrangencia || ""), liberado: f.liberado });
+  const { hoje } = agoraLocal();
+  // deno-lint-ignore no-explicit-any
+  const semLogin = (todos.data || []).filter((c: any) => !(c.usuarios && c.usuarios.auth_user_id) && (!c.demissao || c.demissao >= hoje)).map((c: any) => String(c.nome));
   return {
     cfg: cfg.data || {}, regimes, feriados, colabs: col.data || [], jornadas: jor.data || [],
-    nome: sis.data?.nome_escritorio || "SAGA", url: sis.data?.extra?.url_sistema || "",
+    nome: sis.data?.nome_escritorio || "SAGA", url: sis.data?.extra?.url_sistema || URL_PADRAO, semLogin,
   };
 }
 // deno-lint-ignore no-explicit-any
@@ -149,37 +162,60 @@ async function transportarMes(b: Base, k: string, hoje: string) {
   return n;
 }
 
-/* ---------- e-mail ---------- */
+/* ---------- e-mail: visual do SAGA ---------- */
 const esc = (t: unknown) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const hmEmail = (m: number | null | undefined) => (m === null || m === undefined ? "" : PC.hhmm(m));
 const hm = (m: number | null) => (m === null || m === undefined ? "" : PC.hhmmRelogio(m));
 function saldoEmail(m: number | null | undefined) {
-  if (m === null || m === undefined) return "";
-  const cor = m < 0 ? "#B91C1C" : m > 0 ? "#15803D" : "#1F2937";
-  return `<span style="color:${cor};font-weight:bold">${m > 0 ? "+" : ""}${PC.hhmm(m)}</span>`;
+  if (m === null || m === undefined) return `<span style="color:${SUAVE}">-</span>`;
+  const cor = m < 0 ? "#B91C1C" : m > 0 ? "#047857" : TINTA;
+  return `<span style="color:${cor};font-weight:600">${m > 0 ? "+" : ""}${PC.hhmm(m)}</span>`;
 }
-function tabelaEmail(cab: string[], linhas: string[][], cores?: (string | null)[]) {
-  const th = 'style="background:#1F2A44;color:#fff;padding:6px 8px;border:1px solid #1F2A44;font-size:12px;text-align:center"';
-  let h = '<table style="border-collapse:collapse;width:100%;font-family:Calibri,Arial;font-size:13px;margin:6px 0 16px">';
-  h += "<tr>" + cab.map((x) => `<th ${th}>${esc(x)}</th>`).join("") + "</tr>";
+function selo(texto: string) {
+  const c = COR_STATUS[texto] || ["#F1F5F9", "#334155"];
+  return texto ? `<span style="display:inline-block;padding:2px 9px;border-radius:999px;background:${c[0]};color:${c[1]};font-size:11.5px;font-weight:600;white-space:nowrap">${esc(texto)}</span>` : "";
+}
+function secao(titulo: string, dica?: string) {
+  return `<div style="margin:22px 0 8px;font-family:${FONTE}"><div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${AZUL2};font-weight:700">${esc(titulo)}</div>` +
+    (dica ? `<div style="font-size:12px;color:${SUAVE};margin-top:2px">${dica}</div>` : "") + "</div>";
+}
+function tabela(cab: string[], linhas: string[][], alinhar?: string[]) {
+  let h = `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:0;width:100%;font-family:${FONTE};font-size:13px;border:1px solid ${LINHA};border-radius:10px;overflow:hidden">`;
+  h += "<tr>" + cab.map((x, j) => `<th style="background:${FUNDO};color:${SUAVE};font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:9px 10px;border-bottom:1px solid ${LINHA};text-align:${(alinhar && alinhar[j]) || (j === 0 ? "left" : "center")}">${esc(x)}</th>`).join("") + "</tr>";
   linhas.forEach((l, i) => {
-    const bg = (cores && cores[i]) || (i % 2 ? "#F3F4F6" : "#FFFFFF");
-    h += "<tr>" + l.map((x, j) => `<td style="padding:5px 8px;border:1px solid #D1D5DB;background:${bg};${j === 0 ? "text-align:left" : "text-align:center"}">${x}</td>`).join("") + "</tr>";
+    h += "<tr>" + l.map((x, j) => `<td style="padding:9px 10px;${i < linhas.length - 1 ? `border-bottom:1px solid ${LINHA};` : ""}color:${TINTA};text-align:${(alinhar && alinhar[j]) || (j === 0 ? "left" : "center")};vertical-align:middle">${x}</td>`).join("") + "</tr>";
   });
   return h + "</table>";
 }
-function cartoesEmail(itens: [string, string | number, string | null][]) {
-  return '<table style="border-collapse:separate;border-spacing:6px;margin:4px 0 12px"><tr>' + itens.map((it) =>
-    `<td style="background:${it[2] || "#F3F4F6"};border-radius:6px;padding:8px 12px;text-align:center;font-family:Calibri,Arial">` +
-    `<div style="font-size:20px;font-weight:bold;color:#1F2A44">${esc(it[1])}</div><div style="font-size:11px;color:#6B7280">${esc(it[0])}</div></td>`).join("") + "</tr></table>";
+function numeros(itens: [string, string | number, string?][]) {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:8px 0;margin:4px -8px 0"><tr>` + itens.map((it) =>
+    `<td style="background:#FFFFFF;border:1px solid ${LINHA};border-top:3px solid ${it[2] || AZUL2};border-radius:10px;padding:10px 14px;font-family:${FONTE};min-width:90px">` +
+    `<div style="font-size:22px;font-weight:700;color:${AZUL}">${esc(it[1])}</div><div style="font-size:11.5px;color:${SUAVE}">${esc(it[0])}</div></td>`).join("") + "</tr></table>";
 }
-function moldeEmail(b: Base, titulo: string, subtitulo: string, corpo: string) {
-  const link = b.url ? ` <a href="${esc(b.url)}/ponto_eletronico_padrao_metalico.html">Abrir o Ponto no SAGA</a>` : "";
-  return '<div style="font-family:Calibri,Arial;color:#1F2937;max-width:1100px">' +
-    `<div style="background:#1F2A44;color:#fff;padding:12px 16px;border-radius:6px 6px 0 0"><div style="font-size:18px;font-weight:bold">${esc(titulo)}</div>` +
-    `<div style="font-size:12px;opacity:.85">${esc(subtitulo)}</div></div>` +
-    `<div style="border:1px solid #E5E7EB;border-top:0;padding:12px 16px;border-radius:0 0 6px 6px">${corpo}` +
-    `<p style="font-size:12px;color:#6B7280;margin-top:16px">Gerado automaticamente pelo Ponto do SAGA (${esc(b.nome)}).${link}</p></div></div>`;
+function atencao(itens: [string, string[]][]) {
+  const com = itens.filter((x) => x[1].length);
+  if (!com.length) return `<div style="padding:12px 14px;border-radius:10px;background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;font-family:${FONTE};font-size:13px">✔ Nada a observar: sem faltas, atrasos, saídas antecipadas ou marcações incompletas.</div>`;
+  return `<div style="padding:12px 14px;border-radius:10px;background:#FFFBEB;border:1px solid #FDE68A;font-family:${FONTE};font-size:13px;color:${TINTA}">` +
+    com.map((x) => `<div style="margin:3px 0"><b>${esc(x[0])}:</b> ${x[1].map(esc).join(", ")}</div>`).join("") + "</div>";
+}
+function semLoginHtml(b: Base) {
+  if (!b.semLogin.length) return "";
+  return secao("Ainda batem o ponto na planilha", "Ainda não têm login no SAGA, por isso não aparecem neste relatório. Quando todos estiverem aqui, o e-mail da planilha pode ser desligado.") +
+    `<div style="font-family:${FONTE};font-size:13px;color:${TINTA}">${b.semLogin.map(esc).join(" · ")}</div>`;
+}
+function moldeEmail(b: Base, tipo: string, titulo: string, subtitulo: string, corpo: string) {
+  const link = `${esc(b.url)}/ponto_eletronico_padrao_metalico.html`;
+  return `<div style="background:${FUNDO};padding:20px 10px;font-family:${FONTE}"><table role="presentation" cellpadding="0" cellspacing="0" align="center" style="width:100%;max-width:1040px;margin:0 auto;border-collapse:collapse">` +
+    `<tr><td style="background:${AZUL};border-radius:14px 14px 0 0;padding:18px 22px;border-bottom:4px solid ${OURO}">` +
+    `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%"><tr><td style="font-family:${FONTE}">` +
+    `<div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:${OURO};font-weight:700">SAGA ADV · Ponto Eletrônico · ${esc(tipo)}</div>` +
+    `<div style="font-size:22px;color:#FFFFFF;font-weight:700;margin-top:4px">${esc(titulo)}</div>` +
+    `<div style="font-size:13px;color:#C7D2E3;margin-top:2px">${esc(subtitulo)}</div></td>` +
+    `<td style="text-align:right;vertical-align:top"><span style="display:inline-block;padding:5px 11px;border-radius:999px;background:${AZUL2};color:#FFFFFF;font-size:11px;font-weight:700;white-space:nowrap">Relatório do SAGA</span></td></tr></table></td></tr>` +
+    `<tr><td style="background:#FFFFFF;padding:16px 22px 22px;border:1px solid ${LINHA};border-top:0;border-radius:0 0 14px 14px">${corpo}` +
+    `<div style="margin-top:24px"><a href="${link}" style="display:inline-block;padding:10px 18px;border-radius:10px;background:${AZUL2};color:#FFFFFF;text-decoration:none;font-weight:600;font-size:13px">Abrir o Ponto no SAGA</a></div>` +
+    `<div style="margin-top:14px;font-size:11.5px;color:${SUAVE};line-height:1.5">Este e-mail vem do <b>SAGA</b> (${esc(b.nome)}), o sistema novo, e não da planilha do Google. ` +
+    `Os números são os do Ponto do SAGA, com as mesmas regras da planilha. Os relatórios também ficam na aba Relatórios do Ponto.</div></td></tr></table></div>`;
 }
 const emailValido = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
 function destinatarios(b: Base, comExtras: boolean) {
@@ -188,12 +224,16 @@ function destinatarios(b: Base, comExtras: boolean) {
   if (!lista.length) { const u = Deno.env.get("GMAIL_USUARIO"); if (u) lista.push(u); }
   return lista;
 }
-async function enviar(b: Base, para: string[], assunto: string, html: string) {
+// so_html (com a chave do servidor): devolve o e-mail montado sem enviar, para conferir o visual.
+// A captura vai junto em cada chamada (nada compartilhado entre pedidos ao mesmo tempo).
+type Captura = { assunto: string; html: string } | null;
+async function enviar(b: Base, para: string[], assunto: string, html: string, cap?: { e: Captura }) {
+  if (cap) { cap.e = { assunto, html }; return; }
   const usuario = Deno.env.get("GMAIL_USUARIO"), senha = (Deno.env.get("GMAIL_SENHA_APP") || "").replace(/\s+/g, "");
   if (!usuario || !senha) throw new Error("Segredos GMAIL_USUARIO e GMAIL_SENHA_APP não configurados no Supabase.");
   if (!para.length) throw new Error("Nenhum e-mail de destino nas Configurações do ponto.");
   const t = nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user: usuario, pass: senha } });
-  await t.sendMail({ from: `"Ponto ${b.nome}" <${usuario}>`, to: para.join(","), subject: assunto, html });
+  await t.sendMail({ from: `"SAGA · Ponto" <${usuario}>`, to: para.join(","), subject: assunto, html });
 }
 async function jaEnviado(tipo: string, chave: string) {
   const r = await admin.from("ponto_envios").select("tipo").eq("tipo", tipo).eq("chave", chave).maybeSingle();
@@ -202,55 +242,67 @@ async function jaEnviado(tipo: string, chave: string) {
 async function marcarEnviado(tipo: string, chave: string, detalhe: string) {
   await admin.from("ponto_envios").upsert({ tipo, chave, detalhe, enviado_em: new Date().toISOString() }, { onConflict: "tipo,chave" });
 }
+const prefixo = (previa?: boolean) => previa ? "[SAGA · PRÉVIA] Ponto" : "[SAGA] Ponto";
 
 /* ---------- relatorios ---------- */
-async function relatorioDiario(b: Base, diaKey: string, hoje: string) {
+async function relatorioDiario(b: Base, diaKey: string, hoje: string, previa?: boolean, cap?: { e: Captura }) {
   const dados = await coletarMes(b, diaKey.slice(0, 7), hoje);
-  const equipe: string[][] = [], cores: (string | null)[] = [], diretoria: string[][] = [];
-  let presentes = 0, previstos = 0, faltas = 0, atrasos = 0, antec = 0, incompletas = 0;
+  const linhas: { ordem: number; l: string[] }[] = [], diretoria: string[][] = [];
+  let presentes = 0, previstos = 0, horas = 0;
+  const faltas: string[] = [], atrasos: string[] = [], antec: string[] = [], incompletas: string[] = [], abertos: string[] = [], pausas: string[] = [];
   for (const x of dados) {
     // deno-lint-ignore no-explicit-any
     const dia = x.calc.dias.find((y: any) => y.key === diaKey);
     if (!dia) continue;
-    const d = dia.d, mk = dia.mk;
+    const d = dia.d, mk = dia.mk, nome = String(x.c.nome);
     if (x.livre) {
       if (d.trab !== null && d.trab !== undefined) {
         const per = [];
-        for (let i = 0; i < 8; i += 2) if (mk[i] !== null) per.push(hm(mk[i]) + " às " + (mk[i + 1] !== null ? hm(mk[i + 1]) : "..."));
-        diretoria.push([esc(x.c.nome), per.join("<br>"), hmEmail(d.trab), esc(d.status)]);
+        for (let i = 0; i < 8; i += 2) if (mk[i] !== null) per.push(hm(mk[i]) + " às " + (mk[i + 1] !== null ? hm(mk[i + 1]) : "em aberto"));
+        diretoria.push([`<b>${esc(nome)}</b>`, per.join("<br>"), hmEmail(d.trab), selo(d.status)]);
+        if (d.status === "Em andamento" || d.status === "Marcação incompleta") abertos.push(nome);
       }
       continue;
     }
     if (d.carga) previstos++;
     if (mk[0] !== null) presentes++;
-    if (d.falta) faltas++;
-    if (d.fAtraso) atrasos++;
-    if (d.fAntec) antec++;
-    if (d.incompleta) incompletas++;
+    if (d.trab) horas += d.trab;
+    if (d.falta) faltas.push(nome);
+    if (d.fAtraso) atrasos.push(`${nome} (${d.atraso} min)`);
+    if (d.fAntec) antec.push(`${nome} (${d.antec} min)`);
+    if (d.fPausa) pausas.push(nome);
+    if (d.incompleta) incompletas.push(nome);
+    if (d.status === "Em andamento") abertos.push(nome);
     if (!d.carga && mk[0] === null) continue;
-    const pausas = [];
-    for (let i = 1; i <= 5; i += 2) if (mk[i] !== null) pausas.push(hm(mk[i]) + " a " + (mk[i + 1] !== null ? hm(mk[i + 1]) : "..."));
-    equipe.push([esc(x.c.nome), PC.hhmm(dia.cj.entrada) + " às " + PC.hhmm(dia.cj.saida), mk[0] !== null ? hm(mk[0]) : "-", mk[7] !== null ? hm(mk[7]) : "-",
-      pausas.join("<br>") || "-", hmEmail(d.trab), saldoEmail(d.saldo), "<b>" + esc(d.status || dia.sit) + "</b>", esc((d.ocorr || []).join("; "))]);
-    cores.push(CORES_STATUS_EMAIL[d.status] || null);
+    const p = [];
+    for (let i = 1; i <= 5; i += 2) if (mk[i] !== null) p.push(hm(mk[i]) + "–" + (mk[i + 1] !== null ? hm(mk[i + 1]) : "…"));
+    const grave = d.falta || d.incompleta || d.fAtraso || d.fAntec || d.fPausa ? 0 : 1;
+    linhas.push({ ordem: grave, l: [`<b>${esc(nome)}</b><div style="font-size:11.5px;color:${SUAVE}">${esc(x.c.regime || "")} · ${PC.hhmm(dia.cj.entrada)} às ${PC.hhmm(dia.cj.saida)}</div>`,
+      mk[0] !== null ? hm(mk[0]) : "-", mk[7] !== null ? hm(mk[7]) : "-", p.join("<br>") || "-", hmEmail(d.trab) || "-", saldoEmail(d.saldo),
+      selo(d.status || dia.sit), `<span style="font-size:12px;color:${SUAVE}">${esc((d.ocorr || []).join("; "))}</span>`] });
   }
-  if (!equipe.length && !diretoria.length) return { enviado: false, msg: `Nada a relatar em ${br(diaKey)} (dia sem expediente e sem registros).` };
+  if (!linhas.length && !diretoria.length) return { enviado: false, msg: `Nada a relatar em ${br(diaKey)} (dia sem expediente e sem registros).` };
   const pj = await admin.from("ponto_justificativas").select("id", { count: "exact", head: true }).eq("status", "pendente");
   const pend = pj.count || 0;
-  let corpo = cartoesEmail([
-    ["presentes", `${presentes} de ${previstos}`, "#DCEFD9"], ["faltas", faltas, faltas ? "#EBC4C4" : null],
-    ["atrasos acima da tolerância", atrasos, atrasos ? "#F7EDC4" : null], ["saídas antecipadas", antec, antec ? "#F7EDC4" : null],
-    ["marcações incompletas", incompletas, incompletas ? "#FBE3D6" : null], ["justificativas pendentes", pend, pend ? "#F7EDC4" : null],
+  linhas.sort((a, c) => a.ordem - c.ordem);
+  let corpo = numeros([
+    ["presentes", `${presentes} de ${previstos}`, "#15803D"], ["horas trabalhadas (equipe)", PC.hhmm(horas) || "00:00", AZUL2],
+    ["faltas", faltas.length, faltas.length ? "#B91C1C" : "#94A3B8"], ["ocorrências", atrasos.length + antec.length + pausas.length + incompletas.length, "#C2410C"],
+    ["justificativas pendentes", pend, pend ? "#A16207" : "#94A3B8"],
   ]);
-  if (equipe.length) corpo += '<h3 style="color:#1F2A44;margin:8px 0 2px">Equipe</h3>' + tabelaEmail(["Colaborador", "Horário previsto", "Entrada", "Saída", "Pausas", "Trabalhadas", "Saldo do dia", "Status", "Ocorrências"], equipe, cores);
-  if (diretoria.length) corpo += '<h3 style="color:#1F2A44;margin:8px 0 2px">Diretoria (horário livre)</h3>' + tabelaEmail(["Nome", "Períodos", "Horas no dia", "Status"], diretoria);
+  corpo += secao("Pontos de atenção") + atencao([["Faltas", faltas], ["Atrasos acima da tolerância", atrasos], ["Saídas antecipadas", antec], ["Pausas excedidas", pausas],
+    ["Marcação incompleta", incompletas], ["Ponto ainda aberto", abertos], ["Justificativas para aprovar", pend ? [`${pend} pendente(s) na aba Justificativas`] : []]]);
+  if (linhas.length) corpo += secao("Equipe", "Quem tem ocorrência aparece primeiro.") + tabela(["Colaborador", "Entrada", "Saída", "Pausas", "Trabalhadas", "Saldo do dia", "Situação", "Observações"], linhas.map((x) => x.l), ["left", "center", "center", "center", "center", "center", "center", "left"]);
+  if (diretoria.length) corpo += secao("Diretoria (horário livre)") + tabela(["Nome", "Períodos", "Horas no dia", "Situação"], diretoria);
+  corpo += semLoginHtml(b);
   const para = destinatarios(b, false);
-  await enviar(b, para, `Ponto ${b.nome} | Relatório diário ${br(diaKey)}`,
-    moldeEmail(b, `Relatório diário do ponto | ${br(diaKey)}`, `${PC.NOMES_DIA[PC.diaSemana(diaKey)]} | ${equipe.length} colaborador(es) com expediente`, corpo));
+  const nomeDia = PC.NOMES_DIA[PC.diaSemana(diaKey)];
+  await enviar(b, para, `${prefixo(previa)} · Diário · ${DIAS_CURTOS[PC.diaSemana(diaKey)]} ${br(diaKey)}`,
+    moldeEmail(b, "Relatório diário", `Ponto do dia ${br(diaKey)}`, `${nomeDia.charAt(0).toUpperCase() + nomeDia.slice(1)} · ${linhas.length} colaborador(es) com expediente`, corpo), cap);
   return { enviado: true, msg: `Relatório diário de ${br(diaKey)} enviado para ${para.join(", ")}.` };
 }
 
-async function relatorioSemanal(b: Base, fimKey: string, hoje: string) {
+async function relatorioSemanal(b: Base, fimKey: string, hoje: string, previa?: boolean, cap?: { e: Captura }) {
   const w = PC.diaSemana(fimKey), iniKey = somaDias(fimKey, -((w + 6) % 7));
   const meses = [iniKey.slice(0, 7)];
   if (fimKey.slice(0, 7) !== meses[0]) meses.push(fimKey.slice(0, 7));
@@ -263,50 +315,81 @@ async function relatorioSemanal(b: Base, fimKey: string, hoje: string) {
       if (mes === fimKey.slice(0, 7)) o.mesAtual = x.calc.dias;
     }
   }
-  const equipe: string[][] = [], cores: (string | null)[] = [], diretoria: string[][] = [];
+  const diasSemana: string[] = [];
+  for (let k = iniKey; k <= fimKey; k = somaDias(k, 1)) diasSemana.push(k);
+  const linhas: { ordem: number; l: string[] }[] = [], grade: string[][] = [], diretoria: string[][] = [];
+  let horas = 0, saldoEq = 0, faltasEq = 0, ocorrEq = 0;
+  const alerta: string[] = [], negativo: string[] = [];
   for (const id of Object.keys(porId)) {
-    const x = porId[id], s = PC.somarPeriodo(x.dias, iniKey, fimKey);
-    if (x.livre) { if (s.trab) diretoria.push([esc(x.c.nome), String(s.diasTrab), hmEmail(s.trab)]); continue; }
+    const x = porId[id], s = PC.somarPeriodo(x.dias, iniKey, fimKey), nome = String(x.c.nome);
+    if (x.livre) { if (s.trab) diretoria.push([`<b>${esc(nome)}</b>`, String(s.diasTrab), hmEmail(s.trab)]); continue; }
     if (!s.carga && !s.trab) continue;
     const m = PC.somarPeriodo(x.mesAtual || [], fimKey.slice(0, 8) + "01", fimKey), ocorr = s.atrasos + s.antec + s.pausas;
-    equipe.push([esc(x.c.nome), hmEmail(s.carga), hmEmail(s.trab), saldoEmail(s.saldo), s.atrasos, s.antec, s.pausas, s.faltas, s.incompletas, saldoEmail(m.saldo)].map(String));
-    cores.push(s.faltas || ocorr >= b.cfg.limite_alerta ? "#F4D6D6" : s.saldo < 0 ? "#FBE3D6" : null);
+    horas += s.trab; saldoEq += s.saldo; faltasEq += s.faltas; ocorrEq += ocorr + s.incompletas;
+    if (s.faltas || ocorr >= b.cfg.limite_alerta) alerta.push(nome);
+    if (s.saldo < 0) negativo.push(`${nome} (${PC.hhmm(s.saldo)})`);
+    linhas.push({ ordem: s.faltas || ocorr >= b.cfg.limite_alerta ? 0 : s.saldo < 0 ? 1 : 2, l: [`<b>${esc(nome)}</b>`, hmEmail(s.carga), hmEmail(s.trab), saldoEmail(s.saldo),
+      String(s.atrasos), String(s.antec), String(s.pausas), String(s.faltas), String(s.incompletas), saldoEmail(m.saldo)] });
+    // quadro da semana dia a dia
+    grade.push([`<b>${esc(nome)}</b>`].concat(diasSemana.map((k) => {
+      // deno-lint-ignore no-explicit-any
+      const dia = x.dias.find((y: any) => y.key === k);
+      if (!dia || (!dia.d.carga && !dia.d.trab)) return `<span style="color:#CBD5E1">·</span>`;
+      const st = dia.d.status || "", c = COR_STATUS[st] || ["#F1F5F9", "#334155"];
+      const txt = dia.d.trab ? PC.hhmm(dia.d.trab) : st === "Falta" ? "falta" : st === "Aguardando entrada" ? "—" : st.toLowerCase();
+      return `<span title="${esc(st)}" style="display:inline-block;min-width:46px;padding:3px 6px;border-radius:7px;background:${c[0]};color:${c[1]};font-size:11.5px;font-weight:600">${esc(txt)}</span>`;
+    })));
   }
-  let corpo = "";
-  if (equipe.length) corpo += '<h3 style="color:#1F2A44;margin:8px 0 2px">Equipe</h3>' + tabelaEmail(["Colaborador", "Carga da semana", "Trabalhadas", "Saldo da semana", "Atrasos", "Saídas antecipadas", "Pausas excedidas", "Faltas", "Incompletas", "Saldo do mês até hoje"], equipe, cores);
-  if (diretoria.length) corpo += '<h3 style="color:#1F2A44;margin:8px 0 2px">Diretoria (horário livre)</h3>' + tabelaEmail(["Nome", "Dias com registro", "Horas na semana"], diretoria);
-  if (!corpo) return { enviado: false, msg: "Nada a relatar na semana." };
-  corpo += `<p style="font-size:12px;color:#6B7280">Linhas em vermelho: falta ou ocorrências no limite de alerta (${b.cfg.limite_alerta}). Atrasos, saídas e pausas contam só acima da tolerância de ${b.cfg.tolerancia_min} min.</p>`;
-  await enviar(b, destinatarios(b, false), `Ponto ${b.nome} | Relatório semanal ${br(iniKey)} a ${br(fimKey)}`, moldeEmail(b, "Relatório semanal do ponto", `${br(iniKey)} a ${br(fimKey)}`, corpo));
+  if (!linhas.length && !diretoria.length) return { enviado: false, msg: "Nada a relatar na semana." };
+  linhas.sort((a, c) => a.ordem - c.ordem);
+  let corpo = numeros([["horas trabalhadas (equipe)", PC.hhmm(horas) || "00:00", AZUL2], ["saldo da equipe", (saldoEq > 0 ? "+" : "") + (PC.hhmm(saldoEq) || "00:00"), saldoEq < 0 ? "#B91C1C" : "#047857"],
+    ["faltas", faltasEq, faltasEq ? "#B91C1C" : "#94A3B8"], ["ocorrências", ocorrEq, ocorrEq ? "#C2410C" : "#94A3B8"]]);
+  corpo += secao("Pontos de atenção") + atencao([[`No limite de alerta (${b.cfg.limite_alerta} ocorrências) ou com falta`, alerta], ["Saldo negativo na semana", negativo]]);
+  if (grade.length) corpo += secao("A semana dia a dia", "Horas trabalhadas em cada dia; a cor segue a situação do dia.") +
+    tabela(["Colaborador"].concat(diasSemana.map((k) => `${DIAS_CURTOS[PC.diaSemana(k)]} ${brCurto(k)}`)), grade);
+  if (linhas.length) corpo += secao("Totais da semana", `Atrasos, saídas e pausas contam só acima da tolerância de ${esc(b.cfg.tolerancia_min)} min.`) +
+    tabela(["Colaborador", "Carga", "Trabalhadas", "Saldo da semana", "Atrasos", "Saídas antes", "Pausas excedidas", "Faltas", "Incompletas", "Saldo do mês"], linhas.map((x) => x.l));
+  if (diretoria.length) corpo += secao("Diretoria (horário livre)") + tabela(["Nome", "Dias com registro", "Horas na semana"], diretoria);
+  corpo += semLoginHtml(b);
+  await enviar(b, destinatarios(b, false), `${prefixo(previa)} · Semanal · ${brCurto(iniKey)} a ${br(fimKey)}`,
+    moldeEmail(b, "Relatório semanal", "Ponto da semana", `${br(iniKey)} a ${br(fimKey)}`, corpo), cap);
   return { enviado: true, msg: `Relatório semanal ${br(iniKey)} a ${br(fimKey)} enviado.` };
 }
 
 async function fechamentoMensal(b: Base, k: string, hoje: string) {
   const { dados, out, fechKey } = await fecharMes(b, k, hoje);
-  const p = partesMes(k), equipe: string[][] = [], cores: (string | null)[] = [], diretoria: string[][] = [];
+  const p = partesMes(k), equipe: string[][] = [], diretoria: string[][] = [];
+  let desc = 0, comp = 0;
+  const alerta: string[] = [], descontar: string[] = [];
   for (const { x, f } of out) {
     const s = f.soma, ocorr = s.atrasos + s.antec + s.pausas;
     const perfil = ocorr >= b.cfg.limite_alerta || s.faltas ? "ALERTA" : "Regular";
-    equipe.push([esc(x.c.nome), esc(x.c.regime), hmEmail(s.carga), hmEmail(s.trab), hmEmail(s.abono), saldoEmail(s.saldo), saldoEmail(f.anterior), saldoEmail(f.total),
-      f.descontar ? `<b style="color:#B91C1C">${PC.hhmm(f.descontar)}</b>` : "-", f.compensar ? `<b style="color:#15803D">${PC.hhmm(f.compensar)}</b>` : "-",
-      f.excedente ? PC.hhmm(f.excedente) : "-", String(s.faltas), String(ocorr), `<b>${perfil}</b>`]);
-    cores.push(f.descontar ? "#F4D6D6" : f.compensar ? "#DCEFD9" : null);
+    if (perfil === "ALERTA") alerta.push(String(x.c.nome));
+    if (f.descontar) { desc += f.descontar; descontar.push(`${x.c.nome} (${PC.hhmm(f.descontar)})`); }
+    comp += f.compensar || 0;
+    equipe.push([`<b>${esc(x.c.nome)}</b><div style="font-size:11.5px;color:${SUAVE}">${esc(x.c.regime)}</div>`, hmEmail(s.carga), hmEmail(s.trab), hmEmail(s.abono), saldoEmail(s.saldo), saldoEmail(f.anterior), saldoEmail(f.total),
+      f.descontar ? `<b style="color:#B91C1C">${PC.hhmm(f.descontar)}</b>` : "-", f.compensar ? `<b style="color:#047857">${PC.hhmm(f.compensar)}</b>` : "-",
+      f.excedente ? PC.hhmm(f.excedente) : "-", String(s.faltas), String(ocorr), perfil === "ALERTA" ? selo("Falta").replace(">Falta<", ">ALERTA<") : selo("Registrado").replace(">Registrado<", ">Regular<")]);
   }
   for (const x of dados) {
     if (!x.livre) continue;
     const s = PC.somarPeriodo(x.calc.dias, `${k}-01`, fechKey);
-    if (s.trab) diretoria.push([esc(x.c.nome), String(s.diasTrab), hmEmail(s.trab)]);
+    if (s.trab) diretoria.push([`<b>${esc(x.c.nome)}</b>`, String(s.diasTrab), hmEmail(s.trab)]);
   }
   if (b.cfg.email_fechamento === false) return { enviado: false, msg: `Fechamento de ${NOMES_MES[p.m - 1]} gravado (e-mail desligado).` };
   const fim = fimKeyDe(k);
-  let corpo = `<p>Fechamento do período de <b>${br(`${k}-01`)}</b> a <b>${br(fechKey)}</b> para a folha de pagamento. ` +
+  let corpo = numeros([["colaboradores no fechamento", out.length, AZUL2], ["horas a descontar na folha", PC.hhmm(desc) || "00:00", desc ? "#B91C1C" : "#94A3B8"],
+    ["horas a compensar", PC.hhmm(comp) || "00:00", comp ? "#047857" : "#94A3B8"], ["em alerta", alerta.length, alerta.length ? "#C2410C" : "#94A3B8"]]);
+  corpo += `<p style="font-family:${FONTE};font-size:13px;color:${TINTA};margin:16px 0 0">Fechamento do período de <b>${br(`${k}-01`)}</b> a <b>${br(fechKey)}</b> para a folha de pagamento. ` +
     `O que acontecer de ${br(fechKey < fim ? somaDias(fechKey, 1) : fim)} até o fim do mês entra no saldo do mês seguinte.</p>`;
-  if (equipe.length) corpo += tabelaEmail(["Colaborador", "Regime", "Carga", "Trabalhadas", "Abonadas", "Saldo do período", "Saldo anterior", "Saldo total", "Descontar na folha", "Compensar até o fim do mês", "Excedente desconsiderado", "Faltas", "Ocorrências", "Perfil"], equipe, cores);
-  if (diretoria.length) corpo += '<h3 style="color:#1F2A44;margin:8px 0 2px">Diretoria (horário livre)</h3>' + tabelaEmail(["Nome", "Dias com registro", "Horas no período"], diretoria);
-  corpo += '<p style="font-size:12px;color:#6B7280">Regras: horas negativas são descontadas na folha; horas positivas valem até 1 dia de carga e devem ser compensadas até o fim do mês ' +
+  corpo += secao("Pontos de atenção") + atencao([["Descontar na folha", descontar], ["Em alerta (faltas ou ocorrências)", alerta]]);
+  if (equipe.length) corpo += secao("Fechamento por colaborador") + tabela(["Colaborador", "Carga", "Trabalhadas", "Abonadas", "Saldo do período", "Saldo anterior", "Saldo total", "Descontar na folha", "Compensar até o fim do mês", "Excedente desconsiderado", "Faltas", "Ocorrências", "Perfil"], equipe);
+  if (diretoria.length) corpo += secao("Diretoria (horário livre)") + tabela(["Nome", "Dias com registro", "Horas no período"], diretoria);
+  corpo += `<p style="font-family:${FONTE};font-size:12px;color:${SUAVE};margin-top:14px">Regras: horas negativas são descontadas na folha; horas positivas valem até 1 dia de carga e devem ser compensadas até o fim do mês ` +
     "(saída mais cedo ou folga, de preferência na última sexta-feira); o que passar de 1 dia é desconsiderado. Os valores ficam gravados na aba Banco de horas do Ponto.</p>";
-  await enviar(b, destinatarios(b, true), `Ponto ${b.nome} | Fechamento para a folha ${NOMES_MES[p.m - 1]}/${p.a}`,
-    moldeEmail(b, `Fechamento mensal do ponto | ${NOMES_MES[p.m - 1]} de ${p.a}`, `${br(`${k}-01`)} a ${br(fechKey)}`, corpo));
+  corpo += semLoginHtml(b);
+  await enviar(b, destinatarios(b, true), `[SAGA] Ponto · Fechamento para a folha · ${NOMES_MES[p.m - 1]}/${p.a}`,
+    moldeEmail(b, "Fechamento mensal", `Fechamento de ${NOMES_MES[p.m - 1]} de ${p.a}`, `${br(`${k}-01`)} a ${br(fechKey)} · para a folha de pagamento`, corpo));
   return { enviado: true, msg: `Fechamento de ${NOMES_MES[p.m - 1]} gravado e enviado.` };
 }
 
@@ -350,10 +433,10 @@ Deno.serve(async (req) => {
     // Chave do agendador: guardada no cofre do banco (vault); so o servidor consegue ler
     const ch = await admin.rpc("saga_chave_rotina");
     const chave = ch.data ? String(ch.data) : "";
-    // Agendador do banco (ou teste interno com a chave)
+    // Agendador do banco (ou teste/previa interna com a chave)
     if (chave && req.headers.get("x-saga-chave") === chave) {
       if (acao === "rotina") return json({ ok: true, ...(await rotina()) });
-      if (acao !== "teste") return json({ ok: false, mensagem: "Ação inválida." }, 400);
+      if (!["teste", "diario", "semanal"].includes(acao)) return json({ ok: false, mensagem: "Ação inválida." }, 400);
     } else {
       // Chamada pela tela: so o gestor do ponto
       const auth = req.headers.get("Authorization") || "";
@@ -363,15 +446,20 @@ Deno.serve(async (req) => {
     }
     const b = await carregarBase();
     const { hoje } = agoraLocal();
+    if (corpo.so_html === true && !!chave && req.headers.get("x-saga-chave") === chave && (acao === "diario" || acao === "semanal")) {
+      const cap: { e: Captura } = { e: null };
+      const r = acao === "diario" ? await relatorioDiario(b, corpo.data || hoje, hoje, true, cap) : await relatorioSemanal(b, corpo.data || hoje, hoje, true, cap);
+      return json({ ok: true, ...r, email: cap.e });
+    }
     if (acao === "teste") {
       const para = destinatarios(b, false);
-      await enviar(b, para, `Ponto ${b.nome} | E-mail de teste`, moldeEmail(b, "E-mail de teste do Ponto", br(hoje),
-        "<p>Se você recebeu este e-mail, o envio automático do Ponto está funcionando.</p><p>Relatório diário às " + esc(b.cfg.hora_relatorio ?? 19) +
-        "h nos dias úteis, semanal e fechamento no dia " + esc(b.cfg.dia_fechamento ?? 25) + ".</p>"));
+      await enviar(b, para, "[SAGA] Ponto · E-mail de teste", moldeEmail(b, "Teste", "E-mail de teste do Ponto", br(hoje),
+        `<p style="font-family:${FONTE};font-size:14px;color:${TINTA}">Se você recebeu este e-mail, o envio automático do Ponto do SAGA está funcionando.</p>` +
+        `<p style="font-family:${FONTE};font-size:13px;color:${SUAVE}">Relatório diário às ${esc(b.cfg.hora_relatorio ?? 19)}h nos dias úteis, semanal e fechamento no dia ${esc(b.cfg.dia_fechamento ?? 25)}.</p>`));
       return json({ ok: true, mensagem: `E-mail de teste enviado para ${para.join(", ")}.` });
     }
-    if (acao === "diario") return json({ ok: true, ...(await relatorioDiario(b, corpo.data || hoje, hoje)) });
-    if (acao === "semanal") return json({ ok: true, ...(await relatorioSemanal(b, corpo.data || hoje, hoje)) });
+    if (acao === "diario") return json({ ok: true, ...(await relatorioDiario(b, corpo.data || hoje, hoje, corpo.previa === true)) });
+    if (acao === "semanal") return json({ ok: true, ...(await relatorioSemanal(b, corpo.data || hoje, hoje, corpo.previa === true)) });
     return json({ ok: false, mensagem: "Ação inválida." }, 400);
   } catch (e) {
     return json({ ok: false, mensagem: (e as Error).message }, 500);
