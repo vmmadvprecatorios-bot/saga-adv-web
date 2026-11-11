@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611110121"></script>
+<script src="saga_guard.js?v=202611111154"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -67,6 +67,13 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 .cli{font-weight:600}.sub{font-size:10.5px;color:var(--muted);margin-top:2px}
 .vazio{padding:34px 16px;text-align:center;color:var(--muted);font-size:12px}
 .pos{color:var(--success)}.neg{color:var(--danger)}
+/* Acessos (bloco 157, T150): entrada no sistema x entrada do ponto, só o administrador geral */
+#aba-acessos tbody tr{cursor:default}
+#aba-acessos tr.dia-sep td{background:var(--panel-2,transparent);font-weight:700;font-size:11px;letter-spacing:.4px;color:var(--muted);padding:8px 12px}
+.ac-dif{display:inline-block;padding:2px 8px;border-radius:7px;font-size:10.5px;font-weight:700;white-space:nowrap;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent)}
+.ac-outras{font-size:10.5px;color:var(--muted);line-height:1.55}
+.ac-recusa{font-size:10.5px;color:var(--danger);margin-top:3px}
+.ac-nao{color:var(--muted)}
 
 .dist-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 .dist-card{background:var(--panel);border:1px solid var(--border-soft);border-radius:var(--radius);padding:15px}
@@ -230,7 +237,7 @@ tr.apagado td{color:var(--muted)}
   }
   #roscasMeuPonto .centro .n{font-size:15px}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611110121">
+<link rel="stylesheet" href="saga_tema.css?v=202611111154">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -248,6 +255,7 @@ tr.apagado td{color:var(--muted)}
     <button class="tab-btn" data-aba="just">Justificativas</button>
     <button class="tab-btn" data-aba="ho">Home office</button>
     <button class="tab-btn" data-aba="equipe" id="abaEquipeBtn" style="display:none">Equipe <span class="qtd" id="qtdPend" style="display:none">0</span></button>
+    <button class="tab-btn" data-aba="acessos" id="abaAcessosBtn" style="display:none" title="Só o administrador geral vê">Acessos</button>
     <button class="tab-btn" data-aba="banco" id="abaBancoBtn" style="display:none">Banco de horas</button>
     <button class="tab-btn" data-aba="rel" id="abaRelBtn" style="display:none">Relatórios</button>
     <button class="tab-btn" data-aba="pdf" id="abaPdfBtn" style="display:none">Baixar PDF</button>
@@ -343,11 +351,23 @@ tr.apagado td{color:var(--muted)}
   <section class="tab-pane" id="aba-equipe">
     <div class="toolbar"><div class="campo" style="margin:0"><input id="eqData" type="date"></div><span class="sub" id="eqResumo"></span><button class="btn-secondary btn-sm" id="pdfEquipe" type="button" style="margin-left:auto" title="Uma folha por colaborador, do mês da data escolhida">Folha de ponto de todos (PDF)</button></div>
     <section id="roscasPontoEquipe" hidden aria-label="Gráfico mensal do ponto da equipe"></section>
-    <div class="tabela-wrap"><table><thead><tr><th>Colaborador</th><th>Regime</th><th>Horário</th><th>Entrada</th><th>Saída</th><th>Pausas</th><th class="num">Trabalhadas</th><th class="num">Saldo</th><th>Status</th><th>Ocorrências</th><th>Relatório</th></tr></thead><tbody id="tbEquipe"></tbody></table></div>
+    <div class="tabela-wrap"><table><thead><tr><th>Colaborador</th><th>Regime</th><th>Horário</th><th id="thEntrouSistema" style="display:none" title="Primeira entrada no SAGA no dia (só o administrador geral vê)">Entrou no sistema</th><th>Entrada</th><th>Saída</th><th>Pausas</th><th class="num">Trabalhadas</th><th class="num">Saldo</th><th>Status</th><th>Ocorrências</th><th>Relatório</th></tr></thead><tbody id="tbEquipe"></tbody></table></div>
     <div class="secao-titulo">Justificativas para decidir</div>
     <div class="lista-cards" id="listaPendJust"></div>
     <div class="secao-titulo">Pedidos de home office</div>
     <div class="lista-cards" id="listaPendHo"></div>
+  </section>
+
+  <!-- ACESSOS (só o administrador geral; bloco 157, T150) -->
+  <section class="tab-pane" id="aba-acessos">
+    <div class="toolbar">
+      <div class="pills" id="acModo"><button class="pill active" data-modo="dia" type="button">Dia</button><button class="pill" data-modo="7" type="button">Últimos 7 dias</button></div>
+      <div class="nav-mes"><button class="btn-secondary btn-sm" id="acAnt" type="button" aria-label="Dia anterior">‹</button><div class="campo" style="margin:0"><input id="acData" type="date"></div><button class="btn-secondary btn-sm" id="acProx" type="button" aria-label="Próximo dia">›</button></div>
+      <span class="sub" id="acResumo"></span>
+      <button class="btn-secondary btn-sm" id="acAtualizar" type="button" style="margin-left:auto">Atualizar</button>
+    </div>
+    <p class="sub" style="margin:-4px 0 12px">Só o administrador geral vê esta aba. Hora em que cada colaborador <b>entrou no SAGA</b> (hora do servidor, com o aparelho e o IP) ao lado da hora em que <b>bateu o ponto</b>, para conferir nas câmeras. Atualiza sozinha a cada 30 segundos.</p>
+    <div class="tabela-wrap"><table><thead><tr><th>Colaborador</th><th>Entrou no sistema</th><th>Bateu o ponto</th><th>Diferença</th><th>Como entrou</th><th>Aparelho</th><th>IP</th><th>Outras entradas do dia</th></tr></thead><tbody id="tbAcessos"></tbody></table></div>
   </section>
 
   <!-- BANCO DE HORAS (gestor) -->
@@ -611,12 +631,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611110121"></script>
-<script src="saga_texto.js?v=202611110121"></script>
+<script src="saga_ui.js?v=202611111154"></script>
+<script src="saga_texto.js?v=202611111154"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611110121"></script>
-<script src="saga_roscas.js?v=202611110121"></script>
-<script src="saga_pdf.js?v=202611110121"></script>
+<script src="ponto_calculo.js?v=202611111154"></script>
+<script src="saga_roscas.js?v=202611111154"></script>
+<script src="saga_pdf.js?v=202611111154"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -969,9 +989,11 @@ async function carregarEquipe(){
   var data=document.getElementById('eqData').value||state.hoje;
   var r=await Promise.all([
     _sb.from('ponto_marcacoes').select('colaborador_id,slot,momento').eq('data',data),
-    _sb.from('ponto_dias').select('*').eq('data',data)
+    _sb.from('ponto_dias').select('*').eq('data',data),
+    state.pode.admin?_sb.rpc('acessos_entradas_dia',{p_data:data}):Promise.resolve({data:[]})
   ]);
-  var mkPor={},diaPor={};
+  var mkPor={},diaPor={},entrouPor={};
+  (r[2].data||[]).forEach(function(x){if(x.entrou)entrouPor[x.colaborador_id]=x;});
   (r[0].data||[]).forEach(function(x){(mkPor[x.colaborador_id]=mkPor[x.colaborador_id]||[null,null,null,null,null,null,null,null])[x.slot]=minutosLocal(x.momento);});
   (r[1].data||[]).forEach(function(x){diaPor[x.colaborador_id]=x;});
   var presentes=0,previstos=0,faltas=0;
@@ -984,16 +1006,80 @@ async function carregarEquipe(){
     var pausas=[];for(var i=1;i<=5;i+=2)if(mk[i]!==null)pausas.push(PC.hhmmRelogio(mk[i])+'–'+(mk[i+1]!==null?PC.hhmmRelogio(mk[i+1]):'…'));
     var ent=reg.livre?PC.hhmmRelogio(mk[0]):PC.hhmmRelogio(mk[0]),sai=reg.livre?'':PC.hhmmRelogio(mk[7]);
     return '<tr data-colab="'+c.id+'"><td><div class="cli">'+esc(c.nome)+'</div><div class="sub">'+esc(c.cargo||'')+'</div></td><td>'+esc(c.regime)+'</td><td>'+(reg.livre?'Livre':PC.hhmm(cj.entrada)+'–'+PC.hhmm(cj.saida))+'</td>'+
+      (state.pode.admin?'<td>'+celulaEntrouSistema(entrouPor[c.id],mk[0])+'</td>':'')+
       '<td>'+(ent||'-')+'</td><td>'+(sai||'-')+'</td><td>'+(pausas.join('<br>')||'-')+'</td><td class="num">'+PC.hhmm(d.trab)+'</td><td class="num">'+saldoTxt(d.saldo)+'</td>'+
       '<td>'+(etqStatus(d.status)||esc(sit))+'</td><td class="ocorr">'+esc(d.ocorr.join('; '))+'</td><td>'+(dia.relatorio||state.pode.admin?'<button class="btn-rel" data-relc="'+c.id+'" type="button">'+(dia.relatorio?'Ver ✎':'Abrir')+'</button>':'<span class="sub">—</span>')+'</td></tr>';
   });
   var tb=document.getElementById('tbEquipe');
-  tb.innerHTML=linhas.join('')||'<tr><td colspan="11" class="vazio">Nenhum colaborador ativo nesta data.</td></tr>';
+  tb.innerHTML=linhas.join('')||'<tr><td colspan="'+(state.pode.admin?12:11)+'" class="vazio">Nenhum colaborador ativo nesta data.</td></tr>';
   document.getElementById('eqResumo').textContent=dataBR(data)+' · presentes '+presentes+' de '+previstos+(faltas?' · '+faltas+' falta(s)':'')+' · clique em uma pessoa para ver o mês';
   tb.querySelectorAll('[data-colab]').forEach(function(tr){tr.addEventListener('click',function(e){if(e.target.closest('[data-relc]'))return;abrirMesColab(tr.dataset.colab);});});
   tb.querySelectorAll('[data-relc]').forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();var c=state.colabs.find(function(x){return x.id===b.dataset.relc;});abrirRelatorio(data,c,false);});});
   await Promise.all([carregarPendencias(),carregarRoscaEquipePonto()]);
 }
+/* ----- Acessos: entrada no sistema x ponto (só o administrador geral; bloco 157, T150) ----- */
+function durTxt(m){m=Math.round(Math.abs(m));return m<60?m+' min':Math.floor(m/60)+'h'+(m%60?(' '+('0'+m%60).slice(-2)+'min'):'');}
+function horaLocal(iso,seg){if(!iso)return '';return new Intl.DateTimeFormat('pt-BR',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:seg?'2-digit':undefined,hourCycle:'h23'}).format(new Date(iso));}
+// Diferença entre a entrada no sistema e a entrada do ponto (minutos; positivo = ponto depois)
+function difEntradaPonto(entrou,ponto){
+  if(!entrou||!ponto)return '';
+  var m=Math.round((new Date(ponto)-new Date(entrou))/60000),txt,c;
+  if(Math.abs(m)<=5){txt='Juntos ('+(m>=0?'+':'')+m+' min)';c='var(--success)';}
+  else if(m>0){txt='Ponto '+durTxt(m)+' depois';c=m>15?'var(--danger)':'var(--warning)';}
+  else{txt='Ponto '+durTxt(m)+' antes';c='var(--gold)';}
+  return '<span class="ac-dif" style="--c:'+c+'" title="Entrou no sistema às '+horaLocal(entrou,true)+' e bateu o ponto às '+horaLocal(ponto,true)+'">'+txt+'</span>';
+}
+function celulaEntrouSistema(x,mkEntrada){
+  if(!x||!x.entrou)return '<span class="ac-nao">-</span>';
+  var h=horaLocal(x.entrou),dif='';
+  if(mkEntrada!==null&&mkEntrada!==undefined){var m=Math.round(mkEntrada-minutosLocal(x.entrou));if(m>5)dif=' <span class="sub" style="display:inline;color:'+(m>15?'var(--danger)':'var(--warning)')+'">ponto '+durTxt(m)+' depois</span>';}
+  return '<span title="'+esc((x.aparelho||'')+(x.ip?' · IP '+x.ip:''))+'">'+h+'</span>'+dif;
+}
+var acState={modo:'dia',data:null,timer:null,versao:0};
+var AC_EVENTO={senha:'Login com senha',google:'Login com o Google',abriu:'Já estava logado (abriu o SAGA)'};
+function prepararAcessos(){
+  acState.data=state.hoje;document.getElementById('acData').value=state.hoje;document.getElementById('acData').max=state.hoje;
+  document.querySelectorAll('#acModo .pill').forEach(function(b){b.addEventListener('click',function(){
+    acState.modo=b.dataset.modo;document.querySelectorAll('#acModo .pill').forEach(function(x){x.classList.toggle('active',x===b);});carregarAcessos();});});
+  document.getElementById('acData').addEventListener('change',function(){if(this.value){acState.data=this.value;carregarAcessos();}});
+  function mover(d){var p=acState.data.split('-').map(Number),dt=new Date(Date.UTC(p[0],p[1]-1,p[2]+d)),k=dt.toISOString().slice(0,10);if(k>state.hoje)return;acState.data=k;document.getElementById('acData').value=k;carregarAcessos();}
+  document.getElementById('acAnt').addEventListener('click',function(){mover(-1);});
+  document.getElementById('acProx').addEventListener('click',function(){mover(1);});
+  document.getElementById('acAtualizar').addEventListener('click',function(){carregarAcessos();});
+  acState.timer=setInterval(function(){
+    if(document.hidden||!document.getElementById('aba-acessos').classList.contains('ativo'))return;
+    if(acState.data===state.hoje)carregarAcessos(true);
+  },30000);
+}
+async function carregarAcessos(silencioso){
+  if(!state.pode.admin)return;
+  var v=++acState.versao,ate=acState.data,de=ate;
+  if(acState.modo==='7'){var p=ate.split('-').map(Number);de=new Date(Date.UTC(p[0],p[1]-1,p[2]-6)).toISOString().slice(0,10);}
+  var tb=document.getElementById('tbAcessos');
+  if(!silencioso&&!tb.children.length)tb.innerHTML='<tr><td colspan="8" class="vazio">Carregando...</td></tr>';
+  var r=await _sb.rpc('acessos_painel',{p_de:de,p_ate:ate});
+  if(v!==acState.versao)return;
+  if(r.error){tb.innerHTML='<tr><td colspan="8" class="vazio">'+esc(r.error.message)+'</td></tr>';return;}
+  var linhas=(r.data&&r.data.linhas)||[],html=[],diaAtual=null,entraram=0,total=0;
+  linhas.forEach(function(l){
+    if(acState.modo==='7'&&l.data!==diaAtual){diaAtual=l.data;var dt=new Date(l.data+'T12:00:00');html.push('<tr class="dia-sep"><td colspan="8">'+esc(dt.toLocaleDateString('pt-BR',{weekday:'long'}))+', '+dataBR(l.data)+'</td></tr>');}
+    if(l.data===acState.data){total++;if(l.entrou)entraram++;}
+    var ent=Array.isArray(l.entradas)?l.entradas:[],pri=ent[0]||null,outras=ent.slice(1);
+    var recusa=l.recusas?'<div class="ac-recusa">Tentou entrar e foi barrado'+(l.recusa_motivo?' ('+esc(l.recusa_motivo)+')':'')+' às '+horaLocal(l.recusa_primeira)+(l.recusas>1?' · '+l.recusas+' vezes':'')+'</div>':'';
+    var como=pri?AC_EVENTO[pri.evento]||pri.evento:(l.fonte==='registro'?'<span class="sub" style="display:inline">Registro de acesso (antes de 11/11)</span>':'');
+    html.push('<tr><td><div class="cli">'+esc(l.nome)+'</div>'+recusa+'</td>'+
+      '<td>'+(l.entrou?'<b title="'+horaLocal(l.entrou,true)+'">'+horaLocal(l.entrou)+'</b>':'<span class="ac-nao">Não entrou</span>')+'</td>'+
+      '<td>'+(l.ponto_entrada?'<b title="'+horaLocal(l.ponto_entrada,true)+'">'+horaLocal(l.ponto_entrada)+'</b>':'<span class="ac-nao">-</span>')+'</td>'+
+      '<td>'+(difEntradaPonto(l.entrou,l.ponto_entrada)||'<span class="ac-nao">-</span>')+'</td>'+
+      '<td>'+(como||'<span class="ac-nao">-</span>')+'</td>'+
+      '<td>'+esc(pri&&pri.aparelho||'')+'</td>'+
+      '<td class="sub" style="margin:0">'+esc(pri&&pri.ip||'')+'</td>'+
+      '<td class="ac-outras">'+(outras.length?outras.map(function(o){return horaLocal(o.momento)+' · '+esc(AC_EVENTO[o.evento]||o.evento)+(o.aparelho?' · '+esc(o.aparelho):'')+(o.ip?' · IP '+esc(o.ip):'');}).join('<br>'):'-')+'</td></tr>');
+  });
+  tb.innerHTML=html.join('')||'<tr><td colspan="8" class="vazio">Nenhum colaborador com acesso ao SAGA.</td></tr>';
+  document.getElementById('acResumo').textContent=dataBR(acState.data)+' · '+entraram+' de '+total+' entraram no sistema'+(acState.data===state.hoje?' · atualizado às '+horaLocal(new Date().toISOString()):'');
+}
+
 async function carregarPendencias(){
   var pend=0;
   if(state.pode.aprova){
@@ -2196,9 +2282,10 @@ async function abrirAtestado(caminho){
 }
 
 function trocarAba(aba){
+  if(aba==='acessos'&&!(state.pode&&state.pode.admin))aba='meu';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='rel')renderRelatorios();if(aba==='pdf')montarBaixar();
+  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='acessos')carregarAcessos();if(aba==='rel')renderRelatorios();if(aba==='pdf')montarBaixar();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
@@ -2297,7 +2384,7 @@ async function init(){
   state.bh=partesMes(mesBh);state.bh={ano:state.bh.a,mes:state.bh.m};
   if(state.pode.equipe||state.pode.gerencia)document.getElementById('abaBancoBtn').style.display='';
   if(state.pode.gerencia)document.getElementById('abaCadastroBtn').style.display='';
-  if(state.pode.admin){document.getElementById('abaRelBtn').style.display='';prepararRelatorios();document.querySelectorAll('.so-admin').forEach(function(el){el.style.display='';});}
+  if(state.pode.admin){document.getElementById('abaAcessosBtn').style.display='';document.getElementById('thEntrouSistema').style.display='';prepararAcessos();document.getElementById('abaRelBtn').style.display='';prepararRelatorios();document.querySelectorAll('.so-admin').forEach(function(el){el.style.display='';});}
   if(state.pode.exporta){document.getElementById('abaPdfBtn').style.display='';prepararBaixar();}
   state.ferAno=Number(state.hoje.slice(0,4));
   rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});

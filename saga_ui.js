@@ -1116,6 +1116,7 @@
     if(n&&n.referencia_tabela==='ponto')return {titulo:'Ponto',tela:'ponto_eletronico_padrao_metalico.html'};
     if(n&&n.referencia_tabela==='meta_anuncios')return {titulo:'Robô do Meta',tela:'marketing_campanhas_padrao_metalico.html?aba=painel'};
     if(n&&n.referencia_tabela==='datajud')return {titulo:'Andamento do processo',tela:'monitoramento_multi_oab.html?andamentos=1'};
+    if(n&&n.referencia_tabela==='acessos')return {titulo:'Entrada no sistema',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1139,6 +1140,7 @@
     {chave:'ponto',titulo:'Ponto',tipos:[],tela:'ponto_eletronico_padrao_metalico.html',um:'lembrete do ponto',varios:'lembretes do ponto',cor:'#d97706'},
     {chave:'sugestoes',titulo:'Sugestões de melhoria',tipos:[],tela:'sugestoes.html',um:'aviso de sugestão',varios:'avisos de sugestões',cor:'#c9a84c'},
     {chave:'andamentos',titulo:'Andamentos do CNJ',tipos:[],tela:'monitoramento_multi_oab.html?andamentos=1',um:'andamento novo',varios:'andamentos novos',cor:'#0891b2'},
+    {chave:'acessos',titulo:'Entradas no sistema',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'entrada no sistema',varios:'entradas no sistema',cor:'#6366f1'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   // Pedidos de busca (bloco 140) chegam com o tipo 'outro' e a referência 'pedidos_busca': têm grupo próprio no sino
@@ -1152,6 +1154,8 @@
     if(n&&n.referencia_tabela==='meta_anuncios'){for(var mk=0;mk<GRUPOS_NOTIF.length;mk++){if(GRUPOS_NOTIF[mk].chave==='marketing')return GRUPOS_NOTIF[mk];}}
     // Andamentos do CNJ (bloco 152): tipo 'outro' com a referência 'datajud', grupo próprio no sino
     if(n&&n.referencia_tabela==='datajud'){for(var dj=0;dj<GRUPOS_NOTIF.length;dj++){if(GRUPOS_NOTIF[dj].chave==='andamentos')return GRUPOS_NOTIF[dj];}}
+    // Entradas no sistema (bloco 157, T150): 1ª entrada do dia de cada colaborador, só para o administrador geral
+    if(n&&n.referencia_tabela==='acessos'){for(var ac=0;ac<GRUPOS_NOTIF.length;ac++){if(GRUPOS_NOTIF[ac].chave==='acessos')return GRUPOS_NOTIF[ac];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1266,6 +1270,7 @@
       global.sagaIrPara('pedidos_busca.html');return;
     }
     if(n.referencia_tabela==='ponto'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html');return;}
+    if(n.referencia_tabela==='acessos'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=acessos');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // andamento novo: abre a ficha no processo, já no quadro dos andamentos; aviso do robô (sem processo): a janela dos andamentos
     if(n.referencia_tabela==='datajud'){global.sagaIrPara(n.referencia_id?'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+encodeURIComponent(n.referencia_id)+'&foco=andamentos':'monitoramento_multi_oab.html?andamentos=1');return;}
@@ -1503,6 +1508,21 @@
       }finally{_acessoVerificando=null;}
     })();
     return _acessoVerificando;
+  }
+
+  // ===== Entrada no sistema (bloco 157, T150) =====
+  // Grava cada login (senha ou Google: a tela de login deixa 'saga-login-agora' na aba) e a 1ª abertura do dia
+  // neste navegador. O banco põe a hora do servidor e o IP e avisa o administrador geral na 1ª entrada do dia.
+  function registrarEntrada(){
+    if(!global._sb)return;
+    var ev=null,uid=idSessaoLocal()||'',hoje=new Date().toLocaleDateString('sv-SE',{timeZone:'America/Maceio'}),chave=uid+'|'+hoje;
+    try{ev=sessionStorage.getItem('saga-login-agora');}catch(e){}
+    var jaHoje=false;try{jaHoje=localStorage.getItem('saga-entrada-dia')===chave;}catch(e){}
+    if(!ev&&jaHoje)return;
+    try{sessionStorage.removeItem('saga-login-agora');}catch(e){}
+    global._sb.rpc('acesso_entrada',{p_evento:ev==='senha'||ev==='google'?ev:'abriu',p_navegador:(navigator.userAgent||'').slice(0,300)}).then(function(r){
+      if(!r.error){try{localStorage.setItem('saga-entrada-dia',chave);}catch(e){}}
+    },function(){});
   }
 
   global.sagaLogout=async function(motivo){
@@ -1998,6 +2018,7 @@
     if(await verificarInatividade())return;
     // Horario e local de acesso (a tela continua escondida enquanto confere)
     if(!(await verificarAcesso(false)))return;
+    registrarEntrada();
     registrarAtividade();
     ligarControleInatividade();
     montarMoldura(telaAtiva);
