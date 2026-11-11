@@ -980,6 +980,8 @@
   var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
+  // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
+  var CHAVE_TRAVA='saga-ponto-trava',_trava={ligada:false,timer:null,ligado:false};
   var _colaboradoresAtivos=null;
 
   function iniciarPresenca(){
@@ -1114,6 +1116,7 @@
     if(n&&n.referencia_tabela==='pedidos_busca')return {titulo:'Pedido de busca',tela:'pedidos_busca.html'};
     if(n&&n.referencia_tabela==='sugestoes')return {titulo:'Sugestão de melhoria',tela:'sugestoes.html'};
     if(n&&n.referencia_tabela==='ponto')return {titulo:'Ponto',tela:'ponto_eletronico_padrao_metalico.html'};
+    if(n&&n.referencia_tabela==='ponto_home_office')return {titulo:'Pedido de home office',tela:'ponto_eletronico_padrao_metalico.html?aba=equipe'};
     if(n&&n.referencia_tabela==='meta_anuncios')return {titulo:'Robô do Meta',tela:'marketing_campanhas_padrao_metalico.html?aba=painel'};
     if(n&&n.referencia_tabela==='datajud')return {titulo:'Andamento do processo',tela:'monitoramento_multi_oab.html?andamentos=1'};
     if(n&&n.referencia_tabela==='acessos')return {titulo:'Entrada no sistema',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
@@ -1137,7 +1140,7 @@
     {chave:'notas',titulo:'Notas',tipos:['nota_compartilhada'],tela:'notas.html',um:'nota compartilhada',varios:'notas compartilhadas',cor:'#eab308'},
     {chave:'seguranca',titulo:'Segurança',tipos:['seguranca'],tela:null,um:'alerta de segurança',varios:'alertas de segurança',cor:'#e5484d'},
     {chave:'buscas',titulo:'Pedidos de busca',tipos:[],tela:'pedidos_busca.html',um:'aviso de busca',varios:'avisos de busca',cor:'#0ea5e9'},
-    {chave:'ponto',titulo:'Ponto',tipos:[],tela:'ponto_eletronico_padrao_metalico.html',um:'lembrete do ponto',varios:'lembretes do ponto',cor:'#d97706'},
+    {chave:'ponto',titulo:'Ponto',tipos:[],tela:'ponto_eletronico_padrao_metalico.html',um:'aviso do ponto',varios:'avisos do ponto',cor:'#d97706'},
     {chave:'sugestoes',titulo:'Sugestões de melhoria',tipos:[],tela:'sugestoes.html',um:'aviso de sugestão',varios:'avisos de sugestões',cor:'#c9a84c'},
     {chave:'andamentos',titulo:'Andamentos do CNJ',tipos:[],tela:'monitoramento_multi_oab.html?andamentos=1',um:'andamento novo',varios:'andamentos novos',cor:'#0891b2'},
     {chave:'acessos',titulo:'Entradas no sistema',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'entrada no sistema',varios:'entradas no sistema',cor:'#6366f1'},
@@ -1148,7 +1151,7 @@
     if(n&&n.referencia_tabela==='pedidos_busca'){for(var i=0;i<GRUPOS_NOTIF.length;i++){if(GRUPOS_NOTIF[i].chave==='buscas')return GRUPOS_NOTIF[i];}}
     // Sugestões de melhoria (bloco 145): tipo 'outro' com a referência 'sugestoes', grupo próprio no sino
     // Lembrete da saída do ponto (bloco 146): tipo 'outro' com a referência 'ponto'
-    if(n&&n.referencia_tabela==='ponto'){for(var q=0;q<GRUPOS_NOTIF.length;q++){if(GRUPOS_NOTIF[q].chave==='ponto')return GRUPOS_NOTIF[q];}}
+    if(n&&(n.referencia_tabela==='ponto'||n.referencia_tabela==='ponto_home_office')){for(var q=0;q<GRUPOS_NOTIF.length;q++){if(GRUPOS_NOTIF[q].chave==='ponto')return GRUPOS_NOTIF[q];}}
     if(n&&n.referencia_tabela==='sugestoes'){for(var k=0;k<GRUPOS_NOTIF.length;k++){if(GRUPOS_NOTIF[k].chave==='sugestoes')return GRUPOS_NOTIF[k];}}
     // Robô do Meta (bloco 150): tipo 'outro' com a referência 'meta_anuncios', vai para o grupo do Marketing
     if(n&&n.referencia_tabela==='meta_anuncios'){for(var mk=0;mk<GRUPOS_NOTIF.length;mk++){if(GRUPOS_NOTIF[mk].chave==='marketing')return GRUPOS_NOTIF[mk];}}
@@ -1270,6 +1273,7 @@
       global.sagaIrPara('pedidos_busca.html');return;
     }
     if(n.referencia_tabela==='ponto'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html');return;}
+    if(n.referencia_tabela==='ponto_home_office'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=equipe');return;}
     if(n.referencia_tabela==='acessos'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=acessos');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // andamento novo: abre a ficha no processo, já no quadro dos andamentos; aviso do robô (sem processo): a janela dos andamentos
@@ -1784,7 +1788,7 @@
     (function percorrer(pai){
       Array.prototype.forEach.call(pai.children,function(el){
         if(/^(SCRIPT|STYLE|LINK|TEMPLATE)$/.test(el.tagName)||molduras.indexOf(el)!==-1)return;
-        if(el.id==='overlay'||el.id==='sagaSemAcesso')return;
+        if(el.id==='overlay'||el.id==='sagaSemAcesso'||el.id==='sagaTravaPonto')return;
         if(temMoldura(el))percorrer(el);
         else{var pos=getComputedStyle(el).position;if(pos!=='fixed')el.classList.add('saga-conteudo');}
       });
@@ -1907,6 +1911,7 @@
     // So com login salvo neste navegador (sem login o saga_guard ja mandou para o login)
     if(!idSessaoLocal())return;
     try{montarMoldura('');}catch(e){}
+    try{travaCedo();}catch(e){}
   }
   if(document.getElementById('sidebarSaga')||document.getElementById('topbarSaga'))montarMolduraCedo();
   else document.addEventListener('DOMContentLoaded',montarMolduraCedo);
@@ -2005,6 +2010,88 @@
     });
   }
 
+  // ===== Trava até bater o ponto (11/11, Dr. Victor; bloco 162, T156) =====
+  // Quem tem ponto entra no sistema, mas as outras telas ficam travadas até bater o ponto do dia. O banco decide
+  // (ponto_trava); ficam fora: administrador, Diretoria (horário livre), quem não tem ponto, fim de semana, feriado
+  // liberado, dia de folga/atestado/férias/licença e quem já marcou hoje. A tela do Ponto nunca trava. A resposta do
+  // dia fica guardada neste navegador: liberada, não pergunta de novo; travada, a cortina já nasce na primeira imagem
+  // da tela seguinte (sem mostrar o conteúdo por um instante). Bateu o ponto (nesta aba ou em outra), a trava sai.
+  // A cortina fica abaixo do menu superior e do lateral: o sino, a busca e o "Sair" continuam funcionando.
+  function ehTelaPonto(){return _telaAtual==='ponto'||/ponto_eletronico_padrao_metalico\.html$/i.test(location.pathname);}
+  function lerTravaGuardada(){try{var g=JSON.parse(localStorage.getItem(CHAVE_TRAVA)||'null');if(g&&g.uid&&g.uid===idSessaoLocal()&&g.dia===hojeLocal())return g;}catch(e){}return null;}
+  function guardarTrava(travar,nome){try{localStorage.setItem(CHAVE_TRAVA,JSON.stringify({uid:idSessaoLocal(),dia:hojeLocal(),travar:!!travar,nome:nome||''}));}catch(e){}}
+  function semMovimentoTrava(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+  function posicionarTrava(d){
+    var sb=document.getElementById('sidebarSaga'),tb=document.getElementById('topbarSaga');
+    d.style.left=((sb&&global.innerWidth>760)?Math.max(0,sb.getBoundingClientRect().right):0)+'px';
+    d.style.top=(tb?Math.max(0,tb.getBoundingClientRect().bottom):64)+'px';
+  }
+  function temMolduraSaga(){return !!(document.getElementById('sidebarSaga')||document.getElementById('topbarSaga'));}
+  function mostrarTravaPonto(nome,cedo){
+    if(!document.body||!temMolduraSaga())return;
+    _trava.ligada=true;
+    if(!document.getElementById('sagaTravaPontoCss')){var st=document.createElement('style');st.id='sagaTravaPontoCss';st.textContent='html.saga-trava-ponto .saga-conteudo{visibility:hidden!important}';(document.head||document.documentElement).appendChild(st);}
+    document.documentElement.classList.add('saga-trava-ponto');
+    var d=document.getElementById('sagaTravaPonto');
+    if(!d){
+      var fade=!cedo&&!semMovimentoTrava();
+      d=document.createElement('div');d.id='sagaTravaPonto';d.setAttribute('role','alertdialog');d.setAttribute('aria-labelledby','sagaTravaTitulo');d.setAttribute('data-saga-movimento-proprio','');
+      d.style.cssText='position:fixed;right:0;bottom:0;top:64px;left:0;z-index:140;background:var(--navy-1,#e8ecf1);display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;'+(fade?'opacity:0;transition:opacity .32s cubic-bezier(.22,.78,.25,1);':'');
+      d.innerHTML='<div style="max-width:440px;text-align:center;background:var(--panel,#fff);border:1px solid var(--border,#d5dbe4);border-radius:16px;padding:32px 28px;box-shadow:0 10px 30px rgba(0,0,0,.12)">'
+        +'<div style="width:52px;height:52px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--gold,#2f6cd6) 14%,transparent);color:var(--gold,#2f6cd6)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
+        +'<div id="sagaTravaTitulo" style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:600;color:var(--text,#13233a);margin-bottom:6px">Bata o ponto para começar</div>'
+        +'<div data-texto style="font-size:12.5px;color:var(--muted,#4a586e);line-height:1.55;margin-bottom:18px"></div>'
+        +'<button type="button" data-ir style="height:36px;padding:0 18px;border-radius:9px;border:1px solid var(--gold,#2f6cd6);background:color-mix(in srgb,var(--gold,#2f6cd6) 18%,transparent);color:var(--text,#13233a);font:inherit;font-size:12.5px;cursor:pointer">Ir para o Ponto</button>'
+        +'<div style="font-size:11.5px;color:var(--muted,#4a586e);margin-top:14px;line-height:1.5">Fora do escritório? Na tela do Ponto você pede home office.</div>'
+        +'</div>';
+      d.querySelector('[data-ir]').addEventListener('click',function(){global.sagaIrPara('ponto_eletronico_padrao_metalico.html');});
+      document.body.appendChild(d);
+      posicionarTrava(d);
+      if(fade)requestAnimationFrame(function(){requestAnimationFrame(function(){d.style.opacity='1';});});
+    }
+    d.querySelector('[data-texto]').textContent=(nome?'Olá, '+nome+'! ':'')+'Para usar o sistema hoje, primeiro bata o ponto de entrada. As outras telas são liberadas assim que o ponto for batido.';
+    if(!_trava.timer)_trava.timer=setInterval(function(){if(!document.hidden)conferirTravaPonto(true);},60000);
+  }
+  function tirarTravaPonto(){
+    _trava.ligada=false;
+    if(_trava.timer){clearInterval(_trava.timer);_trava.timer=null;}
+    document.documentElement.classList.remove('saga-trava-ponto');
+    var d=document.getElementById('sagaTravaPonto');if(!d)return;
+    d.id='';
+    if(semMovimentoTrava()){d.remove();return;}
+    d.style.transition='opacity .26s cubic-bezier(.22,.78,.25,1)';d.style.opacity='0';
+    setTimeout(function(){d.remove();},300);
+  }
+  async function conferirTravaPonto(forcar){
+    if(global.top!==global||!global._sb||!idSessaoLocal())return;
+    var g=lerTravaGuardada();
+    if(!forcar&&g&&!g.travar){if(_trava.ligada)tirarTravaPonto();return;}
+    try{
+      var r=await global._sb.rpc('ponto_trava');
+      // sem resposta do banco: não trava (quem já estava dentro continua)
+      if(r.error||!r.data){if(_trava.ligada)tirarTravaPonto();return;}
+      guardarTrava(r.data.travar,r.data.nome);
+      if(r.data.travar&&!ehTelaPonto())mostrarTravaPonto(r.data.nome);
+      else if(_trava.ligada)tirarTravaPonto();
+    }catch(e){}
+  }
+  // primeira imagem da tela: a resposta guardada de hoje diz "travada"? a cortina já aparece
+  function travaCedo(){
+    if(global.top!==global||ehTelaPonto()||!temMolduraSaga())return;
+    var g=lerTravaGuardada();
+    if(g&&g.travar)mostrarTravaPonto(g.nome,true);
+  }
+  function ligarTravaPonto(){
+    if(_trava.ligado||global.top!==global)return;
+    _trava.ligado=true;
+    global.addEventListener('storage',function(e){if(e.key==='saga-ponto-mudou')conferirTravaPonto(true);});
+    document.addEventListener('visibilitychange',function(){if(!document.hidden&&_trava.ligada)conferirTravaPonto(true);});
+    global.addEventListener('pageshow',function(ev){if(ev.persisted)conferirTravaPonto(true);});
+    global.addEventListener('resize',function(){var x=document.getElementById('sagaTravaPonto');if(x)posicionarTrava(x);});
+    var sb=document.getElementById('sidebarSaga');
+    if(sb&&global.ResizeObserver){try{new ResizeObserver(function(){var x=document.getElementById('sagaTravaPonto');if(x)posicionarTrava(x);}).observe(sb);}catch(e){}}
+  }
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sem login valido: vai para o login sem mostrar nada da tela (saga_guard.js a mantem escondida)
@@ -2022,6 +2109,7 @@
     registrarAtividade();
     ligarControleInatividade();
     montarMoldura(telaAtiva);
+    travaCedo();ligarTravaPonto();conferirTravaPonto(false);
     ligarPresencaESino();
     ligarBuscaGlobal();
     marcarConteudo();
@@ -2040,7 +2128,7 @@
   // 09/11: página devolvida pela memória do navegador (botão voltar): confere de novo no banco a cor, a letra e o perfil
   global.addEventListener('pageshow',function(ev){if(ev.persisted&&_perfilAtual)carregarPerfil();});
 
-  global.SagaUI={conferirPonto:function(){try{localStorage.setItem('saga-ponto-mudou',String(Date.now()));}catch(e){}return conferirPonto();},abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={conferirPonto:function(){try{localStorage.setItem('saga-ponto-mudou',String(Date.now()));}catch(e){}conferirTravaPonto(true);return conferirPonto();},abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
 })(window);
 
 /* Copiar com um clique (07/11): qualquer botão com data-copiar="texto" (e data-copiar-rotulo="CPF") copia o texto.

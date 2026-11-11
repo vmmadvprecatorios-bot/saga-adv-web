@@ -489,7 +489,8 @@ html:not(.saga-pode-apagar) :is(
   #mcExcluir, #mvExcluir, [data-rem], #mlExcluir, [data-remover],
   [data-excluir-post], [data-excluir-prod], [data-rad-del],
   [data-rmjorn], [data-ferrm], .cat-btn-excluir, .si-btn[data-excluir],
-  #btnRemover, #areasLista [data-rm], [data-lote-excluir], .card-excluir, #edExcluir
+  #btnRemover, #areasLista [data-rm], [data-lote-excluir], .card-excluir, #edExcluir,
+  [data-rede-remover]
 ){display:none!important}
 
 /* Listas suspensas (09/11): as opções abertas seguem o tema (antes, no escuro, vinham com fundo branco e letra clara) */

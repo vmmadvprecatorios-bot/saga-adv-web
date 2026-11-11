@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611111504"></script>
+<script src="saga_guard.js?v=202611111716"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -237,7 +237,7 @@ tr.apagado td{color:var(--muted)}
   }
   #roscasMeuPonto .centro .n{font-size:15px}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611111504">
+<link rel="stylesheet" href="saga_tema.css?v=202611111716">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -334,11 +334,12 @@ tr.apagado td{color:var(--muted)}
 
   <!-- HOME OFFICE -->
   <section class="tab-pane" id="aba-ho">
-    <div class="panel" style="max-width:560px">
+    <div class="panel" style="max-width:680px">
       <div class="panel-title">Pedir home office</div>
-      <div class="panel-sub">Com o pedido aprovado, você bate o ponto de casa nesse dia (sem conferência de local).</div>
-      <div class="grid2" style="margin-top:12px">
-        <div class="campo"><label>Data</label><input id="hoData" type="date"></div>
+      <div class="panel-sub">Com o pedido aprovado, você bate o ponto de onde estiver nesses dias. Para mais de um dia seguido, preencha também o "Até". O administrador recebe o aviso no sino e você recebe a resposta.</div>
+      <div class="grid3" style="margin-top:12px">
+        <div class="campo"><label>Dia (ou início)</label><input id="hoData" type="date"></div>
+        <div class="campo"><label>Até (opcional)</label><input id="hoAte" type="date"></div>
         <div class="campo"><label>Motivo</label><input id="hoComentario" placeholder="Opcional"></div>
       </div>
       <button class="btn-primary" id="hoEnviar" type="button">Pedir home office</button>
@@ -366,7 +367,7 @@ tr.apagado td{color:var(--muted)}
       <span class="sub" id="acResumo"></span>
       <button class="btn-secondary btn-sm" id="acAtualizar" type="button" style="margin-left:auto">Atualizar</button>
     </div>
-    <p class="sub" style="margin:-4px 0 12px">Só o administrador geral vê esta aba. Hora em que cada colaborador <b>entrou no SAGA</b> (hora do servidor, com o aparelho e o IP) ao lado da hora em que <b>bateu o ponto</b>, para conferir nas câmeras. Atualiza sozinha a cada 30 segundos.</p>
+    <p class="sub" style="margin:-4px 0 12px">Só o administrador geral vê esta aba. Hora em que cada colaborador <b>entrou no SAGA</b> (hora do servidor, com o aparelho e o IP) ao lado da hora em que <b>bateu o ponto</b>, para conferir nas câmeras. O IP vem marcado <b>escritório</b> ou <b>fora</b> conforme as internets cadastradas em Cadastro &gt; Internets do escritório. Atualiza sozinha a cada 30 segundos.</p>
     <div class="tabela-wrap"><table><thead><tr><th>Colaborador</th><th>Entrou no sistema</th><th>Bateu o ponto</th><th>Diferença</th><th>Como entrou</th><th>Aparelho</th><th>IP</th><th>Outras entradas do dia</th></tr></thead><tbody id="tbAcessos"></tbody></table></div>
   </section>
 
@@ -455,7 +456,17 @@ tr.apagado td{color:var(--muted)}
         <div class="campo"><label>E-mails do gestor (separados por vírgula)</label><input id="cfEmails"></div>
         <div class="campo"><label>E-mails extras no fechamento (ex.: contadora)</label><input id="cfExtras"></div>
       </div>
-      <label class="chk"><input type="checkbox" id="cfLocal"> Exigir que a marcação seja feita no escritório (conferência de local)</label>
+      <label class="chk"><input type="checkbox" id="cfLocal"> Exigir que a marcação seja feita no escritório (pela internet do escritório ou pela localização; fora dele, só com home office aprovado)</label>
+      <div class="so-admin" style="display:none">
+        <div class="secao-titulo" style="margin-top:16px">Internets do escritório</div>
+        <p class="sub" style="margin:0 0 8px">Quem bate o ponto por uma destas internets está no escritório e não precisa de localização. Fora delas, vale a localização dentro do raio ou o home office aprovado. A lista também serve para o aviso no sino quando alguém entra no sistema por uma internet de fora. Só o administrador geral vê esta parte; cada mudança aqui vale na hora.</p>
+        <div class="sub" id="redesAviso" style="display:none;margin:0 0 8px;color:var(--warning)"></div>
+        <div class="tabela-wrap"><table class="banco"><thead><tr><th>Internet (IP)</th><th>Nome</th><th>Cadastrada em</th><th></th></tr></thead><tbody id="tbRedes"></tbody></table></div>
+        <div class="toolbar" style="margin:8px 0 0"><div class="campo" style="margin:0"><input id="redeNome" placeholder="Nome (opcional), ex.: Wi-Fi do escritório" maxlength="60" style="min-width:260px"></div><button class="btn-secondary btn-sm" id="redeAqui" type="button">Usar a internet de onde estou agora</button><span class="sub" id="redeMeuIp"></span></div>
+        <div class="secao-titulo" style="margin-top:14px">Internets usadas pela equipe nos últimos 14 dias</div>
+        <p class="sub" style="margin:0 0 8px">Ainda fora da lista. A que muitos usam em horário de expediente costuma ser a do escritório; confira antes de marcar.</p>
+        <div class="tabela-wrap"><table class="banco"><thead><tr><th>Internet (IP)</th><th>Quem entrou por ela</th><th class="num">Entradas</th><th>Última</th><th></th></tr></thead><tbody id="tbRedesSug"></tbody></table></div>
+      </div>
       <div class="secao-titulo" style="margin-top:16px">Local do escritório</div>
       <div class="grid3">
         <div class="campo"><label>Latitude</label><input id="cfLat" type="number" step="0.000001"></div>
@@ -532,6 +543,7 @@ tr.apagado td{color:var(--muted)}
       </div>
     </div>
     <label class="chk"><input type="checkbox" id="ccRelatorio" checked> Exigir relatório diário de atividades</label>
+    <label class="chk" id="ccLocalLivreCampo"><input type="checkbox" id="ccLocalLivre"> Pode bater o ponto de qualquer lugar (home office fixo, sem precisar pedir)</label>
   </div>
   <div class="modal-foot"><button class="btn-secondary" data-fechar="modalCadColab" type="button">Cancelar</button><button class="btn-primary" id="ccSalvar" type="button">Salvar</button></div>
 </div></div>
@@ -631,12 +643,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611111504"></script>
-<script src="saga_texto.js?v=202611111504"></script>
+<script src="saga_ui.js?v=202611111716"></script>
+<script src="saga_texto.js?v=202611111716"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611111504"></script>
-<script src="saga_roscas.js?v=202611111504"></script>
-<script src="saga_pdf.js?v=202611111504"></script>
+<script src="ponto_calculo.js?v=202611111716"></script>
+<script src="saga_roscas.js?v=202611111716"></script>
+<script src="saga_pdf.js?v=202611111716"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -848,13 +860,33 @@ async function bater(botao,btn){
   msg.style.display='';msg.className='msg-ponto';msg.textContent='Registrando…';
   try{
     var livre=regimeDe(state.meuColab).livre;
-    var loc=livre?null:await obterLocal();
-    var r=await _sb.rpc('bater_ponto',{p_botao:botao,p_lat:loc?loc.lat:null,p_lng:loc?loc.lng:null,p_precisao:loc?Math.round(loc.prec):null});
+    var chamar=function(loc){return _sb.rpc('bater_ponto',{p_botao:botao,p_lat:loc?loc.lat:null,p_lng:loc?loc.lng:null,p_precisao:loc?Math.round(loc.prec):null});};
+    // 11/11 (T156): primeiro sem localização (na internet do escritório ela não é necessária);
+    // só se o banco responder que a pessoa está fora do escritório, pede a localização e tenta de novo
+    var r=await chamar(null);
+    if(!livre&&!r.error&&r.data&&!r.data.ok&&r.data.fora){
+      msg.textContent='Conferindo a localização…';
+      var loc=await obterLocal();
+      if(loc)r=await chamar(loc);
+    }
     if(r.error)throw r.error;
     msg.className='msg-ponto '+(r.data.ok?'ok':'erro');msg.textContent=r.data.mensagem;
+    if(!r.data.ok&&r.data.fora)botaoPedirHo(msg);
     if(r.data.ok){await carregarMeuMes();carregarMinhasAtividades();if(window.SagaUI&&SagaUI.conferirPonto)SagaUI.conferirPonto();}
   }catch(e){msg.className='msg-ponto erro';msg.textContent='Não foi possível registrar: '+(e.message||'tente de novo');}
   finally{document.querySelectorAll('[data-botao]').forEach(function(b){b.disabled=false;});}
+}
+// Batida recusada por estar fora do escritório: atalho para pedir home office do dia
+function botaoPedirHo(msg){
+  var b=document.createElement('button');b.type='button';b.className='btn-secondary btn-sm';b.textContent='Pedir home office';
+  b.style.cssText='display:inline-flex;margin:8px 0 0';
+  b.addEventListener('click',function(){irParaHo(state.hoje);});
+  msg.appendChild(document.createElement('br'));msg.appendChild(b);
+}
+function irParaHo(data){
+  trocarAba('ho');
+  var d=document.getElementById('hoData');if(data&&data>=state.hoje)d.value=data;
+  setTimeout(function(){var m=document.getElementById('hoComentario');if(m)m.focus();},80);
 }
 function tickRelogio(){
   document.getElementById('relogio').textContent=new Intl.DateTimeFormat('pt-BR',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date());
@@ -969,17 +1001,23 @@ async function carregarMinhasJust(){
 }
 
 /* ----- Home office ----- */
+// Período do pedido de home office: um dia ("12/11/2026") ou vários ("12/11/2026 a 14/11/2026")
+function periodoHo(h){return dataBR(h.data_referencia)+(h.data_fim&&h.data_fim>h.data_referencia?' a '+dataBR(h.data_fim):'');}
 async function pedirHo(){
-  var data=document.getElementById('hoData').value;if(!data){showToast('Escolha a data.','error');return;}
-  var r=await _sb.from('solicitacoes_home_office').insert({usuario_id:state.meuId,data_referencia:data,origem:'colaborador',solicitado_por_id:state.meuId,status:'pendente',comentario:document.getElementById('hoComentario').value.trim()||null});
-  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
-  showToast('Pedido de home office enviado.','success');document.getElementById('hoData').value='';document.getElementById('hoComentario').value='';carregarMeusHo();
+  var data=document.getElementById('hoData').value,ate=document.getElementById('hoAte').value||null;
+  if(!data){showToast('Escolha o dia.','error');return;}
+  if(ate&&ate<data){showToast('O "Até" precisa ser no mesmo dia ou depois do primeiro dia.','error');return;}
+  if(ate===data)ate=null;
+  var r=await _sb.from('solicitacoes_home_office').insert({usuario_id:state.meuId,data_referencia:data,data_fim:ate,origem:'colaborador',solicitado_por_id:state.meuId,status:'pendente',comentario:document.getElementById('hoComentario').value.trim()||null});
+  if(r.error){showToast(r.error.code==='23505'?'Você já tem um pedido de home office começando em '+dataBR(data)+'.':'Erro: '+esc(r.error.message),'error');return;}
+  showToast('Pedido de home office enviado. O administrador recebe o aviso no sino.','success');
+  ['hoData','hoAte','hoComentario'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('hoAte').min=state.hoje;carregarMeusHo();
 }
 async function carregarMeusHo(){
   var r=await _sb.from('solicitacoes_home_office').select('*').eq('usuario_id',state.meuId).order('data_referencia',{ascending:false}).limit(40);
   var el=document.getElementById('listaHo');
   el.innerHTML=(r.data||[]).length?r.data.map(function(h){var cor={pendente:'#e0a93b',aprovado:'#2fae7a',rejeitado:'#e5484d'}[h.status];
-    return '<div class="card-linha"><div class="topo"><b>'+dataBR(h.data_referencia)+'</b><span class="st" style="background:color-mix(in srgb,'+cor+' 18%,transparent);color:'+cor+'">'+esc(h.status)+'</span></div>'+
+    return '<div class="card-linha"><div class="topo"><b>'+periodoHo(h)+'</b><span class="st" style="background:color-mix(in srgb,'+cor+' 18%,transparent);color:'+cor+'">'+esc(h.status)+'</span></div>'+
       (h.comentario?'<div class="sub">'+esc(h.comentario)+'</div>':'')+(h.comentario_decisao?'<div class="sub">Resposta: '+esc(h.comentario_decisao)+'</div>':'')+'</div>';}).join(''):'<div class="panel vazio">Nenhum pedido.</div>';
 }
 
@@ -1057,7 +1095,7 @@ async function carregarAcessos(silencioso){
   if(acState.modo==='7'){var p=ate.split('-').map(Number);de=new Date(Date.UTC(p[0],p[1]-1,p[2]-6)).toISOString().slice(0,10);}
   var tb=document.getElementById('tbAcessos');
   if(!silencioso&&!tb.children.length)tb.innerHTML='<tr><td colspan="8" class="vazio">Carregando...</td></tr>';
-  var r=await _sb.rpc('acessos_painel',{p_de:de,p_ate:ate});
+  var r=await Promise.all([_sb.rpc('acessos_painel',{p_de:de,p_ate:ate}),state.redes?Promise.resolve():lerRedes()]);r=r[0];
   if(v!==acState.versao)return;
   if(r.error){tb.innerHTML='<tr><td colspan="8" class="vazio">'+esc(r.error.message)+'</td></tr>';return;}
   var linhas=(r.data&&r.data.linhas)||[],html=[],diaAtual=null,entraram=0,total=0;
@@ -1073,8 +1111,8 @@ async function carregarAcessos(silencioso){
       '<td>'+(difEntradaPonto(l.entrou,l.ponto_entrada)||'<span class="ac-nao">-</span>')+'</td>'+
       '<td>'+(como||'<span class="ac-nao">-</span>')+'</td>'+
       '<td>'+esc(pri&&pri.aparelho||'')+'</td>'+
-      '<td class="sub" style="margin:0">'+esc(pri&&pri.ip||'')+'</td>'+
-      '<td class="ac-outras">'+(outras.length?outras.map(function(o){return horaLocal(o.momento)+' · '+esc(AC_EVENTO[o.evento]||o.evento)+(o.aparelho?' · '+esc(o.aparelho):'')+(o.ip?' · IP '+esc(o.ip):'');}).join('<br>'):'-')+'</td></tr>');
+      '<td class="sub" style="margin:0">'+ipComLocal(pri&&pri.ip)+'</td>'+
+      '<td class="ac-outras">'+(outras.length?outras.map(function(o){return horaLocal(o.momento)+' · '+esc(AC_EVENTO[o.evento]||o.evento)+(o.aparelho?' · '+esc(o.aparelho):'')+(o.ip?' · IP '+ipComLocal(o.ip):'');}).join('<br>'):'-')+'</td></tr>');
   });
   tb.innerHTML=html.join('')||'<tr><td colspan="8" class="vazio">Nenhum colaborador com acesso ao SAGA.</td></tr>';
   document.getElementById('acResumo').textContent=dataBR(acState.data)+' · '+entraram+' de '+total+' entraram no sistema'+(acState.data===state.hoje?' · atualizado às '+horaLocal(new Date().toISOString()):'');
@@ -1091,7 +1129,7 @@ async function carregarPendencias(){
     var rh=await _sb.from('solicitacoes_home_office').select('*, usuario:usuarios!usuario_id(nome_completo)').eq('status','pendente').order('data_referencia');
     var lh=rh.data||[];pend+=lh.length;
     var eh=document.getElementById('listaPendHo');
-    eh.innerHTML=lh.length?lh.map(function(h){return '<div class="card-linha"><div class="topo"><b>'+esc(h.usuario?h.usuario.nome_completo:'')+' · '+dataBR(h.data_referencia)+'</b></div>'+(h.comentario?'<div class="sub">'+esc(h.comentario)+'</div>':'')+
+    eh.innerHTML=lh.length?lh.map(function(h){return '<div class="card-linha"><div class="topo"><b>'+esc(h.usuario?h.usuario.nome_completo:'')+' · '+periodoHo(h)+'</b></div>'+(h.comentario?'<div class="sub">'+esc(h.comentario)+'</div>':'')+
       '<div class="acoes"><button class="btn-primary btn-sm" data-ho="aprovado" data-id="'+h.id+'" type="button">Aprovar</button><button class="btn-danger btn-sm" data-ho="rejeitado" data-id="'+h.id+'" type="button">Recusar</button></div></div>';}).join(''):'<div class="panel vazio">Nenhum pedido pendente.</div>';
     eh.querySelectorAll('[data-ho]').forEach(function(b){b.addEventListener('click',function(){decidirHo(b.dataset.id,b.dataset.ho);});});
   }
@@ -1278,7 +1316,7 @@ async function renderCadastro(){
   tb.innerHTML=state.colabs.map(function(c){
     var livre=regimeDe(c).livre,deslig=c.demissao&&c.demissao<state.hoje;
     var sit=!c.temConta?'<span class="sub">Aguardando conta (convite)</span>':deslig?'Desligado em '+dataBR(c.demissao):(c.demissao?'Sai em '+dataBR(c.demissao):'Ativo');
-    return '<tr><td>'+esc(c.codigo||'')+'</td><td><div class="cli">'+esc(c.nome)+'</div><div class="sub">'+esc(c.email||'')+'</div></td><td>'+esc(c.regime)+'</td><td>'+esc(c.cargo||'')+'</td>'+
+    return '<tr><td>'+esc(c.codigo||'')+'</td><td><div class="cli">'+esc(c.nome)+'</div><div class="sub">'+esc(c.email||'')+'</div></td><td>'+esc(c.regime)+(c.local_livre&&!livre?'<div class="sub">Bate de qualquer lugar</div>':'')+'</td><td>'+esc(c.cargo||'')+'</td>'+
       '<td>'+(livre?'<span class="sub">Livre</span>':(esc(jornadaVigente(c))||'<span class="neg">Sem horário</span>'))+'</td><td>'+dataBR(c.admissao)+'</td><td>'+sit+'</td>'+
       '<td style="white-space:nowrap"><button class="lnk" data-edcolab="'+c.id+'" type="button">Editar</button>'+(livre?'':'<button class="lnk" data-jornada="'+c.id+'" type="button">Horário</button>')+'</td></tr>';
   }).join('')||'<tr><td colspan="8" class="vazio">Ninguém no ponto ainda.</td></tr>';
@@ -1309,6 +1347,7 @@ async function abrirCadColab(id){
   document.getElementById('ccAdmissao').value=c?(c.admissao||''):state.hoje;
   document.getElementById('ccDemissao').value=c?(c.demissao||''):'';
   document.getElementById('ccRelatorio').checked=c?c.relatorio_diario!==false:true;
+  document.getElementById('ccLocalLivre').checked=!!(c&&c.local_livre);
   ['ccEntrada','ccSaida','ccCarga'].forEach(function(k){document.getElementById(k).value='';});
   atualizarCampoHorario();
   abrirModal('modalCadColab');
@@ -1316,6 +1355,8 @@ async function abrirCadColab(id){
 function atualizarCampoHorario(){
   var livre=(state.regimes[document.getElementById('ccRegime').value]||{}).livre;
   document.getElementById('ccHorario').style.display=state.ccId||livre?'none':'';
+  // horário livre (Diretoria) já bate de qualquer lugar
+  document.getElementById('ccLocalLivreCampo').style.display=livre?'none':'';
 }
 // Carga sugerida: saida - entrada - almoco do regime (pode ser ajustada)
 function sugerirCarga(idEnt,idSai,idCarga,regime){
@@ -1326,7 +1367,7 @@ function sugerirCarga(idEnt,idSai,idCarga,regime){
 async function salvarCadColab(){
   var btn=document.getElementById('ccSalvar');
   var regime=document.getElementById('ccRegime').value,livre=(state.regimes[regime]||{}).livre;
-  var dados={regime:regime,cargo:document.getElementById('ccCargo').value.trim()||null,admissao:document.getElementById('ccAdmissao').value||null,relatorio_diario:document.getElementById('ccRelatorio').checked};
+  var dados={regime:regime,cargo:document.getElementById('ccCargo').value.trim()||null,admissao:document.getElementById('ccAdmissao').value||null,relatorio_diario:document.getElementById('ccRelatorio').checked,local_livre:!livre&&document.getElementById('ccLocalLivre').checked};
   btn.disabled=true;
   try{
     if(state.ccId){
@@ -1609,6 +1650,62 @@ async function renderConfig(){
   document.getElementById('cfRaio').value=state.local?state.local.raio_metros:50;
   document.getElementById('cfLocalInfo').textContent=state.local?state.local.nome:'Nenhum local cadastrado';
   montarMapa();
+  carregarRedes();
+}
+
+/* ----- Internets do escritório (11/11, Dr. Victor; bloco 162, T156; só o administrador geral) -----
+   A internet (IP) cadastrada vale como presença no escritório no ponto; as outras entradas viram "fora". */
+async function lerRedes(){
+  if(!state.pode.admin){state.redes=[];state.redesIps={};return;}
+  var r=await _sb.from('ponto_redes_escritorio').select('id,ip,nome,criado_em').eq('ativo',true).order('criado_em');
+  state.redes=r.data||[];state.redesIps={};state.redes.forEach(function(x){state.redesIps[x.ip]=x;});
+}
+// IP com a etiqueta "escritório" ou "fora" (só quando já há internet cadastrada)
+function ipComLocal(ip){
+  if(!ip)return '';
+  if(!state.redes||!state.redes.length)return esc(ip);
+  var noEsc=!!state.redesIps[ip];
+  return esc(ip)+' <span class="etq ip-local" style="--c:'+(noEsc?'var(--success)':'var(--warning)')+'">'+(noEsc?'escritório':'fora')+'</span>';
+}
+async function carregarRedes(){
+  if(!state.pode.admin)return;
+  var tb=document.getElementById('tbRedes'),ts=document.getElementById('tbRedesSug');
+  var r=await Promise.all([lerRedes(),_sb.rpc('ponto_redes_sugestoes',{p_dias:14}),_sb.rpc('ponto_meu_ip')]);
+  var sug=Array.isArray(r[1].data)?r[1].data:[],meu=typeof r[2].data==='string'?r[2].data:'';
+  var voce=' <span class="etq ip-local" style="--c:var(--gold)">você está nela agora</span>';
+  tb.innerHTML=state.redes.length?state.redes.map(function(x){
+    return '<tr><td><b>'+esc(x.ip)+'</b>'+(x.ip===meu?voce:'')+'</td><td>'+esc(x.nome||'')+'</td><td>'+dataBR(dataLocalDe(x.criado_em))+'</td>'+
+      '<td style="text-align:right"><button class="lnk" data-rede-remover="'+x.id+'" data-ip="'+esc(x.ip)+'" type="button">Remover</button></td></tr>';
+  }).join(''):'<tr><td colspan="4" class="vazio">Nenhuma internet cadastrada ainda.</td></tr>';
+  ts.innerHTML=sug.length?sug.map(function(x){
+    return '<tr><td><b>'+esc(x.ip)+'</b>'+(x.ip===meu?voce:'')+'</td><td>'+esc(x.nomes||'')+' <span class="sub" style="display:inline">('+x.pessoas+(x.pessoas===1?' pessoa':' pessoas')+')</span></td><td class="num">'+x.entradas+'</td>'+
+      '<td>'+(x.ultima?dataBR(dataLocalDe(x.ultima)).slice(0,5)+' '+horaDe(x.ultima):'')+'</td>'+
+      '<td style="text-align:right"><button class="btn-secondary btn-sm" data-rede-add="'+esc(x.ip)+'" type="button">É do escritório</button></td></tr>';
+  }).join(''):'<tr><td colspan="5" class="vazio">Nenhuma outra internet nos últimos 14 dias.</td></tr>';
+  var info=document.getElementById('redeMeuIp');
+  info.textContent=meu?'Você está agora na internet '+meu+(state.redesIps[meu]?' (já é do escritório).':' (fora da lista).'):'';
+  var av=document.getElementById('redesAviso');
+  av.textContent=state.redes.length?'':'Sem internet cadastrada, no escritório vale só a localização, que no computador sem GPS costuma falhar. Cadastre a internet do escritório antes de ligar a exigência acima.';
+  av.style.display=state.redes.length?'none':'';
+  tb.querySelectorAll('[data-rede-remover]').forEach(function(b){b.addEventListener('click',function(){removerRede(b.dataset.redeRemover,b.dataset.ip);});});
+  ts.querySelectorAll('[data-rede-add]').forEach(function(b){b.addEventListener('click',function(){adicionarRede(b.dataset.redeAdd,b);});});
+}
+async function adicionarRede(ip,btn){
+  if(btn)btn.disabled=true;
+  var nome=document.getElementById('redeNome').value.trim()||null;
+  var r=await _sb.rpc('ponto_rede_adicionar',{p_ip:ip||null,p_nome:nome});
+  if(btn)btn.disabled=false;
+  if(r.error||!r.data||!r.data.ok){showToast('Não foi possível cadastrar: '+esc((r.error&&r.error.message)||'tente de novo'),'error');return;}
+  document.getElementById('redeNome').value='';
+  showToast(r.data.novo?'Internet '+esc(r.data.ip)+' cadastrada como do escritório.':'A internet '+esc(r.data.ip)+' já estava na lista.','success');
+  await carregarRedes();
+}
+async function removerRede(id,ip){
+  if(!await confirmar('Remover internet','Tirar a internet '+ip+' da lista do escritório? Quem bater o ponto por ela vai precisar da localização ou de home office aprovado. O histórico fica guardado.','Remover'))return;
+  var r=await _sb.from('ponto_redes_escritorio').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('id',id).select('id');
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível remover: '+esc((r.error&&r.error.message)||'sem permissão'),'error');return;}
+  showToast('Internet removida da lista.','success');
+  await carregarRedes();
 }
 
 /* ----- Mapa do local do escritorio (OpenStreetMap, gratuito) ----- */
@@ -2331,6 +2428,8 @@ function ligarEventos(){
   });
   document.getElementById('jEnviar').addEventListener('click',enviarJust);
   document.getElementById('hoEnviar').addEventListener('click',pedirHo);
+  document.getElementById('hoData').addEventListener('change',function(){var a=document.getElementById('hoAte');a.min=this.value||state.hoje;if(a.value&&this.value&&a.value<this.value)a.value='';});
+  document.getElementById('redeAqui').addEventListener('click',function(){adicionarRede(null,this);});
   document.getElementById('eqData').addEventListener('change',carregarEquipe);
   document.getElementById('btnAtualizar').addEventListener('click',atualizarTudo);
   document.getElementById('bhAnt').addEventListener('click',function(){mudarMes(-1,state.bh);renderBancoTela();});
@@ -2389,7 +2488,7 @@ async function init(){
   state.ferAno=Number(state.hoje.slice(0,4));
   rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});
   if(state.pode.equipe||state.pode.aprova){document.getElementById('abaEquipeBtn').style.display='';document.getElementById('eqData').value=state.hoje;carregarPendencias();}
-  prepararFormJust();document.getElementById('hoData').min=state.hoje;
+  prepararFormJust();document.getElementById('hoData').min=state.hoje;document.getElementById('hoAte').min=state.hoje;
   if(state.meuColab){
     var c=state.meuColab;
     document.getElementById('subtitulo').textContent=c.nome+' · '+c.regime+(c.cargo?' · '+c.cargo:'');
