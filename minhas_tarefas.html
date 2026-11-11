@@ -531,6 +531,11 @@
   html.saga-sem-movimento .coluna-kanban-tarefas.coluna-entrando{ animation:none; }
   .coluna-kanban-tarefas.coluna-virtual{ border-style:dashed; }
   .numero-processo-card .saga-trib{ margin-left:2px; }
+  /* (11/11, Dr. Victor) atalho do tribunal à vista em toda tarefa (cartão, lista e janela): copia o número e abre o site do tribunal, como nas Intimações */
+  .numero-processo-card .saga-trib,.lista-proc-num .saga-trib{ flex:0 0 auto; color:var(--gold); border-color:color-mix(in srgb,var(--gold) 40%,transparent); background:color-mix(in srgb,var(--gold) 8%,transparent); }
+  .lista-proc-num{ display:inline-flex; align-items:center; gap:2px; white-space:nowrap; }
+  #readonlyTribAtalho .saga-trib.botao{ margin-top:1px; }
+  #readonlyTribAtalho .saga-trib span{ display:inline; margin:0; font-size:11px; text-transform:none; color:inherit; }
   .btn-add-coluna-nova{
     flex:0 0 auto; width:90px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
     border:1px dashed var(--border-soft); border-radius:15px; color:var(--gold); font-size:10.5px; font-weight:600;
@@ -2099,6 +2104,7 @@ html.saga-embed #modalTarefa{background:transparent}
               <div class="campo-readonly-processo"><span>Cliente</span><strong id="readonlyCliente">-</strong></div>
               <div class="campo-readonly-processo"><span>Tribunal</span><strong id="readonlyTribunal">-</strong></div>
               <div class="campo-readonly-processo"><span>Fase Processual</span><strong id="readonlyFase">-</strong></div>
+              <div class="campo-readonly-processo" id="readonlyTribAtalhoBox" style="display:none;"><span>Site do tribunal</span><div id="readonlyTribAtalho"></div></div>
             </div>
           </div>
         </div>
@@ -4129,7 +4135,7 @@ function criarLinhaTabela(tarefa){
     '</div></td>' +
     '<td class="titulo-lista-tarefa">' + escaparHtml(tarefa.titulo) + ' <span class="btn-status-tarefa st-' + tarefa.status + '" style="margin-left:6px;cursor:default;--c-st:' + escaparHtml(corStatusTarefa(tarefa.status)) + '"><i></i>' + rotuloStatusTarefa(tarefa) + '</span>' + (tarefa.status !== 'concluida' && tarefaEstaAtrasada(tarefa) ? ' <span class="selo-atrasada-card">Atrasada</span>' : '') + '</td>' +
     '<td>' + (tarefa.tipo === 'pessoal' ? 'Pessoal' : 'Processo') + '</td>' +
-    '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.numero : '-') + '</td>' +
+    '<td>' + (tarefa.processoVinculado ? '<span class="lista-proc-num">' + escaparHtml(tarefa.processoVinculado.numero) + (window.SagaTribunais ? SagaTribunais.icone(tarefa.processoVinculado.numero) : '') + '</span>' : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.tribunal : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.fase : '-') + '</td>' +
     '<td>' + escaparHtml(idsResponsaveisTarefa(tarefa).map(nomeUsuario).join(', ') || '-') + '</td>' +
@@ -4696,6 +4702,10 @@ function selecionarProcessoNoModal(processo){
   var infoTrib = window.SagaTribunais ? SagaTribunais.tribunal(processo.numero) : null;
   document.getElementById('readonlyTribunal').textContent = infoTrib ? infoTrib.sigla + (infoTrib.secao ? ' · ' + infoTrib.uf : '') : processo.tribunal;
   document.getElementById('readonlyFase').textContent = processo.fase;
+  // (11/11, Dr. Victor) o mesmo atalho das Intimações: copia o número e abre o site do tribunal (para peticionar)
+  var atalhoTrib = window.SagaTribunais ? SagaTribunais.icone(processo.numero, {botao:true}) : '';
+  var boxTrib = document.getElementById('readonlyTribAtalhoBox');
+  if(boxTrib){ document.getElementById('readonlyTribAtalho').innerHTML = atalhoTrib; boxTrib.style.display = atalhoTrib ? '' : 'none'; }
   document.getElementById('processoSelecionadoReadonly').style.display = 'flex';
   document.getElementById('resultadoAutocompleteProcesso').classList.remove('visivel');
 }
