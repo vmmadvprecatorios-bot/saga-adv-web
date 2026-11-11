@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.3",
+  versao: "1.4",
   data: "11/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.4", data: "11/11/2026", mudou: "Chat Interno: em \"+ Nova conversa ou grupo\", a lista dos colegas já aparece aberta para escolher (uma pessoa na conversa direta; várias no grupo)." },
     { versao: "1.3", data: "11/11/2026", mudou: "Minhas Tarefas: coluna sempre do tribunal do processo, coluna \"Automática\", colunas sem tarefa aberta ficam ocultas (linha \"Mostrar\"), etiqueta do estado e botão do tribunal no cartão, janela da tarefa em duas partes. Intimações: Justiça Federal na coluna do TRF com a etiqueta do estado, tribunais sem intimação aberta ocultos, link de cada seção do e-Proc. Primeiros passos: o menu da esquerda fica no lugar ao trocar de tela." },
     { versao: "1.2", data: "11/11/2026", mudou: "Manual com capítulos e partes que abrem e fecham e índice que recolhe; Sugestões de melhoria em Cartões, Kanban e Lista, com filtros de situação e de quem sugeriu; Treinamentos: o administrador exclui." },
     { versao: "1.1", data: "10/11/2026", mudou: "Teses e oportunidades: botão \"Achar clientes para esta tese\"; Clientes por perfil abre já filtrado pela tese." },
@@ -538,6 +539,7 @@ window.SAGA_MANUAL = {
           quando: "Para falar com um colega ou com um grupo sem sair do SAGA.",
           passos: [
             "Abra **Chat Interno**. Escolha a conversa na lista (Todas, Individuais, Grupos) ou clique em [[+ Nova conversa ou grupo]].",
+            "Na conversa nova, a **lista dos colegas** já aparece aberta: em **Conversa Direta**, clique em uma pessoa; em **Grupo**, dê o nome e marque duas ou mais pessoas. Digite no campo para filtrar pelo nome. Num grupo que já existe, o administrador do grupo adiciona pessoas pela mesma lista.",
             "Escreva e envie. Use **@nome** para chamar alguém e anexe arquivos quando precisar.",
             "Assunto de cliente ou processo: registre também na ficha (comentário), para ficar no histórico do processo."
           ],

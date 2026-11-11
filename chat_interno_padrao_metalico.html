@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611111124"></script>
+<script src="saga_guard.js?v=202611111138"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Chat Interno</title>
@@ -211,6 +211,12 @@
   .resultados-busca-modal{background:var(--panel-solid);border:1px solid var(--border-soft);border-radius:9px;margin-top:6px;max-height:180px;overflow-y:auto;}
   .item-busca-modal{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;font-size:12.5px;transition:background 0.15s;}
   .item-busca-modal:hover{background:color-mix(in srgb,var(--gold) 8%,transparent);}
+  /* 11/11 (Dr. Victor, T155): a lista dos colegas já aparece aberta; a escolhida fica marcada */
+  #resultadosBuscaUsuario,#candidatosGrupo,#membrosGrupoLista{max-height:260px;}
+  #inputBuscaMembroGrupo{margin-top:8px;}
+  .item-busca-modal.selecionado{background:color-mix(in srgb,var(--gold) 12%,transparent);box-shadow:inset 3px 0 0 var(--gold);}
+  .item-busca-modal .check-membro{margin-left:auto;opacity:0;color:var(--gold);transition:opacity .2s cubic-bezier(.22,.78,.25,1);}
+  .item-busca-modal.selecionado .check-membro{opacity:1;}
   .item-busca-modal .av-mini{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 25%,transparent),color-mix(in srgb,var(--gold-deep) 10%,transparent));display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:var(--gold-light);border:1px solid var(--border-soft);flex:0 0 auto;}
   .sem-resultado-busca{padding:14px;text-align:center;font-size:12px;color:var(--muted);}
   .usuario-selecionado-chip{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 12px;background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid color-mix(in srgb,var(--gold) 25%,transparent);border-radius:9px;font-size:12.5px;color:var(--gold-light);}
@@ -340,7 +346,7 @@
     .seletor-papel button{padding:4px 6px;}
   }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611111124">
+<link rel="stylesheet" href="saga_tema.css?v=202611111138">
 </head>
 <body data-theme="dark">
 
@@ -356,7 +362,8 @@
       <div class="aba-tipo" id="tabGrupo" onclick="toggleTipoConversa('grupo')">Grupo</div>
     </div>
     <div id="secaoDireto">
-      <input type="text" class="campo-modal" id="inputBuscaUsuario" placeholder="Buscar por nome do colega..." oninput="buscarUsuariosModal(this.value)" autocomplete="off">
+      <span class="label-modal">Escolha com quem conversar:</span>
+      <input type="text" class="campo-modal" id="inputBuscaUsuario" placeholder="Filtrar pelo nome..." oninput="buscarUsuariosModal(this.value)" autocomplete="off">
       <div id="resultadosBuscaUsuario" class="resultados-busca-modal" style="display:none"></div>
       <div id="usuarioSelecionadoInfo" class="usuario-selecionado-chip" style="display:none">
         <div class="av-mini" id="avSelDireto"></div>
@@ -366,9 +373,10 @@
     </div>
     <div id="secaoGrupo" style="display:none">
       <input type="text" class="campo-modal" id="inputNomeGrupo" placeholder="Nome do grupo...">
-      <span class="label-modal">Selecionar membros:</span>
+      <span class="label-modal">Marque as pessoas do grupo:</span>
       <div id="chipsMembros" class="chips-membros"></div>
-      <div id="membrosGrupoLista" class="lista-membros-modal"></div>
+      <input type="text" class="campo-modal" id="inputBuscaMembroGrupo" placeholder="Filtrar pelo nome..." oninput="carregarListaUsuariosGrupo()" autocomplete="off">
+      <div id="membrosGrupoLista" class="lista-membros-modal" role="listbox" aria-multiselectable="true" aria-label="Colegas para o grupo"></div>
     </div>
     <div class="modal-gen-botoes" style="margin-top:18px;">
       <button class="btn-gen-cancelar" onclick="closeModal('modalNovaConversa')">Cancelar</button>
@@ -399,7 +407,7 @@
     <div class="legenda-papeis"><b>Administrador:</b> adiciona e remove pessoas, muda papéis, renomeia e apaga o grupo e qualquer mensagem. <b>Comentador:</b> envia mensagens e arquivos. <b>Leitor:</b> só lê e baixa arquivos.</div>
     <div id="secaoAdicionarMembros" style="display:none">
       <div class="grupo-secao-titulo">Adicionar pessoas</div>
-      <input type="text" class="campo-modal" id="inputAddMembro" placeholder="Buscar colega pelo nome..." oninput="renderCandidatosGrupo(this.value)" autocomplete="off">
+      <input type="text" class="campo-modal" id="inputAddMembro" placeholder="Filtrar pelo nome..." oninput="renderCandidatosGrupo(this.value)" autocomplete="off">
       <div id="candidatosGrupo" class="resultados-busca-modal" style="display:none"></div>
     </div>
     <div class="acoes-grupo" id="acoesGrupo"></div>
@@ -510,7 +518,7 @@
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611111124"></script>
+<script src="saga_ui.js?v=202611111138"></script>
 <script>
 // ===== CLIENTE SUPABASE =====
 var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
@@ -1523,13 +1531,23 @@ function atualizarPreviewConversa(msg) {
 function abrirModalNovaConversa() {
   state.novaConversa = { tipo: 'direto', usuarioSelecionado: null, membrosGrupo: [] };
   document.getElementById('inputBuscaUsuario').value = '';
-  document.getElementById('resultadosBuscaUsuario').innerHTML = '';
-  document.getElementById('resultadosBuscaUsuario').style.display = 'none';
   document.getElementById('usuarioSelecionadoInfo').style.display = 'none';
   document.getElementById('inputNomeGrupo').value = '';
+  document.getElementById('inputBuscaMembroGrupo').value = '';
   document.getElementById('chipsMembros').innerHTML = '';
   toggleTipoConversa('direto');
+  buscarUsuariosModal('');
   openModal('modalNovaConversa');
+}
+
+// 11/11 (Dr. Victor, T155): ao começar conversa ou grupo, a lista de TODOS os colegas com acesso ao SAGA
+// já aparece aberta (em ordem alfabética); digitar só filtra. Conversa direta: escolhe uma pessoa; grupo: marca várias.
+function semAcentoChat(t){ return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+function colegasParaEscolher(termo, excluir){
+  var t = semAcentoChat(termo);
+  return (state.colegas || []).filter(function(u){
+    return (excluir || []).indexOf(u.id) === -1 && (!t || semAcentoChat(u.nome_completo).indexOf(t) !== -1);
+  });
 }
 
 function toggleTipoConversa(tipo) {
@@ -1541,34 +1559,28 @@ function toggleTipoConversa(tipo) {
   if (tipo === 'grupo') carregarListaUsuariosGrupo();
 }
 
-var _buscaTimeout = null;
 var _resultadosBusca = [];
+var ICO_CHECK_CHAT = '<svg class="check-membro" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function buscarUsuariosModal(termo) {
-  clearTimeout(_buscaTimeout);
   var el = document.getElementById('resultadosBuscaUsuario');
-  if (!termo || termo.length < 2) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  _buscaTimeout = setTimeout(async function(){
-    var res = await _sb.from('usuarios').select('id,nome_completo').eq('ativo', true).not('auth_user_id', 'is', null)
-      .neq('id', state.meuInternoId).ilike('nome_completo', '%' + termo + '%').limit(10);
-    if (!res.data || !res.data.length) {
-      el.style.display = 'block';
-      el.innerHTML = '<div class="sem-resultado-busca">Nenhum usuario encontrado.</div>';
-      return;
-    }
-    el.style.display = 'block';
-    _resultadosBusca = res.data;
-    el.innerHTML = res.data.map(function(u, i){
-      return '<div class="item-busca-modal" onclick="selecionarUsuarioDireto(_resultadosBusca[' + i + '])">' +
-        '<div class="av-mini" data-saga-nome="' + esc(u.nome_completo) + '">' + esc(iniciais(u.nome_completo)) + '</div>' +
-        '<span>' + esc(u.nome_completo) + '</span></div>';
-    }).join('');
-  }, 300);
+  var lista = colegasParaEscolher(termo);
+  var sel = state.novaConversa && state.novaConversa.usuarioSelecionado;
+  _resultadosBusca = lista;
+  el.style.display = 'block';
+  el.setAttribute('role', 'listbox');
+  el.setAttribute('aria-label', 'Colegas');
+  if (!lista.length) { el.innerHTML = '<div class="sem-resultado-busca">' + ((state.colegas || []).length ? 'Nenhum colega com esse nome.' : 'Nenhum colega com acesso ao SAGA ainda.') + '</div>'; return; }
+  el.innerHTML = lista.map(function(u, i){
+    var on = !!(sel && sel.id === u.id);
+    return '<div class="item-busca-modal' + (on ? ' selecionado' : '') + '" role="option" aria-selected="' + on + '" tabindex="0" onclick="selecionarUsuarioDireto(_resultadosBusca[' + i + '])" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}">' +
+      '<div class="av-mini" data-saga-nome="' + esc(u.nome_completo) + '">' + esc(iniciais(u.nome_completo)) + '</div>' +
+      '<span>' + esc(u.nome_completo) + '</span>' + ICO_CHECK_CHAT + '</div>';
+  }).join('');
 }
 
 function selecionarUsuarioDireto(u) {
   state.novaConversa.usuarioSelecionado = u;
-  document.getElementById('inputBuscaUsuario').value = u.nome_completo;
-  document.getElementById('resultadosBuscaUsuario').style.display = 'none';
+  buscarUsuariosModal(document.getElementById('inputBuscaUsuario').value);
   var info = document.getElementById('usuarioSelecionadoInfo');
   info.style.display = 'flex';
   document.getElementById('avSelDireto').textContent = iniciais(u.nome_completo);
@@ -1579,17 +1591,16 @@ function limparSelecaoDireta() {
   state.novaConversa.usuarioSelecionado = null;
   document.getElementById('inputBuscaUsuario').value = '';
   document.getElementById('usuarioSelecionadoInfo').style.display = 'none';
+  buscarUsuariosModal('');
 }
 
 function carregarListaUsuariosGrupo() {
   var lista = document.getElementById('membrosGrupoLista');
-  var todos = Object.entries(state.usuarios)
-    .filter(function(e){ return e[0] !== state.meuInternoId; })
-    .map(function(e){ return { id: e[0], nome_completo: e[1] }; })
-    .sort(function(a,b){ return a.nome_completo.localeCompare(b.nome_completo); });
+  var todos = colegasParaEscolher((document.getElementById('inputBuscaMembroGrupo') || {}).value || '');
+  if (!todos.length) { lista.innerHTML = '<div class="sem-resultado-busca">' + ((state.colegas || []).length ? 'Nenhum colega com esse nome.' : 'Nenhum colega com acesso ao SAGA ainda.') + '</div>'; return; }
   lista.innerHTML = todos.map(function(u){
     var sel = state.novaConversa.membrosGrupo.indexOf(u.id) !== -1;
-    return '<div class="item-membro-modal ' + (sel ? 'selecionado' : '') + '" onclick="toggleMembro(\'' + u.id + '\')">' +
+    return '<div class="item-membro-modal ' + (sel ? 'selecionado' : '') + '" role="option" aria-selected="' + sel + '" tabindex="0" onclick="toggleMembro(\'' + u.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}">' +
       '<div class="av-mini" data-saga-nome="' + esc(u.nome_completo) + '">' + esc(iniciais(u.nome_completo)) + '</div>' +
       '<span>' + esc(u.nome_completo) + '</span>' +
       '<svg class="check-membro" width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
@@ -1798,6 +1809,7 @@ function renderGerenciarGrupo() {
   }).join('');
 
   document.getElementById('secaoAdicionarMembros').style.display = gerencia ? 'block' : 'none';
+  if (gerencia) renderCandidatosGrupo(document.getElementById('inputAddMembro').value);
 
   var acoes = ['<button class="btn-gen-cancelar" onclick="closeModal(\'modalGrupo\')">Fechar</button>'];
   if (conv.souMembro) acoes.push('<button class="btn-gen-cancelar" style="color:var(--danger)" onclick="closeModal(\'modalGrupo\');openModal(\'modalSairGrupo\')">Sair do grupo</button>');
@@ -1843,11 +1855,8 @@ function renderCandidatosGrupo(termo) {
   var el = document.getElementById('candidatosGrupo');
   var conv = state.conversaAtiva;
   var atuais = (conv.participantes || []).map(function(p){ return p.usuario_id; });
-  var t = String(termo || '').trim().toLowerCase();
-  if (t.length < 2) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  var lista = Object.keys(state.usuarios).filter(function(id){
-    return atuais.indexOf(id) === -1 && state.usuarios[id].toLowerCase().indexOf(t) !== -1;
-  }).slice(0, 10);
+  // 11/11 (T155): a lista já aparece inteira; digitar só filtra
+  var lista = colegasParaEscolher(termo, atuais).map(function(u){ return u.id; });
   el.style.display = 'block';
   el.innerHTML = lista.length
     ? lista.map(function(id){
@@ -1883,8 +1892,12 @@ async function init() {
       state.souAdminSistema = !!rp.data.eh_administrador;
     }
 
-    var ru = await _sb.from('usuarios').select('id,nome_completo').eq('ativo', true);
+    var ru = await _sb.from('usuarios').select('id,nome_completo,auth_user_id').eq('ativo', true);
     (ru.data || []).forEach(function(u){ state.usuarios[u.id] = u.nome_completo; });
+    // colegas que já entram no SAGA (os pré-cadastros sem convite aceito ficam de fora), em ordem alfabética
+    state.colegas = (ru.data || []).filter(function(u){ return u.auth_user_id && u.id !== state.meuInternoId && u.nome_completo; })
+      .map(function(u){ return { id: u.id, nome_completo: u.nome_completo }; })
+      .sort(function(a, b){ return a.nome_completo.localeCompare(b.nome_completo, 'pt-BR'); });
 
     await carregarConversas();
 
