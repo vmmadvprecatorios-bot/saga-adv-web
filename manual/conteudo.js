@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.4",
+  versao: "1.5",
   data: "11/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.5", data: "11/11/2026", mudou: "Ponto: aba Acessos e coluna \"Entrou no sistema\" (só o administrador), com o aviso no sino na primeira entrada do dia de cada colaborador." },
     { versao: "1.4", data: "11/11/2026", mudou: "Chat Interno: em \"+ Nova conversa ou grupo\", a lista dos colegas já aparece aberta para escolher (uma pessoa na conversa direta; várias no grupo)." },
     { versao: "1.3", data: "11/11/2026", mudou: "Minhas Tarefas: coluna sempre do tribunal do processo, coluna \"Automática\", colunas sem tarefa aberta ficam ocultas (linha \"Mostrar\"), etiqueta do estado e botão do tribunal no cartão, janela da tarefa em duas partes. Intimações: Justiça Federal na coluna do TRF com a etiqueta do estado, tribunais sem intimação aberta ocultos, link de cada seção do e-Proc. Primeiros passos: o menu da esquerda fica no lugar ao trocar de tela." },
     { versao: "1.2", data: "11/11/2026", mudou: "Manual com capítulos e partes que abrem e fecham e índice que recolhe; Sugestões de melhoria em Cartões, Kanban e Lista, com filtros de situação e de quem sugeriu; Treinamentos: o administrador exclui." },
@@ -208,6 +209,19 @@ window.SAGA_MANUAL = {
             "Os relatórios chegam sozinhos por e-mail ao gestor: o **diário** às 20h dos dias úteis, o **semanal** na sexta e o de **fechamento** no dia 25.",
             "Em **Cadastro** e nas configurações do Ponto ficam a jornada de cada um, os feriados e os horários dos lembretes."
           ]
+        },
+        { id: "acessos", titulo: "Para o administrador: entradas no sistema (aba Acessos)",
+          quando: "Para conferir a que horas cada colaborador entrou no SAGA e comparar com a hora em que bateu o ponto (por exemplo, com as câmeras do escritório). Só o administrador geral vê.",
+          passos: [
+            "Na **primeira entrada do dia** de cada colaborador, o sino avisa: \"Fulano entrou no sistema às 08:02 (ponto ainda não batido)\", com o aparelho. Clicar no aviso abre a aba **Acessos**.",
+            "No Ponto, abra a aba **Acessos**. Escolha [[Dia]] (com as setas ou o calendário) ou [[Últimos 7 dias]].",
+            "Para cada colaborador aparecem: a hora em que **entrou no sistema**, a hora em que **bateu o ponto** e a **diferença** (verde quando foram juntos; amarelo ou vermelho quando o ponto veio depois; azul quando veio antes).",
+            "Ao lado: **como entrou** (login com senha, com o Google ou já estava logado), o **aparelho**, a **rede (IP)** e as outras entradas do dia. Tentativas barradas pelo controle de horário e local aparecem em vermelho embaixo do nome.",
+            "A aba se atualiza sozinha a cada 30 segundos. Na aba **Equipe**, a coluna **Entrou no sistema** mostra a mesma hora ao lado das batidas."
+          ],
+          img: "ponto_acessos",
+          marcas: ["Aba Acessos (só o administrador vê).", "Escolher o dia ou os últimos 7 dias.", "Entrou no sistema, bateu o ponto e a diferença entre os dois.", "Como entrou, aparelho e rede (IP)."],
+          atencao: ["Dias antes de 11/11/2026 mostram a hora do registro de acessos antigo, sem aparelho nem IP.", "O administrador não aparece na própria lista."]
         }
       ]
     },
