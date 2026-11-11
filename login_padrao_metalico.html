@@ -276,7 +276,7 @@ setTimeout(function(){document.documentElement.classList.remove('saga-entrando')
     .rodape-esquerdo{display:none;}
   }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611111138">
+<link rel="stylesheet" href="saga_tema.css?v=202611111154">
 <style>@view-transition{navigation:auto;}::view-transition-group(root){animation-duration:.12s;}</style>
 </head>
 <body>
@@ -453,6 +453,7 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
   }
   var erroGoogle = new URLSearchParams(window.location.search).get('error_description') || new URLSearchParams((window.location.hash || '').slice(1)).get('error_description');
   if (erroGoogle) {
+    try { sessionStorage.removeItem('saga-login-agora'); } catch (e) {}
     showToast(/cadastrad/i.test(erroGoogle) ? 'Este e-mail não está cadastrado na equipe do escritório. Use o e-mail funcional cadastrado pelo administrador.' : 'Não foi possível entrar com o Google. Tente de novo.', 'erro');
     try { history.replaceState(null, '', window.location.pathname); } catch (e) {}
   }
@@ -542,8 +543,9 @@ document.getElementById('btnGoogle').addEventListener('click', async function ()
   var btn = this;
   btn.disabled = true;
   var volta = window.location.href.split('?')[0].split('#')[0];
+  try { sessionStorage.setItem('saga-login-agora', 'google'); } catch (e) {}
   var r = await _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: volta, queryParams: { prompt: 'select_account' } } });
-  if (r.error) { btn.disabled = false; showToast('Não foi possível abrir o login do Google.', 'erro'); }
+  if (r.error) { btn.disabled = false; try { sessionStorage.removeItem('saga-login-agora'); } catch (e) {} showToast('Não foi possível abrir o login do Google.', 'erro'); }
 });
 
 // ================================================================
@@ -596,6 +598,8 @@ document.getElementById('formLogin').addEventListener('submit', async function (
 
     // Marca a entrada como atividade, para a contagem de inatividade do saga_ui.js
     try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
+    // Entrada no sistema (bloco 157): a 1ª tela grava este login com a hora do servidor
+    try { sessionStorage.setItem('saga-login-agora', 'senha'); } catch (e) {}
     showToast('Acesso autorizado. Redirecionando...', 'sucesso');
     var destino = await telaInicial();
     setTimeout(function () {
