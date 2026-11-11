@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.6",
+  versao: "1.7",
   data: "11/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.7", data: "11/11/2026", mudou: "Cliente repetido: ao cadastrar, o SAGA procura ficha com o mesmo CPF, o mesmo nome ou nome parecido e abre a janela \"Essa pessoa já tem ficha?\" (\"Usar esta ficha\"); mesmo CPF não cria outra; ficha separada só com o motivo escrito." },
     { versao: "1.6", data: "11/11/2026", mudou: "Minhas Tarefas: o atalho do tribunal (copia o número e abre o processo no site do tribunal) fica à vista no cartão, na Lista e na janela da tarefa (\"Site do tribunal\"), como nas Intimações." },
     { versao: "1.5", data: "11/11/2026", mudou: "Ponto: aba Acessos e coluna \"Entrou no sistema\" (só o administrador), com o aviso no sino na primeira entrada do dia de cada colaborador." },
     { versao: "1.4", data: "11/11/2026", mudou: "Chat Interno: em \"+ Nova conversa ou grupo\", a lista dos colegas já aparece aberta para escolher (uma pessoa na conversa direta; várias no grupo)." },
@@ -273,6 +274,7 @@ window.SAGA_MANUAL = {
           passos: [
             "Clique em [[Novo Processo]].",
             "Em **Pessoa (cliente)**, procure pelo nome ou CPF. Não achou? Clique em **Cadastrar nova pessoa**.",
+            "Se o SAGA achar uma ficha com o **mesmo CPF**, o **mesmo nome** ou um **nome parecido**, abre a janela **Essa pessoa já tem ficha?** com os processos de cada ficha. É a mesma pessoa? Clique em [[Usar esta ficha]]: o processo novo vira mais um cartão dela. É outra pessoa com nome parecido? Clique em **É outra pessoa... criar ficha separada** e escreva o motivo.",
             "Preencha o **número do processo** (se já existir), a **área do direito** e o **tipo de ação**, o **status inicial** e o **responsável**.",
             "Valor da causa e honorários (%), se souber. Em **Outros clientes ou herdeiros** acrescente quem mais faz parte.",
             "Em **De onde veio o cliente?** marque a rede social ou a campanha. Dica: cole a 1ª mensagem do cliente; o código da campanha (ex.: [IR27]) marca tudo sozinho.",
@@ -280,7 +282,7 @@ window.SAGA_MANUAL = {
           ],
           img: "novo_processo",
           marcas: ["Cliente (procure antes de cadastrar, para não repetir).", "Número do processo, se já houver.", "De onde veio o cliente (rede social, campanha ou indicação)."],
-          atencao: ["Antes de cadastrar, procure o CPF na busca do alto: o cliente pode já existir com outro processo."]
+          atencao: ["Antes de cadastrar, procure o CPF na busca do alto: o cliente pode já existir com outro processo.", "Mesmo CPF: o SAGA não deixa criar outra ficha. Use a ficha que já existe.", "Ficha separada de propósito só com o motivo escrito: ele fica no Registro de atividades e a ficha mostra a etiqueta \"Ficha separada de propósito\".", "A mesma janela aparece em \"Nova pessoa\" da ficha, nas partes do processo (herdeiros) e no \"Incorporar\" das Intimações."]
         },
         { id: "planilhas", titulo: "Importar planilha e distribuir fichas",
           quando: "Quando chega uma lista nova de possíveis clientes ou é preciso dividir a lista entre a equipe.",
@@ -765,7 +767,7 @@ window.SAGA_MANUAL = {
     ["Fiz uma mudança e não aparece para mim.", "Aperte F5. Se não resolver, Ctrl+Shift+R (recarrega tudo)."],
     ["Não vejo uma tela ou um botão que o colega vê.", "É permissão. Peça ao administrador para liberar no Painel de permissões."],
     ["Errei uma informação.", "Edite. Colaborador não apaga; a edição fica registrada com o antes e o depois. Se precisar mesmo apagar, peça ao administrador."],
-    ["Cadastrei o cliente duas vezes.", "Avise o administrador: ele junta ou remove o repetido. Antes de cadastrar, procure o CPF na busca do alto."],
+    ["Cadastrei o cliente duas vezes.", "Desde 11/11 o SAGA avisa antes de criar (janela \"Essa pessoa já tem ficha?\") e não aceita o mesmo CPF duas vezes. Se mesmo assim ficou repetido, avise o administrador: ele junta ou desativa o repetido."],
     ["Esqueci a senha.", "Na tela de entrada, clique em Esqueci a senha e siga o e-mail."],
     ["O SAGA me tirou do sistema.", "Ficou muito tempo parado ou está fora do horário/local liberado. Entre de novo; se não deixar, fale com o administrador."],
     ["Esqueci de bater o ponto.", "Faça a justificativa no Ponto, no mesmo dia, com o horário certo."],
