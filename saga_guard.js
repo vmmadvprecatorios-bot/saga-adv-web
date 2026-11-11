@@ -312,6 +312,9 @@
       if(!irmaos.length)return;
       var antes=ultimoAtivo.get(grupo);
       if(!antes){var pn=ultimoPorNome.get(nomeGrupo(grupo));if(pn&&!pn.grupo.isConnected)antes=pn;}
+      // (11/11) Janela que está abrindo agora (ex.: abrir outra sugestão): o destaque já nasce no lugar certo,
+      // sem deslizar do que estava marcado na janela anterior (dentro da janela que abria, parecia tremer)
+      if(antes){var jan=grupo.closest('[role="dialog"],.mo,.modal-overlay');if(jan&&visivelAntes.get(jan)===false)antes=null;}
       // O destaque mudou de botao (troca de classe ou botoes redesenhados): desliza do antigo para o novo
       if(antes&&antes.el!==el&&!(antes.el.isConnected&&ATIVO.test(antes.el.className))&&!(!antes.el.isConnected&&antes.txt===el.textContent)){ultimaTrocaGrupo=Date.now();deslizar(grupo,antes,el);}
       lembrar(grupo,el);
@@ -371,12 +374,31 @@
     setTimeout(function(){if(copia.isConnected)copia.remove();},600);
   }
   // Chamado na hora da mudanca (antes de a tela ser desenhada), para a janela nao sumir de uma vez
+  // (11/11, Dr. Victor) Janela que faz o PRÓPRIO movimento pela transição do CSS (opacidade que vai de 0 a 1 e volta):
+  // o saga_guard não anima por cima. Antes, ao fechar, a janela ainda estava opaca no primeiro quadro e contava como
+  // "abrindo": o saga_guard tocava o movimento de ABRIR e ela fechava, abria de novo e fechava (Sugestões, Pedidos de busca...).
+  // Ao abrir, se o primeiro quadro já tinha um pouco de opacidade, entravam os dois movimentos juntos (tremia).
+  // Devolve null (sem transição própria em andamento) ou se a janela vai TERMINAR visível (true) ou fechada (false).
+  function movimentoProprio(el){
+    if(!el.getAnimations||typeof CSSTransition==='undefined')return null;
+    var fim=null;
+    el.getAnimations().forEach(function(a){
+      if(!(a instanceof CSSTransition)||a.playState!=='running'||a.transitionProperty!=='opacity')return;
+      try{var k=a.effect.getKeyframes(),ult=k[k.length-1];if(ult&&ult.opacity!==undefined&&ult.opacity!=='')fim=parseFloat(ult.opacity)>=0.05;}catch(e){}
+    });
+    if(fim===true){var cs=getComputedStyle(el);if(cs.display==='none')fim=false;}
+    return fim;
+  }
   function verFechamentos(lista){
     lista.forEach(function(m){
       if(m.type!=='attributes')return;
       var el=m.target;
       if(visivelAntes.get(el)!==true||!ehJanela(el))return;
-      try{if(!estaVisivel(el)){visivelAntes.set(el,false);fecharJanela(el);}}catch(e){}
+      try{
+        var mp=movimentoProprio(el);
+        if(mp!==null){visivelAntes.set(el,mp);return;} // o próprio CSS da janela faz a saída suave
+        if(!estaVisivel(el)){visivelAntes.set(el,false);fecharJanela(el);}
+      }catch(e){}
     });
   }
   // Janelas (09/11, Dr. Victor): abrem na curva do sistema, sem a mola que passava do ponto e voltava
@@ -455,6 +477,9 @@
     try{var prof=function(n){var d=0;while(n&&n.parentNode){d++;n=n.parentNode;}return d;};if(!(window.__sagaSemConteudoAte>Date.now()))animarConteudo(novos.filter(function(n){return n&&n.nodeType===1;}).map(function(n){return [prof(n),n];}).sort(function(a,b){return a[0]-b[0];}).map(function(x){return x[1];}));}catch(e){}
     itens.forEach(function(el){try{
       if(!el.isConnected||!ehJanela(el))return;
+      // abrindo ou fechando pela transição do próprio CSS: só anota como ela vai terminar (sem animar por cima)
+      var mp=movimentoProprio(el);
+      if(mp!==null){visivelAntes.set(el,mp);if(mp)displayAberto.set(el,getComputedStyle(el).display);return;}
       var antes=visivelAntes.get(el),agora=estaVisivel(el);
       visivelAntes.set(el,agora);
       if(agora)displayAberto.set(el,getComputedStyle(el).display);

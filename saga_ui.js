@@ -208,7 +208,7 @@
       '#topbarSaga .sg-chave i{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .18s ease;}'+
       '#topbarSaga .sg-ligada .sg-chave{background:var(--gold) !important;}#topbarSaga .sg-ligada .sg-chave i{transform:translateX(13px);}'+
       /* ===== SIDEBAR: aparencia fixa, retratil, sticky ===== */
-      '#sidebarSaga{width:208px !important;background:var(--navy-2) !important;border-right:1px solid var(--border) !important;padding:22px 0 !important;position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;flex-grow:0 !important;flex-shrink:0 !important;flex-basis:208px !important;transition:width .22s ease,min-width .22s ease,flex-basis .22s ease,padding .22s ease,opacity .18s ease !important;}'+
+      '#sidebarSaga{width:208px !important;background:var(--navy-2) !important;border-right:1px solid var(--border) !important;padding:22px 0 !important;position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;overscroll-behavior-y:contain !important;flex-grow:0 !important;flex-shrink:0 !important;flex-basis:208px !important;transition:width .22s ease,min-width .22s ease,flex-basis .22s ease,padding .22s ease,opacity .18s ease !important;}'+
       '[data-theme="light"] #sidebarSaga{background:#ffffff !important;border-right-color:var(--border) !important;}'+
       // recolhido no computador = faixa de 64 px só com os ícones; passando o mouse abre por cima (sem empurrar a tela)
       '@media(min-width:761px){#sidebarSaga{transition:width .3s cubic-bezier(.22,.78,.25,1),min-width .3s cubic-bezier(.22,.78,.25,1),margin-right .3s cubic-bezier(.22,.78,.25,1),box-shadow .3s ease !important;}'+
@@ -1696,6 +1696,8 @@
       if(grupo&&grupo.classList.contains('nav-grupo'))grupo.querySelectorAll('.nav-item').forEach(function(it){if(!it.classList.contains('sem-permissao'))algum=true;});
       sec.classList.toggle('sem-permissao',!algum);
     });
+    // itens que apareceram ou sumiram mudam a altura do menu: volta para a altura guardada
+    restaurarRolagemMenu();
   }
   // Logo que o menu e desenhado: usa as permissoes guardadas da ultima vez (mesmo usuario).
   // Sem guardadas (primeiro acesso ou outro usuario), as telas com restricao ficam ocultas ate o banco responder.
@@ -1729,6 +1731,7 @@
     if(!ok&&!_minhasPermissoes){
       // Sem resposta do banco: mostra o menu completo (o banco continua bloqueando os dados)
       document.querySelectorAll('#sidebarSaga .perm-pendente').forEach(function(el){el.classList.remove('perm-pendente');});
+      restaurarRolagemMenu();
       return;
     }
     pintarMenuPermissoes();
@@ -1782,6 +1785,46 @@
     if(exato)return exato;
     return achou;
   }
+  // ===== Rolagem do menu lateral (11/11, pedido do Dr. Victor) =====
+  // (1) A tela nova abre com o menu lateral na MESMA altura em que ele estava (antes voltava para o topo e quem
+  //     clicava em Permissões ou Treinamentos, lá embaixo, perdia o lugar). A altura fica guardada nesta aba
+  //     (sessionStorage) a cada rolagem e volta antes da primeira imagem da tela nova (o menu não pula).
+  // (2) Mouse em cima do menu: a roda rola só o menu. No fim (ou no começo) dele, ou quando ele cabe inteiro
+  //     na tela, a página de trás não rola (antes a rolagem "passava" para a tela aberta).
+  var CHAVE_ROLAGEM_MENU='saga-menu-rolagem';
+  var _rolagemMenu={ligado:false,desejada:lerRolagemMenu(),aplicada:-1,mexeu:false};
+  function lerRolagemMenu(){var v=0;try{v=parseFloat(sessionStorage.getItem(CHAVE_ROLAGEM_MENU)||'0')||0;}catch(e){}return v>0?v:0;}
+  // põe o menu na altura guardada (só enquanto a pessoa ainda não rolou o menu nesta tela)
+  function restaurarRolagemMenu(){
+    var sb=document.getElementById('sidebarSaga');
+    if(!sb||!_rolagemMenu.ligado||_rolagemMenu.mexeu)return;
+    if(Math.abs(sb.scrollTop-_rolagemMenu.desejada)>=1)sb.scrollTop=_rolagemMenu.desejada;
+    _rolagemMenu.aplicada=Math.round(sb.scrollTop);
+  }
+  function ligarRolagemMenu(sb){
+    if(sb.dataset.rolagem)return;sb.dataset.rolagem='1';
+    _rolagemMenu.ligado=true;
+    var agendado=false;
+    sb.addEventListener('scroll',function(){
+      if(agendado)return;agendado=true;
+      requestAnimationFrame(function(){
+        agendado=false;
+        var v=Math.round(sb.scrollTop);
+        if(v===_rolagemMenu.aplicada)return; // é a própria volta à altura guardada, não a pessoa rolando
+        _rolagemMenu.aplicada=-1;_rolagemMenu.mexeu=true;_rolagemMenu.desejada=v;
+        try{sessionStorage.setItem(CHAVE_ROLAGEM_MENU,String(v));}catch(e){}
+      });
+    },{passive:true});
+    sb.addEventListener('wheel',function(e){
+      if(e.ctrlKey||window.innerWidth<=760)return; // Ctrl+roda é o zoom do navegador; no celular o menu aberto já trava a página
+      var dy=e.deltaY;if(!dy||Math.abs(e.deltaX)>Math.abs(dy))return;
+      var max=sb.scrollHeight-sb.clientHeight;
+      if(max<1||(dy<0&&sb.scrollTop<=0)||(dy>0&&sb.scrollTop>=max-1))e.preventDefault();
+    },{passive:false});
+    // volta pela seta do navegador (tela guardada na memória dele): o menu fica na altura da última tela
+    global.addEventListener('pageshow',function(ev){if(ev.persisted){_rolagemMenu.mexeu=false;_rolagemMenu.desejada=lerRolagemMenu();restaurarRolagemMenu();}});
+    restaurarRolagemMenu();
+  }
   // Cada item do menu vira um link (<a href>): clique normal troca de tela com a transicao;
   // Ctrl/Cmd+clique, clique do meio ou "Abrir em nova aba" abrem o sistema em outra aba do navegador
   function linksDoMenu(sb){
@@ -1828,6 +1871,8 @@
       ligarTema();
       ligarPrivacidade();
       ligarHamburger();
+      // depois do ligarHamburger: no celular ele muda o menu de lugar (e mudar de lugar zera a rolagem)
+      if(sb)ligarRolagemMenu(sb);
     }
     var tela=telaAtiva||telaDoEndereco();
     if(tela){
