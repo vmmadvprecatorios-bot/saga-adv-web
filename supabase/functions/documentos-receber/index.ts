@@ -4,7 +4,7 @@
 // fotos e PDFs que o Dr. Victor manda na conversa.
 // Chamada só com o cabeçalho x-saga-chave = chave do cofre do banco (saga_import_chave), como a importar-planilha.
 // Corpo (JSON): { processo_id, pessoa_id, pasta_id?, usuario_id, nome_arquivo, tipo_conteudo?, conteudo_base64 }
-// Nada é apagado por aqui.
+// { acao: "liberar_espaco", pessoa_id }: apaga do armazenamento só o que já foi marcado como removido no banco.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
@@ -19,6 +19,21 @@ Deno.serve(async (req) => {
     const chave = ch.data ? String(ch.data) : "";
     if (!chave || req.headers.get("x-saga-chave") !== chave) return json({ ok: false, mensagem: "Chave inválida." }, 403);
     const c = await req.json();
+
+    // Liberar espaço: apaga do armazenamento só os arquivos de documentos desta pessoa que JÁ foram
+    // marcados como removidos (excluido_logico = true, feito antes no banco por quem pode apagar).
+    // A linha em documentos fica (registro do que existiu).
+    if (c.acao === "liberar_espaco") {
+      if (!UUID.test(String(c.pessoa_id || ""))) return json({ ok: false, mensagem: "Falta pessoa_id." }, 400);
+      const d = await admin.from("documentos").select("caminho_storage").eq("pessoa_id", c.pessoa_id).eq("excluido_logico", true);
+      if (d.error) return json({ ok: false, mensagem: d.error.message }, 500);
+      const caminhos = (d.data || []).map((x) => x.caminho_storage).filter(Boolean);
+      if (!caminhos.length) return json({ ok: true, removidos: 0 });
+      const r = await admin.storage.from("documentos-clientes").remove(caminhos);
+      if (r.error) return json({ ok: false, mensagem: r.error.message }, 500);
+      return json({ ok: true, removidos: (r.data || []).length });
+    }
+
     for (const k of ["processo_id", "pessoa_id", "usuario_id"]) if (!UUID.test(String(c[k] || ""))) return json({ ok: false, mensagem: "Falta " + k + "." }, 400);
     if (c.pasta_id && !UUID.test(String(c.pasta_id))) return json({ ok: false, mensagem: "pasta_id inválida." }, 400);
     const nome = String(c.nome_arquivo || "").trim();
@@ -34,7 +49,7 @@ Deno.serve(async (req) => {
 
     const bin = Uint8Array.from(atob(String(c.conteudo_base64)), (x) => x.charCodeAt(0));
     if (bin.length > LIMITE) return json({ ok: false, mensagem: "Arquivo maior que 25 MB." }, 400);
-    const seguro = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const seguro = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "_");
     const caminho = c.processo_id + "/" + crypto.randomUUID() + "_" + seguro;
     const i = nome.lastIndexOf(".");
     const tipo = i > -1 ? nome.slice(i + 1).toLowerCase() : null;
