@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611102356"></script>
+<script src="saga_guard.js?v=202611110046"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Sugestões de melhoria</title>
@@ -22,7 +22,6 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
 .btn[hidden]{display:none}
 .btn.perigo{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 40%,transparent)}
-.btn.grande{height:38px;padding:0 16px;font-size:12.5px}
 .barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 .busca{flex:1 1 220px;min-width:180px;height:36px;border-radius:11px;border:1px solid var(--border-soft);background:var(--panel);padding:0 13px;font-size:12.5px;outline:0}
 .busca:focus,.sel:focus{border-color:var(--gold)}
@@ -39,24 +38,10 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .kpi:hover,.kpi.active{border-color:var(--c)}
 #area{transition:opacity .26s cubic-bezier(.22,.78,.25,1)}
 #area.trocando{opacity:0}
-/* painéis por aba */
-.paineis{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;align-items:start}
-.painel{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid var(--border-soft);border-radius:14px;background:color-mix(in srgb,var(--panel) 70%,transparent);min-width:0}
-.painel-cab{display:flex;align-items:center;gap:8px;padding:2px 4px 4px;font-size:12px;font-weight:700;color:var(--text)}
-.painel-cab i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:0 0 auto}
-.painel-cab .nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
-.painel-cab .nome:hover{color:var(--gold-light,var(--gold))}
-.painel-cab .qtd{padding:1px 8px;border-radius:999px;background:color-mix(in srgb,var(--text) 8%,transparent);font-size:10.5px;font-weight:600;color:var(--muted)}
-.mais{width:26px;height:26px;border-radius:8px;border:1px solid var(--border-soft);color:var(--muted);font-size:15px;line-height:1;flex:0 0 auto}
-.mais:hover{border-color:var(--gold);color:var(--text)}
-.ver-todas{font-size:11px;color:var(--muted);text-align:center;padding:4px;border-radius:8px}
-.ver-todas:hover{color:var(--text);background:color-mix(in srgb,var(--text) 5%,transparent)}
-.sem-sug{margin-top:16px}
-.sem-sug h3{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
-.chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip-area{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;border:1px dashed var(--border-soft);font-size:11px;color:var(--muted)}
-.chip-area i{width:8px;height:8px;border-radius:50%;background:var(--c)}
-.chip-area:hover{border-color:var(--c);color:var(--text)}
+/* cartões (visão padrão, 11/11): menores, em grade */
+.cartoes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-items:start}
+/* botões do topo do mesmo tamanho (11/11, Dr. Victor) */
+.page-head .btn{height:36px;padding:0 14px;font-size:12px}
 /* cartão */
 .sg-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:10px 12px 10px 15px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--panel));font-size:11.5px;cursor:pointer;transition:border-color .3s cubic-bezier(.22,.78,.25,1),box-shadow .3s cubic-bezier(.22,.78,.25,1),transform .3s cubic-bezier(.22,.78,.25,1)}
 .sg-card::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--c)}
@@ -171,9 +156,9 @@ table.lista{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
 .lupa img{max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 20px 60px rgba(0,0,0,.5);transform:scale(.97);transition:transform .34s cubic-bezier(.22,.78,.25,1)}
 .lupa.aberto img{transform:none}
 @media(max-width:1100px){.kanban{grid-template-columns:repeat(var(--cols,6),minmax(230px,260px))}}
-@media(max-width:700px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.paineis{grid-template-columns:1fr}.sel{max-width:none;flex:1 1 140px}.det-imgs img{width:calc(50% - 4px);height:100px}}
+@media(max-width:700px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.cartoes{grid-template-columns:1fr}.sel{max-width:none;flex:1 1 140px}.det-imgs img{width:calc(50% - 4px);height:100px}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611102356">
+<link rel="stylesheet" href="saga_tema.css?v=202611110046">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -188,20 +173,20 @@ table.lista{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="btn" id="sgGerenciar" hidden>Organizar abas</button>
-      <button type="button" class="btn btn-ouro grande" id="sgNova">+ Nova sugestão</button>
+      <button type="button" class="btn btn-ouro" id="sgNova">+ Nova sugestão</button>
     </div>
   </div>
   <div class="resumo" id="sgResumo"></div>
   <div class="barra">
     <div class="pills" id="sgVisoes">
-      <button type="button" class="pill active" data-visao="abas">Por aba</button>
+      <button type="button" class="pill active" data-visao="cartoes">Cartões</button>
       <button type="button" class="pill" data-visao="kanban">Kanban</button>
       <button type="button" class="pill" data-visao="lista">Lista</button>
     </div>
     <select class="sel" id="sgFArea" aria-label="Aba do sistema"><option value="">Todas as abas</option></select>
     <select class="sel" id="sgFSit" aria-label="Situação"></select>
+    <select class="sel" id="sgFQuem" aria-label="Quem sugeriu"><option value="">Todas as pessoas</option></select>
     <input class="busca" id="sgBusca" type="search" placeholder="Buscar pelo título, texto ou nome de quem sugeriu..." autocomplete="off">
-    <label class="chk"><input type="checkbox" id="sgMinhas"> Só as minhas</label>
     <label class="chk"><input type="checkbox" id="sgArquivadas"> Mostrar arquivadas</label>
   </div>
   <div id="area"><div class="vazio">Carregando as sugestões...</div></div>
@@ -249,7 +234,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611102356"></script>
+<script src="saga_ui.js?v=202611110046"></script>
 <script>
 /* =====================================================================
    SAGA · Sugestões de melhoria (bloco 145, 10/11; T94). Pedido do Dr. Victor: toda a equipe sugere melhorias
@@ -258,11 +243,15 @@ window._sb=_sb;
    Gravação só pelas funções sugestao_* do banco. Imagens no lugar privado "sugestoes-imagens", na pasta de quem envia.
    Painéis = etiquetas_catalogo, categoria sugestao_area (o administrador cria, renomeia, reordena e remove aqui).
    ===================================================================== */
-var S={lista:[],areas:[],usuarios:{},eu:null,responder:false,admin:false,visao:'abas',fArea:'',fSit:'',minhas:false,arquivadas:false,busca:'',
+var S={lista:[],areas:[],usuarios:{},eu:null,responder:false,admin:false,visao:'cartoes',fArea:'',fSit:'',fQuem:'',arquivadas:false,busca:'',
   nCom:{},urls:{},vistos:{},det:null,coments:[],novas:[],editando:null,imgsCm:[],destinoImgs:'nova',arrastando:null};
 var SIT=[['nova','Nova','#c9a84c'],['em_analise','Em análise','#2563eb'],['aprovada','Aprovada','#16a34a'],['em_desenvolvimento','Em desenvolvimento','#7c3aed'],
   ['concluida','Concluída','#0d9488'],['nao_aprovada','Não aprovada','#e5484d'],['arquivada','Arquivada','#8a94a8']];
 var SITM={};SIT.forEach(function(s){SITM[s[0]]={nome:s[1],cor:s[2]};});
+// pendentes = ajustes ainda não feitos; concluída = ajuste feito; não aprovada = recusada (11/11)
+var PEND=['nova','em_analise','aprovada','em_desenvolvimento'];
+var DICA_SIT={pendentes:'Ainda não feitas: novas, em análise, aprovadas e em desenvolvimento',concluida:'Concluídas: ajustes feitos',nao_aprovada:'Não aprovadas: recusadas'};
+var NOME_FILTRO={concluida:'Concluídas (ajustes feitos)',nao_aprovada:'Não aprovadas (recusadas)'};
 var BUCKET='sugestoes-imagens',MAX_IMGS=6,LADO_MAX=1600;
 // aba aberta quando a pessoa clicou em "Sugerir uma melhoria" (menu da foto) -> painel correspondente
 var TELA_AREA={ponto:'ponto',processos:'juridico',processos_juridico:'juridico',processos_captacao:'captacao',ficha:'ficha',cartas:'cartas',buscas:'pedidos de busca',
@@ -303,6 +292,7 @@ async function carregar(){
   if(r[0].error){$('area').innerHTML='<div class="vazio">Não foi possível carregar as sugestões: '+esc(r[0].error.message||'')+'</div>';return;}
   S.lista=r[0].data||[];
   S.nCom={};(r[1].data||[]).forEach(function(c){S.nCom[c.sugestao_id]=(S.nCom[c.sugestao_id]||0)+1;});
+  montarQuem();
   await assinarImagens(S.lista.reduce(function(acc,x){return acc.concat((x.imagens||[]).slice(0,3).map(function(i){return i.caminho;}));},[]));
   desenhar();
   if(S.det){var d=sug(S.det);if(d&&$('jDet').classList.contains('aberto'))desenharDetalhe(d,true);}
@@ -325,70 +315,68 @@ function visiveis(){
   return S.lista.filter(function(x){
     if(x.situacao==='arquivada'&&!S.arquivadas&&S.fSit!=='arquivada')return false;
     if(S.fArea&&x.area_id!==S.fArea)return false;
-    if(S.fSit&&x.situacao!==S.fSit)return false;
-    if(S.minhas&&x.criado_por_id!==S.eu)return false;
+    if(S.fSit==='pendentes'){if(PEND.indexOf(x.situacao)<0)return false;}
+    else if(S.fSit&&x.situacao!==S.fSit)return false;
+    if(!quemOk(x))return false;
     if(q&&norm(x.titulo+' '+x.descricao+' '+nomeUsu(x.criado_por_id)+' '+x.numero+' '+area(x.area_id).nome).indexOf(q)<0)return false;
     return true;
   });
+}
+function quemOk(x){return !S.fQuem||(S.fQuem==='eu'?x.criado_por_id===S.eu:x.criado_por_id===S.fQuem);}
+// quem sugeriu: todas as pessoas, só as minhas ou cada colaborador (com quantas sugestões deu)
+function montarQuem(){
+  var sel=$('sgFQuem');if(!sel)return;var cont={};
+  S.lista.forEach(function(x){if(x.criado_por_id)cont[x.criado_por_id]=(cont[x.criado_por_id]||0)+1;});
+  var ids=Object.keys(cont).sort(function(a,b){return String(nomeUsu(a)).localeCompare(String(nomeUsu(b)),'pt-BR');});
+  sel.innerHTML='<option value="">Todas as pessoas</option>'+(S.eu?'<option value="eu">Só as minhas</option>':'')
+    +ids.map(function(id){return '<option value="'+esc(id)+'">'+esc(nomeUsu(id))+' ('+cont[id]+')</option>';}).join('');
+  if(S.fQuem&&S.fQuem!=='eu'&&!cont[S.fQuem])S.fQuem='';
+  sel.value=S.fQuem;
 }
 function ordenar(l){return l.slice().sort(function(a,b){return (b.apoios||[]).length-(a.apoios||[]).length||new Date(b.criado_em)-new Date(a.criado_em);});}
 
 /* ---------- desenho ---------- */
 function desenharResumo(){
-  var base=S.lista.filter(function(x){return (!S.fArea||x.area_id===S.fArea)&&(!S.minhas||x.criado_por_id===S.eu);});
-  var conta={};base.forEach(function(x){conta[x.situacao]=(conta[x.situacao]||0)+1;});
-  $('sgResumo').innerHTML=SIT.filter(function(s){return s[0]!=='arquivada'||conta.arquivada;}).map(function(s){
-    return '<button type="button" class="kpi'+(S.fSit===s[0]?' active':'')+'" style="--c:'+s[2]+'" data-sit="'+s[0]+'" title="Mostrar só: '+esc(s[1])+'"><i></i>'+esc(s[1])+' <b>'+(conta[s[0]]||0)+'</b></button>';
+  var base=S.lista.filter(function(x){return (!S.fArea||x.area_id===S.fArea)&&quemOk(x);});
+  var conta={pendentes:0};base.forEach(function(x){conta[x.situacao]=(conta[x.situacao]||0)+1;if(PEND.indexOf(x.situacao)>=0)conta.pendentes++;});
+  var itens=[['pendentes','Pendentes','#d97706']].concat(SIT.filter(function(s){return s[0]!=='arquivada'||conta.arquivada;}));
+  $('sgResumo').innerHTML=itens.map(function(s){
+    return '<button type="button" class="kpi'+(S.fSit===s[0]?' active':'')+'" style="--c:'+s[2]+'" data-sit="'+s[0]+'" title="Mostrar só: '+esc(DICA_SIT[s[0]]||s[1])+'"><i></i>'+esc(s[1])+' <b>'+(conta[s[0]]||0)+'</b></button>';
   }).join('');
 }
 function cartao(x,compacto){
-  var a=area(x.area_id),s=SITM[x.situacao]||SITM.nova,ap=(x.apoios||[]).length,meuApoio=(x.apoios||[]).indexOf(S.eu)>=0,nc=S.nCom[x.id]||0;
+  var s=SITM[x.situacao]||SITM.nova,ap=(x.apoios||[]).length,meuApoio=(x.apoios||[]).indexOf(S.eu)>=0,nc=S.nCom[x.id]||0,ni=(x.imagens||[]).length;
   var novo=!S.vistos[x.id];
-  var thumbs=(x.imagens||[]).slice(0,3).map(function(i){var u=urlImg(i.caminho);return u?'<img src="'+esc(u)+'" alt="" loading="lazy">':'';}).join('');
   return '<article class="sg-card'+(novo?' entra':'')+'" style="--c:'+s.cor+'" data-id="'+esc(x.id)+'" tabindex="0"'+(S.responder&&S.visao==='kanban'?' draggable="true"':'')+'>'
-    +'<div class="sg-topo"><span class="sg-num">nº '+esc(x.numero)+'</span>'+stHtml(x.situacao)+(compacto?'':areaTag(x.area_id))+'</div>'
+    +'<div class="sg-topo"><span class="sg-num">nº '+esc(x.numero)+'</span>'+stHtml(x.situacao)+areaTag(x.area_id)+'</div>'
     +'<div class="sg-tit">'+esc(x.titulo)+'</div>'
     +(x.descricao?'<div class="sg-desc">'+esc(x.descricao)+'</div>':'')
-    +(thumbs?'<div class="sg-thumbs">'+thumbs+'</div>':'')
-    +(x.resposta?'<div class="sg-resp"><b>Resposta:</b> '+esc(x.resposta)+'</div>':'')
     +'<div class="sg-rod"><span'+(x.criado_por_id===S.eu?' class="sg-mini meu"':'')+'>'+esc(x.criado_por_id===S.eu?'Você':nomeUsu(x.criado_por_id))+' · '+esc(quando(x.criado_em))+'</span><span class="esp"></span>'
+    +(x.resposta?'<span class="sg-mini" title="Já tem resposta">↩</span>':'')+(ni?'<span class="sg-mini" title="Imagens">🖼 '+ni+'</span>':'')
     +'<span class="sg-mini'+(meuApoio?' meu':'')+'" title="Pessoas que também querem">👍 '+ap+'</span><span class="sg-mini" title="Comentários">💬 '+nc+'</span></div>'
     +'</article>';
 }
 function desenhar(){
   desenharResumo();
   var l=ordenar(visiveis()),h='';
-  if(S.visao==='abas')h=htmlPaineis(l);
-  else if(S.visao==='kanban')h=htmlKanban(l);
-  else h=htmlLista(l);
+  if(S.visao==='kanban')h=htmlKanban(l);
+  else if(S.visao==='lista')h=htmlLista(l);
+  else h=htmlCartoes(l);
   $('area').innerHTML=h;
   S.lista.forEach(function(x){S.vistos[x.id]=1;});
 }
-function htmlPaineis(l){
-  var porArea={};l.forEach(function(x){(porArea[x.area_id||'_']=porArea[x.area_id||'_']||[]).push(x);});
-  var ordem=S.areas.filter(function(a){return porArea[a.id];}).map(function(a){return a.id;});
-  if(porArea._)ordem.push('_');
-  var LIM=S.fArea?999:5;
-  var h=ordem.map(function(id){
-    var a=id==='_'?{nome:'Sem aba',cor:'#8a94a8'}:area(id),itens=porArea[id];
-    return '<section class="painel" style="--c:'+esc(a.cor||'#8a94a8')+'"><div class="painel-cab"><i></i><span class="nome" data-filtrar="'+esc(id==='_'?'':id)+'" title="Ver só esta aba">'+esc(a.nome)+'</span><span class="qtd">'+itens.length+'</span>'
-      +(id!=='_'&&a.ativo!==false?'<button type="button" class="mais" data-nova-area="'+esc(id)+'" title="Sugerir nesta aba" aria-label="Sugerir nesta aba">+</button>':'')+'</div>'
-      +itens.slice(0,LIM).map(function(x){return cartao(x,true);}).join('')
-      +(itens.length>LIM?'<button type="button" class="ver-todas" data-filtrar="'+esc(id)+'">Ver as '+itens.length+' sugestões desta aba</button>':'')
-      +'</section>';
-  }).join('');
-  if(!ordem.length)h='<div class="vazio" style="grid-column:1/-1">'+(S.lista.length?'Nenhuma sugestão com estes filtros.':'Ainda não há sugestões. Que tal ser a primeira pessoa a sugerir?')+'</div>';
-  var semNada=S.fArea||S.busca||S.minhas||S.fSit?[]:areasAtivas().filter(function(a){return !porArea[a.id];});
-  return '<div class="paineis">'+h+'</div>'
-    +(semNada.length?'<div class="sem-sug"><h3>Abas ainda sem sugestão: clique para sugerir</h3><div class="chips">'+semNada.map(function(a){return '<button type="button" class="chip-area" style="--c:'+esc(a.cor||'#8a94a8')+'" data-nova-area="'+esc(a.id)+'"><i></i>'+esc(a.nome)+'</button>';}).join('')+'</div></div>':'');
+function htmlCartoes(l){
+  if(!l.length)return '<div class="vazio">'+(S.lista.length?'Nenhuma sugestão com estes filtros.':'Ainda não há sugestões. Que tal ser a primeira pessoa a sugerir? Use "+ Nova sugestão".')+'</div>';
+  return '<div class="cartoes">'+l.map(function(x){return cartao(x,true);}).join('')+'</div>';
 }
 function htmlKanban(l){
   var cols=SIT.filter(function(s){return s[0]!=='arquivada'||S.arquivadas||S.fSit==='arquivada';});
-  if(S.fSit)cols=cols.filter(function(s){return s[0]===S.fSit;});
+  if(S.fSit==='pendentes')cols=cols.filter(function(s){return PEND.indexOf(s[0])>=0;});
+  else if(S.fSit)cols=cols.filter(function(s){return s[0]===S.fSit;});
   return '<div class="kanban" style="--cols:'+cols.length+'">'+cols.map(function(s){
     var itens=l.filter(function(x){return x.situacao===s[0];});
     return '<section class="coluna" style="--c:'+s[2]+'" data-col="'+s[0]+'"><div class="coluna-cab"><i></i>'+esc(s[1])+'<span>'+itens.length+'</span></div>'
-      +(itens.length?itens.map(function(x){return cartao(x,false);}).join(''):'<div class="vazio">'+(S.responder?'Arraste um cartão para cá.':'Nada aqui.')+'</div>')+'</section>';
+      +(itens.length?itens.map(function(x){return cartao(x,true);}).join(''):'<div class="vazio">'+(S.responder?'Arraste um cartão para cá.':'Nada aqui.')+'</div>')+'</section>';
   }).join('')+'</div>'+(S.responder?'<p class="dica" style="margin-top:8px">Arraste os cartões entre as colunas para mudar a situação (quem sugeriu é avisado no sino).</p>':'');
 }
 function htmlLista(l){
@@ -664,12 +652,10 @@ function ligar(){
   $('sgFArea').onchange=function(){S.fArea=this.value;desenhar();};
   $('sgFSit').onchange=function(){S.fSit=this.value;desenhar();};
   $('sgBusca').addEventListener('input',function(){S.busca=this.value;desenhar();});
-  $('sgMinhas').onchange=function(){S.minhas=this.checked;desenhar();};
+  $('sgFQuem').onchange=function(){S.fQuem=this.value;desenhar();};
   $('sgArquivadas').onchange=function(){S.arquivadas=this.checked;desenhar();};
   $('sgResumo').addEventListener('click',function(e){var b=e.target.closest('[data-sit]');if(!b)return;S.fSit=S.fSit===b.dataset.sit?'':b.dataset.sit;$('sgFSit').value=S.fSit;desenhar();});
   $('area').addEventListener('click',function(e){
-    var f=e.target.closest('[data-filtrar]');if(f){S.fArea=f.dataset.filtrar;$('sgFArea').value=S.fArea;desenhar();window.scrollTo({top:0,behavior:reduzido()?'auto':'smooth'});return;}
-    var n=e.target.closest('[data-nova-area]');if(n){abrirNova(n.dataset.novaArea,null);return;}
     var c=e.target.closest('[data-id]');if(c)abrirDetalhe(c.dataset.id);
   });
   $('area').addEventListener('keydown',function(e){if(e.key!=='Enter')return;var c=e.target.closest('[data-id]');if(c)abrirDetalhe(c.dataset.id);});
@@ -708,7 +694,7 @@ function ligar(){
   setInterval(function(){if(!document.hidden&&!$('jNova').classList.contains('aberto'))carregar();},90000);
 }
 async function init(){
-  $('sgFSit').innerHTML='<option value="">Todas as situações</option>'+SIT.map(function(s){return '<option value="'+s[0]+'">'+esc(s[1])+'</option>';}).join('');
+  $('sgFSit').innerHTML='<option value="">Todas as situações</option><option value="pendentes">Pendentes (ainda não feitas)</option>'+SIT.map(function(s){return '<option value="'+s[0]+'">'+esc(NOME_FILTRO[s[0]]||s[1])+'</option>';}).join('');
   ligar();
   await SagaUI.carregar('sugestoes');
   var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
@@ -720,7 +706,7 @@ async function init(){
   $('sgGerenciar').hidden=!S.admin;
   if(S.responder)$('sgAjuda').textContent='Sugestões da equipe para melhorar o SAGA (e ideias de abas novas). Cada sugestão nova chega no seu sino; abra, responda, mude a situação (ou arraste no Kanban), conclua ou arquive. Quem sugeriu e quem apoiou são avisados.';
   var salvo=null;try{salvo=localStorage.getItem('saga-sugestoes-visao');}catch(e){}
-  if(salvo==='kanban'||salvo==='lista'){S.visao=salvo;$('sgVisoes').querySelectorAll('.pill').forEach(function(b){b.classList.toggle('active',b.dataset.visao===salvo);});}
+  if(salvo==='kanban'||salvo==='lista'||salvo==='cartoes'){S.visao=salvo;$('sgVisoes').querySelectorAll('.pill').forEach(function(b){b.classList.toggle('active',b.dataset.visao===salvo);});}
   await carregarAreas();
   await carregar();
   var q=new URLSearchParams(location.search);

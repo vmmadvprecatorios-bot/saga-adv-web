@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.1",
-  data: "10/11/2026",
+  versao: "1.2",
+  data: "11/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.2", data: "11/11/2026", mudou: "Manual com capítulos e partes que abrem e fecham e índice que recolhe; Sugestões de melhoria em Cartões, Kanban e Lista, com filtros de situação e de quem sugeriu; Treinamentos: o administrador exclui." },
     { versao: "1.1", data: "10/11/2026", mudou: "Teses e oportunidades: botão \"Achar clientes para esta tese\"; Clientes por perfil abre já filtrado pela tese." },
     { versao: "1.0", data: "10/11/2026", mudou: "Primeira versão: todas as telas e regras do SAGA até esta data." }
   ],
@@ -527,12 +528,13 @@ window.SAGA_MANUAL = {
           quando: "Quando o colaborador vê algo que pode ficar melhor, um erro, ou sente falta de uma aba.",
           passos: [
             "Menu da foto > [[Sugerir uma melhoria]] (já marca a tela em que você está) ou **Sugestões de melhoria** no menu.",
-            "Clique em [[+ Nova sugestão]], escreva e cole até 6 prints (Ctrl+V).",
-            "Todos veem as sugestões, comentam e apoiam (**Também quero**).",
-            "O Dr. Victor muda a situação (Nova, Em análise, Aprovada, Em desenvolvimento, Concluída...) e responde. Você recebe o aviso no sino."
+            "Clique em [[+ Nova sugestão]], escolha a aba do sistema, escreva e cole até 6 prints (Ctrl+V).",
+            "Veja as sugestões em **Cartões**, **Kanban** (uma coluna por situação) ou **Lista**. Todos comentam e apoiam (**Também quero**).",
+            "Filtre pelos atalhos do alto (**Pendentes** = ainda não feitas, Aprovada, **Concluída** = ajuste feito, **Não aprovada** = recusada...), pela aba, por **quem sugeriu** ou pela busca.",
+            "O Dr. Victor muda a situação, responde e arquiva. Quem sugeriu e quem apoiou recebem o aviso no sino."
           ],
           img: "sugestoes",
-          marcas: ["Nova sugestão.", "Ver por aba, em Kanban ou em lista.", "Buscar sugestões."]
+          marcas: ["Nova sugestão.", "Ver em Cartões, Kanban ou Lista.", "Atalhos por situação (Pendentes = ainda não feitas).", "Quem sugeriu (cada colaborador ou só as minhas)."]
         }
       ]
     },
@@ -693,7 +695,7 @@ window.SAGA_MANUAL = {
           quando: "Para achar um modelo de petição ou documento, ou estudar os materiais da equipe.",
           passos: [
             "**Biblioteca de Modelos**: modelos organizados em categorias e pastas. Busque e baixe o modelo.",
-            "**Treinamentos**: materiais, perguntas e respostas, roteiros de atendimento e fluxos de trabalho. Abra, estude e marque como concluído."
+            "**Treinamentos**: materiais, perguntas e respostas, roteiros de atendimento e fluxos de trabalho. Abra, estude e marque como concluído. O administrador exclui um treinamento pela lixeira do cartão (aparece ao passar o mouse) ou pelo botão [[Excluir]] dentro dele."
           ],
           img: "biblioteca",
           marcas: ["Nova categoria (quem pode).", "Ver em grade ou lista."]

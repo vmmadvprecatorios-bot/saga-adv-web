@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611102356"></script>
+<script src="saga_guard.js?v=202611110046"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Treinamentos</title>
@@ -73,6 +73,17 @@ html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafit
 .card-res{font-size:11.5px;color:var(--muted);line-height:1.45;flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .card-rod{display:flex;justify-content:space-between;gap:8px;font-size:11px}
 .card-rod .ok{color:var(--success,#16a34a);font-weight:600}.card-rod .pend{color:var(--muted)}.card-rod .quem{color:var(--muted)}
+/* 11/11 (Dr. Victor): o administrador exclui o treinamento pela lixeira do cartão (aparece ao passar o mouse) */
+.card-wrap{position:relative;display:flex;min-width:0}.card-wrap>.card{flex:1;min-width:0}
+.card-wrap.com-excluir .card-topo{padding-right:34px}
+.card-excluir{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border-soft);background:var(--panel-solid);color:var(--muted);opacity:0;transform:scale(.9);transition:opacity .22s cubic-bezier(.22,.78,.25,1),transform .22s cubic-bezier(.22,.78,.25,1),color .2s,border-color .2s}
+.card-wrap:hover .card-excluir,.card-excluir:focus-visible{opacity:1;transform:none}
+.card-excluir:hover{color:var(--danger,#dc2626);border-color:color-mix(in srgb,var(--danger,#dc2626) 50%,transparent);background:color-mix(in srgb,var(--danger,#dc2626) 8%,var(--panel-solid))}
+@media (hover:none){.card-excluir{opacity:1;transform:none}}
+html.sem-movimento .card-excluir{transition:none}
+.btn-perigo{color:var(--danger,#dc2626);border-color:color-mix(in srgb,var(--danger,#dc2626) 40%,var(--border-soft))}
+.btn-perigo:hover{border-color:var(--danger,#dc2626);background:color-mix(in srgb,var(--danger,#dc2626) 10%,var(--panel))}
+.md-rod .esq{margin-right:auto}
 .texto{font-size:13px;line-height:1.65;overflow-wrap:anywhere}.texto a{color:var(--gold-light)}
 .dica{font-size:11.5px;color:var(--muted)}
 .pessoas{display:flex;flex-wrap:wrap;gap:6px}.pessoas span{font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--border-soft)}.pessoas .ok{border-color:color-mix(in srgb,var(--success,#16a34a) 45%,transparent)}.pessoas small{color:var(--muted)}
@@ -114,7 +125,7 @@ body.canvas-aberto{overflow:hidden}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.dois{grid-template-columns:1fr}.cv-corpo{flex-direction:column}.cv-painel{width:auto;border-left:0;border-top:1px solid var(--border-soft);max-height:32vh;padding:10px 14px;gap:8px}.cv-painel textarea{min-height:56px!important}.cv-barra h2{flex-basis:100%}.busca{min-width:0}}
 
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611102356">
+<link rel="stylesheet" href="saga_tema.css?v=202611110046">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -157,7 +168,7 @@ body.canvas-aberto{overflow:hidden}
   <div class="md-cab"><div><h2 id="verTit"></h2><p id="verSub"></p></div><button class="md-x" type="button" data-fechar="moVer" aria-label="Fechar">✕</button></div>
   <div class="md-corpo" id="verCorpo"></div>
   <div class="md-rod">
-    <button class="btn" type="button" id="btnRemover" hidden>Remover</button>
+    <button class="btn btn-perigo esq" type="button" id="btnRemover" hidden>Excluir</button>
     <button class="btn" type="button" id="btnEditar" hidden>Editar</button>
     <button class="btn" type="button" id="btnFluxoPdf" hidden>Baixar PDF</button>
     <button class="btn" type="button" id="btnFluxoCheio" hidden>Tela cheia</button>
@@ -178,7 +189,7 @@ body.canvas-aberto{overflow:hidden}
     <div class="campo"><label for="edLink">Link (opcional: vídeo, PDF, documento)</label><input id="edLink" placeholder="https://..."></div>
     <label class="chk"><input type="checkbox" id="edObrigatorio"> Obrigatório para toda a equipe</label>
   </div>
-  <div class="md-rod"><button class="btn" type="button" data-fechar="moEditar">Cancelar</button><button class="btn btn-ouro" type="button" id="edSalvar">Salvar</button></div>
+  <div class="md-rod"><button class="btn btn-perigo esq" type="button" id="edExcluir" hidden>Excluir</button><button class="btn" type="button" data-fechar="moEditar">Cancelar</button><button class="btn btn-ouro" type="button" id="edSalvar">Salvar</button></div>
 </div></div>
 
 <div class="mo" id="moAreas"><div class="md">
@@ -224,8 +235,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611102356"></script>
-<script src="saga_pdf.js?v=202611102356"></script>
+<script src="saga_ui.js?v=202611110046"></script>
+<script src="saga_pdf.js?v=202611110046"></script>
 <script>
 /* =====================================================================
    SAGA · Treinamentos da equipe (T121) + Canvas de fluxos (T37) · bloco 121
@@ -297,10 +308,11 @@ function desenhar(){
     var tp=TIPOS[i.tipo]||TIPOS.material,feito=T.minhas[i.id];
     var resumo=i.tipo==='fluxo'?((i.fluxo&&i.fluxo.nos||[]).length+' etapas no fluxo'):String(i.conteudo||'').slice(0,150);
     var quem=T.acompanhar&&T.todas?(T.todas[i.id]||[]).length:null;
-    return '<button type="button" class="card'+(feito?' feito':'')+'" data-abrir="'+esc(i.id)+'" style="--c:'+tp.cor+'">'+
+    return '<div class="card-wrap'+(T.excluir?' com-excluir':'')+'" data-wrap="'+esc(i.id)+'"><button type="button" class="card'+(feito?' feito':'')+'" data-abrir="'+esc(i.id)+'" style="--c:'+tp.cor+'">'+
       '<span class="card-topo"><span class="tipo">'+esc(tp.nome)+'</span>'+(i.area_id?'<span class="area">'+esc(nomeArea(i.area_id))+'</span>':'')+(i.obrigatorio?'<span class="obr">Obrigatório</span>':'')+'</span>'+
       '<span class="card-tit">'+esc(i.titulo)+'</span><span class="card-res">'+esc(resumo)+'</span>'+
-      '<span class="card-rod">'+(feito?'<span class="ok">✓ Concluído</span>':'<span class="pend">A fazer</span>')+(quem!==null?'<span class="quem">'+quem+' concluíram</span>':'')+'</span></button>';
+      '<span class="card-rod">'+(feito?'<span class="ok">✓ Concluído</span>':'<span class="pend">A fazer</span>')+(quem!==null?'<span class="quem">'+quem+' concluíram</span>':'')+'</span></button>'+
+      (T.excluir?'<button type="button" class="card-excluir" data-excluir-tr="'+esc(i.id)+'" title="Excluir este treinamento" aria-label="Excluir '+esc(i.titulo)+'"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12M9 7V4h6v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>':'')+'</div>';
   }).join('')+'</div>';
 }
 
@@ -324,7 +336,7 @@ function abrirItem(id){
   $('verCorpo').innerHTML=corpo;
   $('btnConcluir').textContent=feito?'✓ Concluído (desfazer)':'Marcar como concluído';
   $('btnConcluir').classList.toggle('btn-ouro',!feito);
-  $('btnEditar').hidden=!T.editar;$('btnRemover').hidden=!T.editar;
+  $('btnEditar').hidden=!T.editar;$('btnRemover').hidden=!T.excluir;
   $('btnFluxoCheio').hidden=i.tipo!=='fluxo';$('btnFluxoPdf').hidden=i.tipo!=='fluxo';
   abrirMo('moVer');
   var fv=$('fluxoVer');if(fv)fv.onclick=function(e){var g=e.target.closest('[data-liga]');if(g&&g.dataset.liga){fecharMo('moVer');setTimeout(function(){abrirItem(g.dataset.liga);},250);}};
@@ -355,6 +367,7 @@ function abrirEditor(tipo,item){
   $('edLink').value=item&&item.link||'';
   $('edObrigatorio').checked=!!(item&&item.obrigatorio);
   $('edFluxoLinha').hidden=edicao.tipo!=='fluxo';
+  $('edExcluir').hidden=!(T.excluir&&edicao.id);
   atualizarResumoFluxo();
   abrirMo('moEditar');setTimeout(function(){$('edTitulo').focus();},60);
 }
@@ -373,16 +386,16 @@ async function salvarEditor(){
   }catch(e){toast('Não foi possível salvar: '+esc(e.message||''),'error');}
   finally{b.disabled=false;}
 }
-async function removerItem(){
-  var i=T.aberto;if(!i)return;
-  var ok=window.sagaConfirmar?await sagaConfirmar('Remover treinamento','Tirar "'+i.titulo+'" da lista? O histórico de quem concluiu fica guardado.','Remover'):confirm('Remover?');
+async function excluirItem(id){
+  var i=T.itens.find(function(x){return x.id===id;});if(!i)return;
+  var ok=window.sagaConfirmar?await sagaConfirmar('Excluir treinamento','Excluir "'+i.titulo+'" de vez? Ele sai da lista de todos, e as marcações de quem já concluiu também são apagadas. Não dá para desfazer.','Excluir',true):confirm('Excluir de vez?');
   if(!ok)return;
-  var r=await _sb.from('treinamentos').update({ativo:false}).eq('id',i.id);
-  if(r.error){toast('Não foi possível remover: '+esc(r.error.message),'error');return;}
-  fecharMo('moVer');
-  var card=document.querySelector('.card[data-abrir="'+i.id+'"]');
-  var fim=function(){carregar();toast('Treinamento removido da lista.','success');};
-  if(card&&window.sagaRecolher)window.sagaRecolher(card,true,fim);else fim();
+  var r=await _sb.from('treinamentos').delete().eq('id',id).select('id');
+  if(r.error||!r.data||!r.data.length){toast('Não foi possível excluir'+(r.error?': '+esc(r.error.message):'. Só o administrador geral exclui.'),'error');return;}
+  fecharMo('moVer');fecharMo('moEditar');
+  var w=document.querySelector('.card-wrap[data-wrap="'+id+'"]');
+  var fim=function(){carregar();toast('Treinamento excluído.','success');};
+  if(w&&window.sagaRecolher)window.sagaRecolher(w,true,fim);else fim();
 }
 
 /* ---------------- áreas (menu com criar / renomear / reordenar / remover) ---------------- */
@@ -550,13 +563,14 @@ function ligar(){
   $('abas').addEventListener('click',function(e){var b=e.target.closest('[data-aba]');if(!b)return;T.aba=b.dataset.aba;desenhar();});
   var tm=null;$('fBusca').addEventListener('input',function(){clearTimeout(tm);var v=this.value;tm=setTimeout(function(){T.busca=v;desenhar();},200);});
   $('fArea').addEventListener('change',function(){if(this.value==='__gerenciar'){this.value=T.area;abrirAreas();return;}T.area=this.value;desenhar();});
-  $('lista').addEventListener('click',function(e){var c=e.target.closest('[data-abrir]');if(c)abrirItem(c.dataset.abrir);});
+  $('lista').addEventListener('click',function(e){var x=e.target.closest('[data-excluir-tr]');if(x){e.stopPropagation();excluirItem(x.dataset.excluirTr);return;}var c=e.target.closest('[data-abrir]');if(c)abrirItem(c.dataset.abrir);});
   $('btnNovo').addEventListener('click',function(e){e.stopPropagation();$('menuNovo').hidden=!$('menuNovo').hidden;});
   $('menuNovo').addEventListener('click',function(e){var b=e.target.closest('[data-novo]');if(!b)return;$('menuNovo').hidden=true;abrirEditor(b.dataset.novo,null);});
   document.addEventListener('click',function(e){if(!e.target.closest('.novo-wrap'))$('menuNovo').hidden=true;});
   $('btnConcluir').addEventListener('click',alternarConcluido);
   $('btnEditar').addEventListener('click',function(){var i=T.aberto;fecharMo('moVer');setTimeout(function(){abrirEditor(i.tipo,i);},200);});
-  $('btnRemover').addEventListener('click',removerItem);
+  $('btnRemover').addEventListener('click',function(){if(T.aberto)excluirItem(T.aberto.id);});
+  $('edExcluir').addEventListener('click',function(){if(edicao&&edicao.id)excluirItem(edicao.id);});
   $('btnFluxoCheio').addEventListener('click',function(){var i=T.aberto;fecharMo('moVer');abrirCanvas(i.fluxo,true,i.titulo);});
   $('btnFluxoPdf').addEventListener('click',function(){var i=T.aberto;baixarPdfFluxo(i.fluxo||{},i.titulo);});
   $('edTipo').addEventListener('change',function(){edicao.tipo=this.value;var tp=TIPOS[this.value];$('edTituloRot').textContent=this.value==='pergunta'?'Pergunta':'Título';$('edConteudoRot').textContent=tp.rot;$('edFluxoLinha').hidden=this.value!=='fluxo';});
@@ -585,6 +599,7 @@ async function init(){
   T.meuId=r[2].data||null;
   T.editar=adm||perms.indexOf('treinamentos.editar')>=0;
   T.acompanhar=adm||perms.indexOf('treinamentos.acompanhar')>=0;
+  T.excluir=adm; // só o administrador geral exclui (bloco 155; regra de 09/11)
   (r[3].data||[]).forEach(function(u){if(u.auth_user_id||u.ativo!==false)T.usuarios[u.id]=u;});
   await carregar();
 }
