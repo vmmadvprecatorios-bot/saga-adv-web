@@ -1395,14 +1395,12 @@
       var dados=comTarefa?dadosTarefa('siIncResp'):null,et=comTarefa?etiqueta():null;
       if(comTarefa&&!dados.titulo){toast('Escreva o que precisa ser feito.','error');return;}
       if(et&&et.reserva){toast('Escolha uma etiqueta cadastrada ou Sem etiqueta antes de salvar.','error');return;}
-      // Fichas repetidas (08/11): se a pessoa já tem ficha, pergunta antes de criar outra
+      // Cliente repetido (08/11 e 11/11, T152): se a pessoa já tem ficha, usa a existente; ficha separada só com o motivo escrito
+      var decisao={acao:'nova',motivo:null,parecidas:[]};
       if(!escolhida&&window.SagaFichas){
-        var ja=await SagaFichas.procurar(S.sb,{nome:cliente});
-        if(ja.length){
-          var usar=await (window.sagaConfirmar?sagaConfirmar('Essa pessoa já tem ficha','Já existe no SAGA:\n• '+ja.map(SagaFichas.descrever).join('\n• ')+'\n\nUsar a ficha existente? O processo vira mais um cartão nela (recomendado).','Usar a ficha existente',false):Promise.resolve(confirm('Usar a ficha existente de '+ja[0].nome_completo+'?')));
-          if(usar){escolhida=ja[0].id;cliente=ja[0].nome_completo;document.getElementById('siIncCli').value=cliente;}
-          else if(!(await (window.sagaConfirmar?sagaConfirmar('Criar outra ficha?','Só crie outra ficha se for OUTRA pessoa com o mesmo nome (ou um processo que precisa ficar separado, como o de vários irmãos).','Criar ficha nova',false):Promise.resolve(confirm('Criar outra ficha?')))))return;
-        }
+        decisao=await SagaFichas.decidir(S.sb,{nome:cliente,usar:'Usar esta ficha'});
+        if(decisao.acao==='cancelar')return;
+        if(decisao.acao==='usar'){escolhida=decisao.pessoa.id;cliente=decisao.pessoa.nome_completo;document.getElementById('siIncCli').value=cliente;}
       }
       var button=this,incorporado=false;button.disabled=true;
       try{
@@ -1410,6 +1408,7 @@
         var r=await S.sb.rpc('intimacao_incorporar',{p_id:i.id,p_pessoa_id:escolhida,p_cliente_nome:cliente,p_tese_id:tese,p_responsavel_id:responsavel});
         if(r.error)throw r.error;
         incorporado=true;i.processo_id=r.data;i.responsavel_id=responsavel;
+        if(decisao.motivo){try{var rpp=await S.sb.from('processos').select('pessoa_id').eq('id',r.data).maybeSingle();if(rpp.data&&rpp.data.pessoa_id)await SagaFichas.registrar(S.sb,rpp.data.pessoa_id,decisao.motivo,decisao.parecidas);}catch(x){}}
         S.processos[r.data]={id:r.data,pessoa_id:escolhida,responsavel_id:responsavel,pessoa:{nome_completo:cliente}};
         if(comTarefa){await criarTarefaDaIntimacao(i,dados,et);toast('Processo incorporado e tarefa criada. Tudo ficou registrado na ficha do cliente.','sucesso');preencherJanela(i);carregarHistorico(i.id);mudou();}
         else{toast('Processo incorporado ao SAGA, já no Jurídico. A intimação está na ficha do cliente.','sucesso');preencherJanela(i);carregarHistorico(i.id);mudou();}

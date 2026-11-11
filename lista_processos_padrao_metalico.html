@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611111406"></script>
+<script src="saga_guard.js?v=202611111457"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Processos em Andamento</title>
@@ -464,7 +464,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
   [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
 .proxima-providencia{margin-top:6px;min-width:0;max-width:100%}.providencia-link{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;max-width:100%;border:1px solid var(--border-soft);border-left:4px solid var(--prazo-cor,var(--muted));border-radius:7px;padding:5px 7px;background:var(--panel);color:var(--text);font-size:10px;line-height:1.5;text-decoration:none;overflow-wrap:anywhere}.providencia-link:active{transform:scale(.98)}.providencia-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.providencia-prazo{background:var(--prazo-cor,var(--panel-2));color:var(--prazo-texto,var(--muted));border-radius:4px;padding:1px 4px}.providencia-link[data-situacao-prazo="muito-atrasada"]{outline:1px solid var(--prazo-muito-contorno)}.providencia-concluida{color:var(--muted);border-left-width:1px}.providencia-mais{color:var(--muted);font-weight:700}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611111406">
+<link rel="stylesheet" href="saga_tema.css?v=202611111457">
 </head>
 <body data-theme="dark">
 
@@ -724,18 +724,18 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611111406"></script>
-<script src="saga_teses.js?v=202611111406"></script>
-<script src="saga_etiquetas.js?v=202611111406"></script>
-<script src="saga_partes.js?v=202611111406"></script>
-<script src="saga_roscas.js?v=202611111406"></script>
-<script src="saga_paineis.js?v=202611111406"></script>
-<script src="saga_xlsx.js?v=202611111406"></script>
-<script src="saga_fichas.js?v=202611111406"></script>
-<script src="saga_origem.js?v=202611111406"></script>
-<script src="saga_planilha.js?v=202611111406"></script>
-<script src="saga_recursos.js?v=202611111406"></script>
-<script src="saga_tribunais.js?v=202611111406"></script>
+<script src="saga_ui.js?v=202611111457"></script>
+<script src="saga_teses.js?v=202611111457"></script>
+<script src="saga_etiquetas.js?v=202611111457"></script>
+<script src="saga_partes.js?v=202611111457"></script>
+<script src="saga_roscas.js?v=202611111457"></script>
+<script src="saga_paineis.js?v=202611111457"></script>
+<script src="saga_xlsx.js?v=202611111457"></script>
+<script src="saga_fichas.js?v=202611111457"></script>
+<script src="saga_origem.js?v=202611111457"></script>
+<script src="saga_planilha.js?v=202611111457"></script>
+<script src="saga_recursos.js?v=202611111457"></script>
+<script src="saga_tribunais.js?v=202611111457"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -824,21 +824,19 @@ async function criarNovaPessoaRapida(){
   var telDigitos=(document.getElementById('novaPessoaTelefone').value||'').replace(/\D/g,'');
   if(!nome){showToast('Informe o nome completo.','warning');return;}
   var cpf=cpfDigitos?cpfDigitos:null;
-  // Fichas repetidas (08/11): se a pessoa já tem ficha, usa a existente (o processo novo vira mais um cartão nela)
+  // Cliente repetido (08/11 e 11/11, T152): se a pessoa já tem ficha, usa a existente; ficha separada só com o motivo escrito
+  var decisao={acao:'nova',motivo:null,parecidas:[]};
   if(window.SagaFichas){
-    var ja=await SagaFichas.procurar(_sb,{nome:nome,cpf:cpf});
-    if(ja.length){
-      var usar=await sagaConfirmar('Essa pessoa já tem ficha','Já existe no SAGA:\n• '+ja.map(SagaFichas.descrever).join('\n• ')+'\n\nUsar a ficha existente? O novo processo vira mais um cartão nela (recomendado).','Usar a ficha existente',false);
-      if(usar){selPessoaNovo(ja[0]);document.getElementById('novoPessoaCriarWrap').style.display='none';showToast('Usando a ficha que já existe. Continue preenchendo o processo.','success');return;}
-      if(ja.some(function(p){return p.motivo==='mesmo CPF';})){showToast('Já existe uma ficha com este CPF. Use a ficha existente.','warning');return;}
-      if(!(await sagaConfirmar('Criar outra ficha?','Só crie outra ficha se for OUTRA pessoa com o mesmo nome (ou um processo que precisa ficar separado, como o de vários irmãos).','Criar ficha nova',false)))return;
-    }
+    decisao=await SagaFichas.decidir(_sb,{nome:nome,cpf:cpf,usar:'Usar esta ficha'});
+    if(decisao.acao==='cancelar')return;
+    if(decisao.acao==='usar'){selPessoaNovo(decisao.pessoa);document.getElementById('novoPessoaCriarWrap').style.display='none';showToast('Usando a ficha que já existe. Continue preenchendo o processo.','success');return;}
   }
   var r=await _sb.from('pessoas').insert({nome_completo:nome,cpf:cpf,situacao_vital:'vivo',criado_por_id:state.meuInternoId}).select('id,nome_completo,cpf').single();
   if(r.error){
-    if(String(r.error.code)==='23505'){showToast('Ja existe uma pessoa cadastrada com este CPF.','warning');return;}
+    if(String(r.error.code)==='23505'){showToast(r.error.message&&/ficha com este CPF/.test(r.error.message)?r.error.message:'Já existe uma pessoa cadastrada com este CPF.','warning');return;}
     showToast('Nao foi possivel cadastrar a pessoa. Verifique suas permissoes.','error');return;
   }
+  if(decisao.motivo&&!(await SagaFichas.registrar(_sb,r.data.id,decisao.motivo,decisao.parecidas)))showToast('Ficha criada, mas o motivo não foi gravado. Escreva o motivo num comentário da ficha.','warning');
   if(telDigitos.length>=10){
     var rt=await _sb.from('pessoas_telefones').insert({pessoa_id:r.data.id,numero:telDigitos,tipo:'celular',principal:true,whatsapp:true,validado:false,origem:'manual',criado_por_id:state.meuInternoId});
     if(rt.error)showToast('Pessoa cadastrada, mas o telefone nao foi salvo. Adicione na Ficha do Cliente.','warning');

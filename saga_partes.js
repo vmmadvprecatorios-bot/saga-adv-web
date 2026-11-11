@@ -160,10 +160,18 @@
       else if(novaPessoa){dados.nome=q('ptNome').value.trim();dados.cpf=q('ptCpf').value.trim()||null;if(!dados.nome){erro.textContent='Escreva o nome da pessoa.';return;}}
       else{erro.textContent='Escolha uma pessoa da lista ou cadastre uma nova.';return;}
       if(dados.quota!=null&&(isNaN(Number(dados.quota))||Number(dados.quota)<=0||Number(dados.quota)>100)){erro.textContent='A quota-parte deve ficar entre 0 e 100.';return;}
+      // Cliente repetido (11/11, T152): pessoa nova com ficha parecida no SAGA → usar a existente ou escrever o motivo
+      var decisao=null;
+      if(!edit&&novaPessoa&&global.SagaFichas){
+        decisao=await global.SagaFichas.decidir(S.sb,{nome:dados.nome,cpf:dados.cpf,usar:'Usar esta ficha'});
+        if(decisao.acao==='cancelar')return;
+        if(decisao.acao==='usar'){dados.pessoa_id=decisao.pessoa.id;delete dados.nome;delete dados.cpf;decisao=null;}
+      }
       var b=this;b.disabled=true;
       var r=await S.sb.rpc('processo_parte_salvar',{p_processo_id:c.processoId,p_dados:dados});
       b.disabled=false;
       if(r.error){erro.textContent=r.error.message||'Não foi possível salvar.';return;}
+      if(decisao&&decisao.motivo){try{var rp=await S.sb.from('processos_partes').select('pessoa_id').eq('id',r.data).maybeSingle();if(rp.data)await global.SagaFichas.registrar(S.sb,rp.data.pessoa_id,decisao.motivo,decisao.parecidas);}catch(x){}}
       fechar();aviso(edit?'Parte atualizada.':'Parte incluída no processo.');
       await atualizar();
     };
@@ -222,7 +230,20 @@
     if(cfg.podeCriar){
       q('psNova').onclick=function(){q('psNovaBox').hidden=!q('psNovaBox').hidden;if(!q('psNovaBox').hidden)q('psNome').focus();};
       q('psCpf').addEventListener('input',function(){this.value=cpfFmt(this.value);});
-      q('psNovaOk').onclick=function(){var n=q('psNome').value.trim();if(!n){aviso('Escreva o nome da pessoa.',true);return;}itens.push({nome:n,cpf:q('psCpf').value.trim()||null,papel_id:papelAtual()});q('psNome').value='';q('psCpf').value='';q('psNovaBox').hidden=true;chips();};
+      q('psNovaOk').onclick=async function(){
+        var n=q('psNome').value.trim(),cpf=q('psCpf').value.trim()||null;if(!n){aviso('Escreva o nome da pessoa.',true);return;}
+        // Cliente repetido (11/11, T152): ficha parecida no SAGA → usar a existente ou escrever o motivo da ficha separada
+        var it={nome:n,cpf:cpf,papel_id:papelAtual()};
+        if(global.SagaFichas){
+          var dec=await global.SagaFichas.decidir(sb,{nome:n,cpf:cpf,usar:'Usar esta ficha'});
+          if(dec.acao==='cancelar')return;
+          if(dec.acao==='usar'){
+            if(itens.some(function(x){return x.pessoa_id===dec.pessoa.id;})||(cfg.excluir||[]).includes(dec.pessoa.id)){aviso('Essa pessoa já está na lista.',true);return;}
+            it={pessoa_id:dec.pessoa.id,nome:dec.pessoa.nome_completo,papel_id:papelAtual()};
+          }else if(dec.motivo){it.motivo=dec.motivo;it.parecidas=dec.parecidas;}
+        }
+        itens.push(it);q('psNome').value='';q('psCpf').value='';q('psNovaBox').hidden=true;chips();
+      };
     }
     return {itens:function(){return itens.slice();},limpar:function(){itens=[];chips();}};
   }
@@ -232,7 +253,8 @@
       var it=itens[i],d={papel_id:it.papel_id||null};
       if(it.pessoa_id)d.pessoa_id=it.pessoa_id;else{d.nome=it.nome;d.cpf=it.cpf||null;}
       var r=await sb.rpc('processo_parte_salvar',{p_processo_id:processoId,p_dados:d});
-      if(r.error)falhas++;
+      if(r.error){falhas++;continue;}
+      if(it.motivo&&global.SagaFichas){try{var rp=await sb.from('processos_partes').select('pessoa_id').eq('id',r.data).maybeSingle();if(rp.data)await global.SagaFichas.registrar(sb,rp.data.pessoa_id,it.motivo,it.parecidas);}catch(x){}}
     }
     return falhas;
   }
