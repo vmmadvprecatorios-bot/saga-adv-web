@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.5",
+  versao: "1.6",
   data: "11/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.6", data: "11/11/2026", mudou: "Minhas Tarefas: o atalho do tribunal (copia o número e abre o processo no site do tribunal) fica à vista no cartão, na Lista e na janela da tarefa (\"Site do tribunal\"), como nas Intimações." },
     { versao: "1.5", data: "11/11/2026", mudou: "Ponto: aba Acessos e coluna \"Entrou no sistema\" (só o administrador), com o aviso no sino na primeira entrada do dia de cada colaborador." },
     { versao: "1.4", data: "11/11/2026", mudou: "Chat Interno: em \"+ Nova conversa ou grupo\", a lista dos colegas já aparece aberta para escolher (uma pessoa na conversa direta; várias no grupo)." },
     { versao: "1.3", data: "11/11/2026", mudou: "Minhas Tarefas: coluna sempre do tribunal do processo, coluna \"Automática\", colunas sem tarefa aberta ficam ocultas (linha \"Mostrar\"), etiqueta do estado e botão do tribunal no cartão, janela da tarefa em duas partes. Intimações: Justiça Federal na coluna do TRF com a etiqueta do estado, tribunais sem intimação aberta ocultos, link de cada seção do e-Proc. Primeiros passos: o menu da esquerda fica no lugar ao trocar de tela." },
@@ -476,7 +477,7 @@ window.SAGA_MANUAL = {
           quando: "Para entender onde cada tarefa aparece no Kanban.",
           passos: [
             "A coluna de toda tarefa de processo é a do **tribunal**, tirado do número do processo. A Justiça Federal fica na coluna do **TRF** da região, nunca numa coluna da seção ou da vara (ex.: Justiça Federal do RJ ou do ES vai para o **TRF-2**).",
-            "No cartão, a **etiqueta do estado** (RJ, ES, AL...) mostra de qual Justiça Federal o processo é. O botão ao lado do número **copia o número e abre o processo no tribunal** (no e-Proc, primeiro o link da seção do estado).",
+            "No cartão, a **etiqueta do estado** (RJ, ES, AL...) mostra de qual Justiça Federal o processo é. O botão ao lado do número **copia o número e abre o processo no tribunal**, para consultar ou peticionar (no e-Proc, primeiro o link da seção do estado). O mesmo atalho fica na **Lista**, ao lado do número, e na janela da tarefa, em **Site do tribunal** ([[Ver no TRF-5]] ou o tribunal do processo). Clicar nele não abre a tarefa.",
             "Tarefa criada pelo sistema (robô das intimações, processos parados, ficha) já nasce na coluna do tribunal. Tribunal novo ganha a coluna sozinho.",
             "Processo **sem número** fica na coluna **Sem número do processo**; quando alguém cadastra o número, a tarefa passa sozinha para o tribunal.",
             "Coluna sem tarefa aberta fica **oculta** e volta sozinha quando chega tarefa nova. A linha em cima do quadro mostra as ocultas: clique no nome para mostrar ou em [[Mostrar todas]]. Coluna que você mostrou volta a se ocultar pelo menu dela (**Ocultar quando estiver vazia**).",
