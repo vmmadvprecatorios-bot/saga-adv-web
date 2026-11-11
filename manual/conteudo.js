@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.2",
+  versao: "1.3",
   data: "11/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.3", data: "11/11/2026", mudou: "Minhas Tarefas: coluna sempre do tribunal do processo, coluna \"Automática\", colunas sem tarefa aberta ficam ocultas (linha \"Mostrar\"), etiqueta do estado e botão do tribunal no cartão, janela da tarefa em duas partes. Intimações: Justiça Federal na coluna do TRF com a etiqueta do estado, tribunais sem intimação aberta ocultos, link de cada seção do e-Proc. Primeiros passos: o menu da esquerda fica no lugar ao trocar de tela." },
     { versao: "1.2", data: "11/11/2026", mudou: "Manual com capítulos e partes que abrem e fecham e índice que recolhe; Sugestões de melhoria em Cartões, Kanban e Lista, com filtros de situação e de quem sugeriu; Treinamentos: o administrador exclui." },
     { versao: "1.1", data: "10/11/2026", mudou: "Teses e oportunidades: botão \"Achar clientes para esta tese\"; Clientes por perfil abre já filtrado pela tese." },
     { versao: "1.0", data: "10/11/2026", mudou: "Primeira versão: todas as telas e regras do SAGA até esta data." }
@@ -87,7 +88,8 @@ window.SAGA_MANUAL = {
           passos: [
             "No **menu da esquerda** ficam as telas, em três grupos: **Operação** (o trabalho do dia a dia), **Comunicação** e **Gestão**. Só aparece o que você tem permissão para ver.",
             "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **olho** (modo privacidade), atualizar, o **tema** (claro ou escuro) e a sua **foto**.",
-            "Os números ao lado dos itens do menu (Agenda, Minhas Tarefas, Chat) mostram o que há para hoje ou o que não foi lido."
+            "Os números ao lado dos itens do menu (Agenda, Minhas Tarefas, Chat) mostram o que há para hoje ou o que não foi lido.",
+            "O menu da esquerda **fica no lugar** quando você troca de tela (não volta para o topo). Com o mouse em cima dele, a roda do mouse rola só o menu, sem mexer na página."
           ],
           img: "topo",
           marcas: ["Abre e fecha o menu da esquerda (no celular, o menu fica escondido aqui).", "Busca: cliente, CPF, processo, telefone, e-mail ou endereço.", "Sino: os seus avisos.", "Olho: modo privacidade (esconde nomes, CPF, números e valores para gravar a tela).", "Tema claro ou escuro.", "Sua foto: menu com perfil, preferências, sugestões e sair."]
@@ -386,11 +388,23 @@ window.SAGA_MANUAL = {
           passos: [
             "Abra **Intimações**. No alto: disponibilizadas hoje, abertas, prazos vencidos e fora do SAGA.",
             "Veja em **Kanban** (uma coluna por tribunal) ou **Lista**. Use **Só as novas** para ver o que ainda não foi tratado.",
+            "A **Justiça Federal** fica na coluna do **TRF** da região, com a **etiqueta do estado** no cartão (ex.: no TRF-2, **RJ** ou **ES**). Tribunal sem intimação aberta fica **oculto** (veja a parte seguinte).",
             "Filtros: situação, período, tribunal, OAB, triagem e a busca (processo, parte, vara, etiqueta ou texto).",
             "[[Trazer para o SAGA em lote]]: cadastra de uma vez os processos das intimações que estão fora do SAGA (um por número)."
           ],
           img: "intimacoes",
           marcas: ["Só as novas.", "Andamentos do CNJ.", "Trazer para o SAGA em lote.", "Cartão da intimação: clique para abrir."]
+        },
+        { id: "colunas", titulo: "Tribunais, estados e colunas ocultas",
+          quando: "Para achar rápido as intimações de cada tribunal e saber de qual estado elas vêm.",
+          passos: [
+            "Cada **tribunal** tem a sua coluna. A Justiça Federal do Rio de Janeiro e a do Espírito Santo ficam na coluna do **TRF-2**; a do Rio Grande do Sul, a do Paraná e a de Santa Catarina, no **TRF-4**; e assim por diante.",
+            "No cartão, a **etiqueta do estado** (RJ, ES, RS, AL...) mostra de qual Justiça Federal a intimação veio.",
+            "Tribunal sem nenhuma intimação aberta fica **oculto** e volta sozinho quando chega intimação nova. A linha em cima do quadro diz quais estão ocultos: clique no nome para mostrar ou em [[Mostrar todos]].",
+            "Para ver as já resolvidas, use **Concluídas** ou **Ver concluídas** no fim de cada coluna."
+          ],
+          img: "intimacoes_tribunais",
+          marcas: ["Tribunais sem intimação aberta (ocultos): clique no nome para mostrar.", "Coluna do TRF-2 (Justiça Federal do RJ e do ES).", "Etiqueta do estado no cartão.", "Links dos tribunais (o link de cada seção)."]
         },
         { id: "tratar", titulo: "Tratar uma intimação (triagem, prazo e tarefa)",
           quando: "Para cada intimação nova.",
@@ -400,7 +414,7 @@ window.SAGA_MANUAL = {
             "**Prazo**: o SAGA sugere pelo texto (ex.: 15 dias) e conta em **dias úteis** (sem sábados, domingos, feriados do escritório e o recesso de 20/12 a 20/01). Use os atalhos 5, 10, 15, 30 ou escolha a data.",
             "**Etiqueta** (o que fazer) e a cor; depois [[Salvar prazo e etiqueta]].",
             "Comente para a equipe e, quando terminar, clique em [[Concluir]].",
-            "[[Abrir processo no tribunal]] copia o número e abre a consulta; **Abrir ficha do cliente** leva ao processo no SAGA."
+            "[[Abrir processo no tribunal]] copia o número e abre a consulta. No processo de 1º grau da Justiça Federal, o primeiro link é o da **seção do estado** (ex.: e-Proc da JFRJ) e o segundo, o do TRF (2º grau). **Abrir ficha do cliente** leva ao processo no SAGA."
           ],
           img: "intimacao_aberta",
           marcas: ["Abrir processo no tribunal.", "Comentar.", "Criar tarefa.", "Prazo (dias úteis).", "Salvar prazo e etiqueta."]
@@ -421,6 +435,7 @@ window.SAGA_MANUAL = {
           passos: [
             "**OABs monitoradas**: cadastre a OAB e a UF de cada advogado do escritório.",
             "**Links dos tribunais**: o endereço da consulta processual de cada tribunal (é o que o botão do tribunal abre). Mais de um link para o mesmo tribunal vira um menu.",
+            "**Seção da Justiça Federal no e-Proc** (cada estado tem o seu endereço): cadastre com **JF + estado** (ex.: JFRJ, JFES, JFRS). Quando chega uma seção nova, o SAGA cria sozinho o lugar marcado **(configurar)** e avisa no sino: é só trocar pelo link certo e salvar.",
             "Só quem tem permissão mexe nessas listas."
           ]
         }
@@ -436,10 +451,25 @@ window.SAGA_MANUAL = {
           passos: [
             "Abra **Minhas Tarefas**. No alto: total, novas, em andamento, **atrasadas** e concluídas hoje (clique para filtrar).",
             "Veja em **Kanban** (arraste o cartão entre as colunas) ou **Lista**. O calendário mostra os prazos do mês.",
-            "[[Filtros]]: tipo, situação, prioridade, prazo e responsável."
+            "[[Filtros]]: tipo, situação, prioridade, prazo e responsável.",
+            "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],
           img: "tarefas",
           marcas: ["Nova Tarefa.", "Filtros.", "Atrasadas: comece por elas."]
+        },
+        { id: "colunas", titulo: "Colunas por tribunal e colunas ocultas",
+          quando: "Para entender onde cada tarefa aparece no Kanban.",
+          passos: [
+            "A coluna de toda tarefa de processo é a do **tribunal**, tirado do número do processo. A Justiça Federal fica na coluna do **TRF** da região, nunca numa coluna da seção ou da vara (ex.: Justiça Federal do RJ ou do ES vai para o **TRF-2**).",
+            "No cartão, a **etiqueta do estado** (RJ, ES, AL...) mostra de qual Justiça Federal o processo é. O botão ao lado do número **copia o número e abre o processo no tribunal** (no e-Proc, primeiro o link da seção do estado).",
+            "Tarefa criada pelo sistema (robô das intimações, processos parados, ficha) já nasce na coluna do tribunal. Tribunal novo ganha a coluna sozinho.",
+            "Processo **sem número** fica na coluna **Sem número do processo**; quando alguém cadastra o número, a tarefa passa sozinha para o tribunal.",
+            "Coluna sem tarefa aberta fica **oculta** e volta sozinha quando chega tarefa nova. A linha em cima do quadro mostra as ocultas: clique no nome para mostrar ou em [[Mostrar todas]]. Coluna que você mostrou volta a se ocultar pelo menu dela (**Ocultar quando estiver vazia**).",
+            "Arraste o cartão para outra coluna quando precisar. O administrador cria, renomeia e muda a ordem das colunas."
+          ],
+          img: "tarefas_colunas",
+          marcas: ["Colunas sem tarefa aberta (ocultas): clique no nome para mostrar.", "Mostrar todas.", "Etiqueta do estado e botão do tribunal.", "Coluna do tribunal (TRF-2)."],
+          dicas: ["Tarefa sem coluna aparece numa coluna \"Sem coluna\": arraste cada uma para a coluna certa."]
         },
         { id: "nova", titulo: "Criar uma tarefa",
           quando: "Quando surge algo a fazer: para você ou para um colega.",
@@ -447,12 +477,14 @@ window.SAGA_MANUAL = {
             "Clique em [[Nova Tarefa]] (ou crie pela intimação, pela ficha ou pelo cartão).",
             "Escreva o **título** do que precisa ser feito (ex.: Protocolar petição de cumprimento de sentença).",
             "**Pessoal** ou **Vinculada a processo** (escolha o processo). Descrição, se precisar.",
+            "A janela tem duas partes: à esquerda, **o que fazer** (tipo, processo, descrição, subtarefas, anexos e comentários); à direita, **os detalhes** (coluna, responsável, prazo, status, prioridade, etiqueta, outros responsáveis e compartilhar). No celular, os detalhes vêm logo depois do título.",
+            "**Coluna**: deixe **Automática (tribunal do processo)** ou escolha uma (as colunas ocultas também aparecem na lista). Tarefa pessoal precisa de uma coluna escolhida.",
             "**Responsável**, outros responsáveis e com quem compartilhar.",
             "**Prazo**: Hoje, Amanhã, Esta semana ou a data (o SAGA mostra o prazo em dias úteis).",
-            "Salve. O responsável recebe o aviso no sino."
+            "Clique em [[Salvar Tarefa]]. O responsável recebe o aviso no sino."
           ],
           img: "nova_tarefa",
-          marcas: ["Título da tarefa."],
+          marcas: ["Título da tarefa.", "Pessoal ou vinculada a processo.", "Coluna: Automática (tribunal do processo).", "Prazo.", "Salvar Tarefa."],
           dicas: ["Tarefa ligada a processo, quando concluída, atualiza a providência do processo."]
         }
       ]
