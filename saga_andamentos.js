@@ -24,6 +24,7 @@
 
   function e(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function dig(v){return String(v==null?'':v).replace(/\D/g,'');}
+  function cnjFmt(n){var d=dig(n);return d.length===20?d.slice(0,7)+'-'+d.slice(7,9)+'.'+d.slice(9,13)+'.'+d.slice(13,14)+'.'+d.slice(14,16)+'.'+d.slice(16):String(n||'');}
   function cnj(v){var d=dig(v);return d.length===20?d.slice(0,7)+'-'+d.slice(7,9)+'.'+d.slice(9,13)+'.'+d.slice(13,14)+'.'+d.slice(14,16)+'.'+d.slice(16):(v||'');}
   function reduzido(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(x){return false;}}
   function partes(iso){
@@ -93,8 +94,10 @@
       +'.and-nota{margin:10px 0 0;color:var(--muted);font-size:10px;line-height:1.5}'
       +'.and-freq input{width:56px;padding:2px 6px;border:1px solid var(--border);border-radius:7px;background:var(--panel,transparent);color:var(--text);font:inherit;text-align:center}'
       +'.and-freq .btn-secondary{padding:3px 12px;margin-left:4px;font-size:11px;border-radius:999px}'
+      +'.and-robo-lista{margin:4px 0 8px;font-size:11px}.and-robo-lista summary{cursor:pointer}.and-robo-lista table{width:100%;border-collapse:collapse;margin-top:6px}.and-robo-lista th,.and-robo-lista td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);vertical-align:top}.and-robo-lista a{color:inherit;text-decoration:underline}'
       +'.and-robo-erros{margin:4px 0 6px;padding-left:18px;font-size:11px}.and-vermelho{color:var(--danger,#e5484d)}'
       +'.and-amarelo{color:color-mix(in srgb,var(--warning,#e0a93b) 80%,var(--text))}'
+      +'.and-fila{color:var(--text-muted,var(--text));border:1px solid var(--border);background:color-mix(in srgb,var(--text) 4%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-passageiro{color:var(--text);border:1px solid color-mix(in srgb,var(--warning,#e0a93b) 55%,transparent);background:color-mix(in srgb,var(--warning,#e0a93b) 12%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-erro{color:var(--text);border:1px solid color-mix(in srgb,var(--danger,#e5484d) 40%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 8%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-roda{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:andGira .8s linear infinite}'
@@ -169,17 +172,21 @@
     var nums=d.numeros||[],ands=d.andamentos||[],robo=d.robo||{};
     // erro passageiro (o CNJ pediu para esperar, demorou ou estava fora do ar): o número volta sozinho para a fila (bloco 182)
     var passageiro=function(t){return /(tenta de novo|\(429\)|demorou demais|n[aã]o consegui falar com o datajud)/i.test(String(t||''));};
-    var erro=nums.filter(function(n){return n.erro&&!passageiro(n.erro);})[0];
+    // regra de 12/11 (erros sempre à vista; blocos 182 a 184): VERMELHO = erro de verdade ou 3+ consultas seguidas com erro
+    // (o administrador recebe aviso no sino); AMARELO = erro passageiro, o robô tenta de novo; CINZA = só nunca consultado
+    var motivo=function(t){t=String(t||'');return /\(429\)/.test(t)?'o CNJ pediu para esperar (erro 429: pedidos demais)':/demorou demais/i.test(t)?'o CNJ demorou demais para responder (mais de 60 s)':/falar com o datajud/i.test(t)?'não consegui falar com o CNJ (internet ou o CNJ fora do ar)':t.replace(/[.\s]+$/,'');};
+    var repetido=function(n){return n.erro&&(!passageiro(n.erro)||(n.tentativas||0)>=3);};
+    var erro=nums.filter(repetido)[0];
     var naFila=!erro&&nums.some(function(n){return n.erro&&passageiro(n.erro);});
-    // regra de 12/11 (erros sempre à vista): erro passageiro em AMARELO com o motivo, quando foi e a próxima tentativa
     var pass=naFila&&nums.filter(function(n){return n.erro&&passageiro(n.erro);})[0];
-    var motivo=function(t){t=String(t||'');return /\(429\)/.test(t)?'erro 429: pedidos demais ao CNJ ao mesmo tempo (limite de consultas)':/demorou demais/i.test(t)?'o CNJ demorou demais para responder (mais de 60 s)':/falar com o datajud/i.test(t)?'não consegui falar com o CNJ (internet ou o CNJ fora do ar)':t;};
-    var html=erro?'<div class="and-erro">A última consulta ao CNJ'+(erro.consultado_em?' ('+e(quando(erro.consultado_em))+')':'')+' deu erro: '+e(erro.erro)+'</div>'
-      :pass?'<div class="and-passageiro"><b>A consulta ao CNJ deu erro'+(pass.consultado_em?' em '+e(quando(pass.consultado_em)):'')+':</b> '+e(motivo(pass.erro))+'. O robô tenta de novo sozinho na próxima rodada (de madrugada, entre 1h e 6h40); para tentar agora, use <b>Atualizar agora</b>.</div>':'';
+    var ult=function(n){return n.consultado_em?'Última tentativa: '+e(quando(n.consultado_em))+' — ':'';};
+    var html=erro?'<div class="and-erro"><b>Erro na consulta ao CNJ'+((erro.tentativas||0)>1?' ('+erro.tentativas+' tentativas seguidas)':'')+'.</b> '+ult(erro)+e(motivo(erro.erro))+'. '
+        +(passageiro(erro.erro)?'O robô continua tentando de madrugada, mas o erro se repete; o administrador foi avisado no sino.':'Precisa de conferência (o robô não resolve sozinho); o administrador foi avisado no sino.')+'</div>'
+      :pass?'<div class="and-passageiro">'+ult(pass)+e(motivo(pass.erro))+'. Nova tentativa na próxima rodada do robô (madrugada, entre 1h e 6h40); para tentar agora, use <b>Atualizar agora</b>.</div>':'';
     if(!ands.length){
       if(!nums.length&&!temNumero)return html+'<p class="and-vazio">Este processo ainda não tem número no padrão do CNJ. Quando tiver, o SAGA busca os andamentos sozinho.</p>';
       if(naFila)return html;
-      if(!nums.length)return html+'<p class="and-vazio">Ainda não consultado no CNJ. '+(robo.ativo?'O robô diário consulta todos os processos do Jurídico de madrugada; ':'')+'Use <b>Atualizar agora</b> para buscar já.</p>';
+      if(!nums.length)return html+'<div class="and-fila">Na fila do CNJ: ainda não consultado. '+(robo.ativo?'Consulta prevista na próxima rodada do robô (madrugada, entre 1h e 6h40). ':'O robô está desligado. ')+'Use <b>Atualizar agora</b> para buscar já.</div>';
       if(nums.every(function(n){return n.encontrado===false;}))return html+'<p class="and-vazio">Não encontrado na base pública do CNJ. Pode ser processo em segredo de justiça, muito recente ou que o tribunal ainda não enviou ao CNJ.</p>';
       return html+'<p class="and-vazio">Nenhum andamento na base pública do CNJ até agora.</p>';
     }
@@ -326,6 +333,9 @@
         +((d.erros_motivos||[]).length?'<ul class="and-robo-erros">'+d.erros_motivos.map(function(x){
             return '<li class="'+(x.passageiro?'and-amarelo':'and-vermelho')+'">'+x.quantos+' número(s): '+e(x.erro)+(x.ultima?' (última tentativa '+e(relativo(x.ultima))+')':'')
               +(x.passageiro?' · o robô tenta de novo sozinho na próxima rodada':' · precisa de conferência')+'</li>';}).join('')+'</ul>':'')
+        +((d.erros_lista||[]).length?'<details class="and-robo-lista"><summary>Ver os '+d.erros_lista.length+' número(s) com erro, para conferir</summary><table><thead><tr><th>Cliente</th><th>Número</th><th>Motivo</th><th>Tentativas</th><th>Última</th></tr></thead><tbody>'
+            +d.erros_lista.map(function(x){return '<tr class="'+(x.repetido?'and-vermelho':'and-amarelo')+'"><td><a href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+encodeURIComponent(x.processo_id)+'&foco=andamentos" data-and-proc="'+e(x.processo_id)+'">'+e(x.cliente||'(sem cliente)')+'</a></td><td>'+e(cnjFmt(x.numero))+'</td><td>'+e(x.erro)+'</td><td>'+(x.tentativas||1)+'</td><td>'+(x.ultima?e(quando(x.ultima)):'')+'</td></tr>';}).join('')
+            +'</tbody></table></details>':'')
         +'<div class="and-robo-num and-freq">Consulta cada processo: ativos a cada <input id="andDiasAtivos" type="number" min="1" max="90" value="'+(d.dias_ativos||7)+'" aria-label="Dias entre consultas dos processos ativos"> dias · encerrados e sacados a cada <input id="andDiasDemais" type="number" min="1" max="365" value="'+(d.dias_demais||30)+'" aria-label="Dias entre consultas dos encerrados e sacados"> dias <button type="button" class="btn-secondary" data-and="freq-salvar">Salvar</button><br>Intimação nova ligada ao processo: consultado na próxima rodada, com prioridade.</div>'
         +(ult?'<ul class="and-robo-exec"><li>Última rodada ('+e(relativo(ult.inicio))+'): '+e(ult.mensagem||(ult.fim?'terminou':'em andamento...'))+'</li></ul>':'')
         +'<div class="and-robo-num">Chave pública do CNJ: '+(d.chave?(d.chave_origem==='manual'?'colada à mão':'buscada sozinha na página do CNJ')+' ('+e(d.chave)+')':'o robô busca sozinho na página do CNJ na 1ª consulta')
