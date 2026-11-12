@@ -91,6 +91,8 @@
       +'.and-vazio{color:var(--muted);font-size:11px;line-height:1.55;margin:0}'
       +'.and-vazio b{color:var(--text);font-weight:600}'
       +'.and-nota{margin:10px 0 0;color:var(--muted);font-size:10px;line-height:1.5}'
+      +'.and-freq input{width:56px;padding:2px 6px;border:1px solid var(--border);border-radius:7px;background:var(--panel,transparent);color:var(--text);font:inherit;text-align:center}'
+      +'.and-freq .btn-secondary{padding:3px 12px;margin-left:4px;font-size:11px;border-radius:999px}'
       +'.and-fila{color:var(--text-muted,var(--text));border:1px solid var(--border);background:color-mix(in srgb,var(--text) 4%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-erro{color:var(--text);border:1px solid color-mix(in srgb,var(--danger,#e5484d) 40%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 8%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-roda{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:andGira .8s linear infinite}'
@@ -287,6 +289,11 @@
       if(acao==='todos'){await carregarTudo(b);return;}
       if(acao==='testar'){await testarLigacao(b);return;}
       if(acao==='chave-mostrar'){var c=f.querySelector('.and-robo-chave');recolher(c,!c.hidden);return;}
+      if(acao==='freq-salvar'){
+        var da=parseInt((f.querySelector('#andDiasAtivos')||{}).value,10),dd=parseInt((f.querySelector('#andDiasDemais')||{}).value,10);
+        if(!(da>=1&&da<=90)||!(dd>=1&&dd<=365)){aviso('Ativos: de 1 a 90 dias. Encerrados e sacados: de 1 a 365 dias.','error');return;}
+        await salvarRobo({p_dias_ativos:da,p_dias_demais:dd},'Frequência salva: ativos a cada '+da+' dia(s); encerrados e sacados a cada '+dd+' dia(s).');return;
+      }
       if(acao==='chave-salvar'){var v=(f.querySelector('#andChave')||{}).value||'';await salvarRobo({p_chave:v.trim()},v.trim()?'Chave colada. O robô passa a usar esta chave.':'O robô volta a buscar a chave sozinho na página do CNJ.');return;}
     });
     var rb=await A.sb.rpc('datajud_robo');
@@ -308,9 +315,10 @@
           +'<button type="button" class="btn-secondary" data-and="todos">Carregar tudo agora</button>'
           +'<button type="button" class="btn-secondary" data-and="testar">Testar a ligação</button>'
         +'</div></div>'
-        +'<div class="and-robo-num">'+d.na_fila+' número(s) de processo e recurso no Jurídico · '+d.consultados+' já consultado(s) · '+d.encontrados+' encontrado(s) no CNJ · '+d.andamentos+' andamento(s)'
+        +'<div class="and-robo-num">'+(d.total_numeros!=null?d.total_numeros:d.na_fila)+' número(s) de processo e recurso no Jurídico · '+d.consultados+' já consultado(s) · '+d.encontrados+' encontrado(s) no CNJ · '+d.andamentos+' andamento(s)'
           +(d.aguardando?' · '+d.aguardando+' na fila do CNJ (próxima rodada)':'')
           +(d.com_erro?' · '+d.com_erro+' com erro':'')+'</div>'
+        +'<div class="and-robo-num and-freq">Consulta cada processo: ativos a cada <input id="andDiasAtivos" type="number" min="1" max="90" value="'+(d.dias_ativos||7)+'" aria-label="Dias entre consultas dos processos ativos"> dias · encerrados e sacados a cada <input id="andDiasDemais" type="number" min="1" max="365" value="'+(d.dias_demais||30)+'" aria-label="Dias entre consultas dos encerrados e sacados"> dias <button type="button" class="btn-secondary" data-and="freq-salvar">Salvar</button><br>Intimação nova ligada ao processo: consultado na próxima rodada, com prioridade.</div>'
         +(ult?'<ul class="and-robo-exec"><li>Última rodada ('+e(relativo(ult.inicio))+'): '+e(ult.mensagem||(ult.fim?'terminou':'em andamento...'))+'</li></ul>':'')
         +'<div class="and-robo-num">Chave pública do CNJ: '+(d.chave?(d.chave_origem==='manual'?'colada à mão':'buscada sozinha na página do CNJ')+' ('+e(d.chave)+')':'o robô busca sozinho na página do CNJ na 1ª consulta')
           +' · <button type="button" class="and-ver" data-and="chave-mostrar" style="margin:0;padding:0">'+(d.chave_origem==='manual'?'trocar':'colar à mão')+'</button></div>'
