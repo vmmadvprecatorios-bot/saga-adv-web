@@ -118,6 +118,37 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
   .aparelho.atual{border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
   .ap-icone{width:34px;height:34px;flex:0 0 auto;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--gold-light)}
   .ap-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ap-info b{font-size:13px;color:var(--text)}.ap-info b em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--gold-light);margin-left:6px}.ap-info small{font-size:11px;color:var(--muted)}
+/* ----- Armazenamento (12/11, T163): barras no estilo do iPhone ----- */
+#aba-armazenamento>.panel.largo{grid-column:1/-1;max-width:none}
+#aba-armazenamento .panel{max-width:none}
+.arm-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.arm-topo .acoes{margin:0}
+.arm-lido{font-size:11px;color:var(--muted);margin-top:4px}
+.arm-lido i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);margin-right:6px;vertical-align:middle;animation:armPulso 2.4s cubic-bezier(.22,.78,.25,1) infinite}
+@keyframes armPulso{0%,100%{opacity:1}50%{opacity:.35}}
+html.saga-sem-movimento .arm-lido i{animation:none}
+.arm-num{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+.arm-num b{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.arm-num span{font-size:12px;color:var(--muted)}
+.arm-barra{display:flex;height:22px;border-radius:7px;overflow:hidden;background:color-mix(in srgb,var(--text) 9%,transparent);border:1px solid var(--border-soft)}
+.arm-barra .arm-fatia{height:100%;width:0;min-width:0;transition:width .42s cubic-bezier(.22,.78,.25,1);box-shadow:inset -1px 0 0 color-mix(in srgb,var(--panel-solid,#000) 55%,transparent)}
+.arm-barra .arm-fatia.min{min-width:3px}
+.arm-leg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:6px 18px;margin-top:12px}
+.arm-leg .it{display:flex;align-items:center;gap:8px;font-size:12px;min-width:0}
+.arm-leg .bol{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.arm-leg .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arm-leg .vl{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.arm-aviso{display:none;margin-top:12px;padding:9px 12px;border-radius:10px;font-size:12px;line-height:1.45}
+.arm-aviso.amarelo{display:block;background:color-mix(in srgb,var(--warning) 14%,transparent);border:1px solid color-mix(in srgb,var(--warning) 40%,transparent)}
+.arm-aviso.vermelho{display:block;background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent)}
+.arm-pct{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted)}
+.arm-pct.amarelo{color:var(--warning);border-color:color-mix(in srgb,var(--warning) 45%,transparent)}
+.arm-pct.vermelho{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,transparent)}
+.arm-sub{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.arm-plano{display:grid;grid-template-columns:1.4fr 1fr 1fr auto;gap:12px;align-items:end}
+.arm-plano .campo{margin-bottom:0}
+.arm-plano .dica{grid-column:1/-1;font-size:11px;color:var(--muted);line-height:1.5}
+@media(max-width:760px){.arm-plano{grid-template-columns:1fr 1fr}.arm-plano .campo:first-child{grid-column:1/-1}.arm-plano>button{grid-column:1/-1}.arm-num b{font-size:19px}}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611121643">
 </head>
@@ -140,6 +171,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
     <button class="tab-btn" data-aba="preferencias" type="button">Preferências</button>
     <button class="tab-btn" data-aba="areas-teses" type="button" id="abaAreasTesesBtn" style="display:none">Áreas e tipos de ação</button>
     <button class="tab-btn" data-aba="escritorio" type="button" id="abaEscritorioBtn" style="display:none">Escritório</button>
+    <button class="tab-btn" data-aba="armazenamento" type="button" id="abaArmazenamentoBtn" style="display:none">Armazenamento</button>
   </div>
 
   <!-- MEU PERFIL -->
@@ -273,6 +305,46 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
       <div class="acoes"><button class="btn-primary" id="esSalvar" type="button">Salvar dados do escritório</button></div>
     </div>
   </section>
+  <!-- ARMAZENAMENTO (12/11, T163): só o administrador geral -->
+  <section class="tab-pane" id="aba-armazenamento">
+    <div class="panel largo">
+      <div class="arm-topo">
+        <div>
+          <div class="panel-title">Armazenamento do SAGA</div>
+          <div class="panel-sub" style="margin-bottom:0">Quanto espaço o sistema usa no Supabase e quanto ainda cabe no plano. Só você vê esta aba.</div>
+          <div class="arm-lido" id="armLido">Lendo…</div>
+        </div>
+        <div class="acoes"><button class="btn-secondary btn-sm" id="armAtualizar" type="button">Atualizar agora</button></div>
+      </div>
+      <div class="arm-sub">Plano e limites</div>
+      <div class="arm-plano">
+        <div class="campo"><label for="armPlano">Plano do Supabase</label>
+          <select id="armPlano"><option value="gratuito">Gratuito (banco 500 MB · arquivos 1 GB)</option><option value="pro">Pro (banco 8 GB · arquivos 100 GB)</option><option value="personalizado">Personalizado</option></select></div>
+        <div class="campo"><label for="armLimBanco">Limite do banco (MB)</label><input id="armLimBanco" inputmode="numeric" maxlength="12"></div>
+        <div class="campo"><label for="armLimArq">Limite dos arquivos (MB)</label><input id="armLimArq" inputmode="numeric" maxlength="12"></div>
+        <button class="btn-primary" id="armSalvarPlano" type="button">Salvar limites</button>
+        <div class="dica">Ao assinar o Pro, escolha "Pro" e salve: banco 8 GB (o disco cresce sozinho quando chega a 90%, e o Supabase cobra o que passar) e arquivos 100 GB incluídos no plano. Acima de 80%, o sino avisa uma vez por dia.</div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Banco de dados</div>
+      <div class="panel-sub">Fichas, processos, tarefas, registros e tudo o que o sistema grava.</div>
+      <div class="arm-num"><b id="armBancoUsado">—</b><span id="armBancoDe"></span><em class="arm-pct" id="armBancoPct" style="font-style:normal"></em></div>
+      <div class="arm-barra" id="armBancoBarra" role="img" aria-label="Uso do banco de dados"></div>
+      <div class="arm-leg" id="armBancoLeg"></div>
+      <div class="arm-aviso" id="armBancoAviso"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Arquivos</div>
+      <div class="panel-sub">Documentos, fotos e vídeos enviados ao sistema.</div>
+      <div class="arm-num"><b id="armArqUsado">—</b><span id="armArqDe"></span><em class="arm-pct" id="armArqPct" style="font-style:normal"></em></div>
+      <div class="arm-barra" id="armArqBarra" role="img" aria-label="Uso dos arquivos"></div>
+      <div class="arm-leg" id="armArqLeg"></div>
+      <div class="arm-aviso" id="armArqAviso"></div>
+      <div class="arm-sub">Por lugar</div>
+      <div class="arm-leg" id="armArqLugares"></div>
+    </div>
+  </section>
 </main>
 </div>
 
@@ -326,10 +398,11 @@ function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=do
 function iniciais(n){return String(n||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase()||'--';}
 function erroTexto(e){return (e&&(e.message||e.error_description))||'Não foi possível concluir.';}
 function trocarAba(aba){
-  if(aba==='areas-teses'&&!state.adminGeral)aba='perfil';
+  if((aba==='areas-teses'||aba==='armazenamento')&&!state.adminGeral)aba='perfil';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
   if(aba==='seguranca')carregarAparelhos();
+  if(aba==='armazenamento'&&state.adminGeral){armCarregar();armLigarTimer(true);}else armLigarTimer(false);
 }
 /* ----- Aparelhos conectados (bloco 109) ----- */
 function descreverAparelho(ua){
@@ -873,9 +946,101 @@ async function removerLogo(){
   showToast('Logo removido.','success');
 }
 
+/* ----- Armazenamento (12/11, T163; bloco 177): só o administrador geral ----- */
+var ARM_CORES=['#3b82f6','#f59e0b','#10b981','#8b5cf6','#ec4899','#14b8a6','#f97316','#64748b','#ef4444','#06b6d4','#84cc16','#a855f7'];
+var ARM_COR_GRUPO={'Processos e fichas':'#3b82f6','Captação e importações':'#f59e0b','Intimações e andamentos':'#10b981','Tarefas, agenda e conversas':'#8b5cf6','Registro de atividades e históricos':'#ec4899','Ponto':'#14b8a6','Financeiro':'#84cc16','Marketing':'#f97316','Cópias de segurança':'#06b6d4','Outros':'#d946ef','Sistema (estrutura e rotinas)':'#64748b',
+  'Documentos':'#3b82f6','Fotos e imagens':'#f59e0b','Vídeos':'#ec4899','Áudios':'#14b8a6'};
+var ARM_LUGAR={'documentos-clientes':'Documentos de clientes','marketing-materiais':'Artes do Marketing','avatares':'Fotos de perfil','chat-anexos':'Anexos do chat','tarefas-anexos':'Anexos das tarefas','biblioteca-arquivos':'Biblioteca de modelos','atestados':'Atestados do ponto','produtos-arquivos':'Arquivos das teses','sugestoes-imagens':'Imagens das sugestões'};
+var ARM_NOME={'Registro de atividades e históricos':'Registros e históricos','Sistema (estrutura e rotinas)':'Sistema do banco','Tarefas, agenda e conversas':'Tarefas, agenda e chat'};
+var ARM_PLANOS={gratuito:{banco:500,arq:1024},pro:{banco:8192,arq:102400}};
+var arm={dados:null,timer:null,lendo:false};
+function armTam(b){b=Number(b)||0;var u=['bytes','KB','MB','GB','TB'],i=0;while(b>=1024&&i<u.length-1){b/=1024;i++;}
+  return (i===0?String(Math.round(b)):b.toLocaleString('pt-BR',{minimumFractionDigits:b<10?1:0,maximumFractionDigits:1}))+' '+u[i];}
+function armPct(v,t){if(!t)return 0;return v/t*100;}
+function armPctTxt(p){return (p>0&&p<0.1?'< 0,1':p.toLocaleString('pt-BR',{maximumFractionDigits:p<10?1:0}))+'%';}
+function armMilhar(v){var d=String(v==null?'':v).replace(/\D/g,'');return d?Number(d).toLocaleString('pt-BR'):'';}
+function armNum(id){return Number(String(document.getElementById(id).value||'').replace(/\D/g,''))||0;}
+function armSemMov(){try{return window.sagaMq?window.sagaMq().matches:localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+function armCor(nome,i){return ARM_COR_GRUPO[nome]||ARM_CORES[i%ARM_CORES.length];}
+function armDesenhar(barraId,legId,itens,usado,limite){
+  var barra=document.getElementById(barraId),leg=document.getElementById(legId);
+  var total=Math.max(limite,usado)||1,livre=Math.max(limite-usado,0);
+  var lista=itens.filter(function(x){return x.bytes>0;});
+  var segs=barra.querySelectorAll('.arm-fatia'),novo=segs.length!==lista.length;
+  if(novo){barra.innerHTML=lista.map(function(x){return '<span class="arm-fatia min" style="background:'+x.cor+'" title="'+esc(x.nome+': '+armTam(x.bytes))+'"></span>';}).join('');segs=barra.querySelectorAll('.arm-fatia');}
+  else lista.forEach(function(x,i){segs[i].style.background=x.cor;segs[i].title=x.nome+': '+armTam(x.bytes);});
+  var aplicar=function(){lista.forEach(function(x,i){segs[i].style.width=(x.bytes/total*100)+'%';});};
+  if(armSemMov()){segs.forEach(function(s){s.style.transition='none';});aplicar();}
+  else if(novo)requestAnimationFrame(function(){requestAnimationFrame(aplicar);});else aplicar();
+  leg.innerHTML=itens.map(function(x){return '<div class="it"><span class="bol" style="background:'+x.cor+'"></span><span class="nm" title="'+esc(x.nome)+'">'+esc(x.nome)+'</span><span class="vl">'+armTam(x.bytes)+(x.extra?' · '+esc(x.extra):'')+'</span></div>';}).join('')+
+    '<div class="it"><span class="bol" style="background:color-mix(in srgb,var(--text) 14%,transparent);border:1px solid var(--border)"></span><span class="nm">Espaço livre</span><span class="vl">'+armTam(livre)+'</span></div>';
+}
+function armFaixa(pctId,avisoId,p,nome){
+  var el=document.getElementById(pctId),av=document.getElementById(avisoId),cls=p>=90?'vermelho':p>=70?'amarelo':'';
+  el.textContent=armPctTxt(p)+' usado';el.className='arm-pct'+(cls?' '+cls:'');
+  av.className='arm-aviso'+(cls?' '+cls:'');
+  av.textContent=p>=100?'O '+nome+' passou do limite do plano. No gratuito o Supabase pode deixar o sistema só para leitura: hora de assinar o Pro ou liberar espaço.':
+    p>=90?'O '+nome+' está quase cheio ('+armPctTxt(p)+'). Hora de assinar o Pro ou liberar espaço.':
+    p>=70?'O '+nome+' já passou de 70% do limite do plano. Vale acompanhar.':'';
+}
+function armMostrar(d){
+  arm.dados=d;var lim=d.limites||{},lb=(Number(lim.limite_banco_mb)||500)*1048576,la=(Number(lim.limite_arquivos_mb)||1024)*1048576;
+  var b=d.banco||{},a=d.arquivos||{};
+  document.getElementById('armBancoUsado').textContent=armTam(b.bytes);
+  document.getElementById('armBancoDe').textContent='de '+armTam(lb);
+  armDesenhar('armBancoBarra','armBancoLeg',(b.grupos||[]).map(function(g,i){return {nome:ARM_NOME[g.grupo]||g.grupo,bytes:Number(g.bytes)||0,cor:armCor(g.grupo,i)};}),Number(b.bytes)||0,lb);
+  armFaixa('armBancoPct','armBancoAviso',armPct(b.bytes,lb),'banco de dados');
+  document.getElementById('armArqUsado').textContent=armTam(a.bytes);
+  var q=Number(a.quantidade)||0;
+  document.getElementById('armArqDe').textContent='de '+armTam(la)+' · '+q.toLocaleString('pt-BR')+(q===1?' arquivo':' arquivos');
+  armDesenhar('armArqBarra','armArqLeg',(a.tipos||[]).filter(function(t){return Number(t.bytes)>0||Number(t.arquivos)>0;}).map(function(t,i){return {nome:t.tipo,bytes:Number(t.bytes)||0,cor:armCor(t.tipo,i),extra:(t.arquivos||0)+(t.arquivos===1?' arquivo':' arquivos')};}),Number(a.bytes)||0,la);
+  armFaixa('armArqPct','armArqAviso',armPct(a.bytes,la),'espaço de arquivos');
+  document.getElementById('armArqLugares').innerHTML=(a.lugares||[]).map(function(l){var nm=ARM_LUGAR[l.lugar]||l.lugar;
+    return '<div class="it"><span class="bol" style="background:color-mix(in srgb,var(--gold) 55%,transparent)"></span><span class="nm" title="'+esc(nm)+'">'+esc(nm)+'</span><span class="vl">'+armTam(l.bytes)+' · '+(l.arquivos||0)+'</span></div>';}).join('');
+  var lido=new Date(d.lido_em||Date.now());
+  document.getElementById('armLido').innerHTML='<i></i>Lido às '+esc(lido.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' de '+esc(lido.toLocaleDateString('pt-BR'))+' · atualiza sozinho a cada minuto enquanto esta aba está aberta';
+  var sel=document.getElementById('armPlano'),pl=String(lim.plano||'gratuito');
+  if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest('.arm-plano'))return;
+  sel.value=ARM_PLANOS[pl]&&ARM_PLANOS[pl].banco===Number(lim.limite_banco_mb)&&ARM_PLANOS[pl].arq===Number(lim.limite_arquivos_mb)?pl:'personalizado';
+  document.getElementById('armLimBanco').value=armMilhar(lim.limite_banco_mb);
+  document.getElementById('armLimArq').value=armMilhar(lim.limite_arquivos_mb);
+}
+async function armCarregar(){
+  if(!state.adminGeral||arm.lendo)return;arm.lendo=true;
+  var bt=document.getElementById('armAtualizar');bt.disabled=true;
+  try{var r=await _sb.rpc('armazenamento_painel');
+    if(r.error){document.getElementById('armLido').textContent='Não foi possível ler o armazenamento agora.';return;}
+    armMostrar(r.data||{});
+  }finally{arm.lendo=false;bt.disabled=false;}
+}
+function armLigarTimer(ligar){
+  if(arm.timer){clearInterval(arm.timer);arm.timer=null;}
+  if(ligar)arm.timer=setInterval(function(){if(document.visibilityState==='visible')armCarregar();},60000);
+}
+async function armSalvarPlano(){
+  var banco=armNum('armLimBanco'),arq=armNum('armLimArq'),pl=document.getElementById('armPlano').value;
+  if(!banco||!arq){showToast('Informe os dois limites em MB.','error');return;}
+  var b=document.getElementById('armSalvarPlano');b.disabled=true;
+  var r=await _sb.rpc('armazenamento_limites_salvar',{p_plano:pl,p_limite_banco_mb:banco,p_limite_arquivos_mb:arq});
+  b.disabled=false;
+  if(r.error){showToast(esc(erroTexto(r.error)),'error');return;}
+  showToast('Limites do plano salvos.','success');document.activeElement&&document.activeElement.blur&&document.activeElement.blur();armCarregar();
+}
+function armLigarEventos(){
+  document.getElementById('armAtualizar').addEventListener('click',armCarregar);
+  document.getElementById('armSalvarPlano').addEventListener('click',armSalvarPlano);
+  document.getElementById('armPlano').addEventListener('change',function(){var p=ARM_PLANOS[this.value];
+    if(p){document.getElementById('armLimBanco').value=armMilhar(p.banco);document.getElementById('armLimArq').value=armMilhar(p.arq);}
+    else document.getElementById('armLimBanco').focus();});
+  ['armLimBanco','armLimArq'].forEach(function(id){document.getElementById(id).addEventListener('input',function(){
+    this.value=armMilhar(this.value);document.getElementById('armPlano').value='personalizado';});});
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&arm.timer)armCarregar();});
+}
+
 /* ----- Inicio ----- */
 function ligarEventos(){
   ligarCorte();
+  armLigarEventos();
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.addEventListener('click',function(){trocarAba(b.dataset.aba);});});
   document.getElementById('pfSalvar').addEventListener('click',salvarPerfil);
   document.getElementById('pfTrocarFoto').addEventListener('click',function(){document.getElementById('pfArquivo').click();});
@@ -931,6 +1096,8 @@ async function carregar(){
   state.eu=r.data;
   state.adminGeral=r.data.eh_administrador===true;
   document.getElementById('abaAreasTesesBtn').style.display=state.adminGeral?'':'none';
+  document.getElementById('abaArmazenamentoBtn').style.display=state.adminGeral?'':'none';
+  if(!state.adminGeral&&document.getElementById('aba-armazenamento').classList.contains('ativo'))trocarAba('perfil');
   if(state.adminGeral){
     if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:true,erro:function(msg){showToast(esc(msg),'error');}});
     await carregarSituacoesAcao();
