@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611121247"></script>
+<script src="saga_guard.js?v=202611121249"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Financeiro</title>
@@ -123,7 +123,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
   .tabs{max-width:100%}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121247">
+<link rel="stylesheet" href="saga_tema.css?v=202611121249">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -148,6 +148,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
     <button class="tab-btn active" data-aba="visao">Visão geral</button>
     <button class="tab-btn" data-aba="processos">Honorários por processo <span class="qtd" id="qtdProcessos">0</span></button>
     <button class="tab-btn" data-aba="lancamentos">Lançamentos avulsos <span class="qtd" id="qtdLancamentos">0</span></button>
+    <button class="tab-btn" data-aba="parcelas" id="abaParcelasBtn" hidden>Parcelas <span class="qtd" id="qtdParcelas">0</span></button>
     <button class="tab-btn" data-aba="distribuicao">Distribuição</button>
     <button class="tab-btn" data-aba="escritorios">Por escritório e participante</button>
   </div>
@@ -186,6 +187,24 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
     <div class="tabela-wrap"><table>
       <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Processo</th><th>Situação</th><th class="num">Valor</th></tr></thead>
       <tbody id="tbodyLancamentos"></tbody>
+    </table></div>
+  </section>
+
+  <!-- PARCELAS (T159, bloco 167): pagamentos combinados na ficha de cada cliente (bloco "Pagamentos") -->
+  <section class="tab-pane" id="aba-parcelas">
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-title">Parcelas combinadas com os clientes</div>
+      <div class="panel-sub">Vêm do bloco "Pagamentos" da ficha de cada cliente. Parcela de honorários marcada como paga entra aqui como <b>recebida</b> (e na Visão geral). Clique numa linha para abrir a ficha do cliente.</div>
+    </div>
+    <div class="kpis" id="kpisParcelas"></div>
+    <div class="toolbar">
+      <div class="busca"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><input id="buscaParcelas" placeholder="Buscar cliente ou número do processo..."></div>
+      <div class="pills" id="filtroParcelas"></div>
+      <div class="pills" id="tipoParcelas"></div>
+    </div>
+    <div class="tabela-wrap"><table>
+      <thead><tr><th>Vencimento</th><th>Cliente</th><th>Processo</th><th>Parcela</th><th>Situação</th><th class="num">Valor</th></tr></thead>
+      <tbody id="tbodyParcelas"></tbody>
     </table></div>
   </section>
 
@@ -287,10 +306,10 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611121247"></script>
-<script src="saga_texto.js?v=202611121247"></script>
-<script src="saga_roscas.js?v=202611121247"></script>
-<script src="saga_etiquetas.js?v=202611121247"></script>
+<script src="saga_ui.js?v=202611121249"></script>
+<script src="saga_texto.js?v=202611121249"></script>
+<script src="saga_roscas.js?v=202611121249"></script>
+<script src="saga_etiquetas.js?v=202611121249"></script>
 <script>
 /* =====================================================================
    FINANCEIRO (dados reais do banco)
@@ -307,7 +326,8 @@ var ETAPAS={
 };
 var state={escritorios:[],escTese:'',escFase:'',escPart:'',aba:'visao',processos:[],lancamentos:[],rateios:[],usuarios:[],podeVer:false,podeEditar:false,fontesRoscas:{},
   periodoVisao:'ano',periodoLanc:'mes',filtroEtapa:'todas',filtroTipo:'todos',buscaP:'',buscaL:'',
-  procAberto:null,rateioModal:[],lancEditando:null};
+  procAberto:null,rateioModal:[],lancEditando:null,
+  parcelas:[],temParcelas:false,filtroParc:'abertas',tipoParc:'honorarios',buscaPa:''};
 
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
 function moeda(n){return n==null||isNaN(n)?'—':Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
@@ -394,7 +414,7 @@ function dadosGraficosFinanceiro(){
   }
   if(fontes.lancamentos){
     var b=state.buscaL.trim().toLowerCase();
-    var lancamentos=state.lancamentos.filter(function(l){return dentroDoPeriodo(l.data_lancamento,state.periodoLanc)&&(!b||[l.descricao,l.categoria].join(' ').toLowerCase().indexOf(b)>-1);});
+    var lancamentos=lancAvulsos().filter(function(l){return dentroDoPeriodo(l.data_lancamento,state.periodoLanc)&&(!b||[l.descricao,l.categoria].join(' ').toLowerCase().indexOf(b)>-1);});
     grupos.push({id:'lancamentos',titulo:'Lançamentos por tipo',moeda:true,rotulo:'movimentado',
       dica:'Valores dos lançamentos no período e busca da aba Lançamentos, incluindo previstos. Clique para filtrar o tipo.',
       itens:[{id:'receita',nome:'Entradas',cor:'var(--g2)'},{id:'despesa',nome:'Saídas',cor:'var(--g-venc)'}].map(function(x){
@@ -449,7 +469,8 @@ async function carregarTudo(){
     _sb.from('financeiro_lancamentos').select('*').order('data_lancamento',{ascending:false}),
     _sb.from('financeiro_rateio').select('*').order('criado_em'),
     _sb.from('usuarios').select('id,nome_completo,ativo').order('nome_completo'),
-    _sb.rpc('financeiro_honorarios_participantes')
+    _sb.rpc('financeiro_honorarios_participantes'),
+    _sb.rpc('pagamentos_painel')
   ]);
   state.escritorios=r[4].error?[]:(r[4].data||[]);
   if(r[0].error){showToast('Não foi possível carregar o financeiro: '+esc(r[0].error.message),'error');}
@@ -458,12 +479,16 @@ async function carregarTudo(){
   state.rateios=r[2].data||[];
   state.usuarios=r[3].data||[];
   state.fontesRoscas={processos:!r[0].error,lancamentos:!r[1].error,rateios:!r[2].error};
+  // Parcelas da ficha (bloco 167): sem a função no banco, a aba fica escondida
+  state.temParcelas=!r[5].error;state.parcelas=r[5].error?[]:(Array.isArray(r[5].data)?r[5].data:[]);
+  document.getElementById('abaParcelasBtn').hidden=!state.temParcelas;
   renderTudo();
 }
 function renderTudo(){
   document.getElementById('qtdProcessos').textContent=state.processos.length;
-  document.getElementById('qtdLancamentos').textContent=state.lancamentos.length;
-  renderVisao();renderProcessos();renderLancamentos();renderDistribuicao();renderEscritorios();
+  document.getElementById('qtdLancamentos').textContent=lancAvulsos().length;
+  document.getElementById('qtdParcelas').textContent=state.parcelas.filter(function(p){return p.honorarios!==false&&!p.pago_em;}).length;
+  renderVisao();renderProcessos();renderLancamentos();renderDistribuicao();renderEscritorios();renderParcelas();
 }
 
 /* ------------------------- VISAO GERAL ------------------------- */
@@ -480,20 +505,25 @@ function renderVisao(){
   var somaRest=function(lista){return lista.reduce(function(s,x){return s+restante(x);},0);};
   var rec=P.filter(function(p){return p.etapa==='recebido';});
   var recPer=rec.filter(function(p){return dentroDoPeriodo(p.data_recebimento,per);});
-  var L=state.lancamentos.filter(function(l){return l.situacao==='confirmado'&&dentroDoPeriodo(l.data_lancamento,per);});
+  var Ltodos=state.lancamentos.filter(function(l){return l.situacao==='confirmado'&&dentroDoPeriodo(l.data_lancamento,per);});
+  // (T159) parcela de honorários paga na ficha do cliente vira lançamento com parcela_id: aparece à parte, não como avulso
+  var L=Ltodos.filter(function(l){return !l.parcela_id;}),Lp=Ltodos.filter(function(l){return l.parcela_id&&l.tipo==='receita';});
   var receitasAv=soma(L.filter(function(l){return l.tipo==='receita';}),'valor');
   var despesasAv=soma(L.filter(function(l){return l.tipo==='despesa';}),'valor');
+  var parcelasRec=soma(Lp,'valor');
+  var aReceberParc=state.parcelas.filter(function(p){return p.honorarios!==false&&!p.pago_em;}).reduce(function(s,p){return s+Number(p.valor||0);},0);
   var distribuido=0,pago=0;
   state.rateios.forEach(function(r){var p=P.find(function(x){return x.processo_id===r.processo_id;});if(!p)return;var v=valorRateio(r,p.base_rateio,p.percentual_honorarios);distribuido+=v;if(r.pago&&dentroDoPeriodo(r.data_pagamento,per))pago+=v;});
-  var resultado=soma(recPer,'valor_recebido')+receitasAv-despesasAv-pago;
+  var resultado=soma(recPer,'valor_recebido')+parcelasRec+receitasAv-despesasAv-pago;
   var rotPer={mes:'neste mês',ano:'neste ano',tudo:'no total'}[per];
   var cards=[
     ['Expectativa de honorários',somaRest(exp),exp.length+' processo(s) aguardando sentença','#4b8af5'],
     ['A receber (após sentença)',somaRest(sen),sen.length+' processo(s) com sentença','#e0a93b'],
     ['Recebido '+rotPer,soma(recPer,'valor_recebido'),recPer.length+' processo(s) com valor sacado','#2fae7a'],
+    ['Honorários parcelados recebidos '+rotPer,parcelasRec,Lp.length+' parcela(s) paga(s)'+(state.temParcelas?' · a receber '+moeda(aReceberParc):''),'#1f9d74'],
     ['Lançamentos avulsos '+rotPer,receitasAv-despesasAv,'Entradas '+moeda(receitasAv)+' · Saídas '+moeda(despesasAv),'#8a6fd6'],
     ['Pago aos colaboradores '+rotPer,pago,'Total distribuído (todas as etapas): '+moeda(distribuido),'#c46a9c'],
-    ['Resultado do escritório '+rotPer,resultado,'Recebido + avulsos − saídas − pagamentos','#13233a']
+    ['Resultado do escritório '+rotPer,resultado,'Recebido + parcelas + avulsos − saídas − pagamentos','#13233a']
   ];
   document.getElementById('kpisVisao').innerHTML=cards.map(function(c){
     return '<div class="kpi-card" style="--c:'+c[3]+'"><span class="faixa"></span><div class="rotulo">'+esc(c[0])+'</div><div class="kpi-value'+(c[1]<0?' neg':'')+'">'+moeda(c[1])+'</div><div class="meta">'+esc(c[2])+'</div></div>';
@@ -640,7 +670,7 @@ function renderLancamentos(){
   renderPills('filtroTipo',[['todos','Todos'],['receita','Receitas'],['despesa','Despesas']],state.filtroTipo,function(v){state.filtroTipo=v;renderLancamentos();});
   renderPills('periodoLanc',PERIODOS,state.periodoLanc,function(v){state.periodoLanc=v;renderLancamentos();});
   var b=state.buscaL.trim().toLowerCase();
-  var lista=state.lancamentos.filter(function(l){
+  var lista=lancAvulsos().filter(function(l){
     if(state.filtroTipo!=='todos'&&l.tipo!==state.filtroTipo)return false;
     if(!dentroDoPeriodo(l.data_lancamento,state.periodoLanc))return false;
     return !b||[l.descricao,l.categoria].join(' ').toLowerCase().indexOf(b)>-1;
@@ -657,6 +687,58 @@ function renderLancamentos(){
       '<td class="num '+(l.tipo==='receita'?'pos':'neg')+'">'+(l.tipo==='despesa'?'− ':'')+moeda(l.valor)+'</td></tr>';
   }).join('')+'<tr><td colspan="6" style="text-align:right;font-weight:700">Saldo confirmado no filtro</td><td class="num '+(total<0?'neg':'pos')+'" style="font-weight:700">'+moeda(total)+'</td></tr>';
   tb.querySelectorAll('[data-lanc]').forEach(function(tr){tr.addEventListener('click',function(){abrirLancamento(tr.dataset.lanc);});});
+}
+function lancAvulsos(){return state.lancamentos.filter(function(l){return !l.parcela_id;});}
+
+/* ------------------------- PARCELAS (T159, bloco 167) ------------------------- */
+function renderParcelas(){
+  if(!state.temParcelas)return;
+  var hoje=hojeISO(),mes=hoje.slice(0,7);
+  var dias=function(iso){var a=String(iso).slice(0,10).split('-'),h=hoje.split('-');return Math.round((new Date(+a[0],+a[1]-1,+a[2])-new Date(+h[0],+h[1]-1,+h[2]))/86400000);};
+  var val=function(p){return Number(p.pago_em&&p.valor_pago!=null?p.valor_pago:p.valor||0);};
+  var temOutros=state.parcelas.some(function(p){return p.honorarios===false;});
+  if(!temOutros)state.tipoParc='honorarios';
+  renderPills('filtroParcelas',[['abertas','A receber'],['atrasadas','Atrasadas'],['pagas','Pagas'],['todas','Todas']],state.filtroParc,function(v){state.filtroParc=v;renderParcelas();});
+  var tp=document.getElementById('tipoParcelas');
+  if(temOutros)renderPills('tipoParcelas',[['honorarios','Honorários'],['outros','Pensão, acordos e outros'],['todos','Todos']],state.tipoParc,function(v){state.tipoParc=v;renderParcelas();});else tp.innerHTML='';
+  var hon=state.parcelas.filter(function(p){return p.honorarios!==false;});
+  var abertas=hon.filter(function(p){return !p.pago_em;}),atras=abertas.filter(function(p){return String(p.vencimento).slice(0,10)<hoje;});
+  var prox30=abertas.filter(function(p){var d=dias(p.vencimento);return d>=0&&d<=30;});
+  var pagasMes=hon.filter(function(p){return p.pago_em&&String(p.pago_em).slice(0,7)===mes;});
+  var somaV=function(l){return l.reduce(function(s,p){return s+val(p);},0);};
+  document.getElementById('kpisParcelas').innerHTML=[
+    ['Honorários a receber',somaV(abertas),abertas.length+' parcela(s) em aberto','#e0a93b'],
+    ['Atrasadas',somaV(atras),atras.length+' parcela(s) vencida(s) sem pagamento','#e5636a'],
+    ['Vencem em 30 dias',somaV(prox30),prox30.length+' parcela(s)','#4b8af5'],
+    ['Recebido neste mês',somaV(pagasMes),pagasMes.length+' parcela(s) paga(s)','#2fae7a']
+  ].map(function(c){return '<div class="kpi-card" style="--c:'+c[3]+'"><span class="faixa"></span><div class="rotulo">'+esc(c[0])+'</div><div class="kpi-value">'+moeda(c[1])+'</div><div class="meta">'+esc(c[2])+'</div></div>';}).join('');
+  var b=state.buscaPa.trim().toLowerCase(),bd=b.replace(/\D/g,'');
+  var lista=state.parcelas.filter(function(p){
+    if(state.tipoParc==='honorarios'&&p.honorarios===false)return false;
+    if(state.tipoParc==='outros'&&p.honorarios!==false)return false;
+    var aberta=!p.pago_em,atrasada=aberta&&String(p.vencimento).slice(0,10)<hoje;
+    if(state.filtroParc==='abertas'&&!aberta)return false;
+    if(state.filtroParc==='atrasadas'&&!atrasada)return false;
+    if(state.filtroParc==='pagas'&&aberta)return false;
+    if(!b)return true;
+    return [p.cliente,p.descricao,p.pagador,p.tipo_nome].join(' ').toLowerCase().indexOf(b)>-1||(bd.length>=4&&String(p.numero_processo_cnj||'').replace(/\D/g,'').indexOf(bd)>-1);
+  });
+  if(state.filtroParc==='pagas')lista.sort(function(x,y){return String(y.pago_em).localeCompare(String(x.pago_em));});
+  var tb=document.getElementById('tbodyParcelas');
+  if(!lista.length){tb.innerHTML='<tr><td colspan="6" class="vazio">'+(state.parcelas.length?'Nenhuma parcela neste filtro.':'Nenhuma parcela combinada ainda. Elas são criadas na ficha do cliente, no bloco "Pagamentos".')+'</td></tr>';return;}
+  var total=0;
+  tb.innerHTML=lista.map(function(p){
+    total+=val(p);
+    var d=dias(p.vencimento),sit;
+    if(p.pago_em)sit=etq('Paga em '+dataBR(p.pago_em),'#2fae7a')+(p.forma?'<div class="sub">'+esc(p.forma)+'</div>':'');
+    else if(d<0)sit=etq('Atrasada há '+(-d)+' dia'+(d===-1?'':'s'),'#e5636a');
+    else sit=etq(d===0?'Vence hoje':'Vence em '+d+' dia'+(d===1?'':'s'),d<=7?'#e0a93b':'#4b8af5');
+    var proc=p.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj):(p.processo_id?'Sem número':'—');
+    return '<tr data-pessoa="'+esc(p.pessoa_id)+'" style="cursor:pointer" title="Abrir a ficha do cliente"><td>'+dataBR(p.vencimento)+'</td>'+
+      '<td><div class="cli">'+esc(p.cliente||'—')+'</div>'+((p.descricao||p.tipo_nome)?'<div class="sub">'+esc(p.descricao||p.tipo_nome)+(p.pagador?' · paga: '+esc(p.pagador):'')+'</div>':'')+'</td>'+
+      '<td>'+esc(proc)+'</td><td>'+p.numero+'/'+p.n_parcelas+'</td><td>'+sit+'</td><td class="num">'+moeda(val(p))+'</td></tr>';
+  }).join('')+'<tr><td colspan="5" style="text-align:right;font-weight:700">Total no filtro</td><td class="num" style="font-weight:700">'+moeda(total)+'</td></tr>';
+  tb.querySelectorAll('[data-pessoa]').forEach(function(tr){tr.addEventListener('click',function(){var u='ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(tr.dataset.pessoa)+'&foco=pagamentos';if(window.sagaIrPara)sagaIrPara(u);else location.href=u;});});
 }
 function opcoesProcessos(){
   return '<option value="">Nenhum (lançamento do escritório)</option>'+state.processos.map(function(p){return '<option value="'+esc(p.processo_id)+'">'+esc(p.cliente+' · '+(p.tese||'')+(p.numero_processo_cnj?' · '+(window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj):''))+'</option>';}).join('');
@@ -791,12 +873,14 @@ function trocarAba(aba){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
   if(aba==='processos')renderProcessos();
+  if(aba==='parcelas')renderParcelas();
 }
 function ligarEventos(){
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.addEventListener('click',function(){trocarAba(b.dataset.aba);});});
   document.querySelectorAll('[data-fechar]').forEach(function(b){b.addEventListener('click',function(){fecharModal(b.dataset.fechar);});});
   document.getElementById('buscaProcessos').addEventListener('input',function(e){state.buscaP=e.target.value;renderProcessos();});
   document.getElementById('buscaLancamentos').addEventListener('input',function(e){state.buscaL=e.target.value;renderLancamentos();});
+  document.getElementById('buscaParcelas').addEventListener('input',function(e){state.buscaPa=e.target.value;renderParcelas();});
   document.getElementById('btnAtualizar').addEventListener('click',carregarTudo);
   document.getElementById('escTese').addEventListener('change',function(e){state.escTese=e.target.value;renderEscritorios();renderGraficosFinanceiro();});
   document.getElementById('escFase').addEventListener('change',function(e){state.escFase=e.target.value;renderEscritorios();renderGraficosFinanceiro();});
