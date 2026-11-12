@@ -665,6 +665,95 @@
     el._recolhendo=setTimeout(terminar,470);
   };
 
+  // Riscar e queimar (12/11, Dr. Victor; T160): ao concluir uma tarefa ou uma intimação, uma linha risca o texto
+  // da esquerda para a direita (300 ms); quando o banco confirma, o item "queima" da esquerda para a direita, com
+  // uma brasa na borda (440 ms), e depois recolhe (altura, espaço interno e o vão da lista). Assim a pessoa vê
+  // que clicou certo.
+  // sagaRiscar(el, {texto, esperar, recolher}) devolve uma Promise com true (feito) ou false (desfeito):
+  //   texto: seletor (ou elemento) dos pedaços que levam o risco, ex.: o título; sem texto, só queima;
+  //   esperar: Promise do salvamento (true/false); se der false ou erro, o risco é desfeito e nada some;
+  //   recolher: false = só risca e o item fica no lugar (ex.: linha da lista que continua aparecendo riscada).
+  // No fim o item fica com display:none: quem chamou redesenha a lista (ele aparece em "Concluídas").
+  // Linha de tabela (tr) não queima: risca e esmaece. Com "efeitos de movimento" desligados, só espera o banco.
+  // sagaRiscar.pulsar(el) acende de leve o lugar para onde o item foi (ex.: "Concluídas (3)").
+  (function(){
+    var curva='cubic-bezier(.22,.78,.25,1)',fogo='cubic-bezier(.45,.05,.55,.95)',pronto=false;
+    function semMovimento(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+    function estilo(){
+      if(pronto)return;pronto=true;
+      var s=document.createElement('style');s.id='sagaRiscarCss';
+      s.textContent='.saga-risco-txt{background-image:linear-gradient(currentColor,currentColor);background-repeat:no-repeat;background-position:0 58%;background-size:0 1.6px;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-size 300ms '+curva+'}'
+        +'.saga-riscado .saga-risco-txt{background-size:100% 1.6px}'
+        +'.saga-queima{-webkit-mask-image:linear-gradient(90deg,transparent 40%,#000 60%);mask-image:linear-gradient(90deg,transparent 40%,#000 60%);-webkit-mask-size:260% 100%;mask-size:260% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:100% 0;mask-position:100% 0}'
+        +'.saga-queima.saga-queima-vai{-webkit-transition:-webkit-mask-position 440ms '+fogo+';transition:mask-position 440ms '+fogo+',-webkit-mask-position 440ms '+fogo+';-webkit-mask-position:0 0;mask-position:0 0}'
+        +'.saga-brasa{position:absolute;top:0;bottom:0;left:0;pointer-events:none;z-index:3;border-radius:inherit;background:linear-gradient(90deg,transparent 0,color-mix(in srgb,var(--warning,#e0a93b) 60%,transparent) 45%,color-mix(in srgb,var(--danger,#e5636a) 75%,transparent) 68%,transparent 100%);filter:blur(2px)}'
+        +'tr.saga-riscado>td{transition:opacity 360ms ease}tr.saga-some>td{opacity:0}'
+        +'@keyframes sagaPulso{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--success,#4cc38a) 50%,transparent);background-color:color-mix(in srgb,var(--success,#4cc38a) 18%,transparent)}100%{box-shadow:0 0 0 9px transparent;background-color:transparent}}'
+        +'.saga-pulso{animation:sagaPulso 950ms ease-out 1}';
+      (document.head||document.documentElement).appendChild(s);
+    }
+    function espera(ms){return new Promise(function(r){setTimeout(r,ms);});}
+    // recolhe por inteiro (altura, espaço interno, borda e o vão da lista) e esconde com display:none,
+    // que vale mesmo quando o CSS da tela dá display:flex ao item (o atributo hidden sozinho não esconde)
+    function recolherTudo(el){
+      return new Promise(function(fim){
+        if(!el.isConnected){fim(true);return;}
+        var pai=el.parentElement,vao=0,antes=!!el.previousElementSibling;
+        if(pai){var pc=getComputedStyle(pai);if(/flex/.test(pc.display)&&/column/.test(pc.flexDirection)){var g=parseFloat(pc.rowGap)||0;if(g>0&&(antes||el.nextElementSibling))vao=g;}}
+        el.style.boxSizing='border-box';el.style.height=el.offsetHeight+'px';el.style.overflow='hidden';
+        void el.offsetHeight;
+        el.style.transition=['height','padding-top','padding-bottom','border-top-width','border-bottom-width','margin-top','margin-bottom'].map(function(k){return k+' 420ms '+curva;}).join(',');
+        el.style.height='0px';el.style.paddingTop='0px';el.style.paddingBottom='0px';el.style.borderTopWidth='0px';el.style.borderBottomWidth='0px';
+        el.style.marginTop=(vao&&antes?-vao:0)+'px';el.style.marginBottom=(vao&&!antes?-vao:0)+'px';
+        setTimeout(function(){el.style.display='none';el.hidden=true;fim(true);},440);
+      });
+    }
+    window.sagaRiscar=function(el,op){
+      op=op||{};
+      var salvou=Promise.resolve(op.esperar===undefined?true:op.esperar).then(function(v){return v!==false;},function(){return false;});
+      if(!el||!el.isConnected||semMovimento())return salvou;
+      estilo();
+      var alvos=[];
+      if(op.texto)alvos=typeof op.texto==='string'?Array.prototype.slice.call(el.querySelectorAll(op.texto)):[].concat(op.texto);
+      if(el.tagName==='TR'&&!alvos.length)alvos=Array.prototype.slice.call(el.children);
+      var envoltos=[],brasa=null,posAntes=el.style.position;
+      alvos.forEach(function(a){
+        if(!a||a.nodeType!==1||!a.firstChild||a.querySelector('.saga-risco-txt'))return;
+        var sp=document.createElement('span');sp.className='saga-risco-txt';
+        while(a.firstChild)sp.appendChild(a.firstChild);
+        a.appendChild(sp);envoltos.push([a,sp]);
+      });
+      void el.offsetWidth;
+      el.classList.add('saga-riscado');
+      function desfazer(){
+        el.classList.remove('saga-riscado','saga-queima','saga-queima-vai','saga-some');
+        envoltos.forEach(function(p){while(p[1].firstChild)p[0].insertBefore(p[1].firstChild,p[1]);p[1].remove();});
+        if(brasa)brasa.remove();el.style.position=posAntes;el.hidden=false;
+      }
+      return Promise.all([salvou,espera(330)]).then(function(r){
+        if(!r[0]){desfazer();return false;}
+        if(op.recolher===false||!el.isConnected)return true;
+        if(el.tagName==='TR'){el.classList.add('saga-some');return espera(380).then(function(){el.style.display='none';el.hidden=true;return true;});}
+        var w=el.offsetWidth,b=Math.max(44,Math.min(96,Math.round(w*0.2)));
+        if(getComputedStyle(el).position==='static')el.style.position='relative';
+        brasa=document.createElement('span');brasa.className='saga-brasa';brasa.setAttribute('aria-hidden','true');
+        brasa.style.width=b+'px';brasa.style.transform='translateX('+Math.round(-0.3*w-b/2)+'px)';
+        el.appendChild(brasa);el.classList.add('saga-queima');
+        void el.offsetWidth;
+        brasa.style.transition='transform 440ms '+fogo;
+        el.classList.add('saga-queima-vai');
+        brasa.style.transform='translateX('+Math.round(1.3*w-b/2)+'px)';
+        return espera(450).then(function(){return recolherTudo(el);});
+      });
+    };
+    window.sagaRiscar.pulsar=function(alvo){
+      if(!alvo||semMovimento())return;
+      estilo();
+      alvo.classList.remove('saga-pulso');void alvo.offsetWidth;alvo.classList.add('saga-pulso');
+      setTimeout(function(){alvo.classList.remove('saga-pulso');},1000);
+    };
+  })();
+
   // Saida suave ao trocar de tela pelo menu: os blocos somem em cascata rapida
   var saindo=false;
   window.sagaIrPara=function(url){

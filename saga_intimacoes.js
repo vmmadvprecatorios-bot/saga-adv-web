@@ -820,14 +820,49 @@
     if(!silencio&&S.aberta===id)carregarHistorico(id);
     return true;
   }
+  // 12/11 (Dr. Victor; T160): ao concluir, o cartão (ou a linha da lista) é riscado na hora e, quando o banco confirma,
+  // "queima" e recolhe (sagaRiscar, saga_guard.js); some do quadro e vai para "concluídas" da coluna, que acende de leve
+  // (não abre sozinho). Na lista, a linha que continua aparecendo pelos filtros só fica riscada. O aviso com
+  // "Desfazer" continua. Se o banco recusar, o risco é desfeito e nada some.
+  var concluindoIntim={};
+  function elementosDaIntimacao(id){
+    return Array.prototype.filter.call(document.querySelectorAll('[data-int]'),function(el){return el.dataset.int===id&&!!el.offsetParent&&!el.closest('.si-arquivo');});
+  }
+  function pulsarConcluidas(id){
+    if(!window.sagaRiscar)return;
+    grupos(filtradas(true)).forEach(function(g){
+      if(!g.itens.some(function(x){return x.id===id;}))return;
+      var col=Array.prototype.filter.call(document.querySelectorAll('.si-col[data-col]'),function(c){return c.dataset.col===g.id;})[0];
+      var b=col&&col.querySelector('.si-arquivo>button');
+      if(b&&b.offsetParent)requestAnimationFrame(function(){sagaRiscar.pulsar(b);});
+    });
+  }
   async function alternarConcluida(id){
-    var i=S.itens.filter(function(x){return x.id===id;})[0];if(!i)return;
+    var i=S.itens.filter(function(x){return x.id===id;})[0];if(!i||concluindoIntim[id])return;
+    var alvos=!i.concluida&&window.sagaRiscar?elementosDaIntimacao(id):[];
+    if(alvos.length){
+      concluindoIntim[id]=true;
+      try{
+        var antes=i.concluida;i.concluida=true;
+        var ficaNaLista=filtradas(false).some(function(x){return x.id===id;});
+        i.concluida=antes;
+        alvos.forEach(function(el){var c=el.querySelector('[data-chk]');if(c){c.classList.add('on');c.textContent='✓';}});
+        var rpc=Promise.resolve(S.sb.rpc('intimacao_atualizar',{p_id:id,p_campos:{concluida:true}})).catch(function(e){return {error:e};});
+        await Promise.all(alvos.map(function(el){
+          var linha=el.tagName==='TR';
+          return sagaRiscar(el,{texto:linha?'td:nth-child(3),td:nth-child(4),td:nth-child(6)':'.si-proc span,.si-cli',esperar:rpc.then(function(r){return !r.error;}),recolher:!(linha&&ficaNaLista)});
+        }));
+        var r=await rpc;
+        if(r.error){mudou();toast('Não foi possível salvar: '+esc(r.error.message||''),'error');return;}
+        i.concluida=true;i.concluida_em=new Date().toISOString();
+        mudou();pulsarConcluidas(id);avisoDesfazer(id);
+        if(S.aberta===id){carregarHistorico(id);preencherJanela(i);}
+      }finally{delete concluindoIntim[id];}
+      return;
+    }
     var ok=await atualizar(id,{concluida:!i.concluida});
-    if(ok&&i.concluida){
-      // A concluída fica no fim da própria coluna: abre o bloco "concluídas" dela para a pessoa ver onde foi parar
-      grupos(filtradas(true)).forEach(function(g){if(g.itens.some(function(x){return x.id===id;}))S.concluidasAbertas[g.id]=true;});
-      mudou();avisoDesfazer(id);
-    }else if(ok)toast('Intimação reaberta.','sucesso');
+    if(ok&&i.concluida){mudou();pulsarConcluidas(id);avisoDesfazer(id);}
+    else if(ok)toast('Intimação reaberta.','sucesso');
     if(S.aberta===id)preencherJanela(i);
   }
   function avisoDesfazer(id){

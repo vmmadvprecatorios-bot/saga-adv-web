@@ -180,10 +180,14 @@
 
   async function render(cfg){
     estilos();S.sb=cfg.sb;S.cfg=cfg;
-    if(!cfg.raiz||!cfg.processoId){if(cfg.raiz)cfg.raiz.innerHTML='';return;}
+    if(!cfg.raiz||!cfg.processoId){if(cfg.raiz){cfg.raiz.innerHTML='';delete cfg.raiz.dataset.ptProcesso;}return;}
     var minha=++S.carregando;
-    cfg.raiz.innerHTML='<div class="secao-titulo">Partes do processo</div><div class="pt-vazio">Carregando…</div>';
-    try{await carregar();}catch(e){cfg.raiz.innerHTML='';return;}
+    // 12/11 (T160): ao recarregar o MESMO processo, o quadro fica como está até os dados novos chegarem
+    // (antes mostrava "Carregando…" e encolhia por um instante, e as tarefas logo abaixo davam um pulo)
+    var mesmo=cfg.raiz.dataset.ptProcesso===String(cfg.processoId)&&cfg.raiz.childElementCount>0;
+    if(!mesmo)cfg.raiz.innerHTML='<div class="secao-titulo">Partes do processo</div><div class="pt-vazio">Carregando…</div>';
+    cfg.raiz.dataset.ptProcesso=String(cfg.processoId);
+    try{await carregar();}catch(e){cfg.raiz.innerHTML='';delete cfg.raiz.dataset.ptProcesso;return;}
     if(minha!==S.carregando)return;
     desenhar();
   }

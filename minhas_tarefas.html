@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611121343"></script>
+<script src="saga_guard.js?v=202611121404"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -566,6 +566,8 @@
   .checkbox-conclusao-card:hover{ border-color:var(--gold); background:color-mix(in srgb,var(--gold) 11%,transparent); }
   .checkbox-conclusao-card.marcado{ background:linear-gradient(120deg,var(--gold),var(--gold-light)); border-color:transparent; }
   .checkbox-conclusao-card svg{ pointer-events:none; }
+  .link-ficha-tarefa{ color:var(--gold); text-decoration:none; font-weight:700; }
+  .link-ficha-tarefa:hover{ text-decoration:underline; }
   .card-tarefa.concluida{
     opacity:0.72; border-color:color-mix(in srgb,var(--success) 22%,transparent); background:color-mix(in srgb,var(--success) 3.5%,transparent);
   }
@@ -1772,7 +1774,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121343">
+<link rel="stylesheet" href="saga_tema.css?v=202611121404">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2323,12 +2325,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611121343"></script>
-<script src="saga_etiquetas.js?v=202611121343"></script>
-<script src="saga_mencoes.js?v=202611121343"></script>
-<script src="saga_prazos.js?v=202611121343"></script>
-<script src="saga_texto.js?v=202611121343"></script>
-<script src="saga_tribunais.js?v=202611121343"></script>
+<script src="saga_ui.js?v=202611121404"></script>
+<script src="saga_etiquetas.js?v=202611121404"></script>
+<script src="saga_mencoes.js?v=202611121404"></script>
+<script src="saga_prazos.js?v=202611121404"></script>
+<script src="saga_texto.js?v=202611121404"></script>
+<script src="saga_tribunais.js?v=202611121404"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -3236,11 +3238,38 @@ function aplicarFiltrosERenderizar(){
    evento realtime para os outros componentes (Kanban de Processos e Ficha
    do Cliente) assinantes do mesmo registro.
 ===================================================================== */
+// 12/11 (Dr. Victor; T160): ao concluir, o cartão do quadro e a linha da lista são riscados na hora; quando o banco
+// confirma, o cartão "queima" e recolhe (sagaRiscar, saga_guard.js) e a linha da lista continua no lugar, riscada.
+// Depois o "Ver tarefas concluídas" da coluna acende de leve, mostrando para onde a tarefa foi. Se o banco recusar,
+// o risco é desfeito e nada some.
+var concluindoTarefas = {};
+function elementosVisiveisTarefa(idTarefa){
+  var lista = [];
+  document.querySelectorAll('.card-tarefa[data-tarefa-id]').forEach(function(el){ if(el.getAttribute('data-tarefa-id') === idTarefa && el.offsetParent) lista.push(el); });
+  document.querySelectorAll('.checkbox-conclusao[data-id-check]').forEach(function(cx){ var tr = cx.closest('tr'); if(cx.getAttribute('data-id-check') === idTarefa && tr && tr.offsetParent) lista.push(tr); });
+  return lista;
+}
+function marcarCaixaConcluindo(el){
+  var cx = el.querySelector(el.tagName === 'TR' ? '.checkbox-conclusao' : '[data-acao="alternar-conclusao"]');
+  if(cx){ cx.classList.add('marcado'); cx.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 6" stroke="#0a0e1a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }
+}
 async function alternarConclusaoTarefa(idTarefa){
   var tarefa = window.SAGA_TASKS.filter(function(t){ return t.id === idTarefa; })[0];
-  if(!tarefa) return;
+  if(!tarefa || concluindoTarefas[idTarefa]) return;
   var novoStatus = tarefa.status === 'concluida' ? 'pendente' : 'concluida';
-  if(!(await salvarCamposTarefa(idTarefa, { status: novoStatus }))) return;
+  concluindoTarefas[idTarefa] = true;
+  try{
+    var salvando = salvarCamposTarefa(idTarefa, { status: novoStatus });
+    if(novoStatus === 'concluida' && window.sagaRiscar){
+      var alvos = elementosVisiveisTarefa(idTarefa);
+      alvos.forEach(marcarCaixaConcluindo);
+      await Promise.all(alvos.map(function(el){
+        var linha = el.tagName === 'TR';
+        return sagaRiscar(el, { texto: linha ? '.titulo-lista-tarefa' : '.titulo-card-tarefa', esperar: salvando, recolher: !linha });
+      }));
+    }
+    if(!(await salvando)){ aplicarFiltrosERenderizar(); return; }
+  }finally{ delete concluindoTarefas[idTarefa]; }
   if(tarefa.status === 'concluida'){
     tarefa.status = 'pendente';
     tarefa.dataConclusao = null;
@@ -3252,8 +3281,13 @@ async function alternarConclusaoTarefa(idTarefa){
     colunasConcluidasExpandidas[tarefa.colunaId] = false;
   }
   aplicarFiltrosERenderizar();
+  if(tarefa.status === 'concluida' && window.sagaRiscar){
+    var coluna = Array.prototype.filter.call(document.querySelectorAll('[data-coluna-id]'), function(c){ return c.getAttribute('data-coluna-id') === tarefa.colunaId; })[0];
+    var botaoConcl = coluna && coluna.querySelector('.btn-ver-concluidas-coluna');
+    if(botaoConcl && botaoConcl.offsetParent) requestAnimationFrame(function(){ sagaRiscar.pulsar(botaoConcl); });
+  }
   mostrarToast(tarefa.status === 'concluida'
-    ? 'Tarefa <strong>' + escaparHtml(tarefa.titulo) + '</strong> concluida e arquivada na coluna.'
+    ? 'Tarefa <strong>' + escaparHtml(tarefa.titulo) + '</strong> concluída: ela foi para "Ver tarefas concluídas", no fim da coluna.'
     : 'Tarefa reaberta e devolvida para as tarefas ativas.', 'sucesso');
 }
 
@@ -3765,7 +3799,7 @@ function criarArquivoConcluidasColuna(colunaId, tarefasConcluidas){
   var botao = document.createElement('button');
   botao.type = 'button';
   botao.className = 'btn-ver-concluidas-coluna';
-  botao.innerHTML = '<span>' + (abrirConcl ? 'Ocultar' : 'Ver') + ' tarefas concluidas (' + tarefasConcluidas.length + ')</span><span class="seta-arquivo"></span>';
+  botao.innerHTML = '<span>' + (abrirConcl ? 'Ocultar' : 'Ver') + ' tarefas concluídas (' + tarefasConcluidas.length + ')</span><span class="seta-arquivo"></span>';
   botao.addEventListener('click', function(e){
     e.stopPropagation();
     colunasConcluidasExpandidas[colunaId] = !colunasConcluidasExpandidas[colunaId];
@@ -4734,7 +4768,11 @@ document.querySelectorAll('.opcao-tipo-tarefa').forEach(function(opcao){
 function selecionarProcessoNoModal(processo){
   estadoModalTarefa.processoVinculado = processo;
   document.getElementById('inputBuscaProcesso').value = processo.numero + ' - ' + processo.cliente;
-  document.getElementById('readonlyCliente').textContent = processo.cliente;
+  // 12/11 (Dr. Victor; T160): o nome do cliente abre a ficha dele (Ctrl+clique abre em outra aba)
+  var cliRO = document.getElementById('readonlyCliente');
+  if(processo.id){
+    cliRO.innerHTML = '<a class="link-ficha-tarefa" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id=' + encodeURIComponent(processo.id) + '" title="Abrir a ficha do cliente (Ctrl+clique abre em outra aba)">' + escaparHtml(processo.cliente) + ' ↗</a>';
+  } else cliRO.textContent = processo.cliente;
   var infoTrib = window.SagaTribunais ? SagaTribunais.tribunal(processo.numero) : null;
   document.getElementById('readonlyTribunal').textContent = infoTrib ? infoTrib.sigla + (infoTrib.secao ? ' · ' + infoTrib.uf : '') : processo.tribunal;
   document.getElementById('readonlyFase').textContent = processo.fase;

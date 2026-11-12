@@ -1,7 +1,8 @@
 /* SAGA ADV: tarefas e intimações abertas a partir da ficha do cliente (mão dupla).
    Clicar numa tarefa ou intimação da ficha abre uma janela com os dados, o texto e os comentários;
    dá para comentar ali, editar/concluir a tarefa, ou ir para a tela da tarefa/intimação.
-   Usa o que a ficha já tem: _sb, state, perms, esc, showToast, getActiveProcess, abrirModalTarefa, concluirTarefa. */
+   Usa o que a ficha já tem: _sb, state, perms, esc, showToast, getActiveProcess, abrirModalTarefa, concluirTarefa,
+   reabrirTarefa, concluirIntimacaoFicha, reabrirIntimacaoFicha e podeMexerIntimacoes (12/11, T160). */
 (function(){
   'use strict';
   const e=s=>esc(s==null?'':String(s));
@@ -58,12 +59,16 @@
       +(t.descricao?'<div class="fa-rotulo">Descrição</div><div class="fa-texto">'+(window.SagaTexto?SagaTexto.html(t.descricao):e(t.descricao))+'</div>':'')
       +(origem?'<button type="button" class="fa-link" data-fa-intim="'+e(origem.id)+'">Veio da intimação: '+e((origem.tipo_documento||'Intimação')+(origem.tribunal?' ('+origem.tribunal+')':''))+' ›</button>':'')
       +'<div class="fa-rotulo">Comentários ('+coms.length+')</div><div class="fa-coms" id="faComs">'+htmlComentarios(coms,'Nenhum comentário ainda.')+'</div>'+caixaComentar();
+    const podeReabrir=t.concluida&&perms.tarefasEditar===true;
     const rodape='<a class="btn-secondary fa-ir" href="minhas_tarefas.html?tarefa='+encodeURIComponent(id)+'">Abrir em Minhas Tarefas ↗</a>'
-      +(podeEditar?'<button type="button" class="btn-secondary" id="faEditar">Editar</button><button type="button" class="btn-primary" id="faConcluir">Concluir tarefa</button>':'');
+      +(podeEditar?'<button type="button" class="btn-secondary" id="faEditar">Editar</button><button type="button" class="btn-primary" id="faConcluir">Concluir tarefa</button>':'')
+      +(podeReabrir?'<button type="button" class="btn-secondary" id="faReabrir">Reabrir tarefa</button>':'');
     const d=janela(e(t.titulo),'Tarefa deste processo',corpo,rodape);
     if(window.SagaTexto)SagaTexto.ligar(d.querySelector('#faTexto'));
     const ed=d.querySelector('#faEditar');if(ed)ed.addEventListener('click',()=>{fechar();abrirModalTarefa(id);});
-    const cc=d.querySelector('#faConcluir');if(cc)cc.addEventListener('click',async()=>{cc.disabled=true;const ok=await concluirTarefa(id);cc.disabled=false;if(ok!==false)fechar();});
+    // 12/11 (T160): a janela fecha primeiro, para a pessoa ver o risco e a "queima" do item na lista
+    const cc=d.querySelector('#faConcluir');if(cc)cc.addEventListener('click',()=>{cc.disabled=true;fechar();setTimeout(()=>concluirTarefa(id),260);});
+    const rb=d.querySelector('#faReabrir');if(rb)rb.addEventListener('click',()=>{fechar();reabrirTarefa(id);});
     const oi=d.querySelector('[data-fa-intim]');if(oi)oi.addEventListener('click',()=>abrirIntimacao(oi.dataset.faIntim));
     d.querySelector('#faEnviar').addEventListener('click',async ev=>{
       const ta=d.querySelector('#faTexto');const texto=ta.value.trim();if(!texto){ta.focus();return;}
@@ -86,7 +91,7 @@
     if(ri.error||!ri.data){showToast('Não foi possível abrir esta intimação (talvez você não tenha acesso).','warning');return;}
     const i=ri.data;
     const coms=(rc.data||[]).map(c=>({autor:c.usuario_id,texto:c.texto,em:c.criado_em,tipo:c.tipo}));
-    const chips=['<span class="fa-chip '+(i.concluida?'ok':'aberta')+'">'+(i.concluida?'Resolvida':'Em aberto')+'</span>',
+    const chips=['<span class="fa-chip '+(i.concluida?'ok':'aberta')+'">'+(i.concluida?'Concluída':'Em aberto')+'</span>',
       i.etiqueta?'<span class="fa-chip" style="border-color:'+e(i.etiqueta_cor||'')+'">'+e(i.etiqueta)+'</span>':'',
       i.prazo?'<span class="fa-chip">Prazo '+e(fmt(i.prazo))+'</span>':'',
       '<span class="fa-chip">Disponibilizada em '+e(fmt(i.data_disponibilizacao))+'</span>',
@@ -98,11 +103,16 @@
       +(texto?'<div class="fa-rotulo">Texto da intimação</div><div class="fa-texto fa-teor">'+e(texto)+'</div>':'')
       +(i.tarefa_id?'<button type="button" class="fa-link" data-fa-tarefa="'+e(i.tarefa_id)+'">Ver a tarefa criada desta intimação ›</button>':'')
       +'<div class="fa-rotulo">Comentários e histórico ('+coms.length+')</div><div class="fa-coms" id="faComs">'+htmlComentarios(coms,'Nenhum comentário ainda.')+'</div>'+caixaComentar();
+    // 12/11 (Dr. Victor; T160): concluir (ou reabrir) a intimação pela própria ficha
+    const podeIntim=typeof podeMexerIntimacoes==='function'&&podeMexerIntimacoes();
     const rodape=(i.link?'<a class="btn-secondary fa-ir" href="'+e(i.link)+'" target="_blank" rel="noopener">Ver no tribunal ↗</a>':'')
-      +'<a class="btn-primary fa-ir" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(id)+'">Abrir em Intimações ↗</a>';
+      +'<a class="'+(podeIntim&&!i.concluida?'btn-secondary':'btn-primary')+' fa-ir" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(id)+'">Abrir em Intimações ↗</a>'
+      +(podeIntim?(i.concluida?'<button type="button" class="btn-secondary" id="faReabrirIntim">Reabrir intimação</button>':'<button type="button" class="btn-primary" id="faConcluirIntim">Concluir intimação</button>'):'');
     const d=janela(e((i.etiqueta?i.etiqueta+' · ':'')+(i.tipo_documento||'Intimação')),'Intimação deste processo',corpo,rodape);
     if(window.SagaTexto)SagaTexto.ligar(d.querySelector('#faTexto'));
     const vt=d.querySelector('[data-fa-tarefa]');if(vt)vt.addEventListener('click',()=>abrirTarefa(vt.dataset.faTarefa));
+    const ci=d.querySelector('#faConcluirIntim');if(ci)ci.addEventListener('click',()=>{ci.disabled=true;fechar();setTimeout(()=>concluirIntimacaoFicha(id),260);});
+    const rr=d.querySelector('#faReabrirIntim');if(rr)rr.addEventListener('click',()=>{fechar();reabrirIntimacaoFicha(id);});
     d.querySelector('#faEnviar').addEventListener('click',async ev=>{
       const ta=d.querySelector('#faTexto');const t=ta.value.trim();if(!t){ta.focus();return;}
       ev.target.disabled=true;
@@ -127,7 +137,7 @@
    +'.fa-comentar{display:flex;flex-direction:column;gap:8px;margin-top:12px}.fa-comentar textarea{width:100%;resize:vertical;padding:9px 11px;border:1px solid var(--border-soft);border-radius:9px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);font:inherit;font-size:12px}.fa-comentar textarea:focus{outline:none;border-color:var(--gold)}.fa-comentar .btn-primary{align-self:flex-end}'
    +'.fa-rodape{flex-wrap:wrap;gap:8px}.fa-ir{text-decoration:none;display:inline-flex;align-items:center}'
    +'.item-tarefa-mini[data-fa-abrir]{cursor:pointer}.item-tarefa-mini[data-fa-abrir]:hover{border-color:color-mix(in srgb,var(--gold) 45%,transparent)}'
-   +'.fa-resolvidas{margin-top:6px}.fa-resolvidas>summary{cursor:pointer;list-style:none;color:var(--muted);font-size:10.5px;font-weight:700;padding:6px 2px}.fa-resolvidas>summary::-webkit-details-marker{display:none}.fa-resolvidas>summary::before{content:"▸ ";}.fa-resolvidas[open]>summary::before{content:"▾ ";}.fa-resolvidas .item-tarefa-mini{opacity:.75}';
+   +'.fa-resolvidas{margin-top:6px}.fa-resolvidas>summary{cursor:pointer;list-style:none;color:var(--muted);font-size:10.5px;font-weight:700;padding:6px 8px;margin:0 -6px;border-radius:8px}.fa-resolvidas>summary:hover{color:var(--text)}.fa-resolvidas>summary::-webkit-details-marker{display:none}.fa-resolvidas>summary::before{content:"▸ ";}.fa-resolvidas[open]>summary::before{content:"▾ ";}.fa-resolvidas .item-tarefa-mini{opacity:.75}';
   document.head.appendChild(css);
   window.SagaFichaAtividades={abrirTarefa:abrirTarefa,abrirIntimacao:abrirIntimacao,fechar:fechar};
 })();
