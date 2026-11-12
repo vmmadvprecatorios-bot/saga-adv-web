@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.8",
+  versao: "1.9",
   data: "12/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.9", data: "12/11/2026", mudou: "Jurídico: selo \"sem resumo\" no nome do cliente e o filtro \"Sem resumo do agente\"; Intimações: a janela mostra o resumo do agente (situação, próximo passo, prazo e última movimentação) e avisa quando a intimação é mais nova que o resumo." },
     { versao: "1.8", data: "12/11/2026", mudou: "Menu da esquerda em cinco grupos (Processos, Meu dia, Comunicação, Gestão e Administração), com os nomes sempre numa linha; menu da foto só com Meu perfil, Preferências, Segurança e Sair (o Manual e as Sugestões ficam no menu da esquerda); Minhas Tarefas com o atalho \"Dar impulso processual\"; Dashboard com os processos parados e os processos sem o resumo do agente que abrem a lista e a ficha." },
     { versao: "1.7", data: "11/11/2026", mudou: "Cliente repetido: ao cadastrar, o SAGA procura ficha com o mesmo CPF, o mesmo nome ou nome parecido e abre a janela \"Essa pessoa já tem ficha?\" (\"Usar esta ficha\"); mesmo CPF não cria outra; ficha separada só com o motivo escrito." },
     { versao: "1.6", data: "11/11/2026", mudou: "Minhas Tarefas: o atalho do tribunal (copia o número e abre o processo no site do tribunal) fica à vista no cartão, na Lista e na janela da tarefa (\"Site do tribunal\"), como nas Intimações." },
@@ -305,7 +306,8 @@ window.SAGA_MANUAL = {
             "Abra **Jurídico** no menu. A lista funciona como a da Captação (busca, filtros, colunas, visões, Kanban).",
             "Use os grupos: **Todos**, **Protocolados**, **Não protocolados**, **Encerrados** e **Sacados**.",
             "Cada processo está em um grupo só: **sacado** (o recebido no Financeiro cobre o esperado) > **encerrado** (situação Encerrada ou Inviável) > **ativo**.",
-            "O painel **Processos parados** mostra há quanto tempo cada processo está sem movimento no escritório. O responsável recebe tarefa e aviso automáticos."
+            "O painel **Processos parados** mostra há quanto tempo cada processo está sem movimento no escritório. O responsável recebe tarefa e aviso automáticos.",
+            "O selo **sem resumo** ao lado do nome marca o processo ativo que o agente ainda não leu (sem o resumo estratégico). [[Sem resumo do agente]] mostra só esses processos; os números para baixar os autos estão no **Dashboard** (Copiar números)."
           ],
           img: "juridico",
           marcas: ["Protocolados.", "Não protocolados.", "Encerrados.", "Sacados."],
@@ -398,7 +400,8 @@ window.SAGA_MANUAL = {
           passos: [
             "**Diário eletrônico (CNJ)**: o SAGA procura de hora em hora, todos os dias do ano, pelas OABs cadastradas em **OABs monitoradas**.",
             "**E-mail dos tribunais** (PJe, e-Proc, e-SAJ, Recorte Digital): lidos 4 vezes por dia da caixa de e-mail do escritório. O que já veio pelo CNJ não se repete.",
-            "Intimação com número de processo cadastrado entra direto no processo; sem processo, fica em **Fora do SAGA**."
+            "Intimação com número de processo cadastrado entra direto no processo; sem processo, fica em **Fora do SAGA**.",
+            "Ao abrir a intimação de um processo cadastrado, o quadro **Resumo do agente** mostra a situação, o **próximo passo**, o prazo e a última movimentação que o agente deixou na ficha do processo. Se a intimação é mais nova que o resumo, o SAGA avisa para conferir ou usar [[Pedir ao agente]]. Sem resumo, o quadro avisa que o agente ainda não leu o processo."
           ]
         },
         { id: "tela", titulo: "A tela de Intimações",
