@@ -13,6 +13,7 @@ Desde 12/11/2026 uma conversa do Claude, o **Diário de bordo**, coordena todas 
 4. Se a tarefa exigir mexer no banco, em senhas, chaves ou em funções do Supabase, **pare e avise no PR**. Isso é feito só pelo Claude.
 
 ## Regras inegociáveis
+- Erros sempre à vista (12/11, Dr. Victor): nunca esconder um erro nem trocá-lo por texto neutro só para a tela ficar bonita. Mostre o que falhou, o motivo em português simples (com o código), quando e o que acontece agora. Passageiro com nova tentativa: amarelo; repetido ou que precisa de alguém: vermelho + aviso no sino do administrador.
 - **O repositório é público.** Nunca coloque senhas, chaves secretas, tokens, e-mails de clientes, CPFs ou qualquer dado de cliente no código, em testes ou em exemplos. Use dados inventados.
 - Não crie nem commite arquivos `.sql`, `.env` ou `.md` (exceto `CLAUDE.md` e este `AGENTS.md`); eles são ignorados de propósito.
 - Não altere `supabase/functions` sem a tarefa pedir.
