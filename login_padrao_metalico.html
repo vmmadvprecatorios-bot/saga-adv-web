@@ -276,7 +276,7 @@ setTimeout(function(){document.documentElement.classList.remove('saga-entrando')
     .rodape-esquerdo{display:none;}
   }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121917">
+<link rel="stylesheet" href="saga_tema.css?v=202611121925">
 <style>@view-transition{navigation:auto;}::view-transition-group(root){animation-duration:.12s;}</style>
 </head>
 <body>
@@ -445,6 +445,10 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
   var motivo = new URLSearchParams(window.location.search).get('motivo');
   if (motivo === 'inatividade') {
     showToast('Sua sessão foi encerrada após 2 horas sem uso fora do horário de expediente. Entre novamente.', 'info');
+  } else if (motivo === 'fim_dia') {
+    showToast('O login do dia termina às 20h. Para usar o SAGA de novo, entre com seu e-mail e senha.', 'info');
+  } else if (motivo === 'inatividade_fora') {
+    showToast('Sua sessão foi encerrada depois de 30 minutos sem uso fora do seu horário de trabalho. Entre novamente.', 'info');
   } else if (motivo === 'desligado') {
     showToast(MSG_ACESSO_DESATIVADO, 'erro');
   } else if (motivo === 'acesso') {

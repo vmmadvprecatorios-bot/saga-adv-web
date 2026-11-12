@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611121917"></script>
+<script src="saga_guard.js?v=202611121925"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -238,7 +238,7 @@ tr.apagado td{color:var(--muted)}
   #roscasMeuPonto .centro .n{font-size:15px}
 .ap-apelido{width:100%;min-width:160px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text);font:inherit;font-size:12.5px}.ap-apelido:focus{outline:none;border-color:var(--gold)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121917">
+<link rel="stylesheet" href="saga_tema.css?v=202611121925">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -467,6 +467,16 @@ tr.apagado td{color:var(--muted)}
       </div>
       <label class="chk"><input type="checkbox" id="cfLocal"> Exigir que a marcação seja feita no escritório (pela internet do escritório ou pela localização; fora dele, só com home office aprovado)</label>
       <label class="chk so-admin" style="display:none"><input type="checkbox" id="cfAparelho"> Exigir computador autorizado: o ponto só vale num computador autorizado (Ponto &gt; Acessos &gt; Internets e computadores), na internet do escritório, pela localização no raio ou com home office. A Diretoria e o administrador nunca travam. <b>Deixe desligado na fase de transição.</b></label>
+      <div class="so-admin" id="cfLoginBloco" style="display:none">
+        <div class="secao-titulo" style="margin-top:16px">Login diário da equipe</div>
+        <p class="sub" style="margin:0 0 8px">Todo dia cada colaborador entra com e-mail e senha e depois bate o ponto. O administrador geral e as pessoas marcadas abaixo nunca caem nem são barrados (só a expiração normal de segurança). Cada saída fica no Registro de atividades e em Ponto &gt; Acessos.</p>
+        <label class="chk"><input type="checkbox" id="cfLoginFim"><span>Derrubar o login de todos os colaboradores às <input id="cfLoginHora" type="time" style="width:96px;margin:0 4px" value="20:00"> (no dia seguinte entram de novo)</span></label>
+        <label class="chk"><input type="checkbox" id="cfLoginInativo"><span>Fora do horário de trabalho (antes do início, depois da saída, fim de semana e feriado), o login cai depois de <input id="cfLoginMin" type="number" min="5" max="240" style="width:64px;margin:0 4px" value="30"> min sem uso. No horário de trabalho não cai. Vale o horário de cada um no cadastro do Ponto; sem horário, 7h às 20h em dia útil.</span></label>
+        <label class="chk"><input type="checkbox" id="cfLoginRede"><span><b>Colaborador só entra pela internet do escritório.</b> De outra internet, a tela fica "Aguardando autorização" e você recebe no sino o pedido com "Autorizar só hoje", "Autorizar esta internet sempre" e "Recusar". Home office aprovado e quem "Pode bater o ponto de qualquer lugar" entram sem pedir.</span></label>
+        <div class="sub" id="cfLoginRedeAviso" style="margin:0 0 8px;color:var(--warning)">Ligue só depois de autorizar as internets em Ponto &gt; Acessos &gt; Internets e computadores (a do escritório e a da sua sala). Sem nenhuma internet autorizada, todos ficam aguardando.</div>
+        <div class="sub" style="margin:6px 0 4px">Nunca caem nem são barrados:</div>
+        <div id="cfLoginIsentos" style="display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 0 6px"></div>
+      </div>
       <div class="so-admin" style="display:none">
         <div class="secao-titulo" style="margin-top:16px">Internets do escritório</div>
         <p class="sub" style="margin:0 0 8px">Quem bate o ponto por uma destas internets está no escritório e não precisa de localização. Fora delas, vale a localização dentro do raio ou o home office aprovado. A lista também serve para o aviso no sino quando alguém entra no sistema por uma internet de fora. Só o administrador geral vê esta parte; cada mudança aqui vale na hora.</p>
@@ -653,12 +663,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611121917"></script>
-<script src="saga_texto.js?v=202611121917"></script>
+<script src="saga_ui.js?v=202611121925"></script>
+<script src="saga_texto.js?v=202611121925"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611121917"></script>
-<script src="saga_roscas.js?v=202611121917"></script>
-<script src="saga_pdf.js?v=202611121917"></script>
+<script src="ponto_calculo.js?v=202611121925"></script>
+<script src="saga_roscas.js?v=202611121925"></script>
+<script src="saga_pdf.js?v=202611121925"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -1699,6 +1709,16 @@ async function renderConfig(){
   document.getElementById('cfEmails').value=(c.emails_gestor||[]).join(', ');document.getElementById('cfExtras').value=(c.emails_extras||[]).join(', ');
   document.getElementById('cfLocal').checked=c.exigir_local!==false;
   var cfAp=document.getElementById('cfAparelho');if(cfAp)cfAp.checked=c.exigir_aparelho===true;
+  // login diário (bloco 181, T165)
+  if(document.getElementById('cfLoginFim')){
+    document.getElementById('cfLoginFim').checked=c.login_fim_dia!==false;
+    var hm=c.login_fim_dia_min!=null?c.login_fim_dia_min:1200;document.getElementById('cfLoginHora').value=String(Math.floor(hm/60)).padStart(2,'0')+':'+String(hm%60).padStart(2,'0');
+    document.getElementById('cfLoginInativo').checked=c.login_inativo_fora!==false;
+    document.getElementById('cfLoginMin').value=c.login_inativo_min||30;
+    document.getElementById('cfLoginRede').checked=c.login_so_rede===true;
+    state.loginIsentos=(c.login_isentos||[]).slice();
+    carregarIsentosLogin();
+  }
   var r=await _sb.from('localizacoes_permitidas').select('*').eq('ativo',true).order('criado_em').limit(1);
   state.local=(r.data||[])[0]||null;
   document.getElementById('cfLat').value=state.local?state.local.latitude:'';document.getElementById('cfLng').value=state.local?state.local.longitude:'';
@@ -1706,6 +1726,17 @@ async function renderConfig(){
   document.getElementById('cfLocalInfo').textContent=state.local?state.local.nome:'Nenhum local cadastrado';
   montarMapa();
   carregarRedes();
+}
+
+/* ----- Login diário (12/11, Dr. Victor; bloco 181, T165): quem nunca cai nem é barrado (o administrador geral sempre) ----- */
+async function carregarIsentosLogin(){
+  var cx=document.getElementById('cfLoginIsentos');if(!cx||!state.pode.admin)return;
+  var r=await _sb.from('usuarios').select('id,nome_completo,eh_administrador').eq('ativo',true).order('nome_completo');
+  var marc=state.loginIsentos||[];
+  cx.innerHTML=(r.data||[]).map(function(u){
+    if(u.eh_administrador)return '<label class="chk" style="margin:0"><input type="checkbox" checked disabled> '+esc(u.nome_completo)+' (administrador)</label>';
+    return '<label class="chk" style="margin:0"><input type="checkbox" value="'+esc(u.id)+'"'+(marc.indexOf(u.id)>=0?' checked':'')+'> '+esc(u.nome_completo)+'</label>';
+  }).join('');
 }
 
 /* ----- Internets do escritório (11/11, Dr. Victor; bloco 162, T156; só o administrador geral) -----
@@ -1881,6 +1912,20 @@ async function salvarConfig(){
     email_diario:document.getElementById('cfEmDiario').checked,email_semanal:document.getElementById('cfEmSemanal').checked,email_fechamento:document.getElementById('cfEmFech').checked,atualizado_em:new Date().toISOString()};
   var btn=document.getElementById('cfSalvar');btn.disabled=true;
   try{
+    var lb=document.getElementById('cfLoginBloco');
+    if(lb&&lb.style.display!=='none'){
+      var hh=/^(\d{1,2}):(\d{2})$/.exec(document.getElementById('cfLoginHora').value||'');
+      dados.login_fim_dia=document.getElementById('cfLoginFim').checked;
+      dados.login_fim_dia_min=hh?Math.min(1439,(+hh[1])*60+(+hh[2])):1200;
+      dados.login_inativo_fora=document.getElementById('cfLoginInativo').checked;
+      dados.login_inativo_min=Math.min(240,Math.max(5,num('cfLoginMin')||30));
+      dados.login_so_rede=document.getElementById('cfLoginRede').checked;
+      dados.login_isentos=Array.prototype.map.call(document.querySelectorAll('#cfLoginIsentos input:checked'),function(x){return x.value;});
+      if(dados.login_so_rede&&!((state.redes||[]).length>0)){
+        var ok=typeof sagaConfirmar==='function'?await sagaConfirmar('Nenhuma internet autorizada','Ainda não há internet autorizada em Ponto > Acessos. Se ligar agora, todos os colaboradores ficam aguardando a sua autorização para entrar. Ligar mesmo assim?','Ligar mesmo assim'):confirm('Nenhuma internet autorizada. Ligar mesmo assim?');
+        if(!ok){btn.disabled=false;return;}
+      }
+    }
     var r=await _sb.from('ponto_config').update(dados).eq('id',true);if(r.error)throw new Error(erroMsg(r));
     var lat=parseFloat(document.getElementById('cfLat').value),lng=parseFloat(document.getElementById('cfLng').value),raio=num('cfRaio')||50;
     if(!isNaN(lat)&&!isNaN(lng)){

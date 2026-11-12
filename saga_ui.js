@@ -1113,12 +1113,195 @@
 
   async function verificarInatividade(){
     if(!global._sb)return false;
+    // Login diário (bloco 181, T165): colaborador segue o horário dele (30 min sem uso fora dele) e cai às 20h.
+    // Administrador geral e Hevelyn (isentos) continuam na regra antiga de 2 horas.
+    var g=_regrasLogin;
+    if(g&&g.ok&&!g.isento){
+      if(_proximoCorte&&Date.now()>=_proximoCorte){
+        _proximoCorte=0;
+        var nova=await carregarRegrasLogin(true);
+        if(!nova||nova.erro||nova.sessao_vencida){await sairPorRegra('fim_dia');return true;}
+      }
+      if(g.inativo){
+        if(minutosOciososForaDoHorario(g)>=g.inativo_min){await sairPorRegra('inatividade');return true;}
+        return false;
+      }
+    }
     if(minutosOciososForaDoExpediente()>=LIMITE_INATIVIDADE_MIN){
       await global.sagaLogout('inatividade');
       return true;
     }
     return false;
   }
+
+  // ===== Login diário (12/11, Dr. Victor; bloco 181, T165) =====
+  // O banco diz as regras de quem está usando (login_regras): isento (administrador geral e Hevelyn), hora do corte
+  // do fim do dia (20h), minutos sem uso fora do horário (30) e o horário de hoje (jornada do Ponto; sem jornada,
+  // 7h às 20h em dia útil). Às 20h o banco apaga as sessões (agendador login-fim-dia) e a tela também confere.
+  var CHAVE_REGRAS_LOGIN='saga-login-regras',_regrasLogin=null,_proximoCorte=0,_difRelogio=0;
+  var _fmtHM=new Intl.DateTimeFormat('en-US',{timeZone:'America/Maceio',hour:'2-digit',minute:'2-digit',hour12:false});
+  function minutoMaceio(ms){var p={};_fmtHM.formatToParts(new Date(ms)).forEach(function(x){p[x.type]=x.value;});return (parseInt(p.hour,10)%24)*60+parseInt(p.minute,10);}
+  function minutosOciososForaDoHorario(g){
+    var ultima=parseInt(localStorage.getItem(CHAVE_ATIVIDADE)||'0',10);
+    if(!ultima)return 0;
+    var agora=Date.now()+_difRelogio,m=minutoMaceio(agora);
+    if(g.dia_util&&m>=g.ini_min&&m<g.fim_min)return 0;
+    // depois do horário de hoje, conta só desde o fim do horário; antes do início, fim de semana ou feriado, desde o último uso
+    var inicioFora=(g.dia_util&&m>=g.fim_min)?agora-(m-g.fim_min)*60000:0;
+    return Math.max(0,(agora-Math.max(ultima+_difRelogio,inicioFora))/60000);
+  }
+  function agendarCorte(g){
+    _proximoCorte=0;
+    if(!g||!g.ok||g.isento||!g.fim_dia)return;
+    var agora=Date.now()+_difRelogio,falta=g.fim_dia_min-minutoMaceio(agora);
+    if(falta<=0)falta+=1440;
+    _proximoCorte=Date.now()+falta*60000-(new Date(agora).getSeconds()*1000);
+  }
+  async function carregarRegrasLogin(forcar){
+    if(!global._sb)return null;
+    var uid=idSessaoLocal()||'',hoje=new Date().toLocaleDateString('sv-SE',{timeZone:'America/Maceio'});
+    if(!forcar){
+      try{var c=JSON.parse(sessionStorage.getItem(CHAVE_REGRAS_LOGIN)||'null');
+        if(c&&c.uid===uid&&c.dia===hoje&&c.ate>Date.now()&&c.dados){_regrasLogin=c.dados;_difRelogio=c.dif||0;if(!_proximoCorte)agendarCorte(_regrasLogin);return _regrasLogin;}}catch(e){}
+    }
+    try{
+      var r=await global._sb.rpc('login_regras');
+      if(r.error||!r.data)return {erro:true};
+      _regrasLogin=r.data;
+      if(r.data.agora){var srv=Date.parse(r.data.agora);if(!isNaN(srv))_difRelogio=srv-Date.now();}
+      try{sessionStorage.setItem(CHAVE_REGRAS_LOGIN,JSON.stringify({uid:uid,dia:hoje,ate:Date.now()+10*60000,dif:_difRelogio,dados:r.data}));}catch(e){}
+      agendarCorte(_regrasLogin);
+      return _regrasLogin;
+    }catch(e){return {erro:true};}
+  }
+  // Grava o motivo (Registro de atividades e Ponto > Acessos) e sai
+  async function sairPorRegra(motivo){
+    try{
+      await Promise.race([global._sb.rpc('login_saida_registrar',{p_motivo:motivo==='fim_dia'?'fim_dia':'inatividade',p_navegador:(navigator.userAgent||'').slice(0,300)}),new Promise(function(ok){setTimeout(ok,3000);})]);
+    }catch(e){}
+    try{sessionStorage.removeItem(CHAVE_REGRAS_LOGIN);sessionStorage.removeItem(CHAVE_ENTRADA_OK);}catch(e){}
+    await global.sagaLogout(motivo==='fim_dia'?'fim_dia':'inatividade_fora');
+  }
+  // Ao abrir a tela: login de antes do corte das 20h? sai (o banco já derrubou ou vai derrubar)
+  async function conferirLoginDiario(){
+    var g=await carregarRegrasLogin(false);
+    if(g&&g.ok&&!g.isento&&g.sessao_vencida){await sairPorRegra('fim_dia');return false;}
+    return true;
+  }
+
+  // ===== Entrada só pela internet do escritório (bloco 181, T165; chave em Ponto > Cadastro > Configurações) =====
+  // De uma internet fora da lista, a tela fica em "Aguardando autorização do administrador" e o Dr. Victor
+  // decide no sino (só hoje, esta internet sempre ou recusar). Autorizado, a tela libera sozinha.
+  var CHAVE_ENTRADA_OK='saga-entrada-ok';
+  async function conferirEntradaRede(){
+    if(!global._sb)return true;
+    var uid=idSessaoLocal()||'';
+    try{var c=JSON.parse(sessionStorage.getItem(CHAVE_ENTRADA_OK)||'null');if(c&&c.uid===uid&&c.ate>Date.now())return true;}catch(e){}
+    var pedir=function(){return global._sb.rpc('entrada_conferir',{p_aparelho:global.sagaAparelhoCodigo(),p_navegador:(navigator.userAgent||'').slice(0,300)});};
+    var d;
+    try{var r=await pedir();if(r.error||!r.data)return true;d=r.data;}catch(e){return true;}
+    var guardar=function(){try{sessionStorage.setItem(CHAVE_ENTRADA_OK,JSON.stringify({uid:uid,ate:Date.now()+15*60000}));}catch(e){}};
+    if(d.ok){guardar();return true;}
+    return new Promise(function(liberar){
+      var tela=mostrarAguardandoEntrada(d),timer=null;
+      if(d.situacao==='recusado')return;
+      timer=setInterval(async function(){
+        if(document.hidden)return;
+        try{var r2=await pedir();if(r2.error||!r2.data)return;
+          if(r2.data.ok){clearInterval(timer);guardar();tirarAguardandoEntrada(tela);liberar(true);}
+          else if(r2.data.situacao==='recusado'){clearInterval(timer);mostrarAguardandoEntrada(r2.data);}
+        }catch(e){}
+      },8000);
+    });
+  }
+  function mostrarAguardandoEntrada(d){
+    var recusado=d.situacao==='recusado';
+    var t=document.getElementById('sagaAguardaEntrada');
+    var fade=!t&&!semMovimentoTrava();
+    if(!t){
+      t=document.createElement('div');t.id='sagaAguardaEntrada';t.setAttribute('role','alertdialog');t.setAttribute('aria-labelledby','sagaAguardaTitulo');t.setAttribute('data-saga-movimento-proprio','');
+      t.style.cssText='position:fixed;inset:0;z-index:2147483000;background:linear-gradient(160deg,var(--navy-1,#e8ecf1),var(--navy-2,#dfe5ee));display:flex;align-items:center;justify-content:center;padding:24px 16px;overflow:auto;font-family:Montserrat,Arial,sans-serif;'+(fade?'opacity:0;transition:opacity .32s cubic-bezier(.22,.78,.25,1);':'');
+      // fica fora do body (a tela ainda está escondida): leva o tema claro/escuro do body
+      try{var tema=document.body&&document.body.getAttribute('data-theme');if(tema)t.setAttribute('data-theme',tema);}catch(e){}
+      document.documentElement.appendChild(t);
+      if(fade)requestAnimationFrame(function(){requestAnimationFrame(function(){t.style.opacity='1';});});
+    }
+    var cor=recusado?'#e5484d':'var(--gold,#2f6cd6)';
+    t.innerHTML='<div style="max-width:460px;width:100%;text-align:center;background:var(--panel,#fff);border:1px solid var(--border,#d5dbe4);border-radius:16px;padding:30px 26px;box-shadow:0 10px 30px rgba(0,0,0,.14);color:var(--text,#13233a)">'
+      +'<div style="width:52px;height:52px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,'+cor+' 14%,transparent);color:'+cor+'"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">'
+      +(recusado?'<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>':'<path d="M3.5 9.5a12 12 0 0117 0M6.5 12.5a7.5 7.5 0 0111 0M9.5 15.5a3 3 0 015 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="18.5" r="1.2" fill="currentColor"/>')
+      +'</svg></div>'
+      +'<div id="sagaAguardaTitulo" style="font-family:Cormorant Garamond,serif;font-size:22px;font-weight:600;margin-bottom:8px">'+(recusado?'Entrada recusada':'Aguardando autorização do administrador para entrar desta internet')+'</div>'
+      +'<div style="font-size:12.5px;color:var(--muted,#4a586e);line-height:1.55;margin-bottom:16px">'
+      +(recusado?'O administrador recusou a entrada no SAGA por esta internet hoje. No escritório, use a internet do escritório (Wi-Fi ou cabo). Se for engano, fale com o Dr. Victor.'
+               :'Esta internet'+(d.ip?' ('+esc(d.ip)+')':'')+' não é uma das internets autorizadas do escritório. O Dr. Victor já recebeu o pedido no sino; assim que ele autorizar, esta tela libera sozinha. Trabalhando de casa? Peça home office pelo Ponto antes (ou fale com ele).')
+      +'</div>'
+      +(recusado?'':'<div aria-hidden="true" style="display:flex;gap:6px;justify-content:center;margin:0 0 18px"><span class="saga-ag-p"></span><span class="saga-ag-p"></span><span class="saga-ag-p"></span></div>')
+      +'<button type="button" data-sair style="height:36px;padding:0 18px;border-radius:9px;border:1px solid var(--border,#d5dbe4);background:transparent;color:var(--text,#13233a);font:inherit;font-size:12.5px;cursor:pointer">Sair do sistema</button>'
+      +'</div>';
+    if(!document.getElementById('sagaAguardaCss')){var st=document.createElement('style');st.id='sagaAguardaCss';
+      st.textContent='.saga-ag-p{width:7px;height:7px;border-radius:50%;background:var(--gold,#2f6cd6);opacity:.25;animation:sagaAgP 1.2s cubic-bezier(.22,.78,.25,1) infinite}.saga-ag-p:nth-child(2){animation-delay:.2s}.saga-ag-p:nth-child(3){animation-delay:.4s}@keyframes sagaAgP{50%{opacity:1}}html.saga-sem-movimento .saga-ag-p{animation:none;opacity:.6}';
+      (document.head||document.documentElement).appendChild(st);}
+    t.querySelector('[data-sair]').addEventListener('click',function(){try{sessionStorage.removeItem(CHAVE_ENTRADA_OK);}catch(e){}global.sagaLogout();});
+    return t;
+  }
+  function tirarAguardandoEntrada(t){
+    if(!t)return;t.id='';
+    if(semMovimentoTrava()){t.remove();return;}
+    t.style.transition='opacity .26s cubic-bezier(.22,.78,.25,1)';t.style.opacity='0';
+    setTimeout(function(){t.remove();},300);
+  }
+
+  // Janela do administrador: decidir os pedidos de entrada (aviso do sino 'acessos_pedido')
+  async function abrirPedidosEntrada(ids){
+    ids=(ids||[]).filter(Boolean);if(!ids.length)return;
+    var dados=[];
+    for(var i=0;i<ids.length;i++){try{var r=await global._sb.rpc('entrada_pedido_ver',{p_pedido:ids[i]});if(!r.error&&r.data)dados.push(r.data);}catch(e){}}
+    var velho=document.getElementById('sagaPedidosEntrada');if(velho)velho.remove();
+    var fundo=document.createElement('div');fundo.id='sagaPedidosEntrada';fundo.setAttribute('role','dialog');fundo.setAttribute('aria-modal','true');fundo.setAttribute('aria-labelledby','sagaPedTit');fundo.setAttribute('data-saga-movimento-proprio','');
+    var mov=!semMovimentoTrava();
+    fundo.style.cssText='position:fixed;inset:0;z-index:1500;background:rgba(8,14,26,.45);display:flex;align-items:flex-start;justify-content:center;padding:70px 16px 24px;overflow:auto;'+(mov?'opacity:0;transition:opacity .28s cubic-bezier(.22,.78,.25,1);':'');
+    var fmtH=function(t){try{return new Date(t).toLocaleTimeString('pt-BR',{timeZone:'America/Maceio',hour:'2-digit',minute:'2-digit'});}catch(e){return '';}};
+    var linhas=dados.length?dados.map(function(p){
+      var feito=p.situacao!=='aguardando';
+      return '<div data-ped="'+esc(p.id)+'" style="border:1px solid var(--border,#d5dbe4);border-radius:12px;padding:12px 14px;margin:0 0 10px">'
+        +'<div style="font-size:13px;font-weight:600">'+esc(p.nome||'Colaborador')+'</div>'
+        +'<div style="font-size:11.5px;color:var(--muted,#4a586e);line-height:1.5;margin:3px 0 10px">Internet '+esc(p.ip||'')+(p.aparelho?' · '+esc(p.aparelho):'')+' · pediu às '+fmtH(p.criado_em)+(p.ip_ja_autorizado?' · esta internet já está autorizada':'')+'</div>'
+        +(feito?'<div style="font-size:12px">'+(p.situacao==='recusado'?'Recusado':'Autorizado'+(p.alcance==='sempre'?' (internet autorizada sempre)':' (só hoje)'))+(p.decidido_por?' por '+esc(p.decidido_por):'')+(p.decidido_em?' às '+fmtH(p.decidido_em):'')+'.</div>'
+          :'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="saga-ped-btn principal" data-dec="hoje">Autorizar só hoje</button><button type="button" class="saga-ped-btn" data-dec="sempre">Autorizar esta internet sempre</button><button type="button" class="saga-ped-btn perigo" data-dec="recusar">Recusar</button></div>')
+        +'</div>';}).join(''):'<div style="font-size:12px;color:var(--muted,#4a586e)">Pedido não encontrado.</div>';
+    fundo.innerHTML='<div style="width:100%;max-width:480px;background:var(--panel,#fff);color:var(--text,#13233a);border:1px solid var(--border,#d5dbe4);border-radius:16px;padding:20px 20px 16px;box-shadow:0 14px 40px rgba(0,0,0,.25);font-family:Montserrat,Arial,sans-serif">'
+      +'<div id="sagaPedTit" style="font-family:Cormorant Garamond,serif;font-size:21px;font-weight:600;margin-bottom:4px">Pedido de entrada no SAGA</div>'
+      +'<div style="font-size:11.5px;color:var(--muted,#4a586e);line-height:1.5;margin-bottom:14px">Colaborador tentando entrar de uma internet que não está entre as autorizadas. "Sempre" acrescenta a internet em Ponto &gt; Cadastro &gt; Internets do escritório (vale também para o ponto).</div>'
+      +linhas+'<div style="text-align:right;margin-top:6px"><button type="button" class="saga-ped-btn" data-fechar>Fechar</button></div></div>';
+    if(!document.getElementById('sagaPedBtnCss')){var cs=document.createElement('style');cs.id='sagaPedBtnCss';
+      cs.textContent='.saga-ped-btn{height:32px;padding:0 14px;border-radius:9px;border:1px solid var(--border,#d5dbe4);background:color-mix(in srgb,var(--text,#13233a) 4%,transparent);color:var(--text,#13233a);font:inherit;font-size:12px;font-weight:400;cursor:pointer;transition:background .2s,border-color .2s}'
+        +'.saga-ped-btn:hover{border-color:var(--gold,#2f6cd6)}.saga-ped-btn.principal{border-color:color-mix(in srgb,var(--gold,#2f6cd6) 60%,transparent);background:color-mix(in srgb,var(--gold,#2f6cd6) 18%,transparent)}'
+        +'.saga-ped-btn.perigo{color:#e5484d;border-color:color-mix(in srgb,#e5484d 45%,transparent);background:color-mix(in srgb,#e5484d 8%,transparent)}.saga-ped-btn:disabled{opacity:.55;cursor:default}';
+      (document.head||document.documentElement).appendChild(cs);}
+    document.body.appendChild(fundo);
+    if(mov)requestAnimationFrame(function(){requestAnimationFrame(function(){fundo.style.opacity='1';});});
+    var fechar=function(){if(mov){fundo.style.opacity='0';setTimeout(function(){fundo.remove();},300);}else fundo.remove();contarNaoLidas();};
+    fundo.addEventListener('click',async function(e){
+      if(e.target===fundo||e.target.closest('[data-fechar]')){fechar();return;}
+      var b=e.target.closest('[data-dec]');if(!b)return;
+      var cx=b.closest('[data-ped]'),id=cx.getAttribute('data-ped');
+      cx.querySelectorAll('button').forEach(function(x){x.disabled=true;});
+      try{
+        var r=await global._sb.rpc('entrada_decidir',{p_pedido:id,p_decisao:b.getAttribute('data-dec')});
+        if(r.error)throw r.error;
+        var txt=b.getAttribute('data-dec')==='recusar'?'Entrada recusada.':'Entrada autorizada: a tela da pessoa libera sozinha.';
+        if(typeof global.showToast==='function')global.showToast(txt,'success');
+        var bx=cx.querySelector('div:last-child');if(bx)bx.outerHTML='<div style="font-size:12px">'+esc(txt)+'</div>';
+        if(b.getAttribute('data-dec')==='sempre')setTimeout(function(){abrirPedidosEntrada(ids);},400);
+      }catch(err){
+        cx.querySelectorAll('button').forEach(function(x){x.disabled=false;});
+        if(typeof global.showToast==='function')global.showToast('Não deu para gravar: '+((err&&err.message)||'erro'),'error');
+      }
+    });
+    document.addEventListener('keydown',function esc1(e){if(e.key==='Escape'&&document.body.contains(fundo)){fechar();document.removeEventListener('keydown',esc1);}});
+  }
+  global.sagaAbrirPedidosEntrada=abrirPedidosEntrada;
 
   function ligarControleInatividade(){
     if(document.body.dataset.sagaInatividadeLigada)return;
@@ -1127,6 +1310,7 @@
       document.addEventListener(ev,registrarAtividade,{passive:true,capture:true});
     });
     setInterval(verificarInatividade,60000);
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)verificarInatividade();});
     // Revalida o acesso em segundo plano quando passam os 30 minutos
     setInterval(function(){verificarAcesso(false);},60000);
   }
@@ -1163,6 +1347,7 @@
     if(n&&n.referencia_tabela==='ponto_home_office')return {titulo:'Pedido de home office',tela:'ponto_eletronico_padrao_metalico.html?aba=equipe'};
     if(n&&n.referencia_tabela==='meta_anuncios')return {titulo:'Robô do Meta',tela:'marketing_campanhas_padrao_metalico.html?aba=painel'};
     if(n&&n.referencia_tabela==='datajud')return {titulo:'Andamento do processo',tela:'monitoramento_multi_oab.html?andamentos=1'};
+    if(n&&n.referencia_tabela==='acessos_pedido')return {titulo:'Pedido de entrada',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
     if(n&&n.referencia_tabela==='acessos')return {titulo:'Entrada no sistema',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
     if(n&&n.referencia_tabela==='pagamentos')return {titulo:'Parcela vencida',tela:'financeiro.html?aba=parcelas'};
     if(n&&n.referencia_tabela==='armazenamento')return {titulo:'Armazenamento',tela:'configuracoes_padrao_metalico.html?aba=armazenamento'};
@@ -1189,6 +1374,7 @@
     {chave:'ponto',titulo:'Ponto',tipos:[],tela:'ponto_eletronico_padrao_metalico.html',um:'aviso do ponto',varios:'avisos do ponto',cor:'#d97706'},
     {chave:'sugestoes',titulo:'Sugestões de melhoria',tipos:[],tela:'sugestoes.html',um:'aviso de sugestão',varios:'avisos de sugestões',cor:'#c9a84c'},
     {chave:'andamentos',titulo:'Andamentos do CNJ',tipos:[],tela:'monitoramento_multi_oab.html?andamentos=1',um:'andamento novo',varios:'andamentos novos',cor:'#0891b2'},
+    {chave:'acessos_pedido',titulo:'Pedidos de entrada',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'pedido de entrada',varios:'pedidos de entrada',cor:'#e5484d'},
     {chave:'acessos',titulo:'Entradas no sistema',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'entrada no sistema',varios:'entradas no sistema',cor:'#6366f1'},
     {chave:'pagamentos',titulo:'Pagamentos',tipos:[],tela:'financeiro.html?aba=parcelas',um:'parcela vencida',varios:'parcelas vencidas',cor:'#2fae7a'},
     {chave:'armazenamento',titulo:'Armazenamento',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=armazenamento',um:'aviso de espaço',varios:'avisos de espaço',cor:'#0ea5e9'},
@@ -1207,6 +1393,8 @@
     if(n&&n.referencia_tabela==='datajud'){for(var dj=0;dj<GRUPOS_NOTIF.length;dj++){if(GRUPOS_NOTIF[dj].chave==='andamentos')return GRUPOS_NOTIF[dj];}}
     // Entradas no sistema (bloco 157, T150): 1ª entrada do dia de cada colaborador, só para o administrador geral
     if(n&&n.referencia_tabela==='acessos'){for(var ac=0;ac<GRUPOS_NOTIF.length;ac++){if(GRUPOS_NOTIF[ac].chave==='acessos')return GRUPOS_NOTIF[ac];}}
+    // Pedido de entrada por internet não autorizada (bloco 181, T165): grupo próprio, abre a janela de decisão
+    if(n&&n.referencia_tabela==='acessos_pedido'){for(var ap=0;ap<GRUPOS_NOTIF.length;ap++){if(GRUPOS_NOTIF[ap].chave==='acessos_pedido')return GRUPOS_NOTIF[ap];}}
     // Parcela vencida e não paga (bloco 167, T159): tipo 'outro' com a referência 'pagamentos', grupo próprio no sino
     if(n&&n.referencia_tabela==='pagamentos'){for(var pg=0;pg<GRUPOS_NOTIF.length;pg++){if(GRUPOS_NOTIF[pg].chave==='pagamentos')return GRUPOS_NOTIF[pg];}}
     // Espaço do banco ou dos arquivos acima do limite (bloco 177, T163): grupo próprio no sino
@@ -1301,6 +1489,8 @@
   }
   async function abrirGrupoNotif(g){
     var ids=g.itens.map(function(n){return n.id;});
+    // pedidos de entrada: a janela de decisão (o aviso some quando o pedido é decidido)
+    if(g.grupo.chave==='acessos_pedido'){var vistos={};abrirPedidosEntrada(g.itens.map(function(n){return n.referencia_id;}).filter(function(x){if(!x||vistos[x])return false;vistos[x]=1;return true;}));return;}
     // Um item so (ou todos do mesmo item): vai direto nele
     var refs={};g.itens.forEach(function(n){refs[n.referencia_id||n.id]=1;});
     if(Object.keys(refs).length===1){await abrirNotificacao(g.itens[0],ids);return;}
@@ -1310,6 +1500,7 @@
   }
 
   async function abrirNotificacao(n,idsParaMarcar){
+    if(n&&n.referencia_tabela==='acessos_pedido'){abrirPedidosEntrada([n.referencia_id]);return;}
     await marcarLidas(idsParaMarcar||(n.lida?[]:[n.id]));
     if(n.tipo==='distribuicao'){global.sagaIrPara('lista_processos_padrao_metalico.html?fase=captacao');return;}
     if(n.referencia_tabela==='pedidos_busca'){
@@ -1605,7 +1796,7 @@
     try{await global._sb.auth.signOut();}catch(e){}
     try{localStorage.removeItem(CHAVE_ATIVIDADE);}catch(e){}
     try{localStorage.removeItem('saga-permissoes');sessionStorage.removeItem(CHAVE_ACESSO);}catch(e){}
-    window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'||motivo==='acesso'?'?motivo='+motivo:'');
+    window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'||motivo==='acesso'||motivo==='fim_dia'||motivo==='inatividade_fora'?'?motivo='+motivo:'');
   };
 
 
@@ -2172,10 +2363,14 @@
         if(!ses.data||!ses.data.session){window.location.replace('login_padrao_metalico.html');return;}
       }catch(e){}
     }
+    // Login diário (bloco 181): login de antes do corte das 20h sai; as regras de horário valem para a inatividade
+    if(!(await conferirLoginDiario()))return;
     // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
     if(await verificarInatividade())return;
     // Horario e local de acesso (a tela continua escondida enquanto confere)
     if(!(await verificarAcesso(false)))return;
+    // Entrada só pela internet do escritório (chave em Ponto > Configurações): espera a autorização do administrador
+    await conferirEntradaRede();
     registrarEntrada();
     registrarAtividade();
     ligarControleInatividade();
