@@ -46,18 +46,25 @@
   if(!global.sagaIrPara)global.sagaIrPara=function(url){if(url)window.location.href=url;};
   // Cores do tema disponíveis (para criar outra: incluir aqui e as regras html[data-cor="..."] no saga_tema.css)
   // Nome de cada tema (cor + modo), para conversar sobre ele: Azul Marinho/Azul Porcelana e Grafite Noturno/Grafite Linho
-  global.SAGA_CORES=[{id:'azul',nome:'Azul',descricao:'Padrão do sistema',escuro:'Azul Marinho',claro:'Azul Porcelana'},
-    {id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe',escuro:'Grafite Noturno',claro:'Grafite Linho'},
+  // grupo: como as cores aparecem em Configurações > Preferências (12/11, T151b: cartões iguais, em grupos)
+  global.SAGA_GRUPOS_CORES=[{id:'classicos',nome:'Clássicos'},{id:'campanhas',nome:'Campanhas'},{id:'vidro',nome:'Vidro tecnológico'}];
+  global.SAGA_CORES=[{id:'azul',nome:'Azul',descricao:'Padrão do sistema',escuro:'Azul Marinho',claro:'Azul Porcelana',grupo:'classicos',padrao:true},
+    {id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe',escuro:'Grafite Noturno',claro:'Grafite Linho',grupo:'classicos'},
     // 12/11 (T48): temas de campanha; com o "Tema do mês" ligado, entram sozinhos no mês de cada um
-    {id:'novembro',nome:'Novembro Azul',descricao:'Campanha de saúde do homem',escuro:'Novembro Azul Noite',claro:'Novembro Azul Céu',mes:11},
-    {id:'rosa',nome:'Rosa',descricao:'Outubro Rosa: prevenção do câncer de mama',escuro:'Rosa Noite',claro:'Rosa Pétala',mes:10},
-    {id:'natal',nome:'Natal',descricao:'Verde, vermelho e dourado de fim de ano',escuro:'Natal Pinheiro',claro:'Natal Neve',mes:12},
+    {id:'novembro',nome:'Novembro Azul',descricao:'Campanha de saúde do homem',escuro:'Novembro Azul Noite',claro:'Novembro Azul Céu',mes:11,grupo:'campanhas'},
+    {id:'rosa',nome:'Rosa',descricao:'Outubro Rosa: prevenção do câncer de mama',escuro:'Rosa Noite',claro:'Rosa Pétala',mes:10,grupo:'campanhas'},
+    {id:'natal',nome:'Natal',descricao:'Verde, vermelho e dourado de fim de ano',escuro:'Natal Pinheiro',claro:'Natal Neve',mes:12,grupo:'campanhas'},
     // 12/11 (T151): "Vidro tecnológico" (vidro: true = tem fundo e opções próprias em Configurações > Preferências)
-    {id:'vidro',nome:'Vidro azul profundo',descricao:'Vidro tecnológico: placas de vidro sobre um fundo à sua escolha',escuro:'Vidro Azul Noite',claro:'Vidro Azul Gelo',vidro:true},
-    {id:'vidro-ciano',nome:'Vidro ciano holográfico',descricao:'Vidro tecnológico com destaque ciano',escuro:'Vidro Ciano Noite',claro:'Vidro Ciano Claro',vidro:true}];
+    {id:'vidro',nome:'Azul profundo',descricao:'Vidro tecnológico: placas de vidro sobre um fundo à sua escolha',escuro:'Vidro Azul Noite',claro:'Vidro Azul Gelo',vidro:true,grupo:'vidro'},
+    {id:'vidro-ciano',nome:'Ciano holográfico',descricao:'Vidro tecnológico com destaque ciano',escuro:'Vidro Ciano Noite',claro:'Vidro Ciano Claro',vidro:true,grupo:'vidro'},
+    {id:'vidro-ambar',nome:'Âmbar de reator',descricao:'Vidro tecnológico com destaque âmbar',escuro:'Vidro Âmbar Noite',claro:'Vidro Âmbar Claro',vidro:true,grupo:'vidro'},
+    {id:'vidro-aurora',nome:'Aurora violeta',descricao:'Vidro tecnológico com destaque violeta',escuro:'Vidro Aurora Noite',claro:'Vidro Aurora Claro',vidro:true,grupo:'vidro'},
+    // coringa: a pessoa escolhe a cor (saga-vidro-cor) e o saga_guard.js monta o resto (sagaVidroLivre)
+    {id:'vidro-livre',nome:'A sua cor',descricao:'Vidro tecnológico na cor que você escolher',escuro:'Vidro com a sua cor (noite)',claro:'Vidro com a sua cor (dia)',vidro:true,livre:true,grupo:'vidro'}];
   // cor de fundo de cada tema antes da 1ª imagem da tela ([escuro, claro]); o saga_guard.js tem a mesma lista
-  global.SAGA_FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3']};
-  global.sagaFundoCor=function(cor,claro){var f=global.SAGA_FUNDOS[cor]||global.SAGA_FUNDOS.azul;return claro?f[1]:f[0];};
+  global.SAGA_FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0']};
+  global.sagaFundoCor=function(cor,claro){if(cor==='vidro-livre'&&global.sagaVidroLivre){try{var vl=global.sagaVidroLivre(localStorage.getItem('saga-vidro-cor')||'#5AA9FF');return claro?vl.c.fundo:vl.e.fundo;}catch(e){}}
+    var f=global.SAGA_FUNDOS[cor]||global.SAGA_FUNDOS.azul;return claro?f[1]:f[0];};
   // "Tema do mês" (12/11): o administrador liga e escolhe a cor de cada mês (padrão: out Rosa, nov Novembro Azul, dez Natal);
   // vale para toda a equipe, menos para quem tem a cor fixada pelo administrador
   global.sagaTemaDoMes=function(rg,data){rg=rg||global._sagaTemasRegra||{};var m=rg.mes||{};if(!m.ativo)return null;
@@ -82,8 +89,10 @@
   // 12/11 (T151): opções do Vidro tecnológico, de cada pessoa NESTE navegador: fundo (montanhas, grade ou imagem
   // própria, guardada só aqui, diminuída) e "Vidro mais fosco". O saga_guard.js aplica antes da 1ª imagem da tela.
   global.sagaVidro={
-    opcoes:function(){var o={fundo:'montanhas',fosco:false,imagem:null};try{o.fundo=localStorage.getItem('saga-vidro-fundo')||'montanhas';o.fosco=localStorage.getItem('saga-vidro-fosco')==='1';o.imagem=localStorage.getItem('saga-vidro-imagem');}catch(e){}if(o.fundo==='imagem'&&!o.imagem)o.fundo='montanhas';return o;},
+    opcoes:function(){var o={fundo:'montanhas',fosco:false,imagem:null,cor:'#5AA9FF'};try{o.fundo=localStorage.getItem('saga-vidro-fundo')||'montanhas';o.fosco=localStorage.getItem('saga-vidro-fosco')==='1';o.imagem=localStorage.getItem('saga-vidro-imagem');o.cor=localStorage.getItem('saga-vidro-cor')||'#5AA9FF';}catch(e){}if(o.fundo==='imagem'&&!o.imagem)o.fundo='montanhas';return o;},
     aplicar:function(){var h=document.documentElement,o=global.sagaVidro.opcoes();h.setAttribute('data-vidro-fundo',o.fundo);h.classList.toggle('vidro-fosco',o.fosco);
+      if(global.sagaVidroAplicarLivre)global.sagaVidroAplicarLivre(o.cor);
+      if((h.getAttribute('data-cor')||'')==='vidro-livre'){var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';h.style.background=global.sagaFundoCor('vidro-livre',claro);h.style.setProperty('--vd-fundo-html',h.style.background);}
       if(o.fundo==='imagem'&&o.imagem)h.style.setProperty('--vidro-img','url("'+o.imagem+'")');else h.style.removeProperty('--vidro-img');},
     definir:function(chave,valor){try{if(valor===null||valor===undefined||valor===false)localStorage.removeItem('saga-vidro-'+chave);else localStorage.setItem('saga-vidro-'+chave,valor===true?'1':String(valor));}catch(e){return false;}global.sagaVidro.aplicar();return true;}
   };
@@ -93,7 +102,8 @@
     if(cor==='azul')h.removeAttribute('data-cor');else h.setAttribute('data-cor',cor);
     if(!(opcoes&&opcoes.previa)){try{localStorage.setItem('saga-cor',cor);}catch(e){}}
     var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';
-    h.style.background=global.sagaFundoCor(cor,claro);
+    h.style.background=global.sagaFundoCor(cor,claro);h.style.setProperty('--vd-fundo-html',h.style.background);
+    if(cor.indexOf('vidro')===0&&global.sagaVidro)global.sagaVidro.aplicar();
     global.sagaTituloTema();
     return cor;
   };
@@ -800,7 +810,7 @@
         document.body.setAttribute('data-theme',novo);
         try{localStorage.setItem('saga-tema',novo);}catch(e){}
         // 09/11: o fundo da página (atrás de tudo) acompanha o claro/escuro na hora
-        try{var corA=document.documentElement.getAttribute('data-cor')||'azul';document.documentElement.style.background=global.sagaFundoCor(corA,novo==='light');document.documentElement.style.colorScheme=novo==='light'?'light':'dark';}catch(e){}
+        try{var corA=document.documentElement.getAttribute('data-cor')||'azul';document.documentElement.style.background=global.sagaFundoCor(corA,novo==='light');document.documentElement.style.setProperty('--vd-fundo-html',document.documentElement.style.background);document.documentElement.style.colorScheme=novo==='light'?'light':'dark';}catch(e){}
       }
       trocarTemaComLuz(btn,novo,aplicar);
       setTimeout(function(){global.sagaTituloTema&&global.sagaTituloTema();},700);
@@ -995,6 +1005,7 @@
       // cor do tema: a fixada pelo administrador vale mais que a escolha da pessoa; sem nada, Azul
       // e só vale cor liberada pelo administrador (regra geral ou "todos os temas" para a pessoa)
       try{var rg=await global._sb.rpc('temas_regra');if(!rg.error&&rg.data)global._sagaTemasRegra=rg.data;}catch(e){}
+      try{var vlc=(r.data.preferencias||{}).vidro_cor;if(vlc&&/^#[0-9a-f]{6}$/i.test(vlc)&&localStorage.getItem('saga-vidro-cor')!==vlc)localStorage.setItem('saga-vidro-cor',vlc);}catch(e){}
       var corEsc=r.data.tema_cor_fixo||global.sagaTemaDoMes()||(r.data.preferencias||{}).cor||'azul';
       if(!r.data.tema_cor_fixo&&global.sagaTemasPermitidos(r.data).indexOf(corEsc)<0)corEsc='azul';
       global.sagaAplicarCor(corEsc);

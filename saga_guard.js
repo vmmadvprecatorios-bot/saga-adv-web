@@ -32,14 +32,64 @@
   try{cor=localStorage.getItem('saga-cor')||'azul';}catch(e){}
   if(cor&&cor!=='azul')html.setAttribute('data-cor',cor);
   // fundo de cada cor antes da 1ª imagem ([escuro, claro]; a mesma lista do SAGA_FUNDOS no saga_ui.js)
-  var FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3']};
+  var FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0']};
   html.style.background=(FUNDOS[cor]||FUNDOS.azul)[tema==='light'?1:0];
   html.style.colorScheme=tema==='light'?'light':'dark';
+  // 12/11 (T151b): "Vidro com a sua cor" (coringa). A partir da cor escolhida monta as variáveis do claro (--vl-c-*)
+  // e do escuro (--vl-e-*) no html, com o destaque e o texto conferidos para ter boa leitura (contraste mínimo).
+  (function(){
+    function hsl2rgb(h,s,l){h=((h%360)+360)%360;s=Math.max(0,Math.min(1,s));l=Math.max(0,Math.min(1,l));var c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2,r=0,g=0,b=0;
+      if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
+      return [Math.round((r+m)*255),Math.round((g+m)*255),Math.round((b+m)*255)];}
+    function hex2hsl(hex){var n=parseInt(String(hex||'').replace('#',''),16);if(isNaN(n))n=0x5AA9FF;var r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,h=0,s=0,d=mx-mn;
+      if(d){s=d/(1-Math.abs(2*l-1));if(mx===r)h=60*(((g-b)/d)%6);else if(mx===g)h=60*((b-r)/d+2);else h=60*((r-g)/d+4);}return [h,s,l];}
+    function hx(c){return '#'+c.map(function(v){return ('0'+v.toString(16)).slice(-2);}).join('');}
+    function lum(c){var a=c.map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);});return .2126*a[0]+.7152*a[1]+.0722*a[2];}
+    function contraste(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05);}
+    // sobe (ou desce) a luz da cor até ter o contraste pedido com o fundo
+    function ajustar(h,s,l,fundo,min,subir){var c=hsl2rgb(h,s,l);for(var i=0;i<40&&contraste(c,fundo)<min;i++){l+=subir?.02:-.02;c=hsl2rgb(h,s,l);}return c;}
+    function rgba(c,a){return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';}
+    var W=1600,H=900;
+    function estrelas(){var s=7,o='';function rnd(){s=(s*9301+49297)%233280;return s/233280;}for(var i=0;i<110;i++){o+="<circle cx='"+Math.round(rnd()*W)+"' cy='"+Math.round(rnd()*H*.5)+"' r='"+(rnd()*1.2+.3).toFixed(1)+"' fill='%23fff' fill-opacity='"+(.25+rnd()*.6).toFixed(2)+"'/>";}return o;}
+    function svg(corpo){return "url(\"data:image/svg+xml,"+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 "+W+" "+H+"' preserveAspectRatio='xMidYMax slice'>").replace(/%23/g,'%23')+corpo+encodeURIComponent('</svg>')+"\")";}
+    function montes(cores,escuro,alfas){var o=escuro?estrelas():'';cores.forEach(function(cor,k){var base=H*(.52+k*.14),amp=H*(.16-k*.03),seed=k*37+11,d='M0 '+H;
+      for(var px=0;px<=W+40;px+=40){d+='L'+px+' '+Math.round(base-Math.abs(Math.sin(px/(180-k*30)+seed))*amp-Math.sin(px/67+seed*2)*amp*.25);}
+      o+="<path d='"+d+"L"+W+" "+H+"Z' fill='"+cor.replace('#','%23')+"' fill-opacity='"+alfas[k]+"'/>";});return svg(o);}
+    function cidade(cores,escuro,alfas,bri){var o=escuro?estrelas():'';for(var k=0;k<3;k++){var px=-10,base=H*(.62+k*.12),d='',j2='';
+      while(px<W){var bw=24+((px*7+k*13)%46),bh=H*(.08+((px*13+k*29)%100)/100*.22)*(1-k*.2);d+='M'+px+' '+Math.round(base-bh)+'h'+bw+'V'+H+'h-'+bw+'Z';
+        if(escuro&&k===2){for(var j=0;j<6;j++){if(((px+j*17)%5)===0)j2+='M'+(px+5+(j%3)*7)+' '+Math.round(base-bh+8+Math.floor(j/3)*10)+'h3v4h-3Z';}}px+=bw+2;}
+      o+="<path d='"+d+"' fill='"+cores[k].replace('#','%23')+"' fill-opacity='"+alfas[k]+"'/>";if(j2)o+="<path d='"+j2+"' fill='"+bri.replace('#','%23')+"' fill-opacity='.5'/>";}return svg(o);}
+    window.sagaVidroLivre=function(hex){
+      var t=hex2hsl(hex),h=t[0],s=Math.max(.35,Math.min(.9,t[1])),sb=s*.6,v={};
+      // escuro
+      var f=hsl2rgb(h,sb,.08),f2=hsl2rgb(h,sb,.14),vid=hsl2rgb(h,sb,.18);
+      var bri=ajustar(h,Math.max(s,.7),.6,f2,3.2,true),dest=ajustar(h,Math.max(s,.6),.72,f2,4.5,true),tx=hsl2rgb(h,.3,.94),mu=ajustar(h,.15,.7,f2,4.5,true);
+      var mo=[hx(hsl2rgb(h,sb*.8,.10)),hx(hsl2rgb(h,sb*.8,.13)),hx(hsl2rgb(h,sb*.8,.16))];
+      v.e={fundo:hx(f),navy2:rgba(f,.55),navy3:rgba(f2,.6),panel:rgba(vid,.58),panel2:rgba(vid,.66),solid:hx(f2),borda:'rgba(220,232,245,.16)',borda2:'rgba(220,232,245,.09)',texto:hx(tx),muted:hx(mu),gold:hx(bri),gold2:hx(dest),
+        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(h,sb,.06))+' 0%,'+hx(hsl2rgb(h,sb,.17))+' 60%,'+hx(hsl2rgb(h,sb*.8,.32))+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(bri,.30)+',transparent 70%)',
+        montes:montes(mo,true,[1,1,1]),cidade:cidade(mo,true,[1,1,1],hx(bri)),grade:rgba(bri,.22),veu:'linear-gradient(180deg,'+rgba(f,.30)+','+rgba(f,.70)+')',vidro:rgba(vid,.40),vidro2:rgba(vid,.66),brilho:hx(bri)};
+      // claro
+      var cf=hsl2rgb(h,sb*.75,.90),cf2=hsl2rgb(h,sb*.75,.96),branco=[255,255,255];
+      var cdest=ajustar(h,Math.max(s,.6),.32,branco,4.8,false),cbri=ajustar(h,Math.max(s,.7),.45,branco,3,false),ctx=ajustar(h,.4,.14,branco,12,false),cmu=ajustar(h,.18,.34,branco,6,false);
+      var cmo=[hx(hsl2rgb(h,sb,.70)),hx(hsl2rgb(h,sb,.58)),hx(hsl2rgb(h,sb,.45))];
+      v.c={fundo:hx(cf),navy2:rgba(cf,.55),navy3:rgba(cf2,.6),panel:'rgba(255,255,255,.62)',panel2:'rgba(255,255,255,.72)',solid:'#FFFFFF',borda:'rgba(16,36,58,.16)',borda2:'rgba(16,36,58,.10)',texto:hx(ctx),muted:hx(cmu),gold:hx(cdest),gold2:hx(cbri),
+        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(h,sb,.80))+' 0%,'+hx(cf)+' 60%,'+hx(cf2)+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(cbri,.32)+',transparent 70%)',
+        montes:montes(cmo,false,[.55,.7,.85]),cidade:cidade(cmo,false,[.55,.7,.85],hx(cbri)),grade:rgba(cbri,.20),veu:'linear-gradient(180deg,'+rgba(cf,.25)+','+rgba(cf,.55)+')',vidro:'rgba(255,255,255,.50)',vidro2:'rgba(255,255,255,.74)',brilho:hx(cbri)};
+      v.amostra=[v.e.fundo,v.e.solid,v.e.gold,v.c.fundo,v.c.gold2,v.c.gold];
+      return v;};
+    // põe as variáveis no html (vale para o claro e o escuro; o tema troca sem refazer a conta)
+    window.sagaVidroAplicarLivre=function(hex){var html=document.documentElement,v=window.sagaVidroLivre(hex);
+      ['e','c'].forEach(function(p){Object.keys(v[p]).forEach(function(k){html.style.setProperty('--vl-'+p+'-'+k,v[p][k]);});});
+      return v;};
+  })();
   // 12/11 (T151): Vidro tecnológico: fundo e "mais fosco" escolhidos pela pessoa, antes da 1ª imagem
   try{var vf=localStorage.getItem('saga-vidro-fundo')||'montanhas',vi=vf==='imagem'?localStorage.getItem('saga-vidro-imagem'):null;
     if(vf==='imagem'&&!vi)vf='montanhas';html.setAttribute('data-vidro-fundo',vf);
     if(localStorage.getItem('saga-vidro-fosco')==='1')html.classList.add('vidro-fosco');
     if(vi)html.style.setProperty('--vidro-img','url("'+vi+'")');}catch(e){}
+  // coringa: monta as cores da pessoa antes da 1ª imagem (a cor fica em saga-vidro-cor)
+  try{var vlc=localStorage.getItem('saga-vidro-cor')||'#5AA9FF';if(cor==='vidro-livre'){var vl=window.sagaVidroAplicarLivre(vlc);html.style.background=tema==='light'?vl.c.fundo:vl.e.fundo;}}catch(e){}
+  try{html.style.setProperty('--vd-fundo-html',html.style.background);}catch(e){}
 
   var temSessao=false;
   try{
