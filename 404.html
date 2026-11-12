@@ -11,7 +11,7 @@
   var p=location.pathname, i=p.indexOf('/saga-adv-web/'), base=i>=0?p.slice(0,i+14):'/';
   if(/\/autorizar_conector\.html\/?$/.test(p)&&p!==base+'autorizar_conector.html'){location.replace(base+'autorizar_conector.html'+location.search);return;}
   var b=document.createElement('base');b.href=base;document.head.appendChild(b);
-  var t=localStorage.getItem('saga-tema')||'dark',c=localStorage.getItem('saga-cor')||'azul';
+  var t=localStorage.getItem('saga-tema')||'dark',c=localStorage.getItem('saga-cor-salva')||localStorage.getItem('saga-cor')||'azul';
   if(c&&c!=='azul')document.documentElement.setAttribute('data-cor',c);
   if(localStorage.getItem('saga-movimento')==='reduzido')document.documentElement.classList.add('sem-movimento');
   document.documentElement.setAttribute('data-tema-404',t==='light'?'light':'dark');
@@ -40,7 +40,7 @@ p b{color:var(--text);font-weight:600}
 .btn-primary:hover{background:color-mix(in srgb,var(--gold) 24%,var(--panel))}
 @media(max-width:520px){.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes .btn-primary{width:100%}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121531">
+<link rel="stylesheet" href="saga_tema.css?v=202611121556">
 </head>
 <body>
 <main class="cartao" id="cartao">

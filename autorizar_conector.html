@@ -3,7 +3,7 @@
 <head>
 <script>
 // Tema e cor escolhidos no SAGA, antes de qualquer coisa aparecer
-(function(){try{var t=localStorage.getItem('saga-tema')||'dark',c=localStorage.getItem('saga-cor')||'azul';
+(function(){try{var t=localStorage.getItem('saga-tema')||'dark',c=localStorage.getItem('saga-cor-salva')||localStorage.getItem('saga-cor')||'azul';
 if(c&&c!=='azul')document.documentElement.setAttribute('data-cor',c);
 var F={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2']};document.documentElement.style.background=(F[c]||F.azul)[t==='light'?1:0];}catch(e){}})();
 </script>
@@ -46,7 +46,7 @@ h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-he
 @keyframes gira{to{transform:rotate(360deg)}}
 @media(max-width:520px){.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes{flex-direction:column-reverse}.botoes button{width:100%}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121531">
+<link rel="stylesheet" href="saga_tema.css?v=202611121556">
 </head>
 <body>
 <main class="cartao" id="cartao" aria-live="polite">

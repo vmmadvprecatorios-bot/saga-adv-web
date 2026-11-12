@@ -29,7 +29,7 @@
   try{tema=localStorage.getItem('saga-tema')||'dark';}catch(e){}
   // Cor do tema (Azul padrão ou Grafite), escolhida nas Configurações > Preferências (ou fixada pelo administrador)
   var cor='azul';
-  try{cor=localStorage.getItem('saga-cor')||'azul';}catch(e){}
+  try{cor=localStorage.getItem('saga-cor-salva')||localStorage.getItem('saga-cor')||'azul';}catch(e){}
   if(cor&&cor!=='azul')html.setAttribute('data-cor',cor);
   // fundo de cada cor antes da 1ª imagem ([escuro, claro]; a mesma lista do SAGA_FUNDOS no saga_ui.js)
   var FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0']};
@@ -640,11 +640,11 @@
       saindo=false;html.classList.remove('saga-carregando');mostrarMoldura();
       // a cópia guardada pelo navegador é de antes da última troca: reaplica cor, modo e letra salvos agora
       try{
-        var corS=localStorage.getItem('saga-cor')||'azul',temaS=localStorage.getItem('saga-tema')||'dark',letraS=localStorage.getItem('saga-letra')||'1';
+        var corS=localStorage.getItem('saga-cor-salva')||localStorage.getItem('saga-cor')||'azul',temaS=localStorage.getItem('saga-tema')||'dark',letraS=localStorage.getItem('saga-letra')||'1';
         if(corS==='azul')html.removeAttribute('data-cor');else html.setAttribute('data-cor',corS);
         if(document.body&&document.body.getAttribute('data-theme')!==temaS)document.body.setAttribute('data-theme',temaS);
         html.style.zoom=letraS==='1'?'':letraS;
-        if(window.sagaAplicarCor)window.sagaAplicarCor(corS);
+        if(window.sagaAplicarCor)window.sagaAplicarCor(corS,{deOutraAba:true});
       }catch(e){}
       if(document.getAnimations)document.getAnimations().forEach(function(a){try{a.cancel();}catch(e){}});
     }

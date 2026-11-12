@@ -100,7 +100,10 @@
     if(!global.SAGA_CORES.some(function(c){return c.id===cor;}))cor='azul';
     var h=document.documentElement;
     if(cor==='azul')h.removeAttribute('data-cor');else h.setAttribute('data-cor',cor);
-    if(!(opcoes&&opcoes.previa)){try{localStorage.setItem('saga-cor',cor);}catch(e){}}
+    // 12/11 (T151b): 'saga-cor-salva' é a cor que vale (as abas abertas com código antigo só mexem em 'saga-cor' e
+    // não conhecem as cores novas: punham o Azul e derrubavam a cor recém-salva nas outras abas).
+    // opcoes.deOutraAba = veio de outra aba: aplica sem regravar (evita o vai e vem entre abas)
+    if(!(opcoes&&(opcoes.previa||opcoes.deOutraAba))){try{localStorage.setItem('saga-cor',cor);localStorage.setItem('saga-cor-salva',cor);}catch(e){}}
     var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';
     h.style.background=global.sagaFundoCor(cor,claro);h.style.setProperty('--vd-fundo-html',h.style.background);
     if(cor.indexOf('vidro')===0&&global.sagaVidro)global.sagaVidro.aplicar();
@@ -111,8 +114,8 @@
   global.addEventListener('storage',function(e){
     try{
       if(e.key&&e.key.indexOf('saga-vidro-')===0&&global.sagaVidro)global.sagaVidro.aplicar();
-      if(e.key==='saga-cor'&&e.newValue&&e.newValue!==(document.documentElement.getAttribute('data-cor')||'azul'))global.sagaAplicarCor(e.newValue);
-      if(e.key==='saga-tema'&&e.newValue&&document.body&&document.body.getAttribute('data-theme')!==e.newValue){document.body.setAttribute('data-theme',e.newValue);if(global.sagaAplicarCor)global.sagaAplicarCor(document.documentElement.getAttribute('data-cor')||'azul');}
+      if(e.key==='saga-cor-salva'&&e.newValue&&e.newValue!==(document.documentElement.getAttribute('data-cor')||'azul')&&global.SAGA_CORES.some(function(c){return c.id===e.newValue;}))global.sagaAplicarCor(e.newValue,{deOutraAba:true});
+      if(e.key==='saga-tema'&&e.newValue&&document.body&&document.body.getAttribute('data-theme')!==e.newValue){document.body.setAttribute('data-theme',e.newValue);if(global.sagaAplicarCor)global.sagaAplicarCor(document.documentElement.getAttribute('data-cor')||'azul',{deOutraAba:true});}
     }catch(x){}
   });
   // Efeitos de movimento: desligar = tudo troca na hora (vale na hora, sem recarregar). Usado no menu da foto e nas Configurações.
