@@ -306,6 +306,16 @@
   '.si-hi .q{font-size:10px;color:var(--muted);margin-bottom:2px}.si-hi .t{white-space:pre-wrap;word-break:break-word}'+
   '.si-proc-box{border:1px solid var(--border-soft);border-radius:11px;padding:10px;font-size:11.5px}'+
   '.si-proc-box.ok{border-color:color-mix(in srgb,var(--success) 45%,transparent);background:color-mix(in srgb,var(--success) 7%,transparent)}'+
+  // 12/11 (Dr. Victor; T110 parte 3): o resumo do agente e o próximo passo junto da intimação
+  '.si-agente{margin-top:10px;border:1px solid var(--border-soft);border-radius:11px;padding:10px 12px;font-size:11.5px;line-height:1.5;background:color-mix(in srgb,var(--gold) 5%,transparent);min-height:44px}'+
+  '.si-agente h5{margin:0 0 6px;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}'+
+  '.si-agente h5 small{text-transform:none;letter-spacing:0;font-weight:500}'+
+  '.si-agente dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:4px 10px}.si-agente dt{color:var(--muted);font-weight:600}.si-agente dd{margin:0;color:var(--text);white-space:pre-wrap;word-break:break-word}'+
+  '.si-agente .si-ag-aviso{margin-top:8px;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--warning) 10%,transparent);color:var(--text)}'+
+  '.si-agente .si-ag-mais{margin-top:8px;background:none;border:0;padding:0;color:var(--gold);font:inherit;font-size:11px;cursor:pointer;text-decoration:underline}'+
+  '.si-agente .si-ag-resumo{margin-top:8px;white-space:pre-wrap;color:var(--text)}'+
+  '.si-agente.sem{background:transparent;color:var(--muted)}'+
+  '@media(max-width:760px){.si-agente dl{grid-template-columns:1fr}.si-agente dd{margin-bottom:4px}}'+
   '.si-proc-box.falta{border-color:color-mix(in srgb,var(--warning) 45%,transparent);background:color-mix(in srgb,var(--warning) 7%,transparent)}'+
   '.si-res-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow:auto;margin-top:6px}'+
   '.si-res-list button{text-align:left;padding:7px 9px;border:1px solid var(--border-soft);border-radius:8px;font:inherit;font-size:11.5px;background:none;color:var(--text);cursor:pointer}'+
@@ -1327,7 +1337,9 @@
       var quem=pts.length>1?pts.map(function(x){return '<a class="si-cli" style="display:block;color:inherit" href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(x.pessoa_id)+'&processo_id='+esc(i.processo_id)+'">'+esc(x.nome)+(x.principal?' <small>(titular)</small>':'')+'</a>';}).join(''):'<span class="si-cli">'+esc(p&&p.pessoa?p.pessoa.nome_completo:'Cliente')+'</span>';
       w.innerHTML='<div class="si-proc-box ok"><b>✓ Processo já cadastrado no SAGA'+(pts.length>1?' · '+pts.length+' clientes':'')+'</b><div style="margin-top:4px">'+quem+'</div>'+
         '<div class="si-acoes" style="margin-top:8px"><a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(i.processo_id)+'">Abrir ficha do cliente</a>'+
-        (podePedirAgente()?'<button class="si-btn sm" type="button" id="siPedirAgente">Pedir ao agente</button>':'')+'</div></div>';
+        (podePedirAgente()?'<button class="si-btn sm" type="button" id="siPedirAgente">Pedir ao agente</button>':'')+'</div></div>'+
+        '<div class="si-agente" id="siAgente" aria-live="polite">Procurando o resumo do agente...</div>';
+      carregarResumoAgente(i);
       var bAg=document.getElementById('siPedirAgente');
       if(bAg)bAg.addEventListener('click',async function(){
         var ok=window.sagaConfirmar?await sagaConfirmar('Pedir ao agente?','O agente de petições analisa esta intimação na próxima vez que o Dr. Victor abrir o agente no computador. O resultado volta para a ficha do processo.','Pedir ao agente',false):confirm('Pedir ao agente para analisar esta intimação?');
@@ -1344,6 +1356,32 @@
     w.innerHTML='<div class="si-proc-box falta"><b>Este processo não está no sistema.</b><div class="si-sub">Deseja incorporar? O SAGA cria o processo (e o cliente, se ainda não existir) com o número e o tribunal desta intimação.</div>'+
       '<div class="si-acoes" style="margin-top:8px">'+(S.pode.criarProc?'<button class="si-btn pri sm" type="button" data-p="incorporar">Incorporar ao SAGA</button>':'')+(S.pode.criarProc&&S.pode.editar&&!i.triagem?'<button class="si-btn pri sm" type="button" data-p="incorporar-tarefa">Incorporar e criar tarefa</button>':'')+(S.pode.gerenciar?'<button class="si-btn sm" type="button" data-p="ligar">Ligar a um processo existente</button>':'')+'</div><div id="siProcForm"></div></div>';
     w.onclick=function(e){var b=e.target.closest('[data-p]');if(!b)return;if(b.dataset.p==='incorporar'||b.dataset.p==='incorporar-tarefa')formIncorporar(i,b.dataset.p==='incorporar-tarefa');else if(b.dataset.p==='ligar')formLigar(i);};
+  }
+  // 12/11 (Dr. Victor; T110 parte 3): junto da intimação, a situação e o próximo passo que o agente deixou na ficha do
+  // processo (processos_obsidian). Assim a equipe sabe o que fazer sem ler os autos de novo. Sem a ficha: avisa que o
+  // agente ainda não leu o processo. Intimação mais nova que o resumo: avisa para pedir a atualização ao agente.
+  var pedidoResumo=0;
+  function dataDoTexto(t){var m=String(t||'').match(/(\d{2})\/(\d{2})\/(\d{4})/);return m?m[3]+'-'+m[2]+'-'+m[1]:'';}
+  async function carregarResumoAgente(i){
+    var meu=++pedidoResumo,box=document.getElementById('siAgente');if(!box)return;
+    var r=await S.sb.from('processos_obsidian').select('situacao,proximo_passo,prazo,ultima_movimentacao,resumo,estrategia,pendencias,ficha_atualizada_em,recebido_em').eq('processo_id',i.processo_id).maybeSingle();
+    box=document.getElementById('siAgente');if(meu!==pedidoResumo||!box)return;
+    if(r.error){box.classList.add('sem');box.textContent='Não foi possível ler o resumo do agente agora.';return;}
+    var o=r.data;
+    if(!o){box.classList.add('sem');box.innerHTML='<h5>Resumo do agente</h5>O agente ainda não leu este processo: não há o resumo estratégico nem o próximo passo. '+(podePedirAgente()?'Use <b>Pedir ao agente</b> acima ou baixe os autos e solte na pasta 01 Entrada.':'Avise o Dr. Victor para mandar os autos ao agente.');return;}
+    var quando=o.ficha_atualizada_em||(o.recebido_em?dataBR(o.recebido_em):'');
+    var dResumo=dataDoTexto(o.ficha_atualizada_em)||(o.recebido_em?String(o.recebido_em).slice(0,10):''),dInt=String(i.data_disponibilizacao||'').slice(0,10);
+    var linha=function(rot,v){return v?'<dt>'+esc(rot)+'</dt><dd>'+esc(v)+'</dd>':'';};
+    var extra=[o.resumo?'Resumo\n'+o.resumo:'',o.estrategia?'Estratégia\n'+o.estrategia:'',o.pendencias?'Pendências\n'+o.pendencias:''].filter(Boolean).join('\n\n');
+    box.classList.remove('sem');
+    box.innerHTML='<h5>Resumo do agente'+(quando?' <small>atualizado em '+esc(quando)+'</small>':'')+'</h5>'+
+      '<dl>'+linha('Situação',o.situacao)+linha('Próximo passo',o.proximo_passo)+linha('Prazo',o.prazo)+linha('Última movimentação',o.ultima_movimentacao)+'</dl>'+
+      (dInt&&dResumo&&dInt>dResumo?'<div class="si-ag-aviso">Esta intimação chegou depois do último resumo ('+esc(dataBR(dInt))+'). Confira se o próximo passo mudou'+(podePedirAgente()?' ou use <b>Pedir ao agente</b> para atualizar':'')+'.</div>':'')+
+      (extra?'<div class="si-ag-resumo" id="siAgExtra" hidden>'+esc(extra)+'</div><button type="button" class="si-ag-mais" id="siAgMais" aria-expanded="false">Ver o resumo completo</button>':'');
+    var mais=document.getElementById('siAgMais');
+    if(mais)mais.onclick=function(){var ex=document.getElementById('siAgExtra'),abrir=ex.hidden;
+      if(global.sagaRecolher)global.sagaRecolher(ex,!abrir);else ex.hidden=!abrir;
+      mais.textContent=abrir?'Esconder o resumo completo':'Ver o resumo completo';mais.setAttribute('aria-expanded',String(abrir));};
   }
   // Mais de um processo cadastrado com o mesmo número: a pessoa escolhe qual é (o sistema não adivinha)
   async function renderEscolherProcesso(i,w){

@@ -15,7 +15,7 @@
   if(c&&c!=='azul')document.documentElement.setAttribute('data-cor',c);
   if(localStorage.getItem('saga-movimento')==='reduzido')document.documentElement.classList.add('sem-movimento');
   document.documentElement.setAttribute('data-tema-404',t==='light'?'light':'dark');
-  document.documentElement.style.background=c==='grafite'?(t==='light'?'#F3F2EF':'#1A1A1A'):(t==='light'?'#f3f5f8':'#172234');
+  var F={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2']};document.documentElement.style.background=(F[c]||F.azul)[t==='light'?1:0];
 }catch(e){}})();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -40,7 +40,7 @@ p b{color:var(--text);font-weight:600}
 .btn-primary:hover{background:color-mix(in srgb,var(--gold) 24%,var(--panel))}
 @media(max-width:520px){.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes .btn-primary{width:100%}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121043">
+<link rel="stylesheet" href="saga_tema.css?v=202611121228">
 </head>
 <body>
 <main class="cartao" id="cartao">

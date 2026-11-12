@@ -47,7 +47,19 @@
   // Cores do tema disponíveis (para criar outra: incluir aqui e as regras html[data-cor="..."] no saga_tema.css)
   // Nome de cada tema (cor + modo), para conversar sobre ele: Azul Marinho/Azul Porcelana e Grafite Noturno/Grafite Linho
   global.SAGA_CORES=[{id:'azul',nome:'Azul',descricao:'Padrão do sistema',escuro:'Azul Marinho',claro:'Azul Porcelana'},
-    {id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe',escuro:'Grafite Noturno',claro:'Grafite Linho'}];
+    {id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe',escuro:'Grafite Noturno',claro:'Grafite Linho'},
+    // 12/11 (T48): temas de campanha; com o "Tema do mês" ligado, entram sozinhos no mês de cada um
+    {id:'novembro',nome:'Novembro Azul',descricao:'Campanha de saúde do homem',escuro:'Novembro Azul Noite',claro:'Novembro Azul Céu',mes:11},
+    {id:'rosa',nome:'Rosa',descricao:'Outubro Rosa: prevenção do câncer de mama',escuro:'Rosa Noite',claro:'Rosa Pétala',mes:10},
+    {id:'natal',nome:'Natal',descricao:'Verde, vermelho e dourado de fim de ano',escuro:'Natal Pinheiro',claro:'Natal Neve',mes:12}];
+  // cor de fundo de cada tema antes da 1ª imagem da tela ([escuro, claro]); o saga_guard.js tem a mesma lista
+  global.SAGA_FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2']};
+  global.sagaFundoCor=function(cor,claro){var f=global.SAGA_FUNDOS[cor]||global.SAGA_FUNDOS.azul;return claro?f[1]:f[0];};
+  // "Tema do mês" (12/11): o administrador liga e escolhe a cor de cada mês (padrão: out Rosa, nov Novembro Azul, dez Natal);
+  // vale para toda a equipe, menos para quem tem a cor fixada pelo administrador
+  global.sagaTemaDoMes=function(rg,data){rg=rg||global._sagaTemasRegra||{};var m=rg.mes||{};if(!m.ativo)return null;
+    var mes=String(((data||new Date()).getMonth())+1),cor=(m.meses||{})[mes];
+    return cor&&global.SAGA_CORES.some(function(c){return c.id===cor;})?cor:null;};
   global.sagaNomeTema=function(cor,modo){var c=global.SAGA_CORES.find(function(x){return x.id===cor;})||global.SAGA_CORES[0];return modo==='light'?c.claro:c.escuro;};
   // dica do botão do sol e da lua: diz qual tema vai entrar ao clicar
   global.sagaTituloTema=function(){var b=document.getElementById('themeToggle');if(!b)return;var cor=document.documentElement.getAttribute('data-cor')||'azul';
@@ -58,6 +70,7 @@
     u=u||_perfilAtual||{};var todas=global.SAGA_CORES.map(function(c){return c.id;});
     if(u.tema_cor_fixo)return [u.tema_cor_fixo];
     var rg=global._sagaTemasRegra||{todos:true};
+    var tm=global.sagaTemaDoMes(rg);if(tm)return [tm];
     if(u.temas_modo==='todos'||rg.todos!==false||u.eh_administrador)return todas;
     var lib=(rg.liberados||[]).concat(['azul']);return todas.filter(function(id){return lib.indexOf(id)>=0;});
   };
@@ -69,7 +82,7 @@
     if(cor==='azul')h.removeAttribute('data-cor');else h.setAttribute('data-cor',cor);
     if(!(opcoes&&opcoes.previa)){try{localStorage.setItem('saga-cor',cor);}catch(e){}}
     var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';
-    h.style.background=cor==='grafite'?(claro?'#F3F2EF':'#1A1A1A'):(claro?'#f3f5f8':'#172234');
+    h.style.background=global.sagaFundoCor(cor,claro);
     global.sagaTituloTema();
     return cor;
   };
@@ -772,7 +785,7 @@
         document.body.setAttribute('data-theme',novo);
         try{localStorage.setItem('saga-tema',novo);}catch(e){}
         // 09/11: o fundo da página (atrás de tudo) acompanha o claro/escuro na hora
-        try{var corA=document.documentElement.getAttribute('data-cor')||'azul';document.documentElement.style.background=corA==='grafite'?(novo==='light'?'#F3F2EF':'#1A1A1A'):(novo==='light'?'#f3f5f8':'#172234');document.documentElement.style.colorScheme=novo==='light'?'light':'dark';}catch(e){}
+        try{var corA=document.documentElement.getAttribute('data-cor')||'azul';document.documentElement.style.background=global.sagaFundoCor(corA,novo==='light');document.documentElement.style.colorScheme=novo==='light'?'light':'dark';}catch(e){}
       }
       trocarTemaComLuz(btn,novo,aplicar);
       setTimeout(function(){global.sagaTituloTema&&global.sagaTituloTema();},700);
@@ -967,7 +980,7 @@
       // cor do tema: a fixada pelo administrador vale mais que a escolha da pessoa; sem nada, Azul
       // e só vale cor liberada pelo administrador (regra geral ou "todos os temas" para a pessoa)
       try{var rg=await global._sb.rpc('temas_regra');if(!rg.error&&rg.data)global._sagaTemasRegra=rg.data;}catch(e){}
-      var corEsc=r.data.tema_cor_fixo||(r.data.preferencias||{}).cor||'azul';
+      var corEsc=r.data.tema_cor_fixo||global.sagaTemaDoMes()||(r.data.preferencias||{}).cor||'azul';
       if(!r.data.tema_cor_fixo&&global.sagaTemasPermitidos(r.data).indexOf(corEsc)<0)corEsc='azul';
       global.sagaAplicarCor(corEsc);
       _avisosDesligados=((r.data.preferencias_notificacao||{}).desligados)||[];
