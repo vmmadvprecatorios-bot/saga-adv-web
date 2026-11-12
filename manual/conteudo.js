@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.9",
+  versao: "2.0",
   data: "12/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.0", data: "12/11/2026", mudou: "Cores novas do tema: Novembro Azul, Rosa (Outubro Rosa) e Natal, cada uma com claro e escuro; Tema do mês: o administrador liga e o SAGA troca a cor da equipe sozinho no mês de cada campanha." },
     { versao: "1.9", data: "12/11/2026", mudou: "Jurídico: selo \"sem resumo\" no nome do cliente e o filtro \"Sem resumo do agente\"; Intimações: a janela mostra o resumo do agente (situação, próximo passo, prazo e última movimentação) e avisa quando a intimação é mais nova que o resumo." },
     { versao: "1.8", data: "12/11/2026", mudou: "Menu da esquerda em cinco grupos (Processos, Meu dia, Comunicação, Gestão e Administração), com os nomes sempre numa linha; menu da foto só com Meu perfil, Preferências, Segurança e Sair (o Manual e as Sugestões ficam no menu da esquerda); Minhas Tarefas com o atalho \"Dar impulso processual\"; Dashboard com os processos parados e os processos sem o resumo do agente que abrem a lista e a ficha." },
     { versao: "1.7", data: "11/11/2026", mudou: "Cliente repetido: ao cadastrar, o SAGA procura ficha com o mesmo CPF, o mesmo nome ou nome parecido e abre a janela \"Essa pessoa já tem ficha?\" (\"Usar esta ficha\"); mesmo CPF não cria outra; ficha separada só com o motivo escrito." },
@@ -138,13 +139,13 @@ window.SAGA_MANUAL = {
           passos: [
             "Menu da foto > **Preferências** (ou Configurações > Preferências).",
             "**Tema**: Claro ou Escuro (também pelo botão sol/lua no alto).",
-            "**Cor do tema**: Azul (padrão) ou Grafite. Clique numa cor para ver como fica; ela só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
+            "**Cor do tema**: Azul (padrão), Grafite, **Novembro Azul**, **Rosa** (Outubro Rosa) ou **Natal**, cada uma com claro e escuro. Clique numa cor para ver como fica; ela só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
             "**Efeitos de movimento**: Ligados (janelas abrem e fecham suaves) ou Desligados (troca na hora).",
             "**Tamanho da letra**: Normal, Grande ou Maior."
           ],
           img: "configuracoes",
-          marcas: ["Aba Preferências.", "Tema claro ou escuro.", "Cor do tema: Azul ou Grafite.", "Efeitos de movimento."],
-          dicas: ["O administrador pode fixar a cor de um colaborador; nesse caso a escolha fica travada."]
+          marcas: ["Aba Preferências.", "Tema claro ou escuro.", "Cor do tema: Azul, Grafite e as cores de campanha.", "Efeitos de movimento."],
+          dicas: ["O administrador pode fixar a cor de um colaborador; nesse caso a escolha fica travada.", "**Tema do mês** (só o administrador liga, em Preferências > Cor do tema da equipe): o SAGA troca sozinho a cor de toda a equipe no mês de cada campanha (outubro Rosa, novembro Novembro Azul, dezembro Natal; dá para mudar cada mês). Nesse mês a sua escolha fica guardada e volta quando o mês acaba; quem tem a cor fixada continua com ela."]
         },
         { id: "privacidade", titulo: "Gravar a tela ou mostrar o sistema sem expor clientes",
           quando: "Quando o colaborador vai gravar um vídeo, compartilhar a tela numa reunião ou mostrar o SAGA a alguém de fora.",
