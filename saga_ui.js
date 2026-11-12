@@ -256,8 +256,8 @@
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat{opacity:0 !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item{color:transparent !important;font-size:0 !important;}'+
         '#sidebarSaga.collapsed.sg-aberto{width:232px !important;min-width:232px !important;margin-right:-168px !important;box-shadow:14px 0 34px rgba(0,0,0,.28) !important;}}'+
-      // celular: fica como era (grupos sempre abertos, sem setinha)
-      '@media(max-width:760px){#sidebarSaga .nav-grupo{display:block !important;}#sidebarSaga .nav-section[data-grupo]{cursor:default !important;pointer-events:none;}#sidebarSaga .nav-section[data-grupo]::after{display:none !important;}}'+
+      // celular (12/11, Dr. Victor): grupos abrem e fecham como no computador (toque no título); faixa de toque maior
+      '@media(max-width:760px){#sidebarSaga .nav-section[data-grupo]{min-height:40px !important;-webkit-tap-highlight-color:transparent;}#sidebarSaga .nav-section[data-grupo]::after{margin-right:6px;width:7px;height:7px;}}'+
       // grupos: título clicável com setinha
       '#sidebarSaga .nav-section[data-grupo]{cursor:pointer !important;display:flex !important;align-items:center !important;justify-content:space-between !important;user-select:none;}'+
       // 09/11: título de grupo sem nenhuma tela permitida some (o display:flex acima vencia o sem-permissao e "Gestão" aparecia vazio)
@@ -266,8 +266,9 @@
       '#sidebarSaga .nav-section[data-grupo].fechado::after{transform:rotate(-45deg);}'+
       '#sidebarSaga .nav-section[data-grupo]:hover{opacity:1 !important;filter:brightness(1.25);}'+
       '#sidebarSaga .nav-section[data-grupo]:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}'+
-      '#sidebarSaga.collapsed .nav-section[data-grupo]::after{display:none !important;}'+
-      '#sidebarSaga.collapsed .nav-section[data-grupo]{cursor:default !important;pointer-events:none !important;}'+
+      // menu recolhido no computador: grupos sempre abertos, sem setinha (no celular o recolhido do computador não vale)
+      '@media(min-width:761px){#sidebarSaga.collapsed .nav-section[data-grupo]::after{display:none !important;}'+
+      '#sidebarSaga.collapsed .nav-section[data-grupo]{cursor:default !important;pointer-events:none !important;}}'+
       '#sidebarSaga .nav-section,#sidebarSaga .nav-secao{font-size:10px !important;letter-spacing:1.6px !important;color:#9aa6b8 !important;text-transform:uppercase !important;font-weight:600 !important;padding:17px 22px 7px !important;opacity:1 !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-section,[data-theme="light"] #sidebarSaga .nav-secao{color:#5b6880 !important;}'+
       '#sidebarSaga .nav-item{white-space:nowrap !important;}'+ // nome sempre numa linha só (12/11, Dr. Victor)
@@ -563,7 +564,7 @@
       if(fech[id]){g.hidden=true;marcar(true);}
       if(sec.dataset.ligado)return;sec.dataset.ligado='1';
       var alternar=function(){
-        if(sb.classList.contains('collapsed'))return; // menu recolhido: grupos sempre abertos, sem opção de fechar
+        if(sb.classList.contains('collapsed')&&window.innerWidth>760)return; // menu recolhido no computador: grupos sempre abertos
         var fechar=!g.hidden;marcar(fechar);
         if(global.sagaRecolher)global.sagaRecolher(g,fechar);else g.hidden=fechar;
         var f=gruposFechados();if(fechar)f[id]=true;else delete f[id];try{localStorage.setItem('saga-menu-grupos',JSON.stringify(f));}catch(e){}
