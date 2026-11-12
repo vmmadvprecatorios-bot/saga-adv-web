@@ -388,8 +388,9 @@
     var p=await Promise.all([
       S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'monitoramento_oab',p_acao:'gerenciar'}),
       S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'criar'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'editar'})]);
-    S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.editar=p[2].data===true||S.ehAdmin;
+      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'editar'}),
+      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'gerenciar_todas'})]);
+    S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.todas=p[3].data===true||S.ehAdmin;S.pode.editar=p[2].data===true||S.pode.todas;
     if(!S.pode.editar)document.body.classList.add('si-so-leitura');
     if(S.ehAdmin){var c=await S.sb.from('configuracoes_sistema').select('extra').limit(1).maybeSingle();if(c.data&&c.data.extra&&Array.isArray(c.data.extra.monitoramento_horas))S.horas=c.data.extra.monitoramento_horas.map(Number);}
     catalogoEtiquetas=SagaEtiquetas.criar({sb:S.sb,admin:S.ehAdmin,
@@ -1354,7 +1355,7 @@
     }
     if((i.processo_candidatos||[]).length>1){renderEscolherProcesso(i,w);return;}
     w.innerHTML='<div class="si-proc-box falta"><b>Este processo não está no sistema.</b><div class="si-sub">Deseja incorporar? O SAGA cria o processo (e o cliente, se ainda não existir) com o número e o tribunal desta intimação.</div>'+
-      '<div class="si-acoes" style="margin-top:8px">'+(S.pode.criarProc?'<button class="si-btn pri sm" type="button" data-p="incorporar">Incorporar ao SAGA</button>':'')+(S.pode.criarProc&&S.pode.editar&&!i.triagem?'<button class="si-btn pri sm" type="button" data-p="incorporar-tarefa">Incorporar e criar tarefa</button>':'')+(S.pode.gerenciar?'<button class="si-btn sm" type="button" data-p="ligar">Ligar a um processo existente</button>':'')+'</div><div id="siProcForm"></div></div>';
+      '<div class="si-acoes" style="margin-top:8px">'+(S.pode.criarProc?'<button class="si-btn pri sm" type="button" data-p="incorporar">Incorporar ao SAGA</button>':'')+(S.pode.criarProc&&S.pode.editar&&!i.triagem?'<button class="si-btn pri sm" type="button" data-p="incorporar-tarefa">Incorporar e criar tarefa</button>':'')+((S.pode.gerenciar||S.pode.todas)?'<button class="si-btn sm" type="button" data-p="ligar">Ligar a um processo existente</button>':'')+'</div><div id="siProcForm"></div></div>';
     w.onclick=function(e){var b=e.target.closest('[data-p]');if(!b)return;if(b.dataset.p==='incorporar'||b.dataset.p==='incorporar-tarefa')formIncorporar(i,b.dataset.p==='incorporar-tarefa');else if(b.dataset.p==='ligar')formLigar(i);};
   }
   // 12/11 (Dr. Victor; T110 parte 3): junto da intimação, a situação e o próximo passo que o agente deixou na ficha do

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611121249"></script>
+<script src="saga_guard.js?v=202611121343"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -1772,7 +1772,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121249">
+<link rel="stylesheet" href="saga_tema.css?v=202611121343">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2323,12 +2323,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611121249"></script>
-<script src="saga_etiquetas.js?v=202611121249"></script>
-<script src="saga_mencoes.js?v=202611121249"></script>
-<script src="saga_prazos.js?v=202611121249"></script>
-<script src="saga_texto.js?v=202611121249"></script>
-<script src="saga_tribunais.js?v=202611121249"></script>
+<script src="saga_ui.js?v=202611121343"></script>
+<script src="saga_etiquetas.js?v=202611121343"></script>
+<script src="saga_mencoes.js?v=202611121343"></script>
+<script src="saga_prazos.js?v=202611121343"></script>
+<script src="saga_texto.js?v=202611121343"></script>
+<script src="saga_tribunais.js?v=202611121343"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2352,6 +2352,7 @@ var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Preenchidos em carregarDadosTarefas() a partir do banco
 var isAdmin = false;
+var gerenciaTodasTarefas = false; // chave tarefas.gerenciar_todas (bloco 174): mexe em todas, menos apagar
 var catalogoEtiquetas = null, menuEtiquetaTarefa = null;
 function seloEtiquetaTarefa(t){ return SagaEtiquetas.selo(catalogoEtiquetas && catalogoEtiquetas.porId(t.etiquetaId)); }
 var usuarioLogadoId = null;
@@ -2490,7 +2491,7 @@ function htmlDeParaTarefa(t){
 
 // Dono da tarefa: quem criou, o responsavel ou o administrador. Marcados so veem e comentam.
 function souDonoDaTarefa(t){
-  return !!t && (isAdmin || t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId || (t.responsaveisExtras || []).indexOf(usuarioLogadoId) !== -1);
+  return !!t && (isAdmin || gerenciaTodasTarefas || t.criadoPorId === usuarioLogadoId || t.responsavelId === usuarioLogadoId || (t.responsaveisExtras || []).indexOf(usuarioLogadoId) !== -1);
 }
 
 function diaLocal(ts){
@@ -2513,6 +2514,7 @@ async function carregarDadosTarefas(){
   if(eu.error || !eu.data){ mostrarToast('Não foi possível identificar seu usuário.', 'erro'); return false; }
   usuarioLogadoId = eu.data.id;
   isAdmin = !!eu.data.eh_administrador;
+  if(!isAdmin){ try{ var gt = await _sb.rpc('gerencio_todas_tarefas'); gerenciaTodasTarefas = gt.data === true; }catch(e){ gerenciaTodasTarefas = false; } }
   if(!catalogoEtiquetas) catalogoEtiquetas = SagaEtiquetas.criar({sb:_sb, admin:isAdmin,
     erro:function(msg){ mostrarToast(msg, 'erro'); },
     alterou:function(){
@@ -5288,6 +5290,7 @@ async function iniciarMinhasTarefas(){
   var eu = getColaborador(usuarioLogadoId);
   document.getElementById('textoResumoVisao').textContent = isAdmin
     ? 'visualizando como ' + (eu ? eu.nome : '') + ' (Administrador): todas as tarefas do escritório'
+    : gerenciaTodasTarefas ? 'visualizando como ' + (eu ? eu.nome : '') + ' (acesso total): todas as tarefas do escritório'
     : 'visualizando como ' + (eu ? eu.nome : '') + ': suas tarefas e as compartilhadas com você';
   atualizarListasDeFiltro();
   popularSelectColunas();
