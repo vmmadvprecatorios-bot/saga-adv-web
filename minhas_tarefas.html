@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611121404"></script>
+<script src="saga_guard.js?v=202611121416"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -850,6 +850,14 @@
   .item-subtarefa-modal input[type="text"]{ flex:1; background:color-mix(in srgb,var(--text) 4%,transparent); border:1px solid color-mix(in srgb,var(--text) 8%,transparent); border-radius:8px; padding:7px 10px; color:var(--text); font-size:11.5px; outline:none; }
   .item-subtarefa-modal input[type="text"]:focus{ border-color:var(--gold); }
   .item-subtarefa-modal.subtarefa-concluida input[type="text"]{ text-decoration:line-through; color:var(--muted); }
+  /* 12/11 (Dr. Victor; T161): atalhos entre tarefa, ficha do cliente e intimações (Ctrl+clique abre em outra aba) */
+  .atalhos-lig{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .atalho-lig{ display:inline-flex; align-items:center; gap:4px; font-size:10.5px; line-height:1.3; padding:2px 9px; border:1px solid var(--border); border-radius:999px; color:var(--text); text-decoration:none; background:transparent; font-weight:400; transition:border-color .2s cubic-bezier(.22,.78,.25,1), background .2s cubic-bezier(.22,.78,.25,1); white-space:nowrap; }
+  .atalho-lig:hover{ border-color:var(--gold); background:color-mix(in srgb,var(--gold) 10%,transparent); }
+  .atalho-lig[aria-disabled="true"]{ opacity:.45; cursor:not-allowed; }
+  .atalho-lig[aria-disabled="true"]:hover{ border-color:var(--border); background:transparent; }
+  .faixa-filtro-processo{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0 0 12px; padding:9px 14px; border:1px solid color-mix(in srgb,var(--gold) 40%,var(--border)); border-radius:12px; background:color-mix(in srgb,var(--gold) 8%,transparent); font-size:12.5px; }
+  .faixa-filtro-processo button{ font:inherit; font-size:11.5px; padding:4px 11px; border-radius:999px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; }
   .btn-remover-subtarefa{ width:22px;height:22px; border-radius:6px; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--muted); background:none; border:none; flex:0 0 auto; }
   .btn-remover-subtarefa:hover{ background:color-mix(in srgb,var(--danger) 12%,transparent); color:var(--danger); }
   .btn-add-subtarefa{ display:flex; align-items:center; gap:6px; font-size:11px; color:var(--gold); cursor:pointer; padding:6px 0; }
@@ -1774,7 +1782,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611121404">
+<link rel="stylesheet" href="saga_tema.css?v=202611121416">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2116,6 +2124,7 @@ html.saga-embed #modalTarefa{background:transparent}
               <div class="campo-readonly-processo"><span>Fase Processual</span><strong id="readonlyFase">-</strong></div>
               <div class="campo-readonly-processo" id="readonlyTribAtalhoBox" style="display:none;"><span>Site do tribunal</span><div id="readonlyTribAtalho"></div></div>
             </div>
+            <div id="atalhosLigacaoModal"></div>
           </div>
         </div>
 
@@ -2146,7 +2155,7 @@ html.saga-embed #modalTarefa{background:transparent}
           <div class="novo-comentario-wrap">
             <textarea id="textareaNovoComentario" placeholder="Escreva um comentário... use @ para marcar um colega"></textarea>
             <select id="selectMoverAoComentar" title="Ao comentar, mover a tarefa para esta coluna" style="height:38px;max-width:150px;padding:0 8px;border:1px solid var(--border);border-radius:9px;background:var(--panel);color:var(--text);font:inherit;font-size:11px;align-self:flex-end"></select>
-            <button class="btn-enviar-comentario" id="btnEnviarComentario">
+            <button class="btn-enviar-comentario" id="btnEnviarComentario" title="Enviar o comentário (o &quot;Salvar Tarefa&quot; também grava o que estiver escrito)" aria-label="Enviar o comentário">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12l16-8-6 16-3-7-7-1z" fill="#0a0e1a"/></svg>
             </button>
           </div>
@@ -2325,12 +2334,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611121404"></script>
-<script src="saga_etiquetas.js?v=202611121404"></script>
-<script src="saga_mencoes.js?v=202611121404"></script>
-<script src="saga_prazos.js?v=202611121404"></script>
-<script src="saga_texto.js?v=202611121404"></script>
-<script src="saga_tribunais.js?v=202611121404"></script>
+<script src="saga_ui.js?v=202611121416"></script>
+<script src="saga_etiquetas.js?v=202611121416"></script>
+<script src="saga_mencoes.js?v=202611121416"></script>
+<script src="saga_prazos.js?v=202611121416"></script>
+<script src="saga_texto.js?v=202611121416"></script>
+<script src="saga_tribunais.js?v=202611121416"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2354,7 +2363,9 @@ var _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Preenchidos em carregarDadosTarefas() a partir do banco
 var isAdmin = false;
-var gerenciaTodasTarefas = false; // chave tarefas.gerenciar_todas (bloco 174): mexe em todas, menos apagar
+var gerenciaTodasTarefas = false;
+var podeVerFichaTarefas = false, podeVerIntimacoesTarefas = false; // T161: atalhos para a ficha e as intimações
+var filtroProcessoUrl = null; // T161: minhas_tarefas.html?processo=<id> mostra só as tarefas desse processo // chave tarefas.gerenciar_todas (bloco 174): mexe em todas, menos apagar
 var catalogoEtiquetas = null, menuEtiquetaTarefa = null;
 function seloEtiquetaTarefa(t){ return SagaEtiquetas.selo(catalogoEtiquetas && catalogoEtiquetas.porId(t.etiquetaId)); }
 var usuarioLogadoId = null;
@@ -2391,6 +2402,23 @@ function tribunalDoNumero(numero){
   if(j === '3') return 'STJ';
   if(j === '1') return 'STF';
   return 'Outros';
+}
+
+// 12/11 (Dr. Victor; T161): "um link em todas as abas para qualquer aba": da tarefa para a ficha do cliente,
+// para as intimações e para as outras tarefas do mesmo processo. São links (<a>): clique abre na tela inteira,
+// Ctrl+clique ou botão do meio abrem em outra aba. Sem processo ligado: aparecem apagados com a dica.
+function htmlAtalhosLigacao(proc, opts){
+  opts = opts || {};
+  var semProc = '<span class="atalho-lig" aria-disabled="true" title="Sem processo ligado">';
+  if(!proc || !proc.id){
+    if(!opts.desativados) return '';
+    return '<div class="atalhos-lig">' + (podeVerFichaTarefas ? semProc + 'Ficha do cliente</span>' : '') + (podeVerIntimacoesTarefas ? semProc + 'Intimações</span>' : '') + '</div>';
+  }
+  var id = encodeURIComponent(proc.id), h = '';
+  if(podeVerFichaTarefas) h += '<a class="atalho-lig" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id=' + id + '" title="Abrir a ficha do cliente neste processo (Ctrl+clique abre em outra aba)">Ficha ↗</a>';
+  if(podeVerIntimacoesTarefas) h += '<a class="atalho-lig" href="monitoramento_multi_oab.html?processo_id=' + id + '" title="Ver as intimações deste processo (Ctrl+clique abre em outra aba)">Intimações ↗</a>';
+  if(opts.tarefas) h += '<a class="atalho-lig" href="minhas_tarefas.html?processo=' + id + '" title="Ver todas as tarefas deste processo (Ctrl+clique abre em outra aba)">Tarefas do processo ↗</a>';
+  return h ? '<div class="atalhos-lig">' + h + '</div>' : '';
 }
 
 function montarProcessoVinculado(p){
@@ -2517,6 +2545,11 @@ async function carregarDadosTarefas(){
   usuarioLogadoId = eu.data.id;
   isAdmin = !!eu.data.eh_administrador;
   if(!isAdmin){ try{ var gt = await _sb.rpc('gerencio_todas_tarefas'); gerenciaTodasTarefas = gt.data === true; }catch(e){ gerenciaTodasTarefas = false; } }
+  if(isAdmin){ podeVerFichaTarefas = podeVerIntimacoesTarefas = true; }
+  else { try{ var pv = await Promise.all([
+      _sb.rpc('verificar_permissao',{p_usuario_id:usuarioLogadoId,p_modulo:'processos',p_acao:'visualizar'}),
+      _sb.rpc('verificar_permissao',{p_usuario_id:usuarioLogadoId,p_modulo:'movimentacoes_cnj',p_acao:'visualizar'})]);
+    podeVerFichaTarefas = pv[0].data === true; podeVerIntimacoesTarefas = pv[1].data === true; }catch(e){} }
   if(!catalogoEtiquetas) catalogoEtiquetas = SagaEtiquetas.criar({sb:_sb, admin:isAdmin,
     erro:function(msg){ mostrarToast(msg, 'erro'); },
     alterou:function(){
@@ -2925,6 +2958,7 @@ document.getElementById('btnTogglePainelFiltros').addEventListener('click', func
 });
 
 document.getElementById('btnLimparFiltrosTarefas').addEventListener('click', function(){
+  filtroProcessoUrl = null;
   filtrosAtivos = { faixa:'', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
   document.querySelectorAll('.painel-filtros-expandido .opcao-multi-check').forEach(function(o){ o.classList.remove('marcada'); });
   document.getElementById('textoFiltroEtiqueta').textContent = 'Todas as etiquetas';
@@ -2950,6 +2984,10 @@ function renderizarChipsFiltros(){
   container.innerHTML = '';
   var chips = [];
   var rotFaixa = { total:'Total de tarefas', novas:'Novas', andamento:'Em andamento', atrasadas:'Atrasadas', concluidas:'Concluídas hoje' };
+  if(filtroProcessoUrl){
+    var tpu = (window.SAGA_TASKS || []).find(function(x){ return x.processoVinculado && x.processoVinculado.id === filtroProcessoUrl; });
+    chips.push({ label:'Processo: ' + (tpu ? tpu.processoVinculado.numero + ' · ' + tpu.processoVinculado.cliente : 'escolhido'), limpar:function(){ filtroProcessoUrl = null; } });
+  }
   if(filtrosAtivos.faixa) chips.push({ label:'Painel: ' + rotFaixa[filtrosAtivos.faixa], limpar:function(){ filtrosAtivos.faixa=''; } });
   if(filtrosAtivos.tipo !== 'Todas') chips.push({ label:'Tipo: ' + filtrosAtivos.tipo, limpar:function(){ resetarDropdownSimples('dropFiltroTipo','Tipo'); filtrosAtivos.tipo='Todas'; } });
   if(filtrosAtivos.status !== 'Todos') chips.push({ label:'Status: ' + filtrosAtivos.status, limpar:function(){ resetarDropdownSimples('dropFiltroStatus','Status'); filtrosAtivos.status='Todos'; } });
@@ -3002,6 +3040,8 @@ function desmarcarOpcaoMulti(idLista, valor){
 ===================================================================== */
 
 function tarefaPassaFiltros(t, ignorar){
+  // T161: veio de um atalho "Tarefas do processo" (ficha, intimação ou outra tarefa)
+  if(filtroProcessoUrl && !(t.processoVinculado && t.processoVinculado.id === filtroProcessoUrl)) return false;
   // Faixa de números do topo (Total, Em andamento, Atrasadas, Concluídas hoje)
   var fx = filtrosAtivos.faixa;
   if(fx === 'novas' && t.status !== 'pendente') return false;
@@ -3733,13 +3773,14 @@ function criarCardTarefaEl(tarefa){
     (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
     numeroProcessoHtml +
     metaProcessoHtml +
+    htmlAtalhosLigacao(tarefa.processoVinculado) +
     barraSubHtml +
     '<div class="rodape-card-tarefa">' +
       avataresResponsaveisHtml(tarefa) +
       '<div class="prazo-rodape-card">' + badgePrazoHtml + '</div>' +
     '</div>';
 
-  card.addEventListener('click', function(){ abrirModalTarefa(tarefa.id); });
+  card.addEventListener('click', function(e){ if(e.target.closest('.atalho-lig')) return; abrirModalTarefa(tarefa.id); });
   var btnSt = card.querySelector('.btn-status-tarefa');
   if(btnSt && podeMexer) btnSt.addEventListener('click', function(e){ e.stopPropagation(); abrirMenuStatusTarefa(btnSt, tarefa); });
 
@@ -4205,7 +4246,7 @@ function criarLinhaTabela(tarefa){
     '</div></td>' +
     '<td class="titulo-lista-tarefa">' + escaparHtml(tarefa.titulo) + ' <span class="btn-status-tarefa st-' + tarefa.status + '" style="margin-left:6px;cursor:default;--c-st:' + escaparHtml(corStatusTarefa(tarefa.status)) + '"><i></i>' + rotuloStatusTarefa(tarefa) + '</span>' + (tarefa.status !== 'concluida' && tarefaEstaAtrasada(tarefa) ? ' <span class="selo-atrasada-card">Atrasada</span>' : '') + '</td>' +
     '<td>' + (tarefa.tipo === 'pessoal' ? 'Pessoal' : 'Processo') + '</td>' +
-    '<td>' + (tarefa.processoVinculado ? '<span class="lista-proc-num">' + escaparHtml(tarefa.processoVinculado.numero) + (window.SagaTribunais ? SagaTribunais.icone(tarefa.processoVinculado.numero) : '') + '</span>' : '-') + '</td>' +
+    '<td>' + (tarefa.processoVinculado ? '<span class="lista-proc-num">' + escaparHtml(tarefa.processoVinculado.numero) + (window.SagaTribunais ? SagaTribunais.icone(tarefa.processoVinculado.numero) : '') + '</span>' + htmlAtalhosLigacao(tarefa.processoVinculado) : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.tribunal : '-') + '</td>' +
     '<td>' + (tarefa.processoVinculado ? tarefa.processoVinculado.fase : '-') + '</td>' +
     '<td>' + escaparHtml(idsResponsaveisTarefa(tarefa).map(nomeUsuario).join(', ') || '-') + '</td>' +
@@ -4220,7 +4261,7 @@ function criarLinhaTabela(tarefa){
   tr.querySelector('.checkbox-conclusao').addEventListener('click', function(e){ e.stopPropagation(); alternarConclusaoTarefa(tarefa.id); });
   tr.querySelector('.acao-editar').addEventListener('click', function(e){ e.stopPropagation(); abrirModalTarefa(tarefa.id); });
   tr.querySelector('.acao-excluir').addEventListener('click', function(e){ e.stopPropagation(); abrirConfirmacaoExclusaoTarefa(tarefa.id); });
-  tr.addEventListener('click', function(){ abrirModalTarefa(tarefa.id); });
+  tr.addEventListener('click', function(e){ if(e.target.closest('.atalho-lig')) return; abrirModalTarefa(tarefa.id); });
 
   return tr;
 }
@@ -4515,6 +4556,7 @@ function resetarFormularioTarefa(){
   document.getElementById('inputHoraPrazoTarefa').disabled = true;
   document.getElementById('inputBuscaProcesso').value = '';
   document.getElementById('processoSelecionadoReadonly').style.display = 'none';
+  document.getElementById('atalhosLigacaoModal').innerHTML = '';
   document.getElementById('subsecaoProcessoVinculado').classList.remove('visivel');
   document.querySelectorAll('.opcao-tipo-tarefa').forEach(function(o){ o.classList.toggle('ativa', o.getAttribute('data-tipo') === 'pessoal'); });
   document.querySelectorAll('.pill-prioridade-opcao[data-prioridade]').forEach(function(p){ p.classList.toggle('selecionada', p.getAttribute('data-prioridade') === 'media'); });
@@ -4760,6 +4802,7 @@ document.querySelectorAll('.opcao-tipo-tarefa').forEach(function(opcao){
       estadoModalTarefa.processoVinculado = null;
       document.getElementById('processoSelecionadoReadonly').style.display = 'none';
       document.getElementById('inputBuscaProcesso').value = '';
+      document.getElementById('atalhosLigacaoModal').innerHTML = '';
     }
   });
 });
@@ -4781,6 +4824,7 @@ function selecionarProcessoNoModal(processo){
   var boxTrib = document.getElementById('readonlyTribAtalhoBox');
   if(boxTrib){ document.getElementById('readonlyTribAtalho').innerHTML = atalhoTrib; boxTrib.style.display = atalhoTrib ? '' : 'none'; }
   document.getElementById('processoSelecionadoReadonly').style.display = 'flex';
+  document.getElementById('atalhosLigacaoModal').innerHTML = htmlAtalhosLigacao(processo, {tarefas:true});
   document.getElementById('resultadoAutocompleteProcesso').classList.remove('visivel');
 }
 
@@ -5007,10 +5051,18 @@ function renderizarComentariosModal(){
   });
 }
 var salvandoComentarioTarefa=false;
-document.getElementById('btnEnviarComentario').addEventListener('click', async function(){
+// 12/11 (Dr. Victor; T161: "isso aí não funciona"): o comentário só era gravado pelo botãozinho de enviar; quem
+// escrevia e clicava em "Salvar Tarefa" perdia o texto (e o "e mover para..."). Agora o Salvar grava também.
+// O comentário fica na tarefa e o banco copia para os comentários do processo na ficha do cliente (bloco 175).
+function comentarioPendenteTarefa(){
+  var v = (document.getElementById('textareaNovoComentario').value || '').replace(/<[^>]*>/g,'').replace(/&nbsp;/g,' ').trim();
+  return !!v;
+}
+document.getElementById('btnEnviarComentario').addEventListener('click', function(){ enviarComentarioTarefa(); });
+async function enviarComentarioTarefa(){
   var textarea=document.getElementById('textareaNovoComentario'),texto=textarea.value.trim(),id=tarefaEmEdicaoId;
-  if(!texto||!id||salvandoComentarioTarefa)return;
-  var ids=SagaMencoes.marcados(textarea),destino=document.getElementById('selectMoverAoComentar').value,button=this;
+  if(!comentarioPendenteTarefa()||!id||salvandoComentarioTarefa)return false;
+  var ids=SagaMencoes.marcados(textarea),destino=document.getElementById('selectMoverAoComentar').value,button=document.getElementById('btnEnviarComentario');
   salvandoComentarioTarefa=true;button.disabled=true;textarea.readOnly=true;
   try{
     var r=await _sb.from('tarefas_comentarios').insert({tarefa_id:id,autor_id:usuarioLogadoId,texto:texto}).select('id,criado_em').single();
@@ -5019,17 +5071,19 @@ document.getElementById('btnEnviarComentario').addEventListener('click', async f
     var comentario={id:r.data.id,autorId:usuarioLogadoId,texto:texto,timestamp:r.data.criado_em};
     var tarefa=window.SAGA_TASKS.find(function(t){return t.id===id;});
     if(tarefa)tarefa.comentarios=(tarefa.comentarios||[]).concat([comentario]);
-    if(tarefaEmEdicaoId!==id)return;
+    if(tarefaEmEdicaoId!==id)return true;
     estadoModalTarefa.comentarios.push(comentario);
     textarea.value='';SagaMencoes.limpar(textarea);renderizarComentariosModal();
     if(destino&&tarefa&&destino!==tarefa.colunaId){
-      if(!souDonoDaTarefa(tarefa)){mostrarToast('Comentário salvo. Só quem é dono da tarefa pode mudar a coluna.','aviso');return;}
+      if(!souDonoDaTarefa(tarefa)){mostrarToast('Comentário salvo. Só quem é dono da tarefa pode mudar a coluna.','aviso');return true;}
+      if(tarefa.status==='concluida'){mostrarToast('Comentário salvo. Tarefa concluída: reabra para mudar de coluna.','aviso');return true;}
       moverTarefaKanban(tarefa.id,destino,null,false);selecionarValorSelectCustomTarefa('selectColunaTarefa',destino);
       var col=dadosColunas.find(function(c){return c.id===destino;});mostrarToast('Comentado e movido para <strong>'+escaparHtml(col?col.nome:'')+'</strong>.','sucesso');preencherMoverAoComentar(tarefa);
-    }
-  }catch(e){mostrarToast('Erro ao comentar: '+escaparHtml(e.message||'Tente novamente.'),'erro');}
+    } else mostrarToast(tarefa&&tarefa.processoVinculado?'Comentário salvo na tarefa e na ficha do cliente.':'Comentário salvo.','sucesso');
+    return true;
+  }catch(e){mostrarToast('Erro ao comentar: '+escaparHtml(e.message||'Tente novamente.'),'erro');return false;}
   finally{salvandoComentarioTarefa=false;button.disabled=false;textarea.readOnly=false;}
-});
+}
 document.getElementById('selectColunaTarefa').addEventListener('change', function(){
   var destino = this.value, id = tarefaEmEdicaoId;
   if(!id) return;
@@ -5065,6 +5119,8 @@ document.getElementById('btnSalvarTarefa').addEventListener('click', async funct
     document.getElementById('inputBuscaProcesso').focus();
     return;
   }
+  // T161: comentário escrito e não enviado vai junto com o Salvar (antes se perdia)
+  if(tarefaEmEdicaoId && comentarioPendenteTarefa()){ var okCom = await enviarComentarioTarefa(); if(okCom === false) return; }
 
   var colunaId = document.getElementById('selectColunaTarefa').value;
   if(!colunaId){
@@ -5339,6 +5395,13 @@ async function iniciarMinhasTarefas(){
   // Veio do gráfico "Tarefas por prazo" do Dashboard: abre filtrado pela faixa
   var prazoUrl = qsTI.get('prazo'), faixaUrl = prazoUrl && PRAZOS_GRAFICOS_TAREFAS.find(function(x){ return x.v === prazoUrl; });
   if(faixaUrl){ filtrosAtivos.prazo = faixaUrl.filtro; var dpz = document.getElementById('dropFiltroPrazo'); if(dpz){ dpz.setAttribute('data-valor', faixaUrl.filtro); var sp = dpz.querySelector('.dropdown-custom-valor span'); if(sp) sp.textContent = 'Prazo: ' + faixaUrl.filtro; } }
+  // T161: minhas_tarefas.html?processo=<id> (fora da ficha) mostra só as tarefas daquele processo
+  if(qsTI.get('processo') && !document.documentElement.classList.contains('saga-embed')){
+    filtroProcessoUrl = qsTI.get('processo');
+    var achouProc = window.SAGA_TASKS.some(function(t){ return t.processoVinculado && t.processoVinculado.id === filtroProcessoUrl; });
+    if(!achouProc) mostrarToast('Nenhuma tarefa sua ou que você possa ver neste processo.', 'aviso');
+    history.replaceState(null,'',location.pathname);
+  }
   aplicarFiltrosERenderizar();
   // Veio de uma notificacao: abre a tarefa direto
   var idTarefaUrl = qsTI.get('tarefa');

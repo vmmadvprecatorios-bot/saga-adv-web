@@ -232,6 +232,7 @@
   '.si-desfazer button{flex:0 0 auto;border:0;background:transparent;color:var(--gold);font:inherit;font-weight:700;cursor:pointer;padding:4px 6px}'+
   '@keyframes siDesfazerIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}'+
   '@media (min-resolution:100000dppx){.si-desfazer{animation:none}}'+
+  '.si-lig{text-decoration:none;cursor:pointer}.si-lig:hover{border-color:var(--gold);filter:brightness(1.15)}'+
   '.si-card.concluida{opacity:.6}.si-card.concluida .si-proc span,.si-card.concluida .si-cli{text-decoration:line-through}'+
   '.si-topo{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--muted);font-weight:700}'+
   '.si-topo .data{margin-left:auto;font-weight:600}.si-topo .data+.si-mover{margin-left:2px}'+
@@ -389,8 +390,10 @@
       S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'monitoramento_oab',p_acao:'gerenciar'}),
       S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'criar'}),
       S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'editar'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'gerenciar_todas'})]);
-    S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.todas=p[3].data===true||S.ehAdmin;S.pode.editar=p[2].data===true||S.pode.todas;
+      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'gerenciar_todas'}),
+      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'visualizar'}),
+      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'tarefas',p_acao:'visualizar'})]);
+    S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.todas=p[3].data===true||S.ehAdmin;S.pode.verFicha=p[4].data===true||S.ehAdmin;S.pode.verTarefas=p[5].data===true||S.ehAdmin;S.pode.editar=p[2].data===true||S.pode.todas;
     if(!S.pode.editar)document.body.classList.add('si-so-leitura');
     if(S.ehAdmin){var c=await S.sb.from('configuracoes_sistema').select('extra').limit(1).maybeSingle();if(c.data&&c.data.extra&&Array.isArray(c.data.extra.monitoramento_horas))S.horas=c.data.extra.monitoramento_horas.map(Number);}
     catalogoEtiquetas=SagaEtiquetas.criar({sb:S.sb,admin:S.ehAdmin,
@@ -567,7 +570,9 @@
         (i.triagem==='tarefa'?'<span class="si-tag" style="--c:#4b8af5">Virou tarefa</span>':i.triagem==='vista'?'<span class="si-tag" style="--c:#8a94a8">Vista</span>':'')+
         (i.etiqueta?'<span class="si-tag" style="--c:'+esc(i.etiqueta_cor||corEtiqueta(i.etiqueta))+'">'+esc(i.etiqueta)+'</span>':'')+
         seloPrazo(u)+
-        (i.processo_id?'<span class="si-tag" style="--c:#2fae7a">Na ficha do cliente</span>':'<span class="si-tag" style="--c:#8b5cf6">Fora do SAGA</span>')+
+        (i.processo_id?(S.pode.verFicha?'<a class="si-tag si-lig" data-lig style="--c:#2fae7a" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+encodeURIComponent(i.processo_id)+'" title="Abrir a ficha do cliente (Ctrl+clique abre em outra aba)">Ficha ↗</a>':'<span class="si-tag" style="--c:#2fae7a">Na ficha do cliente</span>')+
+          (S.pode.verTarefas?'<a class="si-tag si-lig" data-lig style="--c:#4b8af5" href="minhas_tarefas.html?processo='+encodeURIComponent(i.processo_id)+'" title="Ver as tarefas deste processo (Ctrl+clique abre em outra aba)">Tarefas ↗</a>':'')
+          :'<span class="si-tag" style="--c:#8b5cf6" title="Sem processo ligado: abra a intimação para incorporar ou ligar a um processo">Fora do SAGA</span>')+
       '</div>';
     return el;
   }
@@ -582,6 +587,8 @@
   }
   function ligarCartoes(raiz){
     raiz.addEventListener('click',function(e){
+      // T161: atalhos para a ficha e as tarefas: deixam o link abrir (Ctrl+clique em outra aba) sem abrir a intimação
+      if(e.target.closest('[data-lig]')){e.stopPropagation();return;}
       var cp=e.target.closest('[data-copiar]');if(cp){e.stopPropagation();copiar(cp.dataset.copiar);return;}
       var mv=e.target.closest('[data-mover]');if(mv){e.stopPropagation();var cm=mv.closest('[data-int]');if(cm)menuMover(mv,cm.dataset.int);return;}
       var ck=e.target.closest('[data-chk]');if(ck){e.stopPropagation();var c=ck.closest('[data-int]');if(c)alternarConcluida(c.dataset.int);return;}
@@ -1373,6 +1380,7 @@
       var quem=pts.length>1?pts.map(function(x){return '<a class="si-cli" style="display:block;color:inherit" href="ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(x.pessoa_id)+'&processo_id='+esc(i.processo_id)+'">'+esc(x.nome)+(x.principal?' <small>(titular)</small>':'')+'</a>';}).join(''):'<span class="si-cli">'+esc(p&&p.pessoa?p.pessoa.nome_completo:'Cliente')+'</span>';
       w.innerHTML='<div class="si-proc-box ok"><b>✓ Processo já cadastrado no SAGA'+(pts.length>1?' · '+pts.length+' clientes':'')+'</b><div style="margin-top:4px">'+quem+'</div>'+
         '<div class="si-acoes" style="margin-top:8px"><a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(i.processo_id)+'">Abrir ficha do cliente</a>'+
+        (S.pode.verTarefas?'<a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="minhas_tarefas.html?processo='+esc(i.processo_id)+'" title="Ver as tarefas deste processo (Ctrl+clique abre em outra aba)">Tarefas do processo</a>':'')+
         (podePedirAgente()?'<button class="si-btn sm" type="button" id="siPedirAgente">Pedir ao agente</button>':'')+'</div></div>'+
         '<div class="si-agente" id="siAgente" aria-live="polite">Procurando o resumo do agente...</div>';
       carregarResumoAgente(i);
