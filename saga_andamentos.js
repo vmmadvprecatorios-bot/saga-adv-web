@@ -91,6 +91,7 @@
       +'.and-vazio{color:var(--muted);font-size:11px;line-height:1.55;margin:0}'
       +'.and-vazio b{color:var(--text);font-weight:600}'
       +'.and-nota{margin:10px 0 0;color:var(--muted);font-size:10px;line-height:1.5}'
+      +'.and-fila{color:var(--text-muted,var(--text));border:1px solid var(--border);background:color-mix(in srgb,var(--text) 4%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-erro{color:var(--text);border:1px solid color-mix(in srgb,var(--danger,#e5484d) 40%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 8%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-roda{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:andGira .8s linear infinite}'
       +'@keyframes andGira{to{transform:rotate(360deg)}}'
@@ -162,10 +163,15 @@
     var temNumero=dig(processo.cnj||processo.numero||'').length===20;
     if(!d)return '<p class="and-vazio"><span class="and-roda" aria-hidden="true"></span> Carregando os andamentos...</p>';
     var nums=d.numeros||[],ands=d.andamentos||[],robo=d.robo||{};
-    var erro=nums.filter(function(n){return n.erro;})[0];
-    var html=erro?'<div class="and-erro">A última consulta ao CNJ deu erro: '+e(erro.erro)+'</div>':'';
+    // erro passageiro (o CNJ pediu para esperar, demorou ou estava fora do ar): o número volta sozinho para a fila (bloco 182)
+    var passageiro=function(t){return /(tenta de novo|\(429\)|demorou demais|n[aã]o consegui falar com o datajud)/i.test(String(t||''));};
+    var erro=nums.filter(function(n){return n.erro&&!passageiro(n.erro);})[0];
+    var naFila=!erro&&nums.some(function(n){return n.erro&&passageiro(n.erro);});
+    var html=erro?'<div class="and-erro">A última consulta ao CNJ deu erro: '+e(erro.erro)+'</div>'
+      :naFila?'<div class="and-fila">Na fila do CNJ: consulta prevista para a próxima rodada do robô (de madrugada, entre 1h e 6h40).</div>':'';
     if(!ands.length){
       if(!nums.length&&!temNumero)return html+'<p class="and-vazio">Este processo ainda não tem número no padrão do CNJ. Quando tiver, o SAGA busca os andamentos sozinho.</p>';
+      if(naFila)return html;
       if(!nums.length)return html+'<p class="and-vazio">Ainda não consultado no CNJ. '+(robo.ativo?'O robô diário consulta todos os processos do Jurídico de madrugada; ':'')+'Use <b>Atualizar agora</b> para buscar já.</p>';
       if(nums.every(function(n){return n.encontrado===false;}))return html+'<p class="and-vazio">Não encontrado na base pública do CNJ. Pode ser processo em segredo de justiça, muito recente ou que o tribunal ainda não enviou ao CNJ.</p>';
       return html+'<p class="and-vazio">Nenhum andamento na base pública do CNJ até agora.</p>';
@@ -277,7 +283,7 @@
       var acao=b.dataset.and;
       if(acao==='fechar'){fecharJanela();return;}
       if(acao==='so'){J.soImp=!J.soImp;b.classList.toggle('active',J.soImp);b.setAttribute('aria-pressed',String(J.soImp));feed();return;}
-      if(acao==='ligar'||acao==='desligar'){await salvarRobo({p_ativo:acao==='ligar'},acao==='ligar'?'Robô diário ligado: todo dia às 5h50.':'Robô diário desligado.');return;}
+      if(acao==='ligar'||acao==='desligar'){await salvarRobo({p_ativo:acao==='ligar'},acao==='ligar'?'Robô ligado: consulta de madrugada, entre 1h e 6h40.':'Robô diário desligado.');return;}
       if(acao==='todos'){await carregarTudo(b);return;}
       if(acao==='testar'){await testarLigacao(b);return;}
       if(acao==='chave-mostrar'){var c=f.querySelector('.and-robo-chave');recolher(c,!c.hidden);return;}
@@ -296,13 +302,14 @@
       if(s.error){el.innerHTML='';return;}
       var d=s.data||{};
       var ult=(d.execucoes||[])[0];
-      html='<div class="and-robo"><div class="and-robo-l1"><span class="and-robo-sit'+(d.ativo?' ligado':'')+'"><i></i>Robô diário (5h50): '+(d.ativo?'ligado':'desligado')+'</span>'
+      html='<div class="and-robo"><div class="and-robo-l1"><span class="and-robo-sit'+(d.ativo?' ligado':'')+'"><i></i>Robô de madrugada (1h às 6h40): '+(d.ativo?'ligado':'desligado')+'</span>'
         +'<div class="and-robo-bts">'
           +(d.ativo?'<button type="button" class="btn-secondary" data-and="desligar">Desligar</button>':'<button type="button" class="btn-primary" data-and="ligar">Ligar o robô</button>')
           +'<button type="button" class="btn-secondary" data-and="todos">Carregar tudo agora</button>'
           +'<button type="button" class="btn-secondary" data-and="testar">Testar a ligação</button>'
         +'</div></div>'
         +'<div class="and-robo-num">'+d.na_fila+' número(s) de processo e recurso no Jurídico · '+d.consultados+' já consultado(s) · '+d.encontrados+' encontrado(s) no CNJ · '+d.andamentos+' andamento(s)'
+          +(d.aguardando?' · '+d.aguardando+' na fila do CNJ (próxima rodada)':'')
           +(d.com_erro?' · '+d.com_erro+' com erro':'')+'</div>'
         +(ult?'<ul class="and-robo-exec"><li>Última rodada ('+e(relativo(ult.inicio))+'): '+e(ult.mensagem||(ult.fim?'terminou':'em andamento...'))+'</li></ul>':'')
         +'<div class="and-robo-num">Chave pública do CNJ: '+(d.chave?(d.chave_origem==='manual'?'colada à mão':'buscada sozinha na página do CNJ')+' ('+e(d.chave)+')':'o robô busca sozinho na página do CNJ na 1ª consulta')
@@ -310,7 +317,7 @@
         +'<div class="and-robo-chave" hidden><input id="andChave" type="text" autocomplete="off" spellcheck="false" placeholder="Cole aqui a chave pública (vazio = buscar sozinho na página do CNJ)"><button type="button" class="btn-secondary" data-and="chave-salvar">Salvar chave</button></div>'
         +'</div>';
     }else if(info){
-      html='<div class="and-robo"><span class="and-robo-sit'+(info.ativo?' ligado':'')+'"><i></i>Robô diário: '+(info.ativo?'ligado (todo dia às 5h50)':'desligado')+'</span>'
+      html='<div class="and-robo"><span class="and-robo-sit'+(info.ativo?' ligado':'')+'"><i></i>Robô diário: '+(info.ativo?'ligado (de madrugada, entre 1h e 6h40)':'desligado')+'</span>'
         +(info.ultima&&info.ultima.inicio?'<div class="and-robo-num">Última rodada '+e(relativo(info.ultima.inicio))+'.</div>':'')+'</div>';
     }
     el.innerHTML=html;

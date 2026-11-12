@@ -2,7 +2,7 @@
 // Consulta a API pública do DataJud e grava os andamentos pela função datajud_receber do banco (nunca apaga, nunca repete).
 //
 // Chamadas:
-//  - rotina (agendador do banco "datajud-andamentos-dia", todo dia às 5h50 de Maceió): cabeçalho x-saga-chave = chave do
+//  - rotina (agendador do banco "datajud-andamentos-dia", a cada 20 min de 1h00 às 6h40 de Maceió; uma consulta por vez): cabeçalho x-saga-chave = chave do
 //    cofre do banco (saga_chave_rotina). Só consulta com o robô ligado (datajud_config.ativo).
 //  - pela tela, com o login da pessoa:
 //      acao "processo" + processo_id: quem vê o processo ("Atualizar agora" da ficha); consulta só ele (e os recursos).
@@ -19,7 +19,9 @@ const PAGINA_CHAVE = "https://datajud-wiki.cnj.jus.br/api-publica/acesso";
 const POR_GRAVACAO = 10;      // números por chamada à datajud_receber
 const LIMITE_MS = 80_000;     // depois disso não começa consulta nova (a que está em curso termina; a função tem ~150 s)
 const ESPERA_MS = 60_000;     // tempo máximo de espera por uma consulta ao DataJud
-const PAUSA_MS = 250;         // pausa entre consultas, para não sobrecarregar o CNJ
+const PAUSA_MS = 2000;        // pausa entre consultas: o DataJud responde 429 (limite) com consultas seguidas (12/11/2026)
+const ESPERA_429_MS = 15_000; // espera inicial depois de um 429 sem Retry-After (dobra a cada nova recusa)
+const TENTATIVAS_429 = 2;     // depois disso a rodada para e o resto fica para a próxima
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-saga-chave",
@@ -103,6 +105,15 @@ export function montarItem(alvo: any, docs: any[]) {
 
 /* ---------- erros em português, sem detalhes técnicos ---------- */
 class ErroChave extends Error {}
+// o DataJud pediu para esperar (HTTP 429): não é erro do processo; a rodada espera ou para, sem marcar ninguém
+class ErroLimite extends Error { constructor(public esperaMs: number | null) { super("O DataJud pediu para esperar (limite de consultas)."); } }
+function lerRetryAfter(v: string | null): number | null {
+  if (!v) return null;
+  const s = Number(v);
+  if (isFinite(s) && s >= 0) return Math.min(s * 1000, 120_000);
+  const t = Date.parse(v);
+  return isNaN(t) ? null : Math.max(0, Math.min(t - Date.now(), 120_000));
+}
 function traduzir(e: unknown): string {
   if (e instanceof ErroChave) {
     return "O DataJud recusou a chave pública (o CNJ pode ter trocado a chave). O robô buscou a nova na página do CNJ e não deu certo: cole a chave em Intimações > Andamentos do CNJ.";
@@ -147,6 +158,7 @@ async function consultar(tribunal: string, numeros: string[], chave: string): Pr
     signal: AbortSignal.timeout(ESPERA_MS),
   });
   if (r.status === 401 || r.status === 403) throw new ErroChave(`recusou a chave (${r.status})`);
+  if (r.status === 429) throw new ErroLimite(lerRetryAfter(r.headers.get("retry-after")));
   if (r.status === 404) throw new Error(`O DataJud não tem o tribunal ${tribunal.toUpperCase()}.`);
   if (!r.ok) throw new Error(`O DataJud respondeu com erro (${r.status}). O robô tenta de novo na próxima rodada.`);
   const j = await r.json();
@@ -198,17 +210,19 @@ async function rodada(alvos: any[], conf: any, o: { origem: string; pedidoPor?: 
     grupos.get(t)!.push({ ...a, tribunal: t });
   }
   const porConsulta = Math.max(1, Math.min(100, Number(conf.por_consulta) || 20));
-  const paralelas = Math.max(1, Math.min(6, Number(conf.paralelas) || 3));
+  // uma consulta por vez por padrão (com 3 ao mesmo tempo o DataJud respondeu 429 em 387 números, 12/11/2026)
+  const paralelas = Math.max(1, Math.min(2, Number(conf.paralelas) || 1));
   const tarefas: { tribunal: string; pedaco: any[] }[] = [];
   for (const [tribunal, lista] of grupos) {
     for (let i = 0; i < lista.length; i += porConsulta) tarefas.push({ tribunal, pedaco: lista.slice(i, i + porConsulta) });
   }
-  let parou = false, falha: string | null = null, proxima = 0, erroChave: unknown = null;
-  // várias consultas ao mesmo tempo (o DataJud demora); cada uma grava assim que volta
+  let parou = false, falha: string | null = null, proxima = 0, erroChave: unknown = null, limitado = false, esperas429 = 0;
+  // uma consulta por vez (paralelas = 1, bloco 182); cada uma grava assim que volta
   const trabalhador = async () => {
-    while (proxima < tarefas.length && !erroChave) {
+    while (proxima < tarefas.length && !erroChave && !limitado) {
       if (Date.now() - inicio > LIMITE_MS) { parou = true; return; }
-      const { tribunal, pedaco } = tarefas[proxima++];
+      const indice = proxima++;
+      const { tribunal, pedaco } = tarefas[indice];
       try {
         const docs = await consultarComChave(tribunal, pedaco.map((a) => a.numero), conf);
         const porNumero = new Map<string, any[]>();
@@ -220,6 +234,19 @@ async function rodada(alvos: any[], conf: any, o: { origem: string; pedidoPor?: 
         for (const a of pedaco) pendentes.push(montarItem(a, porNumero.get(a.numero) || []));
       } catch (e) {
         if (e instanceof ErroChave) { erroChave = e; return; } // chave recusada mesmo depois de buscar de novo: para a rodada
+        if (e instanceof ErroLimite) {
+          // 429: espera o que o CNJ pediu (ou 15 s, 30 s...) e tenta o mesmo pedaço; sem tempo ou depois de 2 recusas, para.
+          // Nada é marcado como erro: esses números continuam na fila e vão na próxima rodada.
+          const espera = e.esperaMs ?? ESPERA_429_MS * Math.pow(2, esperas429);
+          esperas429++;
+          if (esperas429 <= TENTATIVAS_429 && Date.now() - inicio + espera < LIMITE_MS) {
+            await pausa(espera);
+            tarefas.push(tarefas[indice]); // volta para o fim da lista desta rodada
+            continue;
+          }
+          limitado = true;
+          return;
+        }
         const msg = traduzir(e);
         for (const a of pedaco) pendentes.push({ ...a, erro: msg });
       }
@@ -235,14 +262,14 @@ async function rodada(alvos: any[], conf: any, o: { origem: string; pedidoPor?: 
     falha = traduzir(e);
     if (pendentes.length) { try { await gravar(pendentes.splice(0), tot); } catch (_) { /* a falha principal já vai no registro */ } }
   }
-  if (proxima < tarefas.length && !falha) parou = true;
+  if ((proxima < tarefas.length || limitado) && !falha) parou = true;
   const ok = !falha;
   const segundos = Math.round((Date.now() - inicio) / 1000);
   const mensagem = falha
     ? falha
     : `${tot.consultados} número(s) consultado(s), ${tot.encontrados} encontrado(s) no CNJ, ${tot.novos} andamento(s) novo(s)` +
       (tot.importantes ? ` (${tot.importantes} importante(s))` : "") + (tot.avisos ? `, ${tot.avisos} aviso(s) no sino` : "") +
-      (tot.erros ? `, ${tot.erros} com erro` : "") + (parou ? ". Parei no limite de tempo: o resto vai na próxima rodada." : ".") + ` (${segundos} s)`;
+      (tot.erros ? `, ${tot.erros} com erro` : "") + (limitado ? ". O CNJ pediu para esperar (limite de consultas): parei, e o resto vai na próxima rodada." : parou ? ". Parei no limite de tempo: o resto vai na próxima rodada." : ".") + ` (${segundos} s)`;
   if (execId) {
     await admin.from("datajud_execucoes").update({ fim: new Date().toISOString(), ok, mensagem, ...tot }).eq("id", execId);
   }
