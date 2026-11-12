@@ -1165,6 +1165,7 @@
     if(n&&n.referencia_tabela==='datajud')return {titulo:'Andamento do processo',tela:'monitoramento_multi_oab.html?andamentos=1'};
     if(n&&n.referencia_tabela==='acessos')return {titulo:'Entrada no sistema',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
     if(n&&n.referencia_tabela==='pagamentos')return {titulo:'Parcela vencida',tela:'financeiro.html?aba=parcelas'};
+    if(n&&n.referencia_tabela==='armazenamento')return {titulo:'Armazenamento',tela:'configuracoes_padrao_metalico.html?aba=armazenamento'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1190,6 +1191,7 @@
     {chave:'andamentos',titulo:'Andamentos do CNJ',tipos:[],tela:'monitoramento_multi_oab.html?andamentos=1',um:'andamento novo',varios:'andamentos novos',cor:'#0891b2'},
     {chave:'acessos',titulo:'Entradas no sistema',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'entrada no sistema',varios:'entradas no sistema',cor:'#6366f1'},
     {chave:'pagamentos',titulo:'Pagamentos',tipos:[],tela:'financeiro.html?aba=parcelas',um:'parcela vencida',varios:'parcelas vencidas',cor:'#2fae7a'},
+    {chave:'armazenamento',titulo:'Armazenamento',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=armazenamento',um:'aviso de espaço',varios:'avisos de espaço',cor:'#0ea5e9'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   // Pedidos de busca (bloco 140) chegam com o tipo 'outro' e a referência 'pedidos_busca': têm grupo próprio no sino
@@ -1207,6 +1209,8 @@
     if(n&&n.referencia_tabela==='acessos'){for(var ac=0;ac<GRUPOS_NOTIF.length;ac++){if(GRUPOS_NOTIF[ac].chave==='acessos')return GRUPOS_NOTIF[ac];}}
     // Parcela vencida e não paga (bloco 167, T159): tipo 'outro' com a referência 'pagamentos', grupo próprio no sino
     if(n&&n.referencia_tabela==='pagamentos'){for(var pg=0;pg<GRUPOS_NOTIF.length;pg++){if(GRUPOS_NOTIF[pg].chave==='pagamentos')return GRUPOS_NOTIF[pg];}}
+    // Espaço do banco ou dos arquivos acima do limite (bloco 177, T163): grupo próprio no sino
+    if(n&&n.referencia_tabela==='armazenamento'){for(var am=0;am<GRUPOS_NOTIF.length;am++){if(GRUPOS_NOTIF[am].chave==='armazenamento')return GRUPOS_NOTIF[am];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1323,6 +1327,7 @@
     if(n.referencia_tabela==='ponto'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html');return;}
     if(n.referencia_tabela==='ponto_home_office'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=equipe');return;}
     if(n.referencia_tabela==='acessos'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=acessos');return;}
+    if(n.referencia_tabela==='armazenamento'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=armazenamento');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // parcela vencida (bloco 167): abre a ficha do cliente no bloco Pagamentos; sem achar a parcela, a aba Parcelas do Financeiro
     if(n.referencia_tabela==='pagamentos'){
