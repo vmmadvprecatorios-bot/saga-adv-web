@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611121950"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Pedidos do Claude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:86ch;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:11px;font-size:12px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
+.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ouro{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
+.pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
+.pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
+.ent:focus{border-color:var(--gold)}
+.resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px}
+.resumo b{color:var(--text);font-weight:600}
+.grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+.grupo-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
+.grupo-cab h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
+.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
+.lnk{font-size:11.5px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:9px;padding:6px 10px;white-space:nowrap;transition:border-color .2s}
+.lnk:hover{border-color:var(--gold)}
+.ped{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:start}
+.ped:last-child{border-bottom:0}
+.ped .oque{font-size:13.5px;font-weight:600;line-height:1.4}
+.ped .det{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px}
+.ped .det b{color:var(--text);font-weight:500}
+.selos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.selo{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.selo.amarelo{color:var(--warning,#d97706);border-color:color-mix(in srgb,var(--warning,#d97706) 50%,transparent)}
+.selo.vermelho{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent)}
+.selo.ok{color:var(--success,#16a34a);border-color:color-mix(in srgb,var(--success,#16a34a) 50%,transparent)}
+.ped .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.recebido{font-size:12px;line-height:1.5;margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--text) 4%,transparent)}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;border:1px dashed var(--border-soft);border-radius:14px}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.erro-caixa{padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12.5px;line-height:1.55}
+.erro-caixa b{display:block;margin-bottom:3px}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.toast.success{border-color:color-mix(in srgb,#16a34a 50%,var(--border))}.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}
+.mo{position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s linear .26s}
+.mo.aberto{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s}
+html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
+.md{width:100%;max-width:520px;display:flex;flex-direction:column;border-radius:18px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);transform:translateY(10px) scale(.985);transition:transform .34s cubic-bezier(.22,.78,.25,1)}
+.mo.aberto .md{transform:none}
+.md-cab{padding:16px 18px 10px;border-bottom:1px solid var(--border-soft)}
+.md-cab h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.md-cab p{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.md-corpo{padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.md-corpo label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.md-corpo textarea{min-height:110px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:10px;font-size:12.5px;outline:0;resize:vertical}
+.md-corpo textarea:focus{border-color:var(--gold)}
+.md-rod{display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 16px}
+@media(max-width:760px){
+  .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
+  .ped{grid-template-columns:1fr}.ped .acoes{justify-content:flex-start}
+  .ent{min-width:0;width:100%;flex-basis:100%}
+}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611121950">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Pedidos do Claude</h1>
+      <p>O que o Claude (SAGA no Claude) pediu para você trazer para andar com os processos: autos, certidões, documentos. Quando você entrega numa conversa ("você pediu isso aqui"), o próprio Claude conclui; também dá para concluir aqui. Cada pedido também aparece em Minhas Tarefas e na ficha do cliente.</p>
+    </div>
+    <button class="btn" type="button" id="btnAtualizar">Atualizar</button>
+  </div>
+  <div class="barra">
+    <div class="pills" role="group" aria-label="Quais pedidos">
+      <button class="pill active" type="button" data-sit="abertos">Abertos<b id="nAbertos"></b></button>
+      <button class="pill" type="button" data-sit="concluidos">Concluídos</button>
+    </div>
+    <input class="ent" id="fBusca" type="search" autocomplete="off" placeholder="Buscar por cliente, número ou o que foi pedido">
+  </div>
+  <div class="resumo" id="resumo">Carregando…</div>
+  <div id="area"></div>
+</main>
+</div>
+
+<div class="mo" id="janela" role="dialog" aria-modal="true" aria-labelledby="jTitulo" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jTitulo">Concluir pedido</h2><p id="jSub"></p></div>
+  <div class="md-corpo"><label for="jTexto">O que foi entregue (opcional)</label><textarea id="jTexto" maxlength="4000" placeholder="Ex.: autos inteiros baixados e enviados ao Claude em 13/11"></textarea></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="jOk">Concluir pedido</button></div>
+</div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611121950"></script>
+<script>
+/* =====================================================================
+   SAGA · Pedidos do Claude (T166, blocos 185 e 186; 12/11/2026, pedido do Dr. Victor)
+   Um lugar só com os pedidos do Claude (tarefas origem 'claude_pedido') de quem está vendo:
+   abertos agrupados por cliente/processo e concluídos. Só quem usa o SAGA no Claude (conector_claude.usar).
+   Dados: pedidos_claude_painel; concluir/reabrir: pedido_claude_concluir.
+   ===================================================================== */
+var P={sit:'abertos',lista:[],busca:'',erro:null,pedido:null};
+var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},4800);}
+function dataBR(d){if(!d)return '';var s=String(d).slice(0,10).split('-');return s[2]+'/'+s[1]+'/'+s[0];}
+function dataHoraBR(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('pt-BR')+' às '+x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function hojeISO(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function linkFicha(p){return p.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(p.pessoa_id)+(p.processo_id?'&processo_id='+encodeURIComponent(p.processo_id):''):null;}
+
+async function carregar(){
+  $('resumo').textContent='Carregando…';
+  var r=await _sb.rpc('pedidos_claude_painel',{p_situacao:P.sit});
+  if(r.error){P.erro=r.error.message||String(r.error);P.lista=[];desenhar();return;}
+  P.erro=null;P.lista=(r.data&&r.data.pedidos)||[];
+  var n=(r.data&&r.data.abertos)||0;$('nAbertos').textContent=n?String(n):'';
+  desenhar();
+}
+function filtrados(){
+  var b=semAcento(P.busca.trim());
+  if(!b)return P.lista;
+  return P.lista.filter(function(p){return semAcento([p.cliente,p.numero,p.o_que,p.motivo,p.assunto].join(' ')).indexOf(b)>=0;});
+}
+function seloDias(p){
+  var d=p.dias||0,cls=d>7?'vermelho':(d>3?'amarelo':'');
+  return '<span class="selo '+cls+'" title="Desde '+esc(dataHoraBR(p.criado_em))+'">'+(d===0?'Pedido hoje':'Esperando há '+d+' dia'+(d>1?'s':''))+'</span>';
+}
+function seloPrazo(p){
+  if(!p.prazo)return '';
+  var h=hojeISO(),cls=p.prazo<h?'vermelho':(p.prazo===h?'amarelo':'');
+  return '<span class="selo '+cls+'">'+(p.prazo<h?'Prazo vencido em ':(p.prazo===h?'Prazo hoje, ':'Prazo: '))+esc(dataBR(p.prazo))+'</span>';
+}
+function htmlPedido(p){
+  var abertos=P.sit==='abertos';
+  return '<div class="ped" data-id="'+esc(p.id)+'"><div>'+
+    '<div class="oque">'+esc(p.o_que)+'</div>'+
+    (p.motivo?'<div class="det"><b>Para quê:</b> '+esc(p.motivo)+'</div>':'')+
+    (p.assunto?'<div class="det"><b>Conversa:</b> '+esc(p.assunto)+'</div>':'')+
+    '<div class="selos">'+(abertos?seloDias(p)+seloPrazo(p):'<span class="selo ok">Concluído em '+esc(dataHoraBR(p.concluida_em))+(p.concluida_por?' por '+esc(p.concluida_por):'')+'</span><span class="selo">Pedido em '+esc(dataBR(p.criado_em))+'</span>')+'</div>'+
+    (!abertos&&p.recebido?'<div class="recebido"><b>Recebido:</b> '+esc(p.recebido)+'</div>':'')+
+    '</div><div class="acoes">'+(abertos?'<button class="btn btn-ouro" type="button" data-concluir="'+esc(p.id)+'">Concluir</button>':'<button class="btn" type="button" data-reabrir="'+esc(p.id)+'">Reabrir</button>')+'</div></div>';
+}
+function desenhar(){
+  var area=$('area');
+  if(P.erro){
+    area.innerHTML='<div class="erro-caixa"><b>Não consegui carregar os pedidos do Claude.</b>Motivo: '+esc(P.erro)+'<br>Tente "Atualizar". Se continuar, avise o administrador com esta mensagem.</div>';
+    $('resumo').textContent='';return;
+  }
+  var l=filtrados();
+  if(!l.length){
+    area.innerHTML='<div class="vazio"><b>'+(P.busca?'Nada encontrado nesta busca.':(P.sit==='abertos'?'Nenhum pedido do Claude em aberto.':'Nenhum pedido concluído nos últimos 6 meses.'))+'</b>'+(P.sit==='abertos'&&!P.busca?'Quando o Claude precisar de algo seu para andar com um processo, o pedido aparece aqui.':'')+'</div>';
+    $('resumo').innerHTML=P.sit==='abertos'?'<b>0</b> pedidos em aberto':'';return;
+  }
+  // agrupa por processo (ou "Sem processo"), na ordem em que chegaram
+  var grupos=[],idx={};
+  l.forEach(function(p){var k=p.processo_id||'sem';if(!(k in idx)){idx[k]=grupos.length;grupos.push({k:k,p:p,itens:[]});}grupos[idx[k]].itens.push(p);});
+  area.innerHTML=grupos.map(function(g){
+    var f=linkFicha(g.p);
+    var tit=g.k==='sem'?'Sem processo':(g.p.cliente||'Cliente');
+    var sub=g.k==='sem'?'Pedidos que não são de um processo':(g.p.numero||'Processo sem número');
+    return '<section class="grupo"><div class="grupo-cab"><div><h2>'+esc(tit)+'</h2><small>'+esc(sub)+' · '+g.itens.length+' pedido'+(g.itens.length>1?'s':'')+'</small></div>'+
+      (f?'<a class="lnk" href="'+esc(f)+'">Abrir ficha ↗</a>':'')+'</div>'+g.itens.map(htmlPedido).join('')+'</section>';
+  }).join('');
+  var velhos=l.filter(function(p){return (p.dias||0)>3;}).length;
+  $('resumo').innerHTML=P.sit==='abertos'
+    ?'<b>'+l.length+'</b> pedido'+(l.length>1?'s':'')+' em aberto'+(velhos?' · <b>'+velhos+'</b> esperando há mais de 3 dias':'')
+    :'<b>'+l.length+'</b> concluído'+(l.length>1?'s':'')+' nos últimos 6 meses';
+}
+
+// janela "Concluir pedido"
+function abrirJanela(p){
+  P.pedido=p;$('jSub').textContent=p.o_que+(p.cliente?' · '+p.cliente:'');$('jTexto').value='';
+  $('janela').classList.add('aberto');setTimeout(function(){$('jTexto').focus();},60);
+}
+function fecharJanela(){$('janela').classList.remove('aberto');P.pedido=null;}
+async function concluir(){
+  var p=P.pedido;if(!p)return;
+  var texto=$('jTexto').value.trim();
+  $('jOk').disabled=true;fecharJanela();
+  var el=document.querySelector('.ped[data-id="'+p.id+'"]');
+  var gravando=Promise.resolve(_sb.rpc('pedido_claude_concluir',{p_tarefa:p.id,p_recebido:texto||null,p_concluir:true})).then(function(r){if(r.error)throw r.error;return r;});
+  try{
+    if(el&&window.sagaRiscar)await sagaRiscar(el,{texto:'.oque',esperar:gravando,recolher:true});else await gravando;
+    toast('Pedido concluído.','success');
+  }catch(e){toast('Não consegui concluir: '+((e&&e.message)||'erro desconhecido'),'error');}
+  $('jOk').disabled=false;
+  await carregar();
+  if(window.SagaUI&&SagaUI.contarDia)try{SagaUI.contarDia();}catch(e){}
+}
+async function reabrir(id){
+  var ok=window.sagaConfirmar?await sagaConfirmar('Reabrir pedido','O pedido volta para os abertos (em Minhas Tarefas também).','Reabrir',false):confirm('Reabrir este pedido?');
+  if(!ok)return;
+  var r=await _sb.rpc('pedido_claude_concluir',{p_tarefa:id,p_recebido:null,p_concluir:false});
+  if(r.error){toast('Não consegui reabrir: '+(r.error.message||''),'error');return;}
+  toast('Pedido reaberto.','success');await carregar();
+}
+
+function ligar(){
+  document.querySelectorAll('.pill[data-sit]').forEach(function(b){b.addEventListener('click',function(){
+    if(P.sit===b.dataset.sit)return;
+    document.querySelectorAll('.pill[data-sit]').forEach(function(x){x.classList.toggle('active',x===b);});
+    P.sit=b.dataset.sit;setTimeout(carregar,0);
+  });});
+  $('fBusca').addEventListener('input',function(){P.busca=this.value;desenhar();});
+  $('btnAtualizar').addEventListener('click',carregar);
+  $('area').addEventListener('click',function(e){
+    var c=e.target.closest('[data-concluir]');if(c){var p=P.lista.filter(function(x){return x.id===c.dataset.concluir;})[0];if(p)abrirJanela(p);return;}
+    var r=e.target.closest('[data-reabrir]');if(r){reabrir(r.dataset.reabrir);}
+  });
+  $('janela').addEventListener('click',function(e){if(e.target===$('janela')||e.target.closest('[data-fechar]'))fecharJanela();});
+  $('jOk').addEventListener('click',concluir);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('janela').classList.contains('aberto'))fecharJanela();});
+  try{if(localStorage.getItem('saga-movimento')==='reduzido')document.documentElement.classList.add('sem-movimento');}catch(e){}
+}
+async function init(){
+  ligar();
+  await SagaUI.carregar('pedidos_claude');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  await carregar();
+}
+init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+</script>
+</body>
+</html>

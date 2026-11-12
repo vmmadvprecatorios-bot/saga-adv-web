@@ -637,6 +637,10 @@
     +'<div class="nav-item" data-tela="tarefas" onclick="sagaIrPara(\'minhas_tarefas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
+    // T166 (12/11, Dr. Victor): o que o Claude (SAGA no Claude) pediu para a pessoa trazer; só quem usa o conector
+    +'<div class="nav-item" data-tela="pedidos_claude" onclick="sagaIrPara(\'pedidos_claude.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2h-6l-4 4v-4H6a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6.5l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+    +'Pedidos do Claude<span class="nav-badge-chat nav-badge-dia" id="navBadgePedidosClaude" style="display:none" title="Pedidos do Claude em aberto"></span></div>'
     +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
@@ -1021,7 +1025,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -1351,6 +1355,7 @@
     if(n&&n.referencia_tabela==='acessos')return {titulo:'Entrada no sistema',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
     if(n&&n.referencia_tabela==='pagamentos')return {titulo:'Parcela vencida',tela:'financeiro.html?aba=parcelas'};
     if(n&&n.referencia_tabela==='armazenamento')return {titulo:'Armazenamento',tela:'configuracoes_padrao_metalico.html?aba=armazenamento'};
+    if(n&&n.referencia_tabela==='pedidos_claude')return {titulo:'Pedidos do Claude',tela:'pedidos_claude.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1378,6 +1383,7 @@
     {chave:'acessos',titulo:'Entradas no sistema',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'entrada no sistema',varios:'entradas no sistema',cor:'#6366f1'},
     {chave:'pagamentos',titulo:'Pagamentos',tipos:[],tela:'financeiro.html?aba=parcelas',um:'parcela vencida',varios:'parcelas vencidas',cor:'#2fae7a'},
     {chave:'armazenamento',titulo:'Armazenamento',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=armazenamento',um:'aviso de espaço',varios:'avisos de espaço',cor:'#0ea5e9'},
+    {chave:'pedidos_claude',titulo:'Pedidos do Claude',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Claude',varios:'avisos de pedidos do Claude',cor:'#c9a84c'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   // Pedidos de busca (bloco 140) chegam com o tipo 'outro' e a referência 'pedidos_busca': têm grupo próprio no sino
@@ -1399,6 +1405,8 @@
     if(n&&n.referencia_tabela==='pagamentos'){for(var pg=0;pg<GRUPOS_NOTIF.length;pg++){if(GRUPOS_NOTIF[pg].chave==='pagamentos')return GRUPOS_NOTIF[pg];}}
     // Espaço do banco ou dos arquivos acima do limite (bloco 177, T163): grupo próprio no sino
     if(n&&n.referencia_tabela==='armazenamento'){for(var am=0;am<GRUPOS_NOTIF.length;am++){if(GRUPOS_NOTIF[am].chave==='armazenamento')return GRUPOS_NOTIF[am];}}
+    // Pedido do Claude esperando há mais de 3 dias (bloco 186, T166): grupo próprio no sino
+    if(n&&n.referencia_tabela==='pedidos_claude'){for(var pc=0;pc<GRUPOS_NOTIF.length;pc++){if(GRUPOS_NOTIF[pc].chave==='pedidos_claude')return GRUPOS_NOTIF[pc];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1519,6 +1527,7 @@
     if(n.referencia_tabela==='ponto_home_office'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=equipe');return;}
     if(n.referencia_tabela==='acessos'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=acessos');return;}
     if(n.referencia_tabela==='armazenamento'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=armazenamento');return;}
+    if(n.referencia_tabela==='pedidos_claude'){global.sagaIrPara('pedidos_claude.html');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // parcela vencida (bloco 167): abre a ficha do cliente no bloco Pagamentos; sem achar a parcela, a aba Parcelas do Financeiro
     if(n.referencia_tabela==='pagamentos'){
@@ -1912,6 +1921,12 @@
         var rb=await global._sb.from('pedidos_busca').select('id',{count:'exact',head:true}).eq('situacao','a_fazer');
         if(!rb.error){var nb=rb.count||0;bb.textContent=nb>99?'99+':String(nb);bb.style.display=nb>0?'':'none';bb.title=nb+' pedido(s) de busca a fazer';}
       }
+      // Pedidos do Claude em aberto (bloco 186, T166): só para quem usa o SAGA no Claude
+      var bp=document.getElementById('navBadgePedidosClaude');
+      if(bp&&_minhasPermissoes&&_minhasPermissoes.indexOf('conector_claude.usar')>=0){
+        var rp=await global._sb.rpc('pedidos_claude_contar');
+        if(!rp.error){var np=rp.data||0;bp.textContent=np>99?'99+':String(np);bp.style.display=np>0?'':'none';bp.title=np+' pedido(s) do Claude em aberto';}
+      }
       guardarNumerosMoldura();
     }catch(e){}
   }
@@ -1941,6 +1956,7 @@
     clientes_perfil:['pessoas.visualizar','processos.visualizar'],
     agenda:['compromissos.visualizar'],
     tarefas:['tarefas.visualizar'],
+    pedidos_claude:['conector_claude.usar'],
     chat:['chat.usar'],
     ponto:['ponto.bater','ponto.visualizar_proprio','ponto.visualizar_equipe'],
     colaboradores:['colaboradores.visualizar','usuarios.convidar','usuarios.gerenciar_papeis'],
@@ -2128,7 +2144,7 @@
       ev.preventDefault();global.sagaIrPara(a.getAttribute('href'));
     });
   }
-  var IDS_NUMEROS=['navBadgeChat','navBadgeAgenda','navBadgeTarefas','navBadgeBuscas','notifCount','onlineText'];
+  var IDS_NUMEROS=['navBadgeChat','navBadgeAgenda','navBadgeTarefas','navBadgeBuscas','navBadgePedidosClaude','notifCount','onlineText'];
   function guardarNumerosMoldura(){
     var g={};
     IDS_NUMEROS.forEach(function(id){var el=document.getElementById(id);if(el)g[id]={t:el.textContent,o:el.style.display==='none',a:el.classList.contains('atrasada')};});
@@ -2394,7 +2410,7 @@
   // 09/11: página devolvida pela memória do navegador (botão voltar): confere de novo no banco a cor, a letra e o perfil
   global.addEventListener('pageshow',function(ev){if(ev.persisted&&_perfilAtual)carregarPerfil();});
 
-  global.SagaUI={conferirPonto:function(){try{localStorage.setItem('saga-ponto-mudou',String(Date.now()));}catch(e){}conferirTravaPonto(true);return conferirPonto();},abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes};
+  global.SagaUI={conferirPonto:function(){try{localStorage.setItem('saga-ponto-mudou',String(Date.now()));}catch(e){}conferirTravaPonto(true);return conferirPonto();},abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes,contarDia:function(){return contarDia();}};
 })(window);
 
 /* Copiar com um clique (07/11): qualquer botão com data-copiar="texto" (e data-copiar-rotulo="CPF") copia o texto.
