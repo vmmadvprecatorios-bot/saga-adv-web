@@ -1581,11 +1581,19 @@
     var jaHoje=false;try{jaHoje=localStorage.getItem('saga-entrada-dia')===chave;}catch(e){}
     if(!ev&&jaHoje)return;
     try{sessionStorage.removeItem('saga-login-agora');}catch(e){}
-    global._sb.rpc('acesso_entrada',{p_evento:ev==='senha'||ev==='google'?ev:'abriu',p_navegador:(navigator.userAgent||'').slice(0,300)}).then(function(r){
+    global._sb.rpc('acesso_entrada',{p_evento:ev==='senha'||ev==='google'?ev:'abriu',p_navegador:(navigator.userAgent||'').slice(0,300),p_aparelho:global.sagaAparelhoCodigo()}).then(function(r){
       if(!r.error){try{localStorage.setItem('saga-entrada-dia',chave);}catch(e){}}
     },function(){});
   }
 
+  // 12/11 (T162): código deste computador/navegador (aleatório, sem dado pessoal), criado na 1ª vez e guardado nele.
+  // Vai na entrada no sistema e na batida do ponto; o administrador autoriza o computador em Ponto > Acessos.
+  global.sagaAparelhoCodigo=function(){
+    try{var c=localStorage.getItem('saga-aparelho');if(c&&/^[A-Za-z0-9-]{20,64}$/.test(c))return c;
+      var b=new Uint8Array(16);(global.crypto||global.msCrypto).getRandomValues(b);
+      c='ap-'+Array.prototype.map.call(b,function(x){return ('0'+x.toString(16)).slice(-2);}).join('');
+      localStorage.setItem('saga-aparelho',c);return c;}catch(e){return null;}
+  };
   global.sagaLogout=async function(motivo){
     if(!global._sb)return;
     try{if(_canalPresenca)await _canalPresenca.untrack();}catch(e){}

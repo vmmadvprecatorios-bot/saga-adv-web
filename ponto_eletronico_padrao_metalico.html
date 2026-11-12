@@ -236,6 +236,7 @@ tr.apagado td{color:var(--muted)}
     .rel-doc,.tabela-wrap,.resumo-grid div{border-color:#ccc!important;background:#fff!important}
   }
   #roscasMeuPonto .centro .n{font-size:15px}
+.ap-apelido{width:100%;min-width:160px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text);font:inherit;font-size:12.5px}.ap-apelido:focus{outline:none;border-color:var(--gold)}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611121631">
 </head>
@@ -369,6 +370,14 @@ tr.apagado td{color:var(--muted)}
     </div>
     <p class="sub" style="margin:-4px 0 12px">Só o administrador geral vê esta aba. Hora em que cada colaborador <b>entrou no SAGA</b> (hora do servidor, com o aparelho e o IP) ao lado da hora em que <b>bateu o ponto</b>, para conferir nas câmeras. O IP vem marcado <b>escritório</b> ou <b>fora</b> conforme as internets cadastradas em Cadastro &gt; Internets do escritório. Atualiza sozinha a cada 30 segundos.</p>
     <div class="tabela-wrap"><table><thead><tr><th>Colaborador</th><th>Entrou no sistema</th><th>Bateu o ponto</th><th>Diferença</th><th>Como entrou</th><th>Aparelho</th><th>IP</th><th>Outras entradas do dia</th></tr></thead><tbody id="tbAcessos"></tbody></table></div>
+  
+    <!-- 12/11 (Dr. Victor; T162, bloco 176): internets (critério principal) e computadores autorizados -->
+    <div class="secao-titulo" style="margin-top:22px">Internets e computadores</div>
+    <p class="sub" style="margin:0 0 10px">A <b>internet do escritório</b> (IP) é o critério principal: autorize aqui a internet do escritório. Entrada por internet ou computador ainda não autorizados avisa você no sino (uma vez por dia). O computador serve de apoio: mostra qual máquina e quem usou, e dá para autorizar um computador específico.</p>
+    <div class="toolbar" style="margin:0 0 8px"><b>Internets vistas (30 dias)</b><button class="btn-secondary btn-sm" id="apAtualizar" type="button" style="margin-left:auto">Atualizar</button></div>
+    <div class="tabela-wrap"><table><thead><tr><th>Internet (IP)</th><th>Situação</th><th>Quem entrou por ela</th><th class="num">Entradas</th><th>Última vez</th><th></th></tr></thead><tbody id="tbApIps"></tbody></table></div>
+    <div class="toolbar" style="margin:16px 0 8px"><b>Computadores</b><button class="btn-primary btn-sm" id="apEste" type="button" style="margin-left:auto" title="Use no computador que quer autorizar, mesmo que ninguém da equipe o use ainda">Autorizar este computador</button></div>
+    <div class="tabela-wrap"><table><thead><tr><th>Computador</th><th>Situação</th><th>Quem usou</th><th>Internets vistas</th><th>Primeira / última vez</th><th></th></tr></thead><tbody id="tbAparelhos"></tbody></table></div>
   </section>
 
   <!-- BANCO DE HORAS (gestor) -->
@@ -457,6 +466,7 @@ tr.apagado td{color:var(--muted)}
         <div class="campo"><label>E-mails extras no fechamento (ex.: contadora)</label><input id="cfExtras"></div>
       </div>
       <label class="chk"><input type="checkbox" id="cfLocal"> Exigir que a marcação seja feita no escritório (pela internet do escritório ou pela localização; fora dele, só com home office aprovado)</label>
+      <label class="chk so-admin" style="display:none"><input type="checkbox" id="cfAparelho"> Exigir computador autorizado: o ponto só vale num computador autorizado (Ponto &gt; Acessos &gt; Internets e computadores), na internet do escritório, pela localização no raio ou com home office. A Diretoria e o administrador nunca travam. <b>Deixe desligado na fase de transição.</b></label>
       <div class="so-admin" style="display:none">
         <div class="secao-titulo" style="margin-top:16px">Internets do escritório</div>
         <p class="sub" style="margin:0 0 8px">Quem bate o ponto por uma destas internets está no escritório e não precisa de localização. Fora delas, vale a localização dentro do raio ou o home office aprovado. A lista também serve para o aviso no sino quando alguém entra no sistema por uma internet de fora. Só o administrador geral vê esta parte; cada mudança aqui vale na hora.</p>
@@ -860,7 +870,7 @@ async function bater(botao,btn){
   msg.style.display='';msg.className='msg-ponto';msg.textContent='Registrando…';
   try{
     var livre=regimeDe(state.meuColab).livre;
-    var chamar=function(loc){return _sb.rpc('bater_ponto',{p_botao:botao,p_lat:loc?loc.lat:null,p_lng:loc?loc.lng:null,p_precisao:loc?Math.round(loc.prec):null});};
+    var chamar=function(loc){return _sb.rpc('bater_ponto',{p_botao:botao,p_lat:loc?loc.lat:null,p_lng:loc?loc.lng:null,p_precisao:loc?Math.round(loc.prec):null,p_aparelho:window.sagaAparelhoCodigo?sagaAparelhoCodigo():null});};
     // 11/11 (T156): primeiro sem localização (na internet do escritório ela não é necessária);
     // só se o banco responder que a pessoa está fora do escritório, pede a localização e tenta de novo
     var r=await chamar(null);
@@ -1084,6 +1094,8 @@ function prepararAcessos(){
   document.getElementById('acAnt').addEventListener('click',function(){mover(-1);});
   document.getElementById('acProx').addEventListener('click',function(){mover(1);});
   document.getElementById('acAtualizar').addEventListener('click',function(){carregarAcessos();});
+  document.getElementById('apAtualizar').addEventListener('click',function(){carregarAparelhos();});
+  document.getElementById('apEste').addEventListener('click',autorizarEsteComputador);
   acState.timer=setInterval(function(){
     if(document.hidden||!document.getElementById('aba-acessos').classList.contains('ativo'))return;
     if(acState.data===state.hoje)carregarAcessos(true);
@@ -1116,6 +1128,48 @@ async function carregarAcessos(silencioso){
   });
   tb.innerHTML=html.join('')||'<tr><td colspan="8" class="vazio">Nenhum colaborador com acesso ao SAGA.</td></tr>';
   document.getElementById('acResumo').textContent=dataBR(acState.data)+' · '+entraram+' de '+total+' entraram no sistema'+(acState.data===state.hoje?' · atualizado às '+horaLocal(new Date().toISOString()):'');
+}
+
+/* ----- Internets e computadores (12/11, Dr. Victor; T162, bloco 176; só o administrador geral) ----- */
+async function carregarAparelhos(){
+  if(!state.pode.admin)return;
+  var ti=document.getElementById('tbApIps'),ta=document.getElementById('tbAparelhos');if(!ti||!ta)return;
+  var r=await _sb.rpc('aparelhos_painel');
+  if(r.error){ti.innerHTML='<tr><td colspan="6" class="vazio">'+esc(r.error.message)+'</td></tr>';ta.innerHTML='';return;}
+  var d=r.data||{},ips=d.ips||[],aps=d.aparelhos||[];
+  var etq=function(ok,txtOk,txtNao){return '<span class="etq ip-local" style="--c:'+(ok?'var(--success)':'var(--warning)')+'">'+(ok?txtOk:txtNao)+'</span>';};
+  var quando=function(x){return x?dataBR(dataLocalDe(x)).slice(0,5)+' '+horaDe(x):'';};
+  ti.innerHTML=ips.length?ips.map(function(x){
+    return '<tr><td><b>'+esc(x.ip)+'</b></td><td>'+etq(x.autorizado,'autorizada (escritório)','não autorizada')+'</td><td>'+esc((x.pessoas||[]).join(', '))+'</td><td class="num">'+x.entradas+'</td><td>'+quando(x.ultima)+'</td>'+
+      '<td style="text-align:right">'+(x.autorizado?'':'<button class="btn-secondary btn-sm" data-ap-ip="'+esc(x.ip)+'" type="button">Autorizar IP</button>')+'</td></tr>';
+  }).join(''):'<tr><td colspan="6" class="vazio">Nenhuma entrada nos últimos 30 dias.</td></tr>';
+  ta.innerHTML=aps.length?aps.map(function(a){
+    var nome=a.apelido||a.nome_auto||'Computador';
+    return '<tr'+(a.ativo?'':' style="opacity:.55"')+'><td><input class="ap-apelido" data-ap-apelido="'+a.id+'" value="'+esc(a.apelido||'')+'" placeholder="'+esc(a.nome_auto||'Apelido, ex.: Recepção 1')+'" maxlength="60" title="Apelido (ex.: Recepção 1); Enter grava"><div class="sub" style="margin:2px 0 0">'+esc(a.nome_auto||'')+'</div></td>'+
+      '<td>'+(a.ativo?etq(a.autorizado,'autorizado','não autorizado'):'<span class="etq ip-local" style="--c:var(--muted)">desativado</span>')+'</td>'+
+      '<td>'+esc((a.usuarios||[]).join(', ')||'ninguém ainda')+'</td><td class="sub" style="margin:0">'+esc((a.ips||[]).slice(-4).join(', '))+'</td>'+
+      '<td>'+quando(a.primeira_vez)+'<br>'+quando(a.ultima_vez)+'</td>'+
+      '<td style="text-align:right;white-space:nowrap">'+(a.ativo?'<button class="btn-secondary btn-sm" data-ap-aut="'+a.id+'" data-v="'+(a.autorizado?'0':'1')+'" type="button">'+(a.autorizado?'Tirar autorização':'Autorizar')+'</button> <button class="lnk" data-ap-desativar="'+a.id+'" type="button">Desativar</button>':'<button class="lnk" data-ap-reativar="'+a.id+'" type="button">Reativar</button>')+'</td></tr>';
+  }).join(''):'<tr><td colspan="6" class="vazio">Nenhum computador registrado ainda. Eles aparecem aqui conforme a equipe entra no SAGA.</td></tr>';
+  ti.querySelectorAll('[data-ap-ip]').forEach(function(b){b.addEventListener('click',async function(){
+    if(!await (window.sagaConfirmar?sagaConfirmar('Autorizar a internet '+b.dataset.apIp+'?','Ela passa a contar como internet do escritório para o ponto e deixa de gerar aviso no sino.','Autorizar',false):confirm('Autorizar a internet '+b.dataset.apIp+'?')))return;
+    b.disabled=true;var rr=await _sb.rpc('ponto_rede_adicionar',{p_ip:b.dataset.apIp,p_nome:null});b.disabled=false;
+    if(rr.error||!rr.data||!rr.data.ok){showToast('Não foi possível autorizar: '+esc((rr.error&&rr.error.message)||'tente de novo'),'error');return;}
+    showToast('Internet '+esc(b.dataset.apIp)+' autorizada.','success');state.redes=null;carregarAparelhos();});});
+  var salvarAp=async function(id,campos,msg){var rr=await _sb.rpc('aparelho_salvar',Object.assign({p_id:id},campos));if(rr.error){showToast('Não foi possível gravar: '+esc(rr.error.message),'error');return;}if(msg)showToast(msg,'success');carregarAparelhos();};
+  ta.querySelectorAll('[data-ap-aut]').forEach(function(b){b.addEventListener('click',function(){salvarAp(b.dataset.apAut,{p_autorizado:b.dataset.v==='1'},b.dataset.v==='1'?'Computador autorizado.':'Autorização retirada.');});});
+  ta.querySelectorAll('[data-ap-desativar]').forEach(function(b){b.addEventListener('click',async function(){if(!await (window.sagaConfirmar?sagaConfirmar('Desativar este computador?','Ele sai da lista de autorizados (o histórico fica).','Desativar',true):confirm('Desativar este computador?')))return;salvarAp(b.dataset.apDesativar,{p_ativo:false},'Computador desativado.');});});
+  ta.querySelectorAll('[data-ap-reativar]').forEach(function(b){b.addEventListener('click',function(){salvarAp(b.dataset.apReativar,{p_ativo:true},'Computador reativado.');});});
+  ta.querySelectorAll('[data-ap-apelido]').forEach(function(inp){var ant=inp.value;var gravar=function(){if(inp.value.trim()===ant)return;ant=inp.value.trim();salvarAp(inp.dataset.apApelido,{p_apelido:ant},'Apelido gravado.');};
+    inp.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();inp.blur();}});inp.addEventListener('blur',gravar);});
+}
+async function autorizarEsteComputador(){
+  var cod=window.sagaAparelhoCodigo?sagaAparelhoCodigo():null;
+  if(!cod){showToast('Este navegador não guardou o código do computador. Recarregue a página.','error');return;}
+  var apelido=window.prompt('Apelido deste computador (ex.: Recepção 1):','');if(apelido===null)return;
+  var r=await _sb.rpc('aparelho_autorizar_este',{p_codigo:cod,p_apelido:apelido||null,p_navegador:(navigator.userAgent||'').slice(0,300)});
+  if(r.error){showToast('Não foi possível autorizar: '+esc(r.error.message),'error');return;}
+  showToast('Este computador foi autorizado'+(r.data&&r.data.apelido?' ('+esc(r.data.apelido)+')':'')+'. Quem bater o ponto nele estará no escritório.','success');carregarAparelhos();
 }
 
 async function carregarPendencias(){
@@ -1644,6 +1698,7 @@ async function renderConfig(){
   document.getElementById('cfSemanal').value=String(c.dia_semanal||5);
   document.getElementById('cfEmails').value=(c.emails_gestor||[]).join(', ');document.getElementById('cfExtras').value=(c.emails_extras||[]).join(', ');
   document.getElementById('cfLocal').checked=c.exigir_local!==false;
+  var cfAp=document.getElementById('cfAparelho');if(cfAp)cfAp.checked=c.exigir_aparelho===true;
   var r=await _sb.from('localizacoes_permitidas').select('*').eq('ativo',true).order('criado_em').limit(1);
   state.local=(r.data||[])[0]||null;
   document.getElementById('cfLat').value=state.local?state.local.latitude:'';document.getElementById('cfLng').value=state.local?state.local.longitude:'';
@@ -1822,7 +1877,7 @@ async function salvarConfig(){
   if(ruim.length){showToast('E-mail inválido: '+esc(ruim.join(', ')),'error');return;}
   if(!(num('cfFech')>=1&&num('cfFech')<=31)){showToast('Dia do fechamento entre 1 e 31.','error');return;}
   var dados={inicio_contagem:document.getElementById('cfInicio').value||null,tolerancia_min:num('cfTol')||0,limite_alerta:num('cfLimite')||1,intervalo_alerta_min:Math.min(240,Math.max(5,num('cfIntervalo')||30)),lembrete_saida_min:Math.min(240,Math.max(0,num('cfLembSaida')||0)),lembrete_livre_min:(function(v){var m=/^(\d{1,2}):(\d{2})$/.exec(v||'');return m?Math.min(1439,(+m[1])*60+(+m[2])):0;})(document.getElementById('cfLembLivre').value),dia_fechamento:num('cfFech'),
-    hora_relatorio:num('cfHora'),dia_semanal:num('cfSemanal'),emails_gestor:em,emails_extras:ex,exigir_local:document.getElementById('cfLocal').checked,
+    hora_relatorio:num('cfHora'),dia_semanal:num('cfSemanal'),emails_gestor:em,emails_extras:ex,exigir_local:document.getElementById('cfLocal').checked,exigir_aparelho:!!(document.getElementById('cfAparelho')&&document.getElementById('cfAparelho').checked),
     email_diario:document.getElementById('cfEmDiario').checked,email_semanal:document.getElementById('cfEmSemanal').checked,email_fechamento:document.getElementById('cfEmFech').checked,atualizado_em:new Date().toISOString()};
   var btn=document.getElementById('cfSalvar');btn.disabled=true;
   try{
@@ -2382,7 +2437,7 @@ function trocarAba(aba){
   if(aba==='acessos'&&!(state.pode&&state.pode.admin))aba='meu';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='acessos')carregarAcessos();if(aba==='rel')renderRelatorios();if(aba==='pdf')montarBaixar();
+  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='acessos'){carregarAcessos();carregarAparelhos();}if(aba==='rel')renderRelatorios();if(aba==='pdf')montarBaixar();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
