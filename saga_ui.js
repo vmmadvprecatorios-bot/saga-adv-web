@@ -208,17 +208,16 @@
       '#topbarSaga .sg-chave i{position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .18s ease;}'+
       '#topbarSaga .sg-ligada .sg-chave{background:var(--gold) !important;}#topbarSaga .sg-ligada .sg-chave i{transform:translateX(13px);}'+
       /* ===== SIDEBAR: aparencia fixa, retratil, sticky ===== */
-      '#sidebarSaga{width:208px !important;background:var(--navy-2) !important;border-right:1px solid var(--border) !important;padding:22px 0 !important;position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;overscroll-behavior-y:contain !important;flex-grow:0 !important;flex-shrink:0 !important;flex-basis:208px !important;transition:width .22s ease,min-width .22s ease,flex-basis .22s ease,padding .22s ease,opacity .18s ease !important;}'+
+      '#sidebarSaga{width:232px !important;background:var(--navy-2) !important;border-right:1px solid var(--border) !important;padding:22px 0 !important;position:sticky !important;top:64px !important;height:calc(100vh - 64px) !important;overflow-y:auto !important;overscroll-behavior-y:contain !important;flex-grow:0 !important;flex-shrink:0 !important;flex-basis:232px !important;transition:width .22s ease,min-width .22s ease,flex-basis .22s ease,padding .22s ease,opacity .18s ease !important;}'+
       '[data-theme="light"] #sidebarSaga{background:#ffffff !important;border-right-color:var(--border) !important;}'+
       // recolhido no computador = faixa de 64 px só com os ícones; passando o mouse abre por cima (sem empurrar a tela)
       '@media(min-width:761px){#sidebarSaga{transition:width .3s cubic-bezier(.22,.78,.25,1),min-width .3s cubic-bezier(.22,.78,.25,1),margin-right .3s cubic-bezier(.22,.78,.25,1),box-shadow .3s ease !important;}'+
         '#sidebarSaga.collapsed{width:64px !important;min-width:64px !important;flex-basis:64px !important;overflow-x:hidden !important;z-index:150 !important;}'+
-        '#sidebarSaga.collapsed .nav-item{white-space:nowrap !important;}'+
         '#sidebarSaga.collapsed .nav-grupo{display:block !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section{height:1px !important;padding:0 !important;margin:12px 16px !important;font-size:0 !important;overflow:hidden !important;background:var(--border-soft) !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat{opacity:0 !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item{color:transparent !important;font-size:0 !important;}'+
-        '#sidebarSaga.collapsed.sg-aberto{width:208px !important;min-width:208px !important;margin-right:-144px !important;box-shadow:14px 0 34px rgba(0,0,0,.28) !important;}}'+
+        '#sidebarSaga.collapsed.sg-aberto{width:232px !important;min-width:232px !important;margin-right:-168px !important;box-shadow:14px 0 34px rgba(0,0,0,.28) !important;}}'+
       // celular: fica como era (grupos sempre abertos, sem setinha)
       '@media(max-width:760px){#sidebarSaga .nav-grupo{display:block !important;}#sidebarSaga .nav-section[data-grupo]{cursor:default !important;pointer-events:none;}#sidebarSaga .nav-section[data-grupo]::after{display:none !important;}}'+
       // grupos: título clicável com setinha
@@ -233,7 +232,8 @@
       '#sidebarSaga.collapsed .nav-section[data-grupo]{cursor:default !important;pointer-events:none !important;}'+
       '#sidebarSaga .nav-section,#sidebarSaga .nav-secao{font-size:10px !important;letter-spacing:1.6px !important;color:#9aa6b8 !important;text-transform:uppercase !important;font-weight:600 !important;padding:17px 22px 7px !important;opacity:1 !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-section,[data-theme="light"] #sidebarSaga .nav-secao{color:#5b6880 !important;}'+
-      '#sidebarSaga .nav-item{display:flex !important;align-items:center !important;gap:11px !important;padding:11px 22px !important;font-size:13px !important;color:#d5dbe4 !important;font-weight:500 !important;cursor:pointer !important;border-left:3px solid transparent !important;background:transparent !important;transition:all .2s !important;}'+
+      '#sidebarSaga .nav-item{white-space:nowrap !important;}'+ // nome sempre numa linha só (12/11, Dr. Victor)
+      '#sidebarSaga .nav-item{display:flex !important;align-items:center !important;gap:11px !important;padding:11px 16px 11px 22px !important;font-size:13px !important;color:#d5dbe4 !important;font-weight:500 !important;cursor:pointer !important;border-left:3px solid transparent !important;background:transparent !important;transition:all .2s !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-item{color:#22324a !important;}'+
       '#sidebarSaga .nav-item:hover{color:#ffffff !important;background:rgba(255,255,255,.06) !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-item:hover{color:#13233a !important;background:rgba(19,38,66,.06) !important;}'+
@@ -573,7 +573,7 @@
   }
 
   var SIDEBAR_HTML=''
-    +'<div class="nav-section" data-grupo="operacao" role="button" tabindex="0" aria-expanded="true">Operação</div><div class="nav-grupo" data-grupo="operacao">'
+    +'<div class="nav-section" data-grupo="processos" role="button" tabindex="0" aria-expanded="true">Processos</div><div class="nav-grupo" data-grupo="processos">'
     +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Jurídico</div>'
@@ -586,56 +586,58 @@
     +'<div class="nav-item" data-tela="buscas" onclick="sagaIrPara(\'pedidos_busca.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M15.4 15.4L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10.5" cy="9" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7.2 14a3.6 3.6 0 0 1 6.6 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
     +'Pedidos de busca<span class="nav-badge-chat nav-badge-dia" id="navBadgeBuscas" style="display:none" title="Pedidos de busca a fazer"></span></div>'
-    +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
-    +'<div class="nav-item" data-tela="tarefas" onclick="sagaIrPara(\'minhas_tarefas.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
-    +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Notas</div>'
-    +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Intimações</div>'
-    +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Teses e oportunidades</div>'
     +'<div class="nav-item" data-tela="clientes_perfil" onclick="sagaIrPara(\'clientes_perfil.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 20a6.5 6.5 0 0 1 10.5-5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17.5" cy="16.5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.7 18.7L22 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Clientes por perfil</div>'
+    +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Teses e oportunidades</div>'
+    +'</div><div class="nav-section" data-grupo="meudia" role="button" tabindex="0" aria-expanded="true">Meu dia</div><div class="nav-grupo" data-grupo="meudia">'
+    +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Ponto Eletrônico</div>'
+    +'<div class="nav-item" data-tela="tarefas" onclick="sagaIrPara(\'minhas_tarefas.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
+    +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
+    +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Intimações</div>'
+    +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Notas</div>'
     +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicação</div><div class="nav-grupo" data-grupo="comunicacao">'
     +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Chat Interno<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
-    +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Ponto Eletrônico</div>'
     +'<div class="nav-item" data-tela="sugestoes" onclick="sagaIrPara(\'sugestoes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Sugestões de melhoria</div>'
     +'<div class="nav-item" data-tela="manual" onclick="sagaIrPara(\'manual.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5zM9 7.5h7M9 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Manual do SAGA</div>'
+    +'<div class="nav-item" data-tela="treinamentos" onclick="sagaIrPara(\'treinamentos.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M2 8l10-5 10 5-10 5-10-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Treinamentos</div>'
     +'</div><div class="nav-section" data-grupo="gestao" role="button" tabindex="0" aria-expanded="true">Gestão</div><div class="nav-grupo" data-grupo="gestao">'
-    +'<div class="nav-item" data-tela="colaboradores" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Colaboradores</div>'
     +'<div class="nav-item" data-tela="dashboard" onclick="sagaIrPara(\'dashboard_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Dashboard</div>'
-    +'<div class="nav-item" data-tela="biblioteca" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 4v16a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v16" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Biblioteca de Modelos</div>'
     +'<div class="nav-item" data-tela="financeiro" onclick="sagaIrPara(\'financeiro.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Financeiro</div>'
     +'<div class="nav-item" data-tela="marketing" onclick="sagaIrPara(\'marketing_campanhas_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8v18l-18-8v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 15v4a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Marketing</div>'
-    +'<div class="nav-item" data-tela="treinamentos" onclick="sagaIrPara(\'treinamentos.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M2 8l10-5 10 5-10 5-10-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Treinamentos</div>'
+    +'<div class="nav-item" data-tela="colaboradores" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Colaboradores</div>'
+    +'<div class="nav-item" data-tela="biblioteca" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 4v16a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v16" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Biblioteca de Modelos</div>'
+    +'</div><div class="nav-section" data-grupo="admin" role="button" tabindex="0" aria-expanded="true">Administração</div><div class="nav-grupo" data-grupo="admin">'
     +'<div class="nav-item sem-permissao" data-tela="atividades" onclick="sagaIrPara(\'registro_atividades.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 6h12M8 12h12M8 18h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>'
     +'Registro de atividades</div>'
@@ -644,7 +646,8 @@
     +'Fichas do agente</div>'
     +'<div class="nav-item sem-permissao" data-tela="permissoes" onclick="sagaIrPara(\'painel_admin_permissoes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2l8 4v6c0 5-3.4 8.7-8 10-4.6-1.3-8-5-8-10V6l8-4z" stroke="currentColor" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Permissões</div></div>';
+    +'Permissões</div>'
+    +'</div>';
 
   var TOPBAR_HTML=''
     +'<div class="top-left">'
@@ -686,8 +689,7 @@
     +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=preferencias" data-ir="configuracoes_padrao_metalico.html?aba=preferencias"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16" cy="6" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="12" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.6"/></svg><span>Preferências</span></a>'
     +'<a class="pop-row pop-row-link" href="configuracoes_padrao_metalico.html?aba=seguranca" data-ir="configuracoes_padrao_metalico.html?aba=seguranca"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Segurança e aparelhos</span></a>'
     // "Efeitos de movimento" fica só em Configurações > Preferências (pedido do Dr. Victor, 08/11)
-    +'<div class="pop-row pop-row-link" data-acao="manual" role="menuitem" tabindex="0" title="Abre o manual no capítulo da tela em que você está"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5zM9 7.5h7M9 11h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Manual do SAGA</span></div>'
-    +'<div class="pop-row pop-row-link" data-acao="sugerir" role="menuitem" tabindex="0" title="Abre uma sugestão já na aba em que você está"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sugerir uma melhoria</span></div>'
+    // "Manual do SAGA" e "Sugerir uma melhoria" saíram daqui: já estão no menu lateral (pedido do Dr. Victor, 12/11)
     +'<div class="pop-divisor"></div>'
     +'<div class="pop-row pop-row-sair" data-acao="sair" role="menuitem" tabindex="0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sair do sistema</span></div>'
     +'</div>'

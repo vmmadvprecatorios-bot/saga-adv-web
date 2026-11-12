@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "1.7",
-  data: "11/11/2026",
+  versao: "1.8",
+  data: "12/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "1.8", data: "12/11/2026", mudou: "Menu da esquerda em cinco grupos (Processos, Meu dia, Comunicação, Gestão e Administração), com os nomes sempre numa linha; menu da foto só com Meu perfil, Preferências, Segurança e Sair (o Manual e as Sugestões ficam no menu da esquerda); Minhas Tarefas com o atalho \"Dar impulso processual\"; Dashboard com os processos parados e os processos sem o resumo do agente que abrem a lista e a ficha." },
     { versao: "1.7", data: "11/11/2026", mudou: "Cliente repetido: ao cadastrar, o SAGA procura ficha com o mesmo CPF, o mesmo nome ou nome parecido e abre a janela \"Essa pessoa já tem ficha?\" (\"Usar esta ficha\"); mesmo CPF não cria outra; ficha separada só com o motivo escrito." },
     { versao: "1.6", data: "11/11/2026", mudou: "Minhas Tarefas: o atalho do tribunal (copia o número e abre o processo no site do tribunal) fica à vista no cartão, na Lista e na janela da tarefa (\"Site do tribunal\"), como nas Intimações." },
     { versao: "1.5", data: "11/11/2026", mudou: "Ponto: aba Acessos e coluna \"Entrou no sistema\" (só o administrador), com o aviso no sino na primeira entrada do dia de cada colaborador." },
@@ -64,7 +65,7 @@ window.SAGA_MANUAL = {
       "**Senha é pessoal.** Não empreste o seu acesso nem anote a senha em papel. Ao sair do computador, use [[Sair do sistema]] no menu da foto.",
       "**Ponto todo dia.** Bata a entrada, as pausas e a saída no Ponto. Esqueceu? Faça a justificativa no mesmo dia.",
       "**Documentos dos clientes.** Hoje ficam no Google Drive do escritório. Quando o sistema estiver pronto para isso, irão para as pastas de cada cliente no SAGA (o administrador avisa).",
-      "**Viu algo errado ou tem uma ideia?** Use [[Sugerir uma melhoria]] (menu da foto). Não mude o jeito de trabalhar por conta própria."
+      "**Viu algo errado ou tem uma ideia?** Use **Sugestões de melhoria** (menu da esquerda, em Comunicação). Não mude o jeito de trabalhar por conta própria."
     ]
   },
 
@@ -90,7 +91,7 @@ window.SAGA_MANUAL = {
         { id: "tela", titulo: "Conhecer a tela",
           quando: "Para se localizar em qualquer tela do SAGA: a barra do alto e o menu da esquerda são sempre os mesmos.",
           passos: [
-            "No **menu da esquerda** ficam as telas, em três grupos: **Operação** (o trabalho do dia a dia), **Comunicação** e **Gestão**. Só aparece o que você tem permissão para ver.",
+            "No **menu da esquerda** ficam as telas, em grupos que abrem e fecham: **Processos** (Jurídico, Captação, Cartas, Pedidos de busca, Clientes por perfil, Teses), **Meu dia** (Ponto, Tarefas, Agenda, Intimações, Notas), **Comunicação** (Chat, Sugestões, Manual, Treinamentos), **Gestão** (Dashboard, Financeiro, Marketing, Colaboradores, Biblioteca) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver.",
             "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **olho** (modo privacidade), atualizar, o **tema** (claro ou escuro) e a sua **foto**.",
             "Os números ao lado dos itens do menu (Agenda, Minhas Tarefas, Chat) mostram o que há para hoje ou o que não foi lido.",
             "O menu da esquerda **fica no lugar** quando você troca de tela (não volta para o topo). Com o mouse em cima dele, a roda do mouse rola só o menu, sem mexer na página."
@@ -119,14 +120,13 @@ window.SAGA_MANUAL = {
           img: "sino",
           marcas: ["Sino com o número de avisos não lidos."]
         },
-        { id: "foto", titulo: "Menu da foto: perfil, sugestões e sair",
-          quando: "Para mudar os seus dados, a senha, as preferências, sugerir uma melhoria ou sair do sistema.",
+        { id: "foto", titulo: "Menu da foto: perfil, preferências e sair",
+          quando: "Para mudar os seus dados, a senha, as preferências ou sair do sistema.",
           passos: [
             "Clique na sua **foto** (canto de cima, à direita).",
             "**Meu perfil**: foto, nome, telefone e OAB. **Segurança e aparelhos**: troca de senha e aparelhos conectados.",
             "**Preferências**: tema, cor, tamanho da letra, efeitos de movimento e avisos.",
-            "**Manual do SAGA**: abre este manual já no capítulo da tela em que você está (o manual também fica no menu da esquerda, em Comunicação).",
-            "**Sugerir uma melhoria**: abre a sugestão já marcada na tela em que você está.",
+            "O **Manual do SAGA** e as **Sugestões de melhoria** ficam no menu da esquerda, em **Comunicação**.",
             "**Sair do sistema**: use sempre ao terminar. Se o seu ponto estiver aberto, o SAGA lembra antes de sair."
           ],
           img: "menu_foto",
@@ -470,6 +470,7 @@ window.SAGA_MANUAL = {
             "Abra **Minhas Tarefas**. No alto: total, novas, em andamento, **atrasadas** e concluídas hoje (clique para filtrar).",
             "Veja em **Kanban** (arraste o cartão entre as colunas) ou **Lista**. O calendário mostra os prazos do mês.",
             "[[Filtros]]: tipo, situação, prioridade, prazo e responsável.",
+            "[[Dar impulso processual]] (ao lado de Todas / Minhas): mostra só as tarefas de impulso que o SAGA cria nos processos parados, com o número delas; clique de novo para voltar a todas. No filtro **Tipo** também há **Sem as de impulso**.",
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],
           img: "tarefas",
@@ -578,7 +579,7 @@ window.SAGA_MANUAL = {
         { id: "sugestoes", titulo: "Sugerir uma melhoria ou uma aba nova",
           quando: "Quando o colaborador vê algo que pode ficar melhor, um erro, ou sente falta de uma aba.",
           passos: [
-            "Menu da foto > [[Sugerir uma melhoria]] (já marca a tela em que você está) ou **Sugestões de melhoria** no menu.",
+            "Abra **Sugestões de melhoria** no menu da esquerda (em Comunicação).",
             "Clique em [[+ Nova sugestão]], escolha a aba do sistema, escreva e cole até 6 prints (Ctrl+V).",
             "Veja as sugestões em **Cartões**, **Kanban** (uma coluna por situação) ou **Lista**. Todos comentam e apoiam (**Também quero**).",
             "Filtre pelos atalhos do alto (**Pendentes** = ainda não feitas, Aprovada, **Concluída** = ajuste feito, **Não aprovada** = recusada...), pela aba, por **quem sugeriu** ou pela busca.",
@@ -737,7 +738,9 @@ window.SAGA_MANUAL = {
           quando: "Para ver o resumo do escritório.",
           passos: [
             "Abra **Dashboard**: processos por fase e área, prazos vencidos, tarefas pendentes, intimações e avisos.",
-            "Escolha o período e a equipe e clique em [[Aplicar]]."
+            "Escolha o período e a equipe e clique em [[Aplicar]].",
+            "**Processos sem movimentação** (mais de 30, 60, 90 e 120 dias, e sem data) e **Resumo do agente**: clique na linha para abrir a lista dos processos ativos do Jurídico. Na lista, troque a faixa no alto, filtre pelo nome, número ou responsável e clique no processo para abrir a ficha (Ctrl+clique abre em outra aba).",
+            "Na lista **Sem resumo do agente**, [[Copiar números]] copia os números dos processos para baixar os autos e mandar ao agente, que faz o resumo estratégico e envia a ficha ao SAGA."
           ],
           img: "dashboard",
           marcas: ["Período.", "Aplicar."]
