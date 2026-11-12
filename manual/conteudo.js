@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.0",
+  versao: "2.1",
   data: "12/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.1", data: "12/11/2026", mudou: "Tela nova Precatórios e RPV (menu Gestão): situação do requisitório de cada processo do Jurídico, aviso de pagamento liberado e dinheiro a entrar por mês e por ano; colunas novas do requisitório na planilha do Jurídico." },
     { versao: "2.0", data: "12/11/2026", mudou: "Cores novas do tema: Novembro Azul, Rosa (Outubro Rosa) e Natal, cada uma com claro e escuro; Tema do mês: o administrador liga e o SAGA troca a cor da equipe sozinho no mês de cada campanha." },
     { versao: "1.9", data: "12/11/2026", mudou: "Jurídico: selo \"sem resumo\" no nome do cliente e o filtro \"Sem resumo do agente\"; Intimações: a janela mostra o resumo do agente (situação, próximo passo, prazo e última movimentação) e avisa quando a intimação é mais nova que o resumo." },
     { versao: "1.8", data: "12/11/2026", mudou: "Menu da esquerda em cinco grupos (Processos, Meu dia, Comunicação, Gestão e Administração), com os nomes sempre numa linha; menu da foto só com Meu perfil, Preferências, Segurança e Sair (o Manual e as Sugestões ficam no menu da esquerda); Minhas Tarefas com o atalho \"Dar impulso processual\"; Dashboard com os processos parados e os processos sem o resumo do agente que abrem a lista e a ficha." },
@@ -698,6 +699,18 @@ window.SAGA_MANUAL = {
           ],
           img: "financeiro",
           marcas: ["Lançamento avulso.", "Atualizar."]
+        },
+        { id: "precatorios", titulo: "Precatórios e RPV: pagamento liberado e dinheiro a entrar",
+          quando: "Para saber em que pé está o requisitório de cada processo, quais pagamentos já saíram e quanto deve entrar em cada mês ou ano.",
+          passos: [
+            "Abra **Precatórios e RPV** no menu (Gestão). No alto escolha **A receber** (ativos e encerrados), **Ativos**, **Encerrados** ou **Sacados**.",
+            "**Pagamento liberado** (quadro verde): processos com a situação \"Pago (liberado para saque)\" na planilha ou com andamento de pagamento ou alvará no CNJ nos últimos 120 dias, ainda não sacados. Clique para abrir a ficha e fazer o levantamento.",
+            "**Dinheiro a entrar**: os honorários a receber (esperado − já recebido) pela previsão de pagamento, [[Por mês]] ou [[Por ano]]. Clique numa barra para ver só os processos dela; **Previsão vencida** mostra o que já devia ter entrado.",
+            "Sem data na planilha, o SAGA **estima**: RPV, 60 dias depois da expedição; precatório, o ano do orçamento (LOA) ou, pela data da expedição no CNJ, o ano seguinte (expedido até 2 de abril) ou o outro. A tabela marca \"(estimada)\".",
+            "Para preencher: na planilha do **Jurídico**, colunas **Tipo do requisitório**, **Situação do requisitório**, **Ano do orçamento (LOA)**, **Previsão de pagamento** e **Valor atualizado do requisitório** (na célula ou pelo [[Importar planilha]], com esses nomes no Excel).",
+            "[[Salvar em PDF]] tira o relatório com os números, as faixas e a lista."
+          ],
+          dicas: ["Os honorários aparecem só para quem vê o Financeiro; os outros veem os processos e o valor dos requisitórios.", "Nada é contado duas vezes: o \"a receber\" é o mesmo do Financeiro e do Dashboard (esperado − recebido)."]
         }
       ]
     },

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611121247"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Precatórios e RPV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:80ch;line-height:1.5}
+.botoes{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:11px;font-size:12px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
+.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);flex-wrap:wrap}
+.pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.filtros{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;padding:14px;border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px}
+.campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.campo>label,.campo>.rot{font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.campo .rot button{font-size:10px;letter-spacing:0;text-transform:none;color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.campo .rot button:hover{color:var(--text)}
+.ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;width:100%;min-width:0}
+.ent:focus{border-color:var(--gold)}
+select.ent{padding:0 8px}
+.faixa{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center}
+.faixa span{font-size:11px;color:var(--muted)}
+.faixa .ent{text-align:center;font-variant-numeric:tabular-nums}
+.resumo-topo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.resumo-topo b{color:var(--text);font-weight:600}
+.ordem{display:flex;align-items:center;gap:8px}.ordem .ent{height:32px;width:auto;font-size:12px}
+.tabela{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);overflow:hidden}
+table.tb{width:100%;border-collapse:collapse;font-size:12px}
+.tb th{text-align:left;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--border-soft);white-space:nowrap}
+.tb td{padding:10px 12px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+.tb tr:last-child td{border-bottom:0}
+.tb tbody tr{transition:background .2s}
+.tb tbody tr:hover{background:color-mix(in srgb,var(--text) 3%,transparent)}
+.tb .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.nome-cliente{color:var(--text);font-weight:600;font-size:12.5px;text-decoration:none;overflow-wrap:anywhere}
+.nome-cliente:hover{color:var(--gold-light);text-decoration:underline;text-underline-offset:3px}
+.sub{display:block;color:var(--muted);font-size:11px;margin-top:2px;font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;height:21px;padding:0 8px;border-radius:999px;font-size:10.5px;font-weight:600;border:1px solid color-mix(in srgb,var(--c,var(--gold)) 45%,transparent);background:color-mix(in srgb,var(--c,var(--gold)) 13%,transparent);color:var(--text);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip.falecido{--c:#8a94a8}
+.perfil-l{display:flex;flex-direction:column;gap:3px}
+.perfil-l .chip{align-self:flex-start}
+.perfil-l .linha{font-size:11.5px;overflow-wrap:anywhere}
+.teses{display:flex;flex-wrap:wrap;gap:4px}
+.tese{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:7px;font-size:10.5px;border:1px solid var(--border-soft);background:color-mix(in srgb,var(--panel-solid) 70%,transparent);color:var(--text);text-decoration:none;max-width:240px}
+.tese span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tese i{font-style:normal;width:7px;height:7px;border-radius:50%;background:var(--g,#8a94a8);flex:0 0 auto}
+.tese:hover{border-color:var(--gold)}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.paginacao{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:12px;font-size:12px;color:var(--muted)}
+.paginacao[hidden]{display:none}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}
+
+/* ===== Precatórios e RPV (T117 parte 1, 12/11) ===== */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.kpi{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:12px 14px;min-width:0}
+.kpi small{display:block;font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.kpi b{display:block;font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.kpi.alerta{border-color:color-mix(in srgb,var(--success) 55%,transparent);background:color-mix(in srgb,var(--success) 8%,var(--panel))}
+.bloco{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:14px 16px;margin-bottom:14px}
+.bloco h2{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.bloco h2 small{font-family:Montserrat,Arial,sans-serif;font-size:11px;font-weight:400;color:var(--muted)}
+.bloco p.ajuda{font-size:11.5px;color:var(--muted);margin:4px 0 10px;line-height:1.5;max-width:90ch}
+.aviso-pag{border-color:color-mix(in srgb,var(--success) 50%,transparent);background:color-mix(in srgb,var(--success) 7%,var(--panel))}
+.aviso-pag[hidden]{display:none}
+.lin-aviso{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;padding:8px 10px;border-radius:10px;font-size:12px;transition:background .25s cubic-bezier(.22,.78,.25,1)}
+.lin-aviso:hover,.lin-aviso:focus-visible{background:color-mix(in srgb,var(--success) 12%,transparent);outline:none}
+.lin-aviso b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lin-aviso span{color:var(--muted);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lin-aviso em{font-style:normal;font-size:10.5px;font-weight:600;color:var(--success);white-space:nowrap}
+.barras{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.barra-l{display:grid;grid-template-columns:150px minmax(0,1fr) 130px;gap:10px;align-items:center;font-size:12px;width:100%;text-align:left;padding:3px 4px;border-radius:8px;transition:background .25s cubic-bezier(.22,.78,.25,1)}
+.barra-l:hover,.barra-l:focus-visible{background:color-mix(in srgb,var(--text) 4%,transparent);outline:none}
+.barra-l.active{background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.barra-l .rot{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barra-l .rot small{color:var(--muted);margin-left:4px}
+.trilho{height:12px;border-radius:7px;background:color-mix(in srgb,var(--text) 6%,transparent);overflow:hidden}
+.trilho i{display:block;height:100%;border-radius:7px;background:linear-gradient(90deg,var(--gold-light),var(--gold));width:0;transition:width .42s cubic-bezier(.22,.78,.25,1)}
+.barra-l.sem .trilho i{background:color-mix(in srgb,var(--muted) 60%,transparent)}
+.barra-l.atrasado .trilho i{background:linear-gradient(90deg,#f59e0b,#e5636a)}
+.barra-l .val{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.barra-l .val small{display:block;color:var(--muted);font-size:10.5px}
+.sit{display:inline-flex;align-items:center;gap:5px;font-size:11px;white-space:nowrap}
+.sit i{width:8px;height:8px;border-radius:50%;background:var(--c,#8a94a8);flex:0 0 auto}
+.est{color:var(--muted);font-size:10.5px}
+.cnj{display:table;font-size:10px;font-weight:600;padding:1px 6px;border-radius:6px;border:1px solid var(--border-soft);color:var(--muted);margin-top:3px}
+.cnj.pag{color:var(--success);border-color:color-mix(in srgb,var(--success) 45%,transparent)}
+.tb tbody tr{cursor:pointer}
+.filtros-p{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.filtros-p .ent{width:auto;min-width:200px}
+.filtros-p input.ent{flex:1;min-width:220px}
+.btn[hidden]{display:none!important}
+.bloco h2 .pills{font-family:Montserrat,Arial,sans-serif}
+.dica-col{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){
+  .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .barra-l{grid-template-columns:96px minmax(0,1fr) 92px;gap:6px;font-size:11px}
+  .lin-aviso{grid-template-columns:minmax(0,1fr) auto}.lin-aviso span{display:none}
+  .filtros-p .ent{min-width:0;width:100%}
+  .tb thead{display:none}
+  .tb tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;padding:12px;border-bottom:1px solid var(--border-soft)}
+  .tb tr:last-child{border-bottom:0}
+  .tb td{border:0;padding:0}
+  .tb td.c-nome{grid-column:1/-1}
+  .tb td[data-r]::before{content:attr(data-r);display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611121247">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Precatórios e RPV</h1>
+      <p>A situação do requisitório de cada processo do Jurídico e o dinheiro que deve entrar. Lê o que está no SAGA: as colunas do requisitório na planilha do Jurídico (que entram também pelo "Importar planilha") e os andamentos do CNJ. Clique no processo para abrir a ficha.</p>
+    </div>
+    <div class="botoes"><button class="btn" type="button" id="btnAtualizar">Atualizar</button><button class="btn" type="button" id="btnPdf">Salvar em PDF</button></div>
+  </div>
+  <div class="barra">
+    <div class="pills" id="pillsGrupo" role="group" aria-label="Quais processos">
+      <button class="pill active" type="button" data-grupo="receber">A receber<b id="nReceber"></b></button>
+      <button class="pill" type="button" data-grupo="ativo">Ativos<b id="nAtivo"></b></button>
+      <button class="pill" type="button" data-grupo="encerrado">Encerrados<b id="nEncerrado"></b></button>
+      <button class="pill" type="button" data-grupo="sacado">Sacados<b id="nSacado"></b></button>
+    </div>
+  </div>
+  <section class="kpis" id="kpis" aria-label="Números"></section>
+  <section class="bloco aviso-pag" id="avisoPag" hidden aria-labelledby="tAviso">
+    <h2 id="tAviso">Pagamento liberado <small id="nAviso"></small></h2>
+    <p class="ajuda">Processos com a situação "Pago (liberado para saque)" na planilha ou com andamento de pagamento ou alvará no CNJ nos últimos 120 dias, e que ainda não estão como sacados. Confira e faça o levantamento.</p>
+    <div id="listaAviso"></div>
+  </section>
+  <section class="bloco" id="blocoDinheiro" aria-labelledby="tDinheiro">
+    <h2 id="tDinheiro">Dinheiro a entrar <span class="pills" id="pillsPeriodo" role="group" aria-label="Agrupar por"><button class="pill active" type="button" data-per="mes">Por mês</button><button class="pill" type="button" data-per="ano">Por ano</button></span></h2>
+    <p class="ajuda" id="ajudaDinheiro">Honorários a receber (esperado − já recebido) pela previsão de pagamento. Sem data na planilha, o SAGA estima: RPV, 60 dias depois da expedição; precatório, o ano do orçamento (LOA) ou, pela data da expedição, o ano seguinte (expedido até 2 de abril) ou o outro. Clique numa barra para ver os processos dela.</p>
+    <div class="barras" id="barras"></div>
+  </section>
+  <div class="filtros-p">
+    <input class="ent" id="fBusca" type="search" autocomplete="off" placeholder="Buscar por cliente, número, tipo de ação ou responsável">
+    <select class="ent" id="fSit" aria-label="Situação do requisitório"><option value="">Todas as situações</option></select>
+    <select class="ent" id="fTipo" aria-label="Tipo do requisitório"><option value="">Precatório e RPV</option><option value="Precatório">Precatório</option><option value="RPV">RPV</option><option value="?">Tipo não informado</option></select>
+    <button class="btn" type="button" id="btnLimparFaixa" hidden>Ver todas as previsões</button>
+  </div>
+  <div class="resumo-topo"><span id="resumo">Carregando…</span></div>
+  <div id="area"></div>
+  <p class="dica-col">Para preencher: na planilha do Jurídico, colunas <b>Tipo do requisitório</b>, <b>Situação do requisitório</b>, <b>Ano do orçamento (LOA)</b>, <b>Previsão de pagamento</b> e <b>Valor atualizado do requisitório</b> (na célula ou pelo "Importar planilha", com esses nomes nas colunas do Excel).</p>
+</main>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611121247"></script>
+<script src="saga_pdf.js?v=202611121247"></script>
+<script>
+/* =====================================================================
+   SAGA · Precatórios e RPV (T117 parte 1; bloco 170: precatorios_painel)
+   Fonte única: vw_processos_andamento (grupo ativo/encerrado/sacado; a receber = esperado − recebido).
+   Honorários só para quem vê o Financeiro (a função devolve ve_valores = false para os outros).
+   ===================================================================== */
+var P={linhas:[],grupo:'receber',per:'mes',faixa:null,ve:false};
+var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
+var CORES_SIT={'Não expedido':'#8a94a8','Expedido':'#e0a93b','Expedido (CNJ)':'#e0a93b','No orçamento':'#4b8af5','Pago (liberado para saque)':'#16a34a','Pago (CNJ)':'#16a34a','Sacado':'#2f6cd6','Sem informação':'#64748b'};
+var ORDEM_SIT=['Pago (liberado para saque)','Pago (CNJ)','No orçamento','Expedido','Expedido (CNJ)','Não expedido','Sacado','Sem informação'];
+var MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
+function n(v){return new Intl.NumberFormat('pt-BR').format(v||0);}
+function rs(v){return v==null?'—':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v));}
+function rsCurto(v){v=Number(v||0);if(Math.abs(v)>=1e6)return 'R$ '+(v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:2})+' mi';if(Math.abs(v)>=1e3)return 'R$ '+(v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil';return rs(v);}
+function dataBR(d){if(!d)return '';var p=String(d).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+function hojeISO(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+function somaDias(iso,dias){var d=new Date(iso+'T12:00:00');d.setDate(d.getDate()+dias);return d.toISOString().slice(0,10);}
+// situação mostrada: a da planilha; sem ela, o que o CNJ indica
+function situacaoDe(p){
+  if(p.situacao)return p.situacao;
+  if(p.grupo==='sacado')return 'Sacado';
+  if(p.cnj_pagamento_em)return 'Pago (CNJ)';
+  if(p.cnj_requisicao_em)return 'Expedido (CNJ)';
+  return 'Sem informação';
+}
+function tipoDe(p){return p.tipo||'';}
+// previsão: a data da planilha; sem ela, estimada (RPV +60 dias da expedição; precatório pelo ano do orçamento ou pela regra do 2 de abril)
+function previsaoDe(p){
+  if(p.previsao)return {data:p.previsao,ano:+String(p.previsao).slice(0,4),est:false};
+  var req=p.cnj_requisicao_em;
+  if(tipoDe(p)==='RPV'&&req){var d=somaDias(req,60);return {data:d,ano:+d.slice(0,4),est:true,como:'RPV: 60 dias depois da expedição ('+dataBR(req)+')'};}
+  var ano=/^\d{4}$/.test(String(p.ano_orcamento||'').trim())?+String(p.ano_orcamento).trim():null;
+  if(ano)return {data:null,ano:ano,est:true,como:'orçamento (LOA) de '+ano};
+  if(req&&tipoDe(p)!=='RPV'){var y=+req.slice(0,4),corte=y+'-04-02';var a=req<=corte?y+1:y+2;return {data:null,ano:a,est:true,como:'expedido em '+dataBR(req)+': orçamento de '+a};}
+  return null;
+}
+function liberado(p){
+  if(p.grupo==='sacado')return false;
+  if(p.situacao==='Pago (liberado para saque)')return true;
+  if(p.cnj_pagamento_em&&p.cnj_pagamento_em>=somaDias(hojeISO(),-120))return true;
+  return false;
+}
+function noGrupo(p){return P.grupo==='receber'?(p.grupo==='ativo'||p.grupo==='encerrado'):p.grupo===P.grupo;}
+// faixa de tempo de cada processo (para as barras e o filtro pela barra)
+function faixaDe(p){
+  var pv=previsaoDe(p),hoje=hojeISO();
+  if(!pv)return {k:'sem',rot:'Sem previsão',ordem:'9999'};
+  if(P.per==='ano'){if(pv.ano<+hoje.slice(0,4))return {k:'atr',rot:'Previsão vencida',ordem:'0000'};return {k:String(pv.ano),rot:String(pv.ano),ordem:String(pv.ano)};}
+  if(pv.data){var m=pv.data.slice(0,7);if(m<hoje.slice(0,7))return {k:'atr',rot:'Previsão vencida',ordem:'0000'};return {k:m,rot:MESES[+m.slice(5,7)-1]+'/'+m.slice(0,4),ordem:m};}
+  if(pv.ano<+hoje.slice(0,4))return {k:'atr',rot:'Previsão vencida',ordem:'0000'};
+  return {k:'a'+pv.ano,rot:'Em '+pv.ano+' (sem mês)',ordem:pv.ano+'-99'};
+}
+function filtradas(semFaixa){
+  var q=$('fBusca').value.trim().toLowerCase(),sit=$('fSit').value,tp=$('fTipo').value;
+  return P.linhas.filter(function(p){
+    if(!noGrupo(p))return false;
+    if(sit&&situacaoDe(p)!==sit)return false;
+    if(tp==='?'&&p.tipo)return false;if(tp&&tp!=='?'&&p.tipo!==tp)return false;
+    if(q&&[p.cliente,p.numero,p.tese,p.responsavel].join(' ').toLowerCase().indexOf(q)<0)return false;
+    if(!semFaixa&&P.faixa&&faixaDe(p).k!==P.faixa)return false;
+    return true;
+  });
+}
+function contarGrupos(){
+  var c={receber:0,ativo:0,encerrado:0,sacado:0};
+  P.linhas.forEach(function(p){if(c[p.grupo]!=null)c[p.grupo]++;if(p.grupo==='ativo'||p.grupo==='encerrado')c.receber++;});
+  ['receber','ativo','encerrado','sacado'].forEach(function(k){$('n'+k[0].toUpperCase()+k.slice(1)).textContent=n(c[k]);});
+}
+function desenharKpis(){
+  var l=P.linhas.filter(noGrupo);
+  var exp=l.filter(function(p){var s=situacaoDe(p);return s!=='Sem informação'&&s!=='Não expedido';}).length;
+  var lib=l.filter(liberado).length,prev=l.filter(function(p){return !!previsaoDe(p);}).length;
+  var arec=l.reduce(function(s,p){return s+(Number(p.honorarios_a_receber)||0);},0);
+  var prc=l.reduce(function(s,p){return s+(Number(p.valor_atualizado||p.valor_precatorio)||0);},0);
+  var k=[
+    {r:'Processos',v:n(l.length),s:P.grupo==='receber'?'ativos e encerrados':''},
+    {r:'Requisitório expedido',v:n(exp),s:'pela planilha ou pelo CNJ'},
+    {r:'Pagamento liberado',v:n(lib),s:lib?'conferir e levantar':'nenhum agora',cls:lib?'alerta':''},
+    {r:'Com previsão',v:n(prev),s:'data, ano do orçamento ou estimada'},
+    P.ve?{r:'Honorários a receber',v:rsCurto(arec),s:'esperado − recebido'}:{r:'Valor dos requisitórios',v:rsCurto(prc),s:'atualizado ou do precatório'}
+  ];
+  $('kpis').innerHTML=k.map(function(x){return '<div class="kpi '+(x.cls||'')+'"><small>'+esc(x.r)+'</small><b>'+esc(x.v)+'</b><span>'+esc(x.s)+'</span></div>';}).join('');
+}
+function desenharAviso(){
+  var l=P.linhas.filter(liberado).sort(function(a,b){return String(b.cnj_pagamento_em||'').localeCompare(String(a.cnj_pagamento_em||''));});
+  var box=$('avisoPag'),abrir=l.length>0;
+  $('nAviso').textContent=l.length?n(l.length)+' processo(s)':'';
+  $('listaAviso').innerHTML=l.slice(0,30).map(function(p){
+    return '<button type="button" class="lin-aviso" data-pid="'+esc(p.processo_id)+'"><b>'+esc(p.cliente||'Sem nome')+'</b><span>'+esc(p.numero||'Sem número')+(p.tese?' · '+esc(p.tese):'')+'</span><em>'+(p.situacao==='Pago (liberado para saque)'?'Pago (planilha)':'CNJ '+esc(dataBR(p.cnj_pagamento_em)))+(P.ve&&p.honorarios_a_receber?' · '+esc(rs(p.honorarios_a_receber)):'')+'</em></button>';
+  }).join('');
+  if(box.hidden===!abrir)return;
+  if(window.sagaRecolher)sagaRecolher(box,!abrir);else box.hidden=!abrir;
+}
+function desenharBarras(){
+  var bloco=$('blocoDinheiro');
+  var l=filtradas(true),grupos={};
+  l.forEach(function(p){var f=faixaDe(p);var g=grupos[f.k]||(grupos[f.k]={k:f.k,rot:f.rot,ordem:f.ordem,valor:0,qtd:0,est:0});
+    g.qtd++;g.valor+=P.ve?(Number(p.honorarios_a_receber)||0):(Number(p.valor_atualizado||p.valor_precatorio)||0);var pv=previsaoDe(p);if(pv&&pv.est)g.est++;});
+  var lista=Object.keys(grupos).map(function(k){return grupos[k];}).sort(function(a,b){return a.ordem.localeCompare(b.ordem);});
+  var max=lista.reduce(function(m,g){return Math.max(m,g.valor);},0)||1;
+  $('barras').innerHTML=lista.length?lista.map(function(g){
+    var cls=g.k==='sem'?' sem':g.k==='atr'?' atrasado':'';
+    return '<button type="button" class="barra-l'+cls+(P.faixa===g.k?' active':'')+'" data-faixa="'+esc(g.k)+'" title="Ver os processos desta faixa"><span class="rot">'+esc(g.rot)+'<small>'+n(g.qtd)+'</small></span><span class="trilho"><i style="--w:'+Math.max(2,Math.round(g.valor/max*100))+'%"></i></span><span class="val">'+esc(P.ve?rs(g.valor):rsCurto(g.valor))+(g.est?'<small>'+n(g.est)+' estimado(s)</small>':'')+'</span></button>';
+  }).join(''):'<div class="vazio">Nenhum processo nesta seleção.</div>';
+  // as barras crescem da esquerda (respeita "Efeitos de movimento")
+  requestAnimationFrame(function(){$('barras').querySelectorAll('.trilho i').forEach(function(i){i.style.width=i.style.getPropertyValue('--w');});});
+}
+function desenharTabela(){
+  var l=filtradas(false).sort(function(a,b){
+    var la=liberado(a)?0:1,lb=liberado(b)?0:1;if(la!==lb)return la-lb;
+    var pa=previsaoDe(a),pb=previsaoDe(b),ka=pa?(pa.data||pa.ano+'-12-31'):'9999',kb=pb?(pb.data||pb.ano+'-12-31'):'9999';
+    if(ka!==kb)return ka.localeCompare(kb);return String(a.cliente||'').localeCompare(String(b.cliente||''));});
+  $('resumo').innerHTML='<b>'+n(l.length)+'</b> processo(s)'+(P.faixa?' na faixa escolhida':'')+(P.ve?'':' · os valores de honorários aparecem só para quem vê o Financeiro');
+  $('btnLimparFaixa').hidden=!P.faixa;
+  if(!l.length){$('area').innerHTML='<div class="tabela"><div class="vazio"><b>Nenhum processo</b>Mude os filtros ou a faixa de previsão.</div></div>';return;}
+  $('area').innerHTML='<div class="tabela"><table class="tb"><thead><tr><th>Cliente</th><th>Tipo</th><th>Situação</th><th>Previsão</th><th>Valor do requisitório</th>'+(P.ve?'<th>Honorários a receber</th>':'')+'</tr></thead><tbody>'+
+    l.map(function(p){var s=situacaoDe(p),pv=previsaoDe(p);
+      var prevTxt=pv?(pv.data?dataBR(pv.data):'Em '+pv.ano):'—';
+      var val=p.valor_atualizado!=null?p.valor_atualizado:p.valor_precatorio;
+      return '<tr data-pid="'+esc(p.processo_id)+'"><td class="c-nome"><a class="nome-cliente" href="'+FICHA+'?processo_id='+esc(p.processo_id)+'">'+esc(p.cliente||'Sem nome')+'</a><span class="sub">'+esc(p.numero||'Sem número')+(p.tese?' · '+esc(p.tese):'')+'</span></td>'+
+        '<td data-r="Tipo">'+esc(p.tipo||'—')+'</td>'+
+        '<td data-r="Situação"><span class="sit" style="--c:'+(CORES_SIT[s]||'#8a94a8')+'"><i></i>'+esc(s)+'</span>'+(p.ano_orcamento?'<span class="sub">LOA '+esc(p.ano_orcamento)+'</span>':'')+
+          (p.cnj_pagamento_em?'<span class="cnj pag">CNJ pagamento '+esc(dataBR(p.cnj_pagamento_em))+'</span>':p.cnj_requisicao_em?'<span class="cnj">CNJ requisitório '+esc(dataBR(p.cnj_requisicao_em))+'</span>':'')+'</td>'+
+        '<td data-r="Previsão" class="num">'+esc(prevTxt)+(pv&&pv.est?'<span class="est" title="'+esc(pv.como||'estimada')+'"> (estimada)</span>':'')+'</td>'+
+        '<td data-r="Valor do requisitório" class="num">'+esc(val!=null?rs(val):'—')+(p.valor_atualizado!=null?'<span class="sub">atualizado</span>':'')+'</td>'+
+        (P.ve?'<td data-r="Honorários a receber" class="num">'+esc(p.honorarios_a_receber!=null?rs(p.honorarios_a_receber):'—')+'</td>':'')+'</tr>';
+    }).join('')+'</tbody></table></div>';
+}
+function preencherSituacoes(){
+  var tem={};P.linhas.forEach(function(p){tem[situacaoDe(p)]=1;});
+  var atual=$('fSit').value;
+  $('fSit').innerHTML='<option value="">Todas as situações</option>'+ORDEM_SIT.filter(function(s){return tem[s];}).map(function(s){return '<option'+(s===atual?' selected':'')+'>'+esc(s)+'</option>';}).join('');
+}
+function desenhar(){contarGrupos();desenharKpis();desenharAviso();desenharBarras();desenharTabela();}
+async function carregar(){
+  $('area').classList.add('carregando');
+  var r=await _sb.rpc('precatorios_painel');
+  $('area').classList.remove('carregando');
+  if(r.error){toast('Não foi possível carregar: '+r.error.message,'error');$('resumo').textContent='Não foi possível carregar.';return;}
+  P.linhas=r.data||[];P.ve=P.linhas.some(function(p){return p.ve_valores;});
+  preencherSituacoes();desenhar();
+}
+function abrirFicha(id,e){var url=FICHA+'?processo_id='+encodeURIComponent(id);if(e&&(e.ctrlKey||e.metaKey||e.button===1)){window.open(url,'_blank');return;}location.href=url;}
+function trocarPills(grupoEl,btn){grupoEl.querySelectorAll('.pill').forEach(function(x){x.classList.toggle('active',x===btn);});}
+function ligar(){
+  $('pillsGrupo').addEventListener('click',function(e){var b=e.target.closest('[data-grupo]');if(!b||b.dataset.grupo===P.grupo)return;P.grupo=b.dataset.grupo;P.faixa=null;trocarPills(this,b);setTimeout(desenhar,window.sagaMq&&sagaMq().matches?0:420);});
+  $('pillsPeriodo').addEventListener('click',function(e){var b=e.target.closest('[data-per]');if(!b||b.dataset.per===P.per)return;P.per=b.dataset.per;P.faixa=null;trocarPills(this,b);setTimeout(function(){desenharBarras();desenharTabela();},window.sagaMq&&sagaMq().matches?0:420);});
+  $('barras').addEventListener('click',function(e){var b=e.target.closest('[data-faixa]');if(!b)return;P.faixa=P.faixa===b.dataset.faixa?null:b.dataset.faixa;
+    $('barras').querySelectorAll('.barra-l').forEach(function(x){x.classList.toggle('active',x.dataset.faixa===P.faixa);});desenharTabela();});
+  $('btnLimparFaixa').addEventListener('click',function(){P.faixa=null;$('barras').querySelectorAll('.barra-l').forEach(function(x){x.classList.remove('active');});desenharTabela();});
+  ['fBusca','fSit','fTipo'].forEach(function(id){$(id).addEventListener(id==='fBusca'?'input':'change',function(){desenharBarras();desenharTabela();});});
+  $('area').addEventListener('click',function(e){if(e.target.closest('a'))return;var tr=e.target.closest('tr[data-pid]');if(tr)abrirFicha(tr.dataset.pid,e);});
+  $('area').addEventListener('auxclick',function(e){var tr=e.target.closest('tr[data-pid]');if(tr&&e.button===1&&!e.target.closest('a'))abrirFicha(tr.dataset.pid,e);});
+  $('listaAviso').addEventListener('click',function(e){var b=e.target.closest('[data-pid]');if(b)abrirFicha(b.dataset.pid,e);});
+  $('btnAtualizar').addEventListener('click',carregar);
+  $('btnPdf').addEventListener('click',pdf);
+}
+function pdf(){
+  if(!window.SagaPdf){toast('O gerador de PDF não carregou.','error');return;}
+  var l=filtradas(false);
+  var kp=$('kpis').innerText.split('\n').filter(Boolean);
+  var barras=Array.prototype.map.call($('barras').querySelectorAll('.barra-l'),function(b){return '<tr><td>'+esc(b.querySelector('.rot').childNodes[0].textContent)+'</td><td>'+esc(b.querySelector('.rot small').textContent)+'</td><td>'+esc(b.querySelector('.val').childNodes[0].textContent)+'</td></tr>';}).join('');
+  var html='<div class="kpis">'+Array.prototype.map.call($('kpis').children,function(k){return '<div><small>'+esc(k.querySelector('small').textContent)+'</small><b>'+esc(k.querySelector('b').textContent)+'</b></div>';}).join('')+'</div>'+
+    '<h3>Dinheiro a entrar ('+(P.per==='mes'?'por mês':'por ano')+')</h3><table class="tab"><thead><tr><th>Quando</th><th>Processos</th><th>'+(P.ve?'Honorários a receber':'Valor')+'</th></tr></thead><tbody>'+barras+'</tbody></table>'+
+    '<h3>Processos ('+n(l.length)+')</h3><table class="tab"><thead><tr><th>Cliente</th><th>Número</th><th>Tipo</th><th>Situação</th><th>Previsão</th><th>Valor</th>'+(P.ve?'<th>Honorários a receber</th>':'')+'</tr></thead><tbody>'+
+    l.map(function(p){var pv=previsaoDe(p),val=p.valor_atualizado!=null?p.valor_atualizado:p.valor_precatorio;return '<tr><td>'+esc(p.cliente||'')+'</td><td>'+esc(p.numero||'')+'</td><td>'+esc(p.tipo||'')+'</td><td>'+esc(situacaoDe(p))+'</td><td>'+esc(pv?(pv.data?dataBR(pv.data):'Em '+pv.ano)+(pv.est?' (est.)':''):'—')+'</td><td>'+esc(val!=null?rs(val):'—')+'</td>'+(P.ve?'<td>'+esc(p.honorarios_a_receber!=null?rs(p.honorarios_a_receber):'—')+'</td>':'')+'</tr>';}).join('')+'</tbody></table>';
+  SagaPdf.imprimir({titulo:'Precatórios e RPV',subtitulo:({receber:'A receber (ativos e encerrados)',ativo:'Ativos',encerrado:'Encerrados',sacado:'Sacados'})[P.grupo]+' · '+n(l.length)+' processos',arquivo:'precatorios-e-rpv',paisagem:true,paginas:[html]});
+}
+async function init(){
+  ligar();
+  await SagaUI.carregar('precatorios');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  await carregar();
+}
+init().catch(function(e){toast('Erro ao abrir: '+(e.message||''),'error');});
+</script>
+</body>
+</html>
