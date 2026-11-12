@@ -3,6 +3,8 @@
 // situação/campos do processo e guardar arquivo na pasta do cliente). Só o Dr. Victor e a Hevelyn usam (conector_claude.usar).
 // Cada mudança é uma função conector_* SECURITY INVOKER (mesmas regras das telas), com limite de 60 por hora e registro
 // com antes e depois. NADA apaga. O Claude deve pedir o OK da pessoa antes de cada mudança.
+// T166 (bloco 185, 12/11/2026): PEDIDOS DO CLAUDE para a pessoa (pedir_ao_usuario, meus_pedidos_pendentes, concluir_pedido):
+// o que o Claude precisa que a pessoa traga vira tarefa "Pedido do Claude" (Minhas Tarefas e ficha) e é concluído quando chega.
 // O Claude (claude.ai, aplicativo ou Claude Code) liga este endereço como "conector personalizado":
 //   https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/saga-mcp
 // Login: servidor OAuth 2.1 do próprio Supabase (Authentication > OAuth Server). Sem chave válida, a resposta é 401
@@ -35,7 +37,11 @@ const INSTRUCOES =
   "criar_compromisso, mudar_situacao_processo, mudar_campo_processo, guardar_arquivo_na_pasta_do_cliente): ANTES de cada uma, mostre à " +
   "pessoa, em uma frase, exatamente o que vai mudar (em qual cliente/processo, de quê para quê) e só chame depois do OK dela. " +
   "Uma mudança por chamada; no máximo 60 por hora. Nada pode ser apagado pelo Claude (só o administrador apaga, pela tela). " +
-  "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió.";
+  "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió. " +
+  "PEDIDOS DO CLAUDE: ao começar a tratar de um cliente ou processo, chame 'meus_pedidos_pendentes' (com o processo_id) e lembre a pessoa do que ainda falta. " +
+  "Quando você precisar de algo DELA para andar (autos inteiros, certidão, contracheque, documento), proponha registrar com 'pedir_ao_usuario' " +
+  "(com o OK dela) para ela não esquecer. Quando ela trouxer o que foi pedido (\"você pediu isso aqui\"), analise e chame 'concluir_pedido' " +
+  "dizendo o que recebeu e o que achou; não precisa pedir OK de novo para concluir o pedido que ela mesma acabou de atender, mas diga que concluiu.";
 
 type Args = Record<string, unknown>;
 type Ferramenta = { name: string; title: string; description: string; inputSchema: Record<string, unknown>; rpc: string; args: (a: Args) => Record<string, unknown>; muda?: boolean; especial?: "arquivo" };
@@ -134,6 +140,12 @@ const FERRAMENTAS: Ferramenta[] = [
     description: "Lista a equipe (ids para responsável e pessoa da agenda), as colunas das tarefas, as situações de processo e os tipos de compromisso da agenda. Use antes de criar ou mudar tarefas, compromissos ou a situação do processo.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     rpc: "conector_equipe", args: () => ({}),
+  },
+  {
+    name: "meus_pedidos_pendentes", title: "Pedidos do Claude em aberto",
+    description: "Lista o que o Claude já pediu para a pessoa conectada trazer e ainda não chegou (autos, certidões, documentos...), com o processo e o cliente. Chame ao começar a tratar de um cliente ou processo (com processo_id) para lembrar a pessoa.",
+    inputSchema: { type: "object", properties: { processo_id: { type: "string", description: "Só os pedidos de um processo (uuid), opcional." } }, additionalProperties: false },
+    rpc: "conector_pedidos_pendentes", args: (a) => ({ p_processo: uuidOuNulo(a.processo_id, "o id do processo") }),
   },
   // ----- MUDANÇAS (bloco 179) -----
   {
@@ -247,6 +259,29 @@ const FERRAMENTAS: Ferramenta[] = [
     rpc: "conector_campo_processo", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_campo: texto(a.campo, 120), p_valor: texto(a.valor, 4000) }),
   },
   {
+    name: "pedir_ao_usuario", title: "Registrar um pedido para a pessoa", muda: true,
+    description: "MUDA O SAGA: registra algo que você (Claude) precisa que a pessoa conectada traga para andar com o processo (ex.: baixar os autos inteiros, certidão de óbito, contracheque). Vira uma tarefa \"Pedido do Claude\" dela, em Minhas Tarefas e na ficha, com o que trazer, por quê e de qual conversa. Não repete pedido igual em aberto no mesmo processo." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      o_que: { type: "string", description: "O que a pessoa precisa trazer, curto (vira o título)." },
+      motivo: { type: "string", description: "Por que precisa (para que serve)." },
+      assunto: { type: "string", description: "Conversa ou assunto em que surgiu o pedido." },
+      processo_id: { type: "string", description: "id do processo (uuid), se for de um processo." },
+      prazo: { type: "string", description: "Prazo AAAA-MM-DD (opcional)." } }, required: ["o_que"], additionalProperties: false },
+    rpc: "conector_pedir_ao_usuario", args: (a) => {
+      if (a.prazo != null && !ehData(a.prazo)) throw new ErroArgs("Prazo no formato AAAA-MM-DD.");
+      return { p_o_que: texto(a.o_que, 250), p_motivo: texto(a.motivo, 3000), p_assunto: texto(a.assunto, 500),
+        p_processo: uuidOuNulo(a.processo_id, "o id do processo"), p_prazo: a.prazo ?? null };
+    },
+  },
+  {
+    name: "concluir_pedido", title: "Concluir um pedido do Claude", muda: true,
+    description: "MUDA O SAGA: dá como concluído um pedido do Claude (de meus_pedidos_pendentes) quando a pessoa trouxe o que foi pedido. Informe o que foi recebido e o que a análise mostrou: vira comentário na tarefa e na ficha do processo. Só serve para pedidos do Claude (para outras tarefas, concluir_tarefa).",
+    inputSchema: { type: "object", properties: {
+      pedido_id: { type: "string", description: "id do pedido (pedido_id de meus_pedidos_pendentes)." },
+      recebido: { type: "string", description: "O que foi recebido e o resumo da análise." } }, required: ["pedido_id", "recebido"], additionalProperties: false },
+    rpc: "conector_concluir_pedido", args: (a) => ({ p_pedido: exigeUuid(a.pedido_id, "o id do pedido"), p_recebido: texto(a.recebido, 8000) }),
+  },
+  {
     name: "guardar_arquivo_na_pasta_do_cliente", title: "Guardar arquivo na pasta do cliente", muda: true, especial: "arquivo",
     description: "MUDA O SAGA: guarda um arquivo (PDF, imagem, Word, Excel, texto; até 10 MB) nos Documentos do processo, na ficha do cliente (opcionalmente numa pasta da ficha, pelo nome). O conteúdo vai em base64." + PEDIR_OK,
     inputSchema: { type: "object", properties: {
@@ -340,7 +375,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.0.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.1.0" },
         instructions: INSTRUCOES,
       });
     }
