@@ -106,7 +106,7 @@ export function montarItem(alvo: any, docs: any[]) {
 /* ---------- erros em português, sem detalhes técnicos ---------- */
 class ErroChave extends Error {}
 // o DataJud pediu para esperar (HTTP 429): não é erro do processo; a rodada espera ou para, sem marcar ninguém
-class ErroLimite extends Error { constructor(public esperaMs: number | null) { super("O DataJud pediu para esperar (limite de consultas)."); } }
+class ErroLimite extends Error { constructor(public esperaMs: number | null) { super("O DataJud respondeu erro 429 (pedidos demais, limite de consultas). O robô tenta de novo na próxima rodada."); } }
 function lerRetryAfter(v: string | null): number | null {
   if (!v) return null;
   const s = Number(v);
@@ -269,11 +269,15 @@ async function rodada(alvos: any[], conf: any, o: { origem: string; pedidoPor?: 
     ? falha
     : `${tot.consultados} número(s) consultado(s), ${tot.encontrados} encontrado(s) no CNJ, ${tot.novos} andamento(s) novo(s)` +
       (tot.importantes ? ` (${tot.importantes} importante(s))` : "") + (tot.avisos ? `, ${tot.avisos} aviso(s) no sino` : "") +
-      (tot.erros ? `, ${tot.erros} com erro` : "") + (limitado ? ". O CNJ pediu para esperar (limite de consultas): parei, e o resto vai na próxima rodada." : parou ? ". Parei no limite de tempo: o resto vai na próxima rodada." : ".") + ` (${segundos} s)`;
+      (tot.erros ? `, ${tot.erros} com erro` : "") + (limitado ? ". O CNJ respondeu erro 429 (pedidos demais, limite de consultas): parei, e o resto tenta de novo na próxima rodada (daqui a 20 min, de madrugada)." : parou ? ". Parei no limite de tempo: o resto vai na próxima rodada." : ".") + ` (${segundos} s)`;
   if (execId) {
     await admin.from("datajud_execucoes").update({ fim: new Date().toISOString(), ok, mensagem, ...tot }).eq("id", execId);
   }
   if (!ok && o.origem === "rotina") await avisarErroAdmin(falha!);
+  // 429 que não deixou consultar nada na rodada: avisa o administrador (uma vez por dia), como pede a regra "erros sempre à vista"
+  if (ok && limitado && tot.consultados === 0 && o.origem === "rotina") {
+    await avisarErroAdmin("O CNJ respondeu erro 429 (pedidos demais) e nenhuma consulta foi feita nesta rodada. O robô tenta de novo na próxima; se continuar, diminua os números por consulta.");
+  }
   // quanto falta na fila (para a tela continuar a 1ª carga)
   let restantes = 0;
   if (o.origem !== "processo") {

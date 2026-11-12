@@ -93,7 +93,9 @@
       +'.and-nota{margin:10px 0 0;color:var(--muted);font-size:10px;line-height:1.5}'
       +'.and-freq input{width:56px;padding:2px 6px;border:1px solid var(--border);border-radius:7px;background:var(--panel,transparent);color:var(--text);font:inherit;text-align:center}'
       +'.and-freq .btn-secondary{padding:3px 12px;margin-left:4px;font-size:11px;border-radius:999px}'
-      +'.and-fila{color:var(--text-muted,var(--text));border:1px solid var(--border);background:color-mix(in srgb,var(--text) 4%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
+      +'.and-robo-erros{margin:4px 0 6px;padding-left:18px;font-size:11px}.and-vermelho{color:var(--danger,#e5484d)}'
+      +'.and-amarelo{color:color-mix(in srgb,var(--warning,#e0a93b) 80%,var(--text))}'
+      +'.and-passageiro{color:var(--text);border:1px solid color-mix(in srgb,var(--warning,#e0a93b) 55%,transparent);background:color-mix(in srgb,var(--warning,#e0a93b) 12%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-erro{color:var(--text);border:1px solid color-mix(in srgb,var(--danger,#e5484d) 40%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 8%,transparent);border-radius:9px;padding:7px 10px;font-size:11px;margin-bottom:8px}'
       +'.and-roda{display:inline-block;width:11px;height:11px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:andGira .8s linear infinite}'
       +'@keyframes andGira{to{transform:rotate(360deg)}}'
@@ -169,8 +171,11 @@
     var passageiro=function(t){return /(tenta de novo|\(429\)|demorou demais|n[aã]o consegui falar com o datajud)/i.test(String(t||''));};
     var erro=nums.filter(function(n){return n.erro&&!passageiro(n.erro);})[0];
     var naFila=!erro&&nums.some(function(n){return n.erro&&passageiro(n.erro);});
-    var html=erro?'<div class="and-erro">A última consulta ao CNJ deu erro: '+e(erro.erro)+'</div>'
-      :naFila?'<div class="and-fila">Na fila do CNJ: consulta prevista para a próxima rodada do robô (de madrugada, entre 1h e 6h40).</div>':'';
+    // regra de 12/11 (erros sempre à vista): erro passageiro em AMARELO com o motivo, quando foi e a próxima tentativa
+    var pass=naFila&&nums.filter(function(n){return n.erro&&passageiro(n.erro);})[0];
+    var motivo=function(t){t=String(t||'');return /\(429\)/.test(t)?'erro 429: pedidos demais ao CNJ ao mesmo tempo (limite de consultas)':/demorou demais/i.test(t)?'o CNJ demorou demais para responder (mais de 60 s)':/falar com o datajud/i.test(t)?'não consegui falar com o CNJ (internet ou o CNJ fora do ar)':t;};
+    var html=erro?'<div class="and-erro">A última consulta ao CNJ'+(erro.consultado_em?' ('+e(quando(erro.consultado_em))+')':'')+' deu erro: '+e(erro.erro)+'</div>'
+      :pass?'<div class="and-passageiro"><b>A consulta ao CNJ deu erro'+(pass.consultado_em?' em '+e(quando(pass.consultado_em)):'')+':</b> '+e(motivo(pass.erro))+'. O robô tenta de novo sozinho na próxima rodada (de madrugada, entre 1h e 6h40); para tentar agora, use <b>Atualizar agora</b>.</div>':'';
     if(!ands.length){
       if(!nums.length&&!temNumero)return html+'<p class="and-vazio">Este processo ainda não tem número no padrão do CNJ. Quando tiver, o SAGA busca os andamentos sozinho.</p>';
       if(naFila)return html;
@@ -316,8 +321,11 @@
           +'<button type="button" class="btn-secondary" data-and="testar">Testar a ligação</button>'
         +'</div></div>'
         +'<div class="and-robo-num">'+(d.total_numeros!=null?d.total_numeros:d.na_fila)+' número(s) de processo e recurso no Jurídico · '+d.consultados+' já consultado(s) · '+d.encontrados+' encontrado(s) no CNJ · '+d.andamentos+' andamento(s)'
-          +(d.aguardando?' · '+d.aguardando+' na fila do CNJ (próxima rodada)':'')
+          +(d.aguardando?' · <span class="and-amarelo">'+d.aguardando+' com erro passageiro (o robô tenta de novo sozinho)</span>':'')
           +(d.com_erro?' · '+d.com_erro+' com erro':'')+'</div>'
+        +((d.erros_motivos||[]).length?'<ul class="and-robo-erros">'+d.erros_motivos.map(function(x){
+            return '<li class="'+(x.passageiro?'and-amarelo':'and-vermelho')+'">'+x.quantos+' número(s): '+e(x.erro)+(x.ultima?' (última tentativa '+e(relativo(x.ultima))+')':'')
+              +(x.passageiro?' · o robô tenta de novo sozinho na próxima rodada':' · precisa de conferência')+'</li>';}).join('')+'</ul>':'')
         +'<div class="and-robo-num and-freq">Consulta cada processo: ativos a cada <input id="andDiasAtivos" type="number" min="1" max="90" value="'+(d.dias_ativos||7)+'" aria-label="Dias entre consultas dos processos ativos"> dias · encerrados e sacados a cada <input id="andDiasDemais" type="number" min="1" max="365" value="'+(d.dias_demais||30)+'" aria-label="Dias entre consultas dos encerrados e sacados"> dias <button type="button" class="btn-secondary" data-and="freq-salvar">Salvar</button><br>Intimação nova ligada ao processo: consultado na próxima rodada, com prioridade.</div>'
         +(ult?'<ul class="and-robo-exec"><li>Última rodada ('+e(relativo(ult.inicio))+'): '+e(ult.mensagem||(ult.fim?'terminou':'em andamento...'))+'</li></ul>':'')
         +'<div class="and-robo-num">Chave pública do CNJ: '+(d.chave?(d.chave_origem==='manual'?'colada à mão':'buscada sozinha na página do CNJ')+' ('+e(d.chave)+')':'o robô busca sozinho na página do CNJ na 1ª consulta')
