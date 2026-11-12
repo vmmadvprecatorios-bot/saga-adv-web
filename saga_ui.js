@@ -51,9 +51,12 @@
     // 12/11 (T48): temas de campanha; com o "Tema do mês" ligado, entram sozinhos no mês de cada um
     {id:'novembro',nome:'Novembro Azul',descricao:'Campanha de saúde do homem',escuro:'Novembro Azul Noite',claro:'Novembro Azul Céu',mes:11},
     {id:'rosa',nome:'Rosa',descricao:'Outubro Rosa: prevenção do câncer de mama',escuro:'Rosa Noite',claro:'Rosa Pétala',mes:10},
-    {id:'natal',nome:'Natal',descricao:'Verde, vermelho e dourado de fim de ano',escuro:'Natal Pinheiro',claro:'Natal Neve',mes:12}];
+    {id:'natal',nome:'Natal',descricao:'Verde, vermelho e dourado de fim de ano',escuro:'Natal Pinheiro',claro:'Natal Neve',mes:12},
+    // 12/11 (T151): "Vidro tecnológico" (vidro: true = tem fundo e opções próprias em Configurações > Preferências)
+    {id:'vidro',nome:'Vidro azul profundo',descricao:'Vidro tecnológico: placas de vidro sobre um fundo à sua escolha',escuro:'Vidro Azul Noite',claro:'Vidro Azul Gelo',vidro:true},
+    {id:'vidro-ciano',nome:'Vidro ciano holográfico',descricao:'Vidro tecnológico com destaque ciano',escuro:'Vidro Ciano Noite',claro:'Vidro Ciano Claro',vidro:true}];
   // cor de fundo de cada tema antes da 1ª imagem da tela ([escuro, claro]); o saga_guard.js tem a mesma lista
-  global.SAGA_FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2']};
+  global.SAGA_FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3']};
   global.sagaFundoCor=function(cor,claro){var f=global.SAGA_FUNDOS[cor]||global.SAGA_FUNDOS.azul;return claro?f[1]:f[0];};
   // "Tema do mês" (12/11): o administrador liga e escolhe a cor de cada mês (padrão: out Rosa, nov Novembro Azul, dez Natal);
   // vale para toda a equipe, menos para quem tem a cor fixada pelo administrador
@@ -76,6 +79,14 @@
   };
   // opcoes.previa = só mostra nesta tela (Configurações, antes de "Salvar cor do tema"): não grava no navegador
   // nem muda as outras abas abertas
+  // 12/11 (T151): opções do Vidro tecnológico, de cada pessoa NESTE navegador: fundo (montanhas, grade ou imagem
+  // própria, guardada só aqui, diminuída) e "Vidro mais fosco". O saga_guard.js aplica antes da 1ª imagem da tela.
+  global.sagaVidro={
+    opcoes:function(){var o={fundo:'montanhas',fosco:false,imagem:null};try{o.fundo=localStorage.getItem('saga-vidro-fundo')||'montanhas';o.fosco=localStorage.getItem('saga-vidro-fosco')==='1';o.imagem=localStorage.getItem('saga-vidro-imagem');}catch(e){}if(o.fundo==='imagem'&&!o.imagem)o.fundo='montanhas';return o;},
+    aplicar:function(){var h=document.documentElement,o=global.sagaVidro.opcoes();h.setAttribute('data-vidro-fundo',o.fundo);h.classList.toggle('vidro-fosco',o.fosco);
+      if(o.fundo==='imagem'&&o.imagem)h.style.setProperty('--vidro-img','url("'+o.imagem+'")');else h.style.removeProperty('--vidro-img');},
+    definir:function(chave,valor){try{if(valor===null||valor===undefined||valor===false)localStorage.removeItem('saga-vidro-'+chave);else localStorage.setItem('saga-vidro-'+chave,valor===true?'1':String(valor));}catch(e){return false;}global.sagaVidro.aplicar();return true;}
+  };
   global.sagaAplicarCor=function(cor,opcoes){
     if(!global.SAGA_CORES.some(function(c){return c.id===cor;}))cor='azul';
     var h=document.documentElement;
@@ -89,6 +100,7 @@
   // 08/11: outra janela/aba do SAGA trocou a cor ou o claro/escuro → esta acompanha na hora (ex.: dois monitores)
   global.addEventListener('storage',function(e){
     try{
+      if(e.key&&e.key.indexOf('saga-vidro-')===0&&global.sagaVidro)global.sagaVidro.aplicar();
       if(e.key==='saga-cor'&&e.newValue&&e.newValue!==(document.documentElement.getAttribute('data-cor')||'azul'))global.sagaAplicarCor(e.newValue);
       if(e.key==='saga-tema'&&e.newValue&&document.body&&document.body.getAttribute('data-theme')!==e.newValue){document.body.setAttribute('data-theme',e.newValue);if(global.sagaAplicarCor)global.sagaAplicarCor(document.documentElement.getAttribute('data-cor')||'azul');}
     }catch(x){}

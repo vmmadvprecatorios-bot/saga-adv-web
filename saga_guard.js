@@ -32,9 +32,14 @@
   try{cor=localStorage.getItem('saga-cor')||'azul';}catch(e){}
   if(cor&&cor!=='azul')html.setAttribute('data-cor',cor);
   // fundo de cada cor antes da 1ª imagem ([escuro, claro]; a mesma lista do SAGA_FUNDOS no saga_ui.js)
-  var FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2']};
+  var FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3']};
   html.style.background=(FUNDOS[cor]||FUNDOS.azul)[tema==='light'?1:0];
   html.style.colorScheme=tema==='light'?'light':'dark';
+  // 12/11 (T151): Vidro tecnológico: fundo e "mais fosco" escolhidos pela pessoa, antes da 1ª imagem
+  try{var vf=localStorage.getItem('saga-vidro-fundo')||'montanhas',vi=vf==='imagem'?localStorage.getItem('saga-vidro-imagem'):null;
+    if(vf==='imagem'&&!vi)vf='montanhas';html.setAttribute('data-vidro-fundo',vf);
+    if(localStorage.getItem('saga-vidro-fosco')==='1')html.classList.add('vidro-fosco');
+    if(vi)html.style.setProperty('--vidro-img','url("'+vi+'")');}catch(e){}
 
   var temSessao=false;
   try{
