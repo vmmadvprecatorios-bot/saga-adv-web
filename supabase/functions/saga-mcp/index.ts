@@ -1,11 +1,15 @@
-// SAGA no Claude (T66, bloco 151, 10/11/2026, pedido do Dr. Victor): servidor MCP do SAGA, versão 1 SÓ COM CONSULTAS.
+// SAGA no Claude (T66, bloco 151, 10/11/2026, pedido do Dr. Victor): servidor MCP do SAGA.
+// Versão 2 (T66 parte 2, bloco 179, 12/11/2026): além das consultas, MUDANÇAS (anotar, tarefas, intimações, agenda,
+// situação/campos do processo e guardar arquivo na pasta do cliente). Só o Dr. Victor e a Hevelyn usam (conector_claude.usar).
+// Cada mudança é uma função conector_* SECURITY INVOKER (mesmas regras das telas), com limite de 60 por hora e registro
+// com antes e depois. NADA apaga. O Claude deve pedir o OK da pessoa antes de cada mudança.
 // O Claude (claude.ai, aplicativo ou Claude Code) liga este endereço como "conector personalizado":
 //   https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/saga-mcp
 // Login: servidor OAuth 2.1 do próprio Supabase (Authentication > OAuth Server). Sem chave válida, a resposta é 401
 // com o endereço dos metadados deste recurso (RFC 9728); o Claude então abre o login do SAGA e a página
 // autorizar_conector.html, onde a pessoa autoriza. Cada ferramenta chama uma função conector_* do banco COM O LOGIN
 // DA PESSOA (vale só o que ela já pode ver no SAGA) e cada consulta vai para o Registro de atividades.
-// Nada aqui grava dado de cliente. Publicar com verify_jwt = false (este código confere a chave sozinho).
+// Publicar com verify_jwt = false (este código confere a chave sozinho).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const URL_SB = Deno.env.get("SUPABASE_URL")!;
@@ -22,15 +26,35 @@ const CORS: Record<string, string> = {
 };
 const INSTRUCOES =
   "Você está ligado ao SAGA, o sistema do escritório Victor Morais Advocacia (VMMADV), com o login da pessoa que conectou: " +
-  "só aparece o que ela já pode ver no SAGA, e esta versão só CONSULTA (não muda nada). Comece por 'buscar' para achar o cliente " +
+  "você age COMO ESSA PESSOA: só aparece o que ela já pode ver e só muda o que ela já pode mudar na tela do SAGA. Comece por 'buscar' para achar o cliente " +
   "ou o processo e use os ids em 'ver_cliente' e 'ver_processo'. No dia a dia: 'resumo_escritorio', 'listar_intimacoes', " +
   "'listar_tarefas' e 'ver_agenda'. Marketing: 'resumo_marketing'. Responda em português do Brasil, em linguagem simples, e trate " +
   "CPF, telefone e dados de clientes com cuidado (LGPD): não repita esses dados sem necessidade. Cada consulta fica registrada no " +
-  "Registro de atividades do SAGA. Os links 'link_da_ficha' abrem a ficha no SAGA.";
+  "Registro de atividades do SAGA. Os links 'link_da_ficha' abrem a ficha no SAGA. " +
+  "MUDANÇAS (anotar_no_processo, criar_tarefa, alterar_tarefa, concluir_tarefa, concluir_intimacao, ligar_intimacao_ao_processo, " +
+  "criar_compromisso, mudar_situacao_processo, mudar_campo_processo, guardar_arquivo_na_pasta_do_cliente): ANTES de cada uma, mostre à " +
+  "pessoa, em uma frase, exatamente o que vai mudar (em qual cliente/processo, de quê para quê) e só chame depois do OK dela. " +
+  "Uma mudança por chamada; no máximo 60 por hora. Nada pode ser apagado pelo Claude (só o administrador apaga, pela tela). " +
+  "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió.";
 
 type Args = Record<string, unknown>;
-type Ferramenta = { name: string; title: string; description: string; inputSchema: Record<string, unknown>; rpc: string; args: (a: Args) => Record<string, unknown> };
+type Ferramenta = { name: string; title: string; description: string; inputSchema: Record<string, unknown>; rpc: string; args: (a: Args) => Record<string, unknown>; muda?: boolean; especial?: "arquivo" };
 const SO_LEITURA = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
+const MUDA = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
+const PEDIR_OK = " ANTES DE CHAMAR: diga à pessoa exatamente o que vai mudar e espere o OK dela. Não apaga nada; fica no Registro de atividades.";
+const ehHora = (v: unknown) => typeof v === "string" && /^\d{2}:\d{2}$/.test(v);
+const ehDataHora = (v: unknown) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(v);
+// data e hora de Maceió (sem fuso) viram horário com -03:00
+const comFuso = (v: string) => /([+-]\d{2}:?\d{2}|Z)$/.test(v) ? v : v.replace(" ", "T").slice(0, 16) + ":00-03:00";
+const texto = (v: unknown, max: number) => v == null ? null : String(v).slice(0, max);
+const uuidOuNulo = (v: unknown, nome: string) => v == null || v === "" ? null : exigeUuid(v, nome);
+const MAX_ARQUIVO = 10 * 1024 * 1024;
+const TIPOS_ARQUIVO: Record<string, string> = {
+  pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic",
+  doc: "application/msword", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel", xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  odt: "application/vnd.oasis.opendocument.text", txt: "text/plain", md: "text/markdown", csv: "text/csv",
+};
 const ehUuid = (v: unknown) => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const ehData = (v: unknown) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 const inteiro = (v: unknown) => (typeof v === "number" && Number.isFinite(v)) ? Math.round(v) : (typeof v === "string" && /^\d+$/.test(v) ? Number(v) : null);
@@ -105,6 +129,133 @@ const FERRAMENTAS: Ferramenta[] = [
     inputSchema: { type: "object", properties: { periodo: { type: "string", enum: ["mes", "3m", "ano", "tudo"], description: "mes, 3m (padrão: este mês e os dois anteriores), ano ou tudo." } }, additionalProperties: false },
     rpc: "conector_marketing", args: (a) => ({ p_periodo: a.periodo == null ? "3m" : String(a.periodo) }),
   },
+  {
+    name: "equipe_e_opcoes", title: "Equipe e opções",
+    description: "Lista a equipe (ids para responsável e pessoa da agenda), as colunas das tarefas, as situações de processo e os tipos de compromisso da agenda. Use antes de criar ou mudar tarefas, compromissos ou a situação do processo.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    rpc: "conector_equipe", args: () => ({}),
+  },
+  // ----- MUDANÇAS (bloco 179) -----
+  {
+    name: "anotar_no_processo", title: "Anotar no processo", muda: true,
+    description: "MUDA O SAGA: grava uma anotação (comentário) no processo, com o nome da pessoa conectada; aparece na ficha do cliente, nos comentários do processo." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      processo_id: { type: "string", description: "id do processo (uuid)." },
+      texto: { type: "string", description: "Texto da anotação (até 8.000 letras)." } }, required: ["processo_id", "texto"], additionalProperties: false },
+    rpc: "conector_comentar_processo", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_texto: texto(a.texto, 8000) }),
+  },
+  {
+    name: "criar_tarefa", title: "Criar tarefa", muda: true,
+    description: "MUDA O SAGA: cria uma tarefa (aparece em Minhas Tarefas e na ficha), com prazo, responsável (padrão: quem está conectado), prioridade e processo. A coluna sai sozinha pelo tribunal do processo." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      titulo: { type: "string", description: "Título da tarefa." },
+      processo_id: { type: "string", description: "id do processo (uuid), se for de um processo." },
+      descricao: { type: "string", description: "Descrição (opcional)." },
+      prazo: { type: "string", description: "Prazo AAAA-MM-DD (opcional)." },
+      hora: { type: "string", description: "Hora do prazo HH:MM (opcional)." },
+      responsavel_id: { type: "string", description: "id do responsável (de equipe_e_opcoes); padrão: quem está conectado." },
+      prioridade: { type: "string", enum: ["baixa", "media", "alta", "urgente"] },
+      coluna_id: { type: "string", description: "id da coluna (opcional; padrão: automática pelo tribunal)." } }, required: ["titulo"], additionalProperties: false },
+    rpc: "conector_criar_tarefa", args: (a) => {
+      if (a.prazo != null && !ehData(a.prazo)) throw new ErroArgs("Prazo no formato AAAA-MM-DD.");
+      if (a.hora != null && !ehHora(a.hora)) throw new ErroArgs("Hora no formato HH:MM.");
+      return { p_titulo: texto(a.titulo, 300), p_processo: uuidOuNulo(a.processo_id, "o id do processo"), p_descricao: texto(a.descricao, 8000),
+        p_prazo: a.prazo ?? null, p_hora: a.hora ?? null, p_responsavel: uuidOuNulo(a.responsavel_id, "o id do responsável"),
+        p_prioridade: a.prioridade ?? null, p_coluna: uuidOuNulo(a.coluna_id, "o id da coluna") };
+    },
+  },
+  {
+    name: "alterar_tarefa", title: "Mudar tarefa", muda: true,
+    description: "MUDA O SAGA: muda uma tarefa aberta: prazo (ou tirar o prazo), hora, responsável, coluna, prioridade, título, descrição e/ou acrescenta um comentário (o comentário também vai para a ficha do processo). Mande só o que muda. Devolve como era antes e como ficou." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      tarefa_id: { type: "string", description: "id da tarefa (uuid), de listar_tarefas ou ver_processo." },
+      prazo: { type: "string", description: "Novo prazo AAAA-MM-DD." },
+      tirar_prazo: { type: "boolean", description: "true para deixar sem prazo." },
+      hora: { type: "string", description: "Hora HH:MM." },
+      responsavel_id: { type: "string" }, coluna_id: { type: "string" },
+      prioridade: { type: "string", enum: ["baixa", "media", "alta", "urgente"] },
+      titulo: { type: "string" }, descricao: { type: "string" },
+      comentario: { type: "string", description: "Comentário a acrescentar na tarefa." } }, required: ["tarefa_id"], additionalProperties: false },
+    rpc: "conector_alterar_tarefa", args: (a) => {
+      if (a.prazo != null && !ehData(a.prazo)) throw new ErroArgs("Prazo no formato AAAA-MM-DD.");
+      if (a.hora != null && !ehHora(a.hora)) throw new ErroArgs("Hora no formato HH:MM.");
+      return { p_tarefa: exigeUuid(a.tarefa_id, "o id da tarefa"), p_prazo: a.prazo ?? null, p_tirar_prazo: !!a.tirar_prazo, p_hora: a.hora ?? null,
+        p_responsavel: uuidOuNulo(a.responsavel_id, "o id do responsável"), p_coluna: uuidOuNulo(a.coluna_id, "o id da coluna"),
+        p_prioridade: a.prioridade ?? null, p_titulo: texto(a.titulo, 300), p_descricao: texto(a.descricao, 8000), p_comentario: texto(a.comentario, 8000) };
+    },
+  },
+  {
+    name: "concluir_tarefa", title: "Concluir ou reabrir tarefa", muda: true,
+    description: "MUDA O SAGA: dá o check numa tarefa (concluir) ou reabre (concluir=false), com comentário opcional." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      tarefa_id: { type: "string" }, concluir: { type: "boolean", description: "true conclui (padrão); false reabre." },
+      comentario: { type: "string" } }, required: ["tarefa_id"], additionalProperties: false },
+    rpc: "conector_concluir_tarefa", args: (a) => ({ p_tarefa: exigeUuid(a.tarefa_id, "o id da tarefa"), p_concluir: a.concluir == null ? true : !!a.concluir, p_comentario: texto(a.comentario, 8000) }),
+  },
+  {
+    name: "concluir_intimacao", title: "Concluir ou reabrir intimação", muda: true,
+    description: "MUDA O SAGA: dá o check numa intimação (concluir) ou reabre (concluir=false), com comentário opcional; usa a mesma regra da tela Intimações." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      intimacao_id: { type: "string", description: "id da intimação (uuid), de listar_intimacoes." },
+      concluir: { type: "boolean", description: "true conclui (padrão); false reabre." }, comentario: { type: "string" } },
+      required: ["intimacao_id"], additionalProperties: false },
+    rpc: "conector_concluir_intimacao", args: (a) => ({ p_intimacao: exigeUuid(a.intimacao_id, "o id da intimação"), p_concluir: a.concluir == null ? true : !!a.concluir, p_comentario: texto(a.comentario, 8000) }),
+  },
+  {
+    name: "ligar_intimacao_ao_processo", title: "Ligar intimação a um processo", muda: true,
+    description: "MUDA O SAGA: liga uma intimação a um processo já cadastrado (como \"Ligar a um processo existente\" na tela Intimações); a tarefa aberta dela vai junto." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      intimacao_id: { type: "string" }, processo_id: { type: "string" },
+      responsavel_id: { type: "string", description: "Responsável (opcional)." } }, required: ["intimacao_id", "processo_id"], additionalProperties: false },
+    rpc: "conector_ligar_intimacao", args: (a) => ({ p_intimacao: exigeUuid(a.intimacao_id, "o id da intimação"), p_processo: exigeUuid(a.processo_id, "o id do processo"),
+      p_responsavel: uuidOuNulo(a.responsavel_id, "o id do responsável") }),
+  },
+  {
+    name: "criar_compromisso", title: "Criar compromisso ou prazo na agenda", muda: true,
+    description: "MUDA O SAGA: cria um compromisso na agenda (prazo processual, audiência, reunião, despacho, perícia, outros). Ligado a processo vai para a agenda do escritório; sem processo fica particular, salvo escritorio=true. Avisa se a pessoa já tem outro compromisso no horário (não impede). Atendimento de cliente: marcar pela Agenda do SAGA." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      titulo: { type: "string" },
+      inicio: { type: "string", description: "Início AAAA-MM-DDTHH:MM (hora de Maceió)." },
+      fim: { type: "string", description: "Fim AAAA-MM-DDTHH:MM (opcional)." },
+      tipo: { type: "string", enum: ["Prazo Processual", "Audiencia", "Reuniao", "Despacho", "Pericia", "Outros"] },
+      processo_id: { type: "string" }, responsavel_id: { type: "string", description: "De quem é a agenda (padrão: quem está conectado)." },
+      local: { type: "string", description: "Local ou link." }, observacao: { type: "string" },
+      escritorio: { type: "boolean", description: "true: agenda do escritório (todos veem)." } }, required: ["titulo", "inicio"], additionalProperties: false },
+    rpc: "conector_criar_compromisso", args: (a) => {
+      if (!ehDataHora(a.inicio)) throw new ErroArgs("Início no formato AAAA-MM-DDTHH:MM.");
+      if (a.fim != null && !ehDataHora(a.fim)) throw new ErroArgs("Fim no formato AAAA-MM-DDTHH:MM.");
+      return { p_titulo: texto(a.titulo, 300), p_inicio: comFuso(String(a.inicio)), p_fim: a.fim == null ? null : comFuso(String(a.fim)),
+        p_tipo: a.tipo == null ? "Prazo Processual" : String(a.tipo), p_processo: uuidOuNulo(a.processo_id, "o id do processo"),
+        p_responsavel: uuidOuNulo(a.responsavel_id, "o id da pessoa"), p_local: texto(a.local, 500), p_observacao: texto(a.observacao, 4000),
+        p_escritorio: a.escritorio == null ? null : !!a.escritorio };
+    },
+  },
+  {
+    name: "mudar_situacao_processo", title: "Mudar a situação do processo", muda: true,
+    description: "MUDA O SAGA: troca a situação da ação do processo (nome exato do menu; veja equipe_e_opcoes). Pode levar um texto de contato com o cliente. Fica anotado nos comentários do processo." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      processo_id: { type: "string" }, situacao: { type: "string", description: "Nome da situação, ex.: Protocolada." },
+      contato: { type: "string", description: "Texto do contato com o cliente (opcional)." } }, required: ["processo_id", "situacao"], additionalProperties: false },
+    rpc: "conector_situacao_processo", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_situacao: texto(a.situacao, 120), p_contato: texto(a.contato, 2000) }),
+  },
+  {
+    name: "mudar_campo_processo", title: "Mudar um campo do processo", muda: true,
+    description: "MUDA O SAGA: grava um campo (coluna) da planilha do processo, pelo nome da coluna como aparece em ver_processo (dados da planilha): observações, datas, valores, menus... Vale a mesma conferência da planilha (formato, opções do menu, permissão). Valor vazio limpa o campo. A próxima providência sai das tarefas: para mudá-la, crie ou mude a tarefa." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      processo_id: { type: "string" }, campo: { type: "string", description: "Nome da coluna da planilha." },
+      valor: { type: "string", description: "Novo valor (datas dd/mm/aaaa; valores 1234,56; opções com o nome exato)." } }, required: ["processo_id", "campo", "valor"], additionalProperties: false },
+    rpc: "conector_campo_processo", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_campo: texto(a.campo, 120), p_valor: texto(a.valor, 4000) }),
+  },
+  {
+    name: "guardar_arquivo_na_pasta_do_cliente", title: "Guardar arquivo na pasta do cliente", muda: true, especial: "arquivo",
+    description: "MUDA O SAGA: guarda um arquivo (PDF, imagem, Word, Excel, texto; até 10 MB) nos Documentos do processo, na ficha do cliente (opcionalmente numa pasta da ficha, pelo nome). O conteúdo vai em base64." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      processo_id: { type: "string" },
+      nome_arquivo: { type: "string", description: "Nome com a extensão, ex.: Peticao inicial.pdf" },
+      conteudo_base64: { type: "string", description: "Conteúdo do arquivo em base64." },
+      pasta: { type: "string", description: "Nome de uma pasta da ficha do cliente (opcional)." } }, required: ["processo_id", "nome_arquivo", "conteudo_base64"], additionalProperties: false },
+    rpc: "conector_documento_registrar", args: () => ({}),
+  },
 ];
 
 const sbPublico = createClient(URL_SB, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -117,21 +268,60 @@ function semLogin(invalido: boolean) {
 const erroRpc = (id: unknown, code: number, message: string) => ({ jsonrpc: "2.0", id: id ?? null, error: { code, message } });
 const resultado = (id: unknown, result: unknown) => ({ jsonrpc: "2.0", id, result });
 function textoErro(m: string) {
-  if (/permission denied/i.test(m)) return "Sem permissão para essa consulta.";
+  if (/permission denied|row-level security/i.test(m)) return "Sem permissão para isso no SAGA.";
   if (/invalid input syntax for type uuid/i.test(m)) return "O id informado não é válido: use o id que veio em \"buscar\".";
   if (/JWT expired|jwt/i.test(m)) return "O acesso ao SAGA venceu: conecte de novo.";
   return m.replace(/^.*?ERROR:\s*/i, "").slice(0, 500);
 }
 
+function base64ParaBytes(b64: string) {
+  const limpo = b64.replace(/^data:[^,]*,/, "").replace(/\s+/g, "");
+  if (!/^[A-Za-z0-9+/_-]*={0,2}$/.test(limpo)) throw new ErroArgs("O conteúdo do arquivo não está em base64.");
+  const bin = atob(limpo.replace(/-/g, "+").replace(/_/g, "/"));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+const falha = (t: string) => ({ content: [{ type: "text", text: t }], isError: true });
+
+// guardar arquivo: confere no banco, sobe no mesmo lugar da ficha (documentos-clientes/<processo>/...) com o login da pessoa e registra
+async function guardarArquivo(args: Args, cliente: ReturnType<typeof createClient>) {
+  let proc: string, nome: string, bytes: Uint8Array;
+  try {
+    proc = exigeUuid(args.processo_id, "o id do processo");
+    nome = String(args.nome_arquivo ?? "").trim().slice(0, 180);
+    if (!nome) throw new ErroArgs("Informe o nome do arquivo, com a extensão.");
+    bytes = base64ParaBytes(String(args.conteudo_base64 ?? ""));
+  } catch (e) { if (e instanceof ErroArgs) return falha(e.message); throw e; }
+  const ext = (nome.match(/\.([A-Za-z0-9]{1,5})$/)?.[1] || "").toLowerCase();
+  const tipo = TIPOS_ARQUIVO[ext];
+  if (!tipo) return falha("Tipo de arquivo não aceito. Aceitos: " + Object.keys(TIPOS_ARQUIVO).join(", ") + ".");
+  if (!bytes.length) return falha("O arquivo está vazio.");
+  if (bytes.length > MAX_ARQUIVO) return falha("Arquivo grande demais (máximo 10 MB). Guarde pela ficha do SAGA.");
+  const prep = await cliente.rpc("conector_documento_preparar", { p_processo: proc });
+  if (prep.error) return falha(textoErro(prep.error.message || String(prep.error)));
+  const seguro = nome.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const caminho = `${proc}/${crypto.randomUUID()}_${seguro}`;
+  const up = await cliente.storage.from("documentos-clientes").upload(caminho, bytes, { contentType: tipo, upsert: false });
+  if (up.error) return falha("Não consegui guardar o arquivo: " + textoErro(up.error.message || String(up.error)));
+  const reg = await cliente.rpc("conector_documento_registrar", { p_processo: proc, p_nome: nome, p_caminho: caminho, p_tamanho: bytes.length, p_pasta: texto(args.pasta, 120) });
+  if (reg.error) {
+    try { await cliente.storage.from("documentos-clientes").remove([caminho]); } catch { /* fica sem registro: o arquivo solto é tirado */ }
+    return falha(textoErro(reg.error.message || String(reg.error)));
+  }
+  return { content: [{ type: "text", text: JSON.stringify(reg.data ?? null) }] };
+}
+
 async function chamarFerramenta(nome: string, args: Args, token: string) {
   const f = FERRAMENTAS.find((x) => x.name === nome);
   if (!f) return null;
+  const cliente = createClient(URL_SB, ANON, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } });
+  if (f.especial === "arquivo") return await guardarArquivo(args || {}, cliente);
   let parametros: Record<string, unknown>;
   try { parametros = f.args(args || {}); } catch (e) {
     if (e instanceof ErroArgs) return { content: [{ type: "text", text: e.message }], isError: true };
     throw e;
   }
-  const cliente = createClient(URL_SB, ANON, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } });
   const r = await cliente.rpc(f.rpc, parametros);
   if (r.error) return { content: [{ type: "text", text: textoErro(r.error.message || String(r.error)) }], isError: true };
   return { content: [{ type: "text", text: JSON.stringify(r.data ?? null) }] };
@@ -150,13 +340,13 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "1.0.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.0.0" },
         instructions: INSTRUCOES,
       });
     }
     case "ping": return resultado(id, {});
     case "tools/list":
-      return resultado(id, { tools: FERRAMENTAS.map((f) => ({ name: f.name, title: f.title, description: f.description, inputSchema: f.inputSchema, annotations: { title: f.title, ...SO_LEITURA } })) });
+      return resultado(id, { tools: FERRAMENTAS.map((f) => ({ name: f.name, title: f.title, description: f.description, inputSchema: f.inputSchema, annotations: { title: f.title, ...(f.muda ? MUDA : SO_LEITURA) } })) });
     case "tools/call": {
       const r = await chamarFerramenta(String(p.name || ""), (p.arguments || {}) as Args, token);
       if (!r) return erroRpc(id, -32602, `Ferramenta desconhecida: ${String(p.name || "")}`);
@@ -188,6 +378,7 @@ Deno.serve(async (req) => {
   try {
     if (Array.isArray(corpo)) {
       if (!corpo.length) return json(erroRpc(null, -32600, "Pedido vazio."), 400);
+      if (corpo.length > 10) return json(erroRpc(null, -32600, "No máximo 10 pedidos de uma vez."), 400);
       const respostas = (await Promise.all(corpo.map((x) => tratar(x, token)))).filter((x) => x !== null);
       return respostas.length ? json(respostas) : new Response(null, { status: 202, headers: CORS });
     }

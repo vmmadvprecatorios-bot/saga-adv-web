@@ -40,11 +40,18 @@ h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-he
 .btn-secondary{border:1px solid var(--border);background:var(--panel);color:var(--text)}
 .btn-primary{border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 16%,var(--panel));color:var(--text)}
 .btn-primary:disabled,.btn-secondary:disabled{opacity:.55;cursor:wait}
+.quem{display:flex;align-items:center;gap:12px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 9%,var(--panel));border-radius:12px;padding:10px 12px;margin:14px 0 2px}
+.quem>div{flex:1;min-width:0}
+.quem .ini{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:600;font-size:14px;background:color-mix(in srgb,var(--gold) 22%,var(--panel));flex:none}
+.quem .rot{font-size:11px;color:var(--muted);letter-spacing:.3px}
+.quem .nome{font-size:14px;font-weight:600;line-height:1.3;word-break:break-word}
+.quem .mail{font-size:11.5px;color:var(--muted);word-break:break-all}
+.link-troca{font-size:12px;color:var(--muted);text-decoration:underline;padding:0;height:auto;margin-left:auto;flex:none}
 .rodape{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.5}
 .carregando{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
 .roda{width:16px;height:16px;border-radius:50%;border:2px solid var(--border);border-top-color:var(--gold);animation:gira .8s linear infinite}
 @keyframes gira{to{transform:rotate(360deg)}}
-@media(max-width:520px){.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes{flex-direction:column-reverse}.botoes button{width:100%}}
+@media(max-width:520px){.quem{flex-wrap:wrap}.quem>div{flex:1;min-width:0}.link-troca{margin-left:48px;width:100%;text-align:left}.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes{flex-direction:column-reverse}.botoes button{width:100%}}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611121703">
 </head>
@@ -56,7 +63,9 @@ h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-he
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
 <script>
-// Página de autorização do conector do SAGA no Claude (T66, bloco 151, 10/11/2026).
+// Página de autorização do conector do SAGA no Claude (T66, bloco 151, 10/11/2026; parte 2, bloco 179, 12/11/2026).
+// "Perfil de quem?" = o próprio login do SAGA (e-mail e senha, ou Google): a página mostra com quem o Claude vai agir e
+// oferece "Entrar com outra pessoa". Só o Dr. Victor e a Hevelyn têm a permissão conector_claude.usar.
 // O Supabase (Authentication > OAuth Server, caminho /autorizar_conector.html) manda a pessoa para cá com ?authorization_id=.
 // Sem login, vai para o login do SAGA e volta para cá. Só aceita pedidos do Claude (claude.ai / claude.com).
 var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
@@ -101,6 +110,11 @@ async function iniciar() {
   if (!d.data.authorization_id && d.data.redirect_url) { location.replace(d.data.redirect_url); return; }
   var cliente = d.data.client || {}, app = cliente.name || cliente.client_name || 'Aplicativo', destino = d.data.redirect_uri || '', host = hostDe(destino);
   var nome = (eu.data.nome_completo || '').split(' ')[0];
+  var email = (s.data.session.user && s.data.session.user.email) || '';
+  var ini = (eu.data.nome_completo || '?').trim().split(/\s+/).map(function (x) { return x.charAt(0); }).slice(0, 2).join('').toUpperCase();
+  var quem = '<div class="quem"><span class="ini" aria-hidden="true">' + esc(ini) + '</span><div><div class="rot">Você está conectando o Claude como</div>'
+    + '<div class="nome">' + esc(eu.data.nome_completo || '') + '</div>' + (email ? '<div class="mail">' + esc(email) + '</div>' : '') + '</div>'
+    + '<button class="link-troca" type="button" id="btTrocar">Entrar com outra pessoa</button></div>';
   if (!doClaude(host)) {
     mostrar('<h1>Pedido recusado por segurança</h1><p class="sub">O SAGA só se liga ao <b>Claude</b>. Este pedido vem de <b>' + esc(app) + '</b> e iria para <b>' + esc(host || 'endereço desconhecido') + '</b>.</p>'
       + '<div class="quadro alerta">Se você não pediu isso, apenas feche esta página. Nada foi liberado.</div>'
@@ -109,24 +123,31 @@ async function iniciar() {
     return;
   }
   if (pode.data !== true) {
-    mostrar('<h1>Sem permissão para usar o SAGA no Claude</h1><p class="sub">' + esc(nome) + ', a sua conta ainda não pode usar o SAGA dentro do Claude. Peça ao administrador (Painel de permissões &gt; <b>SAGA no Claude</b>).</p>'
+    mostrar('<h1>Esta conta não pode usar o SAGA no Claude</h1>' + quem
+      + '<p class="sub" style="margin-top:12px">' + esc(nome) + ', por decisão do escritório, só o <b>Dr. Victor</b> e a <b>Hevelyn</b> podem ligar o SAGA ao Claude. Se você entrou com a conta errada, use "Entrar com outra pessoa".</p>'
       + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Voltar ao Claude</button></div>');
-    setTimeout(function () { $('btRecusar').onclick = recusar; }, 260);
+    setTimeout(function () { $('btRecusar').onclick = recusar; $('btTrocar').onclick = trocarPessoa; }, 260);
     return;
   }
   mostrar('<h1>Ligar o SAGA ao Claude?</h1>'
-    + '<p class="sub"><b>' + esc(app) + '</b> quer usar o SAGA com a sua conta (<b>' + esc(eu.data.nome_completo || '') + '</b>).</p>'
+    + '<p class="sub"><b>' + esc(app) + '</b> quer usar o SAGA <b>como se fosse você</b>.</p>' + quem
     + '<ul class="lista">'
     + '<li class="sim">' + ICO_SIM + '<span>O Claude poderá <b>consultar</b> clientes, processos, intimações, tarefas, agenda e os resumos do escritório e do marketing.</span></li>'
-    + '<li class="sim">' + ICO_SIM + '<span>Só aparece o que <b>você já pode ver</b> no SAGA; os valores, só se você vê o Financeiro.</span></li>'
-    + '<li class="sim">' + ICO_SIM + '<span>Cada consulta fica no <b>Registro de atividades</b>.</span></li>'
-    + '<li class="nao">' + ICO_NAO + '<span>Ele <b>não muda nada</b>: não cria, não edita e não apaga (por enquanto, só consultas).</span></li>'
+    + '<li class="sim">' + ICO_SIM + '<span>E <b>fazer mudanças em seu nome</b>: anotar no processo, criar e mudar tarefas (prazo, responsável, coluna), dar o check em tarefas e intimações, ligar intimação a processo, marcar prazo na agenda, mudar a situação e campos do processo e guardar arquivos na pasta do cliente. <b>Antes de cada mudança ele pede o seu OK.</b></span></li>'
+    + '<li class="sim">' + ICO_SIM + '<span>Vale só o que <b>você já pode fazer</b> no SAGA; os valores, só se você vê o Financeiro. Tudo fica no <b>Registro de atividades</b> (com o antes e o depois).</span></li>'
+    + '<li class="nao">' + ICO_NAO + '<span>Ele <b>não apaga nada</b>, e faz no máximo 60 mudanças por hora.</span></li>'
     + '</ul>'
     + '<div class="quadro">Depois de autorizar, você volta para o Claude (<b>' + esc(host) + '</b>). Para desligar, remova o conector nas configurações do Claude.</div>'
     + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Recusar</button><button class="btn-primary" type="button" id="btAutorizar">Autorizar</button></div>');
-  setTimeout(function () { $('btRecusar').onclick = recusar; $('btAutorizar').onclick = function () { aprovar(app); }; }, 260);
+  setTimeout(function () { $('btRecusar').onclick = recusar; $('btTrocar').onclick = trocarPessoa; $('btAutorizar').onclick = function () { aprovar(app); }; }, 260);
 }
-function travar() { document.querySelectorAll('.botoes button').forEach(function (b) { b.disabled = true; }); }
+// "Entrar com outra pessoa": sai desta conta neste navegador e volta para o login, que traz de volta para cá
+async function trocarPessoa() {
+  travar();
+  try { await _sb.auth.signOut(); } catch (e) {}
+  location.replace('login_padrao_metalico.html?voltar=' + encodeURIComponent('autorizar_conector.html?authorization_id=' + ID));
+}
+function travar() { document.querySelectorAll('.botoes button, #btTrocar').forEach(function (b) { b.disabled = true; }); }
 async function aprovar(app) {
   travar();
   var r = await _sb.auth.oauth.approveAuthorization(ID, { skipBrowserRedirect: true });

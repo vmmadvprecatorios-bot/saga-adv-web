@@ -88,7 +88,7 @@ html.sem-movimento .ev{animation:none}
     <input class="busca" id="fBusca" type="search" placeholder="Buscar por cliente, processo, tarefa ou texto...">
     <select class="sel" id="fPessoa" aria-label="Pessoa"><option value="">Todas as pessoas</option></select>
     <select class="sel" id="fModulo" aria-label="Módulo"><option value="">Todos os módulos</option></select>
-    <select class="sel" id="fAcao" aria-label="Ação"><option value="">Todas as ações</option><option value="criou">Criou</option><option value="alterou">Alterou</option><option value="excluiu">Excluiu</option><option value="consultou">Consultou (Claude)</option><option value="autorizou">Autorizou</option></select>
+    <select class="sel" id="fAcao" aria-label="Ação"><option value="">Todas as ações</option><option value="criou">Criou</option><option value="alterou">Alterou</option><option value="excluiu">Excluiu</option><option value="concluiu">Concluiu</option><option value="reabriu">Reabriu</option><option value="consultou">Consultou (Claude)</option><option value="autorizou">Autorizou</option></select>
     <select class="sel" id="fPeriodo" aria-label="Período"><option value="1">Hoje</option><option value="7" selected>Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="">Tudo</option></select>
   </div>
   <p class="resumo-topo" id="resumoTopo"></p>
@@ -112,7 +112,7 @@ window._sb=_sb;
    ===================================================================== */
 var A={linhas:[],usuarios:{},pessoas:{},pagina:0,acabou:false,pedido:0,filtroProcesso:null};
 var POR_PAGINA=200;
-var CORES={criou:'#16a34a',alterou:'#2563eb',excluiu:'#e5484d',consultou:'#8b5cf6',autorizou:'#c9a84c'};
+var CORES={criou:'#16a34a',alterou:'#2563eb',excluiu:'#e5484d',consultou:'#8b5cf6',autorizou:'#c9a84c',concluiu:'#0d9488',reabriu:'#d97706'};
 var MODULOS=['Processos','Clientes','Tarefas','Intimações','Agenda','Comentários','Financeiro','Documentos','Teses','Catálogos','Biblioteca','Marketing','Treinamentos','Colaboradores','Chat','Notas','SAGA no Claude'];
 var NOMES_CAMPOS={status_id:'Status',responsavel_id:'Responsável',captador_id:'Captador',data_prazo:'Prazo',hora_prazo:'Hora do prazo',concluida:'Concluída',concluida_em:'Data de conclusão',titulo:'Título',descricao:'Descrição',campos:'Dados da planilha',valor_causa:'Valor da causa',valor_precatorio_origem:'Valor do precatório',numero_processo_cnj:'Número do processo',tese_id:'Tipo de ação',area_direito_id:'Área',situacao_acao_id:'Situação da ação',nome_completo:'Nome',cpf:'CPF',excluido_logico:'Excluído',etiqueta_id:'Etiqueta',cor_etiqueta:'Cor da etiqueta',coluna_id:'Coluna',prazo:'Prazo',situacao:'Situação',triagem:'Triagem',etiqueta:'Etiqueta',processo_id:'Processo',pessoa_id:'Cliente',prioridade:'Prioridade',status:'Status',conteudo:'Texto',data_inicio:'Início',data_fim:'Fim',nome:'Nome',ativo:'Ativo',opcoes:'Opções',itens:'Itens',telefone:'Telefone',email:'E-mail',logradouro:'Endereço',numero:'Número',cep:'CEP',cidade:'Cidade',uf:'UF',sigilo:'Sigilo',tipo_acao:'Tipo de ação',subtarefas:'Subtarefas',valor:'Valor',data_vencimento:'Vencimento',data_pagamento:'Pagamento',pago:'Pago'};
 function $(id){return document.getElementById(id);}
