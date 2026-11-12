@@ -1122,6 +1122,7 @@
     if(n&&n.referencia_tabela==='meta_anuncios')return {titulo:'Robô do Meta',tela:'marketing_campanhas_padrao_metalico.html?aba=painel'};
     if(n&&n.referencia_tabela==='datajud')return {titulo:'Andamento do processo',tela:'monitoramento_multi_oab.html?andamentos=1'};
     if(n&&n.referencia_tabela==='acessos')return {titulo:'Entrada no sistema',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
+    if(n&&n.referencia_tabela==='pagamentos')return {titulo:'Parcela vencida',tela:'financeiro.html?aba=parcelas'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1146,6 +1147,7 @@
     {chave:'sugestoes',titulo:'Sugestões de melhoria',tipos:[],tela:'sugestoes.html',um:'aviso de sugestão',varios:'avisos de sugestões',cor:'#c9a84c'},
     {chave:'andamentos',titulo:'Andamentos do CNJ',tipos:[],tela:'monitoramento_multi_oab.html?andamentos=1',um:'andamento novo',varios:'andamentos novos',cor:'#0891b2'},
     {chave:'acessos',titulo:'Entradas no sistema',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'entrada no sistema',varios:'entradas no sistema',cor:'#6366f1'},
+    {chave:'pagamentos',titulo:'Pagamentos',tipos:[],tela:'financeiro.html?aba=parcelas',um:'parcela vencida',varios:'parcelas vencidas',cor:'#2fae7a'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   // Pedidos de busca (bloco 140) chegam com o tipo 'outro' e a referência 'pedidos_busca': têm grupo próprio no sino
@@ -1161,6 +1163,8 @@
     if(n&&n.referencia_tabela==='datajud'){for(var dj=0;dj<GRUPOS_NOTIF.length;dj++){if(GRUPOS_NOTIF[dj].chave==='andamentos')return GRUPOS_NOTIF[dj];}}
     // Entradas no sistema (bloco 157, T150): 1ª entrada do dia de cada colaborador, só para o administrador geral
     if(n&&n.referencia_tabela==='acessos'){for(var ac=0;ac<GRUPOS_NOTIF.length;ac++){if(GRUPOS_NOTIF[ac].chave==='acessos')return GRUPOS_NOTIF[ac];}}
+    // Parcela vencida e não paga (bloco 167, T159): tipo 'outro' com a referência 'pagamentos', grupo próprio no sino
+    if(n&&n.referencia_tabela==='pagamentos'){for(var pg=0;pg<GRUPOS_NOTIF.length;pg++){if(GRUPOS_NOTIF[pg].chave==='pagamentos')return GRUPOS_NOTIF[pg];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1278,6 +1282,15 @@
     if(n.referencia_tabela==='ponto_home_office'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=equipe');return;}
     if(n.referencia_tabela==='acessos'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=acessos');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
+    // parcela vencida (bloco 167): abre a ficha do cliente no bloco Pagamentos; sem achar a parcela, a aba Parcelas do Financeiro
+    if(n.referencia_tabela==='pagamentos'){
+      try{
+        var pq=n.referencia_id?await global._sb.from('pagamentos_parcelas').select('id,acordo_id').eq('id',n.referencia_id).maybeSingle():null;
+        var pa=pq&&pq.data&&pq.data.acordo_id?await global._sb.from('pagamentos_acordos').select('id,pessoa_id').eq('id',pq.data.acordo_id).maybeSingle():null;
+        if(pa&&pa.data&&pa.data.pessoa_id){global.sagaIrPara('ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+encodeURIComponent(pa.data.pessoa_id)+'&foco=pagamentos');return;}
+      }catch(e){}
+      global.sagaIrPara('financeiro.html?aba=parcelas');return;
+    }
     // andamento novo: abre a ficha no processo, já no quadro dos andamentos; aviso do robô (sem processo): a janela dos andamentos
     if(n.referencia_tabela==='datajud'){global.sagaIrPara(n.referencia_id?'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+encodeURIComponent(n.referencia_id)+'&foco=andamentos':'monitoramento_multi_oab.html?andamentos=1');return;}
     if(n.referencia_tabela==='sugestoes'){global.sagaIrPara('sugestoes.html'+(n.referencia_id?'?id='+encodeURIComponent(n.referencia_id):''));return;}

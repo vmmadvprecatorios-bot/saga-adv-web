@@ -372,6 +372,7 @@ span.ps-origem-btn{cursor:default}
 <script src="saga_andamentos.js?v=202611121043"></script>
 <script src="saga_tribunais.js?v=202611121043"></script>
 <script src="saga_atendimentos.js?v=202611121043"></script>
+<script src="saga_pagamentos.js?v=202611121043"></script>
 <link rel="stylesheet" href="saga_tema.css?v=202611121043">
 </head>
 <body data-theme="dark">
@@ -452,6 +453,7 @@ span.ps-origem-btn{cursor:default}
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>Responsável</div><div class="responsavel-bloco" id="processResponsible"></div></section>
           <section class="bloco-lateral" id="secaoDocumentos"><div class="secao-titulo pastas-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Pastas do cliente</span><button type="button" class="pasta-topo-btn" id="btnNovaPasta" title="Criar pasta">+ Pasta</button></div><div class="arvore-pastas" id="documentList"></div><button class="btn-anexar-documento" id="btnAnexarDocumento">+ Anexar documento</button><input class="hidden" id="documentInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt"></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Tarefas</div><div class="tarefa-list" id="taskList"></div><button class="btn-nova-tarefa-mini" id="btnAddTask">+ Adicionar tarefa</button></section>
+          <section class="bloco-lateral" id="secaoPagamentos" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Pagamentos</div><div id="pagamentosFicha"></div><button class="btn-nova-tarefa-mini" id="btnNovoPagamento" type="button" hidden>+ Novo pagamento</button></section>
           <section class="bloco-lateral" id="secaoAgente" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Agente de petições</div><div class="ag-lista" id="agenteLista"></div><button class="btn-nova-tarefa-mini" id="btnPedirAgente" hidden>+ Pedir ao agente</button></section>
           <section class="bloco-lateral" id="secaoNotas" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Notas</div><div class="notas-ficha" id="notasFicha"></div><button class="btn-nova-tarefa-mini" id="btnNovaNotaFicha" type="button">+ Nova nota sobre o cliente</button></section>
           <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Ações</div><div class="botoes-acao-lateral"><button class="btn-acao-lateral" id="btnVerMovimentacoes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Intimações do processo</button></div></section>
@@ -3464,6 +3466,16 @@ async function carregarDetalhesProcesso(pid){
 }
 /* ---------- Atendimentos do cliente (T141, bloco 149): a mesma conversa da agenda; responder aqui = responder no evento ---------- */
 if(window.SagaAtendimentos)SagaAtendimentos.configurar({toast:(m,t)=>showToast(esc(m),t==='ok'?'success':t==='erro'?'error':'warning')});
+/* ---------- Pagamentos e parcelas do cliente (T159, bloco 167): honorários parcelados, pensão, acordo; parcela de honorários paga entra no Financeiro ---------- */
+if(window.SagaPagamentos)SagaPagamentos.configurar({toast:(m,t)=>showToast(esc(m),t==='ok'?'success':t==='erro'?'error':'warning')});
+function renderPagamentosFicha(){
+  const sec=document.getElementById('secaoPagamentos'),el=document.getElementById('pagamentosFicha'),p=state.pessoaRow;
+  if(!sec||!el)return Promise.resolve(false);
+  if(!window.SagaPagamentos||!p){sec.hidden=true;return Promise.resolve(false);}
+  return SagaPagamentos.blocoFicha(el,{secao:sec,botao:document.getElementById('btnNovoPagamento'),pessoaId:p.id,pessoaNome:p.nome_completo,
+    processos:state.processos.map(x=>({id:x.id,rotulo:x.tese+(x.cnj&&x.cnj!=='Não informado'?' · '+x.cnj:' · sem número')})),
+    processoAtivo:()=>state.activeProcessId}).catch(()=>false);
+}
 function renderAtendimentosFicha(forcar){
   const sec=document.getElementById('secaoAtendimentos'),el=document.getElementById('atendimentosFicha');
   if(!sec||!el)return;
@@ -3507,6 +3519,7 @@ async function carregarFicha(pessoaId,processoIdInicial){
     state.activeView='process';
     renderActiveProcess();
     renderAtendimentosFicha();
+    state.pagamentosPronto=renderPagamentosFicha();
     return true;
   }catch(erro){
     showToast('Não foi possível carregar os dados desta pessoa.','error');
@@ -4765,6 +4778,8 @@ async function init(){
       if((params.get('aba')==='localizacao'||params.get('pedido_busca'))&&typeof activateLocation==='function')activateLocation();
       // vindo do sino ("Busca pronta", bloco 140): destaca o pedido e abre o leitor com o PDF da consulta
       if(params.get('pedido_busca')&&window.SagaLocalizacao&&SagaLocalizacao.abrirPedido)SagaLocalizacao.abrirPedido(params.get('pedido_busca'));
+      // vindo do aviso de parcela vencida (sino, bloco 167): rola até o bloco Pagamentos
+      if(params.get('foco')==='pagamentos'&&window.SagaPagamentos)(state.pagamentosPronto||renderPagamentosFicha()).then(ok=>{if(ok)SagaPagamentos.rolar();});
       return;
     }
     // Lista de processos, Kanban e busca do topo abrem a ficha pelo processo:
