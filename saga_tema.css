@@ -607,3 +607,90 @@ html[data-cor^="vidro"] body tbody tr:nth-child(even) > td{background:color-mix(
 html[data-cor^="vidro"] body tbody tr:hover > td{background:color-mix(in srgb,var(--gold) 14%,var(--panel-solid))}
 html[data-cor^="vidro"].vidro-fosco body tbody tr > td{background:var(--panel-solid)}
 html[data-cor^="vidro"] body .grade-mes > .celula-dia.hoje{background:color-mix(in srgb,var(--gold) 20%,transparent)}
+
+/* =====================================================================
+ CAIXAS, BOLINHAS, MENUS E BOTÕES NO PADRÃO DO SAGA (13/11/2026, T169, Dr. Victor).
+ Nada com a cara padrão do navegador: caixa de marcar, bolinha de escolha, menu suspenso, botão sem classe
+ e campo de texto seguem o tema (claro/escuro, Azul, Grafite, campanhas e Vidro), só com as variáveis do tema.
+ Regras "fracas" (:where, força zero): o que cada tela já desenhou continua valendo (chavinhas .switch,
+ escolhas com .active e o deslize do saga_guard, filtros e caixinhas da planilha). Só o desenho de base muda.
+ Marcar/desmarcar com movimento suave (curva do sistema, 220 ms); html.saga-sem-movimento troca na hora.
+ ===================================================================== */
+:where(input[type="checkbox"],input[type="radio"]):where(:not(.switch input)){
+  -webkit-appearance:none;appearance:none;box-sizing:border-box;flex:0 0 auto;
+  width:16px;height:16px;margin:0 3px 0 0;padding:0;vertical-align:-3px;
+  display:inline-grid;place-content:center;cursor:pointer;
+  border:1.5px solid color-mix(in srgb,var(--text) 40%,transparent);border-radius:5px;
+  background:var(--panel-solid);color:var(--panel-solid);
+  transition:background-color .22s cubic-bezier(.22,.78,.25,1),border-color .22s cubic-bezier(.22,.78,.25,1),box-shadow .22s cubic-bezier(.22,.78,.25,1);
+}
+:where(input[type="radio"]):where(:not(.switch input)){border-radius:50%}
+/* o sinal de marcado: ✓ na caixa, bolinha no meio da escolha */
+:where(input[type="checkbox"]):where(:not(.switch input))::before{
+  content:"";width:9px;height:9px;background:currentColor;
+  clip-path:polygon(14% 44%,0 60%,40% 100%,100% 22%,86% 8%,40% 70%);
+  transform:scale(0);transition:transform .22s cubic-bezier(.22,.78,.25,1);
+}
+:where(input[type="radio"]):where(:not(.switch input))::before{
+  content:"";width:8px;height:8px;border-radius:50%;background:var(--gold);
+  transform:scale(0);transition:transform .22s cubic-bezier(.22,.78,.25,1);
+}
+:where(input[type="checkbox"]):where(:not(.switch input)):is(:checked,:indeterminate){background:var(--gold);border-color:var(--gold)}
+:where(input[type="checkbox"]):where(:not(.switch input)):is(:checked,:indeterminate)::before{transform:scale(1)}
+:where(input[type="checkbox"]):where(:not(.switch input)):indeterminate::before{clip-path:inset(40% 8% 40% 8% round 2px)}
+:where(input[type="radio"]):where(:not(.switch input)):checked{border-color:var(--gold)}
+:where(input[type="radio"]):where(:not(.switch input)):checked::before{transform:scale(1)}
+:where(input[type="checkbox"],input[type="radio"]):where(:not(.switch input)):not(:disabled):hover{border-color:var(--gold)}
+:where(input[type="checkbox"],input[type="radio"]):where(:not(.switch input)):focus-visible{outline:2px solid color-mix(in srgb,var(--gold) 70%,transparent);outline-offset:2px}
+:where(input[type="checkbox"],input[type="radio"]):where(:not(.switch input)):disabled{opacity:.45;cursor:not-allowed}
+
+/* menu suspenso (uma escolha): seta fina na cor do texto, cantos arredondados */
+:where(select){
+  -webkit-appearance:none;appearance:none;max-width:100%;
+  font-family:inherit;color:var(--text);cursor:pointer;
+  padding:6px 10px;border:1px solid var(--border);border-radius:8px;
+  background-color:color-mix(in srgb,var(--text) 5%,var(--panel-solid));
+  transition:border-color .22s cubic-bezier(.22,.78,.25,1),box-shadow .22s cubic-bezier(.22,.78,.25,1);
+}
+select:not([multiple]):not([size]){
+  -webkit-appearance:none!important;appearance:none!important;padding-right:28px!important;
+  background-image:linear-gradient(45deg,transparent 40%,currentColor 40% 60%,transparent 60%),linear-gradient(-45deg,transparent 40%,currentColor 40% 60%,transparent 60%)!important;
+  background-position:right 15.5px center,right 11px center!important;background-size:5px 5px,5px 5px!important;background-repeat:no-repeat!important;
+}
+:where(select):not(:disabled):hover{border-color:color-mix(in srgb,var(--gold) 55%,var(--border))}
+:where(select):disabled{opacity:.55;cursor:not-allowed}
+
+/* campos de texto sem desenho próprio (as caixas de busca sem borda, dentro de um contorno da tela, ficam como estão) */
+:where(input:not([type]),input[type="text"],input[type="email"],input[type="tel"],input[type="number"],input[type="search"],input[type="password"],input[type="url"],input[type="date"],input[type="time"],input[type="datetime-local"],input[type="month"],input[type="week"],textarea):where(:not([class*="busca"] > *,[class*="search"] > *,.quantidade-custom-wrap > *,.page-size > *)){
+  font-family:inherit;color:var(--text);
+  padding:5px 9px;border:1px solid var(--border);border-radius:8px;
+  background:color-mix(in srgb,var(--text) 4%,var(--panel-solid));
+  transition:border-color .22s cubic-bezier(.22,.78,.25,1),box-shadow .22s cubic-bezier(.22,.78,.25,1);
+}
+:where(input,textarea)::placeholder{color:var(--muted);opacity:1}
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),select,textarea):focus-visible{
+  outline:0;border-color:var(--gold);box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 20%,transparent);
+}
+:where(input,textarea):disabled{opacity:.6;cursor:not-allowed}
+
+/* botão sem classe (e input de botão): AÇÃO secundária fina; com type=submit, ação principal */
+:where(button:not([class]),input[type="button"]:not([class]),input[type="reset"]:not([class])){
+  font:inherit;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;
+  padding:6px 12px;border-radius:8px;border:1px solid var(--sb-sec-borda);background:var(--sb-sec);
+  transition:background-color .22s cubic-bezier(.22,.78,.25,1),border-color .22s cubic-bezier(.22,.78,.25,1);
+}
+:where(input[type="submit"]:not([class])){
+  font:inherit;font-size:13px;font-weight:600;color:var(--text);cursor:pointer;
+  padding:6px 14px;border-radius:8px;border:1px solid var(--sb-acao-borda);background:var(--sb-acao);
+}
+:where(button:not([class]),input[type="button"]:not([class]),input[type="reset"]:not([class])):not(:disabled):hover{background:var(--sb-sec-hover);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
+:where(input[type="submit"]:not([class])):not(:disabled):hover{background:var(--sb-acao-hover)}
+:where(button,input[type="button"],input[type="submit"],input[type="reset"]):focus-visible{outline:2px solid color-mix(in srgb,var(--gold) 70%,transparent);outline-offset:2px}
+:where(button:not([class]),input[type="button"],input[type="submit"],input[type="reset"]):disabled{opacity:.5;cursor:not-allowed}
+/* botão de escolher arquivo */
+:where(input[type="file"])::file-selector-button{
+  font:inherit;font-size:12.5px;color:var(--text);cursor:pointer;margin-right:10px;
+  padding:5px 12px;border-radius:8px;border:1px solid var(--sb-sec-borda);background:var(--sb-sec);
+}
+/* "Efeitos de movimento" desligado: troca na hora */
+html.saga-sem-movimento :is(input,select,textarea,button),html.saga-sem-movimento :is(input[type="checkbox"],input[type="radio"])::before{transition:none!important}
