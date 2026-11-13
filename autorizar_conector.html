@@ -93,6 +93,13 @@ function erro(texto) {
 }
 function hostDe(u) { try { return new URL(u).hostname.toLowerCase(); } catch (e) { return ''; } }
 function doClaude(host) { return /(^|\.)claude\.(ai|com)$/.test(host); }
+// Conector local da pasta Agentes VMMADV (Claude Code no computador do escritório), liberado pelo Dr. Victor em 13/11/2026:
+// só este cliente e só com este endereço de retorno exato no próprio computador. As demais regras (login, conector_pode_usar) continuam valendo.
+var CONECTORES_LOCAIS = { '57461f09-e3cc-46ee-873a-6a89ac70b8d8': 'http://localhost:3118/callback' };
+function conectorLocalLiberado(cliente, destino) {
+  var id = (cliente && (cliente.client_id || cliente.id)) || '';
+  return !!id && Object.prototype.hasOwnProperty.call(CONECTORES_LOCAIS, id) && CONECTORES_LOCAIS[id] === destino;
+}
 
 async function iniciar() {
   if (!/^[A-Za-z0-9_-]{8,200}$/.test(ID)) { erro('Este link de autorização está incompleto.'); return; }
@@ -115,7 +122,7 @@ async function iniciar() {
   var quem = '<div class="quem"><span class="ini" aria-hidden="true">' + esc(ini) + '</span><div><div class="rot">Você está conectando o Claude como</div>'
     + '<div class="nome">' + esc(eu.data.nome_completo || '') + '</div>' + (email ? '<div class="mail">' + esc(email) + '</div>' : '') + '</div>'
     + '<button class="link-troca" type="button" id="btTrocar">Entrar com outra pessoa</button></div>';
-  if (!doClaude(host)) {
+  if (!doClaude(host) && !conectorLocalLiberado(cliente, destino)) {
     mostrar('<h1>Pedido recusado por segurança</h1><p class="sub">O SAGA só se liga ao <b>Claude</b>. Este pedido vem de <b>' + esc(app) + '</b> e iria para <b>' + esc(host || 'endereço desconhecido') + '</b>.</p>'
       + '<div class="quadro alerta">Se você não pediu isso, apenas feche esta página. Nada foi liberado.</div>'
       + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Recusar e voltar</button></div>');
