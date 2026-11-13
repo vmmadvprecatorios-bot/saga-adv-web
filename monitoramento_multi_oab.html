@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611122325"></script>
+<script src="saga_guard.js?v=202611130011"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Intimações</title>
@@ -22,6 +22,12 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .pill{height:32px;padding:0 14px;border-radius:8px;font-size:11.5px;font-weight:700;color:var(--muted)}
 .pill.active{background:var(--gold);color:#fff}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.intim-aviso{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;margin:0 0 10px;padding:9px 12px;border-radius:12px;font-size:12.5px;border:1px solid var(--border-soft);background:var(--panel);animation:intimAvisoEntra .32s cubic-bezier(.22,.78,.25,1)}
+.intim-aviso.novo{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}
+.intim-aviso.filtro{border-color:color-mix(in srgb,#f59e0b 55%,transparent);background:color-mix(in srgb,#f59e0b 9%,var(--panel))}
+.intim-aviso.erro{border-color:color-mix(in srgb,#e5484d 55%,transparent);background:color-mix(in srgb,#e5484d 9%,var(--panel))}
+@keyframes intimAvisoEntra{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+html.saga-sem-movimento .intim-aviso{animation:none}
 .kpi-card{background:var(--panel);border:1px solid var(--border-soft);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden}
 .kpi-card .rotulo{font-size:11px;color:var(--muted);font-weight:600}
 .kpi-card .kpi-value{font-size:24px;margin-top:6px}
@@ -34,7 +40,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 body.si-so-leitura .aviso-leitura{display:block}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.kpis{grid-template-columns:1fr 1fr;gap:9px}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611122325">
+<link rel="stylesheet" href="saga_tema.css?v=202611130011">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -58,6 +64,7 @@ body.si-so-leitura .aviso-leitura{display:block}
   <div class="si-graf-barra" style="display:flex;justify-content:flex-end;margin:0 0 8px"><button type="button" class="si-btn" id="btnGraficosIntim" aria-controls="intimGraficos" aria-expanded="true">Ocultar gráficos</button></div>
   <div id="intimGraficos"></div>
   <div id="intimFiltros"></div>
+  <div id="intimAvisos" aria-live="polite"></div>
   <div id="intimQuadro"></div>
   <div id="intimLista" style="display:none"></div>
 </main>
@@ -71,12 +78,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611122325"></script>
-<script src="saga_texto.js?v=202611122325"></script>
-<script src="saga_prazos.js?v=202611122325"></script>
-<script src="saga_fichas.js?v=202611122325"></script>
-<script src="saga_intimacoes.js?v=202611122325"></script>
-<script src="saga_andamentos.js?v=202611122325"></script>
+<script src="saga_ui.js?v=202611130011"></script>
+<script src="saga_texto.js?v=202611130011"></script>
+<script src="saga_prazos.js?v=202611130011"></script>
+<script src="saga_fichas.js?v=202611130011"></script>
+<script src="saga_intimacoes.js?v=202611130011"></script>
+<script src="saga_andamentos.js?v=202611130011"></script>
 <script>
 /* =====================================================================
    INTIMAÇÕES (tela própria; o quadro, a lista, os filtros e as janelas vêm de saga_intimacoes.js)
@@ -94,14 +101,38 @@ function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=docume
 function renderTudo(){
   document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.classList.toggle('active',b.dataset.visao===visao);});
   var c=SagaIntimacoes.contagens();
-  var cards=[['hoje','Disponibilizadas hoje',c.hoje,'#4b8af5'],['abertas','Abertas',c.abertas,'#e5484d'],['vencidas','Prazos vencidos',c.atrasadas,'#f97316'],['fora','Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']],fx=SagaIntimacoes.faixa();
+  var cards=[['hoje','Chegaram ou publicadas hoje',c.hoje,'#4b8af5'],['abertas','Abertas',c.abertas,'#e5484d'],['vencidas','Prazos vencidos',c.atrasadas,'#f97316'],['fora','Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']],fx=SagaIntimacoes.faixa();
   document.getElementById('kpis').innerHTML=cards.map(function(k){return '<button type="button" class="kpi-card kpi-filtro'+(fx===k[0]?' ativo':'')+'" data-faixa="'+k[0]+'" aria-pressed="'+(fx===k[0])+'" title="'+(fx===k[0]?'Clique para tirar o filtro':'Clique para filtrar')+'" style="--c:'+k[3]+'"><span class="faixa"></span><div class="rotulo">'+esc(k[1])+'</div><div class="kpi-value">'+k[2]+'</div></button>';}).join('');
   SagaIntimacoes.montarFiltros(document.getElementById('intimFiltros'));
+  pintarAvisosIntim();
   var gEl=document.getElementById('intimGraficos');SagaIntimacoes.renderGraficos(gEl);gEl.hidden=graficosIntimOcultos;
   var q=document.getElementById('intimQuadro'),l=document.getElementById('intimLista');
   q.style.display=visao==='kanban'?'':'none';l.style.display=visao==='lista'?'':'none';
   if(visao==='kanban')SagaIntimacoes.renderQuadro(q);else SagaIntimacoes.renderLista(l,false);
 }
+// 12/11 (Dr. Victor: "a intimação não aparece"): avisa quando os filtros escondem intimações abertas
+// e quando chegaram intimações novas depois que a tela abriu (confere a cada 2 min, com a aba à vista)
+var _novasIntim=0,_erroNovasIntim='';
+function pintarAvisosIntim(){
+  var el=document.getElementById('intimAvisos');if(!el)return;
+  var h='',e=SagaIntimacoes.escondidasPorFiltro?SagaIntimacoes.escondidasPorFiltro():{qtd:0,motivos:[]};
+  if(_novasIntim>0)h+='<div class="intim-aviso novo"><span><b>'+_novasIntim+(_novasIntim===1?' intimação nova chegou':' intimações novas chegaram')+'</b> depois que esta tela abriu.</span><button type="button" class="si-btn" data-av="atualizar">Mostrar agora</button></div>';
+  if(_erroNovasIntim)h+='<div class="intim-aviso erro"><span>Não deu para conferir se chegaram intimações novas: '+esc(_erroNovasIntim)+'. A tela tenta de novo em 2 minutos; se quiser, clique em Atualizar.</span></div>';
+  if(e.qtd>0)h+='<div class="intim-aviso filtro"><span><b>'+e.qtd+(e.qtd===1?' intimação aberta não aparece':' intimações abertas não aparecem')+'</b> por causa dos filtros'+(e.motivos.length?' ('+esc(e.motivos.join(', '))+')':'')+'.</span><button type="button" class="si-btn" data-av="limpar">Limpar filtros e ver todas</button></div>';
+  el.innerHTML=h;
+}
+document.getElementById('intimAvisos').addEventListener('click',async function(ev){
+  var b=ev.target.closest('[data-av]');if(!b)return;
+  if(b.dataset.av==='limpar'){SagaIntimacoes.limparTodosFiltros();return;}
+  if(b.dataset.av==='atualizar'){b.disabled=true;_novasIntim=0;await SagaIntimacoes.carregar();renderTudo();}
+});
+async function conferirNovasIntim(){
+  if(document.hidden||!SagaIntimacoes.pronto||!SagaIntimacoes.pronto())return;
+  try{var n=await SagaIntimacoes.novasDesdeCarga();_erroNovasIntim='';if(n!==_novasIntim){_novasIntim=n;pintarAvisosIntim();}}
+  catch(err){_erroNovasIntim=(err&&err.message)||'erro de ligação';pintarAvisosIntim();}
+}
+setInterval(conferirNovasIntim,120000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)conferirNovasIntim();});
 pintarBotaoGraficosIntim();
 document.getElementById('btnGraficosIntim').addEventListener('click',function(){
   graficosIntimOcultos=!graficosIntimOcultos;try{localStorage.setItem('saga-intimacoes-graficos-ocultos',graficosIntimOcultos?'1':'0');}catch(e){}
@@ -111,7 +142,7 @@ document.getElementById('btnGraficosIntim').addEventListener('click',function(){
 document.getElementById('kpis').addEventListener('click',function(e){var b=e.target.closest('[data-faixa]');if(b)SagaIntimacoes.definirFaixa(b.dataset.faixa);});
 document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.addEventListener('click',function(){
   visao=b.dataset.visao;try{localStorage.setItem('saga-mon-visao',visao);}catch(e){}renderTudo();});});
-document.addEventListener('saga-atualizar',async function(){await SagaIntimacoes.carregar();renderTudo();});
+document.addEventListener('saga-atualizar',async function(){_novasIntim=0;await SagaIntimacoes.carregar();renderTudo();});
 
 async function init(){
   await SagaUI.carregar('monitoramento');

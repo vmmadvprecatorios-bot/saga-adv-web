@@ -115,6 +115,10 @@
   function toast(m,t){if(S.toast)S.toast(m,t==='error'?'erro':t);}
   function dataBR(d){if(!d)return '—';var p=String(d).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
   function hojeISO(){var d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+  // 12/11 (Dr. Victor): intimação que chega pelo e-mail costuma ter a data do tribunal de ontem; "hoje" e o período
+  // contam também o dia em que ela CHEGOU no SAGA (capturado_em), senão a que acabou de chegar some do filtro
+  function diaChegada(i){if(!i||!i.capturado_em)return '';var d=new Date(i.capturado_em);if(isNaN(d))return '';return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+  function ehDeHoje(i,h){h=h||hojeISO();return i.data_disponibilizacao===h||diaChegada(i)===h;}
   function diasAtras(n){var d=new Date();d.setDate(d.getDate()-n);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
   function iniciais(n){return String(n||'?').split(' ').filter(Boolean).slice(0,2).map(function(p){return p[0];}).join('').toUpperCase();}
   function usuario(id){return S.usuarios.filter(function(u){return u.id===id;})[0];}
@@ -437,7 +441,7 @@
       var j=justicaDe(i);
       if(f.processo&&i.processo_id!==f.processo)return false;
       if(faixa){
-        if(faixa==='hoje'&&i.data_disponibilizacao!==hoje)return false;           // todas de hoje, inclusive as concluídas (riscadas)
+        if(faixa==='hoje'&&!ehDeHoje(i,hoje))return false;           // todas de hoje, inclusive as concluídas (riscadas)
         if(faixa==='abertas'&&i.concluida)return false;
         if(faixa==='vencidas'&&(i.concluida||!i.prazo||i.prazo>=hoje))return false;
         if(faixa==='fora'&&(i.concluida||i.processo_id))return false;
@@ -448,7 +452,7 @@
       if(f.situacao&&situacaoDe(i).chave!==f.situacao)return false;
       if(f.triagem&&(f.triagem==='sem'?!!i.triagem:i.triagem!==f.triagem))return false;
       if(!semNovasTribunal&&S.novasTribunais[j.chave]&&situacaoDe(i).chave!=='nova')return false;
-      if(desde&&!f.processo&&String(i.data_disponibilizacao||'')<desde)return false;
+      if(desde&&!f.processo&&String(i.data_disponibilizacao||'')<desde&&diaChegada(i)<desde)return false;
       if(f.ramo&&j.ramo!==f.ramo)return false;
       if(f.tribunal&&j.chave!==f.tribunal)return false;
       if(f.regiao){if(f.regiao.indexOf('uf:')===0){if(j.uf!==f.regiao.slice(3))return false;}else if(j.regiao!==f.regiao)return false;}
@@ -500,7 +504,7 @@
         '<button class="si-btn si-so-novas" type="button" data-acao="so-novas" aria-pressed="'+(f.situacao==='nova')+'">Só as novas</button>'+
         '<button class="si-btn" type="button" data-acao="ordem-padrao" title="Voltar à ordem padrão dos tribunais">Ordem padrão</button>'+
         '<div class="si-seg" data-seg="conclusao" aria-label="Conclusão"><button type="button" data-v="abertas" class="'+(f.conclusao==='abertas'?'active':'')+'">Abertas</button><button type="button" data-v="concluidas" class="'+(f.conclusao==='concluidas'?'active':'')+'">Concluídas</button><button type="button" data-v="todas" class="'+(f.conclusao==='todas'?'active':'')+'">Todas</button></div>'+
-        '<select data-f="periodo" title="Período">'+[['hoje','Disponibilizadas hoje'],['7','Últimos 7 dias'],['30','Últimos 30 dias'],['tudo','Todo o período']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===f.periodo?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
+        '<select data-f="periodo" title="Período">'+[['hoje','Chegaram ou publicadas hoje'],['7','Últimos 7 dias'],['30','Últimos 30 dias'],['tudo','Todo o período']].map(function(o){return '<option value="'+o[0]+'"'+(o[0]===f.periodo?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>'+
         '<input data-f="busca" placeholder="Processo, parte, vara, etiqueta ou texto..." value="'+esc(f.busca)+'">'+
         '<button class="si-btn" type="button" data-acao="andamentos" title="Andamentos dos processos do Jurídico trazidos do CNJ (DataJud)">Andamentos do CNJ</button>'+
         (S.pode.criarProc?'<button class="si-btn pri" type="button" data-acao="lote">Trazer para o SAGA em lote</button>':'')+
@@ -1742,11 +1746,41 @@
   }
   function contagens(){
     var l=S.itens.filter(function(i){return !i.concluida;}),h=hojeISO();
-    return {abertas:l.length,hoje:S.itens.filter(function(i){return i.data_disponibilizacao===h;}).length,
+    return {abertas:l.length,hoje:S.itens.filter(function(i){return ehDeHoje(i,h);}).length,
       atrasadas:l.filter(function(i){return i.prazo&&i.prazo<h;}).length,semProcesso:l.filter(function(i){return !i.processo_id;}).length};
   }
 
-  global.SagaIntimacoes={iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,renderGraficos:renderGraficos,
+  // 12/11 (Dr. Victor: "a intimação não aparece"): quantas intimações ABERTAS os filtros escondem agora
+  function escondidasPorFiltro(){
+    var abertas=S.itens.filter(function(i){return !i.concluida;});
+    var vis={};filtradas(false,false).forEach(function(i){vis[i.id]=1;});
+    var fora=abertas.filter(function(i){return !vis[i.id];});
+    var f=S.f,motivos=[];
+    if(f.faixa)motivos.push('o número do topo escolhido');
+    if(f.periodo&&f.periodo!=='tudo')motivos.push('o período');
+    if(f.situacao)motivos.push('a situação');
+    if(f.triagem)motivos.push('a triagem');
+    if(f.advogado)motivos.push('o advogado/responsável');
+    if(f.ramo||f.tribunal||f.regiao||f.orgao)motivos.push('a justiça/tribunal');
+    if(f.oab)motivos.push('a OAB/origem');
+    if(f.busca)motivos.push('a busca');
+    if(f.processo)motivos.push('o processo');
+    if(f.conclusao==='concluidas')motivos.push('"só concluídas"');
+    if(Object.keys(S.novasTribunais).some(function(k){return S.novasTribunais[k];}))motivos.push('"Só as novas"');
+    return {qtd:fora.length,motivos:motivos};
+  }
+  function limparTodosFiltros(){S.f.faixa='';S.f.situacao='';S.f.periodo='tudo';S.f.conclusao='abertas';S.novasTribunais={};['ramo','tribunal','regiao','orgao','advogado','oab','busca','triagem'].forEach(function(k){S.f[k]='';});S.f.processo=null;guardarFiltros();mudou();}
+  // Chegou intimação nova depois que a tela abriu? (a tela não se redesenha sozinha para não atrapalhar quem está mexendo)
+  async function novasDesdeCarga(){
+    if(!S.sb||!S.itens)return 0;
+    var ult='';S.itens.forEach(function(i){if(i.capturado_em&&i.capturado_em>ult)ult=i.capturado_em;});
+    if(!ult)return 0;
+    var r=await S.sb.from('intimacoes').select('id',{count:'exact',head:true}).gt('capturado_em',ult);
+    if(r.error)throw r.error;
+    return r.count||0;
+  }
+
+  global.SagaIntimacoes={escondidasPorFiltro:escondidasPorFiltro,limparTodosFiltros:limparTodosFiltros,novasDesdeCarga:novasDesdeCarga,iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,renderGraficos:renderGraficos,
     injetarNoKanbanTarefas:injetarNoKanbanTarefas,abrir:abrir,contagens:contagens,justicaDe:justicaDe,
     faixa:function(){return S.f.faixa||'';},definirFaixa:function(k){S.f.faixa=S.f.faixa===k?'':(k||'');mudou();},
     filtrarProcesso:function(id){S.f.processo=id||null;},filtrarTribunal:function(t){S.f.tribunal=t||'';},pronto:function(){return S.carregado;}};
