@@ -24,7 +24,7 @@ window.SagaPlanilha=(function(){
   // dentro das caixinhas de marcar: escolher só "(Vazias)" escondia tudo (vistoria 09/11). VAZIO_ANTIGO converte filtros guardados.
   var VAZIO='__saga_vazio__',VAZIO_ANTIGO='\u0000vazio';
   function trocaVazioAntigo(lista){return (lista||[]).map(function(v){return v===VAZIO_ANTIGO||v==='\ufffdvazio'?VAZIO:v;});}
-  var SISTEMA_SO_LEITURA=['processo.fase','processo.criado_em','processo.atualizado_em','processo.providencia'];
+  var SISTEMA_SO_LEITURA=['processo.codigo','processo.fase','processo.criado_em','processo.atualizado_em','processo.providencia'];
   // colunas preenchidas sozinhas pelo sistema (não se edita na planilha nem se arrasta no Kanban)
   var COLUNAS_AUTOMATICAS=['captacao.carta'];
   // Colunas que só fazem sentido numa fase
@@ -63,6 +63,7 @@ window.SagaPlanilha=(function(){
       case 'pessoa.telefone':return pe.telefone_whatsapp;
       case 'pessoa.email':return pe.email;
       case 'processo.numero':return p.numero_processo_cnj;
+      case 'processo.codigo':return p.codigo;
       case 'processo.area':return p.area_direito_id;
       case 'processo.tese':return p.tese_id;
       case 'processo.status':return p.status_id;
@@ -312,8 +313,10 @@ window.SagaPlanilha=(function(){
     tb.innerHTML=lista.map(function(p){
       var sig=!!p.sigilo&&!state.permissoes.editar_dados;
       return '<tr data-sp-proc="'+h(p.id)+'"><td onclick="event.stopPropagation()"><input type="checkbox" class="chk-linha" value="'+h(p.id)+'"></td>'+cs.map(function(c){
-        var t=sig&&c.campo_sistema!=='pessoa.nome'?'••••':exibir(c,texto(p,c)),cor=sig?null:corDe(p,c),v=bruto(p,c);
+        var t=sig&&c.campo_sistema!=='pessoa.nome'&&c.campo_sistema!=='processo.codigo'?'••••':exibir(c,texto(p,c)),cor=sig?null:corDe(p,c),v=bruto(p,c);
         var conteudo;
+        // 13/11 (T176): código do processo (VMM-01234-PSS) com copiar; o código não revela dado, aparece mesmo em sigilo
+        if(c.campo_sistema==='processo.codigo'&&t)return '<td data-sp-cel="'+h(c.id)+'" title="'+h(t)+'"><span class="sp-codigo">'+h(t)+'</span>'+(window.sagaIconeCopiar?sagaIconeCopiar(t,'Código do processo'):'')+'</td>';
         if(c.campo_sistema==='pessoa.nome')conteudo='<a class="nome-cliente sp-link-ficha" href="ficha_cliente_padrao_metalico_FINAL.html?processo_id='+h(p.id)+'">'+h(t||'N/D')+'</a>'+(semResumoAgente(p)?SELO_SEM_RESUMO:'');
         else if(c.tipo==='link'&&!sig&&Array.isArray(v))conteudo=v.map(function(l){var u=/^https?:\/\//i.test(l.url||'')?l.url:'';return u?'<a href="'+h(u)+'" target="_blank" rel="noopener noreferrer" class="sp-link" onclick="event.stopPropagation()">'+h(l.texto||l.url)+'</a>':'';}).join(' · ');
         else if(cor&&t)conteudo='<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>';
@@ -489,7 +492,7 @@ window.SagaPlanilha=(function(){
     var n=alvo.querySelector('td[data-sp-cel="'+idCss(sel.col)+'"]');if(n)selecionar(n,true);return true;
   }
   // ---------- faixa na mesma coluna (Shift+setas, Shift+clique) e "copiar para baixo" (Ctrl+D), como no Excel ----------
-  var NAO_COPIA=['pessoa.nome','pessoa.cpf','processo.numero'];   // cada linha tem o seu: copiar para baixo trocaria o cliente/processo
+  var NAO_COPIA=['pessoa.nome','pessoa.cpf','processo.numero','processo.codigo'];   // cada linha tem o seu: copiar para baixo trocaria o cliente/processo
   function linhasVisiveis(){var tb=document.getElementById('tbodyPrincipal');return tb?Array.prototype.filter.call(tb.children,function(x){return x.matches('tr[data-sp-proc]')&&x.querySelector('td[data-sp-cel]');}):[];}
   function indiceLinha(ls,id){for(var i=0;i<ls.length;i++)if(ls[i].dataset.spProc===id)return i;return -1;}
   function faixaCelulas(){
@@ -1203,7 +1206,7 @@ window.SagaPlanilha=(function(){
       '.sp-th{display:flex;align-items:center;gap:6px;width:100%;padding:13px 14px;border:0;background:none;color:inherit;font:inherit;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;text-align:left}'+
       '.sp-th:hover,.sp-th.ativo{color:var(--gold-light)}.sp-funil{opacity:.7;font-size:10px}.sp-th:active{transform:scale(.97)}'+
       '.sp-tabela td{max-width:260px;overflow:hidden;text-overflow:ellipsis}.sp-tabela td.sp-editavel{cursor:cell}.sp-tabela td.sp-editavel:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 35%,transparent)}'+
-      '.sp-tabela td.sp-salvando{opacity:.5}.sp-vazio{color:var(--muted)}.sp-link{color:var(--gold-light);text-decoration:underline}.sp-link-ficha{cursor:pointer;color:inherit;text-decoration:none}.sp-link-ficha:hover{text-decoration:underline}'+
+      '.sp-tabela td.sp-salvando{opacity:.5}.sp-vazio{color:var(--muted)}.sp-codigo{font-family:\'JetBrains Mono\',ui-monospace,Menlo,monospace;font-size:11.5px;letter-spacing:.2px;color:var(--gold-light)}.sp-tabela td .saga-copiar{width:20px;height:20px}.sp-link{color:var(--gold-light);text-decoration:underline}.sp-link-ficha{cursor:pointer;color:inherit;text-decoration:none}.sp-link-ficha:hover{text-decoration:underline}'+
       '.sp-hon{display:flex;align-items:center;gap:4px;min-width:170px}.sp-hon .sp-editor{min-width:0;flex:1}.sp-hon-modo{flex:0 0 auto;height:28px;min-width:34px;padding:0 6px;border-radius:7px;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--text);font:inherit;font-size:11px;font-weight:600;cursor:pointer}.sp-hon-modo:hover{border-color:var(--gold)}.sp-hon-dica{flex:0 0 auto;font-size:10px;color:var(--muted);white-space:nowrap}'+
       '.sp-editor{width:100%;min-width:140px;background:var(--panel);color:var(--text);border:1px solid var(--gold);border-radius:7px;padding:6px 8px;font:inherit;font-size:12px}'+
       '.sp-menu{position:fixed;z-index:3000;background:var(--panel-solid,var(--panel));border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.35);padding:10px;max-height:min(480px,80vh);display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(16px)}'+
@@ -1815,7 +1818,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     situacoes=r[4].data||situacoes;
     return catFicha;
   }
-  var CAMPO_LINHA={'pessoa.nome':'nome','pessoa.cpf':'cpf','pessoa.uf':'uf','pessoa.situacao_vital':'situacao_vital','pessoa.telefone':'telefone','pessoa.email':'email',
+  var CAMPO_LINHA={'processo.codigo':'codigo','pessoa.nome':'nome','pessoa.cpf':'cpf','pessoa.uf':'uf','pessoa.situacao_vital':'situacao_vital','pessoa.telefone':'telefone','pessoa.email':'email',
     'processo.numero':'numero','processo.area':'area_id','processo.tese':'tese_id','processo.status':'status_id','processo.fase':'fase','processo.responsavel':'responsavel_id',
     'processo.captador':'captador_id','processo.situacao_acao':'situacao_acao_id','processo.valor_causa':'valor_causa','processo.valor_precatorio':'valor_precatorio',
     'processo.criado_em':'criado_em','processo.atualizado_em':'atualizado_em','processo.ultima_movimentacao':'ultima_movimentacao','processo.origem':'origem_id','processo.campanha':'campanha_id'};

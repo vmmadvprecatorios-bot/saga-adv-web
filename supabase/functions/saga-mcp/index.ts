@@ -28,7 +28,7 @@ const CORS: Record<string, string> = {
 };
 const INSTRUCOES =
   "Você está ligado ao SAGA, o sistema do escritório Victor Morais Advocacia (VMMADV), com o login da pessoa que conectou: " +
-  "você age COMO ESSA PESSOA: só aparece o que ela já pode ver e só muda o que ela já pode mudar na tela do SAGA. Comece por 'buscar' para achar o cliente " +
+  "você age COMO ESSA PESSOA: só aparece o que ela já pode ver e só muda o que ela já pode mudar na tela do SAGA. Todo cliente tem um CÓDIGO permanente (VMM-01234) e cada processo o código do cliente + a sigla da tese (VMM-01234-PSS; 2º da mesma tese: PSS2): quando a pessoa citar um código, use-o em 'buscar', 'ver_cliente' (codigo) ou 'ver_processo' (numero), e mostre o código nas respostas para evitar confusão entre homônimos. Comece por 'buscar' para achar o cliente " +
   "ou o processo e use os ids em 'ver_cliente' e 'ver_processo'. No dia a dia: 'resumo_escritorio', 'listar_intimacoes', " +
   "'listar_tarefas' e 'ver_agenda'. Marketing: 'resumo_marketing'. Responda em português do Brasil, em linguagem simples, e trate " +
   "CPF, telefone e dados de clientes com cuidado (LGPD): não repita esses dados sem necessidade. Cada consulta fica registrada no " +
@@ -70,22 +70,27 @@ function exigeUuid(v: unknown, nome: string) { if (!ehUuid(v)) throw new ErroArg
 const FERRAMENTAS: Ferramenta[] = [
   {
     name: "buscar", title: "Buscar no SAGA",
-    description: "Procura no SAGA clientes, processos e colaboradores por nome, CPF, número do processo, telefone, e-mail ou começo do endereço. Devolve as listas 'pessoas', 'processos', 'usuarios' e 'contatos' (onde o telefone/e-mail/endereço foi achado), com os ids para usar em ver_cliente e ver_processo.",
-    inputSchema: { type: "object", properties: { termo: { type: "string", description: "Nome, CPF, número do processo, telefone, e-mail ou começo do endereço (pelo menos 2 letras ou números)." } }, required: ["termo"], additionalProperties: false },
+    description: "Procura no SAGA clientes, processos e colaboradores por nome, CPF, número do processo, CÓDIGO do cliente (VMM-01234, ou só 01234) ou do processo (VMM-01234-PSS), código antigo da planilha, telefone, e-mail ou começo do endereço. Devolve as listas 'pessoas', 'processos', 'usuarios' e 'contatos' (onde o telefone/e-mail/endereço foi achado), com os ids para usar em ver_cliente e ver_processo.",
+    inputSchema: { type: "object", properties: { termo: { type: "string", description: "Nome, CPF, número do processo, código (VMM-01234 ou VMM-01234-PSS), telefone, e-mail ou começo do endereço (pelo menos 2 letras ou números)." } }, required: ["termo"], additionalProperties: false },
     rpc: "conector_buscar", args: (a) => ({ p_termo: String(a.termo ?? "").slice(0, 200) }),
   },
   {
     name: "ver_cliente", title: "Ficha do cliente",
     description: "Ficha de um cliente: dados, perfil (situação funcional, órgão, cargo...), telefones, e-mails, todos os processos dele (fase, etapa, situação, tese, responsável, próxima providência e, para quem vê o Financeiro, os valores) e os últimos atendimentos.",
-    inputSchema: { type: "object", properties: { pessoa_id: { type: "string", description: "id do cliente (uuid), vindo de 'buscar'." } }, required: ["pessoa_id"], additionalProperties: false },
-    rpc: "conector_cliente", args: (a) => ({ p_pessoa: exigeUuid(a.pessoa_id, "o id do cliente") }),
+    inputSchema: { type: "object", properties: {
+      pessoa_id: { type: "string", description: "id do cliente (uuid), vindo de 'buscar'." },
+      codigo: { type: "string", description: "Ou o código do cliente: VMM-01234 (também aceita só 01234 ou o código antigo da planilha)." } }, additionalProperties: false },
+    rpc: "conector_cliente", args: (a) => {
+      if (a.pessoa_id == null && a.codigo == null) throw new ErroArgs("Informe o id do cliente ou o código (VMM-01234).");
+      return { p_pessoa: a.pessoa_id == null ? null : exigeUuid(a.pessoa_id, "o id do cliente"), p_codigo: a.codigo == null ? null : String(a.codigo).slice(0, 40) };
+    },
   },
   {
     name: "ver_processo", title: "Dados do processo",
-    description: "Tudo de um processo: fase, etapa, situação, tese, responsável, próxima providência, cliente, dados da planilha, recursos, últimas intimações, tarefas abertas, comentários recentes, agenda e, para quem vê o Financeiro, os valores. Aceita o id ou o número do processo (ou de um recurso dele).",
+    description: "Tudo de um processo: fase, etapa, situação, tese, responsável, próxima providência, cliente, dados da planilha, recursos, últimas intimações, tarefas abertas, comentários recentes, agenda e, para quem vê o Financeiro, os valores. Aceita o id, o número do processo (ou de um recurso dele) ou o código do processo (VMM-01234-PSS).",
     inputSchema: { type: "object", properties: {
       processo_id: { type: "string", description: "id do processo (uuid), vindo de 'buscar' ou 'ver_cliente'." },
-      numero: { type: "string", description: "Número do processo (CNJ, com ou sem pontuação) ou de um recurso dele." } }, additionalProperties: false },
+      numero: { type: "string", description: "Número do processo (CNJ, com ou sem pontuação), de um recurso dele, ou o código do processo (VMM-01234-PSS; também o código antigo da planilha)." } }, additionalProperties: false },
     rpc: "conector_processo", args: (a) => {
       if (a.processo_id == null && a.numero == null) throw new ErroArgs("Informe o id do processo ou o número.");
       return { p_processo: a.processo_id == null ? null : exigeUuid(a.processo_id, "o id do processo"), p_numero: a.numero == null ? null : String(a.numero).slice(0, 60) };
@@ -375,7 +380,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.1.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.2.0" },
         instructions: INSTRUCOES,
       });
     }

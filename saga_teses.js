@@ -6,6 +6,7 @@
   function estilos(){
     if(document.getElementById('sagaTesesCss'))return;
     const s=document.createElement('style');s.id='sagaTesesCss';s.textContent=`
+      .st-sigla-selo{font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.4px;padding:1px 7px;margin-left:6px;border-radius:999px;border:1px solid var(--border-soft);color:var(--gold-light)}.st-editor .st-sigla{text-transform:uppercase;letter-spacing:.5px}
       .st-par{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;width:100%;min-width:0}.st-campo{min-width:0;font-size:12px}.st-label{display:block;margin-bottom:6px;color:var(--muted);font-size:10px;font-weight:700}
       .st-campo button,.st-editor button,.st-gestao button{font:inherit;cursor:pointer;transition:transform .15s;color:var(--text)}.st-campo button:active,.st-editor button:active,.st-gestao button:active{transform:scale(.96)}
       .st-trigger{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:8px 10px;border:1px solid var(--border-soft);border-radius:9px;background:var(--panel);text-align:left;box-sizing:border-box}.st-trigger span{min-width:0;overflow-wrap:anywhere}.st-trigger i{margin-left:auto;font-style:normal;color:var(--muted)}
@@ -65,7 +66,7 @@
       try{
         const r=await Promise.all([
           o.sb.from('areas_direito').select('id,nome,ativo,ordem').order('ordem').order('nome'),
-          o.sb.from('teses').select('id,nome,descricao,cor,ativo,ordem,area_direito_id').order('ordem').order('nome')]);
+          o.sb.from('teses').select('id,nome,descricao,cor,ativo,ordem,area_direito_id,sigla').order('ordem').order('nome')]);
         if(r[0].error||r[1].error)throw r[0].error||r[1].error;
         areas=r[0].data||[];teses=r[1].data||[];notificar();return true;
       }catch(e){if(o.erro)o.erro(e.message||'Não foi possível carregar as áreas e tipos de ação.');return false;}
@@ -75,6 +76,9 @@
       const p={p_id:item.id||null,p_nome:item.nome.trim(),p_ativo:item.ativo!==false,p_ordem:item.ordem??null};
       if(tipo==='tese')p.p_area_id=item.area_direito_id||null;
       const r=await o.sb.rpc(tipo==='tese'?'tese_salvar':'area_direito_salvar',p);if(r.error)throw r.error;
+      // 13/11 (T176): sigla da tese (vai no código do processo: VMM-01234-PSS); só muda se foi digitada outra
+      if(tipo==='tese'&&item.sigla!==undefined){const sg=String(item.sigla||'').trim().toUpperCase(),antes=(tese(item.id)||{}).sigla||'';
+        if(sg&&sg!==antes){const rs=await o.sb.rpc('tese_sigla_salvar',{p_id:item.id||r.data,p_sigla:sg});if(rs.error)throw rs.error;}}
       return r.data;
     }
     async function salvar(tipo,item){await gravar(tipo,item);if(!(await carregar()))throw new Error('Opção salva, mas não foi possível atualizar a lista. Recarregue a tela.');}
@@ -89,8 +93,9 @@
     function editor(root,tipo,id,areaId){
       if(!o.admin||ocupado)return;
       const atual=(tipo==='tese'?tese(id):area(id))||{nome:'',ativo:true,area_direito_id:areaId==='*'?null:areaId};
-      root.innerHTML='<div class="st-editor"><strong>'+(tipo==='tese'?(id?'Editar tipo de ação':'Novo tipo de ação'):(id?'Editar área':'Nova área'))+'</strong><label>Nome<input class="st-nome" type="text" autocomplete="off"></label>'+(tipo==='tese'?'<div class="st-editor-area"></div>':'')+'<label class="st-ativo"><input type="checkbox"> Ativa na lista</label><div class="st-erro" role="alert"></div><div class="st-acoes"><button type="button" class="st-salvar">Salvar</button><button type="button" class="st-cancelar">Cancelar</button>'+(id?'<button type="button" class="st-subir">↑ Subir</button><button type="button" class="st-descer">↓ Descer</button>':'')+'</div></div>';
-      const form=root.firstChild,input=form.querySelector('.st-nome');input.value=atual.nome;form.querySelector('input[type=checkbox]').checked=atual.ativo!==false;
+      root.innerHTML='<div class="st-editor"><strong>'+(tipo==='tese'?(id?'Editar tipo de ação':'Novo tipo de ação'):(id?'Editar área':'Nova área'))+'</strong><label>Nome<input class="st-nome" type="text" autocomplete="off"></label>'+(tipo==='tese'?'<label>Sigla (vai no código do processo, ex.: VMM-01234-PSS)<input class="st-sigla" type="text" maxlength="5" autocomplete="off" placeholder="Em branco: o sistema cria"></label><div class="st-editor-area"></div>':'')+'<label class="st-ativo"><input type="checkbox"> Ativa na lista</label><div class="st-erro" role="alert"></div><div class="st-acoes"><button type="button" class="st-salvar">Salvar</button><button type="button" class="st-cancelar">Cancelar</button>'+(id?'<button type="button" class="st-subir">↑ Subir</button><button type="button" class="st-descer">↓ Descer</button>':'')+'</div></div>';
+      const form=root.firstChild,input=form.querySelector('.st-nome'),inSigla=form.querySelector('.st-sigla');input.value=atual.nome;
+      if(inSigla){inSigla.value=atual.sigla||'';inSigla.oninput=()=>{const c=inSigla.selectionStart;inSigla.value=inSigla.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);try{inSigla.setSelectionRange(c,c);}catch(e){}};}form.querySelector('input[type=checkbox]').checked=atual.ativo!==false;
       let areaEscolhida=atual.area_direito_id||null,areaMenu=null;
       if(tipo==='tese')areaMenu=menu(form.querySelector('.st-editor-area'),'Área do direito',()=>[{id:null,nome:'Sem área'}].concat(todasAreas().filter(a=>a.ativo||a.id===areaEscolhida)),()=>({id:areaEscolhida,nome:area(areaEscolhida)?.nome||'Sem área'}),id=>{areaEscolhida=id;},null);
       function fechar(){areaMenu?.destruir();root.replaceChildren();}
@@ -103,7 +108,8 @@
       form.querySelector('.st-cancelar').onclick=fechar;
       form.querySelector('.st-salvar').onclick=()=>{
         if(!input.value.trim()){form.querySelector('.st-erro').textContent='Informe o nome.';input.focus();return;}
-        executar(()=>salvar(tipo,{...atual,id:id||null,nome:input.value,ativo:form.querySelector('input[type=checkbox]').checked,area_direito_id:areaEscolhida}));
+        if(inSigla&&inSigla.value&&!/^[A-Z0-9]{2,5}$/.test(inSigla.value)){form.querySelector('.st-erro').textContent='A sigla precisa ter de 2 a 5 letras ou números.';inSigla.focus();return;}
+        executar(()=>salvar(tipo,{...atual,id:id||null,nome:input.value,ativo:form.querySelector('input[type=checkbox]').checked,area_direito_id:areaEscolhida,sigla:inSigla?inSigla.value:undefined}));
       };
       if(id){form.querySelector('.st-subir').onclick=()=>executar(()=>mover(tipo,id,-1));form.querySelector('.st-descer').onclick=()=>executar(()=>mover(tipo,id,1));}
       input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();form.querySelector('.st-salvar').click();}if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fechar();}};
@@ -140,7 +146,7 @@
     function renderGestao(root){
       if(!o.admin){root.replaceChildren();return;}
       root.classList.add('st-gestao');
-      function linha(tipo,e){return '<div class="st-registro'+(e.ativo?'':' st-inativo')+'" data-tipo="'+tipo+'" data-id="'+esc(e.id)+'"><span>'+esc(e.nome)+'</span><div class="st-acoes"><button type="button" data-acao="editar">'+(tipo==='tese'?'Editar / mudar área':'Renomear')+'</button><button type="button" data-acao="subir" aria-label="Subir '+esc(e.nome)+'">↑</button><button type="button" data-acao="descer" aria-label="Descer '+esc(e.nome)+'">↓</button><button type="button" data-acao="ativo">'+(e.ativo?'Desativar':'Reativar')+'</button></div></div>';}
+      function linha(tipo,e){return '<div class="st-registro'+(e.ativo?'':' st-inativo')+'" data-tipo="'+tipo+'" data-id="'+esc(e.id)+'"><span>'+esc(e.nome)+(tipo==='tese'&&e.sigla?' <em class="st-sigla-selo" title="Sigla no código do processo">'+esc(e.sigla)+'</em>':'')+'</span><div class="st-acoes"><button type="button" data-acao="editar">'+(tipo==='tese'?'Editar / mudar área':'Renomear')+'</button><button type="button" data-acao="subir" aria-label="Subir '+esc(e.nome)+'">↑</button><button type="button" data-acao="descer" aria-label="Descer '+esc(e.nome)+'">↓</button><button type="button" data-acao="ativo">'+(e.ativo?'Desativar':'Reativar')+'</button></div></div>';}
       root.innerHTML='<button type="button" data-nova-area>+ Nova área</button><div class="st-erro" role="alert"></div>'+todasAreas().concat([{id:null,nome:'Sem área'}]).map(a=>'<section class="st-grupo" data-area="'+esc(a.id||'')+'">'+(a.id?linha('area',a):'<h3>Sem área</h3>')+'<div class="st-teses">'+todasTeses().filter(t=>(t.area_direito_id||null)===a.id).map(t=>linha('tese',t)).join('')+'<div class="st-acoes"><button type="button" data-nova-tese>+ Novo tipo de ação</button></div></div></section>').join('')+'<div class="st-gestao-editor"></div>';
       root.onclick=async ev=>{
         const b=ev.target.closest('button');if(!b||ocupado||b.closest('.st-editor'))return;
