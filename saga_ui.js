@@ -631,6 +631,10 @@
     +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Teses e oportunidades</div>'
+    // T168 (13/11, Dr. Victor): juntar, separar, girar, comprimir PDFs sem o arquivo sair do computador (LGPD)
+    +'<div class="nav-item" data-tela="editor_pdf" onclick="sagaIrPara(\'editor_pdf.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5M9 13.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Editor de PDF</div>'
     +'</div><div class="nav-section" data-grupo="meudia" role="button" tabindex="0" aria-expanded="true">Meu dia</div><div class="nav-grupo" data-grupo="meudia">'
     +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
@@ -1026,7 +1030,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -1356,6 +1360,7 @@
     if(n&&n.referencia_tabela==='acessos')return {titulo:'Entrada no sistema',tela:'ponto_eletronico_padrao_metalico.html?aba=acessos'};
     if(n&&n.referencia_tabela==='pagamentos')return {titulo:'Parcela vencida',tela:'financeiro.html?aba=parcelas'};
     if(n&&n.referencia_tabela==='armazenamento')return {titulo:'Armazenamento',tela:'configuracoes_padrao_metalico.html?aba=armazenamento'};
+    if(n&&n.referencia_tabela==='saude')return {titulo:'Saúde do sistema',tela:'configuracoes_padrao_metalico.html?aba=saude'};
     if(n&&n.referencia_tabela==='pedidos_claude')return {titulo:'Pedidos do Claude',tela:'pedidos_claude.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
@@ -1384,6 +1389,7 @@
     {chave:'acessos',titulo:'Entradas no sistema',tipos:[],tela:'ponto_eletronico_padrao_metalico.html?aba=acessos',um:'entrada no sistema',varios:'entradas no sistema',cor:'#6366f1'},
     {chave:'pagamentos',titulo:'Pagamentos',tipos:[],tela:'financeiro.html?aba=parcelas',um:'parcela vencida',varios:'parcelas vencidas',cor:'#2fae7a'},
     {chave:'armazenamento',titulo:'Armazenamento',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=armazenamento',um:'aviso de espaço',varios:'avisos de espaço',cor:'#0ea5e9'},
+    {chave:'saude',titulo:'Saúde do sistema',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=saude',um:'aviso de saúde do sistema',varios:'avisos de saúde do sistema',cor:'#e5484d'},
     {chave:'pedidos_claude',titulo:'Pedidos do Claude',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Claude',varios:'avisos de pedidos do Claude',cor:'#c9a84c'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
@@ -1406,6 +1412,7 @@
     if(n&&n.referencia_tabela==='pagamentos'){for(var pg=0;pg<GRUPOS_NOTIF.length;pg++){if(GRUPOS_NOTIF[pg].chave==='pagamentos')return GRUPOS_NOTIF[pg];}}
     // Espaço do banco ou dos arquivos acima do limite (bloco 177, T163): grupo próprio no sino
     if(n&&n.referencia_tabela==='armazenamento'){for(var am=0;am<GRUPOS_NOTIF.length;am++){if(GRUPOS_NOTIF[am].chave==='armazenamento')return GRUPOS_NOTIF[am];}}
+    if(n&&n.referencia_tabela==='saude'){for(var sd=0;sd<GRUPOS_NOTIF.length;sd++){if(GRUPOS_NOTIF[sd].chave==='saude')return GRUPOS_NOTIF[sd];}}
     // Pedido do Claude esperando há mais de 3 dias (bloco 186, T166): grupo próprio no sino
     if(n&&n.referencia_tabela==='pedidos_claude'){for(var pc=0;pc<GRUPOS_NOTIF.length;pc++){if(GRUPOS_NOTIF[pc].chave==='pedidos_claude')return GRUPOS_NOTIF[pc];}}
     return grupoDoTipo(n&&n.tipo);
@@ -1528,6 +1535,7 @@
     if(n.referencia_tabela==='ponto_home_office'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=equipe');return;}
     if(n.referencia_tabela==='acessos'){global.sagaIrPara('ponto_eletronico_padrao_metalico.html?aba=acessos');return;}
     if(n.referencia_tabela==='armazenamento'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=armazenamento');return;}
+    if(n.referencia_tabela==='saude'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=saude');return;}
     if(n.referencia_tabela==='pedidos_claude'){global.sagaIrPara('pedidos_claude.html');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // parcela vencida (bloco 167): abre a ficha do cliente no bloco Pagamentos; sem achar a parcela, a aba Parcelas do Financeiro
@@ -1721,11 +1729,11 @@
       }
       if(pessoas.length){
         html+='<div class="pop-title">Pessoas</div>';
-        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?(String(p.cpf).replace(/\D/g,'').length===14?'CNPJ ':'CPF ')+esc(global.sagaFmt.cpf(p.cpf)):'Sem CPF')+'</div></div></div>';}).join('');
+        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+(p.codigo?' <span style="font-size:9px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap">'+esc(p.codigo)+'</span>':'')+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?(String(p.cpf).replace(/\D/g,'').length===14?'CNPJ ':'CPF ')+esc(global.sagaFmt.cpf(p.cpf)):'Sem CPF')+'</div></div></div>';}).join('');
       }
       if(processos.length){
         html+='<div class="pop-title">Processos</div>';
-        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(global.sagaFmt.cnj(pr.numero_processo_cnj)):'Sem número do processo')+'</div></div></div>';}).join('');
+        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+(pr.codigo?' <span style="font-size:9px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap">'+esc(pr.codigo)+'</span>':'')+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(global.sagaFmt.cnj(pr.numero_processo_cnj)):'Sem número do processo')+'</div></div></div>';}).join('');
       }
       if(colaboradores.length){
         html+='<div class="pop-title">Colaboradores</div>';

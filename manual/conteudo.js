@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.1",
-  data: "12/11/2026",
+  versao: "2.2",
+  data: "13/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.2", data: "13/11/2026", mudou: "Tela nova Editor de PDF (menu Processos): juntar, separar, tirar, girar e reordenar páginas, numerar, escrever texto, tapar área e reduzir o tamanho, tudo no próprio computador (o arquivo não vai para nenhum site); na ficha, o PDF guardado abre no editor e o resultado volta como documento novo." },
     { versao: "2.1", data: "12/11/2026", mudou: "Tela nova Precatórios e RPV (menu Gestão): situação do requisitório de cada processo do Jurídico, aviso de pagamento liberado e dinheiro a entrar por mês e por ano; colunas novas do requisitório na planilha do Jurídico." },
     { versao: "2.0", data: "12/11/2026", mudou: "Cores novas do tema: Novembro Azul, Rosa (Outubro Rosa) e Natal, cada uma com claro e escuro; Tema do mês: o administrador liga e o SAGA troca a cor da equipe sozinho no mês de cada campanha." },
     { versao: "1.9", data: "12/11/2026", mudou: "Jurídico: selo \"sem resumo\" no nome do cliente e o filtro \"Sem resumo do agente\"; Intimações: a janela mostra o resumo do agente (situação, próximo passo, prazo e última movimentação) e avisa quando a intimação é mais nova que o resumo." },
@@ -597,7 +598,7 @@ window.SAGA_MANUAL = {
     },
 
     /* ----------------------------------------------------------------- */
-    { id: "operacao", titulo: "Cartas, buscas, teses e perfis", quem: "Conforme a permissão",
+    { id: "operacao", titulo: "Cartas, buscas, teses, perfis e PDF", quem: "Conforme a permissão",
       resumo: "Telas de apoio da Operação.",
       secoes: [
         { id: "cartas", titulo: "Cartas para os clientes",
@@ -647,6 +648,23 @@ window.SAGA_MANUAL = {
           ],
           img: "clientes_perfil",
           marcas: ["Aviso: de qual tese são os clientes mostrados.", "Ainda não tem a tese.", "Jurídico, Captação ou os dois.", "Salvar em PDF."]
+        },
+        { id: "editorpdf", titulo: "Editor de PDF: juntar, separar, girar e comprimir",
+          quando: "Para montar a petição com os documentos, tirar páginas, separar por limite de tamanho, girar página escaneada de lado ou reduzir o tamanho antes de protocolar. Use SEMPRE este editor em vez de sites de PDF da internet (LGPD).",
+          passos: [
+            "Abra **Processos > Editor de PDF** e arraste os PDFs para a tela (ou clique para escolher). Vários de uma vez viram uma fila só; cada arquivo ganha uma letra (A, B, C...). Para acrescentar depois: [[Mais PDFs]].",
+            "**Reordenar**: arraste a página para o lugar novo (no celular, segure o dedo um instante e arraste) ou use as setinhas ‹ › no pé da página.",
+            "**Marcar**: clique na página (ou no quadradinho). Com páginas marcadas: [[Tirar marcadas]], [[Extrair marcadas]] (baixa só elas num PDF à parte), [[Girar à esq.]] e [[Girar à dir.]] (sem nada marcado, giram todas). [[Desfazer]] (ou Ctrl+Z) volta a última mudança.",
+            "[[Separar]]: cada página num arquivo, por intervalos (ex.: 1-3, 5, 7-9) ou de tantas em tantas páginas. Vários arquivos vêm juntos num .zip.",
+            "[[Numerar]]: escolha o formato (1, 1 / 10, Página 1 de 10, Fls. 1), o lugar e se a capa fica sem número.",
+            "**Escrever ou tapar**: no lápis da página, escolha **Texto** (escreva e clique onde ele deve ficar) ou **Tapar área** (arraste sobre o CPF, a assinatura...). Com **Apagar de verdade**, a página com tarja vira imagem para o texto de baixo sumir do arquivo.",
+            "[[Comprimir]]: escolha o nível, clique em [[Calcular]] e veja o tamanho antes e depois; só então baixe.",
+            "Dê o nome no campo ao lado e clique em [[Baixar PDF]]. Veio da ficha? [[Guardar na pasta do cliente]] guarda o resultado como documento NOVO na mesma pasta (o original fica)."
+          ],
+          img: "editor_pdf",
+          marcas: ["Abrir mais PDFs.", "Página marcada: arraste para mudar a ordem; lápis, girar e tirar no canto.", "Tirar as páginas marcadas.", "Separar em vários arquivos.", "Reduzir o tamanho.", "Nome do arquivo e Baixar PDF."],
+          atencao: ["Os níveis Leve, Média e Forte do Comprimir transformam cada página em imagem: o texto deixa de ser selecionável. Confira antes de protocolar.", "PDF com senha pede a senha (que não é guardada); PDF com defeito ou trava do autor mostra o motivo em vermelho ou amarelo no alto."],
+          dicas: ["Na ficha, abra o PDF guardado e use o botão do editor (ao lado de Baixar) para levá-lo direto ao Editor de PDF."]
         }
       ]
     },

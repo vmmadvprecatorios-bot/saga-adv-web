@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611131815"></script>
+<script src="saga_guard.js?v=202611131825"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -369,21 +369,21 @@ span.ps-origem-btn{cursor:default}
 
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611131815"></script>
-<script src="saga_fichas.js?v=202611131815"></script>
-<script src="saga_teses.js?v=202611131815"></script>
-<script src="saga_mencoes.js?v=202611131815"></script>
-<script src="saga_texto.js?v=202611131815"></script>
-<script src="saga_partes.js?v=202611131815"></script>
-<script src="saga_etiquetas.js?v=202611131815"></script>
-<script src="saga_origem.js?v=202611131815"></script>
-<script src="saga_planilha.js?v=202611131815"></script>
-<script src="saga_recursos.js?v=202611131815"></script>
-<script src="saga_andamentos.js?v=202611131815"></script>
-<script src="saga_tribunais.js?v=202611131815"></script>
-<script src="saga_atendimentos.js?v=202611131815"></script>
-<script src="saga_pagamentos.js?v=202611131815"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611131815">
+<script src="saga_ui.js?v=202611131825"></script>
+<script src="saga_fichas.js?v=202611131825"></script>
+<script src="saga_teses.js?v=202611131825"></script>
+<script src="saga_mencoes.js?v=202611131825"></script>
+<script src="saga_texto.js?v=202611131825"></script>
+<script src="saga_partes.js?v=202611131825"></script>
+<script src="saga_etiquetas.js?v=202611131825"></script>
+<script src="saga_origem.js?v=202611131825"></script>
+<script src="saga_planilha.js?v=202611131825"></script>
+<script src="saga_recursos.js?v=202611131825"></script>
+<script src="saga_andamentos.js?v=202611131825"></script>
+<script src="saga_tribunais.js?v=202611131825"></script>
+<script src="saga_atendimentos.js?v=202611131825"></script>
+<script src="saga_pagamentos.js?v=202611131825"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611131825">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -1523,6 +1523,8 @@ async function abrirVisualizador(docId){
     +'<div class="doc-visor-titulo"><b title="'+esc(doc.nome)+'">'+esc(doc.nome)+'</b><span id="docVisorInfo">'+esc(doc.pastaId?caminhoPasta(doc.pastaId):'Fora das pastas')+'</span></div>'
     +'<div class="doc-visor-botoes">'
     +(tipo==='pdf'?'<button type="button" data-visor="menos" title="Diminuir">'+ic('<path d="M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')+'</button><button type="button" data-visor="ajustar" class="texto" title="Ajustar à largura" id="docVisorZoom">100%</button><button type="button" data-visor="mais" title="Aumentar">'+ic('<path d="M12 6v12M6 12h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>')+'</button><span class="doc-visor-sep"></span>':'')
+    // T168 (13/11): abrir este PDF no Editor de PDF (o arquivo é lido só no navegador; o resultado é baixado ou guardado como documento novo)
+    +(tipo==='pdf'?'<button type="button" data-visor="editor" title="Abrir no Editor de PDF (juntar, separar, girar, comprimir)">'+ic('<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v5h5M9 16l1-3 5-5 2 2-5 5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>')+'</button>':'')
     +'<button type="button" data-visor="baixar" title="Baixar">'+ic('<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>')+'</button>'
     +(perms.documentosCriar?'<button type="button" data-visor="mover" title="Mover para outra pasta">'+ic('<path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5"/>')+'</button>':'')
     +'<button type="button" data-visor="comentar" title="Comentários do documento">'+ic('<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/>')+'</button>'
@@ -1538,6 +1540,7 @@ async function abrirVisualizador(docId){
     const a=b.dataset.visor;
     if(a==='fechar')fecharVisualizador();
     else if(a==='baixar')baixarDocumento(doc.id);
+    else if(a==='editor'){const url='editor_pdf.html?doc='+encodeURIComponent(doc.id);if(ev.ctrlKey||ev.metaKey)window.open(url,'_blank');else{fecharVisualizador();window.location.href=url;}}
     else if(a==='mover'){fecharVisualizador();abrirModalPasta('moverDoc',{docId:doc.id});}
     else if(a==='comentar'){
       fecharVisualizador();
@@ -4941,7 +4944,7 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611131815"></script>
-<script src="saga_ficha_atividades.js?v=202611131815"></script>
+<script src="saga_localizacao.js?v=202611131825"></script>
+<script src="saga_ficha_atividades.js?v=202611131825"></script>
 </body>
 </html>
