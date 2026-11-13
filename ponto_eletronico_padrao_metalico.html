@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611130011"></script>
+<script src="saga_guard.js?v=202611130109"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -238,7 +238,7 @@ tr.apagado td{color:var(--muted)}
   #roscasMeuPonto .centro .n{font-size:15px}
 .ap-apelido{width:100%;min-width:160px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text);font:inherit;font-size:12.5px}.ap-apelido:focus{outline:none;border-color:var(--gold)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611130011">
+<link rel="stylesheet" href="saga_tema.css?v=202611130109">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -258,6 +258,7 @@ tr.apagado td{color:var(--muted)}
     <button class="tab-btn" data-aba="equipe" id="abaEquipeBtn" style="display:none">Equipe <span class="qtd" id="qtdPend" style="display:none">0</span></button>
     <button class="tab-btn" data-aba="acessos" id="abaAcessosBtn" style="display:none" title="Só o administrador geral vê">Acessos</button>
     <button class="tab-btn" data-aba="banco" id="abaBancoBtn" style="display:none">Banco de horas</button>
+    <button class="tab-btn" data-aba="relponto" id="abaRelPontoBtn" style="display:none" title="Diário, semanal e fechamento do mês, o mesmo dos e-mails">Relatórios do ponto</button>
     <button class="tab-btn" data-aba="rel" id="abaRelBtn" style="display:none">Relatórios</button>
     <button class="tab-btn" data-aba="pdf" id="abaPdfBtn" style="display:none">Baixar PDF</button>
     <button class="tab-btn" data-aba="cadastro" id="abaCadastroBtn" style="display:none">Cadastro</button>
@@ -393,6 +394,9 @@ tr.apagado td{color:var(--muted)}
   </section>
 
   <!-- RELATORIOS (administrador geral) -->
+  <!-- RELATORIOS DO PONTO (13/11, Dr. Victor; T166): diario, semanal e fechamento dentro do sistema (saga_ponto_relatorios.js) -->
+  <section class="tab-pane" id="aba-relponto"></section>
+
   <section class="tab-pane" id="aba-rel">
     <div class="toolbar">
       <div class="pills" id="relModo"><button class="pill" data-modo="dia" type="button">Dia</button><button class="pill" data-modo="semana" type="button">Semana</button><button class="pill" data-modo="mes" type="button">Mês</button></div>
@@ -663,12 +667,13 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611130011"></script>
-<script src="saga_texto.js?v=202611130011"></script>
+<script src="saga_ui.js?v=202611130109"></script>
+<script src="saga_texto.js?v=202611130109"></script>
+<script src="saga_ponto_relatorios.js?v=202611130109"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611130011"></script>
-<script src="saga_roscas.js?v=202611130011"></script>
-<script src="saga_pdf.js?v=202611130011"></script>
+<script src="ponto_calculo.js?v=202611130109"></script>
+<script src="saga_roscas.js?v=202611130109"></script>
+<script src="saga_pdf.js?v=202611130109"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -2479,10 +2484,12 @@ async function abrirAtestado(caminho){
 }
 
 function trocarAba(aba){
+  if(aba==='relatorios')aba='relponto';
   if(aba==='acessos'&&!(state.pode&&state.pode.admin))aba='meu';
+  if(aba==='relponto'&&!(state.pode&&(state.pode.admin||state.pode.equipe)))aba='meu';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
-  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='acessos'){carregarAcessos();carregarAparelhos();}if(aba==='rel')renderRelatorios();if(aba==='pdf')montarBaixar();
+  if(aba==='banco')renderBancoTela();if(aba==='cadastro'){renderCadastro();carregarEnvios();}if(aba==='just')carregarMinhasJust();if(aba==='ho')carregarMeusHo();if(aba==='equipe')carregarEquipe();if(aba==='acessos'){carregarAcessos();carregarAparelhos();}if(aba==='rel')renderRelatorios();if(aba==='relponto'&&window.SagaPontoRelatorios)SagaPontoRelatorios.mostrar();if(aba==='pdf')montarBaixar();
 }
 function mudarMes(delta,alvo){
   var o=alvo||state;var m=o.mes+delta,a=o.ano;if(m<1){m=12;a--;}if(m>12){m=1;a++;}o.mes=m;o.ano=a;
@@ -2584,6 +2591,11 @@ async function init(){
   if(state.pode.equipe||state.pode.gerencia)document.getElementById('abaBancoBtn').style.display='';
   if(state.pode.gerencia)document.getElementById('abaCadastroBtn').style.display='';
   if(state.pode.admin){document.getElementById('abaAcessosBtn').style.display='';document.getElementById('thEntrouSistema').style.display='';prepararAcessos();document.getElementById('abaRelBtn').style.display='';prepararRelatorios();document.querySelectorAll('.so-admin').forEach(function(el){el.style.display='';});}
+  // Relatórios do ponto (T166): o administrador geral e quem já vê a Equipe do ponto
+  if((state.pode.admin||state.pode.equipe)&&window.SagaPontoRelatorios){
+    SagaPontoRelatorios.iniciar({sb:_sb,state:state,regimeDe:regimeDe,cfgCalc:cfgCalc,colabCalc:colabCalc,jornadasDe:jornadasDe,minutosLocal:minutosLocal,etqStatus:etqStatus,toast:function(m,t){showToast(esc(m),t);}});
+    document.getElementById('abaRelPontoBtn').style.display='';
+  }
   if(state.pode.exporta){document.getElementById('abaPdfBtn').style.display='';prepararBaixar();}
   state.ferAno=Number(state.hoje.slice(0,4));
   rotinaBanco().then(function(){if(document.getElementById('aba-banco').classList.contains('ativo'))renderBancoTela();renderBancoMeu();});
