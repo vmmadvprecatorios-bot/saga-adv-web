@@ -152,6 +152,60 @@ html.saga-sem-movimento .arm-lido i{animation:none}
 .arm-plano .campo{margin-bottom:0}
 .arm-plano .dica{grid-column:1/-1;font-size:11px;color:var(--muted);line-height:1.5}
 @media(max-width:760px){.arm-plano{grid-template-columns:1fr 1fr}.arm-plano .campo:first-child{grid-column:1/-1}.arm-plano>button{grid-column:1/-1}.arm-num b{font-size:19px}}
+/* ----- Saúde do sistema (13/11, T178; bloco 187): robôs, agendadores e erros ----- */
+#aba-saude>.panel{grid-column:1/-1;max-width:none}
+.sd-resumo{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.sd-chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--border-soft);color:var(--text);background:color-mix(in srgb,var(--text) 3%,transparent)}
+.sd-chip b{font-variant-numeric:tabular-nums}
+.sd-bol{width:9px;height:9px;border-radius:50%;flex:0 0 auto;background:var(--muted)}
+.sd-verde .sd-bol,.sd-bol.sd-verde{background:var(--success)}
+.sd-amarelo .sd-bol,.sd-bol.sd-amarelo{background:var(--warning)}
+.sd-vermelho .sd-bol,.sd-bol.sd-vermelho{background:var(--danger)}
+.sd-cinza .sd-bol,.sd-bol.sd-cinza{background:color-mix(in srgb,var(--muted) 70%,transparent)}
+.sd-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:4px}
+.sd-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 14px 12px 16px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 2%,transparent);min-width:0;overflow:hidden;
+  transition:border-color .32s cubic-bezier(.22,.78,.25,1),background-color .32s cubic-bezier(.22,.78,.25,1)}
+.sd-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:color-mix(in srgb,var(--muted) 55%,transparent);transition:background-color .32s cubic-bezier(.22,.78,.25,1)}
+.sd-card.sd-verde::before{background:var(--success)}
+.sd-card.sd-amarelo::before{background:var(--warning)}.sd-card.sd-amarelo{border-color:color-mix(in srgb,var(--warning) 40%,transparent)}
+.sd-card.sd-vermelho::before{background:var(--danger)}.sd-card.sd-vermelho{border-color:color-mix(in srgb,var(--danger) 45%,transparent);background:color-mix(in srgb,var(--danger) 5%,transparent)}
+.sd-card-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.sd-card-topo b{font-size:13.5px;color:var(--text);line-height:1.3}
+.sd-sit{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10.5px;font-weight:600;letter-spacing:.3px;padding:2px 9px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.sd-sit.sd-verde{color:var(--success);border-color:color-mix(in srgb,var(--success) 45%,transparent)}
+.sd-sit.sd-amarelo{color:var(--warning);border-color:color-mix(in srgb,var(--warning) 45%,transparent)}
+.sd-sit.sd-vermelho{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,transparent)}
+.sd-desc{font-size:11.5px;color:var(--muted);line-height:1.45}
+.sd-res{font-size:12.5px;color:var(--text);line-height:1.45}
+.sd-erro{font-size:11.5px;line-height:1.45;padding:7px 10px;border-radius:9px;word-break:break-word;background:color-mix(in srgb,var(--warning) 12%,transparent);border:1px solid color-mix(in srgb,var(--warning) 35%,transparent)}
+.sd-card.sd-vermelho .sd-erro{background:color-mix(in srgb,var(--danger) 10%,transparent);border-color:color-mix(in srgb,var(--danger) 38%,transparent)}
+.sd-acao{font-size:11.5px;color:var(--text);line-height:1.45}.sd-acao span{color:var(--muted)}
+.sd-tempos{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:11.5px;margin-top:2px}
+.sd-tempos dt{color:var(--muted)}.sd-tempos dd{margin:0;color:var(--text);font-variant-numeric:tabular-nums}
+.sd-fez{font-size:11.5px;color:var(--muted);line-height:1.45}
+.sd-link{font-size:11.5px;color:var(--gold-light);text-decoration:none;align-self:flex-start}.sd-link:hover{text-decoration:underline}
+.sd-tab{width:100%;border-collapse:collapse;font-size:12px}
+.sd-tab th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);padding:8px;border-bottom:1px solid var(--border)}
+.sd-tab td{padding:9px 8px;border-bottom:1px solid var(--border-soft);vertical-align:top;color:var(--text)}
+.sd-tab tr:last-child td{border-bottom:0}
+.sd-tab td small{display:block;color:var(--muted);font-size:11px;line-height:1.4;margin-top:2px}
+.sd-tab td code{font-size:10.5px;color:var(--muted)}
+.sd-tab .sd-falha{color:var(--danger);font-size:11px;word-break:break-word}
+.sd-filtro{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+#aba-saude .sd-filtro select{min-width:220px;font-size:12.5px}
+.sd-erros{display:flex;flex-direction:column;gap:8px}
+.sd-erro-it{display:grid;grid-template-columns:10px 1fr;gap:10px;padding:9px 12px;border:1px solid var(--border-soft);border-radius:10px;background:color-mix(in srgb,var(--text) 2%,transparent)}
+.sd-erro-it .sd-bol{margin-top:5px}
+.sd-erro-it b{font-size:12px;color:var(--text)}.sd-erro-it time{font-size:11px;color:var(--muted);margin-left:8px;font-variant-numeric:tabular-nums}
+.sd-erro-it p{margin:3px 0 0;font-size:12px;color:var(--text);line-height:1.45;word-break:break-word}
+.sd-vazio{font-size:12px;color:var(--muted);padding:6px 0}
+.sd-falhou{display:none;margin-top:10px;padding:9px 12px;border-radius:10px;font-size:12px;background:color-mix(in srgb,var(--danger) 12%,transparent);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent)}
+.sd-falhou.mostrar{display:block}
+@media(max-width:760px){.sd-grade{grid-template-columns:1fr}
+  .sd-tab thead{display:none}.sd-tab,.sd-tab tbody,.sd-tab tr,.sd-tab td{display:block;width:100%}
+  .sd-tab tr{padding:8px 0;border-bottom:1px solid var(--border-soft)}.sd-tab td{border:0;padding:3px 0}
+  .sd-tab td[data-r]::before{content:attr(data-r) ": ";color:var(--muted);font-size:11px}
+  .sd-filtro select{min-width:0;flex:1 1 100%}}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611131155">
 </head>
@@ -175,6 +229,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
     <button class="tab-btn" data-aba="areas-teses" type="button" id="abaAreasTesesBtn" style="display:none">Áreas e tipos de ação</button>
     <button class="tab-btn" data-aba="escritorio" type="button" id="abaEscritorioBtn" style="display:none">Escritório</button>
     <button class="tab-btn" data-aba="armazenamento" type="button" id="abaArmazenamentoBtn" style="display:none">Armazenamento</button>
+    <button class="tab-btn" data-aba="saude" type="button" id="abaSaudeBtn" style="display:none">Saúde do sistema</button>
   </div>
 
   <!-- MEU PERFIL -->
@@ -348,6 +403,37 @@ html.saga-sem-movimento .arm-lido i{animation:none}
       <div class="arm-leg" id="armArqLugares"></div>
     </div>
   </section>
+  <!-- SAÚDE DO SISTEMA (13/11, T178; bloco 187): só o administrador geral -->
+  <section class="tab-pane" id="aba-saude">
+    <div class="panel">
+      <div class="arm-topo">
+        <div>
+          <div class="panel-title">Saúde do sistema</div>
+          <div class="panel-sub" style="margin-bottom:0">Todos os robôs, automações e agendadores do SAGA num lugar só, com os erros. O erro continua aparecendo também no lugar dele (ex.: na ficha). Só você vê esta aba.</div>
+          <div class="arm-lido" id="sdLido">Lendo…</div>
+        </div>
+        <div class="acoes"><button class="btn-secondary btn-sm" id="sdAtualizar" type="button">Atualizar agora</button></div>
+      </div>
+      <div class="sd-resumo" id="sdResumo"></div>
+      <div class="sd-falhou" id="sdFalhou" role="alert"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Robôs e automações</div>
+      <div class="panel-sub">Verde: funcionando. Amarelo: erro passageiro, o sistema tenta de novo sozinho. Vermelho: erro que se repete ou que precisa de alguém (vai para o sino uma vez por dia). Cinza: desligado ou ainda não rodou.</div>
+      <div class="sd-grade" id="sdRobos"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Erros recentes</div>
+      <div class="panel-sub">Últimos 7 dias, de todos os robôs e agendadores, o mais novo em cima.</div>
+      <div class="sd-filtro"><label for="sdFiltro" style="font-size:12px;color:var(--muted)">Robô</label><select id="sdFiltro"><option value="">Todos os robôs</option></select><span class="sd-fez" id="sdErrosConta"></span></div>
+      <div class="sd-erros" id="sdErros"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">Agendadores do banco</div>
+      <div class="panel-sub">Cada rotina que o banco roda sozinho (pg_cron), com a última e a próxima rodada e a última falha. Horários de Maceió.</div>
+      <div style="overflow-x:auto"><table class="sd-tab"><thead><tr><th>Situação</th><th>Agendador</th><th>Última rodada</th><th>Próxima</th><th>24 h</th></tr></thead><tbody id="sdAgendadores"></tbody></table></div>
+    </div>
+  </section>
 </main>
 </div>
 
@@ -401,11 +487,12 @@ function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=do
 function iniciais(n){return String(n||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase()||'--';}
 function erroTexto(e){return (e&&(e.message||e.error_description))||'Não foi possível concluir.';}
 function trocarAba(aba){
-  if((aba==='areas-teses'||aba==='armazenamento')&&!state.adminGeral)aba='perfil';
+  if((aba==='areas-teses'||aba==='armazenamento'||aba==='saude')&&!state.adminGeral)aba='perfil';
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.classList.toggle('active',b.dataset.aba===aba);});
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+aba);});
   if(aba==='seguranca')carregarAparelhos();
   if(aba==='armazenamento'&&state.adminGeral){armCarregar();armLigarTimer(true);}else armLigarTimer(false);
+  if(aba==='saude'&&state.adminGeral){sdCarregar();sdLigarTimer(true);}else sdLigarTimer(false);
 }
 /* ----- Aparelhos conectados (bloco 109) ----- */
 function descreverAparelho(ua){
@@ -1040,10 +1127,101 @@ function armLigarEventos(){
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&arm.timer)armCarregar();});
 }
 
+/* ----- Saúde do sistema (13/11, T178; bloco 187): só o administrador geral ----- */
+var SD_SIT={verde:'Funcionando',amarelo:'Atenção',vermelho:'Com problema',cinza:'Parado'};
+var SD_ORDEM={vermelho:0,amarelo:1,verde:2,cinza:3};
+var sd={dados:null,timer:null,lendo:false};
+function sdData(v){if(!v)return null;var d=new Date(v);return isNaN(d)?null:d;}
+function sdHora(v){var d=sdData(v);if(!d)return '—';
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',timeZone:'America/Maceio'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Maceio'});}
+function sdRel(v){var d=sdData(v);if(!d)return '';var s=Math.round((d.getTime()-Date.now())/1000),a=Math.abs(s),t;
+  if(a<60)t='menos de 1 min';else if(a<3600)t=Math.round(a/60)+' min';else if(a<172800)t=Math.round(a/3600)+' h';else t=Math.round(a/86400)+' dias';
+  return s>=0?'em '+t:'há '+t;}
+function sdQuando(v){var d=sdData(v);return d?sdHora(v)+' <span style="color:var(--muted)">('+esc(sdRel(v))+')</span>':'—';}
+function sdSit(s){s=SD_SIT[s]?s:'cinza';return '<span class="sd-sit sd-'+s+'"><span class="sd-bol sd-'+s+'"></span>'+SD_SIT[s]+'</span>';}
+function sdRobos(d){
+  var lista=(d.robos||[]).slice().sort(function(a,b){return (SD_ORDEM[a.situacao]-SD_ORDEM[b.situacao]);});
+  var el=document.getElementById('sdRobos');
+  el.innerHTML=lista.map(function(r){var s=SD_SIT[r.situacao]?r.situacao:'cinza';
+    return '<article class="sd-card sd-'+s+'" data-robo="'+esc(r.chave)+'">'+
+      '<div class="sd-card-topo"><b>'+esc(r.nome)+'</b>'+sdSit(s)+'</div>'+
+      (r.descricao?'<div class="sd-desc">'+esc(r.descricao)+'</div>':'')+
+      '<div class="sd-res">'+esc(r.resumo||'')+'</div>'+
+      (r.erro?'<div class="sd-erro"><b>Erro:</b> '+esc(r.erro)+'</div>':'')+
+      (r.acao?'<div class="sd-acao"><span>O que acontece agora:</span> '+esc(r.acao)+'</div>':'')+
+      '<dl class="sd-tempos"><dt>Última rodada</dt><dd>'+sdQuando(r.ultima)+'</dd><dt>Próxima</dt><dd>'+sdQuando(r.proxima)+'</dd></dl>'+
+      (r.fez?'<div class="sd-fez">'+esc(r.fez)+'</div>':'')+
+      (r.aviso_proprio&&s==='vermelho'?'<div class="sd-fez">Este robô já tem aviso próprio no sino.</div>':'')+
+      (r.tela?'<a class="sd-link" href="'+esc(r.tela)+'">Abrir a tela ↗</a>':'')+
+    '</article>';}).join('')||'<div class="sd-vazio">Nenhum robô encontrado.</div>';
+}
+function sdResumo(d){
+  var c={verde:0,amarelo:0,vermelho:0,cinza:0};(d.robos||[]).forEach(function(r){c[SD_SIT[r.situacao]?r.situacao:'cinza']++;});
+  var ag={verde:0,amarelo:0,vermelho:0,cinza:0};(d.agendadores||[]).forEach(function(a){ag[SD_SIT[a.situacao]?a.situacao:'cinza']++;});
+  var nomes={verde:'funcionando',amarelo:'com atenção',vermelho:'com problema',cinza:'parados'};
+  document.getElementById('sdResumo').innerHTML=['vermelho','amarelo','verde','cinza'].filter(function(k){return c[k];}).map(function(k){
+      return '<span class="sd-chip sd-'+k+'"><span class="sd-bol"></span><b>'+c[k]+'</b> '+(c[k]===1?'robô':'robôs')+' '+nomes[k]+'</span>';}).join('')+
+    '<span class="sd-chip"><span><b>'+(d.agendadores||[]).length+'</b> agendadores'+(ag.vermelho?' · <b style="color:var(--danger)">'+ag.vermelho+'</b> com problema':'')+(ag.amarelo?' · <b style="color:var(--warning)">'+ag.amarelo+'</b> com atenção':'')+'</span></span>'+
+    '<span class="sd-chip"><b>'+(d.erros||[]).length+'</b> '+((d.erros||[]).length===1?'erro':'erros')+' em 7 dias</span>';
+}
+function sdErros(){
+  var d=sd.dados||{},f=document.getElementById('sdFiltro').value,lista=(d.erros||[]).filter(function(e){return !f||e.robo===f;});
+  document.getElementById('sdErrosConta').textContent=lista.length?(lista.length+(lista.length===1?' erro':' erros')):'';
+  document.getElementById('sdErros').innerHTML=lista.map(function(e){var s=e.nivel==='vermelho'?'vermelho':'amarelo';
+    return '<div class="sd-erro-it"><span class="sd-bol sd-'+s+'"></span><div><b>'+esc(e.origem||e.robo)+'</b><time>'+esc(sdHora(e.quando))+' · '+esc(sdRel(e.quando))+'</time><p>'+esc(e.mensagem||'')+'</p></div></div>';}).join('')||
+    '<div class="sd-vazio">Nenhum erro'+(f?' deste robô':'')+' nos últimos 7 dias.</div>';
+}
+function sdFiltroOpcoes(d){
+  var sel=document.getElementById('sdFiltro'),atual=sel.value,nomes={};
+  (d.robos||[]).forEach(function(r){nomes[r.chave]=r.nome;});
+  var usados={};(d.erros||[]).forEach(function(e){usados[e.robo]=(usados[e.robo]||0)+1;});
+  var chaves=Object.keys(nomes).concat(Object.keys(usados).filter(function(k){return !nomes[k];}));
+  sel.innerHTML='<option value="">Todos os robôs</option>'+chaves.map(function(k){var nm=nomes[k]||(k==='outros'?'Outros':k);
+    return '<option value="'+esc(k)+'">'+esc(nm)+(usados[k]?' ('+usados[k]+')':'')+'</option>';}).join('');
+  sel.value=chaves.indexOf(atual)>=0?atual:'';
+}
+function sdAgendadores(d){
+  var lista=(d.agendadores||[]).slice().sort(function(a,b){return (SD_ORDEM[a.situacao]-SD_ORDEM[b.situacao])||String(a.nome).localeCompare(String(b.nome),'pt-BR');});
+  document.getElementById('sdAgendadores').innerHTML=lista.map(function(a){
+    return '<tr><td>'+sdSit(a.situacao)+'</td>'+
+      '<td><b>'+esc(a.nome)+'</b> <code>'+esc(a.job)+'</code><small>'+esc(a.descricao||'')+'</small><small>'+esc(a.resumo||'')+'</small>'+
+        (a.falha_msg?'<small class="sd-falha">Última falha ('+esc(sdHora(a.falha_em))+'): '+esc(a.falha_msg)+'</small>':'')+'</td>'+
+      '<td data-r="Última">'+sdQuando(a.ultima)+'</td><td data-r="Próxima">'+(a.ativo?sdQuando(a.proxima):'Desligado')+'</td>'+
+      '<td data-r="24 h">'+(a.rodadas_24h||0)+(a.rodadas_24h===1?' rodada':' rodadas')+(a.falhas_24h?'<small class="sd-falha">'+a.falhas_24h+(a.falhas_24h===1?' falha':' falhas')+'</small>':'')+'</td></tr>';}).join('')||
+    '<tr><td colspan="5" class="sd-vazio">Nenhum agendador.</td></tr>';
+}
+function sdMostrar(d){
+  sd.dados=d;sdResumo(d);sdRobos(d);sdFiltroOpcoes(d);sdErros();sdAgendadores(d);
+  var lido=new Date(d.lido_em||Date.now());
+  document.getElementById('sdLido').innerHTML='<i></i>Lido às '+esc(lido.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}))+' de '+esc(lido.toLocaleDateString('pt-BR'))+' · atualiza sozinho a cada minuto enquanto esta aba está aberta';
+}
+async function sdCarregar(){
+  if(!state.adminGeral||sd.lendo)return;sd.lendo=true;
+  var bt=document.getElementById('sdAtualizar'),fa=document.getElementById('sdFalhou');bt.disabled=true;
+  try{var r=await _sb.rpc('saude_painel');
+    if(r.error){var q=new Date();
+      fa.innerHTML='<b>Não foi possível ler a saúde do sistema</b> ('+esc(q.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))+'): '+esc(erroTexto(r.error))+(r.error.code?' (código '+esc(r.error.code)+')':'')+'. Tenta de novo sozinho em 1 minuto.';
+      fa.classList.add('mostrar');if(!sd.dados)document.getElementById('sdLido').textContent='Sem leitura: veja o erro abaixo.';return;}
+    fa.classList.remove('mostrar');fa.textContent='';
+    sdMostrar(r.data||{});
+  }catch(e){fa.innerHTML='<b>Não foi possível ler a saúde do sistema:</b> '+esc(e.message||String(e))+'. Tenta de novo sozinho em 1 minuto.';fa.classList.add('mostrar');}
+  finally{sd.lendo=false;bt.disabled=false;}
+}
+function sdLigarTimer(ligar){
+  if(sd.timer){clearInterval(sd.timer);sd.timer=null;}
+  if(ligar)sd.timer=setInterval(function(){if(document.visibilityState==='visible')sdCarregar();},60000);
+}
+function sdLigarEventos(){
+  document.getElementById('sdAtualizar').addEventListener('click',sdCarregar);
+  document.getElementById('sdFiltro').addEventListener('change',sdErros);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&sd.timer)sdCarregar();});
+}
+
 /* ----- Inicio ----- */
 function ligarEventos(){
   ligarCorte();
   armLigarEventos();
+  sdLigarEventos();
   document.querySelectorAll('#abas .tab-btn').forEach(function(b){b.addEventListener('click',function(){trocarAba(b.dataset.aba);});});
   document.getElementById('pfSalvar').addEventListener('click',salvarPerfil);
   document.getElementById('pfTrocarFoto').addEventListener('click',function(){document.getElementById('pfArquivo').click();});
@@ -1100,7 +1278,8 @@ async function carregar(){
   state.adminGeral=r.data.eh_administrador===true;
   document.getElementById('abaAreasTesesBtn').style.display=state.adminGeral?'':'none';
   document.getElementById('abaArmazenamentoBtn').style.display=state.adminGeral?'':'none';
-  if(!state.adminGeral&&document.getElementById('aba-armazenamento').classList.contains('ativo'))trocarAba('perfil');
+  document.getElementById('abaSaudeBtn').style.display=state.adminGeral?'':'none';
+  if(!state.adminGeral&&(document.getElementById('aba-armazenamento').classList.contains('ativo')||document.getElementById('aba-saude').classList.contains('ativo')))trocarAba('perfil');
   if(state.adminGeral){
     if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:true,erro:function(msg){showToast(esc(msg),'error');}});
     await carregarSituacoesAcao();
