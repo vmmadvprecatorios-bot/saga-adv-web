@@ -41,7 +41,7 @@ const INSTRUCOES =
   "criar_compromisso, mudar_situacao_processo, mudar_campo_processo, guardar_arquivo_na_pasta_do_cliente): ANTES de cada uma, mostre à " +
   "pessoa, em uma frase, exatamente o que vai mudar (em qual cliente/processo, de quê para quê) e só chame depois do OK dela. " +
   "Uma mudança por chamada; no máximo 60 por hora. REGRA: TODA mudança no SAGA passa por este conector; NUNCA abra o SAGA no navegador para mudar algo (o navegador fica só para o que não é do SAGA: cálculos, sites de tribunais). Não sabe se existe ferramenta? Chame 'o_que_posso_fazer'; se não existir, diga à pessoa para fazer pela tela. " +
-  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro e distribuicao_honorarios. Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
+  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), horarios_de_atendimento, marcar_atendimento, responder_atendimento e material_marketing. Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
   "EXCLUIR (excluir_processo, excluir_compromisso e outras 'excluir_'): só o ADMINISTRADOR; diga exatamente o que será excluído e só chame depois do OK EXPLÍCITO dele nesta conversa; para colaborador a ferramenta recusa (colaborador não apaga nada no SAGA). " +
   "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió. " +
   "PEDIDOS DO CLAUDE: ao começar a tratar de um cliente ou processo, chame 'meus_pedidos_pendentes' (com o processo_id) e lembre a pessoa do que ainda falta. " +
@@ -494,6 +494,91 @@ const FERRAMENTAS: Ferramenta[] = [
     inputSchema: { type: "object", properties: { tipo: { type: "string", enum: ["tarefa", "lancamento", "distribuicao"] }, id: { type: "string" }, motivo: { type: "string" } }, required: ["tipo", "id", "motivo"], additionalProperties: false },
     rpc: "conector_excluir_registro", args: (a) => ({ p_tipo: String(a.tipo ?? ""), p_id: exigeUuid(a.id, "o id"), p_motivo: texto(a.motivo, 500) }),
   },
+  // ----- T182 lotes 4 e 5 (blocos 194, 194b e 195) -----
+  {
+    name: "etiqueta_tarefa", title: "Pôr ou tirar etiqueta da tarefa", muda: true,
+    description: "MUDA O SAGA: põe a etiqueta (nome do menu de etiquetas de tarefa) numa tarefa, ou tira (etiqueta vazia)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { tarefa_id: { type: "string" }, etiqueta: { type: "string", description: "Nome da etiqueta; vazio tira." } }, required: ["tarefa_id"], additionalProperties: false },
+    rpc: "conector_tarefa_etiqueta", args: (a) => ({ p_tarefa: exigeUuid(a.tarefa_id, "o id da tarefa"), p_etiqueta: texto(a.etiqueta, 120) }),
+  },
+  {
+    name: "origem_do_cliente", title: "De onde veio o cliente (processo já cadastrado)", muda: true,
+    description: "MUDA O SAGA: grava no processo de onde o cliente veio (origem: nome do menu, rede social, indicação...) e/ou a campanha (código, ex.: IR27; traz a rede principal dela), como \"Como chegou\" na ficha." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, origem: { type: "string" }, campanha: { type: "string" } }, required: ["processo_id"], additionalProperties: false },
+    rpc: "conector_origem_processo", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_origem: texto(a.origem, 120), p_campanha: texto(a.campanha, 120) }),
+  },
+  {
+    name: "checklist_processo", title: "Marcar item do checklist", muda: true, precisa: ["pessoas.editar"],
+    description: "MUDA O SAGA: marca (feito=true) ou desmarca um item do checklist do processo na ficha, pelo texto do item (ou id); se houver itens iguais em listas diferentes, informe a lista." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, item: { type: "string" }, feito: { type: "boolean" }, lista: { type: "string" } }, required: ["processo_id", "item"], additionalProperties: false },
+    rpc: "conector_checklist", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_item: texto(a.item, 300), p_feito: a.feito == null ? true : !!a.feito, p_lista: texto(a.lista, 120) }),
+  },
+  {
+    name: "documento_do_cliente", title: "Mover, renomear ou excluir documento da ficha", muda: true,
+    description: "MUDA O SAGA: documento guardado na ficha: acao 'mover' (para a pasta da ficha pelo nome; vazio = fora das pastas, como na tela), 'renomear' (só quem pode alterar documentos) ou 'excluir' (SÓ o administrador, com o motivo e o OK explícito dele)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { documento_id: { type: "string" }, acao: { type: "string", enum: ["mover", "renomear", "excluir"] }, pasta: { type: "string" }, nome: { type: "string" }, motivo: { type: "string" } }, required: ["documento_id", "acao"], additionalProperties: false },
+    rpc: "conector_documento", args: (a) => ({ p_documento: exigeUuid(a.documento_id, "o id do documento"), p_acao: String(a.acao ?? ""), p_pasta: texto(a.pasta, 120), p_nome: texto(a.nome, 180), p_motivo: texto(a.motivo, 500) }),
+  },
+  {
+    name: "nota", title: "Criar ou mudar nota", muda: true,
+    description: "MUDA O SAGA: cria (sem nota_id) ou muda uma nota da tela Notas (as suas e as compartilhadas para editar): titulo, conteudo, tipo (texto, lista, emails, telefones), itens, cor, fixada, arquivada, etiquetas, processo_id, pessoa_id. Notas de SENHA não passam pelo Claude." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { nota_id: { type: "string" }, dados: { type: "object" } }, required: ["dados"], additionalProperties: false },
+    rpc: "conector_nota", args: (a) => ({ p_nota: uuidOuNulo(a.nota_id, "o id da nota"), p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  {
+    name: "carta", title: "Carta: pôr na fila ou mudar a situação", muda: true, precisa: ["pessoas.editar"],
+    description: "MUDA O SAGA: põe uma carta na fila (endereco_id de um endereço da Localização ou da ficha, destinatário opcional) ou muda a situação de uma carta (carta_id + status: impressa, enviada, devolvida, respondida ou cancelada = tira da lista). O funil da Captação se atualiza sozinho (respondida leva para Conversando)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { carta_id: { type: "string" }, status: { type: "string", enum: ["a_enviar", "impressa", "enviada", "devolvida", "respondida", "cancelada"] },
+      endereco_id: { type: "string" }, processo_id: { type: "string" }, destinatario: { type: "string" }, observacao: { type: "string" } }, additionalProperties: false },
+    rpc: "conector_carta", args: (a) => ({ p_carta: uuidOuNulo(a.carta_id, "o id da carta"), p_status: a.status ?? null, p_pessoa: null, p_processo: uuidOuNulo(a.processo_id, "o id do processo"),
+      p_endereco: uuidOuNulo(a.endereco_id, "o id do endereço"), p_destinatario: texto(a.destinatario, 200), p_observacao: texto(a.observacao, 2000) }),
+  },
+  {
+    name: "incorporar_intimacao", title: "Incorporar intimação como processo novo", muda: true, precisa: ["processos.criar"],
+    description: "MUDA O SAGA: transforma a intimação de um processo que ainda não está no SAGA num processo novo do cliente (tese pelo nome ou sigla) e liga a intimação a ele, como \"Incorporar\" na tela. O cliente precisa estar cadastrado: procure com buscar; se não houver, crie antes com criar_cliente (regra do cliente repetido)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { intimacao_id: { type: "string" }, pessoa_id: { type: "string" }, tese: { type: "string" }, responsavel_id: { type: "string" } }, required: ["intimacao_id", "pessoa_id", "tese"], additionalProperties: false },
+    rpc: "conector_incorporar_intimacao", args: (a) => ({ p_intimacao: exigeUuid(a.intimacao_id, "o id da intimação"), p_pessoa: exigeUuid(a.pessoa_id, "o id do cliente"), p_tese: texto(a.tese, 120), p_responsavel: uuidOuNulo(a.responsavel_id, "o id do responsável") }),
+  },
+  {
+    name: "pedido_de_busca", title: "Pedido de busca (Lemit, Data Solution)", muda: true,
+    description: "MUDA O SAGA: acao 'pedir' (pessoa_id do cliente; cliente=true e/ou parentes = ids; fontes = nomes do menu; texto = observação; urgente) — qualquer pessoa pede. Quem atende (buscas.atender): 'pegar', 'soltar', 'registrar_informacoes' (leitura = as INFORMAÇÕES lidas da consulta, nunca o PDF: LGPD; só o que a tela aceita, sem renda, score, consumo, veículos ou empresas), 'pronto' (texto = resposta), 'nao_encontrado' (texto = motivo), 'devolver' e 'cancelar'." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { acao: { type: "string", enum: ["pedir", "pegar", "soltar", "registrar_informacoes", "pronto", "nao_encontrado", "devolver", "cancelar"] },
+      pedido_id: { type: "string" }, pessoa_id: { type: "string" }, cliente: { type: "boolean" }, parentes: { type: "array", items: { type: "string" } },
+      fontes: { type: "array", items: { type: "string" } }, texto: { type: "string" }, urgente: { type: "boolean" }, leitura: { type: "object" } }, required: ["acao"], additionalProperties: false },
+    rpc: "conector_pedido_busca", args: (a) => ({ p_acao: String(a.acao ?? ""), p_id: uuidOuNulo(a.pedido_id, "o id do pedido"), p_pessoa: uuidOuNulo(a.pessoa_id, "o id do cliente"),
+      p_cliente: a.cliente == null ? true : !!a.cliente, p_parentes: Array.isArray(a.parentes) ? a.parentes.map((x) => exigeUuid(x, "o id do parente")) : null,
+      p_fontes: Array.isArray(a.fontes) ? a.fontes.map(String) : null, p_texto: texto(a.texto, 2000), p_urgente: !!a.urgente,
+      p_leitura: (a.leitura && typeof a.leitura === "object") ? a.leitura : null }),
+  },
+  {
+    name: "horarios_de_atendimento", title: "Horários livres para atendimento",
+    description: "Horários da grade de atendimento de uma pessoa (livre, ocupado ou passado) entre duas datas (até 31 dias) e a lista de quem atende. Use antes de marcar_atendimento.",
+    inputSchema: { type: "object", properties: { usuario_id: { type: "string" }, de: { type: "string", description: "AAAA-MM-DD" }, ate: { type: "string", description: "AAAA-MM-DD" } }, required: ["usuario_id", "de", "ate"], additionalProperties: false },
+    rpc: "conector_atendimento_horarios", args: (a) => {
+      if (!ehData(a.de) || !ehData(a.ate)) throw new ErroArgs("Datas no formato AAAA-MM-DD.");
+      return { p_usuario: exigeUuid(a.usuario_id, "o id de quem atende"), p_de: a.de, p_ate: a.ate };
+    },
+  },
+  {
+    name: "marcar_atendimento", title: "Marcar atendimento com cliente", muda: true,
+    description: "MUDA O SAGA: marca atendimento com cliente CADASTRADO, pela mesma regra da Agenda: dados = pessoa_id, responsavel_id (quem atende), processo_id (opcional), inicio (AAAA-MM-DDTHH:MM-03:00, num horário livre de horarios_de_atendimento), modalidade (presencial ou telepresencial), canal (whatsapp ou meet: WhatsApp exige o telefone do cliente e Meet o e-mail; mande telefone/email se faltar), local, observacao. Colega só marca em horário livre." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { dados: { type: "object" } }, required: ["dados"], additionalProperties: false },
+    rpc: "conector_atendimento_marcar", args: (a) => ({ p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  {
+    name: "responder_atendimento", title: "Responder a conversa do atendimento", muda: true,
+    description: "MUDA O SAGA: escreve na conversa do atendimento (aparece no evento da agenda e na ficha do cliente): resposta (nome do menu de respostas prontas; escolher uma já conclui o atendimento) e/ou texto; concluir=true conclui." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { compromisso_id: { type: "string" }, resposta: { type: "string" }, texto: { type: "string" }, concluir: { type: "boolean" } }, required: ["compromisso_id"], additionalProperties: false },
+    rpc: "conector_atendimento_responder", args: (a) => ({ p_compromisso: exigeUuid(a.compromisso_id, "o id do atendimento"), p_resposta: texto(a.resposta, 120), p_texto: texto(a.texto, 4000), p_concluir: !!a.concluir }),
+  },
+  {
+    name: "material_marketing", title: "Arte ou vídeo do Marketing", muda: true,
+    description: "MUDA O SAGA: em uma arte/vídeo do Marketing: acao 'salvar' (campos: legenda, canal, data prevista, link do post...; depois de decidido, quem enviou só muda canal, data e link), 'comentar' (texto), 'reenviar' (depois do ajuste, com texto) ou 'decidir' (só quem aprova: decisao aprovar, ajuste, recusar ou publicado, com texto). Arquivo novo: pela tela." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { acao: { type: "string", enum: ["salvar", "comentar", "reenviar", "decidir"] }, material_id: { type: "string" },
+      campos: { type: "object" }, texto: { type: "string" }, decisao: { type: "string" } }, required: ["acao", "material_id"], additionalProperties: false },
+    rpc: "conector_material", args: (a) => ({ p_acao: String(a.acao ?? ""), p_material: exigeUuid(a.material_id, "o id da arte/vídeo"),
+      p_campos: (a.campos && typeof a.campos === "object") ? a.campos : null, p_texto: texto(a.texto, 4000), p_decisao: a.decisao == null ? null : String(a.decisao) }),
+  },
 ];
 
 const sbPublico = createClient(URL_SB, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -594,7 +679,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.3.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.4.0" },
         instructions: INSTRUCOES,
       });
     }
