@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.2",
+  versao: "2.3",
   data: "13/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.3", data: "13/11/2026", mudou: "SAGA no Claude liberado para toda a equipe: passo a passo para ligar o conector no seu Claude (cada um com o próprio login e as próprias permissões)." },
     { versao: "2.2", data: "13/11/2026", mudou: "Tela nova Editor de PDF (menu Processos): juntar, separar, tirar, girar e reordenar páginas, numerar, escrever texto, tapar área e reduzir o tamanho, tudo no próprio computador (o arquivo não vai para nenhum site); na ficha, o PDF guardado abre no editor e o resultado volta como documento novo." },
     { versao: "2.1", data: "12/11/2026", mudou: "Tela nova Precatórios e RPV (menu Gestão): situação do requisitório de cada processo do Jurídico, aviso de pagamento liberado e dinheiro a entrar por mês e por ano; colunas novas do requisitório na planilha do Jurídico." },
     { versao: "2.0", data: "12/11/2026", mudou: "Cores novas do tema: Novembro Azul, Rosa (Outubro Rosa) e Natal, cada uma com claro e escuro; Tema do mês: o administrador liga e o SAGA troca a cor da equipe sozinho no mês de cada campanha." },
@@ -665,6 +666,17 @@ window.SAGA_MANUAL = {
           marcas: ["Abrir mais PDFs.", "Página marcada: arraste para mudar a ordem; lápis, girar e tirar no canto.", "Tirar as páginas marcadas.", "Separar em vários arquivos.", "Reduzir o tamanho.", "Nome do arquivo e Baixar PDF."],
           atencao: ["Os níveis Leve, Média e Forte do Comprimir transformam cada página em imagem: o texto deixa de ser selecionável. Confira antes de protocolar.", "PDF com senha pede a senha (que não é guardada); PDF com defeito ou trava do autor mostra o motivo em vermelho ou amarelo no alto."],
           dicas: ["Na ficha, abra o PDF guardado e use o botão do editor (ao lado de Baixar) para levá-lo direto ao Editor de PDF."]
+        },
+        { id: "claude", titulo: "Ligar o SAGA no seu Claude (conector)",
+          quando: "Para pedir ao Claude que consulte e faça o trabalho do SAGA por você (achar cliente, ver processo, criar e mudar tarefas, agenda, anotações, valores...), sem abrir a tela.",
+          passos: [
+            "No Claude (site claude.ai ou aplicativo), abra **Configurações > Conectores** e clique em [[Adicionar conector personalizado]].",
+            "Nome: **SAGA**. Endereço (URL): **https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/saga-mcp**. Clique em [[Adicionar]].",
+            "Clique em [[Conectar]]: abre o SAGA. Entre com o SEU e-mail e senha (ou Google). A página mostra \"Você está conectando o Claude como: seu nome\"; confira e clique em [[Autorizar]].",
+            "Pronto: numa conversa, peça, por exemplo, \"No SAGA, quais são minhas tarefas de hoje?\". Antes de mudar qualquer coisa, o Claude diz o que vai mudar e espera o seu OK."
+          ],
+          atencao: ["O Claude age COMO VOCÊ: só vê e só muda o que você já vê e muda na tela. Colaborador não apaga nada (só o administrador, e sempre com o OK dele na conversa).", "Tudo o que o Claude consulta ou muda fica no Registro de atividades com o seu nome (módulo \"SAGA no Claude\"), com o antes e o depois.", "Apareceu \"Seu usuário não tem a permissão do conector\"? Peça ao administrador (Painel de permissões > SAGA no Claude)."],
+          dicas: ["Use o código do cliente (VMM-01234) ou do processo (VMM-01234-PSS) no pedido: evita confusão entre homônimos.", "O que o Claude pedir para você trazer (autos, certidão...) aparece em Meu dia > Pedidos do Claude."]
         }
       ]
     },
@@ -794,7 +806,7 @@ window.SAGA_MANUAL = {
           passos: [
             "**Configurações > Áreas e tipos de ação** e **Escritório** (só o administrador).",
             "Toda lista de opções (etiquetas, situações, etapas, categorias, fontes de busca, origens, respostas prontas) se cria, renomeia, reordena e remove na própria tela. Remover só desativa: o histórico fica.",
-            "**SAGA no Claude**: quem tem a permissão consulta o SAGA pelo Claude, com o próprio login (só vê o que já pode ver; tudo vai para o Registro de atividades)."
+            "**SAGA no Claude**: toda a equipe pode ligar o SAGA no próprio Claude (ver o capítulo de Cartas, buscas, teses, perfis e PDF), com o próprio login (só vê e muda o que já pode; tudo vai para o Registro de atividades). O administrador tira a permissão de alguém no Painel de permissões > SAGA no Claude."
           ]
         }
       ]

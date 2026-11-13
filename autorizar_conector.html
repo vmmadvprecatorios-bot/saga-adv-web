@@ -65,7 +65,8 @@ h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-he
 <script>
 // Página de autorização do conector do SAGA no Claude (T66, bloco 151, 10/11/2026; parte 2, bloco 179, 12/11/2026).
 // "Perfil de quem?" = o próprio login do SAGA (e-mail e senha, ou Google): a página mostra com quem o Claude vai agir e
-// oferece "Entrar com outra pessoa". Só o Dr. Victor e a Hevelyn têm a permissão conector_claude.usar.
+// oferece "Entrar com outra pessoa". Desde 13/11 (T182, bloco 190) toda a equipe tem a permissão conector_claude.usar
+// (vem pelo perfil; o administrador pode tirar de alguém no Painel de permissões).
 // O Supabase (Authentication > OAuth Server, caminho /autorizar_conector.html) manda a pessoa para cá com ?authorization_id=.
 // Sem login, vai para o login do SAGA e volta para cá. Só aceita pedidos do Claude (claude.ai / claude.com).
 var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
@@ -131,7 +132,7 @@ async function iniciar() {
   }
   if (pode.data !== true) {
     mostrar('<h1>Esta conta não pode usar o SAGA no Claude</h1>' + quem
-      + '<p class="sub" style="margin-top:12px">' + esc(nome) + ', por decisão do escritório, só o <b>Dr. Victor</b> e a <b>Hevelyn</b> podem ligar o SAGA ao Claude. Se você entrou com a conta errada, use "Entrar com outra pessoa".</p>'
+      + '<p class="sub" style="margin-top:12px">' + esc(nome) + ', seu usuário está sem a permissão do conector (SAGA no Claude). Peça ao administrador para liberar no Painel de permissões. Se você entrou com a conta errada, use "Entrar com outra pessoa".</p>'
       + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Voltar ao Claude</button></div>');
     setTimeout(function () { $('btRecusar').onclick = recusar; $('btTrocar').onclick = trocarPessoa; }, 260);
     return;
