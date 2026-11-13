@@ -1,8 +1,12 @@
 // SAGA no Claude (T66, bloco 151, 10/11/2026, pedido do Dr. Victor): servidor MCP do SAGA.
 // Versão 2 (T66 parte 2, bloco 179, 12/11/2026): além das consultas, MUDANÇAS (anotar, tarefas, intimações, agenda,
-// situação/campos do processo e guardar arquivo na pasta do cliente). Só o Dr. Victor e a Hevelyn usam (conector_claude.usar).
+// situação/campos do processo e guardar arquivo na pasta do cliente). Desde 13/11 (T182, bloco 190) TODA a equipe usa
+// (conector_claude.usar vem de todos os perfis), cada um com o próprio login e as próprias permissões.
+// T182 (blocos 191+, 13/11/2026): toda mudança do Claude no SAGA passa por aqui (financeiro do processo, agenda, etiquetas,
+// cliente, recursos, pagamentos...); o_que_posso_fazer lista o que a pessoa pode. O ADMINISTRADOR pode excluir (exclusão
+// lógica de processo, compromisso), sempre com o OK explícito dele; para os outros as ferramentas de excluir recusam.
 // Cada mudança é uma função conector_* SECURITY INVOKER (mesmas regras das telas), com limite de 60 por hora e registro
-// com antes e depois. NADA apaga. O Claude deve pedir o OK da pessoa antes de cada mudança.
+// com antes e depois. O Claude deve pedir o OK da pessoa antes de cada mudança.
 // T166 (bloco 185, 12/11/2026): PEDIDOS DO CLAUDE para a pessoa (pedir_ao_usuario, meus_pedidos_pendentes, concluir_pedido):
 // o que o Claude precisa que a pessoa traga vira tarefa "Pedido do Claude" (Minhas Tarefas e ficha) e é concluído quando chega.
 // O Claude (claude.ai, aplicativo ou Claude Code) liga este endereço como "conector personalizado":
@@ -36,7 +40,9 @@ const INSTRUCOES =
   "MUDANÇAS (anotar_no_processo, criar_tarefa, alterar_tarefa, concluir_tarefa, concluir_intimacao, ligar_intimacao_ao_processo, " +
   "criar_compromisso, mudar_situacao_processo, mudar_campo_processo, guardar_arquivo_na_pasta_do_cliente): ANTES de cada uma, mostre à " +
   "pessoa, em uma frase, exatamente o que vai mudar (em qual cliente/processo, de quê para quê) e só chame depois do OK dela. " +
-  "Uma mudança por chamada; no máximo 60 por hora. Nada pode ser apagado pelo Claude (só o administrador apaga, pela tela). " +
+  "Uma mudança por chamada; no máximo 60 por hora. REGRA: TODA mudança no SAGA passa por este conector; NUNCA abra o SAGA no navegador para mudar algo (o navegador fica só para o que não é do SAGA: cálculos, sites de tribunais). Não sabe se existe ferramenta? Chame 'o_que_posso_fazer'; se não existir, diga à pessoa para fazer pela tela. " +
+  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro e distribuicao_honorarios. Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
+  "EXCLUIR (excluir_processo, excluir_compromisso e outras 'excluir_'): só o ADMINISTRADOR; diga exatamente o que será excluído e só chame depois do OK EXPLÍCITO dele nesta conversa; para colaborador a ferramenta recusa (colaborador não apaga nada no SAGA). " +
   "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió. " +
   "PEDIDOS DO CLAUDE: ao começar a tratar de um cliente ou processo, chame 'meus_pedidos_pendentes' (com o processo_id) e lembre a pessoa do que ainda falta. " +
   "Quando você precisar de algo DELA para andar (autos inteiros, certidão, contracheque, documento), proponha registrar com 'pedir_ao_usuario' " +
@@ -44,10 +50,13 @@ const INSTRUCOES =
   "dizendo o que recebeu e o que achou; não precisa pedir OK de novo para concluir o pedido que ela mesma acabou de atender, mas diga que concluiu.";
 
 type Args = Record<string, unknown>;
-type Ferramenta = { name: string; title: string; description: string; inputSchema: Record<string, unknown>; rpc: string; args: (a: Args) => Record<string, unknown>; muda?: boolean; especial?: "arquivo" };
+type Ferramenta = { name: string; title: string; description: string; inputSchema: Record<string, unknown>; rpc: string; args: (a: Args) => Record<string, unknown>; muda?: boolean; especial?: "arquivo" | "posso"; precisa?: string[]; admin?: boolean; exclui?: boolean };
 const SO_LEITURA = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 const MUDA = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
-const PEDIR_OK = " ANTES DE CHAMAR: diga à pessoa exatamente o que vai mudar e espere o OK dela. Não apaga nada; fica no Registro de atividades.";
+const EXCLUI = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false };
+const SO_ADMIN_OK = " SÓ O ADMINISTRADOR (para os outros a ferramenta recusa). ANTES DE CHAMAR: diga exatamente o que vai ser excluído (cliente, código, número) e espere o OK EXPLÍCITO dele nesta conversa. Fica no Registro de atividades com o antes e o depois.";
+const num = (v: unknown, nome: string) => { if (v == null || v === "") return null; const x = typeof v === "number" ? v : Number(String(v).replace(/\./g, "").replace(",", ".")); if (!Number.isFinite(x)) throw new ErroArgs(`${nome}: número inválido (use 1234.56).`); return x; };
+const PEDIR_OK = " ANTES DE CHAMAR: diga à pessoa exatamente o que vai mudar e espere o OK dela. Fica no Registro de atividades com o antes e o depois.";
 const ehHora = (v: unknown) => typeof v === "string" && /^\d{2}:\d{2}$/.test(v);
 const ehDataHora = (v: unknown) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(v);
 // data e hora de Maceió (sem fuso) viram horário com -03:00
@@ -296,6 +305,195 @@ const FERRAMENTAS: Ferramenta[] = [
       pasta: { type: "string", description: "Nome de uma pasta da ficha do cliente (opcional)." } }, required: ["processo_id", "nome_arquivo", "conteudo_base64"], additionalProperties: false },
     rpc: "conector_documento_registrar", args: () => ({}),
   },
+  // ----- T182 lote 1 (bloco 191) -----
+  {
+    name: "o_que_posso_fazer", title: "O que posso fazer no SAGA", especial: "posso",
+    description: "Lista TODAS as ferramentas do SAGA e diz quais a pessoa conectada pode usar (pelas permissões dela). Chame quando não souber se existe ferramenta para um pedido: toda mudança no SAGA passa por este conector; não use o navegador para o SAGA.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    rpc: "minhas_permissoes", args: () => ({}),
+  },
+  {
+    name: "ver_financeiro_processo", title: "Financeiro do processo", precisa: ["financeiro.visualizar", "financeiro.editar"],
+    description: "Valores do processo no Financeiro: valor principal, correção SELIC, honorários (total, da sentença, percentual), valor recebido/sacado e data, data do protocolo, observação, e o calculado (expectativa, a receber, etapa). Só para quem vê o Financeiro.",
+    inputSchema: { type: "object", properties: { processo_id: { type: "string", description: "id do processo (uuid)." } }, required: ["processo_id"], additionalProperties: false },
+    rpc: "conector_financeiro_ver", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo") }),
+  },
+  {
+    name: "mudar_financeiro_processo", title: "Mudar o financeiro do processo", muda: true, precisa: ["financeiro.editar"],
+    description: "MUDA O SAGA: grava valores do processo no Financeiro (como a janela do processo na tela Financeiro). Mande só o que muda; 'limpar' tira o valor de um campo (ex.: ['valor_recebido'] para tirar um recebido lançado errado). 'zerar_expectativa': true para processo encerrado sem nada a receber (põe os honorários da sentença em 0 e anota na observação; o 'a receber' fica 0). Valor recebido sem data usa hoje. Devolve antes, depois e o calculado." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      processo_id: { type: "string" },
+      valor_principal: { type: "number" }, valor_correcao_selic: { type: "number" }, valor_honorarios_total: { type: "number" },
+      valor_honorarios_sentenca: { type: "number", description: "Honorários definidos na sentença (R$)." },
+      percentual_honorarios: { type: "number", description: "0 a 100." },
+      valor_recebido: { type: "number", description: "Valor recebido/sacado (R$)." },
+      data_recebimento: { type: "string", description: "AAAA-MM-DD" }, data_sentenca: { type: "string", description: "AAAA-MM-DD" },
+      data_protocolo: { type: "string", description: "AAAA-MM-DD" }, observacao: { type: "string" },
+      limpar: { type: "array", items: { type: "string", enum: ["valor_principal", "valor_correcao_selic", "valor_honorarios_total", "valor_honorarios_sentenca", "valor_recebido", "percentual_honorarios", "data_sentenca", "data_recebimento", "data_protocolo", "observacao"] } },
+      zerar_expectativa: { type: "boolean" } }, required: ["processo_id"], additionalProperties: false },
+    rpc: "conector_financeiro_salvar", args: (a) => {
+      const d: Record<string, unknown> = {};
+      for (const k of ["valor_principal", "valor_correcao_selic", "valor_honorarios_total", "valor_honorarios_sentenca", "percentual_honorarios", "valor_recebido"]) if (a[k] != null) d[k] = num(a[k], k);
+      for (const k of ["data_recebimento", "data_sentenca", "data_protocolo"]) if (a[k] != null) { if (!ehData(a[k])) throw new ErroArgs(`${k} no formato AAAA-MM-DD.`); d[k] = a[k]; }
+      if (a.observacao != null) d.observacao = texto(a.observacao, 4000);
+      const limpar = Array.isArray(a.limpar) ? a.limpar.map(String) : null;
+      if (!Object.keys(d).length && !limpar?.length && !a.zerar_expectativa) throw new ErroArgs("Diga o que mudar.");
+      return { p_processo: exigeUuid(a.processo_id, "o id do processo"), p_dados: d, p_limpar: limpar, p_zerar_expectativa: !!a.zerar_expectativa };
+    },
+  },
+  {
+    name: "alterar_compromisso", title: "Mudar compromisso da agenda", muda: true,
+    description: "MUDA O SAGA: muda um compromisso da agenda (título, data/hora, fim, tipo, local, observação, de quem é). Pode quem criou, a pessoa da agenda ou quem edita a agenda do escritório. Avisa se o novo horário está ocupado. Use os ids de ver_agenda ou ver_processo." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      compromisso_id: { type: "string" }, titulo: { type: "string" },
+      inicio: { type: "string", description: "AAAA-MM-DDTHH:MM (Maceió)." }, fim: { type: "string", description: "AAAA-MM-DDTHH:MM" },
+      tirar_fim: { type: "boolean" }, tipo: { type: "string", enum: ["Prazo Processual", "Audiencia", "Reuniao", "Despacho", "Pericia", "Outros", "retorno"] },
+      local: { type: "string" }, observacao: { type: "string" }, responsavel_id: { type: "string" } }, required: ["compromisso_id"], additionalProperties: false },
+    rpc: "conector_compromisso_editar", args: (a) => {
+      if (a.inicio != null && !ehDataHora(a.inicio)) throw new ErroArgs("Início no formato AAAA-MM-DDTHH:MM.");
+      if (a.fim != null && !ehDataHora(a.fim)) throw new ErroArgs("Fim no formato AAAA-MM-DDTHH:MM.");
+      return { p_compromisso: exigeUuid(a.compromisso_id, "o id do compromisso"), p_titulo: texto(a.titulo, 300),
+        p_inicio: a.inicio == null ? null : comFuso(String(a.inicio)), p_fim: a.fim == null ? null : comFuso(String(a.fim)), p_tirar_fim: !!a.tirar_fim,
+        p_tipo: a.tipo ?? null, p_local: texto(a.local, 500), p_observacao: texto(a.observacao, 4000), p_responsavel: uuidOuNulo(a.responsavel_id, "o id da pessoa") };
+    },
+  },
+  {
+    name: "concluir_compromisso", title: "Concluir ou reabrir compromisso", muda: true,
+    description: "MUDA O SAGA: marca um compromisso da agenda como feito (ou reabre), com comentário. Para DESMARCAR/cancelar sem ser administrador, conclua com o comentário \"Cancelado: motivo\" (colaborador não apaga)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { compromisso_id: { type: "string" }, concluir: { type: "boolean" }, comentario: { type: "string" } }, required: ["compromisso_id"], additionalProperties: false },
+    rpc: "conector_compromisso_concluir", args: (a) => ({ p_compromisso: exigeUuid(a.compromisso_id, "o id do compromisso"), p_concluir: a.concluir == null ? true : !!a.concluir, p_comentario: texto(a.comentario, 4000) }),
+  },
+  {
+    name: "excluir_compromisso", title: "Excluir compromisso (administrador)", muda: true, exclui: true, admin: true,
+    description: "APAGA do SAGA um compromisso da agenda, com o motivo." + SO_ADMIN_OK,
+    inputSchema: { type: "object", properties: { compromisso_id: { type: "string" }, motivo: { type: "string" } }, required: ["compromisso_id", "motivo"], additionalProperties: false },
+    rpc: "conector_compromisso_excluir", args: (a) => ({ p_compromisso: exigeUuid(a.compromisso_id, "o id do compromisso"), p_motivo: texto(a.motivo, 500) }),
+  },
+  {
+    name: "agendar_retorno", title: "Retorno agendado do processo", muda: true,
+    description: "MUDA O SAGA: o \"Retorno agendado\" da ficha (Agenda > retorno do processo): cria, ou muda a data/hora se já existir. remover=true tira o retorno (só o administrador; os outros concluem com concluir_compromisso)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, inicio: { type: "string", description: "AAAA-MM-DDTHH:MM (Maceió)." },
+      observacao: { type: "string" }, remover: { type: "boolean" } }, required: ["processo_id"], additionalProperties: false },
+    rpc: "conector_retorno", args: (a) => {
+      if (!a.remover && !ehDataHora(a.inicio)) throw new ErroArgs("Informe inicio no formato AAAA-MM-DDTHH:MM.");
+      return { p_processo: exigeUuid(a.processo_id, "o id do processo"), p_inicio: a.inicio == null ? null : comFuso(String(a.inicio)), p_observacao: texto(a.observacao, 4000), p_remover: !!a.remover };
+    },
+  },
+  {
+    name: "etiqueta_processo", title: "Pôr ou tirar etiqueta do processo", muda: true, precisa: ["pessoas.editar"],
+    description: "MUDA O SAGA: põe (por=true, padrão) ou tira (por=false) uma etiqueta do processo, como na ficha (menu de etiquetas processuais e de urgência; nome exato). \"Requisitório OK\" e \"Processo finalizado\" disparam a regra do escritório (situação Encerrada)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, etiqueta: { type: "string" }, por: { type: "boolean" } }, required: ["processo_id", "etiqueta"], additionalProperties: false },
+    rpc: "conector_etiqueta_processo", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_etiqueta: texto(a.etiqueta, 120), p_por: a.por == null ? true : !!a.por }),
+  },
+  {
+    name: "excluir_processo", title: "Excluir processo/cartão (administrador)", muda: true, exclui: true, admin: true,
+    description: "EXCLUI um processo/cartão (exclusão lógica: some das listas, o histórico fica; ex.: cartão duplicado). Informe o motivo." + SO_ADMIN_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, motivo: { type: "string" } }, required: ["processo_id", "motivo"], additionalProperties: false },
+    rpc: "conector_excluir_processo", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_motivo: texto(a.motivo, 500) }),
+  },
+  // ----- T182 lote 2 (bloco 192) -----
+  {
+    name: "mudar_dados_cliente", title: "Mudar dados e perfil do cliente", muda: true, precisa: ["pessoas.editar"],
+    description: "MUDA O SAGA: dados da ficha do cliente (nome_completo, cpf, situacao_vital vivo/falecido/nao_informado, data_falecimento, uf, municipio, endereco, email, telefone_whatsapp) e/ou o PERFIL (situacao_funcional do menu, orgao, cargo, profissao, matricula, data_nascimento, data_ingresso, data_aposentadoria em dd/mm/aaaa, nome_mae). Mande só o que muda; texto vazio limpa o campo do perfil. Telefones/e-mails/endereços da lista: use contato_cliente." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { pessoa_id: { type: "string" },
+      dados: { type: "object", description: "Campos da ficha a mudar.", additionalProperties: { type: "string" } },
+      perfil: { type: "object", description: "Campos do perfil a mudar.", additionalProperties: { type: "string" } } }, required: ["pessoa_id"], additionalProperties: false },
+    rpc: "conector_cliente_editar", args: (a) => ({ p_pessoa: exigeUuid(a.pessoa_id, "o id do cliente"), p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {}, p_perfil: (a.perfil && typeof a.perfil === "object") ? a.perfil : {} }),
+  },
+  {
+    name: "contato_cliente", title: "Telefone, e-mail ou endereço do cliente", muda: true, precisa: ["pessoas.editar"],
+    description: "MUDA O SAGA: cadastra (sem id) ou corrige (com o id que veio em ver_cliente) um telefone, e-mail ou endereço do cliente, como na ficha. Telefone: numero, whatsapp, principal, tipo (celular/fixo), detalhe. E-mail: email, principal. Endereço: endereco, cidade, uf, cep, tipo, principal, detalhe. desativar=true tira o contato da lista (só o administrador)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { pessoa_id: { type: "string" }, tipo: { type: "string", enum: ["telefone", "email", "endereco"] },
+      contato_id: { type: "string", description: "id do contato (para corrigir ou desativar)." },
+      dados: { type: "object", description: "Ex.: {\"numero\":\"82999991234\",\"whatsapp\":true}" }, desativar: { type: "boolean" } }, required: ["pessoa_id", "tipo"], additionalProperties: false },
+    rpc: "conector_contato_salvar", args: (a) => ({ p_pessoa: exigeUuid(a.pessoa_id, "o id do cliente"), p_tipo: String(a.tipo ?? ""), p_id: uuidOuNulo(a.contato_id, "o id do contato"),
+      p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {}, p_desativar: !!a.desativar }),
+  },
+  {
+    name: "parte_do_processo", title: "Parte do processo (herdeiro, parente)", muda: true, precisa: ["processos.editar"],
+    description: "MUDA O SAGA: cadastra ou corrige uma parte do processo (herdeiro, cônjuge, parente...), como em Partes do processo na ficha. dados: nome e cpf (pessoa nova; com CPF já cadastrado usa a ficha existente) ou pessoa_id, papel (nome do menu, ex.: Herdeiro), herdeiro_de_id, quota, percentual_honorarios (precisa permissão), observacao; para corrigir, mande o id da parte." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, dados: { type: "object" } }, required: ["processo_id", "dados"], additionalProperties: false },
+    rpc: "conector_parte_salvar", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  {
+    name: "recurso_do_processo", title: "Recurso do processo", muda: true, precisa: ["processos.editar"],
+    description: "MUDA O SAGA: cadastra (sem recurso_id) ou corrige um recurso DENTRO do processo (agravo, apelação, embargos...; não vira processo novo). dados: tipo e situacao (nomes do menu), numero, tribunal, orgao, relator, interposto_em (AAAA-MM-DD), quem_recorreu (nos ou outra_parte), observacao. Intimações com o número do recurso passam a cair no processo." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, recurso_id: { type: "string" }, dados: { type: "object" } }, required: ["processo_id", "dados"], additionalProperties: false },
+    rpc: "conector_recurso_salvar", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_id: uuidOuNulo(a.recurso_id, "o id do recurso"), p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  {
+    name: "mudar_fase_processo", title: "Passar entre Captação e Jurídico", muda: true, precisa: ["processos.editar"],
+    description: "MUDA O SAGA: passa o processo da Captação para o Jurídico (ou volta), entrando na etapa inicial da fase, como na tela." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, fase: { type: "string", enum: ["captacao", "juridico"] } }, required: ["processo_id", "fase"], additionalProperties: false },
+    rpc: "conector_mudar_fase", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_fase: String(a.fase ?? "") }),
+  },
+  {
+    name: "criar_cliente", title: "Cadastrar cliente novo", muda: true, precisa: ["pessoas.criar"],
+    description: "MUDA O SAGA: cadastra um cliente novo (nome completo, CPF, telefone, e-mail). Regra do cliente repetido: CPF já cadastrado NÃO cria (devolve a ficha existente); nome igual ou parecido devolve as fichas parecidas e NÃO cria: pergunte à pessoa se é uma delas (use a ficha) ou se é ficha separada de propósito (mande motivo_ficha_separada, mín. 10 letras). Depois cadastre o processo com criar_processo (o código VMM nasce aí). Antes, procure com 'buscar'." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { nome: { type: "string" }, cpf: { type: "string" }, telefone: { type: "string" }, email: { type: "string" },
+      motivo_ficha_separada: { type: "string" } }, required: ["nome"], additionalProperties: false },
+    rpc: "conector_cliente_novo", args: (a) => ({ p_nome: texto(a.nome, 200), p_cpf: texto(a.cpf, 20), p_telefone: texto(a.telefone, 30), p_email: texto(a.email, 200), p_motivo_ficha_separada: texto(a.motivo_ficha_separada, 1000) }),
+  },
+  {
+    name: "criar_processo", title: "Cadastrar processo/cartão novo", muda: true, precisa: ["processos.criar"],
+    description: "MUDA O SAGA: cadastra um processo (cartão) para um cliente: tese (nome ou sigla), fase (captacao ou juridico; entra na etapa inicial), número CNJ, valor da causa, percentual de honorários (só grava para quem mexe no Financeiro), responsável, origem do cliente (nome do menu: rede social, indicação...) e campanha (código, ex.: IR27). O código do processo (VMM-01234-PSS) sai sozinho. Confira antes com ver_cliente se o processo já existe." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { pessoa_id: { type: "string" }, tese: { type: "string" }, fase: { type: "string", enum: ["captacao", "juridico"] },
+      numero: { type: "string" }, valor_causa: { type: "number" }, percentual_honorarios: { type: "number" }, responsavel_id: { type: "string" },
+      origem: { type: "string" }, campanha: { type: "string" } }, required: ["pessoa_id", "tese"], additionalProperties: false },
+    rpc: "conector_processo_novo", args: (a) => ({ p_pessoa: exigeUuid(a.pessoa_id, "o id do cliente"), p_tese: texto(a.tese, 120), p_fase: a.fase == null ? "captacao" : String(a.fase),
+      p_numero: texto(a.numero, 40), p_valor_causa: num(a.valor_causa, "valor_causa"), p_percentual: num(a.percentual_honorarios, "percentual_honorarios"),
+      p_responsavel: uuidOuNulo(a.responsavel_id, "o id do responsável"), p_origem: texto(a.origem, 120), p_campanha: texto(a.campanha, 120) }),
+  },
+  // ----- T182 lote 3 (bloco 193) -----
+  {
+    name: "ver_pagamentos_cliente", title: "Pagamentos e parcelas do cliente",
+    description: "Pagamentos combinados do cliente (bloco Pagamentos da ficha) com as parcelas (pagas e a pagar), como na ficha. Honorários só para quem vê o Financeiro.",
+    inputSchema: { type: "object", properties: { pessoa_id: { type: "string" } }, required: ["pessoa_id"], additionalProperties: false },
+    rpc: "conector_pagamentos_ver", args: (a) => ({ p_pessoa: exigeUuid(a.pessoa_id, "o id do cliente") }),
+  },
+  {
+    name: "combinar_pagamento", title: "Combinar ou mudar pagamento parcelado", muda: true,
+    description: "MUDA O SAGA: cria (sem id) ou muda um pagamento combinado da ficha, que gera as parcelas sozinho. dados: pessoa_id, processo_id (opcional), tipo (nome do menu, ex.: Honorários parcelados), quem_paga, descricao, valor_total ou valor_parcela, n_parcelas, primeiro_vencimento (AAAA-MM-DD), periodicidade (mensal, quinzenal, semanal). Mudar total/número/datas refaz só as parcelas que faltam." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { dados: { type: "object" } }, required: ["dados"], additionalProperties: false },
+    rpc: "conector_pagamento_acordo", args: (a) => ({ p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  {
+    name: "marcar_parcela", title: "Marcar parcela paga (ou desmarcar)", muda: true,
+    description: "MUDA O SAGA: marca uma parcela como paga (data, valor, forma do menu) ou desmarca (pago=false). Parcela de honorários paga entra no Financeiro como receita confirmada (desmarcar tira)." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { parcela_id: { type: "string" }, pago: { type: "boolean" }, valor: { type: "number" }, data: { type: "string", description: "AAAA-MM-DD" },
+      forma: { type: "string" }, observacao: { type: "string" } }, required: ["parcela_id"], additionalProperties: false },
+    rpc: "conector_parcela_marcar", args: (a) => {
+      if (a.data != null && !ehData(a.data)) throw new ErroArgs("Data no formato AAAA-MM-DD.");
+      return { p_parcela: exigeUuid(a.parcela_id, "o id da parcela"), p_pago: a.pago == null ? true : !!a.pago, p_valor: num(a.valor, "valor"), p_data: a.data ?? null, p_forma: texto(a.forma, 80), p_obs: texto(a.observacao, 2000) };
+    },
+  },
+  {
+    name: "mudar_parcela", title: "Mudar vencimento ou valor de uma parcela", muda: true,
+    description: "MUDA O SAGA: muda o vencimento, o valor ou a observação de uma parcela ainda não paga." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { parcela_id: { type: "string" }, vencimento: { type: "string" }, valor: { type: "number" }, observacao: { type: "string" } }, required: ["parcela_id"], additionalProperties: false },
+    rpc: "conector_parcela_editar", args: (a) => {
+      if (a.vencimento != null && !ehData(a.vencimento)) throw new ErroArgs("Vencimento no formato AAAA-MM-DD.");
+      return { p_parcela: exigeUuid(a.parcela_id, "o id da parcela"), p_vencimento: a.vencimento ?? null, p_valor: num(a.valor, "valor"), p_obs: texto(a.observacao, 2000) };
+    },
+  },
+  {
+    name: "lancamento_financeiro", title: "Lançamento avulso no Financeiro", muda: true, precisa: ["financeiro.editar"],
+    description: "MUDA O SAGA: cria (sem id) ou muda um lançamento avulso do Financeiro. dados: tipo (receita/despesa), descricao, valor (> 0), data_lancamento (AAAA-MM-DD), categoria, processo_id, situacao (previsto/confirmado), observacao. Lançamento que veio de parcela paga muda pela parcela." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { lancamento_id: { type: "string" }, dados: { type: "object" } }, required: ["dados"], additionalProperties: false },
+    rpc: "conector_lancamento_salvar", args: (a) => ({ p_id: uuidOuNulo(a.lancamento_id, "o id do lançamento"), p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  {
+    name: "distribuicao_honorarios", title: "Distribuição dos honorários do processo", muda: true, precisa: ["financeiro.editar"],
+    description: "MUDA O SAGA: põe (sem id) ou muda uma linha da distribuição dos honorários do processo (rateio da tela Financeiro). dados: usuario_id (colaborador, de equipe_e_opcoes) ou beneficiario_externo, percentual (da causa; a soma não passa dos honorários) ou valor_fixo, pago, data_pagamento, observacao." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { processo_id: { type: "string" }, linha_id: { type: "string" }, dados: { type: "object" } }, required: ["processo_id", "dados"], additionalProperties: false },
+    rpc: "conector_distribuicao_salvar", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_id: uuidOuNulo(a.linha_id, "o id da linha"), p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  {
+    name: "excluir_registro", title: "Excluir tarefa, lançamento ou linha da distribuição (administrador)", muda: true, exclui: true, admin: true,
+    description: "APAGA do SAGA uma tarefa, um lançamento avulso do Financeiro ou uma linha da distribuição dos honorários, com o motivo. Colaborador: para cancelar uma tarefa, conclua com o comentário \"Cancelada: motivo\"." + SO_ADMIN_OK,
+    inputSchema: { type: "object", properties: { tipo: { type: "string", enum: ["tarefa", "lancamento", "distribuicao"] }, id: { type: "string" }, motivo: { type: "string" } }, required: ["tipo", "id", "motivo"], additionalProperties: false },
+    rpc: "conector_excluir_registro", args: (a) => ({ p_tipo: String(a.tipo ?? ""), p_id: exigeUuid(a.id, "o id"), p_motivo: texto(a.motivo, 500) }),
+  },
 ];
 
 const sbPublico = createClient(URL_SB, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -352,11 +550,27 @@ async function guardarArquivo(args: Args, cliente: ReturnType<typeof createClien
   return { content: [{ type: "text", text: JSON.stringify(reg.data ?? null) }] };
 }
 
+// o_que_posso_fazer: as ferramentas e se a pessoa conectada pode usar cada uma (minhas_permissoes, a mesma lista das telas)
+async function oQuePossoFazer(cliente: ReturnType<typeof createClient>) {
+  const [p, adm] = await Promise.all([cliente.rpc("minhas_permissoes"), cliente.rpc("eh_admin_sistema")]);
+  if (p.error) return falha(textoErro(p.error.message || String(p.error)));
+  const minhas = new Set<string>(Array.isArray(p.data) ? p.data : []);
+  const ehAdm = adm.data === true;
+  if (!ehAdm && !minhas.has("conector_claude.usar")) return falha("Seu usuário não tem a permissão do conector (SAGA no Claude). Peça ao administrador.");
+  const lista = FERRAMENTAS.filter((f) => f.especial !== "posso").map((f) => {
+    const pode = f.admin ? ehAdm : (!f.precisa || ehAdm || f.precisa.some((x) => minhas.has(x)));
+    return { ferramenta: f.name, o_que_faz: f.title, tipo: f.exclui ? "exclui" : f.muda ? "muda" : "consulta", pode_usar: pode,
+      obs: f.admin && !ehAdm ? "só o administrador" : (!pode && f.precisa ? "falta a permissão " + f.precisa.join(" ou ") : (f.muda && pode ? "o banco ainda confere a permissão de cada registro, como na tela" : undefined)) };
+  });
+  return { content: [{ type: "text", text: JSON.stringify({ administrador: ehAdm, regra: "Toda mudança no SAGA passa por este conector; o navegador fica só para o que não é do SAGA. Se não houver ferramenta para o pedido, diga à pessoa e faça pela tela do SAGA.", ferramentas: lista }) }] };
+}
+
 async function chamarFerramenta(nome: string, args: Args, token: string) {
   const f = FERRAMENTAS.find((x) => x.name === nome);
   if (!f) return null;
   const cliente = createClient(URL_SB, ANON, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } });
   if (f.especial === "arquivo") return await guardarArquivo(args || {}, cliente);
+  if (f.especial === "posso") return await oQuePossoFazer(cliente);
   let parametros: Record<string, unknown>;
   try { parametros = f.args(args || {}); } catch (e) {
     if (e instanceof ErroArgs) return { content: [{ type: "text", text: e.message }], isError: true };
@@ -380,13 +594,13 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.2.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.3.0" },
         instructions: INSTRUCOES,
       });
     }
     case "ping": return resultado(id, {});
     case "tools/list":
-      return resultado(id, { tools: FERRAMENTAS.map((f) => ({ name: f.name, title: f.title, description: f.description, inputSchema: f.inputSchema, annotations: { title: f.title, ...(f.muda ? MUDA : SO_LEITURA) } })) });
+      return resultado(id, { tools: FERRAMENTAS.map((f) => ({ name: f.name, title: f.title, description: f.description, inputSchema: f.inputSchema, annotations: { title: f.title, ...(f.exclui ? EXCLUI : f.muda ? MUDA : SO_LEITURA) } })) });
     case "tools/call": {
       const r = await chamarFerramenta(String(p.name || ""), (p.arguments || {}) as Args, token);
       if (!r) return erroRpc(id, -32602, `Ferramenta desconhecida: ${String(p.name || "")}`);
