@@ -500,6 +500,8 @@ function destinoVolta() {
   var v = '';
   try { v = new URLSearchParams(window.location.search).get('voltar') || sessionStorage.getItem('saga-voltar') || ''; } catch (e) {}
   if (/^autorizar_conector\.html\?authorization_id=[A-Za-z0-9_-]{8,200}$/.test(v)) { try { sessionStorage.setItem('saga-voltar', v); } catch (e) {} return v; }
+  // 14/11 (bloco 202): link de envio de documento pedido ao Claude; depois do login a pessoa volta para ele
+  if (/^enviar_documento\.html\?t=[0-9a-f]{36}$/.test(v)) { try { sessionStorage.setItem('saga-voltar', v); } catch (e) {} return v; }
   return '';
 }
 destinoVolta();

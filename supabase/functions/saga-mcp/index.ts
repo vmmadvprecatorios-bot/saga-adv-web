@@ -15,6 +15,10 @@
 // com o endereço dos metadados deste recurso (RFC 9728); o Claude então abre o login do SAGA e a página
 // autorizar_conector.html, onde a pessoa autoriza. Cada ferramenta chama uma função conector_* do banco COM O LOGIN
 // DA PESSOA (vale só o que ela já pode ver no SAGA) e cada consulta vai para o Registro de atividades.
+// Versão 2.6 (bloco 202, 14/11/2026, Dr. Victor): DOCUMENTO DA CONVERSA PARA A PASTA DO CLIENTE. O base64 dentro da chamada
+// não serve para o anexo da pessoa (o Claude do claude.ai/celular nem sempre tem os bytes; 1 MB de PDF = ~1,4 milhão de letras).
+// preparar_envio_de_arquivo cria o envio e devolve o LINK DO SAGA (enviar_documento.html?t=..., a pessoa toca e escolhe o arquivo)
+// e, com o nome do arquivo, um endereço de envio assinado (PUT) para quem roda código; confirmar_envio_de_arquivo confere e registra.
 // Publicar com verify_jwt = false (este código confere a chave sozinho).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
@@ -44,13 +48,17 @@ const INSTRUCOES =
   "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), horarios_de_atendimento, marcar_atendimento, responder_atendimento, material_marketing e disparo_de_email (fila de e-mails da Captação; mostre a prévia antes de pôr na fila). Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
   "EXCLUIR (excluir_processo, excluir_compromisso e outras 'excluir_'): só o ADMINISTRADOR; diga exatamente o que será excluído e só chame depois do OK EXPLÍCITO dele nesta conversa; para colaborador a ferramenta recusa (colaborador não apaga nada no SAGA). " +
   "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió. " +
+  "DOCUMENTOS (guardar na pasta do cliente o arquivo que a pessoa anexou na conversa): NÃO mande o arquivo em base64. Com o OK da pessoa, chame 'preparar_envio_de_arquivo' (processo, pasta opcional, nome do arquivo). " +
+  "(1) Se você roda código e tem o arquivo de verdade (ex.: Claude Code no computador, ou ferramenta de código com o arquivo enviado), envie os bytes com o PUT de 'envio_por_codigo' e depois chame 'confirmar_envio_de_arquivo'. " +
+  "(2) Se não (claude.ai, aplicativo do celular ou do computador: o anexo da conversa você só LÊ), mande à pessoa o 'link_para_a_pessoa' numa frase (\"Toque neste link e escolha o arquivo: ele vai direto para a pasta X do cliente Y\"); quando ela disser que enviou, chame 'confirmar_envio_de_arquivo'. " +
+  "'guardar_arquivo_na_pasta_do_cliente' (base64) só para arquivo pequeno que você mesmo gerou (texto, CSV). " +
   "PEDIDOS DO CLAUDE: ao começar a tratar de um cliente ou processo, chame 'meus_pedidos_pendentes' (com o processo_id) e lembre a pessoa do que ainda falta. " +
   "Quando você precisar de algo DELA para andar (autos inteiros, certidão, contracheque, documento), proponha registrar com 'pedir_ao_usuario' " +
   "(com o OK dela) para ela não esquecer. Quando ela trouxer o que foi pedido (\"você pediu isso aqui\"), analise e chame 'concluir_pedido' " +
   "dizendo o que recebeu e o que achou; não precisa pedir OK de novo para concluir o pedido que ela mesma acabou de atender, mas diga que concluiu.";
 
 type Args = Record<string, unknown>;
-type Ferramenta = { name: string; title: string; description: string; inputSchema: Record<string, unknown>; rpc: string; args: (a: Args) => Record<string, unknown>; muda?: boolean; especial?: "arquivo" | "posso"; precisa?: string[]; admin?: boolean; exclui?: boolean };
+type Ferramenta = { name: string; title: string; description: string; inputSchema: Record<string, unknown>; rpc: string; args: (a: Args) => Record<string, unknown>; muda?: boolean; especial?: "arquivo" | "posso" | "envio" | "confirmar_envio"; precisa?: string[]; admin?: boolean; exclui?: boolean };
 const SO_LEITURA = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 const MUDA = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
 const EXCLUI = { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false };
@@ -297,13 +305,31 @@ const FERRAMENTAS: Ferramenta[] = [
   },
   {
     name: "guardar_arquivo_na_pasta_do_cliente", title: "Guardar arquivo na pasta do cliente", muda: true, especial: "arquivo",
-    description: "MUDA O SAGA: guarda um arquivo (PDF, imagem, Word, Excel, texto; até 10 MB) nos Documentos do processo, na ficha do cliente (opcionalmente numa pasta da ficha, pelo nome). O conteúdo vai em base64." + PEDIR_OK,
+    description: "MUDA O SAGA: guarda nos Documentos do processo um arquivo PEQUENO cujo conteúdo você mesmo tem em bytes (ex.: um texto ou CSV que você gerou), em base64 dentro da chamada. Para o documento que a PESSOA anexou na conversa (PDF, foto, Word), NÃO use esta: use preparar_envio_de_arquivo (link de envio)." + PEDIR_OK,
     inputSchema: { type: "object", properties: {
       processo_id: { type: "string" },
       nome_arquivo: { type: "string", description: "Nome com a extensão, ex.: Peticao inicial.pdf" },
       conteudo_base64: { type: "string", description: "Conteúdo do arquivo em base64." },
       pasta: { type: "string", description: "Nome de uma pasta da ficha do cliente (opcional)." } }, required: ["processo_id", "nome_arquivo", "conteudo_base64"], additionalProperties: false },
     rpc: "conector_documento_registrar", args: () => ({}),
+  },
+  // ----- bloco 202 (14/11): documento da conversa para a pasta do cliente -----
+  {
+    name: "preparar_envio_de_arquivo", title: "Preparar envio de documento para a pasta do cliente", muda: true, especial: "envio", precisa: ["documentos.criar"],
+    description: "MUDA O SAGA: prepara o envio de um documento (o que a pessoa anexou ou vai mandar: PDF, foto, Word, Excel; até 50 MB) para os Documentos do processo, na ficha do cliente (pasta opcional, pelo nome). " +
+      "Devolve 'link_para_a_pessoa' (página do SAGA: a pessoa toca, entra com o login dela se pedir, e escolhe o arquivo no celular ou no computador; vale 24 h) e, se você informar nome_arquivo, 'envio_por_codigo' " +
+      "(endereço assinado para enviar os bytes com PUT, válido ~2 h; só para quem roda código e tem o arquivo). Depois chame confirmar_envio_de_arquivo. Use SEMPRE esta, nunca base64, para documento da pessoa." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      processo_id: { type: "string", description: "id do processo (uuid)." },
+      nome_arquivo: { type: "string", description: "Nome com a extensão (ex.: Contracheque 10-2026.pdf). Obrigatório para o envio por código; no link, a pessoa escolhe o arquivo." },
+      pasta: { type: "string", description: "Nome de uma pasta da ficha do cliente (opcional; sem ela o arquivo fica em Documentos)." } }, required: ["processo_id"], additionalProperties: false },
+    rpc: "conector_envio_preparar", args: () => ({}),
+  },
+  {
+    name: "confirmar_envio_de_arquivo", title: "Conferir se o documento chegou", especial: "confirmar_envio", precisa: ["documentos.criar"],
+    description: "Confere o envio feito por preparar_envio_de_arquivo: diz se o arquivo já está na ficha do cliente (nome, tamanho, quando). No envio por código, é esta chamada que registra o arquivo nos Documentos (depois do PUT). Se ainda não chegou, diga à pessoa e ofereça o link de novo.",
+    inputSchema: { type: "object", properties: { envio_id: { type: "string", description: "envio_id devolvido por preparar_envio_de_arquivo." } }, required: ["envio_id"], additionalProperties: false },
+    rpc: "conector_envio_situacao", args: () => ({}),
   },
   // ----- T182 lote 1 (bloco 191) -----
   {
@@ -652,6 +678,64 @@ async function guardarArquivo(args: Args, cliente: ReturnType<typeof createClien
   return { content: [{ type: "text", text: JSON.stringify(reg.data ?? null) }] };
 }
 
+// bloco 202: envio por link (página do SAGA) ou por código (PUT assinado no Storage)
+const SITE = "https://vmmadvprecatorios-bot.github.io/saga-adv-web";
+const MAX_ENVIO = 50 * 1024 * 1024;
+async function prepararEnvio(args: Args, cliente: ReturnType<typeof createClient>) {
+  let proc: string;
+  try { proc = exigeUuid(args.processo_id, "o id do processo"); } catch (e) { if (e instanceof ErroArgs) return falha(e.message); throw e; }
+  const nome = String(args.nome_arquivo ?? "").trim().slice(0, 180) || null;
+  let caminho: string | null = null, tipo: string | null = null;
+  if (nome) {
+    const ext = (nome.match(/\.([A-Za-z0-9]{1,5})$/)?.[1] || "").toLowerCase();
+    tipo = TIPOS_ARQUIVO[ext] || null;
+    if (!tipo) return falha("Tipo de arquivo não aceito. Aceitos: " + Object.keys(TIPOS_ARQUIVO).join(", ") + ".");
+    caminho = `${proc}/${crypto.randomUUID()}_${nome.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+  }
+  const prep = await cliente.rpc("conector_envio_preparar", { p_processo: proc, p_nome: nome, p_pasta: texto(args.pasta, 120), p_caminho: caminho });
+  if (prep.error) return falha(textoErro(prep.error.message || String(prep.error)));
+  const d = prep.data as Record<string, unknown>;
+  const out: Record<string, unknown> = {
+    envio_id: d.envio_id, expira_em: d.expira_em, pasta: d.pasta ?? null,
+    link_para_a_pessoa: `${SITE}/enviar_documento.html?t=${d.token}`,
+    como_usar: "Mande este link à pessoa: ela toca, escolhe o arquivo (celular ou computador) e ele vai direto para a ficha do cliente" + (d.pasta ? ` (pasta ${d.pasta})` : "") + ". Vale 24 h e só para ela. Depois chame confirmar_envio_de_arquivo.",
+  };
+  if (caminho) {
+    const up = await cliente.storage.from("documentos-clientes").createSignedUploadUrl(caminho);
+    if (up.error || !up.data) out.envio_por_codigo_erro = "Não consegui criar o endereço de envio por código: " + textoErro(up.error?.message || "sem resposta") + ". Use o link.";
+    else out.envio_por_codigo = { metodo: "PUT", url: up.data.signedUrl, cabecalhos: { "Content-Type": tipo, "x-upsert": "false" }, limite_mb: 50,
+      exemplo: `curl -X PUT -H "Content-Type: ${tipo}" -H "x-upsert: false" --data-binary @"ARQUIVO" "${up.data.signedUrl}"`,
+      depois: "Chame confirmar_envio_de_arquivo com este envio_id para registrar o arquivo na ficha." };
+  }
+  return { content: [{ type: "text", text: JSON.stringify(out) }] };
+}
+async function confirmarEnvio(args: Args, cliente: ReturnType<typeof createClient>) {
+  let id: string;
+  try { id = exigeUuid(args.envio_id, "o id do envio"); } catch (e) { if (e instanceof ErroArgs) return falha(e.message); throw e; }
+  const s = await cliente.rpc("conector_envio_situacao", { p_envio: id });
+  if (s.error) return falha(textoErro(s.error.message || String(s.error)));
+  const d = s.data as Record<string, any>;
+  if (Array.isArray(d.arquivos) && d.arquivos.length) return { content: [{ type: "text", text: JSON.stringify({ chegou: true, ...d }) }] };
+  // envio por código: o arquivo está no Storage? então registra nos Documentos
+  if (d.caminho_codigo) {
+    const cam = String(d.caminho_codigo), pasta = cam.split("/")[0], arq = cam.slice(pasta.length + 1);
+    const l = await cliente.storage.from("documentos-clientes").list(pasta, { search: arq, limit: 5 });
+    if (l.error) return falha("Não consegui conferir o arquivo no SAGA: " + textoErro(l.error.message || String(l.error)));
+    const obj = (l.data || []).find((o: any) => o.name === arq);
+    if (obj) {
+      const tam = Number((obj as any).metadata?.size ?? 0);
+      if (tam > MAX_ENVIO) return falha("O arquivo passou de 50 MB e não foi registrado.");
+      const reg = await cliente.rpc("conector_documento_registrar", { p_processo: d.processo_id, p_nome: d.nome_sugerido || arq.replace(/^[0-9a-f-]{36}_/, ""), p_caminho: cam, p_tamanho: tam, p_pasta: d.pasta ?? null });
+      if (reg.error) return falha(textoErro(reg.error.message || String(reg.error)));
+      const docId = (reg.data as any)?.documento_id;
+      if (docId) await cliente.rpc("conector_envio_marcar", { p_envio: id, p_documento: docId });
+      return { content: [{ type: "text", text: JSON.stringify({ chegou: true, registrado_agora: true, documento: reg.data }) }] };
+    }
+  }
+  return { content: [{ type: "text", text: JSON.stringify({ chegou: false, expirado: d.expirado, expira_em: d.expira_em,
+    mensagem: d.expirado ? "O link venceu (24 h). Prepare um envio novo." : "O arquivo ainda não chegou. Peça à pessoa para tocar no link e escolher o arquivo (ou, no envio por código, confira se o PUT deu certo)." }) }] };
+}
+
 // o_que_posso_fazer: as ferramentas e se a pessoa conectada pode usar cada uma (minhas_permissoes, a mesma lista das telas)
 async function oQuePossoFazer(cliente: ReturnType<typeof createClient>) {
   const [p, adm] = await Promise.all([cliente.rpc("minhas_permissoes"), cliente.rpc("eh_admin_sistema")]);
@@ -673,6 +757,8 @@ async function chamarFerramenta(nome: string, args: Args, token: string) {
   const cliente = createClient(URL_SB, ANON, { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false, autoRefreshToken: false } });
   if (f.especial === "arquivo") return await guardarArquivo(args || {}, cliente);
   if (f.especial === "posso") return await oQuePossoFazer(cliente);
+  if (f.especial === "envio") return await prepararEnvio(args || {}, cliente);
+  if (f.especial === "confirmar_envio") return await confirmarEnvio(args || {}, cliente);
   let parametros: Record<string, unknown>;
   try { parametros = f.args(args || {}); } catch (e) {
     if (e instanceof ErroArgs) return { content: [{ type: "text", text: e.message }], isError: true };
@@ -696,7 +782,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.5.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.6.0" },
         instructions: INSTRUCOES,
       });
     }
