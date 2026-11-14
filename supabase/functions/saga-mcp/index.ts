@@ -41,7 +41,7 @@ const INSTRUCOES =
   "criar_compromisso, mudar_situacao_processo, mudar_campo_processo, guardar_arquivo_na_pasta_do_cliente): ANTES de cada uma, mostre à " +
   "pessoa, em uma frase, exatamente o que vai mudar (em qual cliente/processo, de quê para quê) e só chame depois do OK dela. " +
   "Uma mudança por chamada; no máximo 60 por hora. REGRA: TODA mudança no SAGA passa por este conector; NUNCA abra o SAGA no navegador para mudar algo (o navegador fica só para o que não é do SAGA: cálculos, sites de tribunais). Não sabe se existe ferramenta? Chame 'o_que_posso_fazer'; se não existir, diga à pessoa para fazer pela tela. " +
-  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), horarios_de_atendimento, marcar_atendimento, responder_atendimento e material_marketing. Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
+  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), horarios_de_atendimento, marcar_atendimento, responder_atendimento, material_marketing e disparo_de_email (fila de e-mails da Captação; mostre a prévia antes de pôr na fila). Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
   "EXCLUIR (excluir_processo, excluir_compromisso e outras 'excluir_'): só o ADMINISTRADOR; diga exatamente o que será excluído e só chame depois do OK EXPLÍCITO dele nesta conversa; para colaborador a ferramenta recusa (colaborador não apaga nada no SAGA). " +
   "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió. " +
   "PEDIDOS DO CLAUDE: ao começar a tratar de um cliente ou processo, chame 'meus_pedidos_pendentes' (com o processo_id) e lembre a pessoa do que ainda falta. " +
@@ -579,6 +579,23 @@ const FERRAMENTAS: Ferramenta[] = [
     rpc: "conector_material", args: (a) => ({ p_acao: String(a.acao ?? ""), p_material: exigeUuid(a.material_id, "o id da arte/vídeo"),
       p_campos: (a.campos && typeof a.campos === "object") ? a.campos : null, p_texto: texto(a.texto, 4000), p_decisao: a.decisao == null ? null : String(a.decisao) }),
   },
+  {
+    name: "disparo_de_email", title: "Disparos de e-mail (Captação)", muda: true, precisa: ["disparos.ver", "disparos.enviar"],
+    description: "Disparos de e-mail da Captação (T179). acao 'opcoes' (modelos por tese e remetentes que a pessoa pode usar), 'previa' (cliente_id, processo_id?, modelo?, remetente?, email?: mostra para quem vai, o assunto, o texto montado e os avisos), " +
+      "'ver' (cliente_id: os e-mails do cliente; sem cliente: a fila geral), e MUDANÇAS (precisam do OK da pessoa): 'por_na_fila' (cliente_id, processo_id?, modelo? = nome ou id; sem modelo vale o da tese do processo; remetente? = e-mail do remetente, sem ele vai pelo rodízio; email? só para este envio; a_partir? AAAA-MM-DD HH:MM), " +
+      "'cancelar' (ids da fila, motivo?) e 'nao_enviar_mais' (cliente_id ou email, motivo: o cliente pediu para sair; LGPD). O robô manda sozinho dentro da manhã e da tarde, sem passar do limite de cada remetente. Antes de pôr na fila, mostre a prévia à pessoa. Nunca ponha valores no e-mail." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { acao: { type: "string", enum: ["opcoes", "previa", "ver", "por_na_fila", "cancelar", "nao_enviar_mais"] },
+      cliente_id: { type: "string" }, processo_id: { type: "string" }, modelo: { type: "string" }, remetente: { type: "string" }, email: { type: "string" },
+      ids: { type: "array", items: { type: "string" } }, motivo: { type: "string" }, a_partir: { type: "string", description: "AAAA-MM-DD HH:MM (Maceió)" } },
+      required: ["acao"], additionalProperties: false },
+    rpc: "conector_disparo_email", args: (a) => {
+      if (a.a_partir != null && a.a_partir !== "" && !ehDataHora(a.a_partir)) throw new ErroArgs("a_partir no formato AAAA-MM-DD HH:MM.");
+      const ids = Array.isArray(a.ids) ? a.ids.slice(0, 200).map((x: unknown) => exigeUuid(x, "os ids da fila")) : null;
+      return { p_acao: String(a.acao ?? ""), p_pessoa: uuidOuNulo(a.cliente_id, "o id do cliente"), p_processo: uuidOuNulo(a.processo_id, "o id do processo"),
+        p_modelo: texto(a.modelo, 200), p_remetente: texto(a.remetente, 200), p_email: texto(a.email, 200), p_ids: ids, p_motivo: texto(a.motivo, 500),
+        p_a_partir: a.a_partir ? comFuso(String(a.a_partir)) : null };
+    },
+  },
 ];
 
 const sbPublico = createClient(URL_SB, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -679,7 +696,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.4.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.5.0" },
         instructions: INSTRUCOES,
       });
     }

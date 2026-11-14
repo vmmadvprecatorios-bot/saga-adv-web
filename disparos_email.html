@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611141337"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Disparos de e-mail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+[hidden]{display:none!important}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:90ch;line-height:1.5}
+.acoes-topo{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:11px;font-size:12px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s;white-space:nowrap}
+.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ouro{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.btn-p{height:30px;padding:0 11px;font-size:11.5px;border-radius:9px}
+.faixa{display:flex;gap:12px;align-items:flex-start;padding:12px 15px;border-radius:14px;border:1px solid var(--border-soft);background:var(--panel);margin-bottom:14px;font-size:12px;line-height:1.55}
+.faixa .ponto{width:10px;height:10px;border-radius:50%;margin-top:4px;flex:0 0 auto;background:var(--muted)}
+.faixa.verde .ponto{background:var(--success,#16a34a)}.faixa.amarelo .ponto{background:var(--warning,#d97706)}.faixa.vermelho .ponto{background:var(--danger,#e5484d)}
+.faixa.amarelo{border-color:color-mix(in srgb,var(--warning,#d97706) 50%,transparent)}
+.faixa.vermelho{border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 7%,var(--panel))}
+.faixa b{font-weight:600}.faixa .linha2{color:var(--muted)}
+.faixa .erro-linha{color:var(--danger,#e5484d)}.faixa .amarelo-linha{color:var(--warning,#d97706)}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);flex-wrap:wrap}
+.pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s;white-space:nowrap}
+.pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.pill b.verm{color:var(--danger,#e5484d);opacity:1}
+.ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;min-width:240px;flex:1}
+.ent:focus{border-color:var(--gold)}
+.resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.resumo b{color:var(--text);font-weight:600}
+.lista{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);overflow:hidden}
+.lin{display:grid;grid-template-columns:22px minmax(0,1.3fr) minmax(0,1fr) minmax(0,.9fr) auto;gap:6px 14px;padding:11px 14px;border-bottom:1px solid var(--border-soft);align-items:start}
+.lin:last-child{border-bottom:0}
+.lin .nome{font-size:13px;font-weight:600;line-height:1.35}
+.lin .nome a{color:inherit;text-decoration:none}.lin .nome a:hover{text-decoration:underline}
+.lin .sub{font-size:11px;color:var(--muted);line-height:1.5;margin-top:2px;overflow-wrap:anywhere}
+.lin .sub b{color:var(--text);font-weight:500}
+.lin .acs{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.lin .err{grid-column:2/-1;font-size:11.5px;line-height:1.5;padding:7px 10px;border-radius:9px;background:color-mix(in srgb,var(--danger,#e5484d) 10%,transparent);color:var(--danger,#e5484d)}
+.lin .err.amarelo{background:color-mix(in srgb,var(--warning,#d97706) 11%,transparent);color:var(--warning,#d97706)}
+.lin .corpo{grid-column:2/-1;font-size:12px;line-height:1.6;white-space:pre-wrap;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--text) 4%,transparent)}
+.lin .corpo b{display:block;margin-bottom:6px}
+.selo{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.selo.amarelo{color:var(--warning,#d97706);border-color:color-mix(in srgb,var(--warning,#d97706) 50%,transparent)}
+.selo.vermelho{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent)}
+.selo.ok{color:var(--success,#16a34a);border-color:color-mix(in srgb,var(--success,#16a34a) 50%,transparent)}
+.cartoes{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.cartao{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:14px 15px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.cartao.fora{opacity:.6}
+.cartao h3{font-size:14px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.cartao .sub{font-size:11.5px;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
+.cartao .sub b{color:var(--text);font-weight:500}
+.cartao .acs{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:4px}
+.cartao .err{font-size:11.5px;line-height:1.5;padding:7px 10px;border-radius:9px;background:color-mix(in srgb,var(--danger,#e5484d) 10%,transparent);color:var(--danger,#e5484d)}
+.cartao .err.amarelo{background:color-mix(in srgb,var(--warning,#d97706) 11%,transparent);color:var(--warning,#d97706)}
+.cartao .trecho{font-size:11.5px;line-height:1.5;white-space:pre-wrap;max-height:84px;overflow:hidden;color:var(--muted);-webkit-mask-image:linear-gradient(#000 60%,transparent)}
+.uso{display:grid;grid-template-columns:auto 1fr auto;gap:4px 8px;align-items:center;font-size:11px;color:var(--muted)}
+.uso .tr{height:6px;border-radius:99px;background:color-mix(in srgb,var(--text) 9%,transparent);overflow:hidden}
+.uso .tr i{display:block;height:100%;border-radius:99px;background:var(--gold);transition:width .42s cubic-bezier(.22,.78,.25,1)}
+.uso .tr i.cheio{background:var(--warning,#d97706)}
+.uso b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;border:1px dashed var(--border-soft);border-radius:14px}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.erro-caixa{padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12.5px;line-height:1.55}
+.erro-caixa b{display:block;margin-bottom:3px}
+.painel{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:16px 18px;display:flex;flex-direction:column;gap:12px;max-width:760px}
+.painel h2{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.campo{display:flex;flex-direction:column;gap:5px;min-width:0}
+.campo>label{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--gold)}
+.in{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 10px;font-size:12.5px;outline:0;width:100%;min-width:0}
+textarea.in{height:auto;min-height:90px;padding:9px 10px;resize:vertical;line-height:1.55}
+.in:focus{border-color:var(--gold)}
+.dica{font-size:11px;color:var(--muted);line-height:1.55}
+.dica b{color:var(--text);font-weight:600}
+.chk{display:flex;gap:8px;align-items:center;font-size:12.5px}
+.tab{width:100%;border-collapse:collapse;font-size:11.5px}
+.tab th{text-align:left;font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border-soft)}
+.tab td{padding:7px 8px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+.campos-modelo{display:flex;flex-wrap:wrap;gap:5px}
+.campos-modelo button{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--border-soft);background:var(--panel)}
+.campos-modelo button:hover{border-color:var(--gold)}
+.res-busca{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto}
+.res-it{display:grid;grid-template-columns:22px 1fr;gap:8px;padding:8px 10px;border:1px solid var(--border-soft);border-radius:10px;font-size:12px;line-height:1.45;align-items:start}
+.res-it.sem{opacity:.55}
+.res-it small{display:block;color:var(--muted);font-size:11px}
+.res-it select{margin-top:5px;height:30px}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:380px;line-height:1.45}
+.toast.success{border-color:color-mix(in srgb,#16a34a 50%,var(--border))}.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}.toast.warning{border-color:color-mix(in srgb,#d97706 60%,var(--border))}
+@media(max-width:860px){
+  .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
+  .lin{grid-template-columns:22px 1fr}.lin>div:nth-child(3),.lin>div:nth-child(4){grid-column:2}.lin .acs{grid-column:2;justify-content:flex-start}
+  .ent{min-width:0;width:100%;flex-basis:100%}.g3{grid-template-columns:1fr}
+}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611141337">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Disparos de e-mail</h1>
+      <p>Escolha os clientes e eles entram na fila. De 10 em 10 minutos, dentro da manhã e da tarde, o sistema manda sozinho o e-mail com o modelo da tese (pré-aprovado; só os dados do cliente mudam, nunca valores), pelo remetente escolhido ou em rodízio, sem passar do limite de cada remetente. Tudo fica aqui e na ficha do cliente.</p>
+    </div>
+    <div class="acoes-topo">
+      <button class="btn btn-ouro" type="button" id="btnNovo" hidden>+ Novo disparo</button>
+      <button class="btn" type="button" id="btnAgora" hidden title="Roda o robô agora (respeita o horário e os limites)">Rodar agora</button>
+      <button class="btn" type="button" id="btnAtualizar">Atualizar</button>
+    </div>
+  </div>
+  <div class="faixa" id="faixa"><span class="ponto"></span><div>Carregando…</div></div>
+  <div class="barra">
+    <div class="pills" role="group" aria-label="O que ver">
+      <button class="pill active" type="button" data-aba="fila">Na fila<b id="nFila"></b></button>
+      <button class="pill" type="button" data-aba="enviados">Enviados<b id="nEnviados"></b></button>
+      <button class="pill" type="button" data-aba="erros">Com erro<b id="nErros" class="verm"></b></button>
+      <button class="pill" type="button" data-aba="cancelados">Cancelados<b id="nCancelados"></b></button>
+      <button class="pill" type="button" data-aba="contas">Remetentes<b id="nContas"></b></button>
+      <button class="pill" type="button" data-aba="modelos">Modelos<b id="nModelos"></b></button>
+      <button class="pill" type="button" data-aba="descadastros">Não enviar mais</button>
+      <button class="pill" type="button" data-aba="config" id="pillConfig" hidden>Configurações</button>
+    </div>
+  </div>
+  <div class="barra" id="barraBusca"><input class="ent" id="fBusca" type="search" autocomplete="off" placeholder="Buscar por cliente, código, e-mail ou modelo"></div>
+  <div class="resumo" id="resumo"></div>
+  <div id="area"></div>
+</main>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611141337"></script>
+<script src="saga_disparos.js?v=202611141337"></script>
+<script>
+/* =====================================================================
+   SAGA · Disparos de e-mail (T179, blocos 205 a 207; 14/11/2026, pedido do Dr. Victor)
+   Fila (na fila, enviados, com erro, cancelados), remetentes (cada caminho de envio com o seu limite por manhã e por
+   tarde; senha no cofre do banco), modelos por tese (só o administrador; pré-aprovados), "não enviar mais" e as
+   configurações do robô (função do servidor disparos-email, a cada 10 min). Dados: disparos_painel.
+   Erros sempre à vista: o motivo de cada e-mail que não saiu, o remetente com senha recusada em vermelho e a última rodada.
+   ===================================================================== */
+var D={aba:'fila',dados:null,busca:'',erro:null,marcados:new Set(),abertos:new Set()};
+var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
+var CURVA='cubic-bezier(.22,.78,.25,1)';
+var CAMPOS=[['nome','Nome do cliente'],['primeiro_nome','Primeiro nome'],['codigo','Código do processo'],['codigo_cliente','Código do cliente'],['tese','Tese'],['numero_processo','Nº do processo'],['orgao','Órgão'],['cargo','Cargo'],['remetente','Quem envia'],['remetente_email','E-mail de quem envia'],['escritorio','Escritório'],['data_hoje','Data de hoje']];
+var EXEMPLO={nome:'Maria da Silva Santos',primeiro_nome:'Maria',codigo:'VMM-01234-PSS',codigo_cliente:'VMM-01234',tese:'PSS',numero_processo:'0801234-56.2024.4.05.8000',orgao:'Ministério da Saúde',cargo:'Agente administrativo',remetente:'Hevelyn (Victor Morais Advocacia)',remetente_email:'contato@exemplo.com.br',escritorio:'Victor Morais Advocacia',data_hoje:new Date().toLocaleDateString('pt-BR')};
+var PROVEDORES={gmail:{nome:'Gmail',ajuda:'No Gmail é preciso a <b>senha de app</b> (16 letras), não a senha normal: na conta Google, ligue a verificação em duas etapas e crie em "Senhas de app" (myaccount.google.com/apppasswords). O Gmail gratuito aguenta cerca de 500 por dia; comece com pouco.'},
+  locaweb:{nome:'Locaweb',ajuda:'Use o e-mail completo e a senha da caixa da Locaweb. Servidor: email-ssl.com.br, porta 465 (SSL).'},
+  hostinger:{nome:'Hostinger',ajuda:'Use o e-mail completo e a senha da caixa da Hostinger. Servidor: smtp.hostinger.com, porta 465 (SSL).'},
+  outlook:{nome:'Outlook / Hotmail',ajuda:'<b>Atenção:</b> a Microsoft só aceita a porta 587 e, nas contas pessoais (Hotmail/Outlook.com), bloqueou o login por senha. Provavelmente NÃO vai funcionar daqui; use um Gmail, a Locaweb ou a Hostinger.'},
+  outro:{nome:'Outro (servidor SMTP)',ajuda:'Informe o servidor de saída (SMTP) e a porta do seu provedor. Use a porta 465 (SSL): a 587 e a 25 são bloqueadas pelo servidor do SAGA.'}};
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},6000);}
+function dh(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('pt-BR')+' '+x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function hh(t){return String(t||'').slice(0,5);}
+function semMov(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+function erroTxt(e){return (e&&(e.message||e.msg))||String(e||'erro desconhecido');}
+function linkFicha(i){return i.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(i.pessoa_id)+(i.processo_id?'&processo_id='+encodeURIComponent(i.processo_id):''):'#';}
+function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function confirmar(t,x,b,p){return window.sagaConfirmar?sagaConfirmar(t,x,b,p):Promise.resolve(confirm(x));}
+
+async function carregar(){
+  var sit=['fila','enviados','erros','cancelados'].indexOf(D.aba)>=0?D.aba:'fila';
+  var r=await _sb.rpc('disparos_painel',{p_situacao:sit,p_busca:null,p_limite:500});
+  if(r.error){D.erro=erroTxt(r.error);D.dados=null;desenhar();return;}
+  D.erro=null;D.dados=r.data||{};D.marcados.clear();
+  desenhar();
+}
+
+/* ---------- faixa do robô (situação sempre à vista) ---------- */
+function faixa(){
+  var d=D.dados,el=$('faixa');if(!d){el.className='faixa vermelho';el.innerHTML='<span class="ponto"></span><div><b>Não consegui ler os disparos.</b> '+esc(D.erro||'')+'</div>';return;}
+  var c=d.config||{},u=d.ultima_rodada,cont=d.contagem||{},contas=(d.contas||[]).filter(function(k){return k.ativo;});
+  var ruins=contas.filter(function(k){return k.situacao==='erro_login'||k.situacao==='erro';});
+  var pausadas=contas.filter(function(k){return k.pausada_ate&&new Date(k.pausada_ate)>new Date();});
+  var cor='verde',l1,linhas=[];
+  var janela='manhã '+hh(c.manha_ini)+'–'+hh(c.manha_fim)+' e tarde '+hh(c.tarde_ini)+'–'+hh(c.tarde_fim)+(c.so_dias_uteis?' (dias úteis)':'');
+  if(!c.ativo){cor='cinza';l1='<b>Robô desligado.</b> Os e-mails ficam na fila até ele ser ligado (Configurações).';}
+  else if(!contas.length){cor='cinza';l1='<b>Nenhum e-mail de envio cadastrado.</b> Cadastre em "Remetentes" para o robô começar.';}
+  else l1='<b>Robô ligado</b> · '+(d.turno?'enviando agora ('+(d.turno==='manha'?'manhã':'tarde')+')':'fora do horário agora')+' · envia na '+janela+'.';
+  if(u){
+    var ul='Última rodada: '+dh(u.inicio)+' · '+esc(u.mensagem||'');
+    if(!u.ok){cor='vermelho';linhas.push('<div class="erro-linha"><b>A última rodada falhou</b> ('+dh(u.inicio)+'): '+esc(u.mensagem||'sem mensagem')+'. O robô tenta de novo na próxima; se continuar, avise o administrador.</div>');}
+    else linhas.push('<div class="linha2">'+ul+'</div>');
+  }else if(c.ativo&&contas.length)linhas.push('<div class="linha2">O robô ainda não rodou.</div>');
+  if(c.ativo&&d.proxima_rodada)linhas.push('<div class="linha2">Próxima conferência: '+dh(d.proxima_rodada)+' (só manda se houver e-mail na fila e estiver no horário).</div>');
+  ruins.forEach(function(k){cor='vermelho';linhas.push('<div class="erro-linha"><b>'+esc(k.email)+'</b>: '+(k.situacao==='erro_login'?'o provedor recusou a senha':'falhou '+k.erros_seguidos+' vezes seguidas')+' ('+dh(k.ultimo_erro_em)+'). '+esc(k.ultimo_erro||'')+' Os e-mails dele saem pelos outros remetentes; corrija a senha em "Remetentes" e clique em "Testar".</div>');});
+  pausadas.forEach(function(k){if(cor==='verde')cor='amarelo';linhas.push('<div class="amarelo-linha"><b>'+esc(k.email)+'</b> pausado até '+dh(k.pausada_ate)+': '+esc(k.pausa_motivo||'')+'</div>');});
+  if(cont.aguardando_tentativa){if(cor==='verde')cor='amarelo';linhas.push('<div class="amarelo-linha">'+cont.aguardando_tentativa+' e-mail(s) aguardando nova tentativa (erro passageiro; o robô tenta de novo em 30 min).</div>');}
+  if(cont.erros){if(cor==='verde')cor='amarelo';linhas.push('<div class="amarelo-linha">'+cont.erros+' e-mail(s) não saíram: veja o motivo em "Com erro".</div>');}
+  el.className='faixa '+cor;el.innerHTML='<span class="ponto"></span><div><div>'+l1+'</div>'+linhas.join('')+'</div>';
+}
+
+function contadores(){
+  var c=(D.dados&&D.dados.contagem)||{};
+  $('nFila').textContent=c.fila?String(c.fila):'';$('nEnviados').textContent=c.enviados?String(c.enviados):'';
+  $('nErros').textContent=c.erros?String(c.erros):'';$('nCancelados').textContent=c.cancelados?String(c.cancelados):'';
+  var ct=((D.dados&&D.dados.contas)||[]).filter(function(k){return k.ativo;}).length;$('nContas').textContent=ct?String(ct):'';
+  var md=((D.dados&&D.dados.modelos)||[]).filter(function(k){return k.ativo;}).length;$('nModelos').textContent=md?String(md):'';
+}
+
+function desenhar(){
+  faixa();contadores();
+  var d=D.dados||{};
+  $('btnNovo').hidden=!d.pode_enviar;$('btnAgora').hidden=!d.pode_enviar;$('pillConfig').hidden=!d.admin;
+  $('barraBusca').hidden=['fila','enviados','erros','cancelados'].indexOf(D.aba)<0;
+  if(D.erro){$('area').innerHTML='<div class="erro-caixa"><b>Não consegui carregar os disparos.</b>Motivo: '+esc(D.erro)+'<br>Tente "Atualizar". Se continuar, avise o administrador com esta mensagem.</div>';$('resumo').innerHTML='';return;}
+  if(D.aba==='contas')return desenharContas();
+  if(D.aba==='modelos')return desenharModelos();
+  if(D.aba==='descadastros')return desenharDescadastros();
+  if(D.aba==='config')return desenharConfig();
+  desenharFila();
+}
+
+/* ---------- fila / enviados / com erro / cancelados ---------- */
+function seloSit(i){
+  var m={na_fila:['Na fila',''],enviando:['Enviando',''],enviado:['Enviado','ok'],respondido:['Respondido','ok'],erro:['Não saiu','vermelho'],cancelado:['Cancelado','']}[i.situacao]||[i.situacao,''];
+  if(i.situacao==='na_fila'&&i.proxima_tentativa_em)m=['Nova tentativa '+dh(i.proxima_tentativa_em),'amarelo'];
+  else if(i.situacao==='na_fila'&&i.a_partir&&new Date(i.a_partir)>new Date())m=['Sai a partir de '+dh(i.a_partir),''];
+  return '<span class="selo '+m[1]+'">'+esc(m[0])+'</span>';
+}
+function filtrados(){
+  var b=semAcento(D.busca.trim()),l=(D.dados&&D.dados.itens)||[];
+  if(!b)return l;
+  return l.filter(function(i){return semAcento([i.cliente,i.codigo,i.para,i.modelo,i.tese,i.numero,i.conta_usada,i.conta_escolhida].join(' ')).indexOf(b)>=0;});
+}
+function linhaHtml(i){
+  var podeMarcar=i.pode_mexer&&['na_fila','erro','cancelado'].indexOf(i.situacao)>=0;
+  var quando=i.situacao==='enviado'||i.situacao==='respondido'?'Enviado em <b>'+dh(i.enviado_em)+'</b> por <b>'+esc(i.conta_usada||'?')+'</b>'+(i.respondido_em?' · respondeu em '+dh(i.respondido_em):'')
+    :i.situacao==='cancelado'?'Cancelado em '+dh(i.cancelado_em)+(i.motivo_cancelamento?' · '+esc(i.motivo_cancelamento):'')
+    :'Sai por <b>'+esc(i.conta_escolhida||'rodízio')+'</b>'+(i.tentativas?' · '+i.tentativas+' tentativa(s)':'');
+  var acs=[];
+  acs.push('<button class="btn btn-p" type="button" data-ver="'+esc(i.id)+'">'+(D.abertos.has(i.id)?'Fechar':'Ver e-mail')+'</button>');
+  if(i.pode_mexer&&(i.situacao==='na_fila'||i.situacao==='erro'))acs.push('<button class="btn btn-p" type="button" data-cancelar="'+esc(i.id)+'">Cancelar</button>');
+  if(D.dados.pode_enviar&&(i.situacao==='erro'||i.situacao==='cancelado'))acs.push('<button class="btn btn-p" type="button" data-voltar="'+esc(i.id)+'">Voltar para a fila</button>');
+  if(D.dados.pode_enviar&&i.situacao==='enviado')acs.push('<button class="btn btn-p" type="button" data-respondeu="'+esc(i.id)+'" title="O cliente respondeu este e-mail">Respondeu</button>');
+  if(D.dados.pode_enviar&&i.situacao==='respondido')acs.push('<button class="btn btn-p" type="button" data-desresp="'+esc(i.id)+'">Desfazer respondido</button>');
+  var erro=i.erro&&(i.situacao==='erro'||i.situacao==='na_fila')?'<div class="err'+(i.situacao==='na_fila'?' amarelo':'')+'">'+(i.situacao==='erro'?'<b>Por que não saiu:</b> ':'')+esc(i.erro)+(i.erro_em?' ('+dh(i.erro_em)+')':'')+'</div>':'';
+  var corpo=D.abertos.has(i.id)?'<div class="corpo"><b>Assunto: '+esc(i.assunto||'(montado na hora do envio)')+'</b>'+esc(i.corpo||'O texto é montado na hora do envio, com o modelo "'+(i.modelo||'')+'" e os dados do cliente naquele momento.')+'</div>':'';
+  return '<div class="lin" data-id="'+esc(i.id)+'"><div>'+(podeMarcar?'<input type="checkbox" data-marcar="'+esc(i.id)+'"'+(D.marcados.has(i.id)?' checked':'')+' aria-label="Marcar">':'')+'</div>'+
+    '<div><div class="nome"><a href="'+esc(linkFicha(i))+'">'+esc(i.cliente)+'</a></div><div class="sub">'+esc(i.codigo||'')+(i.tese?' · '+esc(i.tese):'')+'<br>para <b>'+esc(i.para)+'</b></div></div>'+
+    '<div><div class="sub">Modelo: <b>'+esc(i.modelo||'')+'</b><br>'+quando+'</div></div>'+
+    '<div>'+seloSit(i)+'<div class="sub">Pôs na fila: '+esc(i.criado_por||'?')+'<br>'+dh(i.criado_em)+(i.observacao?'<br>'+esc(i.observacao):'')+'</div></div>'+
+    '<div class="acs">'+acs.join('')+'</div>'+erro+corpo+'</div>';
+}
+function desenharFila(){
+  var l=filtrados(),area=$('area'),nomes={fila:'na fila',enviados:'enviados',erros:'com erro',cancelados:'cancelados'};
+  var marc=D.marcados.size;
+  $('resumo').innerHTML='<span><b>'+l.length+'</b> '+nomes[D.aba]+(D.busca?' nesta busca':'')+'</span>'+
+    (D.aba==='enviados'&&D.dados.contagem?'<span>· <b>'+(D.dados.contagem.enviados_hoje||0)+'</b> hoje · <b>'+(D.dados.contagem.respondidos||0)+'</b> respondidos</span>':'')+
+    (marc?'<span>· <b>'+marc+'</b> marcado(s):</span>'+(D.aba!=='cancelados'?'<button class="btn btn-p" type="button" id="bCancMarc">Cancelar marcados</button>':'')+(D.aba!=='fila'?'<button class="btn btn-p" type="button" id="bVoltMarc">Voltar marcados para a fila</button>':''):'');
+  if(!l.length){
+    area.innerHTML='<div class="vazio"><b>'+(D.busca?'Nada encontrado nesta busca.':{fila:'Nenhum e-mail na fila.',enviados:'Nenhum e-mail enviado ainda.',erros:'Nenhum e-mail com erro.',cancelados:'Nenhum e-mail cancelado.'}[D.aba])+'</b>'+
+      (D.aba==='fila'&&!D.busca&&D.dados.pode_enviar?'Use "+ Novo disparo" ou o botão "Enviar e-mail" na ficha do cliente.':'')+'</div>';
+    return;
+  }
+  area.innerHTML='<div class="lista">'+l.map(linhaHtml).join('')+'</div>';
+}
+
+/* ---------- remetentes ---------- */
+function usoHtml(k){
+  function barra(rot,usados,lim){var p=lim?Math.min(100,Math.round(usados*100/lim)):100;return '<span>'+rot+'</span><span class="tr"><i class="'+(usados>=lim?'cheio':'')+'" style="width:'+p+'%"></i></span><b>'+usados+'/'+lim+'</b>';}
+  return '<div class="uso">'+barra('Manhã',k.usados_manha||0,k.limite_manha)+barra('Tarde',k.usados_tarde||0,k.limite_tarde)+'</div>';
+}
+function seloConta(k){
+  if(!k.ativo)return '<span class="selo">Fora da lista</span>';
+  if(k.situacao==='erro_login')return '<span class="selo vermelho">Senha recusada</span>';
+  if(k.situacao==='erro')return '<span class="selo vermelho">Com erro</span>';
+  if(k.pausada_ate&&new Date(k.pausada_ate)>new Date())return '<span class="selo amarelo">Pausado até '+dh(k.pausada_ate)+'</span>';
+  if(k.situacao==='nao_testada')return '<span class="selo amarelo">Ainda não testado</span>';
+  return '<span class="selo ok">Funcionando</span>';
+}
+function desenharContas(){
+  var d=D.dados,l=d.contas||[];
+  $('resumo').innerHTML=(d.pode_enviar?'<button class="btn btn-ouro btn-p" type="button" id="bNovaConta">+ Cadastrar e-mail de envio</button>':'')+
+    '<span>Cada remetente manda no máximo o seu limite por turno; o robô espalha os envios pelo turno. Senha recusada ou limite do provedor: o remetente para e os e-mails saem pelos outros.</span>';
+  if(!l.length){$('area').innerHTML='<div class="vazio"><b>Nenhum e-mail de envio cadastrado.</b>Cadastre o Gmail de cada colaborador, o e-mail da Locaweb, da Hostinger... Cada um com o seu limite.</div>';return;}
+  $('area').innerHTML='<div class="cartoes">'+l.map(function(k){
+    var acs=[];
+    if(k.ativo&&k.pode_editar)acs.push('<button class="btn btn-p" type="button" data-testar="'+esc(k.id)+'">Testar</button>');
+    if(k.pode_editar)acs.push('<button class="btn btn-p" type="button" data-editar-conta="'+esc(k.id)+'">Editar</button>');
+    if(k.ativo&&k.pode_editar){
+      if(k.pausada_ate&&new Date(k.pausada_ate)>new Date())acs.push('<button class="btn btn-p" type="button" data-retomar="'+esc(k.id)+'">Retomar</button>');
+      else acs.push('<button class="btn btn-p" type="button" data-pausar="'+esc(k.id)+'">Pausar até amanhã</button>');
+    }
+    if(d.admin)acs.push('<button class="btn btn-p" type="button" data-ativar-conta="'+esc(k.id)+'" data-v="'+(k.ativo?'0':'1')+'">'+(k.ativo?'Tirar da lista':'Voltar para a lista')+'</button>');
+    var erro=k.ativo&&(k.situacao==='erro_login'||k.situacao==='erro')&&k.ultimo_erro?'<div class="err"><b>Erro ('+dh(k.ultimo_erro_em)+'):</b> '+esc(k.ultimo_erro)+'</div>'
+      :(k.ativo&&k.pausada_ate&&new Date(k.pausada_ate)>new Date()?'<div class="err amarelo">'+esc(k.pausa_motivo||'Pausado.')+'</div>':'');
+    return '<div class="cartao'+(k.ativo?'':' fora')+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h3>'+esc(k.apelido)+'</h3>'+seloConta(k)+'</div>'+
+      '<div class="sub"><b>'+esc(k.email)+'</b>'+(k.nome_exibicao?' · aparece como "'+esc(k.nome_exibicao)+'"':'')+'<br>'+esc((PROVEDORES[k.provedor]||{}).nome||k.provedor)+' · '+esc(k.smtp_host)+':'+k.smtp_porta+(k.senha_final?' · senha …'+esc(k.senha_final):'')+
+      '<br>'+(k.uso==='equipe'?'Toda a equipe que dispara pode usar':'Só '+esc(k.dono||'o dono')+' usa')+(k.ultimo_envio_em?' · último envio '+dh(k.ultimo_envio_em):'')+
+      (k.ultimo_teste_em?'<br>Último teste: '+dh(k.ultimo_teste_em)+' ('+(k.ultimo_teste_ok?'deu certo':'falhou')+')':'')+(k.na_fila?'<br><b>'+k.na_fila+'</b> na fila escolhendo este remetente':'')+'</div>'+
+      usoHtml(k)+erro+'<div class="acs">'+acs.join('')+'</div></div>';
+  }).join('')+'</div>';
+}
+function janelaConta(k){
+  var d=D.dados,adm=d.admin,novo=!k;k=k||{provedor:'gmail',limite_manha:20,limite_tarde:20,uso:adm?'equipe':'dono'};
+  var optsProv=Object.keys(PROVEDORES).map(function(p){return '<option value="'+p+'"'+(k.provedor===p?' selected':'')+'>'+esc(PROVEDORES[p].nome)+'</option>';}).join('');
+  var optsDono=adm?'<option value="">— do escritório (sem dono) —</option>'+(d.usuarios||[]).map(function(u){return '<option value="'+esc(u.id)+'"'+(k.dono_id===u.id?' selected':'')+'>'+esc(u.nome)+'</option>';}).join(''):'';
+  var corpo='<div class="sd-g2"><div class="sd-campo"><label for="cProv">Provedor</label><select class="sd-in" id="cProv">'+optsProv+'</select></div>'+
+    '<div class="sd-campo"><label for="cEmail">E-mail de envio</label><input class="sd-in" id="cEmail" type="email" autocomplete="off" value="'+esc(k.email||'')+'" placeholder="nome@gmail.com"></div></div>'+
+    '<div class="dica" id="cAjuda"></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label for="cSenha">'+(novo?'Senha':'Nova senha (deixe em branco para manter)')+'</label><input class="sd-in" id="cSenha" type="password" autocomplete="new-password" placeholder="'+(novo?'':'…'+esc(k.senha_final||''))+'"><div class="dica">Fica guardada no cofre do banco; ninguém vê depois, nem o administrador.</div></div>'+
+    '<div class="sd-campo"><label for="cApelido">Apelido (como aparece aqui)</label><input class="sd-in" id="cApelido" value="'+esc(k.apelido||'')+'" placeholder="Ex.: Gmail da Karine"></div></div>'+
+    '<div class="sd-g2" id="cSmtp"><div class="sd-campo"><label for="cHost">Servidor de saída (SMTP)</label><input class="sd-in" id="cHost" value="'+esc(k.smtp_host||'')+'" placeholder="smtp.seuprovedor.com.br"></div>'+
+    '<div class="sd-campo"><label for="cPorta">Porta</label><input class="sd-in" id="cPorta" inputmode="numeric" value="'+esc(k.smtp_porta||465)+'"></div></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label for="cNome">Nome que aparece para o cliente</label><input class="sd-in" id="cNome" value="'+esc(k.nome_exibicao||'')+'" placeholder="Ex.: Karine · Victor Morais Advocacia"></div>'+
+    '<div class="sd-campo"><label for="cUsuario">Usuário do login (se for diferente do e-mail)</label><input class="sd-in" id="cUsuario" value="'+esc(k.smtp_usuario&&k.smtp_usuario!==k.email?k.smtp_usuario:'')+'" placeholder="em branco = o próprio e-mail"></div></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label for="cLimM">Limite por manhã</label><input class="sd-in" id="cLimM" inputmode="numeric" value="'+esc(k.limite_manha)+'"></div>'+
+    '<div class="sd-campo"><label for="cLimT">Limite por tarde</label><input class="sd-in" id="cLimT" inputmode="numeric" value="'+esc(k.limite_tarde)+'"></div></div>'+
+    (adm?'<div class="sd-g2"><div class="sd-campo"><label for="cDono">Dono</label><select class="sd-in" id="cDono">'+optsDono+'</select></div>'+
+      '<div class="sd-campo"><label for="cUso">Quem pode usar</label><select class="sd-in" id="cUso"><option value="equipe"'+(k.uso==='equipe'?' selected':'')+'>Toda a equipe que dispara</option><option value="dono"'+(k.uso==='dono'?' selected':'')+'>Só o dono</option></select></div></div>'
+      :'<div class="dica">Este e-mail fica sendo <b>seu</b>: só você (e o administrador) usa e muda.</div>')+
+    '<div class="sd-campo"><label for="cAss">Assinatura no fim do e-mail (opcional)</label><textarea class="sd-in" id="cAss" rows="3" placeholder="Ex.: Karine Souza&#10;Victor Morais Advocacia · (82) 9 9999-9999">'+esc(k.assinatura||'')+'</textarea></div>';
+  var j=SagaDisparos.abrirJanela(novo?'Cadastrar e-mail de envio':'Editar e-mail de envio','Depois de salvar, clique em "Testar": o SAGA manda um e-mail de teste para você.',corpo,
+    '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="cOk">Salvar</button>');
+  var q=j.q;
+  function prov(){var p=q('#cProv').value;q('#cAjuda').innerHTML=PROVEDORES[p].ajuda;q('#cSmtp').hidden=p!=='outro';}
+  q('#cProv').addEventListener('change',prov);prov();
+  ['#cLimM','#cLimT','#cPorta'].forEach(function(s){q(s).addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,4);});});
+  q('#cOk').addEventListener('click',async function(){
+    var bt=this,dados={provedor:q('#cProv').value,email:q('#cEmail').value.trim(),apelido:q('#cApelido').value.trim(),nome_exibicao:q('#cNome').value.trim(),
+      smtp_host:q('#cHost').value.trim(),smtp_porta:q('#cPorta').value,smtp_usuario:q('#cUsuario').value.trim(),limite_manha:q('#cLimM').value,limite_tarde:q('#cLimT').value,assinatura:q('#cAss').value};
+    if(adm){dados.dono_id=q('#cDono').value||null;dados.uso=q('#cUso').value;}
+    bt.disabled=true;
+    var r=await _sb.rpc('disparo_conta_salvar',{p_id:novo?null:k.id,p_dados:dados,p_senha:q('#cSenha').value||null});
+    bt.disabled=false;
+    if(r.error){toast('Não consegui salvar: '+erroTxt(r.error),'error');return;}
+    toast('E-mail de envio salvo. Agora clique em "Testar".','success');j.fechar();await carregar();
+  });
+}
+async function testarConta(id,bt){
+  if(bt){bt.disabled=true;bt.textContent='Testando…';}
+  try{
+    var r=await _sb.functions.invoke('disparos-email',{body:{acao:'testar',conta:id}});
+    var d=r.data||{};
+    if(r.error&&!r.data){var m=erroTxt(r.error);try{var ctx=r.error.context;if(ctx&&ctx.json){var j=await ctx.json();m=j.erro||m;}}catch(e){}throw new Error(m);}
+    if(d.ok)toast('Deu certo: o e-mail de teste foi para '+d.para+'.','success');
+    else toast('O teste falhou: '+(d.erro||'sem mensagem'),'error');
+  }catch(e){toast('Não consegui testar: '+erroTxt(e),'error');}
+  await carregar();
+}
+
+/* ---------- modelos ---------- */
+async function teses(){
+  if(D.teses)return D.teses;
+  var r=await _sb.from('teses').select('id,nome').eq('ativo',true).order('nome');
+  D.teses=r.data||[];return D.teses;
+}
+function desenharModelos(){
+  var d=D.dados,l=d.modelos||[];
+  $('resumo').innerHTML=(d.admin?'<button class="btn btn-ouro btn-p" type="button" id="bNovoModelo">+ Novo modelo</button>':'')+
+    '<span>O modelo de cada tese é pré-aprovado: no envio só entram os dados do cliente. '+(d.admin?'Só você cria e muda os modelos.':'Só o administrador cria e muda os modelos.')+' Quando o processo não tem modelo da tese, vale o modelo "todas as teses" (o primeiro da lista).</span>';
+  if(!l.length){$('area').innerHTML='<div class="vazio"><b>Nenhum modelo ainda.</b>'+(d.admin?'Clique em "+ Novo modelo" e escreva o texto de uma tese com os campos {nome}, {tese}, {codigo}...':'O administrador cria os modelos de cada tese.')+'</div>';return;}
+  var ativos=l.filter(function(m){return m.ativo;});
+  $('area').innerHTML='<div class="cartoes">'+l.map(function(m){
+    var idx=ativos.indexOf(m),acs=[];
+    acs.push('<button class="btn btn-p" type="button" data-ver-modelo="'+esc(m.id)+'">'+(d.admin?'Editar':'Ver')+'</button>');
+    if(d.admin&&m.ativo){
+      if(idx>0)acs.push('<button class="btn btn-p" type="button" data-subir="'+esc(m.id)+'" title="Subir">▲</button>');
+      if(idx<ativos.length-1)acs.push('<button class="btn btn-p" type="button" data-descer="'+esc(m.id)+'" title="Descer">▼</button>');
+    }
+    if(d.admin)acs.push('<button class="btn btn-p" type="button" data-ativar-modelo="'+esc(m.id)+'" data-v="'+(m.ativo?'0':'1')+'">'+(m.ativo?'Tirar da lista':'Voltar para a lista')+'</button>');
+    return '<div class="cartao'+(m.ativo?'':' fora')+'"><h3>'+esc(m.nome)+'</h3><div class="sub">'+(m.tese?'Tese: <b>'+esc(m.tese)+'</b>':'<b>Todas as teses</b> (quando a tese não tem modelo próprio)')+
+      '<br>Assunto: '+esc(m.assunto)+'<br>'+(m.enviados||0)+' enviado(s) · '+(m.na_fila||0)+' na fila · mudado em '+dh(m.atualizado_em)+'</div><div class="trecho">'+esc(m.corpo)+'</div><div class="acs">'+acs.join('')+'</div></div>';
+  }).join('')+'</div>';
+}
+async function janelaModelo(m){
+  var adm=D.dados.admin,novo=!m;m=m||{};
+  var ts=await teses();
+  var optsT='<option value="">Todas as teses (modelo geral)</option>'+ts.map(function(t){return '<option value="'+esc(t.id)+'"'+(m.tese_id===t.id?' selected':'')+'>'+esc(t.nome)+'</option>';}).join('');
+  var ro=adm?'':' disabled';
+  var corpo='<div class="sd-g2"><div class="sd-campo"><label for="mNome">Nome do modelo</label><input class="sd-in" id="mNome" value="'+esc(m.nome||'')+'" placeholder="Ex.: PSS · primeiro contato"'+ro+'></div>'+
+    '<div class="sd-campo"><label for="mTese">Tese</label><select class="sd-in" id="mTese"'+ro+'>'+optsT+'</select></div></div>'+
+    '<div class="sd-campo"><label for="mAssunto">Assunto</label><input class="sd-in" id="mAssunto" value="'+esc(m.assunto||'')+'" placeholder="Ex.: {primeiro_nome}, há um valor a receber na ação do PSS"'+ro+'></div>'+
+    (adm?'<div class="sd-campo"><label>Pôr um campo (clique para inserir onde está o cursor)</label><div class="campos-modelo">'+CAMPOS.map(function(c){return '<button type="button" data-campo="'+c[0]+'" title="'+esc(c[1])+'">{'+c[0]+'}</button>';}).join('')+'</div></div>':'')+
+    '<div class="sd-campo"><label for="mCorpo">Texto do e-mail</label><textarea class="sd-in" id="mCorpo" rows="12" placeholder="Prezado(a) {nome},&#10;&#10;..."'+ro+'>'+esc(m.corpo||'')+'</textarea>'+
+    '<div class="dica">Parágrafos separados por uma linha em branco. <b>**texto**</b> fica em negrito. Links e e-mails viram clicáveis. Nunca escreva valores: por segurança o modelo não tem campo de valor. No fim de todo e-mail vai a frase "Se não quiser mais receber nossos e-mails, responda com a palavra SAIR."</div></div>'+
+    '<div class="sd-campo"><label>Prévia com um cliente inventado</label><div class="sd-previa"><div class="sd-previa-cab" id="mPrevCab"></div><div class="sd-previa-corpo" id="mPrev"></div></div></div>';
+  var j=SagaDisparos.abrirJanela(novo?'Novo modelo de e-mail':(adm?'Editar modelo':'Modelo de e-mail'),adm?'Mudar o modelo vale para os e-mails que ainda estão na fila (o texto é montado na hora do envio).':'Só o administrador muda os modelos.',corpo,
+    '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>'+(adm?'Cancelar':'Fechar')+'</button>'+(adm?'<button class="btn btn-ouro" type="button" id="mOk">Salvar modelo</button>':''));
+  var q=j.q,ultimo=q('#mCorpo');
+  function preencher(t){return String(t||'').replace(/\{([a-z_]+)\}/g,function(a,k){return k in EXEMPLO?EXEMPLO[k]:a;});}
+  function prev(){q('#mPrevCab').innerHTML='<b>Assunto:</b> '+esc(preencher(q('#mAssunto').value));q('#mPrev').textContent=preencher(q('#mCorpo').value);}
+  q('#mAssunto').addEventListener('input',prev);q('#mCorpo').addEventListener('input',prev);prev();
+  q('#mAssunto').addEventListener('focus',function(){ultimo=this;});q('#mCorpo').addEventListener('focus',function(){ultimo=this;});
+  j.ov.addEventListener('click',function(e){var b=e.target.closest('[data-campo]');if(!b)return;
+    var el=ultimo,t='{'+b.dataset.campo+'}',a=el.selectionStart==null?el.value.length:el.selectionStart,z=el.selectionEnd==null?a:el.selectionEnd;
+    el.value=el.value.slice(0,a)+t+el.value.slice(z);el.focus();try{el.setSelectionRange(a+t.length,a+t.length);}catch(x){}prev();});
+  if(adm)q('#mOk').addEventListener('click',async function(){
+    var bt=this;bt.disabled=true;
+    var r=await _sb.rpc('disparo_modelo_salvar',{p_id:novo?null:m.id,p_nome:q('#mNome').value,p_tese:q('#mTese').value||null,p_assunto:q('#mAssunto').value,p_corpo:q('#mCorpo').value,p_ordem:null});
+    bt.disabled=false;
+    if(r.error){toast('Não consegui salvar o modelo: '+erroTxt(r.error),'error');return;}
+    toast('Modelo salvo.','success');j.fechar();await carregar();
+  });
+}
+async function moverModelo(id,dir){
+  var ativos=(D.dados.modelos||[]).filter(function(m){return m.ativo;}).map(function(m){return m.id;});
+  var i=ativos.indexOf(id),k=i+dir;if(i<0||k<0||k>=ativos.length)return;
+  var t=ativos[i];ativos[i]=ativos[k];ativos[k]=t;
+  var r=await _sb.rpc('disparo_modelo_ordenar',{p_ids:ativos});
+  if(r.error){toast('Não consegui mudar a ordem: '+erroTxt(r.error),'error');return;}
+  await carregar();
+}
+
+/* ---------- não enviar mais ---------- */
+function desenharDescadastros(){
+  var d=D.dados,l=d.descadastros||[];
+  $('resumo').innerHTML=(d.pode_enviar?'<button class="btn btn-ouro btn-p" type="button" id="bNovoDesc">+ Não enviar mais para um e-mail</button>':'')+
+    '<span>Quem pediu para sair (respondeu "SAIR", reclamou ou pediu por telefone) não recebe mais nenhum disparo (LGPD). O que estava na fila para esse e-mail é cancelado.'+(d.admin?'':' Só o administrador libera de novo.')+'</span>';
+  if(!l.length){$('area').innerHTML='<div class="vazio"><b>Ninguém na lista.</b>Quando um cliente pedir para não receber e-mails, ponha o e-mail aqui.</div>';return;}
+  $('area').innerHTML='<div class="lista">'+l.map(function(x){
+    return '<div class="lin" style="grid-template-columns:1fr auto"><div><div class="nome">'+esc(x.email)+'</div><div class="sub">'+(x.motivo?esc(x.motivo)+' · ':'')+'desde '+dh(x.criado_em)+(x.por?' · por '+esc(x.por):'')+'</div></div>'+
+      '<div class="acs">'+(d.admin?'<button class="btn btn-p" type="button" data-liberar="'+esc(x.email)+'">Voltar a enviar</button>':'')+'</div></div>';
+  }).join('')+'</div>';
+}
+function janelaDescadastro(){
+  var j=SagaDisparos.abrirJanela('Não enviar mais para um e-mail','O e-mail sai de todas as filas e não recebe mais disparos.',
+    '<div class="sd-campo"><label for="xEmail">E-mail</label><input class="sd-in" id="xEmail" type="email" autocomplete="off"></div><div class="sd-campo"><label for="xMot">Motivo (opcional)</label><input class="sd-in" id="xMot" placeholder="Ex.: respondeu SAIR em 14/11"></div>',
+    '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="xOk">Não enviar mais</button>');
+  j.q('#xOk').addEventListener('click',async function(){
+    var r=await _sb.rpc('disparo_descadastrar',{p_email:j.q('#xEmail').value,p_motivo:j.q('#xMot').value||null,p_pessoa:null});
+    if(r.error){toast('Não consegui gravar: '+erroTxt(r.error),'error');return;}
+    toast('Pronto: esse e-mail não recebe mais disparos.','success');j.fechar();await carregar();
+  });
+}
+
+/* ---------- configurações (administrador) ---------- */
+function desenharConfig(){
+  var c=D.dados.config||{},rod=D.dados.rodadas||[];
+  $('resumo').innerHTML='';
+  $('area').innerHTML='<div class="painel"><h2>Robô dos disparos</h2>'+
+    '<label class="chk"><input type="checkbox" id="kAtivo"'+(c.ativo?' checked':'')+'> Robô ligado (manda os e-mails da fila sozinho)</label>'+
+    '<div class="g3"><div class="campo"><label for="kMI">Manhã: de</label><input class="in" type="time" id="kMI" value="'+hh(c.manha_ini)+'"></div><div class="campo"><label for="kMF">até</label><input class="in" type="time" id="kMF" value="'+hh(c.manha_fim)+'"></div><div></div>'+
+    '<div class="campo"><label for="kTI">Tarde: de</label><input class="in" type="time" id="kTI" value="'+hh(c.tarde_ini)+'"></div><div class="campo"><label for="kTF">até</label><input class="in" type="time" id="kTF" value="'+hh(c.tarde_fim)+'"></div>'+
+    '<div class="campo"><label for="kMax">Tentativas por e-mail</label><input class="in" id="kMax" inputmode="numeric" value="'+esc(c.max_tentativas||3)+'"></div></div>'+
+    '<label class="chk"><input type="checkbox" id="kUteis"'+(c.so_dias_uteis?' checked':'')+'> Só em dias úteis (sem sábado, domingo e feriados liberados do Ponto)</label>'+
+    '<div class="dica">O limite de cada remetente vale por turno (manhã ou tarde) e fica no cadastro dele, em "Remetentes". O robô confere a fila a cada 10 minutos e espalha os envios até o fim do turno.</div>'+
+    '<div><button class="btn btn-ouro" type="button" id="kSalvar">Salvar</button></div></div>'+
+    '<div class="painel" style="margin-top:12px"><h2>Últimas rodadas</h2>'+(rod.length?'<table class="tab"><thead><tr><th>Quando</th><th>Origem</th><th>Enviados</th><th>Erros</th><th>Resultado</th></tr></thead><tbody>'+
+      rod.map(function(x){return '<tr><td>'+dh(x.inicio)+'</td><td>'+(x.origem==='manual'?'Rodar agora':'Robô')+'</td><td>'+x.enviados+'</td><td>'+x.erros+'</td><td'+(x.ok?'':' style="color:var(--danger,#e5484d)"')+'>'+esc(x.mensagem||'')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="dica">O robô ainda não rodou.</div>')+'</div>';
+  $('kMax').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,2);});
+  $('kSalvar').addEventListener('click',async function(){
+    var r=await _sb.rpc('disparo_config_salvar',{p:{ativo:$('kAtivo').checked,manha_ini:$('kMI').value,manha_fim:$('kMF').value,tarde_ini:$('kTI').value,tarde_fim:$('kTF').value,so_dias_uteis:$('kUteis').checked,max_tentativas:$('kMax').value}});
+    if(r.error){toast('Não consegui salvar: '+erroTxt(r.error),'error');return;}
+    toast('Configurações salvas.','success');await carregar();
+  });
+}
+
+/* ---------- novo disparo: procurar clientes ou colar uma lista ---------- */
+function janelaNovo(){
+  var sel=new Map();
+  var corpo='<div class="pills" role="group" aria-label="Como escolher"><button class="pill active" type="button" data-modo="buscar">Procurar cliente</button><button class="pill" type="button" data-modo="lista">Colar uma lista</button></div>'+
+    '<div id="nBuscar"><input class="sd-in" id="nTermo" type="search" autocomplete="off" placeholder="Nome, CPF ou código (VMM-01234)"><div class="dica" style="margin:6px 0">Marque os clientes; dá para procurar várias vezes e ir juntando.</div><div class="res-busca" id="nRes"></div></div>'+
+    '<div id="nLista" hidden><textarea class="sd-in" id="nLinhas" rows="7" placeholder="Um cliente por linha: código VMM, CPF ou nome completo"></textarea><div style="margin:8px 0"><button class="btn" type="button" id="nConferir">Conferir a lista</button></div><div class="res-busca" id="nResL"></div></div>'+
+    '<div class="dica" id="nConta"><b>0</b> cliente(s) escolhido(s).</div>';
+  var j=SagaDisparos.abrirJanela('Novo disparo','Escolha os clientes; na próxima janela, o modelo, o remetente e a prévia.',corpo,
+    '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="nOk" disabled>Continuar</button>');
+  var q=j.q;
+  function conta(){q('#nConta').innerHTML='<b>'+sel.size+'</b> cliente(s) escolhido(s).';q('#nOk').disabled=!sel.size;}
+  function itHtml(c,linha){
+    var ok=c.email&&!c.descadastrado&&c.processos.length;
+    var motivo=!c.email?'sem e-mail cadastrado':c.descadastrado?'pediu para não receber e-mails':!c.processos.length?'sem processo':'';
+    var procSel=c.processos.length>1?'<select class="sd-in" data-proc="'+esc(c.pessoa_id)+'">'+c.processos.map(function(p){return '<option value="'+esc(p.id)+'">'+esc((p.codigo||'')+' · '+(p.tese||'sem tese')+(p.tem_modelo?'':' (sem modelo)'))+'</option>';}).join('')+'</select>':'';
+    var p0=c.processos[0];
+    return '<label class="res-it'+(ok?'':' sem')+'"><input type="checkbox" data-pes="'+esc(c.pessoa_id)+'"'+(sel.has(c.pessoa_id)?' checked':'')+(ok?'':' disabled')+'><div>'+(linha?'<small>'+esc(linha)+'</small>':'')+'<b>'+esc(c.nome)+'</b> '+esc(c.codigo||'')+
+      '<small>'+(c.email?esc(c.email):'')+(motivo?' · '+motivo:'')+(c.processos.length===1&&p0?' · '+esc((p0.tese||'sem tese')+(p0.tem_modelo?'':' (sem modelo de e-mail)')):'')+'</small>'+procSel+'</div></label>';
+  }
+  var cache={};
+  function guardar(lista){lista.forEach(function(c){if(c)cache[c.pessoa_id]=c;});}
+  var tB=null;
+  q('#nTermo').addEventListener('input',function(){clearTimeout(tB);var t=this.value.trim();tB=setTimeout(async function(){
+    if(t.length<3){q('#nRes').innerHTML='';return;}
+    var r=await _sb.rpc('disparo_buscar',{p_termo:t});
+    if(r.error){q('#nRes').innerHTML='<div class="sd-erro">Não consegui procurar: '+esc(erroTxt(r.error))+'</div>';return;}
+    var l=r.data||[];guardar(l);
+    q('#nRes').innerHTML=l.length?l.map(function(c){return itHtml(c);}).join(''):'<div class="dica">Nenhum cliente encontrado.</div>';
+  },350);});
+  q('#nConferir').addEventListener('click',async function(){
+    var linhas=q('#nLinhas').value.split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
+    if(!linhas.length)return;
+    this.disabled=true;var r=await _sb.rpc('disparo_buscar_lista',{p_linhas:linhas});this.disabled=false;
+    if(r.error){q('#nResL').innerHTML='<div class="sd-erro">Não consegui conferir: '+esc(erroTxt(r.error))+'</div>';return;}
+    var html=(r.data||[]).map(function(x){
+      if(x.cliente){guardar([x.cliente]);var c=x.cliente;if(c.email&&!c.descadastrado&&c.processos.length)sel.set(c.pessoa_id,{pessoa_id:c.pessoa_id,nome:c.nome,processo_id:c.processos[0].id});return itHtml(c,x.linha);}
+      return '<div class="res-it sem"><span></span><div><small>'+esc(x.linha)+'</small>'+(x.achados>1?'Vários clientes com esse nome: use o código ou o CPF ('+(x.opcoes||[]).map(function(o){return esc(o.nome+' '+(o.codigo||''));}).join('; ')+')':'Não achei esse cliente.')+'</div></div>';
+    }).join('');
+    q('#nResL').innerHTML=html;conta();
+  });
+  j.ov.addEventListener('change',function(e){
+    var ch=e.target.closest('[data-pes]');
+    if(ch){var c=cache[ch.dataset.pes];if(!c)return;
+      if(ch.checked){var s=j.ov.querySelector('[data-proc="'+c.pessoa_id+'"]');sel.set(c.pessoa_id,{pessoa_id:c.pessoa_id,nome:c.nome,processo_id:s?s.value:(c.processos[0]&&c.processos[0].id)});}
+      else sel.delete(c.pessoa_id);conta();return;}
+    var ps=e.target.closest('[data-proc]');if(ps&&sel.has(ps.dataset.proc))sel.get(ps.dataset.proc).processo_id=ps.value;
+  });
+  j.ov.addEventListener('click',function(e){var b=e.target.closest('[data-modo]');if(!b)return;
+    j.ov.querySelectorAll('[data-modo]').forEach(function(x){x.classList.toggle('active',x===b);});
+    q('#nBuscar').hidden=b.dataset.modo!=='buscar';q('#nLista').hidden=b.dataset.modo!=='lista';});
+  q('#nOk').addEventListener('click',function(){
+    var itens=Array.from(sel.values());j.fechar();
+    var c1=itens.length===1?cache[itens[0].pessoa_id]:null;
+    SagaDisparos.enviar({itens:itens,processos:c1?c1.processos.map(function(p){return {id:p.id,rotulo:(p.codigo||'')+' · '+(p.tese||'sem tese')};}):[],aoSalvar:function(){D.aba='fila';marcarAba();carregar();}});
+  });
+}
+
+/* ---------- ações ---------- */
+async function acaoFila(rpc,args,ok){
+  var r=await _sb.rpc(rpc,args);
+  if(r.error){toast('Não consegui: '+erroTxt(r.error),'error');return false;}
+  if(ok)toast(typeof ok==='function'?ok(r.data):ok,'success');
+  await carregar();return true;
+}
+async function rodarAgora(){
+  var bt=$('btnAgora');bt.disabled=true;bt.textContent='Rodando…';
+  try{
+    var r=await _sb.functions.invoke('disparos-email',{body:{acao:'agora'}});
+    var d=r.data||{};
+    if(r.error&&!r.data){var m=erroTxt(r.error);try{var ctx=r.error.context;if(ctx&&ctx.json){var j=await ctx.json();m=j.erro||m;}}catch(e){}throw new Error(m);}
+    if(d.ok===false)toast('A rodada falhou: '+(d.erro||'sem mensagem'),'error');
+    else toast(d.mensagem||'Rodada feita.',d.erros?'warning':'success');
+  }catch(e){toast('Não consegui rodar agora: '+erroTxt(e),'error');}
+  bt.disabled=false;bt.textContent='Rodar agora';await carregar();
+}
+function marcarAba(){document.querySelectorAll('.pill[data-aba]').forEach(function(x){x.classList.toggle('active',x.dataset.aba===D.aba);});}
+function ligar(){
+  document.querySelectorAll('.pill[data-aba]').forEach(function(b){b.addEventListener('click',function(){
+    if(D.aba===b.dataset.aba)return;D.aba=b.dataset.aba;marcarAba();D.abertos.clear();
+    try{history.replaceState(null,'','?aba='+D.aba);}catch(e){}
+    setTimeout(carregar,0);
+  });});
+  $('fBusca').addEventListener('input',function(){D.busca=this.value;desenhar();});
+  $('btnAtualizar').addEventListener('click',carregar);
+  $('btnNovo').addEventListener('click',janelaNovo);
+  $('btnAgora').addEventListener('click',rodarAgora);
+  $('area').addEventListener('change',function(e){var c=e.target.closest('[data-marcar]');if(!c)return;if(c.checked)D.marcados.add(c.dataset.marcar);else D.marcados.delete(c.dataset.marcar);desenharFila();});
+  document.addEventListener('click',async function(e){
+    var t=e.target.closest('button');if(!t||!t.closest('.content'))return;
+    var ds=t.dataset;
+    if(ds.ver){if(D.abertos.has(ds.ver))D.abertos.delete(ds.ver);else D.abertos.add(ds.ver);desenharFila();return;}
+    if(ds.cancelar){if(!await confirmar('Cancelar e-mail','Este e-mail sai da fila e não será enviado.','Cancelar e-mail',true))return;acaoFila('disparo_cancelar',{p_ids:[ds.cancelar],p_motivo:null},'E-mail cancelado.');return;}
+    if(ds.voltar){acaoFila('disparo_voltar_fila',{p_ids:[ds.voltar]},function(n){return n?'Voltou para a fila.':'Não voltou: o e-mail pediu para sair ou já está na fila.';});return;}
+    if(ds.respondeu){acaoFila('disparo_marcar_respondido',{p_id:ds.respondeu,p_respondido:true,p_obs:null},'Marcado como respondido.');return;}
+    if(ds.desresp){acaoFila('disparo_marcar_respondido',{p_id:ds.desresp,p_respondido:false,p_obs:null},'Desmarcado.');return;}
+    if(t.id==='bCancMarc'){if(!await confirmar('Cancelar marcados','Os '+D.marcados.size+' e-mails marcados saem da fila.','Cancelar e-mails',true))return;acaoFila('disparo_cancelar',{p_ids:Array.from(D.marcados),p_motivo:null},function(n){return n+' cancelado(s).';});return;}
+    if(t.id==='bVoltMarc'){acaoFila('disparo_voltar_fila',{p_ids:Array.from(D.marcados)},function(n){return n+' voltaram para a fila.';});return;}
+    if(t.id==='bNovaConta'){janelaConta(null);return;}
+    if(ds.editarConta){janelaConta((D.dados.contas||[]).filter(function(k){return k.id===ds.editarConta;})[0]);return;}
+    if(ds.testar){testarConta(ds.testar,t);return;}
+    if(ds.pausar){var am=new Date();am.setDate(am.getDate()+1);am.setHours(8,0,0,0);acaoFila('disparo_conta_pausar',{p_id:ds.pausar,p_ate:am.toISOString(),p_motivo:'Pausado à mão'},'Pausado até amanhã 8h.');return;}
+    if(ds.retomar){acaoFila('disparo_conta_pausar',{p_id:ds.retomar,p_ate:null,p_motivo:null},'Retomado.');return;}
+    if(ds.ativarConta){var v=ds.v==='1';if(!v&&!await confirmar('Tirar da lista','Este remetente para de mandar e-mails (o histórico fica). O que estava escolhendo ele vai pelo rodízio.','Tirar da lista',true))return;acaoFila('disparo_conta_ativar',{p_id:ds.ativarConta,p_ativo:v},v?'Voltou para a lista.':'Tirado da lista.');return;}
+    if(t.id==='bNovoModelo'){janelaModelo(null);return;}
+    if(ds.verModelo){janelaModelo((D.dados.modelos||[]).filter(function(m){return m.id===ds.verModelo;})[0]);return;}
+    if(ds.subir){moverModelo(ds.subir,-1);return;}
+    if(ds.descer){moverModelo(ds.descer,1);return;}
+    if(ds.ativarModelo){var vm=ds.v==='1';if(!vm&&!await confirmar('Tirar da lista','O modelo sai da lista (o histórico fica).','Tirar da lista',true))return;acaoFila('disparo_modelo_ativar',{p_id:ds.ativarModelo,p_ativo:vm},vm?'Voltou para a lista.':'Tirado da lista.');return;}
+    if(t.id==='bNovoDesc'){janelaDescadastro();return;}
+    if(ds.liberar){if(!await confirmar('Voltar a enviar','Este e-mail volta a poder receber disparos.','Voltar a enviar',false))return;acaoFila('disparo_descadastro_desfazer',{p_email:ds.liberar},'Liberado.');return;}
+  });
+  try{if(localStorage.getItem('saga-movimento')==='reduzido')document.documentElement.classList.add('sem-movimento');}catch(e){}
+}
+async function init(){
+  var a=new URLSearchParams(location.search).get('aba');
+  if(a&&document.querySelector('.pill[data-aba="'+a+'"]')){D.aba=a;marcarAba();}
+  SagaDisparos.configurar({toast:function(m,t){toast(m,t==='ok'?'success':t==='erro'?'error':'warning');}});
+  ligar();
+  await SagaUI.carregar('disparos');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  await carregar();
+  setInterval(function(){if(!document.hidden&&['fila','enviados','erros'].indexOf(D.aba)>=0&&!document.querySelector('.sd-ov'))carregar();},60000);
+}
+init().catch(function(e){D.erro=erroTxt(e)||'Erro ao abrir a tela.';desenhar();});
+</script>
+</body>
+</html>

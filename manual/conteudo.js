@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.9",
+  versao: "3.0",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.0", data: "14/11/2026", mudou: "Tela nova Disparos de e-mail (menu Processos): escolher clientes, pôr na fila e o SAGA manda sozinho o e-mail com o modelo da tese, pelos remetentes cadastrados (Gmail, Locaweb, Hostinger...), com limite por manhã e por tarde; erros com o motivo, \"Não enviar mais\" e o bloco E-mails enviados na ficha do cliente." },
     { versao: "2.9", data: "14/11/2026", mudou: "Ficha: \"Organizar campos\" em Dados do Processo (escolher quais campos ficam à vista e em que ordem; cada um salva a sua, o administrador salva o padrão do escritório; uma para o Jurídico e outra para a Captação); Andamentos no tribunal (CNJ) mostram só os 2 mais recentes, o resto em Ver todos." },
     { versao: "2.8", data: "14/11/2026", mudou: "Biblioteca: Timbrados e modelos. Os papéis timbrados da Victor Morais Advocacia, da ANCREF e da Sarmento ficam guardados no SAGA, e os modelos de petição geram o Word e o PDF já no papel timbrado, no Padrão VMM, aqui no próprio computador." },
     { versao: "2.7", data: "14/11/2026", mudou: "Minhas Tarefas e Intimações: o número do processo fica sempre à vista no cartão (não só ao passar o mouse), com pontos e traço, e o Ctrl+F do navegador acha o processo pelo número; a etiqueta continua sempre à vista." },
@@ -647,6 +648,34 @@ window.SAGA_MANUAL = {
           ],
           img: "cartas",
           marcas: ["Situações da carta (A enviar, Impressas, Enviadas...).", "Modelos de carta.", "Marcar todas as linhas."]
+        },
+        { id: "disparos", titulo: "Disparos de e-mail",
+          quando: "Quando a Captação quer mandar e-mail para clientes (um ou vários) com o texto pronto da tese, sem ficar enviando um por um. Quem põe na fila: Captação e administrador (outra pessoa: Painel de permissões > Disparos de e-mail).",
+          passos: [
+            "Em **Processos > Disparos de e-mail**, clique em [[+ Novo disparo]]: procure o cliente pelo nome, CPF ou código (VMM-01234) e marque; ou use **Colar uma lista** (um cliente por linha). Na ficha do cliente, o bloco **E-mails enviados** tem o botão [[+ Enviar e-mail]].",
+            "Na janela **Enviar e-mail**: o **Modelo** (Automático = o modelo da tese do processo), o **remetente** (Automático = rodízio entre os e-mails de envio disponíveis), o e-mail do cliente e **Quando**. Confira a **prévia** e os avisos e clique em [[Pôr na fila]].",
+            "Pronto: o e-mail fica **Na fila**. A cada 10 minutos, dentro da **manhã e da tarde** (dias úteis), o robô manda sozinho, sem passar do limite de cada remetente por turno, espalhando os envios até o fim do turno.",
+            "Acompanhe nas abas **Na fila**, **Enviados**, **Com erro** e **Cancelados**. [[Ver e-mail]] mostra o texto exato que saiu. Cliente respondeu? Clique em [[Respondeu]].",
+            "**Com erro**: o motivo aparece em vermelho (ex.: \"endereço recusado\"). Corrija o e-mail na ficha e use [[Voltar para a fila]]. Erro passageiro (amarelo) o robô tenta de novo sozinho em 30 min, até 3 vezes.",
+            "Cliente pediu para não receber mais (respondeu SAIR, reclamou): aba **Não enviar mais** > [[+ Não enviar mais para um e-mail]]. O que estava na fila para ele é cancelado (LGPD)."
+          ],
+          img: "disparos",
+          marcas: ["Novo disparo: escolher os clientes.", "Situação do robô: última rodada, próxima, remetente com senha recusada (vermelho) ou pausado (amarelo).", "E-mails que não saíram, com o motivo.", "Remetentes: os e-mails de envio e o limite de cada um.", "Modelos de cada tese (pré-aprovados).", "Erro passageiro: o robô tenta de novo sozinho."],
+          atencao: ["Os modelos são pré-aprovados pelo Dr. Victor: no envio só entram os dados do cliente (nome, código, tese, número do processo, órgão, cargo). Nunca há valores no e-mail.", "No fim de todo e-mail vai a frase \"Se não quiser mais receber nossos e-mails, responda com a palavra SAIR\". Quem responder SAIR vai para **Não enviar mais**."]
+        },
+        { id: "disparos-remetentes", titulo: "Disparos: remetentes, modelos e horário",
+          quando: "Para cadastrar os e-mails por onde os disparos saem (o Gmail de cada colaborador, o e-mail da Locaweb, da Hostinger...) e os textos de cada tese.",
+          passos: [
+            "**Remetentes** > [[+ Cadastrar e-mail de envio]]: escolha o provedor (Gmail, Locaweb, Hostinger ou Outro), o e-mail, a senha e os limites por **manhã** e por **tarde** (comece com 20 + 20). No **Gmail** a senha é a **senha de app** (16 letras), criada na conta Google com a verificação em duas etapas ligada. A senha fica no cofre do banco: ninguém vê depois.",
+            "Depois de salvar, clique em [[Testar]]: o SAGA manda um e-mail de teste para você. Deu errado? O motivo aparece em vermelho.",
+            "Cada colaborador cadastra o **próprio** e-mail (só ele usa). O administrador cadastra os e-mails do escritório e escolhe se **toda a equipe** pode usar.",
+            "O provedor recusou por excesso de envios? O remetente fica **pausado até o dia seguinte** (amarelo) e os e-mails saem pelos outros. Senha recusada: fica **vermelho**, o sino avisa o dono e o administrador; corrija a senha e [[Testar]]. [[Pausar até amanhã]] e [[Retomar]] também existem.",
+            "**Modelos** (só o administrador): [[+ Novo modelo]] com nome, tese, assunto e texto. Os botões de campo põem {nome}, {primeiro_nome}, {codigo}, {tese}, {numero_processo}, {orgao}, {cargo}, {remetente}... A prévia mostra o texto com um cliente inventado. As setinhas ▲▼ mudam a ordem; o modelo \"Todas as teses\" vale quando a tese não tem modelo próprio.",
+            "**Configurações** (só o administrador): ligar/desligar o robô, horário da manhã e da tarde, só dias úteis e quantas tentativas por e-mail; e a lista das últimas rodadas."
+          ],
+          img: "disparos_enviar",
+          marcas: ["Modelo (Automático = o da tese do processo).", "Remetente (Automático = rodízio).", "Prévia do e-mail com os dados do cliente.", "Pôr na fila."],
+          atencao: ["Outlook/Hotmail pessoal provavelmente não funciona (a Microsoft bloqueou o login por senha). Prefira Gmail, Locaweb ou Hostinger.", "O Gmail gratuito aguenta cerca de 500 e-mails por dia; muitos e-mails para listas frias levam a conta para o spam. Suba o limite aos poucos."]
         },
         { id: "buscas", titulo: "Pedidos de busca (Lemit, Data Solution)",
           quando: "Quem pede: precisa de telefone ou endereço do cliente/parente. Quem atende (Administrativo): faz a consulta.",

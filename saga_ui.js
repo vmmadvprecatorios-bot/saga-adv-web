@@ -622,6 +622,9 @@
     +'<div class="nav-item" data-tela="cartas" onclick="sagaIrPara(\'cartas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Cartas</div>'
+    +'<div class="nav-item" data-tela="disparos" onclick="sagaIrPara(\'disparos_email.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-6 18-3-8-9-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 13l9-10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Disparos de e-mail</div>'
     +'<div class="nav-item" data-tela="buscas" onclick="sagaIrPara(\'pedidos_busca.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M15.4 15.4L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10.5" cy="9" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7.2 14a3.6 3.6 0 0 1 6.6 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
     +'Pedidos de busca<span class="nav-badge-chat nav-badge-dia" id="navBadgeBuscas" style="display:none" title="Pedidos de busca a fazer"></span></div>'
@@ -1030,7 +1033,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -1362,6 +1365,7 @@
     if(n&&n.referencia_tabela==='armazenamento')return {titulo:'Armazenamento',tela:'configuracoes_padrao_metalico.html?aba=armazenamento'};
     if(n&&n.referencia_tabela==='saude')return {titulo:'Saúde do sistema',tela:'configuracoes_padrao_metalico.html?aba=saude'};
     if(n&&n.referencia_tabela==='pedidos_claude')return {titulo:'Pedidos do Claude',tela:'pedidos_claude.html'};
+    if(n&&n.referencia_tabela==='disparos')return {titulo:'Disparos de e-mail',tela:'disparos_email.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1391,6 +1395,7 @@
     {chave:'armazenamento',titulo:'Armazenamento',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=armazenamento',um:'aviso de espaço',varios:'avisos de espaço',cor:'#0ea5e9'},
     {chave:'saude',titulo:'Saúde do sistema',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=saude',um:'aviso de saúde do sistema',varios:'avisos de saúde do sistema',cor:'#e5484d'},
     {chave:'pedidos_claude',titulo:'Pedidos do Claude',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Claude',varios:'avisos de pedidos do Claude',cor:'#c9a84c'},
+    {chave:'disparos',titulo:'Disparos de e-mail',tipos:[],tela:'disparos_email.html',um:'aviso dos disparos de e-mail',varios:'avisos dos disparos de e-mail',cor:'#f97316'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
   // Pedidos de busca (bloco 140) chegam com o tipo 'outro' e a referência 'pedidos_busca': têm grupo próprio no sino
@@ -1415,6 +1420,8 @@
     if(n&&n.referencia_tabela==='saude'){for(var sd=0;sd<GRUPOS_NOTIF.length;sd++){if(GRUPOS_NOTIF[sd].chave==='saude')return GRUPOS_NOTIF[sd];}}
     // Pedido do Claude esperando há mais de 3 dias (bloco 186, T166): grupo próprio no sino
     if(n&&n.referencia_tabela==='pedidos_claude'){for(var pc=0;pc<GRUPOS_NOTIF.length;pc++){if(GRUPOS_NOTIF[pc].chave==='pedidos_claude')return GRUPOS_NOTIF[pc];}}
+    // Disparos de e-mail (bloco 206, T179): remetente com erro ou e-mails que não saíram
+    if(n&&n.referencia_tabela==='disparos'){for(var de=0;de<GRUPOS_NOTIF.length;de++){if(GRUPOS_NOTIF[de].chave==='disparos')return GRUPOS_NOTIF[de];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1537,6 +1544,7 @@
     if(n.referencia_tabela==='armazenamento'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=armazenamento');return;}
     if(n.referencia_tabela==='saude'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=saude');return;}
     if(n.referencia_tabela==='pedidos_claude'){global.sagaIrPara('pedidos_claude.html');return;}
+    if(n.referencia_tabela==='disparos'){global.sagaIrPara(n.referencia_id?'disparos_email.html?aba=contas':'disparos_email.html?aba=erros');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // parcela vencida (bloco 167): abre a ficha do cliente no bloco Pagamentos; sem achar a parcela, a aba Parcelas do Financeiro
     if(n.referencia_tabela==='pagamentos'){
@@ -1961,6 +1969,7 @@
   var PERMS_TELA={
     processos:['processos.visualizar'],processos_juridico:['processos.visualizar'],processos_captacao:['processos.visualizar'],
     cartas:['pessoas.visualizar'],
+    disparos:['disparos.ver','disparos.enviar'],
     teses:['teses.visualizar'],
     clientes_perfil:['pessoas.visualizar','processos.visualizar'],
     agenda:['compromissos.visualizar'],
