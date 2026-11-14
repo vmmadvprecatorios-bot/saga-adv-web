@@ -1311,6 +1311,8 @@ window.SagaPlanilha=(function(){
       '.sp-ficha-toggle{border:0;background:none;color:var(--gold-light);font:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:4px 0}.sp-ficha-toggle:active{transform:scale(.97)}'+
       '.sp-ficha-padrao{border:0;background:none;color:var(--muted);font:inherit;font-size:11px;text-decoration:underline;cursor:pointer}'+
       '.sp-ficha-todos{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px 14px}.sp-ficha-todos[hidden]{display:none}'+
+      '.sp-org-barra{grid-column:1/-1;display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--border-soft);border-radius:10px;background:color-mix(in srgb,var(--gold) 6%,transparent)}.sp-org-acoes{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}.sp-org-msg{flex-basis:100%;font-size:12px;color:var(--muted)}.sp-org-msg:empty{display:none}.sp-org-erro{grid-column:1/-1;color:var(--danger,#c0392b);font-size:12px}.sp-org-abre{display:inline-flex;align-items:center;gap:10px}'+
+      '.sp-ficha-organizando .campo-dado-label{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.sp-ficha-organizando .campo-dado:not(.sp-tudo-item){outline:1px dashed var(--border);outline-offset:4px;border-radius:6px}'+
       '.sp-ficha-editando .campo-dado-label{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.sp-ferr{margin-left:auto;display:inline-flex;gap:4px}.sp-ferr button{min-width:22px;height:22px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:11px;cursor:pointer;padding:0 6px}.sp-ferr button:hover:not(:disabled){color:var(--gold-light);border-color:var(--gold)}.sp-ferr button:disabled{opacity:.35;cursor:default}.sp-ferr .sp-fx.ligado{color:var(--gold-light);border-color:var(--gold)}'+
       '.sp-num{display:inline-block;min-width:22px;font-variant-numeric:tabular-nums;color:var(--gold-light);font-weight:700}.sp-ficha-dica{grid-column:1/-1;font-size:11px;color:var(--muted)}.sp-edit-wrap{display:flex;flex-direction:column;gap:6px}.sp-ficha-editando .sp-editor{width:100%}'+
       '.sp-fixar{margin-left:6px;width:17px;height:17px;line-height:15px;border-radius:50%;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:11px;cursor:pointer;opacity:0;transition:opacity .15s;padding:0;vertical-align:middle}'+
@@ -1974,14 +1976,29 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     }
     return {campo:campo,ler:ler,bruto:function(){return campo.value;},definir:function(b){campo.value=b;},mudou:function(novo){return !mesmoValor(novo,x.valor==null||x.valor===''?null:(x.tipo==='data'?String(x.valor).slice(0,10):Number(x.valor)));}};
   }
+  // 14/11 (Dr. Victor; bloco 201): arrumação dos campos da ficha. Padrão do escritório (só o administrador grava)
+  // + arrumação própria de cada pessoa por cima, uma para o Jurídico e outra para a Captação (ficha_campos_ler/salvar).
+  var _fichaCampos=null;
+  function lerFichaCampos(){
+    if(!_fichaCampos)_fichaCampos=Promise.resolve(_sb.rpc('ficha_campos_ler')).then(function(r){if(r.error)throw r.error;return r.data||{};})
+      .catch(function(e){_fichaCampos=null;return {erro:(e&&e.message)||'erro desconhecido'};});
+    return _fichaCampos;
+  }
   async function fichaDados(el,processoId,opts){
     opts=opts||{};estilos();
     try{
       if(!cols.length)await carregarColunas();
       var cat=await catalogosFicha();
-      var r=await _sb.rpc('lista_buscar',{p_tela:'todas',p_filtros:[{coluna:'processo.id',op:'igual',valor:processoId}],p_ordem:[],p_busca:null,p_limite:1,p_inicio:0});
-      if(r.error)throw r.error;
-      var row=(r.data&&r.data.linhas||[])[0];if(!row)return false;
+      var fc=await lerFichaCampos();
+      var row;
+      // reorganizar os campos não lê o processo de novo (a troca de lugar é na hora)
+      if(opts.reusar&&opts._row&&String(opts._row.id||opts._rowId)===String(processoId))row=opts._row;
+      else{
+        var r=await _sb.rpc('lista_buscar',{p_tela:'todas',p_filtros:[{coluna:'processo.id',op:'igual',valor:processoId}],p_ordem:[],p_busca:null,p_limite:1,p_inicio:0});
+        if(r.error)throw r.error;
+        row=(r.data&&r.data.linhas||[])[0];if(!row)return false;
+      }
+      opts.reusar=false;opts._row=row;opts._rowId=processoId;
       if(opts.ativo&&!opts.ativo())return false;
     }catch(e){console.warn('Dados do processo:',e);return false;}
     var sig=row.sigilo&&!opts.podeEditarDados;
@@ -2000,11 +2017,25 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     var PADRAO=capt?['processo.numero','processo.captador','processo.valor_precatorio','processo.status','processo.tese','#Competência','@captacao.data_retorno','@captacao.etiquetas']
       :['processo.tese','processo.responsavel','processo.valor_precatorio','processo.valor_causa','processo.numero','extra:Honorários','extra:Data de início'];
     var ehPadrao=function(c,k){return k.indexOf('extra:')===0?false:(c.campo_sistema===k||(!c.campo_sistema&&!c.chave&&k==='#'+c.nome)||(c.chave&&k==='@'+c.chave));};
-    var ordem=null;
-    try{var s1=JSON.parse(localStorage.getItem(chaveFixos)||'null');if(Array.isArray(s1))ordem=s1;else{var s0=JSON.parse(localStorage.getItem(chaveAntiga)||'null');if(Array.isArray(s0))ordem=s0;}}catch(e){}
-    if(!ordem){ordem=[];PADRAO.forEach(function(k){if(k.indexOf('extra:')===0){ordem.push(k);return;}var c=cs.find(function(x){return ehPadrao(x,k);});if(c)ordem.push(c.id);});}
+    var faseK=capt?'captacao':'juridico',fcOk=fc&&!fc.erro,organizando=!!opts.organizando&&!editando,ehAdmin=fcOk&&fc.admin===true;
+    var minha=fcOk&&fc.minha&&Array.isArray(fc.minha[faseK])?fc.minha[faseK]:null,doEscritorio=fcOk&&fc.escritorio&&Array.isArray(fc.escritorio[faseK])?fc.escritorio[faseK]:null;
+    var ordem=null,origem='sistema';
+    if(organizando&&Array.isArray(opts.ordemTemp)){ordem=opts.ordemTemp;origem=opts.origemTemp||'sua';}
+    else if(minha){ordem=minha.slice();origem='sua';}
+    else{
+      // arrumação antiga guardada só neste navegador (antes de 14/11): continua valendo até a pessoa salvar na conta
+      try{var s1=JSON.parse(localStorage.getItem(chaveFixos)||'null');if(Array.isArray(s1))ordem=s1;else{var s0=JSON.parse(localStorage.getItem(chaveAntiga)||'null');if(Array.isArray(s0))ordem=s0;}}catch(e){}
+      if(ordem)origem='sua';else if(doEscritorio){ordem=doEscritorio.slice();origem='escritorio';}
+    }
+    if(!ordem){ordem=[];PADRAO.forEach(function(k){if(k.indexOf('extra:')===0){ordem.push(k);return;}var c=cs.find(function(x){return ehPadrao(x,k);});if(c)ordem.push(c.id);});origem='sistema';}
     ordem=ordem.filter(function(id,i){return campos[id]&&ordem.indexOf(id)===i;});
-    var salvarOrdem=function(){try{localStorage.setItem(chaveFixos,JSON.stringify(ordem));}catch(e){}};
+    // grava a arrumação na conta (vale em qualquer computador); escritorio=true: o padrão da equipe (só o administrador)
+    var gravarArrumacao=async function(ids,escritorio){
+      var r2=await _sb.rpc('ficha_campos_salvar',{p_fase:faseK,p_ids:ids,p_escritorio:!!escritorio});if(r2.error)throw r2.error;
+      if(!escritorio){try{localStorage.removeItem(chaveFixos);localStorage.removeItem(chaveAntiga);}catch(e){}}
+      _fichaCampos=null;
+    };
+    var salvarOrdem=function(){gravarArrumacao(ordem.slice(),false).catch(function(e){aviso('Não foi possível guardar a arrumação dos campos: '+h(e.message||'erro desconhecido'),true);});};
     var no_resumo=function(id){return ordem.indexOf(id)!==-1;};
     var rotulo=function(id){return campos[id].c?nomeCol(campos[id].c,row.fase):campos[id].x.nome;};
     // texto/HTML de leitura
@@ -2019,7 +2050,11 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       var f=campos[id],c=f.c,x=f.x,editavelAqui=editando&&(c?podeEd(c):x.editavel)&&(!tudo||!no_resumo(id));
       var valor=c?valorHtml(c):(x.texto?h(x.texto):'<span class="sp-vazio">—</span>');
       var ferr='';
-      if(editando){
+      if(organizando){
+        if(!tudo){var io=ordem.indexOf(id);ferr='<span class="sp-ferr"><button type="button" data-sp-org-mover="-1" data-id="'+h(id)+'" title="Mover para antes" aria-label="Mover '+h(rotulo(id))+' para antes"'+(io===0?' disabled':'')+'>◀</button><button type="button" data-sp-org-mover="1" data-id="'+h(id)+'" title="Mover para depois" aria-label="Mover '+h(rotulo(id))+' para depois"'+(io===ordem.length-1?' disabled':'')+'>▶</button><button type="button" data-sp-org-fixar="'+h(id)+'" title="Recolher: vai para Todos os dados (o dado continua lá)" aria-label="Recolher '+h(rotulo(id))+'">▾ Recolher</button></span>';}
+        else ferr='<span class="sp-ferr"><button type="button" data-sp-org-fixar="'+h(id)+'" class="sp-fx'+(no_resumo(id)?' ligado':'')+'" title="'+(no_resumo(id)?'Já está à vista; clique para recolher':'Trazer para cima, à vista')+'">'+(no_resumo(id)?'À vista ×':'▴ Pôr à vista')+'</button></span>';
+      }
+      else if(editando){
         if(!tudo){var i=ordem.indexOf(id);ferr='<span class="sp-ferr"><button type="button" data-sp-mover="-1" data-id="'+h(id)+'" title="Mover para antes" aria-label="Mover para antes"'+(i===0?' disabled':'')+'>◀</button><button type="button" data-sp-mover="1" data-id="'+h(id)+'" title="Mover para depois" aria-label="Mover para depois"'+(i===ordem.length-1?' disabled':'')+'>▶</button><button type="button" data-sp-fixar="'+h(id)+'" title="Tirar do resumo (continua em Todos os dados)" aria-label="Tirar do resumo">×</button></span>';}
         else ferr='<span class="sp-ferr"><button type="button" data-sp-fixar="'+h(id)+'" class="sp-fx'+(no_resumo(id)?' ligado':'')+'" title="'+(no_resumo(id)?'Tirar do resumo':'Mostrar no resumo')+'">'+(no_resumo(id)?'No resumo ×':'+ Resumo')+'</button></span>';
       }
@@ -2033,22 +2068,60 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       }
       return '<div class="campo-dado'+(tudo?' sp-tudo-item':'')+'" data-sp-campo="'+h(id)+'"><div class="campo-dado-label">'+(tudo?'<span class="sp-num">'+num+'</span>':'')+h(rotulo(id))+ferr+'</div><div class="campo-dado-valor" data-sp-ficha="'+h(id)+'">'+(editavelAqui?'':valor+copiar)+'</div></div>';
     };
-    var resumoHtml=ordem.length?ordem.map(function(id){return cartao(id,false);}).join(''):'<div class="sp-vazio" style="grid-column:1/-1">Nenhum campo no resumo.'+(editando?' Em "Todos os dados", use + Resumo.':'')+'</div>';
+    var resumoHtml=ordem.length?ordem.map(function(id){return cartao(id,false);}).join(''):'<div class="sp-vazio" style="grid-column:1/-1">Nenhum campo à vista.'+(editando?' Em "Todos os dados", use + Resumo.':organizando?' Em "Todos os dados", use ▴ Pôr à vista.':'')+'</div>';
     var aberto=false;try{aberto=localStorage.getItem(chaveAberto)==='1';}catch(e){}
+    if(organizando)aberto=true;
+    var nomeOrigem={sua:'a sua',escritorio:'o padrão do escritório',sistema:'o padrão do sistema'}[origem]||'';
+    var barraOrg=organizando?
+      '<div class="sp-org-barra"><b>Organizar campos</b><span class="sp-ajuda">◀ ▶ mudam a ordem; ▾ Recolher manda o campo para "Todos os dados"; ▴ Pôr à vista traz para cima. Nenhum dado é apagado.</span>'+
+        '<span class="sp-org-acoes"><button type="button" class="btn-secondary sp-btn" data-sp-org="cancelar">Cancelar</button>'+
+        (minha||origem==='sua'?'<button type="button" class="btn-secondary sp-btn" data-sp-org="padrao" title="Apaga a sua arrumação e volta ao padrão do escritório">Voltar ao padrão do escritório</button>':'')+
+        (ehAdmin?'<button type="button" class="btn-secondary sp-btn" data-sp-org="escritorio" title="Toda a equipe passa a ver assim (quem tem a própria arrumação continua com a sua)">Salvar como padrão do escritório</button>':'')+
+        '<button type="button" class="btn-primary sp-btn" data-sp-org="minha">Salvar para mim</button></span><div class="sp-org-msg" role="status"></div></div>':'';
     var tudoIds=cs.map(function(c){return c.id;}).concat(extras.map(function(x){return x.id;}));
-    el.classList.add('sp-ficha');el.classList.toggle('sp-ficha-editando',editando);
-    el.innerHTML=resumoHtml+
+    // posição de cada campo antes de redesenhar: depois o campo DESLIZA do lugar antigo para o novo
+    var antes=opts._rects||null;opts._rects=null;
+    el.classList.add('sp-ficha');el.classList.toggle('sp-ficha-editando',editando);el.classList.toggle('sp-ficha-organizando',organizando);
+    el.innerHTML=barraOrg+resumoHtml+
       '<div class="sp-ficha-barra"><button type="button" class="sp-ficha-toggle" aria-expanded="'+aberto+'">'+(aberto?'▾':'▸')+' Todos os dados do processo ('+tudoIds.length+')</button>'+
-      (editando?'<button type="button" class="sp-ficha-padrao" title="Voltar aos campos de antes">Voltar ao padrão</button>':'')+'</div>'+
+      (editando?'<button type="button" class="sp-ficha-padrao" title="Voltar aos campos de antes">Voltar ao padrão</button>':
+        (!organizando&&opts.usuarioId?'<span class="sp-org-abre"><span class="sp-ajuda">Arrumação: '+h(nomeOrigem)+'</span><button type="button" class="sp-ficha-padrao" data-sp-org="abrir" title="Escolher quais campos ficam à vista e em que ordem">Organizar campos</button></span>':''))+'</div>'+
+      (fc&&fc.erro?'<div class="sp-org-erro">Não foi possível ler a arrumação dos campos ('+h(fc.erro)+'); mostrando o padrão. A ficha tenta de novo ao abrir outra vez.</div>':'')+
       '<div class="sp-ficha-todos"'+(aberto?'':' hidden')+'>'+(editando?'<div class="sp-ficha-dica">Os campos que já estão no resumo são editados lá em cima. Use <b>+ Resumo</b> para trazer um campo para o resumo.</div>':'')+tudoIds.map(function(id,i){return cartao(id,true,i+1);}).join('')+'</div>';
-    el.querySelector('.sp-ficha-toggle').onclick=function(){var box=el.querySelector('.sp-ficha-todos'),abrir=box.hidden;box.hidden=!abrir;this.setAttribute('aria-expanded',abrir);this.textContent=(abrir?'▾':'▸')+this.textContent.slice(1);try{localStorage.setItem(chaveAberto,abrir?'1':'0');}catch(e){}
-      if(abrir&&!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)box.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:240,easing:'cubic-bezier(.2,1.2,.4,1)'});};
+    var reduz=(window.sagaMq?sagaMq():{matches:false}).matches;
+    if(antes&&!reduz){
+      el.querySelectorAll('.campo-dado[data-sp-campo]:not(.sp-tudo-item)').forEach(function(n){
+        var a=antes[n.dataset.spCampo],b=n.getBoundingClientRect();if(!n.animate)return;
+        if(a)n.animate([{transform:'translate('+(a.left-b.left)+'px,'+(a.top-b.top)+'px)'},{transform:'none'}],{duration:320,easing:'cubic-bezier(.22,.78,.25,1)'});
+        else n.animate([{opacity:0,transform:'translateY(6px) scale(.98)'},{opacity:1,transform:'none'}],{duration:280,easing:'cubic-bezier(.22,.78,.25,1)'});
+      });
+    }
+    el.querySelector('.sp-ficha-toggle').onclick=function(){var box=el.querySelector('.sp-ficha-todos'),abrir=box.hidden;this.setAttribute('aria-expanded',abrir);this.textContent=(abrir?'▾':'▸')+this.textContent.slice(1);try{localStorage.setItem(chaveAberto,abrir?'1':'0');}catch(e){}
+      if(window.sagaRecolher)window.sagaRecolher(box,!abrir);else box.hidden=!abrir;};
+    // ---------- Organizar campos (fora do modo de edição) ----------
+    var posicoes=function(){var o={};el.querySelectorAll('.campo-dado[data-sp-campo]:not(.sp-tudo-item)').forEach(function(n){var r0=n.getBoundingClientRect();o[n.dataset.spCampo]={left:r0.left,top:r0.top};});return o;};
+    var reorganizar=function(origemNova){opts._rects=posicoes();opts.reusar=true;opts.organizando=true;opts.ordemTemp=ordem.slice();if(origemNova)opts.origemTemp=origemNova;fichaDados(el,processoId,opts);};
+    var sairOrganizar=function(){opts._rects=posicoes();opts.reusar=true;opts.organizando=false;opts.ordemTemp=null;opts.origemTemp=null;fichaDados(el,processoId,opts);};
+    var bAbre=el.querySelector('[data-sp-org="abrir"]');if(bAbre)bAbre.onclick=function(){opts.origemTemp=origem;opts.ordemTemp=ordem.slice();opts.organizando=true;opts.reusar=true;fichaDados(el,processoId,opts);};
+    if(organizando){
+      el.querySelectorAll('[data-sp-org-fixar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.spOrgFixar,i=ordem.indexOf(id);if(i>=0)ordem.splice(i,1);else ordem.push(id);reorganizar();};});
+      el.querySelectorAll('[data-sp-org-mover]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.id,i=ordem.indexOf(id),j=i+Number(b.dataset.spOrgMover);if(i<0||j<0||j>=ordem.length)return;ordem.splice(j,0,ordem.splice(i,1)[0]);reorganizar();};});
+      var msg=function(t,erro){var m=el.querySelector('.sp-org-msg');if(m){m.className='sp-org-msg'+(erro?' sp-org-erro':'');m.textContent=t;}};
+      var acao=async function(b,fn,ok){var bs=el.querySelectorAll('[data-sp-org]');bs.forEach(function(x){x.disabled=true;});msg('Salvando...');
+        try{await fn();aviso(ok);sairOrganizar();}catch(e){msg('Não foi possível salvar: '+(e.message||'erro desconhecido')+'. Nada mudou; tente de novo.',true);bs.forEach(function(x){x.disabled=false;});}};
+      el.querySelector('[data-sp-org="cancelar"]').onclick=sairOrganizar;
+      el.querySelector('[data-sp-org="minha"]').onclick=function(){acao(this,function(){return gravarArrumacao(ordem.slice(),false);},'Arrumação dos campos salva para você ('+(capt?'Captação':'Jurídico')+').');};
+      var bEsc=el.querySelector('[data-sp-org="escritorio"]');if(bEsc)bEsc.onclick=async function(){
+        var ok=window.sagaConfirmar?await sagaConfirmar('Padrão do escritório','Toda a equipe passa a ver os campos da ficha do '+(capt?'Captação':'Jurídico')+' nesta ordem. Quem já tem a própria arrumação continua com a sua. Salvar?','Salvar'):true;if(!ok)return;
+        acao(this,async function(){await gravarArrumacao(ordem.slice(),true);if(minha||origem==='sua')await gravarArrumacao(null,false);},'Padrão do escritório salvo ('+(capt?'Captação':'Jurídico')+').');};
+      var bPad=el.querySelector('[data-sp-org="padrao"]');if(bPad)bPad.onclick=function(){acao(this,function(){return gravarArrumacao(null,false);},'Você voltou ao padrão do escritório.');};
+    }
     // as caixas de edição precisam sobreviver a recarregar o desenho: guardamos o que foi digitado antes de redesenhar
     var controles={};
     var redesenhar=function(){var pend=lerPendentes();opts.rascunho=pend;fichaDados(el,processoId,opts);};
     var lerPendentes=function(){var o={};Object.keys(controles).forEach(function(id){try{o[id]=controles[id].bruto();}catch(e){}});return o;};
     if(editando){
-      var pad=el.querySelector('.sp-ficha-padrao');if(pad)pad.onclick=function(){ordem=null;try{localStorage.removeItem(chaveFixos);localStorage.removeItem(chaveAntiga);}catch(e){}opts.rascunho=lerPendentes();fichaDados(el,processoId,opts);};
+      var pad=el.querySelector('.sp-ficha-padrao');if(pad)pad.onclick=async function(){ordem=null;try{localStorage.removeItem(chaveFixos);localStorage.removeItem(chaveAntiga);}catch(e){}try{await gravarArrumacao(null,false);}catch(e){aviso('Não foi possível voltar ao padrão: '+h(e.message||'erro desconhecido'),true);}opts.rascunho=lerPendentes();opts.reusar=true;fichaDados(el,processoId,opts);};
       el.querySelectorAll('[data-sp-fixar]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.spFixar,i=ordem.indexOf(id);if(i>=0)ordem.splice(i,1);else ordem.push(id);salvarOrdem();redesenhar();};});
       el.querySelectorAll('[data-sp-mover]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var id=b.dataset.id,i=ordem.indexOf(id),j=i+Number(b.dataset.spMover);if(i<0||j<0||j>=ordem.length)return;ordem.splice(j,0,ordem.splice(i,1)[0]);salvarOrdem();redesenhar();};});
       var opcoesFicha=function(c){

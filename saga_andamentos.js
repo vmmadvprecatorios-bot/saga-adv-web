@@ -10,7 +10,7 @@
 (function(global){
   'use strict';
   var CURVA='cubic-bezier(.22,.78,.25,1)';
-  var VISIVEIS=6;
+  var VISIVEIS=2; // 14/11 (Dr. Victor): só os 2 mais recentes à vista; o resto recolhido em "Ver todos", que abre e fecha com o movimento (sagaRecolher)
   var A={sb:null,dados:{},carregando:{},aberto:{}};
   var CAT={
     pagamento:{n:'Pagamento',c:'var(--success)'},requisicao:{n:'RPV / Precatório',c:'var(--success)'},

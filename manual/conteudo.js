@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.8",
+  versao: "2.9",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.9", data: "14/11/2026", mudou: "Ficha: \"Organizar campos\" em Dados do Processo (escolher quais campos ficam à vista e em que ordem; cada um salva a sua, o administrador salva o padrão do escritório; uma para o Jurídico e outra para a Captação); Andamentos no tribunal (CNJ) mostram só os 2 mais recentes, o resto em Ver todos." },
     { versao: "2.8", data: "14/11/2026", mudou: "Biblioteca: Timbrados e modelos. Os papéis timbrados da Victor Morais Advocacia, da ANCREF e da Sarmento ficam guardados no SAGA, e os modelos de petição geram o Word e o PDF já no papel timbrado, no Padrão VMM, aqui no próprio computador." },
     { versao: "2.7", data: "14/11/2026", mudou: "Minhas Tarefas e Intimações: o número do processo fica sempre à vista no cartão (não só ao passar o mouse), com pontos e traço, e o Ctrl+F do navegador acha o processo pelo número; a etiqueta continua sempre à vista." },
     { versao: "2.6", data: "14/11/2026", mudou: "Jurídico: botão \"Sem número CNJ (N)\" (processos ativos sem número válido, para completar um por vez) e o selo \"número inválido\" na célula; Captação: lotes semanais com meta (\"Meu lote\" com a meta do dia para cada localizador; para o administrador, o quadro Lotes da Captação com configurar, entregar e desfazer)." },
@@ -377,9 +378,10 @@ window.SAGA_MANUAL = {
           quando: "Para conferir valores, número, recursos e o que andou no tribunal.",
           passos: [
             "**Dados do Processo**: tipo de ação, responsável, valores (bruto, causa, honorários) e número. O lápis edita.",
+            "[[Organizar campos]] (embaixo dos dados): escolha o que fica à vista. **◀ ▶** mudam a ordem, **▾ Recolher** manda o campo para **Todos os dados do processo** e **▴ Pôr à vista** traz para cima. [[Salvar para mim]] vale só para você, em qualquer computador; [[Voltar ao padrão do escritório]] desfaz a sua. O administrador também tem [[Salvar como padrão do escritório]] (toda a equipe vê assim, menos quem tem a própria arrumação). Jurídico e Captação têm cada um a sua. Nenhum dado é apagado.",
             "**Recursos deste processo**: agravos, apelações e embargos ficam aqui, com número, tribunal, relator e situação. Use [[+ Recurso]] para cadastrar. Intimação com o número do recurso cai neste processo.",
             "**Andamentos no tribunal (CNJ)**: os movimentos trazidos da base pública do CNJ. Os importantes (pagamento, RPV/precatório, trânsito em julgado, sentença, decisão, audiência) ficam destacados e avisam o responsável no sino.",
-            "[[Atualizar agora]] consulta o CNJ na hora (leva cerca de 1 minuto). [[Ver todos]] mostra o histórico inteiro."
+            "[[Atualizar agora]] consulta o CNJ na hora (leva cerca de 1 minuto). Ficam à vista só os **2 mais recentes**; [[Ver todos]] abre o histórico inteiro e **Mostrar menos** recolhe de novo."
           ],
           img: "ficha_andamentos",
           marcas: ["Andamentos no tribunal (CNJ).", "Atualizar agora.", "Andamento importante (destacado)."],
