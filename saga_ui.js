@@ -251,8 +251,11 @@
       // recolhido no computador = faixa de 64 px só com os ícones; passando o mouse abre por cima (sem empurrar a tela)
       '@media(min-width:761px){#sidebarSaga{transition:width .3s cubic-bezier(.22,.78,.25,1),min-width .3s cubic-bezier(.22,.78,.25,1),margin-right .3s cubic-bezier(.22,.78,.25,1),box-shadow .3s ease !important;}'+
         '#sidebarSaga.collapsed{width:64px !important;min-width:64px !important;flex-basis:64px !important;overflow-x:hidden !important;z-index:150 !important;}'+
-        '#sidebarSaga.collapsed .nav-grupo{display:block !important;}'+
-        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section{height:1px !important;padding:0 !important;margin:12px 16px !important;font-size:0 !important;overflow:hidden !important;background:var(--border-soft) !important;}'+
+        '#sidebarSaga.collapsed .nav-grupo:not([hidden]){display:block !important;}'+
+        // 14/11 (Dr. Victor): no menu recolhido cada grupo vira uma divisória fina com a setinha, clicável (abre e fecha o grupo; o nome aparece ao parar o mouse)
+        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section{height:22px !important;min-height:22px !important;padding:0 !important;margin:6px 12px !important;font-size:0 !important;letter-spacing:0 !important;overflow:hidden !important;background:transparent !important;border-top:1px solid var(--border-soft) !important;justify-content:center !important;border-radius:6px;}'+
+        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section[data-grupo]::after{margin:0 !important;width:6px !important;height:6px !important;}'+
+        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section[data-grupo]:hover{background:color-mix(in srgb,var(--gold) 12%,transparent) !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat{opacity:0 !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item{color:transparent !important;font-size:0 !important;}'+
         '#sidebarSaga.collapsed.sg-aberto{width:232px !important;min-width:232px !important;margin-right:-168px !important;box-shadow:14px 0 34px rgba(0,0,0,.28) !important;}}'+
@@ -266,9 +269,7 @@
       '#sidebarSaga .nav-section[data-grupo].fechado::after{transform:rotate(-45deg);}'+
       '#sidebarSaga .nav-section[data-grupo]:hover{opacity:1 !important;filter:brightness(1.25);}'+
       '#sidebarSaga .nav-section[data-grupo]:focus-visible{outline:2px solid var(--gold);outline-offset:-2px;}'+
-      // menu recolhido no computador: grupos sempre abertos, sem setinha (no celular o recolhido do computador não vale)
-      '@media(min-width:761px){#sidebarSaga.collapsed .nav-section[data-grupo]::after{display:none !important;}'+
-      '#sidebarSaga.collapsed .nav-section[data-grupo]{cursor:default !important;pointer-events:none !important;}}'+
+      // menu recolhido no computador (14/11, Dr. Victor): os grupos também abrem e fecham (a mesma escolha do menu aberto, saga-menu-grupos)
       '#sidebarSaga .nav-section,#sidebarSaga .nav-secao{font-size:10px !important;letter-spacing:1.6px !important;color:#9aa6b8 !important;text-transform:uppercase !important;font-weight:600 !important;padding:17px 22px 7px !important;opacity:1 !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-section,[data-theme="light"] #sidebarSaga .nav-secao{color:#5b6880 !important;}'+
       '#sidebarSaga .nav-item{white-space:nowrap !important;}'+ // nome sempre numa linha só (12/11, Dr. Victor)
@@ -562,9 +563,9 @@
       var id=sec.getAttribute('data-grupo'),g=sb.querySelector('.nav-grupo[data-grupo="'+id+'"]');if(!g)return;
       var marcar=function(fechado){sec.classList.toggle('fechado',fechado);sec.setAttribute('aria-expanded',fechado?'false':'true');};
       if(fech[id]){g.hidden=true;marcar(true);}
+      if(!sec.getAttribute('title'))sec.setAttribute('title',(sec.textContent||'').trim()+': clique para abrir ou fechar o grupo');
       if(sec.dataset.ligado)return;sec.dataset.ligado='1';
       var alternar=function(){
-        if(sb.classList.contains('collapsed')&&window.innerWidth>760)return; // menu recolhido no computador: grupos sempre abertos
         var fechar=!g.hidden;marcar(fechar);
         if(global.sagaRecolher)global.sagaRecolher(g,fechar);else g.hidden=fechar;
         var f=gruposFechados();if(fechar)f[id]=true;else delete f[id];try{localStorage.setItem('saga-menu-grupos',JSON.stringify(f));}catch(e){}

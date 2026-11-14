@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.1",
+  versao: "3.2",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.2", data: "14/11/2026", mudou: "Menu da esquerda: os grupos (Processos, Meu dia, Comunicação, Gestão, Administração) também abrem e fecham com o menu recolhido (a linha fina com a setinha) e com o menu aberto por cima pelo mouse." },
     { versao: "3.1", data: "14/11/2026", mudou: "SAGA no Claude: guardar na pasta do cliente o documento que você passa ao Claude na conversa (o Claude manda um link do SAGA; você toca, escolhe o arquivo no celular ou no computador e ele cai direto na ficha, na pasta certa)." },
     { versao: "3.0", data: "14/11/2026", mudou: "Tela nova Disparos de e-mail (menu Processos): escolher clientes, pôr na fila e o SAGA manda sozinho o e-mail com o modelo da tese, pelos remetentes cadastrados (Gmail, Locaweb, Hostinger...), com limite por manhã e por tarde; erros com o motivo, \"Não enviar mais\" e o bloco E-mails enviados na ficha do cliente." },
     { versao: "2.9", data: "14/11/2026", mudou: "Ficha: \"Organizar campos\" em Dados do Processo (escolher quais campos ficam à vista e em que ordem; cada um salva a sua, o administrador salva o padrão do escritório; uma para o Jurídico e outra para a Captação); Andamentos no tribunal (CNJ) mostram só os 2 mais recentes, o resto em Ver todos." },
@@ -104,7 +105,7 @@ window.SAGA_MANUAL = {
         { id: "tela", titulo: "Conhecer a tela",
           quando: "Para se localizar em qualquer tela do SAGA: a barra do alto e o menu da esquerda são sempre os mesmos.",
           passos: [
-            "No **menu da esquerda** ficam as telas, em grupos que abrem e fecham: **Processos** (Jurídico, Captação, Cartas, Pedidos de busca, Clientes por perfil, Teses), **Meu dia** (Ponto, Tarefas, Agenda, Intimações, Notas), **Comunicação** (Chat, Sugestões, Manual, Treinamentos), **Gestão** (Dashboard, Financeiro, Marketing, Colaboradores, Biblioteca) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver.",
+            "No **menu da esquerda** ficam as telas, em grupos que abrem e fecham: **Processos** (Jurídico, Captação, Cartas, Pedidos de busca, Clientes por perfil, Teses), **Meu dia** (Ponto, Tarefas, Agenda, Intimações, Notas), **Comunicação** (Chat, Sugestões, Manual, Treinamentos), **Gestão** (Dashboard, Financeiro, Marketing, Colaboradores, Biblioteca) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver. Clique no nome do grupo para abrir ou fechar; com o menu **recolhido** (só os ícones), cada grupo vira uma linha fina com a setinha, que também abre e fecha o grupo. A escolha fica guardada neste navegador.",
             "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **olho** (modo privacidade), atualizar, o **tema** (claro ou escuro) e a sua **foto**.",
             "Os números ao lado dos itens do menu (Agenda, Minhas Tarefas, Chat) mostram o que há para hoje ou o que não foi lido.",
             "O menu da esquerda **fica no lugar** quando você troca de tela (não volta para o topo). Com o mouse em cima dele, a roda do mouse rola só o menu, sem mexer na página."
