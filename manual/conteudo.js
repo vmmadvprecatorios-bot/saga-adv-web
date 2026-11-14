@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.6",
+  versao: "2.7",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.7", data: "14/11/2026", mudou: "Minhas Tarefas e Intimações: o número do processo fica sempre à vista no cartão (não só ao passar o mouse), com pontos e traço, e o Ctrl+F do navegador acha o processo pelo número; a etiqueta continua sempre à vista." },
     { versao: "2.6", data: "14/11/2026", mudou: "Jurídico: botão \"Sem número CNJ (N)\" (processos ativos sem número válido, para completar um por vez) e o selo \"número inválido\" na célula; Captação: lotes semanais com meta (\"Meu lote\" com a meta do dia para cada localizador; para o administrador, o quadro Lotes da Captação com configurar, entregar e desfazer)." },
     { versao: "2.5", data: "14/11/2026", mudou: "Minhas Tarefas: o administrador muda a ordem das etiquetas pelas setinhas do menu; os botões Dar impulso processual e Pedidos do Claude ficam só no menu de etiquetas; a situação da tarefa volta a aparecer no cartão. Notas: as etiquetas ficam sempre à vista, também na lista do celular." },
     { versao: "2.4", data: "14/11/2026", mudou: "Minhas Tarefas mais organizada: números, gráficos e calendário recolhidos em \"Mostrar resumo\"; uma barra de filtros (Busca, Etiqueta, Responsável, Prazo e \"Mais filtros\"); menu de etiquetas sempre à vista, com a quantidade de tarefas abertas, os atalhos Dar impulso processual e Pedidos do Claude e, para o administrador, criar, renomear, mudar a cor e tirar etiqueta da lista; cartão mais limpo (o resto aparece ao passar o mouse)." },
@@ -439,7 +440,7 @@ window.SAGA_MANUAL = {
           quando: "Para achar rápido as intimações de cada tribunal e saber de qual estado elas vêm.",
           passos: [
             "Cada **tribunal** tem a sua coluna. A Justiça Federal do Rio de Janeiro e a do Espírito Santo ficam na coluna do **TRF-2**; a do Rio Grande do Sul, a do Paraná e a de Santa Catarina, no **TRF-4**; e assim por diante.",
-            "No cartão, a **etiqueta do estado** (RJ, ES, RS, AL...) mostra de qual Justiça Federal a intimação veio.",
+            "No cartão, a **etiqueta do estado** (RJ, ES, RS, AL...) mostra de qual Justiça Federal a intimação veio. O **número do processo** (com pontos e traço) e a **etiqueta** ficam sempre à vista: use o Ctrl+F do navegador para achar um processo pelo número.",
             "Tribunal sem nenhuma intimação aberta fica **oculto** e volta sozinho quando chega intimação nova. A linha em cima do quadro diz quais estão ocultos: clique no nome para mostrar ou em [[Mostrar todos]].",
             "Para ver as já resolvidas, use **Concluídas** ou **Ver concluídas** no fim de cada coluna."
           ],
@@ -492,7 +493,7 @@ window.SAGA_MANUAL = {
             "Abra **Minhas Tarefas**. A tela abre enxuta: em cima, [[Kanban]] / [[Lista]], [[Mostrar resumo]] e [[Nova Tarefa]]. O número vermelho ao lado de Mostrar resumo é quantas tarefas estão **atrasadas**.",
             "[[Mostrar resumo]] abre os números (total, novas, em andamento, atrasadas e concluídas hoje; clique para filtrar), os gráficos e o calendário dos prazos. [[Esconder resumo]] recolhe. O SAGA lembra a sua escolha neste computador.",
             "Logo abaixo fica a **barra de filtros**: busca, [[Etiqueta]], responsável e prazo. Os outros (tipo, situação, prioridade, tribunal e fase) ficam em [[Mais filtros]]; o número no botão mostra quantos estão ligados lá dentro. Cada filtro ligado aparece como uma etiqueta clicável embaixo (o × tira) e [[Limpar filtros]] tira todos.",
-            "No cartão aparece só o essencial: etiqueta, título, situação (Nova, Em andamento...), cliente, subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passe o mouse para ver o resto: tipo, quem passou a tarefa, compartilhamento, número do processo com o botão do tribunal e os atalhos [[Ficha]] e [[Intimações]]. No celular, toque no cartão para abrir a tarefa inteira.",
+            "No cartão aparece só o essencial: etiqueta, título, situação (Nova, Em andamento...), cliente, **número do processo** (sempre à vista, com o botão do tribunal; o Ctrl+F do navegador acha o processo pelo número), subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passe o mouse para ver o resto: tipo, quem passou a tarefa, compartilhamento e os atalhos [[Ficha]] e [[Intimações]]. No celular, toque no cartão para abrir a tarefa inteira.",
             "As tarefas de **dar impulso processual** (que o SAGA cria nos processos parados) e os **Pedidos do Claude** ficam como atalhos no menu [[Etiqueta]], com o número delas. No filtro **Tipo** (em Mais filtros) também há **Sem as de impulso**.",
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611141311"></script>
+<script src="saga_guard.js?v=202611141315"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -879,10 +879,12 @@
   [data-theme="light"] .select-custom-tf-opcao{ color:var(--text); }
 
   .numero-processo-card{
-    display:flex; align-items:center; gap:5px; min-width:0; margin:-2px 0 6px;
-    font-size:9.5px; color:var(--gold-light); line-height:1.35;
+    display:flex; flex-wrap:wrap; align-items:center; gap:3px 5px; min-width:0; margin:-2px 0 6px;
+    font-size:10.5px; color:var(--muted); line-height:1.35; font-variant-numeric:tabular-nums;
   }
-  .numero-processo-card span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .numero-processo-card > svg{ flex:0 0 auto; opacity:.8; }
+  /* 14/11: número inteiro à vista (nada de reticências), selecionável e achado pelo Ctrl+F */
+  .numero-processo-card span.num-cnj{ white-space:nowrap; letter-spacing:.1px; user-select:text; -webkit-user-select:text; cursor:text; }
 
   .toggle-tipo-tarefa{ display:flex; gap:8px; background:color-mix(in srgb,var(--text) 4%,transparent); border-radius:11px; padding:4px; }
   .opcao-tipo-tarefa{ flex:1; text-align:center; padding:9px; border-radius:8px; font-size:11.5px; font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.2s ease; }
@@ -1821,7 +1823,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   .extras-resp-chips:not(:empty){ margin-bottom:8px; }
   .linha-etiqueta-card{ display:flex; flex-wrap:wrap; gap:5px; margin:-2px 0 8px; min-width:0; }
   .linha-etiqueta-card .se-tag{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .card-tarefa .numero-processo-card{ margin-bottom:5px; }
+  .card-tarefa .numero-processo-card{ margin:-6px 0 9px; }
   .card-tarefa .meta-processo-card{ margin-bottom:10px; line-height:1.35; }
   .card-tarefa .rodape-card-tarefa{ align-items:center; gap:10px; margin-top:2px; }
   .prazo-rodape-card{ flex:1 1 auto; min-width:0; display:flex; justify-content:flex-end; }
@@ -1865,7 +1867,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611141311">
+<link rel="stylesheet" href="saga_tema.css?v=202611141315">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2421,12 +2423,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611141311"></script>
-<script src="saga_etiquetas.js?v=202611141311"></script>
-<script src="saga_mencoes.js?v=202611141311"></script>
-<script src="saga_prazos.js?v=202611141311"></script>
-<script src="saga_texto.js?v=202611141311"></script>
-<script src="saga_tribunais.js?v=202611141311"></script>
+<script src="saga_ui.js?v=202611141315"></script>
+<script src="saga_etiquetas.js?v=202611141315"></script>
+<script src="saga_mencoes.js?v=202611141315"></script>
+<script src="saga_prazos.js?v=202611141315"></script>
+<script src="saga_texto.js?v=202611141315"></script>
+<script src="saga_tribunais.js?v=202611141315"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -4054,7 +4056,7 @@ function criarCardTarefaEl(tarefa){
     numeroProcessoHtml =
       '<div class="numero-processo-card" title="Processo: ' + escaparHtml(tarefa.processoVinculado.numero) + '">' +
         '<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/></svg>' +
-        '<span>' + escaparHtml(tarefa.processoVinculado.numero) + '</span>' +
+        '<span class="num-cnj">' + escaparHtml(tarefa.processoVinculado.numero) + '</span>' +
         (window.SagaTribunais ? SagaTribunais.selo(tarefa.processoVinculado.numero) + SagaTribunais.icone(tarefa.processoVinculado.numero) : '') +
       '</div>';
     metaProcessoHtml = '<div class="meta-processo-card icone-processo-tooltip">' +
@@ -4071,12 +4073,14 @@ function criarCardTarefaEl(tarefa){
   var badgePrazoHtml = tarefa.dataPrazo ? htmlPrazoTarefa(tarefa, situacao) : '';
 
   // T183 (14/11, Dr. Victor: "muita informação"): à vista só o essencial (etiqueta, título, cliente, subtarefas,
-  // responsável e prazo; prioridade só quando é alta ou urgente); o resto (status, quem passou, compartilhada,
-  // número do processo com o botão do tribunal e os atalhos Ficha/Intimações) aparece ao passar o mouse e na janela.
+  // responsável e prazo; desde 14/11 também o NÚMERO DO PROCESSO; prioridade só quando é alta ou urgente); o resto (status, quem passou, compartilhada,
+  // atalhos Ficha/Intimações) aparece ao passar o mouse e na janela.
   var prioridadeHtml = (tarefa.prioridade === 'alta' || tarefa.prioridade === 'urgente') ? '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' : '';
   var seloPedidoHtml = tarefaPedidoClaude(tarefa) ? '<div class="selo-pedido-claude" title="O Claude pediu isto para você trazer; quando você trouxer na conversa, ele mesmo dá como concluído">Pedido do Claude</div>' : '';
   var compartilhadaHtml = !podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '');
-  var extraHtml = badgeTipoHtml + htmlDeParaTarefa(tarefa) + compartilhadaHtml + numeroProcessoHtml + htmlAtalhosLigacao(tarefa.processoVinculado);
+  // 14/11 (Dr. Victor: "bater o olho e SEMPRE ver o número do processo"): o número fica À VISTA no cartão, como texto
+  // de verdade (o Ctrl+F do navegador acha), com o botão do tribunal; não vai para o .card-extra.
+  var extraHtml = badgeTipoHtml + htmlDeParaTarefa(tarefa) + compartilhadaHtml + htmlAtalhosLigacao(tarefa.processoVinculado);
   card.innerHTML =
     '<div class="topo-card-tarefa">' +
       '<div class="topo-card-tarefa-esquerda">' + criarCheckboxConclusaoCard(tarefa) + (etiquetaHtml || '') + seloPedidoHtml + '</div>' +
@@ -4086,6 +4090,7 @@ function criarCardTarefaEl(tarefa){
     htmlStatusTarefa(tarefa, podeMexer) +
     (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
     metaProcessoHtml +
+    numeroProcessoHtml +
     barraSubHtml +
     '<div class="rodape-card-tarefa">' +
       avataresResponsaveisHtml(tarefa) +

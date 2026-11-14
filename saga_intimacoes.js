@@ -133,7 +133,7 @@
   }
   function ehAdvogado(u){return !!(u&&u.ativo&&u.auth_user_id&&(u.possui_registro_oab||u.numero_oab));}
   function primeiroNome(id){return (nomeUsuario(id)||'').split(' ')[0];}
-  function cnj(i){return i.numero_processo_mascara||i.numero_processo||'Sem número';}
+  function cnj(i){var v=i.numero_processo_mascara||i.numero_processo||'';if(!v)return 'Sem número';return window.sagaFmt&&sagaFmt.cnj?sagaFmt.cnj(v):v;} // 14/11: sempre com pontos e traço (o Ctrl+F acha como na ficha)
   function partesAtivas(i){var a=(i.partes||[]).filter(function(p){return p.polo==='A';}).map(function(p){return p.nome;});if(!a.length)a=(i.partes||[]).map(function(p){return p.nome;});return a.join(', ');}
   // Todas as partes (titular e herdeiros) de cada processo: a intimação aparece para todos, sem duplicar
   async function carregarPartes(ids){
