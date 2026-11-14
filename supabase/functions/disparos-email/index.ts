@@ -226,6 +226,34 @@ async function testeModelo(user: any, corpo: any) {
   }
 }
 
+// ---------- teste de layout por rotina (só com a chave do servidor): manda um modelo com cliente inventado para um endereço ----------
+// Uso: conferência de layout das identidades (ex.: "[TESTE ANCREF]"); NÃO passa pela fila nem pela regra caixa x identidade
+// (é só teste para o próprio Dr. Victor; na operação a ANCREF só sai por caixa ANCREF).
+// deno-lint-ignore no-explicit-any
+async function testeLayout(corpo: any) {
+  const m = await admin.from("disparo_modelos").select("assunto,corpo,identidade_id,anexo_regra").eq("id", corpo.modelo).single();
+  if (m.error) return { ok: false, erro: "Modelo: " + m.error.message };
+  const ct = await admin.from("disparo_contas").select("id,email,nome_exibicao,smtp_host,smtp_porta,smtp_seguro,smtp_usuario,assinatura").eq("id", corpo.conta).single();
+  if (ct.error) return { ok: false, erro: "Remetente: " + ct.error.message };
+  const id = (await admin.rpc("disparo_identidade_json", { p_id: m.data.identidade_id })).data || {};
+  const instit = id.assinatura_tipo === "instituicao";
+  const c: Conta = { id: ct.data.id, email: ct.data.email, nome: instit ? id.nome : (ct.data.nome_exibicao || ""), host: ct.data.smtp_host, porta: ct.data.smtp_porta,
+    seguro: ct.data.smtp_seguro, usuario: ct.data.smtp_usuario, assinatura: id.assinatura || ct.data.assinatura || "" };
+  const campos: Record<string, string> = { nome: "Maria da Silva Santos", primeiro_nome: "Maria", tese: "PSS", numero_processo: "0801234-56.2024.4.05.8000",
+    orgao: "Ministério da Saúde", cargo: "Agente administrativo", escritorio: id.nome || "", data_hoje: new Date().toLocaleDateString("pt-BR"),
+    remetente: instit ? (String(id.assinatura || "Equipe de Atendimento").split("\n")[0] + " · " + id.nome) : (c.nome || ""), remetente_email: instit ? "" : c.email };
+  const pre = (t: string) => String(t || "").replace(/\{([a-z_]+)\}/g, (x, k) => k in campos ? campos[k] : x);
+  const assunto = (corpo.prefixo ? corpo.prefixo + " " : "") + pre(m.data.assunto);
+  try {
+    const t = await transporte(c);
+    const anexos = m.data.anexo_regra === "espelho" ? [{ nome: "Espelho do tribunal (EXEMPLO).pdf", conteudo: pdfExemplo(), tamanho: 900 }] : [];
+    const em = await montarEmail({ assunto: pre(m.data.assunto), corpo: pre(m.data.corpo), identidade: id, whatsapp: id.whatsapp, anexos }, c);
+    await t.sendMail({ from: cabecalhoDe(c), to: corpo.para, subject: assunto, replyTo: c.email, text: em.text, html: em.html, attachments: em.attachments });
+    try { t.close(); } catch { /* nada */ }
+    return { ok: true, para: corpo.para, assunto };
+  } catch (e) { const k = classificar(e); return { ok: false, erro: k.msg }; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   // deno-lint-ignore no-explicit-any
@@ -237,6 +265,11 @@ Deno.serve(async (req) => {
       const ch = await admin.rpc("saga_chave_rotina");
       if (!ch.data || req.headers.get("x-saga-chave") !== ch.data) return json({ ok: false, erro: "Sem autorização." }, 401);
       return json(await rodada("rotina"));
+    }
+    if (acao === "teste_layout") {
+      const ch = await admin.rpc("saga_chave_rotina");
+      if (!ch.data || req.headers.get("x-saga-chave") !== ch.data) return json({ ok: false, erro: "Sem autorização." }, 401);
+      return json(await testeLayout(corpo));
     }
     const auth = req.headers.get("Authorization") || "";
     const user = createClient(URL_SB, ANON, { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });

@@ -95,7 +95,7 @@
       '<span style="color:' + c1 + ';font-weight:bold">' + esc(nomeId) + '</span>' + (id.subtitulo ? '<span style="color:#8A94A6"> · ' + esc(id.subtitulo) + '</span>' : '') + '<br>' +
       contatos.join('<span style="color:#C3CAD5"> &nbsp;|&nbsp; </span>') + '</td></tr></table>';
     // com logo: cabeçalho BRANCO com a logo (as logos das marcas têm letra escura) e as faixas da cor embaixo
-    var logo = o.logoSrc ? '<img src="' + esc(o.logoSrc) + '" alt="' + esc(nomeId) + '" height="56" style="display:block;height:56px;width:auto;max-width:100%;border:0">' : '';
+    var logo = o.logoSrc ? '<img src="' + esc(o.logoSrc) + '" alt="' + esc(nomeId) + '" height="84" style="display:block;height:84px;width:auto;max-width:100%;border:0">' : '';
     var rodape = String(id.rodape || '').split('\n').map(function (l) { return esc(l.trim()); }).filter(Boolean).join('<br>');
     var site = id.site ? '<a href="https://' + esc(String(id.site).replace(/^https?:\/\//, '')) + '" style="color:' + c1 + ';text-decoration:underline">' + esc(String(id.site).replace(/^https?:\/\//, '')) + '</a>' : '';
 
