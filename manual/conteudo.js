@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.3",
+  versao: "3.4",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.4", data: "14/11/2026", mudou: "Disparos de e-mail: o e-mail sai bonito (faixa com a marca, destaque, botões Falar no WhatsApp e Responder, assinatura e rodapé), com IDENTIDADES (VMM, ANCREF...); anexo do espelho do tribunal achado sozinho na pasta do cliente (ou documentos escolhidos na ficha); Enviar um teste para mim; resultado do Rodar agora à vista e Enviar agora mesmo (administrador); disparos todos os dias; o código do cliente não vai mais no e-mail." },
     { versao: "3.3", data: "14/11/2026", mudou: "Situação da ação \"Protocolar novamente\" (processo extinto que precisa de novo protocolo): tarefa automática para o responsável e atalho \"Protocolar novamente (N)\" na planilha do Jurídico." },
     { versao: "3.2", data: "14/11/2026", mudou: "Menu da esquerda: os grupos (Processos, Meu dia, Comunicação, Gestão, Administração) também abrem e fecham com o menu recolhido (a linha fina com a setinha) e com o menu aberto por cima pelo mouse." },
     { versao: "3.1", data: "14/11/2026", mudou: "SAGA no Claude: guardar na pasta do cliente o documento que você passa ao Claude na conversa (o Claude manda um link do SAGA; você toca, escolhe o arquivo no celular ou no computador e ele cai direto na ficha, na pasta certa)." },
@@ -657,15 +658,17 @@ window.SAGA_MANUAL = {
           quando: "Quando a Captação quer mandar e-mail para clientes (um ou vários) com o texto pronto da tese, sem ficar enviando um por um. Quem põe na fila: Captação e administrador (outra pessoa: Painel de permissões > Disparos de e-mail).",
           passos: [
             "Em **Processos > Disparos de e-mail**, clique em [[+ Novo disparo]]: procure o cliente pelo nome, CPF ou código (VMM-01234) e marque; ou use **Colar uma lista** (um cliente por linha). Na ficha do cliente, o bloco **E-mails enviados** tem o botão [[+ Enviar e-mail]].",
-            "Na janela **Enviar e-mail**: o **Modelo** (Automático = o modelo da tese do processo), o **remetente** (Automático = rodízio entre os e-mails de envio disponíveis), o e-mail do cliente e **Quando**. Confira a **prévia** e os avisos e clique em [[Pôr na fila]].",
-            "Pronto: o e-mail fica **Na fila**. A cada 10 minutos, dentro da **manhã e da tarde** (dias úteis), o robô manda sozinho, sem passar do limite de cada remetente por turno, espalhando os envios até o fim do turno.",
+            "Na janela **Enviar e-mail**: o **Modelo** (Automático = o modelo da tese do processo), o **remetente** (Automático = rodízio entre os e-mails de envio disponíveis), o e-mail do cliente e **Quando**. Pelo envio de UM cliente aparecem os **Anexos**: os documentos da pasta do cliente para marcar (o espelho do tribunal já vem marcado quando o modelo pede; limite de 15 MB por e-mail). Confira a **prévia** (o e-mail exatamente como o cliente vai ver, com a marca, os botões e a assinatura) e os avisos e clique em [[Pôr na fila]].",
+            "Pronto: o e-mail fica **Na fila**. A cada 10 minutos, dentro da **manhã e da tarde** (todos os dias do ano, também sábado, domingo e feriado), o robô manda sozinho, sem passar do limite de cada remetente por turno, espalhando os envios até o fim do turno.",
+            "[[Rodar agora]] manda o que está na fila na hora e mostra o resultado no alto da tela (quantos saíram ou o motivo, ex.: \"Fora do horário de envio\"). O administrador tem [[Enviar agora mesmo]] na linha de um e-mail: ele sai na hora, mesmo fora do horário.",
+            "Modelo que pede o **espelho do tribunal** e cliente sem espelho na pasta: o e-mail fica **Na fila** com o aviso amarelo \"Sem espelho na pasta\" e NÃO sai sem ele; quando o espelho for guardado na pasta (arquivo ou pasta com \"espelho\" no nome), ele sai sozinho.",
             "Acompanhe nas abas **Na fila**, **Enviados**, **Com erro** e **Cancelados**. [[Ver e-mail]] mostra o texto exato que saiu. Cliente respondeu? Clique em [[Respondeu]].",
             "**Com erro**: o motivo aparece em vermelho (ex.: \"endereço recusado\"). Corrija o e-mail na ficha e use [[Voltar para a fila]]. Erro passageiro (amarelo) o robô tenta de novo sozinho em 30 min, até 3 vezes.",
             "Cliente pediu para não receber mais (respondeu SAIR, reclamou): aba **Não enviar mais** > [[+ Não enviar mais para um e-mail]]. O que estava na fila para ele é cancelado (LGPD)."
           ],
           img: "disparos",
           marcas: ["Novo disparo: escolher os clientes.", "Situação do robô: última rodada, próxima, remetente com senha recusada (vermelho) ou pausado (amarelo).", "E-mails que não saíram, com o motivo.", "Remetentes: os e-mails de envio e o limite de cada um.", "Modelos de cada tese (pré-aprovados).", "Erro passageiro: o robô tenta de novo sozinho."],
-          atencao: ["Os modelos são pré-aprovados pelo Dr. Victor: no envio só entram os dados do cliente (nome, código, tese, número do processo, órgão, cargo). Nunca há valores no e-mail.", "No fim de todo e-mail vai a frase \"Se não quiser mais receber nossos e-mails, responda com a palavra SAIR\". Quem responder SAIR vai para **Não enviar mais**."]
+          atencao: ["Os modelos são pré-aprovados pelo Dr. Victor: no envio só entram os dados do cliente (nome, tese, número do processo, órgão, cargo). O **código do cliente (VMM-...) é só interno**: não vai no e-mail (o sistema recusa {codigo}). Nunca há valores no e-mail.", "No fim de todo e-mail vai a frase \"Se não quiser mais receber nossos e-mails, responda com a palavra SAIR\". Quem responder SAIR vai para **Não enviar mais**."]
         },
         { id: "disparos-remetentes", titulo: "Disparos: remetentes, modelos e horário",
           quando: "Para cadastrar os e-mails por onde os disparos saem (o Gmail de cada colaborador, o e-mail da Locaweb, da Hostinger...) e os textos de cada tese.",
@@ -674,8 +677,9 @@ window.SAGA_MANUAL = {
             "Depois de salvar, clique em [[Testar]]: o SAGA manda um e-mail de teste para você. Deu errado? O motivo aparece em vermelho.",
             "Cada colaborador cadastra o **próprio** e-mail (só ele usa). O administrador cadastra os e-mails do escritório e escolhe se **toda a equipe** pode usar.",
             "O provedor recusou por excesso de envios? O remetente fica **pausado até o dia seguinte** (amarelo) e os e-mails saem pelos outros. Senha recusada: fica **vermelho**, o sino avisa o dono e o administrador; corrija a senha e [[Testar]]. [[Pausar até amanhã]] e [[Retomar]] também existem.",
-            "**Modelos** (só o administrador): [[+ Novo modelo]] com nome, tese, assunto e texto. Os botões de campo põem {nome}, {primeiro_nome}, {codigo}, {tese}, {numero_processo}, {orgao}, {cargo}, {remetente}... A prévia mostra o texto com um cliente inventado. As setinhas ▲▼ mudam a ordem; o modelo \"Todas as teses\" vale quando a tese não tem modelo próprio.",
-            "**Configurações** (só o administrador): ligar/desligar o robô, horário da manhã e da tarde, só dias úteis e quantas tentativas por e-mail; e a lista das últimas rodadas."
+            "**Modelos** (só o administrador): [[+ Novo modelo]] com nome, tese, **identidade** (a marca do e-mail: VMM, ANCREF...), **Anexar documentos do cliente** (\"O(s) espelho(s) do tribunal\"), assunto e texto. Os botões de campo põem {nome}, {primeiro_nome}, {tese}, {numero_processo}, {orgao}, {cargo}, {remetente}... No texto: linha em branco separa parágrafos, **\*\*negrito\*\***, parágrafo começando com **>** vira o destaque e uma 1ª linha com **#** vira o título. A prévia mostra o e-mail pronto, com um cliente inventado; [[Enviar um teste para mim]] manda esse e-mail para a sua caixa (não entra na fila). As setinhas ▲▼ mudam a ordem; o modelo \"Todas as teses\" vale quando a tese não tem modelo próprio.",
+            "**Identidades** (no alto da aba Modelos; só o administrador): nome, frase, cores, logo (opcional, PNG/JPG até 300 KB, vai anexada ao e-mail), WhatsApp do botão, site e rodapé. Vale a identidade do modelo; se ele não escolhe, a do remetente; senão a padrão. No remetente dá para pôr o **WhatsApp** de quem envia (o botão do e-mail usa ele).",
+            "**Configurações** (só o administrador): ligar/desligar o robô, horário da manhã e da tarde, \"só dias úteis\" (DESMARCADO desde 14/11: todos os dias), tentativas por e-mail e o limite dos anexos (15 MB); e a lista das últimas rodadas."
           ],
           img: "disparos_enviar",
           marcas: ["Modelo (Automático = o da tese do processo).", "Remetente (Automático = rodízio).", "Prévia do e-mail com os dados do cliente.", "Pôr na fila."],

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611141458"></script>
+<script src="saga_guard.js?v=202611141906"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Disparos de e-mail</title>
@@ -98,6 +98,17 @@ textarea.in{height:auto;min-height:90px;padding:9px 10px;resize:vertical;line-he
 .res-it.sem{opacity:.55}
 .res-it small{display:block;color:var(--muted);font-size:11px}
 .res-it select{margin-top:5px;height:30px}
+.res-rodada{display:flex;gap:12px;align-items:flex-start;padding:12px 15px;border-radius:14px;border:1px solid var(--border-soft);background:var(--panel);margin-bottom:14px;font-size:12.5px;line-height:1.55}
+.res-rodada.verde{border-color:color-mix(in srgb,var(--success,#16a34a) 50%,transparent)}.res-rodada.amarelo{border-color:color-mix(in srgb,var(--warning,#d97706) 55%,transparent);background:color-mix(in srgb,var(--warning,#d97706) 7%,var(--panel))}
+.res-rodada.vermelho{border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 7%,var(--panel))}
+.res-rodada b{font-weight:600}.res-rodada .x{margin-left:auto;font-size:13px;color:var(--muted);padding:0 4px}.res-rodada ul{margin:4px 0 0 18px;font-size:11.5px}
+.idents{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;margin-bottom:16px}
+.ident{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.ident.fora{opacity:.6}.ident .cab{padding:12px 14px;color:#fff}.ident .cab b{display:block;font-family:Georgia,serif;font-size:16px;line-height:1.25}.ident .cab small{display:block;font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;margin-top:3px}
+.ident .faixa-cor{height:3px}.ident .cp{padding:10px 14px;font-size:11.5px;color:var(--muted);line-height:1.5;display:flex;flex-direction:column;gap:8px}.ident .cp b{color:var(--text);font-weight:500}
+.ident .acs{display:flex;gap:6px;flex-wrap:wrap}
+.secao-tit{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;margin:4px 2px 8px}
+.cores{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cores input[type=color]{width:44px;height:34px;padding:2px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel-solid);cursor:pointer}
 .toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
 .toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:380px;line-height:1.45}
 .toast.success{border-color:color-mix(in srgb,#16a34a 50%,var(--border))}.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}.toast.warning{border-color:color-mix(in srgb,#d97706 60%,var(--border))}
@@ -107,7 +118,7 @@ textarea.in{height:auto;min-height:90px;padding:9px 10px;resize:vertical;line-he
   .ent{min-width:0;width:100%;flex-basis:100%}.g3{grid-template-columns:1fr}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611141458">
+<link rel="stylesheet" href="saga_tema.css?v=202611141906">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -127,6 +138,7 @@ textarea.in{height:auto;min-height:90px;padding:9px 10px;resize:vertical;line-he
     </div>
   </div>
   <div class="faixa" id="faixa"><span class="ponto"></span><div>Carregando…</div></div>
+  <div class="res-rodada" id="resRodada" hidden></div>
   <div class="barra">
     <div class="pills" role="group" aria-label="O que ver">
       <button class="pill active" type="button" data-aba="fila">Na fila<b id="nFila"></b></button>
@@ -153,8 +165,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611141458"></script>
-<script src="saga_disparos.js?v=202611141458"></script>
+<script src="saga_ui.js?v=202611141906"></script>
+<script src="saga_disparos.js?v=202611141906"></script>
 <script>
 /* =====================================================================
    SAGA · Disparos de e-mail (T179, blocos 205 a 207; 14/11/2026, pedido do Dr. Victor)
@@ -166,8 +178,9 @@ window._sb=_sb;
 var D={aba:'fila',dados:null,busca:'',erro:null,marcados:new Set(),abertos:new Set()};
 var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
 var CURVA='cubic-bezier(.22,.78,.25,1)';
-var CAMPOS=[['nome','Nome do cliente'],['primeiro_nome','Primeiro nome'],['codigo','Código do processo'],['codigo_cliente','Código do cliente'],['tese','Tese'],['numero_processo','Nº do processo'],['orgao','Órgão'],['cargo','Cargo'],['remetente','Quem envia'],['remetente_email','E-mail de quem envia'],['escritorio','Escritório'],['data_hoje','Data de hoje']];
-var EXEMPLO={nome:'Maria da Silva Santos',primeiro_nome:'Maria',codigo:'VMM-01234-PSS',codigo_cliente:'VMM-01234',tese:'PSS',numero_processo:'0801234-56.2024.4.05.8000',orgao:'Ministério da Saúde',cargo:'Agente administrativo',remetente:'Hevelyn (Victor Morais Advocacia)',remetente_email:'contato@exemplo.com.br',escritorio:'Victor Morais Advocacia',data_hoje:new Date().toLocaleDateString('pt-BR')};
+/* 14/11 (Dr. Victor): o código VMM do cliente é só interno: não entra nos e-mails ({codigo} e {codigo_cliente} saíram e o banco recusa) */
+var CAMPOS=[['nome','Nome do cliente'],['primeiro_nome','Primeiro nome'],['tese','Tese'],['numero_processo','Nº do processo'],['orgao','Órgão'],['cargo','Cargo'],['remetente','Quem envia'],['remetente_email','E-mail de quem envia'],['escritorio','Escritório'],['data_hoje','Data de hoje']];
+var EXEMPLO={nome:'Maria da Silva Santos',primeiro_nome:'Maria',tese:'PSS',numero_processo:'0801234-56.2024.4.05.8000',orgao:'Ministério da Saúde',cargo:'Agente administrativo',remetente:'Hevelyn (Victor Morais Advocacia)',remetente_email:'contato@exemplo.com.br',escritorio:'Victor Morais Advocacia',data_hoje:new Date().toLocaleDateString('pt-BR')};
 var PROVEDORES={gmail:{nome:'Gmail',ajuda:'No Gmail é preciso a <b>senha de app</b> (16 letras), não a senha normal: na conta Google, ligue a verificação em duas etapas e crie em "Senhas de app" (myaccount.google.com/apppasswords). O Gmail gratuito aguenta cerca de 500 por dia; comece com pouco.'},
   locaweb:{nome:'Locaweb',ajuda:'Use o e-mail completo e a senha da caixa da Locaweb. Servidor: email-ssl.com.br, porta 465 (SSL).'},
   hostinger:{nome:'Hostinger',ajuda:'Use o e-mail completo e a senha da caixa da Hostinger. Servidor: smtp.hostinger.com, porta 465 (SSL).'},
@@ -182,6 +195,10 @@ function semMov(){try{return localStorage.getItem('saga-movimento')==='reduzido'
 function erroTxt(e){return (e&&(e.message||e.msg))||String(e||'erro desconhecido');}
 function linkFicha(i){return i.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(i.pessoa_id)+(i.processo_id?'&processo_id='+encodeURIComponent(i.processo_id):''):'#';}
 function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function foneMasc(v){var d=String(v||'').replace(/\D/g,'').slice(0,11);if(d.length<=2)return d?'('+d:'';if(d.length<=6)return '('+d.slice(0,2)+') '+d.slice(2);if(d.length<=10)return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);return '('+d.slice(0,2)+') '+d.slice(2,3)+' '+d.slice(3,7)+'-'+d.slice(7);}
+function identPorId(id){return ((D.dados&&D.dados.identidades)||[]).filter(function(x){return x.id===id;})[0];}
+function identPadrao(){var l=(D.dados&&D.dados.identidades)||[];return l.filter(function(x){return x.padrao&&x.ativo;})[0]||l.filter(function(x){return x.ativo;})[0]||null;}
+function optsIdent(sel,rotuloVazio){return '<option value="">'+esc(rotuloVazio)+'</option>'+((D.dados&&D.dados.identidades)||[]).filter(function(x){return x.ativo||x.id===sel;}).map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===sel?' selected':'')+'>'+esc(x.chave+' · '+x.nome)+'</option>';}).join('');}
 function confirmar(t,x,b,p){return window.sagaConfirmar?sagaConfirmar(t,x,b,p):Promise.resolve(confirm(x));}
 
 async function carregar(){
@@ -212,6 +229,7 @@ function faixa(){
   ruins.forEach(function(k){cor='vermelho';linhas.push('<div class="erro-linha"><b>'+esc(k.email)+'</b>: '+(k.situacao==='erro_login'?'o provedor recusou a senha':'falhou '+k.erros_seguidos+' vezes seguidas')+' ('+dh(k.ultimo_erro_em)+'). '+esc(k.ultimo_erro||'')+' Os e-mails dele saem pelos outros remetentes; corrija a senha em "Remetentes" e clique em "Testar".</div>');});
   pausadas.forEach(function(k){if(cor==='verde')cor='amarelo';linhas.push('<div class="amarelo-linha"><b>'+esc(k.email)+'</b> pausado até '+dh(k.pausada_ate)+': '+esc(k.pausa_motivo||'')+'</div>');});
   if(cont.aguardando_tentativa){if(cor==='verde')cor='amarelo';linhas.push('<div class="amarelo-linha">'+cont.aguardando_tentativa+' e-mail(s) aguardando nova tentativa (erro passageiro; o robô tenta de novo em 30 min).</div>');}
+  if(cont.sem_anexo){if(cor==='verde')cor='amarelo';linhas.push('<div class="amarelo-linha">'+cont.sem_anexo+' e-mail(s) esperando o espelho do tribunal na pasta do cliente (saem sozinhos quando o espelho for guardado).</div>');}
   if(cont.erros){if(cor==='verde')cor='amarelo';linhas.push('<div class="amarelo-linha">'+cont.erros+' e-mail(s) não saíram: veja o motivo em "Com erro".</div>');}
   el.className='faixa '+cor;el.innerHTML='<span class="ponto"></span><div><div>'+l1+'</div>'+linhas.join('')+'</div>';
 }
@@ -240,7 +258,8 @@ function desenhar(){
 /* ---------- fila / enviados / com erro / cancelados ---------- */
 function seloSit(i){
   var m={na_fila:['Na fila',''],enviando:['Enviando',''],enviado:['Enviado','ok'],respondido:['Respondido','ok'],erro:['Não saiu','vermelho'],cancelado:['Cancelado','']}[i.situacao]||[i.situacao,''];
-  if(i.situacao==='na_fila'&&i.proxima_tentativa_em)m=['Nova tentativa '+dh(i.proxima_tentativa_em),'amarelo'];
+  if(i.situacao==='na_fila'&&i.erro_tipo==='sem_anexo')m=['Sem espelho na pasta','amarelo'];
+  else if(i.situacao==='na_fila'&&i.proxima_tentativa_em)m=['Nova tentativa '+dh(i.proxima_tentativa_em),'amarelo'];
   else if(i.situacao==='na_fila'&&i.a_partir&&new Date(i.a_partir)>new Date())m=['Sai a partir de '+dh(i.a_partir),''];
   return '<span class="selo '+m[1]+'">'+esc(m[0])+'</span>';
 }
@@ -256,12 +275,14 @@ function linhaHtml(i){
     :'Sai por <b>'+esc(i.conta_escolhida||'rodízio')+'</b>'+(i.tentativas?' · '+i.tentativas+' tentativa(s)':'');
   var acs=[];
   acs.push('<button class="btn btn-p" type="button" data-ver="'+esc(i.id)+'">'+(D.abertos.has(i.id)?'Fechar':'Ver e-mail')+'</button>');
+  if(D.dados.admin&&(i.situacao==='na_fila'||i.situacao==='erro'))acs.push('<button class="btn btn-p" type="button" data-ja="'+esc(i.id)+'" title="Só o administrador: manda agora, fora do horário e do limite do turno">Enviar agora mesmo</button>');
   if(i.pode_mexer&&(i.situacao==='na_fila'||i.situacao==='erro'))acs.push('<button class="btn btn-p" type="button" data-cancelar="'+esc(i.id)+'">Cancelar</button>');
   if(D.dados.pode_enviar&&(i.situacao==='erro'||i.situacao==='cancelado'))acs.push('<button class="btn btn-p" type="button" data-voltar="'+esc(i.id)+'">Voltar para a fila</button>');
   if(D.dados.pode_enviar&&i.situacao==='enviado')acs.push('<button class="btn btn-p" type="button" data-respondeu="'+esc(i.id)+'" title="O cliente respondeu este e-mail">Respondeu</button>');
   if(D.dados.pode_enviar&&i.situacao==='respondido')acs.push('<button class="btn btn-p" type="button" data-desresp="'+esc(i.id)+'">Desfazer respondido</button>');
   var erro=i.erro&&(i.situacao==='erro'||i.situacao==='na_fila')?'<div class="err'+(i.situacao==='na_fila'?' amarelo':'')+'">'+(i.situacao==='erro'?'<b>Por que não saiu:</b> ':'')+esc(i.erro)+(i.erro_em?' ('+dh(i.erro_em)+')':'')+'</div>':'';
-  var corpo=D.abertos.has(i.id)?'<div class="corpo"><b>Assunto: '+esc(i.assunto||'(montado na hora do envio)')+'</b>'+esc(i.corpo||'O texto é montado na hora do envio, com o modelo "'+(i.modelo||'')+'" e os dados do cliente naquele momento.')+'</div>':'';
+  var anx=(i.anexos||[]).length?'Anexos: '+i.anexos.map(function(a){return esc(a.nome)+' ('+SagaDisparos.tamanhoTxt(a.tamanho)+')';}).join(', '):i.anexos_escolhidos?i.anexos_escolhidos+' anexo(s) escolhido(s) na ficha':i.anexo_regra==='espelho'?'Vai com o espelho do tribunal da pasta do cliente':'';
+  var corpo=D.abertos.has(i.id)?'<div class="corpo"><b>Assunto: '+esc(i.assunto||'(montado na hora do envio)')+'</b>'+(anx?'<span style="display:block;color:var(--muted);margin-bottom:6px">'+anx+'</span>':'')+esc(i.corpo||'O texto é montado na hora do envio, com o modelo "'+(i.modelo||'')+'" e os dados do cliente naquele momento.')+'</div>':'';
   return '<div class="lin" data-id="'+esc(i.id)+'"><div>'+(podeMarcar?'<input type="checkbox" data-marcar="'+esc(i.id)+'"'+(D.marcados.has(i.id)?' checked':'')+' aria-label="Marcar">':'')+'</div>'+
     '<div><div class="nome"><a href="'+esc(linkFicha(i))+'">'+esc(i.cliente)+'</a></div><div class="sub">'+esc(i.codigo||'')+(i.tese?' · '+esc(i.tese):'')+'<br>para <b>'+esc(i.para)+'</b></div></div>'+
     '<div><div class="sub">Modelo: <b>'+esc(i.modelo||'')+'</b><br>'+quando+'</div></div>'+
@@ -313,6 +334,7 @@ function desenharContas(){
       :(k.ativo&&k.pausada_ate&&new Date(k.pausada_ate)>new Date()?'<div class="err amarelo">'+esc(k.pausa_motivo||'Pausado.')+'</div>':'');
     return '<div class="cartao'+(k.ativo?'':' fora')+'"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><h3>'+esc(k.apelido)+'</h3>'+seloConta(k)+'</div>'+
       '<div class="sub"><b>'+esc(k.email)+'</b>'+(k.nome_exibicao?' · aparece como "'+esc(k.nome_exibicao)+'"':'')+'<br>'+esc((PROVEDORES[k.provedor]||{}).nome||k.provedor)+' · '+esc(k.smtp_host)+':'+k.smtp_porta+(k.senha_final?' · senha …'+esc(k.senha_final):'')+
+      '<br>Identidade: <b>'+esc((identPorId(k.identidade_id)||{}).chave||'a do modelo ou a padrão')+'</b>'+(k.whatsapp?' · WhatsApp '+esc(foneMasc(k.whatsapp)):'')+
       '<br>'+(k.uso==='equipe'?'Toda a equipe que dispara pode usar':'Só '+esc(k.dono||'o dono')+' usa')+(k.ultimo_envio_em?' · último envio '+dh(k.ultimo_envio_em):'')+
       (k.ultimo_teste_em?'<br>Último teste: '+dh(k.ultimo_teste_em)+' ('+(k.ultimo_teste_ok?'deu certo':'falhou')+')':'')+(k.na_fila?'<br><b>'+k.na_fila+'</b> na fila escolhendo este remetente':'')+'</div>'+
       usoHtml(k)+erro+'<div class="acs">'+acs.join('')+'</div></div>';
@@ -336,12 +358,15 @@ function janelaConta(k){
     (adm?'<div class="sd-g2"><div class="sd-campo"><label for="cDono">Dono</label><select class="sd-in" id="cDono">'+optsDono+'</select></div>'+
       '<div class="sd-campo"><label for="cUso">Quem pode usar</label><select class="sd-in" id="cUso"><option value="equipe"'+(k.uso==='equipe'?' selected':'')+'>Toda a equipe que dispara</option><option value="dono"'+(k.uso==='dono'?' selected':'')+'>Só o dono</option></select></div></div>'
       :'<div class="dica">Este e-mail fica sendo <b>seu</b>: só você (e o administrador) usa e muda.</div>')+
+    '<div class="sd-g2"><div class="sd-campo"><label for="cIdent">Identidade (marca do e-mail)</label><select class="sd-in" id="cIdent">'+optsIdent(k.identidade_id||'','A do modelo (ou a padrão)')+'</select><div class="dica">Quando o modelo não escolhe a identidade, vale esta.</div></div>'+
+    '<div class="sd-campo"><label for="cWa">WhatsApp de quem envia (botão "Falar no WhatsApp")</label><input class="sd-in" id="cWa" inputmode="numeric" autocomplete="off" value="'+esc(foneMasc(k.whatsapp||''))+'" placeholder="(82) 9 9999-9999"><div class="dica">Em branco: usa o WhatsApp da identidade.</div></div></div>'+
     '<div class="sd-campo"><label for="cAss">Assinatura no fim do e-mail (opcional)</label><textarea class="sd-in" id="cAss" rows="3" placeholder="Ex.: Karine Souza&#10;Victor Morais Advocacia · (82) 9 9999-9999">'+esc(k.assinatura||'')+'</textarea></div>';
   var j=SagaDisparos.abrirJanela(novo?'Cadastrar e-mail de envio':'Editar e-mail de envio','Depois de salvar, clique em "Testar": o SAGA manda um e-mail de teste para você.',corpo,
     '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="cOk">Salvar</button>');
   var q=j.q;
   function prov(){var p=q('#cProv').value;q('#cAjuda').innerHTML=PROVEDORES[p].ajuda;q('#cSmtp').hidden=p!=='outro';}
   q('#cProv').addEventListener('change',prov);prov();
+  q('#cWa').addEventListener('input',function(){this.value=foneMasc(this.value);});
   ['#cLimM','#cLimT','#cPorta'].forEach(function(s){q(s).addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,4);});});
   q('#cOk').addEventListener('click',async function(){
     var bt=this,dados={provedor:q('#cProv').value,email:q('#cEmail').value.trim(),apelido:q('#cApelido').value.trim(),nome_exibicao:q('#cNome').value.trim(),
@@ -351,6 +376,8 @@ function janelaConta(k){
     var r=await _sb.rpc('disparo_conta_salvar',{p_id:novo?null:k.id,p_dados:dados,p_senha:q('#cSenha').value||null});
     bt.disabled=false;
     if(r.error){toast('Não consegui salvar: '+erroTxt(r.error),'error');return;}
+    var r2=await _sb.rpc('disparo_conta_identidade',{p_id:r.data,p_identidade:q('#cIdent').value||null,p_whatsapp:q('#cWa').value||null});
+    if(r2.error){toast('O e-mail foi salvo, mas a identidade/WhatsApp não: '+erroTxt(r2.error),'error');await carregar();return;}
     toast('E-mail de envio salvo. Agora clique em "Testar".','success');j.fechar();await carregar();
   });
 }
@@ -373,13 +400,21 @@ async function teses(){
   D.teses=r.data||[];return D.teses;
 }
 function desenharModelos(){
-  var d=D.dados,l=d.modelos||[];
+  var d=D.dados,l=d.modelos||[],ids=d.identidades||[];
   $('resumo').innerHTML=(d.admin?'<button class="btn btn-ouro btn-p" type="button" id="bNovoModelo">+ Novo modelo</button>':'')+
     '<span>O modelo de cada tese é pré-aprovado: no envio só entram os dados do cliente. '+(d.admin?'Só você cria e muda os modelos.':'Só o administrador cria e muda os modelos.')+' Quando o processo não tem modelo da tese, vale o modelo "todas as teses" (o primeiro da lista).</span>';
-  if(!l.length){$('area').innerHTML='<div class="vazio"><b>Nenhum modelo ainda.</b>'+(d.admin?'Clique em "+ Novo modelo" e escreva o texto de uma tese com os campos {nome}, {tese}, {codigo}...':'O administrador cria os modelos de cada tese.')+'</div>';return;}
+  var htmlIds='<div class="secao-tit">Identidades (a marca que veste o e-mail)</div><div class="dica" style="margin:-4px 2px 10px">Nome, cores, logo, rodapé e WhatsApp do alto e do fim do e-mail. Ordem: a identidade do <b>modelo</b>; se o modelo não escolhe, a do <b>remetente</b>; senão a <b>padrão</b>.'+(d.admin?'':' Só o administrador muda.')+'</div>'+
+    '<div class="idents">'+ids.map(function(x){
+      var acs=[];
+      if(d.admin)acs.push('<button class="btn btn-p" type="button" data-editar-ident="'+esc(x.id)+'">Editar</button>');
+      if(d.admin&&!x.padrao)acs.push('<button class="btn btn-p" type="button" data-ativar-ident="'+esc(x.id)+'" data-v="'+(x.ativo?'0':'1')+'">'+(x.ativo?'Tirar da lista':'Voltar para a lista')+'</button>');
+      return '<div class="ident'+(x.ativo?'':' fora')+'"><div class="cab" style="background:'+esc(x.cor_principal)+'"><b>'+esc(x.nome)+'</b>'+(x.subtitulo?'<small style="color:'+esc(x.cor_destaque)+'">'+esc(x.subtitulo)+'</small>':'')+'</div><div class="faixa-cor" style="background:'+esc(x.cor_destaque)+'"></div>'+
+        '<div class="cp"><div><b>'+esc(x.chave)+'</b>'+(x.padrao?' · <span class="selo ok">Padrão</span>':'')+(x.logo_caminho?' · com logo':'')+'<br>'+(x.modelos||0)+' modelo(s) · '+(x.remetentes||0)+' remetente(s)'+(x.whatsapp?' · WhatsApp '+esc(foneMasc(x.whatsapp)):'')+'</div>'+(acs.length?'<div class="acs">'+acs.join('')+'</div>':'')+'</div></div>';
+    }).join('')+(d.admin?'<button class="ident" type="button" id="bNovaIdent" style="align-items:center;justify-content:center;min-height:120px;border-style:dashed;color:var(--muted);font-size:12.5px">+ Nova identidade</button>':'')+'</div>';
+  if(!l.length){$('area').innerHTML=htmlIds+'<div class="vazio"><b>Nenhum modelo ainda.</b>'+(d.admin?'Clique em "+ Novo modelo" e escreva o texto de uma tese com os campos {nome}, {tese}, {numero_processo}...':'O administrador cria os modelos de cada tese.')+'</div>';return;}
   var ativos=l.filter(function(m){return m.ativo;});
-  $('area').innerHTML='<div class="cartoes">'+l.map(function(m){
-    var idx=ativos.indexOf(m),acs=[];
+  $('area').innerHTML=htmlIds+'<div class="secao-tit">Modelos</div><div class="cartoes">'+l.map(function(m){
+    var idx=ativos.indexOf(m),acs=[],idn=identPorId(m.identidade_id);
     acs.push('<button class="btn btn-p" type="button" data-ver-modelo="'+esc(m.id)+'">'+(d.admin?'Editar':'Ver')+'</button>');
     if(d.admin&&m.ativo){
       if(idx>0)acs.push('<button class="btn btn-p" type="button" data-subir="'+esc(m.id)+'" title="Subir">▲</button>');
@@ -387,37 +422,101 @@ function desenharModelos(){
     }
     if(d.admin)acs.push('<button class="btn btn-p" type="button" data-ativar-modelo="'+esc(m.id)+'" data-v="'+(m.ativo?'0':'1')+'">'+(m.ativo?'Tirar da lista':'Voltar para a lista')+'</button>');
     return '<div class="cartao'+(m.ativo?'':' fora')+'"><h3>'+esc(m.nome)+'</h3><div class="sub">'+(m.tese?'Tese: <b>'+esc(m.tese)+'</b>':'<b>Todas as teses</b> (quando a tese não tem modelo próprio)')+
-      '<br>Assunto: '+esc(m.assunto)+'<br>'+(m.enviados||0)+' enviado(s) · '+(m.na_fila||0)+' na fila · mudado em '+dh(m.atualizado_em)+'</div><div class="trecho">'+esc(m.corpo)+'</div><div class="acs">'+acs.join('')+'</div></div>';
+      '<br>Assunto: '+esc(m.assunto)+'<br>Identidade: <b>'+esc(idn?idn.chave:'a do remetente (ou a padrão)')+'</b> · Anexo: <b>'+(m.anexo_regra==='espelho'?'espelho do tribunal':'nenhum')+'</b>'+
+      '<br>'+(m.enviados||0)+' enviado(s) · '+(m.na_fila||0)+' na fila · mudado em '+dh(m.atualizado_em)+'</div><div class="trecho">'+esc(m.corpo)+'</div><div class="acs">'+acs.join('')+'</div></div>';
   }).join('')+'</div>';
 }
 async function janelaModelo(m){
-  var adm=D.dados.admin,novo=!m;m=m||{};
+  var d=D.dados,adm=d.admin,novo=!m;m=m||{anexo_regra:'nenhum'};
   var ts=await teses();
   var optsT='<option value="">Todas as teses (modelo geral)</option>'+ts.map(function(t){return '<option value="'+esc(t.id)+'"'+(m.tese_id===t.id?' selected':'')+'>'+esc(t.nome)+'</option>';}).join('');
+  var contas=(d.contas||[]).filter(function(k){return k.pode_usar;});
   var ro=adm?'':' disabled';
   var corpo='<div class="sd-g2"><div class="sd-campo"><label for="mNome">Nome do modelo</label><input class="sd-in" id="mNome" value="'+esc(m.nome||'')+'" placeholder="Ex.: PSS · primeiro contato"'+ro+'></div>'+
     '<div class="sd-campo"><label for="mTese">Tese</label><select class="sd-in" id="mTese"'+ro+'>'+optsT+'</select></div></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label for="mIdent">Identidade (marca do e-mail)</label><select class="sd-in" id="mIdent"'+ro+'>'+optsIdent(m.identidade_id||'','A do remetente (ou a padrão)')+'</select><div class="dica">Ex.: VMM para clientes do escritório, ANCREF para a captação pela associação.</div></div>'+
+    '<div class="sd-campo"><label for="mAnexo">Anexar documentos do cliente</label><select class="sd-in" id="mAnexo"'+ro+'><option value="nenhum"'+(m.anexo_regra!=='espelho'?' selected':'')+'>Não anexar</option><option value="espelho"'+(m.anexo_regra==='espelho'?' selected':'')+'>O(s) espelho(s) do tribunal</option></select>'+
+    '<div class="dica">O sistema acha sozinho na pasta do processo (arquivo ou pasta com "espelho" no nome). Sem espelho, o e-mail <b>espera na fila</b> (amarelo) e não sai sem ele.</div></div></div>'+
     '<div class="sd-campo"><label for="mAssunto">Assunto</label><input class="sd-in" id="mAssunto" value="'+esc(m.assunto||'')+'" placeholder="Ex.: {primeiro_nome}, há um valor a receber na ação do PSS"'+ro+'></div>'+
     (adm?'<div class="sd-campo"><label>Pôr um campo (clique para inserir onde está o cursor)</label><div class="campos-modelo">'+CAMPOS.map(function(c){return '<button type="button" data-campo="'+c[0]+'" title="'+esc(c[1])+'">{'+c[0]+'}</button>';}).join('')+'</div></div>':'')+
     '<div class="sd-campo"><label for="mCorpo">Texto do e-mail</label><textarea class="sd-in" id="mCorpo" rows="12" placeholder="Prezado(a) {nome},&#10;&#10;..."'+ro+'>'+esc(m.corpo||'')+'</textarea>'+
-    '<div class="dica">Parágrafos separados por uma linha em branco. <b>**texto**</b> fica em negrito. Links e e-mails viram clicáveis. Nunca escreva valores: por segurança o modelo não tem campo de valor. No fim de todo e-mail vai a frase "Se não quiser mais receber nossos e-mails, responda com a palavra SAIR."</div></div>'+
-    '<div class="sd-campo"><label>Prévia com um cliente inventado</label><div class="sd-previa"><div class="sd-previa-cab" id="mPrevCab"></div><div class="sd-previa-corpo" id="mPrev"></div></div></div>';
+    '<div class="dica">Parágrafos separados por uma linha em branco. <b>**texto**</b> fica em negrito. Um parágrafo começando com <b>&gt; </b> vira o <b>destaque</b> (a frase principal, numa caixa colorida). Uma 1ª linha começando com <b># </b> vira o título (sem ela, o título é o assunto). Links e e-mails viram clicáveis. O sistema "veste" o texto no layout: faixa com a marca, botões "Falar no WhatsApp" e "Responder", assinatura e rodapé com "responda SAIR". O código do cliente (VMM-...) é só interno e não vai no e-mail. Nunca escreva valores.</div></div>'+
+    '<div class="sd-campo"><label>Prévia com um cliente inventado (como o cliente vai ver)</label><div id="mPrev"></div></div>'+
+    (contas.length?'<div class="sd-campo"><label for="mTesteConta">Enviar um teste para mim</label><div style="display:flex;gap:8px;flex-wrap:wrap"><select class="sd-in" id="mTesteConta" style="flex:1 1 220px">'+contas.map(function(k){return '<option value="'+esc(k.id)+'">sai por '+esc(k.apelido)+' · '+esc(k.email)+'</option>';}).join('')+'</select>'+
+      '<button class="btn" type="button" id="mTeste">Enviar um teste para mim</button></div><div class="dica">Manda este e-mail (com o que está escrito aqui, mesmo sem salvar) para o <b>seu</b> e-mail, com um cliente inventado. Não entra na fila de clientes.</div><div id="mTesteRes" class="dica" hidden></div></div>':'');
   var j=SagaDisparos.abrirJanela(novo?'Novo modelo de e-mail':(adm?'Editar modelo':'Modelo de e-mail'),adm?'Mudar o modelo vale para os e-mails que ainda estão na fila (o texto é montado na hora do envio).':'Só o administrador muda os modelos.',corpo,
     '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>'+(adm?'Cancelar':'Fechar')+'</button>'+(adm?'<button class="btn btn-ouro" type="button" id="mOk">Salvar modelo</button>':''));
-  var q=j.q,ultimo=q('#mCorpo');
-  function preencher(t){return String(t||'').replace(/\{([a-z_]+)\}/g,function(a,k){return k in EXEMPLO?EXEMPLO[k]:a;});}
-  function prev(){q('#mPrevCab').innerHTML='<b>Assunto:</b> '+esc(preencher(q('#mAssunto').value));q('#mPrev').textContent=preencher(q('#mCorpo').value);}
-  q('#mAssunto').addEventListener('input',prev);q('#mCorpo').addEventListener('input',prev);prev();
+  var q=j.q,ultimo=q('#mCorpo'),tPrev=null;
+  function preencher(t){var e2=Object.assign({},EXEMPLO);var idn=identPorId(q('#mIdent').value)||identPadrao();if(idn)e2.escritorio=idn.nome;return String(t||'').replace(/\{([a-z_]+)\}/g,function(a,k){return k in e2?e2[k]:a;});}
+  function prev(){
+    var idn=identPorId(q('#mIdent').value)||identPadrao()||{};
+    SagaDisparos.previaHtml(q('#mPrev'),{assunto:preencher(q('#mAssunto').value),corpo:preencher(q('#mCorpo').value),identidade:idn,remetente:EXEMPLO.remetente,
+      remetente_email:EXEMPLO.remetente_email,whatsapp:idn.whatsapp||'',anexos:q('#mAnexo').value==='espelho'?[{nome:'Espelho do tribunal (exemplo).pdf',tamanho:110817}]:[]});
+  }
+  function adiar(){clearTimeout(tPrev);tPrev=setTimeout(prev,250);}
+  q('#mAssunto').addEventListener('input',adiar);q('#mCorpo').addEventListener('input',adiar);q('#mIdent').addEventListener('change',prev);q('#mAnexo').addEventListener('change',prev);prev();
   q('#mAssunto').addEventListener('focus',function(){ultimo=this;});q('#mCorpo').addEventListener('focus',function(){ultimo=this;});
   j.ov.addEventListener('click',function(e){var b=e.target.closest('[data-campo]');if(!b)return;
     var el=ultimo,t='{'+b.dataset.campo+'}',a=el.selectionStart==null?el.value.length:el.selectionStart,z=el.selectionEnd==null?a:el.selectionEnd;
     el.value=el.value.slice(0,a)+t+el.value.slice(z);el.focus();try{el.setSelectionRange(a+t.length,a+t.length);}catch(x){}prev();});
+  if(q('#mTeste'))q('#mTeste').addEventListener('click',async function(){
+    var bt=this,res=q('#mTesteRes');bt.disabled=true;bt.textContent='Enviando o teste…';
+    try{
+      var r=await _sb.functions.invoke('disparos-email',{body:{acao:'teste_modelo',conta:q('#mTesteConta').value,assunto:q('#mAssunto').value,corpo:q('#mCorpo').value,identidade:q('#mIdent').value||null,anexo_regra:q('#mAnexo').value}});
+      var dd=r.data||{};
+      if(r.error&&!r.data){var mm=erroTxt(r.error);try{var ctx=r.error.context;if(ctx&&ctx.json){var jj=await ctx.json();mm=jj.erro||mm;}}catch(x){}throw new Error(mm);}
+      if(!dd.ok)throw new Error(dd.erro||'sem mensagem');
+      res.style.color='var(--success,#16a34a)';res.innerHTML='Teste enviado para <b>'+esc(dd.para)+'</b> (saiu por '+esc(dd.por)+'). Confira a caixa de entrada (e o spam).';
+    }catch(e){res.style.color='var(--danger,#e5484d)';res.innerHTML='<b>O teste não saiu:</b> '+esc(erroTxt(e));}
+    res.hidden=false;bt.disabled=false;bt.textContent='Enviar um teste para mim';
+  });
   if(adm)q('#mOk').addEventListener('click',async function(){
     var bt=this;bt.disabled=true;
-    var r=await _sb.rpc('disparo_modelo_salvar',{p_id:novo?null:m.id,p_nome:q('#mNome').value,p_tese:q('#mTese').value||null,p_assunto:q('#mAssunto').value,p_corpo:q('#mCorpo').value,p_ordem:null});
+    var r=await _sb.rpc('disparo_modelo_salvar',{p_id:novo?null:m.id,p_nome:q('#mNome').value,p_tese:q('#mTese').value||null,p_assunto:q('#mAssunto').value,p_corpo:q('#mCorpo').value,p_ordem:null,p_identidade:q('#mIdent').value||null,p_anexo_regra:q('#mAnexo').value});
     bt.disabled=false;
     if(r.error){toast('Não consegui salvar o modelo: '+erroTxt(r.error),'error');return;}
     toast('Modelo salvo.','success');j.fechar();await carregar();
+  });
+}
+/* ---------- identidades (só o administrador) ---------- */
+function janelaIdentidade(x){
+  var novo=!x;x=x||{cor_principal:'#0E2841',cor_destaque:'#C9A45C'};var logoNovo=null,tirarLogo=false;
+  var corpo='<div class="sd-g2"><div class="sd-campo"><label for="iChave">Sigla</label><input class="sd-in" id="iChave" value="'+esc(x.chave||'')+'" placeholder="Ex.: VMM, ANCREF" maxlength="12"></div>'+
+    '<div class="sd-campo"><label for="iNome">Nome no alto do e-mail</label><input class="sd-in" id="iNome" value="'+esc(x.nome||'')+'" placeholder="Ex.: Victor Morais Advocacia"></div></div>'+
+    '<div class="sd-campo"><label for="iSub">Frase abaixo do nome (opcional)</label><input class="sd-in" id="iSub" value="'+esc(x.subtitulo||'')+'" placeholder="Ex.: Advocacia & Consultoria"></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label>Cores</label><div class="cores"><input type="color" id="iC1" value="'+esc(x.cor_principal)+'" title="Cor principal (faixa do alto, títulos)"> principal <input type="color" id="iC2" value="'+esc(x.cor_destaque)+'" title="Cor de destaque (filete, caixa de destaque)"> destaque</div></div>'+
+    '<div class="sd-campo"><label for="iWa">WhatsApp (botão do e-mail)</label><input class="sd-in" id="iWa" inputmode="numeric" value="'+esc(foneMasc(x.whatsapp||''))+'" placeholder="(82) 9 9999-9999"></div></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label for="iSite">Site (opcional)</label><input class="sd-in" id="iSite" value="'+esc(x.site||'')+'" placeholder="victormoraisadv.com.br"></div>'+
+    '<div class="sd-campo"><label for="iLogo">Logo (PNG ou JPG, até 300 KB; opcional)</label><input class="sd-in" id="iLogo" type="file" accept="image/png,image/jpeg"><div class="dica" id="iLogoInfo">'+(x.logo_caminho?'Tem logo. <button class="btn btn-p" type="button" id="iTirarLogo">Tirar a logo</button>':'Sem logo: aparece só o nome (é o que mais chega na caixa de entrada; a logo vai anexada ao e-mail, nunca como link público).')+'</div></div></div>'+
+    '<div class="sd-campo"><label for="iRod">Rodapé (endereço, telefones, e-mails)</label><textarea class="sd-in" id="iRod" rows="3">'+esc(x.rodape||'')+'</textarea></div>'+
+    '<label class="chk"><input type="checkbox" id="iPadrao"'+(x.padrao?' checked':'')+'> Identidade padrão (quando o modelo e o remetente não escolhem)</label>'+
+    '<div class="sd-campo"><label>Prévia</label><div id="iPrev"></div></div>';
+  var j=SagaDisparos.abrirJanela(novo?'Nova identidade':'Editar identidade '+x.chave,'A marca que veste os e-mails: nome, cores, logo, WhatsApp e rodapé.',corpo,
+    '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="iOk">Salvar</button>');
+  var q=j.q,urlLogo='';
+  function dados(){return {chave:q('#iChave').value.trim().toUpperCase(),nome:q('#iNome').value.trim(),subtitulo:q('#iSub').value.trim(),cor_principal:q('#iC1').value,cor_destaque:q('#iC2').value,whatsapp:q('#iWa').value,site:q('#iSite').value.trim(),rodape:q('#iRod').value,padrao:q('#iPadrao').checked};}
+  function prev(){var dd=dados();SagaDisparos.previaHtml(q('#iPrev'),{assunto:'{primeiro_nome}, temos uma informação sobre a sua ação'.replace('{primeiro_nome}','Maria'),corpo:'Prezada Maria,\n\nEste é um exemplo do e-mail com esta identidade.\n\n> Esta é a frase principal, em destaque.\n\nAtenciosamente,',identidade:dd,remetente:'Quem envia',remetente_email:'contato@exemplo.com.br',whatsapp:dd.whatsapp,anexos:[],logoSrc:tirarLogo?'':(urlLogo||'')});}
+  if(x.logo_caminho)_sb.storage.from('disparos-marcas').createSignedUrl(x.logo_caminho,600).then(function(r){if(r.data){urlLogo=r.data.signedUrl;prev();}});
+  q('#iWa').addEventListener('input',function(){this.value=foneMasc(this.value);adiar();});
+  var tP=null;function adiar(){clearTimeout(tP);tP=setTimeout(prev,250);}
+  ['#iChave','#iNome','#iSub','#iSite','#iRod','#iC1','#iC2'].forEach(function(s2){q(s2).addEventListener('input',adiar);});q('#iPadrao').addEventListener('change',prev);
+  q('#iLogo').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;
+    if(!/^image\/(png|jpeg)$/.test(f.type)){toast('A logo precisa ser PNG ou JPG.','error');this.value='';return;}
+    if(f.size>300*1024){toast('A logo tem '+Math.round(f.size/1024)+' KB; o máximo é 300 KB. Diminua a imagem.','error');this.value='';return;}
+    logoNovo=f;tirarLogo=false;urlLogo=URL.createObjectURL(f);prev();});
+  j.ov.addEventListener('click',function(e){if(e.target.id==='iTirarLogo'){tirarLogo=true;logoNovo=null;urlLogo='';q('#iLogoInfo').textContent='A logo sai quando você salvar.';prev();}});
+  prev();
+  q('#iOk').addEventListener('click',async function(){
+    var bt=this,dd=dados();bt.disabled=true;
+    try{
+      if(logoNovo){var cam=dd.chave.toLowerCase()+'/logo_'+Date.now()+(logoNovo.type==='image/png'?'.png':'.jpg');
+        var up=await _sb.storage.from('disparos-marcas').upload(cam,logoNovo,{contentType:logoNovo.type,upsert:false});
+        if(up.error)throw new Error('a logo não subiu: '+up.error.message);dd.logo_caminho=cam;}
+      else if(tirarLogo)dd.logo_caminho='';
+      var r=await _sb.rpc('disparo_identidade_salvar',{p_id:novo?null:x.id,p_dados:dd});
+      if(r.error)throw r.error;
+      toast('Identidade salva.','success');j.fechar();await carregar();
+    }catch(e){toast('Não consegui salvar a identidade: '+erroTxt(e),'error');bt.disabled=false;}
   });
 }
 async function moverModelo(id,dir){
@@ -460,14 +559,16 @@ function desenharConfig(){
     '<div class="g3"><div class="campo"><label for="kMI">Manhã: de</label><input class="in" type="time" id="kMI" value="'+hh(c.manha_ini)+'"></div><div class="campo"><label for="kMF">até</label><input class="in" type="time" id="kMF" value="'+hh(c.manha_fim)+'"></div><div></div>'+
     '<div class="campo"><label for="kTI">Tarde: de</label><input class="in" type="time" id="kTI" value="'+hh(c.tarde_ini)+'"></div><div class="campo"><label for="kTF">até</label><input class="in" type="time" id="kTF" value="'+hh(c.tarde_fim)+'"></div>'+
     '<div class="campo"><label for="kMax">Tentativas por e-mail</label><input class="in" id="kMax" inputmode="numeric" value="'+esc(c.max_tentativas||3)+'"></div></div>'+
-    '<label class="chk"><input type="checkbox" id="kUteis"'+(c.so_dias_uteis?' checked':'')+'> Só em dias úteis (sem sábado, domingo e feriados liberados do Ponto)</label>'+
+    '<label class="chk"><input type="checkbox" id="kUteis"'+(c.so_dias_uteis?' checked':'')+'> Só em dias úteis (sem sábado, domingo e feriados liberados do Ponto). Desmarcado = todos os dias do ano (padrão desde 14/11)</label>'+
+    '<div class="g3"><div class="campo"><label for="kAnx">Limite dos anexos (MB por e-mail)</label><input class="in" id="kAnx" inputmode="numeric" value="'+esc(c.anexo_limite_mb||15)+'"></div></div>'+
     '<div class="dica">O limite de cada remetente vale por turno (manhã ou tarde) e fica no cadastro dele, em "Remetentes". O robô confere a fila a cada 10 minutos e espalha os envios até o fim do turno.</div>'+
     '<div><button class="btn btn-ouro" type="button" id="kSalvar">Salvar</button></div></div>'+
     '<div class="painel" style="margin-top:12px"><h2>Últimas rodadas</h2>'+(rod.length?'<table class="tab"><thead><tr><th>Quando</th><th>Origem</th><th>Enviados</th><th>Erros</th><th>Resultado</th></tr></thead><tbody>'+
-      rod.map(function(x){return '<tr><td>'+dh(x.inicio)+'</td><td>'+(x.origem==='manual'?'Rodar agora':'Robô')+'</td><td>'+x.enviados+'</td><td>'+x.erros+'</td><td'+(x.ok?'':' style="color:var(--danger,#e5484d)"')+'>'+esc(x.mensagem||'')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="dica">O robô ainda não rodou.</div>')+'</div>';
+      rod.map(function(x){return '<tr><td>'+dh(x.inicio)+'</td><td>'+(x.origem==='manual'?'À mão':'Robô')+'</td><td>'+x.enviados+'</td><td>'+x.erros+'</td><td'+(x.ok?'':' style="color:var(--danger,#e5484d)"')+'>'+esc(x.mensagem||'')+'</td></tr>';}).join('')+'</tbody></table>':'<div class="dica">O robô ainda não rodou.</div>')+'</div>';
   $('kMax').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,2);});
+  $('kAnx').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,2);});
   $('kSalvar').addEventListener('click',async function(){
-    var r=await _sb.rpc('disparo_config_salvar',{p:{ativo:$('kAtivo').checked,manha_ini:$('kMI').value,manha_fim:$('kMF').value,tarde_ini:$('kTI').value,tarde_fim:$('kTF').value,so_dias_uteis:$('kUteis').checked,max_tentativas:$('kMax').value}});
+    var r=await _sb.rpc('disparo_config_salvar',{p:{ativo:$('kAtivo').checked,manha_ini:$('kMI').value,manha_fim:$('kMF').value,tarde_ini:$('kTI').value,tarde_fim:$('kTF').value,so_dias_uteis:$('kUteis').checked,max_tentativas:$('kMax').value,anexo_limite_mb:$('kAnx').value}});
     if(r.error){toast('Não consegui salvar: '+erroTxt(r.error),'error');return;}
     toast('Configurações salvas.','success');await carregar();
   });
@@ -537,16 +638,36 @@ async function acaoFila(rpc,args,ok){
   if(ok)toast(typeof ok==='function'?ok(r.data):ok,'success');
   await carregar();return true;
 }
+/* 14/11 (Dr. Victor): o resultado do "Rodar agora" (e do "Enviar agora mesmo") fica À VISTA, no alto, até fechar */
+async function chamarRobo(corpo){
+  var r=await _sb.functions.invoke('disparos-email',{body:corpo});
+  if(r.error&&!r.data){var m=erroTxt(r.error);try{var ctx=r.error.context;if(ctx&&ctx.json){var j=await ctx.json();m=j.erro||m;}}catch(e){}throw new Error(m);}
+  return r.data||{};
+}
+function mostrarResultado(titulo,d,erro){
+  var el=$('resRodada'),cor,txt;
+  if(erro){cor='vermelho';txt='<b>'+esc(titulo)+': não deu certo.</b> '+esc(erro)+'<br>Nada foi enviado. Se continuar, avise o administrador com esta mensagem.';}
+  else if(d.ok===false){cor='vermelho';txt='<b>'+esc(titulo)+': falhou.</b> '+esc(d.erro||'sem mensagem');}
+  else if(!d.reservados){cor=d.fora_horario||d.sem_anexo?'amarelo':'';txt='<b>'+esc(titulo)+': nenhum e-mail saiu.</b> '+esc(d.mensagem||'')+(d.fora_horario&&D.dados&&D.dados.admin?' Para mandar um e-mail escolhido agora, use "Enviar agora mesmo" na linha dele.':'');}
+  else{cor=d.erros?'amarelo':'verde';txt='<b>'+esc(titulo)+': '+d.enviados+' enviado(s)'+(d.erros?', '+d.erros+' com erro':'')+'.</b> '+esc(d.mensagem||'')+
+    ((d.detalhe||[]).length?'<ul>'+d.detalhe.map(function(x){return '<li>'+esc(x.para)+': '+esc(x.erro)+'</li>';}).join('')+'</ul>':'');}
+  el.className='res-rodada'+(cor?' '+cor:'');
+  el.innerHTML='<div>'+txt+'<div class="dica" style="margin-top:4px">'+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'</div></div><button class="x" type="button" id="resFechar" aria-label="Fechar">✕</button>';
+  if(el.hidden){if(window.sagaRecolher&&!semMov())sagaRecolher(el,false);else el.hidden=false;}
+}
 async function rodarAgora(){
   var bt=$('btnAgora');bt.disabled=true;bt.textContent='Rodando…';
-  try{
-    var r=await _sb.functions.invoke('disparos-email',{body:{acao:'agora'}});
-    var d=r.data||{};
-    if(r.error&&!r.data){var m=erroTxt(r.error);try{var ctx=r.error.context;if(ctx&&ctx.json){var j=await ctx.json();m=j.erro||m;}}catch(e){}throw new Error(m);}
-    if(d.ok===false)toast('A rodada falhou: '+(d.erro||'sem mensagem'),'error');
-    else toast(d.mensagem||'Rodada feita.',d.erros?'warning':'success');
-  }catch(e){toast('Não consegui rodar agora: '+erroTxt(e),'error');}
+  try{mostrarResultado('Rodar agora',await chamarRobo({acao:'agora'}));}
+  catch(e){mostrarResultado('Rodar agora',{},erroTxt(e));}
   bt.disabled=false;bt.textContent='Rodar agora';await carregar();
+}
+async function enviarAgoraMesmo(id,bt){
+  var i=((D.dados&&D.dados.itens)||[]).filter(function(x){return x.id===id;})[0]||{};
+  if(!await confirmar('Enviar agora mesmo','O e-mail para '+(i.para||'este cliente')+' sai AGORA, fora do horário e sem contar o limite do turno.','Enviar agora',false))return;
+  if(bt){bt.disabled=true;bt.textContent='Enviando…';}
+  try{mostrarResultado('Enviar agora mesmo ('+(i.cliente||'')+')',await chamarRobo({acao:'enviar_um',id:id}));}
+  catch(e){mostrarResultado('Enviar agora mesmo',{},erroTxt(e));}
+  await carregar();
 }
 function marcarAba(){document.querySelectorAll('.pill[data-aba]').forEach(function(x){x.classList.toggle('active',x.dataset.aba===D.aba);});}
 function ligar(){
@@ -564,6 +685,11 @@ function ligar(){
     var t=e.target.closest('button');if(!t||!t.closest('.content'))return;
     var ds=t.dataset;
     if(ds.ver){if(D.abertos.has(ds.ver))D.abertos.delete(ds.ver);else D.abertos.add(ds.ver);desenharFila();return;}
+    if(ds.ja){enviarAgoraMesmo(ds.ja,t);return;}
+    if(t.id==='resFechar'){var rr=$('resRodada');if(window.sagaRecolher&&!semMov())sagaRecolher(rr,true);else rr.hidden=true;return;}
+    if(t.id==='bNovaIdent'){janelaIdentidade(null);return;}
+    if(ds.editarIdent){janelaIdentidade(identPorId(ds.editarIdent));return;}
+    if(ds.ativarIdent){var vi=ds.v==='1';if(!vi&&!await confirmar('Tirar da lista','A identidade sai da lista (o histórico fica). Modelos e remetentes que usavam ela passam a sair com a identidade padrão.','Tirar da lista',true))return;acaoFila('disparo_identidade_ativar',{p_id:ds.ativarIdent,p_ativo:vi},vi?'Voltou para a lista.':'Tirada da lista.');return;}
     if(ds.cancelar){if(!await confirmar('Cancelar e-mail','Este e-mail sai da fila e não será enviado.','Cancelar e-mail',true))return;acaoFila('disparo_cancelar',{p_ids:[ds.cancelar],p_motivo:null},'E-mail cancelado.');return;}
     if(ds.voltar){acaoFila('disparo_voltar_fila',{p_ids:[ds.voltar]},function(n){return n?'Voltou para a fila.':'Não voltou: o e-mail pediu para sair ou já está na fila.';});return;}
     if(ds.respondeu){acaoFila('disparo_marcar_respondido',{p_id:ds.respondeu,p_respondido:true,p_obs:null},'Marcado como respondido.');return;}

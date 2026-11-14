@@ -9,6 +9,10 @@
      SagaDisparos.blocoFicha(el, {secao, botao, pessoaId, pessoaNome, processos:[{id,rotulo}], processoAtivo:fn})
          -> histórico dos e-mails do cliente na ficha (na fila, enviado, erro com o motivo, respondido) + botão
      SagaDisparos.situacao(s) -> {rotulo, cor}
+   Parte 2 (14/11, bloco 216): a prévia mostra o e-mail JÁ VESTIDO no layout da identidade (o mesmo layout.js do robô,
+   supabase/functions/disparos-email/layout.js, carregado sob demanda: SagaDisparos.layout()) e, no envio de um cliente,
+   a lista dos documentos da pasta para escolher os anexos (o espelho do tribunal vem marcado quando o modelo pede).
+     SagaDisparos.previaHtml(alvo, dados) -> desenha o e-mail num quadro (iframe sem script) dentro de alvo
    Tudo grava pelas funções disparo_* do banco (que conferem a permissão disparos.enviar de novo).
    Movimento: curva cubic-bezier(.22,.78,.25,1), respeita "Efeitos de movimento" (saga-movimento = 'reduzido'). */
 (function(global){
@@ -37,6 +41,35 @@
   }
   function dataHora(d){ if (!d) return ''; var x = new Date(d); return x.toLocaleDateString('pt-BR') + ' ' + x.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
   function situacao(s){ return SIT[s] || { rotulo: s || '?', cor: 'cinza' }; }
+
+  /* ---------- layout do e-mail (o mesmo arquivo do robô) ---------- */
+  var promLayout = null;
+  function layout(){
+    if (global.SagaEmailLayout) return Promise.resolve(global.SagaEmailLayout);
+    if (promLayout) return promLayout;
+    var v = '';
+    try { var me = document.querySelector('script[src*="saga_disparos.js"]'); var m = me && /[?&]v=(\d+)/.exec(me.getAttribute('src')); if (m) v = m[1]; } catch(e) {}
+    promLayout = new Promise(function(ok, falha){
+      var sc = document.createElement('script');
+      sc.src = 'supabase/functions/disparos-email/layout.js' + (v ? '?v=' + v : '');
+      sc.onload = function(){ global.SagaEmailLayout ? ok(global.SagaEmailLayout) : falha(new Error('o layout do e-mail não carregou')); };
+      sc.onerror = function(){ promLayout = null; falha(new Error('não consegui carregar o layout do e-mail (layout.js)')); };
+      document.head.appendChild(sc);
+    });
+    return promLayout;
+  }
+  function tamanhoTxt(b){ b = Number(b || 0); return b >= 1048576 ? (b / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB'; }
+  /* desenha o e-mail montado num quadro sem script (o que o cliente recebe) */
+  async function previaHtml(alvo, d){
+    if (!alvo) return;
+    try {
+      var L = await layout();
+      var m = L.montar(d);
+      var fr = alvo.querySelector('iframe.sd-email');
+      if (!fr) { alvo.innerHTML = '<iframe class="sd-email" sandbox="allow-popups allow-popups-to-escape-sandbox" title="Prévia do e-mail" loading="lazy"></iframe>'; fr = alvo.querySelector('iframe'); }
+      fr.srcdoc = m.html.replace('<head>', '<head><base target="_blank">');
+    } catch(e) { alvo.innerHTML = '<div class="sd-erro">Não consegui montar a prévia do e-mail: ' + esc(erroTxt(e)) + '</div>'; }
+  }
 
   /* ---------- estilo (só variáveis do tema) ---------- */
   function css(){
@@ -82,7 +115,14 @@
       '.sd-erro{font-size:11.5px;line-height:1.5;color:var(--danger,#e5484d)}' +
       '.sd-pulados{font-size:11px;line-height:1.5;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--warning,#d97706) 10%,transparent)}' +
       '.sd-pulados li{margin-left:16px}' +
-      '@media (max-width:600px){.sd-ov{padding:8px;align-items:flex-end}.sd-g2{grid-template-columns:1fr}.sd-pe .btn{flex:1 1 auto}}';
+      '.sd-email{display:block;width:100%;height:520px;border:0;border-radius:10px;background:#EEF1F5}' +
+      '.sd-docs{display:flex;flex-direction:column;gap:4px;max-height:190px;overflow:auto;border:1px solid var(--border-soft,var(--border));border-radius:10px;padding:6px}' +
+      '.sd-doc{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:start;font-size:11.5px;line-height:1.4;padding:5px 6px;border-radius:8px;cursor:pointer}' +
+      '.sd-doc:hover{background:color-mix(in srgb,var(--text) 5%,transparent)}.sd-doc small{display:block;color:var(--muted);font-size:10px}' +
+      '.sd-doc .sd-tam{font-size:10px;color:var(--muted);white-space:nowrap}' +
+      '.sd-tag{display:inline-block;font-size:9.5px;padding:1px 6px;border-radius:999px;margin-left:5px;border:1px solid color-mix(in srgb,var(--gold) 55%,transparent);color:var(--gold)}' +
+      '.sd-anx-res{font-size:11px;line-height:1.5;color:var(--muted)}.sd-anx-res b{color:var(--text);font-weight:600}.sd-anx-res.amarelo{color:var(--warning,#d97706)}.sd-anx-res.vermelho{color:var(--danger,#e5484d)}' +
+      '@media (max-width:600px){.sd-email{height:460px}.sd-ov{padding:8px;align-items:flex-end}.sd-g2{grid-template-columns:1fr}.sd-pe .btn{flex:1 1 auto}}';
     document.head.appendChild(s);
   }
 
@@ -138,6 +178,7 @@
       '<div class="sd-g2"><div class="sd-campo"><label for="sdModelo">Modelo</label><select class="sd-in" id="sdModelo">' + optsMod + '</select></div>' +
       '<div class="sd-campo"><label for="sdConta">Sai por (remetente)</label><select class="sd-in" id="sdConta">' + optsConta + '</select></div></div>' +
       (um ? '<div class="sd-campo"><label for="sdEmail">E-mail do cliente</label><input class="sd-in" id="sdEmail" type="email" autocomplete="off" placeholder="o e-mail cadastrado na ficha"><div class="sd-dica">Vem da ficha/Localização. Trocar aqui vale só para este envio.</div></div>' : '') +
+      (um ? '<div class="sd-campo"><label>Anexos (documentos da pasta do cliente)</label><div id="sdDocs"><div class="sd-dica">Lendo os documentos…</div></div><div class="sd-anx-res" id="sdAnxRes"></div></div>' : '') +
       '<div class="sd-campo"><label for="sdQuando">Quando</label><select class="sd-in" id="sdQuando"><option value="">Na próxima rodada</option><option value="data">A partir de uma data e hora…</option></select>' +
       '<input class="sd-in" id="sdData" type="datetime-local" hidden><div class="sd-dica">' + quando + '</div></div>' +
       '<div id="sdPrevia"><div class="sd-dica">Montando a prévia…</div></div><div id="sdRes" hidden></div>';
@@ -146,36 +187,66 @@
       corpo, '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="sdOk"' + (modelos.length ? '' : ' disabled') + '>Pôr na fila</button>');
     var q = j.q;
     var procAtual = function(){ var s = q('#sdProc'); return s ? s.value : (itens[0].processo_id || null); };
-    var tPrev = null, primeira = true;
+    var tPrev = null, primeira = true, docs = [], mexeuDocs = false, marcados = new Set();
+    function modeloEsc(){ var id = q('#sdModelo').value; return id ? modelos.filter(function(m){ return m.id === id; })[0] : null; }
+    function anexosEscolhidos(){ return um && mexeuDocs ? Array.from(marcados) : null; }
+    function desenharDocs(regra){
+      var el = q('#sdDocs'); if (!el) return;
+      if (!mexeuDocs) { marcados = new Set(regra === 'espelho' ? docs.filter(function(d){ return d.espelho && (d.deste_processo || !procAtual()); }).map(function(d){ return d.id; }) : []); }
+      if (!docs.length) { el.innerHTML = '<div class="sd-dica">Nenhum documento na pasta deste cliente.</div>'; return; }
+      el.innerHTML = '<div class="sd-docs">' + docs.map(function(d){
+        return '<label class="sd-doc"><input type="checkbox" data-sd-doc="' + esc(d.id) + '"' + (marcados.has(d.id) ? ' checked' : '') + '><span>' + esc(d.nome) +
+          (d.espelho ? '<span class="sd-tag">espelho</span>' : '') + '<small>' + esc((d.pasta || 'sem pasta') + (d.processo ? ' · ' + d.processo : '')) + '</small></span><span class="sd-tam">' + tamanhoTxt(d.tamanho) + '</span></label>';
+      }).join('') + '</div>';
+    }
+    async function carregarDocs(){
+      if (!um) return;
+      try { var r = await sb().rpc('disparo_documentos_cliente', { p_pessoa: itens[0].pessoa_id, p_processo: procAtual() }); if (r.error) throw r.error; docs = r.data || []; }
+      catch(e) { var el = q('#sdDocs'); if (el) el.innerHTML = '<div class="sd-erro">Não consegui ler os documentos do cliente: ' + esc(erroTxt(e)) + '</div>'; return; }
+      desenharDocs(null);
+    }
     async function previa(){
       var alvo = q('#sdPrevia'); if (!alvo) return;
       var it = itens[0];
       try {
         var r = await sb().rpc('disparo_previa', { p_pessoa: it.pessoa_id, p_processo: um ? procAtual() : (it.processo_id || null),
-          p_modelo: q('#sdModelo').value || null, p_conta: q('#sdConta').value || null, p_email: um ? (q('#sdEmail').value.trim() || null) : null });
+          p_modelo: q('#sdModelo').value || null, p_conta: q('#sdConta').value || null, p_email: um ? (q('#sdEmail').value.trim() || null) : null, p_anexos: anexosEscolhidos() });
         if (r.error) throw r.error;
         var p = r.data || {};
         if (p.erro) { alvo.innerHTML = '<div class="sd-erro">' + esc(p.erro) + '</div>'; return; }
         if (um && primeira && p.para_email && !q('#sdEmail').value) q('#sdEmail').value = p.para_email;
         primeira = false;
+        if (um && !mexeuDocs) { desenharDocs(p.anexo_regra); }
+        var anx = p.anexos || [], res = q('#sdAnxRes');
+        if (res) {
+          res.className = 'sd-anx-res' + (p.acima_limite ? ' vermelho' : p.falta_espelho ? ' amarelo' : '');
+          res.innerHTML = p.falta_espelho ? 'O modelo pede o <b>espelho do tribunal</b> e a pasta não tem: o e-mail fica na fila (amarelo) até o espelho ser guardado.'
+            : anx.length ? '<b>' + anx.length + '</b> anexo(s), ' + tamanhoTxt(p.anexos_total) + ' de ' + p.anexos_limite_mb + ' MB' + (p.acima_limite ? ': <b>acima do limite</b>, desmarque algum.' : '.') + (mexeuDocs ? '' : (p.anexo_regra === 'espelho' ? ' (o espelho, pela regra do modelo)' : ''))
+            : 'Sem anexo.';
+        }
         alvo.innerHTML = (um ? '' : '<div class="sd-dica">Prévia do 1º cliente (' + esc(it.nome || '') + '):</div>') +
           '<div class="sd-previa"><div class="sd-previa-cab"><b>Para:</b> ' + esc(p.para_email || '— sem e-mail —') + '<br><b>Assunto:</b> ' + esc(p.assunto) +
-          '<br><b>Modelo:</b> ' + esc(p.modelo) + '</div><div class="sd-previa-corpo">' + esc(p.corpo) + '</div></div>' +
+          '<br><b>Modelo:</b> ' + esc(p.modelo) + (p.identidade ? ' · <b>Identidade:</b> ' + esc(p.identidade.chave) : '') + (anx.length ? ' · <b>Anexos:</b> ' + anx.map(function(a){ return esc(a.nome); }).join(', ') : '') + '</div><div class="sd-previa-quadro"></div></div>' +
           ((p.avisos || []).length ? '<div class="sd-avisos" style="margin-top:8px">' + p.avisos.map(function(a){ return '<div>' + esc(a) + '</div>'; }).join('') + '</div>' : '');
+        previaHtml(alvo.querySelector('.sd-previa-quadro'), { assunto: p.assunto, corpo: p.corpo, identidade: p.identidade, remetente: p.remetente,
+          remetente_email: p.remetente_email, whatsapp: p.whatsapp, anexos: anx });
       } catch(e) { alvo.innerHTML = '<div class="sd-erro">Não consegui montar a prévia: ' + esc(erroTxt(e)) + '</div>'; }
     }
     function adiar(){ clearTimeout(tPrev); tPrev = setTimeout(previa, 350); }
-    ['#sdModelo', '#sdConta', '#sdProc'].forEach(function(s){ var el = q(s); if (el) el.addEventListener('change', previa); });
+    ['#sdModelo', '#sdConta'].forEach(function(s){ var el = q(s); if (el) el.addEventListener('change', function(){ if (s === '#sdModelo') mexeuDocs = false; previa(); }); });
+    if (q('#sdProc')) q('#sdProc').addEventListener('change', function(){ mexeuDocs = false; carregarDocs().then(previa); });
+    j.ov.addEventListener('change', function(e){ var c = e.target.closest('[data-sd-doc]'); if (!c) return; mexeuDocs = true; if (c.checked) marcados.add(c.dataset.sdDoc); else marcados.delete(c.dataset.sdDoc); adiar(); });
     if (um) q('#sdEmail').addEventListener('input', adiar);
     q('#sdQuando').addEventListener('change', function(){ q('#sdData').hidden = this.value !== 'data'; });
-    previa();
+    carregarDocs().then(previa);
     q('#sdOk').addEventListener('click', async function(){
       var bt = this; var aPartir = null;
       if (q('#sdQuando').value === 'data') {
         var v = q('#sdData').value; if (!v) { aviso('Escolha a data e a hora.', 'alerta'); return; }
         aPartir = new Date(v).toISOString();
       }
-      var lista = itens.map(function(it){ return { pessoa_id: it.pessoa_id, processo_id: um ? procAtual() : (it.processo_id || null), email: um ? (q('#sdEmail').value.trim() || null) : null }; });
+      var lista = itens.map(function(it){ var o2 = { pessoa_id: it.pessoa_id, processo_id: um ? procAtual() : (it.processo_id || null), email: um ? (q('#sdEmail').value.trim() || null) : null };
+        var ax = anexosEscolhidos(); if (ax) o2.anexos = ax; return o2; });
       bt.disabled = true; bt.textContent = 'Pondo na fila…';
       try {
         var r = await sb().rpc('disparo_por_na_fila', { p_itens: lista, p_modelo: q('#sdModelo').value || null, p_conta: q('#sdConta').value || null, p_a_partir: aPartir, p_origem: 'tela' });
@@ -201,7 +272,7 @@
   function seloHtml(it){
     var s = situacao(it.situacao), cor = s.cor;
     if (it.situacao === 'na_fila' && it.proxima_tentativa_em) cor = 'amarelo';
-    return '<span class="sd-selo ' + cor + '">' + esc(s.rotulo) + '</span>';
+    return '<span class="sd-selo ' + cor + '">' + esc(it.situacao === 'na_fila' && it.erro_tipo === 'sem_anexo' ? 'Sem espelho na pasta' : s.rotulo) + '</span>';
   }
   function itemHtml(it){
     var quando = it.situacao === 'enviado' || it.situacao === 'respondido' ? 'Enviado em ' + dataHora(it.enviado_em) + (it.remetente ? ' por ' + it.remetente : '')
@@ -211,6 +282,8 @@
       ? '<div class="sd-it-erro' + (it.situacao === 'na_fila' ? ' amarelo' : '') + '">' + esc(it.erro) + '</div>' : '';
     return '<div class="sd-it" data-sd-it="' + esc(it.id) + '" tabindex="0" role="button" aria-expanded="false"><div class="sd-it-cab"><div class="sd-it-tit">' + esc(it.assunto || it.modelo || 'E-mail') + '</div>' + seloHtml(it) + '</div>' +
       '<div class="sd-it-sub">' + esc(quando) + ' · para ' + esc(it.para) + (it.criado_por ? ' · pôs na fila: ' + esc(it.criado_por) : '') + (it.respondido_em ? ' · respondeu em ' + esc(dataHora(it.respondido_em)) : '') + '</div>' + erro +
+      ((it.anexos || []).length ? '<div class="sd-it-sub">Anexos: ' + it.anexos.map(function(a){ return esc(a.nome); }).join(', ') + '</div>'
+        : it.anexos_escolhidos ? '<div class="sd-it-sub">' + it.anexos_escolhidos + ' anexo(s) escolhido(s)</div>' : it.anexo_regra === 'espelho' && it.situacao === 'na_fila' ? '<div class="sd-it-sub">Vai com o espelho do tribunal da pasta</div>' : '') +
       '<div class="sd-it-corpo" hidden>' + esc(it.corpo || 'O texto é montado na hora do envio, com o modelo "' + (it.modelo || '') + '".') + '</div></div>';
   }
   async function blocoFicha(el, ctx){
@@ -249,6 +322,7 @@
 
   global.SagaDisparos = {
     configurar: function(o){ cfg.toast = (o && o.toast) || null; },
-    enviar: enviar, blocoFicha: blocoFicha, situacao: situacao, css: css, abrirJanela: abrirJanela
+    enviar: enviar, blocoFicha: blocoFicha, situacao: situacao, css: css, abrirJanela: abrirJanela,
+    layout: layout, previaHtml: previaHtml, tamanhoTxt: tamanhoTxt
   };
 })(window);

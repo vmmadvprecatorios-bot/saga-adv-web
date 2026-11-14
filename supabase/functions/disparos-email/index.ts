@@ -7,11 +7,20 @@
 //  - rotina: agendador disparos-email-rodada (a cada 10 min, só quando há trabalho), cabeçalho x-saga-chave = saga_chave_rotina()
 //  - agora: pessoa logada com disparos.enviar ("Rodar agora" na tela; respeita horário e limites)
 //  - testar: pessoa logada (dono do remetente ou administrador) manda um e-mail de teste para o próprio e-mail
+//  - teste_modelo: "Enviar um teste para mim" na janela do modelo (cliente inventado, layout de verdade, para o e-mail de quem está logado)
+//  - enviar_um: "Enviar agora mesmo" (só o administrador; um item escolhido, fora do horário e da cota)
+// Parte 2 (14/11, bloco 216): o e-mail sai vestido no layout da IDENTIDADE (layout.js, o mesmo da prévia da tela) e com os
+// ANEXOS (espelho do tribunal achado na pasta do cliente ou os documentos escolhidos na ficha), baixados do lugar privado
+// documentos-clientes e anexados ao e-mail (nunca link público).
 // Erros sempre à vista: cada envio grava o resultado (disparo_resultado) com o motivo em português; senha recusada pausa o
 // remetente (vermelho + sino), limite do provedor pausa até o dia seguinte (amarelo), endereço recusado fica em "Com erro".
 // Atenção: o Supabase bloqueia as portas 25 e 587; os provedores usam a 465 (SSL). Outlook/Hotmail só aceita 587.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
+import { Buffer } from "node:buffer";
+import "./layout.js";
+// deno-lint-ignore no-explicit-any
+const Layout = (globalThis as any).SagaEmailLayout;
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -25,25 +34,46 @@ const TEMPO_MAX_MS = 110_000;      // a função tem ~150 s; o que sobrar volta 
 const PAUSA_ENTRE_MS = 1500;       // espaço entre dois e-mails do mesmo remetente
 
 const json = (o: unknown, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
-const esc = (t: string) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// ---------- e-mail montado: texto simples do modelo -> HTML leve (sem imagens, para não cair no spam) ----------
-function linkar(t: string) {
-  return t.replace(/(https?:\/\/[^\s<]+)/g, (u) => `<a href="${u}" style="color:#1f4f9c">${u}</a>`)
-    .replace(/\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g, (e) => `<a href="mailto:${e}" style="color:#1f4f9c">${e}</a>`);
+// ---------- e-mail montado no layout da identidade (layout.js) + anexos ----------
+// deno-lint-ignore no-explicit-any
+const logos = new Map<string, any>();
+// deno-lint-ignore no-explicit-any
+async function logoAnexo(ident: any) {
+  const cam = ident?.logo_caminho; if (!cam) return null;
+  if (logos.has(cam)) return logos.get(cam);
+  const r = await admin.storage.from("disparos-marcas").download(cam);
+  const v = r.error || !r.data ? null : { filename: "logo" + (cam.endsWith(".png") ? ".png" : ".jpg"), content: Buffer.from(await r.data.arrayBuffer()), cid: "logo@saga", contentDisposition: "inline" };
+  logos.set(cam, v); return v;
 }
-function negrito(t: string) { return t.replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>"); }
-function montarHtml(corpo: string, assinatura: string, remetente: string) {
-  const blocos = String(corpo || "").replace(/\r/g, "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
-  const paras = blocos.map((p) => `<p style="margin:0 0 14px">${negrito(linkar(esc(p))).replace(/\n/g, "<br>")}</p>`).join("");
-  const ass = assinatura ? `<p style="margin:18px 0 0;color:#334155">${linkar(esc(assinatura)).replace(/\n/g, "<br>")}</p>` : "";
-  const rodape = `<p style="margin:26px 0 0;font-size:11.5px;color:#64748b">Se não quiser mais receber nossos e-mails, responda a esta mensagem com a palavra SAIR.</p>`;
-  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14.5px;line-height:1.55;color:#1e293b;max-width:640px">${paras}${ass}${rodape}</div>`;
+// deno-lint-ignore no-explicit-any
+async function montarEmail(it: any, c: Conta) {
+  const logo = await logoAnexo(it.identidade);
+  const m = Layout.montar({ assunto: it.assunto, corpo: it.corpo, identidade: it.identidade, remetente: c.nome || it.identidade?.nome,
+    remetente_email: c.email, assinatura: c.assinatura, whatsapp: it.whatsapp, anexos: it.anexos || [], logoSrc: logo ? "cid:logo@saga" : "" });
+  // deno-lint-ignore no-explicit-any
+  const anexos: any[] = logo ? [logo] : [];
+  for (const a of (it.anexos || [])) {
+    if (a.conteudo) { anexos.push({ filename: a.nome, content: a.conteudo }); continue; }
+    const r = await admin.storage.from("documentos-clientes").download(a.caminho);
+    if (r.error || !r.data) throw Object.assign(new Error(`Não consegui ler o anexo "${a.nome}" na pasta do cliente (${r.error?.message || "arquivo não encontrado"}).`), { code: "ANEXO" });
+    anexos.push({ filename: a.nome, content: Buffer.from(await r.data.arrayBuffer()) });
+  }
+  return { html: m.html, text: m.texto, attachments: anexos };
 }
-function montarTexto(corpo: string, assinatura: string) {
-  return String(corpo || "").replace(/\*\*([^*\n]+)\*\*/g, "$1") + (assinatura ? "\n\n" + assinatura : "") +
-    "\n\nSe não quiser mais receber nossos e-mails, responda a esta mensagem com a palavra SAIR.";
+// PDF pequeno de exemplo para o teste do modelo com "anexar o espelho"
+function pdfExemplo() {
+  const txt = "BT /F1 18 Tf 72 760 Td (Espelho do tribunal - EXEMPLO) Tj 0 -28 Td /F1 12 Tf (Arquivo de teste do SAGA: no envio de verdade vai o espelho da pasta do cliente.) Tj ET";
+  const objs = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+    `<< /Length ${txt.length} >>\nstream\n${txt}\nendstream`, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"];
+  let out = "%PDF-1.4\n"; const off: number[] = [];
+  objs.forEach((o, i) => { off.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
+  const x = out.length;
+  out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n` + off.map((o) => String(o).padStart(10, "0") + " 00000 n \n").join("") +
+    `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`;
+  return Buffer.from(out, "latin1");
 }
 
 // ---------- erro do servidor de e-mail -> tipo + motivo em português ----------
@@ -62,6 +92,7 @@ function classificar(e: any): { tipo: string; msg: string } {
   if (code === "EENVELOPE" || /5\.1\.1|5\.1\.0|user unknown|does not exist|no such user|recipient.*(rejected|invalid|not found)|mailbox (unavailable|not found)|invalid recipient|address rejected/i.test(txt)) {
     return { tipo: "destinatario", msg: base };
   }
+  if (code === "ANEXO") return { tipo: "passageiro", msg: String(e?.message || e) };
   if (/ETIMEDOUT|ECONNECTION|ESOCKET|ECONNRESET|EDNS|ECONNREFUSED|EPROTOCOL|timeout|greeting never received/i.test(code + " " + txt) || (cod >= 400 && cod < 500)) {
     return { tipo: "passageiro", msg: "Falha de ligação com o servidor de e-mail (passageira). " + base + (/ECONNREFUSED|ETIMEDOUT/.test(code + txt) ? " · Se o provedor só aceita a porta 587, ele não funciona daqui (o servidor bloqueia a 587): use a 465 (SSL)." : "") };
   }
@@ -82,20 +113,21 @@ async function transporte(c: Conta) {
 function cabecalhoDe(c: Conta) { return c.nome ? `"${c.nome.replace(/"/g, "'")}" <${c.email}>` : c.email; }
 
 // ---------- uma rodada ----------
-async function rodada(origem: string) {
+// deno-lint-ignore no-explicit-any
+async function rodada(origem: string, reservar?: () => Promise<any>) {
   const inicio = new Date().toISOString(), t0 = Date.now();
   let reservados = 0, enviados = 0, erros = 0;
   const detalhe: Record<string, unknown>[] = [];
   try {
-    const r = await admin.rpc("disparo_reservar", { p_max: MAX_POR_RODADA });
-    if (r.error) throw new Error("disparo_reservar: " + r.error.message);
+    const r = reservar ? await reservar() : await admin.rpc("disparo_reservar", { p_max: MAX_POR_RODADA });
+    if (r.error) { if (reservar) return { ok: false, reservados: 0, enviados: 0, erros: 0, erro: r.error.message }; throw new Error("disparo_reservar: " + r.error.message); }
     // deno-lint-ignore no-explicit-any
     const itens: any[] = (r.data && r.data.itens) || [];
     reservados = itens.length;
     if (!itens.length) {
       const msg = (r.data && r.data.motivo) || "Nada para mandar.";
       if (origem !== "rotina") await admin.rpc("disparo_execucao_registrar", { p_inicio: inicio, p_origem: origem, p_reservados: 0, p_enviados: 0, p_erros: 0, p_ok: true, p_mensagem: msg });
-      return { ok: true, reservados: 0, enviados: 0, erros: 0, mensagem: msg };
+      return { ok: true, reservados: 0, enviados: 0, erros: 0, mensagem: msg, fora_horario: !!(r.data && r.data.fora_horario), sem_anexo: (r.data && r.data.sem_anexo) || 0 };
     }
     // agrupa por remetente (cada um com a sua ligação; se o login cair, devolve o resto dele)
     // deno-lint-ignore no-explicit-any
@@ -115,9 +147,10 @@ async function rodada(origem: string) {
           continue;
         }
         try {
+          const em = await montarEmail(it, c);
           const info = await t.sendMail({
             from: cabecalhoDe(c), to: it.para, subject: it.assunto, replyTo: c.email,
-            text: montarTexto(it.corpo, c.assinatura), html: montarHtml(it.corpo, c.assinatura, c.nome),
+            text: em.text, html: em.html, attachments: em.attachments,
             headers: { "List-Unsubscribe": `<mailto:${c.email}?subject=SAIR>` },
           });
           await admin.rpc("disparo_resultado", { p_id: it.id, p_tipo: "ok", p_message_id: info?.messageId || null });
@@ -133,11 +166,12 @@ async function rodada(origem: string) {
       }
       try { t?.close?.(); } catch { /* nada */ }
     }
-    const msg = `${enviados} enviado(s)` + (erros ? `, ${erros} com erro` : "") + ` de ${reservados} reservado(s).`;
+    const semAnx = (r.data && r.data.sem_anexo) || 0;
+    const msg = `${enviados} enviado(s)` + (erros ? `, ${erros} com erro` : "") + ` de ${reservados} reservado(s).` + (semAnx ? ` ${semAnx} esperando o espelho na pasta do cliente.` : "");
     await admin.rpc("disparo_execucao_registrar", { p_inicio: inicio, p_origem: origem, p_reservados: reservados, p_enviados: enviados, p_erros: erros,
       p_ok: true, p_mensagem: msg, p_detalhe: detalhe.length ? { erros: detalhe } : null });
     if (erros) await admin.rpc("disparos_avisar");
-    return { ok: true, reservados, enviados, erros, mensagem: msg };
+    return { ok: true, reservados, enviados, erros, mensagem: msg, detalhe, sem_anexo: semAnx };
   } catch (e) {
     const msg = "A rodada falhou: " + String((e as Error)?.message || e).slice(0, 500);
     await admin.rpc("disparo_execucao_registrar", { p_inicio: inicio, p_origem: origem, p_reservados: reservados, p_enviados: enviados, p_erros: erros, p_ok: false, p_mensagem: msg });
@@ -155,12 +189,34 @@ async function testar(user: any, conta: string) {
     const t = await transporte(c);
     await t.verify();
     const corpo = `Teste do SAGA: o e-mail de envio ${c.email} está funcionando.\n\nOs disparos de e-mail da Captação vão sair por ele, dentro dos limites cadastrados.`;
-    await t.sendMail({ from: cabecalhoDe(c), to: c.para, subject: "[SAGA] Teste do e-mail de envio", text: montarTexto(corpo, c.assinatura), html: montarHtml(corpo, c.assinatura, c.nome) });
+    const id = await admin.rpc("disparo_identidade_json", { p_id: (await admin.rpc("disparo_identidade_id", { p_modelo: null, p_conta: c.id })).data });
+    const em = await montarEmail({ assunto: "Teste do e-mail de envio", corpo, identidade: id.data || {}, anexos: [] }, c);
+    await t.sendMail({ from: cabecalhoDe(c), to: c.para, subject: "[SAGA] Teste do e-mail de envio", text: em.text, html: em.html, attachments: em.attachments });
     await admin.rpc("disparo_conta_teste_resultado", { p_conta: c.id, p_ok: true });
     return { ok: true, para: c.para };
   } catch (e) {
     const k = classificar(e);
     await admin.rpc("disparo_conta_teste_resultado", { p_conta: c.id, p_ok: false, p_erro: k.msg, p_tipo: k.tipo });
+    return { ok: false, erro: k.msg, tipo: k.tipo };
+  }
+}
+
+// ---------- "Enviar um teste para mim" (modelo, cliente inventado) ----------
+// deno-lint-ignore no-explicit-any
+async function testeModelo(user: any, corpo: any) {
+  const r = await user.rpc("disparo_modelo_teste", { p_conta: corpo.conta, p_assunto: corpo.assunto || "", p_corpo: corpo.corpo || "",
+    p_identidade: corpo.identidade || null, p_anexo_regra: corpo.anexo_regra || "nenhum" });
+  if (r.error) return { ok: false, erro: r.error.message };
+  const d = r.data, c = d.conta as Conta;
+  try {
+    const t = await transporte(c);
+    const anexos = d.anexo_exemplo ? [{ nome: "Espelho do tribunal (EXEMPLO).pdf", conteudo: pdfExemplo(), tamanho: 900 }] : [];
+    const em = await montarEmail({ assunto: d.assunto, corpo: d.corpo, identidade: d.identidade, whatsapp: d.whatsapp, anexos }, c);
+    await t.sendMail({ from: cabecalhoDe(c), to: d.para, subject: d.assunto, replyTo: c.email, text: em.text, html: em.html, attachments: em.attachments });
+    try { t.close(); } catch { /* nada */ }
+    return { ok: true, para: d.para, por: c.email };
+  } catch (e) {
+    const k = classificar(e);
     return { ok: false, erro: k.msg, tipo: k.tipo };
   }
 }
@@ -185,6 +241,14 @@ Deno.serve(async (req) => {
       const p = await user.rpc("disparos_pode_enviar");
       if (p.error || !p.data) return json({ ok: false, erro: "Você não tem permissão para os disparos de e-mail." }, 403);
       return json(await rodada("manual"));
+    }
+    if (acao === "enviar_um") {
+      if (!corpo.id) return json({ ok: false, erro: "Escolha o e-mail." }, 400);
+      return json(await rodada("manual", () => user.rpc("disparo_reservar_um", { p_id: String(corpo.id) })));
+    }
+    if (acao === "teste_modelo") {
+      if (!corpo.conta) return json({ ok: false, erro: "Escolha por qual remetente o teste sai." }, 400);
+      return json(await testeModelo(user, corpo));
     }
     if (acao === "testar") {
       if (!corpo.conta) return json({ ok: false, erro: "Informe o remetente." }, 400);
