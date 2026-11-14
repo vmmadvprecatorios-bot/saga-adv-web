@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.4",
+  versao: "3.5",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.5", data: "14/11/2026", mudou: "Disparos de e-mail v2: três identidades (VMM, ANCREF, Sarmento) com logo e assinatura certa (ANCREF sempre em nome da instituição), caixa e modelo da mesma identidade, botão \"Não quero mais receber estes e-mails\" de 1 clique, linha de prévia, quadro \"Seu processo\", próximo passo, aviso antigolpe, como funciona, perguntas rápidas e transparência; pastas Pesquisa > Busca e Espelhos do TRF criadas sozinhas na ficha." },
     { versao: "3.4", data: "14/11/2026", mudou: "Disparos de e-mail: o e-mail sai bonito (faixa com a marca, destaque, botões Falar no WhatsApp e Responder, assinatura e rodapé), com IDENTIDADES (VMM, ANCREF...); anexo do espelho do tribunal achado sozinho na pasta do cliente (ou documentos escolhidos na ficha); Enviar um teste para mim; resultado do Rodar agora à vista e Enviar agora mesmo (administrador); disparos todos os dias; o código do cliente não vai mais no e-mail." },
     { versao: "3.3", data: "14/11/2026", mudou: "Situação da ação \"Protocolar novamente\" (processo extinto que precisa de novo protocolo): tarefa automática para o responsável e atalho \"Protocolar novamente (N)\" na planilha do Jurídico." },
     { versao: "3.2", data: "14/11/2026", mudou: "Menu da esquerda: os grupos (Processos, Meu dia, Comunicação, Gestão, Administração) também abrem e fecham com o menu recolhido (a linha fina com a setinha) e com o menu aberto por cima pelo mouse." },
@@ -679,6 +680,9 @@ window.SAGA_MANUAL = {
             "O provedor recusou por excesso de envios? O remetente fica **pausado até o dia seguinte** (amarelo) e os e-mails saem pelos outros. Senha recusada: fica **vermelho**, o sino avisa o dono e o administrador; corrija a senha e [[Testar]]. [[Pausar até amanhã]] e [[Retomar]] também existem.",
             "**Modelos** (só o administrador): [[+ Novo modelo]] com nome, tese, **identidade** (a marca do e-mail: VMM, ANCREF...), **Anexar documentos do cliente** (\"O(s) espelho(s) do tribunal\"), assunto e texto. Os botões de campo põem {nome}, {primeiro_nome}, {tese}, {numero_processo}, {orgao}, {cargo}, {remetente}... No texto: linha em branco separa parágrafos, **\*\*negrito\*\***, parágrafo começando com **>** vira o destaque e uma 1ª linha com **#** vira o título. A prévia mostra o e-mail pronto, com um cliente inventado; [[Enviar um teste para mim]] manda esse e-mail para a sua caixa (não entra na fila). As setinhas ▲▼ mudam a ordem; o modelo \"Todas as teses\" vale quando a tese não tem modelo próprio.",
             "**Identidades** (no alto da aba Modelos; só o administrador): nome, frase, cores, logo (opcional, PNG/JPG até 300 KB, vai anexada ao e-mail), WhatsApp do botão, site e rodapé. Vale a identidade do modelo; se ele não escolhe, a do remetente; senão a padrão. No remetente dá para pôr o **WhatsApp** de quem envia (o botão do e-mail usa ele).",
+            "**Três identidades** (14/11): cada CAIXA e cada MODELO são de uma identidade (VMM, ANCREF ou Sarmento); o modelo só sai por caixa da mesma identidade. VMM e Sarmento assinam como o Dr. Victor (advogado, OAB); a **ANCREF** sai sempre em nome da instituição (\"Equipe de Atendimento ANCREF\", com o primeiro nome de quem atende, se a caixa tiver): o sistema recusa nome de advogado, OAB, \"Victor\" ou \"escritório\" nos textos da ANCREF.",
+            "**No modelo**: **Linha de prévia** (o texto que aparece ao lado do assunto na caixa de entrada), **Próximo passo** (quadro em destaque) e **Mostrar o quadro \"Seu processo\"** (número, tribunal, situação, último andamento do CNJ e \"Consultar no tribunal\"; só clientes VMM/Sarmento). Na **identidade**: CNPJ, Instagram, por que a pessoa recebeu (LGPD), aviso antigolpe, \"Como funciona\" em 3 passos e 3 perguntas rápidas (o que ficar em branco não aparece).",
+            "Todo e-mail termina com \"Se esta mensagem chegou por engano, por favor desconsidere\" e o botão **Não quero mais receber estes e-mails**: um clique, sem login, e o endereço vai para **Não enviar mais** (vale para todas as identidades e caixas). O \"responda SAIR\" continua.",
             "**Configurações** (só o administrador): ligar/desligar o robô, horário da manhã e da tarde, \"só dias úteis\" (DESMARCADO desde 14/11: todos os dias), tentativas por e-mail e o limite dos anexos (15 MB); e a lista das últimas rodadas."
           ],
           img: "disparos_enviar",
