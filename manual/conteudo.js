@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.0",
+  versao: "3.1",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.1", data: "14/11/2026", mudou: "SAGA no Claude: guardar na pasta do cliente o documento que você passa ao Claude na conversa (o Claude manda um link do SAGA; você toca, escolhe o arquivo no celular ou no computador e ele cai direto na ficha, na pasta certa)." },
     { versao: "3.0", data: "14/11/2026", mudou: "Tela nova Disparos de e-mail (menu Processos): escolher clientes, pôr na fila e o SAGA manda sozinho o e-mail com o modelo da tese, pelos remetentes cadastrados (Gmail, Locaweb, Hostinger...), com limite por manhã e por tarde; erros com o motivo, \"Não enviar mais\" e o bloco E-mails enviados na ficha do cliente." },
     { versao: "2.9", data: "14/11/2026", mudou: "Ficha: \"Organizar campos\" em Dados do Processo (escolher quais campos ficam à vista e em que ordem; cada um salva a sua, o administrador salva o padrão do escritório; uma para o Jurídico e outra para a Captação); Andamentos no tribunal (CNJ) mostram só os 2 mais recentes, o resto em Ver todos." },
     { versao: "2.8", data: "14/11/2026", mudou: "Biblioteca: Timbrados e modelos. Os papéis timbrados da Victor Morais Advocacia, da ANCREF e da Sarmento ficam guardados no SAGA, e os modelos de petição geram o Word e o PDF já no papel timbrado, no Padrão VMM, aqui no próprio computador." },
@@ -737,7 +738,8 @@ window.SAGA_MANUAL = {
             "No Claude (site claude.ai ou aplicativo), abra **Configurações > Conectores** e clique em [[Adicionar conector personalizado]].",
             "Nome: **SAGA**. Endereço (URL): **https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/saga-mcp**. Clique em [[Adicionar]].",
             "Clique em [[Conectar]]: abre o SAGA. Entre com o SEU e-mail e senha (ou Google). A página mostra \"Você está conectando o Claude como: seu nome\"; confira e clique em [[Autorizar]].",
-            "Pronto: numa conversa, peça, por exemplo, \"No SAGA, quais são minhas tarefas de hoje?\". Antes de mudar qualquer coisa, o Claude diz o que vai mudar e espera o seu OK."
+            "Pronto: numa conversa, peça, por exemplo, \"No SAGA, quais são minhas tarefas de hoje?\". Antes de mudar qualquer coisa, o Claude diz o que vai mudar e espera o seu OK.",
+            "**Guardar um documento da conversa na pasta do cliente**: diga, por exemplo, \"guarde este contracheque na pasta Contracheques do cliente VMM-01234\". O Claude confirma e manda um **link do SAGA**: toque nele, entre com o seu login se pedir e clique em [[Escolher arquivo]] (no celular: galeria, câmera ou arquivos; no computador: escolha ou arraste). O arquivo vai do seu aparelho direto para a ficha, na pasta escolhida (dá para trocar a pasta na própria página), até 50 MB por arquivo, vários de uma vez. Depois diga ao Claude \"enviei\": ele confere se chegou. O link vale 24 h e só para você."
           ],
           atencao: ["O Claude age COMO VOCÊ: só vê e só muda o que você já vê e muda na tela. Colaborador não apaga nada (só o administrador, e sempre com o OK dele na conversa).", "Tudo o que o Claude consulta ou muda fica no Registro de atividades com o seu nome (módulo \"SAGA no Claude\"), com o antes e o depois.", "Apareceu \"Seu usuário não tem a permissão do conector\"? Peça ao administrador (Painel de permissões > SAGA no Claude)."],
           dicas: ["Use o código do cliente (VMM-01234) ou do processo (VMM-01234-PSS) no pedido: evita confusão entre homônimos.", "O que o Claude pedir para você trazer (autos, certidão...) aparece em Meu dia > Pedidos do Claude."]
