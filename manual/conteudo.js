@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.5",
+  versao: "2.6",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.6", data: "14/11/2026", mudou: "Jurídico: botão \"Sem número CNJ (N)\" (processos ativos sem número válido, para completar um por vez) e o selo \"número inválido\" na célula; Captação: lotes semanais com meta (\"Meu lote\" com a meta do dia para cada localizador; para o administrador, o quadro Lotes da Captação com configurar, entregar e desfazer)." },
     { versao: "2.5", data: "14/11/2026", mudou: "Minhas Tarefas: o administrador muda a ordem das etiquetas pelas setinhas do menu; os botões Dar impulso processual e Pedidos do Claude ficam só no menu de etiquetas; a situação da tarefa volta a aparecer no cartão. Notas: as etiquetas ficam sempre à vista, também na lista do celular." },
     { versao: "2.4", data: "14/11/2026", mudou: "Minhas Tarefas mais organizada: números, gráficos e calendário recolhidos em \"Mostrar resumo\"; uma barra de filtros (Busca, Etiqueta, Responsável, Prazo e \"Mais filtros\"); menu de etiquetas sempre à vista, com a quantidade de tarefas abertas, os atalhos Dar impulso processual e Pedidos do Claude e, para o administrador, criar, renomear, mudar a cor e tirar etiqueta da lista; cartão mais limpo (o resto aparece ao passar o mouse)." },
     { versao: "2.3", data: "13/11/2026", mudou: "SAGA no Claude liberado para toda a equipe: passo a passo para ligar o conector no seu Claude (cada um com o próprio login e as próprias permissões)." },
@@ -298,6 +299,17 @@ window.SAGA_MANUAL = {
             "**Distribuir fichas**: escolha as pessoas e a quantidade; cada uma recebe as suas fichas como responsável.",
             "Os dois botões só aparecem para quem tem permissão."
           ]
+        },
+        { id: "lotes", titulo: "Lotes da semana e a meta do dia",
+          quando: "Todo dia, para quem localiza clientes na Captação (hoje: Tarcila, Karine, Tamires e David).",
+          passos: [
+            "Toda **segunda às 7h** cada localizador recebe o **lote da semana** (150 fichas), uma para cada, na ordem da planilha. O aviso chega no sino.",
+            "Abra **Captação**: no alto aparece **Meu lote**, com o lote da semana, **Hoje: X de 30** (a meta do dia, com a barrinha), a semana e quantas **Faltam**.",
+            "Clique em [[Faltam]] para ver na lista só as fichas do lote que ainda faltam trabalhar; clique de novo para voltar à lista toda.",
+            "A ficha conta como trabalhada quando **muda de etapa**, ganha **comentário** ou um **contato/anotação na Localização**. Ela sai da lista do lote sozinha.",
+            "O que sobrar de uma semana continua com a pessoa e soma com o lote novo."
+          ],
+          dicas: ["Administrador: o quadro **Lotes da Captação** mostra todos, com [[Configurar lotes]] (quem recebe, tamanho do lote, ligado/desligado), [[Entregar lote agora]] e [[Desfazer lote]] (as fichas voltam a ficar sem Jovem Talento). As fichas em **Sem sucesso** não entram nos lotes."]
         }
       ]
     },
@@ -313,7 +325,8 @@ window.SAGA_MANUAL = {
             "Use os grupos: **Todos**, **Protocolados**, **Não protocolados**, **Encerrados** e **Sacados**.",
             "Cada processo está em um grupo só: **sacado** (o recebido no Financeiro cobre o esperado) > **encerrado** (situação Encerrada ou Inviável) > **ativo**.",
             "O painel **Processos parados** mostra há quanto tempo cada processo está sem movimento no escritório. O responsável recebe tarefa e aviso automáticos.",
-            "O selo **sem resumo** ao lado do nome marca o processo ativo que o agente ainda não leu (sem o resumo estratégico). [[Sem resumo do agente]] mostra só esses processos; os números para baixar os autos estão no **Dashboard** (Copiar números)."
+            "O selo **sem resumo** ao lado do nome marca o processo ativo que o agente ainda não leu (sem o resumo estratégico). [[Sem resumo do agente]] mostra só esses processos; os números para baixar os autos estão no **Dashboard** (Copiar números).",
+            "[[Sem número CNJ]] mostra só os processos ativos sem número CNJ válido (vazio, sem os 20 dígitos ou com o dígito verificador errado). Sem o número, o robô do CNJ e o radar não acompanham o processo. Complete o número na própria célula (clique duplo) e o processo sai da lista. Número errado aparece com o selo vermelho **número inválido**."
           ],
           img: "juridico",
           marcas: ["Protocolados.", "Não protocolados.", "Encerrados.", "Sacados."],
