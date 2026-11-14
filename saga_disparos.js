@@ -230,7 +230,8 @@
           '<br><b>Modelo:</b> ' + esc(p.modelo) + (p.identidade ? ' · <b>Identidade:</b> ' + esc(p.identidade.chave) : '') + (anx.length ? ' · <b>Anexos:</b> ' + anx.map(function(a){ return esc(a.nome); }).join(', ') : '') + '</div><div class="sd-previa-quadro"></div></div>' +
           ((p.avisos || []).length ? '<div class="sd-avisos" style="margin-top:8px">' + p.avisos.map(function(a){ return '<div>' + esc(a) + '</div>'; }).join('') + '</div>' : '');
         previaHtml(alvo.querySelector('.sd-previa-quadro'), { assunto: p.assunto, corpo: p.corpo, identidade: p.identidade, remetente: p.remetente,
-          remetente_email: p.remetente_email, whatsapp: p.whatsapp, anexos: anx });
+          remetente_email: p.identidade && p.identidade.assinatura_tipo === 'instituicao' && !/ancref/i.test(p.remetente_email || '') ? '' : p.remetente_email,
+          whatsapp: p.whatsapp, anexos: anx, extras: Object.assign({ sair_url: '#' }, p.extras || {}) });
       } catch(e) { alvo.innerHTML = '<div class="sd-erro">Não consegui montar a prévia: ' + esc(erroTxt(e)) + '</div>'; }
     }
     function adiar(){ clearTimeout(tPrev); tPrev = setTimeout(previa, 350); }

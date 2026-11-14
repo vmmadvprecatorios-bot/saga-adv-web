@@ -32,6 +32,18 @@ const admin = createClient(URL_SB, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
 const MAX_POR_RODADA = 30;
 const TEMPO_MAX_MS = 110_000;      // a função tem ~150 s; o que sobrar volta para a fila
 const PAUSA_ENTRE_MS = 1500;       // espaço entre dois e-mails do mesmo remetente
+// v2 (14/11): descadastro de 1 clique. O botão do e-mail abre a página do site (sair.html, só confirma) e o cabeçalho
+// List-Unsubscribe (RFC 8058, one-click) aponta para a função disparos-sair; os dois usam o token do item (disparo_fila.sair_token).
+const SAIR_PAGINA = "https://vmmadvprecatorios-bot.github.io/saga-adv-web/sair.html?t=";
+const SAIR_FUNCAO = URL_SB + "/functions/v1/disparos-sair?t=";
+// deno-lint-ignore no-explicit-any
+function extrasDe(it: any) { const ex = { ...(it.extras || {}) }; if (ex.sair_token) ex.sair_url = SAIR_PAGINA + ex.sair_token; return ex; }
+function cabecalhosSair(token: string | null, email: string) {
+  // deno-lint-ignore no-explicit-any
+  const h: any = { "List-Unsubscribe": (token ? `<${SAIR_FUNCAO}${token}>, ` : "") + `<mailto:${email}?subject=SAIR>` };
+  if (token) h["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+  return h;
+}
 
 const json = (o: unknown, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -55,8 +67,11 @@ async function logoAnexo(ident: any) {
 // deno-lint-ignore no-explicit-any
 async function montarEmail(it: any, c: Conta) {
   const logo = await logoAnexo(it.identidade);
+  // identidade institucional (ANCREF): no corpo só aparece e-mail da própria instituição
+  const instit = it.identidade?.assinatura_tipo === "instituicao";
   const m = Layout.montar({ assunto: it.assunto, corpo: it.corpo, identidade: it.identidade, remetente: c.nome || it.identidade?.nome,
-    remetente_email: c.email, assinatura: c.assinatura, whatsapp: it.whatsapp, anexos: it.anexos || [], logoSrc: logo ? "cid:logo@saga" : "" });
+    remetente_email: instit && !/ancref/i.test(c.email) ? "" : c.email, assinatura: c.assinatura, whatsapp: it.whatsapp, anexos: it.anexos || [],
+    logoSrc: logo ? "cid:logo@saga" : "", extras: extrasDe(it) });
   // deno-lint-ignore no-explicit-any
   const anexos: any[] = logo ? [logo] : [];
   for (const a of (it.anexos || [])) {
@@ -66,6 +81,20 @@ async function montarEmail(it: any, c: Conta) {
     anexos.push({ filename: a.nome, content: Buffer.from(await r.data.arrayBuffer()) });
   }
   return { html: m.html, text: m.texto, attachments: anexos };
+}
+// extras inventados para os testes (cliente inventado; o botão "não quero mais" aparece mas não descadastra ninguém)
+// deno-lint-ignore no-explicit-any
+function extrasTeste(id: any, o: any) {
+  const instit = id?.assinatura_tipo === "instituicao";
+  return {
+    preheader: o.preheader || "", proximo_passo: o.proximo_passo || "",
+    resumo_caso: instit ? "Processo do TRF-5, de 2023 (exemplo)" : "",
+    assinante: instit ? (o.assinante || "") : "",
+    processo: !instit && o.mostrar_processo ? { numero: "0801234-56.2024.4.05.8000", tribunal: "TRF-5", situacao: "Protocolada",
+      andamento: { data: new Date().toLocaleDateString("pt-BR"), texto: "Juntada de petição (exemplo)" }, link: "https://pje.trf5.jus.br/pjeconsulta/ConsultaPublica/listView.seam",
+      responsavel: { nome: "Victor de Medeiros Morais", email: "victormorais@sarmentocamargo.adv.br", telefone: "" } } : null,
+    sair_url: SAIR_PAGINA + "teste",
+  };
 }
 // PDF pequeno de exemplo para o teste do modelo com "anexar o espelho"
 function pdfExemplo() {
@@ -156,7 +185,7 @@ async function rodada(origem: string, reservar?: () => Promise<any>) {
           const info = await t.sendMail({
             from: cabecalhoDe(c), to: it.para, subject: it.assunto, replyTo: c.email,
             text: em.text, html: em.html, attachments: em.attachments,
-            headers: { "List-Unsubscribe": `<mailto:${c.email}?subject=SAIR>` },
+            headers: cabecalhosSair(it.extras?.sair_token || null, c.email),
           });
           await admin.rpc("disparo_resultado", { p_id: it.id, p_tipo: "ok", p_message_id: info?.messageId || null });
           enviados++;
@@ -216,7 +245,7 @@ async function testeModelo(user: any, corpo: any) {
   try {
     const t = await transporte(c);
     const anexos = d.anexo_exemplo ? [{ nome: "Espelho do tribunal (EXEMPLO).pdf", conteudo: pdfExemplo(), tamanho: 900 }] : [];
-    const em = await montarEmail({ assunto: d.assunto, corpo: d.corpo, identidade: d.identidade, whatsapp: d.whatsapp, anexos }, c);
+    const em = await montarEmail({ assunto: d.assunto, corpo: d.corpo, identidade: d.identidade, whatsapp: d.whatsapp, anexos, extras: extrasTeste(d.identidade, corpo) }, c);
     await t.sendMail({ from: cabecalhoDe(c), to: d.para, subject: d.assunto, replyTo: c.email, text: em.text, html: em.html, attachments: em.attachments });
     try { t.close(); } catch { /* nada */ }
     return { ok: true, para: d.para, por: c.email };
@@ -231,9 +260,9 @@ async function testeModelo(user: any, corpo: any) {
 // (é só teste para o próprio Dr. Victor; na operação a ANCREF só sai por caixa ANCREF).
 // deno-lint-ignore no-explicit-any
 async function testeLayout(corpo: any) {
-  const m = await admin.from("disparo_modelos").select("assunto,corpo,identidade_id,anexo_regra").eq("id", corpo.modelo).single();
+  const m = await admin.from("disparo_modelos").select("assunto,corpo,identidade_id,anexo_regra,preheader,proximo_passo,mostrar_processo").eq("id", corpo.modelo).single();
   if (m.error) return { ok: false, erro: "Modelo: " + m.error.message };
-  const ct = await admin.from("disparo_contas").select("id,email,nome_exibicao,smtp_host,smtp_porta,smtp_seguro,smtp_usuario,assinatura").eq("id", corpo.conta).single();
+  const ct = await admin.from("disparo_contas").select("id,email,nome_exibicao,smtp_host,smtp_porta,smtp_seguro,smtp_usuario,assinatura,assinante").eq("id", corpo.conta).single();
   if (ct.error) return { ok: false, erro: "Remetente: " + ct.error.message };
   const id = (await admin.rpc("disparo_identidade_json", { p_id: m.data.identidade_id })).data || {};
   const instit = id.assinatura_tipo === "instituicao";
@@ -247,7 +276,8 @@ async function testeLayout(corpo: any) {
   try {
     const t = await transporte(c);
     const anexos = m.data.anexo_regra === "espelho" ? [{ nome: "Espelho do tribunal (EXEMPLO).pdf", conteudo: pdfExemplo(), tamanho: 900 }] : [];
-    const em = await montarEmail({ assunto: pre(m.data.assunto), corpo: pre(m.data.corpo), identidade: id, whatsapp: id.whatsapp, anexos }, c);
+    const em = await montarEmail({ assunto: pre(m.data.assunto), corpo: pre(m.data.corpo), identidade: id, whatsapp: id.whatsapp, anexos,
+      extras: extrasTeste(id, { preheader: pre(m.data.preheader || ""), proximo_passo: pre(m.data.proximo_passo || ""), mostrar_processo: m.data.mostrar_processo, assinante: corpo.assinante || ct.data.assinante }) }, c);
     await t.sendMail({ from: cabecalhoDe(c), to: corpo.para, subject: assunto, replyTo: c.email, text: em.text, html: em.html, attachments: em.attachments });
     try { t.close(); } catch { /* nada */ }
     return { ok: true, para: corpo.para, assunto };

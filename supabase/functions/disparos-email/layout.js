@@ -6,6 +6,10 @@
    e no celular. Versão em texto simples junto. Sem imagem de fora (a logo, se houver, vai ANEXADA ao e-mail, cid).
      SagaEmailLayout.montar({assunto, corpo, identidade, remetente, remetente_email, assinatura, whatsapp, anexos, logoSrc})
        -> {html, texto}
+   v2 (14/11, aprovado o v1 pelo Dr. Victor; "desse modelo pra frente, não retrocede"; o v1 fica em layout_v1_aprovado.js):
+     o.extras = {preheader, proximo_passo, processo{numero,tribunal,situacao,andamento{data,texto},link,responsavel{nome,email,telefone}},
+                 resumo_caso, assinante, sair_url}
+     identidade: cnpj, instagram, transparencia, antigolpe, passos[3], faq[{p,r}] (o que estiver vazio não aparece).
    Marcações no texto do modelo: parágrafos separados por linha em branco; **negrito**; linha começando com "# " no início
    vira o título (senão o título é o assunto); parágrafo começando com "> " vira o DESTAQUE (caixa com a cor da identidade);
    links e e-mails viram clicáveis. O último parágrafo é tirado quando só repete a assinatura ({remetente}, {escritorio},
@@ -15,6 +19,11 @@
   var FONTE = "Arial,'Helvetica Neue',Helvetica,sans-serif";
   var SERIFA = "Georgia,'Times New Roman',serif";
   var SAIR = 'Se não quiser mais receber nossos e-mails, responda a esta mensagem com a palavra SAIR.';
+  var ENGANO = 'Se esta mensagem chegou por engano, por favor desconsidere. Agradecemos a sua atenção.';
+  function caixa(c1, fundo, borda, html) {
+    return '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:6px 0 18px"><tr><td bgcolor="' + fundo + '" style="background:' + fundo + ';border:1px solid ' + borda + ';border-radius:10px;padding:16px 18px;font-family:' + FONTE + ';font-size:14px;line-height:21px;color:#2B3340">' + html + '</td></tr></table>';
+  }
+  function rotulo(t, c) { return '<div style="font-family:' + FONTE + ';font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:' + c + ';font-weight:bold;margin:0 0 8px">' + esc(t) + '</div>'; }
 
   function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function cor(c, padrao) { return /^#[0-9a-f]{6}$/i.test(String(c || '')) ? c : padrao; }
@@ -62,7 +71,11 @@
       var sabidos = [remetente, nomeId, emailRem, id.subtitulo || ''].map(function (x) { return String(x || '').trim().toLowerCase(); }).filter(Boolean);
       if (ult.length && ult.every(function (l) { return sabidos.indexOf(l) >= 0; })) blocos.pop();
     }
-    var preheader = semMarcas((blocos[1] || blocos[0] || '').replace(/^>\s*/, '')).replace(/\s+/g, ' ').slice(0, 140);
+    var ex = o.extras || {};
+    // fecho curto ("Atenciosamente,") desce para logo acima da assinatura (os quadros novos ficam antes dele)
+    var fecho = blocos.length > 1 && /^(atenciosamente|cordialmente|abra[çc]os|att\.?|um abra[çc]o|grato|grata)[,.!]?$/i.test(blocos[blocos.length - 1]) ? blocos.pop() : '';
+    var destaque = blocos.filter(function (p) { return /^>\s*/.test(p); })[0];
+    var preheader = semMarcas(ex.preheader || (destaque || blocos[1] || blocos[0] || '').replace(/^>\s*/, '')).replace(/\s+/g, ' ').slice(0, 140);
     var paras = blocos.map(function (p) {
       if (/^>\s*/.test(p)) {
         var t = negrito(linkar(esc(p.replace(/^>\s*/gm, '')), c1), c1).replace(/\n/g, '<br>');
@@ -82,7 +95,9 @@
     // assinatura organizada
     var instit = id.assinatura_tipo === 'instituicao';
     if (instit) remetente = nomeId;
-    var assLinhas = String(instit ? (id.assinatura || 'Equipe de Atendimento') : (id.assinatura || o.assinatura || '')).replace(/\r/g, '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+    // ANCREF: primeiro nome de quem atende (nunca advogado/OAB) + a equipe da instituição
+    var assTexto = instit ? ((ex.assinante ? ex.assinante + '\n' : '') + (id.assinatura || 'Equipe de Atendimento') + (ex.assinante ? ' ' + nomeId : '')) : (id.assinatura || o.assinatura || '');
+    var assLinhas = String(assTexto).replace(/\r/g, '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
     var nomeAss = assLinhas.length ? assLinhas.shift() : remetente;
     assLinhas = assLinhas.filter(function (l) { return l.toLowerCase() !== nomeId.toLowerCase(); });
     var contatos = [];
@@ -96,6 +111,34 @@
       contatos.join('<span style="color:#C3CAD5"> &nbsp;|&nbsp; </span>') + '</td></tr></table>';
     // com logo: cabeçalho BRANCO com a logo (as logos das marcas têm letra escura) e as faixas da cor embaixo
     var logo = o.logoSrc ? '<img src="' + esc(o.logoSrc) + '" alt="' + esc(nomeId) + '" height="84" style="display:block;height:84px;width:auto;max-width:100%;border:0">' : '';
+    // ---- blocos novos (v2): só aparecem quando há dado ----
+    var blocosV2 = '';
+    if (ex.resumo_caso) blocosV2 += caixa(c1, clarear(c1, 0.94), clarear(c1, 0.8), rotulo('Seu caso em uma linha', c1) + '<strong style="color:' + c1 + '">' + esc(ex.resumo_caso) + '</strong>');
+    var pr = ex.processo;
+    if (pr && pr.numero) {
+      var lin = function (r, v) { return v ? '<tr><td style="padding:3px 12px 3px 0;color:#7A8597;font-size:12.5px;white-space:nowrap;vertical-align:top">' + esc(r) + '</td><td style="padding:3px 0;font-size:13.5px;color:#2B3340">' + v + '</td></tr>' : ''; };
+      blocosV2 += caixa(c1, '#FFFFFF', clarear(c1, 0.75), rotulo('Seu processo', c1) +
+        '<table role="presentation" cellspacing="0" cellpadding="0" border="0">' + lin('Número', '<strong>' + esc(pr.numero) + '</strong>') + lin('Tribunal', esc(pr.tribunal || '')) +
+        lin('Situação', esc(pr.situacao || '')) + lin('Último andamento', pr.andamento ? esc(pr.andamento.data) + ' · ' + esc(pr.andamento.texto) : '') + '</table>' +
+        (pr.link ? '<div style="margin-top:10px">' + botao(pr.link, 'Consultar no tribunal', '#FFFFFF', c1, clarear(c1, 0.55)) + '</div>' : '') +
+        (pr.responsavel && pr.responsavel.nome ? '<div style="margin-top:4px;font-size:12.5px;color:#4A5568">Responsável pelo seu processo: <strong style="color:' + c1 + '">' + esc(pr.responsavel.nome) + '</strong>' +
+          (pr.responsavel.email ? ' · <a href="mailto:' + esc(pr.responsavel.email) + '" style="color:' + c1 + '">' + esc(pr.responsavel.email) + '</a>' : '') +
+          (pr.responsavel.telefone ? ' · ' + esc(foneBonito(pr.responsavel.telefone)) : '') + '</div>' : ''));
+    }
+    if (ex.proximo_passo) blocosV2 += caixa(c1, clarear(c2, 0.88), clarear(c2, 0.55), rotulo('Próximo passo', c1) + '<strong style="color:' + c1 + '">' + negrito(linkar(esc(ex.proximo_passo), c1), c1) + '</strong>');
+    var passos = Array.isArray(id.passos) ? id.passos.filter(Boolean).slice(0, 3) : [];
+    var comoFunciona = passos.length ? '<div style="padding:8px 0 4px">' + rotulo('Como funciona', c1) +
+      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr>' + passos.map(function (t, k) {
+        return '<td valign="top" width="' + Math.floor(100 / passos.length) + '%" style="padding:0 6px 0 0;font-family:' + FONTE + ';font-size:13px;line-height:18px;color:#2B3340">' +
+          '<table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" valign="middle" width="30" height="30" bgcolor="' + c1 + '" style="width:30px;height:30px;border-radius:15px;background:' + c1 + ';color:#FFFFFF;font-weight:bold;font-size:14px;font-family:' + FONTE + '">' + (k + 1) + '</td></tr></table>' +
+          '<div style="margin-top:8px">' + esc(t) + '</div></td>'; }).join('') + '</tr></table></div>' : '';
+    var faq = Array.isArray(id.faq) ? id.faq.filter(function (x) { return x && x.p; }).slice(0, 3) : [];
+    var faqHtml = faq.length ? '<div style="padding:14px 0 4px">' + rotulo('Perguntas rápidas', c1) + faq.map(function (x) {
+      return '<p style="margin:0 0 10px;font-family:' + FONTE + ';font-size:13.5px;line-height:20px;color:#2B3340"><strong style="color:' + c1 + '">' + esc(x.p) + '</strong><br>' + esc(x.r || '') + '</p>'; }).join('') + '</div>' : '';
+    var golpe = id.antigolpe ? caixa(c1, '#FFF8E6', '#F0D28A', '<strong style="color:#8A5A00">Atenção a golpes.</strong> ' + esc(id.antigolpe) +
+      (digitos(id.whatsapp) ? ' WhatsApp oficial: <strong>' + esc(foneBonito(id.whatsapp)) + '</strong>.' : '')) : '';
+    var confianca = [id.cnpj ? 'CNPJ ' + esc(id.cnpj) : '', id.instagram ? 'Instagram <a href="https://instagram.com/' + esc(String(id.instagram).replace(/^@/, '')) + '" style="color:' + c1 + '">@' + esc(String(id.instagram).replace(/^@/, '')) + '</a>' : ''].filter(Boolean).join(' · ');
+    var sairBotao = ex.sair_url ? '<div style="margin-top:12px"><a href="' + esc(ex.sair_url) + '" target="_blank" style="display:inline-block;padding:7px 14px;border:1px solid #C3CAD5;border-radius:6px;font-family:' + FONTE + ';font-size:12px;color:#5A6577;text-decoration:none">Não quero mais receber estes e-mails</a></div>' : '';
     var rodape = String(id.rodape || '').split('\n').map(function (l) { return esc(l.trim()); }).filter(Boolean).join('<br>');
     var site = id.site ? '<a href="https://' + esc(String(id.site).replace(/^https?:\/\//, '')) + '" style="color:' + c1 + ';text-decoration:underline">' + esc(String(id.site).replace(/^https?:\/\//, '')) + '</a>' : '';
 
@@ -117,22 +160,31 @@
       // corpo
       '<tr><td class="sg-p" style="padding:34px 36px 10px">' +
       (titulo ? '<h1 class="sg-h1" style="margin:0 0 20px;font-family:' + SERIFA + ';font-size:24px;line-height:31px;color:' + c1 + ';font-weight:bold">' + negrito(esc(titulo), c1) + '</h1>' : '') +
-      paras + anexoHtml +
-      (botoes ? '<div style="padding:10px 0 8px">' + botoes + '</div>' : '') +
+      paras + blocosV2 + anexoHtml +
+      (botoes ? '<div style="padding:10px 0 8px">' + botoes + '</div>' : '') + comoFunciona + faqHtml + golpe +
       '</td></tr>' +
-      '<tr><td class="sg-p" style="padding:6px 36px 30px">' + assinatura + '</td></tr>' +
+      '<tr><td class="sg-p" style="padding:6px 36px 30px">' + (fecho ? '<p style="margin:0 0 12px;font-family:' + FONTE + ';font-size:15px;line-height:24px;color:#2B3340">' + esc(fecho) + '</p>' : '') + assinatura + '</td></tr>' +
       // rodapé
       '<tr><td class="sg-p" bgcolor="#F5F7FA" style="background:#F5F7FA;padding:20px 36px 24px;border-top:1px solid #E3E8EF;font-family:' + FONTE + ';font-size:11.5px;line-height:18px;color:#7A8597">' +
-      (rodape ? rodape + '<br>' : '') + (site ? site + '<br>' : '') +
-      '<span style="display:inline-block;margin-top:8px;color:#8A94A6">' + esc(SAIR) + '</span></td></tr>' +
+      (rodape ? rodape + '<br>' : '') + (site ? site + (confianca ? ' · ' : '') : '') + (confianca || '') + (site || confianca ? '<br>' : '') +
+      (id.transparencia ? '<div style="margin-top:10px">' + esc(id.transparencia) + '</div>' : '') +
+      '<div style="margin-top:8px">' + esc(ENGANO) + '</div>' + sairBotao +
+      '<span style="display:inline-block;margin-top:10px;color:#8A94A6">' + esc(SAIR) + '</span></td></tr>' +
       '</table><!--[if mso]></td></tr></table><![endif]--></td></tr></table></body></html>';
 
     var texto = (titulo ? semMarcas(titulo) + '\n\n' : '') + blocos.map(function (p) { return semMarcas(p.replace(/^>\s*/gm, '')); }).join('\n\n') +
+      (ex.resumo_caso ? '\n\nSeu caso: ' + ex.resumo_caso : '') +
+      (pr && pr.numero ? '\n\nSeu processo: ' + pr.numero + (pr.tribunal ? ' (' + pr.tribunal + ')' : '') + (pr.situacao ? '\nSituação: ' + pr.situacao : '') + (pr.andamento ? '\nÚltimo andamento: ' + pr.andamento.data + ' · ' + pr.andamento.texto : '') + (pr.link ? '\nConsultar no tribunal: ' + pr.link : '') : '') +
+      (ex.proximo_passo ? '\n\nPróximo passo: ' + semMarcas(ex.proximo_passo) : '') +
+      (passos.length ? '\n\nComo funciona: ' + passos.map(function (t, k) { return (k + 1) + ') ' + t; }).join('  ') : '') +
+      (faq.length ? '\n\n' + faq.map(function (x) { return x.p + ' ' + (x.r || ''); }).join('\n') : '') +
+      (id.antigolpe ? '\n\nAtenção a golpes: ' + id.antigolpe : '') + (fecho ? '\n\n' + fecho : '') +
       (anexos.length ? '\n\nAnexo: ' + anexos.map(function (a) { return a.nome; }).join(', ') : '') +
       (wa ? '\n\nFale no WhatsApp: ' + wa : '') +
       '\n\n--\n' + nomeAss + (assLinhas.length ? '\n' + assLinhas.join('\n') : '') + '\n' + nomeId + (id.subtitulo ? ' · ' + id.subtitulo : '') +
       (emailRem ? '\n' + emailRem : '') + (digitos(o.whatsapp) ? '\nWhatsApp ' + foneBonito(o.whatsapp) : '') +
-      (id.rodape ? '\n\n' + id.rodape : '') + (id.site ? '\n' + id.site : '') + '\n\n' + SAIR;
+      (id.rodape ? '\n\n' + id.rodape : '') + (id.site ? '\n' + id.site : '') + (id.cnpj ? '\nCNPJ ' + id.cnpj : '') +
+      (id.transparencia ? '\n\n' + id.transparencia : '') + '\n\n' + ENGANO + (ex.sair_url ? '\nNão quero mais receber estes e-mails: ' + ex.sair_url : '') + '\n' + SAIR;
     return { html: html, texto: texto };
   }
 

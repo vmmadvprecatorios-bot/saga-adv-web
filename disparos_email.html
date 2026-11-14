@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611141931"></script>
+<script src="saga_guard.js?v=202611142221"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Disparos de e-mail</title>
@@ -118,7 +118,7 @@ textarea.in{height:auto;min-height:90px;padding:9px 10px;resize:vertical;line-he
   .ent{min-width:0;width:100%;flex-basis:100%}.g3{grid-template-columns:1fr}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611141931">
+<link rel="stylesheet" href="saga_tema.css?v=202611142221">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -165,8 +165,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611141931"></script>
-<script src="saga_disparos.js?v=202611141931"></script>
+<script src="saga_ui.js?v=202611142221"></script>
+<script src="saga_disparos.js?v=202611142221"></script>
 <script>
 /* =====================================================================
    SAGA · Disparos de e-mail (T179, blocos 205 a 207; 14/11/2026, pedido do Dr. Victor)
@@ -360,6 +360,7 @@ function janelaConta(k){
       :'<div class="dica">Este e-mail fica sendo <b>seu</b>: só você (e o administrador) usa e muda.</div>')+
     '<div class="sd-g2"><div class="sd-campo"><label for="cIdent">Identidade (marca do e-mail)</label><select class="sd-in" id="cIdent">'+optsIdent(k.identidade_id||'','A do modelo (ou a padrão)')+'</select><div class="dica">Quando o modelo não escolhe a identidade, vale esta.</div></div>'+
     '<div class="sd-campo"><label for="cWa">WhatsApp de quem envia (botão "Falar no WhatsApp")</label><input class="sd-in" id="cWa" inputmode="numeric" autocomplete="off" value="'+esc(foneMasc(k.whatsapp||''))+'" placeholder="(82) 9 9999-9999"><div class="dica">Em branco: usa o WhatsApp da identidade.</div></div></div>'+
+    '<div class="sd-campo"><label for="cAssin">Primeiro nome de quem atende (só ANCREF; opcional)</label><input class="sd-in" id="cAssin" value="'+esc(k.assinante||'')+'" placeholder="Ex.: Karine"><div class="dica">Na ANCREF o e-mail assina "Karine · Equipe de Atendimento ANCREF": nunca advogado nem OAB.</div></div>'+
     '<div class="sd-campo"><label for="cAss">Assinatura no fim do e-mail (opcional)</label><textarea class="sd-in" id="cAss" rows="3" placeholder="Ex.: Karine Souza&#10;Victor Morais Advocacia · (82) 9 9999-9999">'+esc(k.assinatura||'')+'</textarea></div>';
   var j=SagaDisparos.abrirJanela(novo?'Cadastrar e-mail de envio':'Editar e-mail de envio','Depois de salvar, clique em "Testar": o SAGA manda um e-mail de teste para você.',corpo,
     '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="cOk">Salvar</button>');
@@ -378,6 +379,8 @@ function janelaConta(k){
     if(r.error){toast('Não consegui salvar: '+erroTxt(r.error),'error');return;}
     var r2=await _sb.rpc('disparo_conta_identidade',{p_id:r.data,p_identidade:q('#cIdent').value||null,p_whatsapp:q('#cWa').value||null});
     if(r2.error){toast('O e-mail foi salvo, mas a identidade/WhatsApp não: '+erroTxt(r2.error),'error');await carregar();return;}
+    var r3=await _sb.rpc('disparo_conta_assinante',{p_id:r.data,p_assinante:q('#cAssin').value});
+    if(r3.error){toast('O e-mail foi salvo, mas o primeiro nome não: '+erroTxt(r3.error),'error');await carregar();return;}
     toast('E-mail de envio salvo. Agora clique em "Testar".','success');j.fechar();await carregar();
   });
 }
@@ -441,6 +444,9 @@ async function janelaModelo(m){
     (adm?'<div class="sd-campo"><label>Pôr um campo (clique para inserir onde está o cursor)</label><div class="campos-modelo">'+CAMPOS.map(function(c){return '<button type="button" data-campo="'+c[0]+'" title="'+esc(c[1])+'">{'+c[0]+'}</button>';}).join('')+'</div></div>':'')+
     '<div class="sd-campo"><label for="mCorpo">Texto do e-mail</label><textarea class="sd-in" id="mCorpo" rows="12" placeholder="Prezado(a) {nome},&#10;&#10;..."'+ro+'>'+esc(m.corpo||'')+'</textarea>'+
     '<div class="dica">Parágrafos separados por uma linha em branco. <b>**texto**</b> fica em negrito. Um parágrafo começando com <b>&gt; </b> vira o <b>destaque</b> (a frase principal, numa caixa colorida). Uma 1ª linha começando com <b># </b> vira o título (sem ela, o título é o assunto). Links e e-mails viram clicáveis. O sistema "veste" o texto no layout: faixa com a marca, botões "Falar no WhatsApp" e "Responder", assinatura e rodapé com "responda SAIR". O código do cliente (VMM-...) é só interno e não vai no e-mail. Nunca escreva valores.</div></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label for="mPre">Linha de prévia (aparece ao lado do assunto)</label><input class="sd-in" id="mPre" value="'+esc(m.preheader||'')+'" placeholder="Em branco = a frase em destaque"'+ro+'></div>'+
+    '<div class="sd-campo"><label for="mProx">Próximo passo (em destaque)</label><input class="sd-in" id="mProx" value="'+esc(m.proximo_passo||'')+'" placeholder="Ex.: Responda com um horário para conversarmos"'+ro+'></div></div>'+
+    '<label class="chk"><input type="checkbox" id="mProc"'+(m.mostrar_processo?' checked':'')+(adm?'':' disabled')+'> Mostrar o quadro "Seu processo" (número, tribunal, situação, último andamento do CNJ e "Consultar no tribunal"; só clientes VMM/Sarmento e só quando houver número)</label>'+
     '<div class="sd-campo"><label>Prévia com um cliente inventado (como o cliente vai ver)</label><div id="mPrev"></div></div>'+
     (contas.length?'<div class="sd-campo"><label for="mTesteConta">Enviar um teste para mim</label><div style="display:flex;gap:8px;flex-wrap:wrap"><select class="sd-in" id="mTesteConta" style="flex:1 1 220px">'+contas.map(function(k){return '<option value="'+esc(k.id)+'">sai por '+esc(k.apelido)+' · '+esc(k.email)+'</option>';}).join('')+'</select>'+
       '<button class="btn" type="button" id="mTeste">Enviar um teste para mim</button></div><div class="dica">Manda este e-mail (com o que está escrito aqui, mesmo sem salvar) para o <b>seu</b> e-mail, com um cliente inventado. Não entra na fila de clientes.</div><div id="mTesteRes" class="dica" hidden></div></div>':'');
@@ -450,11 +456,14 @@ async function janelaModelo(m){
   function preencher(t){var e2=Object.assign({},EXEMPLO);var idn=identPorId(q('#mIdent').value)||identPadrao();if(idn)e2.escritorio=idn.nome;return String(t||'').replace(/\{([a-z_]+)\}/g,function(a,k){return k in e2?e2[k]:a;});}
   function prev(){
     var idn=identPorId(q('#mIdent').value)||identPadrao()||{};
+    var instit=idn.assinatura_tipo==='instituicao';
     SagaDisparos.previaHtml(q('#mPrev'),{assunto:preencher(q('#mAssunto').value),corpo:preencher(q('#mCorpo').value),identidade:idn,remetente:EXEMPLO.remetente,
-      remetente_email:EXEMPLO.remetente_email,whatsapp:idn.whatsapp||'',anexos:q('#mAnexo').value==='espelho'?[{nome:'Espelho do tribunal (exemplo).pdf',tamanho:110817}]:[]});
+      remetente_email:instit?'':EXEMPLO.remetente_email,whatsapp:idn.whatsapp||'',anexos:q('#mAnexo').value==='espelho'?[{nome:'Espelho do tribunal (exemplo).pdf',tamanho:110817}]:[],
+      extras:{preheader:preencher(q('#mPre').value),proximo_passo:preencher(q('#mProx').value),resumo_caso:instit?'Processo do TRF-5, de 2023 (exemplo)':'',assinante:instit?'Karine':'',sair_url:'#',
+        processo:!instit&&q('#mProc').checked?{numero:EXEMPLO.numero_processo,tribunal:'TRF-5',situacao:'Protocolada',andamento:{data:EXEMPLO.data_hoje,texto:'Juntada de petição (exemplo)'},link:'#',responsavel:{nome:'Responsável do processo',email:'',telefone:''}}:null}});
   }
   function adiar(){clearTimeout(tPrev);tPrev=setTimeout(prev,250);}
-  q('#mAssunto').addEventListener('input',adiar);q('#mCorpo').addEventListener('input',adiar);q('#mIdent').addEventListener('change',prev);q('#mAnexo').addEventListener('change',prev);prev();
+  q('#mAssunto').addEventListener('input',adiar);q('#mCorpo').addEventListener('input',adiar);q('#mIdent').addEventListener('change',prev);q('#mAnexo').addEventListener('change',prev);q('#mPre').addEventListener('input',adiar);q('#mProx').addEventListener('input',adiar);q('#mProc').addEventListener('change',prev);prev();
   q('#mAssunto').addEventListener('focus',function(){ultimo=this;});q('#mCorpo').addEventListener('focus',function(){ultimo=this;});
   j.ov.addEventListener('click',function(e){var b=e.target.closest('[data-campo]');if(!b)return;
     var el=ultimo,t='{'+b.dataset.campo+'}',a=el.selectionStart==null?el.value.length:el.selectionStart,z=el.selectionEnd==null?a:el.selectionEnd;
@@ -462,7 +471,7 @@ async function janelaModelo(m){
   if(q('#mTeste'))q('#mTeste').addEventListener('click',async function(){
     var bt=this,res=q('#mTesteRes');bt.disabled=true;bt.textContent='Enviando o teste…';
     try{
-      var r=await _sb.functions.invoke('disparos-email',{body:{acao:'teste_modelo',conta:q('#mTesteConta').value,assunto:q('#mAssunto').value,corpo:q('#mCorpo').value,identidade:q('#mIdent').value||null,anexo_regra:q('#mAnexo').value}});
+      var r=await _sb.functions.invoke('disparos-email',{body:{acao:'teste_modelo',conta:q('#mTesteConta').value,assunto:q('#mAssunto').value,corpo:q('#mCorpo').value,identidade:q('#mIdent').value||null,anexo_regra:q('#mAnexo').value,preheader:q('#mPre').value,proximo_passo:q('#mProx').value,mostrar_processo:q('#mProc').checked}});
       var dd=r.data||{};
       if(r.error&&!r.data){var mm=erroTxt(r.error);try{var ctx=r.error.context;if(ctx&&ctx.json){var jj=await ctx.json();mm=jj.erro||mm;}}catch(x){}throw new Error(mm);}
       if(!dd.ok)throw new Error(dd.erro||'sem mensagem');
@@ -475,6 +484,8 @@ async function janelaModelo(m){
     var r=await _sb.rpc('disparo_modelo_salvar',{p_id:novo?null:m.id,p_nome:q('#mNome').value,p_tese:q('#mTese').value||null,p_assunto:q('#mAssunto').value,p_corpo:q('#mCorpo').value,p_ordem:null,p_identidade:q('#mIdent').value||null,p_anexo_regra:q('#mAnexo').value});
     bt.disabled=false;
     if(r.error){toast('Não consegui salvar o modelo: '+erroTxt(r.error),'error');return;}
+    var r2=await _sb.rpc('disparo_modelo_extras_salvar',{p_id:r.data,p_preheader:q('#mPre').value,p_proximo_passo:q('#mProx').value,p_mostrar_processo:q('#mProc').checked});
+    if(r2.error){toast('O modelo foi salvo, mas a prévia/próximo passo/quadro do processo não: '+erroTxt(r2.error),'error');await carregar();return;}
     toast('Modelo salvo.','success');j.fechar();await carregar();
   });
 }
@@ -491,18 +502,27 @@ function janelaIdentidade(x){
     '<div class="sd-g2"><div class="sd-campo"><label for="iTipo">Quem assina</label><select class="sd-in" id="iTipo"><option value="pessoal"'+(x.assinatura_tipo!=='instituicao'?' selected':'')+'>Uma pessoa (ex.: o Dr. Victor, advogado)</option><option value="instituicao"'+(x.assinatura_tipo==='instituicao'?' selected':'')+'>A instituição (sem nome de advogado nem OAB)</option></select><div class="dica">Na ANCREF o e-mail sai sempre em nome da instituição.</div></div>'+
     '<div class="sd-campo"><label for="iAss">Assinatura</label><textarea class="sd-in" id="iAss" rows="3" placeholder="Ex.: Victor de Medeiros Morais&#10;Advogado · OAB/AL 15.348">'+esc(x.assinatura||'')+'</textarea></div></div>'+
     '<div class="sd-campo"><label for="iRod">Rodapé (endereço, telefones, e-mails)</label><textarea class="sd-in" id="iRod" rows="3">'+esc(x.rodape||'')+'</textarea></div>'+
+    '<div class="sd-g2"><div class="sd-campo"><label for="iCnpj">CNPJ (aparece no rodapé)</label><input class="sd-in" id="iCnpj" value="'+esc(x.cnpj||'')+'" placeholder="00.000.000/0000-00"></div>'+
+    '<div class="sd-campo"><label for="iInsta">Instagram</label><input class="sd-in" id="iInsta" value="'+esc(x.instagram||'')+'" placeholder="@perfil"></div></div>'+
+    '<div class="sd-campo"><label for="iTransp">Por que a pessoa recebeu (transparência, LGPD)</label><textarea class="sd-in" id="iTransp" rows="2">'+esc(x.transparencia||'')+'</textarea></div>'+
+    '<div class="sd-campo"><label for="iGolpe">Aviso antigolpe (em branco = não aparece)</label><textarea class="sd-in" id="iGolpe" rows="2">'+esc(x.antigolpe||'')+'</textarea></div>'+
+    '<div class="sd-campo"><label>Como funciona: 3 passos (em branco = não aparece)</label><div class="sd-g2">'+[0,1,2].map(function(k){return '<input class="sd-in" id="iPasso'+k+'" value="'+esc((x.passos||[])[k]||'')+'" placeholder="Passo '+(k+1)+'">';}).join('')+'</div></div>'+
+    '<div class="sd-campo"><label>Perguntas rápidas (até 3; em branco = não aparece)</label>'+[0,1,2].map(function(k){var f=(x.faq||[])[k]||{};return '<div class="sd-g2" style="margin-bottom:6px"><input class="sd-in" id="iFaqP'+k+'" value="'+esc(f.p||'')+'" placeholder="Pergunta"><input class="sd-in" id="iFaqR'+k+'" value="'+esc(f.r||'')+'" placeholder="Resposta curta"></div>';}).join('')+'</div>'+
     '<label class="chk"><input type="checkbox" id="iPadrao"'+(x.padrao?' checked':'')+'> Identidade padrão (quando o modelo e o remetente não escolhem)</label>'+
     '<div class="sd-campo"><label>Prévia</label><div id="iPrev"></div></div>';
   var j=SagaDisparos.abrirJanela(novo?'Nova identidade':'Editar identidade '+x.chave,'A marca que veste os e-mails: nome, cores, logo, WhatsApp e rodapé.',corpo,
     '<span class="esp"></span><button class="btn" type="button" data-sd-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="iOk">Salvar</button>');
   var q=j.q,urlLogo='';
-  function dados(){return {chave:q('#iChave').value.trim().toUpperCase(),nome:q('#iNome').value.trim(),subtitulo:q('#iSub').value.trim(),cor_principal:q('#iC1').value,cor_destaque:q('#iC2').value,whatsapp:q('#iWa').value,site:q('#iSite').value.trim(),rodape:q('#iRod').value,padrao:q('#iPadrao').checked,assinatura:q('#iAss').value,assinatura_tipo:q('#iTipo').value,logo_caminho_atual:x.logo_caminho||''};}
-  function prev(){var dd=dados();SagaDisparos.previaHtml(q('#iPrev'),{assunto:'{primeiro_nome}, temos uma informação sobre a sua ação'.replace('{primeiro_nome}','Maria'),corpo:'Prezada Maria,\n\nEste é um exemplo do e-mail com esta identidade.\n\n> Esta é a frase principal, em destaque.\n\nAtenciosamente,',identidade:dd,remetente:'Quem envia',remetente_email:'contato@exemplo.com.br',whatsapp:dd.whatsapp,anexos:[],logoSrc:tirarLogo?'':(urlLogo||'')});}
+  function dados(){return {chave:q('#iChave').value.trim().toUpperCase(),nome:q('#iNome').value.trim(),subtitulo:q('#iSub').value.trim(),cor_principal:q('#iC1').value,cor_destaque:q('#iC2').value,whatsapp:q('#iWa').value,site:q('#iSite').value.trim(),rodape:q('#iRod').value,padrao:q('#iPadrao').checked,assinatura:q('#iAss').value,assinatura_tipo:q('#iTipo').value,logo_caminho_atual:x.logo_caminho||'',logo_caminho:x.logo_caminho||'',
+    cnpj:q('#iCnpj').value.trim(),instagram:q('#iInsta').value.trim(),transparencia:q('#iTransp').value,antigolpe:q('#iGolpe').value,
+    passos:[0,1,2].map(function(k){return q('#iPasso'+k).value.trim();}).filter(Boolean),
+    faq:[0,1,2].map(function(k){return {p:q('#iFaqP'+k).value.trim(),r:q('#iFaqR'+k).value.trim()};}).filter(function(f){return f.p;})};}
+  function prev(){var dd=dados();SagaDisparos.previaHtml(q('#iPrev'),{assunto:'{primeiro_nome}, temos uma informação sobre a sua ação'.replace('{primeiro_nome}','Maria'),corpo:'Prezada Maria,\n\nEste é um exemplo do e-mail com esta identidade.\n\n> Esta é a frase principal, em destaque.\n\nAtenciosamente,',identidade:dd,remetente:'Quem envia',remetente_email:'contato@exemplo.com.br',whatsapp:dd.whatsapp,anexos:[],logoSrc:tirarLogo?'':(urlLogo||''),extras:{sair_url:'#',assinante:dd.assinatura_tipo==='instituicao'?'Karine':''}});}
   if(x.logo_caminho&&/^https:\/\//.test(x.logo_caminho))urlLogo=x.logo_caminho;
   else if(x.logo_caminho)_sb.storage.from('disparos-marcas').createSignedUrl(x.logo_caminho,600).then(function(r){if(r.data){urlLogo=r.data.signedUrl;prev();}});
   q('#iWa').addEventListener('input',function(){this.value=foneMasc(this.value);adiar();});
   var tP=null;function adiar(){clearTimeout(tP);tP=setTimeout(prev,250);}
-  ['#iChave','#iNome','#iSub','#iSite','#iRod','#iC1','#iC2','#iAss'].forEach(function(s2){q(s2).addEventListener('input',adiar);});q('#iPadrao').addEventListener('change',prev);q('#iTipo').addEventListener('change',prev);
+  ['#iChave','#iNome','#iSub','#iSite','#iRod','#iC1','#iC2','#iAss','#iCnpj','#iInsta','#iTransp','#iGolpe','#iPasso0','#iPasso1','#iPasso2','#iFaqP0','#iFaqR0','#iFaqP1','#iFaqR1','#iFaqP2','#iFaqR2'].forEach(function(s2){q(s2).addEventListener('input',adiar);});q('#iPadrao').addEventListener('change',prev);q('#iTipo').addEventListener('change',prev);
   q('#iLogo').addEventListener('change',function(){var f=this.files&&this.files[0];if(!f)return;
     if(!/^image\/(png|jpeg)$/.test(f.type)){toast('A logo precisa ser PNG ou JPG.','error');this.value='';return;}
     if(f.size>300*1024){toast('A logo tem '+Math.round(f.size/1024)+' KB; o máximo é 300 KB. Diminua a imagem.','error');this.value='';return;}
@@ -510,7 +530,7 @@ function janelaIdentidade(x){
   j.ov.addEventListener('click',function(e){if(e.target.id==='iTirarLogo'){tirarLogo=true;logoNovo=null;urlLogo='';q('#iLogoInfo').textContent='A logo sai quando você salvar.';prev();}});
   prev();
   q('#iOk').addEventListener('click',async function(){
-    var bt=this,dd=dados();delete dd.logo_caminho_atual;bt.disabled=true;
+    var bt=this,dd=dados();delete dd.logo_caminho_atual;delete dd.logo_caminho;var extrasId={cnpj:dd.cnpj,instagram:dd.instagram,transparencia:dd.transparencia,antigolpe:dd.antigolpe,passos:dd.passos,faq:dd.faq};bt.disabled=true;
     try{
       if(logoNovo){var cam=dd.chave.toLowerCase()+'/logo_'+Date.now()+(logoNovo.type==='image/png'?'.png':'.jpg');
         var up=await _sb.storage.from('disparos-marcas').upload(cam,logoNovo,{contentType:logoNovo.type,upsert:false});
@@ -518,6 +538,8 @@ function janelaIdentidade(x){
       else if(tirarLogo)dd.logo_caminho='';
       var r=await _sb.rpc('disparo_identidade_salvar',{p_id:novo?null:x.id,p_dados:dd});
       if(r.error)throw r.error;
+      var r2=await _sb.rpc('disparo_identidade_extras_salvar',{p_id:r.data,p_dados:extrasId});
+      if(r2.error)throw new Error('a identidade foi salva, mas CNPJ/antigolpe/passos/perguntas não: '+erroTxt(r2.error));
       toast('Identidade salva.','success');j.fechar();await carregar();
     }catch(e){toast('Não consegui salvar a identidade: '+erroTxt(e),'error');bt.disabled=false;}
   });
