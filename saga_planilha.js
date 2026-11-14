@@ -13,7 +13,7 @@ window.SagaPlanilha=(function(){
   'use strict';
   var cols=[],situacoes=[],sacados=new Set(),pronta=false,filtros={},faixas={},ordem=null,protocolo='',retorno='',minhas=false,
     // 12/11 (Dr. Victor; T110 parte 2): processos que o agente já leu (ficha com o resumo em processos_obsidian) e o filtro "Sem resumo do agente"
-    comResumo=null,semResumo=false,semNumero=false,ocultas=null,editando=false,menuAberto=null;
+    comResumo=null,semResumo=false,semNumero=false,loteFiltro=null,loteFiltroDe=null,lotes=null,ocultas=null,editando=false,menuAberto=null;
   var CHAVE=function(){return 'saga-planilha2-'+FASE_FIXA+'-'+(state.meuInternoId||'');};
   // Nome e ordem próprios da Captação (planilha de captação do escritório)
   function nomeCol(c,fase){return (fase||(typeof FASE_FIXA!=='undefined'?FASE_FIXA:''))==='captacao'&&c.nome_captacao?c.nome_captacao:c.nome;}
@@ -159,6 +159,7 @@ window.SagaPlanilha=(function(){
     if(minhas&&String(p.captador_id||'')!==String(state.meuInternoId||''))return false;
     if(semResumo&&!semResumoAgente(p))return false;
     if(semNumero&&!semNumeroCnj(p))return false;
+    if(loteFiltro&&!loteFiltro.has(String(p.id)))return false;
     if(retorno){var cr=colPorChave('captacao.data_retorno'),dr=cr&&(p.campos||{})[cr.id],hoje=hojeISO(),em7=hojeISO(new Date(Date.now()+7*864e5));
       // quem está em "Sem sucesso" não conta nos retornos (como no aviso do sino; 09/11)
       if(!dr||statusDe(p).etapa==='Sem sucesso')return false;dr=String(dr).slice(0,10);
@@ -1016,6 +1017,7 @@ window.SagaPlanilha=(function(){
       case 'processo.campanha':p.campanha_origem_id=r;if(r&&!p.origem_id&&ori()){var cc=ori().campanha(r);if(cc&&cc.origem_id)p.origem_id=cc.origem_id;}break;
     }
     if(typeof invalidarBaseProcessos==='function'){var base=state.baseProcessos;invalidarBaseProcessos();state.baseProcessos=base;}
+    if(FASE_FIXA==='captacao'&&lotes)carregarLotesLogo();
   }
 
   // ---------- escolher colunas ----------
@@ -1207,7 +1209,7 @@ window.SagaPlanilha=(function(){
     w.querySelectorAll('[data-tese]').forEach(function(b){b.onclick=function(){state.filtroTese=b.dataset.tese?catalogoTeses.tese(b.dataset.tese):null;if(typeof renderDropdownsTeses==='function')renderDropdownsTeses();renderAbas();aplicarFiltros();};});
     var st=w.querySelector('[data-tipo]');if(st)st.onchange=function(){if(st.value)filtros[tipo.id]=new Set([st.value]);else delete filtros[tipo.id];aplicar();};
   }
-  function limpar(){filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;guardar();renderBarra();}
+  function limpar(){filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;loteFiltro=null;loteFiltroDe=null;renderLotes();guardar();renderBarra();}
 
   function estilos(){
     if(document.getElementById('spEstilo'))return;
@@ -1252,7 +1254,8 @@ window.SagaPlanilha=(function(){
       '.sp-pill-solta{border:1px solid var(--border-soft);background:var(--panel)}'+
       '.sp-pill-solta .sp-qtd-resumo{font-weight:600;margin-left:3px;color:var(--gold)}'+
       '.sp-sem-resumo{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;border:1px solid var(--border-soft);font-size:9.5px;font-weight:500;line-height:16px;color:var(--muted);vertical-align:1px;white-space:nowrap}'+
-      '.card-nome .sp-sem-resumo{margin-left:5px}.sp-num-invalido{color:var(--danger,#c0392b);border-color:currentColor}'+
+      '.card-nome .sp-sem-resumo{margin-left:5px}'+
+      '#spLotes{margin:0 0 12px}.sp-lt{background:var(--panel);border:1px solid var(--border-soft);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}.sp-lt-topo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.sp-lt-acoes{margin-left:auto;display:flex;gap:6px}.sp-lt-linha{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px}.sp-lt-nome{min-width:90px;font-weight:600}.sp-lt-barra{display:inline-block;width:80px;height:6px;border-radius:4px;background:var(--border-soft);vertical-align:middle;overflow:hidden}.sp-lt-barra i{display:block;height:100%;background:var(--gold);border-radius:4px;transition:width .42s cubic-bezier(.22,.78,.25,1)}.sp-lt-barra i.ok{background:var(--success,#2e9e6b)}.sp-lt-desl{color:var(--danger,#c0392b);font-weight:600}.sp-lt-erro{color:var(--danger,#c0392b);font-size:13px}.sp-lt-desf{margin-left:auto}@media(prefers-reduced-motion:reduce){.sp-lt-barra i{transition:none}}html.saga-sem-movimento .sp-lt-barra i{transition:none}.sp-num-invalido{color:var(--danger,#c0392b);border-color:currentColor}'+
       '#spAbas{margin:0 0 12px}.sp-abas{display:flex;gap:2px;overflow-x:auto;border-bottom:1px solid var(--border-soft);scrollbar-width:thin}.sp-aba{border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;font-weight:600;padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color .2s,border-color .25s}'+
       '.sp-aba{border-radius:9px}.sp-abas{padding-bottom:3px}.sp-aba:hover{color:var(--text)}.sp-aba.ativo{color:var(--gold-light);border-bottom-color:var(--gold)}.sp-aba:active{transform:scale(.97)}'+
       '.sp-org{margin-left:auto;font-size:11.5px;color:var(--gold-light);text-decoration:underline}.sp-sub{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}.sp-teses{flex-wrap:wrap}.sp-tipo{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}.sp-tipo select{background:var(--panel);color:var(--text);border:1px solid var(--border-soft);border-radius:8px;padding:6px 8px;font:inherit;font-size:12px;max-width:240px}'+
@@ -1336,6 +1339,7 @@ window.SagaPlanilha=(function(){
     if(!cols.length)return false;
     lerPreferencias();
     var abas=document.createElement('div');abas.id='spAbas';var cab=document.querySelector('.barra-filtros');(cab||document.getElementById('listaView')).parentNode.insertBefore(abas,cab||document.getElementById('listaView'));
+    if(FASE_FIXA==='captacao'){var lt=document.createElement('div');lt.id='spLotes';lt.hidden=true;abas.parentNode.insertBefore(lt,abas);carregarLotes();setInterval(function(){if(!document.hidden)carregarLotes();},120000);}
     var barra=document.createElement('div');barra.id='spBarra';
     var lv=document.getElementById('listaView');lv.parentNode.insertBefore(barra,lv);
     var bk=document.getElementById('barraKanban');if(bk&&!document.getElementById('spKanbanPor')){var kp=document.createElement('div');kp.id='spKanbanPor';kp.className='sp-kb-por';kp.style.display='none';bk.insertBefore(kp,bk.querySelector('.busca-kanban'));}
@@ -1571,6 +1575,81 @@ window.SagaPlanilha=(function(){
         j.fechar();aviso('Distribuído: '+(r||[]).map(function(x){return h(String(x.nome||'').split(' ')[0])+' '+x.quantidade;}).join(' · '));
         if(typeof invalidarBaseProcessos==='function')invalidarBaseProcessos();if(typeof carregarProcessos==='function')carregarProcessos();}
       catch(e){aviso(h(e.message||'Não foi possível distribuir.'),true);b.disabled=false;b.textContent='Distribuir';}
+    };
+  }
+
+  // ---------- Lotes semanais da Captação com meta (14/11, Dr. Victor; Raio-X item 4; bloco 200) ----------
+  // Cada localizador recebe um lote por semana (toda segunda às 7h, agendador captacao-lotes-semana) e vê a meta do dia;
+  // ficha "trabalhada" = mudou de etapa, ganhou comentário ou contato/anotação na Localização (gatilhos no banco).
+  // O administrador vê todos, configura (pessoas, tamanho, ligado), entrega o lote na hora e desfaz um lote.
+  var _lotesTimer=null;
+  function carregarLotesLogo(){clearTimeout(_lotesTimer);_lotesTimer=setTimeout(carregarLotes,1500);}
+  async function carregarLotes(){
+    var el=document.getElementById('spLotes');if(!el)return;
+    try{var r=await _sb.rpc('captacao_lotes_painel');if(r.error)throw r.error;lotes=r.data||null;}
+    catch(e){lotes={erro:(e&&e.message)||'erro desconhecido'};}
+    // o filtro "Meu lote" acompanha as fichas que ainda faltam
+    if(loteFiltro&&lotes&&lotes.pessoas){var pp=lotes.pessoas.find(function(x){return String(x.id)===String(loteFiltroDe);});loteFiltro=new Set(((pp&&pp.ids)||[]).map(String));}
+    renderLotes();
+  }
+  function barraMeta(feito,meta){var pct=meta?Math.min(100,Math.round(feito*100/meta)):0;return '<span class="sp-lt-barra" title="'+feito+' de '+meta+'"><i style="width:'+pct+'%"'+(feito>=meta&&meta?' class="ok"':'')+'></i></span>';}
+  function renderLotes(){
+    var el=document.getElementById('spLotes');if(!el)return;
+    var L=lotes;
+    if(!L||(!L.erro&&(!L.configurado||L.participa===false))){el.hidden=true;el.innerHTML='';return;}
+    el.hidden=false;
+    if(L.erro){el.innerHTML='<div class="sp-lt-erro">Não foi possível ler os lotes da Captação: '+h(L.erro)+'. A tela tenta de novo em 2 minutos.</div>';return;}
+    var meta=L.meta_dia||0,sem=String(L.semana||'').split('-').reverse().slice(0,2).join('/');
+    var linha=function(p,admin){
+      var filtrando=loteFiltro&&String(loteFiltroDe)===String(p.id);
+      var hoje=L.dia_util?'Hoje: <b>'+p.feitas_hoje+'</b> de '+meta+' '+barraMeta(p.feitas_hoje,meta):'Hoje: <b>'+p.feitas_hoje+'</b> <span class="sp-ajuda">(fim de semana, sem meta)</span>';
+      return '<div class="sp-lt-linha">'+(admin?'<span class="sp-lt-nome">'+h(String(p.nome||'').split(' ')[0])+(p.no_lote?'':' <span class="sp-ajuda">(fora dos lotes)</span>')+'</span>':'<span class="sp-lt-nome">Meu lote</span>')+
+        '<span>'+(p.lote_semana?'Lote da semana de '+sem+': <b>'+p.lote_semana+'</b>':'<span class="sp-ajuda">Lote da semana de '+sem+' ainda não entregue</span>')+'</span>'+
+        '<span>'+hoje+'</span><span>Semana: <b>'+p.feitas_semana+'</b> de '+(L.tamanho||0)+'</span>'+
+        '<button type="button" class="sp-pill sp-pill-solta'+(filtrando?' active ativo':'')+'" data-lt-ver="'+h(p.id)+'" aria-pressed="'+!!filtrando+'" title="Mostrar só as fichas do lote que ainda faltam trabalhar">Faltam <b>'+p.pendentes+'</b></button>'+
+        (admin&&p.lote_id?'<button type="button" class="btn-secondary sp-btn sp-lt-desf" data-lt-desfazer="'+h(p.lote_id)+'" data-lt-nome="'+h(p.nome)+'" title="As fichas deste lote voltam a ficar sem Jovem Talento">Desfazer lote</button>':'')+
+        '</div>';};
+    var pessoas=L.pessoas||[];
+    if(!L.admin){el.innerHTML='<div class="sp-lt">'+(pessoas.length?linha(pessoas[0],false):'')+'<div class="sp-ajuda">Meta: '+meta+' fichas por dia útil. Conta quando a ficha muda de etapa, ganha comentário ou contato/anotação na Localização. Lote novo toda segunda às 7h.</div></div>';ligarLotes(el);return;}
+    el.innerHTML='<div class="sp-lt"><div class="sp-lt-topo"><b>Lotes da Captação</b><span class="sp-ajuda">Semana de '+sem+' · '+(L.tamanho||0)+' por pessoa · meta '+meta+' por dia útil · '+(L.ativo?'entrega sozinha toda segunda às 7h':'<span class="sp-lt-desl">DESLIGADO</span>')+' · '+(L.reserva==null?'?':Number(L.reserva).toLocaleString('pt-BR'))+' fichas esperando os próximos lotes</span>'+
+      '<span class="sp-lt-acoes"><button type="button" class="btn-secondary sp-btn" data-lt-config>Configurar lotes</button><button type="button" class="btn-primary sp-btn" data-lt-entregar title="Entrega agora o lote desta semana a quem ainda não recebeu">Entregar lote agora</button></span></div>'+
+      (pessoas.length?pessoas.map(function(p){return linha(p,true);}).join(''):'<div class="sp-ajuda">Ninguém nos lotes. Use "Configurar lotes".</div>')+'</div>';
+    ligarLotes(el);
+  }
+  function ligarLotes(el){
+    el.querySelectorAll('[data-lt-ver]').forEach(function(b){b.onclick=function(){
+      var id=b.dataset.ltVer;if(loteFiltro&&String(loteFiltroDe)===String(id)){loteFiltro=null;loteFiltroDe=null;}
+      else{var p=(lotes.pessoas||[]).find(function(x){return String(x.id)===String(id);});loteFiltro=new Set(((p&&p.ids)||[]).map(String));loteFiltroDe=id;}
+      el.querySelectorAll('[data-lt-ver]').forEach(function(x){var on=!!loteFiltro&&x===b;x.classList.toggle('active',on);x.classList.toggle('ativo',on);x.setAttribute('aria-pressed',String(on));});
+      requestAnimationFrame(function(){setTimeout(aplicar,60);});};});
+    var bc=el.querySelector('[data-lt-config]');if(bc)bc.onclick=abrirConfigLotes;
+    var be=el.querySelector('[data-lt-entregar]');if(be)be.onclick=async function(){
+      var ok=window.sagaConfirmar?await sagaConfirmar('Entregar lote agora','Entregar agora o lote desta semana a quem ainda não recebeu? Cada pessoa recebe o aviso no sino.','Entregar'):true;if(!ok)return;
+      be.disabled=true;
+      try{var r=await rpcOk('captacao_lote_entregar',{p_origem:'manual'});aviso((r&&r.length)?'Lotes da semana: '+r.map(function(x){return h(String(x.nome||'').split(' ')[0])+' '+x.quantidade;}).join(' · '):'Todos já tinham o lote desta semana.');
+        if(typeof invalidarBaseProcessos==='function')invalidarBaseProcessos();if(typeof carregarProcessos==='function')carregarProcessos();carregarLotes();}
+      catch(e){aviso('Não foi possível entregar o lote: '+h(e.message||'erro desconhecido'),true);}be.disabled=false;};
+    el.querySelectorAll('[data-lt-desfazer]').forEach(function(b){b.onclick=async function(){
+      var ok=window.sagaConfirmar?await sagaConfirmar('Desfazer lote','Desfazer o lote desta semana de '+b.dataset.ltNome+'? As fichas que ainda estão com essa pessoa voltam a ficar sem Jovem Talento (o que já foi trabalhado fica registrado).','Desfazer',true):true;if(!ok)return;
+      b.disabled=true;
+      try{var n=await rpcOk('captacao_lote_desfazer',{p_lote_id:Number(b.dataset.ltDesfazer),p_semana:null});aviso('Lote desfeito: '+n+' ficha(s) voltaram a ficar sem Jovem Talento.');
+        if(typeof invalidarBaseProcessos==='function')invalidarBaseProcessos();if(typeof carregarProcessos==='function')carregarProcessos();carregarLotes();}
+      catch(e){aviso('Não foi possível desfazer: '+h(e.message||'erro desconhecido'),true);b.disabled=false;}};});
+  }
+  function abrirConfigLotes(){
+    var L=lotes||{},marcados=(L.pessoas_config||[]).map(String),pessoas=state.responsaveis||[];
+    var j=janela('Lotes da Captação',
+      '<div class="sp-dist-bloco"><label class="sp-item"><input type="checkbox" class="sp-lt-ativo"'+(L.ativo!==false?' checked':'')+'> Ligado: entregar o lote sozinho toda segunda às 7h</label></div>'+
+      '<div class="sp-dist-bloco"><div class="sp-dist-tit">Fichas por pessoa em cada semana</div><input type="number" class="sp-bloco sp-lt-tam" min="1" max="2000" value="'+h(L.tamanho||150)+'"> <span class="sp-ajuda">meta do dia = lote ÷ 5 dias úteis</span></div>'+
+      '<div class="sp-dist-bloco"><div class="sp-dist-tit">Quem recebe (na ordem da entrega)</div><div class="sp-dist-pessoas">'+pessoas.map(function(u){return '<label class="sp-item"><input type="checkbox" value="'+h(u.id)+'"'+(marcados.indexOf(String(u.id))!==-1?' checked':'')+'> <span>'+h(u.nome_completo)+'</span></label>';}).join('')+'</div>'+
+      '<p class="sp-ajuda">As fichas vão uma para cada, na ordem da planilha, sem as de "Sem sucesso". Tirar alguém daqui não tira as fichas que a pessoa já recebeu.</p></div><div class="sp-lt-msg"></div>',
+      '<button type="button" class="btn-secondary" data-fechar>Cancelar</button><button type="button" class="btn-primary" data-ok>Salvar</button>');
+    j.q('[data-ok]').onclick=async function(){
+      var ps=marcados.filter(function(id){return j.ov.querySelector('.sp-dist-pessoas input[value="'+id+'"]:checked');});
+      Array.from(j.ov.querySelectorAll('.sp-dist-pessoas input:checked')).forEach(function(i){if(ps.indexOf(i.value)===-1)ps.push(i.value);});
+      var b=this;b.disabled=true;
+      try{await rpcOk('captacao_lotes_config_salvar',{p_ativo:j.q('.sp-lt-ativo').checked,p_tamanho:Number(j.q('.sp-lt-tam').value)||0,p_pessoas:ps});j.fechar();aviso('Lotes da Captação salvos.');carregarLotes();}
+      catch(e){j.q('.sp-lt-msg').innerHTML='<div class="sp-lt-erro">Não foi possível salvar: '+h(e.message||'erro desconhecido')+'</div>';b.disabled=false;}
     };
   }
 
