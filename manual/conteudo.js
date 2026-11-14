@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.7",
+  versao: "2.8",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.8", data: "14/11/2026", mudou: "Biblioteca: Timbrados e modelos. Os papéis timbrados da Victor Morais Advocacia, da ANCREF e da Sarmento ficam guardados no SAGA, e os modelos de petição geram o Word e o PDF já no papel timbrado, no Padrão VMM, aqui no próprio computador." },
     { versao: "2.7", data: "14/11/2026", mudou: "Minhas Tarefas e Intimações: o número do processo fica sempre à vista no cartão (não só ao passar o mouse), com pontos e traço, e o Ctrl+F do navegador acha o processo pelo número; a etiqueta continua sempre à vista." },
     { versao: "2.6", data: "14/11/2026", mudou: "Jurídico: botão \"Sem número CNJ (N)\" (processos ativos sem número válido, para completar um por vez) e o selo \"número inválido\" na célula; Captação: lotes semanais com meta (\"Meu lote\" com a meta do dia para cada localizador; para o administrador, o quadro Lotes da Captação com configurar, entregar e desfazer)." },
     { versao: "2.5", data: "14/11/2026", mudou: "Minhas Tarefas: o administrador muda a ordem das etiquetas pelas setinhas do menu; os botões Dar impulso processual e Pedidos do Claude ficam só no menu de etiquetas; a situação da tarefa volta a aparecer no cartão. Notas: as etiquetas ficam sempre à vista, também na lista do celular." },
@@ -832,6 +833,22 @@ window.SAGA_MANUAL = {
           ],
           img: "biblioteca",
           marcas: ["Nova categoria (quem pode).", "Ver em grade ou lista."]
+        },
+        { id: "timbrados", titulo: "Timbrados e modelos de petição",
+          quando: "Para fazer uma petição já no papel timbrado da Victor Morais Advocacia, da ANCREF ou da Sarmento, em Word ou em PDF, ou para baixar o papel timbrado em branco.",
+          passos: [
+            "Abra **Biblioteca** e clique em [[Timbrados e modelos]], no alto da coluna das categorias.",
+            "Em **Modelos de petição**, escolha o escritório no alto (ou [[Todos]]) e clique em [[Gerar petição]] no modelo.",
+            "Na janela, confira o **Papel timbrado** (dá para trocar: o mesmo texto sai em qualquer um dos três) e, no da Victor Morais Advocacia, a **Versão**: colorida (para enviar) ou para imprimir (sem as faixas).",
+            "Preencha o que quiser: juízo, número do processo (os pontos e o traço entram sozinhos), cliente, nome da peça, fatos, direito e pedidos. O que ficar em branco sai entre colchetes, por exemplo [Do direito], para completar depois no Word. A data em branco sai com a data de hoje.",
+            "Para destacar um nome de pessoa ou órgão como no Padrão VMM (negrito, itálico e versalete), escreva dois asteriscos (o sinal de estrelinha) antes e dois depois do nome, sem espaço. Dois sublinhados antes e dois depois deixam o texto só em negrito.",
+            "Clique em [[Baixar Word]] ou [[Baixar PDF]]. O arquivo é montado no seu computador e vai para a pasta de downloads; nada é enviado para fora.",
+            "Em **Papéis timbrados** ficam os três papéis oficiais, cada um guardado uma vez só: [[Word em branco]], [[PDF em branco]] e, no da Victor Morais Advocacia, [[Word para impressão]].",
+            "Só o administrador: [[Trocar timbrado]] guarda os arquivos novos de um timbrado (o Word e o fundo do PDF). A partir daí todas as petições novas saem com o timbrado novo; o arquivo antigo continua guardado."
+          ],
+          img: "biblioteca_timbrados",
+          marcas: ["Timbrados e modelos, no alto das categorias.", "Escolher o escritório.", "Gerar a petição em Word ou PDF.", "O papel timbrado de cada escritório, com os botões para baixar em branco (e Trocar, só o administrador)."],
+          dicas: ["No PDF da ANCREF e da Sarmento, a letra Segoe UI do Word é trocada por uma muito parecida (Open Sans), porque a Segoe UI não pode ser usada fora do Windows. No Word baixado fica a letra original.", "Se aparecer um aviso vermelho dizendo que não foi possível gerar, mande a mensagem ao administrador: ela diz o que faltou."]
         },
         { id: "config", titulo: "Configurações do escritório e listas de opções",
           quando: "Quando o administrador precisa mudar uma opção de menu, uma área do direito ou um dado do escritório.",

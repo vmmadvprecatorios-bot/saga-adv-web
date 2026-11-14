@@ -1,0 +1,6 @@
+Fontes usadas pelo SAGA para gerar as petições em PDF no navegador (saga_timbrado.js).
+- EB Garamond (Georg Duffner e Octavio Pardo): SIL Open Font License 1.1. Fica no lugar da Garamond (timbrado VMM).
+- Open Sans (Steve Matteson / Google): SIL Open Font License 1.1. Fica no lugar da Segoe UI (timbrados ANCREF e Sarmento).
+- Liberation Serif (Red Hat): SIL Open Font License 1.1. Fica no lugar da Times New Roman (citações ANCREF e Sarmento).
+No Word baixado continuam as fontes originais do timbrado (Garamond, Segoe UI, Times New Roman), que o Windows do escritório já tem.
+Texto da licença: https://openfontlicense.org

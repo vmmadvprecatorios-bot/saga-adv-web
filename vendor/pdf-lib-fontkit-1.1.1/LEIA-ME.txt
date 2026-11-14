@@ -1,0 +1,2 @@
+@pdf-lib/fontkit 1.1.1 (fontkit.umd.min.js), licença MIT. Permite ao pdf-lib (vendor/pdf-lib-1.17.1) usar fontes TTF próprias.
+Usado pelo saga_timbrado.js para escrever as petições em PDF com as fontes de vendor/fontes.
