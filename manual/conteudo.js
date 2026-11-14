@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.3",
-  data: "13/11/2026",
+  versao: "2.4",
+  data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.4", data: "14/11/2026", mudou: "Minhas Tarefas mais organizada: números, gráficos e calendário recolhidos em \"Mostrar resumo\"; uma barra de filtros (Busca, Etiqueta, Responsável, Prazo e \"Mais filtros\"); menu de etiquetas sempre à vista, com a quantidade de tarefas abertas, os atalhos Dar impulso processual e Pedidos do Claude e, para o administrador, criar, renomear, mudar a cor e tirar etiqueta da lista; cartão mais limpo (o resto aparece ao passar o mouse)." },
     { versao: "2.3", data: "13/11/2026", mudou: "SAGA no Claude liberado para toda a equipe: passo a passo para ligar o conector no seu Claude (cada um com o próprio login e as próprias permissões)." },
     { versao: "2.2", data: "13/11/2026", mudou: "Tela nova Editor de PDF (menu Processos): juntar, separar, tirar, girar e reordenar páginas, numerar, escrever texto, tapar área e reduzir o tamanho, tudo no próprio computador (o arquivo não vai para nenhum site); na ficha, o PDF guardado abre no editor e o resultado volta como documento novo." },
     { versao: "2.1", data: "12/11/2026", mudou: "Tela nova Precatórios e RPV (menu Gestão): situação do requisitório de cada processo do Jurídico, aviso de pagamento liberado e dinheiro a entrar por mês e por ano; colunas novas do requisitório na planilha do Jurídico." },
@@ -474,14 +475,29 @@ window.SAGA_MANUAL = {
         { id: "visao", titulo: "Ver e organizar as tarefas",
           quando: "Todo dia, ao começar, e sempre que receber tarefa nova.",
           passos: [
-            "Abra **Minhas Tarefas**. No alto: total, novas, em andamento, **atrasadas** e concluídas hoje (clique para filtrar).",
-            "Veja em **Kanban** (arraste o cartão entre as colunas) ou **Lista**. O calendário mostra os prazos do mês.",
-            "[[Filtros]]: tipo, situação, prioridade, prazo e responsável.",
+            "Abra **Minhas Tarefas**. A tela abre enxuta: em cima, [[Kanban]] / [[Lista]], [[Mostrar resumo]] e [[Nova Tarefa]]. O número vermelho ao lado de Mostrar resumo é quantas tarefas estão **atrasadas**.",
+            "[[Mostrar resumo]] abre os números (total, novas, em andamento, atrasadas e concluídas hoje; clique para filtrar), os gráficos e o calendário dos prazos. [[Esconder resumo]] recolhe. O SAGA lembra a sua escolha neste computador.",
+            "Logo abaixo fica a **barra de filtros**: busca, [[Etiqueta]], responsável e prazo. Os outros (tipo, situação, prioridade, tribunal e fase) ficam em [[Mais filtros]]; o número no botão mostra quantos estão ligados lá dentro. Cada filtro ligado aparece como uma etiqueta clicável embaixo (o × tira) e [[Limpar filtros]] tira todos.",
+            "No cartão aparece só o essencial: etiqueta, título, cliente, subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passe o mouse para ver o resto: situação, quem passou a tarefa, compartilhamento, número do processo com o botão do tribunal e os atalhos [[Ficha]] e [[Intimações]]. No celular, toque no cartão para abrir a tarefa inteira.",
             "[[Dar impulso processual]] (ao lado de Todas / Minhas): mostra só as tarefas de impulso que o SAGA cria nos processos parados, com o número delas; clique de novo para voltar a todas. No filtro **Tipo** também há **Sem as de impulso**.",
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],
           img: "tarefas",
-          marcas: ["Nova Tarefa.", "Filtros.", "Atrasadas: comece por elas."]
+          marcas: ["Nova Tarefa.", "Mostrar resumo (números, gráficos e calendário); o número vermelho são as atrasadas.", "Etiqueta: o menu de etiquetas.", "Mais filtros: tipo, situação, prioridade, tribunal e fase."]
+        },
+        { id: "etiquetas", titulo: "Filtrar e criar etiquetas",
+          quando: "Para ver só as tarefas de um assunto (ex.: cumprimento, aguardando documento) ou criar uma etiqueta nova.",
+          passos: [
+            "Clique em [[Etiqueta]] na barra de filtros. O menu mostra cada etiqueta com a quantidade de **tarefas abertas** dela.",
+            "Marque uma ou várias: a lista filtra na hora (aparecem as tarefas com qualquer uma das marcadas). Clique de novo para desmarcar, ou em [[Limpar etiquetas]].",
+            "No alto do menu ficam os **atalhos** [[Dar impulso processual]] e [[Pedidos do Claude]]: mostram só essas tarefas e podem ser combinados com as etiquetas.",
+            "Para criar (só o administrador): [[+ Nova etiqueta]], escreva o nome (até 40 letras), escolha a cor e [[Salvar etiqueta]]. Ela já aparece no menu e na janela da tarefa.",
+            "Para renomear ou mudar a cor: o lápis ✎ ao lado da etiqueta. Para tirar da lista, desmarque **Mostrar na lista**: as tarefas que já têm a etiqueta continuam com ela (o histórico fica). As tiradas aparecem em [[Ver as tiradas da lista]], e o lápis volta qualquer uma para a lista.",
+            "Para pôr a etiqueta numa tarefa: abra a tarefa e escolha em **Etiqueta**, na parte da direita."
+          ],
+          img: "tarefas_etiquetas",
+          marcas: ["Atalhos: Dar impulso processual e Pedidos do Claude.", "Quantas tarefas abertas têm a etiqueta.", "Lápis: renomear, mudar a cor ou tirar da lista (só o administrador).", "+ Nova etiqueta (só o administrador)."],
+          dicas: ["Se aparecer \"Já existe uma etiqueta com esse nome\", use a que já existe (ou veja em Ver as tiradas da lista: pode estar só fora da lista)."]
         },
         { id: "colunas", titulo: "Colunas por tribunal e colunas ocultas",
           quando: "Para entender onde cada tarefa aparece no Kanban.",

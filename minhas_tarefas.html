@@ -358,6 +358,75 @@
   .opcao-multi-check:hover{ background:color-mix(in srgb,var(--gold) 8%,transparent); }
   .caixa-check-multi{ width:14px;height:14px; border-radius:4px; border:1.4px solid var(--border); flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
   .opcao-multi-check.marcada .caixa-check-multi{ background:var(--gold); border-color:var(--gold); }
+
+  /* ===== T183 (14/11): barra de filtros enxuta, menu de etiquetas, resumo recolhido ===== */
+  .busca-filtro-topo{ position:relative; flex:1 1 220px; min-width:170px; max-width:340px; }
+  .busca-filtro-topo svg{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+  .busca-filtro-topo .campo-busca-filtro{ padding-left:31px; background:var(--panel); border:1px solid var(--border-soft); }
+  .drop-etiquetas.com-filtro > .dropdown-custom-valor{ border-color:color-mix(in srgb,var(--gold) 55%,transparent); background:color-mix(in srgb,var(--gold) 10%,var(--panel)); }
+  #dropFiltroEtiqueta .dropdown-custom-valor span{ max-width:230px; overflow:hidden; text-overflow:ellipsis; }
+  .dropdown-custom.aberto > .dropdown-custom-lista{ animation:mtMenuAbrir 240ms cubic-bezier(.22,.78,.25,1); }
+  @keyframes mtMenuAbrir{ from{ opacity:0; transform:translateY(-5px); } to{ opacity:1; transform:none; } }
+  html.mt-sem-mov .dropdown-custom.aberto > .dropdown-custom-lista{ animation:none; }
+  .menu-etiquetas-filtro{ width:300px; max-width:calc(100vw - 32px); max-height:min(460px, 70vh); padding:6px; overscroll-behavior:contain; }
+  .mef-secao{ font-size:9.5px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); font-weight:600; padding:8px 9px 4px; }
+  .mef-secao small{ text-transform:none; letter-spacing:0; font-weight:400; }
+  .mef-linha{ display:flex; align-items:center; gap:2px; min-width:0; }
+  .mef-op{ flex:1; min-width:0; display:flex; align-items:center; gap:8px; padding:7px 8px; border:0; border-radius:8px; background:transparent; color:var(--text); font:inherit; font-size:11.5px; text-align:left; cursor:pointer; transition:background .18s ease; }
+  .mef-op:hover, .mef-op:focus-visible{ background:color-mix(in srgb,var(--gold) 9%,transparent); outline:none; }
+  .mef-op.marcada .caixa-check-multi{ background:var(--gold); border-color:var(--gold); }
+  .mef-op.marcada .mef-nome{ font-weight:600; }
+  .mef-bola{ width:9px; height:9px; border-radius:50%; flex:0 0 auto; background:var(--c,var(--muted)); }
+  .mef-bola-atalho{ background:transparent; border:1.5px solid var(--gold); }
+  .mef-nome{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .mef-n{ font-weight:500; font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .mef-editar{ flex:0 0 auto; width:28px; height:28px; border:0; border-radius:7px; background:transparent; color:var(--muted); cursor:pointer; font-size:12px; }
+  .mef-editar:hover, .mef-editar:focus-visible{ color:var(--gold); background:color-mix(in srgb,var(--gold) 9%,transparent); outline:none; }
+  .mef-desativada{ padding:3px 9px 3px 31px; gap:8px; font-size:11px; color:var(--muted); }
+  .mef-vazio{ padding:8px 9px; font-size:11px; color:var(--muted); }
+  .mef-ver-desativadas, .mef-limpar{ display:block; width:100%; margin-top:4px; padding:7px 9px; border:0; border-radius:8px; background:transparent; color:var(--muted); font:inherit; font-size:10.5px; text-align:left; cursor:pointer; }
+  .mef-ver-desativadas:hover, .mef-limpar:hover{ color:var(--text); background:color-mix(in srgb,var(--text) 5%,transparent); }
+  .mef-admin{ border-top:1px solid var(--border-soft); margin-top:5px; padding-top:4px; }
+  .mef-admin:empty{ display:none; }
+  .mef-nova{ display:block; width:100%; padding:8px 9px; border:0; border-radius:8px; background:transparent; color:var(--gold); font:inherit; font-size:11.5px; text-align:left; cursor:pointer; }
+  .mef-nova:hover, .mef-nova:focus-visible{ background:color-mix(in srgb,var(--gold) 9%,transparent); outline:none; }
+  .mef-editor{ display:grid; gap:8px; padding:9px; margin-top:4px; border-top:1px solid var(--border-soft); font-size:11px; }
+  .mef-editor[hidden]{ display:none; }
+  .mef-editor strong{ font-size:11.5px; color:var(--text); }
+  .mef-editor label{ display:grid; gap:4px; color:var(--muted); }
+  .mef-editor input[type=text]{ width:100%; box-sizing:border-box; padding:8px 9px; border-radius:8px; border:1px solid var(--border-soft); background:var(--panel); color:var(--text); font:inherit; font-size:12px; }
+  .mef-cores{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .mef-cor{ width:22px; height:22px; border-radius:50%; border:2px solid transparent; background:var(--c); cursor:pointer; padding:0; box-shadow:inset 0 0 0 2px var(--panel-2,var(--panel)); transition:border-color .2s ease, transform .15s ease; }
+  .mef-cor.active{ border-color:var(--text); }
+  .mef-cor:active{ transform:scale(.92); }
+  .mef-cor-livre{ display:inline-flex !important; }
+  .mef-cor-livre input{ width:30px; height:24px; padding:1px; border-radius:7px; }
+  .mef-editor label.mef-ativo{ display:flex; align-items:flex-start; gap:7px; color:var(--text); }
+  .mef-ativo small{ color:var(--muted); }
+  .mef-erro{ color:var(--danger); font-size:11px; }
+  .mef-erro:empty{ display:none; }
+  .mef-acoes{ display:flex; gap:6px; flex-wrap:wrap; }
+  .mef-salvar, .mef-cancelar{ padding:7px 12px; border-radius:8px; font:inherit; font-size:11px; cursor:pointer; color:var(--text); }
+  .mef-salvar{ border:1px solid color-mix(in srgb,var(--gold) 55%,transparent); background:color-mix(in srgb,var(--gold) 16%,transparent); }
+  .mef-cancelar{ border:1px solid var(--border-soft); background:color-mix(in srgb,var(--text) 3%,transparent); }
+  .painel-filtros-expandido[hidden]{ display:none !important; }
+  .btn-resumo-tarefas.ativo{ border-color:color-mix(in srgb,var(--gold) 55%,transparent); background:color-mix(in srgb,var(--gold) 12%,transparent); }
+  .badge-resumo-atrasadas{ margin-left:6px; padding:1px 7px; border-radius:8px; font-size:9.5px; font-weight:600; color:var(--danger); background:color-mix(in srgb,var(--danger) 12%,transparent); }
+  .bloco-resumo-tarefas{ margin-bottom:16px; }
+  .bloco-resumo-tarefas .legenda-prazos{ margin-top:4px; }
+  /* Cartão mais limpo: o que é secundário aparece ao passar o mouse (ou ao focar pelo teclado) */
+  .card-extra{ display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows 320ms cubic-bezier(.22,.78,.25,1), opacity 220ms ease; }
+  .card-extra > div{ min-height:0; overflow:hidden; }
+  .card-tarefa:hover .card-extra, .card-tarefa:focus-within .card-extra{ grid-template-rows:1fr; opacity:1; transition-delay:300ms; }
+  .card-extra-dentro{ display:flex; flex-direction:column; gap:3px; padding-top:4px; }
+  html.mt-sem-mov .card-extra{ transition:none; }
+  @media (hover:none){ .card-extra{ display:none; } }
+  .topo-card-tarefa-esquerda .se-tag{ max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .topo-card-tarefa-esquerda .selo-pedido-claude{ margin:0; }
+  @media (max-width:760px){
+    .busca-filtro-topo{ flex:1 1 100%; max-width:none; }
+    .menu-etiquetas-filtro{ width:calc(100vw - 32px); }
+  }
   .mini-avatar-filtro{ width:20px;height:20px; border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:700; color:var(--navy-1); }
 
   .btn-aplicar-multi-filtro{
@@ -372,7 +441,7 @@
   }
 
   .painel-filtros-expandido{
-    display:none; background:var(--panel); border:1px solid var(--border-soft); border-radius:13px;
+    display:flex; background:var(--panel); border:1px solid var(--border-soft); border-radius:13px;
     padding:16px; margin-bottom:12px; flex-wrap:wrap; gap:14px;
   }
   .painel-filtros-expandido.visivel{ display:flex; }
@@ -1825,9 +1894,9 @@ html.saga-embed #modalTarefa{background:transparent}
             Lista
           </div>
         </div>
-        <button class="btn-secundario toggle-filtro-painel" id="btnTogglePainelFiltros">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          Filtros<span class="badge-contagem-filtros" id="badgeContagemFiltros" style="display:none;">0</span>
+        <button type="button" class="btn-secundario btn-resumo-tarefas" id="btnResumoTarefas" aria-controls="blocoResumoTarefas" aria-expanded="false" title="Mostrar ou esconder os números, os gráficos e o calendário">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="4" y="12" width="3.5" height="8" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="10.25" y="7" width="3.5" height="13" rx="1" stroke="currentColor" stroke-width="1.6"/><rect x="16.5" y="4" width="3.5" height="16" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
+          <span id="textoBtnResumo">Mostrar resumo</span><span class="badge-resumo-atrasadas" id="badgeResumoAtrasadas" style="display:none;"></span>
         </button>
         <button class="btn-secundario btn-toggle-calendario" id="btnToggleCalendario" aria-controls="miniCalendarioLateral" aria-expanded="true" title="Ocultar ou mostrar o calendario lateral">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.6"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.6"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -1840,6 +1909,8 @@ html.saga-embed #modalTarefa{background:transparent}
       </div>
     </div>
 
+    <!-- T183 (14/11, Dr. Victor): números, gráficos e calendário ficam recolhidos; a escolha fica neste navegador (saga-tarefas-resumo) -->
+    <div class="bloco-resumo-tarefas" id="blocoResumoTarefas" hidden>
     <!-- ===== RESUMO/KPIs DE TAREFAS ===== -->
     <div class="grid-kpis-tarefas">
       <button type="button" class="card-kpi-tarefa kpi-filtro" data-faixa="total" aria-pressed="false" title="Clique para filtrar">
@@ -1886,43 +1957,34 @@ html.saga-embed #modalTarefa{background:transparent}
     </div>
       </aside>
     </div>
+      <div class="legenda-prazos" aria-label="Legenda das cores dos prazos">
+        <span>Prazo:</span>
+        <span data-situacao-prazo="distante">Mais de 3 dias</span>
+        <span data-situacao-prazo="proximo">De 1 a 3 dias</span>
+        <span data-situacao-prazo="hoje">Vence hoje</span>
+        <span data-situacao-prazo="atrasada">Atraso de 1 a 7 dias</span>
+        <span data-situacao-prazo="muito-atrasada">Atraso maior que 7 dias</span>
+      </div>
+    </div>
 
     <!-- ===== FILTROS AVANCADOS ===== -->
     <div class="barra-filtros-tarefas">
       <div class="barra-filtros-topo">
-        <div class="dropdown-custom" id="dropFiltroTipo" data-valor="Todas">
-          <div class="dropdown-custom-valor"><span>Tipo: Todas</span><div class="seta-dropdown"></div></div>
-          <div class="dropdown-custom-lista">
-            <div class="dropdown-custom-opcao selecionada">Todas</div>
-            <div class="dropdown-custom-opcao">Pessoal</div>
-            <div class="dropdown-custom-opcao">Vinculada a Processo</div>
-            <div class="dropdown-custom-opcao">Dar impulso processual</div>
-            <div class="dropdown-custom-opcao">Sem as de impulso</div>
-            <div class="dropdown-custom-opcao">Pedidos do Claude</div>
-          </div>
+        <div class="busca-filtro-topo">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <input type="text" class="campo-busca-filtro" id="campoBuscaTextual" placeholder="Buscar título, descrição ou processo..." aria-label="Buscar nas tarefas">
         </div>
-
-        <div class="dropdown-custom" id="dropFiltroStatus" data-valor="Todos">
-          <div class="dropdown-custom-valor"><span>Status: Todos</span><div class="seta-dropdown"></div></div>
-          <div class="dropdown-custom-lista">
-            <div class="dropdown-custom-opcao selecionada">Todos</div>
-            <div class="dropdown-custom-opcao">Nova</div>
-            <div class="dropdown-custom-opcao">Em Andamento</div>
-            <div class="dropdown-custom-opcao">Concluida</div>
-          </div>
+        <!-- T183: menu das etiquetas sempre à vista (várias de uma vez, com a quantidade de abertas; criar/editar só o administrador) -->
+        <div class="dropdown-custom drop-etiquetas" id="dropFiltroEtiqueta">
+          <div class="dropdown-custom-valor"><span id="textoFiltroEtiqueta">Etiqueta: todas</span><div class="seta-dropdown"></div></div>
+          <div class="dropdown-custom-lista menu-etiquetas-filtro" id="listaMultiEtiqueta"></div>
         </div>
-
-        <div class="dropdown-custom" id="dropFiltroPrioridade" data-valor="Todas">
-          <div class="dropdown-custom-valor"><span>Prioridade: Todas</span><div class="seta-dropdown"></div></div>
-          <div class="dropdown-custom-lista">
-            <div class="dropdown-custom-opcao selecionada">Todas</div>
-            <div class="dropdown-custom-opcao">Baixa</div>
-            <div class="dropdown-custom-opcao">Media</div>
-            <div class="dropdown-custom-opcao">Alta</div>
-            <div class="dropdown-custom-opcao">Urgente</div>
+        <div class="dropdown-custom" id="dropFiltroResponsavel" data-valor="">
+            <div class="dropdown-custom-valor"><span id="textoFiltroResponsavel">Todos os responsaveis</span><div class="seta-dropdown"></div></div>
+            <div class="dropdown-custom-lista dropdown-multi-lista" id="listaMultiResponsavel">
+              <!-- preenchido via JS com base em dadosColaboradores -->
+            </div>
           </div>
-        </div>
-
         <div class="dropdown-custom" id="dropFiltroPrazo" data-valor="Todos">
           <div class="dropdown-custom-valor"><span>Prazo: Todos</span><div class="seta-dropdown"></div></div>
           <div class="dropdown-custom-lista">
@@ -1938,11 +2000,53 @@ html.saga-embed #modalTarefa{background:transparent}
 
           </div>
         </div>
-
+        <button type="button" class="btn-secundario toggle-filtro-painel" id="btnTogglePainelFiltros" aria-expanded="false" aria-controls="painelFiltrosExpandido">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          Mais filtros<span class="badge-contagem-filtros" id="badgeContagemFiltros" style="display:none;">0</span>
+        </button>
         <span class="btn-limpar-filtros" id="btnLimparFiltrosTarefas" style="font-size:11px; color:var(--gold); cursor:pointer; text-decoration:underline; text-decoration-style:dotted;">Limpar filtros</span>
       </div>
 
-      <div class="painel-filtros-expandido" id="painelFiltrosExpandido">
+      <div class="painel-filtros-expandido" id="painelFiltrosExpandido" hidden>
+        <div class="grupo-filtro-expandido">
+          <span class="grupo-filtro-expandido-label">Tipo</span>
+          <div class="dropdown-custom" id="dropFiltroTipo" data-valor="Todas">
+          <div class="dropdown-custom-valor"><span>Tipo: Todas</span><div class="seta-dropdown"></div></div>
+          <div class="dropdown-custom-lista">
+            <div class="dropdown-custom-opcao selecionada">Todas</div>
+            <div class="dropdown-custom-opcao">Pessoal</div>
+            <div class="dropdown-custom-opcao">Vinculada a Processo</div>
+            <div class="dropdown-custom-opcao">Dar impulso processual</div>
+            <div class="dropdown-custom-opcao">Sem as de impulso</div>
+            <div class="dropdown-custom-opcao">Pedidos do Claude</div>
+          </div>
+        </div>
+        </div>
+        <div class="grupo-filtro-expandido">
+          <span class="grupo-filtro-expandido-label">Status</span>
+          <div class="dropdown-custom" id="dropFiltroStatus" data-valor="Todos">
+          <div class="dropdown-custom-valor"><span>Status: Todos</span><div class="seta-dropdown"></div></div>
+          <div class="dropdown-custom-lista">
+            <div class="dropdown-custom-opcao selecionada">Todos</div>
+            <div class="dropdown-custom-opcao">Nova</div>
+            <div class="dropdown-custom-opcao">Em Andamento</div>
+            <div class="dropdown-custom-opcao">Concluida</div>
+          </div>
+        </div>
+        </div>
+        <div class="grupo-filtro-expandido">
+          <span class="grupo-filtro-expandido-label">Prioridade</span>
+          <div class="dropdown-custom" id="dropFiltroPrioridade" data-valor="Todas">
+          <div class="dropdown-custom-valor"><span>Prioridade: Todas</span><div class="seta-dropdown"></div></div>
+          <div class="dropdown-custom-lista">
+            <div class="dropdown-custom-opcao selecionada">Todas</div>
+            <div class="dropdown-custom-opcao">Baixa</div>
+            <div class="dropdown-custom-opcao">Media</div>
+            <div class="dropdown-custom-opcao">Alta</div>
+            <div class="dropdown-custom-opcao">Urgente</div>
+          </div>
+        </div>
+        </div>
         <div class="grupo-filtro-expandido">
           <span class="grupo-filtro-expandido-label">Tribunal</span>
           <div class="dropdown-custom" id="dropFiltroTribunal" data-valor="">
@@ -1962,7 +2066,6 @@ html.saga-embed #modalTarefa{background:transparent}
             </div>
           </div>
         </div>
-
         <div class="grupo-filtro-expandido">
           <span class="grupo-filtro-expandido-label">Fase Processual</span>
           <div class="dropdown-custom" id="dropFiltroFase" data-valor="">
@@ -1980,38 +2083,8 @@ html.saga-embed #modalTarefa{background:transparent}
             </div>
           </div>
         </div>
-
-        <div class="grupo-filtro-expandido">
-          <span class="grupo-filtro-expandido-label">Responsável</span>
-          <div class="dropdown-custom" id="dropFiltroResponsavel" data-valor="">
-            <div class="dropdown-custom-valor"><span id="textoFiltroResponsavel">Todos os responsaveis</span><div class="seta-dropdown"></div></div>
-            <div class="dropdown-custom-lista dropdown-multi-lista" id="listaMultiResponsavel">
-              <!-- preenchido via JS com base em dadosColaboradores -->
-            </div>
-          </div>
-        </div>
-
-        <div class="grupo-filtro-expandido">
-          <span class="grupo-filtro-expandido-label">Etiqueta</span>
-          <div class="dropdown-custom multi-check" id="dropFiltroEtiqueta">
-            <div class="dropdown-custom-valor"><span id="textoFiltroEtiqueta">Todas as etiquetas</span><div class="seta-dropdown"></div></div>
-            <div class="dropdown-custom-lista dropdown-multi-lista" id="listaMultiEtiqueta"><button class="btn-aplicar-multi-filtro" data-aplicar="etiqueta">Aplicar</button></div>
-          </div>
-        </div>
-        <div class="grupo-filtro-expandido">
-          <span class="grupo-filtro-expandido-label">Buscar</span>
-          <input type="text" class="campo-busca-filtro" id="campoBuscaTextual" placeholder="Titulo, descricao ou numero do processo...">
-        </div>
       </div>
 
-      <div class="legenda-prazos" aria-label="Legenda das cores dos prazos">
-        <span>Prazo:</span>
-        <span data-situacao-prazo="distante">Mais de 3 dias</span>
-        <span data-situacao-prazo="proximo">De 1 a 3 dias</span>
-        <span data-situacao-prazo="hoje">Vence hoje</span>
-        <span data-situacao-prazo="atrasada">Atraso de 1 a 7 dias</span>
-        <span data-situacao-prazo="muito-atrasada">Atraso maior que 7 dias</span>
-      </div>
       <div class="chips-filtros-ativos" id="chipsFiltrosAtivos"></div>
       <div class="visao-tarefas" id="visaoTarefas" role="group" aria-label="Quais tarefas mostrar">
         <button type="button" class="visao-btn ativo" data-visao="Todas">Todas</button>
@@ -2956,17 +3029,19 @@ document.getElementById('campoBuscaTextual').addEventListener('input', function(
   aplicarFiltrosERenderizar();
 });
 
+// T183: "Mais filtros" (Tipo, Status, Prioridade, Tribunal e Fase) abre e fecha com o movimento do sistema
 document.getElementById('btnTogglePainelFiltros').addEventListener('click', function(){
   var painel = document.getElementById('painelFiltrosExpandido');
-  painel.classList.toggle('visivel');
-  this.classList.toggle('ativo', painel.classList.contains('visivel'));
+  var abrir = painel.hidden;
+  window.sagaRecolher(painel, !abrir);
+  this.classList.toggle('ativo', abrir);
+  this.setAttribute('aria-expanded', abrir ? 'true' : 'false');
 });
 
 document.getElementById('btnLimparFiltrosTarefas').addEventListener('click', function(){
   filtroProcessoUrl = null;
-  filtrosAtivos = { faixa:'', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
-  document.querySelectorAll('.painel-filtros-expandido .opcao-multi-check').forEach(function(o){ o.classList.remove('marcada'); });
-  document.getElementById('textoFiltroEtiqueta').textContent = 'Todas as etiquetas';
+  filtrosAtivos = { faixa:'', visao:filtrosAtivos.visao || 'Todas', tipo:'Todas', status:'Todos', prioridade:'Todas', prazo:'Todos', tribunais:[], fases:[], responsaveis:[], etiquetas:[], busca:'' };
+  document.querySelectorAll('.barra-filtros-tarefas .opcao-multi-check').forEach(function(o){ o.classList.remove('marcada'); });
   document.getElementById('textoFiltroTribunal').textContent = 'Todos os tribunais';
   document.getElementById('textoFiltroFase').textContent = 'Todas as fases';
   document.getElementById('textoFiltroResponsavel').textContent = 'Todos os responsaveis';
@@ -2983,6 +3058,171 @@ document.getElementById('btnLimparFiltrosTarefas').addEventListener('click', fun
   aplicarFiltrosERenderizar();
   mostrarToast('Filtros restaurados.', 'info');
 });
+
+/* =====================================================================
+   T183 (14/11, Dr. Victor): MENU DE ETIQUETAS sempre à vista na barra de filtros.
+   Marca várias de uma vez (vale na hora), mostra quantas tarefas ABERTAS há em cada uma,
+   traz como atalhos "Dar impulso processual" e "Pedidos do Claude" (filtro Tipo) e,
+   para o administrador, "+ Nova etiqueta" e o lápis para renomear, mudar a cor ou
+   tirar da lista (desativar: as tarefas continuam com ela; o banco recusa os outros).
+===================================================================== */
+var ATALHOS_ETIQUETA = ['Dar impulso processual', 'Pedidos do Claude'];
+var estadoEditorEtiqueta = null; // {id|null}
+var mostrarEtiquetasDesativadas = false;
+function contarAbertasEtiqueta(fn){ return (window.SAGA_TASKS || []).filter(function(t){ return t.status !== 'concluida' && fn(t); }).length; }
+function textoBotaoEtiquetas(){
+  var nomes = [];
+  if(ATALHOS_ETIQUETA.indexOf(filtrosAtivos.tipo) !== -1) nomes.push(filtrosAtivos.tipo);
+  filtrosAtivos.etiquetas.forEach(function(id){ var e = catalogoEtiquetas && catalogoEtiquetas.porId(id); nomes.push(id === '' ? 'Sem etiqueta' : (e ? e.nome : 'Etiqueta')); });
+  if(!nomes.length) return 'Etiqueta: todas';
+  if(nomes.length === 1) return 'Etiqueta: ' + nomes[0];
+  return nomes.length + ' etiquetas';
+}
+function renderMenuEtiquetasFiltro(){
+  var raiz = document.getElementById('listaMultiEtiqueta'); if(!raiz) return;
+  var txt = document.getElementById('textoFiltroEtiqueta'); if(txt) txt.textContent = textoBotaoEtiquetas();
+  var drop = document.getElementById('dropFiltroEtiqueta');
+  if(drop) drop.classList.toggle('com-filtro', filtrosAtivos.etiquetas.length > 0 || ATALHOS_ETIQUETA.indexOf(filtrosAtivos.tipo) !== -1);
+  if(!raiz.querySelector('.mef-lista')){
+    raiz.innerHTML = '<div class="mef-lista" role="group" aria-label="Filtrar por etiqueta"></div><div class="mef-admin"></div><div class="mef-editor" hidden></div>';
+  }
+  var lista = raiz.querySelector('.mef-lista');
+  var todas = catalogoEtiquetas ? catalogoEtiquetas.todas() : [];
+  function linha(attr, marcada, bola, nome, n, extra){
+    return '<div class="mef-linha"><button type="button" class="mef-op' + (marcada ? ' marcada' : '') + '" ' + attr + ' aria-pressed="' + (marcada ? 'true' : 'false') + '">' +
+      '<span class="caixa-check-multi" aria-hidden="true"></span>' + bola + '<span class="mef-nome">' + escaparHtml(nome) + '</span><b class="mef-n" title="Tarefas abertas">' + n + '</b></button>' + (extra || '') + '</div>';
+  }
+  var h = '';
+  var atalhos = ATALHOS_ETIQUETA.map(function(nome){
+    var n = contarAbertasEtiqueta(nome === 'Pedidos do Claude' ? tarefaPedidoClaude : tarefaDeImpulso);
+    var on = filtrosAtivos.tipo === nome;
+    return (n || on) ? linha('data-atalho="' + escaparHtml(nome) + '"', on, '<span class="mef-bola mef-bola-atalho"></span>', nome, n) : '';
+  }).join('');
+  if(atalhos) h += '<div class="mef-secao">Atalhos</div>' + atalhos;
+  h += '<div class="mef-secao">Etiquetas <small>(tarefas abertas)</small></div>';
+  h += linha('data-et=""', filtrosAtivos.etiquetas.indexOf('') !== -1, '<span class="mef-bola" style="--c:#64748b"></span>', 'Sem etiqueta', contarAbertasEtiqueta(function(t){ return !t.etiquetaId; }));
+  todas.filter(function(e){ return e.ativo === true || filtrosAtivos.etiquetas.indexOf(e.id) !== -1; }).forEach(function(e){
+    var lapis = isAdmin ? '<button type="button" class="mef-editar" data-editar="' + escaparHtml(e.id) + '" title="Renomear, mudar a cor ou tirar da lista" aria-label="Editar ' + escaparHtml(e.nome) + '">✎</button>' : '';
+    h += linha('data-et="' + escaparHtml(e.id) + '"', filtrosAtivos.etiquetas.indexOf(e.id) !== -1, '<span class="mef-bola" style="--c:' + SagaEtiquetas.cor(e.cor) + '"></span>', e.nome + (e.ativo === true ? '' : ' (fora da lista)'), contarAbertasEtiqueta(function(t){ return t.etiquetaId === e.id; }), lapis);
+  });
+  if(!catalogoEtiquetas) h += '<div class="mef-vazio">Carregando as etiquetas...</div>';
+  var desativadas = todas.filter(function(e){ return e.ativo !== true; });
+  if(isAdmin && desativadas.length){
+    h += '<button type="button" class="mef-ver-desativadas" aria-expanded="' + mostrarEtiquetasDesativadas + '">' + (mostrarEtiquetasDesativadas ? 'Esconder' : 'Ver') + ' as tiradas da lista (' + desativadas.length + ')</button>';
+    if(mostrarEtiquetasDesativadas) h += desativadas.map(function(e){
+      return '<div class="mef-linha mef-desativada"><span class="mef-bola" style="--c:' + SagaEtiquetas.cor(e.cor) + '"></span><span class="mef-nome">' + escaparHtml(e.nome) + '</span><button type="button" class="mef-editar" data-editar="' + escaparHtml(e.id) + '" title="Editar ou voltar para a lista">✎</button></div>';
+    }).join('');
+  }
+  if(filtrosAtivos.etiquetas.length || ATALHOS_ETIQUETA.indexOf(filtrosAtivos.tipo) !== -1) h += '<button type="button" class="mef-limpar">Limpar etiquetas</button>';
+  lista.innerHTML = h;
+  raiz.querySelector('.mef-admin').innerHTML = isAdmin ? '<button type="button" class="mef-nova">+ Nova etiqueta</button>' : '';
+}
+var CORES_RAPIDAS_ETIQUETA = ['#4b8af5','#22a06b','#e2a23b','#e5534b','#a371f7','#14b8a6','#ec4899','#64748b'];
+function abrirEditorEtiquetaFiltro(id){
+  if(!isAdmin) return;
+  var raiz = document.getElementById('listaMultiEtiqueta'), ed = raiz.querySelector('.mef-editor');
+  var e = id ? catalogoEtiquetas.porId(id) : null;
+  estadoEditorEtiqueta = { id: e ? e.id : null };
+  ed.innerHTML = '<strong>' + (e ? 'Editar etiqueta' : 'Nova etiqueta') + '</strong>' +
+    '<label>Nome (até 40 letras)<input type="text" class="mef-nome-campo" maxlength="40" autocomplete="off"></label>' +
+    '<div class="mef-cores" role="group" aria-label="Cor">' + CORES_RAPIDAS_ETIQUETA.map(function(c){ return '<button type="button" class="mef-cor" data-cor="' + c + '" style="--c:' + c + '" aria-label="Cor ' + c + '"></button>'; }).join('') +
+    '<label class="mef-cor-livre" title="Outra cor"><input type="color" class="mef-cor-campo"></label></div>' +
+    (e ? '<label class="mef-ativo"><input type="checkbox" class="mef-ativo-campo"' + (e.ativo === true ? ' checked' : '') + '> Mostrar na lista <small>(desmarcar tira da lista; as tarefas continuam com ela)</small></label>' : '') +
+    '<div class="mef-erro" role="alert"></div>' +
+    '<div class="mef-acoes"><button type="button" class="mef-salvar">Salvar etiqueta</button><button type="button" class="mef-cancelar">Cancelar</button></div>';
+  ed.querySelector('.mef-nome-campo').value = e ? e.nome : '';
+  marcarCorEditorEtiqueta(SagaEtiquetas.cor(e ? e.cor : '#4b8af5'));
+  if(ed.hidden) window.sagaRecolher(ed, false);
+  setTimeout(function(){ var c = ed.querySelector('.mef-nome-campo'); if(c) c.focus({preventScroll:true}); try{ ed.scrollIntoView({block:'nearest'}); }catch(x){} }, 30);
+}
+function marcarCorEditorEtiqueta(cor){
+  var ed = document.querySelector('#listaMultiEtiqueta .mef-editor'); if(!ed) return;
+  ed.querySelector('.mef-cor-campo').value = cor;
+  ed.querySelectorAll('.mef-cor').forEach(function(b){ b.classList.toggle('active', b.dataset.cor.toLowerCase() === cor.toLowerCase()); });
+}
+function fecharEditorEtiquetaFiltro(){
+  var ed = document.querySelector('#listaMultiEtiqueta .mef-editor');
+  estadoEditorEtiqueta = null;
+  if(ed && !ed.hidden) window.sagaRecolher(ed, true);
+}
+async function salvarEditorEtiquetaFiltro(){
+  var ed = document.querySelector('#listaMultiEtiqueta .mef-editor'); if(!ed || !estadoEditorEtiqueta) return;
+  var nome = ed.querySelector('.mef-nome-campo').value.trim(), msg = ed.querySelector('.mef-erro');
+  if(!nome){ msg.textContent = 'Escreva o nome da etiqueta.'; return; }
+  var ativo = ed.querySelector('.mef-ativo-campo');
+  var p = { p_id: estadoEditorEtiqueta.id, p_nome: nome, p_cor: ed.querySelector('.mef-cor-campo').value, p_ativo: ativo ? ativo.checked : true };
+  ed.querySelectorAll('button,input').forEach(function(b){ b.disabled = true; }); msg.textContent = '';
+  try{
+    var r = await _sb.rpc('etiqueta_tarefa_salvar', p);
+    if(r.error) throw r.error;
+    var ok = await catalogoEtiquetas.carregar();
+    if(!ok) throw new Error('A etiqueta foi salva, mas a lista não recarregou. Feche e abra a tela.');
+    if(!p.p_ativo && p.p_id) filtrosAtivos.etiquetas = filtrosAtivos.etiquetas.filter(function(x){ return x !== p.p_id; });
+    mostrarToast(p.p_id ? 'Etiqueta "' + nome + '" salva.' : 'Etiqueta "' + nome + '" criada.', 'sucesso');
+    fecharEditorEtiquetaFiltro();
+    aplicarFiltrosERenderizar();
+  }catch(err){
+    msg.textContent = 'Não foi possível salvar: ' + String((err && err.message) || 'erro desconhecido').replace(/\.$/, '') + '.';
+  }finally{ ed.querySelectorAll('button,input').forEach(function(b){ b.disabled = false; }); }
+}
+document.getElementById('listaMultiEtiqueta').addEventListener('click', function(ev){
+  ev.stopPropagation();
+  var b = ev.target.closest('button'); if(!b) { var c = ev.target.closest('.mef-cor-livre'); return; }
+  if(b.classList.contains('mef-op')){
+    if(b.hasAttribute('data-atalho')){
+      var nome = b.getAttribute('data-atalho');
+      marcarTipoFiltro(filtrosAtivos.tipo === nome ? 'Todas' : nome);
+    } else {
+      var id = b.getAttribute('data-et');
+      var i = filtrosAtivos.etiquetas.indexOf(id);
+      if(i === -1) filtrosAtivos.etiquetas.push(id); else filtrosAtivos.etiquetas.splice(i, 1);
+    }
+    paginaAtualLista = 1; aplicarFiltrosERenderizar();
+    var foco = document.querySelector('#listaMultiEtiqueta [data-' + (b.hasAttribute('data-atalho') ? 'atalho="' + b.getAttribute('data-atalho') : 'et="' + b.getAttribute('data-et')) + '"]');
+    if(foco) foco.focus({preventScroll:true});
+  } else if(b.classList.contains('mef-limpar')){
+    filtrosAtivos.etiquetas = []; if(ATALHOS_ETIQUETA.indexOf(filtrosAtivos.tipo) !== -1) marcarTipoFiltro('Todas');
+    paginaAtualLista = 1; aplicarFiltrosERenderizar();
+  } else if(b.classList.contains('mef-editar')) abrirEditorEtiquetaFiltro(b.getAttribute('data-editar'));
+  else if(b.classList.contains('mef-nova')) abrirEditorEtiquetaFiltro(null);
+  else if(b.classList.contains('mef-ver-desativadas')){ mostrarEtiquetasDesativadas = !mostrarEtiquetasDesativadas; renderMenuEtiquetasFiltro(); }
+  else if(b.classList.contains('mef-cor')) marcarCorEditorEtiqueta(b.dataset.cor);
+  else if(b.classList.contains('mef-salvar')) salvarEditorEtiquetaFiltro();
+  else if(b.classList.contains('mef-cancelar')) fecharEditorEtiquetaFiltro();
+});
+document.getElementById('listaMultiEtiqueta').addEventListener('input', function(ev){
+  if(ev.target.classList.contains('mef-cor-campo')) marcarCorEditorEtiqueta(ev.target.value);
+});
+document.getElementById('listaMultiEtiqueta').addEventListener('keydown', function(ev){
+  if(ev.key === 'Enter' && ev.target.classList.contains('mef-nome-campo')){ ev.preventDefault(); salvarEditorEtiquetaFiltro(); }
+  if(ev.key === 'Escape'){ ev.stopPropagation(); if(estadoEditorEtiqueta) fecharEditorEtiquetaFiltro(); else document.getElementById('dropFiltroEtiqueta').classList.remove('aberto'); }
+});
+
+/* T183: RESUMO (números do alto, gráficos e minicalendário) recolhido por padrão; a escolha fica neste navegador */
+try{ if(localStorage.getItem('saga-movimento') === 'reduzido') document.documentElement.classList.add('mt-sem-mov'); }catch(e){}
+var resumoTarefasAberto = false;
+try{ resumoTarefasAberto = localStorage.getItem('saga-tarefas-resumo') === 'aberto'; }catch(e){}
+function aplicarResumoTarefas(animar){
+  var bloco = document.getElementById('blocoResumoTarefas'), btn = document.getElementById('btnResumoTarefas');
+  if(animar) window.sagaRecolher(bloco, !resumoTarefasAberto); else bloco.hidden = !resumoTarefasAberto;
+  btn.setAttribute('aria-expanded', resumoTarefasAberto ? 'true' : 'false');
+  btn.classList.toggle('ativo', resumoTarefasAberto);
+  document.getElementById('textoBtnResumo').textContent = resumoTarefasAberto ? 'Esconder resumo' : 'Mostrar resumo';
+  var cal = document.getElementById('btnToggleCalendario'); if(cal) cal.style.display = resumoTarefasAberto ? '' : 'none';
+  atualizarBadgeResumo();
+}
+function atualizarBadgeResumo(){
+  var b = document.getElementById('badgeResumoAtrasadas'); if(!b) return;
+  var n = (window.SAGA_TASKS || []).filter(function(t){ return t.status !== 'concluida' && tarefaEstaAtrasada(t); }).length;
+  b.textContent = n + (n === 1 ? ' atrasada' : ' atrasadas');
+  b.style.display = (!resumoTarefasAberto && n > 0) ? 'inline-block' : 'none';
+}
+document.getElementById('btnResumoTarefas').addEventListener('click', function(){
+  resumoTarefasAberto = !resumoTarefasAberto;
+  try{ localStorage.setItem('saga-tarefas-resumo', resumoTarefasAberto ? 'aberto' : 'fechado'); }catch(e){}
+  aplicarResumoTarefas(true);
+});
+aplicarResumoTarefas(false);
 
 function renderizarChipsFiltros(){
   var container = document.getElementById('chipsFiltrosAtivos');
@@ -3011,8 +3251,14 @@ function renderizarChipsFiltros(){
   });
   if(filtrosAtivos.busca) chips.push({ label:'Busca: ' + filtrosAtivos.busca, limpar:function(){ filtrosAtivos.busca=''; document.getElementById('campoBuscaTextual').value=''; } });
 
-  document.getElementById('btnTogglePainelFiltros').querySelector('.badge-contagem-filtros').style.display = chips.length > 0 ? 'inline-block' : 'none';
-  document.getElementById('btnTogglePainelFiltros').querySelector('.badge-contagem-filtros').textContent = chips.length;
+  // T183: o número no "Mais filtros" conta só os filtros que ficam lá dentro (Tipo, Status, Prioridade, Tribunal, Fase)
+  var nMais = (filtrosAtivos.tipo !== 'Todas' ? 1 : 0) + (filtrosAtivos.status !== 'Todos' ? 1 : 0) + (filtrosAtivos.prioridade !== 'Todas' ? 1 : 0) + filtrosAtivos.tribunais.length + filtrosAtivos.fases.length;
+  var badgeMais = document.getElementById('badgeContagemFiltros');
+  badgeMais.style.display = nMais > 0 ? 'inline-block' : 'none';
+  badgeMais.textContent = nMais;
+  var btnLimpar = document.getElementById('btnLimparFiltrosTarefas');
+  if(btnLimpar) btnLimpar.style.visibility = (chips.length > 0 || filtroProcessoUrl) ? 'visible' : 'hidden';
+  renderMenuEtiquetasFiltro();
 
   chips.forEach(function(chip){
     var el = document.createElement('div');
@@ -3217,6 +3463,7 @@ document.getElementById('graficosTarefas').addEventListener('click',function(e){
 document.getElementById('graficosTarefas').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);}});
 
 function atualizarKpisTarefas(){
+  atualizarBadgeResumo();
   var todas = window.SAGA_TASKS;
   document.querySelectorAll('.kpi-filtro').forEach(function(b){
     var lig = filtrosAtivos.faixa === b.getAttribute('data-faixa');
@@ -3782,26 +4029,27 @@ function criarCardTarefaEl(tarefa){
 
   var badgePrazoHtml = tarefa.dataPrazo ? htmlPrazoTarefa(tarefa, situacao) : '';
 
+  // T183 (14/11, Dr. Victor: "muita informação"): à vista só o essencial (etiqueta, título, cliente, subtarefas,
+  // responsável e prazo; prioridade só quando é alta ou urgente); o resto (status, quem passou, compartilhada,
+  // número do processo com o botão do tribunal e os atalhos Ficha/Intimações) aparece ao passar o mouse e na janela.
+  var prioridadeHtml = (tarefa.prioridade === 'alta' || tarefa.prioridade === 'urgente') ? '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' : '';
+  var seloPedidoHtml = tarefaPedidoClaude(tarefa) ? '<div class="selo-pedido-claude" title="O Claude pediu isto para você trazer; quando você trouxer na conversa, ele mesmo dá como concluído">Pedido do Claude</div>' : '';
+  var compartilhadaHtml = !podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '');
+  var extraHtml = htmlStatusTarefa(tarefa, podeMexer) + badgeTipoHtml + htmlDeParaTarefa(tarefa) + compartilhadaHtml + numeroProcessoHtml + htmlAtalhosLigacao(tarefa.processoVinculado);
   card.innerHTML =
     '<div class="topo-card-tarefa">' +
-      '<div class="topo-card-tarefa-esquerda">' + criarCheckboxConclusaoCard(tarefa) + badgeTipoHtml + '</div>' +
-      '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' +
+      '<div class="topo-card-tarefa-esquerda">' + criarCheckboxConclusaoCard(tarefa) + (etiquetaHtml || '') + seloPedidoHtml + '</div>' +
+      prioridadeHtml +
     '</div>' +
     '<div class="titulo-card-tarefa">' + escaparHtml(tarefa.titulo) + '</div>' +
-    htmlStatusTarefa(tarefa, podeMexer) +
-    (etiquetaHtml ? '<div class="linha-etiqueta-card">' + etiquetaHtml + '</div>' : '') +
-    htmlDeParaTarefa(tarefa) +
-    (!podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '')) +
-    (tarefaPedidoClaude(tarefa) ? '<div class="selo-pedido-claude" title="O Claude pediu isto para você trazer; quando você trouxer na conversa, ele mesmo dá como concluído">Pedido do Claude</div>' : '') +
     (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
-    numeroProcessoHtml +
     metaProcessoHtml +
-    htmlAtalhosLigacao(tarefa.processoVinculado) +
     barraSubHtml +
     '<div class="rodape-card-tarefa">' +
       avataresResponsaveisHtml(tarefa) +
       '<div class="prazo-rodape-card">' + badgePrazoHtml + '</div>' +
-    '</div>';
+    '</div>' +
+    '<div class="card-extra"><div><div class="card-extra-dentro">' + extraHtml + '</div></div></div>';
 
   card.addEventListener('click', function(e){ if(e.target.closest('.atalho-lig')) return; abrirModalTarefa(tarefa.id); });
   var btnSt = card.querySelector('.btn-status-tarefa');
@@ -5375,18 +5623,7 @@ function reconstruirOpcoesMulti(idLista, itens){
 }
 
 function atualizarListasDeFiltro(){
-  if(catalogoEtiquetas){
-    var listaEt = document.getElementById('listaMultiEtiqueta');
-    listaEt.querySelectorAll('.opcao-multi-check').forEach(function(el){el.remove();});
-    [{id:'',nome:'Sem etiqueta',cor:'#64748b'}].concat(catalogoEtiquetas.todas().filter(function(e){return e.ativo===true;})).forEach(function(e){
-      var el=document.createElement('div');
-      el.className='opcao-multi-check'+(filtrosAtivos.etiquetas.indexOf(e.id)!==-1?' marcada':'');
-      el.dataset.valor=e.id;
-      el.innerHTML='<div class="caixa-check-multi"></div>'+SagaEtiquetas.selo(e);
-      listaEt.insertBefore(el,listaEt.querySelector('button'));
-    });
-    ativarOpcoesMultiCheck(listaEt);
-  }
+  renderMenuEtiquetasFiltro();
   var nomesResponsaveis=Array.from(new Set(dadosColaboradores.map(function(c){return c.nome;}).concat([].concat.apply([],window.SAGA_TASKS.map(nomesResponsaveisTarefa)))));
   reconstruirOpcoesMulti('listaMultiResponsavel', nomesResponsaveis.map(function(nome){
     var c=dadosColaboradores.find(function(c){return c.nome===nome;});
