@@ -43,8 +43,13 @@ const logos = new Map<string, any>();
 async function logoAnexo(ident: any) {
   const cam = ident?.logo_caminho; if (!cam) return null;
   if (logos.has(cam)) return logos.get(cam);
-  const r = await admin.storage.from("disparos-marcas").download(cam);
-  const v = r.error || !r.data ? null : { filename: "logo" + (cam.endsWith(".png") ? ".png" : ".jpg"), content: Buffer.from(await r.data.arrayBuffer()), cid: "logo@saga", contentDisposition: "inline" };
+  // logo: arquivo do lugar privado disparos-marcas ou endereço público só da logo (ex.: marcas/ancref.png do site); sempre vai ANEXADA (cid)
+  let dados: ArrayBuffer | null = null;
+  try {
+    if (/^https:\/\//.test(cam)) { const f = await fetch(cam); if (f.ok) dados = await f.arrayBuffer(); }
+    else { const r = await admin.storage.from("disparos-marcas").download(cam); if (!r.error && r.data) dados = await r.data.arrayBuffer(); }
+  } catch { dados = null; }
+  const v = !dados ? null : { filename: "logo" + (/\.png$/i.test(cam) ? ".png" : ".jpg"), content: Buffer.from(dados), cid: "logo@saga", contentDisposition: "inline" };
   logos.set(cam, v); return v;
 }
 // deno-lint-ignore no-explicit-any

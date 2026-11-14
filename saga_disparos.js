@@ -64,6 +64,7 @@
     if (!alvo) return;
     try {
       var L = await layout();
+      if (d && !d.logoSrc && d.identidade && /^https:\/\//.test(d.identidade.logo_caminho || '')) d.logoSrc = d.identidade.logo_caminho;
       var m = L.montar(d);
       var fr = alvo.querySelector('iframe.sd-email');
       if (!fr) { alvo.innerHTML = '<iframe class="sd-email" sandbox="allow-popups allow-popups-to-escape-sandbox" title="Prévia do e-mail" loading="lazy"></iframe>'; fr = alvo.querySelector('iframe'); }

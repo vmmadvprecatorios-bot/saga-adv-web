@@ -80,7 +80,9 @@
       '<strong style="color:' + c1 + '">' + (anexos.length === 1 ? 'Documento anexado' : anexos.length + ' documentos anexados') + '</strong><br>' +
       anexos.map(function (a) { return esc(a.nome) + (a.tamanho ? ' <span style="color:#8A94A6">(' + tamanho(a.tamanho) + ')</span>' : ''); }).join('<br>') + '</td></tr></table>' : '';
     // assinatura organizada
-    var assLinhas = String(o.assinatura || '').replace(/\r/g, '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+    var instit = id.assinatura_tipo === 'instituicao';
+    if (instit) remetente = nomeId;
+    var assLinhas = String(instit ? (id.assinatura || 'Equipe de Atendimento') : (id.assinatura || o.assinatura || '')).replace(/\r/g, '').split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
     var nomeAss = assLinhas.length ? assLinhas.shift() : remetente;
     assLinhas = assLinhas.filter(function (l) { return l.toLowerCase() !== nomeId.toLowerCase(); });
     var contatos = [];
@@ -92,7 +94,8 @@
       assLinhas.map(function (l) { return esc(l) + '<br>'; }).join('') +
       '<span style="color:' + c1 + ';font-weight:bold">' + esc(nomeId) + '</span>' + (id.subtitulo ? '<span style="color:#8A94A6"> · ' + esc(id.subtitulo) + '</span>' : '') + '<br>' +
       contatos.join('<span style="color:#C3CAD5"> &nbsp;|&nbsp; </span>') + '</td></tr></table>';
-    var logo = o.logoSrc ? '<img src="' + esc(o.logoSrc) + '" alt="' + esc(nomeId) + '" height="46" style="display:block;height:46px;width:auto;border:0;margin:0 0 10px">' : '';
+    // com logo: cabeçalho BRANCO com a logo (as logos das marcas têm letra escura) e as faixas da cor embaixo
+    var logo = o.logoSrc ? '<img src="' + esc(o.logoSrc) + '" alt="' + esc(nomeId) + '" height="56" style="display:block;height:56px;width:auto;max-width:100%;border:0">' : '';
     var rodape = String(id.rodape || '').split('\n').map(function (l) { return esc(l.trim()); }).filter(Boolean).join('<br>');
     var site = id.site ? '<a href="https://' + esc(String(id.site).replace(/^https?:\/\//, '')) + '" style="color:' + c1 + ';text-decoration:underline">' + esc(String(id.site).replace(/^https?:\/\//, '')) + '</a>' : '';
 
@@ -105,10 +108,12 @@
       '<!--[if mso]><table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0"><tr><td><![endif]-->' +
       '<table role="presentation" class="sg-c" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px;max-width:600px;background:#FFFFFF;border-radius:12px;overflow:hidden;border:1px solid #DCE2EA">' +
       // cabeçalho com a marca
-      '<tr><td class="sg-p" bgcolor="' + c1 + '" style="background:' + c1 + ';padding:26px 36px 22px">' + logo +
+      (logo ? '<tr><td class="sg-p" bgcolor="#FFFFFF" style="background:#FFFFFF;padding:22px 36px 18px">' + logo + '</td></tr>' +
+        '<tr><td height="5" bgcolor="' + c1 + '" style="height:5px;line-height:5px;font-size:0;background:' + c1 + '">&nbsp;</td></tr>'
+      : '<tr><td class="sg-p" bgcolor="' + c1 + '" style="background:' + c1 + ';padding:26px 36px 22px">' +
       '<div style="font-family:' + SERIFA + ';font-size:24px;line-height:30px;color:#FFFFFF;font-weight:bold;letter-spacing:.5px">' + esc(nomeId) + '</div>' +
       (id.subtitulo ? '<div style="font-family:' + FONTE + ';font-size:11px;line-height:16px;color:' + c2 + ';letter-spacing:2px;text-transform:uppercase;margin-top:4px">' + esc(id.subtitulo) + '</div>' : '') +
-      '</td></tr><tr><td height="3" bgcolor="' + c2 + '" style="height:3px;line-height:3px;font-size:0;background:' + c2 + '">&nbsp;</td></tr>' +
+      '</td></tr>') + '<tr><td height="3" bgcolor="' + c2 + '" style="height:3px;line-height:3px;font-size:0;background:' + c2 + '">&nbsp;</td></tr>' +
       // corpo
       '<tr><td class="sg-p" style="padding:34px 36px 10px">' +
       (titulo ? '<h1 class="sg-h1" style="margin:0 0 20px;font-family:' + SERIFA + ';font-size:24px;line-height:31px;color:' + c1 + ';font-weight:bold">' + negrito(esc(titulo), c1) + '</h1>' : '') +
