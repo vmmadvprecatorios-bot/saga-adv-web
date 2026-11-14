@@ -381,6 +381,14 @@
   .mef-nome{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .mef-n{ font-weight:500; font-size:10.5px; color:var(--muted); font-variant-numeric:tabular-nums; }
   .mef-editar{ flex:0 0 auto; width:28px; height:28px; border:0; border-radius:7px; background:transparent; color:var(--muted); cursor:pointer; font-size:12px; }
+  .mef-setas{ display:inline-flex; flex-direction:column; flex:0 0 auto; }
+  .mef-mover{ width:20px; height:14px; padding:0; border:0; border-radius:4px; background:transparent; color:var(--muted); font-size:8px; line-height:1; cursor:pointer; }
+  .mef-mover:hover:not(:disabled), .mef-mover:focus-visible{ color:var(--gold); background:color-mix(in srgb,var(--gold) 10%,transparent); outline:none; }
+  .mef-mover:disabled{ opacity:.25; cursor:default; }
+  .mef-linha.mef-mexeu{ animation:mefMexeu 420ms cubic-bezier(.22,.78,.25,1); border-radius:8px; }
+  @keyframes mefMexeu{ from{ background:color-mix(in srgb,var(--gold) 22%,transparent); } to{ background:transparent; } }
+  html.mt-sem-mov .mef-linha.mef-mexeu{ animation:none; }
+  a.mef-editar{ display:inline-flex; align-items:center; justify-content:center; text-decoration:none; }
   .mef-editar:hover, .mef-editar:focus-visible{ color:var(--gold); background:color-mix(in srgb,var(--gold) 9%,transparent); outline:none; }
   .mef-desativada{ padding:3px 9px 3px 31px; gap:8px; font-size:11px; color:var(--muted); }
   .mef-vazio{ padding:8px 9px; font-size:11px; color:var(--muted); }
@@ -421,7 +429,11 @@
   .card-extra-dentro{ display:flex; flex-direction:column; gap:3px; padding-top:4px; }
   html.mt-sem-mov .card-extra{ transition:none; }
   @media (hover:none){ .card-extra{ display:none; } }
-  .topo-card-tarefa-esquerda .se-tag{ max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .topo-card-tarefa-esquerda{ flex-wrap:wrap; row-gap:4px; }
+  .topo-card-tarefa-esquerda .se-tag{ max-width:100%; white-space:normal; }
+  .card-tarefa > .linha-status-card{ margin:-2px 0 6px; }
+  .card-tarefa > .linha-status-card .btn-status-tarefa{ font-size:9.5px; padding:1px 7px; }
+  .card-tarefa > .linha-status-card .selo-atrasada-card{ display:none; }
   .topo-card-tarefa-esquerda .selo-pedido-claude{ margin:0; }
   @media (max-width:760px){
     .busca-filtro-topo{ flex:1 1 100%; max-width:none; }
@@ -2092,10 +2104,7 @@ html.saga-embed #modalTarefa{background:transparent}
         <button type="button" class="visao-btn" data-visao="Recebidas">Recebidas de outros</button>
         <button type="button" class="visao-btn" data-visao="Atribuidas">Que eu atribuí</button>
       </div>
-      <!-- 12/11 (Dr. Victor): atalho para ver só as tarefas "Dar impulso processual" que o sistema cria nos processos parados -->
-      <button type="button" class="btn-so-impulso" id="btnSoImpulso" aria-pressed="false" title="Mostrar só as tarefas de dar impulso processual (criadas pelo sistema nos processos parados)">Dar impulso processual <b id="qtdImpulso"></b></button>
-      <!-- T166 (12/11, Dr. Victor): o que o Claude (SAGA no Claude) pediu para a pessoa trazer -->
-      <button type="button" class="btn-so-impulso" id="btnSoPedidosClaude" aria-pressed="false" hidden title="Abrir a tela Pedidos do Claude: o que o Claude pediu para você trazer (autos, certidões, documentos...)">Pedidos do Claude <b id="qtdPedidosClaude"></b></button>
+      <!-- 14/11 (Dr. Victor): os botões "Dar impulso processual (N)" e "Pedidos do Claude (N)" saíram daqui; estão no menu de etiquetas (com o número) -->
       <div class="contador-resultados-filtro" id="contadorResultadosFiltro"></div>
     </div>
 
@@ -3096,13 +3105,18 @@ function renderMenuEtiquetasFiltro(){
   var atalhos = ATALHOS_ETIQUETA.map(function(nome){
     var n = contarAbertasEtiqueta(nome === 'Pedidos do Claude' ? tarefaPedidoClaude : tarefaDeImpulso);
     var on = filtrosAtivos.tipo === nome;
-    return (n || on) ? linha('data-atalho="' + escaparHtml(nome) + '"', on, '<span class="mef-bola mef-bola-atalho"></span>', nome, n) : '';
+    var extraAtalho = nome === 'Pedidos do Claude' ? '<a class="mef-editar mef-ir" href="pedidos_claude.html" title="Abrir a tela Pedidos do Claude (Ctrl+clique abre em outra aba)" aria-label="Abrir a tela Pedidos do Claude">↗</a>' : '';
+    return (n || on) ? linha('data-atalho="' + escaparHtml(nome) + '"', on, '<span class="mef-bola mef-bola-atalho"></span>', nome, n, extraAtalho) : '';
   }).join('');
   if(atalhos) h += '<div class="mef-secao">Atalhos</div>' + atalhos;
   h += '<div class="mef-secao">Etiquetas <small>(tarefas abertas)</small></div>';
   h += linha('data-et=""', filtrosAtivos.etiquetas.indexOf('') !== -1, '<span class="mef-bola" style="--c:#64748b"></span>', 'Sem etiqueta', contarAbertasEtiqueta(function(t){ return !t.etiquetaId; }));
+  var ativasOrdem = todas.filter(function(e){ return e.ativo === true; });
   todas.filter(function(e){ return e.ativo === true || filtrosAtivos.etiquetas.indexOf(e.id) !== -1; }).forEach(function(e){
-    var lapis = isAdmin ? '<button type="button" class="mef-editar" data-editar="' + escaparHtml(e.id) + '" title="Renomear, mudar a cor ou tirar da lista" aria-label="Editar ' + escaparHtml(e.nome) + '">✎</button>' : '';
+    var pos = ativasOrdem.indexOf(e);
+    // 14/11 (Dr. Victor; bloco 199): o administrador muda a ordem pelas setas (etiqueta_tarefa_ordenar)
+    var setas = (isAdmin && pos !== -1 && ativasOrdem.length > 1) ? '<span class="mef-setas"><button type="button" class="mef-mover" data-mover="' + escaparHtml(e.id) + '" data-dir="-1"' + (pos === 0 ? ' disabled' : '') + ' title="Subir na lista" aria-label="Subir ' + escaparHtml(e.nome) + '">▲</button><button type="button" class="mef-mover" data-mover="' + escaparHtml(e.id) + '" data-dir="1"' + (pos === ativasOrdem.length - 1 ? ' disabled' : '') + ' title="Descer na lista" aria-label="Descer ' + escaparHtml(e.nome) + '">▼</button></span>' : '';
+    var lapis = setas + (isAdmin ? '<button type="button" class="mef-editar" data-editar="' + escaparHtml(e.id) + '" title="Renomear, mudar a cor ou tirar da lista" aria-label="Editar ' + escaparHtml(e.nome) + '">✎</button>' : '');
     h += linha('data-et="' + escaparHtml(e.id) + '"', filtrosAtivos.etiquetas.indexOf(e.id) !== -1, '<span class="mef-bola" style="--c:' + SagaEtiquetas.cor(e.cor) + '"></span>', e.nome + (e.ativo === true ? '' : ' (fora da lista)'), contarAbertasEtiqueta(function(t){ return t.etiquetaId === e.id; }), lapis);
   });
   if(!catalogoEtiquetas) h += '<div class="mef-vazio">Carregando as etiquetas...</div>';
@@ -3145,6 +3159,29 @@ function fecharEditorEtiquetaFiltro(){
   estadoEditorEtiqueta = null;
   if(ed && !ed.hidden) window.sagaRecolher(ed, true);
 }
+var movendoEtiqueta = false;
+async function moverEtiquetaFiltro(id, dir){
+  if(!isAdmin || movendoEtiqueta || !catalogoEtiquetas) return;
+  var todas = catalogoEtiquetas.todas().slice(), ativas = todas.filter(function(e){ return e.ativo === true; });
+  var i = ativas.findIndex(function(e){ return e.id === id; }), j = i + dir;
+  if(i < 0 || j < 0 || j >= ativas.length) return;
+  var a = ativas[i], b = ativas[j], ia = todas.indexOf(a), ib = todas.indexOf(b);
+  todas[ia] = b; todas[ib] = a;
+  movendoEtiqueta = true;
+  try{
+    var r = await _sb.rpc('etiqueta_tarefa_ordenar', { p_ids: todas.map(function(e){ return e.id; }) });
+    if(r.error) throw r.error;
+    var ok = await catalogoEtiquetas.carregar();
+    if(!ok) throw new Error('a ordem foi salva, mas a lista não recarregou; feche e abra a tela');
+    renderMenuEtiquetasFiltro();
+    var btnNovo = document.querySelector('#listaMultiEtiqueta [data-et="' + id + '"]');
+    if(btnNovo){ var l = btnNovo.closest('.mef-linha'); l.classList.remove('mef-mexeu'); void l.offsetWidth; l.classList.add('mef-mexeu');
+      var seta = l.querySelector('.mef-mover[data-dir="' + dir + '"]:not(:disabled)') || l.querySelector('.mef-mover:not(:disabled)'); if(seta) seta.focus({preventScroll:true}); }
+    aplicarFiltrosERenderizar();
+  }catch(err){
+    mostrarToast('Não foi possível mudar a ordem da etiqueta: ' + String((err && err.message) || 'erro desconhecido').replace(/\.$/, '') + '.', 'erro');
+  }finally{ movendoEtiqueta = false; }
+}
 async function salvarEditorEtiquetaFiltro(){
   var ed = document.querySelector('#listaMultiEtiqueta .mef-editor'); if(!ed || !estadoEditorEtiqueta) return;
   var nome = ed.querySelector('.mef-nome-campo').value.trim(), msg = ed.querySelector('.mef-erro');
@@ -3167,7 +3204,8 @@ async function salvarEditorEtiquetaFiltro(){
 }
 document.getElementById('listaMultiEtiqueta').addEventListener('click', function(ev){
   ev.stopPropagation();
-  var b = ev.target.closest('button'); if(!b) { var c = ev.target.closest('.mef-cor-livre'); return; }
+  if(ev.target.closest('a.mef-ir')) return;
+  var b = ev.target.closest('button'); if(!b) return;
   if(b.classList.contains('mef-op')){
     if(b.hasAttribute('data-atalho')){
       var nome = b.getAttribute('data-atalho');
@@ -3183,7 +3221,8 @@ document.getElementById('listaMultiEtiqueta').addEventListener('click', function
   } else if(b.classList.contains('mef-limpar')){
     filtrosAtivos.etiquetas = []; if(ATALHOS_ETIQUETA.indexOf(filtrosAtivos.tipo) !== -1) marcarTipoFiltro('Todas');
     paginaAtualLista = 1; aplicarFiltrosERenderizar();
-  } else if(b.classList.contains('mef-editar')) abrirEditorEtiquetaFiltro(b.getAttribute('data-editar'));
+  } else if(b.classList.contains('mef-mover')) moverEtiquetaFiltro(b.getAttribute('data-mover'), +b.getAttribute('data-dir'));
+  else if(b.classList.contains('mef-editar')) abrirEditorEtiquetaFiltro(b.getAttribute('data-editar'));
   else if(b.classList.contains('mef-nova')) abrirEditorEtiquetaFiltro(null);
   else if(b.classList.contains('mef-ver-desativadas')){ mostrarEtiquetasDesativadas = !mostrarEtiquetasDesativadas; renderMenuEtiquetasFiltro(); }
   else if(b.classList.contains('mef-cor')) marcarCorEditorEtiqueta(b.dataset.cor);
@@ -3496,13 +3535,15 @@ function marcarTipoFiltro(texto){
   dropdown.setAttribute('data-valor', texto);
   filtrosAtivos.tipo = texto;
 }
-document.getElementById('btnSoImpulso').addEventListener('click', function(){
+var _btnSoImpulso = document.getElementById('btnSoImpulso');
+if(_btnSoImpulso) _btnSoImpulso.addEventListener('click', function(){
   marcarTipoFiltro(filtrosAtivos.tipo === 'Dar impulso processual' ? 'Todas' : 'Dar impulso processual');
   paginaAtualLista = 1;
   aplicarFiltrosERenderizar();
 });
 // T166 complemento (bloco 186): o botão abre a tela própria "Pedidos do Claude" (Ctrl+clique em outra aba); o filtro Tipo continua aqui
-document.getElementById('btnSoPedidosClaude').addEventListener('click', function(e){
+var _btnSoPedidos = document.getElementById('btnSoPedidosClaude');
+if(_btnSoPedidos) _btnSoPedidos.addEventListener('click', function(e){
   if(e.ctrlKey || e.metaKey){ window.open('pedidos_claude.html', '_blank'); return; }
   if(window.sagaIrPara) sagaIrPara('pedidos_claude.html'); else location.href = 'pedidos_claude.html';
 });
@@ -4035,13 +4076,14 @@ function criarCardTarefaEl(tarefa){
   var prioridadeHtml = (tarefa.prioridade === 'alta' || tarefa.prioridade === 'urgente') ? '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' : '';
   var seloPedidoHtml = tarefaPedidoClaude(tarefa) ? '<div class="selo-pedido-claude" title="O Claude pediu isto para você trazer; quando você trouxer na conversa, ele mesmo dá como concluído">Pedido do Claude</div>' : '';
   var compartilhadaHtml = !podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '');
-  var extraHtml = htmlStatusTarefa(tarefa, podeMexer) + badgeTipoHtml + htmlDeParaTarefa(tarefa) + compartilhadaHtml + numeroProcessoHtml + htmlAtalhosLigacao(tarefa.processoVinculado);
+  var extraHtml = badgeTipoHtml + htmlDeParaTarefa(tarefa) + compartilhadaHtml + numeroProcessoHtml + htmlAtalhosLigacao(tarefa.processoVinculado);
   card.innerHTML =
     '<div class="topo-card-tarefa">' +
       '<div class="topo-card-tarefa-esquerda">' + criarCheckboxConclusaoCard(tarefa) + (etiquetaHtml || '') + seloPedidoHtml + '</div>' +
       prioridadeHtml +
     '</div>' +
     '<div class="titulo-card-tarefa">' + escaparHtml(tarefa.titulo) + '</div>' +
+    htmlStatusTarefa(tarefa, podeMexer) +
     (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
     metaProcessoHtml +
     barraSubHtml +

@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "2.4",
+  versao: "2.5",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "2.5", data: "14/11/2026", mudou: "Minhas Tarefas: o administrador muda a ordem das etiquetas pelas setinhas do menu; os botões Dar impulso processual e Pedidos do Claude ficam só no menu de etiquetas; a situação da tarefa volta a aparecer no cartão. Notas: as etiquetas ficam sempre à vista, também na lista do celular." },
     { versao: "2.4", data: "14/11/2026", mudou: "Minhas Tarefas mais organizada: números, gráficos e calendário recolhidos em \"Mostrar resumo\"; uma barra de filtros (Busca, Etiqueta, Responsável, Prazo e \"Mais filtros\"); menu de etiquetas sempre à vista, com a quantidade de tarefas abertas, os atalhos Dar impulso processual e Pedidos do Claude e, para o administrador, criar, renomear, mudar a cor e tirar etiqueta da lista; cartão mais limpo (o resto aparece ao passar o mouse)." },
     { versao: "2.3", data: "13/11/2026", mudou: "SAGA no Claude liberado para toda a equipe: passo a passo para ligar o conector no seu Claude (cada um com o próprio login e as próprias permissões)." },
     { versao: "2.2", data: "13/11/2026", mudou: "Tela nova Editor de PDF (menu Processos): juntar, separar, tirar, girar e reordenar páginas, numerar, escrever texto, tapar área e reduzir o tamanho, tudo no próprio computador (o arquivo não vai para nenhum site); na ficha, o PDF guardado abre no editor e o resultado volta como documento novo." },
@@ -478,8 +479,8 @@ window.SAGA_MANUAL = {
             "Abra **Minhas Tarefas**. A tela abre enxuta: em cima, [[Kanban]] / [[Lista]], [[Mostrar resumo]] e [[Nova Tarefa]]. O número vermelho ao lado de Mostrar resumo é quantas tarefas estão **atrasadas**.",
             "[[Mostrar resumo]] abre os números (total, novas, em andamento, atrasadas e concluídas hoje; clique para filtrar), os gráficos e o calendário dos prazos. [[Esconder resumo]] recolhe. O SAGA lembra a sua escolha neste computador.",
             "Logo abaixo fica a **barra de filtros**: busca, [[Etiqueta]], responsável e prazo. Os outros (tipo, situação, prioridade, tribunal e fase) ficam em [[Mais filtros]]; o número no botão mostra quantos estão ligados lá dentro. Cada filtro ligado aparece como uma etiqueta clicável embaixo (o × tira) e [[Limpar filtros]] tira todos.",
-            "No cartão aparece só o essencial: etiqueta, título, cliente, subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passe o mouse para ver o resto: situação, quem passou a tarefa, compartilhamento, número do processo com o botão do tribunal e os atalhos [[Ficha]] e [[Intimações]]. No celular, toque no cartão para abrir a tarefa inteira.",
-            "[[Dar impulso processual]] (ao lado de Todas / Minhas): mostra só as tarefas de impulso que o SAGA cria nos processos parados, com o número delas; clique de novo para voltar a todas. No filtro **Tipo** também há **Sem as de impulso**.",
+            "No cartão aparece só o essencial: etiqueta, título, situação (Nova, Em andamento...), cliente, subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passe o mouse para ver o resto: tipo, quem passou a tarefa, compartilhamento, número do processo com o botão do tribunal e os atalhos [[Ficha]] e [[Intimações]]. No celular, toque no cartão para abrir a tarefa inteira.",
+            "As tarefas de **dar impulso processual** (que o SAGA cria nos processos parados) e os **Pedidos do Claude** ficam como atalhos no menu [[Etiqueta]], com o número delas. No filtro **Tipo** (em Mais filtros) também há **Sem as de impulso**.",
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],
           img: "tarefas",
@@ -490,9 +491,10 @@ window.SAGA_MANUAL = {
           passos: [
             "Clique em [[Etiqueta]] na barra de filtros. O menu mostra cada etiqueta com a quantidade de **tarefas abertas** dela.",
             "Marque uma ou várias: a lista filtra na hora (aparecem as tarefas com qualquer uma das marcadas). Clique de novo para desmarcar, ou em [[Limpar etiquetas]].",
-            "No alto do menu ficam os **atalhos** [[Dar impulso processual]] e [[Pedidos do Claude]]: mostram só essas tarefas e podem ser combinados com as etiquetas.",
+            "No alto do menu ficam os **atalhos** [[Dar impulso processual]] e [[Pedidos do Claude]]: mostram só essas tarefas e podem ser combinados com as etiquetas. A setinha ↗ ao lado de Pedidos do Claude abre a tela própria deles.",
             "Para criar (só o administrador): [[+ Nova etiqueta]], escreva o nome (até 40 letras), escolha a cor e [[Salvar etiqueta]]. Ela já aparece no menu e na janela da tarefa.",
             "Para renomear ou mudar a cor: o lápis ✎ ao lado da etiqueta. Para tirar da lista, desmarque **Mostrar na lista**: as tarefas que já têm a etiqueta continuam com ela (o histórico fica). As tiradas aparecem em [[Ver as tiradas da lista]], e o lápis volta qualquer uma para a lista.",
+            "Para mudar a ordem (só o administrador): as setinhas ▲ ▼ ao lado de cada etiqueta sobem ou descem uma posição; a nova ordem vale no menu e na janela da tarefa.",
             "Para pôr a etiqueta numa tarefa: abra a tarefa e escolha em **Etiqueta**, na parte da direita."
           ],
           img: "tarefas_etiquetas",

@@ -58,7 +58,9 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .nota-lin .lin-etq{display:flex;gap:5px;flex-wrap:wrap}.nota-lin .chip{font-size:10px;border-radius:9px;padding:1px 8px;background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--muted)}.nota-lin .chip.comp{background:color-mix(in srgb,var(--info) 16%,transparent);color:var(--info)}
 .nota-lin .lin-data{font-size:11px;color:var(--muted);text-align:right}
 .nota-lin .acoes{opacity:1;display:flex;gap:2px}
-@media(max-width:760px){.nota-lin{grid-template-columns:18px minmax(0,1fr) auto}.nota-lin .tipo,.nota-lin .lin-etq,.nota-lin .lin-data{display:none}}
+@media(max-width:760px){.nota-lin{grid-template-columns:18px minmax(0,1fr) auto}.nota-lin .tipo,.nota-lin .lin-data{display:none}.nota-lin .acoes{grid-row:1;grid-column:3}.nota-lin .lin-etq{grid-row:2;grid-column:2/-1}.nota-lin .lin-etq:empty{display:none}}
+/* 14/11 (Dr. Victor): as etiquetas das notas ficam sempre à vista, também no celular, e mais fáceis de ler */
+.nota .chip:not(.comp):not(.cli),.nota-lin .chip:not(.comp):not(.cli){color:color-mix(in srgb,var(--text) 78%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid color-mix(in srgb,var(--gold) 22%,transparent)}
 .sec-titulo{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;font-weight:700;color:var(--muted);margin:16px 2px 8px}
 .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;align-items:start}.grade>.nota{margin:0}
 .nota{--nc:#8b93a8;break-inside:avoid;display:block;width:100%;margin:0 0 14px;text-align:left;position:relative;border-radius:15px;padding:13px 14px 10px;background:color-mix(in srgb,var(--nc) 9%,var(--panel-solid));border:1px solid color-mix(in srgb,var(--nc) 38%,transparent);cursor:pointer;transition:transform .22s cubic-bezier(.22,.78,.25,1),box-shadow .22s,border-color .2s;}
