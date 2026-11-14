@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.2",
+  versao: "3.3",
   data: "14/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.3", data: "14/11/2026", mudou: "Situação da ação \"Protocolar novamente\" (processo extinto que precisa de novo protocolo): tarefa automática para o responsável e atalho \"Protocolar novamente (N)\" na planilha do Jurídico." },
     { versao: "3.2", data: "14/11/2026", mudou: "Menu da esquerda: os grupos (Processos, Meu dia, Comunicação, Gestão, Administração) também abrem e fecham com o menu recolhido (a linha fina com a setinha) e com o menu aberto por cima pelo mouse." },
     { versao: "3.1", data: "14/11/2026", mudou: "SAGA no Claude: guardar na pasta do cliente o documento que você passa ao Claude na conversa (o Claude manda um link do SAGA; você toca, escolhe o arquivo no celular ou no computador e ele cai direto na ficha, na pasta certa)." },
     { versao: "3.0", data: "14/11/2026", mudou: "Tela nova Disparos de e-mail (menu Processos): escolher clientes, pôr na fila e o SAGA manda sozinho o e-mail com o modelo da tese, pelos remetentes cadastrados (Gmail, Locaweb, Hostinger...), com limite por manhã e por tarde; erros com o motivo, \"Não enviar mais\" e o bloco E-mails enviados na ficha do cliente." },
@@ -332,7 +333,8 @@ window.SAGA_MANUAL = {
             "Cada processo está em um grupo só: **sacado** (o recebido no Financeiro cobre o esperado) > **encerrado** (situação Encerrada ou Inviável) > **ativo**.",
             "O painel **Processos parados** mostra há quanto tempo cada processo está sem movimento no escritório. O responsável recebe tarefa e aviso automáticos.",
             "O selo **sem resumo** ao lado do nome marca o processo ativo que o agente ainda não leu (sem o resumo estratégico). [[Sem resumo do agente]] mostra só esses processos; os números para baixar os autos estão no **Dashboard** (Copiar números).",
-            "[[Sem número CNJ]] mostra só os processos ativos sem número CNJ válido (vazio, sem os 20 dígitos ou com o dígito verificador errado). Sem o número, o robô do CNJ e o radar não acompanham o processo. Complete o número na própria célula (clique duplo) e o processo sai da lista. Número errado aparece com o selo vermelho **número inválido**."
+            "[[Sem número CNJ]] mostra só os processos ativos sem número CNJ válido (vazio, sem os 20 dígitos ou com o dígito verificador errado). Sem o número, o robô do CNJ e o radar não acompanham o processo. Complete o número na própria célula (clique duplo) e o processo sai da lista. Número errado aparece com o selo vermelho **número inválido**.",
+            "**Protocolar novamente**: quando o processo é extinto e precisa de novo protocolo, mude a **Situação da ação** para **Protocolar novamente** (na ficha ou na planilha). O SAGA cria sozinho a tarefa \"Protocolar novamente\" para o responsável do processo (sem responsável: o Dr. Victor), com prazo de 15 dias, sem repetir. Quando o processo voltar para **Protocolada**, a tarefa se conclui sozinha. [[Protocolar novamente]] na barra mostra só esses processos (o processo continua ativo). O administrador muda o prazo ali mesmo, em \"mudar\"."
           ],
           img: "juridico",
           marcas: ["Protocolados.", "Não protocolados.", "Encerrados.", "Sacados."],
