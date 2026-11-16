@@ -169,6 +169,26 @@ const FERRAMENTAS: Ferramenta[] = [
     inputSchema: { type: "object", properties: { processo_id: { type: "string", description: "Só os pedidos de um processo (uuid), opcional." } }, additionalProperties: false },
     rpc: "conector_pedidos_pendentes", args: (a) => ({ p_processo: uuidOuNulo(a.processo_id, "o id do processo") }),
   },
+  {
+    name: "premio_da_captacao", title: "Prêmio da Captação",
+    description: "Prêmio da Captação (T164): nível, quantos processos válidos faltam para o platô, previsão do prêmio do mês, processos validados (com a parte de cada um), meta da equipe, histórico por mês e por tese, regras (níveis, plus, pesos, prêmio cruzado) e as Normas da Captação. Cada pessoa vê o próprio; o administrador vê todos (campo 'todos') e pode pedir o de outra pessoa (pessoa = id de usuário). Mês em AAAA-MM-01 (sem mês = o atual). Tela: premios.html.",
+    inputSchema: { type: "object", properties: {
+      mes: { type: "string", description: "Mês (AAAA-MM-01), opcional." },
+      pessoa: { type: "string", description: "id do usuário (só o administrador), opcional." } }, additionalProperties: false },
+    rpc: "conector_premio", args: (a) => ({ p_mes: ehData(a.mes) ? a.mes : null, p_pessoa: ehUuid(a.pessoa) ? a.pessoa : null }),
+  },
+  {
+    name: "validar_para_o_premio", title: "Validar processo para o prêmio", muda: true, precisa: ["premios.validar"],
+    description: "MUDA O SAGA: valida um processo para o Prêmio da Captação (só o Dr. Victor e quem tem a permissão de validar). Só valide quando a pessoa CONFIRMAR as 3 coisas: documentação completa, cálculo pronto e valor a recuperar. Quem iniciou (captador) e quem pegou a documentação saem do cartão; o processo conta no mês da validação e ambos recebem o aviso no sino." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      processo_id: { type: "string", description: "id do processo (uuid)." },
+      documentacao_completa: { type: "boolean" }, calculo_pronto: { type: "boolean" }, valor_a_recuperar: { type: "boolean" },
+      aprovada_de_primeira: { type: "boolean", description: "Documentação aprovada sem pedir nada de novo (ganha o bônus)." },
+      observacao: { type: "string" } }, required: ["processo_id", "documentacao_completa", "calculo_pronto", "valor_a_recuperar"], additionalProperties: false },
+    rpc: "conector_premio_validar", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_doc_completa: a.documentacao_completa === true,
+      p_calculo_pronto: a.calculo_pronto === true, p_valor_recuperar: a.valor_a_recuperar === true, p_primeira: a.aprovada_de_primeira === true,
+      p_observacao: typeof a.observacao === "string" ? a.observacao.slice(0, 2000) : null }),
+  },
   // ----- MUDANÇAS (bloco 179) -----
   {
     name: "anotar_no_processo", title: "Anotar no processo", muda: true,
@@ -782,7 +802,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.6.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.7.0" },
         instructions: INSTRUCOES,
       });
     }

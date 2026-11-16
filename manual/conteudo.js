@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.6",
+  versao: "3.7",
   data: "16/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.7", data: "16/11/2026", mudou: "Nova tela Comunicação > Normas e prêmio: Normas da Captação, Como funciona o Prêmio da Captação (níveis, platô, plus, peso da tese, prêmio cruzado, meta da equipe), Meu progresso com a barra até o platô, Validar (Dr. Victor e Hevelyn) e Painel geral com fechamento do mês e PDF." },
     { versao: "3.6", data: "16/11/2026", mudou: "Editor de PDF refeito: tela inicial com todas as funções em cartões; Word para PDF, Imagens para PDF e PDF para imagem no próprio computador; Comprimir corrigido (antes podia AUMENTAR o arquivo: agora o texto continua texto e, se não diminuir, avisa e fica o original); depois de cada operação: Guardar na pasta do cliente (escolhendo cliente, processo e pasta), Baixar, Compartilhar (aplicativo ou link do SAGA com prazo) e Fazer outra operação com este arquivo." },
     { versao: "3.5", data: "14/11/2026", mudou: "Disparos de e-mail v2: três identidades (VMM, ANCREF, Sarmento) com logo e assinatura certa (ANCREF sempre em nome da instituição), caixa e modelo da mesma identidade, botão \"Não quero mais receber estes e-mails\" de 1 clique, linha de prévia, quadro \"Seu processo\", próximo passo, aviso antigolpe, como funciona, perguntas rápidas e transparência; pastas Pesquisa > Busca e Espelhos do TRF criadas sozinhas na ficha." },
     { versao: "3.4", data: "14/11/2026", mudou: "Disparos de e-mail: o e-mail sai bonito (faixa com a marca, destaque, botões Falar no WhatsApp e Responder, assinatura e rodapé), com IDENTIDADES (VMM, ANCREF...); anexo do espelho do tribunal achado sozinho na pasta do cliente (ou documentos escolhidos na ficha); Enviar um teste para mim; resultado do Rodar agora à vista e Enviar agora mesmo (administrador); disparos todos os dias; o código do cliente não vai mais no e-mail." },
@@ -320,6 +321,22 @@ window.SAGA_MANUAL = {
             "O que sobrar de uma semana continua com a pessoa e soma com o lote novo."
           ],
           dicas: ["Administrador: o quadro **Lotes da Captação** mostra todos, com [[Configurar lotes]] (quem recebe, tamanho do lote, ligado/desligado), [[Entregar lote agora]] e [[Desfazer lote]] (as fichas voltam a ficar sem Jovem Talento). As fichas em **Sem sucesso** não entram nos lotes."]
+        },
+        { id: "premio", titulo: "Normas da Captação e Prêmio da Captação",
+          quando: "Para ler as normas da captação, entender como funciona o prêmio e acompanhar o seu progresso no mês.",
+          passos: [
+            "No menu, em **Comunicação**, abra **Normas e prêmio** (logo abaixo de Treinamentos). Todo mundo do escritório vê e participa: quem traz ação para dentro conta.",
+            "**Meu progresso**: o selo do seu **nível**, a **barra** \"X de N processos válidos para o platô\" (cada degrau mostra quanto aquele processo vale), quanto falta, a **previsão do prêmio do mês**, os processos validados com a sua parte, a **meta da equipe** e o histórico por mês, por tese e por forma de captação. Use ‹ › para ver outros meses.",
+            "**Normas da Captação**: as regras do dia a dia (quem capta, lotes e meta do dia, etapas do funil, documentação completa, quando o processo é válido, LGPD). Clique no título para abrir ou fechar.",
+            "**Como funciona o prêmio**: a tabela dos níveis (valor de cada processo na escada), subir e descer de nível, plus, peso da tese, qualidade, prêmio cruzado, meta da equipe e o lembrete jurídico (CLT, art. 457, §§ 2º e 4º).",
+            "**Validar** (o Dr. Victor e a Hevelyn): a lista dos cartões em **Documentos em mãos** e dos processos do Jurídico ainda não validados. Clique em [[Validar]], marque as 3 conferências (**documentação completa**, **cálculo pronto**, **valor a recuperar**), marque **de primeira** se a documentação não precisou de nada novo, confira quem iniciou e quem pegou a documentação e confirme. Quem ganha recebe o aviso no sino.",
+            "**Painel geral** (só o administrador): todos lado a lado, **custo previsto do mês**, [[Fechar o mês para pagamento]] (grava os valores, que não mudam mais, define o nível do mês seguinte e avisa cada um), [[Baixar PDF]], [[Lançar ajuste]] e [[Quem participa]]. Clique numa pessoa para ver o progresso dela."
+          ],
+          dicas: ["O processo conta no **mês da validação**. Cada nível começa R$ 2,50 acima do anterior e sobe R$ 5 por processo até o platô; depois do platô todo processo do mês paga o valor do platô.",
+                  "Prêmio cruzado: quem iniciou o cliente fica com 40% e quem pegou a documentação com 60% (a mesma pessoa, 100%); os dois contam o processo na própria escada.",
+                  "Processo a mais do mesmo cliente e habilitação pagam um valor fixo, fora da escada."],
+          atencao: ["Só o administrador edita as normas, as regras e os valores (botões **Editar**, **+ Novo bloco**, **Editar regras e valores**, **Peso das teses**) e cancela uma validação. Cancelar por **erro de documentação** depois do mês fechado vira **estorno** no mês seguinte.",
+                    "Mês fechado não muda: correção vira **ajuste** no mês aberto."]
         }
       ]
     },

@@ -672,6 +672,9 @@
     +'<div class="nav-item" data-tela="treinamentos" onclick="sagaIrPara(\'treinamentos.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M2 8l10-5 10 5-10 5-10-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Treinamentos</div>'
+    +'<div class="nav-item" data-tela="premios" onclick="sagaIrPara(\'premios.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 4h8v5a4 4 0 01-8 0V4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4M12 13v4M8.5 20h7M9.5 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Normas e prêmio</div>'
     +'</div><div class="nav-section" data-grupo="gestao" role="button" tabindex="0" aria-expanded="true">Gestão</div><div class="nav-grupo" data-grupo="gestao">'
     +'<div class="nav-item" data-tela="dashboard" onclick="sagaIrPara(\'dashboard_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>'
@@ -1034,7 +1037,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -1367,6 +1370,7 @@
     if(n&&n.referencia_tabela==='saude')return {titulo:'Saúde do sistema',tela:'configuracoes_padrao_metalico.html?aba=saude'};
     if(n&&n.referencia_tabela==='pedidos_claude')return {titulo:'Pedidos do Claude',tela:'pedidos_claude.html'};
     if(n&&n.referencia_tabela==='disparos')return {titulo:'Disparos de e-mail',tela:'disparos_email.html'};
+    if(n&&n.referencia_tabela==='premios')return {titulo:'Prêmio da Captação',tela:'premios.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1396,6 +1400,7 @@
     {chave:'armazenamento',titulo:'Armazenamento',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=armazenamento',um:'aviso de espaço',varios:'avisos de espaço',cor:'#0ea5e9'},
     {chave:'saude',titulo:'Saúde do sistema',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=saude',um:'aviso de saúde do sistema',varios:'avisos de saúde do sistema',cor:'#e5484d'},
     {chave:'pedidos_claude',titulo:'Pedidos do Claude',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Claude',varios:'avisos de pedidos do Claude',cor:'#c9a84c'},
+    {chave:'premios',titulo:'Prêmio da Captação',tipos:[],tela:'premios.html',um:'aviso do prêmio',varios:'avisos do prêmio',cor:'#c9a84c'},
     {chave:'disparos',titulo:'Disparos de e-mail',tipos:[],tela:'disparos_email.html',um:'aviso dos disparos de e-mail',varios:'avisos dos disparos de e-mail',cor:'#f97316'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
@@ -1423,6 +1428,8 @@
     if(n&&n.referencia_tabela==='pedidos_claude'){for(var pc=0;pc<GRUPOS_NOTIF.length;pc++){if(GRUPOS_NOTIF[pc].chave==='pedidos_claude')return GRUPOS_NOTIF[pc];}}
     // Disparos de e-mail (bloco 206, T179): remetente com erro ou e-mails que não saíram
     if(n&&n.referencia_tabela==='disparos'){for(var de=0;de<GRUPOS_NOTIF.length;de++){if(GRUPOS_NOTIF[de].chave==='disparos')return GRUPOS_NOTIF[de];}}
+    // Prêmio da Captação (blocos 222-224, T164): validação, fechamento, ajuste e estorno
+    if(n&&n.referencia_tabela==='premios'){for(var pm=0;pm<GRUPOS_NOTIF.length;pm++){if(GRUPOS_NOTIF[pm].chave==='premios')return GRUPOS_NOTIF[pm];}}
     return grupoDoTipo(n&&n.tipo);
   }
   function grupoDoTipo(tipo){
@@ -1545,6 +1552,7 @@
     if(n.referencia_tabela==='armazenamento'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=armazenamento');return;}
     if(n.referencia_tabela==='saude'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=saude');return;}
     if(n.referencia_tabela==='pedidos_claude'){global.sagaIrPara('pedidos_claude.html');return;}
+    if(n.referencia_tabela==='premios'){global.sagaIrPara('premios.html?aba=meu');return;}
     if(n.referencia_tabela==='disparos'){global.sagaIrPara(n.referencia_id?'disparos_email.html?aba=contas':'disparos_email.html?aba=erros');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // parcela vencida (bloco 167): abre a ficha do cliente no bloco Pagamentos; sem achar a parcela, a aba Parcelas do Financeiro
