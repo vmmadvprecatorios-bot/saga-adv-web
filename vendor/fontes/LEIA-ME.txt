@@ -4,3 +4,8 @@ Fontes usadas pelo SAGA para gerar as petições em PDF no navegador (saga_timbr
 - Liberation Serif (Red Hat): SIL Open Font License 1.1. Fica no lugar da Times New Roman (citações ANCREF e Sarmento).
 No Word baixado continuam as fontes originais do timbrado (Garamond, Segoe UI, Times New Roman), que o Windows do escritório já tem.
 Texto da licença: https://openfontlicense.org
+
+Fontes do Editor de PDF (Word para PDF no navegador, saga_word_pdf.js, 16/11/2026), de mesma largura de letra que as do Word:
+- Carlito (Google/tyPoland): SIL Open Font License 1.1. Fica no lugar da Calibri.
+- Caladea (Google/Huerta Tipográfica): SIL Open Font License 1.1. Fica no lugar da Cambria.
+- Liberation Sans (Red Hat): SIL Open Font License 1.1. Fica no lugar da Arial.

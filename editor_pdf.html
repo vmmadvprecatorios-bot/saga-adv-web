@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611142221"></script>
+<script src="saga_guard.js?v=202611161854"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Editor de PDF</title>
@@ -28,14 +28,13 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .btn-perigo{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 45%,transparent)}
 .btn svg{flex:none}
 /* zona de soltar */
-.solta{border:1.5px dashed var(--border);border-radius:18px;background:var(--panel);padding:44px 20px;text-align:center;cursor:pointer;transition:border-color .25s cubic-bezier(.22,.78,.25,1),background .25s cubic-bezier(.22,.78,.25,1),transform .25s cubic-bezier(.22,.78,.25,1)}
+.solta{border:1.5px dashed var(--border);border-radius:18px;background:var(--panel);padding:26px 20px;margin-top:18px;text-align:center;cursor:pointer;transition:border-color .25s cubic-bezier(.22,.78,.25,1),background .25s cubic-bezier(.22,.78,.25,1),transform .25s cubic-bezier(.22,.78,.25,1)}
 .solta:hover,.solta:focus-visible{border-color:color-mix(in srgb,var(--gold) 60%,transparent);outline:0}
 .solta.sobre{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,var(--panel));transform:scale(1.005)}
 .solta b{display:block;font-size:15px;margin:10px 0 4px}
 .solta span{font-size:12px;color:var(--muted);line-height:1.6}
 .solta svg{color:var(--gold)}
 .solta-mini{display:none}
-body.tem-paginas .solta{display:none}
 body.tem-paginas.arrastando-arquivo .solta-mini{display:flex}
 .solta-mini{position:fixed;inset:76px 20px 20px;z-index:2400;align-items:center;justify-content:center;border:2px dashed var(--gold);border-radius:20px;background:color-mix(in srgb,var(--gold) 10%,color-mix(in srgb,var(--panel-solid) 80%,transparent));font-size:15px;font-weight:600;pointer-events:none}
 /* avisos (erros sempre à vista) */
@@ -169,8 +168,92 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
   .arq .nm{max-width:170px}
   .comparar strong{font-size:15px}
 }
+/* telas: início (cartões), trabalho (páginas), resultado */
+.tela{animation:telaEntra .32s cubic-bezier(.22,.78,.25,1)}
+@keyframes telaEntra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html.sem-movimento .tela{animation:none}
+.grupo-c{margin-bottom:18px}
+.grupo-c h3{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:600;margin:0 2px 8px}
+.cartoes-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.cartao .topo-c{display:flex;justify-content:space-between;align-items:flex-start;width:100%;gap:6px}
+.cartao{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;padding:15px 15px 14px;border-radius:15px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .26s cubic-bezier(.22,.78,.25,1),border-color .2s,box-shadow .26s cubic-bezier(.22,.78,.25,1);min-height:118px}
+.cartao:hover,.cartao:focus-visible{transform:translateY(-2px);border-color:color-mix(in srgb,var(--gold) 55%,var(--border-soft));box-shadow:0 10px 24px rgba(0,0,0,.14);outline:0}
+.cartao:active{transform:scale(.98)}
+html.sem-movimento .cartao{transition:none}
+.cartao .ic{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent)}
+.cartao b{font-size:13.5px;font-weight:600;color:var(--text)}
+.cartao span.d{font-size:11.5px;color:var(--muted);line-height:1.45}
+.cartao .selo{font-size:10px;padding:1px 7px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted)}
+.atual{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;margin-bottom:16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 8%,var(--panel))}
+.atual-ic{color:var(--gold);display:inline-flex}
+.atual-txt{flex:1;min-width:200px;display:flex;flex-direction:column;gap:1px}
+.atual-txt small{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.atual-txt b{font-size:13.5px;font-weight:600;word-break:break-word}
+.atual-txt span{font-size:11.5px;color:var(--muted)}
+.atual-acoes{display:flex;gap:6px;flex-wrap:wrap}
+.ferr-cab{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.ferr-ic{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:var(--gold);background:color-mix(in srgb,var(--gold) 13%,transparent)}
+.ferr-txt{flex:1;min-width:180px;display:flex;flex-direction:column}
+.ferr-txt b{font-size:15px;font-weight:600}
+.ferr-txt small{font-size:11.5px;color:var(--muted);line-height:1.45}
+/* resultado */
+.res{border:1px solid var(--border-soft);border-radius:18px;background:var(--panel);padding:20px}
+.res-cab{display:flex;gap:14px;align-items:flex-start}
+.res-ok{width:44px;height:44px;flex:none;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--success,#16a34a);background:color-mix(in srgb,var(--success,#16a34a) 14%,transparent);border:1px solid color-mix(in srgb,var(--success,#16a34a) 40%,transparent)}
+.res-ok.alerta{color:var(--warning,#d97706);background:color-mix(in srgb,var(--warning,#d97706) 14%,transparent);border-color:color-mix(in srgb,var(--warning,#d97706) 45%,transparent)}
+.res-cab h2{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;line-height:1.15}
+.res-cab p{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.55}
+.res-arqs{display:flex;flex-direction:column;gap:8px;margin:16px 0}
+.res-arq{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--border-soft);border-radius:13px;background:color-mix(in srgb,var(--text) 3%,transparent);flex-wrap:wrap}
+.res-mini{width:54px;height:70px;flex:none;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.res-mini canvas,.res-mini img{max-width:100%;max-height:100%;display:block}
+.res-info{flex:1;min-width:160px;display:flex;flex-direction:column;gap:3px}
+.res-info input{height:32px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel);padding:0 9px;font-size:12.5px;outline:0;width:100%}
+.res-info input:focus{border-color:var(--gold)}
+.res-info small{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.res-info .guardado{color:var(--success,#16a34a)}
+.res-acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}
+.res-acao{display:flex;gap:10px;align-items:center;text-align:left;padding:12px 13px;border-radius:13px;border:1px solid var(--border-soft);background:var(--panel);transition:border-color .2s,transform .2s cubic-bezier(.22,.78,.25,1)}
+.res-acao:hover{border-color:color-mix(in srgb,var(--gold) 55%,var(--border-soft));transform:translateY(-1px)}
+.res-acao:disabled{opacity:.45;cursor:default;transform:none}
+.res-acao.principal{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 12%,var(--panel))}
+.res-acao .ic{color:var(--gold);flex:none;display:inline-flex}
+.res-acao b{display:block;font-size:12.5px;font-weight:600}
+.res-acao small{display:block;font-size:11px;color:var(--muted);line-height:1.4;margin-top:1px}
+.res-rod{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-soft)}
+.res-avisos{margin-top:12px;font-size:12px;line-height:1.55}
+.res-avisos ul{margin:4px 0 0 18px}
+/* guardar / compartilhar / imagens */
+.escolhido{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:11px;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 8%,transparent);font-size:12.5px}
+.escolhido b{flex:1;font-weight:600}
+.lista-busca{display:flex;flex-direction:column;gap:3px;margin-top:6px;max-height:230px;overflow-y:auto}
+.lista-busca:empty{display:none}
+.lista-busca button{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:8px 10px;border-radius:9px;font-size:12.5px;border:1px solid transparent}
+.lista-busca button:hover,.lista-busca button:focus-visible{border-color:color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 7%,transparent);outline:0}
+.lista-busca small{color:var(--muted);white-space:nowrap}
+.lista-busca .vazio{font-size:12px;color:var(--muted);padding:6px 4px}
+.linha-dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.linha-dupla .campo{width:100%}
+.bloco-c{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--border-soft);border-radius:13px}
+.bloco-c>b{font-size:13px;font-weight:600}
+a.btn{text-decoration:none;color:inherit}
+.lista-img{display:flex;flex-direction:column;gap:6px;max-height:290px;overflow-y:auto}
+.lista-img .li{display:flex;align-items:center;gap:10px;padding:6px;border:1px solid var(--border-soft);border-radius:11px}
+.lista-img img{width:44px;height:44px;object-fit:cover;border-radius:7px;flex:none;background:#fff}
+.lista-img .nm{flex:1;min-width:0;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lista-img .nm small{display:block;color:var(--muted);font-size:11px}
+.lista-img button{width:28px;height:28px;border-radius:8px;border:1px solid var(--border-soft);display:inline-flex;align-items:center;justify-content:center;padding:0}
+@media(max-width:760px){
+  .cartoes-g{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .cartao{min-height:0;padding:12px}
+  .cartao span.d{font-size:11px}
+  .linha-dupla{grid-template-columns:1fr}
+  .res{padding:14px}
+  .ferr-cab .btn .txt{display:none}
+  .ferr-cab #bConcluir{flex:1 1 100%}
+}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611142221">
+<link rel="stylesheet" href="saga_tema.css?v=202611161854">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -181,9 +264,9 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
   <div class="page-head">
     <div>
       <h1>Editor de PDF</h1>
-      <p>Junte, separe, tire, gire e reordene páginas, numere, escreva um texto, tape uma área e reduza o tamanho de PDFs. Tudo acontece neste computador.</p>
+      <p>Escolha o que fazer: juntar, separar, comprimir, converter Word e fotos em PDF e mais. Tudo acontece neste computador; depois de cada operação você guarda na pasta do cliente, baixa, compartilha ou continua com outra operação.</p>
     </div>
-    <span class="cadeado" title="Os arquivos são lidos e montados pelo próprio navegador. Nada vai para o banco, para o armazenamento do SAGA ou para outro site, a não ser que você clique em &quot;Guardar na pasta do cliente&quot;.">
+    <span class="cadeado" title="Os arquivos são lidos, convertidos e montados pelo próprio navegador. Nada vai para outro site. Só vai para o SAGA se você clicar em &quot;Guardar na pasta do cliente&quot;.">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6"/></svg>
       O arquivo não sai deste computador
     </span>
@@ -191,14 +274,33 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 
   <div id="avisos" aria-live="polite"></div>
 
-  <div class="solta" id="solta" role="button" tabindex="0" aria-label="Escolher arquivos PDF">
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M14 3v5h5M12 11v6m0-6l-2.5 2.5M12 11l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <b>Arraste os PDFs para cá ou clique para escolher</b>
-    <span>Pode abrir vários de uma vez: as páginas ficam numa fila só, na ordem em que entraram, e viram um PDF único ao baixar.<br>PDF com senha ou com defeito: o motivo aparece aqui em cima.</span>
-  </div>
-  <div class="solta-mini" id="soltaMini">Solte para acrescentar os PDFs</div>
+  <!-- 1. Tela inicial: todas as funções em cartões -->
+  <section class="tela" id="telaInicio" aria-label="Escolha o que fazer">
+    <div class="atual" id="atualBanner" hidden>
+      <span class="atual-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
+      <div class="atual-txt"><small>Continuando com este arquivo · escolha a próxima operação</small><b id="atualNome"></b><span id="atualInfo"></span></div>
+      <div class="atual-acoes"><button class="btn" type="button" id="atualVer">Ver as páginas</button><button class="btn" type="button" id="atualFechar">Fechar este arquivo</button></div>
+    </div>
+    <div id="cartoes"></div>
+    <div class="solta" id="solta" role="button" tabindex="0" aria-label="Escolher arquivos">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M14 3v5h5M12 11v6m0-6l-2.5 2.5M12 11l2.5 2.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <b>Ou arraste para cá PDFs, fotos ou um Word</b>
+      <span>PDF abre as páginas para organizar; fotos viram PDF; Word (.docx) é convertido em PDF.</span>
+    </div>
+  </section>
+  <div class="solta-mini" id="soltaMini">Solte para acrescentar os arquivos</div>
   <input type="file" id="entradaArquivos" accept="application/pdf,.pdf" multiple class="sr" tabindex="-1">
+  <input type="file" id="entradaImagens" accept="image/*,.heic,.heif" multiple class="sr" tabindex="-1">
+  <input type="file" id="entradaWord" accept=".docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword" class="sr" tabindex="-1">
 
+  <!-- 2. Trabalho: as páginas -->
+  <section class="tela" id="telaTrabalho" hidden aria-label="Páginas">
+    <div class="ferr-cab">
+      <button class="btn" type="button" id="bVoltarInicio" title="Voltar para os cartões (o arquivo continua aberto)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Todas as ferramentas</span></button>
+      <span class="ferr-ic" id="ferrIc"></span>
+      <div class="ferr-txt"><b id="ferrNome">Organizar páginas</b><small id="ferrDica"></small></div>
+      <button class="btn btn-ouro" type="button" id="bConcluir"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-10" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="tConcluir">Gerar o PDF</span></button>
+    </div>
   <div class="ferramentas" id="ferramentas" role="toolbar" aria-label="Ferramentas do PDF">
     <button class="btn" type="button" id="bAbrir" title="Acrescentar mais PDFs"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="txt">Mais PDFs</span></button>
     <button class="btn" type="button" id="bMarcarTodas" title="Marcar todas as páginas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt" id="tMarcarTodas">Marcar todas</span></button>
@@ -206,24 +308,27 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
     <button class="btn" type="button" id="bGirarE" title="Girar para a esquerda (as marcadas, ou todas se nenhuma estiver marcada)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 9a8 8 0 112 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 4v5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Girar à esq.</span></button>
     <button class="btn" type="button" id="bGirarD" title="Girar para a direita (as marcadas, ou todas se nenhuma estiver marcada)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 9a8 8 0 10-2 9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M20 4v5h-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Girar à dir.</span></button>
     <button class="btn" type="button" id="bTirar" title="Tirar as páginas marcadas do documento"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Tirar marcadas</span></button>
-    <button class="btn" type="button" id="bExtrair" title="Baixar só as páginas marcadas, num PDF à parte"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M8 3h8l3 3v6M5 21V5a2 2 0 012-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 17h8m0 0l-3-3m3 3l-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Extrair marcadas</span></button>
+    <button class="btn" type="button" id="bExtrair" title="Gerar um PDF só com as páginas marcadas"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M8 3h8l3 3v6M5 21V5a2 2 0 012-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 17h8m0 0l-3-3m3 3l-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Extrair marcadas</span></button>
     <span class="sep"></span>
     <button class="btn" type="button" id="bSeparar" title="Separar em vários arquivos"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 4v16M18 4v16M10 12h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 9l-2 3 2 3M12 9l2 3-2 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Separar</span></button>
     <button class="btn" type="button" id="bNumerar" title="Número de página"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M11 15h2v3M12 15v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span class="txt" id="tNumerar">Numerar</span></button>
     <button class="btn" type="button" id="bComprimir" title="Reduzir o tamanho do arquivo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M8 3v6H2M16 3v6h6M8 21v-6H2M16 21v-6h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="txt">Comprimir</span></button>
+    <button class="btn" type="button" id="bParaImagem" title="Transformar as páginas em imagens JPG ou PNG"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="txt">Para imagem</span></button>
     <button class="btn" type="button" id="bDesfazer" title="Desfazer a última mudança (Ctrl+Z)" disabled><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 14L4 9l5-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 9h10a6 6 0 010 12h-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="txt">Desfazer</span></button>
     <button class="btn" type="button" id="bLimpar" title="Fechar todos os PDFs e começar de novo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="txt">Fechar tudo</span></button>
     <span class="cresce"></span>
     <div class="nome-saida">
       <label class="sr" for="nomeSaida">Nome do arquivo</label>
       <input id="nomeSaida" autocomplete="off" spellcheck="false" placeholder="Nome do arquivo">
-      <button class="btn" type="button" id="bGuardar" hidden title="Guardar o resultado como um documento NOVO na mesma pasta da ficha (o original continua lá)">Guardar na pasta do cliente</button>
-      <button class="btn btn-ouro" type="button" id="bBaixar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>Baixar PDF</button>
     </div>
   </div>
   <div class="resumo" id="resumo"></div>
   <div class="arquivos" id="arquivos"></div>
   <div class="grade" id="grade" aria-label="Páginas"></div>
+  </section>
+
+  <!-- 3. Resultado: guardar, baixar, compartilhar, continuar -->
+  <section class="tela" id="telaResultado" hidden aria-label="Resultado"></section>
 </main>
 </div>
 
@@ -240,12 +345,12 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
     <div class="dica" id="sepPrevia"></div>
     <div class="progresso" id="sepProg"><div class="barra-p"><i></i></div><small></small></div>
   </div>
-  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="sepOk">Separar e baixar</button></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="sepOk">Separar</button></div>
 </div></div>
 
 <!-- Numerar -->
 <div class="mo" id="jNumerar" role="dialog" aria-modal="true" aria-labelledby="jNumerarT" data-saga-movimento-proprio><div class="md">
-  <div class="md-cab"><h2 id="jNumerarT">Número de página</h2><p>O número entra no pé de cada página quando o PDF for baixado, separado ou comprimido.</p></div>
+  <div class="md-cab"><h2 id="jNumerarT">Número de página</h2><p>O número entra no pé de cada página quando o PDF for gerado ("Gerar o PDF"), separado ou comprimido.</p></div>
   <div class="md-corpo">
     <label class="rot">Formato</label>
     <div class="pills" role="group" aria-label="Formato" id="numFormato">
@@ -272,18 +377,19 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 
 <!-- Comprimir -->
 <div class="mo" id="jComprimir" role="dialog" aria-modal="true" aria-labelledby="jComprimirT" data-saga-movimento-proprio><div class="md">
-  <div class="md-cab"><h2 id="jComprimirT">Reduzir o tamanho</h2><p>Escolha o nível e clique em "Calcular": o SAGA mostra o tamanho antes e depois, e você decide se baixa.</p></div>
+  <div class="md-cab"><h2 id="jComprimirT">Comprimir (reduzir o tamanho)</h2><p>O texto continua texto (dá para selecionar e pesquisar); o SAGA reduz as fotos e as páginas escaneadas que estão dentro do PDF. Se não diminuir, avisa e mantém o original.</p></div>
   <div class="md-corpo">
-    <label class="opcao active" data-nivel="sem"><input type="radio" name="nivel" value="sem" checked><div><b>Sem perder qualidade</b><span>Só reorganiza o arquivo por dentro. O texto continua selecionável. Ganha pouco, às vezes nada.</span></div></label>
-    <label class="opcao" data-nivel="leve"><input type="radio" name="nivel" value="leve"><div><b>Leve</b><span>Páginas viram imagem boa (150 pontos por polegada). Bom para documento escaneado.</span></div></label>
-    <label class="opcao" data-nivel="media"><input type="radio" name="nivel" value="media"><div><b>Média</b><span>Imagem de 110 pontos por polegada. Ainda legível na tela e na impressão comum.</span></div></label>
-    <label class="opcao" data-nivel="forte"><input type="radio" name="nivel" value="forte"><div><b>Forte</b><span>Imagem de 80 pontos por polegada. Arquivo bem menor; letra miúda pode ficar borrada.</span></div></label>
-    <div class="aviso atencao" id="compAviso" hidden><div><b>Atenção: nos níveis Leve, Média e Forte cada página vira uma imagem.</b>O texto deixa de ser selecionável e não dá mais para copiar ou pesquisar palavras no PDF. Confira o resultado antes de protocolar.</div></div>
+    <label class="opcao" data-nivel="sem"><input type="radio" name="nivel" value="sem"><div><b>Sem perder nada</b><span>Só reorganiza e compacta o arquivo por dentro. As imagens ficam como estão.</span></div></label>
+    <label class="opcao" data-nivel="leve"><input type="radio" name="nivel" value="leve"><div><b>Leve</b><span>Fotos e escaneados em boa definição (até ~2.400 pontos no lado maior). Quase não muda a aparência.</span></div></label>
+    <label class="opcao active" data-nivel="media"><input type="radio" name="nivel" value="media" checked><div><b>Recomendada</b><span>Boa para protocolar e mandar por e-mail: leitura perfeita, arquivo bem menor.</span></div></label>
+    <label class="opcao" data-nivel="forte"><input type="radio" name="nivel" value="forte"><div><b>Forte</b><span>Para limite de tamanho apertado. Foto e escaneado com menos detalhe.</span></div></label>
+    <label class="opcao" data-nivel="imagem"><input type="radio" name="nivel" value="imagem"><div><b>Último recurso: páginas viram imagem</b><span>Só ajuda em PDF montado de forma estranha. O texto deixa de ser selecionável.</span></div></label>
+    <div class="aviso atencao" id="compAviso" hidden><div><b>Atenção: aqui cada página vira uma imagem.</b>O texto deixa de ser selecionável e não dá mais para copiar ou pesquisar palavras no PDF. Se o resultado ficar maior, o SAGA mantém o original.</div></div>
     <div class="comparar" id="compResultado" hidden></div>
     <div class="erro-campo" id="compErro"></div>
     <div class="progresso" id="compProg"><div class="barra-p"><i></i></div><small></small></div>
   </div>
-  <div class="md-rod"><button class="btn" type="button" data-fechar>Fechar</button><button class="btn" type="button" id="compCalc">Calcular</button><button class="btn btn-ouro" type="button" id="compBaixar" disabled>Baixar o menor</button></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Fechar</button><button class="btn" type="button" id="compCalc">Calcular</button><button class="btn btn-ouro" type="button" id="compBaixar" disabled>Usar o comprimido</button></div>
 </div></div>
 
 <!-- Editar página -->
@@ -337,16 +443,91 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 </div></div>
 
 <!-- Guardar na pasta do cliente -->
-<div class="mo" id="jGuardar" role="dialog" aria-modal="true" aria-labelledby="jGuardarT" data-saga-movimento-proprio><div class="md">
-  <div class="md-cab"><h2 id="jGuardarT">Guardar na pasta do cliente</h2><p id="jGuardarSub"></p></div>
+<div class="mo alto" id="jGuardar" role="dialog" aria-modal="true" aria-labelledby="jGuardarT" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jGuardarT">Guardar na pasta do cliente</h2><p id="jGuardarSub">Escolha o cliente, o processo e a pasta. O arquivo vira um documento NOVO na ficha.</p></div>
   <div class="md-corpo">
-    <label class="rot" for="guardarNome">Nome do documento novo</label>
-    <input class="campo" id="guardarNome" autocomplete="off">
-    <div class="dica">Fica como um documento NOVO, na mesma pasta do original. O original não muda.</div>
+    <label class="rot" for="gBusca">Cliente</label>
+    <div id="gEscolhido" class="escolhido" hidden></div>
+    <div id="gBuscaBloco">
+      <input class="campo" id="gBusca" autocomplete="off" spellcheck="false" placeholder="Nome, CPF, código (VMM-01234) ou número do processo" style="width:100%">
+      <div class="lista-busca" id="gLista" role="listbox" aria-label="Clientes encontrados"></div>
+    </div>
+    <div class="linha-dupla">
+      <div><label class="rot" for="gProcesso">Processo</label><select class="campo" id="gProcesso" disabled><option value="">Escolha o cliente primeiro</option></select></div>
+      <div><label class="rot" for="gPasta">Pasta da ficha</label><select class="campo" id="gPasta" disabled><option value="">Documentos (sem pasta)</option></select></div>
+    </div>
+    <div id="gNomes"></div>
+    <div class="dica">Fica como documento NOVO na ficha do cliente; nada que já está lá muda.</div>
     <div class="erro-campo" id="guardarErro"></div>
     <div class="progresso" id="guardarProg"><div class="barra-p"><i></i></div><small></small></div>
   </div>
-  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="guardarOk">Guardar</button></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="guardarOk" disabled>Guardar</button></div>
+</div></div>
+
+<!-- Compartilhar -->
+<div class="mo alto" id="jCompartilhar" role="dialog" aria-modal="true" aria-labelledby="jCompartilharT" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jCompartilharT">Compartilhar</h2><p id="jCompartilharSub"></p></div>
+  <div class="md-corpo">
+    <div class="bloco-c">
+      <b>Mandar o arquivo</b>
+      <span class="dica" id="cpEnviarDica"></span>
+      <div class="linha"><button class="btn btn-ouro" type="button" id="cpEnviar">Enviar pelo WhatsApp, e-mail…</button><button class="btn" type="button" id="cpBaixar">Baixar para anexar</button></div>
+    </div>
+    <div class="bloco-c">
+      <b>Link do SAGA com prazo</b>
+      <span class="dica">Quem receber o link baixa o arquivo até o prazo acabar; depois o link para de funcionar. O link aponta para a cópia guardada na pasta do cliente e fica no Registro de atividades. Não mande em grupos.</span>
+      <div class="pills" role="group" aria-label="Prazo do link" id="cpPrazo"><button class="pill" type="button" data-v="24">1 dia</button><button class="pill active" type="button" data-v="72">3 dias</button><button class="pill" type="button" data-v="168">7 dias</button></div>
+      <div id="cpSemPasta" class="dica" hidden></div>
+      <div class="linha"><button class="btn" type="button" id="cpGerar">Gerar o link</button></div>
+      <div id="cpLinkBloco" hidden>
+        <input class="campo" id="cpLink" readonly style="width:100%">
+        <div class="dica" id="cpValidade"></div>
+        <div class="linha"><button class="btn" type="button" id="cpCopiar">Copiar o link</button><a class="btn" id="cpWhats" target="_blank" rel="noopener">WhatsApp</a><a class="btn" id="cpEmail">E-mail</a></div>
+      </div>
+      <div class="erro-campo" id="cpErro"></div>
+    </div>
+  </div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Fechar</button></div>
+</div></div>
+
+<!-- Imagens para PDF -->
+<div class="mo alto" id="jImagens" role="dialog" aria-modal="true" aria-labelledby="jImagensT" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jImagensT">Imagens para PDF</h2><p>Cada imagem vira uma página, na ordem da lista (use as setas para mudar). Fotos tiradas de lado já entram em pé.</p></div>
+  <div class="md-corpo">
+    <div class="lista-img" id="imgLista"></div>
+    <div class="linha"><button class="btn" type="button" id="imgMais">+ Mais imagens</button></div>
+    <label class="rot">Tamanho da página</label>
+    <div class="pills" role="group" aria-label="Tamanho da página" id="imgPagina"><button class="pill active" type="button" data-v="a4">A4 (vira sozinha)</button><button class="pill" type="button" data-v="imagem">Do tamanho da imagem</button></div>
+    <label class="rot">Margem</label>
+    <div class="pills" role="group" aria-label="Margem" id="imgMargem"><button class="pill" type="button" data-v="0">Sem margem</button><button class="pill active" type="button" data-v="20">Pequena</button><button class="pill" type="button" data-v="45">Normal</button></div>
+    <label class="rot">Qualidade</label>
+    <div class="pills" role="group" aria-label="Qualidade" id="imgQualidade"><button class="pill active" type="button" data-v="rec">Recomendada (arquivo menor)</button><button class="pill" type="button" data-v="orig">Original</button></div>
+    <div class="erro-campo" id="imgErro"></div>
+    <div class="progresso" id="imgProg"><div class="barra-p"><i></i></div><small></small></div>
+  </div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="imgOk">Gerar o PDF</button></div>
+</div></div>
+
+<!-- PDF para imagem -->
+<div class="mo" id="jParaImagem" role="dialog" aria-modal="true" aria-labelledby="jParaImagemT" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jParaImagemT">PDF para imagem</h2><p>Cada página vira uma imagem. Várias imagens vêm juntas num .zip.</p></div>
+  <div class="md-corpo">
+    <label class="rot">Formato</label>
+    <div class="pills" role="group" aria-label="Formato" id="piFormato"><button class="pill active" type="button" data-v="jpg">JPG (foto, menor)</button><button class="pill" type="button" data-v="png">PNG (nítido, maior)</button></div>
+    <label class="rot">Definição</label>
+    <div class="pills" role="group" aria-label="Definição" id="piDpi"><button class="pill" type="button" data-v="100">Tela (100 dpi)</button><button class="pill active" type="button" data-v="150">Normal (150 dpi)</button><button class="pill" type="button" data-v="250">Alta (250 dpi)</button></div>
+    <label class="rot">Páginas</label>
+    <div class="pills" role="group" aria-label="Páginas" id="piPaginas"><button class="pill active" type="button" data-v="todas">Todas</button><button class="pill" type="button" data-v="marcadas">Só as marcadas</button></div>
+    <div class="erro-campo" id="piErro"></div>
+    <div class="progresso" id="piProg"><div class="barra-p"><i></i></div><small></small></div>
+  </div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="piOk">Converter</button></div>
+</div></div>
+
+<!-- Convertendo (Word) -->
+<div class="mo" id="jConverter" role="dialog" aria-modal="true" aria-labelledby="jConverterT" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jConverterT">Convertendo o Word em PDF</h2><p id="jConverterSub">Tudo neste computador: o arquivo não vai para nenhum site.</p></div>
+  <div class="md-corpo"><div class="progresso ativo" id="cvProg"><div class="barra-p"><i></i></div><small>Começando…</small></div></div>
 </div></div>
 
 <div class="toast-wrap" id="toastWrap"></div>
@@ -358,8 +539,9 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611142221"></script>
+<script src="saga_ui.js?v=202611161854"></script>
 <script src="vendor/pdf-lib-1.17.1/pdf-lib.min.js"></script>
-<script src="saga_editor_pdf.js?v=202611142221"></script>
+<script src="saga_word_pdf.js?v=202611161854"></script>
+<script src="saga_editor_pdf.js?v=202611161854"></script>
 </body>
 </html>

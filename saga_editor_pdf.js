@@ -15,8 +15,7 @@ var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
 var BUCKET='documentos-clientes';
 var CURVA='cubic-bezier(.22,.78,.25,1)';
 var CORES_TEXTO={preto:[0,0,0],azul:[0.07,0.16,0.36],vermelho:[0.75,0.1,0.1]};
-var NIVEIS={leve:{dpi:150,q:0.8,nome:'Leve'},media:{dpi:110,q:0.65,nome:'Média'},forte:{dpi:80,q:0.5,nome:'Forte'}};
-var E={docs:[],paginas:[],sel:new Set(),numeracao:null,historico:[],seq:0,origem:null,nomeTocado:false,trabalhando:false,pendente:false};
+var E={docs:[],paginas:[],sel:new Set(),numeracao:null,historico:[],seq:0,origem:null,nomeTocado:false,trabalhando:false,pendente:false,tela:'inicio',ferr:null,resultado:null};
 
 function $(id){return document.getElementById(id);}
 function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
@@ -249,8 +248,7 @@ function desenharResumo(){
   $('tMarcarTodas').textContent=m&&m===n?'Desmarcar':'Marcar todas';
   $('bTirar').disabled=!m;$('bExtrair').disabled=!m;
   $('tNumerar').textContent=E.numeracao?'Numeração ✓':'Numerar';
-  $('bBaixar').disabled=!n;
-  $('bGuardar').hidden=!(E.origem&&E.origem.processo_id);
+  atualizarConcluir();
 }
 
 /* ---------- ações de página ---------- */
@@ -531,13 +529,13 @@ async function trabalhar(botao,fn){
   var txt=botao?botao.innerHTML:null;if(botao){botao.disabled=true;botao.textContent='Montando…';}
   try{await fn();}finally{E.trabalhando=false;if(botao){botao.innerHTML=txt;botao.disabled=false;}desenharResumo();}
 }
-async function baixarTudo(){
+async function gerarTudo(){
   if(!E.paginas.length)return;
-  await trabalhar($('bBaixar'),async function(){
+  await trabalhar($('bConcluir'),async function(){
     try{
       var bytes=await montarPdf(E.paginas,{});
-      baixarBytes(bytes,nomeLimpo($('nomeSaida').value||nomeSugerido()));E.pendente=false;
-      toast('PDF pronto: '+tamanhoTxt(bytes.length)+'. Veja na pasta de downloads.','success');
+      var f=ferr();
+      mostrarResultado({titulo:f.pronto||'PDF pronto',detalhe:E.paginas.length+' página'+(E.paginas.length!==1?'s':'')+' · '+tamanhoTxt(bytes.length)+'.',arquivos:[{nome:nomeLimpo($('nomeSaida').value||nomeSugerido()),bytes:bytes,tipo:'application/pdf',paginas:E.paginas.length}]});
     }catch(e){falhaMontar(e,'montar o PDF');}
   });
 }
@@ -546,8 +544,7 @@ async function extrairMarcadas(){
   await trabalhar($('bExtrair'),async function(){
     try{
       var bytes=await montarPdf(l,{});
-      baixarBytes(bytes,baseNome($('nomeSaida').value||nomeSugerido())+' - paginas '+faixaTexto(l)+'.pdf');
-      toast(l.length+' página'+(l.length>1?'s':'')+' extraída'+(l.length>1?'s':'')+' ('+tamanhoTxt(bytes.length)+').','success');
+      mostrarResultado({titulo:'Páginas extraídas',detalhe:l.length+' página'+(l.length>1?'s':'')+' ('+faixaTexto(l)+') · '+tamanhoTxt(bytes.length)+'. O arquivo de onde elas saíram continua aberto ("Voltar e ajustar").',arquivos:[{nome:baseNome($('nomeSaida').value||nomeSugerido())+' - paginas '+faixaTexto(l)+'.pdf',bytes:bytes,tipo:'application/pdf',paginas:l.length}]});
     }catch(e){falhaMontar(e,'extrair as páginas');}
   });
 }
@@ -598,10 +595,8 @@ async function separar(){
       arquivos.push({nome:base+' - '+g[i].nome+'.pdf',bytes:await montarPdf(g[i].pags,{})});
     }
     progresso(prog,1,1,'Pronto.');
-    if(arquivos.length===1)baixarBytes(arquivos[0].bytes,arquivos[0].nome);
-    else baixarBytes(zipar(arquivos),base+' (separado).zip','application/zip');
-    toast(arquivos.length===1?'Arquivo pronto.':arquivos.length+' arquivos prontos, juntos num .zip.','success');
     fecharJanela('jSeparar');
+    mostrarResultado({titulo:'PDF separado',detalhe:arquivos.length+' arquivo'+(arquivos.length>1?'s':'')+'. "Baixar" traz todos juntos num .zip; cada um também tem o seu botão.',zip:base+' (separado).zip',arquivos:arquivos.map(function(a,i){return {nome:a.nome,bytes:a.bytes,tipo:'application/pdf',paginas:g[i].pags.length};})});
   }catch(e){$('sepErro').textContent='Não consegui separar. Motivo: '+((e&&e.message)||'erro desconhecido')+'. Nada foi baixado.';}
   finally{prog.classList.remove('ativo');$('sepOk').disabled=false;}
 }
@@ -649,40 +644,176 @@ function valorPill(grupo){var b=$(grupo).querySelector('.pill.active');return b?
 function salvarNumerar(){
   guardarHistorico();
   E.numeracao={formato:valorPill('numFormato')||'n',pos:valorPill('numPos')||'centro',inicio:Math.max(0,parseInt($('numInicio').value,10)||1),tam:Math.max(6,Math.min(24,parseInt($('numTam').value,10)||10)),capa:$('numCapa').checked};
-  fecharJanela('jNumerar');desenharResumo();toast('Numeração ligada: entra no PDF ao baixar.');
+  fecharJanela('jNumerar');desenharResumo();
+  if(E.ferr==='numerar')gerarTudo();else toast('Numeração ligada: entra no PDF ao gerar ("Gerar o PDF").');
 }
 
-/* ---------- comprimir ---------- */
+/* ---------- comprimir (16/11: refeito) ----------
+   ERRO ANTIGO (16/11, Dr. Victor): Leve/Média/Forte transformavam CADA PÁGINA numa foto JPEG. Num PDF de texto
+   (ou escaneado em preto e branco, que já vem em formato de fax bem leve) a foto é muito MAIOR que o original:
+   4,7 KB viravam 2 MB. Agora: o texto continua texto; só as IMAGENS de dentro do PDF (fotos, páginas escaneadas
+   coloridas) são reduzidas e regravadas, e só quando a imagem nova fica menor. Regra: se o resultado não diminuir,
+   o SAGA avisa ("já está otimizado") e fica com o original; nunca entrega arquivo maior sem avisar. */
+var NIVEIS_IMG={leve:{lado:2400,q:0.82,nome:'Leve'},media:{lado:1700,q:0.7,nome:'Recomendada'},forte:{lado:1150,q:0.55,nome:'Forte'}};
+function _num(ctx,v){v=ctx.lookup(v);return v&&v.asNumber?v.asNumber():null;}
+function _nome(ctx,v){v=ctx.lookup(v);return v&&v.asString?v.asString():(v&&v.encodedName?v.encodedName:null);}
+async function _inflar(bytes){
+  if(typeof DecompressionStream==='undefined')throw new Error('navegador sem descompressão');
+  var st=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'));
+  return new Uint8Array(await new Response(st).arrayBuffer());
+}
+function _a85(b){
+  var out=[],t=0,n=0,i=0;if(b[0]===60&&b[1]===126)i=2;
+  for(;i<b.length;i++){var c=b[i];if(c===126)break;if(c<=32)continue;if(c===122&&n===0){out.push(0,0,0,0);continue;}
+    t=t*85+(c-33);n++;if(n===5){out.push((t>>>24)&255,(t>>>16)&255,(t>>>8)&255,t&255);t=0;n=0;}}
+  if(n>1){for(var k=n;k<5;k++)t=t*85+84;var by=[(t>>>24)&255,(t>>>16)&255,(t>>>8)&255,t&255];for(var m=0;m<n-1;m++)out.push(by[m]);}
+  return new Uint8Array(out);
+}
+function _hexDec(b){var s=String.fromCharCode.apply(null,Array.prototype.filter.call(b,function(c){return /[0-9a-fA-F]/.test(String.fromCharCode(c));}));if(s.length%2)s+='0';var o=new Uint8Array(s.length/2);for(var i=0;i<o.length;i++)o[i]=parseInt(s.substr(i*2,2),16);return o;}
+function _despredizer(dados,colunas,cores){
+  // PNG predictors (Predictor >= 10): cada linha começa com o tipo de filtro
+  var bpl=colunas*cores,linhas=Math.floor(dados.length/(bpl+1)),out=new Uint8Array(linhas*bpl),ant=new Uint8Array(bpl);
+  for(var y=0;y<linhas;y++){
+    var t=dados[y*(bpl+1)],o=y*(bpl+1)+1,lin=out.subarray(y*bpl,(y+1)*bpl);
+    for(var x=0;x<bpl;x++){
+      var a=x>=cores?lin[x-cores]:0,b=ant[x],c=x>=cores?ant[x-cores]:0,v=dados[o+x];
+      if(t===1)v+=a;else if(t===2)v+=b;else if(t===3)v+=(a+b)>>1;
+      else if(t===4){var p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);v+=(pa<=pb&&pa<=pc)?a:(pb<=pc?b:c);}
+      lin[x]=v&255;
+    }
+    ant=lin;
+  }
+  return out;
+}
+async function _imagemParaCanvas(ctx,obj,L){
+  var d=obj.dict,N=L.PDFName;
+  var W=_num(ctx,d.get(N.of('Width'))),H=_num(ctx,d.get(N.of('Height')));
+  if(!W||!H)return null;
+  var f=ctx.lookup(d.get(N.of('Filter'))),filtros=[];
+  if(f instanceof L.PDFArray){for(var fi=0;fi<f.size();fi++)filtros.push(_nome(ctx,f.get(fi)));}else if(f)filtros.push(_nome(ctx,f));
+  var dadosBrutos=obj.contents;
+  // embrulhos de texto (ASCII85 / ASCIIHex) vêm antes do formato da imagem: desembrulha
+  while(filtros.length>1&&(filtros[0]==='/ASCII85Decode'||filtros[0]==='/A85'||filtros[0]==='/ASCIIHexDecode'||filtros[0]==='/AHx')){
+    dadosBrutos=(filtros[0]==='/ASCIIHexDecode'||filtros[0]==='/AHx')?_hexDec(dadosBrutos):_a85(dadosBrutos);filtros.shift();
+  }
+  if(filtros.length!==1)return null;
+  var filtro=filtros[0];
+  if(d.get(N.of('ImageMask'))||d.get(N.of('Mask'))||d.get(N.of('Decode')))return null;
+  var cs=ctx.lookup(d.get(N.of('ColorSpace'))),comps=null;
+  if(cs instanceof L.PDFName){var n=cs.asString();comps=n==='/DeviceRGB'?3:n==='/DeviceGray'?1:null;}
+  else if(cs instanceof L.PDFArray&&cs.size()===2&&_nome(ctx,cs.get(0))==='/ICCBased'){var icc=ctx.lookup(cs.get(1));var nn=icc&&icc.dict?_num(ctx,icc.dict.get(N.of('N'))):null;comps=(nn===1||nn===3)?nn:null;}
+  if(!comps)return null; // CMYK, Indexed e outros: ficam como estão
+  var bmp;
+  if(filtro==='/DCTDecode'){
+    bmp=await createImageBitmap(new Blob([dadosBrutos],{type:'image/jpeg'}));
+  }else if(filtro==='/FlateDecode'){
+    if(_num(ctx,d.get(N.of('BitsPerComponent')))!==8)return null;
+    var dados=await _inflar(dadosBrutos);
+    var dp=ctx.lookup(d.get(N.of('DecodeParms')));
+    if(dp&&dp.get){var pred=_num(ctx,dp.get(N.of('Predictor')))||1;if(pred>=10)dados=_despredizer(dados,_num(ctx,dp.get(N.of('Columns')))||W,comps);else if(pred!==1)return null;}
+    if(dados.length<W*H*comps)return null;
+    var px=new Uint8ClampedArray(W*H*4);
+    for(var i=0,j=0;i<W*H;i++){if(comps===3){px[j]=dados[i*3];px[j+1]=dados[i*3+1];px[j+2]=dados[i*3+2];}else{px[j]=px[j+1]=px[j+2]=dados[i];}px[j+3]=255;j+=4;}
+    bmp=await createImageBitmap(new ImageData(px,W,H));
+  }else return null; // CCITT e JBIG2 (escaneado preto e branco): já são levíssimos
+  return {bmp:bmp,W:W,H:H,cinza:comps===1};
+}
+async function otimizarPdf(bytes,nivel,prog){
+  var L=PDFLib,N=L.PDFName;
+  var doc=await L.PDFDocument.load(bytes,{updateMetadata:false});
+  var ctx=doc.context,cfg=NIVEIS_IMG[nivel];
+  var lista=ctx.enumerateIndirectObjects();
+  var mascaras=new Set();
+  lista.forEach(function(par){var o=par[1];if(o instanceof L.PDFRawStream&&o.dict.get(N.of('SMask'))){var r=o.dict.get(N.of('SMask'));if(r instanceof L.PDFRef)mascaras.add(r.toString());}});
+  var info={imagens:0,reduzidas:0,fluxos:0};
+  for(var k=0;k<lista.length;k++){
+    var ref=lista[k][0],o=lista[k][1];
+    if(!(o instanceof L.PDFRawStream))continue;
+    if(prog&&k%20===0)prog(k,lista.length);
+    var d=o.dict,sub=_nome(ctx,d.get(N.of('Subtype')));
+    if(sub==='/Image'){
+      info.imagens++;
+      if(!cfg||mascaras.has(ref.toString())||o.contents.length<25000)continue;
+      var im=null;try{im=await _imagemParaCanvas(ctx,o,L);}catch(e){im=null;}
+      if(!im)continue;
+      var s=Math.min(1,cfg.lado/Math.max(im.W,im.H)),w=Math.max(1,Math.round(im.W*s)),h=Math.max(1,Math.round(im.H*s));
+      var cv=document.createElement('canvas');cv.width=w;cv.height=h;var c2=cv.getContext('2d');
+      c2.fillStyle='#fff';c2.fillRect(0,0,w,h);c2.imageSmoothingQuality='high';c2.drawImage(im.bmp,0,0,w,h);try{im.bmp.close();}catch(e){}
+      var blob=await new Promise(function(ok){cv.toBlob(ok,'image/jpeg',cfg.q);});cv.width=cv.height=0;
+      if(!blob)continue;
+      var nb=new Uint8Array(await blob.arrayBuffer());
+      if(nb.length>=o.contents.length*0.85)continue; // não ganhou: fica a imagem original
+      var nd={Type:'XObject',Subtype:'Image',Width:w,Height:h,BitsPerComponent:8,ColorSpace:'DeviceRGB',Filter:'DCTDecode'};
+      var novo=ctx.stream(nb,nd);
+      ['SMask','Intent','Interpolate','OC','Metadata'].forEach(function(ch){var v=d.get(N.of(ch));if(v)novo.dict.set(N.of(ch),v);});
+      ctx.assign(ref,novo);info.reduzidas++;
+    }else if(!d.get(N.of('Filter'))&&o.contents.length>256&&!/\/(XRef|ObjStm)/.test(_nome(ctx,d.get(N.of('Type')))||'')){
+      // fluxo gravado sem compressão (texto da página, fontes): compacta sem perder nada
+      var z=ctx.flateStream(o.contents);
+      d.entries().forEach(function(e){var kn=e[0].asString();if(kn!=='/Length'&&kn!=='/Filter')z.dict.set(e[0],e[1]);});
+      if(z.contents.length<o.contents.length){ctx.assign(ref,z);info.fluxos++;}
+    }
+  }
+  var saida=await doc.save({useObjectStreams:true});
+  info.bytes=saida;return info;
+}
+// o que está na tela é exatamente o arquivo original? (um arquivo só, todas as páginas, na ordem, sem mudança)
+function intacto(){
+  if(E.docs.length!==1||E.numeracao)return null;
+  var d=E.docs[0];if(d.rasterizar||E.paginas.length!==d.pdf.numPages)return null;
+  for(var i=0;i<E.paginas.length;i++){var p=E.paginas[i];if(p.doc!==d||p.idx!==i||p.rotUser||p.anot.length)return null;}
+  return d;
+}
 var _comp=null;
 function abrirComprimir(){
   _comp=null;$('compResultado').hidden=true;$('compErro').textContent='';$('compBaixar').disabled=true;
   atualizarAvisoComp();abrirJanela('jComprimir');
 }
 function nivelComp(){return document.querySelector('input[name="nivel"]:checked').value;}
-function atualizarAvisoComp(){$('compAviso').hidden=nivelComp()==='sem';}
+function atualizarAvisoComp(){$('compAviso').hidden=nivelComp()!=='imagem';}
 async function calcularComp(){
   var nivel=nivelComp(),prog=$('compProg');
   $('compErro').textContent='';$('compResultado').hidden=true;$('compBaixar').disabled=true;$('compCalc').disabled=true;prog.classList.add('ativo');
   try{
-    var antes=E.docs.filter(function(d){return E.paginas.some(function(p){return p.doc===d;});}).reduce(function(s,d){return s+d.tamanho;},0);
-    var op={progresso:function(i,n){progresso(prog,i,n,'Página '+Math.min(i+1,n)+' de '+n);}};
-    if(nivel!=='sem')op.raster=NIVEIS[nivel];
-    var bytes=await montarPdf(E.paginas,op);
-    var menor=bytes.length<antes;
-    _comp={bytes:bytes,nivel:nivel,menor:menor};
-    var dif=antes?Math.round((1-bytes.length/antes)*100):0;
-    $('compResultado').innerHTML='<div><small>Antes</small><strong>'+tamanhoTxt(antes)+'</strong></div><div class="seta">→</div><div><small>Depois ('+(nivel==='sem'?'sem perder qualidade':NIVEIS[nivel].nome)+')</small><strong>'+tamanhoTxt(bytes.length)+'</strong></div>'
-      +'<div class="ganho">'+(menor?'<b>'+dif+'% menor.</b>':'<b style="color:var(--warning,#d97706)">Não ficou menor ('+(dif<0?Math.abs(dif)+'% maior':'igual')+').</b> Motivo provável: o PDF já é leve (só texto)'+(E.paginas.some(function(p){return precisaImagem(p,{});})?' ou tem páginas que viram imagem (tarja definitiva ou arquivo travado)':'')+'. Experimente outro nível ou baixe o original.')+'</div>';
+    var orig=intacto();
+    var antes=orig?orig.tamanho:E.docs.filter(function(d){return E.paginas.some(function(p){return p.doc===d;});}).reduce(function(s,d){return s+d.tamanho;},0);
+    progresso(prog,0,3,'Montando o PDF…');
+    var base=await montarPdf(E.paginas,{progresso:function(i,n){progresso(prog,i,n*3,'Montando o PDF: página '+Math.min(i+1,n)+' de '+n);}});
+    var cand=[];
+    if(nivel==='imagem'){
+      var bi=await montarPdf(E.paginas,{raster:{dpi:110,q:0.62},progresso:function(i,n){progresso(prog,n+i,n*3,'Página '+Math.min(i+1,n)+' de '+n+' virando imagem');}});
+      cand.push({bytes:bi,como:'páginas como imagem'});
+    }else{
+      progresso(prog,1,3,'Reduzindo as imagens de dentro do PDF…');
+      var r=await otimizarPdf(base,nivel==='sem'?null:nivel,function(i,n){progresso(prog,n+i,n*3,'Conferindo o arquivo por dentro…');});
+      cand.push({bytes:r.bytes,como:nivel==='sem'?'arquivo reorganizado':!r.imagens?'o PDF não tem fotos para reduzir; arquivo reorganizado':(!r.reduzidas?'nenhuma das '+r.imagens+' imagens precisou ser reduzida':r.reduzidas+' de '+r.imagens+' '+(r.imagens>1?'imagens reduzidas':'imagem reduzida')),info:r});
+    }
+    cand.push({bytes:base,como:'sem compressão'});
+    var melhor=cand.reduce(function(a,b){return b.bytes.length<a.bytes.length?b:a;});
+    var ref=orig?orig.tamanho:base.length; // com mudanças na tela, a comparação justa é com o PDF montado
+    var ganhou=melhor.bytes.length<ref*0.98;
+    var final;
+    if(ganhou)final={bytes:melhor.bytes,otimizado:false,como:melhor.como};
+    else final={bytes:orig?orig.bytes:base,otimizado:true,como:orig?'original mantido':'sem compressão'};
+    _comp={bytes:final.bytes,nivel:nivel,menor:ganhou,antes:antes,otimizado:final.otimizado};
+    var dif=antes?Math.round((1-final.bytes.length/antes)*100):0;
+    var rotN={sem:'sem perder qualidade',leve:'leve',media:'recomendada',forte:'forte',imagem:'páginas como imagem'}[nivel];
+    $('compResultado').innerHTML='<div><small>Antes</small><strong>'+tamanhoTxt(antes)+'</strong></div><div class="seta">→</div><div><small>Depois ('+rotN+')</small><strong>'+tamanhoTxt(final.bytes.length)+'</strong></div>'
+      +'<div class="ganho">'+(ganhou?'<b>'+dif+'% menor</b> ('+esc(melhor.como)+').'+(melhor.como==='páginas como imagem'?' O texto deixou de ser selecionável.':' O texto continua selecionável.')+(nivel!=='sem'&&melhor.como==='sem compressão'?' O nível escolhido não ajudou neste arquivo: ficou só a reorganização.':'')
+        :'<b style="color:var(--warning,#d97706)">Este arquivo já está otimizado: comprimir não reduz.</b> O melhor resultado foi '+tamanhoTxt(melhor.bytes.length)+'. '+(orig?'Vamos manter o ORIGINAL, sem mudança.':'Vamos usar o PDF sem compressão.')+(nivel!=='forte'&&nivel!=='imagem'?' Se quiser tentar mais forte, escolha "Forte" e calcule de novo.':''))+'</div>';
     $('compResultado').hidden=false;$('compBaixar').disabled=false;
-    $('compBaixar').textContent=menor?'Baixar o menor':'Baixar mesmo assim';
-  }catch(e){$('compErro').textContent='Não consegui comprimir. Motivo: '+((e&&e.message)||'erro desconhecido')+'.';}
+    $('compBaixar').textContent=ganhou?'Usar o comprimido':'Continuar com o original';
+  }catch(e){$('compErro').textContent='Não consegui comprimir. Motivo: '+((e&&e.message)||'erro desconhecido')+'. Nada mudou.';}
   finally{prog.classList.remove('ativo');$('compCalc').disabled=false;}
 }
 function baixarComp(){
   if(!_comp)return;
-  var b=baseNome($('nomeSaida').value||nomeSugerido()).replace(/ \(editado\)$/,'');
-  baixarBytes(_comp.bytes,b+(_comp.nivel==='sem'?'':' (comprimido)')+'.pdf');
-  toast('PDF comprimido baixado ('+tamanhoTxt(_comp.bytes.length)+').','success');
+  var b=baseNome($('nomeSaida').value||nomeSugerido()).replace(/ \((editado|juntado)\)$/,'');
+  fecharJanela('jComprimir');
+  mostrarResultado({titulo:_comp.menor?'PDF comprimido':'Arquivo mantido',
+    detalhe:_comp.menor?'Antes '+tamanhoTxt(_comp.antes)+' → depois '+tamanhoTxt(_comp.bytes.length)+' ('+Math.round((1-_comp.bytes.length/_comp.antes)*100)+'% menor).':'Este arquivo já está otimizado: comprimir não reduz. Ficou o '+(_comp.otimizado?'original':'PDF')+', com '+tamanhoTxt(_comp.bytes.length)+'.',
+    alerta:!_comp.menor,
+    arquivos:[{nome:b+(_comp.menor?' (comprimido)':'')+'.pdf',bytes:_comp.bytes,tipo:'application/pdf',paginas:E.paginas.length}]});
 }
 
 /* ---------- editar página (texto e tarja) ---------- */
@@ -831,47 +962,493 @@ async function abrirDaFicha(docId){
     var ok=await abrirBytes(bytes,d.nome_arquivo||'documento.pdf',null,d);
     if(ok){
       var linkF=FICHA+'?pessoa_id='+encodeURIComponent(d.pessoa_id||'')+(d.processo_id?'&processo_id='+encodeURIComponent(d.processo_id):'');
-      aviso('atencao','Documento da ficha aberto: "'+(d.nome_arquivo||'')+'".','Ao terminar, use "Baixar PDF" ou "Guardar na pasta do cliente" (vira um documento novo na mesma pasta; o original continua lá).',[{rotulo:'Voltar para a ficha',fazer:function(){location.href=linkF;}}]);
+      aviso('atencao','Documento da ficha aberto: "'+(d.nome_arquivo||'')+'".','Escolha abaixo o que fazer com ele. No fim, "Guardar na pasta do cliente" já vem com este cliente, processo e pasta (vira um documento novo; o original continua lá).',[{rotulo:'Voltar para a ficha',fazer:function(){location.href=linkF;}}]);
+      irPara('inicio');
     }
   }catch(e){
     tirarAviso(av);
     aviso('erro','Não consegui abrir o documento da ficha.','Motivo: '+((e&&e.message)||'erro desconhecido')+'. Baixe o documento na ficha e arraste para cá.');
   }
 }
-function abrirGuardar(){
-  var o=E.origem;if(!o)return;
-  $('jGuardarSub').textContent='O PDF montado aqui ('+E.paginas.length+' páginas) vai para a pasta do cliente, ao lado de "'+(o.nome_arquivo||'')+'".';
-  $('guardarNome').value=nomeLimpo($('nomeSaida').value||nomeSugerido());$('guardarErro').textContent='';
-  abrirJanela('jGuardar');
+/* =====================================================================
+   16/11 (Dr. Victor): tela inicial em CARTÕES (todas as funções à vista), conversões (Word, imagens, PDF→imagem)
+   e, depois de CADA operação, a tela de resultado: Guardar na pasta do cliente, Baixar, Compartilhar
+   e "Fazer outra operação com este arquivo" (encadear sem baixar e subir de novo).
+   ===================================================================== */
+function svg(d){return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+d+'</svg>';}
+var IC={
+  juntar:svg('<rect x="3" y="4" width="8" height="11" rx="1.5"/><rect x="13" y="9" width="8" height="11" rx="1.5"/><path d="M9 18h3m0 0l-1.5-1.5M12 18l-1.5 1.5"/>'),
+  separar:svg('<path d="M6 4v16M18 4v16M10 12h4"/><path d="M12 9l-2 3 2 3M12 9l2 3-2 3"/>'),
+  extrair:svg('<path d="M8 3h8l3 3v6M5 21V5a2 2 0 012-2"/><path d="M13 17h8m0 0l-3-3m3 3l-3 3"/>'),
+  tirar:svg('<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>'),
+  girar:svg('<path d="M20 9a8 8 0 10-2 9"/><path d="M20 4v5h-5"/>'),
+  organizar:svg('<rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7m-2.5-2.5l2.5 2.5-2.5 2.5"/>'),
+  numerar:svg('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M11 15h2v3M12 15v3"/>'),
+  escrever:svg('<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>'),
+  comprimir:svg('<path d="M8 3v6H2M16 3v6h6M8 21v-6H2M16 21v-6h6"/>'),
+  word:svg('<path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/><path d="M8.5 12l1.2 5 1.3-4 1.3 4 1.2-5"/>'),
+  imagens:svg('<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/>'),
+  pdfimg:svg('<path d="M14 3H7a2 2 0 00-2 2v5"/><path d="M14 3v5h5v2"/><rect x="9" y="12" width="12" height="9" rx="1.5"/><path d="M9 19l3-3 2.5 2.5 2-2 4.5 4"/>')
+};
+var FERR=[
+  {k:'juntar',g:'Organizar',nome:'Juntar PDFs',desc:'Vários PDFs num só, na ordem que você escolher.',aceita:'pdf',botao:'Juntar e gerar o PDF',pronto:'PDFs juntados',dica:'Use "Mais PDFs" para acrescentar e arraste as páginas para a ordem certa.'},
+  {k:'separar',g:'Organizar',nome:'Separar PDF',desc:'Cada página, intervalos (1-3, 5) ou de tantas em tantas.',aceita:'pdf',botao:'Separar…',abre:'separar',dica:'Escolha como separar. Vários arquivos vêm juntos num .zip.'},
+  {k:'extrair',g:'Organizar',nome:'Extrair páginas',desc:'Um PDF novo só com as páginas que você marcar.',aceita:'pdf',botao:'Extrair as marcadas',pronto:'Páginas extraídas',dica:'Clique nas páginas que quer levar (ficam marcadas) e depois em "Extrair as marcadas".'},
+  {k:'tirar',g:'Organizar',nome:'Tirar páginas',desc:'Apagar do PDF as páginas que não servem.',aceita:'pdf',botao:'Gerar o PDF sem elas',pronto:'Páginas tiradas',dica:'Marque as páginas e clique em "Tirar marcadas" (ou na lixeira de cada página).'},
+  {k:'girar',g:'Organizar',nome:'Girar páginas',desc:'Pôr em pé a página escaneada de lado.',aceita:'pdf',botao:'Gerar o PDF',pronto:'Páginas giradas',dica:'Use a seta de cada página, ou marque várias e use "Girar à esq./dir.".'},
+  {k:'organizar',g:'Organizar',nome:'Reordenar páginas',desc:'Arrastar as páginas para a ordem certa.',aceita:'pdf',botao:'Gerar o PDF',pronto:'PDF reorganizado',dica:'Arraste as páginas (no celular, segure e arraste, ou use as setinhas ‹ ›).'},
+  {k:'numerar',g:'Editar',nome:'Numerar páginas',desc:'1, 1 / 10, Página 1 de 10 ou Fls. 1; capa sem número.',aceita:'pdf',botao:'Gerar o PDF numerado',pronto:'PDF numerado',abre:'numerar',dica:'Escolha o formato do número; depois clique em "Gerar o PDF numerado".'},
+  {k:'escrever',g:'Editar',nome:'Escrever ou tapar',desc:'Pôr um texto, ou cobrir assinatura, CPF ou dado sigiloso.',aceita:'pdf',botao:'Gerar o PDF',pronto:'PDF editado',dica:'Clique no lápis da página para escrever ou tapar uma área.'},
+  {k:'comprimir',g:'Otimizar',nome:'Comprimir PDF',desc:'Reduzir o tamanho, mantendo o texto. Se não diminuir, avisa.',aceita:'pdf',botao:'Comprimir…',abre:'comprimir',dica:'Escolha o nível e clique em "Calcular".'},
+  {k:'word',g:'Converter',nome:'Word para PDF',desc:'Arquivo .docx vira PDF aqui mesmo, sem ir para site nenhum.',aceita:'docx'},
+  {k:'imagens',g:'Converter',nome:'Imagens para PDF',desc:'Fotos do celular, JPG e PNG viram um PDF.',aceita:'img'},
+  {k:'pdfimg',g:'Converter',nome:'PDF para imagem',desc:'Cada página vira uma imagem JPG ou PNG.',aceita:'pdf',botao:'Converter em imagens…',abre:'paraimagem',dica:'Escolha o formato e a definição.'}
+];
+function ferrPorK(k){return FERR.find(function(f){return f.k===k;});}
+function ferr(){return ferrPorK(E.ferr||'organizar')||ferrPorK('organizar');}
+function desenharCartoes(){
+  // todas as funções numa grade só (como no iLovePDF), com o grupo em selo discreto
+  $('cartoes').innerHTML='<div class="cartoes-g">'+FERR.map(function(f){
+    return '<button type="button" class="cartao" data-ferr="'+f.k+'"><span class="topo-c"><span class="ic">'+IC[f.k]+'</span><span class="selo">'+esc(f.g)+'</span></span><b>'+esc(f.nome)+'</b><span class="d">'+esc(f.desc)+'</span></button>';
+  }).join('')+'</div>';
 }
-async function guardar(){
-  var o=E.origem;if(!o||!o.processo_id)return;
-  var nome=nomeLimpo($('guardarNome').value);
-  var prog=$('guardarProg');prog.classList.add('ativo');$('guardarOk').disabled=true;$('guardarErro').textContent='';
-  var caminho=null;
+function irPara(tela){
+  ['inicio','trabalho','resultado'].forEach(function(t){var el=$('tela'+t.charAt(0).toUpperCase()+t.slice(1));var v=t===tela;if(el.hidden===!v)return;el.hidden=!v;});
+  E.tela=tela;
+  if(tela==='inicio')atualizarBanner();
+  window.scrollTo({top:0,behavior:semMovimento()?'auto':'smooth'});
+}
+function atualizarBanner(){
+  var tem=E.paginas.length>0;$('atualBanner').hidden=!tem;
+  if(!tem)return;
+  var usados=E.docs.filter(function(d){return E.paginas.some(function(p){return p.doc===d;});});
+  $('atualNome').textContent=nomeLimpo($('nomeSaida').value||nomeSugerido());
+  $('atualInfo').textContent=E.paginas.length+' página'+(E.paginas.length!==1?'s':'')+(usados.length>1?' de '+usados.length+' arquivos':'')+(E.origem&&E.origem.processo_id?' · veio da pasta do cliente':'');
+}
+function escolherTipo(){
+  // a zona "arraste aqui": aceita tudo
+  var inp=$('entradaArquivos');inp.setAttribute('accept','application/pdf,.pdf,image/*,.heic,.heif,.docx,.doc');inp.click();
+  setTimeout(function(){inp.setAttribute('accept','application/pdf,.pdf');},1500);
+}
+function escolherFerramenta(k){
+  var f=ferrPorK(k);if(!f)return;
+  if(f.aceita==='docx'){E.esperaFerr=k;$('entradaWord').click();return;}
+  if(f.aceita==='img'){E.esperaFerr=k;abrirImagens([]);return;}
+  if(E.paginas.length){entrarTrabalho(k);return;}
+  E.esperaFerr=k;var inp=$('entradaArquivos');inp.multiple=true;inp.click();
+}
+async function receberArquivos(lista){
+  var arqs=Array.prototype.slice.call(lista||[]);if(!arqs.length)return;
+  var pdfs=[],imgs=[],words=[],outros=[];
+  arqs.forEach(function(f){var n=(f.name||'').toLowerCase(),t=f.type||'';
+    if(/\.pdf$/.test(n)||t==='application/pdf')pdfs.push(f);
+    else if(/^image\//.test(t)||/\.(jpe?g|png|webp|gif|bmp|heic|heif|tiff?)$/.test(n))imgs.push(f);
+    else if(/\.docx?$/.test(n)||/wordprocessingml|msword/.test(t))words.push(f);
+    else outros.push(f);});
+  outros.forEach(function(f){aviso('erro','"'+f.name+'" não foi aberto.','Motivo: o Editor abre PDF, imagens (JPG, PNG, foto do celular) e Word (.docx). Este formato não é nenhum deles.');});
+  var k=E.esperaFerr;E.esperaFerr=null;
+  if(words.length){for(var i=0;i<words.length;i++)await converterWord(words[i]);}
+  if(imgs.length){abrirImagens(imgs);}
+  if(pdfs.length){
+    var antes=E.paginas.length;
+    for(var j=0;j<pdfs.length;j++){var by;try{by=new Uint8Array(await pdfs[j].arrayBuffer());}catch(e){aviso('erro','"'+pdfs[j].name+'" não foi aberto.','Motivo: o navegador não conseguiu ler o arquivo ('+((e&&e.message)||'erro')+').');continue;}await abrirBytes(by,pdfs[j].name,null);}
+    if(E.paginas.length>antes){
+      if(E.tela!=='trabalho'||k)entrarTrabalho(k||(E.docs.length>1?'juntar':(E.ferr||'organizar')));
+    }
+  }
+}
+function entrarTrabalho(k){
+  E.ferr=k||E.ferr||'organizar';var f=ferr();
+  $('ferrIc').innerHTML=IC[f.k]||'';$('ferrNome').textContent=f.nome;$('ferrDica').textContent=f.dica||'';
+  irPara('trabalho');desenhar();
+  if(f.abre==='separar')setTimeout(function(){$('bSeparar').click();},120);
+  else if(f.abre==='numerar')setTimeout(abrirNumerar,120);
+  else if(f.abre==='comprimir')setTimeout(abrirComprimir,120);
+  else if(f.abre==='paraimagem')setTimeout(abrirParaImagem,120);
+}
+function atualizarConcluir(){
+  var f=ferr();var b=$('bConcluir');if(!b)return;
+  $('tConcluir').textContent=f.botao||'Gerar o PDF';
+  b.disabled=!E.paginas.length||(f.k==='extrair'&&!E.sel.size);
+  b.title=f.k==='extrair'&&!E.sel.size?'Marque primeiro as páginas que quer extrair':'';
+}
+function concluir(){
+  var f=ferr();
+  if(f.abre==='separar'){$('bSeparar').click();return;}
+  if(f.abre==='comprimir'){abrirComprimir();return;}
+  if(f.abre==='paraimagem'){abrirParaImagem();return;}
+  if(f.k==='extrair'){extrairMarcadas();return;}
+  gerarTudo();
+}
+function limparTrabalho(){
+  E.docs.forEach(function(d){try{d.pdf.destroy();}catch(e){}});
+  E.docs=[];E.paginas=[];E.sel.clear();E.historico=[];E.numeracao=null;E.nomeTocado=false;E.origem=null;E.pendente=false;
+  $('nomeSaida').value='';$('bDesfazer').disabled=true;$('grade').innerHTML='';desenhar();
+}
+
+/* ---------- Word → PDF ---------- */
+async function converterWord(file){
+  if(!window.SagaWordPdf){aviso('erro','O conversor de Word não carregou.','Atualize a página (F5). Se continuar, avise o administrador.');return;}
+  var prog=$('cvProg');$('jConverterSub').textContent='"'+file.name+'" · tudo neste computador: o arquivo não vai para nenhum site.';
+  progresso(prog,0,1,'Lendo o arquivo…');abrirJanela('jConverter');
   try{
-    progresso(prog,0,3,'Montando o PDF…');
-    var bytes=await montarPdf(E.paginas,{progresso:function(i,n){progresso(prog,i,n*3,'Montando o PDF: página '+Math.min(i+1,n)+' de '+n);}});
-    progresso(prog,2,3,'Enviando para a pasta do cliente…');
+    var bytes=new Uint8Array(await file.arrayBuffer());
+    var r=await SagaWordPdf.converter(bytes,{titulo:baseNome(file.name.replace(/\.docx?$/i,'')),progresso:function(x,t){progresso(prog,x,1,t);}});
+    fecharJanela('jConverter');
+    var nome=file.name.replace(/\.docx?$/i,'')+'.pdf';
+    mostrarResultado({titulo:'Word convertido em PDF',detalhe:r.paginas+' página'+(r.paginas!==1?'s':'')+' · '+tamanhoTxt(r.bytes.length)+'. Confira o PDF antes de protocolar: abra pelo "Baixar" ou continue com "Fazer outra operação".',
+      avisos:r.avisos,alerta:r.avisos.length>0,
+      nota:'Conversão feita no próprio navegador. Documentos simples (petições, contratos, procurações) saem fiéis; se algo complexo sair diferente, no Word use Arquivo > Salvar como > PDF.',
+      arquivos:[{nome:nome,bytes:r.bytes,tipo:'application/pdf',paginas:r.paginas}]});
+  }catch(e){
+    fecharJanela('jConverter');
+    aviso('erro','"'+file.name+'" não foi convertido.','Motivo: '+((e&&e.message)||'erro desconhecido')+'. Alternativa: abra no Word e use Arquivo > Salvar como > PDF; depois traga o PDF para cá.');
+  }
+}
+
+/* ---------- Imagens → PDF ---------- */
+var IMG={lista:[]};
+function abrirImagens(files){
+  if(!$('jImagens').classList.contains('aberto')){IMG.lista=[];$('imgErro').textContent='';}
+  abrirJanela('jImagens');
+  if(files&&files.length)acrescentarImagens(files);else if(!IMG.lista.length)$('entradaImagens').click();
+  desenharListaImg();
+}
+function acrescentarImagens(files){
+  Array.prototype.forEach.call(files||[],function(f){
+    if(!/^image\//.test(f.type||'')&&!/\.(jpe?g|png|webp|gif|bmp|heic|heif|tiff?)$/i.test(f.name)){$('imgErro').textContent='"'+f.name+'" não é imagem e ficou de fora.';return;}
+    IMG.lista.push({id:novoId(),file:f,url:URL.createObjectURL(f)});
+  });
+  desenharListaImg();
+}
+function desenharListaImg(){
+  var l=IMG.lista;
+  $('imgLista').innerHTML=l.length?l.map(function(x,i){
+    return '<div class="li" data-id="'+x.id+'"><img src="'+x.url+'" alt="" onerror="this.style.visibility=\'hidden\'"><span class="nm">'+(i+1)+'. '+esc(x.file.name)+'<small>'+tamanhoTxt(x.file.size)+'</small></span>'
+      +'<button type="button" data-img="sobe" title="Subir" aria-label="Subir"'+(i===0?' disabled':'')+'>▲</button><button type="button" data-img="desce" title="Descer" aria-label="Descer"'+(i===l.length-1?' disabled':'')+'>▼</button><button type="button" data-img="tira" title="Tirar" aria-label="Tirar da lista">×</button></div>';
+  }).join(''):'<div class="dica">Nenhuma imagem ainda. Clique em "+ Mais imagens" ou arraste as fotos para cá.</div>';
+  $('imgOk').disabled=!l.length;
+}
+async function imagensParaPdf(lista,op){
+  op=op||{};var L=PDFLib;var out=await L.PDFDocument.create();out.setProducer('SAGA ADV · Editor de PDF');out.setCreator('SAGA ADV');
+  var margem=op.margem==null?20:op.margem,falhas=[];
+  for(var i=0;i<lista.length;i++){
+    var f=lista[i];if(op.progresso)op.progresso(i,lista.length,f.name);
+    var bmp;
+    try{bmp=await createImageBitmap(f,{imageOrientation:'from-image'});}
+    catch(e){falhas.push({nome:f.name,motivo:/\.hei[cf]$/i.test(f.name)||/heic|heif/.test(f.type||'')?'foto no formato HEIC do iPhone, que este navegador não abre. No iPhone: Ajustes > Câmera > Formatos > "Mais Compatível" (as próximas fotos saem em JPG), ou mande a foto pelo próprio iPhone (o Safari já converte)':'o navegador não conseguiu abrir esta imagem (arquivo corrompido ou formato desconhecido)'});continue;}
+    var w=bmp.width,h=bmp.height,s=1;
+    if(op.qualidade!=='orig'){s=Math.min(1,2200/Math.max(w,h));}
+    var cw=Math.max(1,Math.round(w*s)),ch=Math.max(1,Math.round(h*s));
+    var cv=document.createElement('canvas');cv.width=cw;cv.height=ch;var c=cv.getContext('2d');
+    var png=/png$/i.test(f.type||'')||/\.png$/i.test(f.name);
+    if(!png){c.fillStyle='#fff';c.fillRect(0,0,cw,ch);}
+    c.imageSmoothingQuality='high';c.drawImage(bmp,0,0,cw,ch);try{bmp.close();}catch(e){}
+    var blob=await new Promise(function(ok){cv.toBlob(ok,png?'image/png':'image/jpeg',op.qualidade==='orig'?0.92:0.8);});
+    if(png&&blob&&op.qualidade!=='orig'){
+      // PNG de foto (não de print) fica bem menor em JPG: usa o JPG só quando ganha muito
+      var cj=document.createElement('canvas');cj.width=cw;cj.height=ch;var x2=cj.getContext('2d');x2.fillStyle='#fff';x2.fillRect(0,0,cw,ch);x2.drawImage(cv,0,0);
+      var bj=await new Promise(function(ok){cj.toBlob(ok,'image/jpeg',0.8);});cj.width=cj.height=0;
+      if(bj&&bj.size<blob.size*0.5){blob=bj;png=false;}
+    }
+    cv.width=cv.height=0;
+    if(!blob){falhas.push({nome:f.name,motivo:'faltou memória para preparar a imagem'});continue;}
+    var by=new Uint8Array(await blob.arrayBuffer());
+    var img=png?await out.embedPng(by):await out.embedJpg(by);
+    var pw,ph;
+    if(op.pagina==='imagem'){pw=w*72/150;ph=h*72/150;if(Math.max(pw,ph)>1400){var k2=1400/Math.max(pw,ph);pw*=k2;ph*=k2;}pw+=margem*2;ph+=margem*2;}
+    else{if(w>h){pw=841.89;ph=595.28;}else{pw=595.28;ph=841.89;}}
+    var pag=out.addPage([pw,ph]);
+    var aw=pw-margem*2,ah=ph-margem*2,esc_=Math.min(aw/w,ah/h);if(op.pagina==='imagem')esc_=aw/w;
+    var dw=w*esc_,dh=h*esc_;
+    pag.drawImage(img,{x:(pw-dw)/2,y:(ph-dh)/2,width:dw,height:dh});
+  }
+  if(op.progresso)op.progresso(lista.length,lista.length,'');
+  if(!out.getPageCount())return {bytes:null,falhas:falhas};
+  return {bytes:await out.save({useObjectStreams:true}),falhas:falhas,paginas:out.getPageCount()};
+}
+async function gerarImagensPdf(){
+  if(!IMG.lista.length)return;
+  var prog=$('imgProg');prog.classList.add('ativo');$('imgOk').disabled=true;$('imgErro').textContent='';
+  try{
+    var r=await imagensParaPdf(IMG.lista.map(function(x){return x.file;}),{pagina:valorPill('imgPagina'),margem:+valorPill('imgMargem'),qualidade:valorPill('imgQualidade'),progresso:function(i,n,nm){progresso(prog,i,n,i<n?'Imagem '+(i+1)+' de '+n+(nm?': '+nm:''):'Gravando…');}});
+    if(!r.bytes){$('imgErro').textContent='Nenhuma imagem pôde ser lida. '+r.falhas.map(function(f){return '"'+f.nome+'": '+f.motivo;}).join(' · ');return;}
+    fecharJanela('jImagens');
+    var nome=IMG.lista.length===1?IMG.lista[0].file.name.replace(/\.[^.]+$/,'')+'.pdf':'Imagens ('+r.paginas+').pdf';
+    IMG.lista.forEach(function(x){URL.revokeObjectURL(x.url);});IMG.lista=[];
+    mostrarResultado({titulo:'Imagens convertidas em PDF',detalhe:r.paginas+' página'+(r.paginas!==1?'s':'')+' · '+tamanhoTxt(r.bytes.length)+'.',alerta:r.falhas.length>0,
+      avisos:r.falhas.map(function(f){return '"'+f.nome+'" ficou de fora: '+f.motivo+'.';}),
+      arquivos:[{nome:nome,bytes:r.bytes,tipo:'application/pdf',paginas:r.paginas}]});
+  }catch(e){$('imgErro').textContent='Não consegui gerar o PDF. Motivo: '+((e&&e.message)||'erro desconhecido')+'.';}
+  finally{prog.classList.remove('ativo');$('imgOk').disabled=!IMG.lista.length;}
+}
+
+/* ---------- PDF → imagem ---------- */
+function abrirParaImagem(){$('piErro').textContent='';escolherPill('piPaginas',E.sel.size?'marcadas':'todas');abrirJanela('jParaImagem');}
+async function converterParaImagem(){
+  var fmt=valorPill('piFormato')||'jpg',dpi=+(valorPill('piDpi')||150),so=valorPill('piPaginas')==='marcadas';
+  var lista=so?E.paginas.filter(function(p){return E.sel.has(p.id);}):E.paginas.slice();
+  if(!lista.length){$('piErro').textContent=so?'Nenhuma página marcada. Marque as páginas ou escolha "Todas".':'Não há páginas.';return;}
+  var prog=$('piProg');prog.classList.add('ativo');$('piOk').disabled=true;$('piErro').textContent='';
+  var base=baseNome($('nomeSaida').value||nomeSugerido()).replace(/ \((editado|juntado)\)$/,'');
+  try{
+    var arqs=[];
+    for(var i=0;i<lista.length;i++){
+      progresso(prog,i,lista.length,'Página '+(i+1)+' de '+lista.length);
+      var p=lista[i],pg=await p.doc.pdf.getPage(p.idx+1),R=rot(p),esc_=dpi/72;
+      var vp=pg.getViewport({scale:esc_,rotation:R});if(Math.max(vp.width,vp.height)>7000){esc_*=7000/Math.max(vp.width,vp.height);vp=pg.getViewport({scale:esc_,rotation:R});}
+      var cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);var ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+      await pg.render({canvasContext:ctx,viewport:vp,background:'#fff'}).promise;
+      desenharAnotacoesCanvas(ctx,p,cv.width,cv.height,esc_);
+      var blob=await new Promise(function(ok){cv.toBlob(ok,fmt==='png'?'image/png':'image/jpeg',0.88);});cv.width=cv.height=0;
+      if(!blob)throw new Error('faltou memória na página '+(E.paginas.indexOf(p)+1)+' (tente a definição "Tela")');
+      arqs.push({nome:base+' - pagina '+(E.paginas.indexOf(p)+1)+'.'+fmt,bytes:new Uint8Array(await blob.arrayBuffer()),tipo:fmt==='png'?'image/png':'image/jpeg'});
+    }
+    fecharJanela('jParaImagem');
+    mostrarResultado({titulo:'PDF convertido em imagem',detalhe:arqs.length+(arqs.length>1?' imagens ':' imagem ')+fmt.toUpperCase()+' ('+dpi+' dpi)'+(arqs.length>1?'. "Baixar" traz todas juntas num .zip.':'.'),zip:base+' (imagens).zip',arquivos:arqs});
+  }catch(e){$('piErro').textContent='Não consegui converter. Motivo: '+((e&&e.message)||'erro desconhecido')+'.';}
+  finally{prog.classList.remove('ativo');$('piOk').disabled=false;}
+}
+
+/* ---------- resultado ---------- */
+function mostrarResultado(r){
+  r.salvo=false;r.arquivos.forEach(function(a){a.guardado=null;});
+  E.resultado=r;desenharResultado();irPara('resultado');
+}
+function ehPdf(a){return a.tipo==='application/pdf';}
+function desenharResultado(){
+  var r=E.resultado;if(!r)return;var n=r.arquivos.length,um=n===1,a0=r.arquivos[0];
+  var ok='<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5 9-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var al='<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10.3 3.9L2.6 17.5A2 2 0 004.3 20.5h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" stroke="currentColor" stroke-width="1.6"/></svg>';
+  var h='<div class="res"><div class="res-cab"><span class="res-ok'+(r.alerta?' alerta':'')+'">'+(r.alerta?al:ok)+'</span><div><h2>'+esc(r.titulo)+'</h2><p>'+esc(r.detalhe||'')+'</p></div></div>';
+  if(r.avisos&&r.avisos.length)h+='<div class="aviso atencao res-avisos"><div><b>Atenção, confira:</b><ul>'+r.avisos.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul></div></div>';
+  if(r.nota)h+='<p class="dica" style="font-size:11.5px;color:var(--muted);margin-top:10px;line-height:1.5">'+esc(r.nota)+'</p>';
+  h+='<div class="res-arqs">'+r.arquivos.map(function(a,i){
+    return '<div class="res-arq" data-i="'+i+'"><span class="res-mini" data-mini="'+i+'"></span><div class="res-info">'
+      +(um?'<label class="sr" for="resNome">Nome do arquivo</label><input id="resNome" value="'+esc(a.nome)+'" spellcheck="false">':'<b style="font-size:12.5px;font-weight:600;word-break:break-word">'+esc(a.nome)+'</b>')
+      +'<small>'+(ehPdf(a)?'PDF':a.tipo==='image/png'?'Imagem PNG':'Imagem JPG')+' · '+tamanhoTxt(a.bytes.length)+(a.paginas?' · '+a.paginas+' página'+(a.paginas>1?'s':''):'')+'</small>'
+      +(a.guardado?'<small class="guardado">✓ Guardado na pasta do cliente: '+esc(a.guardado.onde)+'</small>':'')+'</div>'
+      +(um?'':'<div class="linha" style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn" type="button" data-res-baixar="'+i+'">Baixar</button>'+(ehPdf(a)?'<button class="btn" type="button" data-res-continuar="'+i+'">Continuar com este</button>':'')+'</div>')
+      +'</div>';
+  }).join('')+'</div>';
+  var podeCont=um&&ehPdf(a0);
+  var algumGuardado=r.arquivos.some(function(a){return a.guardado;});
+  h+='<div class="res-acoes">'
+    +'<button type="button" class="res-acao principal" id="resGuardar"><span class="ic">'+svg('<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M12 10v6m0 0l-2.5-2.5M12 16l2.5-2.5"/>')+'</span><span><b>Guardar na pasta do cliente</b><small>'+(algumGuardado?'Já guardado; pode guardar em outro cliente':'Escolher cliente, processo e pasta')+'</small></span></button>'
+    +'<button type="button" class="res-acao" id="resBaixar"><span class="ic">'+svg('<path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/>')+'</span><span><b>Baixar</b><small>'+(um?'Para a pasta de downloads':'Todos num .zip')+'</small></span></button>'
+    +'<button type="button" class="res-acao" id="resCompartilhar"><span class="ic">'+svg('<circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/>')+'</span><span><b>Compartilhar</b><small>Link do SAGA com prazo, WhatsApp ou e-mail</small></span></button>'
+    +'<button type="button" class="res-acao" id="resContinuar"'+(podeCont?'':' disabled title="'+(um?'Só um PDF pode seguir para outra operação':'Escolha "Continuar com este" no arquivo')+'"')+'><span class="ic">'+svg('<path d="M4 12h12m0 0l-4-4m4 4l-4 4"/><path d="M20 5v14"/>')+'</span><span><b>Fazer outra operação com este arquivo</b><small>Converter → comprimir → guardar, sem baixar e subir de novo</small></span></button>'
+    +'</div>';
+  h+='<div class="res-rod">'+(E.paginas.length?'<button class="btn" type="button" id="resVoltar">Voltar e ajustar</button>':'')+'<button class="btn" type="button" id="resInicio">Todas as ferramentas</button><button class="btn" type="button" id="resNovo">Começar de novo</button></div></div>';
+  $('telaResultado').innerHTML=h;
+  r.arquivos.forEach(function(a,i){miniatura(a,document.querySelector('[data-mini="'+i+'"]'));});
+}
+async function miniatura(a,el){
+  if(!el)return;
+  try{
+    if(!ehPdf(a)){var u=URL.createObjectURL(new Blob([a.bytes],{type:a.tipo}));var im=document.createElement('img');im.onload=function(){setTimeout(function(){URL.revokeObjectURL(u);},1000);};im.src=u;el.appendChild(im);return;}
+    var pdfjs=await carregarPdfjs();var d=await pdfjs.getDocument({data:a.bytes.slice(),isEvalSupported:false}).promise;var pg=await d.getPage(1);
+    var v1=pg.getViewport({scale:1}),dpr=Math.min(window.devicePixelRatio||1,2),s=Math.min(54/v1.width,70/v1.height)*dpr,vp=pg.getViewport({scale:s});
+    var cv=document.createElement('canvas');cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);cv.style.width=Math.round(vp.width/dpr)+'px';
+    await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;el.appendChild(cv);d.destroy();
+  }catch(e){el.textContent='PDF';}
+}
+function nomeResultado(i){var r=E.resultado,a=r.arquivos[i];var inp=$('resNome');if(inp&&r.arquivos.length===1){var v=inp.value.trim();if(v){var ext=ehPdf(a)?'.pdf':(a.tipo==='image/png'?'.png':'.jpg');a.nome=v.replace(/[\\/:*?"<>|]+/g,'-');if(!new RegExp('\\'+ext+'$','i').test(a.nome))a.nome+=ext;}}return a.nome;}
+function baixarResultado(i){
+  var r=E.resultado;if(!r)return;
+  if(i==null&&r.arquivos.length>1){baixarBytes(zipar(r.arquivos.map(function(a){return {nome:a.nome,bytes:a.bytes};})),r.zip||'arquivos.zip','application/zip');}
+  else{var a=r.arquivos[i||0];baixarBytes(a.bytes,nomeResultado(i||0),a.tipo);}
+  r.salvo=true;E.pendente=false;toast('Baixado. Veja na pasta de downloads.','success');
+}
+async function continuarCom(i){
+  var r=E.resultado,a=r.arquivos[i];if(!a||!ehPdf(a))return;
+  var nome=nomeResultado(i);var origem=a.guardado?a.guardado.doc:(E.origem||null);
+  limparTrabalho();
+  E.origem=origem;
+  var ok=await abrirBytes(a.bytes.slice(),nome,null,origem);
+  if(!ok)return;
+  $('nomeSaida').value=nome;E.nomeTocado=true;E.pendente=!a.guardado&&!r.salvo;E.historico=[];$('bDesfazer').disabled=true;
+  E.ferr=null;E.resultado=null;
+  irPara('inicio');toast('Pronto: escolha a próxima operação para "'+nome+'".');
+}
+
+/* ---------- guardar na pasta do cliente ---------- */
+var G={pessoa:null,processos:[],pastas:[],busca:0};
+function abrirGuardar(){
+  var r=E.resultado;if(!r)return;
+  $('guardarErro').textContent='';
+  $('jGuardarSub').textContent=r.arquivos.length>1?r.arquivos.length+' arquivos vão para a mesma pasta, como documentos NOVOS na ficha.':'Escolha o cliente, o processo e a pasta. O arquivo vira um documento NOVO na ficha.';
+  $('gNomes').innerHTML=r.arquivos.length===1?'<label class="rot" for="guardarNome">Nome do documento</label><input class="campo" id="guardarNome" autocomplete="off" style="width:100%">':'<div class="dica">'+r.arquivos.map(function(a){return esc(a.nome);}).join('<br>')+'</div>';
+  if(r.arquivos.length===1)$('guardarNome').value=nomeResultado(0);
+  abrirJanela('jGuardar');
+  var o=E.origem;
+  if(o&&o.pessoa_id&&(!G.pessoa||G.pessoa.id!==o.pessoa_id)){escolherPessoa({id:o.pessoa_id,nome_completo:o.cliente_nome||'Cliente do documento aberto'},o.processo_id,o.pasta_id);}
+  else if(!G.pessoa){mostrarBusca();setTimeout(function(){$('gBusca').focus();},80);}
+  else conferirGuardar();
+}
+function mostrarBusca(){G.pessoa=null;$('gEscolhido').hidden=true;$('gBuscaBloco').hidden=false;$('gProcesso').innerHTML='<option value="">Escolha o cliente primeiro</option>';$('gProcesso').disabled=true;$('gPasta').disabled=true;conferirGuardar();}
+async function buscarCliente(){
+  var t=$('gBusca').value.trim(),n=++G.busca,lista=$('gLista');
+  if(t.length<2){lista.innerHTML='';return;}
+  lista.innerHTML='<div class="vazio">Procurando…</div>';
+  try{
+    var r=await _sb.rpc('busca_global',{p_termo:t});if(n!==G.busca)return;
+    if(r.error)throw r.error;
+    var d=r.data||{},pes=(d.pessoas||[]).slice(0,12),pro=(d.processos||[]).slice(0,8);
+    var h=pes.map(function(p){return '<button type="button" data-pes="'+esc(p.id)+'" data-nome="'+esc(p.nome_completo||'')+'"><span>'+esc(p.nome_completo||'(sem nome)')+'</span><small>'+esc(p.codigo||'')+'</small></button>';}).join('')
+      +pro.filter(function(p){return p.pessoa_id||p.pessoa;}).map(function(p){return '<button type="button" data-proc="'+esc(p.id)+'"><span>'+esc((p.pessoa&&p.pessoa.nome_completo)||'Processo')+'</span><small>'+esc(p.codigo||p.numero_processo_cnj||'')+'</small></button>';}).join('');
+    lista.innerHTML=h||'<div class="vazio">Nada encontrado para "'+esc(t)+'". Confira o nome, o CPF ou o código.</div>';
+  }catch(e){if(n===G.busca)lista.innerHTML='<div class="vazio" style="color:var(--danger,#e5484d)">A busca falhou: '+esc((e&&e.message)||'erro')+'</div>';}
+}
+async function escolherPessoa(p,procId,pastaId){
+  G.pessoa=p;$('gBuscaBloco').hidden=true;$('gLista').innerHTML='';
+  var ch=$('gEscolhido');ch.hidden=false;ch.innerHTML='<b>'+esc(p.nome_completo)+(p.codigo?' · '+esc(p.codigo):'')+'</b><button class="btn" type="button" id="gTrocar">Trocar</button>';
+  $('gTrocar').addEventListener('click',function(){mostrarBusca();$('gBusca').focus();});
+  $('gProcesso').innerHTML='<option value="">Carregando…</option>';$('gProcesso').disabled=true;$('gPasta').disabled=true;
+  try{
+    var r1=await _sb.from('processos').select('id,codigo,numero_processo_cnj,criado_em').eq('pessoa_id',p.id).or('excluido_logico.is.null,excluido_logico.eq.false').order('criado_em',{ascending:true});
+    if(r1.error)throw r1.error;
+    var r2=await _sb.from('pastas_cliente').select('id,nome,pai_id,ordem').eq('pessoa_id',p.id).eq('ativo',true);
+    if(r2.error)throw r2.error;
+    if(G.pessoa!==p)return;
+    if(!p.codigo||p.nome_completo==='Cliente do documento aberto'){var r3=await _sb.from('pessoas').select('nome_completo,codigo').eq('id',p.id).maybeSingle();if(r3.data){p.nome_completo=r3.data.nome_completo;p.codigo=r3.data.codigo;ch.querySelector('b').textContent=p.nome_completo+(p.codigo?' · '+p.codigo:'');}}
+    G.processos=r1.data||[];
+    $('gProcesso').innerHTML=G.processos.length?G.processos.map(function(x){return '<option value="'+esc(x.id)+'">'+esc([x.codigo,x.numero_processo_cnj?sagaCnj(x.numero_processo_cnj):'sem número'].filter(Boolean).join(' · '))+'</option>';}).join(''):'<option value="">Este cliente não tem processo: guarde por outro cliente ou cadastre o processo</option>';
+    if(procId)$('gProcesso').value=procId;
+    $('gProcesso').disabled=!G.processos.length;
+    var mapa={};(r2.data||[]).forEach(function(x){mapa[x.id]=x;});
+    function cam(x){var n=[],k=0;while(x&&k<10){n.unshift(x.nome);x=mapa[x.pai_id];k++;}return n.join(' / ');}
+    G.pastas=(r2.data||[]).map(function(x){return {id:x.id,nome:cam(x)};}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
+    $('gPasta').innerHTML='<option value="">Documentos (sem pasta)</option>'+G.pastas.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>';}).join('');
+    if(pastaId)$('gPasta').value=pastaId;$('gPasta').disabled=false;
+  }catch(e){$('guardarErro').textContent='Não consegui ler os processos e as pastas deste cliente. Motivo: '+((e&&e.message)||'erro')+'.';}
+  conferirGuardar();
+}
+function sagaCnj(n){try{return window.sagaFmt&&sagaFmt.cnj?sagaFmt.cnj(n):n;}catch(e){return n;}}
+function conferirGuardar(){$('guardarOk').disabled=!(G.pessoa&&$('gProcesso').value);}
+async function guardar(){
+  var r=E.resultado;if(!r||!G.pessoa)return;var procId=$('gProcesso').value;if(!procId)return;
+  var pastaId=$('gPasta').value||null;
+  var prog=$('guardarProg');prog.classList.add('ativo');$('guardarOk').disabled=true;$('guardarErro').textContent='';
+  try{
     var s=await _sb.auth.getSession();var uid=s.data&&s.data.session&&s.data.session.user&&s.data.session.user.id;
     if(!uid)throw new Error('sua sessão expirou; entre de novo no SAGA');
     var us=await _sb.from('usuarios').select('id').eq('auth_user_id',uid).maybeSingle();
     if(us.error||!us.data)throw new Error('não achei o seu cadastro de usuário ('+((us.error&&us.error.message)||'sem cadastro')+')');
-    caminho=o.processo_id+'/'+crypto.randomUUID()+'_'+nome.replace(/[^a-zA-Z0-9._-]/g,'_');
-    var up=await _sb.storage.from(BUCKET).upload(caminho,new Blob([bytes],{type:'application/pdf'}),{contentType:'application/pdf'});
-    if(up.error)throw up.error;
-    var ins=await _sb.from('documentos').insert({processo_id:o.processo_id,pessoa_id:o.pessoa_id,usuario_id:us.data.id,nome_arquivo:nome,caminho_storage:caminho,tipo_documento:'pdf',tamanho_bytes:bytes.length,pasta_id:o.pasta_id||null,visivel_portal_cliente:false,excluido_logico:false});
-    if(ins.error){var rm=await _sb.storage.from(BUCKET).remove([caminho]);caminho=null;throw new Error((ins.error.message||'o registro do documento foi recusado')+(rm.error?' (e o arquivo enviado ficou solto: avise o administrador)':''));}
-    progresso(prog,3,3,'Pronto.');
-    fecharJanela('jGuardar');
-    var linkF=FICHA+'?pessoa_id='+encodeURIComponent(o.pessoa_id||'')+'&processo_id='+encodeURIComponent(o.processo_id);
-    aviso('atencao','"'+nome+'" foi guardado na pasta do cliente ('+tamanhoTxt(bytes.length)+').','O documento original continua lá, sem mudança.',[{rotulo:'Abrir a ficha',fazer:function(){location.href=linkF;}}]);
-    E.pendente=false;toast('Guardado na pasta do cliente.','success');
+    var proc=G.processos.find(function(x){return x.id===procId;})||{};
+    var pasta=G.pastas.find(function(x){return x.id===pastaId;});
+    var onde=G.pessoa.nome_completo+' › '+(proc.codigo||'processo')+' › '+(pasta?pasta.nome:'Documentos');
+    for(var i=0;i<r.arquivos.length;i++){
+      var a=r.arquivos[i];
+      var nome=r.arquivos.length===1?($('guardarNome').value.trim()||a.nome):a.nome;
+      nome=nome.replace(/[\\/:*?"<>|]+/g,'-');var ext=ehPdf(a)?'.pdf':(a.tipo==='image/png'?'.png':'.jpg');if(!new RegExp('\\'+ext+'$','i').test(nome))nome+=ext;
+      progresso(prog,i,r.arquivos.length,'Enviando '+(i+1)+' de '+r.arquivos.length+': '+nome);
+      var caminho=procId+'/'+crypto.randomUUID()+'_'+nome.replace(/[^a-zA-Z0-9._-]/g,'_');
+      var up=await _sb.storage.from(BUCKET).upload(caminho,new Blob([a.bytes],{type:a.tipo}),{contentType:a.tipo});
+      if(up.error)throw up.error;
+      var ins=await _sb.from('documentos').insert({processo_id:procId,pessoa_id:G.pessoa.id,usuario_id:us.data.id,nome_arquivo:nome,caminho_storage:caminho,tipo_documento:ehPdf(a)?'pdf':'imagem',tamanho_bytes:a.bytes.length,pasta_id:pastaId,visivel_portal_cliente:false,excluido_logico:false}).select('id').single();
+      if(ins.error){var rm=await _sb.storage.from(BUCKET).remove([caminho]);throw new Error((ins.error.message||'o registro do documento foi recusado')+(rm.error?' (e o arquivo enviado ficou solto: avise o administrador)':''));}
+      a.nome=nome;a.guardado={onde:onde,caminho:caminho,docId:ins.data.id,doc:{id:ins.data.id,processo_id:procId,pessoa_id:G.pessoa.id,pasta_id:pastaId,nome_arquivo:nome,caminho_storage:caminho,cliente_nome:G.pessoa.nome_completo}};
+    }
+    progresso(prog,1,1,'Pronto.');
+    r.salvo=true;E.pendente=false;
+    fecharJanela('jGuardar');desenharResultado();
+    var linkF=FICHA+'?pessoa_id='+encodeURIComponent(G.pessoa.id)+'&processo_id='+encodeURIComponent(procId);
+    aviso('atencao',(r.arquivos.length>1?r.arquivos.length+' arquivos guardados':'"'+r.arquivos[0].nome+'" guardado')+' na pasta do cliente.',onde+'.',[{rotulo:'Abrir a ficha',fazer:function(){window.open(linkF,'_blank','noopener');}}]);
+    toast('Guardado na pasta do cliente.','success');
+    if(E._depoisGuardar){var f=E._depoisGuardar;E._depoisGuardar=null;f();}
   }catch(e){
     var m=(e&&e.message)||String(e||'erro desconhecido');
-    if(/row-level security|permission|not allowed|unauthorized/i.test(m))m='você não tem permissão para guardar documentos neste cliente ('+m+')';
-    $('guardarErro').textContent='Não guardei. Motivo: '+m+'. O PDF continua aqui; você pode baixar.';
-  }finally{prog.classList.remove('ativo');$('guardarOk').disabled=false;}
+    if(/row-level security|permission|not allowed|unauthorized|violates/i.test(m))m='você não tem permissão para guardar documentos neste cliente ('+m+')';
+    $('guardarErro').textContent='Não guardei. Motivo: '+m+'. O arquivo continua aqui; você pode baixar.';
+  }finally{prog.classList.remove('ativo');conferirGuardar();}
+}
+
+/* ---------- compartilhar ---------- */
+function abrirCompartilhar(){
+  var r=E.resultado;if(!r)return;var um=r.arquivos.length===1,a=r.arquivos[0];
+  $('jCompartilharSub').textContent=um?'"'+nomeResultado(0)+'" ('+tamanhoTxt(a.bytes.length)+')':r.arquivos.length+' arquivos';
+  var files=r.arquivos.map(function(x){return new File([x.bytes],x.nome,{type:x.tipo});});
+  var pode=false;try{pode=!!(navigator.canShare&&navigator.canShare({files:files}));}catch(e){}
+  $('cpEnviar').hidden=!pode;
+  $('cpEnviarDica').textContent=pode?'Abre a lista de aplicativos do aparelho (WhatsApp, e-mail, Drive…) com o arquivo já anexado. Vai direto do aparelho, sem passar por site nenhum.':'Neste navegador o arquivo não vai direto para outro aplicativo. Baixe e anexe no WhatsApp Web ou no e-mail (ou use o link com prazo, abaixo).';
+  $('cpLinkBloco').hidden=true;$('cpErro').textContent='';
+  var gu=um&&a.guardado;
+  $('cpSemPasta').hidden=!!gu;
+  $('cpSemPasta').innerHTML=!um?'O link é de um arquivo por vez: use "Continuar com este" no arquivo que quer mandar.':'Para gerar o link, o arquivo precisa estar guardado na pasta do cliente (o link aponta para essa cópia).';
+  $('cpGerar').textContent=gu?'Gerar o link':'Guardar na pasta do cliente e gerar o link';
+  $('cpGerar').disabled=!um;
+  abrirJanela('jCompartilhar');
+}
+async function enviarArquivo(){
+  var r=E.resultado;var files=r.arquivos.map(function(x,i){return new File([x.bytes],r.arquivos.length===1?nomeResultado(0):x.nome,{type:x.tipo});});
+  try{await navigator.share({files:files,title:files[0].name});r.salvo=true;}
+  catch(e){if(e&&e.name==='AbortError')return;$('cpErro').textContent='O aparelho não conseguiu enviar: '+((e&&e.message)||'erro')+'. Baixe e anexe.';}
+}
+async function gerarLink(){
+  var r=E.resultado;var a=r&&r.arquivos[0];if(!a)return;
+  if(!a.guardado){fecharJanela('jCompartilhar');E._depoisGuardar=function(){abrirCompartilhar();gerarLink();};abrirGuardar();return;}
+  var horas=+(valorPill('cpPrazo')||72);$('cpErro').textContent='';$('cpGerar').disabled=true;
+  try{
+    var u=await _sb.storage.from(BUCKET).createSignedUrl(a.guardado.caminho,horas*3600,{download:a.nome});
+    if(u.error||!u.data)throw (u.error||new Error('o armazenamento não devolveu o link'));
+    var reg=await _sb.rpc('documento_link_registrar',{p_documento:a.guardado.docId,p_horas:horas,p_meio:'Editor de PDF'});
+    if(reg.error)throw new Error('o link foi criado, mas o registro dele falhou ('+reg.error.message+'); por segurança, não use este link e avise o administrador');
+    var ate=new Date(Date.now()+horas*3600*1000);
+    var quando=ate.toLocaleDateString('pt-BR')+' às '+ate.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    $('cpLink').value=u.data.signedUrl;$('cpValidade').textContent='Vale até '+quando+'. Depois disso o link para de funcionar.';
+    var msg='Segue o documento "'+a.nome+'" (o link vale até '+quando+'): '+u.data.signedUrl;
+    $('cpWhats').href='https://wa.me/?text='+encodeURIComponent(msg);
+    $('cpEmail').href='mailto:?subject='+encodeURIComponent(a.nome)+'&body='+encodeURIComponent(msg);
+    $('cpLinkBloco').hidden=false;if(window.sagaRecolher){$('cpLinkBloco').hidden=true;window.sagaRecolher($('cpLinkBloco'),false);}
+  }catch(e){$('cpErro').textContent='Não gerei o link. Motivo: '+((e&&e.message)||'erro desconhecido')+'.';$('cpLinkBloco').hidden=true;}
+  finally{$('cpGerar').disabled=false;}
+}
+
+function ligarTelas(){
+  $('cartoes').addEventListener('click',function(e){var b=e.target.closest('[data-ferr]');if(b)escolherFerramenta(b.dataset.ferr);});
+  $('atualVer').addEventListener('click',function(){entrarTrabalho(E.ferr||'organizar');});
+  $('atualFechar').addEventListener('click',async function(){
+    if(E.pendente){var ok=window.sagaConfirmar?await sagaConfirmar('Fechar este arquivo','Ele sai da tela (o que está no seu computador ou na pasta do cliente não muda). O que não foi baixado nem guardado se perde.','Fechar',false):confirm('Fechar este arquivo?');if(!ok)return;}
+    limparTrabalho();irPara('inicio');
+  });
+  $('bVoltarInicio').addEventListener('click',function(){irPara('inicio');});
+  $('bConcluir').addEventListener('click',concluir);
+  $('bParaImagem').addEventListener('click',abrirParaImagem);
+  $('piOk').addEventListener('click',converterParaImagem);
+  ['piFormato','piDpi','piPaginas','imgPagina','imgMargem','imgQualidade','cpPrazo'].forEach(function(g){$(g).addEventListener('click',function(e){var b=e.target.closest('.pill');if(b)escolherPill(g,b.dataset.v);});});
+  $('imgMais').addEventListener('click',function(){$('entradaImagens').click();});
+  $('imgOk').addEventListener('click',gerarImagensPdf);
+  $('imgLista').addEventListener('click',function(e){
+    var b=e.target.closest('[data-img]');if(!b)return;var id=b.closest('.li').dataset.id,i=IMG.lista.findIndex(function(x){return x.id===id;});if(i<0)return;
+    var a=b.dataset.img;if(a==='tira'){URL.revokeObjectURL(IMG.lista[i].url);IMG.lista.splice(i,1);}
+    else{var j=a==='sobe'?i-1:i+1;if(j<0||j>=IMG.lista.length)return;var t=IMG.lista[i];IMG.lista[i]=IMG.lista[j];IMG.lista[j]=t;}
+    desenharListaImg();
+  });
+  $('telaResultado').addEventListener('click',function(e){
+    var t=e.target.closest('button');if(!t)return;
+    if(t.id==='resBaixar')baixarResultado(null);
+    else if(t.id==='resGuardar')abrirGuardar();
+    else if(t.id==='resCompartilhar')abrirCompartilhar();
+    else if(t.id==='resContinuar')continuarCom(0);
+    else if(t.id==='resVoltar'){irPara('trabalho');}
+    else if(t.id==='resInicio'){irPara('inicio');}
+    else if(t.id==='resNovo'){(async function(){var r=E.resultado;if(r&&!r.salvo){var ok=window.sagaConfirmar?await sagaConfirmar('Começar de novo','O resultado ainda não foi baixado nem guardado e vai se perder.','Começar de novo',false):confirm('Começar de novo?');if(!ok)return;}E.resultado=null;limparTrabalho();$('avisos').innerHTML='';irPara('inicio');})();}
+    else if(t.dataset.resBaixar!=null)baixarResultado(+t.dataset.resBaixar);
+    else if(t.dataset.resContinuar!=null)continuarCom(+t.dataset.resContinuar);
+  });
+  var tb;$('gBusca').addEventListener('input',function(){clearTimeout(tb);tb=setTimeout(buscarCliente,280);});
+  $('gLista').addEventListener('click',async function(e){
+    var b=e.target.closest('button');if(!b)return;
+    if(b.dataset.pes)escolherPessoa({id:b.dataset.pes,nome_completo:b.dataset.nome});
+    else if(b.dataset.proc){var r=await _sb.from('processos').select('id,pessoa_id').eq('id',b.dataset.proc).maybeSingle();if(r.data&&r.data.pessoa_id)escolherPessoa({id:r.data.pessoa_id,nome_completo:'Cliente do documento aberto'},r.data.id);}
+  });
+  $('gProcesso').addEventListener('change',conferirGuardar);
+  $('guardarOk').addEventListener('click',guardar);
+  $('cpEnviar').addEventListener('click',enviarArquivo);
+  $('cpBaixar').addEventListener('click',function(){baixarResultado(null);});
+  $('cpGerar').addEventListener('click',gerarLink);
+  $('cpCopiar').addEventListener('click',async function(){try{await navigator.clipboard.writeText($('cpLink').value);toast('Link copiado.','success');}catch(e){$('cpLink').select();document.execCommand('copy');toast('Link copiado.','success');}});
 }
 
 /* ---------- janelas ---------- */
@@ -883,17 +1460,19 @@ function janelaAberta(){var a=document.querySelector('.mo.aberto');return a?a.id
 function ligar(){
   try{if(semMovimento())document.documentElement.classList.add('sem-movimento');}catch(e){}
   var entrada=$('entradaArquivos');
-  $('solta').addEventListener('click',function(){entrada.click();});
-  $('solta').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();entrada.click();}});
-  $('bAbrir').addEventListener('click',function(){entrada.click();});
-  entrada.addEventListener('change',function(){var f=this.files;abrirArquivos(f).then(function(){entrada.value='';});});
+  $('solta').addEventListener('click',function(){E.esperaFerr=null;escolherTipo();});
+  $('solta').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();E.esperaFerr=null;escolherTipo();}});
+  $('bAbrir').addEventListener('click',function(){E.esperaFerr=null;entrada.click();});
+  entrada.addEventListener('change',function(){var f=this.files;receberArquivos(f).then(function(){entrada.value='';});});
+  $('entradaImagens').addEventListener('change',function(){var f=this.files,el=this;receberArquivos(f).then(function(){el.value='';});});
+  $('entradaWord').addEventListener('change',function(){var f=this.files,el=this;receberArquivos(f).then(function(){el.value='';});});
   // arrastar arquivos do computador
   var cont=0;
   function temArquivo(e){return e.dataTransfer&&Array.prototype.indexOf.call(e.dataTransfer.types||[],'Files')>=0;}
   document.addEventListener('dragenter',function(e){if(!temArquivo(e))return;e.preventDefault();cont++;document.body.classList.add('arrastando-arquivo');$('solta').classList.add('sobre');});
   document.addEventListener('dragover',function(e){if(!temArquivo(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';});
   document.addEventListener('dragleave',function(e){if(!temArquivo(e))return;cont=Math.max(0,cont-1);if(!cont){document.body.classList.remove('arrastando-arquivo');$('solta').classList.remove('sobre');}});
-  document.addEventListener('drop',function(e){if(!temArquivo(e))return;e.preventDefault();cont=0;document.body.classList.remove('arrastando-arquivo');$('solta').classList.remove('sobre');abrirArquivos(e.dataTransfer.files);});
+  document.addEventListener('drop',function(e){if(!temArquivo(e))return;e.preventDefault();cont=0;document.body.classList.remove('arrastando-arquivo');$('solta').classList.remove('sobre');if(janelaAberta()==='jImagens'){acrescentarImagens(e.dataTransfer.files);return;}receberArquivos(e.dataTransfer.files);});
 
   $('bMarcarTodas').addEventListener('click',function(){
     if(E.sel.size===E.paginas.length)E.sel.clear();else E.paginas.forEach(function(p){E.sel.add(p.id);});
@@ -911,12 +1490,9 @@ function ligar(){
     var ok=window.sagaConfirmar?await sagaConfirmar('Fechar tudo','Os PDFs abertos saem da tela (os arquivos do seu computador não mudam). O que não foi baixado se perde.','Fechar tudo',false):confirm('Fechar tudo?');
     if(!ok)return;
     E.docs.forEach(function(d){try{d.pdf.destroy();}catch(e){}});
-    E.docs=[];E.paginas=[];E.sel.clear();E.historico=[];E.numeracao=null;E.nomeTocado=false;E.origem=null;$('nomeSaida').value='';$('bDesfazer').disabled=true;
-    $('grade').innerHTML='';$('avisos').innerHTML='';desenhar();
+    limparTrabalho();$('avisos').innerHTML='';irPara('inicio');
   });
-  $('bBaixar').addEventListener('click',baixarTudo);
-  $('bGuardar').addEventListener('click',abrirGuardar);
-  $('guardarOk').addEventListener('click',guardar);
+  ligarTelas();
   $('nomeSaida').addEventListener('input',function(){E.nomeTocado=!!this.value.trim();});
   $('arquivos').addEventListener('click',function(e){var b=e.target.closest('[data-tirar-doc]');if(b)tirarDoc(b.dataset.tirarDoc);});
   $('grade').addEventListener('change',function(e){if(e.target.classList.contains('marca')){alternarMarca(e.target.closest('.pg').dataset.id);}});
@@ -948,7 +1524,7 @@ function ligar(){
   document.querySelectorAll('.opcao input[type="radio"]').forEach(function(r){r.addEventListener('change',function(){
     document.querySelectorAll('input[name="'+r.name+'"]').forEach(function(x){x.closest('.opcao').classList.toggle('active',x.checked);});
     if(r.name==='sep')previaSeparar();
-    if(r.name==='nivel'){atualizarAvisoComp();_comp=null;$('compResultado').hidden=true;$('compBaixar').disabled=true;}
+    if(r.name==='nivel'){atualizarAvisoComp();_comp=null;$('compResultado').hidden=true;$('compBaixar').disabled=true;$('compBaixar').textContent='Usar o comprimido';}
   });});
   $('sepIntervalos').addEventListener('focus',function(){var r=document.querySelector('input[name="sep"][value="intervalos"]');if(!r.checked){r.checked=true;r.dispatchEvent(new Event('change'));}});
   $('sepBlocos').addEventListener('focus',function(){var r=document.querySelector('input[name="sep"][value="blocos"]');if(!r.checked){r.checked=true;r.dispatchEvent(new Event('change'));}});
@@ -963,16 +1539,18 @@ function ligar(){
   $('senhaCampo').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();confirmarSenha();}});
   ligarCamada();
   window.addEventListener('resize',function(){if(ED.p&&$('jEditar').classList.contains('aberto')){clearTimeout(window._edRz);window._edRz=setTimeout(desenharPalco,200);}});
-  window.addEventListener('beforeunload',function(e){if(E.paginas.length&&E.pendente){e.preventDefault();e.returnValue='';}});
+  window.addEventListener('beforeunload',function(e){if((E.paginas.length&&E.pendente)||(E.resultado&&!E.resultado.salvo)){e.preventDefault();e.returnValue='';}});
 }
 
 async function init(){
   ligar();
+  desenharCartoes();
   desenhar();
   if(window.SagaUI&&SagaUI.carregar)await SagaUI.carregar('editor_pdf');
   var doc=new URLSearchParams(location.search).get('doc');
   if(doc)abrirDaFicha(doc);
+  else{var f0=new URLSearchParams(location.search).get('ferramenta');if(f0&&ferrPorK(f0))escolherFerramenta(f0);}
 }
-window.SagaEditorPdf={montarPdf:montarPdf,estado:E,abrirBytes:abrirBytes,lerIntervalos:lerIntervalos,zipar:zipar};
+window.SagaEditorPdf={montarPdf:montarPdf,estado:E,abrirBytes:abrirBytes,lerIntervalos:lerIntervalos,zipar:zipar,otimizarPdf:otimizarPdf,imagensParaPdf:imagensParaPdf,mostrarResultado:mostrarResultado,escolherFerramenta:escolherFerramenta};
 init().catch(function(e){aviso('erro','A tela do Editor de PDF não abriu direito.','Motivo: '+((e&&e.message)||'erro desconhecido')+'. Atualize a página (F5).');});
 })();
