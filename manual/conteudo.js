@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.12",
+  versao: "3.13",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.13", data: "17/11/2026", mudou: "Cores em dobro: cada cor tem a versão Normal e a versão Vidro, escolhida dentro do cartão (Clássicos, Tecnológicos e Campanhas); cor nova Ônix (preto e cinza); no Vidro, fundo animado (Brasas de neon, Rede de dados, Circuito de luz) com intensidade e velocidade." },
     { versao: "3.12", data: "17/11/2026", mudou: "Ficha do cliente: [+ Pasta] abre a janela Criar pastas, com uma caixa de marcar em cada pasta pré-pronta (Documentos pessoais, Documentos processuais, Petições, Requisitório, Planilhas, Relatórios, Relatórios processuais, Outras): cria só as marcadas e a que já existe aparece \"já existe\"; pasta livre na mesma janela; o administrador organiza a lista ali mesmo. Leitura da consulta (Lemit, Data Solution) também por PRINT da tela: cole com Ctrl+V (ou solte a imagem), vários prints de uma vez, na ficha > Localização e em Pedidos de busca; os prints não são guardados." },
     { versao: "3.11", data: "17/11/2026", mudou: "CADEADO na barra de cima (trava contra voltar sem querer: travado, o botão de voltar do mouse e a seta do navegador não saem da tela; automático depois de 20 segundos, manual ou desligado em Preferências); VOLTAR SEM PERDER OS FILTROS em Minhas Tarefas, nas planilhas do Jurídico e da Captação e em Intimações (abrir pelo menu continua limpo); \"Pedidos do Claude\" passou a se chamar \"Pedidos do Saga IA\"." },
     { versao: "3.10", data: "17/11/2026", mudou: "Teses e oportunidades: botão \"Mostrar gráficos\" nas abas Atualizações, Prateleira e Radar (barras por situação, área, esfera e pessoa, para quem, material, tipo, impacto, por tese e por mês; clicar numa barra filtra a tela); o cartão de cada tese abre organizado (resumo em destaque, prazo e \"quem não pode\" em destaque, público, vídeos e anexos ao lado, \"+ Anexar documento\"); cada tese tem a sua cor." },
@@ -161,14 +162,28 @@ window.SAGA_MANUAL = {
           passos: [
             "Menu da foto > **Preferências** (ou Configurações > Preferências).",
             "**Tema**: Claro ou Escuro (também pelo botão sol/lua no alto).",
-            "**Cor do tema**: Azul (padrão), Grafite, **Novembro Azul**, **Rosa** (Outubro Rosa) ou **Natal**, cada uma com claro e escuro. Clique numa cor para ver como fica; ela só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
+            "**Cor do tema**: um cartão por cor, em três grupos: **Clássicos** (Azul, que é o padrão, Grafite e **Ônix**, preto e cinza), **Tecnológicos** (Azul profundo, Ciano holográfico, Âmbar de reator, Aurora violeta e \"A sua cor\") e **Campanhas** (Novembro Azul, Rosa e Natal). Cada cor tem claro e escuro.",
+            "Em cada cartão escolha a versão: **Normal** (telas lisas) ou **Vidro** (placas de vidro sobre um fundo). Clique no cartão ou em Normal/Vidro para ver como fica; a cor só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
             "**Efeitos de movimento**: Ligados (janelas abrem e fecham suaves) ou Desligados (troca na hora).",
             "**Cadeado contra voltar sem querer**: Automático (trava sozinho depois de alguns segundos na tela; você escolhe quantos, padrão 20), Manual (só trava quando você clica no cadeado) ou Desligado. A escolha vale neste e nos outros computadores.",
             "**Tamanho da letra**: Normal, Grande ou Maior."
           ],
-          img: "configuracoes",
-          marcas: ["Aba Preferências.", "Tema claro ou escuro.", "Cor do tema: Azul, Grafite e as cores de campanha.", "Efeitos de movimento."],
-          dicas: ["O administrador pode fixar a cor de um colaborador; nesse caso a escolha fica travada.", "**Tema do mês** (só o administrador liga, em Preferências > Cor do tema da equipe): o SAGA troca sozinho a cor de toda a equipe no mês de cada campanha (outubro Rosa, novembro Novembro Azul, dezembro Natal; dá para mudar cada mês). Nesse mês a sua escolha fica guardada e volta quando o mês acaba; quem tem a cor fixada continua com ela."]
+          img: "preferencias_cores",
+          marcas: ["Tema claro ou escuro.", "Cor do tema: um cartão por cor, em grupos.", "Normal ou Vidro, dentro do cartão."],
+          dicas: ["As cores novas começam liberadas só para o administrador; ele libera para a equipe em Preferências > Cores da equipe.", "O administrador pode fixar a cor de um colaborador; nesse caso a escolha fica travada.", "**Tema do mês** (só o administrador liga, em Preferências > Cor do tema da equipe): o SAGA troca sozinho a cor de toda a equipe no mês de cada campanha (outubro Rosa, novembro Novembro Azul, dezembro Natal; dá para mudar cada mês). Nesse mês a sua escolha fica guardada e volta quando o mês acaba; quem tem a cor fixada continua com ela."]
+        },
+        { id: "vidro_fundo", titulo: "Vidro: fundo, fundo animado, intensidade e velocidade",
+          quando: "Quando o colaborador escolheu uma cor na versão Vidro e quer mudar o que aparece atrás das placas.",
+          passos: [
+            "Escolha uma cor na versão **Vidro** e salve. Aparece o quadro **Vidro tecnológico**.",
+            "**Fundo**: Montanhas à noite, Cidade, Grade técnica ou Minha imagem ([[Usar uma imagem minha]]: a imagem fica só neste computador).",
+            "**Vidro normal** ou **Vidro mais fosco** (mais fosco = menos do fundo aparece através das placas).",
+            "**Fundo animado**: Parado, **Brasas de neon** (partículas subindo), **Rede de dados** (pontos ligados por linhas) ou **Circuito de luz** (pulsos de luz correndo por linhas), sempre na cor do tema.",
+            "**Intensidade** (Leve, Média, Forte) e **Velocidade** (Lenta, Normal, Rápida). Vale na hora."
+          ],
+          img: "preferencias_vidro",
+          marcas: ["Fundo atrás das placas.", "Vidro normal ou mais fosco.", "Fundo animado.", "Intensidade e velocidade."],
+          dicas: ["Tudo isso fica guardado só neste computador (em outro computador você escolhe de novo).", "Com os **Efeitos de movimento** desligados o fundo animado aparece parado.", "O fundo animado é leve: para sozinho quando a aba do SAGA fica escondida e não deixa as telas mais lentas."]
         },
         { id: "privacidade", titulo: "Gravar a tela ou mostrar o sistema sem expor clientes",
           quando: "Quando o colaborador vai gravar um vídeo, compartilhar a tela numa reunião ou mostrar o SAGA a alguém de fora.",
