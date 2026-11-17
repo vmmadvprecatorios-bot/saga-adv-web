@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.13",
+  versao: "3.14",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.14", data: "17/11/2026", mudou: "Ficha do cliente: cada aba de processo mostra só os documentos DAQUELE processo; documento PESSOAL (RG, CPF, comprovante, certidão...) é marcado pelo botão do cartão de identidade ao lado do documento, com o dono (cliente ou herdeiro/parte), e aparece no quadro \"Documentos pessoais\" de toda aba em que essa pessoa é parte; [[Puxar de outra pessoa]] traz para a aba os documentos pessoais de outra pessoa da ficha sem copiar o arquivo; [[Tirar desta aba]] só desfaz a ligação." },
     { versao: "3.13", data: "17/11/2026", mudou: "Cores em dobro: cada cor tem a versão Normal e a versão Vidro, escolhida dentro do cartão (Clássicos, Tecnológicos e Campanhas); cor nova Ônix (preto e cinza); no Vidro, fundo animado (Brasas de neon, Rede de dados, Circuito de luz) com intensidade e velocidade." },
     { versao: "3.12", data: "17/11/2026", mudou: "Ficha do cliente: [+ Pasta] abre a janela Criar pastas, com uma caixa de marcar em cada pasta pré-pronta (Documentos pessoais, Documentos processuais, Petições, Requisitório, Planilhas, Relatórios, Relatórios processuais, Outras): cria só as marcadas e a que já existe aparece \"já existe\"; pasta livre na mesma janela; o administrador organiza a lista ali mesmo. Leitura da consulta (Lemit, Data Solution) também por PRINT da tela: cole com Ctrl+V (ou solte a imagem), vários prints de uma vez, na ficha > Localização e em Pedidos de busca; os prints não são guardados." },
     { versao: "3.11", data: "17/11/2026", mudou: "CADEADO na barra de cima (trava contra voltar sem querer: travado, o botão de voltar do mouse e a seta do navegador não saem da tela; automático depois de 20 segundos, manual ou desligado em Preferências); VOLTAR SEM PERDER OS FILTROS em Minhas Tarefas, nas planilhas do Jurídico e da Captação e em Intimações (abrir pelo menu continua limpo); \"Pedidos do Claude\" passou a se chamar \"Pedidos do Saga IA\"." },
@@ -484,6 +485,19 @@ window.SAGA_MANUAL = {
             "As pastas **Pesquisa > Busca** e **Pesquisa > Espelhos do TRF** o SAGA cria sozinho."
           ],
           dicas: ["Administrador: [[Organizar a lista]] na mesma janela muda a lista de pastas pré-prontas de todo o escritório: renomear (clique no nome), ▲ ▼ para a ordem, ✕ para tirar da lista (as pastas já criadas nas fichas continuam), [[+ Pôr na lista]] para uma nova e [[Ver as tiradas da lista]] para trazer uma de volta."]
+        },
+        { id: "docs_pessoais", titulo: "Documentos do processo e documentos pessoais",
+          quando: "Para guardar cada documento no lugar certo: o do processo fica na aba do processo; o pessoal (RG, CPF, comprovante...) fica com a pessoa e aparece em todas as abas em que ela é parte.",
+          passos: [
+            "Cada aba de processo mostra só os documentos **daquele processo**. Anexe o documento com a aba certa aberta (ou arraste para a pasta).",
+            "Documento **pessoal** (RG, CPF, CNH, comprovante de residência, certidões, procuração): clique no botão do **cartão de identidade** ao lado do documento, escolha **de quem é** (o cliente ou um herdeiro/parte) e clique em [[Marcar como pessoal]].",
+            "Ele passa para o quadro **Documentos pessoais**, acima das pastas, e aparece sozinho em **todas as abas** em que essa pessoa é parte (o do cliente aparece em todas).",
+            "O herdeiro tem outro processo na ficha? Na aba desse processo, clique em [[Puxar de outra pessoa]], marque os documentos e clique em [[Puxar para esta aba]]. O arquivo NÃO é copiado: é o mesmo documento, ligado a mais um processo.",
+            "[[Tirar desta aba]] só desfaz a ligação: o documento continua na ficha, nas abas da pessoa dona. Para ele voltar a ser do processo, clique de novo no cartão de identidade e em [[Voltar a ser do processo]]."
+          ],
+          img: "ficha_docs_pessoais",
+          marcas: ["Quadro Documentos pessoais (aparece em todas as abas em que a pessoa é parte).", "Puxar de outra pessoa (sem copiar o arquivo).", "Botão do cartão de identidade: marcar como pessoal, trocar o dono ou voltar a ser do processo.", "Tirar desta aba (só desfaz a ligação).", "Documentos do processo desta aba."],
+          dicas: ["Quem organiza (marca, puxa, tira): quem pode anexar documentos. Os outros só veem.", "Tudo fica no Registro de atividades."]
         },
         { id: "localizacao", titulo: "Localização: achar e contatar o cliente e os parentes",
           quando: "Quando o colaborador precisa achar o cliente (ou um parente) para conversar.",
