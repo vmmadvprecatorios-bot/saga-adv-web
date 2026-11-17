@@ -659,7 +659,8 @@ function motivoRecusa(erro: string): string {
 function semLogin(invalido: boolean, erro = "") {
   const motivo = invalido ? motivoRecusa(erro) : "Entre no SAGA para usar o conector (falta o login).";
   console.warn(JSON.stringify({ saga_mcp_recusa: invalido ? "invalid_token" : "sem_token", motivo: erro.slice(0, 200) }));
-  const www = `Bearer ${invalido ? `error="invalid_token", error_description="${motivo.replace(/"/g, "'")}", ` : ""}resource_metadata="${METADADOS}"`;
+  // cabeçalho SÓ com letras sem acento (com acento o servidor descarta o cabeçalho e o Claude não renova a chave)
+  const www = `Bearer ${invalido ? 'error="invalid_token", ' : ""}resource_metadata="${METADADOS}"`;
   return json({ error: invalido ? "invalid_token" : "unauthorized", error_description: motivo }, 401, { "WWW-Authenticate": www });
 }
 const erroRpc = (id: unknown, code: number, message: string) => ({ jsonrpc: "2.0", id: id ?? null, error: { code, message } });
