@@ -633,7 +633,7 @@ function txtPublico(p){var c=p.publico_criterios||{};return [rotuloEsferas(p),(c
 function chipsPublico(p){
   var c=p.publico_criterios||{},it=[];
   (p.esferas||[]).forEach(function(e){it.push('<span class="pub-chip esf">'+esc(nomeDe(ESFERAS,e))+'</span>');});
-  (p.pessoa_tipo||[]).forEach(function(e){it.push('<span class="pub-chip pes">'+esc(e==='pj'?'PJ':'PF')+'</span>');});
+  (p.pessoa_tipo||[]).forEach(function(e){it.push('<span class="pub-chip pes">'+esc(e==='pj'?'Empresa':'Pessoa física')+'</span>');});
   (c.situacoes||[]).forEach(function(e){it.push('<span class="pub-chip">'+esc(e)+'</span>');});
   return it.length?'<div class="pub-chips">'+it.join('')+'</div>':'';
 }
@@ -648,8 +648,9 @@ function htmlCriterios(p,lado){
   if(c.idade_min||c.idade_max)add('Idade',(c.idade_min?'a partir de '+c.idade_min:'')+(c.idade_min&&c.idade_max?' e ':'')+(c.idade_max?'até '+c.idade_max:'')+' anos');
   add('Precisa ter',(c.precisa||[]).map(function(x){return nomeDe(PRECISA,x);}).join('; '));
   if(!lado){add('Quem não pode',c.nao_pode);add('Prazo',c.prazo);}add('Onde achar',c.fonte);
-  if(!l.length)return '';
-  return '<div class="bloco pub-crit"><b>Público da tese (o que o sistema usa para achar clientes)</b><ul>'+l.join('')+'</ul>'+(p.tese_id&&PODE_CLIENTES?'<p class="pub-nota">"Achar clientes para esta tese" já abre Clientes por perfil com situação, órgão, cargo, UF, anos e idade preenchidos.</p>':'')+'</div>';
+  var bt=(lado&&T.perm.editar)?'<button class="btn btn-sm" type="button" data-editar-pub="'+p.id+'">'+(l.length?'Editar público':'Definir público')+'</button>':'';
+  if(!l.length)return bt?'<div class="bloco pub-crit"><div class="pc-anx-cab"><b>Público da tese</b>'+bt+'</div><p class="pub-nota">Ainda não definido.</p></div>':'';
+  return '<div class="bloco pub-crit">'+(bt?'<div class="pc-anx-cab"><b>Público da tese (o que o sistema usa para achar clientes)</b>'+bt+'</div>':'<b>Público da tese (o que o sistema usa para achar clientes)</b>')+'<ul>'+l.join('')+'</ul>'+(p.tese_id&&PODE_CLIENTES?'<p class="pub-nota">"Achar clientes para esta tese" já abre Clientes por perfil com situação, órgão, cargo, UF, anos e idade preenchidos.</p>':'')+'</div>';
 }
 function urlSegura(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
 function htmlLinks(p){
@@ -658,7 +659,7 @@ function htmlLinks(p){
 }
 function soDigitos(el,max){el.addEventListener('input',function(){var v=el.value.replace(/\D/g,'').slice(0,max);if(v!==el.value)el.value=v;});}
 function linhaLink(x){x=x||{};return '<div class="ln-linha"><input class="ln-tit" maxlength="120" placeholder="Título (ex.: Videoaula PSS)" value="'+esc(x.titulo||'')+'"><input class="ln-url" maxlength="500" placeholder="https://drive.google.com/... ou https://youtu.be/..." value="'+esc(x.url||'')+'"><select class="ln-tipo">'+LINK_TIPOS.map(function(t){return '<option value="'+t[0]+'"'+((x.tipo||'video')===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select><button class="btn btn-sm" type="button" data-tirar-link aria-label="Tirar este link">✕</button></div>';}
-function htmlFormPublico(p){
+function htmlFormPublico(p,soPublico){
   var c=(p&&p.publico_criterios)||{},es=(p&&p.esferas)||[],pe=(p&&p.pessoa_tipo)||[],sit=c.situacoes||[],pr=c.precisa||[];
   var cx=function(nome,val,marc,txt){return '<label class="chk"><input type="checkbox" data-'+nome+'="'+esc(val)+'"'+(marc?' checked':'')+'> '+esc(txt)+'</label>';};
   var num=function(id,v,ph){return '<input id="'+id+'" class="num" inputmode="numeric" maxlength="4" placeholder="'+ph+'" value="'+esc(v==null?'':v)+'">';};
@@ -676,9 +677,9 @@ function htmlFormPublico(p){
     '<div class="campo"><label>Precisa ter</label><div class="cxs">'+PRECISA.map(function(e){return cx('prec',e[0],pr.indexOf(e[0])>=0,e[1]);}).join('')+'</div></div>'+
     '<div class="grade3"><div class="campo"><label for="pcNao">Quem não pode</label><input id="pcNao" maxlength="300" value="'+esc(c.nao_pode||'')+'"></div>'+
     '<div class="campo"><label for="pcPrazo">Prazo</label><input id="pcPrazo" maxlength="200" value="'+esc(c.prazo||'')+'" placeholder="Ex.: 5 anos da aposentadoria"></div>'+
-    '<div class="campo"><label for="pcFonte">Onde achar (fonte)</label><input id="pcFonte" maxlength="200" value="'+esc(c.fonte||'')+'" placeholder="Ex.: Precatórios federais"></div></div></fieldset>'+
+    '<div class="campo"><label for="pcFonte">Onde achar (fonte)</label><input id="pcFonte" maxlength="200" value="'+esc(c.fonte||'')+'" placeholder="Ex.: Precatórios federais"></div></div></fieldset>'+(soPublico?'':
     '<div class="campo"><label for="ppExp">Explicação completa (para a equipe estudar)</label><textarea id="ppExp" rows="5">'+esc((p&&p.explicacao)||'')+'</textarea></div>'+
-    '<div class="campo"><label>Vídeos, áudios e links (Google Drive, YouTube, NotebookLM)</label><div id="ppLinks">'+((p&&p.links)||[]).map(linhaLink).join('')+'</div><button class="btn btn-sm" type="button" id="ppAddLink" style="margin-top:6px">+ Adicionar vídeo ou link</button></div>';
+    '<div class="campo"><label>Vídeos, áudios e links (Google Drive, YouTube, NotebookLM)</label><div id="ppLinks">'+((p&&p.links)||[]).map(linhaLink).join('')+'</div><button class="btn btn-sm" type="button" id="ppAddLink" style="margin-top:6px">+ Adicionar vídeo ou link</button></div>');
 }
 function lerFormPublico(){
   var md=$('mdForm'),marc=function(n){return Array.prototype.map.call(md.querySelectorAll('[data-'+n+']:checked'),function(i){return i.getAttribute('data-'+n);});};
@@ -687,11 +688,12 @@ function lerFormPublico(){
   var c={situacoes:marc('sitf'),orgaos:lista('pcOrg'),cargos:lista('pcCar'),ufs:lista('pcUf',true),ingresso_de:n('pcIng1'),ingresso_ate:n('pcIng2'),aposentadoria_de:n('pcApo1'),aposentadoria_ate:n('pcApo2'),aposentado_ha_menos_de:n('pcHa'),idade_min:n('pcId1'),idade_max:n('pcId2'),precisa:marc('prec'),nao_pode:$('pcNao').value.trim(),prazo:$('pcPrazo').value.trim(),fonte:$('pcFonte').value.trim()};
   Object.keys(c).forEach(function(k){if(c[k]==null||c[k]===''||(Array.isArray(c[k])&&!c[k].length))delete c[k];});
   var links=[],ruim=false;
-  md.querySelectorAll('#ppLinks .ln-linha').forEach(function(l){var u=l.querySelector('.ln-url').value.trim(),t=l.querySelector('.ln-tit').value.trim();if(!u&&!t)return;if(!urlSegura(u)){ruim=true;return;}links.push({titulo:t||u,url:u,tipo:l.querySelector('.ln-tipo').value});});
-  return {criterios:c,esferas:marc('esf'),pessoa_tipo:marc('pes'),links:links,linkRuim:ruim,explicacao:$('ppExp').value.trim()};
+  if($('ppLinks'))md.querySelectorAll('#ppLinks .ln-linha').forEach(function(l){var u=l.querySelector('.ln-url').value.trim(),t=l.querySelector('.ln-tit').value.trim();if(!u&&!t)return;if(!urlSegura(u)){ruim=true;return;}links.push({titulo:t||u,url:u,tipo:l.querySelector('.ln-tipo').value});});
+  return {criterios:c,esferas:marc('esf'),pessoa_tipo:marc('pes'),links:links,linkRuim:ruim,explicacao:$('ppExp')?$('ppExp').value.trim():null};
 }
 function ligarFormPublico(){
   ['pcIng1','pcIng2','pcApo1','pcApo2'].forEach(function(id){soDigitos($(id),4);});['pcHa','pcId1','pcId2'].forEach(function(id){soDigitos($(id),3);});
+  if(!$('ppAddLink'))return;
   $('ppAddLink').onclick=function(){var d=document.createElement('div');d.innerHTML=linhaLink();var l=d.firstChild;$('ppLinks').appendChild(l);if(window.sagaRecolher&&!semMov()){l.hidden=true;window.sagaRecolher(l,false);}l.querySelector('.ln-tit').focus();};
   $('ppLinks').addEventListener('click',function(e){var b=e.target.closest('[data-tirar-link]');if(!b)return;var l=b.closest('.ln-linha');if(window.sagaRecolher&&!semMov()){window.sagaRecolher(l,true);setTimeout(function(){l.remove();},430);}else l.remove();});
 }
@@ -745,7 +747,7 @@ function chipsProd(p){
   var c=catPorId(p.situacao_id),cr=p.publico_criterios||{};
   return '<div class="chips">'+(c?'<span class="chip sit" style="--c:'+esc(c.cor||'#8a94a8')+'"><i></i>'+esc(c.nome)+'</span>':'')+
     (p.esferas||[]).map(function(e){return '<span class="chip">'+esc(nomeDe(ESFERAS,e))+'</span>';}).join('')+
-    (p.pessoa_tipo||[]).map(function(e){return '<span class="chip">'+(e==='pj'?'PJ':'PF')+'</span>';}).join('')+
+    (p.pessoa_tipo||[]).map(function(e){return '<span class="chip">'+(e==='pj'?'Empresa':'Pessoa física')+'</span>';}).join('')+
     (cr.situacoes||[]).map(function(e){return '<span class="chip jul">'+esc(e)+'</span>';}).join('')+(p.ativo?'':'<span class="chip neg">Fora da prateleira</span>')+'</div>';
 }
 function htmlClassif(p){
@@ -868,6 +870,21 @@ function formProduto(id,base){
     if(!p&&r.data&&!base.radarId){trocarAba('prateleira');abrirPasta(r.data.id);}
   };
   var at=$('ppAtivo');if(at)at.onclick=async function(){var r=await _sb.from('produtos_juridicos').update({ativo:!p.ativo}).eq('id',p.id);if(r.error){toast(esc(r.error.message));return;}fechar('moForm');carregarTudo();};
+}
+/* janela curta: editar só o público de uma tese já criada (17/11, Dr. Victor) */
+function formPublico(id){
+  var p=T.produtos.find(function(x){return x.id===id;});if(!p||!T.perm.editar)return;
+  $('mdForm').className='md largo';
+  $('mdForm').innerHTML='<div class="md-cab"><div><h2>Público da tese</h2><p>'+esc(p.nome)+'</p></div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo"><div class="campo"><label for="ppPub">Quem tem direito (texto para a equipe)</label><textarea id="ppPub" rows="3">'+esc(p.publico||'')+'</textarea></div>'+htmlFormPublico(p,true)+'</div>'+
+    '<div class="md-rod"><span class="esq"></span><button class="btn" type="button" data-fechar="moForm">Cancelar</button><button class="btn btn-ouro" type="button" id="ppSalvarPub">Salvar público</button></div>';
+  ligarFormPublico();fechar('moLer');abrir('moForm');
+  $('ppSalvarPub').onclick=async function(){
+    var pub=lerFormPublico(),d={publico:$('ppPub').value.trim(),publico_criterios:pub.criterios,esferas:pub.esferas,pessoa_tipo:pub.pessoa_tipo};
+    this.disabled=true;var r=await _sb.from('produtos_juridicos').update(d).eq('id',p.id);this.disabled=false;
+    if(r.error){toast('Não foi possível salvar o público: '+esc(r.error.message));return;}
+    Object.assign(p,d);fechar('moForm');toast('Público da tese salvo.');desenharProdutos();setTimeout(function(){abrirPasta(p.id);},230);
+  };
 }
 async function excluirProduto(id){
   var p=T.produtos.find(function(x){return x.id===id;});if(!p||!T.perm.excluir)return;
@@ -1112,6 +1129,7 @@ function ligar(){
     if((t=e.target.closest('[data-excluir-post]'))&&!e.target.closest('#atuConteudo')){excluirPost(t.dataset.excluirPost);return;}
     if((t=e.target.closest('[data-editar]'))&&e.target.closest('#mdLer')){fechar('moLer');setTimeout(function(){formPost(t.dataset.editar);},220);return;}
     if((t=e.target.closest('[data-editar-prod]'))){formProduto(t.dataset.editarProd);return;}
+    if((t=e.target.closest('[data-editar-pub]'))){formPublico(t.dataset.editarPub);return;}
     if((t=e.target.closest('[data-excluir-prod]'))){excluirProduto(t.dataset.excluirProd);return;}
     if((t=e.target.closest('[data-tirar-arq]'))){e.stopPropagation();tirarArquivo(t.dataset.tirarArq);return;}
     if((t=e.target.closest('[data-arq]'))){verArquivo(t.dataset.arq);return;}
