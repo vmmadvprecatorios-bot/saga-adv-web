@@ -110,6 +110,44 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
 .prod h3{font-size:15px;font-weight:700;line-height:1.3}
 .prod .sub{font-size:11px;color:var(--muted)}
 .prod .res{font-size:12.5px;line-height:1.5;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+/* cartão da tese (17/11, Dr. Victor: "quando eu abro, uma coisa mais organizada") */
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:5px}
+.chip.sit{color:var(--text);border-color:color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 13%,transparent)}.chip.sit i{width:6px;height:6px;border-radius:50%;background:var(--c)}
+.prod-card{max-width:1080px;overflow:hidden}
+.pc-faixa{height:6px;background:var(--pc,var(--gold));flex:0 0 auto}
+.pc-grade{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:18px;align-items:start}
+.pc-main{display:flex;flex-direction:column;gap:14px;min-width:0}
+.pc-lado{display:flex;flex-direction:column;gap:12px;min-width:0;border-radius:14px;background:color-mix(in srgb,var(--text) 3.5%,transparent);border:1px solid var(--border-soft);padding:12px 14px}
+.pc-dest{border-left:3px solid var(--pc,var(--gold));padding:10px 14px;border-radius:0 12px 12px 0;background:color-mix(in srgb,var(--gold) 7%,transparent)}
+.pc-dest b{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.pc-dest div{font-size:14px;line-height:1.6}
+.pc-aviso{border-radius:11px;padding:9px 12px;border:1px solid}.pc-aviso b{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;margin-bottom:2px}.pc-aviso div{font-size:12.5px;line-height:1.5}
+.pc-aviso.pz{border-color:color-mix(in srgb,#d6a23a 55%,transparent);background:color-mix(in srgb,#d6a23a 11%,transparent)}.pc-aviso.pz b{color:#c08a22}
+.pc-aviso.np{border-color:color-mix(in srgb,#d0564f 50%,transparent);background:color-mix(in srgb,#d0564f 9%,transparent)}.pc-aviso.np b{color:#d0564f}
+.pc-anx-cab{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}.pc-anx-cab b{margin:0}
+.pc-lado .arqs{grid-template-columns:repeat(auto-fill,minmax(110px,1fr))}
+@media(max-width:860px){.pc-grade{grid-template-columns:1fr}}
+/* gráficos das abas (17/11) e cor da tese */
+.anx-cab{display:flex;align-items:center;justify-content:space-between;gap:8px}.anx-cab b{margin:0}
+.cor-esc{height:36px;padding:3px 6px!important;width:120px;cursor:pointer}
+.graf-bloco{margin:0 0 12px}.graf-topo{display:flex;justify-content:flex-end}.graf-topo .btn{display:inline-flex;align-items:center;gap:6px}
+.graf-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:10px}
+.graf{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:12px 14px;min-width:0}
+.graf h4{display:flex;justify-content:space-between;gap:8px;font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 10px}
+.graf h4 i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
+.graf-vazio{font-size:11.5px;color:var(--muted);padding:4px 0}
+.gb-linha{display:grid;grid-template-columns:minmax(70px,40%) 1fr auto;gap:8px;align-items:center;font-size:12px;padding:4px 4px;border-radius:7px}
+.gb-linha.clic{cursor:pointer}.gb-linha.clic:hover,.gb-linha.clic:focus-visible{background:color-mix(in srgb,var(--gold) 8%,transparent);outline:0}
+.gb-rot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gb-barra{height:9px;border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--text) 6%,transparent);overflow:hidden}
+.gb-barra i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--gc,var(--gold))}
+.gb-v{font-variant-numeric:tabular-nums;font-weight:600;min-width:20px;text-align:right}
+.gm{display:flex;align-items:flex-end;gap:4px;height:118px}
+.gm-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px}
+.gm-col i{display:block;width:100%;max-width:22px;border-radius:4px 4px 0 0;background:var(--gold)}
+.gm-col.zero i{background:color-mix(in srgb,var(--text) 10%,transparent)}
+.gm-col b{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums;min-height:12px}
+.gm-col span{font-size:9.5px;color:var(--muted)}
 .pub-chips{display:flex;flex-wrap:wrap;gap:4px}.pub-chip{font-size:10.5px;padding:1px 8px;border-radius:7px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--text);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent)}.pub-chip.esf{font-weight:600}.pub-chip.pes{background:color-mix(in srgb,var(--text) 7%,transparent);border-color:var(--border-soft)}
 .pub-crit ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.6}.pub-crit li b{display:inline;font-size:12px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:600}.pub-nota{font-size:11.5px;color:var(--muted);margin:6px 0 0}
 .pub-form{border:1px solid var(--border-soft);border-radius:12px;padding:10px 14px 4px;margin:6px 0 10px}.pub-form legend{font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);padding:0 6px}
@@ -232,11 +270,13 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
 
   <section class="aba-pane ativo" id="aba-atualizacoes">
     <div class="barra"><input class="busca" id="buscaAtu" type="search" placeholder="Buscar nas atualizações..." autocomplete="off"><select class="sel" id="filtroSit" aria-label="Situação"></select><select class="sel" id="filtroTese" aria-label="Tese"></select></div>
+    <div class="graf-bloco" id="grafAtu"></div>
     <div id="atuConteudo"></div>
   </section>
 
   <section class="aba-pane" id="aba-prateleira">
     <div class="barra"><input class="busca" id="buscaProd" type="search" placeholder="Buscar produto, público, documento..." autocomplete="off"><select class="sel" id="filtroProdSit" aria-label="Situação"></select><select class="sel" id="filtroArea" aria-label="Área"></select><select class="sel" id="filtroEsfera" aria-label="Esfera"><option value="">Federal, estadual e municipal</option><option value="federal">Federal</option><option value="estadual">Estadual</option><option value="municipal">Municipal</option></select><select class="sel" id="filtroPessoa" aria-label="Pessoa"><option value="">Pessoa física e empresa</option><option value="pf">Pessoa física</option><option value="pj">Empresa (PJ)</option></select></div>
+    <div class="graf-bloco" id="grafProd"></div>
     <div id="prodConteudo"></div>
   </section>
 
@@ -250,6 +290,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
       <select class="sel" id="fTipo" aria-label="Tipo"><option value="">Todos os tipos</option><option value="oportunidade">Oportunidades</option><option value="observacao">Em observação</option><option value="atencao">Atenção do escritório</option></select>
       <select class="sel" id="fArea" aria-label="Área"></select>
     </div>
+    <div class="graf-bloco" id="grafRad"></div>
     <div id="radarConteudo"></div>
   </section>
 </main>
@@ -294,6 +335,7 @@ var ICO={
   lista:'<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
   kanban:'<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4" width="5" height="16" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="10.5" y="4" width="5" height="11" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="17.5" y="4" width="3" height="7" rx="1.2" stroke="currentColor" stroke-width="1.6"/></svg>',
   agenda:'<svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  grafico:'<svg viewBox="0 0 24 24" fill="none" width="14" height="14" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
   pasta:'<svg viewBox="0 0 24 24" fill="none"><path d="M3.5 7a2 2 0 012-2h4l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2h-13a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
   doc:'<svg viewBox="0 0 24 24" fill="none"><path d="M7 3h7l4 4v14H7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v4h4M9.5 12h5M9.5 15.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
   video:'<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="13" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M16 10.5l5-3v9l-5-3" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>'
@@ -353,7 +395,7 @@ function confirmar(titulo,texto,botao){return new Promise(function(ok){
 /* ---------- dados ---------- */
 async function carregarTudo(){
   var r=await Promise.all([
-    _sb.from('teses').select('id,nome,ativo,area_direito_id').order('nome'),
+    _sb.from('teses').select('id,nome,ativo,area_direito_id,sigla,cor').order('nome'),
     _sb.from('areas_direito').select('id,nome,ativo,ordem').order('ordem'),
     _sb.from('etiquetas_catalogo').select('id,nome,cor,categoria,ordem,ativo').in('categoria',['tese_situacao','produto_situacao','perfil_situacao_funcional']),
     _sb.from('teses_atualizacoes').select('id,tese_id,situacao_id,titulo,corpo,link,fixada,ativo,autor_id,criado_em,atualizado_em').order('criado_em',{ascending:false}).limit(2000),
@@ -377,6 +419,75 @@ function montarFiltros(){
   $('filtroArea').innerHTML='<option value="">Todas as áreas</option>'+T.areas.map(function(a){return '<option value="'+a.id+'">'+esc(a.nome)+'</option>';}).join('');$('filtroArea').value=T.area;
   var areasR=AREAS_RADAR.concat(T.radar.map(function(x){return x.area;}).filter(function(a){return a&&AREAS_RADAR.indexOf(a)<0;})).filter(function(a,i,arr){return arr.indexOf(a)===i;});
   $('fArea').innerHTML='<option value="">Todas as áreas</option>'+areasR.map(function(a){return '<option>'+esc(a)+'</option>';}).join('');$('fArea').value=T.fArea;
+}
+/* ---------- T191 (17/11, Dr. Victor): Prateleira no mesmo padrão do Radar + gráficos ---------- */
+var GRAF_ABERTO={};try{GRAF_ABERTO=JSON.parse(localStorage.getItem('saga-teses-graficos')||'{}')||{};}catch(e){}
+function blocoGraficos(id,chave,graficos){
+  var el=$(id);if(!el)return;var ab=!!GRAF_ABERTO[chave];
+  el.innerHTML='<div class="graf-topo"><button class="btn btn-sm" type="button" data-graf="'+chave+'" aria-expanded="'+ab+'">'+ICO.grafico+'<span>'+(ab?'Esconder gráficos':'Mostrar gráficos')+'</span></button></div>'+
+    '<div class="graf-grade"'+(ab?'':' hidden')+'>'+graficos.filter(Boolean).join('')+'</div>';
+}
+function alternarGraficos(chave,btn){
+  var grade=btn.closest('.graf-bloco').querySelector('.graf-grade');var ab=!GRAF_ABERTO[chave];GRAF_ABERTO[chave]=ab;
+  try{localStorage.setItem('saga-teses-graficos',JSON.stringify(GRAF_ABERTO));}catch(e){}
+  btn.setAttribute('aria-expanded',String(ab));btn.querySelector('span').textContent=ab?'Esconder gráficos':'Mostrar gráficos';
+  if(window.sagaRecolher&&!semMov())window.sagaRecolher(grade,!ab);else grade.hidden=!ab;
+}
+/* barras deitadas: itens [{r:rótulo, v:número, c:cor da opção (opcional), f:'campo:valor' para filtrar ao clicar}] */
+function graficoBarras(titulo,itens,dica){
+  itens=itens.filter(function(i){return i.v>0;}).sort(function(a,b){return b.v-a.v;});
+  var tot=itens.reduce(function(s,i){return s+i.v;},0),max=itens.length?itens[0].v:0;
+  if(!itens.length)return '<div class="graf"><h4><span>'+esc(titulo)+'</span></h4><div class="graf-vazio">Nada com esses filtros.</div></div>';
+  return '<div class="graf"><h4><span>'+esc(titulo)+'</span>'+(dica?'<i>'+esc(dica)+'</i>':'')+'</h4>'+itens.slice(0,9).map(function(i){
+    var pc=tot?Math.round(i.v*100/tot):0;
+    return '<div class="gb-linha'+(i.f?' clic':'')+'"'+(i.f?' data-graf-f="'+esc(i.f)+'" role="button" tabindex="0"':'')+' title="'+esc(i.r)+': '+i.v+' ('+pc+'%)'+(i.f?' · clique para filtrar':'')+'"><span class="gb-rot">'+esc(i.r)+'</span><span class="gb-barra"><i style="width:'+Math.max(2,Math.round(i.v*100/max))+'%;'+(i.c?'--gc:'+esc(i.c):'')+'"></i></span><span class="gb-v">'+i.v+'</span></div>';
+  }).join('')+(itens.length>9?'<div class="graf-vazio">+ '+(itens.length-9)+' outros</div>':'')+'</div>';
+}
+/* colunas por mês (últimos 12): datas = lista de datas ISO */
+function graficoMeses(titulo,datas){
+  var hoje=new Date(),meses=[];for(var k=11;k>=0;k--){var d=new Date(hoje.getFullYear(),hoje.getMonth()-k,1);meses.push({ch:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),r:d.toLocaleDateString('pt-BR',{month:'short'}).replace('.',''),a:d.getFullYear(),v:0});}
+  datas.forEach(function(x){if(!x)return;var ch=String(x).slice(0,7);var m=meses.find(function(y){return y.ch===ch;});if(m)m.v++;});
+  var max=Math.max.apply(null,meses.map(function(m){return m.v;}).concat([1])),tot=meses.reduce(function(s,m){return s+m.v;},0);
+  return '<div class="graf"><h4><span>'+esc(titulo)+'</span><i>'+tot+' em 12 meses</i></h4><div class="gm">'+meses.map(function(m){
+    return '<div class="gm-col'+(m.v?'':' zero')+'" title="'+esc(m.r+' de '+m.a)+': '+m.v+'"><b>'+(m.v||'')+'</b><i style="height:'+Math.max(2,Math.round(m.v*100/max))+'%"></i><span>'+esc(m.r)+'</span></div>';}).join('')+'</div></div>';
+}
+function contar(lista,fn){var o={};lista.forEach(function(x){[].concat(fn(x)).forEach(function(k){if(k==null||k==='')return;o[k]=(o[k]||0)+1;});});return o;}
+function itensDe(o,rot,cor,filtro){return Object.keys(o).map(function(k){return {r:rot?rot(k):k,v:o[k],c:cor?cor(k):'',f:filtro?filtro(k):''};});}
+
+
+var GRAF_SEL={prodSit:'filtroProdSit',area:'filtroArea',esfera:'filtroEsfera',pessoa:'filtroPessoa',fTipo:'fTipo',fImpacto:'fImpacto',fArea:'fArea',sit:'filtroSit',tese:'filtroTese'};
+function filtrarPeloGrafico(s){
+  var i=String(s).indexOf(':');if(i<0)return;var campo=s.slice(0,i),v=s.slice(i+1);
+  T[campo]=T[campo]===v?'':v;var sel=GRAF_SEL[campo]&&$(GRAF_SEL[campo]);if(sel)sel.value=T[campo];
+  if(T.aba==='prateleira')desenharProdutos();else if(T.aba==='radar')desenharRadar();else desenharAtu();
+}
+function graficosProd(){
+  var l=produtosFiltrados();
+  blocoGraficos('grafProd','prateleira',[
+    graficoBarras('Por situação',itensDe(contar(l,function(p){return p.situacao_id||'';}),function(k){var c=catPorId(k);return c?c.nome:'Sem situação';},function(k){var c=catPorId(k);return c&&c.cor;},function(k){return 'prodSit:'+k;})),
+    graficoBarras('Por área do direito',itensDe(contar(l,function(p){return p.area_id||'';}),function(k){return nomeArea(k)||'Sem área';},null,function(k){return 'area:'+k;})),
+    graficoBarras('Esfera e pessoa',itensDe(contar(l,function(p){return (p.esferas||[]).concat(p.pessoa_tipo||[]);}),function(k){return k==='pf'?'Pessoa física':k==='pj'?'Empresa (PJ)':nomeDe(ESFERAS,k);},null,function(k){return (k==='pf'||k==='pj'?'pessoa:':'esfera:')+k;})),
+    graficoBarras('Para quem (situação funcional)',itensDe(contar(l,function(p){return (p.publico_criterios||{}).situacoes||[];}))),
+    graficoBarras('Material de estudo',[{r:'Com arquivos na pasta',v:l.filter(function(p){return arquivosDe(p.id).length;}).length},{r:'Com vídeos, áudios ou links',v:l.filter(function(p){return (p.links||[]).length;}).length},{r:'Sem material ainda',v:l.filter(function(p){return !arquivosDe(p.id).length&&!(p.links||[]).length;}).length}])
+  ]);
+}
+function graficosRadar(){
+  var base=radarFiltrado(false),cores={positivo:'#2e9d6a',negativo:'#b8862f',neutro:'#8a94a8'};
+  blocoGraficos('grafRad','radar',[
+    graficoMeses('Itens do radar por mês',base.map(function(r){return r.data||r.criado_em;})),
+    graficoBarras('Por tipo',itensDe(contar(base,function(r){return r.tipo;}),function(k){return TIPO[k]||k;},null,function(k){return 'fTipo:'+k;})),
+    graficoBarras('Impacto para o escritório',itensDe(contar(base,function(r){return r.impacto;}),function(k){return IMPACTO[k]||k;},function(k){return cores[k];},function(k){return 'fImpacto:'+k;})),
+    graficoBarras('Por área',itensDe(contar(base,function(r){return r.area;}),null,null,function(k){return 'fArea:'+k;})),
+    graficoBarras('Situação no radar',itensDe(contar(base,function(r){return r.status;}),function(k){var x=RADAR_ST.find(function(s){return s[0]===k;});return x?x[1]:k;},null,function(k){return 'radarSt:'+k;}))
+  ]);
+}
+function graficosAtu(){
+  var l=postsFiltrados();
+  blocoGraficos('grafAtu','atualizacoes',[
+    graficoMeses('Atualizações por mês',l.map(function(p){return p.criado_em;})),
+    graficoBarras('Por tese',itensDe(contar(l,function(p){return p.tese_id||'__geral';}),function(k){return k==='__geral'?'Geral (escritório)':(nomeTese(k)||'Tese');},null,function(k){return 'tese:'+k;})),
+    graficoBarras('Por situação',itensDe(contar(l,function(p){return p.situacao_id||'';}),function(k){var c=catPorId(k);return c?c.nome:'Sem situação';},function(k){var c=catPorId(k);return c&&c.cor;},function(k){return 'sit:'+k;}))
+  ]);
 }
 function desenharTudo(){desenharBotoes();desenharVisoes();desenharAtu();desenharProdutos();desenharRadar();}
 
@@ -413,7 +524,7 @@ function postsFiltrados(){
 function ehNovo(p){return !T.lidos[p.id]&&p.autor_id!==T.eu&&p.ativo;}
 function acoesPost(p){return (T.perm.editar?'<button class="btn btn-sm" type="button" data-editar="'+p.id+'">Editar</button>':'')+(T.perm.excluir?'<button class="btn btn-sm btn-perigo" type="button" data-excluir-post="'+p.id+'">Excluir</button>':'');}
 function desenharAtu(){
-  var v=T.vis.atualizacoes,lista=postsFiltrados(),h='';
+  graficosAtu();var v=T.vis.atualizacoes,lista=postsFiltrados(),h='';
   $('filtroTese').style.display=v==='blog'?'none':'';
   if(v==='blog')h=htmlBlog(lista);
   else if(!lista.length)h=vazioAtu();
@@ -526,7 +637,7 @@ function chipsPublico(p){
   return it.length?'<div class="pub-chips">'+it.join('')+'</div>':'';
 }
 function anoFaixa(de,ate){if(de&&ate)return 'de '+de+' a '+ate;if(de)return 'a partir de '+de;if(ate)return 'até '+ate;return '';}
-function htmlCriterios(p){
+function htmlCriterios(p,lado){
   var c=p.publico_criterios||{},l=[];
   var add=function(r,v){if(v)l.push('<li><b>'+r+':</b> '+esc(v)+'</li>');};
   add('Esfera e pessoa',rotuloEsferas(p));
@@ -535,7 +646,7 @@ function htmlCriterios(p){
   if(c.aposentado_ha_menos_de)add('Aposentado há menos de',c.aposentado_ha_menos_de+' anos (desde '+(new Date().getFullYear()-c.aposentado_ha_menos_de)+')');
   if(c.idade_min||c.idade_max)add('Idade',(c.idade_min?'a partir de '+c.idade_min:'')+(c.idade_min&&c.idade_max?' e ':'')+(c.idade_max?'até '+c.idade_max:'')+' anos');
   add('Precisa ter',(c.precisa||[]).map(function(x){return nomeDe(PRECISA,x);}).join('; '));
-  add('Quem não pode',c.nao_pode);add('Prazo',c.prazo);add('Onde achar',c.fonte);
+  if(!lado){add('Quem não pode',c.nao_pode);add('Prazo',c.prazo);}add('Onde achar',c.fonte);
   if(!l.length)return '';
   return '<div class="bloco pub-crit"><b>Público da tese (o que o sistema usa para achar clientes)</b><ul>'+l.join('')+'</ul>'+(p.tese_id&&PODE_CLIENTES?'<p class="pub-nota">"Achar clientes para esta tese" já abre Clientes por perfil com situação, órgão, cargo, UF, anos e idade preenchidos.</p>':'')+'</div>';
 }
@@ -591,7 +702,7 @@ function produtosFiltrados(){
   });
 }
 function desenharProdutos(){
-  var v=T.vis.prateleira,lista=produtosFiltrados(),h;
+  graficosProd();var v=T.vis.prateleira,lista=produtosFiltrados(),h;
   if(!lista.length&&v!=='kanban')h='<div class="vazio"><b>Nenhum produto na prateleira ainda.</b>'+(T.perm.criar?'Clique em "+ Novo produto" ou incorpore um item do Radar.':'')+'</div>';
   else if(v==='lista')h=htmlListaProd(lista);
   else if(v==='kanban')h=htmlKanbanProd(lista);
@@ -627,16 +738,33 @@ async function mudarProduto(id,campo,valor){
   if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));desenharProdutos();return;}
   var p=T.produtos.find(function(x){return x.id===id;});if(p)p[campo]=valor||null;desenharProdutos();
 }
-/* pasta do produto (tudo + arquivos) */
+function siglaTese(id){var t=T.teses.find(function(x){return x.id===id;});return t?(t.sigla||''):'';}
+function corProd(p){if(p.cor)return p.cor;var t=T.teses.find(function(x){return x.id===p.tese_id;});return (t&&t.cor)||'';}
+function chipsProd(p){
+  var c=catPorId(p.situacao_id),cr=p.publico_criterios||{};
+  return '<div class="chips">'+(c?'<span class="chip sit" style="--c:'+esc(c.cor||'#8a94a8')+'"><i></i>'+esc(c.nome)+'</span>':'')+
+    (p.esferas||[]).map(function(e){return '<span class="chip">'+esc(nomeDe(ESFERAS,e))+'</span>';}).join('')+
+    (p.pessoa_tipo||[]).map(function(e){return '<span class="chip">'+(e==='pj'?'PJ':'PF')+'</span>';}).join('')+
+    (cr.situacoes||[]).map(function(e){return '<span class="chip jul">'+esc(e)+'</span>';}).join('')+(p.ativo?'':'<span class="chip neg">Fora da prateleira</span>')+'</div>';
+}
+/* cartão da tese (como um cartão do Trello): texto à esquerda, público, prazo, vídeos e anexos à direita */
 function abrirPasta(id){
   var p=T.produtos.find(function(x){return x.id===id;});if(!p)return;
-  var bl=function(t,v){return v?'<div class="bloco"><b>'+t+'</b><div>'+esc(v)+'</div></div>':'';};
-  $('mdLer').className='md leitura largo';
-  $('mdLer').innerHTML='<div class="md-cab"><div><div class="post-topo">'+selo(catPorId(p.situacao_id))+'<span class="etq-tese">'+esc([nomeArea(p.area_id),nomeTese(p.tese_id)].filter(Boolean).join(' · ')||'Sem área')+'</span></div><h2>'+esc(p.nome)+'</h2>'+((p.etiquetas||[]).length?'<div class="etqs" style="margin-top:6px">'+p.etiquetas.map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div>':'')+'</div><button class="md-x" type="button" data-fechar="moLer" aria-label="Fechar">✕</button></div>'+
-    '<div class="md-corpo">'+chipsPublico(p)+'<div class="blocos">'+bl('Resumo da tese',p.resumo)+bl('Quem tem direito (público)',p.publico)+bl('Documentos necessários',p.documentos)+bl('Fundamento e jurisprudência',p.fundamento)+'</div>'+
-    (p.explicacao?'<div class="bloco"><b>Explicação completa</b><div>'+esc(p.explicacao)+'</div></div>':'')+htmlCriterios(p)+htmlLinks(p)+
-    ((p.resumo||p.publico||p.documentos||p.fundamento||p.explicacao)?'':'<div class="vazio" style="padding:16px">Ainda sem descrição.'+(T.perm.editar?' Clique em Editar para preencher.':'')+'</div>')+
-    '<div><div class="bloco"><b>Arquivos da pasta (imagens, documentos, vídeos)</b></div><div id="pastaArqs"></div></div></div>'+
+  var bl=function(t,v,cls){return v?'<div class="bloco'+(cls?' '+cls:'')+'"><b>'+t+'</b><div>'+esc(v)+'</div></div>':'';};
+  var cr=p.publico_criterios||{},cor=corProd(p),sg=siglaTese(p.tese_id),n=arquivosDe(p.id).length,pode=T.perm.criar||T.perm.editar;
+  var vazio=!(p.resumo||p.publico||p.documentos||p.fundamento||p.explicacao);
+  $('mdLer').className='md leitura largo prod-card';
+  $('mdLer').innerHTML='<div class="pc-faixa"'+(cor?' style="--pc:'+esc(cor)+'"':'')+'></div><div class="md-cab"><div>'+chipsProd(p)+'<h2>'+esc(p.nome)+'</h2><div class="meta">'+esc([nomeArea(p.area_id)||'Sem área',sg?'Tipo de ação '+nomeTese(p.tese_id)+' ('+sg+')':'Sem tipo de ação ligado',p.atualizado_em?'atualizado em '+dataBR(p.atualizado_em):''].filter(Boolean).join(' · '))+'</div>'+((p.etiquetas||[]).length?'<div class="etqs" style="margin-top:6px">'+p.etiquetas.map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div>':'')+'</div><button class="md-x" type="button" data-fechar="moLer" aria-label="Fechar">✕</button></div>'+
+    '<div class="md-corpo"><div class="pc-grade"><div class="pc-main">'+
+      (p.resumo?'<div class="pc-dest"><b>Resumo da tese</b><div>'+esc(p.resumo)+'</div></div>':'')+
+      bl('Quem tem direito',p.publico)+bl('Explicação completa',p.explicacao)+bl('Fundamento e jurisprudência',p.fundamento)+bl('Documentos necessários',p.documentos)+
+      (vazio?'<div class="vazio" style="padding:16px">Ainda sem descrição.'+(T.perm.editar?' Clique em Editar para preencher.':'')+'</div>':'')+
+    '</div><aside class="pc-lado">'+
+      (cr.prazo?'<div class="pc-aviso pz"><b>Prazo</b><div>'+esc(cr.prazo)+'</div></div>':'')+
+      (cr.nao_pode?'<div class="pc-aviso np"><b>Quem não pode</b><div>'+esc(cr.nao_pode)+'</div></div>':'')+
+      htmlCriterios(p,true)+htmlLinks(p)+
+      '<div class="bloco pc-anexos"><div class="pc-anx-cab"><b>Anexos ('+n+')</b>'+(pode?'<button class="btn btn-sm" type="button" data-anexar="'+p.id+'">+ Anexar documento</button>':'')+'</div><div id="pastaArqs"></div></div>'+
+    '</aside></div></div>'+
     '<div class="md-rod"><span class="esq">'+(T.perm.editar?'<button class="btn" type="button" data-editar-prod="'+p.id+'">Editar</button>':'')+(T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span>'+btnClientes(p.tese_id)+'<button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
   abrir('moLer');desenharArquivos(p.id);
 }
@@ -703,6 +831,7 @@ function formProduto(id,base){
     '<div class="grade2"><div class="campo"><label for="ppPub">Quem tem direito (público-alvo)</label><textarea id="ppPub" rows="3">'+v('publico')+'</textarea></div>'+
     '<div class="campo"><label for="ppDoc">Documentos necessários</label><textarea id="ppDoc" rows="3">'+v('documentos')+'</textarea></div></div>'+
     '<div class="campo"><label for="ppFun">Fundamento e jurisprudência</label><textarea id="ppFun" rows="3">'+v('fundamento')+'</textarea></div>'+
+    '<div class="campo"><label for="ppCor">Cor da tese (para achar depois os aptos na Base de dados)</label><input id="ppCor" type="color" value="'+esc((p&&p.cor)||'#c9a24a')+'" class="cor-esc"></div>'+
     '<div class="campo"><label for="ppEtq">Etiquetas (separe por vírgula)</label><input id="ppEtq" value="'+esc(p?(p.etiquetas||[]).join(', '):(base.etiquetas||[]).join(', '))+'"></div>'+htmlFormPublico(p)+'</div>'+
     '<div class="md-rod"><span class="esq">'+(p?'<button class="btn" type="button" id="ppAtivo">'+(p.ativo?'Tirar da prateleira':'Voltar para a prateleira')+'</button>':'')+(p&&T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span><button class="btn" type="button" data-fechar="moForm">Cancelar</button><button class="btn btn-ouro" type="button" id="ppSalvar">Salvar</button></div>';
   $('ppSit').onchange=function(){novaOpcao(this,'produto_situacao');};
@@ -713,7 +842,7 @@ function formProduto(id,base){
       etiquetas:$('ppEtq').value.split(',').map(function(x){return x.trim();}).filter(Boolean)};
     if(!d.nome){toast('Escreva o nome do produto.');return;}
     var pub=lerFormPublico();if(pub.linkRuim){toast('Algum link não começa com https:// — confira os vídeos e links.');return;}
-    d.publico_criterios=pub.criterios;d.esferas=pub.esferas;d.pessoa_tipo=pub.pessoa_tipo;d.links=pub.links;d.explicacao=pub.explicacao||null;
+    d.cor=$('ppCor').value||null;d.publico_criterios=pub.criterios;d.esferas=pub.esferas;d.pessoa_tipo=pub.pessoa_tipo;d.links=pub.links;d.explicacao=pub.explicacao||null;
     this.disabled=true;
     var r=p?await _sb.from('produtos_juridicos').update(d).eq('id',p.id).select('id').single():await _sb.from('produtos_juridicos').insert(d).select('id').single();
     this.disabled=false;if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));return;}
@@ -774,7 +903,7 @@ function desenharRadar(){
   var v=T.vis.radar;
   $('radarStatus').style.display=v==='kanban'?'none':'';
   $('radarStatus').innerHTML=RADAR_ST.map(function(s){return '<button class="pill'+(T.radarSt===s[0]?' active':'')+'" type="button" data-radar-st="'+s[0]+'">'+s[1]+(cont[s[0]]?'<b>'+cont[s[0]]+'</b>':'')+'</button>';}).join('');
-  var lista=v==='kanban'?base:radarFiltrado(),h;
+  graficosRadar();var lista=v==='kanban'?base:radarFiltrado(),h;
   lista=lista.slice().sort(function(a,b){return (b.destaque?1:0)-(a.destaque?1:0)||String(b.data||b.criado_em).localeCompare(String(a.data||a.criado_em));});
   if(!lista.length&&v!=='kanban')h='<div class="vazio"><b>Nada aqui.</b>O radar chega sozinho todo dia útil (o mesmo do e-mail "Radar VMM"). Mude os filtros ou a situação acima para ver mais.</div>';
   else if(v==='lista')h=htmlListaRadar(lista);
@@ -940,6 +1069,8 @@ function ligar(){
   $('filtroEsfera').addEventListener('change',function(){T.esfera=this.value;desenharProdutos();});
   $('filtroPessoa').addEventListener('change',function(){T.pessoa=this.value;desenharProdutos();});
   $('prodConteudo').addEventListener('change',function(e){var s=e.target.closest('select[data-cel]');if(s)mudarProduto(s.dataset.id,s.dataset.cel,s.value);});
+  document.addEventListener('click',function(e){var g=e.target.closest('[data-graf]');if(g){alternarGraficos(g.dataset.graf,g);return;}var f=e.target.closest('[data-graf-f]');if(f){filtrarPeloGrafico(f.dataset.grafF);return;}var an=e.target.closest('[data-anexar]');if(an){var ea=$('escolherArq');if(ea)ea.click();}});
+  document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var f=e.target.closest&&e.target.closest('[data-graf-f]');if(f)filtrarPeloGrafico(f.dataset.grafF);});
   $('prodConteudo').addEventListener('click',function(e){if(e.target.closest('select'))return;var c=e.target.closest('[data-prod]');if(c)abrirPasta(c.dataset.prod);});
   $('prodConteudo').addEventListener('keydown',function(e){if(e.key==='Enter'){var c=e.target.closest('[data-prod]');if(c)abrirPasta(c.dataset.prod);}});
   ligarKanban($('prodConteudo'),'data-kb-prod',function(id,dest){mudarProduto(id,'situacao_id',dest);});

@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.9",
+  versao: "3.10",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.10", data: "17/11/2026", mudou: "Teses e oportunidades: botão \"Mostrar gráficos\" nas abas Atualizações, Prateleira e Radar (barras por situação, área, esfera e pessoa, para quem, material, tipo, impacto, por tese e por mês; clicar numa barra filtra a tela); o cartão de cada tese abre organizado (resumo em destaque, prazo e \"quem não pode\" em destaque, público, vídeos e anexos ao lado, \"+ Anexar documento\"); cada tese tem a sua cor." },
     { versao: "3.9", data: "17/11/2026", mudou: "Ponto > Acessos: internet (IP) autorizada fica liberada de vez para toda a equipe, sem pedido nem aviso, em qualquer computador; o \"Autorizar só hoje\" saiu; autorizar uma internet resolve os outros pedidos dela; as entradas do administrador nunca geram aviso; \"Tirar autorização\" da internet na mesma tela." },
     { versao: "3.8", data: "17/11/2026", mudou: "Teses e oportunidades: cada produto da Prateleira ganhou o PÚBLICO DA TESE (esfera federal/estadual/municipal, pessoa física ou empresa, situação, órgão, cargo, UF, anos de ingresso e de aposentadoria, \"aposentado há menos de N anos\", idade, o que precisa ter, quem não pode, prazo e onde achar), explicação completa e vídeos, áudios e links (Drive, YouTube, NotebookLM); filtros por esfera e por pessoa física/empresa; \"Achar clientes para uma tese\" já abre Clientes por perfil com o público da tese aplicado (\"Tirar o público da tese\" volta ao que era)." },
     { versao: "3.7", data: "16/11/2026", mudou: "Nova tela Comunicação > Normas e prêmio: Normas da Captação, Como funciona o Prêmio da Captação (níveis, platô, plus, peso da tese, prêmio cruzado, meta da equipe), Meu progresso com a barra até o platô, Validar (Dr. Victor e Hevelyn) e Painel geral com fechamento do mês e PDF." },
@@ -739,6 +740,8 @@ window.SAGA_MANUAL = {
             "**Prateleira de produtos**: os produtos jurídicos que o escritório oferece, em **Cartões**, **Lista** ou **Kanban** (por situação), com filtros por situação, área do direito, **esfera** (federal, estadual, municipal) e **pessoa** (física ou empresa). Clique no produto para abrir a pasta: resumo, quem tem direito, documentos, fundamento, **explicação completa**, **público da tese**, **vídeos, áudios e links** (abrem em outra aba) e os arquivos.",
             "**Público da tese** (em [[Editar]] do produto): marque a esfera, pessoa física ou empresa, a situação (ativo, aposentado, pensionista), os órgãos, cargos e UFs, os anos de ingresso e de aposentadoria, \"aposentado há menos de N anos\", a idade, o que a pessoa precisa ter (precatório, dívida com o fisco...), quem não pode, o prazo e onde achar. Vídeo grande ou do NotebookLM entra por link do Google Drive ou do YouTube em [[+ Adicionar vídeo ou link]].",
             "**Radar de oportunidades**: teses que podem render ações novas.",
+            "[[Mostrar gráficos]] (nas três abas): barras e meses que resumem o que está na tela; clicar numa barra filtra por ela (clicar de novo tira o filtro). A escolha de mostrar ou esconder fica neste navegador.",
+            "Clique numa tese da Prateleira para abrir o **cartão** dela: resumo em destaque e o texto à esquerda; à direita o **prazo** (amarelo), **quem não pode** (vermelho), o público, os vídeos e os **anexos** ([[+ Anexar documento]] ou arrastar). Em [[Editar]] há a **cor da tese**, usada também para achar os aptos na Base de dados.",
             "[[Achar clientes para uma tese]]: escolha a tese e o SAGA abre **Clientes por perfil** com os clientes do Jurídico que ainda não têm essa tese e, quando o produto tem o público preenchido, já com a situação, o órgão, o cargo, a UF, os anos e a idade aplicados. O mesmo botão aparece na tese escolhida no Blog, em cada cartão do \"Por tese\", na leitura de uma atualização e na pasta do produto.",
             "Quem pode publica com [[+ Nova atualização]]."
           ],
