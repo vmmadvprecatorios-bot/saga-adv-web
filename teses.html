@@ -110,6 +110,14 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
 .prod h3{font-size:15px;font-weight:700;line-height:1.3}
 .prod .sub{font-size:11px;color:var(--muted)}
 .prod .res{font-size:12.5px;line-height:1.5;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pub-chips{display:flex;flex-wrap:wrap;gap:4px}.pub-chip{font-size:10.5px;padding:1px 8px;border-radius:7px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--text);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent)}.pub-chip.esf{font-weight:600}.pub-chip.pes{background:color-mix(in srgb,var(--text) 7%,transparent);border-color:var(--border-soft)}
+.pub-crit ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.6}.pub-crit li b{display:inline;font-size:12px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:600}.pub-nota{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+.pub-form{border:1px solid var(--border-soft);border-radius:12px;padding:10px 14px 4px;margin:6px 0 10px}.pub-form legend{font-size:11px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);padding:0 6px}
+.cxs{display:flex;flex-wrap:wrap;gap:6px 14px}.cxs .chk{flex-direction:row;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--text);font-weight:400}.campo .cxs .chk input,.campo .chk input{width:16px;height:16px;min-height:0;padding:0;flex:0 0 auto;border-radius:4px}.pub-form .campo{margin-bottom:8px}.faixa{display:flex;align-items:center;gap:6px}.faixa span{font-size:11.5px;color:var(--muted)}.faixa .num{width:72px}
+.ln-linha{display:grid;grid-template-columns:1fr 1.6fr auto auto;gap:6px;margin-top:6px}
+.links-prod{display:flex;flex-direction:column;gap:6px;margin-top:4px}.link-prod{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--border-soft);border-radius:10px;text-decoration:none;color:var(--text)}.link-prod:hover{border-color:var(--gold)}.link-prod svg{width:20px;height:20px;flex:0 0 auto;color:var(--gold)}.link-prod span{display:flex;flex-direction:column;min-width:0}.link-prod b{font-size:13px;font-weight:600}.link-prod i{font-style:normal;font-size:11px;color:var(--muted)}
+.kb-cartao .pub-chips{margin-top:2px}
+@media(max-width:860px){.ln-linha{grid-template-columns:1fr 1fr}}
 .etqs{display:flex;flex-wrap:wrap;gap:4px}.etqs span{font-size:10.5px;padding:1px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted)}
 .pasta-ico{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
 .pasta-ico svg{width:14px;height:14px}
@@ -228,7 +236,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
   </section>
 
   <section class="aba-pane" id="aba-prateleira">
-    <div class="barra"><input class="busca" id="buscaProd" type="search" placeholder="Buscar produto, público, documento..." autocomplete="off"><select class="sel" id="filtroProdSit" aria-label="Situação"></select><select class="sel" id="filtroArea" aria-label="Área"></select></div>
+    <div class="barra"><input class="busca" id="buscaProd" type="search" placeholder="Buscar produto, público, documento..." autocomplete="off"><select class="sel" id="filtroProdSit" aria-label="Situação"></select><select class="sel" id="filtroArea" aria-label="Área"></select><select class="sel" id="filtroEsfera" aria-label="Esfera"><option value="">Federal, estadual e municipal</option><option value="federal">Federal</option><option value="estadual">Estadual</option><option value="municipal">Municipal</option></select><select class="sel" id="filtroPessoa" aria-label="Pessoa"><option value="">Pessoa física e empresa</option><option value="pf">Pessoa física</option><option value="pj">Empresa (PJ)</option></select></div>
     <div id="prodConteudo"></div>
   </section>
 
@@ -271,7 +279,7 @@ window._sb=_sb;
    Quem mexe: administrador ou quem tem Teses e oportunidades = Editar / Admin total no Painel.
    ===================================================================== */
 var T={aba:'atualizacoes',perm:{ver:true,criar:false,editar:false,excluir:false,admin:false},eu:null,teses:[],areas:[],cat:[],posts:[],lidos:{},produtos:[],arquivos:[],radar:[],radarHist:[],pessoas:{},
-  tese:'',sit:'',busca:'',prodSit:'',area:'',buscaProd:'',radarSt:'novo',buscaRadar:'',fFase:'',fImpacto:'',fTipo:'',fArea:'',ordem:{},
+  tese:'',sit:'',busca:'',prodSit:'',area:'',esfera:'',pessoa:'',buscaProd:'',radarSt:'novo',buscaRadar:'',fFase:'',fImpacto:'',fTipo:'',fArea:'',ordem:{},
   vis:{atualizacoes:'blog',prateleira:'cartoes',radar:'cartoes'}};
 var RADAR_ST=[['novo','Novos'],['analise','Em análise'],['incorporado','Incorporados'],['descartado','Descartados'],['','Todos']];
 var FASE={julgado:'Já julgado',a_julgar:'Vai ser julgado',em_andamento:'Em andamento',norma:'Norma',outro:'Outro'};
@@ -347,7 +355,7 @@ async function carregarTudo(){
   var r=await Promise.all([
     _sb.from('teses').select('id,nome,ativo,area_direito_id').order('nome'),
     _sb.from('areas_direito').select('id,nome,ativo,ordem').order('ordem'),
-    _sb.from('etiquetas_catalogo').select('id,nome,cor,categoria,ordem,ativo').in('categoria',['tese_situacao','produto_situacao']),
+    _sb.from('etiquetas_catalogo').select('id,nome,cor,categoria,ordem,ativo').in('categoria',['tese_situacao','produto_situacao','perfil_situacao_funcional']),
     _sb.from('teses_atualizacoes').select('id,tese_id,situacao_id,titulo,corpo,link,fixada,ativo,autor_id,criado_em,atualizado_em').order('criado_em',{ascending:false}).limit(2000),
     _sb.from('teses_leituras').select('atualizacao_id').eq('usuario_id',T.eu||''),
     _sb.from('produtos_juridicos').select('*').order('ordem').order('nome'),
@@ -502,11 +510,84 @@ async function excluirPost(id){
 
 /* ---------- prateleira ---------- */
 function arquivosDe(id){return T.arquivos.filter(function(a){return a.produto_id===id;});}
+/* ---------- T191: público da tese (critérios que o sistema aplica no perfil dos clientes) ---------- */
+var ESFERAS=[['federal','Federal'],['estadual','Estadual'],['municipal','Municipal']];
+var PESSOAS=[['pf','Pessoa física'],['pj','Empresa (PJ)']];
+var PRECISA=[['precatorio','Recebeu precatório'],['rpv_alto','RPV de valor alto'],['precatorio_cancelado','Precatório/RPV cancelado'],['divida_uniao','Dívida com o fisco (União, estado ou município)'],['plano_saude','Paga plano de saúde'],['doenca_grave','Doença grave (só informativo: dado sensível, o sistema não filtra)']];
+var LINK_TIPOS=[['video','Vídeo'],['audio','Áudio'],['link','Link']];
+function nomeDe(lista,v){var x=lista.find(function(i){return i[0]===v;});return x?x[1]:v;}
+function rotuloEsferas(p){return (p.esferas||[]).map(function(e){return nomeDe(ESFERAS,e);}).concat((p.pessoa_tipo||[]).map(function(e){return nomeDe(PESSOAS,e);})).join(', ');}
+function txtPublico(p){var c=p.publico_criterios||{};return [rotuloEsferas(p),(c.situacoes||[]).join(' '),(c.orgaos||[]).join(' '),(c.cargos||[]).join(' '),c.nao_pode,c.prazo,c.fonte].filter(Boolean).join(' ');}
+function chipsPublico(p){
+  var c=p.publico_criterios||{},it=[];
+  (p.esferas||[]).forEach(function(e){it.push('<span class="pub-chip esf">'+esc(nomeDe(ESFERAS,e))+'</span>');});
+  (p.pessoa_tipo||[]).forEach(function(e){it.push('<span class="pub-chip pes">'+esc(e==='pj'?'PJ':'PF')+'</span>');});
+  (c.situacoes||[]).forEach(function(e){it.push('<span class="pub-chip">'+esc(e)+'</span>');});
+  return it.length?'<div class="pub-chips">'+it.join('')+'</div>':'';
+}
+function anoFaixa(de,ate){if(de&&ate)return 'de '+de+' a '+ate;if(de)return 'a partir de '+de;if(ate)return 'até '+ate;return '';}
+function htmlCriterios(p){
+  var c=p.publico_criterios||{},l=[];
+  var add=function(r,v){if(v)l.push('<li><b>'+r+':</b> '+esc(v)+'</li>');};
+  add('Esfera e pessoa',rotuloEsferas(p));
+  add('Situação',(c.situacoes||[]).join(', '));add('Órgão',(c.orgaos||[]).join(', '));add('Cargo',(c.cargos||[]).join(', '));add('UF',(c.ufs||[]).join(', '));
+  add('Ingresso',anoFaixa(c.ingresso_de,c.ingresso_ate));add('Aposentadoria',anoFaixa(c.aposentadoria_de,c.aposentadoria_ate));
+  if(c.aposentado_ha_menos_de)add('Aposentado há menos de',c.aposentado_ha_menos_de+' anos (desde '+(new Date().getFullYear()-c.aposentado_ha_menos_de)+')');
+  if(c.idade_min||c.idade_max)add('Idade',(c.idade_min?'a partir de '+c.idade_min:'')+(c.idade_min&&c.idade_max?' e ':'')+(c.idade_max?'até '+c.idade_max:'')+' anos');
+  add('Precisa ter',(c.precisa||[]).map(function(x){return nomeDe(PRECISA,x);}).join('; '));
+  add('Quem não pode',c.nao_pode);add('Prazo',c.prazo);add('Onde achar',c.fonte);
+  if(!l.length)return '';
+  return '<div class="bloco pub-crit"><b>Público da tese (o que o sistema usa para achar clientes)</b><ul>'+l.join('')+'</ul>'+(p.tese_id&&PODE_CLIENTES?'<p class="pub-nota">"Achar clientes para esta tese" já abre Clientes por perfil com situação, órgão, cargo, UF, anos e idade preenchidos.</p>':'')+'</div>';
+}
+function urlSegura(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
+function htmlLinks(p){
+  var ls=(p.links||[]).filter(function(x){return urlSegura(x.url);});if(!ls.length)return '';
+  return '<div class="bloco"><b>Vídeos, áudios e links</b><div class="links-prod">'+ls.map(function(x){return '<a class="link-prod" href="'+esc(urlSegura(x.url))+'" target="_blank" rel="noopener noreferrer">'+(x.tipo==='video'?ICO.video:ICO.doc)+'<span><b>'+esc(x.titulo||x.url)+'</b><i>'+esc(nomeDe(LINK_TIPOS,x.tipo||'link'))+' · abre em outra aba</i></span></a>';}).join('')+'</div></div>';
+}
+function soDigitos(el,max){el.addEventListener('input',function(){var v=el.value.replace(/\D/g,'').slice(0,max);if(v!==el.value)el.value=v;});}
+function linhaLink(x){x=x||{};return '<div class="ln-linha"><input class="ln-tit" maxlength="120" placeholder="Título (ex.: Videoaula PSS)" value="'+esc(x.titulo||'')+'"><input class="ln-url" maxlength="500" placeholder="https://drive.google.com/... ou https://youtu.be/..." value="'+esc(x.url||'')+'"><select class="ln-tipo">'+LINK_TIPOS.map(function(t){return '<option value="'+t[0]+'"'+((x.tipo||'video')===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select><button class="btn btn-sm" type="button" data-tirar-link aria-label="Tirar este link">✕</button></div>';}
+function htmlFormPublico(p){
+  var c=(p&&p.publico_criterios)||{},es=(p&&p.esferas)||[],pe=(p&&p.pessoa_tipo)||[],sit=c.situacoes||[],pr=c.precisa||[];
+  var cx=function(nome,val,marc,txt){return '<label class="chk"><input type="checkbox" data-'+nome+'="'+esc(val)+'"'+(marc?' checked':'')+'> '+esc(txt)+'</label>';};
+  var num=function(id,v,ph){return '<input id="'+id+'" class="num" inputmode="numeric" maxlength="4" placeholder="'+ph+'" value="'+esc(v==null?'':v)+'">';};
+  var sits=opcoes('perfil_situacao_funcional').map(function(o){return o.nome;});sit.forEach(function(x){if(sits.indexOf(x)<0)sits.push(x);});
+  return '<fieldset class="pub-form"><legend>Público da tese</legend><p class="pub-nota">O sistema usa isto para achar clientes (Clientes por perfil) e, depois, na Base de dados.</p>'+
+    '<div class="grade2"><div class="campo"><label>Esfera</label><div class="cxs">'+ESFERAS.map(function(e){return cx('esf',e[0],es.indexOf(e[0])>=0,e[1]);}).join('')+'</div></div>'+
+    '<div class="campo"><label>Pessoa</label><div class="cxs">'+PESSOAS.map(function(e){return cx('pes',e[0],pe.indexOf(e[0])>=0,e[1]);}).join('')+'</div></div></div>'+
+    '<div class="campo"><label>Situação funcional</label><div class="cxs">'+sits.map(function(n){return cx('sitf',n,sit.indexOf(n)>=0,n);}).join('')+'</div></div>'+
+    '<div class="grade3"><div class="campo"><label for="pcOrg">Órgãos (separe por vírgula)</label><input id="pcOrg" value="'+esc((c.orgaos||[]).join(', '))+'" placeholder="Ex.: UFAL, INSS"></div>'+
+    '<div class="campo"><label for="pcCar">Cargos (separe por vírgula)</label><input id="pcCar" value="'+esc((c.cargos||[]).join(', '))+'" placeholder="Ex.: Auditor-Fiscal"></div>'+
+    '<div class="campo"><label for="pcUf">UFs (separe por vírgula)</label><input id="pcUf" value="'+esc((c.ufs||[]).join(', '))+'" placeholder="Ex.: AL, PE"></div></div>'+
+    '<div class="grade3"><div class="campo"><label>Ano de ingresso</label><div class="faixa">'+num('pcIng1',c.ingresso_de,'de')+'<span>até</span>'+num('pcIng2',c.ingresso_ate,'até')+'</div></div>'+
+    '<div class="campo"><label>Ano de aposentadoria</label><div class="faixa">'+num('pcApo1',c.aposentadoria_de,'de')+'<span>até</span>'+num('pcApo2',c.aposentadoria_ate,'até')+'</div></div>'+
+    '<div class="campo"><label>Aposentado há menos de (anos) · Idade</label><div class="faixa">'+num('pcHa',c.aposentado_ha_menos_de,'anos')+'<span>idade</span>'+num('pcId1',c.idade_min,'mín.')+num('pcId2',c.idade_max,'máx.')+'</div></div></div>'+
+    '<div class="campo"><label>Precisa ter</label><div class="cxs">'+PRECISA.map(function(e){return cx('prec',e[0],pr.indexOf(e[0])>=0,e[1]);}).join('')+'</div></div>'+
+    '<div class="grade3"><div class="campo"><label for="pcNao">Quem não pode</label><input id="pcNao" maxlength="300" value="'+esc(c.nao_pode||'')+'"></div>'+
+    '<div class="campo"><label for="pcPrazo">Prazo</label><input id="pcPrazo" maxlength="200" value="'+esc(c.prazo||'')+'" placeholder="Ex.: 5 anos da aposentadoria"></div>'+
+    '<div class="campo"><label for="pcFonte">Onde achar (fonte)</label><input id="pcFonte" maxlength="200" value="'+esc(c.fonte||'')+'" placeholder="Ex.: Precatórios federais"></div></div></fieldset>'+
+    '<div class="campo"><label for="ppExp">Explicação completa (para a equipe estudar)</label><textarea id="ppExp" rows="5">'+esc((p&&p.explicacao)||'')+'</textarea></div>'+
+    '<div class="campo"><label>Vídeos, áudios e links (Google Drive, YouTube, NotebookLM)</label><div id="ppLinks">'+((p&&p.links)||[]).map(linhaLink).join('')+'</div><button class="btn btn-sm" type="button" id="ppAddLink" style="margin-top:6px">+ Adicionar vídeo ou link</button></div>';
+}
+function lerFormPublico(){
+  var md=$('mdForm'),marc=function(n){return Array.prototype.map.call(md.querySelectorAll('[data-'+n+']:checked'),function(i){return i.getAttribute('data-'+n);});};
+  var lista=function(id,maiusc){return $(id).value.split(',').map(function(x){x=x.trim();return maiusc?x.toUpperCase():x;}).filter(Boolean);};
+  var n=function(id){var v=parseInt($(id).value,10);return isNaN(v)?null:v;};
+  var c={situacoes:marc('sitf'),orgaos:lista('pcOrg'),cargos:lista('pcCar'),ufs:lista('pcUf',true),ingresso_de:n('pcIng1'),ingresso_ate:n('pcIng2'),aposentadoria_de:n('pcApo1'),aposentadoria_ate:n('pcApo2'),aposentado_ha_menos_de:n('pcHa'),idade_min:n('pcId1'),idade_max:n('pcId2'),precisa:marc('prec'),nao_pode:$('pcNao').value.trim(),prazo:$('pcPrazo').value.trim(),fonte:$('pcFonte').value.trim()};
+  Object.keys(c).forEach(function(k){if(c[k]==null||c[k]===''||(Array.isArray(c[k])&&!c[k].length))delete c[k];});
+  var links=[],ruim=false;
+  md.querySelectorAll('#ppLinks .ln-linha').forEach(function(l){var u=l.querySelector('.ln-url').value.trim(),t=l.querySelector('.ln-tit').value.trim();if(!u&&!t)return;if(!urlSegura(u)){ruim=true;return;}links.push({titulo:t||u,url:u,tipo:l.querySelector('.ln-tipo').value});});
+  return {criterios:c,esferas:marc('esf'),pessoa_tipo:marc('pes'),links:links,linkRuim:ruim,explicacao:$('ppExp').value.trim()};
+}
+function ligarFormPublico(){
+  ['pcIng1','pcIng2','pcApo1','pcApo2'].forEach(function(id){soDigitos($(id),4);});['pcHa','pcId1','pcId2'].forEach(function(id){soDigitos($(id),3);});
+  $('ppAddLink').onclick=function(){var d=document.createElement('div');d.innerHTML=linhaLink();var l=d.firstChild;$('ppLinks').appendChild(l);if(window.sagaRecolher&&!semMov()){l.hidden=true;window.sagaRecolher(l,false);}l.querySelector('.ln-tit').focus();};
+  $('ppLinks').addEventListener('click',function(e){var b=e.target.closest('[data-tirar-link]');if(!b)return;var l=b.closest('.ln-linha');if(window.sagaRecolher&&!semMov()){window.sagaRecolher(l,true);setTimeout(function(){l.remove();},430);}else l.remove();});
+}
 function produtosFiltrados(){
   var b=norm(T.buscaProd);
   return T.produtos.filter(function(p){
-    if(!p.ativo&&!T.perm.editar)return false;if(T.prodSit&&p.situacao_id!==T.prodSit)return false;if(T.area&&p.area_id!==T.area)return false;
-    if(b&&norm([p.nome,p.resumo,p.publico,p.documentos,p.fundamento,(p.etiquetas||[]).join(' '),nomeArea(p.area_id),nomeTese(p.tese_id)].join(' ')).indexOf(b)<0)return false;return true;
+    if(!p.ativo&&!T.perm.editar)return false;if(T.prodSit&&p.situacao_id!==T.prodSit)return false;if(T.area&&p.area_id!==T.area)return false;if(T.esfera&&(p.esferas||[]).indexOf(T.esfera)<0)return false;if(T.pessoa&&(p.pessoa_tipo||[]).indexOf(T.pessoa)<0)return false;
+    if(b&&norm([p.nome,p.resumo,p.explicacao,txtPublico(p),p.publico,p.documentos,p.fundamento,(p.etiquetas||[]).join(' '),nomeArea(p.area_id),nomeTese(p.tese_id)].join(' ')).indexOf(b)<0)return false;return true;
   });
 }
 function desenharProdutos(){
@@ -521,17 +602,17 @@ function cartaoProd(p){
   var n=arquivosDe(p.id).length;
   return '<article class="prod" data-prod="'+p.id+'" tabindex="0"><div style="display:flex;gap:8px;align-items:flex-start;justify-content:space-between"><div><h3>'+esc(p.nome)+'</h3><div class="sub">'+esc([nomeArea(p.area_id),nomeTese(p.tese_id)].filter(Boolean).join(' · ')||'Sem área')+(p.ativo?'':' · fora da prateleira')+'</div></div>'+selo(catPorId(p.situacao_id))+'</div>'+
     (p.resumo?'<div class="res">'+esc(p.resumo)+'</div>':'')+
-    ((p.etiquetas||[]).length?'<div class="etqs">'+p.etiquetas.map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div>':'')+
-    '<div class="rodape"><span class="pasta-ico">'+ICO.pasta+(n?n+(n===1?' arquivo':' arquivos'):'Pasta vazia')+'</span></div></article>';
+    chipsPublico(p)+((p.etiquetas||[]).length?'<div class="etqs">'+p.etiquetas.map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div>':'')+
+    '<div class="rodape"><span class="pasta-ico">'+ICO.pasta+(n?n+(n===1?' arquivo':' arquivos'):'Pasta vazia')+'</span>'+((p.links||[]).length?'<span class="pasta-ico">'+ICO.video+p.links.length+(p.links.length===1?' vídeo/link':' vídeos/links')+'</span>':'')+'</div></article>';
 }
 function htmlListaProd(lista){
-  var campos={nome:function(p){return p.nome;},sit:function(p){var c=catPorId(p.situacao_id);return c?(c.ordem||0):99;},area:function(p){return nomeArea(p.area_id);},tese:function(p){return nomeTese(p.tese_id);},arq:function(p){return arquivosDe(p.id).length;},atu:function(p){return p.atualizado_em||'';}};
+  var campos={nome:function(p){return p.nome;},sit:function(p){var c=catPorId(p.situacao_id);return c?(c.ordem||0):99;},area:function(p){return nomeArea(p.area_id);},tese:function(p){return nomeTese(p.tese_id);},pub:function(p){return rotuloEsferas(p);},arq:function(p){return arquivosDe(p.id).length;},atu:function(p){return p.atualizado_em||'';}};
   lista=ordenar(lista,'prod',campos);var ed=T.perm.editar;
-  return '<div class="tab-wrap"><table class="tab">'+cabTab('prod',[['nome','Produto'],['sit','Situação'],['area','Área'],['tese','Tipo de ação'],['etq','Etiquetas'],['arq','Arquivos'],['atu','Atualizado']])+'<tbody>'+lista.map(function(p){
+  return '<div class="tab-wrap"><table class="tab">'+cabTab('prod',[['nome','Produto'],['sit','Situação'],['area','Área'],['pub','Público'],['tese','Tipo de ação'],['etq','Etiquetas'],['arq','Arquivos'],['atu','Atualizado']])+'<tbody>'+lista.map(function(p){
     return '<tr data-prod="'+p.id+'"><td class="tit">'+esc(p.nome)+(p.ativo?'':' <span class="marca-novo" style="color:var(--muted)">Fora</span>')+'</td>'+
       '<td>'+(ed?'<select class="cel" data-cel="situacao_id" data-id="'+p.id+'" aria-label="Situação">'+'<option value="">Sem situação</option>'+opcoes('produto_situacao').map(function(c){return '<option value="'+c.id+'"'+(c.id===p.situacao_id?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('')+'</select>':selo(catPorId(p.situacao_id)))+'</td>'+
       '<td>'+(ed?'<select class="cel" data-cel="area_id" data-id="'+p.id+'" aria-label="Área"><option value="">Sem área</option>'+T.areas.map(function(a){return '<option value="'+a.id+'"'+(a.id===p.area_id?' selected':'')+'>'+esc(a.nome)+'</option>';}).join('')+'</select>':esc(nomeArea(p.area_id)))+'</td>'+
-      '<td class="cur">'+esc(nomeTese(p.tese_id))+'</td><td><div class="etqs">'+(p.etiquetas||[]).map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div></td><td class="cur">'+arquivosDe(p.id).length+'</td><td class="cur">'+dataBR(p.atualizado_em)+'</td></tr>';}).join('')+'</tbody></table></div>';
+      '<td>'+chipsPublico(p)+'</td><td class="cur">'+esc(nomeTese(p.tese_id))+'</td><td><div class="etqs">'+(p.etiquetas||[]).map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div></td><td class="cur">'+arquivosDe(p.id).length+'</td><td class="cur">'+dataBR(p.atualizado_em)+'</td></tr>';}).join('')+'</tbody></table></div>';
 }
 function htmlKanbanProd(lista){
   var cols=opcoes('produto_situacao').map(function(c){return {id:c.id,nome:c.nome,cor:c.cor};}).concat([{id:'',nome:'Sem situação',cor:'#8a94a8'}]);
@@ -539,7 +620,7 @@ function htmlKanbanProd(lista){
   return '<div class="kb" data-arrastar-lado>'+cols.map(function(c){var it=lista.filter(function(p){return (p.situacao_id||'')===c.id;});
     if(!c.id&&!it.length)return '';
     return '<div class="kb-col" data-kb-prod="'+c.id+'"><div class="kb-cab" style="--c:'+esc(c.cor||'#8a94a8')+'"><i></i>'+esc(c.nome)+'<span class="n">'+it.length+'</span></div><div class="kb-lista">'+it.map(function(p){var n=arquivosDe(p.id).length;
-      return '<div class="kb-cartao" data-prod="'+p.id+'"'+arr+'><b>'+esc(p.nome)+'</b><span class="m">'+esc(nomeArea(p.area_id)||'Sem área')+'</span>'+(n?'<span class="pasta-ico">'+ICO.pasta+n+'</span>':'')+'</div>';}).join('')+'</div></div>';}).join('')+'</div>';
+      return '<div class="kb-cartao" data-prod="'+p.id+'"'+arr+'><b>'+esc(p.nome)+'</b><span class="m">'+esc(nomeArea(p.area_id)||'Sem área')+'</span>'+chipsPublico(p)+(n?'<span class="pasta-ico">'+ICO.pasta+n+'</span>':'')+'</div>';}).join('')+'</div></div>';}).join('')+'</div>';
 }
 async function mudarProduto(id,campo,valor){
   var d={};d[campo]=valor||null;var r=await _sb.from('produtos_juridicos').update(d).eq('id',id);
@@ -552,8 +633,9 @@ function abrirPasta(id){
   var bl=function(t,v){return v?'<div class="bloco"><b>'+t+'</b><div>'+esc(v)+'</div></div>':'';};
   $('mdLer').className='md leitura largo';
   $('mdLer').innerHTML='<div class="md-cab"><div><div class="post-topo">'+selo(catPorId(p.situacao_id))+'<span class="etq-tese">'+esc([nomeArea(p.area_id),nomeTese(p.tese_id)].filter(Boolean).join(' · ')||'Sem área')+'</span></div><h2>'+esc(p.nome)+'</h2>'+((p.etiquetas||[]).length?'<div class="etqs" style="margin-top:6px">'+p.etiquetas.map(function(e){return '<span>'+esc(e)+'</span>';}).join('')+'</div>':'')+'</div><button class="md-x" type="button" data-fechar="moLer" aria-label="Fechar">✕</button></div>'+
-    '<div class="md-corpo"><div class="blocos">'+bl('Resumo da tese',p.resumo)+bl('Quem tem direito (público)',p.publico)+bl('Documentos necessários',p.documentos)+bl('Fundamento e jurisprudência',p.fundamento)+'</div>'+
-    ((p.resumo||p.publico||p.documentos||p.fundamento)?'':'<div class="vazio" style="padding:16px">Ainda sem descrição.'+(T.perm.editar?' Clique em Editar para preencher.':'')+'</div>')+
+    '<div class="md-corpo">'+chipsPublico(p)+'<div class="blocos">'+bl('Resumo da tese',p.resumo)+bl('Quem tem direito (público)',p.publico)+bl('Documentos necessários',p.documentos)+bl('Fundamento e jurisprudência',p.fundamento)+'</div>'+
+    (p.explicacao?'<div class="bloco"><b>Explicação completa</b><div>'+esc(p.explicacao)+'</div></div>':'')+htmlCriterios(p)+htmlLinks(p)+
+    ((p.resumo||p.publico||p.documentos||p.fundamento||p.explicacao)?'':'<div class="vazio" style="padding:16px">Ainda sem descrição.'+(T.perm.editar?' Clique em Editar para preencher.':'')+'</div>')+
     '<div><div class="bloco"><b>Arquivos da pasta (imagens, documentos, vídeos)</b></div><div id="pastaArqs"></div></div></div>'+
     '<div class="md-rod"><span class="esq">'+(T.perm.editar?'<button class="btn" type="button" data-editar-prod="'+p.id+'">Editar</button>':'')+(T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span>'+btnClientes(p.tese_id)+'<button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
   abrir('moLer');desenharArquivos(p.id);
@@ -611,7 +693,7 @@ function formProduto(id,base){
   var p=id?T.produtos.find(function(x){return x.id===id;}):null;base=base||{};
   if(p?!T.perm.editar:!T.perm.criar)return;
   var v=function(k){return esc(p?(p[k]||''):(base[k]||''));};
-  $('mdForm').className='md';
+  $('mdForm').className='md largo';
   $('mdForm').innerHTML='<div class="md-cab"><div><h2>'+(p?'Editar produto':'Novo produto jurídico')+'</h2><p>Cada produto é uma tese que o escritório oferece ou estuda oferecer. Os arquivos ficam na pasta do produto.</p></div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
     '<div class="md-corpo"><div class="campo"><label for="ppNome">Nome do produto</label><input id="ppNome" maxlength="160" value="'+v('nome')+'" placeholder="Ex.: Restituição do PSS sobre precatório"></div>'+
     '<div class="grade3"><div class="campo"><label for="ppArea">Área do direito</label><select id="ppArea"><option value="">Sem área</option>'+T.areas.map(function(a){return '<option value="'+a.id+'"'+(p&&p.area_id===a.id?' selected':'')+'>'+esc(a.nome)+'</option>';}).join('')+'</select></div>'+
@@ -621,14 +703,17 @@ function formProduto(id,base){
     '<div class="grade2"><div class="campo"><label for="ppPub">Quem tem direito (público-alvo)</label><textarea id="ppPub" rows="3">'+v('publico')+'</textarea></div>'+
     '<div class="campo"><label for="ppDoc">Documentos necessários</label><textarea id="ppDoc" rows="3">'+v('documentos')+'</textarea></div></div>'+
     '<div class="campo"><label for="ppFun">Fundamento e jurisprudência</label><textarea id="ppFun" rows="3">'+v('fundamento')+'</textarea></div>'+
-    '<div class="campo"><label for="ppEtq">Etiquetas (separe por vírgula)</label><input id="ppEtq" value="'+esc(p?(p.etiquetas||[]).join(', '):(base.etiquetas||[]).join(', '))+'"></div></div>'+
+    '<div class="campo"><label for="ppEtq">Etiquetas (separe por vírgula)</label><input id="ppEtq" value="'+esc(p?(p.etiquetas||[]).join(', '):(base.etiquetas||[]).join(', '))+'"></div>'+htmlFormPublico(p)+'</div>'+
     '<div class="md-rod"><span class="esq">'+(p?'<button class="btn" type="button" id="ppAtivo">'+(p.ativo?'Tirar da prateleira':'Voltar para a prateleira')+'</button>':'')+(p&&T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span><button class="btn" type="button" data-fechar="moForm">Cancelar</button><button class="btn btn-ouro" type="button" id="ppSalvar">Salvar</button></div>';
   $('ppSit').onchange=function(){novaOpcao(this,'produto_situacao');};
+  ligarFormPublico();
   fechar('moLer');abrir('moForm');
   $('ppSalvar').onclick=async function(){
     var d={nome:$('ppNome').value.trim(),area_id:$('ppArea').value||null,situacao_id:$('ppSit').value||null,tese_id:$('ppTese').value||null,resumo:$('ppRes').value.trim(),publico:$('ppPub').value.trim(),documentos:$('ppDoc').value.trim(),fundamento:$('ppFun').value.trim(),
       etiquetas:$('ppEtq').value.split(',').map(function(x){return x.trim();}).filter(Boolean)};
     if(!d.nome){toast('Escreva o nome do produto.');return;}
+    var pub=lerFormPublico();if(pub.linkRuim){toast('Algum link não começa com https:// — confira os vídeos e links.');return;}
+    d.publico_criterios=pub.criterios;d.esferas=pub.esferas;d.pessoa_tipo=pub.pessoa_tipo;d.links=pub.links;d.explicacao=pub.explicacao||null;
     this.disabled=true;
     var r=p?await _sb.from('produtos_juridicos').update(d).eq('id',p.id).select('id').single():await _sb.from('produtos_juridicos').insert(d).select('id').single();
     this.disabled=false;if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));return;}
@@ -852,6 +937,8 @@ function ligar(){
   $('buscaProd').addEventListener('input',deb(function(v){T.buscaProd=v;desenharProdutos();}));
   $('filtroProdSit').addEventListener('change',function(){T.prodSit=this.value;desenharProdutos();});
   $('filtroArea').addEventListener('change',function(){T.area=this.value;desenharProdutos();});
+  $('filtroEsfera').addEventListener('change',function(){T.esfera=this.value;desenharProdutos();});
+  $('filtroPessoa').addEventListener('change',function(){T.pessoa=this.value;desenharProdutos();});
   $('prodConteudo').addEventListener('change',function(e){var s=e.target.closest('select[data-cel]');if(s)mudarProduto(s.dataset.id,s.dataset.cel,s.value);});
   $('prodConteudo').addEventListener('click',function(e){if(e.target.closest('select'))return;var c=e.target.closest('[data-prod]');if(c)abrirPasta(c.dataset.prod);});
   $('prodConteudo').addEventListener('keydown',function(e){if(e.key==='Enter'){var c=e.target.closest('[data-prod]');if(c)abrirPasta(c.dataset.prod);}});

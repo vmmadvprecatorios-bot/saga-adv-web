@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.7",
-  data: "16/11/2026",
+  versao: "3.8",
+  data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.8", data: "17/11/2026", mudou: "Teses e oportunidades: cada produto da Prateleira ganhou o PÚBLICO DA TESE (esfera federal/estadual/municipal, pessoa física ou empresa, situação, órgão, cargo, UF, anos de ingresso e de aposentadoria, \"aposentado há menos de N anos\", idade, o que precisa ter, quem não pode, prazo e onde achar), explicação completa e vídeos, áudios e links (Drive, YouTube, NotebookLM); filtros por esfera e por pessoa física/empresa; \"Achar clientes para uma tese\" já abre Clientes por perfil com o público da tese aplicado (\"Tirar o público da tese\" volta ao que era)." },
     { versao: "3.7", data: "16/11/2026", mudou: "Nova tela Comunicação > Normas e prêmio: Normas da Captação, Como funciona o Prêmio da Captação (níveis, platô, plus, peso da tese, prêmio cruzado, meta da equipe), Meu progresso com a barra até o platô, Validar (Dr. Victor e Hevelyn) e Painel geral com fechamento do mês e PDF." },
     { versao: "3.6", data: "16/11/2026", mudou: "Editor de PDF refeito: tela inicial com todas as funções em cartões; Word para PDF, Imagens para PDF e PDF para imagem no próprio computador; Comprimir corrigido (antes podia AUMENTAR o arquivo: agora o texto continua texto e, se não diminuir, avisa e fica o original); depois de cada operação: Guardar na pasta do cliente (escolhendo cliente, processo e pasta), Baixar, Compartilhar (aplicativo ou link do SAGA com prazo) e Fazer outra operação com este arquivo." },
     { versao: "3.5", data: "14/11/2026", mudou: "Disparos de e-mail v2: três identidades (VMM, ANCREF, Sarmento) com logo e assinatura certa (ANCREF sempre em nome da instituição), caixa e modelo da mesma identidade, botão \"Não quero mais receber estes e-mails\" de 1 clique, linha de prévia, quadro \"Seu processo\", próximo passo, aviso antigolpe, como funciona, perguntas rápidas e transparência; pastas Pesquisa > Busca e Espelhos do TRF criadas sozinhas na ficha." },
@@ -723,9 +724,10 @@ window.SAGA_MANUAL = {
           quando: "Para acompanhar as teses do escritório e as oportunidades de ação, e para achar os clientes a quem oferecer uma tese.",
           passos: [
             "**Atualizações de teses**: novidades de cada tese (julgamentos, mudanças), em Blog, Linha do tempo, Por tese ou Lista.",
-            "**Prateleira de produtos**: os produtos jurídicos que o escritório oferece.",
+            "**Prateleira de produtos**: os produtos jurídicos que o escritório oferece, em **Cartões**, **Lista** ou **Kanban** (por situação), com filtros por situação, área do direito, **esfera** (federal, estadual, municipal) e **pessoa** (física ou empresa). Clique no produto para abrir a pasta: resumo, quem tem direito, documentos, fundamento, **explicação completa**, **público da tese**, **vídeos, áudios e links** (abrem em outra aba) e os arquivos.",
+            "**Público da tese** (em [[Editar]] do produto): marque a esfera, pessoa física ou empresa, a situação (ativo, aposentado, pensionista), os órgãos, cargos e UFs, os anos de ingresso e de aposentadoria, \"aposentado há menos de N anos\", a idade, o que a pessoa precisa ter (precatório, dívida com o fisco...), quem não pode, o prazo e onde achar. Vídeo grande ou do NotebookLM entra por link do Google Drive ou do YouTube em [[+ Adicionar vídeo ou link]].",
             "**Radar de oportunidades**: teses que podem render ações novas.",
-            "[[Achar clientes para uma tese]]: escolha a tese e o SAGA abre **Clientes por perfil** com os clientes do Jurídico que ainda não têm essa tese. O mesmo botão aparece na tese escolhida no Blog, em cada cartão do \"Por tese\", na leitura de uma atualização e na pasta do produto.",
+            "[[Achar clientes para uma tese]]: escolha a tese e o SAGA abre **Clientes por perfil** com os clientes do Jurídico que ainda não têm essa tese e, quando o produto tem o público preenchido, já com a situação, o órgão, o cargo, a UF, os anos e a idade aplicados. O mesmo botão aparece na tese escolhida no Blog, em cada cartão do \"Por tese\", na leitura de uma atualização e na pasta do produto.",
             "Quem pode publica com [[+ Nova atualização]]."
           ],
           img: "teses",
@@ -738,6 +740,7 @@ window.SAGA_MANUAL = {
             "Abra **Clientes por perfil**, ou venha de **Teses e oportunidades** pelo botão [[Achar clientes para esta tese]]: a tela já abre com os clientes do Jurídico que ainda não têm a tese, e um aviso no alto diz qual é o filtro.",
             "Filtre por situação funcional, órgão, cargo, UF, idade, ano de ingresso e de aposentadoria.",
             "Use **Já tem a tese** e **Ainda não tem a tese** para achar quem pode receber a oferta. **Com perfil preenchido** ou **Todos os clientes**, e **Jurídico**, **Captação** ou os dois, mudam de onde vêm os clientes.",
+            "Vindo de uma tese com **público** preenchido, o aviso do alto mostra o que foi aplicado; [[Tirar o público da tese]] volta aos filtros de antes. Só aparecem clientes com esses dados no perfil: quem está com o perfil vazio fica de fora.",
             "[[Ver sem esta tese]] tira o filtro da tese; [[Limpar filtros]] volta tudo ao começo.",
             "[[Salvar em PDF]] para levar a lista."
           ],
