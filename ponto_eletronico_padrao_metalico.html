@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611162011"></script>
+<script src="saga_guard.js?v=202611170016"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -238,7 +238,7 @@ tr.apagado td{color:var(--muted)}
   #roscasMeuPonto .centro .n{font-size:15px}
 .ap-apelido{width:100%;min-width:160px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text);font:inherit;font-size:12.5px}.ap-apelido:focus{outline:none;border-color:var(--gold)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611162011">
+<link rel="stylesheet" href="saga_tema.css?v=202611170016">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -374,7 +374,7 @@ tr.apagado td{color:var(--muted)}
   
     <!-- 12/11 (Dr. Victor; T162, bloco 176): internets (critério principal) e computadores autorizados -->
     <div class="secao-titulo" style="margin-top:22px">Internets e computadores</div>
-    <p class="sub" style="margin:0 0 10px">A <b>internet do escritório</b> (IP) é o critério principal: autorize aqui a internet do escritório. Entrada por internet ou computador ainda não autorizados avisa você no sino (uma vez por dia). O computador serve de apoio: mostra qual máquina e quem usou, e dá para autorizar um computador específico.</p>
+    <p class="sub" style="margin:0 0 10px">A <b>internet</b> (IP) é o critério principal. Internet <b>autorizada fica liberada de vez</b> para toda a equipe com login ativo: quem entra por ela não gera pedido nem aviso, seja qual for o computador. Internet nova (ex.: a do escritório caiu e a equipe usou outra) avisa você no sino; ao autorizar, ela entra na lista e os outros pedidos da mesma internet se resolvem sozinhos. As suas próprias entradas nunca geram aviso. "Tirar autorização" só desativa (o histórico fica). O computador serve de apoio: mostra qual máquina e quem usou.</p>
     <div class="toolbar" style="margin:0 0 8px"><b>Internets vistas (30 dias)</b><button class="btn-secondary btn-sm" id="apAtualizar" type="button" style="margin-left:auto">Atualizar</button></div>
     <div class="tabela-wrap"><table><thead><tr><th>Internet (IP)</th><th>Situação</th><th>Quem entrou por ela</th><th class="num">Entradas</th><th>Última vez</th><th></th></tr></thead><tbody id="tbApIps"></tbody></table></div>
     <div class="toolbar" style="margin:16px 0 8px"><b>Computadores</b><button class="btn-primary btn-sm" id="apEste" type="button" style="margin-left:auto" title="Use no computador que quer autorizar, mesmo que ninguém da equipe o use ainda">Autorizar este computador</button></div>
@@ -476,7 +476,7 @@ tr.apagado td{color:var(--muted)}
         <p class="sub" style="margin:0 0 8px">Todo dia cada colaborador entra com e-mail e senha e depois bate o ponto. O administrador geral e as pessoas marcadas abaixo nunca caem nem são barrados (só a expiração normal de segurança). Cada saída fica no Registro de atividades e em Ponto &gt; Acessos.</p>
         <label class="chk"><input type="checkbox" id="cfLoginFim"><span>Derrubar o login de todos os colaboradores às <input id="cfLoginHora" type="time" style="width:96px;margin:0 4px" value="20:00"> (no dia seguinte entram de novo)</span></label>
         <label class="chk"><input type="checkbox" id="cfLoginInativo"><span>Fora do horário de trabalho (antes do início, depois da saída, fim de semana e feriado), o login cai depois de <input id="cfLoginMin" type="number" min="5" max="240" style="width:64px;margin:0 4px" value="30"> min sem uso. No horário de trabalho não cai. Vale o horário de cada um no cadastro do Ponto; sem horário, 7h às 20h em dia útil.</span></label>
-        <label class="chk"><input type="checkbox" id="cfLoginRede"><span><b>Colaborador só entra pela internet do escritório.</b> De outra internet, a tela fica "Aguardando autorização" e você recebe no sino o pedido com "Autorizar só hoje", "Autorizar esta internet sempre" e "Recusar". Home office aprovado e quem "Pode bater o ponto de qualquer lugar" entram sem pedir.</span></label>
+        <label class="chk"><input type="checkbox" id="cfLoginRede"><span><b>Colaborador só entra pela internet do escritório.</b> De outra internet, a tela fica "Aguardando autorização" e você recebe no sino o pedido com "Autorizar esta internet" (fica liberada de vez para toda a equipe; os outros pedidos da mesma internet se resolvem sozinhos) e "Recusar". Home office aprovado e quem "Pode bater o ponto de qualquer lugar" entram sem pedir.</span></label>
         <div class="sub" id="cfLoginRedeAviso" style="margin:0 0 8px;color:var(--warning)">Ligue só depois de autorizar as internets em Ponto &gt; Acessos &gt; Internets e computadores (a do escritório e a da sua sala). Sem nenhuma internet autorizada, todos ficam aguardando.</div>
         <div class="sub" style="margin:6px 0 4px">Nunca caem nem são barrados:</div>
         <div id="cfLoginIsentos" style="display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 0 6px"></div>
@@ -667,13 +667,13 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611162011"></script>
-<script src="saga_texto.js?v=202611162011"></script>
-<script src="saga_ponto_relatorios.js?v=202611162011"></script>
+<script src="saga_ui.js?v=202611170016"></script>
+<script src="saga_texto.js?v=202611170016"></script>
+<script src="saga_ponto_relatorios.js?v=202611170016"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611162011"></script>
-<script src="saga_roscas.js?v=202611162011"></script>
-<script src="saga_pdf.js?v=202611162011"></script>
+<script src="ponto_calculo.js?v=202611170016"></script>
+<script src="saga_roscas.js?v=202611170016"></script>
+<script src="saga_pdf.js?v=202611170016"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -1155,22 +1155,28 @@ async function carregarAparelhos(){
   var etq=function(ok,txtOk,txtNao){return '<span class="etq ip-local" style="--c:'+(ok?'var(--success)':'var(--warning)')+'">'+(ok?txtOk:txtNao)+'</span>';};
   var quando=function(x){return x?dataBR(dataLocalDe(x)).slice(0,5)+' '+horaDe(x):'';};
   ti.innerHTML=ips.length?ips.map(function(x){
-    return '<tr><td><b>'+esc(x.ip)+'</b></td><td>'+etq(x.autorizado,'autorizada (escritório)','não autorizada')+'</td><td>'+esc((x.pessoas||[]).join(', '))+'</td><td class="num">'+x.entradas+'</td><td>'+quando(x.ultima)+'</td>'+
-      '<td style="text-align:right">'+(x.autorizado?'':'<button class="btn-secondary btn-sm" data-ap-ip="'+esc(x.ip)+'" type="button">Autorizar IP</button>')+'</td></tr>';
+    return '<tr><td><b>'+esc(x.ip)+'</b></td><td>'+etq(x.autorizado,'liberada para a equipe','não autorizada')+'</td><td>'+esc((x.pessoas||[]).join(', '))+'</td><td class="num">'+x.entradas+'</td><td>'+quando(x.ultima)+'</td>'+
+      '<td style="text-align:right">'+(x.autorizado?'<button class="lnk" data-ap-ip-tirar="'+esc(x.ip)+'" type="button">Tirar autorização</button>':'<button class="btn-secondary btn-sm" data-ap-ip="'+esc(x.ip)+'" type="button">Autorizar IP</button>')+'</td></tr>';
   }).join(''):'<tr><td colspan="6" class="vazio">Nenhuma entrada nos últimos 30 dias.</td></tr>';
   ta.innerHTML=aps.length?aps.map(function(a){
     var nome=a.apelido||a.nome_auto||'Computador';
     return '<tr'+(a.ativo?'':' style="opacity:.55"')+'><td><input class="ap-apelido" data-ap-apelido="'+a.id+'" value="'+esc(a.apelido||'')+'" placeholder="'+esc(a.nome_auto||'Apelido, ex.: Recepção 1')+'" maxlength="60" title="Apelido (ex.: Recepção 1); Enter grava"><div class="sub" style="margin:2px 0 0">'+esc(a.nome_auto||'')+'</div></td>'+
-      '<td>'+(a.ativo?etq(a.autorizado,'autorizado','não autorizado'):'<span class="etq ip-local" style="--c:var(--muted)">desativado</span>')+'</td>'+
+      '<td>'+(a.ativo?(a.autorizado?etq(true,'autorizado'):a.so_admin?'<span class="etq ip-local" style="--c:var(--muted)">seu (administrador)</span>':a.ip_liberado?etq(true,'pela internet liberada'):etq(false,'','não autorizado')):'<span class="etq ip-local" style="--c:var(--muted)">desativado</span>')+'</td>'+
       '<td>'+esc((a.usuarios||[]).join(', ')||'ninguém ainda')+'</td><td class="sub" style="margin:0">'+esc((a.ips||[]).slice(-4).join(', '))+'</td>'+
       '<td>'+quando(a.primeira_vez)+'<br>'+quando(a.ultima_vez)+'</td>'+
       '<td style="text-align:right;white-space:nowrap">'+(a.ativo?'<button class="btn-secondary btn-sm" data-ap-aut="'+a.id+'" data-v="'+(a.autorizado?'0':'1')+'" type="button">'+(a.autorizado?'Tirar autorização':'Autorizar')+'</button> <button class="lnk" data-ap-desativar="'+a.id+'" type="button">Desativar</button>':'<button class="lnk" data-ap-reativar="'+a.id+'" type="button">Reativar</button>')+'</td></tr>';
   }).join(''):'<tr><td colspan="6" class="vazio">Nenhum computador registrado ainda. Eles aparecem aqui conforme a equipe entra no SAGA.</td></tr>';
   ti.querySelectorAll('[data-ap-ip]').forEach(function(b){b.addEventListener('click',async function(){
-    if(!await (window.sagaConfirmar?sagaConfirmar('Autorizar a internet '+b.dataset.apIp+'?','Ela passa a contar como internet do escritório para o ponto e deixa de gerar aviso no sino.','Autorizar',false):confirm('Autorizar a internet '+b.dataset.apIp+'?')))return;
+    if(!await (window.sagaConfirmar?sagaConfirmar('Autorizar a internet '+b.dataset.apIp+'?','Fica liberada de vez para toda a equipe com login ativo (entrada e ponto), sem pedido nem aviso no sino. Os pedidos abertos desta internet se resolvem sozinhos.','Autorizar',false):confirm('Autorizar a internet '+b.dataset.apIp+'?')))return;
     b.disabled=true;var rr=await _sb.rpc('ponto_rede_adicionar',{p_ip:b.dataset.apIp,p_nome:null});b.disabled=false;
     if(rr.error||!rr.data||!rr.data.ok){showToast('Não foi possível autorizar: '+esc((rr.error&&rr.error.message)||'tente de novo'),'error');return;}
-    showToast('Internet '+esc(b.dataset.apIp)+' autorizada.','success');state.redes=null;carregarAparelhos();});});
+    showToast('Internet '+esc(b.dataset.apIp)+' liberada para toda a equipe.','success');state.redes=null;carregarAparelhos();});});
+  ti.querySelectorAll('[data-ap-ip-tirar]').forEach(function(b){b.addEventListener('click',async function(){
+    var ip=b.dataset.apIpTirar;
+    if(!await (window.sagaConfirmar?sagaConfirmar('Tirar a autorização da internet '+ip+'?','Quem entrar por ela volta a gerar pedido/aviso para você. Só desativa: o histórico fica.','Tirar autorização',true):confirm('Tirar a autorização da internet '+ip+'?')))return;
+    b.disabled=true;var rr=await _sb.from('ponto_redes_escritorio').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('ip',ip).eq('ativo',true).select('id');b.disabled=false;
+    if(rr.error||!rr.data||!rr.data.length){showToast('Não foi possível tirar a autorização: '+esc((rr.error&&rr.error.message)||'internet não encontrada'),'error');return;}
+    showToast('Autorização da internet '+esc(ip)+' retirada.','success');state.redes=null;carregarAparelhos();});});
   var salvarAp=async function(id,campos,msg){var rr=await _sb.rpc('aparelho_salvar',Object.assign({p_id:id},campos));if(rr.error){showToast('Não foi possível gravar: '+esc(rr.error.message),'error');return;}if(msg)showToast(msg,'success');carregarAparelhos();};
   ta.querySelectorAll('[data-ap-aut]').forEach(function(b){b.addEventListener('click',function(){salvarAp(b.dataset.apAut,{p_autorizado:b.dataset.v==='1'},b.dataset.v==='1'?'Computador autorizado.':'Autorização retirada.');});});
   ta.querySelectorAll('[data-ap-desativar]').forEach(function(b){b.addEventListener('click',async function(){if(!await (window.sagaConfirmar?sagaConfirmar('Desativar este computador?','Ele sai da lista de autorizados (o histórico fica).','Desativar',true):confirm('Desativar este computador?')))return;salvarAp(b.dataset.apDesativar,{p_ativo:false},'Computador desativado.');});});

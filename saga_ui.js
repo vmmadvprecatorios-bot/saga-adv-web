@@ -1283,12 +1283,12 @@
       return '<div data-ped="'+esc(p.id)+'" style="border:1px solid var(--border,#d5dbe4);border-radius:12px;padding:12px 14px;margin:0 0 10px">'
         +'<div style="font-size:13px;font-weight:600">'+esc(p.nome||'Colaborador')+'</div>'
         +'<div style="font-size:11.5px;color:var(--muted,#4a586e);line-height:1.5;margin:3px 0 10px">Internet '+esc(p.ip||'')+(p.aparelho?' · '+esc(p.aparelho):'')+' · pediu às '+fmtH(p.criado_em)+(p.ip_ja_autorizado?' · esta internet já está autorizada':'')+'</div>'
-        +(feito?'<div style="font-size:12px">'+(p.situacao==='recusado'?'Recusado':'Autorizado'+(p.alcance==='sempre'?' (internet autorizada sempre)':' (só hoje)'))+(p.decidido_por?' por '+esc(p.decidido_por):'')+(p.decidido_em?' às '+fmtH(p.decidido_em):'')+'.</div>'
-          :'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="saga-ped-btn principal" data-dec="hoje">Autorizar só hoje</button><button type="button" class="saga-ped-btn" data-dec="sempre">Autorizar esta internet sempre</button><button type="button" class="saga-ped-btn perigo" data-dec="recusar">Recusar</button></div>')
+        +(feito?'<div style="font-size:12px">'+(p.situacao==='recusado'?'Recusado':'Autorizado'+(p.alcance==='hoje'?' (só naquele dia)':' (internet liberada para toda a equipe)'))+(p.decidido_por?' por '+esc(p.decidido_por):'')+(p.decidido_em?' às '+fmtH(p.decidido_em):'')+'.</div>'
+          :'<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="saga-ped-btn principal" data-dec="autorizar">Autorizar esta internet</button><button type="button" class="saga-ped-btn perigo" data-dec="recusar">Recusar</button></div>')
         +'</div>';}).join(''):'<div style="font-size:12px;color:var(--muted,#4a586e)">Pedido não encontrado.</div>';
     fundo.innerHTML='<div style="width:100%;max-width:480px;background:var(--panel,#fff);color:var(--text,#13233a);border:1px solid var(--border,#d5dbe4);border-radius:16px;padding:20px 20px 16px;box-shadow:0 14px 40px rgba(0,0,0,.25);font-family:Montserrat,Arial,sans-serif">'
       +'<div id="sagaPedTit" style="font-family:Cormorant Garamond,serif;font-size:21px;font-weight:600;margin-bottom:4px">Pedido de entrada no SAGA</div>'
-      +'<div style="font-size:11.5px;color:var(--muted,#4a586e);line-height:1.5;margin-bottom:14px">Colaborador tentando entrar de uma internet que não está entre as autorizadas. "Sempre" acrescenta a internet em Ponto &gt; Cadastro &gt; Internets do escritório (vale também para o ponto).</div>'
+      +'<div style="font-size:11.5px;color:var(--muted,#4a586e);line-height:1.5;margin-bottom:14px">Colaborador tentando entrar de uma internet que ainda não está autorizada. "Autorizar esta internet" a libera de vez para toda a equipe com login ativo (entrada e ponto): ninguém precisa pedir de novo por ela e os outros pedidos da mesma internet se resolvem sozinhos. Para tirar depois: Ponto &gt; Acessos &gt; Internets e computadores.</div>'
       +linhas+'<div style="text-align:right;margin-top:6px"><button type="button" class="saga-ped-btn" data-fechar>Fechar</button></div></div>';
     if(!document.getElementById('sagaPedBtnCss')){var cs=document.createElement('style');cs.id='sagaPedBtnCss';
       cs.textContent='.saga-ped-btn{height:32px;padding:0 14px;border-radius:9px;border:1px solid var(--border,#d5dbe4);background:color-mix(in srgb,var(--text,#13233a) 4%,transparent);color:var(--text,#13233a);font:inherit;font-size:12px;font-weight:400;cursor:pointer;transition:background .2s,border-color .2s}'
@@ -1306,10 +1306,10 @@
       try{
         var r=await global._sb.rpc('entrada_decidir',{p_pedido:id,p_decisao:b.getAttribute('data-dec')});
         if(r.error)throw r.error;
-        var txt=b.getAttribute('data-dec')==='recusar'?'Entrada recusada.':'Entrada autorizada: a tela da pessoa libera sozinha.';
+        var txt=b.getAttribute('data-dec')==='recusar'?'Entrada recusada.':'Internet liberada para toda a equipe: a tela da pessoa libera sozinha'+(r.data&&r.data.outros_resolvidos?' (e mais '+r.data.outros_resolvidos+' pedido(s) da mesma internet)':'')+'.';
         if(typeof global.showToast==='function')global.showToast(txt,'success');
         var bx=cx.querySelector('div:last-child');if(bx)bx.outerHTML='<div style="font-size:12px">'+esc(txt)+'</div>';
-        if(b.getAttribute('data-dec')==='sempre')setTimeout(function(){abrirPedidosEntrada(ids);},400);
+        if(b.getAttribute('data-dec')!=='recusar')setTimeout(function(){abrirPedidosEntrada(ids);},400);
       }catch(err){
         cx.querySelectorAll('button').forEach(function(x){x.disabled=false;});
         if(typeof global.showToast==='function')global.showToast('Não deu para gravar: '+((err&&err.message)||'erro'),'error');

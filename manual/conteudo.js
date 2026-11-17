@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.8",
+  versao: "3.9",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.9", data: "17/11/2026", mudou: "Ponto > Acessos: internet (IP) autorizada fica liberada de vez para toda a equipe, sem pedido nem aviso, em qualquer computador; o \"Autorizar só hoje\" saiu; autorizar uma internet resolve os outros pedidos dela; as entradas do administrador nunca geram aviso; \"Tirar autorização\" da internet na mesma tela." },
     { versao: "3.8", data: "17/11/2026", mudou: "Teses e oportunidades: cada produto da Prateleira ganhou o PÚBLICO DA TESE (esfera federal/estadual/municipal, pessoa física ou empresa, situação, órgão, cargo, UF, anos de ingresso e de aposentadoria, \"aposentado há menos de N anos\", idade, o que precisa ter, quem não pode, prazo e onde achar), explicação completa e vídeos, áudios e links (Drive, YouTube, NotebookLM); filtros por esfera e por pessoa física/empresa; \"Achar clientes para uma tese\" já abre Clientes por perfil com o público da tese aplicado (\"Tirar o público da tese\" volta ao que era)." },
     { versao: "3.7", data: "16/11/2026", mudou: "Nova tela Comunicação > Normas e prêmio: Normas da Captação, Como funciona o Prêmio da Captação (níveis, platô, plus, peso da tese, prêmio cruzado, meta da equipe), Meu progresso com a barra até o platô, Validar (Dr. Victor e Hevelyn) e Painel geral com fechamento do mês e PDF." },
     { versao: "3.6", data: "16/11/2026", mudou: "Editor de PDF refeito: tela inicial com todas as funções em cartões; Word para PDF, Imagens para PDF e PDF para imagem no próprio computador; Comprimir corrigido (antes podia AUMENTAR o arquivo: agora o texto continua texto e, se não diminuir, avisa e fica o original); depois de cada operação: Guardar na pasta do cliente (escolhendo cliente, processo e pasta), Baixar, Compartilhar (aplicativo ou link do SAGA com prazo) e Fazer outra operação com este arquivo." },
@@ -244,6 +245,17 @@ window.SAGA_MANUAL = {
           img: "ponto_acessos",
           marcas: ["Aba Acessos (só o administrador vê).", "Escolher o dia ou os últimos 7 dias.", "Entrou no sistema, bateu o ponto e a diferença entre os dois.", "Como entrou, aparelho e rede (IP)."],
           atencao: ["Dias antes de 11/11/2026 mostram a hora do registro de acessos antigo, sem aparelho nem IP.", "O administrador não aparece na própria lista."]
+        },
+        { id: "internets", titulo: "Para o administrador: internets autorizadas e pedidos de entrada",
+          quando: "Para liberar a internet do escritório (ou outra de confiança) para toda a equipe e responder quando alguém entra por uma internet nova. Só o administrador geral vê.",
+          passos: [
+            "No Ponto, aba **Acessos**, desça até **Internets e computadores**. Em **Internets vistas (30 dias)**, clique em [[Autorizar IP]] na internet do escritório.",
+            "Internet autorizada fica **liberada de vez** para todo colaborador com login ativo: quem entra por ela não gera pedido nem aviso no sino, em qualquer computador.",
+            "Quando alguém entra por uma internet **nova** (por exemplo, a do escritório caiu e usaram outra), o sino avisa. Se a chave \"Colaborador só entra pela internet do escritório\" estiver ligada, chega o **Pedido de entrada** com [[Autorizar esta internet]] e [[Recusar]].",
+            "Ao autorizar, a internet entra na lista e **os outros pedidos da mesma internet se resolvem sozinhos**: não é preciso autorizar um por um.",
+            "Para tirar a autorização de uma internet, clique em [[Tirar autorização]] na mesma tabela. Só desativa: o histórico fica."
+          ],
+          atencao: ["As suas próprias entradas (administrador) nunca geram pedido nem aviso, de nenhuma internet e de nenhum aparelho.", "O aviso \"Fulano entrou no sistema\" da primeira entrada do dia continua: ele é só informativo."]
         }
       ]
     },
