@@ -2005,7 +2005,7 @@ html.saga-embed #modalTarefa{background:transparent}
             <div class="dropdown-custom-opcao selecionada">Todos</div>
             <div class="dropdown-custom-opcao">Atrasadas</div>
             <div class="dropdown-custom-opcao">Hoje</div>
-            <div class="dropdown-custom-opcao">Esta Semana</div>
+            <div class="dropdown-custom-opcao">Esta Semana</div><div class="dropdown-custom-opcao">Próximos 5 dias</div>
             <div class="dropdown-custom-opcao">Sem Prazo</div>
             <div class="dropdown-custom-opcao">Mais de 3 dias</div>
             <div class="dropdown-custom-opcao">De 1 a 3 dias</div>
@@ -3366,6 +3366,8 @@ function tarefaPassaFiltros(t, ignorar){
     if(faixa&&classePrazoRoscaTarefa(t)!==faixa.v)return false;
     if(filtrosAtivos.prazo === 'Atrasadas' && !tarefaEstaAtrasada(t)) return false;
     if(filtrosAtivos.prazo === 'Esta Semana' && !tarefaEhEstaSemana(t)) return false;
+    // 17/11 (Painel geral): prazo de hoje até 5 dias à frente, como o "Prazo fatal" do Painel
+    if(filtrosAtivos.prazo === 'Próximos 5 dias'){ var d5=new Date(); d5.setHours(0,0,0,0); var ate5=new Date(d5.getTime()+5*864e5); var dp=t.dataPrazo?new Date(t.dataPrazo+'T00:00:00'):null; if(!dp||dp<d5||dp>ate5||t.status==='concluida') return false; }
     if(filtrosAtivos.prazo === 'Sem Prazo' && t.dataPrazo) return false;
   }
 
@@ -5752,6 +5754,11 @@ async function iniciarMinhasTarefas(){
   if(qsTI.get('modo') === 'intimacoes' || qsTI.get('intimacao')){ location.replace('monitoramento_multi_oab.html' + location.search); return; }
   // Veio do gráfico "Tarefas por prazo" do Dashboard: abre filtrado pela faixa
   var prazoUrl = qsTI.get('prazo'), faixaUrl = prazoUrl && PRAZOS_GRAFICOS_TAREFAS.find(function(x){ return x.v === prazoUrl; });
+  // 17/11: atalhos do Painel geral (?prazo=atrasadas | 5dias e ?visao=Minhas)
+  if(!faixaUrl && prazoUrl === 'atrasadas') faixaUrl = { filtro:'Atrasadas' };
+  if(!faixaUrl && prazoUrl === '5dias') faixaUrl = { filtro:'Próximos 5 dias' };
+  var visaoUrl = qsTI.get('visao');
+  if(visaoUrl && ['Todas','Minhas','Recebidas','Atribuidas'].indexOf(visaoUrl) >= 0){ filtrosAtivos.visao = visaoUrl; document.querySelectorAll('#visaoTarefas [data-visao]').forEach(function(x){ x.classList.toggle('ativo', x.dataset.visao === visaoUrl); }); }
   if(faixaUrl){ filtrosAtivos.prazo = faixaUrl.filtro; var dpz = document.getElementById('dropFiltroPrazo'); if(dpz){ dpz.setAttribute('data-valor', faixaUrl.filtro); var sp = dpz.querySelector('.dropdown-custom-valor span'); if(sp) sp.textContent = 'Prazo: ' + faixaUrl.filtro; } }
   // T161: minhas_tarefas.html?processo=<id> (fora da ficha) mostra só as tarefas daquele processo
   if(qsTI.get('processo') && !document.documentElement.classList.contains('saga-embed')){

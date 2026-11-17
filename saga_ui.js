@@ -640,88 +640,102 @@
     });
   }
 
+  // 17/11 (Dr. Victor): menu reorganizado. Painel geral sozinho no alto; Meu dia é o 1º grupo; Precatórios em Processos;
+  // Editor de PDF em Gestão; nomes curtos; itens novos Relatórios, Parceiros e Modelos. Tela nova: pôr no grupo certo.
   var SIDEBAR_HTML=''
-    +'<div class="nav-section" data-grupo="processos" role="button" tabindex="0" aria-expanded="true">Processos</div><div class="nav-grupo" data-grupo="processos">'
+    +'<div class="nav-item nav-item-painel" data-tela="dashboard" onclick="sagaIrPara(\'dashboard_padrao_metalico.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Painel geral</div>'
+    +'<div class="nav-section" data-grupo="meudia" role="button" tabindex="0" aria-expanded="true">Meu dia</div><div class="nav-grupo" data-grupo="meudia">'
+    +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Ponto</div>'
+    +'<div class="nav-item" data-tela="tarefas" onclick="sagaIrPara(\'minhas_tarefas.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
+    +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Intimações</div>'
+    +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
+    // T166 (12/11, Dr. Victor): o que o Claude (SAGA no Claude) pediu para a pessoa trazer; só quem usa o conector
+    +'<div class="nav-item" data-tela="pedidos_claude" onclick="sagaIrPara(\'pedidos_claude.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2h-6l-4 4v-4H6a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6.5l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>'
+    +'Pedidos do Saga IA<span class="nav-badge-chat nav-badge-dia" id="navBadgePedidosClaude" style="display:none" title="Pedidos do Saga IA em aberto"></span></div>'
+    +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Notas</div>'
+    +'</div><div class="nav-section" data-grupo="processos" role="button" tabindex="0" aria-expanded="true">Processos</div><div class="nav-grupo" data-grupo="processos">'
     +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Jurídico</div>'
     +'<div class="nav-item" data-tela="processos_captacao" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=captacao\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 8v6M14 11h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Captação</div>'
-    +'<div class="nav-item" data-tela="cartas" onclick="sagaIrPara(\'cartas.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Cartas</div>'
-    +'<div class="nav-item" data-tela="disparos" onclick="sagaIrPara(\'disparos_email.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-6 18-3-8-9-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 13l9-10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Disparos de e-mail</div>'
-    +'<div class="nav-item" data-tela="buscas" onclick="sagaIrPara(\'pedidos_busca.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M15.4 15.4L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10.5" cy="9" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7.2 14a3.6 3.6 0 0 1 6.6 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
-    +'Pedidos de busca<span class="nav-badge-chat nav-badge-dia" id="navBadgeBuscas" style="display:none" title="Pedidos de busca a fazer"></span></div>'
+    +'<div class="nav-item" data-tela="precatorios" onclick="sagaIrPara(\'precatorios.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Precatórios e RPV</div>'
     +'<div class="nav-item" data-tela="clientes_perfil" onclick="sagaIrPara(\'clientes_perfil.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 20a6.5 6.5 0 0 1 10.5-5.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17.5" cy="16.5" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.7 18.7L22 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Clientes por perfil</div>'
     +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Teses e oportunidades</div>'
-    // T168 (13/11, Dr. Victor): juntar, separar, girar, comprimir PDFs sem o arquivo sair do computador (LGPD)
-    +'<div class="nav-item" data-tela="editor_pdf" onclick="sagaIrPara(\'editor_pdf.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5M9 13.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Editor de PDF</div>'
-    +'</div><div class="nav-section" data-grupo="meudia" role="button" tabindex="0" aria-expanded="true">Meu dia</div><div class="nav-grupo" data-grupo="meudia">'
-    +'<div class="nav-item" data-tela="ponto" onclick="sagaIrPara(\'ponto_eletronico_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Ponto Eletrônico</div>'
-    +'<div class="nav-item" data-tela="tarefas" onclick="sagaIrPara(\'minhas_tarefas.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
-    // T166 (12/11, Dr. Victor): o que o Claude (SAGA no Claude) pediu para a pessoa trazer; só quem usa o conector
-    +'<div class="nav-item" data-tela="pedidos_claude" onclick="sagaIrPara(\'pedidos_claude.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2h-6l-4 4v-4H6a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6.5l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>'
-    +'Pedidos do Saga IA<span class="nav-badge-chat nav-badge-dia" id="navBadgePedidosClaude" style="display:none" title="Pedidos do Saga IA em aberto"></span></div>'
-    +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
-    +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Intimações</div>'
-    +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Notas</div>'
-    +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicação</div><div class="nav-grupo" data-grupo="comunicacao">'
-    +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Chat Interno<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
-    +'<div class="nav-item" data-tela="sugestoes" onclick="sagaIrPara(\'sugestoes.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Sugestões de melhoria</div>'
-    +'<div class="nav-item" data-tela="manual" onclick="sagaIrPara(\'manual.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5zM9 7.5h7M9 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Manual do SAGA</div>'
-    +'<div class="nav-item" data-tela="treinamentos" onclick="sagaIrPara(\'treinamentos.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M2 8l10-5 10 5-10 5-10-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Treinamentos</div>'
-    +'<div class="nav-item" data-tela="premios" onclick="sagaIrPara(\'premios.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 4h8v5a4 4 0 01-8 0V4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4M12 13v4M8.5 20h7M9.5 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Normas e prêmio</div>'
+    // T192 (17/11, Dr. Victor): relatórios dos processos para os clientes (tela feita por outra conversa)
+    +'<div class="nav-item" data-tela="relatorios_clientes" onclick="sagaIrPara(\'relatorios_clientes.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5M9 17v-3M12 17v-5M15 17v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Relatórios</div>'
+    // 17/11 (Dr. Victor, ideia do ADVBOX): parceiros (ANCREF, Sarmento) e quem indica clientes, pela Origem do cliente
+    +'<div class="nav-item" data-tela="parceiros" onclick="sagaIrPara(\'parceiros.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 12l4-4 4 3 3-2 7 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 8l-4 4 5 5 2-1M21 14l-5 4-3-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Parceiros</div>'
+    +'<div class="nav-item" data-tela="buscas" onclick="sagaIrPara(\'pedidos_busca.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M15.4 15.4L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10.5" cy="9" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7.2 14a3.6 3.6 0 0 1 6.6 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+    +'Pedidos de busca<span class="nav-badge-chat nav-badge-dia" id="navBadgeBuscas" style="display:none" title="Pedidos de busca a fazer"></span></div>'
+    +'<div class="nav-item" data-tela="cartas" onclick="sagaIrPara(\'cartas.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Cartas</div>'
+    +'<div class="nav-item" data-tela="disparos" onclick="sagaIrPara(\'disparos_email.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-6 18-3-8-9-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 13l9-10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Disparos de e-mail</div>'
     +'</div><div class="nav-section" data-grupo="gestao" role="button" tabindex="0" aria-expanded="true">Gestão</div><div class="nav-grupo" data-grupo="gestao">'
-    +'<div class="nav-item" data-tela="dashboard" onclick="sagaIrPara(\'dashboard_padrao_metalico.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="3" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/><rect x="13" y="13" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Dashboard</div>'
     +'<div class="nav-item" data-tela="financeiro" onclick="sagaIrPara(\'financeiro.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Financeiro</div>'
-    +'<div class="nav-item" data-tela="precatorios" onclick="sagaIrPara(\'precatorios.html\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Precatórios e RPV</div>'
     +'<div class="nav-item" data-tela="marketing" onclick="sagaIrPara(\'marketing_campanhas_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8v18l-18-8v-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 15v4a2 2 0 002 2h2" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Marketing</div>'
     +'<div class="nav-item" data-tela="colaboradores" onclick="sagaIrPara(\'gestao_colaboradores_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Colaboradores</div>'
+    // 17/11 (Dr. Victor, ideia do ADVBOX): atalho para os timbrados e modelos de petição (Biblioteca, T167)
+    +'<div class="nav-item" data-tela="modelos" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html?aba=timbrados\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 6h14" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Modelos</div>'
     +'<div class="nav-item" data-tela="biblioteca" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 4v16a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v16" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Biblioteca de Modelos</div>'
+    +'Biblioteca</div>'
+    // T168 (13/11, Dr. Victor): juntar, separar, girar, comprimir PDFs sem o arquivo sair do computador (LGPD)
+    +'<div class="nav-item" data-tela="editor_pdf" onclick="sagaIrPara(\'editor_pdf.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5M9 13.5l2 2 4-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Editor de PDF</div>'
+    +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicação</div><div class="nav-grupo" data-grupo="comunicacao">'
+    +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Chat<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
+    +'<div class="nav-item" data-tela="premios" onclick="sagaIrPara(\'premios.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 4h8v5a4 4 0 01-8 0V4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4M12 13v4M8.5 20h7M9.5 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Normas e prêmio</div>'
+    +'<div class="nav-item" data-tela="treinamentos" onclick="sagaIrPara(\'treinamentos.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M2 8l10-5 10 5-10 5-10-5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6 10v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Treinamentos</div>'
+    +'<div class="nav-item" data-tela="manual" onclick="sagaIrPara(\'manual.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5v-15z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5zM9 7.5h7M9 11h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Manual</div>'
+    +'<div class="nav-item" data-tela="sugestoes" onclick="sagaIrPara(\'sugestoes.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Sugestões</div>'
     +'</div><div class="nav-section" data-grupo="admin" role="button" tabindex="0" aria-expanded="true">Administração</div><div class="nav-grupo" data-grupo="admin">'
     +'<div class="nav-item sem-permissao" data-tela="atividades" onclick="sagaIrPara(\'registro_atividades.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 6h12M8 12h12M8 18h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>'
@@ -1069,7 +1083,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -2020,8 +2034,11 @@
     chat:['chat.usar'],
     ponto:['ponto.bater','ponto.visualizar_proprio','ponto.visualizar_equipe'],
     colaboradores:['colaboradores.visualizar','usuarios.convidar','usuarios.gerenciar_papeis'],
-    dashboard:['dashboard.visualizar'],
+    // Painel geral (17/11): aberto para todos; cada cartão do painel só aparece para quem vê aquele assunto
     biblioteca:['biblioteca.visualizar'],
+    modelos:['biblioteca.visualizar'],
+    relatorios_clientes:['processos.visualizar'],
+    parceiros:['processos.visualizar','campanhas.visualizar'],
     financeiro:['financeiro.visualizar'],
     precatorios:['processos.visualizar'],
     marketing:['campanhas.visualizar','materiais_marketing.visualizar','materiais_marketing.aprovar'],
@@ -2141,10 +2158,12 @@
     document.querySelectorAll('#sidebarSaga .nav-item[data-tela]').forEach(function(el){
       var m=(el.getAttribute('href')||el.getAttribute('onclick')||'').match(/([^'\/?]+\.html)(\?[^']*)?/);
       if(!m||m[1].toLowerCase()!==arq)return;
-      if(!achou)achou=el.getAttribute('data-tela');
-      if(m[2]&&new URLSearchParams(busca).get('fase')===new URLSearchParams(m[2]).get('fase'))exato=el.getAttribute('data-tela');
+      // item com endereço sem "?" (ex.: Biblioteca) vale antes de um atalho com "?aba=" (ex.: Modelos), salvo se a aba bater
+      if(!achou&&!m[2])achou=el.getAttribute('data-tela');
+      if(m[2]){var qi=new URLSearchParams(m[2]),qa=new URLSearchParams(busca),bate=true;qi.forEach(function(v,k){if(qa.get(k)!==v)bate=false;});if(bate&&!exato)exato=el.getAttribute('data-tela');}
     });
     if(exato)return exato;
+    if(!achou)document.querySelectorAll('#sidebarSaga .nav-item[data-tela]').forEach(function(el){if(achou)return;var m=(el.getAttribute('onclick')||'').match(/([^'\/?]+\.html)/);if(m&&m[1].toLowerCase()===arq)achou=el.getAttribute('data-tela');});
     return achou;
   }
   // ===== Rolagem do menu lateral (11/11, pedido do Dr. Victor) =====

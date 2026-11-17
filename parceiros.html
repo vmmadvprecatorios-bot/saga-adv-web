@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611171153"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Parceiros</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:86ch;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:11px;font-size:12px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
+.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ouro{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
+.pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
+.pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
+.ent:focus{border-color:var(--gold)}
+.resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px}
+.resumo b{color:var(--text);font-weight:600}
+.grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+.grupo-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
+.grupo-cab h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
+.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
+.lnk{font-size:11.5px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:9px;padding:6px 10px;white-space:nowrap;transition:border-color .2s}
+.lnk:hover{border-color:var(--gold)}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;border:1px dashed var(--border-soft);border-radius:14px}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.erro-caixa{padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12.5px;line-height:1.55}
+.erro-caixa b{display:block;margin-bottom:3px}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.toast.success{border-color:color-mix(in srgb,#16a34a 50%,var(--border))}.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}
+.mo{position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s linear .26s}
+.mo.aberto{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s}
+html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
+.md{width:100%;max-width:520px;display:flex;flex-direction:column;border-radius:18px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);transform:translateY(10px) scale(.985);transition:transform .34s cubic-bezier(.22,.78,.25,1)}
+.mo.aberto .md{transform:none}
+.md-cab{padding:16px 18px 10px;border-bottom:1px solid var(--border-soft)}
+.md-cab h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.md-cab p{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.md-corpo{padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.md-corpo label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.md-corpo textarea{min-height:110px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:10px;font-size:12.5px;outline:0;resize:vertical}
+.md-corpo textarea:focus{border-color:var(--gold)}
+.md-rod{display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 16px}
+@media(max-width:760px){
+  .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
+  .ped{grid-template-columns:1fr}.ped .acoes{justify-content:flex-start}
+  .ent{min-width:0;width:100%;flex-basis:100%}
+}
+
+.parc-num{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+.parc-num b{display:block;font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.parc-acoes{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ico{width:30px;height:30px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel);font-size:12px;color:var(--muted);transition:border-color .2s}
+.ico:hover{border-color:var(--gold);color:var(--text)}
+.parc-corpo{padding:10px 16px 14px}
+.parc-cli{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 12px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border-soft);font-size:12.5px}
+.parc-cli:last-child{border-bottom:0}
+.parc-cli a{color:var(--text);text-decoration:none}
+.parc-cli a:hover{color:var(--gold-light)}
+.parc-cli .cod{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.selo{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.selo.parc{color:var(--gold-light);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
+.selo.tirado{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
+.dica{font-size:12px;color:var(--muted);line-height:1.6;border:1px solid var(--border-soft);border-radius:12px;padding:10px 14px;margin-bottom:12px;background:var(--panel)}
+.dica b{color:var(--text);font-weight:600}
+.md-corpo input{height:38px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:0 10px;font-size:13px;outline:0}
+.md-corpo input:focus{border-color:var(--gold)}
+.md-erro{color:var(--danger,#e5484d);font-size:12px;min-height:16px}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611171153">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Parceiros</h1>
+      <p>Quem traz clientes para o escritório: ANCREF, Sarmento e quem indica. Cada número conta os clientes e processos marcados com esse parceiro em "De onde veio este cliente?".</p>
+    </div>
+    <div class="parc-acoes"><button class="btn btn-ouro" type="button" id="btnNovo" hidden>+ Novo parceiro</button></div>
+  </div>
+  <div class="dica"><b>Como ligar um cliente a um parceiro:</b> na ficha do cliente, no topo do processo, clique em <b>Como chegou</b> e escolha o parceiro em "De onde veio". O processo passa a contar aqui na hora.</div>
+  <div class="barra">
+    <input class="ent" id="fBusca" type="search" autocomplete="off" placeholder="Buscar parceiro ou cliente">
+    <div class="pills" role="group" aria-label="Quais mostrar" id="pillsVer" hidden><button class="pill active" type="button" data-ver="ativos">Na lista</button><button class="pill" type="button" data-ver="tirados">Tirados da lista</button></div>
+  </div>
+  <div class="resumo" id="resumo">Carregando…</div>
+  <div id="area"></div>
+</main>
+</div>
+
+<div class="mo" id="janela" role="dialog" aria-modal="true" aria-labelledby="jTitulo" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jTitulo">Novo parceiro</h2><p>Aparece também na lista "De onde veio este cliente?" da ficha.</p></div>
+  <div class="md-corpo"><label for="jNome">Nome do parceiro</label><input id="jNome" maxlength="80" autocomplete="off" placeholder="Ex.: ANCREF, Dr. Fulano (indicador)"><div class="md-erro" id="jErro" role="alert"></div></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="jOk">Salvar</button></div>
+</div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611171153"></script>
+<script>
+/* =====================================================================
+   SAGA · Parceiros (17/11/2026, Dr. Victor; ideia do ADVBOX; bloco 242)
+   Parceiro = opção da lista "De onde veio o cliente" (etiquetas_catalogo origem_outra, acao 'parceiro').
+   Dados: parceiros_painel (cada pessoa conta só os processos que já pode ver).
+   Só o administrador geral cria, renomeia, reordena e tira da lista (parceiro_salvar; tirar = desativar).
+   ===================================================================== */
+var P={lista:[],admin:false,busca:'',ver:'ativos',abertos:{},erro:null,editando:null};
+var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function n(v){return Number(v||0).toLocaleString('pt-BR');}
+function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},4800);}
+function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+async function carregar(){
+  var r=await _sb.rpc('parceiros_painel');
+  if(r.error){P.erro=(r.error.message||String(r.error))+(r.error.code?' (código '+r.error.code+')':'');P.lista=[];desenhar();return;}
+  P.erro=null;P.lista=(r.data&&r.data.parceiros)||[];P.admin=!!(r.data&&r.data.admin);
+  $('btnNovo').hidden=!P.admin;$('pillsVer').hidden=!P.admin;
+  desenhar();
+}
+function visiveis(){
+  var b=semAcento(P.busca.trim());
+  return P.lista.filter(function(p){
+    if(P.ver==='ativos'?!p.ativo:p.ativo)return false;
+    if(!b)return true;
+    return semAcento(p.nome).indexOf(b)>=0||(p.ultimos||[]).some(function(c){return semAcento([c.nome,c.codigo].join(' ')).indexOf(b)>=0;});
+  });
+}
+function htmlParceiro(p,idx,lista){
+  var ab=!!P.abertos[p.id];
+  var adm=P.admin?'<button class="ico" type="button" title="Renomear" aria-label="Renomear '+esc(p.nome)+'" data-renomear="'+esc(p.id)+'">✎</button>'+
+    (p.ativo&&p.parceiro?'<button class="ico" type="button" title="Subir" aria-label="Subir" data-subir="'+idx+'"'+(idx===0?' disabled':'')+'>▲</button><button class="ico" type="button" title="Descer" aria-label="Descer" data-descer="'+idx+'"'+(idx===lista.length-1?' disabled':'')+'>▼</button>':'')+
+    (p.ativo?'<button class="ico" type="button" title="Tirar da lista (o histórico fica)" aria-label="Tirar da lista" data-tirar="'+esc(p.id)+'">✕</button>':'<button class="btn" type="button" data-voltar="'+esc(p.id)+'">Pôr na lista</button>'):'';
+  var cli=(p.ultimos||[]).map(function(c){
+    var href=c.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(c.pessoa_id)+(c.processo_id?'&processo_id='+encodeURIComponent(c.processo_id):''):null;
+    return '<div class="parc-cli"><span>'+(href?'<a href="'+href+'">'+esc(c.nome||'(sem nome)')+'</a>':esc(c.nome||''))+(c.tese?' <span class="cod">· '+esc(c.tese)+'</span>':'')+'</span><span class="cod">'+esc(c.codigo||'')+'</span><span class="selo">'+esc(c.fase==='juridico'?'Jurídico':(c.etapa||'Captação'))+'</span></div>';
+  }).join('');
+  return '<section class="grupo" data-id="'+esc(p.id)+'"><div class="grupo-cab"><div><h2>'+esc(p.nome)+' '+(p.parceiro?'<span class="selo parc">Parceiro</span>':'<span class="selo">Indicação</span>')+(p.ativo?'':' <span class="selo tirado">Tirado da lista</span>')+'</h2>'+
+    '<div class="parc-num" style="margin-top:8px"><span><b>'+n(p.clientes)+'</b>clientes</span><span><b>'+n(p.processos)+'</b>processos</span><span><b>'+n(p.captacao)+'</b>na Captação</span><span><b>'+n(p.juridico)+'</b>no Jurídico</span><span><b>'+n(p.fecharam)+'</b>fecharam</span></div></div>'+
+    '<div class="parc-acoes">'+adm+(p.processos?'<button class="btn" type="button" data-abrir="'+esc(p.id)+'" aria-expanded="'+ab+'">'+(ab?'Esconder clientes':'Ver clientes')+'</button>':'')+'</div></div>'+
+    '<div class="parc-corpo" id="cli-'+esc(p.id)+'"'+(ab?'':' hidden')+'>'+(cli||'<span class="resumo">Nenhum cliente ainda.</span>')+(p.processos>30?'<div class="resumo" style="margin-top:8px">Mostrando os 30 mais recentes de '+n(p.processos)+'.</div>':'')+'</div></section>';
+}
+function desenhar(){
+  var area=$('area');
+  if(P.erro){$('resumo').textContent='';area.innerHTML='<div class="erro-caixa"><b>Não consegui carregar os parceiros.</b>Motivo: '+esc(P.erro)+'<br>Clique em Atualizar, no alto. Se continuar, avise o administrador com esta mensagem.</div>';return;}
+  var l=visiveis();
+  var tot=l.reduce(function(s,p){return s+(p.clientes||0);},0);
+  $('resumo').innerHTML=l.length?'<b>'+n(l.length)+'</b> '+(l.length===1?'parceiro':'parceiros e indicações')+' · <b>'+n(tot)+'</b> clientes':'';
+  area.innerHTML=l.length?l.map(function(p,i){return htmlParceiro(p,i,l);}).join(''):'<div class="vazio"><b>'+(P.busca?'Nada encontrado nesta busca.':(P.ver==='tirados'?'Nenhum parceiro tirado da lista.':'Nenhum parceiro ainda.'))+'</b>'+(P.admin&&P.ver==='ativos'?'Clique em "+ Novo parceiro".':'')+'</div>';
+}
+function abrirJanela(p){
+  P.editando=p||null;$('jTitulo').textContent=p?'Renomear parceiro':'Novo parceiro';$('jNome').value=p?p.nome:'';$('jErro').textContent='';
+  $('janela').classList.add('aberto');setTimeout(function(){$('jNome').focus();},60);
+}
+function fecharJanela(){$('janela').classList.remove('aberto');P.editando=null;}
+async function salvarNome(){
+  var nome=$('jNome').value.trim();if(!nome){$('jErro').textContent='Escreva o nome do parceiro.';return;}
+  $('jOk').disabled=true;
+  var r=await _sb.rpc('parceiro_salvar',{p_id:P.editando?P.editando.id:null,p_nome:nome,p_ativo:true,p_ordem:null});
+  $('jOk').disabled=false;
+  if(r.error){$('jErro').textContent='Não foi salvo: '+(r.error.message||String(r.error));return;}
+  fecharJanela();toast(P.editando?'Parceiro renomeado.':'Parceiro criado.','success');carregar();
+}
+async function mudar(p,campos,msg){
+  var r=await _sb.rpc('parceiro_salvar',Object.assign({p_id:p.id,p_nome:null,p_ativo:null,p_ordem:null},campos));
+  if(r.error){toast('Não foi salvo: '+(r.error.message||String(r.error)),'error');return false;}
+  if(msg)toast(msg,'success');return true;
+}
+async function trocarOrdem(i,j){
+  var l=visiveis().filter(function(p){return p.parceiro;}),a=l[i],b=l[j];if(!a||!b)return;
+  var oa=a.ordem==null?i:a.ordem,ob=b.ordem==null?j:b.ordem;if(oa===ob){ob=oa+(j>i?1:-1);}
+  if(await mudar(a,{p_ordem:ob})&&await mudar(b,{p_ordem:oa}))carregar();
+}
+document.addEventListener('click',async function(e){
+  var t=e.target.closest('button');if(!t)return;
+  var achar=function(id){return P.lista.find(function(p){return p.id===id;});};
+  if(t.id==='btnNovo'){abrirJanela(null);return;}
+  if(t.hasAttribute('data-fechar')){fecharJanela();return;}
+  if(t.id==='jOk'){salvarNome();return;}
+  if(t.dataset.ver){document.querySelectorAll('[data-ver]').forEach(function(x){x.classList.toggle('active',x===t);});P.ver=t.dataset.ver;setTimeout(desenhar,420);return;}
+  if(t.dataset.abrir){var id=t.dataset.abrir,el=$('cli-'+id),ab=!P.abertos[id];P.abertos[id]=ab;t.textContent=ab?'Esconder clientes':'Ver clientes';t.setAttribute('aria-expanded',String(ab));
+    if(window.sagaRecolher)window.sagaRecolher(el,!ab);else el.hidden=!ab;return;}
+  if(t.dataset.renomear){abrirJanela(achar(t.dataset.renomear));return;}
+  if(t.dataset.tirar){var p=achar(t.dataset.tirar);if(!confirm('Tirar "'+p.nome+'" da lista? Os processos já marcados continuam com ele; ele só some das escolhas novas.'))return;if(await mudar(p,{p_ativo:false},'Tirado da lista.'))carregar();return;}
+  if(t.dataset.voltar){if(await mudar(achar(t.dataset.voltar),{p_ativo:true},'De volta à lista.'))carregar();return;}
+  if(t.dataset.subir!=null){trocarOrdem(+t.dataset.subir,+t.dataset.subir-1);return;}
+  if(t.dataset.descer!=null){trocarOrdem(+t.dataset.descer,+t.dataset.descer+1);return;}
+});
+$('janela').addEventListener('click',function(e){if(e.target===$('janela'))fecharJanela();});
+$('jNome').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();salvarNome();}});
+var _tb=null;$('fBusca').addEventListener('input',function(){clearTimeout(_tb);var v=this.value;_tb=setTimeout(function(){P.busca=v;desenhar();},200);});
+document.addEventListener('saga-atualizar',carregar);
+(async function(){
+  await SagaUI.carregar('parceiros');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  await carregar();
+  if(window.SagaVolta)SagaVolta.registrar('parceiros',{ler:function(){return {busca:P.busca,ver:P.ver,abertos:P.abertos};},
+    aplicar:function(o){P.busca=o.busca||'';$('fBusca').value=P.busca;P.ver=o.ver==='tirados'?'tirados':'ativos';document.querySelectorAll('[data-ver]').forEach(function(x){x.classList.toggle('active',x.dataset.ver===P.ver);});P.abertos=o.abertos||{};desenhar();}});
+})();
+</script>
+</body>
+</html>

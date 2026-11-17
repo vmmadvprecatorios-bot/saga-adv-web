@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.14",
+  versao: "3.15",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.15", data: "17/11/2026", mudou: "PAINEL GERAL (o Dashboard renomeado, 1º item do menu): prazo fatal nos próximos 5 dias, atrasados e para hoje; faixa dos robôs (administrador); cartões de Meu dia, Intimações, Jurídico, Captação, Dinheiro, Prêmio e Equipe que levam à lista certa; produtividade por pessoa. MENU reorganizado (Meu dia primeiro; nomes curtos; Precatórios em Processos; Editor de PDF em Gestão; itens novos Relatórios, Parceiros e Modelos). Tela nova PARCEIROS (ANCREF, Sarmento e quem indica)." },
     { versao: "3.14", data: "17/11/2026", mudou: "Ficha do cliente: cada aba de processo mostra só os documentos DAQUELE processo; documento PESSOAL (RG, CPF, comprovante, certidão...) é marcado pelo botão do cartão de identidade ao lado do documento, com o dono (cliente ou herdeiro/parte), e aparece no quadro \"Documentos pessoais\" de toda aba em que essa pessoa é parte; [[Puxar de outra pessoa]] traz para a aba os documentos pessoais de outra pessoa da ficha sem copiar o arquivo; [[Tirar desta aba]] só desfaz a ligação." },
     { versao: "3.13", data: "17/11/2026", mudou: "Cores em dobro: cada cor tem a versão Normal e a versão Vidro, escolhida dentro do cartão (Clássicos, Tecnológicos e Campanhas); cor nova Ônix (preto e cinza); no Vidro, fundo animado (Brasas de neon, Rede de dados, Circuito de luz) com intensidade e velocidade." },
     { versao: "3.12", data: "17/11/2026", mudou: "Ficha do cliente: [+ Pasta] abre a janela Criar pastas, com uma caixa de marcar em cada pasta pré-pronta (Documentos pessoais, Documentos processuais, Petições, Requisitório, Planilhas, Relatórios, Relatórios processuais, Outras): cria só as marcadas e a que já existe aparece \"já existe\"; pasta livre na mesma janela; o administrador organiza a lista ali mesmo. Leitura da consulta (Lemit, Data Solution) também por PRINT da tela: cole com Ctrl+V (ou solte a imagem), vários prints de uma vez, na ficha > Localização e em Pedidos de busca; os prints não são guardados." },
@@ -117,7 +118,7 @@ window.SAGA_MANUAL = {
         { id: "tela", titulo: "Conhecer a tela",
           quando: "Para se localizar em qualquer tela do SAGA: a barra do alto e o menu da esquerda são sempre os mesmos.",
           passos: [
-            "No **menu da esquerda** ficam as telas, em grupos que abrem e fecham: **Processos** (Jurídico, Captação, Cartas, Pedidos de busca, Clientes por perfil, Teses), **Meu dia** (Ponto, Tarefas, Agenda, Intimações, Notas), **Comunicação** (Chat, Sugestões, Manual, Treinamentos), **Gestão** (Dashboard, Financeiro, Marketing, Colaboradores, Biblioteca) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver. Clique no nome do grupo para abrir ou fechar; com o menu **recolhido** (só os ícones), cada grupo vira uma linha fina com a setinha, que também abre e fecha o grupo. A escolha fica guardada neste navegador.",
+            "No **menu da esquerda**, no alto, fica o **Painel geral** (a visão do escritório inteiro). Abaixo, as telas em grupos que abrem e fecham: **Meu dia** (Ponto, Minhas Tarefas, Intimações, Agenda, Pedidos do Saga IA, Notas), **Processos** (Jurídico, Captação, Precatórios e RPV, Clientes por perfil, Teses e oportunidades, Relatórios, Parceiros, Pedidos de busca, Cartas, Disparos de e-mail), **Gestão** (Financeiro, Marketing, Colaboradores, Modelos, Biblioteca, Editor de PDF), **Comunicação** (Chat, Normas e prêmio, Treinamentos, Manual, Sugestões) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver. Clique no nome do grupo para abrir ou fechar; com o menu **recolhido** (só os ícones), cada grupo vira uma linha fina com a setinha, que também abre e fecha o grupo. A escolha fica guardada neste navegador.",
             "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **cadeado** (trava contra voltar sem querer), o **olho** (modo privacidade), atualizar, o **tema** (claro ou escuro) e a sua **foto**.",
             "Os números ao lado dos itens do menu (Agenda, Minhas Tarefas, Chat) mostram o que há para hoje ou o que não foi lido.",
             "O menu da esquerda **fica no lugar** quando você troca de tela (não volta para o topo). Com o mouse em cima dele, a roda do mouse rola só o menu, sem mexer na página."
@@ -979,16 +980,29 @@ window.SAGA_MANUAL = {
           img: "atividades",
           marcas: ["Buscar.", "Pessoa.", "Ação.", "Período."]
         },
-        { id: "dashboard", titulo: "Dashboard",
-          quando: "Para ver o resumo do escritório.",
+        { id: "dashboard", titulo: "Painel geral",
+          quando: "Para ver, num lugar só, o que está vencendo, o que está atrasado e como está o escritório, e ir direto para a lista certa.",
           passos: [
-            "Abra **Dashboard**: processos por fase e área, prazos vencidos, tarefas pendentes, intimações e avisos.",
-            "Escolha o período e a equipe e clique em [[Aplicar]].",
-            "**Processos sem movimentação** (mais de 30, 60, 90 e 120 dias, e sem data) e **Resumo do agente**: clique na linha para abrir a lista dos processos ativos do Jurídico. Na lista, troque a faixa no alto, filtre pelo nome, número ou responsável e clique no processo para abrir a ficha (Ctrl+clique abre em outra aba).",
-            "Na lista **Sem resumo do agente**, [[Copiar números]] copia os números dos processos para baixar os autos e mandar ao agente, que faz o resumo estratégico e envia a ficha ao SAGA."
+            "Clique em **Painel geral**, o primeiro item do menu da esquerda. (Depois de entrar, o SAGA continua abrindo no **Ponto**.)",
+            "No alto, três números grandes: **Prazo fatal nos próximos 5 dias**, **Atrasados** e **Para hoje**. Contam as SUAS tarefas, as intimações com prazo e os prazos da agenda; embaixo de cada um, clique em \"N tarefas\", \"N intimações\" ou \"N compromissos\" para abrir a lista já filtrada. Quem acompanha o escritório inteiro vê também a linha **No escritório**.",
+            "O administrador vê a faixa dos **robôs** (radar do CNJ, radar de e-mail, andamentos do CNJ, Meta...): verde funcionando, amarelo atenção, vermelho com erro. Clique para abrir a **Saúde do sistema**.",
+            "Os cartões **Meu dia**, **Intimações**, **Jurídico**, **Captação**, **Dinheiro**, **Prêmio da Captação** e **Equipe** mostram os números de cada assunto. Cada número é um link: abre a planilha, a tela ou a lista certa (Ctrl+clique abre em outra aba). Cada pessoa só vê o cartão do que já pode ver no sistema.",
+            "No Jurídico, **Parados há mais de 30/90 dias**, **Sem data de movimentação** e **Sem o resumo do agente** abrem a janela com a lista dos processos (clique no processo para abrir a ficha; [[Copiar números]] copia os números para mandar ao agente).",
+            "**Produtividade**: tarefas concluídas, intimações tratadas e processos movimentados por pessoa, nos [[Últimos 7 dias]] ou [[Últimos 30 dias]]. O administrador vê a equipe toda; cada colaborador vê a própria.",
+            "Em **Mais números**, embaixo, continuam os gráficos e quadros de antes (período, equipe, processos por situação, distribuição por UF)."
           ],
           img: "dashboard",
-          marcas: ["Período.", "Aplicar."]
+          marcas: ["Período.", "Aplicar."],
+          dicas: ["O número de Minhas Tarefas \"Próximos 5 dias\" também está no filtro Prazo da tela de tarefas."]
+        },
+        { id: "parceiros", titulo: "Parceiros (ANCREF, Sarmento e quem indica)",
+          quando: "Para saber quantos clientes e processos vieram de cada parceiro e quantos fecharam.",
+          passos: [
+            "Abra **Processos > Parceiros**. Cada parceiro mostra clientes, processos, quantos estão na Captação, no Jurídico e quantos **fecharam** (documentação pedida, documentos em mãos ou Jurídico).",
+            "[[Ver clientes]] abre os 30 mais recentes; clique no nome para abrir a ficha.",
+            "Para ligar um cliente a um parceiro: na ficha, no topo do processo, clique em **Como chegou** e escolha o parceiro em \"De onde veio\".",
+            "Só o administrador: [[+ Novo parceiro]], ✎ renomear, ▲▼ mudar a ordem e ✕ tirar da lista (o histórico fica; \"Tirados da lista\" mostra e [[Pôr na lista]] devolve)."
+          ]
         },
         { id: "biblioteca", titulo: "Biblioteca de modelos e Treinamentos",
           quando: "Para achar um modelo de petição ou documento, ou estudar os materiais da equipe.",

@@ -4,7 +4,7 @@
 <script src="saga_guard.js?v=202611171153"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VMMADV Sistema | Dashboard</title>
+<title>VMMADV Sistema | Painel geral</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -540,6 +540,63 @@
   [data-theme="light"] #roscasDashboard{--prazo-azul:#155bc0;--prazo-amarelo:#f2c400;--prazo-laranja:#c24100;--prazo-vermelho:#c91c30;--prazo-vermelho-escuro:#780d22;}
   @media (min-resolution:100000dppx){.barra-tese-fill,.linha-uf-fill,.dashboard-grafico-atualizado{transition:none;}}
 .kpi-sub{font-size:10.5px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums;min-height:14px}
+  /* ===== PAINEL GERAL (17/11, Dr. Victor) ===== */
+  .pg-prazos{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:16px; }
+  .pg-prazo{ background:var(--panel); backdrop-filter:blur(20px); border:1px solid var(--border-soft); border-radius:16px; padding:18px 20px; display:flex; flex-direction:column; gap:6px; position:relative; overflow:hidden; }
+  .pg-prazo::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--pg-cor,var(--gold)); }
+  .pg-prazo.fatal{ --pg-cor:var(--danger); } .pg-prazo.atraso{ --pg-cor:#e07b39; } .pg-prazo.hoje{ --pg-cor:var(--info); }
+  .pg-prazo-rotulo{ font-size:12px; color:var(--muted); letter-spacing:.02em; }
+  .pg-prazo-num{ font-family:'Cormorant Garamond',serif; font-size:44px; line-height:1; font-weight:700; color:var(--text); text-decoration:none; font-variant-numeric:tabular-nums; width:fit-content; }
+  .pg-prazo-num:hover{ color:var(--gold-light); }
+  .pg-prazo-partes{ display:flex; flex-wrap:wrap; gap:4px 12px; font-size:11.5px; color:var(--muted); }
+  .pg-prazo-partes a,.pg-lista a{ color:var(--text); text-decoration:none; border-bottom:1px dotted color-mix(in srgb,var(--muted) 60%,transparent); }
+  .pg-prazo-partes a:hover,.pg-lista a:hover{ color:var(--gold-light); border-bottom-color:var(--gold); }
+  .pg-prazo-esc{ font-size:11px; color:var(--muted); margin-top:2px; }
+  .pg-robos{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--border-soft); border-radius:14px; background:var(--panel); margin-bottom:16px; font-size:12px; }
+  .pg-robos[hidden]{ display:none; }
+  .pg-robos-tit{ color:var(--muted); margin-right:4px; }
+  .pg-robo{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; border:1px solid var(--border-soft); color:var(--text); text-decoration:none; white-space:nowrap; transition:border-color .26s cubic-bezier(.22,.78,.25,1); }
+  .pg-robo:hover{ border-color:var(--gold); }
+  .pg-robo i{ width:8px; height:8px; border-radius:50%; background:var(--muted); flex:none; }
+  .pg-robo.verde i{ background:var(--success); } .pg-robo.amarelo i{ background:#e0a93b; } .pg-robo.vermelho i{ background:var(--danger); }
+  .pg-robo.vermelho{ border-color:color-mix(in srgb,var(--danger) 55%,transparent); }
+  .pg-cartoes{ display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; margin-bottom:16px; }
+  .pg-cartao{ background:var(--panel); backdrop-filter:blur(20px); border:1px solid var(--border-soft); border-radius:16px; padding:18px 20px; min-width:0; }
+  .pg-cartao h3{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:var(--text); margin:0 0 12px; }
+  .pg-cartao h3 a{ font-family:inherit; font-size:11.5px; font-weight:500; color:var(--gold-light); text-decoration:none; white-space:nowrap; }
+  .pg-lista{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; }
+  .pg-lista li{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:7px 0; border-bottom:1px solid var(--border-soft); font-size:12.5px; color:var(--muted); }
+  .pg-lista li:last-child{ border-bottom:0; }
+  .pg-lista b{ font-family:'Cormorant Garamond',serif; font-size:19px; color:var(--text); font-variant-numeric:tabular-nums; }
+  .pg-lista .alerta b{ color:var(--danger); }
+  .pg-lista button.pg-ir{ all:unset; cursor:pointer; color:var(--text); border-bottom:1px dotted color-mix(in srgb,var(--muted) 60%,transparent); }
+  .pg-lista button.pg-ir:hover,.pg-lista button.pg-ir:focus-visible{ color:var(--gold-light); border-bottom-color:var(--gold); }
+  .pg-funil{ display:flex; flex-direction:column; gap:7px; }
+  .pg-funil a{ display:grid; grid-template-columns:1fr auto; gap:3px 8px; font-size:12px; color:var(--muted); text-decoration:none; }
+  .pg-funil a b{ color:var(--text); font-variant-numeric:tabular-nums; }
+  .pg-funil a span.trilho{ grid-column:1/-1; height:6px; border-radius:4px; background:var(--panel-2); overflow:hidden; }
+  .pg-funil a span.trilho i{ display:block; height:100%; border-radius:4px; background:var(--pg-c,var(--gold)); transition:width .42s cubic-bezier(.22,.78,.25,1); }
+  .pg-funil a:hover{ color:var(--text); }
+  .pg-prod{ background:var(--panel); backdrop-filter:blur(20px); border:1px solid var(--border-soft); border-radius:16px; padding:18px 20px; margin-bottom:26px; }
+  .pg-prod-topo{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .pg-prod-topo h3{ font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:600; color:var(--text); margin:0; }
+  .pg-periodo{ display:inline-flex; gap:4px; padding:3px; border:1px solid var(--border-soft); border-radius:10px; }
+  .pg-periodo button{ font:inherit; font-size:11.5px; padding:5px 10px; border-radius:8px; border:1px solid transparent; background:none; color:var(--muted); cursor:pointer; }
+  .pg-periodo button.active{ color:var(--text); background:color-mix(in srgb,var(--gold) 14%,transparent); border-color:color-mix(in srgb,var(--gold) 40%,transparent); }
+  .pg-tab-wrap{ overflow-x:auto; }
+  .pg-tab{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:420px; }
+  .pg-tab th{ text-align:right; font-weight:500; font-size:11px; color:var(--muted); padding:6px 8px; border-bottom:1px solid var(--border-soft); }
+  .pg-tab th:first-child,.pg-tab td:first-child{ text-align:left; }
+  .pg-tab td{ text-align:right; padding:8px; border-bottom:1px solid var(--border-soft); color:var(--text); font-variant-numeric:tabular-nums; }
+  .pg-tab tr:last-child td{ border-bottom:0; }
+  .pg-tab td .barra{ display:inline-block; vertical-align:middle; height:6px; border-radius:4px; background:color-mix(in srgb,var(--gold) 60%,transparent); margin-right:6px; transition:width .42s cubic-bezier(.22,.78,.25,1); }
+  .pg-erro{ border:1px solid color-mix(in srgb,var(--danger) 55%,transparent); background:color-mix(in srgb,var(--danger) 10%,transparent); color:var(--text); border-radius:12px; padding:10px 14px; font-size:12.5px; margin-bottom:16px; }
+  .pg-erro[hidden]{ display:none; }
+  .pg-mais-tit{ font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:600; color:var(--text); margin:6px 0 12px; }
+  .pg-entra{ animation:pgEntra .36s cubic-bezier(.22,.78,.25,1) both; }
+  @keyframes pgEntra{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+  .pg-cinza{ color:var(--muted); font-size:12px; }
+  @media(max-width:760px){ .pg-prazos{ grid-template-columns:1fr; } .pg-prazo-num{ font-size:38px; } }
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611171153">
 </head>
@@ -560,10 +617,26 @@
 
     <div class="header-pagina">
       <div>
-        <h1>Dashboard</h1>
+        <h1>Painel geral</h1>
         <div class="contagem">Olá, <strong id="nomeUsuarioHeader">...</strong> &middot; <span id="textoFiltroAtivo">Sem filtros ativos</span></div>
       </div>
     </div>
+
+    <!-- ===== PAINEL GERAL (17/11, Dr. Victor): prazos, robôs, cartões que levam à lista certa e produtividade ===== -->
+    <div class="pg-erro" id="pgErro" role="alert" hidden></div>
+    <div class="pg-prazos" id="pgPrazos" aria-label="Prazos">
+      <div class="pg-prazo fatal"><span class="pg-prazo-rotulo">Prazo fatal nos próximos 5 dias</span><a class="pg-prazo-num skeleton-anim" id="pgFatal" href="minhas_tarefas.html?prazo=5dias&amp;visao=Minhas">000</a><div class="pg-prazo-partes" id="pgFatalPartes"></div><div class="pg-prazo-esc" id="pgFatalEsc"></div></div>
+      <div class="pg-prazo atraso"><span class="pg-prazo-rotulo">Atrasados</span><a class="pg-prazo-num skeleton-anim" id="pgAtraso" href="minhas_tarefas.html?prazo=atrasadas&amp;visao=Minhas">000</a><div class="pg-prazo-partes" id="pgAtrasoPartes"></div><div class="pg-prazo-esc" id="pgAtrasoEsc"></div></div>
+      <div class="pg-prazo hoje"><span class="pg-prazo-rotulo">Para hoje</span><a class="pg-prazo-num skeleton-anim" id="pgHoje" href="minhas_tarefas.html?prazo=hoje&amp;visao=Minhas">000</a><div class="pg-prazo-partes" id="pgHojePartes"></div><div class="pg-prazo-esc" id="pgHojeEsc"></div></div>
+    </div>
+    <div class="pg-robos" id="pgRobos" hidden aria-label="Robôs e automações"></div>
+    <div class="pg-cartoes" id="pgCartoes"></div>
+    <section class="pg-prod" id="pgProd" hidden aria-label="Produtividade">
+      <div class="pg-prod-topo"><h3 id="pgProdTit">Produtividade</h3>
+        <div class="pg-periodo" role="group" aria-label="Período"><button type="button" class="active" data-pg-dias="7">Últimos 7 dias</button><button type="button" data-pg-dias="30">Últimos 30 dias</button></div></div>
+      <div class="pg-tab-wrap"><table class="pg-tab"><thead><tr><th>Pessoa</th><th>Tarefas concluídas</th><th>Intimações tratadas</th><th>Processos movimentados</th></tr></thead><tbody id="pgProdCorpo"></tbody></table></div>
+    </section>
+    <div class="pg-mais-tit">Mais números</div>
 
     <!-- ===== FILTROS ===== -->
     <div class="barra-filtros-dash">
@@ -984,6 +1057,137 @@ function resolverSkeleton(id, val) {
   if (val !== undefined) contarNumeroDashboard(id, /^\d[\d.]*$/.test(String(val)) ? Number(String(val).replace(/\./g, '')) : NaN, String(val), function(n) { return numBR(Math.round(n)); });
 }
 
+
+// ================================================================
+// PAINEL GERAL (17/11, Dr. Victor; bloco 241: painel_geral)
+// Cada número leva à lista certa. Cada pessoa só vê o que já pode ver (a função conta pelo login dela).
+// ================================================================
+var pgDados = null, pgDias = 7;
+function pgEsc(v){ var d=document.createElement('div'); d.textContent=v==null?'':String(v); return d.innerHTML; }
+function pgN(v){ return Number(v||0).toLocaleString('pt-BR'); }
+function pgDin(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}); }
+function pgLink(href, n, txt){ return '<a href="'+href+'">'+pgN(n)+' '+pgEsc(txt)+'</a>'; }
+function pgLi(rotulo, n, href, alerta, botao){
+  var valor = botao ? '<button type="button" class="pg-ir" data-pg-parados="'+botao+'"><b>'+pgN(n)+'</b></button>'
+            : href ? '<a href="'+href+'"><b>'+pgN(n)+'</b></a>' : '<b>'+pgN(n)+'</b>';
+  return '<li'+(alerta && n>0?' class="alerta"':'')+'><span>'+pgEsc(rotulo)+'</span>'+valor+'</li>';
+}
+function pgCartao(titulo, link, linkTxt, corpo){
+  return '<article class="pg-cartao pg-entra"><h3>'+pgEsc(titulo)+(link?'<a href="'+link+'">'+pgEsc(linkTxt||'Abrir')+' ↗</a>':'')+'</h3>'+corpo+'</article>';
+}
+async function pgCarregar(){
+  var erro = document.getElementById('pgErro');
+  try{
+    var r = await _sb.rpc('painel_geral');
+    if(r.error) throw r.error;
+    pgDados = r.data || {};
+    erro.hidden = true; erro.textContent = '';
+    pgPintar();
+  }catch(e){
+    var q = new Date();
+    erro.innerHTML = '<b>Não foi possível ler os números do Painel geral</b> ('+pgEsc(q.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}))+'): '+pgEsc(e.message||String(e))+(e.code?' (código '+pgEsc(e.code)+')':'')+'. Clique em Atualizar, no alto; se continuar, avise o administrador com esta mensagem.';
+    erro.hidden = false;
+    ['pgFatal','pgAtraso','pgHoje'].forEach(function(id){ var el=document.getElementById(id); el.classList.remove('skeleton-anim'); el.textContent='—'; });
+  }
+  if(pgDados && pgDados.admin) pgRobos();
+}
+function pgPintar(){
+  var d = pgDados, t = d.tarefas||{}, i = d.intimacoes||null, a = d.agenda||null;
+  function num(id, v){ var el=document.getElementById(id); el.classList.remove('skeleton-anim'); el.textContent=pgN(v); }
+  // Prazos (meus)
+  var fatal = (t.cinco_dias||0) + (i?i.cinco_dias||0:0) + (a?a.prazos_cinco_dias||0:0);
+  var atraso = (t.atrasadas||0) + (i?i.atrasadas||0:0);
+  var hoje = (t.hoje||0) + (a?a.hoje||0:0);
+  num('pgFatal', fatal); num('pgAtraso', atraso); num('pgHoje', hoje);
+  document.getElementById('pgFatalPartes').innerHTML = [pgLink('minhas_tarefas.html?prazo=5dias&visao=Minhas', t.cinco_dias, 'tarefas'),
+    i?pgLink('monitoramento_multi_oab.html', i.cinco_dias, 'intimações'):'', a?pgLink('calendario_padrao_metalico.html', a.prazos_cinco_dias, 'prazos na agenda'):''].filter(Boolean).join('');
+  document.getElementById('pgAtrasoPartes').innerHTML = [pgLink('minhas_tarefas.html?prazo=atrasadas&visao=Minhas', t.atrasadas, 'tarefas'),
+    i?pgLink('monitoramento_multi_oab.html', i.atrasadas, 'intimações'):''].filter(Boolean).join('');
+  document.getElementById('pgHojePartes').innerHTML = [pgLink('minhas_tarefas.html?prazo=hoje&visao=Minhas', t.hoje, 'tarefas'),
+    a?pgLink('calendario_padrao_metalico.html', a.hoje, 'compromissos'):''].filter(Boolean).join('');
+  var esc = d.escritorio && t.esc_atrasadas != null;
+  document.getElementById('pgFatalEsc').innerHTML = esc ? 'No escritório: <a href="minhas_tarefas.html?prazo=5dias&visao=Todas">'+pgN(t.esc_cinco_dias)+' tarefas</a>' : 'Só as suas.';
+  document.getElementById('pgAtrasoEsc').innerHTML = esc ? 'No escritório: <a href="minhas_tarefas.html?prazo=atrasadas&visao=Todas">'+pgN(t.esc_atrasadas)+' tarefas</a>' : 'Só as suas.';
+  document.getElementById('pgHojeEsc').innerHTML = esc ? 'No escritório: <a href="minhas_tarefas.html?prazo=hoje&visao=Todas">'+pgN(t.esc_hoje)+' tarefas</a>' : 'Só as suas.';
+
+  // Cartões
+  var h = '';
+  h += pgCartao('Meu dia', 'ponto_eletronico_padrao_metalico.html', 'Ponto',
+    '<ul class="pg-lista">'+pgLi('Minhas tarefas abertas', t.abertas, 'minhas_tarefas.html?visao=Minhas')+
+    (a?pgLi('Compromissos hoje', a.hoje, 'calendario_padrao_metalico.html'):'')+
+    (d.pedidos_saga!=null?pgLi('Pedidos do Saga IA abertos', d.pedidos_saga, 'pedidos_claude.html'):'')+'</ul>');
+  if(i) h += pgCartao('Intimações', 'monitoramento_multi_oab.html', 'Abrir',
+    '<ul class="pg-lista">'+pgLi('Abertas', i.abertas, 'monitoramento_multi_oab.html')+pgLi('Chegaram ou publicadas hoje', i.hoje, 'monitoramento_multi_oab.html')+
+    pgLi('Fora do SAGA (sem processo)', i.sem_processo, 'monitoramento_multi_oab.html', true)+'</ul>');
+  if(d.juridico){ var j = d.juridico, lj = 'lista_processos_padrao_metalico.html?fase=juridico';
+    h += pgCartao('Jurídico', lj, 'Planilha',
+      '<ul class="pg-lista">'+pgLi('Ativos', j.ativos, lj)+pgLi('Encerrados', j.encerrados, lj)+pgLi('Sacados', j.sacados, lj)+
+      pgLi('Parados há mais de 30 dias', j.parados_30, null, true, '30')+pgLi('Parados há mais de 90 dias', j.parados_90, null, true, '90')+
+      pgLi('Sem data de movimentação', j.sem_data, null, false, 'sem')+pgLi('Sem o resumo do agente', j.sem_resumo, null, false, 'resumo')+
+      pgLi('Sem número CNJ (não protocolados)', j.sem_numero, lj)+pgLi('Protocolar novamente', j.protocolar_novamente, lj, true)+'</ul>');
+  }
+  if(d.captacao){ var c = d.captacao, lc = 'lista_processos_padrao_metalico.html?fase=captacao', f = c.funil||[], mx = Math.max.apply(null, f.map(function(x){return x.qtd||0;}).concat([1]));
+    h += pgCartao('Captação', lc, 'Planilha',
+      '<div class="pg-funil">'+f.map(function(x){ return '<a href="'+lc+'"><span>'+pgEsc(x.nome)+'</span><b>'+pgN(x.qtd)+'</b><span class="trilho"><i style="width:'+Math.round((x.qtd||0)*100/mx)+'%;--pg-c:'+pgEsc(x.cor||'var(--gold)')+'"></i></span></a>'; }).join('')+'</div>'+
+      '<ul class="pg-lista" style="margin-top:10px">'+pgLi('Pedidos de busca a fazer', c.buscas_a_fazer, 'pedidos_busca.html')+pgLi('Cartas na fila', c.cartas_na_fila, 'cartas.html')+
+      pgLi('E-mails na fila', c.emails_na_fila, 'disparos_email.html')+pgLi('E-mails com erro', c.emails_erro, 'disparos_email.html', true)+'</ul>');
+  }
+  if(d.dinheiro){ var m = d.dinheiro;
+    h += pgCartao('Dinheiro', 'financeiro.html', 'Financeiro',
+      '<ul class="pg-lista"><li><span>A receber (Jurídico)</span><a href="financeiro.html"><b>'+pgDin(m.a_receber)+'</b></a></li>'+
+      '<li><span>Recebido neste mês</span><a href="financeiro.html"><b>'+pgDin(m.recebido_mes)+'</b></a></li>'+
+      pgLi('Parcelas atrasadas', m.parcelas_atrasadas, 'financeiro.html?aba=parcelas', true)+pgLi('Parcelas que vencem em 5 dias', m.parcelas_5_dias, 'financeiro.html?aba=parcelas')+
+      '<li><span>Precatórios e RPV</span><a href="precatorios.html">Ver o dinheiro a entrar</a></li></ul>');
+  }
+  h += pgCartao('Prêmio da Captação', 'premios.html?aba=meu', 'Meu progresso',
+    '<p class="pg-cinza">Veja o seu nível, a barra até o platô e a previsão do prêmio deste mês.</p>'+
+    '<ul class="pg-lista"><li><span>Normas da Captação</span><a href="premios.html?aba=normas">Ler</a></li><li><span>Como funciona o prêmio</span><a href="premios.html?aba=como">Ler</a></li></ul>');
+  if(d.equipe){ var q = d.equipe;
+    h += pgCartao('Equipe', 'ponto_eletronico_padrao_metalico.html?aba=equipe', 'Ponto da equipe',
+      '<ul class="pg-lista">'+pgLi('Pedidos de entrada esperando', q.pedidos_entrada, 'ponto_eletronico_padrao_metalico.html?aba=acessos', true)+
+      pgLi('Sugestões novas', q.sugestoes_novas, 'sugestoes.html')+'<li><span>Entradas e acessos de hoje</span><a href="ponto_eletronico_padrao_metalico.html?aba=acessos">Ver</a></li></ul>');
+  }
+  var box = document.getElementById('pgCartoes');
+  box.innerHTML = h;
+  box.querySelectorAll('[data-pg-parados]').forEach(function(b){ b.addEventListener('click', function(){ if(typeof abrirJanelaParados==='function') abrirJanelaParados(b.getAttribute('data-pg-parados')); }); });
+  pgProdutividade();
+}
+function pgProdutividade(){
+  var lista = (pgDados && pgDados.produtividade) || [], sec = document.getElementById('pgProd');
+  sec.hidden = !lista.length; if(!lista.length) return;
+  document.getElementById('pgProdTit').textContent = lista.length > 1 ? 'Produtividade da equipe' : 'Minha produtividade';
+  var k = pgDias === 30 ? '_30' : '_7';
+  var linhas = lista.map(function(p){ return { nome:p.nome, t:p['tarefas'+k]||0, i:p['intimacoes'+k]||0, pr:p['processos'+k]||0 }; })
+    .sort(function(a,b){ return (b.t+b.i+b.pr)-(a.t+a.i+a.pr) || String(a.nome).localeCompare(String(b.nome)); });
+  var mx = Math.max.apply(null, linhas.map(function(l){ return Math.max(l.t,l.i,l.pr); }).concat([1]));
+  function cel(v){ return '<td><span class="barra" style="width:'+Math.round(v*60/mx)+'px"></span>'+pgN(v)+'</td>'; }
+  document.getElementById('pgProdCorpo').innerHTML = linhas.map(function(l){ return '<tr><td>'+pgEsc(l.nome)+'</td>'+cel(l.t)+cel(l.i)+cel(l.pr)+'</tr>'; }).join('');
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest('[data-pg-dias]'); if(!b) return;
+  document.querySelectorAll('[data-pg-dias]').forEach(function(x){ x.classList.toggle('active', x === b); });
+  pgDias = Number(b.getAttribute('data-pg-dias')) || 7;
+  setTimeout(pgProdutividade, 0);
+});
+// Faixa dos robôs (só o administrador geral): verde, amarelo, vermelho ou cinza, com o link para a Saúde do sistema
+async function pgRobos(){
+  var el = document.getElementById('pgRobos');
+  try{
+    var r = await _sb.rpc('saude_painel');
+    if(r.error) throw r.error;
+    var ordem = { vermelho:0, amarelo:1, cinza:2, verde:3 };
+    var lista = ((r.data||{}).robos||[]).slice().sort(function(a,b){ var oa=ordem[a.situacao],ob=ordem[b.situacao]; return (oa==null?9:oa)-(ob==null?9:ob); });
+    var ruins = lista.filter(function(x){ return x.situacao==='vermelho' || x.situacao==='amarelo'; }).length;
+    el.innerHTML = '<span class="pg-robos-tit">'+(ruins ? ruins+(ruins===1?' robô precisa de atenção:':' robôs precisam de atenção:') : 'Robôs funcionando:')+'</span>'+
+      lista.map(function(x){ var s = ordem[x.situacao]!=null ? x.situacao : 'cinza';
+        return '<a class="pg-robo '+s+'" href="configuracoes_padrao_metalico.html?aba=saude" title="'+pgEsc((x.resumo||'')+(x.erro?' · Erro: '+x.erro:''))+'"><i></i>'+pgEsc(x.nome)+'</a>'; }).join('');
+    el.hidden = !lista.length;
+  }catch(e){
+    el.innerHTML = '<span class="pg-robos-tit" style="color:var(--danger)">Não foi possível ler a saúde dos robôs: '+pgEsc(e.message||String(e))+'.</span><a class="pg-robo" href="configuracoes_padrao_metalico.html?aba=saude">Abrir Saúde do sistema</a>';
+    el.hidden = false;
+  }
+}
+
 // ================================================================
 // INIT
 // ================================================================
@@ -1014,6 +1218,7 @@ async function inicializar() {
 
     meuPerfilId = pr.data.id;
     meuNome     = pr.data.nome_completo;
+    pgCarregar();
     await carregarPermissoesRoscasDashboard();
 
     var elNomeHeader = document.getElementById('nomeUsuarioHeader');
@@ -1029,10 +1234,11 @@ async function inicializar() {
     await carregarTudo();
 
   } catch(e) {
-    showToast('Erro ao inicializar o dashboard. Recarregue a pagina.', 'erro');
+    showToast('Erro ao abrir o Painel geral: ' + ((e && e.message) || 'recarregue a página') + '.', 'erro');
   }
 }
 document.addEventListener('saga-atualizar', function() {
+  pgCarregar();
   carregarTudo();
 });
 
