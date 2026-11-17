@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.11",
+  versao: "3.12",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.12", data: "17/11/2026", mudou: "Ficha do cliente: [+ Pasta] abre a janela Criar pastas, com uma caixa de marcar em cada pasta pré-pronta (Documentos pessoais, Documentos processuais, Petições, Requisitório, Planilhas, Relatórios, Relatórios processuais, Outras): cria só as marcadas e a que já existe aparece \"já existe\"; pasta livre na mesma janela; o administrador organiza a lista ali mesmo. Leitura da consulta (Lemit, Data Solution) também por PRINT da tela: cole com Ctrl+V (ou solte a imagem), vários prints de uma vez, na ficha > Localização e em Pedidos de busca; os prints não são guardados." },
     { versao: "3.11", data: "17/11/2026", mudou: "CADEADO na barra de cima (trava contra voltar sem querer: travado, o botão de voltar do mouse e a seta do navegador não saem da tela; automático depois de 20 segundos, manual ou desligado em Preferências); VOLTAR SEM PERDER OS FILTROS em Minhas Tarefas, nas planilhas do Jurídico e da Captação e em Intimações (abrir pelo menu continua limpo); \"Pedidos do Claude\" passou a se chamar \"Pedidos do Saga IA\"." },
     { versao: "3.10", data: "17/11/2026", mudou: "Teses e oportunidades: botão \"Mostrar gráficos\" nas abas Atualizações, Prateleira e Radar (barras por situação, área, esfera e pessoa, para quem, material, tipo, impacto, por tese e por mês; clicar numa barra filtra a tela); o cartão de cada tese abre organizado (resumo em destaque, prazo e \"quem não pode\" em destaque, público, vídeos e anexos ao lado, \"+ Anexar documento\"); cada tese tem a sua cor." },
     { versao: "3.9", data: "17/11/2026", mudou: "Ponto > Acessos: internet (IP) autorizada fica liberada de vez para toda a equipe, sem pedido nem aviso, em qualquer computador; o \"Autorizar só hoje\" saiu; autorizar uma internet resolve os outros pedidos dela; as entradas do administrador nunca geram aviso; \"Tirar autorização\" da internet na mesma tela." },
@@ -458,18 +459,30 @@ window.SAGA_MANUAL = {
           img: "ficha_comentarios",
           marcas: ["Mencionar colega (@).", "Comentar.", "Marcar atendimento com o cliente."]
         },
+        { id: "pastas", titulo: "Pastas do cliente: criar só as que você quer",
+          quando: "Para organizar os documentos do cliente em pastas (pessoais, petições, relatórios...).",
+          passos: [
+            "Na ficha, no bloco **Pastas do cliente** (coluna da direita), clique em [[+ Pasta]]. Abre a janela **Criar pastas**.",
+            "Em **Pastas pré-prontas**, MARQUE só as que quer (uma, duas...). A pasta que já existe na ficha aparece marcada e apagada, com **já existe**, e não é criada de novo.",
+            "Quer uma pasta com outro nome? Escreva em **Pasta livre** (e, se quiser, escolha dentro de qual pasta ela fica).",
+            "Clique em [[Criar]]. Depois, no **⋯** ao lado do nome de qualquer pasta: renomear, mover, subir/descer, nova subpasta, anexar documento aqui ou remover.",
+            "As pastas **Pesquisa > Busca** e **Pesquisa > Espelhos do TRF** o SAGA cria sozinho."
+          ],
+          dicas: ["Administrador: [[Organizar a lista]] na mesma janela muda a lista de pastas pré-prontas de todo o escritório: renomear (clique no nome), ▲ ▼ para a ordem, ✕ para tirar da lista (as pastas já criadas nas fichas continuam), [[+ Pôr na lista]] para uma nova e [[Ver as tiradas da lista]] para trazer uma de volta."]
+        },
         { id: "localizacao", titulo: "Localização: achar e contatar o cliente e os parentes",
           quando: "Quando o colaborador precisa achar o cliente (ou um parente) para conversar.",
           passos: [
             "Clique em **Localização** na ficha.",
             "Há um bloco para o cliente e um para cada parente ([[+ Parente]]): telefones, e-mails e endereços. Grave tudo o que encontrar.",
             "[[Pedir busca]]: pede ao Administrativo uma consulta (Lemit, Data Solution) do cliente e/ou dos parentes escolhidos. Você recebe o aviso no sino quando ficar pronta e confere as informações antes de gravar.",
-            "**Ler consulta (PDF ou texto)**: se você mesmo tem a consulta, o SAGA lê e preenche só o que está vazio na ficha.",
+            "[[Ler consulta (PDF, print ou texto)]]: se você mesmo tem a consulta, o SAGA lê e preenche só o que está vazio na ficha. Pode ser o **PDF** (solte ou escolha), o **print da tela** ou o texto copiado.",
+            "**Pelo print**: na tela da Lemit ou da Data Solution, tire o print com **Win+Shift+S** (no Windows) e, na janela do SAGA, aperte **Ctrl+V**. A consulta tem mais de uma tela? Tire um print de cada parte e cole um depois do outro (aparecem as miniaturas; o ✕ tira um). Clique em [[Ler]] e confira: o SAGA lê no seu computador e não guarda as imagens.",
             "**Enviar carta**: manda o endereço para a fila da tela Cartas."
           ],
           img: "ficha_localizacao",
           marcas: ["Localização.", "Pedir busca."],
-          atencao: ["CPF da consulta diferente do CPF da ficha: tudo vem desmarcado. Confira antes de gravar."]
+          atencao: ["CPF da consulta diferente do CPF da ficha: tudo vem desmarcado. Confira antes de gravar.", "Lido de print: confira cada número com atenção (a leitura de imagem pode trocar um dígito). Use o zoom do navegador em 100% ou mais antes de tirar o print.", "Renda, score, consumo, veículos e empresas NÃO entram no SAGA (LGPD), venham do PDF ou do print."]
         }
       ]
     },
@@ -746,7 +759,7 @@ window.SAGA_MANUAL = {
           quando: "Quem pede: precisa de telefone ou endereço do cliente/parente. Quem atende (Administrativo): faz a consulta.",
           passos: [
             "**Pedir**: na ficha > Localização > [[Pedir busca]], escolha o cliente e/ou os parentes e a fonte.",
-            "**Atender**: em **Pedidos de busca** > **Para atender**, pegue o pedido (A fazer > Em andamento), faça a consulta e use **Ler PDF da consulta**: só as informações lidas vão para o pedido (o PDF não é guardado).",
+            "**Atender**: em **Pedidos de busca** > **Para atender**, pegue o pedido (A fazer > Em andamento), faça a consulta e clique em [[Ler consulta (PDF ou print)]]: solte o PDF ou cole os prints da tela (Win+Shift+S e depois Ctrl+V; vários de uma vez) e clique em [[Ler]]. Só as informações lidas vão para o pedido: o PDF e os prints não são guardados. Também dá para soltar o PDF ou as imagens em cima do cartão do pedido.",
             "Devolva **pronto** ou **não encontrado** (com o motivo).",
             "**Conferir**: quem pediu recebe o aviso no sino, abre a ficha na Localização, confere e grava. Veio errado? **Devolver**."
           ],

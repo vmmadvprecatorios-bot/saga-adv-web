@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611170958"></script>
+<script src="saga_guard.js?v=202611171003"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Pedidos de busca</title>
@@ -87,7 +87,7 @@ a.pb-link{color:var(--text);font-weight:600;text-decoration:none}a.pb-link:hover
 @media(max-width:1100px){.quadro{grid-template-columns:repeat(2,minmax(240px,1fr))}}
 @media(max-width:700px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.quadro{grid-template-columns:1fr}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611170958">
+<link rel="stylesheet" href="saga_tema.css?v=202611171003">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -98,7 +98,7 @@ a.pb-link{color:var(--text);font-weight:600;text-decoration:none}a.pb-link:hover
   <div class="page-head">
     <div>
       <h1>Pedidos de busca</h1>
-      <p id="pbAjuda">Pedidos de consulta (Lemit, Data Solution) feitos nas fichas, em Localização &gt; Pedir busca. Quem atende pega o pedido, faz a consulta e lê o PDF aqui (o PDF não fica guardado: só as informações vão para o pedido); quem pediu recebe o aviso no sino e confere na ficha.</p>
+      <p id="pbAjuda">Pedidos de consulta (Lemit, Data Solution) feitos nas fichas, em Localização &gt; Pedir busca. Quem atende pega o pedido, faz a consulta e lê o PDF ou os prints da consulta aqui (nada disso fica guardado: só as informações vão para o pedido); quem pediu recebe o aviso no sino e confere na ficha.</p>
     </div>
   </div>
   <div class="barra">
@@ -108,7 +108,7 @@ a.pb-link{color:var(--text);font-weight:600;text-decoration:none}a.pb-link:hover
   <div class="quadro" id="pbQuadro"><div class="coluna-vazia">Carregando os pedidos...</div></div>
 </main>
 </div>
-<input type="file" id="pbArquivo" accept="application/pdf,.pdf,.txt,text/plain" multiple hidden>
+<input type="file" id="pbArquivo" accept="application/pdf,.pdf,.txt,text/plain,image/png,image/jpeg,image/webp" multiple hidden>
 
 <div class="mo" id="pbJanela" role="dialog" aria-modal="true" aria-labelledby="pbJTitulo"><div class="md">
   <div class="md-cab"><div><h2 id="pbJTitulo"></h2><p id="pbJSub"></p></div><button class="md-x" type="button" data-fechar aria-label="Fechar">✕</button></div>
@@ -131,8 +131,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611170958"></script>
-<script src="saga_localizacao.js?v=202611170958"></script>
+<script src="saga_ui.js?v=202611171003"></script>
+<script src="saga_localizacao.js?v=202611171003"></script>
 <script>
 /* =====================================================================
    SAGA · Pedidos de busca (bloco 140, 09/11). Quem pede: qualquer pessoa, na ficha (Localização > Pedir busca).
@@ -231,18 +231,18 @@ function cartao(p){
   }
   if(p.resposta&&!aberto)h+='<div class="pb-resp">'+(p.situacao==='nao_encontrado'?'Sem resultado: ':'Recado: ')+esc(p.resposta)+'</div>';
   var ac='';
-  if(B.atender&&p.situacao==='a_fazer')ac+='<button type="button" class="btn btn-ouro" data-acao="pegar">Pegar</button><button type="button" class="btn" data-acao="ler">Ler PDF da consulta</button>';
+  if(B.atender&&p.situacao==='a_fazer')ac+='<button type="button" class="btn btn-ouro" data-acao="pegar">Pegar</button><button type="button" class="btn" data-acao="ler">Ler consulta (PDF ou print)</button>';
   if(B.atender&&p.situacao==='em_andamento'){
     if(p.atendido_por_id&&p.atendido_por_id!==B.eu)ac+='<button type="button" class="btn" data-acao="pegar">Pegar para mim</button>';
-    ac+='<button type="button" class="btn" data-acao="ler">Ler PDF da consulta</button>'
-      +'<button type="button" class="btn btn-ouro" data-acao="pronto"'+(ativos(p).length?'':' disabled title="Leia o PDF da consulta antes"')+'>Devolver pronto</button>'
+    ac+='<button type="button" class="btn" data-acao="ler">Ler consulta (PDF ou print)</button>'
+      +'<button type="button" class="btn btn-ouro" data-acao="pronto"'+(ativos(p).length?'':' disabled title="Leia a consulta (PDF ou print) antes"')+'>Devolver pronto</button>'
       +'<button type="button" class="btn" data-acao="nao-encontrado">Não encontrado</button>'
       +(p.atendido_por_id===B.eu?'<button type="button" class="btn" data-acao="soltar" title="Volta para A fazer, para outra pessoa pegar">Soltar</button>':'');
   }
   if(aberto&&(meu||B.admin))ac+='<button type="button" class="btn perigo" data-acao="cancelar">Cancelar pedido</button>';
   if(meu&&p.situacao==='pronto'&&!p.conferido_em)ac+='<a class="btn btn-ouro pb-link" href="'+esc(urlFicha(p))+'">Conferir na ficha</a>';
   if(ac)h+='<div class="pb-acoes">'+ac+'</div>';
-  if(B.atender&&aberto)h+='<div class="pb-dica">Dá para soltar o PDF aqui em cima do cartão. Ele é lido no seu computador e não fica guardado.</div>';
+  if(B.atender&&aberto)h+='<div class="pb-dica">Dá para soltar o PDF ou os prints aqui em cima do cartão. São lidos no seu computador e não ficam guardados.</div>';
   return h+'</article>';
 }
 
@@ -278,34 +278,50 @@ function infoHtml(d){
 }
 function avisoPessoaPedido(p,d){
   var f=d.ficha||{},av=[];
-  if(f.cpf&&dig(p.cpf).length===11&&dig(f.cpf)!==dig(p.cpf))av.push('o CPF do PDF ('+cpfFmt(f.cpf)+') é diferente do CPF do pedido ('+cpfFmt(p.cpf)+')');
-  else if(f.nome&&norm(f.nome).replace(/\s+/g,' ').trim()!==norm(p.nome).replace(/\s+/g,' ').trim())av.push('o nome no PDF é "'+f.nome+'" e no pedido é "'+p.nome+'"');
+  if(f.cpf&&dig(p.cpf).length===11&&dig(f.cpf)!==dig(p.cpf))av.push('o CPF da consulta ('+cpfFmt(f.cpf)+') é diferente do CPF do pedido ('+cpfFmt(p.cpf)+')');
+  else if(f.nome&&norm(f.nome).replace(/\s+/g,' ').trim()!==norm(p.nome).replace(/\s+/g,' ').trim())av.push('o nome na consulta é "'+f.nome+'" e no pedido é "'+p.nome+'"');
   return av.length?'<div class="pb-alerta">Atenção: '+esc(av.join('; '))+'. Confira se buscou a pessoa certa.</div>':'';
 }
-function abrirJanelaLeitura(titulo,sub,corpo,podeGuardar){
+function abrirJanelaLeitura(titulo,sub,corpo,podeGuardar,rotuloOk){
   $('pbLTitulo').textContent=titulo;$('pbLSub').textContent=sub;$('pbLCorpo').innerHTML=corpo;
-  $('pbLOk').hidden=!podeGuardar;$('pbLCancelar').textContent=podeGuardar?'Cancelar':'Fechar';
+  $('pbLOk').hidden=!podeGuardar;$('pbLOk').disabled=false;$('pbLOk').textContent=rotuloOk||'Guardar as informações no pedido';$('pbLCancelar').textContent=podeGuardar?'Cancelar':'Fechar';
   $('pbLeitura').classList.add('aberto');
 }
-function fecharLeitura(){$('pbLeitura').classList.remove('aberto');B.leituraOk=null;}
+function soltarZona(){if(B.zona){B.zona.soltar();B.zona=null;}}
+function fecharLeitura(){$('pbLeitura').classList.remove('aberto');B.leituraOk=null;soltarZona();}
+/* 17/11 (Dr. Victor): "Ler consulta" abre a janela para soltar o PDF, escolher ou COLAR os prints (Ctrl+V); vários prints de uma vez */
+function abrirReceber(p){
+  soltarZona();
+  abrirJanelaLeitura('Ler a consulta: '+p.nome,'Solte o PDF, escolha o arquivo ou cole o print da tela da consulta (Win+Shift+S e depois Ctrl+V). Tudo é lido aqui no seu computador: o PDF e os prints não ficam guardados.','<div id="pbZona"></div>',true,'Ler');
+  B.zona=SagaLocalizacao.zonaConsulta($('pbZona'));
+  B.leituraOk=function(){var fs=B.zona?B.zona.arquivos():[];if(!fs.length){toast('Solte o PDF, escolha o arquivo ou cole o print (Ctrl+V).','warning');return;}lerParaPedido(p,fs,true);};
+}
 // lê o PDF aqui no navegador; mostra o que achou; com o "Guardar", vão para o pedido só as informações
-async function lerParaPedido(p,arquivos){
-  var f=arquivos[0];if(!f||!p)return;
-  if(arquivos.length>1)toast('Leia um PDF de cada vez (Lemit e Data Solution separados).','warning');
-  if(!/\.(pdf|txt)$/i.test(f.name)&&!/pdf|text\/plain/.test(f.type||'')){toast('"'+esc(f.name)+'" não é PDF: use o PDF da consulta.','warning');return;}
-  toast('Lendo o PDF aqui no seu computador...','info');
+async function lerParaPedido(p,arquivos,daJanela){
+  if(!p||!arquivos||!arquivos.length)return;
+  var imgs=arquivos.filter(SagaLocalizacao.ehImagem),f=arquivos[0];
+  if(!imgs.length){
+    if(arquivos.length>1)toast('Leia um PDF de cada vez (Lemit e Data Solution separados).','warning');
+    if(!/\.(pdf|txt)$/i.test(f.name)&&!/pdf|text\/plain/.test(f.type||'')){toast('"'+esc(f.name)+'" não é PDF nem imagem: use o PDF da consulta ou o print da tela.','warning');return;}
+  }
+  var ok=$('pbLOk');
+  if(daJanela){ok.disabled=true;ok.textContent='Lendo...';}
+  else toast(imgs.length?'Lendo '+(imgs.length>1?imgs.length+' prints':'o print')+' aqui no seu computador...':'Lendo o PDF aqui no seu computador...','info');
   var dados;
-  try{dados=SagaLocalizacao.paraPedido(await SagaLocalizacao.lerArquivo(f));}
-  catch(er){toast('Não foi possível ler: '+esc(er.message||''),'error');return;}
-  var nomeArq=f.name;
-  abrirJanelaLeitura('Informações lidas: '+p.nome,(dados.fonte||'Consulta')+' · '+nomeArq+'. O PDF não é guardado: vão para o pedido só estas informações, e quem pediu confere e grava na ficha.',
-    avisoPessoaPedido(p,dados)+infoHtml(dados),true);
+  try{dados=SagaLocalizacao.paraPedido(await SagaLocalizacao.lerArquivos(imgs.length?imgs:[f],function(t){if(daJanela)ok.textContent=t;}));}
+  catch(er){toast('Não foi possível ler: '+esc(er.message||''),'error');if(daJanela){ok.disabled=false;ok.textContent='Ler';}return;}
+  soltarZona();
+  var nomeArq=imgs.length?(imgs.length>1?imgs.length+' prints da tela':'print da tela'):f.name;
+  var vazio=!dados.telefone.length&&!dados.email.length&&!dados.endereco.length&&!dados.parentes.length&&!Object.keys(dados.ficha||{}).length;
+  if(vazio){toast(imgs.length?'Não encontrei telefone, e-mail, endereço nem dados da pessoa '+(imgs.length>1?'nestes prints':'neste print')+'. Confira se o print pegou a consulta e se a letra está legível (zoom 100% ou mais).':'Não encontrei informações neste arquivo.','warning');if(daJanela)abrirReceber(p);return;}
+  abrirJanelaLeitura('Informações lidas: '+p.nome,(dados.fonte||'Consulta')+' · '+nomeArq+'. '+(imgs.length?'Os prints não são guardados':'O PDF não é guardado')+': vão para o pedido só estas informações, e quem pediu confere e grava na ficha.',
+    (imgs.length?'<div class="pb-alerta">Lido de print (imagem): confira cada número com atenção, porque a leitura de imagem pode trocar um dígito.</div>':'')+avisoPessoaPedido(p,dados)+infoHtml(dados),true);
   B.leituraOk=async function(){
     $('pbLOk').disabled=true;
     var r=await _sb.rpc('pedido_busca_registrar_leitura',{p_id:p.id,p_leitura:{arquivo_nome:nomeArq,dados:dados}});
     $('pbLOk').disabled=false;
     if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
-    fecharLeitura();toast('Informações guardadas no pedido (o PDF não foi guardado). Agora é só "Devolver pronto".','success');
+    fecharLeitura();toast('Informações guardadas no pedido ('+(imgs.length?'os prints não foram guardados':'o PDF não foi guardado')+'). Agora é só "Devolver pronto".','success');
     await carregar();
   };
 }
@@ -319,13 +335,13 @@ async function acao(btn){
   var card=btn.closest('[data-id]');if(!card)return;var p=pedido(card.dataset.id);if(!p)return;var a=btn.dataset.acao;
   if(a==='pegar'){
     if(p.atendido_por_id&&p.atendido_por_id!==B.eu&&!(await sagaConfirmar('Pegar este pedido?',nomeUsu(p.atendido_por_id)+' já está com ele. Pegar mesmo assim?','Pegar para mim',false)))return;
-    await rpc('pedido_busca_pegar',{p_id:p.id},'Pedido com você. Faça a consulta e anexe o PDF.');
+    await rpc('pedido_busca_pegar',{p_id:p.id},'Pedido com você. Faça a consulta e leia o PDF ou os prints.');
   }
   else if(a==='soltar')await rpc('pedido_busca_soltar',{p_id:p.id},'Pedido devolvido para "A fazer".');
-  else if(a==='ler'){B.alvoUpload=p.id;$('pbArquivo').value='';$('pbArquivo').click();}
+  else if(a==='ler')abrirReceber(p);
   else if(a==='ver')verLeitura(p,btn.dataset.leitura);
   else if(a==='nao-usar'){
-    if(!(await sagaConfirmar('Não usar esta leitura?','As informações desta leitura são descartadas (ex.: o PDF era de outra pessoa). Depois é só ler o PDF certo.','Não usar',false)))return;
+    if(!(await sagaConfirmar('Não usar esta leitura?','As informações desta leitura são descartadas (ex.: o PDF era de outra pessoa). Depois é só ler a consulta certa.','Não usar',false)))return;
     await rpc('pedido_busca_leitura_nao_usar',{p_id:p.id,p_leitura_id:btn.dataset.leitura},'Leitura descartada.');
   }
   else if(a==='pronto')janelaTexto('Devolver pronto','Quem pediu ('+nomeUsu(p.pedido_por_id)+') recebe o aviso no sino para conferir na ficha.','Recado para quem pediu','Devolver pronto',false,function(t){return rpc('pedido_busca_concluir',{p_id:p.id,p_resposta:t||null},'Busca devolvida. Quem pediu foi avisado.');});

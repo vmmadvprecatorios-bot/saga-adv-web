@@ -1,6 +1,6 @@
 /* SAGA ADV: Localização do cliente (T102). Usa o que a ficha já tem: _sb, state, perms, esc, showToast, sagaConfirmar.
    Contatos (telefone, e-mail, endereço) do cliente e dos parentes, com funil de status por cores (etiquetas_catalogo loc_*),
-   tentativas de ligação, observação, histórico automático, leitura da consulta (PDF ou texto colado; o PDF não é guardado)
+   tentativas de ligação, observação, histórico automático, leitura da consulta (PDF, print colado ou texto; o PDF e os prints não são guardados)
    e "contato confirmado" que sobe para o topo da ficha. */
 (function(){
   'use strict';
@@ -63,8 +63,8 @@
     const resumo=['telefone','email','endereco'].map(t=>L.contatos.filter(c=>c.tipo===t).length+' '+ROT[t].toLowerCase()).join(' · ')+' · '+contar(L.contatos,'confirma')+' confirmado(s) · '+contar(L.contatos,'carta')+' para carta';
     const alvos=[{id:null,chave:'cliente'}].concat(L.alvos.map(a=>({id:a.id,chave:a.id})));
     root.innerHTML='<div class="loc2">'
-      +'<div class="loc2-topo"><div><h2>Localização</h2><p>'+(total?e(resumo):'Nenhum contato ainda. Leia a consulta (PDF ou texto) ou adicione à mão.')+'</p></div>'
-      +'<div class="loc2-topo-botoes">'+(ed?'<button type="button" class="btn-primary" data-l="ler">Ler consulta (PDF ou texto)</button>':'')
+      +'<div class="loc2-topo"><div><h2>Localização</h2><p>'+(total?e(resumo):'Nenhum contato ainda. Leia a consulta (PDF, print ou texto) ou adicione à mão.')+'</p></div>'
+      +'<div class="loc2-topo-botoes">'+(ed?'<button type="button" class="btn-primary" data-l="ler">Ler consulta (PDF, print ou texto)</button>':'')
       +(state.usuario&&state.usuario.internoId?'<button type="button" class="btn-secondary" data-l="pedir" title="Quem atende (Administrativo) faz a consulta na Lemit / Data Solution e devolve as informações para você conferir aqui (o PDF não fica guardado)">Pedir busca</button>':'')
       +(ed?'<button type="button" class="btn-secondary" data-l="parente">+ Parente</button>':'')+'</div></div>'
       +alvos.map(desenharAlvo).join('')
@@ -787,6 +787,230 @@
     if(!dados){dados=extrair(texto);dados.fonte=detectarFonte(texto);dados.ficha={};}
     return dados;
   }
+  /* ---------- 17/11 (Dr. Victor): leitura da consulta por PRINT (imagem) ----------
+     Tesseract.js 6.0.1 guardado no próprio site (vendor/tesseract-6.0.1: programa, núcleo e o português), roda AQUI no navegador.
+     O print não sai do computador e não é guardado: depois da leitura sobra só o texto, que passa pelos MESMOS filtros do PDF
+     (nada de renda, score, consumo, veículos, empresas nem perfil sociodemográfico; só preenche o que está vazio; CPF diferente
+     vem tudo desmarcado). Vários prints de uma vez são lidos em ordem e juntados. */
+  const OCR_DIR='vendor/tesseract-6.0.1/';let _ocrLib=null;
+  const ehImagem=f=>!!f&&(/^image\//.test(f.type||'')||/\.(png|jpe?g|webp|bmp|gif)$/i.test(f.name||''));
+  const ehPdfOuTexto=f=>!!f&&(/pdf|text\/plain/.test(f.type||'')||/\.(pdf|txt)$/i.test(f.name||''));
+  function ocrCarregar(){
+    if(window.Tesseract&&window.Tesseract.createWorker)return Promise.resolve(window.Tesseract);
+    if(!_ocrLib)_ocrLib=new Promise((ok,falha)=>{
+      const s=document.createElement('script');s.src=OCR_DIR+'tesseract.min.js';
+      s.onload=()=>window.Tesseract?ok(window.Tesseract):falha(new Error('o leitor de imagem não carregou'));
+      s.onerror=()=>{_ocrLib=null;s.remove();falha(new Error('não foi possível carregar o leitor de imagem (arquivo '+OCR_DIR+'tesseract.min.js)'));};
+      document.head.appendChild(s);
+    });
+    return _ocrLib;
+  }
+  // Print de tela tem letra pequena: aumenta, passa para tons de cinza e inverte se o print for do tema escuro.
+  async function prepararImagem(arquivo){
+    let img;
+    if(window.createImageBitmap){img=await createImageBitmap(arquivo);}
+    else{img=await new Promise((ok,falha)=>{const u=URL.createObjectURL(arquivo);const i=new Image();i.onload=()=>{URL.revokeObjectURL(u);ok(i);};i.onerror=()=>{URL.revokeObjectURL(u);falha(new Error('imagem inválida'));};i.src=u;});}
+    const w0=img.width,h0=img.height;if(!w0||!h0)throw new Error('imagem vazia');
+    const esc2=Math.max(1,Math.min(3,2600/w0,9000/h0));
+    const c=document.createElement('canvas');c.width=Math.round(w0*esc2);c.height=Math.round(h0*esc2);
+    const ctx=c.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+    ctx.drawImage(img,0,0,c.width,c.height);if(img.close)img.close();
+    const px=ctx.getImageData(0,0,c.width,c.height),d=px.data;let soma=0;
+    for(let i=0;i<d.length;i+=4){const y=d[i]*.299+d[i+1]*.587+d[i+2]*.114;d[i]=d[i+1]=d[i+2]=y;soma+=y;}
+    if(soma/(d.length/4)<115){for(let i=0;i<d.length;i+=4){d[i]=d[i+1]=d[i+2]=255-d[i];}}
+    ctx.putImageData(px,0,0);
+    return c;
+  }
+  // devolve o texto de todos os prints, em ordem; progresso(n, total, fracao)
+  async function textoDasImagens(arquivos,progresso){
+    const T=await ocrCarregar();
+    const base=new URL(OCR_DIR,document.baseURI||location.href).href;
+    let atual=0;
+    const w=await T.createWorker('por',1,{workerPath:base+'worker.min.js',corePath:base+'core',langPath:base+'lang',gzip:true,workerBlobURL:false,
+      logger:m=>{if(progresso&&m&&m.status==='recognizing text')progresso(atual+1,arquivos.length,m.progress||0);}});
+    try{
+      await w.setParameters({preserve_interword_spaces:'1',user_defined_dpi:'300'});
+      const partes=[];
+      for(atual=0;atual<arquivos.length;atual++){
+        if(progresso)progresso(atual+1,arquivos.length,0);
+        const c=await prepararImagem(arquivos[atual]);
+        const r=await w.recognize(c);
+        partes.push(String((r&&r.data&&r.data.text)||''));
+        c.width=c.height=0;   // solta a imagem da memória
+      }
+      return partes.join('\n');
+    }finally{try{await w.terminate();}catch(er){}}
+  }
+  // Seções da consulta que NÃO entram no SAGA (LGPD): tudo o que vem depois do título até o próximo título permitido é descartado.
+  const SEC_PROIBIDAS=/^(RISCO DE CREDITO|SCORE|RENDA|RENDA PRESUMIDA|FAIXA DE RENDA|PODER AQUISITIVO|PATRIMONIO|PARTICIPACAO SOCIETARIA|PARTICIPACAO EMPRESARIAL|PARTICIPACOES|EMPRESAS|SOCIEDADES|PERFIL DE CONSUMO|CONSUMO|VEICULOS?|PERFIL SOCIODEMOGRAFICO|DADOS SOCIODEMOGRAFICOS|CLASSE SOCIAL|BENEFICIOS SOCIAIS)$/;
+  const SEC_PERMITIDAS=/^(DADOS GERAIS|DADOS CADASTRAIS|DADOS PESSOAIS|VINCULOS|PESSOAS LIGADAS|PARENTES|TELEFONES( CELULARES| FIXOS)?|CELULARES|E ?MAILS?|ENDERECOS?|SITUACAO CADASTRAL|HISTORICO PROFISSIONAL)$/;
+  const LINHA_PROIBIDA=/\b(LTDA|EIRELI|EPP|MEI|S\/A|RENDA|SCORE|SALARIO|PATRIMONIO|VEICULO|PLACA|RENAVAM|CHASSI|CONSUMO|CLASSE SOCIAL|PODER AQUISITIVO|FATURAMENTO|CAPITAL SOCIAL|CNPJ|LIMITE DE CREDITO|BOLSA FAMILIA|BENEFICIO SOCIAL)\b/;
+  function semSecoesProibidas(linhas){
+    let fora=false;const out=[];
+    linhas.forEach(l=>{
+      const t=semAcento(l).replace(/[^A-Z ]+/g,' ').replace(/\s+/g,' ').trim();
+      if(t&&t.length<=40){if(SEC_PROIBIDAS.test(t)){fora=true;return;}if(SEC_PERMITIDAS.test(t)){fora=false;out.push(l);return;}}
+      if(fora||LINHA_PROIBIDA.test(semAcento(l)))return;
+      out.push(l);
+    });
+    return out;
+  }
+  // rótulos dos dados da própria pessoa (Lemit: "Rótulo  valor"; Data Solution: rótulos numa linha e valores na de baixo)
+  const ROTULOS=[['NOME DA MAE',/^nome\s+da\s+m[ãa]e\b/i],['DATA DE NASC.',/^(data\s+(de\s+)?nasc(\.|imento)?|nascimento)\b\.?/i],['POSSIVEL APOSENTADO',/^poss[ií]vel\s+aposentado\b\??/i],
+    ['APOSENTADO',/^aposentado\b\??/i],['FALECIDO?',/^(falecido|[óo]bito)\b\??/i],['OCUPACAO',/^(ocupa[çc][ãa]o|profiss[ãa]o)\b/i],['CPF',/^cpf\b/i],['IDADE',/^idade\b/i],['NOME',/^nome(\s+completo)?\b/i]];
+  const rotuloDe=s=>{for(const r of ROTULOS){const m=String(s).match(r[1]);if(m)return {k:r[0],resto:String(s).slice(m[0].length).replace(/^\s*[:\-–]\s*/,'').trim()};}return null;};
+  function dadosDosRotulos(linhas){
+    const d={};const pos=(k,v)=>{v=limpa(v);if(!v||d[k])return;d[k]=v;};
+    for(let i=0;i<linhas.length;i++){
+      const segs=linhas[i].split(/\s{2,}|\t/).map(s=>s.trim()).filter(Boolean);if(!segs.length)continue;
+      if(/VINCULO|PARENTESCO|GRAU\b/.test(semAcento(linhas[i])))continue;   // cabeçalho da tabela de parentes: não é a pessoa
+      const rots=segs.map(rotuloDe);
+      if(rots.every(r=>r&&!r.resto)&&linhas[i+1]){   // linha só de rótulos: valores na linha de baixo, na mesma ordem
+        const vals=linhas[i+1].split(/\s{2,}|\t/).map(s=>s.trim()).filter(Boolean);
+        if(vals.length===rots.length&&!vals.some(rotuloDe)){rots.forEach((r,k)=>pos(r.k,vals[k]));i++;continue;}
+      }
+      segs.forEach((s,k)=>{const r=rots[k];if(!r)return;if(r.resto)pos(r.k,r.resto);else if(segs[k+1]&&!rots[k+1])pos(r.k,segs[k+1]);});
+    }
+    // conferências: nome só com letras e 2+ palavras; CPF com 11 dígitos
+    if(d.NOME&&!/^[A-Za-zÀ-ÿ' ]{5,}$/.test(d.NOME)||(d.NOME&&d.NOME.trim().split(/\s+/).length<2))delete d.NOME;
+    if(d['NOME DA MAE']&&!/^[A-Za-zÀ-ÿ' ]{5,}$/.test(d['NOME DA MAE']))delete d['NOME DA MAE'];
+    if(d.CPF){const c=(d.CPF.match(/\d{3}\.?\d{3}\.?\d{3}-?\d{2}/)||[])[0];if(c)d.CPF=c;else delete d.CPF;}
+    return d;
+  }
+  // parentesco escrito na coluna da tabela (MÃE, FILHO(A), IRMA(O)...) -> o mesmo nome que o leitor do PDF usa
+  const RX_GRAU_COL=/^(m[ãa]e|pai|irm[ãa]o?|filh[oa]|c[ôo]njuge|espos[oa]|marido|companheir[oa]|av[ôóo]|net[oa]|sobrinh[oa]|prim[oa]|ti[oa]|genro|nora|cunhad[oa]|sogr[oa]|entead[oa])\s*(\(\s*[ao]\s*\))?$/i;
+  function grauCanonico(g){
+    const t=semAcento(g).replace(/[^A-Z]/g,'');
+    const M=[[/^MAE/,'Mãe'],[/^PAI/,'Pai'],[/^IRM/,'Irmão(ã)'],[/^FILH/,'Filho(a)'],[/^(CONJUGE|ESPOS|MARIDO|COMPANHEIR)/,'Cônjuge'],[/^AV/,'Avô/Avó'],[/^NET/,'Neto(a)'],
+      [/^SOBRINH/,'Sobrinho(a)'],[/^PRIM/,'Primo(a)'],[/^TI[OA]/,'Tio(a)'],[/^GENRO/,'Genro'],[/^NORA/,'Nora'],[/^CUNHAD/,'Cunhado(a)'],[/^SOGR/,'Sogro(a)'],[/^ENTEAD/,'Enteado(a)']];
+    for(const m of M)if(m[0].test(t))return m[1];
+    return limpa(g);
+  }
+  /* Parentes do print: só a linha da TABELA (nome, CPF, grau numa coluna própria). Assim "JOSÉ DA SILVA FILHO" ou "... NETO"
+     (sobrenome) não vira parente, e a linha com os dados da própria pessoa também não. */
+  function parentesDoPrint(linhas,cpfProprio){
+    const out=[],vistos=new Set();
+    const RXCPF=/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/;
+    const ehNome=s=>/^[A-Za-zÀ-ÿ' ]{5,}$/.test(s)&&s.trim().split(/\s+/).length>=2&&!rotuloDe(s)&&!RX_GRAU_COL.test(s.trim());
+    linhas.forEach(l=>{
+      let nome='',cpf='',grau='',idade=null;
+      const segs=l.split(/\s{2,}|\t/).map(x=>x.trim()).filter(Boolean);
+      const gi=segs.findIndex(x=>RX_GRAU_COL.test(x));
+      if(gi>=0&&segs.length>=2){
+        grau=segs[gi];cpf=segs.find(x=>RXCPF.test(x))||'';nome=segs.find((x,k)=>k!==gi&&ehNome(x))||'';
+        const id=segs.find((x,k)=>k>gi&&/^\d{1,3}$/.test(x));if(id)idade=Number(id);
+      }else{   // colunas grudadas: NOME  CPF  GRAU  [IDADE] numa linha só
+        const m=l.trim().match(/^([A-Za-zÀ-ÿ' ]{5,}?)\s+(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\s+([A-Za-zÀ-ÿ]+(?:\s*\(\s*[ao]\s*\))?)(?:\s+(\d{1,3}))?\s*$/i);
+        if(!m||!RX_GRAU_COL.test(m[3]))return;
+        nome=m[1];cpf=m[2];grau=m[3];idade=m[4]?Number(m[4]):null;
+      }
+      if(!nome||!grau)return;
+      if(cpf&&cpfProprio&&digitos(cpf)===cpfProprio)return;
+      const k=digitos(cpf)||semAcento(nome);if(vistos.has(k))return;vistos.add(k);
+      out.push({nome:limpa(nome),grau:grauCanonico(grau),cpf:cpf?cpfFmt(cpf):null,idade:idade&&idade<130?idade:null});
+    });
+    return out;
+  }
+  // texto lido dos prints -> o mesmo formato do leitor do PDF (telefone, email, endereco, parentes, ficha)
+  function dadosDoTextoDoPrint(texto){
+    let linhas=String(texto||'').replace(/[|¦]/g,'  ').split(/\r?\n/).map(l=>l.replace(/\s+$/,'')).filter(l=>l.trim());
+    // a leitura de imagem às vezes troca o @ do e-mail por & ou © (com espaço): "fulano& gmail.com"
+    // (provedores conhecidos primeiro: "fulano(&gmail.com", "fulanoQgmail.com", "fulano&Ogmail.com")
+    linhas=linhas.map(l=>l
+      .replace(/([A-Za-z0-9._%+-]*[a-z0-9._%+-])[ ]?([&©®@()QO0 ]{1,4})((?:gmail|hotmail|yahoo|outlook|live|bol|uol|terra|icloud|msn|ig|globo|ymail|rocketmail)\.com(?:\.br)?)\b/g,(t,u,lixo,dom)=>/[&©®@()Q]|[O0]/.test(lixo)?u+'@'+dom:t)
+      .replace(/([A-Za-z0-9._%+-])\s*[&©®]\s*([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.(?:com|net|org|br|gov|edu|adv|jus)\b)/gi,'$1@$2')
+      // espaço que a leitura põe antes/depois do ponto no nome do e-mail ("maria .aparecida@...")
+      .replace(/([A-Za-z0-9_%+-])\s+([._])(?=[A-Za-z0-9._%+-]*@)/g,'$1$2').replace(/([._])\s+(?=[A-Za-z0-9._%+-]*@)/g,'$1'));
+    linhas=semSecoesProibidas(linhas);
+    const fonte=detectarFonte(texto);
+    // colunas da tabela (2+ espaços) viram " - " nas linhas de endereço, para separar rua, bairro, cidade e CEP;
+    // o número de "qualificação" (1, 2, 3...) na frente da linha sai
+    const paraExtrair=linhas.map(l=>{const t=l.trim();if(!(RX_LOGR.test(t.replace(/^\d{1,2}\s+/,''))||/\b\d{5}-?\d{3}\b/.test(t)))return t;const sg=t.split(/\s{2,}|\t/).filter(Boolean);if(sg.length>1&&/^\d{1,2}$/.test(sg[0]))sg.shift();return sg.join(' - ');}).join('\n');
+    const g=extrair(paraExtrair);
+    // endereço em tabela (rua | [complemento] | bairro | cidade - UF | CEP | tipo): lido pelas colunas, como no PDF
+    const ends=[];
+    linhas.forEach(l=>{
+      let sg=l.split(/\s{2,}|\t/).map(x=>x.trim()).filter(Boolean);if(sg.length>1&&/^\d{1,2}$/.test(sg[0]))sg=sg.slice(1);
+      if(sg.length<3||!RX_LOGR.test(sg[0]))return;
+      let cep='',cid='',tipo='';const meio=[];
+      sg.slice(1).forEach(x=>{
+        if(!cep&&/^(cep\s*)?\d{5}-?\d{3}$/i.test(x))cep=x;
+        else if(/^(residencial|comercial|res\.?|com\.?)$/i.test(x))tipo=x;
+        else if(!cid&&/^[A-Za-zÀ-ÿ' .]{2,}\s*[\/,-]\s*[A-Z]{2}$/.test(x))cid=x;
+        else if(!cid&&/^[A-Z]{2}$/.test(x)&&meio.length){cid=meio.pop()+' - '+x;}
+        else meio.push(x);
+      });
+      if(!cep&&!cid)return;
+      const bairro=meio.length?meio[meio.length-1]:'',compl=meio.length>1?meio.slice(0,-1).join(' '):'';
+      ends.push(enderecoDe(sg[0],compl,bairro,cid,cep,tipo));
+    });
+    if(ends.length){const vist=new Set(ends.map(o=>chaveLocal('endereco',o)));g.endereco=ends.concat(g.endereco.filter(o=>{const ch=digitos(o.cep);return !ends.some(x=>x.cep&&x.cep===ch)&&!vist.has(chaveLocal('endereco',o));}));}
+    const r={dados:dadosDosRotulos(linhas)};
+    g.ficha=dadosDaFicha(r);
+    g.parentes=parentesDoPrint(linhas,g.ficha.cpf||'');
+    if(g.ficha.nome){const n=semAcento(g.ficha.nome);g.parentes=g.parentes.filter(p=>semAcento(p.nome)!==n);}   // a própria pessoa não é parente dela
+    g.fonte=fonte+' (print)';g.porPrint=true;   // "(print)" fica na fonte: assim o pedido de busca também sabe que veio de imagem
+    return g;
+  }
+  // Lê vários arquivos de uma vez: prints (imagens) ou um PDF/.txt. progresso(texto) para mostrar na tela.
+  async function lerArquivos(arquivos,progresso){
+    arquivos=Array.from(arquivos||[]).filter(Boolean);
+    const imgs=arquivos.filter(ehImagem),docs=arquivos.filter(f=>!ehImagem(f));
+    if(imgs.length){
+      const texto=await textoDasImagens(imgs,(n,t,f)=>{if(progresso)progresso('Lendo '+(t>1?'o print '+n+' de '+t:'o print')+'... '+Math.round(f*100)+'%');});
+      if(!texto.trim())throw new Error('Não consegui ler texto '+(imgs.length>1?'nestes prints':'neste print')+'. Tire o print com a tela maior (zoom 100% ou mais) e tente de novo.');
+      return dadosDoTextoDoPrint(texto);
+    }
+    if(!docs.length)throw new Error('Escolha o PDF ou os prints da consulta.');
+    return lerArquivo(docs[0]);
+  }
+  /* Zona para receber a consulta: clicar e escolher, soltar arquivos ou COLAR o print (Ctrl+V). Mostra as miniaturas dos prints
+     (só na tela, nada é enviado) com ✕ para tirar. Usada na ficha (Localização) e em Pedidos de busca. */
+  function zonaConsulta(zona,opc){
+    opc=opc||{};let lista=[];const urls=new Map();
+    const inp=document.createElement('input');inp.type='file';inp.multiple=true;inp.hidden=true;inp.accept='application/pdf,.pdf,.txt,image/png,image/jpeg,image/webp,image/bmp';
+    zona.classList.add('loc2-zona');zona.tabIndex=0;zona.setAttribute('role','button');
+    const desenhar=()=>{
+      urls.forEach((u,f)=>{if(lista.indexOf(f)<0){URL.revokeObjectURL(u);urls.delete(f);}});
+      if(!lista.length){zona.innerHTML='<b>Solte aqui o PDF ou os prints da consulta</b><span>ou clique para escolher · ou cole o print aqui com <kbd>Ctrl</kbd>+<kbd>V</kbd> (Win+Shift+S tira o print)</span><span class="loc2-zona-nota">Lemit, Data Solution... Vários prints de uma vez: o SAGA lê em ordem e não guarda as imagens.</span>';zona.appendChild(inp);return;}
+      const imgs=lista.filter(ehImagem);
+      zona.innerHTML='<div class="loc2-prints">'+lista.map((f,i)=>{let u='';if(ehImagem(f)){u=urls.get(f);if(!u){u=URL.createObjectURL(f);urls.set(f,u);}}
+        return '<div class="loc2-print">'+(u?'<img alt="" src="'+e(u)+'">':'<span class="loc2-print-doc">PDF</span>')+'<small>'+e(ehImagem(f)?'Print '+(imgs.indexOf(f)+1):f.name)+'</small><button type="button" class="loc2-print-x" data-tirar="'+i+'" aria-label="Tirar" title="Tirar">✕</button></div>';}).join('')
+        +'<div class="loc2-print loc2-print-mais" title="Colar ou escolher mais"><span>+</span><small>mais</small></div></div>'
+        +'<span>'+(imgs.length?imgs.length+(imgs.length>1?' prints':' print')+' · cole (Ctrl+V) ou solte mais, se a consulta tiver outras telas · clique em Ler':'clique em Ler')+'</span>';
+      zona.appendChild(inp);
+    };
+    const somar=fs=>{
+      fs=Array.from(fs||[]).filter(f=>ehImagem(f)||ehPdfOuTexto(f));if(!fs.length){showToast('Use o PDF da consulta ou o print (imagem) da tela.','warning');return;}
+      const novasImgs=fs.filter(ehImagem);
+      if(novasImgs.length){lista=lista.filter(ehImagem).concat(novasImgs);}   // prints: vão se juntando
+      else lista=[fs[0]];                                                     // PDF: um de cada vez
+      if(fs.some(f=>!ehImagem(f))&&novasImgs.length)showToast('PDF e prints juntos: vou ler só os prints. Leia o PDF numa leitura à parte.','warning');
+      if(lista.length>12){lista=lista.slice(0,12);showToast('Até 12 prints por leitura.','warning');}
+      desenhar();if(opc.aoMudar)opc.aoMudar(lista);
+    };
+    zona.addEventListener('click',ev=>{const x=ev.target.closest('[data-tirar]');if(x){ev.stopPropagation();lista.splice(Number(x.dataset.tirar),1);desenhar();if(opc.aoMudar)opc.aoMudar(lista);return;}inp.click();});
+    zona.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();inp.click();}});
+    inp.addEventListener('change',()=>{somar(inp.files);inp.value='';});
+    ['dragenter','dragover'].forEach(t=>zona.addEventListener(t,ev=>{ev.preventDefault();zona.classList.add('alvo');}));
+    zona.addEventListener('dragleave',()=>zona.classList.remove('alvo'));
+    zona.addEventListener('drop',ev=>{ev.preventDefault();zona.classList.remove('alvo');somar(ev.dataTransfer&&ev.dataTransfer.files);});
+    // Ctrl+V em qualquer lugar da janela (menos num campo de texto, que recebe o texto colado normalmente)
+    const colar=ev=>{
+      if(!zona.isConnected){document.removeEventListener('paste',colar,true);return;}
+      if(zona.offsetParent===null)return;
+      const itens=Array.from((ev.clipboardData&&ev.clipboardData.items)||[]).filter(i=>i.kind==='file'&&/^image\//.test(i.type));
+      if(!itens.length)return;
+      ev.preventDefault();
+      somar(itens.map((i,k)=>{const f=i.getAsFile();try{return new File([f],'print-colado-'+Date.now()+'-'+k+'.'+((i.type.split('/')[1]||'png').replace('jpeg','jpg')),{type:i.type});}catch(er){return f;}}));
+      zona.classList.add('colado');setTimeout(()=>zona.classList.remove('colado'),420);
+    };
+    document.addEventListener('paste',colar,true);
+    desenhar();
+    return {arquivos:()=>lista.slice(),temImagem:()=>lista.some(ehImagem),
+      somar:somar,limpar:()=>{lista=[];urls.forEach(u=>URL.revokeObjectURL(u));urls.clear();desenhar();},
+      soltar:()=>{lista=[];urls.forEach(u=>URL.revokeObjectURL(u));urls.clear();zona.innerHTML='';document.removeEventListener('paste',colar,true);}};
+  }
   // O que vai para o pedido: só telefones, e-mails, endereços, parentes e os dados da ficha (nada de renda, score...)
   function paraPedido(dados){
     const f=(dados&&dados.ficha)||{};const fic={};
@@ -802,11 +1026,11 @@
     opcoes=opcoes||{};const ped=opcoes.pedido||null;
     const opAlvo='<option value="">'+e((state.cliente&&state.cliente.nome)||'Cliente')+' (o próprio cliente)</option>'+L.alvos.map(a=>'<option value="'+e(a.id)+'"'+(a.id===alvoInicial?' selected':'')+'>'+e(alvoRotulo(a.id))+'</option>').join('')+'<option value="__novo">+ Novo parente...</option>';
     const sub=ped?'Busca pedida por '+nomeUsuario(ped.pedido_por_id)+(ped.atendido_por_id?' e feita por '+nomeUsuario(ped.atendido_por_id):'')+'. São as informações lidas do PDF (o PDF não fica guardado). '+(opcoes.somenteVer?'Para gravar na ficha, peça a quem edita clientes.':'Confira e grave só o que estiver certo.')
-                 :'O SAGA lê o PDF aqui no navegador e não guarda o arquivo: ficam só os dados que você confirmar.';
+                 :'O SAGA lê o PDF ou os prints aqui no navegador e não guarda o arquivo nem as imagens: ficam só os dados que você confirmar.';
     const d=janela(ped?'Conferir a busca de '+ped.nome:'Ler consulta de localização',sub,
       '<div class="loc2-ler-grade"><div class="form-field"><label>De quem é esta consulta?</label><select id="loc2LAlvo" class="pasta-select"'+(ped?' disabled':'')+'>'+opAlvo+'</select></div>'
       +'<div class="form-field" id="loc2LNovo" style="display:none"><label>Nome do parente</label><input id="loc2LNome" maxlength="200"><label style="margin-top:8px">Parentesco</label><select id="loc2LPar" class="pasta-select">'+opcoesParentesco('')+'</select></div></div>'
-      +'<div class="loc2-zona" id="loc2Zona" tabindex="0" role="button"><b>Solte aqui o PDF da consulta</b><span>ou clique para escolher (Lemit, Data Solution...)</span><input type="file" id="loc2Arq" accept="application/pdf,.pdf,.txt" hidden></div>'
+      +'<div class="loc2-zona" id="loc2Zona"></div>'
       +'<div class="form-field"><label>Ou cole o texto da consulta</label><textarea id="loc2Txt" rows="4" placeholder="Cole aqui o texto copiado do sistema de busca"></textarea></div>'
       +'<div id="loc2Rev"></div>','Ler',null,true);
     if(ped)d.dataset.pedido=ped.id;
@@ -815,33 +1039,32 @@
     if(ped)selAlvo.value=ped.alvo_id||'';
     selAlvo.addEventListener('change',()=>{d.querySelector('#loc2LNovo').style.display=selAlvo.value==='__novo'?'':'none';});
     ligarNovaOpcaoParentesco(d.querySelector('#loc2LPar'));
-    const zona=d.querySelector('#loc2Zona'),arq=d.querySelector('#loc2Arq');let arquivo=null,revisao=null;
-    const escolher=f=>{if(!f)return;arquivo=f;zona.innerHTML='<b>'+e(f.name)+'</b><span>'+Math.max(1,Math.round(f.size/1024))+' KB · clique em Ler</span>';zona.appendChild(arq);};
-    zona.addEventListener('click',()=>arq.click());zona.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();arq.click();}});
-    arq.addEventListener('change',()=>escolher(arq.files[0]));
-    ['dragenter','dragover'].forEach(t=>zona.addEventListener(t,ev=>{ev.preventDefault();zona.classList.add('alvo');}));
-    zona.addEventListener('dragleave',()=>zona.classList.remove('alvo'));
-    zona.addEventListener('drop',ev=>{ev.preventDefault();zona.classList.remove('alvo');escolher(ev.dataTransfer.files[0]);});
+    const zona=d.querySelector('#loc2Zona');let revisao=null;
+    const Z=zonaConsulta(zona);
+    // ao fechar a janela, os prints saem da memória (nada fica guardado)
+    new MutationObserver((m,obs)=>{if(!d.isConnected){Z.soltar();obs.disconnect();}}).observe(document.body,{childList:true});
     salvarBtn.addEventListener('click',async ev=>{
       ev.stopImmediatePropagation();
       if(revisao){await gravarRevisao(d,revisao);return;}
       let texto=d.querySelector('#loc2Txt').value;
+      const arquivos=Z.arquivos(),porPrint=Z.temImagem();const arquivo=arquivos[0]||null;
       salvarBtn.disabled=true;salvarBtn.textContent='Lendo...';
       try{
         let dados=null;
-        if(arquivo&&!/\.txt$/i.test(arquivo.name)){const itens=await itensDoPdf(arquivo);texto=textoDosItens(itens);if(texto.trim())dados=lerConsulta(itens);}
+        if(porPrint){dados=await lerArquivos(arquivos,t=>{salvarBtn.textContent=t;});texto='-';}
+        else if(arquivo&&!/\.txt$/i.test(arquivo.name)){const itens=await itensDoPdf(arquivo);texto=textoDosItens(itens);if(texto.trim())dados=lerConsulta(itens);}
         else if(arquivo)texto=await arquivo.text();
-        if(!texto||!texto.trim()){showToast('Escolha o PDF ou cole o texto da consulta.','warning');return;}
+        if(!texto||!texto.trim()){showToast(arquivo?'Este PDF parece ser uma imagem (sem texto para ler). Tire o print da tela da consulta e cole aqui (Ctrl+V).':'Escolha o PDF, cole o print (Ctrl+V) ou cole o texto da consulta.','warning');return;}
         if(!dados){dados=extrair(texto);dados.fonte=detectarFonte(texto);dados.ficha={};}
         const temFicha=itensFicha(d,dados).length>0;
-        if(!dados.telefone.length&&!dados.email.length&&!dados.endereco.length&&!dados.parentes.length&&!temFicha){showToast(arquivo&&texto.trim().length<30?'Este PDF parece ser uma imagem (sem texto para ler). Cole o texto ou digite os contatos.':'Não encontrei telefone, e-mail ou endereço neste texto.','warning');return;}
-        revisao=dados;arquivo=null;mostrarRevisao(d,dados);
+        if(!dados.telefone.length&&!dados.email.length&&!dados.endereco.length&&!dados.parentes.length&&!temFicha){showToast(porPrint?'Não encontrei telefone, e-mail, endereço nem dados da pessoa '+(arquivos.length>1?'nestes prints':'neste print')+'. Confira se o print pegou a consulta inteira e se a letra está legível (zoom 100% ou mais).':'Não encontrei telefone, e-mail ou endereço neste texto.','warning');return;}
+        revisao=dados;Z.soltar();mostrarRevisao(d,dados);
         salvarBtn.textContent='Gravar selecionados';
       }catch(erro){showToast('Não foi possível ler: '+e(erro.message||''),'error');salvarBtn.textContent='Ler';}
       finally{salvarBtn.disabled=false;if(!revisao)salvarBtn.textContent='Ler';}
     },true);
     if(opcoes.dados){revisao=opcoes.dados;mostrarRevisao(d,revisao);salvarBtn.textContent='Gravar selecionados';if(opcoes.somenteVer)salvarBtn.remove();}
-    else if(opcoes.arquivo){escolher(opcoes.arquivo);setTimeout(()=>salvarBtn.click(),60);}
+    else if(opcoes.arquivo){Z.somar([opcoes.arquivo]);setTimeout(()=>salvarBtn.click(),60);}
   }
   /* "Dados da ficha": o que a consulta diz da própria pessoa e que ainda está VAZIO na ficha (nada é trocado sem a pessoa ver) */
   function perfilFicha(){const x=state.pessoaRow&&state.pessoaRow.dados_extra;const p=x&&typeof x==='object'&&!Array.isArray(x)?x.perfil:null;return p&&typeof p==='object'&&!Array.isArray(p)?p:{};}
@@ -900,7 +1123,7 @@
     d.querySelector('#loc2Zona').style.display='none';d.querySelector('#loc2Txt').closest('.form-field').style.display='none';d.querySelector('#loc2LAlvo').disabled=true;
     const novos=['telefone','email','endereco'].reduce((n,t)=>n+dados[t].filter(o=>!existentes.has(t+':'+chaveLocal(t,o))).length,0)+dados.parentes.filter(p=>!parJa(p)).length+fichaItens.length;
     delete d.dataset.cpfDiferente;
-    box.innerHTML='<div class="loc2-rev">'+avisoPessoa(d,dados)+'<div class="loc2-rev-topo">Fonte: <b>'+e(dados.fonte)+'</b> · <b>'+novos+' informação(ões) nova(s)</b>; o que já estava na ficha aparece apagado e não é gravado de novo. Confira e desmarque o que não servir.</div>'+fichaHtml+grupo('telefone','Telefones')+grupo('email','E-mails')+grupo('endereco','Endereços')+pars+'</div>';
+    box.innerHTML='<div class="loc2-rev">'+avisoPessoa(d,dados)+((dados.porPrint||/\(print\)/.test(dados.fonte||''))?'<div class="loc2-rev-alerta">Lido de print (imagem): confira cada número com atenção, porque a leitura de imagem pode trocar um dígito. O print não foi guardado.</div>':'')+'<div class="loc2-rev-topo">Fonte: <b>'+e(dados.fonte)+'</b> · <b>'+novos+' informação(ões) nova(s)</b>; o que já estava na ficha aparece apagado e não é gravado de novo. Confira e desmarque o que não servir.</div>'+fichaHtml+grupo('telefone','Telefones')+grupo('email','E-mails')+grupo('endereco','Endereços')+pars+'</div>';
     if(d.dataset.cpfDiferente){box.querySelectorAll('[data-rev]').forEach(cb=>{cb.checked=false;});const nu=box.querySelector('input[name="loc2Hist"][value=""]');if(nu)nu.checked=true;}
   }
   // grava os "Dados da ficha" marcados (cliente: pessoas + perfil; parente: localizacao_alvos). Devolve o que mudou.
@@ -1007,7 +1230,7 @@
   +'.loc2-obs{flex:1;min-width:160px;padding:6px 9px;border:1px solid var(--border-soft);border-radius:8px;background:color-mix(in srgb,var(--text) 3%,transparent);color:var(--text);font:inherit;font-size:10.5px}.loc2-obs:focus{outline:none;border-color:var(--gold)}.loc2-obs-ro{color:var(--muted);font-size:10.5px}'
   +'.loc2-hist{padding:12px 14px;border:1px solid var(--border-soft);border-radius:14px}.loc2-hist-item{display:flex;flex-direction:column;gap:1px;padding:6px 0;border-bottom:1px solid color-mix(in srgb,var(--text) 6%,transparent);font-size:11px;color:var(--text)}.loc2-hist-item:last-of-type{border-bottom:0}.loc2-hist-quem{color:var(--muted);font-size:9.5px}'
   +'.loc2-pop{position:fixed;z-index:4600;max-height:70vh;overflow:auto;min-width:230px;padding:5px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--bg));box-shadow:0 16px 36px rgba(0,0,0,.3);animation:pastaMenu .2s cubic-bezier(.2,1.3,.4,1)}.loc2-pop button{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border:0;border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:11px;text-align:left;cursor:pointer}.loc2-pop button:hover,.loc2-pop button.ativo{background:color-mix(in srgb,var(--text) 7%,transparent)}.loc2-pop button i{width:9px;height:9px;flex:0 0 auto;border-radius:50%}.loc2-pop button small{margin-left:auto;color:var(--muted);font-size:9px}.loc2-pop button.perigo{color:var(--danger)}.loc2-pop hr{margin:4px 2px;border:0;border-top:1px solid var(--border-soft)}'
-  +'.loc2-modal-larga{max-width:640px!important;width:100%}.loc2-ler-grade{display:grid;gap:10px}.loc2-zona{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 12px;padding:22px 12px;border:1.5px dashed color-mix(in srgb,var(--gold) 45%,transparent);border-radius:12px;color:var(--muted);font-size:11px;text-align:center;cursor:pointer}.loc2-zona b{color:var(--text);font-size:12px}.loc2-zona.alvo{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}'
+  +'.loc2-modal-larga{max-width:640px!important;width:100%}.loc2-ler-grade{display:grid;gap:10px}.loc2-zona{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 12px;padding:22px 12px;border:1.5px dashed color-mix(in srgb,var(--gold) 45%,transparent);border-radius:12px;color:var(--muted);font-size:11px;text-align:center;cursor:pointer}.loc2-zona b{color:var(--text);font-size:12px}.loc2-zona kbd{padding:0 4px;border:1px solid var(--border-soft);border-radius:4px;font:inherit;font-size:10px}.loc2-zona-nota{opacity:.8;font-size:10px}.loc2-zona.colado{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent);transition:background .32s cubic-bezier(.22,.78,.25,1)}.loc2-prints{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:4px}.loc2-print{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;width:96px;animation:loc2PrintEntra .32s cubic-bezier(.22,.78,.25,1)}@keyframes loc2PrintEntra{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}.loc2-print img,.loc2-print-doc,.loc2-print-mais>span{width:96px;height:64px;object-fit:cover;object-position:top;border:1px solid var(--border-soft);border-radius:8px;background:color-mix(in srgb,var(--text) 5%,transparent)}.loc2-print-doc,.loc2-print-mais>span{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;font-weight:700}.loc2-print-mais>span{font-size:22px;font-weight:400;border-style:dashed}.loc2-print small{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.5px}.loc2-print-x{position:absolute;top:-6px;right:-6px;width:20px;height:20px;padding:0;border:1px solid var(--border-soft);border-radius:999px;background:var(--panel-solid,var(--bg));color:var(--muted);font-size:10px;line-height:1;cursor:pointer}.loc2-print-x:hover{color:var(--danger,#e5484d);border-color:var(--danger,#e5484d)}html.saga-sem-movimento .loc2-print{animation:none}.loc2-zona.alvo{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}'
   +'.loc2-rev{display:flex;flex-direction:column;gap:12px;max-height:46vh;overflow:auto}.loc2-rev-topo{font-size:11px;color:var(--muted)}.loc2-rev-grupo{display:flex;flex-direction:column;gap:3px}.loc2-rev-grupo>b{font-size:11px;color:var(--text);margin-bottom:2px}.loc2-rev-item{display:flex;align-items:flex-start;gap:8px;padding:5px 6px;border-radius:7px;font-size:11.5px;color:var(--text);cursor:pointer}.loc2-rev-item:hover{background:color-mix(in srgb,var(--text) 5%,transparent)}.loc2-rev-item small{color:var(--muted);font-size:9.5px}.loc2-rev-item.ja{opacity:.55}.loc2-dica{color:var(--muted);font-size:10px;margin:2px 0 4px}'
   +'.loc2-end-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px}.loc2-end-grade .g2{grid-column:span 2}'
   +'.loc2-ger{display:flex;align-items:center;gap:6px;margin-bottom:6px}.loc2-ger input[type=color]{width:30px;height:28px;padding:0;border:1px solid var(--border-soft);border-radius:6px;background:none}.loc2-ger input[type=text]{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--border-soft);border-radius:7px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);font:inherit;font-size:11px}.loc2-ger small{color:var(--muted);font-size:9px}.loc2-ger button{width:28px;height:28px;border:1px solid var(--border-soft);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}.loc2-ger button:disabled{opacity:.3}.loc2-ger button.perigo:hover{color:var(--danger);border-color:var(--danger)}'
@@ -1028,6 +1251,6 @@
   +'@media(max-width:760px){.loc2-contato-linha{flex-direction:column}.loc2-status{max-width:100%}.loc2-end-grade{grid-template-columns:1fr 1fr}.loc2-alvo-conta{display:none}}';
   document.head.appendChild(css);
 
-  window.SagaLocalizacao={render:render,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,lerConsulta:lerConsulta,itensDoPdf:itensDoPdf,abrirPedido:abrirPedido,lerPedido:lerPedido,pedirBusca:abrirPedirBusca,lerArquivo:lerArquivo,paraPedido:paraPedido,resumoLeitura:resumoLeitura,fone:fone,cpfFmt:cpfFmt,cepFmt:cepFmt,_L:L};
+  window.SagaLocalizacao={render:render,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,lerConsulta:lerConsulta,itensDoPdf:itensDoPdf,abrirPedido:abrirPedido,lerPedido:lerPedido,pedirBusca:abrirPedirBusca,lerArquivo:lerArquivo,lerArquivos:lerArquivos,textoDasImagens:textoDasImagens,dadosDoTextoDoPrint:dadosDoTextoDoPrint,zonaConsulta:zonaConsulta,ehImagem:ehImagem,paraPedido:paraPedido,resumoLeitura:resumoLeitura,fone:fone,cpfFmt:cpfFmt,cepFmt:cepFmt,_L:L};
   window.renderLocalizationView=render;
 })();
