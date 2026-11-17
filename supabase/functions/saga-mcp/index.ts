@@ -647,16 +647,27 @@ const FERRAMENTAS: Ferramenta[] = [
 const sbPublico = createClient(URL_SB, ANON, { auth: { persistSession: false, autoRefreshToken: false } });
 const json = (o: unknown, status = 200, extra: Record<string, string> = {}) =>
   new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json", ...extra } });
-function semLogin(invalido: boolean) {
-  const www = `Bearer ${invalido ? 'error="invalid_token", ' : ""}resource_metadata="${METADADOS}"`;
-  return json({ error: invalido ? "invalid_token" : "unauthorized", error_description: "Entre no SAGA para usar o conector." }, 401, { "WWW-Authenticate": www });
+// 17/11 (bloco 238): a recusa diz o MOTIVO em português (regra "erros sempre à vista") e fica no log da função
+// (só o motivo e o código do erro; nunca a chave nem dado de cliente). O 401 com WWW-Authenticate faz o Claude
+// renovar a chave sozinho (refresh token); se a sessão foi encerrada, ele pede para reconectar.
+function motivoRecusa(erro: string): string {
+  if (/expired/i.test(erro)) return "A chave de acesso do conector venceu (dura 1 hora): o Claude renova sozinho; se não renovar, reconecte o SAGA em Configurações > Conectores.";
+  if (/session.*(not found|does not exist)|session_not_found/i.test(erro)) return "Seu login do SAGA no Claude foi encerrado (alguém usou \"Sair de todos os aparelhos\" ou a sessão foi apagada): reconecte o SAGA em Configurações > Conectores.";
+  if (/user.*(not found|banned)/i.test(erro)) return "Este usuário do SAGA não existe mais ou está bloqueado: fale com o administrador.";
+  return "Não consegui conferir o seu login no SAGA (" + erro.slice(0, 120) + "): reconecte o SAGA em Configurações > Conectores.";
+}
+function semLogin(invalido: boolean, erro = "") {
+  const motivo = invalido ? motivoRecusa(erro) : "Entre no SAGA para usar o conector (falta o login).";
+  console.warn(JSON.stringify({ saga_mcp_recusa: invalido ? "invalid_token" : "sem_token", motivo: erro.slice(0, 200) }));
+  const www = `Bearer ${invalido ? `error="invalid_token", error_description="${motivo.replace(/"/g, "'")}", ` : ""}resource_metadata="${METADADOS}"`;
+  return json({ error: invalido ? "invalid_token" : "unauthorized", error_description: motivo }, 401, { "WWW-Authenticate": www });
 }
 const erroRpc = (id: unknown, code: number, message: string) => ({ jsonrpc: "2.0", id: id ?? null, error: { code, message } });
 const resultado = (id: unknown, result: unknown) => ({ jsonrpc: "2.0", id, result });
 function textoErro(m: string) {
   if (/permission denied|row-level security/i.test(m)) return "Sem permissão para isso no SAGA.";
   if (/invalid input syntax for type uuid/i.test(m)) return "O id informado não é válido: use o id que veio em \"buscar\".";
-  if (/JWT expired|jwt/i.test(m)) return "O acesso ao SAGA venceu: conecte de novo.";
+  if (/JWT expired|jwt/i.test(m)) return "A chave de acesso do SAGA venceu no meio do pedido: tente de novo (o Claude renova a chave sozinho); se repetir, reconecte o SAGA em Configurações > Conectores.";
   return m.replace(/^.*?ERROR:\s*/i, "").slice(0, 500);
 }
 
@@ -802,7 +813,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.7.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.7.1" },
         instructions: INSTRUCOES,
       });
     }
@@ -834,7 +845,7 @@ Deno.serve(async (req) => {
   if (!m) return semLogin(false);
   const token = m[1].trim();
   const u = await sbPublico.auth.getUser(token);
-  if (u.error || !u.data || !u.data.user) return semLogin(true);
+  if (u.error || !u.data || !u.data.user) return semLogin(true, String(u.error?.message || u.error?.code || "usuário não encontrado"));
   let corpo: any;
   try { corpo = await req.json(); } catch { return json(erroRpc(null, -32700, "Não consegui ler o pedido (JSON inválido)."), 400); }
   try {

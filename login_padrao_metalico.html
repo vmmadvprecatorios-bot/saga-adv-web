@@ -531,7 +531,7 @@ async function contaLiberada() {
     var v = await _sb.rpc('vincular_minha_conta');
     if (v.error) return true; // falha de rede: as telas internas conferem de novo
     if (v.data && v.data.ok) return true;
-    await _sb.auth.signOut();
+    await _sb.auth.signOut({ scope: 'local' });
     showToast(v.data && v.data.motivo === 'desligado' ? MSG_ACESSO_DESATIVADO : 'Este e-mail não está cadastrado na equipe do escritório. Fale com o administrador.', 'erro');
     return false;
   } catch (e) { return true; }

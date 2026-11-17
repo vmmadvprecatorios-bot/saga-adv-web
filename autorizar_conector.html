@@ -152,7 +152,7 @@ async function iniciar() {
 // "Entrar com outra pessoa": sai desta conta neste navegador e volta para o login, que traz de volta para cá
 async function trocarPessoa() {
   travar();
-  try { await _sb.auth.signOut(); } catch (e) {}
+  try { await _sb.auth.signOut({ scope: 'local' }); } catch (e) {}
   location.replace('login_padrao_metalico.html?voltar=' + encodeURIComponent('autorizar_conector.html?authorization_id=' + ID));
 }
 function travar() { document.querySelectorAll('.botoes button, #btTrocar').forEach(function (b) { b.disabled = true; }); }

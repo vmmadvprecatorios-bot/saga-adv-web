@@ -747,7 +747,7 @@ async function trocarSenha(){
   finally{b.disabled=false;}
 }
 async function sairDeTodos(){
-  if(!(await sagaConfirmar('Sair de todos os aparelhos','Encerrar o SAGA em todos os computadores e celulares, inclusive neste? Você precisará entrar de novo.','Sair de todos')))return;
+  if(!(await sagaConfirmar('Sair de todos os aparelhos','Encerrar o SAGA em todos os computadores e celulares, inclusive neste e o SAGA no Claude (o conector)? Você precisará entrar de novo e reconectar o conector no Claude.','Sair de todos')))return;
   try{await _sb.auth.signOut({scope:'global'});}catch(e){}
   try{localStorage.removeItem('saga-permissoes');}catch(e){}
   window.location.href='login_padrao_metalico.html';
