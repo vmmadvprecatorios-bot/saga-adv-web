@@ -1860,7 +1860,8 @@
   global.sagaLogout=async function(motivo){
     if(!global._sb)return;
     try{if(_canalPresenca)await _canalPresenca.untrack();}catch(e){}
-    try{await global._sb.auth.signOut();}catch(e){}
+    // 17/11: só este navegador (scope local). O padrão (global) apagava também o login do conector do Claude.
+    try{await global._sb.auth.signOut({scope:'local'});}catch(e){}
     try{localStorage.removeItem(CHAVE_ATIVIDADE);}catch(e){}
     try{localStorage.removeItem('saga-permissoes');sessionStorage.removeItem(CHAVE_ACESSO);}catch(e){}
     window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'||motivo==='acesso'||motivo==='fim_dia'||motivo==='inatividade_fora'?'?motivo='+motivo:'');
