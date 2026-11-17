@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.17",
+  versao: "3.18",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.18", data: "17/11/2026", mudou: "Minhas Tarefas: passar o mouse no cartão não aumenta mais o cartão nem empurra os outros; tipo, quem passou a tarefa, compartilhamento e os atalhos Ficha e Intimações ficam na janela da tarefa (clique no cartão)." },
     { versao: "3.17", data: "17/11/2026", mudou: "Teses e oportunidades: botão [[Editar público]] no cartão de cada tese abre uma janela só com o público (quem tem direito, esfera, pessoa, situação, órgão, cargo, UF, anos, o que precisa ter, quem não pode, prazo); nos cartões, \"PF\" e \"PJ\" agora aparecem como \"Pessoa física\" e \"Empresa\" (para não confundir com Polícia Federal)." },
     { versao: "3.16", data: "17/11/2026", mudou: "Teses e oportunidades: a Prateleira recebeu a planilha de produtos do escritório (84 produtos; ideias sem material como \"Ideia\"); cada cartão mostra a Classificação (viabilidade, ticket, escalável), as páginas do site e a pasta no Google Drive, com os links do áudio, vídeo, mapa mental, slides e resumo do NotebookLM; \"Organizar opções\" edita também viabilidade, ticket e escalável." },
     { versao: "3.15", data: "17/11/2026", mudou: "PAINEL GERAL (o Dashboard renomeado, 1º item do menu): prazo fatal nos próximos 5 dias, atrasados e para hoje; faixa dos robôs (administrador); cartões de Meu dia, Intimações, Jurídico, Captação, Dinheiro, Prêmio e Equipe que levam à lista certa; produtividade por pessoa. MENU reorganizado (Meu dia primeiro; nomes curtos; Precatórios em Processos; Editor de PDF em Gestão; itens novos Relatórios, Parceiros e Modelos). Tela nova PARCEIROS (ANCREF, Sarmento e quem indica)." },
@@ -601,7 +602,7 @@ window.SAGA_MANUAL = {
             "Abra **Minhas Tarefas**. A tela abre enxuta: em cima, [[Kanban]] / [[Lista]], [[Mostrar resumo]] e [[Nova Tarefa]]. O número vermelho ao lado de Mostrar resumo é quantas tarefas estão **atrasadas**.",
             "[[Mostrar resumo]] abre os números (total, novas, em andamento, atrasadas e concluídas hoje; clique para filtrar), os gráficos e o calendário dos prazos. [[Esconder resumo]] recolhe. O SAGA lembra a sua escolha neste computador.",
             "Logo abaixo fica a **barra de filtros**: busca, [[Etiqueta]], responsável e prazo. Os outros (tipo, situação, prioridade, tribunal e fase) ficam em [[Mais filtros]]; o número no botão mostra quantos estão ligados lá dentro. Cada filtro ligado aparece como uma etiqueta clicável embaixo (o × tira) e [[Limpar filtros]] tira todos.",
-            "No cartão aparece só o essencial: etiqueta, título, situação (Nova, Em andamento...), cliente, **número do processo** (sempre à vista, com o botão do tribunal; o Ctrl+F do navegador acha o processo pelo número), subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passe o mouse para ver o resto: tipo, quem passou a tarefa, compartilhamento e os atalhos [[Ficha]] e [[Intimações]]. No celular, toque no cartão para abrir a tarefa inteira.",
+            "No cartão aparece só o essencial: etiqueta, título, situação (Nova, Em andamento...), cliente, **número do processo** (sempre à vista, com o botão do tribunal; o Ctrl+F do navegador acha o processo pelo número), subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passar o mouse não aumenta o cartão (ele fica sempre do mesmo tamanho): o resto (tipo, quem passou a tarefa, compartilhamento e os atalhos [[Ficha]] e [[Intimações]]) aparece ao clicar no cartão, na janela da tarefa.",
             "As tarefas de **dar impulso processual** (que o SAGA cria nos processos parados) e os **Pedidos do Saga IA** ficam como atalhos no menu [[Etiqueta]], com o número delas. No filtro **Tipo** (em Mais filtros) também há **Sem as de impulso**.",
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],

@@ -422,13 +422,9 @@
   .badge-resumo-atrasadas{ margin-left:6px; padding:1px 7px; border-radius:8px; font-size:9.5px; font-weight:600; color:var(--danger); background:color-mix(in srgb,var(--danger) 12%,transparent); }
   .bloco-resumo-tarefas{ margin-bottom:16px; }
   .bloco-resumo-tarefas .legenda-prazos{ margin-top:4px; }
-  /* Cartão mais limpo: o que é secundário aparece ao passar o mouse (ou ao focar pelo teclado) */
-  .card-extra{ display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows 320ms cubic-bezier(.22,.78,.25,1), opacity 220ms ease; }
-  .card-extra > div{ min-height:0; overflow:hidden; }
-  .card-tarefa:hover .card-extra, .card-tarefa:focus-within .card-extra{ grid-template-rows:1fr; opacity:1; transition-delay:300ms; }
-  .card-extra-dentro{ display:flex; flex-direction:column; gap:3px; padding-top:4px; }
-  html.mt-sem-mov .card-extra{ transition:none; }
-  @media (hover:none){ .card-extra{ display:none; } }
+  /* 17/11 (Dr. Victor): o cartão NÃO expande ao passar o mouse. O que é secundário (tipo, quem passou, compartilhada,
+     atalhos Ficha/Intimações) fica só na janela da tarefa; o cartão tem sempre o mesmo tamanho. */
+  .card-extra{ display:none !important; }
   .topo-card-tarefa-esquerda{ flex-wrap:wrap; row-gap:4px; }
   .topo-card-tarefa-esquerda .se-tag{ max-width:100%; white-space:normal; }
   .card-tarefa > .linha-status-card{ margin:-2px 0 6px; }
@@ -555,9 +551,9 @@
 
   .card-tarefa{
     background:color-mix(in srgb,var(--text) 5%,transparent); border:1px solid var(--border-soft); border-radius:12px;
-    padding:12px; cursor:pointer; transition:transform 0.16s ease, border-color 0.16s ease;
+    padding:12px; cursor:pointer; transition:border-color 0.16s ease;
   }
-  .card-tarefa:hover{ transform:translateY(-2px); border-color:color-mix(in srgb,var(--gold) 35%,transparent); }
+  .card-tarefa:hover{ border-color:color-mix(in srgb,var(--gold) 35%,transparent); }
   .card-tarefa.arrastando{ opacity:0.4; }
   .card-tarefa.concluida{ opacity:0.55; }
   .card-tarefa.concluida .titulo-card-tarefa{ text-decoration:line-through; }
@@ -4076,7 +4072,7 @@ function criarCardTarefaEl(tarefa){
 
   // T183 (14/11, Dr. Victor: "muita informação"): à vista só o essencial (etiqueta, título, cliente, subtarefas,
   // responsável e prazo; desde 14/11 também o NÚMERO DO PROCESSO; prioridade só quando é alta ou urgente); o resto (status, quem passou, compartilhada,
-  // atalhos Ficha/Intimações) aparece ao passar o mouse e na janela.
+  // atalhos Ficha/Intimações) fica só na janela (17/11: o cartão não expande ao passar o mouse).
   var prioridadeHtml = (tarefa.prioridade === 'alta' || tarefa.prioridade === 'urgente') ? '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' : '';
   var seloPedidoHtml = tarefaPedidoClaude(tarefa) ? '<div class="selo-pedido-claude" title="O Saga IA pediu isto para você trazer; quando você trouxer na conversa, ele mesmo dá como concluído">Pedido do Saga IA</div>' : '';
   var compartilhadaHtml = !podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '');
