@@ -47,7 +47,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .foto.logo{border-radius:16px;background-color:var(--panel-2);background-size:contain;background-repeat:no-repeat;color:var(--muted);font-size:11px;width:150px;height:80px;border:1px dashed var(--border)}
 .foto-botoes{display:flex;gap:8px;flex-wrap:wrap}
 /* T151b: a grade de cores ocupa a largura que houver (sem passar da borda) */.linha-opcao > div:has(> #prCor){flex:1 1 320px;min-width:0;max-width:640px}#prCor{max-width:none}.pr-vidro-op{min-width:0;max-width:100%}#prVidroFundo{flex-wrap:wrap;max-width:100%}
-.pr-vidro[hidden],#prVidroTirar[hidden],#prVidroCorWrap[hidden]{display:none!important}.pr-vidro-cor{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border:1px solid var(--border);border-radius:999px;cursor:pointer;font-size:12px}.pr-vidro-cor input{width:28px;height:28px;border:0;padding:0;background:none;border-radius:50%;cursor:pointer}.pr-vidro-rapidas{display:inline-flex;gap:6px;align-items:center}.pr-vidro-rapidas button{width:22px;height:22px;border-radius:50%;border:1px solid var(--border);cursor:pointer;padding:0}.pr-vidro-rapidas button.active{box-shadow:0 0 0 2px var(--panel-solid),0 0 0 4px var(--gold)}.seg button:disabled{opacity:.45;cursor:not-allowed}.pr-vidro-op{display:flex;flex-direction:column;gap:10px;align-items:flex-start}.pr-vidro-linha{display:flex;gap:8px;flex-wrap:wrap}
+.pr-vidro[hidden],#prVidroTirar[hidden],#prVidroCorWrap[hidden]{display:none!important}.pr-vidro-anim{display:flex;flex-direction:column;gap:8px;align-items:flex-start;padding-top:4px;border-top:1px solid var(--border-soft);width:100%}.pr-vidro-anim .seg{flex-wrap:wrap}.pr-vidro-rot{font-size:11px;color:var(--muted);margin-bottom:4px}.pr-vidro-nota{font-size:11.5px;color:var(--muted)}.pr-vidro-nota:empty{display:none}#prVidroAnimAjustes{gap:14px}#prVidroAnimAjustes.apagado{opacity:.45;pointer-events:none}.pr-vidro-cor{display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 6px;border:1px solid var(--border);border-radius:999px;cursor:pointer;font-size:12px}.pr-vidro-cor input{width:28px;height:28px;border:0;padding:0;background:none;border-radius:50%;cursor:pointer}.pr-vidro-rapidas{display:inline-flex;gap:6px;align-items:center}.pr-vidro-rapidas button{width:22px;height:22px;border-radius:50%;border:1px solid var(--border);cursor:pointer;padding:0}.pr-vidro-rapidas button.active{box-shadow:0 0 0 2px var(--panel-solid),0 0 0 4px var(--gold)}.seg button:disabled{opacity:.45;cursor:not-allowed}.pr-vidro-op{display:flex;flex-direction:column;gap:10px;align-items:flex-start}.pr-vidro-linha{display:flex;gap:8px;flex-wrap:wrap}
 .seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--panel-2);border:1px solid var(--border-soft)}
 .seg button{padding:8px 16px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted)}
 .seg button.active{background:var(--gold);color:#fff}
@@ -304,6 +304,16 @@ html.saga-sem-movimento .arm-lido i{animation:none}
           <div class="pr-vidro-linha" id="prVidroCorWrap" hidden><label class="pr-vidro-cor" title="Escolha qualquer cor: o sistema monta o claro e o escuro com leitura garantida"><input type="color" id="prVidroCor" value="#5aa9ff"><span>Escolher a cor</span></label><span class="pr-vidro-rapidas" id="prVidroRapidas"></span></div>
           <div class="pr-vidro-linha"><button type="button" class="btn-secondary" id="prVidroImg">Usar uma imagem minha</button><button type="button" class="btn-secondary" id="prVidroTirar" hidden>Tirar a imagem</button><input type="file" id="prVidroArq" accept="image/*" hidden></div>
           <div class="seg" id="prVidroFosco"><button type="button" data-v="0">Vidro normal</button><button type="button" data-v="1">Vidro mais fosco</button></div>
+          <!-- 17/11 (Dr. Victor): fundo animado (desenhado pelo saga_guard.js, sagaVidroAnimar) -->
+          <div class="pr-vidro-anim">
+            <div class="pr-vidro-rot">Fundo animado</div>
+            <div class="seg" id="prVidroEfeito"><button type="button" data-v="nenhum">Parado</button><button type="button" data-v="brasas">Brasas de neon</button><button type="button" data-v="rede">Rede de dados</button><button type="button" data-v="circuito">Circuito de luz</button></div>
+            <div class="pr-vidro-linha" id="prVidroAnimAjustes">
+              <div><div class="pr-vidro-rot">Intensidade</div><div class="seg" id="prVidroInt"><button type="button" data-v="1">Leve</button><button type="button" data-v="2">Média</button><button type="button" data-v="3">Forte</button></div></div>
+              <div><div class="pr-vidro-rot">Velocidade</div><div class="seg" id="prVidroVel"><button type="button" data-v="1">Lenta</button><button type="button" data-v="2">Normal</button><button type="button" data-v="3">Rápida</button></div></div>
+            </div>
+            <div class="pr-vidro-nota" id="prVidroAnimNota"></div>
+          </div>
         </div>
       </div>
       <div class="linha-opcao">
@@ -800,33 +810,61 @@ document.addEventListener('click',function(e){if(e.target&&e.target.id==='prCorS
 var AMOSTRAS={azul:['#172234','#212e44','#4b8af5','#e8ecf1','#ffffff','#1f3e6d'],grafite:['#1A1A1A','#242424','#D4B98A','#F3F2EF','#FFFFFF','#1A1A1A'],
   vidro:['#0A1B2E','#1B3B5A','#5AA9FF','#E1E8F0','#7DB8F2','#1F5E9E'],'vidro-ciano':['#04161C','#0B2F38','#22D3EE','#DDF3F3','#4FE3DE','#0B6E73'],
   'vidro-ambar':['#120D08','#3A2618','#FF8A3D','#F6ECDD','#FFB547','#8A4E0C'],'vidro-aurora':['#0E0A1F','#2E2459','#8F7BFF','#ECE8FA','#B39BFF','#5233B5'],
-  novembro:['#0B1B2C','#1C5C93','#3A9DE6','#E3F0FA','#FFFFFF','#1670B3'],rosa:['#1E1219','#8A2E5A','#E85A93','#F9E8EF','#FFFFFF','#B8336A'],natal:['#0E1D16','#1E5A3C','#DB444C','#F1EFE6','#E9C46A','#B3262E']};
+  novembro:['#0B1B2C','#1C5C93','#3A9DE6','#E3F0FA','#FFFFFF','#1670B3'],rosa:['#1E1219','#8A2E5A','#E85A93','#F9E8EF','#FFFFFF','#B8336A'],natal:['#0E1D16','#1E5A3C','#DB444C','#F1EFE6','#E9C46A','#B3262E'],
+  // 17/11: versões normais das cores de vidro e o Ônix (as versões vidro das cores normais vêm da semente: amostraCor)
+  profundo:['#0A1522','#213C5A','#4C9BF0','#E4EAF1','#FFFFFF','#116DD0'],ciano:['#091D23','#21525A','#4CDBF0','#E3EFF2','#FFFFFF','#0B7889'],ambar:['#1D150E','#5D371D','#FA8C42','#EFEAE6','#FFFFFF','#B84C05'],aurora:['#0F0C1F','#281F5B','#8B77F8','#E7E5F0','#FFFFFF','#3716F3'],onix:['#0E0E0E','#2B2B2B','#D9D9D9','#EBEBEB','#FFFFFF','#292929']};
+function amostraCor(id){var sem=window.SAGA_VIDRO_SEMENTES&&SAGA_VIDRO_SEMENTES[id];if(sem&&window.sagaVidroLivre){try{return sagaVidroLivre(sem.cor,sem).amostra;}catch(e){}}return AMOSTRAS[id]||AMOSTRAS.azul;}
 function coresDisponiveis(){return window.SAGA_CORES||[{id:'azul',nome:'Azul',descricao:'Padrão do sistema'}];}
 function corAtual(){return state.eu.tema_cor_fixo||(window.sagaTemaDoMes&&sagaTemaDoMes())||prefs().cor||'azul';}
-function nomeCor(id){return (coresDisponiveis().find(function(c){return c.id===id;})||{nome:id}).nome;}
+// 17/11: com as cores em dobro, o nome diz a versão ("Azul · vidro", "Azul profundo · normal")
+function nomeCorV(c){if(!c)return '';var par=window.sagaCorPar?sagaCorPar(c.id):null;return par?c.nome+(c.vidro?' · vidro':' · normal'):c.nome;}
+function nomeCor(id){var c=coresDisponiveis().find(function(x){return x.id===id;});return c?nomeCorV(c):id;}
 function coresPermitidas(){var ids=window.sagaTemasPermitidos?sagaTemasPermitidos(state.eu):null;return coresDisponiveis().filter(function(c){return !ids||ids.indexOf(c.id)>=0;});}
 var corEscolhida=null;
+function cartaoCor(c,vers,atual,fixo){
+  var temNormal=vers.some(function(x){return !x.vidro;}),temVidro=vers.some(function(x){return x.vidro;});
+  var seletor=(temNormal&&temVidro)?'<span class="saga-cor-versao" role="group" aria-label="Versão da cor">'+
+      '<span role="button" tabindex="0" data-versao="normal" class="'+(!c.vidro?'active':'')+'" aria-pressed="'+(!c.vidro)+'">Normal</span>'+
+      '<span role="button" tabindex="0" data-versao="vidro" class="'+(c.vidro?'active':'')+'" aria-pressed="'+(!!c.vidro)+'">Vidro</span></span>'
+    :'<span class="saga-cor-versao so">'+(c.vidro?'Só vidro':'Só normal')+'</span>';
+  return '<button type="button" class="saga-cor-op'+(c.id===atual?' active':'')+'" data-cor="'+esc(c.id)+'" data-familia="'+esc(c.familia||c.id)+'"'+(fixo?' disabled':'')+' aria-pressed="'+(c.id===atual)+'" title="'+esc(c.descricao||'')+'">'+
+    (vers.some(function(x){return x.padrao;})?'<span class="saga-cor-padrao">Padrão do sistema</span>':'')+
+    (c.livre?'<span class="saga-cor-amostra livre"><i></i></span>':'<span class="saga-cor-amostra">'+amostraCor(c.id).map(function(x){return '<i style="background:'+x+'"></i>';}).join('')+'</span>')+
+    '<b>'+esc(c.livre?'Vidro: '+c.nome:c.nome)+'</b>'+seletor+'</button>';
+}
+// troca a versão (normal/vidro) dentro do cartão, sem redesenhar a grade (o destaque continua no lugar)
+function trocarVersaoCartao(b,vidro){
+  var fam=b.dataset.familia,lista=coresPermitidas(),c=lista.find(function(x){return (x.familia||x.id)===fam&&!!x.vidro===vidro;});if(!c)return null;
+  b.dataset.cor=c.id;b.title=c.descricao||'';
+  var am=b.querySelector('.saga-cor-amostra');if(am&&!c.livre)am.innerHTML=amostraCor(c.id).map(function(x){return '<i style="background:'+x+'"></i>';}).join('');
+  b.querySelectorAll('[data-versao]').forEach(function(v){var on=(v.dataset.versao==='vidro')===vidro;v.classList.toggle('active',on);v.setAttribute('aria-pressed',on);});
+  return c.id;
+}
 function montarCores(){
   var root=document.getElementById('prCor');if(!root)return;
   if(!window._sagaTemasRegra&&!montarCores.lendo){montarCores.lendo=1;_sb.rpc('temas_regra').then(function(r){if(r&&r.data){window._sagaTemasRegra=r.data;montarCores();}});}var fixo=state.eu.tema_cor_fixo,atual=corAtual();
   var lista=coresPermitidas();if(!lista.some(function(c){return c.id===atual;}))atual='azul';
   corEscolhida=atual;
-  // 12/11 (T151b, Dr. Victor): cartões iguais, em grupos (Clássicos, Campanhas, Vidro), só com a paleta e o nome
+  // 12/11 (T151b, Dr. Victor): cartões iguais, em grupos, só com a paleta e o nome.
+  // 17/11 (cores em dobro): UM cartão por cor, com a escolha "Normal / Vidro" dentro (familia no SAGA_CORES)
   var grupos=window.SAGA_GRUPOS_CORES||[{id:'',nome:''}],html='';
   grupos.forEach(function(g){var doGrupo=lista.filter(function(c){return (c.grupo||'')===g.id||(!c.grupo&&!g.id);});if(!doGrupo.length)return;
     if(grupos.length>1&&lista.length>1)html+='<div class="saga-cor-grupo">'+esc(g.nome)+'</div>';
-    html+=doGrupo.map(function(c){var a=AMOSTRAS[c.id]||AMOSTRAS.azul;
-      return '<button type="button" class="saga-cor-op'+(c.id===atual?' active':'')+'" data-cor="'+esc(c.id)+'"'+(fixo?' disabled':'')+' aria-pressed="'+(c.id===atual)+'" title="'+esc(c.descricao||'')+'">'+
-        (c.padrao?'<span class="saga-cor-padrao">Padrão do sistema</span>':'')+
-        (c.livre?'<span class="saga-cor-amostra livre"><i></i></span>':'<span class="saga-cor-amostra">'+a.map(function(x){return '<i style="background:'+x+'"></i>';}).join('')+'</span>')+
-        '<b>'+esc(c.livre?'Vidro: '+c.nome:c.nome)+'</b></button>';}).join('');});
+    var vistas={};
+    doGrupo.forEach(function(c){var fam=c.familia||c.id;if(vistas[fam])return;vistas[fam]=1;
+      var vers=doGrupo.filter(function(x){return (x.familia||x.id)===fam;});
+      var mostra=vers.find(function(x){return x.id===atual;})||vers.find(function(x){return x.principal;})||vers[0];
+      html+=cartaoCor(mostra,vers,atual,fixo);});});
   root.innerHTML=html;
   var tdm=!fixo&&window.sagaTemaDoMes?sagaTemaDoMes():null;
   if(tdm)root.querySelectorAll('[data-cor]').forEach(function(b){b.disabled=true;});
   document.getElementById('prCorAjuda').textContent=fixo?'O administrador definiu a cor do seu tema. Você troca só entre claro e escuro (sol e lua).':tdm?'O Tema do mês está ligado: neste mês toda a equipe usa o '+nomeCor(tdm)+'. A sua cor escolhida volta quando o mês acabar. O claro e o escuro continuam no sol e na lua.':(lista.length<coresDisponiveis().length?'As cores liberadas pelo administrador. Clique numa cor para ver como fica e depois em "Salvar cor do tema"; o claro e o escuro continuam no sol e na lua.':'Clique numa cor para ver como fica e depois em "Salvar cor do tema": ela passa a valer em todas as telas. O claro e o escuro de cada cor continuam no botão do sol e da lua.');
   mostrarSalvarCor(false);mostrarVidro(atual);
-  root.querySelectorAll('[data-cor]').forEach(function(b){b.addEventListener('click',function(){
-    if(state.eu.tema_cor_fixo)return;corEscolhida=b.dataset.cor;
+  root.querySelectorAll('[data-versao]').forEach(function(v){v.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();v.click();}});});
+  root.querySelectorAll('[data-cor]').forEach(function(b){b.addEventListener('click',function(ev){
+    if(state.eu.tema_cor_fixo||b.disabled)return;
+    var vv=ev.target.closest&&ev.target.closest('[data-versao]');if(vv)trocarVersaoCartao(b,vv.dataset.versao==='vidro');
+    corEscolhida=b.dataset.cor;
     root.querySelectorAll('[data-cor]').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b);});
     // 09/11 (Dr. Victor): o clique mostra a cor só nesta tela (prévia); ela passa a valer em todas as telas
     // quando ele clica em "Salvar cor do tema". Sem salvar, as outras telas continuam com a cor salva.
@@ -838,7 +876,7 @@ function montarCores(){
 async function salvarCorTema(){
   var cor=corEscolhida;if(!cor||state.eu.tema_cor_fixo)return;
   var btn=document.getElementById('prCorSalvar');if(btn)btn.disabled=true;
-  var nome=(coresDisponiveis().find(function(c){return c.id===cor;})||{nome:cor}).nome;
+  var nome=nomeCor(cor);
   var ok=await salvarPreferencias({cor:cor},'Tema '+nome+' salvo em todas as telas.');if(btn)btn.disabled=false;
   if(ok===false)return; // a prévia e o botão continuam: dá para tentar de novo
   if(window.sagaAplicarCor)sagaAplicarCor(cor); // grava no navegador; as outras abas abertas acompanham na hora
@@ -850,7 +888,8 @@ async function salvarCorTema(){
 // Cancelar: volta para a cor salva
 function desfazerCorTema(){
   var c=corAtual();corEscolhida=c;trocarCorSuave(c,false);mostrarVidro(c);
-  document.querySelectorAll('#prCor [data-cor]').forEach(function(x){var on=x.dataset.cor===c;x.classList.toggle('active',on);x.setAttribute('aria-pressed',on);});
+  var cc=coresDisponiveis().find(function(x){return x.id===c;});
+  document.querySelectorAll('#prCor [data-cor]').forEach(function(x){if(cc&&x.dataset.familia===(cc.familia||cc.id)&&x.dataset.cor!==c)trocarVersaoCartao(x,!!cc.vidro);var on=x.dataset.cor===c;x.classList.toggle('active',on);x.setAttribute('aria-pressed',on);});
   mostrarSalvarCor(false);
 }
 /* ----- Vidro tecnológico (T151): fundo, imagem própria e "mais fosco"; tudo neste navegador ----- */
@@ -865,6 +904,9 @@ function mostrarVidro(cor){
 function montarVidro(){
   if(!window.sagaVidro)return;var o=sagaVidro.opcoes();
   marcarSeg('prVidroFundo',o.fundo);marcarSeg('prVidroFosco',o.fosco?'1':'0');
+  marcarSeg('prVidroEfeito',o.efeito);marcarSeg('prVidroInt',o.intensidade);marcarSeg('prVidroVel',o.velocidade);
+  var aj=document.getElementById('prVidroAnimAjustes');if(aj)aj.classList.toggle('apagado',o.efeito==='nenhum');
+  var nt=document.getElementById('prVidroAnimNota');if(nt){var red=false;try{red=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}nt.textContent=(o.efeito!=='nenhum'&&red)?'Os "Efeitos de movimento" estão desligados: o fundo aparece parado. Ligue-os abaixo para ver o movimento.':'';}
   var bImg=document.querySelector('#prVidroFundo [data-v="imagem"]');if(bImg){bImg.disabled=!o.imagem;bImg.title=o.imagem?'':'Primeiro escolha a imagem em "Usar uma imagem minha"';}
   document.getElementById('prVidroTirar').hidden=!o.imagem;
   // coringa: o seletor de cor só aparece no "Vidro: A sua cor"
@@ -881,6 +923,7 @@ function escolherCorVidro(hex){
   sagaVidro.definir('cor',hex.toUpperCase());montarVidro();
   clearTimeout(_vidroCorTimer);_vidroCorTimer=setTimeout(function(){salvarPreferencias({vidro_cor:hex.toUpperCase()});},700);
 }
+document.addEventListener('saga-movimento-mudou',function(){var w=document.getElementById('prVidro');if(w&&!w.hidden)montarVidro();});
 document.addEventListener('input',function(e){if(e.target&&e.target.id==='prVidroCor')escolherCorVidro(e.target.value);});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-vcor]');if(b)escolherCorVidro(b.dataset.vcor);});
 // a imagem é diminuída antes de guardar (o navegador guarda até uns 5 MB por site)
@@ -899,6 +942,9 @@ async function usarImagemVidro(arq){
   }catch(e){showToast(esc(e.message||'Não deu para usar a imagem.'),'error');}
 }
 document.addEventListener('click',function(e){
+  var ef=e.target.closest&&e.target.closest('#prVidroEfeito [data-v],#prVidroInt [data-v],#prVidroVel [data-v]');
+  if(ef&&window.sagaVidro){var grupo=ef.parentElement.id,chave=grupo==='prVidroEfeito'?'efeito':grupo==='prVidroInt'?'intensidade':'velocidade';
+    marcarSeg(grupo,ef.dataset.v);sagaVidro.definir(chave,ef.dataset.v);montarVidro();return;}
   var b=e.target.closest&&e.target.closest('#prVidroFundo [data-v],#prVidroFosco [data-v],#prVidroImg,#prVidroTirar');if(!b||!window.sagaVidro)return;
   if(b.id==='prVidroImg'){document.getElementById('prVidroArq').click();return;}
   if(b.id==='prVidroTirar'){sagaVidro.definir('imagem',null);if(sagaVidro.opcoes().fundo!=='imagem'||true)sagaVidro.definir('fundo','montanhas');montarVidro();showToast('Imagem tirada. Voltou o fundo das montanhas.','success');return;}
@@ -932,7 +978,7 @@ async function montarTemasRegra(){
   var cores=coresDisponiveis();
   box.innerHTML='<label class="chk"><input type="radio" name="temasModo" value="todos"'+(rg.todos!==false?' checked':'')+'> Todas as cores liberadas para toda a equipe</label>'+
     '<label class="chk"><input type="radio" name="temasModo" value="lista"'+(rg.todos===false?' checked':'')+'> Só as cores marcadas abaixo</label>'+
-    '<div class="temas-lista"'+(rg.todos===false?'':' hidden')+'>'+cores.map(function(c){var on=c.id==='azul'||(rg.liberados||[]).indexOf(c.id)>=0;return '<label class="chk"><input type="checkbox" value="'+esc(c.id)+'"'+(on?' checked':'')+(c.id==='azul'?' disabled title="O Azul é a cor padrão e fica sempre liberada"':'')+'> '+esc(c.nome)+'</label>';}).join('')+'</div>'+
+    '<div class="temas-lista"'+(rg.todos===false?'':' hidden')+'>'+cores.map(function(c){var on=c.id==='azul'||(rg.liberados||[]).indexOf(c.id)>=0;return '<label class="chk"><input type="checkbox" value="'+esc(c.id)+'"'+(on?' checked':'')+(c.id==='azul'?' disabled title="O Azul é a cor padrão e fica sempre liberada"':'')+'> '+esc(nomeCorV(c))+'</label>';}).join('')+'</div>'+
     '<div style="margin-top:8px"><button type="button" class="btn-primary btn-sm" id="temasRegraSalvar">Salvar regra</button></div>';
   var lista=box.querySelector('.temas-lista');
   box.querySelectorAll('input[name="temasModo"]').forEach(function(i){i.addEventListener('change',function(){var mostrar=box.querySelector('input[name="temasModo"]:checked').value==='lista';if(window.sagaRecolher)sagaRecolher(lista,!mostrar);else lista.hidden=!mostrar;});});
@@ -953,7 +999,7 @@ function montarTemaMes(){
   if(!m.meses)meses=padrao;
   box.innerHTML='<label class="chk"><input type="checkbox" id="temaMesAtivo"'+(m.ativo?' checked':'')+'> Ligar o Tema do mês</label>'+
     '<div class="tema-mes-grade" id="temaMesGrade">'+MESES_NOME.map(function(n,i){var k=String(i+1),v=meses[k]||'';
-      return '<label class="tema-mes-item"><span>'+n+'</span><select data-mes="'+k+'"><option value="">Escolha de cada um</option>'+coresDisponiveis().map(function(c){return '<option value="'+esc(c.id)+'"'+(v===c.id?' selected':'')+'>'+esc(c.nome)+'</option>';}).join('')+'</select></label>';}).join('')+'</div>'+
+      return '<label class="tema-mes-item"><span>'+n+'</span><select data-mes="'+k+'"><option value="">Escolha de cada um</option>'+coresDisponiveis().map(function(c){return '<option value="'+esc(c.id)+'"'+(v===c.id?' selected':'')+'>'+esc(nomeCorV(c))+'</option>';}).join('')+'</select></label>';}).join('')+'</div>'+
     '<div style="margin-top:8px"><button type="button" class="btn-primary btn-sm" id="temaMesSalvar">Salvar Tema do mês</button></div>';
   box.querySelector('#temaMesSalvar').addEventListener('click',async function(){
     var ativo=box.querySelector('#temaMesAtivo').checked,mm={};
@@ -974,9 +1020,9 @@ async function montarCoresEquipe(){
   if(!document.getElementById('temasRegra').innerHTML)montarTemasRegra();
   var r=await _sb.from('usuarios').select('id,nome_completo,tema_cor_fixo,temas_modo,preferencias,eh_administrador').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');
   if(r.error){lista.innerHTML='<div class="s">Não foi possível carregar a equipe.</div>';return;}
-  var opcoes=function(v){return '<option value="">Segue a regra do escritório</option><option value="__todos"'+(v==='__todos'?' selected':'')+'>Todos os temas liberados para ela</option>'+coresDisponiveis().map(function(c){return '<option value="'+esc(c.id)+'"'+(v===c.id?' selected':'')+'>Só '+esc(c.nome)+' (fixo; troca só claro/escuro)</option>';}).join('');};
+  var opcoes=function(v){return '<option value="">Segue a regra do escritório</option><option value="__todos"'+(v==='__todos'?' selected':'')+'>Todos os temas liberados para ela</option>'+coresDisponiveis().map(function(c){return '<option value="'+esc(c.id)+'"'+(v===c.id?' selected':'')+'>Só '+esc(nomeCorV(c))+' (fixo; troca só claro/escuro)</option>';}).join('');};
   lista.innerHTML=(r.data||[]).filter(function(u){return u.id!==state.eu.id;}).map(function(u){
-    var escolhida=(u.preferencias||{}).cor||'azul',nomeEsc=(coresDisponiveis().find(function(c){return c.id===escolhida;})||{nome:'Azul'}).nome;
+    var escolhida=(u.preferencias||{}).cor||'azul',nomeEsc=nomeCor(escolhida);
     return '<div class="linha-opcao"><div><div class="t">'+esc(u.nome_completo||'')+'</div><div class="s">'+(u.tema_cor_fixo?'Cor fixada pelo administrador':u.temas_modo==='todos'?'Todos os temas liberados · usa hoje: '+esc(nomeEsc):'Usa hoje: '+esc(nomeEsc))+'</div></div>'+
       '<div class="campo" style="margin:0;min-width:230px"><select data-cor-usuario="'+esc(u.id)+'"'+(u.eh_administrador?' disabled title="O cadastro de um administrador só pode ser alterado por ele mesmo."':'')+'>'+opcoes(u.tema_cor_fixo||(u.temas_modo==='todos'?'__todos':''))+'</select></div></div>';
   }).join('')||'<div class="s">Nenhum colaborador com conta ainda.</div>';

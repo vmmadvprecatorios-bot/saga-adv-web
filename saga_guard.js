@@ -32,7 +32,9 @@
   try{cor=localStorage.getItem('saga-cor-salva')||localStorage.getItem('saga-cor')||'azul';}catch(e){}
   if(cor&&cor!=='azul')html.setAttribute('data-cor',cor);
   // fundo de cada cor antes da 1ª imagem ([escuro, claro]; a mesma lista do SAGA_FUNDOS no saga_ui.js)
-  var FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0']};
+  var FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0'],
+    // 17/11 (Dr. Victor): cores em dobro (versão normal das cores de vidro) e o Ônix (preto e cinza)
+    profundo:['#0A1B2E','#E9EEF4'],ciano:['#06181E','#E6F5F5'],ambar:['#140F0A','#F8F1E7'],aurora:['#100C22','#F0EDFA'],onix:['#0E0E0F','#EEEEEC']};
   html.style.background=(FUNDOS[cor]||FUNDOS.azul)[tema==='light'?1:0];
   html.style.colorScheme=tema==='light'?'light':'dark';
   // 12/11 (T151b): "Vidro com a sua cor" (coringa). A partir da cor escolhida monta as variáveis do claro (--vl-c-*)
@@ -59,26 +61,41 @@
       while(px<W){var bw=24+((px*7+k*13)%46),bh=H*(.08+((px*13+k*29)%100)/100*.22)*(1-k*.2);d+='M'+px+' '+Math.round(base-bh)+'h'+bw+'V'+H+'h-'+bw+'Z';
         if(escuro&&k===2){for(var j=0;j<6;j++){if(((px+j*17)%5)===0)j2+='M'+(px+5+(j%3)*7)+' '+Math.round(base-bh+8+Math.floor(j/3)*10)+'h3v4h-3Z';}}px+=bw+2;}
       o+="<path d='"+d+"' fill='"+cores[k].replace('#','%23')+"' fill-opacity='"+alfas[k]+"'/>";if(j2)o+="<path d='"+j2+"' fill='"+bri.replace('#','%23')+"' fill-opacity='.5'/>";}return svg(o);}
-    window.sagaVidroLivre=function(hex){
-      var t=hex2hsl(hex),h=t[0],s=Math.max(.35,Math.min(.9,t[1])),sb=s*.6,v={};
+    // op (17/11, cores em dobro): matizFundo/satFundo = o fundo com outra cor que o destaque (ex.: Natal = fundo verde e
+    // destaque vermelho; Grafite e Ônix = fundo sem cor); satDestaque/luzDestaque = destaque cinza (Ônix); halo = cor do brilho
+    // do céu no escuro (Ônix: brilho quente). Sem op = o "A sua cor" de sempre (mesma conta).
+    window.sagaVidroLivre=function(hex,op){op=op||{};
+      var t=hex2hsl(hex),h=t[0],s=Math.max(.35,Math.min(.9,t[1])),v={},hf=op.matizFundo!=null?op.matizFundo:h,sb=op.satFundo!=null?op.satFundo:s*.6;
+      var saB=op.satDestaque!=null?op.satDestaque:Math.max(s,.7),saD=op.satDestaque!=null?op.satDestaque:Math.max(s,.6),stx=op.satFundo!=null?Math.min(.3,sb):.3,smu=op.satFundo!=null?Math.min(.15,sb):.15;
+      var lB=op.luzDestaque!=null?op.luzDestaque:.6,lD=op.luzDestaque!=null?Math.min(.95,op.luzDestaque+.12):.72;
+      var halo=op.halo?(function(){var n=parseInt(op.halo.replace('#',''),16);return [n>>16&255,n>>8&255,n&255];})():null;
       // escuro
-      var f=hsl2rgb(h,sb,.08),f2=hsl2rgb(h,sb,.14),vid=hsl2rgb(h,sb,.18);
-      var bri=ajustar(h,Math.max(s,.7),.6,f2,3.2,true),dest=ajustar(h,Math.max(s,.6),.72,f2,4.5,true),tx=hsl2rgb(h,.3,.94),mu=ajustar(h,.15,.7,f2,4.5,true);
-      var mo=[hx(hsl2rgb(h,sb*.8,.10)),hx(hsl2rgb(h,sb*.8,.13)),hx(hsl2rgb(h,sb*.8,.16))];
+      var f=hsl2rgb(hf,sb,.08),f2=hsl2rgb(hf,sb,.14),vid=hsl2rgb(hf,sb,.18);
+      var bri=ajustar(h,saB,lB,f2,3.2,true),dest=ajustar(h,saD,lD,f2,4.5,true),tx=hsl2rgb(hf,stx,.94),mu=ajustar(hf,smu,.7,f2,4.5,true);
+      var mo=[hx(hsl2rgb(hf,sb*.8,.10)),hx(hsl2rgb(hf,sb*.8,.13)),hx(hsl2rgb(hf,sb*.8,.16))];
       v.e={fundo:hx(f),navy2:rgba(f,.55),navy3:rgba(f2,.6),panel:rgba(vid,.58),panel2:rgba(vid,.66),solid:hx(f2),borda:'rgba(220,232,245,.16)',borda2:'rgba(220,232,245,.09)',texto:hx(tx),muted:hx(mu),gold:hx(bri),gold2:hx(dest),
-        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(h,sb,.06))+' 0%,'+hx(hsl2rgb(h,sb,.17))+' 60%,'+hx(hsl2rgb(h,sb*.8,.32))+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(bri,.30)+',transparent 70%)',
+        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(hf,sb,.06))+' 0%,'+hx(hsl2rgb(hf,sb,.17))+' 60%,'+hx(hsl2rgb(hf,sb*.8,.32))+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(halo||bri,.30)+',transparent 70%)',
         montes:montes(mo,true,[1,1,1]),cidade:cidade(mo,true,[1,1,1],hx(bri)),grade:rgba(bri,.22),veu:'linear-gradient(180deg,'+rgba(f,.30)+','+rgba(f,.70)+')',vidro:rgba(vid,.40),vidro2:rgba(vid,.66),brilho:hx(bri)};
       // claro
-      var cf=hsl2rgb(h,sb*.75,.90),cf2=hsl2rgb(h,sb*.75,.96),branco=[255,255,255];
-      var cdest=ajustar(h,Math.max(s,.6),.32,branco,4.8,false),cbri=ajustar(h,Math.max(s,.7),.45,branco,3,false),ctx=ajustar(h,.4,.14,branco,12,false),cmu=ajustar(h,.18,.34,branco,6,false);
-      var cmo=[hx(hsl2rgb(h,sb,.70)),hx(hsl2rgb(h,sb,.58)),hx(hsl2rgb(h,sb,.45))];
+      var cf=hsl2rgb(hf,sb*.75,.90),cf2=hsl2rgb(hf,sb*.75,.96),branco=[255,255,255];
+      var cdest=ajustar(h,saD,.32,branco,4.8,false),cbri=ajustar(h,saB,.45,branco,3,false),ctx=ajustar(hf,op.satFundo!=null?Math.min(.4,sb):.4,.14,branco,12,false),cmu=ajustar(hf,op.satFundo!=null?Math.min(.18,sb):.18,.34,branco,6,false);
+      var cmo=[hx(hsl2rgb(hf,sb,.70)),hx(hsl2rgb(hf,sb,.58)),hx(hsl2rgb(hf,sb,.45))];
       v.c={fundo:hx(cf),navy2:rgba(cf,.55),navy3:rgba(cf2,.6),panel:'rgba(255,255,255,.62)',panel2:'rgba(255,255,255,.72)',solid:'#FFFFFF',borda:'rgba(16,36,58,.16)',borda2:'rgba(16,36,58,.10)',texto:hx(ctx),muted:hx(cmu),gold:hx(cdest),gold2:hx(cbri),
-        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(h,sb,.80))+' 0%,'+hx(cf)+' 60%,'+hx(cf2)+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(cbri,.32)+',transparent 70%)',
+        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(hf,sb,.80))+' 0%,'+hx(cf)+' 60%,'+hx(cf2)+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(cbri,.32)+',transparent 70%)',
         montes:montes(cmo,false,[.55,.7,.85]),cidade:cidade(cmo,false,[.55,.7,.85],hx(cbri)),grade:rgba(cbri,.20),veu:'linear-gradient(180deg,'+rgba(cf,.25)+','+rgba(cf,.55)+')',vidro:'rgba(255,255,255,.50)',vidro2:'rgba(255,255,255,.74)',brilho:hx(cbri)};
       v.amostra=[v.e.fundo,v.e.solid,v.e.gold,v.c.fundo,v.c.gold2,v.c.gold];
       return v;};
+    // 17/11 (Dr. Victor, cores em dobro): a versão VIDRO das cores normais e o Vidro Ônix (preto e cinza) saem da mesma
+    // conta do "A sua cor", com a semente fixa de cada uma (variáveis --vl-*, regras do vidro-livre no saga_tema.css)
+    window.SAGA_VIDRO_SEMENTES={
+      'vidro-azul':{cor:'#4B8AF5',satFundo:.45},
+      'vidro-grafite':{cor:'#D4B98A',satFundo:.0,satDestaque:.45},
+      'vidro-novembro':{cor:'#3A9DE6',satFundo:.55},
+      'vidro-rosa':{cor:'#E85A93',satFundo:.35},
+      'vidro-natal':{cor:'#E0454E',matizFundo:150,satFundo:.40},
+      'vidro-onix':{cor:'#E8E8E8',satFundo:.0,satDestaque:0,luzDestaque:.82,halo:'#B9874F'}};
     // põe as variáveis no html (vale para o claro e o escuro; o tema troca sem refazer a conta)
-    window.sagaVidroAplicarLivre=function(hex){var html=document.documentElement,v=window.sagaVidroLivre(hex);
+    window.sagaVidroAplicarLivre=function(hex,op){var html=document.documentElement,v=window.sagaVidroLivre(hex,op);
       ['e','c'].forEach(function(p){Object.keys(v[p]).forEach(function(k){html.style.setProperty('--vl-'+p+'-'+k,v[p][k]);});});
       return v;};
   })();
@@ -88,8 +105,77 @@
     if(localStorage.getItem('saga-vidro-fosco')==='1')html.classList.add('vidro-fosco');
     if(vi)html.style.setProperty('--vidro-img','url("'+vi+'")');}catch(e){}
   // coringa: monta as cores da pessoa antes da 1ª imagem (a cor fica em saga-vidro-cor)
-  try{var vlc=localStorage.getItem('saga-vidro-cor')||'#5AA9FF';if(cor==='vidro-livre'){var vl=window.sagaVidroAplicarLivre(vlc);html.style.background=tema==='light'?vl.c.fundo:vl.e.fundo;}}catch(e){}
+  try{var vlc=localStorage.getItem('saga-vidro-cor')||'#5AA9FF',sem=window.SAGA_VIDRO_SEMENTES[cor];
+    if(cor==='vidro-livre'||sem){var vl=sem?window.sagaVidroAplicarLivre(sem.cor,sem):window.sagaVidroAplicarLivre(vlc);html.style.background=tema==='light'?vl.c.fundo:vl.e.fundo;}}catch(e){}
   try{html.style.setProperty('--vd-fundo-html',html.style.background);}catch(e){}
+  // 17/11 (Dr. Victor): FUNDO ANIMADO do Vidro tecnológico (brasas de neon, rede de dados, circuito), na cor do tema.
+  // Um canvas fixo atrás de tudo (#sagaVidroAnim), só com uma cor de vidro e fora das janelas embutidas; no máximo 30
+  // quadros por segundo, para quando a aba está escondida e fica PARADO com "Efeitos de movimento" desligado.
+  // Escolhas deste navegador: saga-vidro-efeito (nenhum|brasas|rede|circuito), saga-vidro-intensidade (1..3) e
+  // saga-vidro-velocidade (1..3). window.sagaVidroAnimar() relê tudo (chamado pelo sagaVidro.aplicar do saga_ui.js).
+  (function(){
+    var cv=null,ctx=null,raf=0,ult=0,itens=[],cfg=null,W=0,H=0,dpr=1,cor=[90,169,255],claro=false,t0=0,pulsos=[];
+    var INT=[0,.55,1,1.6],VEL=[0,.55,1,1.7];
+    function ler(){var o={efeito:'nenhum',int:2,vel:2};try{o.efeito=localStorage.getItem('saga-vidro-efeito')||'nenhum';o.int=+localStorage.getItem('saga-vidro-intensidade')||2;o.vel=+localStorage.getItem('saga-vidro-velocidade')||2;}catch(e){}
+      o.int=Math.max(1,Math.min(3,o.int));o.vel=Math.max(1,Math.min(3,o.vel));return o;}
+    function parado(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+    function ativo(){var h=document.documentElement;return (h.getAttribute('data-cor')||'').indexOf('vidro')===0&&!h.classList.contains('saga-embed')&&cfg&&cfg.efeito!=='nenhum';}
+    function lerCor(){try{var b=document.body,v=getComputedStyle(b).getPropertyValue('--vd-brilho').trim()||getComputedStyle(b).getPropertyValue('--gold').trim();
+      claro=b.getAttribute('data-theme')==='light';var m=/^#?([0-9a-f]{6})$/i.exec(v);if(m){var n=parseInt(m[1],16);cor=[n>>16&255,n>>8&255,n&255];}
+      else{m=/rgba?\(([^)]+)\)/.exec(v);if(m){var p=m[1].split(',');cor=[+p[0],+p[1],+p[2]];}}}catch(e){}}
+    function rgba(a){return 'rgba('+cor[0]+','+cor[1]+','+cor[2]+','+a.toFixed(3)+')';}
+    function medir(){dpr=Math.min(1.5,window.devicePixelRatio||1);W=window.innerWidth;H=window.innerHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);}
+    function rnd(a,b){return a+Math.random()*(b-a);}
+    function montar(){itens=[];pulsos=[];var k=INT[cfg.int],area=W*H/(1280*720);
+      if(cfg.efeito==='brasas'){var n=Math.round(55*k*Math.min(1.6,Math.max(.5,area)));for(var i=0;i<n;i++)itens.push(brasa(true));}
+      else if(cfg.efeito==='rede'){var n2=Math.round(42*k*Math.min(1.5,Math.max(.5,area)));for(var j=0;j<n2;j++)itens.push({x:rnd(0,W),y:rnd(0,H),vx:rnd(-.25,.25),vy:rnd(-.25,.25),r:rnd(1,2.2)});}
+      else if(cfg.efeito==='circuito'){var passo=72;for(var y=passo/2;y<H;y+=passo)itens.push({h:true,p:y});for(var x=passo/2;x<W;x+=passo*1.5)itens.push({h:false,p:x});var np=Math.round(10*k);for(var q=0;q<np;q++)pulsos.push(pulso());}}
+    function brasa(espalhar){return {x:rnd(0,W),y:espalhar?rnd(0,H):H+rnd(0,40),r:rnd(.8,2.6),v:rnd(.25,.9),o:rnd(0,6.28),a:rnd(.35,.95),dx:rnd(-.15,.15)};}
+    function pulso(){var l=itens[Math.floor(Math.random()*itens.length)]||{h:true,p:H/2};return {l:l,s:rnd(-200,0),v:rnd(1.4,3.2)*(Math.random()<.5?-1:1),c:rnd(60,160),raio:Math.random()<.12};}
+    function quadro(dt){var k=INT[cfg.int],ve=VEL[cfg.vel]*dt/16.67,alfa=claro?.75:1;ctx.clearRect(0,0,W,H);
+      if(cfg.efeito==='brasas'){ctx.globalCompositeOperation=claro?'source-over':'lighter';
+        for(var i=0;i<itens.length;i++){var p=itens[i];p.y-=p.v*ve;p.o+=.02*ve;p.x+=(Math.sin(p.o)*.35+p.dx)*ve;if(p.y<-20){itens[i]=brasa(false);continue;}
+          var a=p.a*alfa*(0.55+0.45*Math.sin(p.o*1.7))*Math.min(1,(H-p.y+40)/160)*Math.min(1,(p.y+20)/120),g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*5);
+          g.addColorStop(0,rgba(a));g.addColorStop(.3,rgba(a*.45));g.addColorStop(1,rgba(0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(p.x,p.y,p.r*5,0,6.2832);ctx.fill();}
+        ctx.globalCompositeOperation='source-over';}
+      else if(cfg.efeito==='rede'){var lim=140,lim2=lim*lim;ctx.lineWidth=1;
+        for(var a1=0;a1<itens.length;a1++){var n=itens[a1];n.x+=n.vx*ve;n.y+=n.vy*ve;if(n.x<-20)n.x=W+20;if(n.x>W+20)n.x=-20;if(n.y<-20)n.y=H+20;if(n.y>H+20)n.y=-20;}
+        for(var b1=0;b1<itens.length;b1++){var A=itens[b1];for(var c1=b1+1;c1<itens.length;c1++){var B=itens[c1],dx=A.x-B.x,dy=A.y-B.y,d=dx*dx+dy*dy;if(d<lim2){ctx.strokeStyle=rgba((1-Math.sqrt(d)/lim)*.35*alfa);ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();}}}
+        for(var e1=0;e1<itens.length;e1++){var N=itens[e1];ctx.fillStyle=rgba(.75*alfa);ctx.beginPath();ctx.arc(N.x,N.y,N.r,0,6.2832);ctx.fill();}}
+      else if(cfg.efeito==='circuito'){ctx.lineWidth=1;ctx.strokeStyle=rgba(.07*alfa*k);ctx.beginPath();
+        for(var i2=0;i2<itens.length;i2++){var L=itens[i2];if(L.h){ctx.moveTo(0,L.p);ctx.lineTo(W,L.p);}else{ctx.moveTo(L.p,0);ctx.lineTo(L.p,H);}}ctx.stroke();
+        ctx.globalCompositeOperation=claro?'source-over':'lighter';
+        for(var j2=0;j2<pulsos.length;j2++){var P=pulsos[j2],tam=P.l.h?W:H;P.s+=P.v*ve*2;var pos=P.v>0?P.s:tam-P.s;
+          if(P.s>tam+P.c){pulsos[j2]=pulso();continue;}
+          var x1,y1,x2,y2;if(P.l.h){x1=pos;x2=pos-(P.v>0?P.c:-P.c);y1=y2=P.l.p;}else{y1=pos;y2=pos-(P.v>0?P.c:-P.c);x1=x2=P.l.p;}
+          var gr=ctx.createLinearGradient(x2,y2,x1,y1);gr.addColorStop(0,rgba(0));gr.addColorStop(1,rgba((P.raio?1:.8)*alfa));
+          ctx.strokeStyle=gr;ctx.lineWidth=P.raio?2.2:1.4;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x1,y1);ctx.stroke();
+          ctx.fillStyle=rgba(.9*alfa);ctx.beginPath();ctx.arc(x1,y1,P.raio?2.6:1.8,0,6.2832);ctx.fill();}
+        ctx.globalCompositeOperation='source-over';ctx.lineWidth=1;}}
+    function laco(t){raf=0;if(!cv||document.hidden||!ativo())return;var dt=t-ult;
+      if(dt>=32){quadro(Math.min(dt,100));ult=t;}raf=requestAnimationFrame(laco);}
+    function parar(){if(raf)cancelAnimationFrame(raf);raf=0;}
+    function seguir(){parar();if(!ativo()||document.hidden)return;if(parado()){quadro(16.67);return;}ult=performance.now();raf=requestAnimationFrame(laco);}
+    window.sagaVidroAnimar=function(){cfg=ler();var lig=ativo();
+      if(!lig){if(cv){parar();var c0=cv;c0.style.opacity='0';cv=null;ctx=null;setTimeout(function(){c0.remove();},parado()?0:420);}return;}
+      if(!document.body)return;
+      if(!cv){cv=document.createElement('canvas');cv.id='sagaVidroAnim';cv.setAttribute('aria-hidden','true');
+        cv.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;opacity:0;transition:opacity '+(parado()?'0s':'.42s cubic-bezier(.22,.78,.25,1)');
+        document.body.insertBefore(cv,document.body.firstChild);ctx=cv.getContext('2d');requestAnimationFrame(function(){if(cv)cv.style.opacity='1';});}
+      var chave=cfg.efeito+'|'+cfg.int;lerCor();
+      if(cv._chave!==chave||!W){cv._chave=chave;medir();montar();}
+      quadro(16.67);seguir();};
+    // medição de custo (teste): quanto tempo leva desenhar N quadros
+    window.sagaVidroAnimar.medir=function(n){if(!ctx)return null;var t=performance.now();for(var i=0;i<(n||60);i++)quadro(33);return (performance.now()-t)/(n||60);};
+    var tm=0;window.addEventListener('resize',function(){if(!cv)return;clearTimeout(tm);tm=setTimeout(function(){medir();montar();quadro(16.67);},150);});
+    document.addEventListener('visibilitychange',function(){if(cv)seguir();});
+    document.addEventListener('saga-movimento-mudou',function(){if(cv){cv.style.transition=parado()?'none':'opacity .42s cubic-bezier(.22,.78,.25,1)';seguir();}});
+    // cor e claro/escuro mudam sem recarregar: relê a cor
+    function observar(){try{var antes='';new MutationObserver(function(){var h=document.documentElement,k=(h.getAttribute('data-cor')||'')+(h.classList.contains('saga-embed')?'e':'');if(k===antes)return;antes=k;window.sagaVidroAnimar();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-cor','class']});
+      new MutationObserver(function(){if(cv){lerCor();if(parado())quadro(16.67);}}).observe(document.body,{attributes:true,attributeFilter:['data-theme']});}catch(e){}}
+    window.addEventListener('storage',function(e){if(e.key&&/^saga-(vidro-|movimento)/.test(e.key))window.sagaVidroAnimar();});
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){window.sagaVidroAnimar();observar();});else{window.sagaVidroAnimar();observar();}
+  })();
 
   var temSessao=false;
   try{
