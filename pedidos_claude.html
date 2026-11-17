@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611170016"></script>
+<script src="saga_guard.js?v=202611170958"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VMMADV | Pedidos do Claude</title>
+<title>VMMADV | Pedidos do Saga IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -74,7 +74,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
   .ent{min-width:0;width:100%;flex-basis:100%}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611170016">
+<link rel="stylesheet" href="saga_tema.css?v=202611170958">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -84,8 +84,8 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 <main class="content">
   <div class="page-head">
     <div>
-      <h1>Pedidos do Claude</h1>
-      <p>O que o Claude (SAGA no Claude) pediu para você trazer para andar com os processos: autos, certidões, documentos. Quando você entrega numa conversa ("você pediu isso aqui"), o próprio Claude conclui; também dá para concluir aqui. Cada pedido também aparece em Minhas Tarefas e na ficha do cliente.</p>
+      <h1>Pedidos do Saga IA</h1>
+      <p>O que o Saga IA (o Claude ligado ao SAGA) pediu para você trazer para andar com os processos: autos, certidões, documentos. Quando você entrega numa conversa ("você pediu isso aqui"), o próprio Saga IA conclui; também dá para concluir aqui. Cada pedido também aparece em Minhas Tarefas e na ficha do cliente.</p>
     </div>
     <button class="btn" type="button" id="btnAtualizar">Atualizar</button>
   </div>
@@ -103,7 +103,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 
 <div class="mo" id="janela" role="dialog" aria-modal="true" aria-labelledby="jTitulo" data-saga-movimento-proprio><div class="md">
   <div class="md-cab"><h2 id="jTitulo">Concluir pedido</h2><p id="jSub"></p></div>
-  <div class="md-corpo"><label for="jTexto">O que foi entregue (opcional)</label><textarea id="jTexto" maxlength="4000" placeholder="Ex.: autos inteiros baixados e enviados ao Claude em 13/11"></textarea></div>
+  <div class="md-corpo"><label for="jTexto">O que foi entregue (opcional)</label><textarea id="jTexto" maxlength="4000" placeholder="Ex.: autos inteiros baixados e enviados ao Saga IA em 13/11"></textarea></div>
   <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="jOk">Concluir pedido</button></div>
 </div></div>
 <div class="toast-wrap" id="toastWrap"></div>
@@ -115,7 +115,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611170016"></script>
+<script src="saga_ui.js?v=202611170958"></script>
 <script>
 /* =====================================================================
    SAGA · Pedidos do Claude (T166, blocos 185 e 186; 12/11/2026, pedido do Dr. Victor)
@@ -169,12 +169,12 @@ function htmlPedido(p){
 function desenhar(){
   var area=$('area');
   if(P.erro){
-    area.innerHTML='<div class="erro-caixa"><b>Não consegui carregar os pedidos do Claude.</b>Motivo: '+esc(P.erro)+'<br>Tente "Atualizar". Se continuar, avise o administrador com esta mensagem.</div>';
+    area.innerHTML='<div class="erro-caixa"><b>Não consegui carregar os pedidos do Saga IA.</b>Motivo: '+esc(P.erro)+'<br>Tente "Atualizar". Se continuar, avise o administrador com esta mensagem.</div>';
     $('resumo').textContent='';return;
   }
   var l=filtrados();
   if(!l.length){
-    area.innerHTML='<div class="vazio"><b>'+(P.busca?'Nada encontrado nesta busca.':(P.sit==='abertos'?'Nenhum pedido do Claude em aberto.':'Nenhum pedido concluído nos últimos 6 meses.'))+'</b>'+(P.sit==='abertos'&&!P.busca?'Quando o Claude precisar de algo seu para andar com um processo, o pedido aparece aqui.':'')+'</div>';
+    area.innerHTML='<div class="vazio"><b>'+(P.busca?'Nada encontrado nesta busca.':(P.sit==='abertos'?'Nenhum pedido do Saga IA em aberto.':'Nenhum pedido concluído nos últimos 6 meses.'))+'</b>'+(P.sit==='abertos'&&!P.busca?'Quando o Saga IA precisar de algo seu para andar com um processo, o pedido aparece aqui.':'')+'</div>';
     $('resumo').innerHTML=P.sit==='abertos'?'<b>0</b> pedidos em aberto':'';return;
   }
   // agrupa por processo (ou "Sem processo"), na ordem em que chegaram

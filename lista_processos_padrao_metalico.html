@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611170016"></script>
+<script src="saga_guard.js?v=202611170958"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Processos em Andamento</title>
@@ -464,7 +464,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
   [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
 .proxima-providencia{margin-top:6px;min-width:0;max-width:100%}.providencia-link{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;max-width:100%;border:1px solid var(--border-soft);border-left:4px solid var(--prazo-cor,var(--muted));border-radius:7px;padding:5px 7px;background:var(--panel);color:var(--text);font-size:10px;line-height:1.5;text-decoration:none;overflow-wrap:anywhere}.providencia-link:active{transform:scale(.98)}.providencia-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.providencia-prazo{background:var(--prazo-cor,var(--panel-2));color:var(--prazo-texto,var(--muted));border-radius:4px;padding:1px 4px}.providencia-link[data-situacao-prazo="muito-atrasada"]{outline:1px solid var(--prazo-muito-contorno)}.providencia-concluida{color:var(--muted);border-left-width:1px}.providencia-mais{color:var(--muted);font-weight:700}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611170016">
+<link rel="stylesheet" href="saga_tema.css?v=202611170958">
 </head>
 <body data-theme="dark">
 
@@ -724,18 +724,18 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611170016"></script>
-<script src="saga_teses.js?v=202611170016"></script>
-<script src="saga_etiquetas.js?v=202611170016"></script>
-<script src="saga_partes.js?v=202611170016"></script>
-<script src="saga_roscas.js?v=202611170016"></script>
-<script src="saga_paineis.js?v=202611170016"></script>
-<script src="saga_xlsx.js?v=202611170016"></script>
-<script src="saga_fichas.js?v=202611170016"></script>
-<script src="saga_origem.js?v=202611170016"></script>
-<script src="saga_planilha.js?v=202611170016"></script>
-<script src="saga_recursos.js?v=202611170016"></script>
-<script src="saga_tribunais.js?v=202611170016"></script>
+<script src="saga_ui.js?v=202611170958"></script>
+<script src="saga_teses.js?v=202611170958"></script>
+<script src="saga_etiquetas.js?v=202611170958"></script>
+<script src="saga_partes.js?v=202611170958"></script>
+<script src="saga_roscas.js?v=202611170958"></script>
+<script src="saga_paineis.js?v=202611170958"></script>
+<script src="saga_xlsx.js?v=202611170958"></script>
+<script src="saga_fichas.js?v=202611170958"></script>
+<script src="saga_origem.js?v=202611170958"></script>
+<script src="saga_planilha.js?v=202611170958"></script>
+<script src="saga_recursos.js?v=202611170958"></script>
+<script src="saga_tribunais.js?v=202611170958"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -2113,6 +2113,21 @@ function guardarPosicao(){
       buscaKanban:state.buscaKanban||'',rolagem:window.scrollY||0,rolagemMain:main?main.scrollTop:0,kanbanX:qk?qk.scrollLeft:0}));
   }catch(e){}
 }
+function lerEstadoVolta(){
+  return {busca:state.busca||'',filtroArea:state.filtroArea,filtroTese:state.filtroTese,filtroStatus:state.filtroStatus,filtroResponsavel:state.filtroResponsavel,
+    filtroPeriodoDe:state.filtroPeriodoDe,filtroPeriodoAte:state.filtroPeriodoAte,pageSize:state.pageSize,page:state.page||1,view:state.view,
+    faseLista:state.faseLista||null,faseKanbanAtiva:state.faseKanbanAtiva||null,buscaKanban:state.buscaKanban||'',
+    planilha:window.SagaPlanilha&&SagaPlanilha.pronta()&&SagaPlanilha.estado?SagaPlanilha.estado():null};
+}
+function aplicarEstadoVolta(v){
+  ['busca','filtroArea','filtroTese','filtroStatus','filtroResponsavel','filtroPeriodoDe','filtroPeriodoAte','pageSize'].forEach(function(k){if(v[k]!==undefined)state[k]=v[k];});
+  if(state.busca==null)state.busca='';
+  if(v.faseLista)state.faseLista=v.faseLista;
+  if(v.faseKanbanAtiva)state.faseKanbanAtiva=v.faseKanbanAtiva;
+  if(v.buscaKanban){state.buscaKanban=v.buscaKanban;var bk=document.getElementById('buscaKanban');if(bk)bk.value=v.buscaKanban;}
+  try{sincronizarUI();renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();}catch(e){}
+  if(v.planilha&&window.SagaPlanilha&&SagaPlanilha.voltarEstado&&SagaPlanilha.pronta())SagaPlanilha.voltarEstado(v.planilha);
+}
 function lerPosicao(){try{return JSON.parse(sessionStorage.getItem(CHAVE_POSICAO_PROCESSOS)||'null');}catch(e){return null;}}
 function restaurarRolagem(pos){
   if(!pos)return;
@@ -2392,7 +2407,11 @@ async function init(){
   await carregarOpcoesFiltros();
   try{await SagaPlanilha.iniciar();}catch(e){console.warn(e);}
   await restaurarPreferencias();
-  var pos=lerPosicao();
+  // 17/11 (Dr. Victor): ao VOLTAR (botão do mouse, seta do navegador) a planilha aparece como estava: filtros,
+  // busca, página, visão e rolagem (SagaVolta, saga_guard.js). Abrir pelo menu continua LIMPA (regra de 09/11).
+  var volta=window.SagaVolta?SagaVolta.estado('processos'):null;
+  if(volta)aplicarEstadoVolta(volta);
+  var pos=volta||(window.SagaVolta&&!SagaVolta.voltando)?null:lerPosicao();
   if(pos){
     if(pos.faseLista)state.faseLista=pos.faseLista;
     if(pos.faseKanbanAtiva)state.faseKanbanAtiva=pos.faseKanbanAtiva;
@@ -2401,9 +2420,12 @@ async function init(){
   }
   var viewSalva=null;
   try{viewSalva=localStorage.getItem(CHAVE_VIEW_PROCESSOS);}catch(e){}
+  if(volta&&volta.view)viewSalva=volta.view;
   toggleView(viewSalva==='kanban'?'kanban':'lista',true);
+  if(volta&&volta.page)state.page=volta.page;
   await carregarProcessos();
   restaurarRolagem(pos);
+  if(window.SagaVolta)SagaVolta.registrar('processos',{ler:lerEstadoVolta,aplicar:function(){},rolagem:['main.content','.quadro-kanban','.tabela-scroll']});
   // veio da Agenda (Marcar atendimento > "Cadastre antes na Captação"): já abre o Novo processo (10/11, T141)
   try{var qn=new URLSearchParams(location.search);if(qn.get('novo')==='1'){var u2=new URL(location.href);u2.searchParams.delete('novo');history.replaceState(history.state,'',u2);if(state.permissoes.criar)abrirNovoProcesso();}}catch(e){}
 }

@@ -923,3 +923,76 @@
   (document.head||html).appendChild(Object.assign(document.createElement('style'),{textContent:
     '[class*="modal"],[class*="modal"] *,[class*="popover"],[class*="popover"] *,[class*="dropdown"],[class*="dropdown"] *,[class*="pop-"],dialog,dialog *,.mo,.mo *,.si-ov,.si-ov *,[class*="visor"],[class*="visor"] *{overscroll-behavior:contain;}'}));
 })();
+
+/* =====================================================================
+   VOLTAR SEM PERDER OS FILTROS (17/11, Dr. Victor)
+   Ao VOLTAR (botão do mouse, seta do navegador) ou AVANÇAR para uma tela, ela aparece como estava:
+   filtros, busca, página, aba, visão e rolagem. Abrir pelo MENU (ou por link) é uma entrada nova
+   no histórico e continua abrindo LIMPA (regra de 09/11 das planilhas). F5 também abre limpa.
+   Cada entrada do histórico ganha um código (history.state.sagaEntrada); ao sair da tela
+   (pagehide), cada tela registrada grava o seu estado em sessionStorage 'saga-volta:<código>'
+   (só nesta aba). Tela que quer isso chama, DEPOIS de montar os filtros e os dados:
+     SagaVolta.registrar('chave', {ler:function(){return {...}}, aplicar:function(o){...}, rolagem:['#seletor']})
+   aplicar() só é chamado quando a tela foi aberta pelo voltar/avançar e há estado guardado.
+   ===================================================================== */
+(function(){
+  if(window.SagaVolta)return;
+  var PREF='saga-volta:';
+  var nav=null;try{nav=performance.getEntriesByType('navigation')[0];}catch(e){}
+  var voltando=!!(nav&&nav.type==='back_forward');
+  function lerId(){var st=history.state;return st&&typeof st==='object'&&st.sagaEntrada?String(st.sagaEntrada):null;}
+  function gravarId(id){try{var st=history.state;var novo=(st&&typeof st==='object')?Object.assign({},st):{};novo.sagaEntrada=id;history.replaceState(novo,'',location.href);}catch(e){}}
+  var idCarga=lerId(),dados=null;
+  if(voltando&&idCarga){try{dados=JSON.parse(sessionStorage.getItem(PREF+idCarga)||'null');}catch(e){}if(dados&&dados.caminho!==location.pathname)dados=null;}
+  if(!idCarga){idCarga=Date.now().toString(36)+Math.random().toString(36).slice(2,8);gravarId(idCarga);}
+  var registros={};
+  function limpar(){
+    try{var ks=[];for(var i=0;i<sessionStorage.length;i++){var k=sessionStorage.key(i);if(k&&k.indexOf(PREF)===0)ks.push(k);}
+      if(ks.length<=40)return;
+      ks.map(function(k){var t=0;try{t=JSON.parse(sessionStorage.getItem(k)).t||0;}catch(e){}return {k:k,t:t};})
+        .sort(function(a,b){return a.t-b.t;}).slice(0,ks.length-40).forEach(function(o){sessionStorage.removeItem(o.k);});
+    }catch(e){}
+  }
+  function salvar(){
+    if(!Object.keys(registros).length)return;
+    // a tela pode ter trocado o history.state (replaceState(null...)): o código volta para a entrada
+    var id=lerId();if(!id){id=idCarga;gravarId(id);}
+    var d={caminho:location.pathname,t:Date.now(),rol:{x:window.scrollX,y:window.scrollY},el:{},telas:{}};
+    Object.keys(registros).forEach(function(k){
+      var r=registros[k];
+      try{d.telas[k]=r.ler();}catch(e){}
+      (r.rolagem||[]).forEach(function(sel){var el=document.querySelector(sel);if(el)d.el[sel]={x:el.scrollLeft,y:el.scrollTop};});
+    });
+    try{sessionStorage.setItem(PREF+id,JSON.stringify(d));limpar();}catch(e){}
+  }
+  window.addEventListener('pagehide',salvar);
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden')salvar();});
+  function restaurarRolagem(seletores){
+    if(!dados)return;
+    var tent=0,parar=false;
+    function cancelar(){parar=true;}
+    ['wheel','touchstart','keydown','mousedown'].forEach(function(ev){window.addEventListener(ev,cancelar,{once:true,passive:true,capture:true});});
+    (function passo(){
+      if(parar)return;tent++;var ok=true;
+      if(dados.rol&&(dados.rol.y||dados.rol.x)){window.scrollTo(dados.rol.x,dados.rol.y);if(Math.abs(window.scrollY-dados.rol.y)>2)ok=false;}
+      seletores.forEach(function(sel){var el=document.querySelector(sel),p=dados.el&&dados.el[sel];if(!el||!p)return;
+        el.scrollLeft=p.x;el.scrollTop=p.y;if(Math.abs(el.scrollTop-p.y)>2||Math.abs(el.scrollLeft-p.x)>2)ok=false;});
+      if(!ok&&tent<40)setTimeout(passo,100);
+    })();
+  }
+  window.SagaVolta={
+    voltando:voltando,
+    // estado guardado desta tela (ou null): para a tela que precisa saber ANTES de carregar os dados
+    estado:function(chave){return dados&&dados.telas&&dados.telas[chave]!=null?dados.telas[chave]:null;},
+    registrar:function(chave,o){
+      registros[chave]=o;
+      var est=this.estado(chave);
+      if(est==null||o._aplicado)return false;
+      o._aplicado=true;
+      try{if(o.aplicar)o.aplicar(est);}catch(e){if(window.console)console.warn('SagaVolta: não consegui pôr a tela como estava',e);}
+      restaurarRolagem(o.rolagem||[]);
+      return true;
+    },
+    salvar:salvar
+  };
+})();

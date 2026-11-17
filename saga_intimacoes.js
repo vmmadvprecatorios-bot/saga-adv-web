@@ -1780,7 +1780,10 @@
     return r.count||0;
   }
 
-  global.SagaIntimacoes={escondidasPorFiltro:escondidasPorFiltro,limparTodosFiltros:limparTodosFiltros,novasDesdeCarga:novasDesdeCarga,iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,renderGraficos:renderGraficos,
+  // 17/11 (Dr. Victor): ao VOLTAR para a tela (botão do mouse, seta do navegador) os filtros voltam como estavam (SagaVolta)
+  function estadoFiltros(){return JSON.parse(JSON.stringify(S.f));}
+  function voltarFiltros(f){if(!f||typeof f!=='object')return;Object.keys(S.f).forEach(function(k){if(f[k]!==undefined)S.f[k]=f[k];});guardarFiltros();}
+  global.SagaIntimacoes={estadoFiltros:estadoFiltros,voltarFiltros:voltarFiltros,escondidasPorFiltro:escondidasPorFiltro,limparTodosFiltros:limparTodosFiltros,novasDesdeCarga:novasDesdeCarga,iniciar:iniciar,carregar:carregar,montarFiltros:montarFiltros,renderQuadro:renderQuadro,renderLista:renderLista,renderGraficos:renderGraficos,
     injetarNoKanbanTarefas:injetarNoKanbanTarefas,abrir:abrir,contagens:contagens,justicaDe:justicaDe,
     faixa:function(){return S.f.faixa||'';},definirFaixa:function(k){S.f.faixa=S.f.faixa===k?'':(k||'');mudou();},
     filtrarProcesso:function(id){S.f.processo=id||null;},filtrarTribunal:function(t){S.f.tribunal=t||'';},pronto:function(){return S.carregado;}};

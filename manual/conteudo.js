@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.10",
+  versao: "3.11",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.11", data: "17/11/2026", mudou: "CADEADO na barra de cima (trava contra voltar sem querer: travado, o botão de voltar do mouse e a seta do navegador não saem da tela; automático depois de 20 segundos, manual ou desligado em Preferências); VOLTAR SEM PERDER OS FILTROS em Minhas Tarefas, nas planilhas do Jurídico e da Captação e em Intimações (abrir pelo menu continua limpo); \"Pedidos do Claude\" passou a se chamar \"Pedidos do Saga IA\"." },
     { versao: "3.10", data: "17/11/2026", mudou: "Teses e oportunidades: botão \"Mostrar gráficos\" nas abas Atualizações, Prateleira e Radar (barras por situação, área, esfera e pessoa, para quem, material, tipo, impacto, por tese e por mês; clicar numa barra filtra a tela); o cartão de cada tese abre organizado (resumo em destaque, prazo e \"quem não pode\" em destaque, público, vídeos e anexos ao lado, \"+ Anexar documento\"); cada tese tem a sua cor." },
     { versao: "3.9", data: "17/11/2026", mudou: "Ponto > Acessos: internet (IP) autorizada fica liberada de vez para toda a equipe, sem pedido nem aviso, em qualquer computador; o \"Autorizar só hoje\" saiu; autorizar uma internet resolve os outros pedidos dela; as entradas do administrador nunca geram aviso; \"Tirar autorização\" da internet na mesma tela." },
     { versao: "3.8", data: "17/11/2026", mudou: "Teses e oportunidades: cada produto da Prateleira ganhou o PÚBLICO DA TESE (esfera federal/estadual/municipal, pessoa física ou empresa, situação, órgão, cargo, UF, anos de ingresso e de aposentadoria, \"aposentado há menos de N anos\", idade, o que precisa ter, quem não pode, prazo e onde achar), explicação completa e vídeos, áudios e links (Drive, YouTube, NotebookLM); filtros por esfera e por pessoa física/empresa; \"Achar clientes para uma tese\" já abre Clientes por perfil com o público da tese aplicado (\"Tirar o público da tese\" volta ao que era)." },
@@ -114,12 +115,12 @@ window.SAGA_MANUAL = {
           quando: "Para se localizar em qualquer tela do SAGA: a barra do alto e o menu da esquerda são sempre os mesmos.",
           passos: [
             "No **menu da esquerda** ficam as telas, em grupos que abrem e fecham: **Processos** (Jurídico, Captação, Cartas, Pedidos de busca, Clientes por perfil, Teses), **Meu dia** (Ponto, Tarefas, Agenda, Intimações, Notas), **Comunicação** (Chat, Sugestões, Manual, Treinamentos), **Gestão** (Dashboard, Financeiro, Marketing, Colaboradores, Biblioteca) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver. Clique no nome do grupo para abrir ou fechar; com o menu **recolhido** (só os ícones), cada grupo vira uma linha fina com a setinha, que também abre e fecha o grupo. A escolha fica guardada neste navegador.",
-            "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **olho** (modo privacidade), atualizar, o **tema** (claro ou escuro) e a sua **foto**.",
+            "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **cadeado** (trava contra voltar sem querer), o **olho** (modo privacidade), atualizar, o **tema** (claro ou escuro) e a sua **foto**.",
             "Os números ao lado dos itens do menu (Agenda, Minhas Tarefas, Chat) mostram o que há para hoje ou o que não foi lido.",
             "O menu da esquerda **fica no lugar** quando você troca de tela (não volta para o topo). Com o mouse em cima dele, a roda do mouse rola só o menu, sem mexer na página."
           ],
           img: "topo",
-          marcas: ["Abre e fecha o menu da esquerda (no celular, o menu fica escondido aqui).", "Busca: cliente, CPF, processo, telefone, e-mail ou endereço.", "Sino: os seus avisos.", "Olho: modo privacidade (esconde nomes, CPF, números e valores para gravar a tela).", "Tema claro ou escuro.", "Sua foto: menu com perfil, preferências, sugestões e sair."]
+          marcas: ["Abre e fecha o menu da esquerda (no celular, o menu fica escondido aqui).", "Busca: cliente, CPF, processo, telefone, e-mail ou endereço.", "Sino: os seus avisos.", "Olho: modo privacidade (esconde nomes, CPF, números e valores para gravar a tela). Ao lado dele fica o cadeado (trava contra voltar sem querer).", "Tema claro ou escuro.", "Sua foto: menu com perfil, preferências, sugestões e sair."]
         },
         { id: "busca", titulo: "Achar um cliente ou processo pela busca do alto",
           quando: "Quando o colaborador recebe uma ligação, uma mensagem ou um documento e precisa achar a ficha rápido.",
@@ -161,6 +162,7 @@ window.SAGA_MANUAL = {
             "**Tema**: Claro ou Escuro (também pelo botão sol/lua no alto).",
             "**Cor do tema**: Azul (padrão), Grafite, **Novembro Azul**, **Rosa** (Outubro Rosa) ou **Natal**, cada uma com claro e escuro. Clique numa cor para ver como fica; ela só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
             "**Efeitos de movimento**: Ligados (janelas abrem e fecham suaves) ou Desligados (troca na hora).",
+            "**Cadeado contra voltar sem querer**: Automático (trava sozinho depois de alguns segundos na tela; você escolhe quantos, padrão 20), Manual (só trava quando você clica no cadeado) ou Desligado. A escolha vale neste e nos outros computadores.",
             "**Tamanho da letra**: Normal, Grande ou Maior."
           ],
           img: "configuracoes",
@@ -173,6 +175,25 @@ window.SAGA_MANUAL = {
             "Clique no **olho** no alto da tela. Ele fica vermelho: o modo privacidade está ligado.",
             "Nomes, CPFs, números de processo e valores ficam escondidos em todas as telas.",
             "Clique de novo no olho para mostrar os dados."
+          ]
+        },
+        { id: "cadeado", titulo: "Cadeado: não sair da tela sem querer",
+          quando: "Quando você está trabalhando numa tela (uma planilha filtrada, uma tarefa, a ficha) e o botão de voltar do mouse ou a seta do navegador tiraria você dela sem querer.",
+          passos: [
+            "O **cadeado** fica no alto, ao lado do olho. Aberto, o voltar funciona normalmente.",
+            "No modo **Automático** (padrão), ele **trava sozinho** depois de 20 segundos na tela (o tempo você escolhe em Preferências). No modo **Manual**, clique nele para travar.",
+            "Travado, o botão de voltar do mouse, a seta do navegador e o Alt+← **não saem da tela**: aparece o aviso \"Tela travada: destrave o cadeado para voltar\", com o botão [[Destravar]].",
+            "Para voltar de propósito, clique no cadeado (ou em [[Destravar]] no aviso) e volte. Links, o menu da esquerda e os botões continuam funcionando com o cadeado travado.",
+            "Desligar ou mudar o tempo: Menu da foto > **Preferências** > **Cadeado contra voltar sem querer**."
+          ],
+          dicas: ["Destravou com a mão? Ele fica aberto até você trocar de tela; na tela seguinte o automático começa de novo."]
+        },
+        { id: "voltar", titulo: "Voltar para a tela como ela estava",
+          quando: "Você filtrou uma lista (ex.: só TRF-5), abriu um cliente e quer voltar para a lista do jeito que estava.",
+          passos: [
+            "Use o botão de voltar do mouse ou a seta do navegador (com o cadeado aberto).",
+            "Em **Minhas Tarefas**, nas planilhas do **Jurídico** e da **Captação** e em **Intimações**, a tela volta como estava: filtros, busca, página, visão (Kanban, lista) e a rolagem.",
+            "Abrir a tela pelo **menu da esquerda** continua abrindo a lista **limpa** (sem filtro, na ordem de cadastro). O avançar do navegador também volta a tela como estava."
           ]
         }
       ]
@@ -536,7 +557,7 @@ window.SAGA_MANUAL = {
             "[[Mostrar resumo]] abre os números (total, novas, em andamento, atrasadas e concluídas hoje; clique para filtrar), os gráficos e o calendário dos prazos. [[Esconder resumo]] recolhe. O SAGA lembra a sua escolha neste computador.",
             "Logo abaixo fica a **barra de filtros**: busca, [[Etiqueta]], responsável e prazo. Os outros (tipo, situação, prioridade, tribunal e fase) ficam em [[Mais filtros]]; o número no botão mostra quantos estão ligados lá dentro. Cada filtro ligado aparece como uma etiqueta clicável embaixo (o × tira) e [[Limpar filtros]] tira todos.",
             "No cartão aparece só o essencial: etiqueta, título, situação (Nova, Em andamento...), cliente, **número do processo** (sempre à vista, com o botão do tribunal; o Ctrl+F do navegador acha o processo pelo número), subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passe o mouse para ver o resto: tipo, quem passou a tarefa, compartilhamento e os atalhos [[Ficha]] e [[Intimações]]. No celular, toque no cartão para abrir a tarefa inteira.",
-            "As tarefas de **dar impulso processual** (que o SAGA cria nos processos parados) e os **Pedidos do Claude** ficam como atalhos no menu [[Etiqueta]], com o número delas. No filtro **Tipo** (em Mais filtros) também há **Sem as de impulso**.",
+            "As tarefas de **dar impulso processual** (que o SAGA cria nos processos parados) e os **Pedidos do Saga IA** ficam como atalhos no menu [[Etiqueta]], com o número delas. No filtro **Tipo** (em Mais filtros) também há **Sem as de impulso**.",
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],
           img: "tarefas",
@@ -547,14 +568,14 @@ window.SAGA_MANUAL = {
           passos: [
             "Clique em [[Etiqueta]] na barra de filtros. O menu mostra cada etiqueta com a quantidade de **tarefas abertas** dela.",
             "Marque uma ou várias: a lista filtra na hora (aparecem as tarefas com qualquer uma das marcadas). Clique de novo para desmarcar, ou em [[Limpar etiquetas]].",
-            "No alto do menu ficam os **atalhos** [[Dar impulso processual]] e [[Pedidos do Claude]]: mostram só essas tarefas e podem ser combinados com as etiquetas. A setinha ↗ ao lado de Pedidos do Claude abre a tela própria deles.",
+            "No alto do menu ficam os **atalhos** [[Dar impulso processual]] e [[Pedidos do Saga IA]]: mostram só essas tarefas e podem ser combinados com as etiquetas. A setinha ↗ ao lado de Pedidos do Saga IA abre a tela própria deles.",
             "Para criar (só o administrador): [[+ Nova etiqueta]], escreva o nome (até 40 letras), escolha a cor e [[Salvar etiqueta]]. Ela já aparece no menu e na janela da tarefa.",
             "Para renomear ou mudar a cor: o lápis ✎ ao lado da etiqueta. Para tirar da lista, desmarque **Mostrar na lista**: as tarefas que já têm a etiqueta continuam com ela (o histórico fica). As tiradas aparecem em [[Ver as tiradas da lista]], e o lápis volta qualquer uma para a lista.",
             "Para mudar a ordem (só o administrador): as setinhas ▲ ▼ ao lado de cada etiqueta sobem ou descem uma posição; a nova ordem vale no menu e na janela da tarefa.",
             "Para pôr a etiqueta numa tarefa: abra a tarefa e escolha em **Etiqueta**, na parte da direita."
           ],
           img: "tarefas_etiquetas",
-          marcas: ["Atalhos: Dar impulso processual e Pedidos do Claude.", "Quantas tarefas abertas têm a etiqueta.", "Lápis: renomear, mudar a cor ou tirar da lista (só o administrador).", "+ Nova etiqueta (só o administrador)."],
+          marcas: ["Atalhos: Dar impulso processual e Pedidos do Saga IA.", "Quantas tarefas abertas têm a etiqueta.", "Lápis: renomear, mudar a cor ou tirar da lista (só o administrador).", "+ Nova etiqueta (só o administrador)."],
           dicas: ["Se aparecer \"Já existe uma etiqueta com esse nome\", use a que já existe (ou veja em Ver as tiradas da lista: pode estar só fora da lista)."]
         },
         { id: "colunas", titulo: "Colunas por tribunal e colunas ocultas",
@@ -811,7 +832,7 @@ window.SAGA_MANUAL = {
             "**Guardar um documento da conversa na pasta do cliente**: diga, por exemplo, \"guarde este contracheque na pasta Contracheques do cliente VMM-01234\". O Claude confirma e manda um **link do SAGA**: toque nele, entre com o seu login se pedir e clique em [[Escolher arquivo]] (no celular: galeria, câmera ou arquivos; no computador: escolha ou arraste). O arquivo vai do seu aparelho direto para a ficha, na pasta escolhida (dá para trocar a pasta na própria página), até 50 MB por arquivo, vários de uma vez. Depois diga ao Claude \"enviei\": ele confere se chegou. O link vale 24 h e só para você."
           ],
           atencao: ["O Claude age COMO VOCÊ: só vê e só muda o que você já vê e muda na tela. Colaborador não apaga nada (só o administrador, e sempre com o OK dele na conversa).", "Tudo o que o Claude consulta ou muda fica no Registro de atividades com o seu nome (módulo \"SAGA no Claude\"), com o antes e o depois.", "Apareceu \"Seu usuário não tem a permissão do conector\"? Peça ao administrador (Painel de permissões > SAGA no Claude)."],
-          dicas: ["Use o código do cliente (VMM-01234) ou do processo (VMM-01234-PSS) no pedido: evita confusão entre homônimos.", "O que o Claude pedir para você trazer (autos, certidão...) aparece em Meu dia > Pedidos do Claude."]
+          dicas: ["Use o código do cliente (VMM-01234) ou do processo (VMM-01234-PSS) no pedido: evita confusão entre homônimos.", "O que o Claude pedir para você trazer (autos, certidão...) aparece em Meu dia > Pedidos do Saga IA."]
         }
       ]
     },

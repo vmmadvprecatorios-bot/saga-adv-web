@@ -649,7 +649,7 @@
     // T166 (12/11, Dr. Victor): o que o Claude (SAGA no Claude) pediu para a pessoa trazer; só quem usa o conector
     +'<div class="nav-item" data-tela="pedidos_claude" onclick="sagaIrPara(\'pedidos_claude.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2h-6l-4 4v-4H6a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6.5l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>'
-    +'Pedidos do Claude<span class="nav-badge-chat nav-badge-dia" id="navBadgePedidosClaude" style="display:none" title="Pedidos do Claude em aberto"></span></div>'
+    +'Pedidos do Saga IA<span class="nav-badge-chat nav-badge-dia" id="navBadgePedidosClaude" style="display:none" title="Pedidos do Saga IA em aberto"></span></div>'
     +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
@@ -733,6 +733,8 @@
     +'<button class="icon-btn" id="notifBtn" type="button" aria-label="Notificacoes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="var(--gold)" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="var(--gold)" stroke-width="1.6"/></svg><span class="notif-count" id="notifCount" style="display:none">0</span></button>'
     +'<div class="popover notification-pop" id="notifPop"></div>'
     +'</div>'
+    // cadeado (17/11, Dr. Victor): travado, o voltar do mouse e a seta do navegador não saem da tela
+    +'<button class="icon-btn" id="cadeadoBtn" type="button" aria-pressed="false" aria-label="Travar a tela contra voltar sem querer" title="Cadeado"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" stroke="var(--gold)" stroke-width="1.6"/><path class="cad-arco" d="M8 11V8a4 4 0 018 0v3" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="16" r="1.3" fill="var(--gold)"/></svg></button>'
     +'<button class="icon-btn" id="privBtn" type="button" aria-label="Modo privacidade" title="Ocultar dados dos clientes (para gravar tela)"><svg class="olho-aberto" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="var(--gold)" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="var(--gold)" stroke-width="1.6"/></svg><svg class="olho-fechado" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17.9 17.9A10.4 10.4 0 0112 20c-7 0-11-8-11-8a19 19 0 015.1-5.9M9.9 4.2A9.7 9.7 0 0112 4c7 0 11 8 11 8a19 19 0 01-2.2 3.2M14.1 14.1a3 3 0 11-4.2-4.2" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/><path d="M1 1l22 22" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/></svg></button>'
     +'<button class="icon-btn" id="refreshBtn" type="button" aria-label="Atualizar informacoes"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 11-3-6.7L21 8" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
     +'<button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
@@ -1024,6 +1026,8 @@
       // cor do tema: a fixada pelo administrador vale mais que a escolha da pessoa; sem nada, Azul
       // e só vale cor liberada pelo administrador (regra geral ou "todos os temas" para a pessoa)
       try{var rg=await global._sb.rpc('temas_regra');if(!rg.error&&rg.data)global._sagaTemasRegra=rg.data;}catch(e){}
+      // cadeado (17/11): a escolha guardada no perfil vale em qualquer computador
+      try{var cdp=(r.data.preferencias||{}).cadeado;if(cdp&&typeof cdp==='object'){var cdj=JSON.stringify({modo:cdp.modo,seg:cdp.seg});if(localStorage.getItem('saga-cadeado')!==cdj&&global.sagaCadeado)global.sagaCadeado.configurar({modo:cdp.modo,seg:cdp.seg});}}catch(e){}
       try{var vlc=(r.data.preferencias||{}).vidro_cor;if(vlc&&/^#[0-9a-f]{6}$/i.test(vlc)&&localStorage.getItem('saga-vidro-cor')!==vlc)localStorage.setItem('saga-vidro-cor',vlc);}catch(e){}
       var corEsc=r.data.tema_cor_fixo||global.sagaTemaDoMes()||(r.data.preferencias||{}).cor||'azul';
       if(!r.data.tema_cor_fixo&&global.sagaTemasPermitidos(r.data).indexOf(corEsc)<0)corEsc='azul';
@@ -1037,7 +1041,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Claude',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat Interno',ponto:'Ponto Eletrônico',colaboradores:'Colaboradores',dashboard:'Dashboard',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -1399,7 +1403,7 @@
     {chave:'pagamentos',titulo:'Pagamentos',tipos:[],tela:'financeiro.html?aba=parcelas',um:'parcela vencida',varios:'parcelas vencidas',cor:'#2fae7a'},
     {chave:'armazenamento',titulo:'Armazenamento',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=armazenamento',um:'aviso de espaço',varios:'avisos de espaço',cor:'#0ea5e9'},
     {chave:'saude',titulo:'Saúde do sistema',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=saude',um:'aviso de saúde do sistema',varios:'avisos de saúde do sistema',cor:'#e5484d'},
-    {chave:'pedidos_claude',titulo:'Pedidos do Claude',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Claude',varios:'avisos de pedidos do Claude',cor:'#c9a84c'},
+    {chave:'pedidos_claude',titulo:'Pedidos do Saga IA',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Saga IA',varios:'avisos de pedidos do Saga IA',cor:'#c9a84c'},
     {chave:'premios',titulo:'Prêmio da Captação',tipos:[],tela:'premios.html',um:'aviso do prêmio',varios:'avisos do prêmio',cor:'#c9a84c'},
     {chave:'disparos',titulo:'Disparos de e-mail',tipos:[],tela:'disparos_email.html',um:'aviso dos disparos de e-mail',varios:'avisos dos disparos de e-mail',cor:'#f97316'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
@@ -1951,7 +1955,7 @@
       var bp=document.getElementById('navBadgePedidosClaude');
       if(bp&&_minhasPermissoes&&_minhasPermissoes.indexOf('conector_claude.usar')>=0){
         var rp=await global._sb.rpc('pedidos_claude_contar');
-        if(!rp.error){var np=rp.data||0;bp.textContent=np>99?'99+':String(np);bp.style.display=np>0?'':'none';bp.title=np+' pedido(s) do Claude em aberto';}
+        if(!rp.error){var np=rp.data||0;bp.textContent=np>99?'99+':String(np);bp.style.display=np>0?'':'none';bp.title=np+' pedido(s) do Saga IA em aberto';}
       }
       guardarNumerosMoldura();
     }catch(e){}
@@ -2187,6 +2191,149 @@
   }
   // Coloca o HTML dos menus pelo <template> (e nao por innerHTML): innerHTML durante a leitura da pagina faz o navegador
   // desistir de segurar a primeira imagem (link rel=expect) e os menus passam a piscar na troca de tela.
+  /* =====================================================================
+     CADEADO (17/11, Dr. Victor): trava contra VOLTAR sem querer.
+     Travado, o botão de voltar do mouse e a seta do navegador (e Alt+←) não saem da tela: aparece o aviso
+     "Tela travada: destrave o cadeado para voltar". Links, menu e botões continuam funcionando.
+     Modos (Configurações > Preferências; localStorage 'saga-cadeado' e usuarios.preferencias.cadeado):
+       auto (padrão): trava sozinho depois de N segundos na tela (padrão 20);
+       manual: só trava quando a pessoa clica; desligado: o cadeado some.
+     Como funciona: travado, a tela põe uma entrada "guarda" no histórico (pushState com sagaGuarda); o voltar
+     só tira a guarda (popstate) e a tela volta para ela (history.forward). Ao sair por link ou menu com a
+     guarda no topo, a navegação troca a guarda (location.replace, pelo evento navigate da Navigation API),
+     para não sobrar entrada repetida no histórico. Destravar tira a guarda (history.back).
+     ===================================================================== */
+  var CAD_CHAVE='saga-cadeado',CAD_PADRAO={modo:'auto',seg:20};
+  var _cad={travado:false,guarda:false,ignorar:0,timer:null,cfg:null,destravadoAMao:false,ligado:false,avisoT:null};
+  function cadLerCfg(){
+    var c=null;try{c=JSON.parse(localStorage.getItem(CAD_CHAVE)||'null');}catch(e){}
+    c=Object.assign({},CAD_PADRAO,c&&typeof c==='object'?c:{});
+    if(['auto','manual','desligado'].indexOf(c.modo)<0)c.modo='auto';
+    c.seg=Math.max(3,Math.min(600,parseInt(c.seg,10)||20));
+    return c;
+  }
+  function cadSemMov(){try{return window.sagaMq?window.sagaMq().matches:localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+  function cadPintar(){
+    var b=document.getElementById('cadeadoBtn');if(!b)return;
+    var c=_cad.cfg||cadLerCfg();
+    b.hidden=c.modo==='desligado';
+    b.classList.toggle('travado',_cad.travado);
+    b.setAttribute('aria-pressed',_cad.travado?'true':'false');
+    b.title=_cad.travado?'Tela travada: o voltar do mouse e a seta do navegador não saem daqui. Clique para destravar.'
+      :(c.modo==='auto'&&!_cad.destravadoAMao?'Cadeado aberto: trava sozinho '+c.seg+' segundos depois de abrir a tela. Clique para travar agora.'
+      :'Cadeado aberto: clique para travar (o voltar do mouse e a seta do navegador param de sair da tela).');
+    b.setAttribute('aria-label',_cad.travado?'Destravar a tela':'Travar a tela contra voltar sem querer');
+  }
+  function cadPushGuarda(){
+    if(_cad.guarda)return;
+    // o Chrome pula no "voltar" a entrada criada antes de a pessoa tocar na página: espera o 1º toque
+    var ua=navigator.userActivation;
+    if(ua&&!ua.hasBeenActive){
+      var depois=function(){['pointerdown','keydown'].forEach(function(t){window.removeEventListener(t,depois,true);});setTimeout(function(){if(_cad.travado)cadPushGuarda();},0);};
+      ['pointerdown','keydown'].forEach(function(t){window.addEventListener(t,depois,true);});
+      return;
+    }
+    try{var st=history.state;var novo=(st&&typeof st==='object')?Object.assign({},st):{};novo.sagaGuarda=1;_cad.pondo=true;history.pushState(novo,'',location.href);_cad.guarda=true;}catch(e){}_cad.pondo=false;
+  }
+  function cadTravar(){
+    if(_cad.travado)return;
+    clearTimeout(_cad.timer);_cad.travado=true;cadPushGuarda();cadPintar();
+  }
+  function cadDestravar(){
+    clearTimeout(_cad.timer);_cad.travado=false;_cad.destravadoAMao=true;
+    if(_cad.guarda){_cad.guarda=false;_cad.ignorar++;try{history.back();}catch(e){_cad.ignorar--;}}
+    cadPintar();cadFecharAviso();
+  }
+  function cadAviso(){
+    var el=document.getElementById('sagaCadeadoAviso');
+    if(!el){
+      el=document.createElement('div');el.id='sagaCadeadoAviso';el.setAttribute('role','status');
+      el.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
+        +'<span><b>Tela travada:</b> destrave o cadeado para voltar.</span><button type="button" class="btn-secondary" data-cad-destravar>Destravar</button>';
+      document.body.appendChild(el);
+      el.querySelector('[data-cad-destravar]').addEventListener('click',function(){cadDestravar();});
+    }
+    clearTimeout(_cad.avisoT);
+    el.classList.toggle('sem-mov',cadSemMov());
+    requestAnimationFrame(function(){el.classList.add('aberto');});
+    var b=document.getElementById('cadeadoBtn');
+    if(b&&!cadSemMov()){b.classList.remove('balancar');void b.offsetWidth;b.classList.add('balancar');}
+    _cad.avisoT=setTimeout(cadFecharAviso,3600);
+  }
+  function cadFecharAviso(){var el=document.getElementById('sagaCadeadoAviso');if(el)el.classList.remove('aberto');}
+  function cadAgendar(){
+    clearTimeout(_cad.timer);
+    var c=_cad.cfg;
+    if(c.modo==='auto'&&!_cad.travado&&!_cad.destravadoAMao)_cad.timer=setTimeout(cadTravar,c.seg*1000);
+  }
+  function cadConfigurar(cfg){
+    if(cfg){try{localStorage.setItem(CAD_CHAVE,JSON.stringify(cfg));}catch(e){}}
+    _cad.cfg=cadLerCfg();
+    if(_cad.cfg.modo==='desligado'){if(_cad.travado){_cad.travado=false;if(_cad.guarda){_cad.guarda=false;_cad.ignorar++;try{history.back();}catch(e){_cad.ignorar--;}}}clearTimeout(_cad.timer);}
+    else if(cfg){_cad.destravadoAMao=false;if(_cad.cfg.modo==='manual')clearTimeout(_cad.timer);else cadAgendar();}
+    cadPintar();
+  }
+  function ligarCadeado(){
+    if(_cad.ligado)return;
+    if(document.documentElement.classList.contains('saga-embed')||window.top!==window)return;
+    var b=document.getElementById('cadeadoBtn');if(!b)return;
+    _cad.ligado=true;
+    if(!document.getElementById('sagaCadeadoCss')){
+      var st=document.createElement('style');st.id='sagaCadeadoCss';
+      st.textContent='#cadeadoBtn[hidden]{display:none !important}'
+        +'#cadeadoBtn .cad-arco{transition:transform .32s cubic-bezier(.22,.78,.25,1);transform-origin:16px 11px}'
+        +'#cadeadoBtn:not(.travado) .cad-arco{transform:translateY(-2px) rotate(28deg)}'
+        +'#topbarSaga #cadeadoBtn.travado{background:color-mix(in srgb,var(--gold) 18%,transparent) !important;border-color:color-mix(in srgb,var(--gold) 55%,transparent) !important}'
+        +'#cadeadoBtn.balancar{animation:sagaCadBalanca .42s cubic-bezier(.22,.78,.25,1)}'
+        +'@keyframes sagaCadBalanca{0%,100%{transform:none}25%{transform:rotate(-12deg)}55%{transform:rotate(9deg)}80%{transform:rotate(-4deg)}}'
+        +'#sagaCadeadoAviso{position:fixed;left:50%;top:64px;z-index:100000;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 32px);'
+        +'padding:9px 10px 9px 14px;border-radius:12px;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border,#ccc));background:var(--panel,#fff);color:var(--text,#111);'
+        +'box-shadow:0 10px 30px rgba(0,0,0,.22);font-size:13px;opacity:0;visibility:hidden;transform:translate(-50%,-8px);'
+        +'transition:opacity .26s cubic-bezier(.22,.78,.25,1),transform .32s cubic-bezier(.22,.78,.25,1),visibility 0s linear .32s}'
+        +'#sagaCadeadoAviso.aberto{opacity:1;visibility:visible;transform:translate(-50%,0);transition:opacity .26s cubic-bezier(.22,.78,.25,1),transform .32s cubic-bezier(.22,.78,.25,1),visibility 0s}'
+        +'#sagaCadeadoAviso.sem-mov{transition:none !important}#sagaCadeadoAviso svg{color:var(--gold);flex:none}#sagaCadeadoAviso button{flex:none;font-size:12px;padding:5px 10px}'
+        // celular estreito: com o cadeado a mais, o nome da marca não cabe; fica só o escudo
+        +'@media(max-width:440px){#topbarSaga .brand-name{display:none !important}}'
+        +'html[data-movimento="reduzido"] #cadeadoBtn .cad-arco,html[data-movimento="reduzido"] #cadeadoBtn.balancar{transition:none;animation:none}';
+      document.head.appendChild(st);
+    }
+    // entrou numa entrada "guarda" (recarregou travado, ou voltou para cá): ela vira a entrada normal
+    try{if(history.state&&history.state.sagaGuarda){var s0=Object.assign({},history.state);delete s0.sagaGuarda;history.replaceState(s0,'',location.href);}}catch(e){}
+    _cad.cfg=cadLerCfg();
+    b.addEventListener('click',function(){if(_cad.travado)cadDestravar();else{_cad.destravadoAMao=false;cadTravar();}});
+    window.addEventListener('popstate',function(ev){
+      if(_cad.ignorar>0){_cad.ignorar--;return;}
+      var st=ev.state;
+      if(st&&st.sagaGuarda){_cad.guarda=true;return;}
+      if(_cad.guarda&&_cad.travado){_cad.guarda=false;_cad.ignorar++;try{history.forward();_cad.guarda=true;}catch(e){_cad.ignorar--;}cadAviso();return;}
+      _cad.guarda=false;
+    });
+    // Navigation API (Chrome/Edge): sair por link/menu com a guarda no topo TROCA a guarda (sem entrada repetida);
+    // e, travado, o voltar que o navegador deixa cancelar é cancelado aqui mesmo
+    if(window.navigation&&navigation.addEventListener){
+      navigation.addEventListener('navigate',function(e){
+        try{
+          if(e.navigationType==='traverse'&&_cad.travado&&e.cancelable&&!_cad.ignorar){
+            var cur=navigation.currentEntry,dest=e.destination;
+            if(cur&&dest&&dest.index<cur.index){e.preventDefault();cadAviso();}
+            return;
+          }
+          // a própria tela pôs uma entrada no histórico (pushState, âncora): a guarda deixa de ser a última
+          if((e.navigationType==='push')&&e.destination&&e.destination.sameDocument&&!_cad.pondo){_cad.guarda=false;return;}
+          if(e.navigationType==='push'&&_cad.guarda&&e.cancelable&&!e.hashChange&&!e.downloadRequest&&!e.formData&&e.destination&&!e.destination.sameDocument){
+            e.preventDefault();var u=e.destination.url;_cad.guarda=false;location.replace(u);
+          }
+        }catch(x){}
+      });
+    }
+    // botão de voltar/avançar do mouse: travado, não sai
+    var mouse=function(ev){if(_cad.travado&&(ev.button===3||ev.button===4)){ev.preventDefault();ev.stopPropagation();if(ev.type==='mouseup'&&ev.button===3)cadAviso();}};
+    window.addEventListener('mouseup',mouse,true);window.addEventListener('mousedown',mouse,true);window.addEventListener('auxclick',mouse,true);
+    // outra aba mudou a preferência
+    window.addEventListener('storage',function(ev){if(ev.key===CAD_CHAVE)cadConfigurar();});
+    cadPintar();cadAgendar();
+  }
+  global.sagaCadeado={configurar:cadConfigurar,ler:cadLerCfg,travar:function(){cadTravar();},destravar:function(){cadDestravar();},estado:function(){return {travado:_cad.travado,guarda:_cad.guarda,cfg:_cad.cfg||cadLerCfg()};}};
   function injetarHtml(el,html){var t=document.createElement('template');t.innerHTML=html;el.replaceChildren(t.content);}
   function montarMoldura(telaAtiva){
     var sb=document.getElementById('sidebarSaga'),tb=document.getElementById('topbarSaga');
@@ -2199,6 +2346,7 @@
       try{var ini=localStorage.getItem('saga-iniciais');var avt=document.getElementById('avatarTop');if(ini&&avt)definirIniciaisAvatar(avt,ini);var ft=localStorage.getItem('saga-foto');if(ft)mostrarFotoAvatar(ft);var lg=localStorage.getItem('saga-logo');if(lg)aplicarMarca(lg,localStorage.getItem('saga-escritorio'));}catch(e){}
       ligarTema();
       ligarPrivacidade();
+      ligarCadeado();
       ligarHamburger();
       // depois do ligarHamburger: no celular ele muda o menu de lugar (e mudar de lugar zera a rolagem)
       if(sb)ligarRolagemMenu(sb);

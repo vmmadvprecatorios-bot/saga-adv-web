@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611170016"></script>
+<script src="saga_guard.js?v=202611170958"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -1867,7 +1867,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611170016">
+<link rel="stylesheet" href="saga_tema.css?v=202611170958">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2032,7 +2032,7 @@ html.saga-embed #modalTarefa{background:transparent}
             <div class="dropdown-custom-opcao">Vinculada a Processo</div>
             <div class="dropdown-custom-opcao">Dar impulso processual</div>
             <div class="dropdown-custom-opcao">Sem as de impulso</div>
-            <div class="dropdown-custom-opcao">Pedidos do Claude</div>
+            <div class="dropdown-custom-opcao">Pedidos do Saga IA</div>
           </div>
         </div>
         </div>
@@ -2423,12 +2423,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611170016"></script>
-<script src="saga_etiquetas.js?v=202611170016"></script>
-<script src="saga_mencoes.js?v=202611170016"></script>
-<script src="saga_prazos.js?v=202611170016"></script>
-<script src="saga_texto.js?v=202611170016"></script>
-<script src="saga_tribunais.js?v=202611170016"></script>
+<script src="saga_ui.js?v=202611170958"></script>
+<script src="saga_etiquetas.js?v=202611170958"></script>
+<script src="saga_mencoes.js?v=202611170958"></script>
+<script src="saga_prazos.js?v=202611170958"></script>
+<script src="saga_texto.js?v=202611170958"></script>
+<script src="saga_tribunais.js?v=202611170958"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -3077,7 +3077,7 @@ document.getElementById('btnLimparFiltrosTarefas').addEventListener('click', fun
    para o administrador, "+ Nova etiqueta" e o lápis para renomear, mudar a cor ou
    tirar da lista (desativar: as tarefas continuam com ela; o banco recusa os outros).
 ===================================================================== */
-var ATALHOS_ETIQUETA = ['Dar impulso processual', 'Pedidos do Claude'];
+var ATALHOS_ETIQUETA = ['Dar impulso processual', 'Pedidos do Saga IA'];
 var estadoEditorEtiqueta = null; // {id|null}
 var mostrarEtiquetasDesativadas = false;
 function contarAbertasEtiqueta(fn){ return (window.SAGA_TASKS || []).filter(function(t){ return t.status !== 'concluida' && fn(t); }).length; }
@@ -3105,9 +3105,9 @@ function renderMenuEtiquetasFiltro(){
   }
   var h = '';
   var atalhos = ATALHOS_ETIQUETA.map(function(nome){
-    var n = contarAbertasEtiqueta(nome === 'Pedidos do Claude' ? tarefaPedidoClaude : tarefaDeImpulso);
+    var n = contarAbertasEtiqueta(nome === 'Pedidos do Saga IA' ? tarefaPedidoClaude : tarefaDeImpulso);
     var on = filtrosAtivos.tipo === nome;
-    var extraAtalho = nome === 'Pedidos do Claude' ? '<a class="mef-editar mef-ir" href="pedidos_claude.html" title="Abrir a tela Pedidos do Claude (Ctrl+clique abre em outra aba)" aria-label="Abrir a tela Pedidos do Claude">↗</a>' : '';
+    var extraAtalho = nome === 'Pedidos do Saga IA' ? '<a class="mef-editar mef-ir" href="pedidos_claude.html" title="Abrir a tela Pedidos do Saga IA (Ctrl+clique abre em outra aba)" aria-label="Abrir a tela Pedidos do Saga IA">↗</a>' : '';
     return (n || on) ? linha('data-atalho="' + escaparHtml(nome) + '"', on, '<span class="mef-bola mef-bola-atalho"></span>', nome, n, extraAtalho) : '';
   }).join('');
   if(atalhos) h += '<div class="mef-secao">Atalhos</div>' + atalhos;
@@ -3349,7 +3349,7 @@ function tarefaPassaFiltros(t, ignorar){
   if(filtrosAtivos.tipo === 'Vinculada a Processo' && t.tipo !== 'processo') return false;
   if(filtrosAtivos.tipo === 'Dar impulso processual' && !tarefaDeImpulso(t)) return false;
   if(filtrosAtivos.tipo === 'Sem as de impulso' && tarefaDeImpulso(t)) return false;
-  if(filtrosAtivos.tipo === 'Pedidos do Claude' && !tarefaPedidoClaude(t)) return false;
+  if(filtrosAtivos.tipo === 'Pedidos do Saga IA' && !tarefaPedidoClaude(t)) return false;
 
   if(filtrosAtivos.status !== 'Todos'){
     var stF = STATUS_TAREFA.filter(function(x){ return x.nome === filtrosAtivos.status; })[0];
@@ -3529,7 +3529,7 @@ document.querySelector('.grid-kpis-tarefas').addEventListener('click', function(
 // Tarefa "Dar impulso processual" (criada pelo sistema quando o processo fica parado; bloco 96)
 function tarefaDeImpulso(t){ return /impulso processual/i.test((t && t.titulo) || ''); }
 // T166: pedido que o Claude registrou pelo conector (título começa com "Pedido do Claude:"; origem 'claude_pedido' no banco)
-function tarefaPedidoClaude(t){ return /^\s*Pedido do Claude\s*:/i.test((t && t.titulo) || ''); }
+function tarefaPedidoClaude(t){ return /^\s*Pedido do (Claude|Saga IA)\s*:/i.test((t && t.titulo) || ''); }
 function marcarTipoFiltro(texto){
   var dropdown = document.getElementById('dropFiltroTipo');
   dropdown.querySelectorAll('.dropdown-custom-opcao').forEach(function(o){ o.classList.toggle('selecionada', o.textContent.trim() === texto); });
@@ -3553,7 +3553,7 @@ function atualizarBotaoPedidosClaude(){
   var b = document.getElementById('btnSoPedidosClaude'); if(!b) return;
   var n = (window.SAGA_TASKS || []).filter(function(t){ return tarefaPedidoClaude(t) && t.status !== 'concluida'; }).length;
   document.getElementById('qtdPedidosClaude').textContent = n ? '(' + n + ')' : '';
-  var on = filtrosAtivos.tipo === 'Pedidos do Claude';
+  var on = filtrosAtivos.tipo === 'Pedidos do Saga IA';
   b.classList.toggle('active', on); b.setAttribute('aria-pressed', on ? 'true' : 'false');
   b.hidden = !n && !on;
 }
@@ -4076,7 +4076,7 @@ function criarCardTarefaEl(tarefa){
   // responsável e prazo; desde 14/11 também o NÚMERO DO PROCESSO; prioridade só quando é alta ou urgente); o resto (status, quem passou, compartilhada,
   // atalhos Ficha/Intimações) aparece ao passar o mouse e na janela.
   var prioridadeHtml = (tarefa.prioridade === 'alta' || tarefa.prioridade === 'urgente') ? '<span class="badge-prioridade-pill prioridade-' + tarefa.prioridade + '">' + tarefa.prioridade + '</span>' : '';
-  var seloPedidoHtml = tarefaPedidoClaude(tarefa) ? '<div class="selo-pedido-claude" title="O Claude pediu isto para você trazer; quando você trouxer na conversa, ele mesmo dá como concluído">Pedido do Claude</div>' : '';
+  var seloPedidoHtml = tarefaPedidoClaude(tarefa) ? '<div class="selo-pedido-claude" title="O Saga IA pediu isto para você trazer; quando você trouxer na conversa, ele mesmo dá como concluído">Pedido do Saga IA</div>' : '';
   var compartilhadaHtml = !podeMexer ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com você</div>' : ((tarefa.compartilhadaCom || []).length ? '<div class="selo-compartilhada-card"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 19c0-3 3-5 6-5s6 2 6 5" stroke="currentColor" stroke-width="2"/></svg>Compartilhada com ' + tarefa.compartilhadaCom.length + '</div>' : '');
   // 14/11 (Dr. Victor: "bater o olho e SEMPRE ver o número do processo"): o número fica À VISTA no cartão, como texto
   // de verdade (o Ctrl+F do navegador acha), com o botão do tribunal; não vai para o .card-extra.
@@ -5681,6 +5681,57 @@ function atualizarListasDeFiltro(){
   reconstruirOpcoesMulti('listaMultiFase', Object.keys(fases).sort().map(function(f){ return { valor:f }; }));
 }
 
+/* 17/11 (Dr. Victor): voltar sem perder os filtros. O estado da tela (filtros, busca, visão, lista, página,
+   ordem, "Mais filtros" aberto) é guardado ao sair e devolvido só no voltar/avançar (SagaVolta, saga_guard.js).
+   Abrir pelo menu continua abrindo limpa. */
+function lerEstadoTelaTarefas(){
+  var visao = document.querySelector('.opcao-visao-tarefas.ativa');
+  var sub = document.querySelector('.sub-toggle-item.ativo');
+  var painel = document.getElementById('painelFiltrosExpandido');
+  return { f: JSON.parse(JSON.stringify(filtrosAtivos)), processo: filtroProcessoUrl || null,
+    visao: visao ? visao.getAttribute('data-visao') : 'kanban', modoLista: sub ? sub.getAttribute('data-modolista') : 'tabela',
+    pagina: paginaAtualLista, ordem: ordenacaoAtual, maisFiltros: !!(painel && !painel.hidden) };
+}
+function sincronizarUiFiltrosTarefas(){
+  var multi = { listaMultiTribunal:'tribunais', listaMultiFase:'fases', listaMultiResponsavel:'responsaveis' };
+  Object.keys(multi).forEach(function(idLista){
+    var lista = document.getElementById(idLista); if(!lista) return;
+    var sel = filtrosAtivos[multi[idLista]] || [];
+    lista.querySelectorAll('.opcao-multi-check').forEach(function(o){ o.classList.toggle('marcada', sel.indexOf(o.getAttribute('data-valor')) >= 0); });
+  });
+  var n;
+  n = (filtrosAtivos.tribunais || []).length; document.getElementById('textoFiltroTribunal').textContent = n ? n + ' tribunal(is) selecionado(s)' : 'Todos os tribunais';
+  n = (filtrosAtivos.fases || []).length; document.getElementById('textoFiltroFase').textContent = n ? n + ' fase(s) selecionada(s)' : 'Todas as fases';
+  n = (filtrosAtivos.responsaveis || []).length; document.getElementById('textoFiltroResponsavel').textContent = n ? n + ' selecionado(s)' : 'Todos os responsaveis';
+  var te = document.getElementById('textoFiltroEtiqueta'); n = (filtrosAtivos.etiquetas || []).length;
+  if(te) te.textContent = n ? n + ' etiqueta(s) selecionada(s)' : 'Todas as etiquetas';
+  document.getElementById('campoBuscaTextual').value = filtrosAtivos.busca || '';
+  Object.keys(mapaChaveFiltroSimples).forEach(function(idDrop){
+    var dropdown = document.getElementById(idDrop); if(!dropdown) return;
+    var prefixo = { dropFiltroTipo:'Tipo', dropFiltroStatus:'Status', dropFiltroPrioridade:'Prioridade', dropFiltroPrazo:'Prazo' }[idDrop];
+    var valor = filtrosAtivos[mapaChaveFiltroSimples[idDrop]];
+    var opcoes = dropdown.querySelectorAll('.dropdown-custom-opcao');
+    var achou = Array.prototype.find.call(opcoes, function(o){ return o.textContent.trim() === valor; }) || opcoes[0];
+    opcoes.forEach(function(o){ o.classList.toggle('selecionada', o === achou); });
+    if(achou){ dropdown.querySelector('.dropdown-custom-valor span').textContent = prefixo + ': ' + achou.textContent.trim(); dropdown.setAttribute('data-valor', achou.textContent.trim()); }
+  });
+  document.querySelectorAll('#visaoTarefas [data-visao]').forEach(function(x){ x.classList.toggle('ativo', x.dataset.visao === filtrosAtivos.visao); });
+}
+function aplicarEstadoTelaTarefas(o){
+  if(!o || !o.f) return;
+  Object.keys(o.f).forEach(function(k){ filtrosAtivos[k] = o.f[k]; });
+  filtroProcessoUrl = o.processo || null;
+  if(o.ordem) ordenacaoAtual = o.ordem;
+  sincronizarUiFiltrosTarefas();
+  var painel = document.getElementById('painelFiltrosExpandido'), btnMais = document.getElementById('btnTogglePainelFiltros');
+  if(painel && o.maisFiltros && painel.hidden){ painel.hidden = false; if(btnMais){ btnMais.classList.add('ativo'); btnMais.setAttribute('aria-expanded', 'true'); } }
+  var bv = document.querySelector('.opcao-visao-tarefas[data-visao="' + (o.visao === 'lista' ? 'lista' : 'kanban') + '"]'); if(bv) bv.click();
+  var bl = document.querySelector('.sub-toggle-item[data-modolista="' + (o.modoLista === 'agrupada' ? 'agrupada' : 'tabela') + '"]'); if(bl) bl.click();
+  try{ if(typeof renderMenuEtiquetasFiltro === 'function') renderMenuEtiquetasFiltro(); }catch(e){}
+  paginaAtualLista = o.pagina || 1;
+  aplicarFiltrosERenderizar();
+}
+
 async function iniciarMinhasTarefas(){
   ativarDropdownsSimples(document);
   configurarSelectsCustomTarefa();
@@ -5710,6 +5761,10 @@ async function iniciarMinhasTarefas(){
     history.replaceState(null,'',location.pathname);
   }
   aplicarFiltrosERenderizar();
+  // 17/11 (Dr. Victor): ao VOLTAR para esta tela (botão do mouse, seta do navegador), ela aparece como estava
+  if(window.SagaVolta && !document.documentElement.classList.contains('saga-embed')) SagaVolta.registrar('tarefas', {
+    ler: lerEstadoTelaTarefas, aplicar: aplicarEstadoTelaTarefas, rolagem: ['#kanbanWrapper', '.tabela-tarefas-wrap']
+  });
   // Veio de uma notificacao: abre a tarefa direto
   var idTarefaUrl = qsTI.get('tarefa');
   if(idTarefaUrl){

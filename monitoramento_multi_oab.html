@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611170016"></script>
+<script src="saga_guard.js?v=202611170958"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Intimações</title>
@@ -40,7 +40,7 @@ html.saga-sem-movimento .intim-aviso{animation:none}
 body.si-so-leitura .aviso-leitura{display:block}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.kpis{grid-template-columns:1fr 1fr;gap:9px}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611170016">
+<link rel="stylesheet" href="saga_tema.css?v=202611170958">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -78,12 +78,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611170016"></script>
-<script src="saga_texto.js?v=202611170016"></script>
-<script src="saga_prazos.js?v=202611170016"></script>
-<script src="saga_fichas.js?v=202611170016"></script>
-<script src="saga_intimacoes.js?v=202611170016"></script>
-<script src="saga_andamentos.js?v=202611170016"></script>
+<script src="saga_ui.js?v=202611170958"></script>
+<script src="saga_texto.js?v=202611170958"></script>
+<script src="saga_prazos.js?v=202611170958"></script>
+<script src="saga_fichas.js?v=202611170958"></script>
+<script src="saga_intimacoes.js?v=202611170958"></script>
+<script src="saga_andamentos.js?v=202611170958"></script>
 <script>
 /* =====================================================================
    INTIMAÇÕES (tela própria; o quadro, a lista, os filtros e as janelas vêm de saga_intimacoes.js)
@@ -161,7 +161,11 @@ async function init(){
   var qs=new URLSearchParams(location.search);
   if(qs.get('processo_id'))SagaIntimacoes.filtrarProcesso(qs.get('processo_id'));
   if(qs.get('tribunal'))SagaIntimacoes.filtrarTribunal(qs.get('tribunal'));
+  // 17/11 (Dr. Victor): ao VOLTAR para esta tela ela aparece como estava (filtros, visão, rolagem; SagaVolta)
+  var voltaIntim=window.SagaVolta?SagaVolta.estado('intimacoes'):null;
+  if(voltaIntim){SagaIntimacoes.voltarFiltros(voltaIntim.f);if(voltaIntim.visao==='lista'||voltaIntim.visao==='kanban')visao=voltaIntim.visao;}
   renderTudo();
+  if(window.SagaVolta)SagaVolta.registrar('intimacoes',{ler:function(){return {f:SagaIntimacoes.estadoFiltros(),visao:visao};},aplicar:function(){},rolagem:['#intimQuadro .si-quadro','#intimLista .si-tabela']});
   if(qs.get('intimacao'))SagaIntimacoes.abrir(qs.get('intimacao'));
   // vindo do sino (andamentos do CNJ, bloco 152): abre a janela dos andamentos
   if(qs.get('andamentos')&&window.SagaAndamentos)SagaAndamentos.janela({sb:_sb});

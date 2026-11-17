@@ -8,7 +8,7 @@
 // Cada mudança é uma função conector_* SECURITY INVOKER (mesmas regras das telas), com limite de 60 por hora e registro
 // com antes e depois. O Claude deve pedir o OK da pessoa antes de cada mudança.
 // T166 (bloco 185, 12/11/2026): PEDIDOS DO CLAUDE para a pessoa (pedir_ao_usuario, meus_pedidos_pendentes, concluir_pedido):
-// o que o Claude precisa que a pessoa traga vira tarefa "Pedido do Claude" (Minhas Tarefas e ficha) e é concluído quando chega.
+// o que o Claude precisa que a pessoa traga vira tarefa "Pedido do Saga IA" (Minhas Tarefas e ficha) e é concluído quando chega.
 // O Claude (claude.ai, aplicativo ou Claude Code) liga este endereço como "conector personalizado":
 //   https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/saga-mcp
 // Login: servidor OAuth 2.1 do próprio Supabase (Authentication > OAuth Server). Sem chave válida, a resposta é 401
@@ -302,7 +302,7 @@ const FERRAMENTAS: Ferramenta[] = [
   },
   {
     name: "pedir_ao_usuario", title: "Registrar um pedido para a pessoa", muda: true,
-    description: "MUDA O SAGA: registra algo que você (Claude) precisa que a pessoa conectada traga para andar com o processo (ex.: baixar os autos inteiros, certidão de óbito, contracheque). Vira uma tarefa \"Pedido do Claude\" dela, em Minhas Tarefas e na ficha, com o que trazer, por quê e de qual conversa. Não repete pedido igual em aberto no mesmo processo." + PEDIR_OK,
+    description: "MUDA O SAGA: registra algo que você (Claude) precisa que a pessoa conectada traga para andar com o processo (ex.: baixar os autos inteiros, certidão de óbito, contracheque). Vira uma tarefa \"Pedido do Saga IA\" dela, em Minhas Tarefas e na ficha, com o que trazer, por quê e de qual conversa. Não repete pedido igual em aberto no mesmo processo." + PEDIR_OK,
     inputSchema: { type: "object", properties: {
       o_que: { type: "string", description: "O que a pessoa precisa trazer, curto (vira o título)." },
       motivo: { type: "string", description: "Por que precisa (para que serve)." },
@@ -317,7 +317,7 @@ const FERRAMENTAS: Ferramenta[] = [
   },
   {
     name: "concluir_pedido", title: "Concluir um pedido do Claude", muda: true,
-    description: "MUDA O SAGA: dá como concluído um pedido do Claude (de meus_pedidos_pendentes) quando a pessoa trouxe o que foi pedido. Informe o que foi recebido e o que a análise mostrou: vira comentário na tarefa e na ficha do processo. Só serve para pedidos do Claude (para outras tarefas, concluir_tarefa).",
+    description: "MUDA O SAGA: dá como concluído um pedido do Saga IA (de meus_pedidos_pendentes) quando a pessoa trouxe o que foi pedido. Informe o que foi recebido e o que a análise mostrou: vira comentário na tarefa e na ficha do processo. Só serve para pedidos do Saga IA (para outras tarefas, concluir_tarefa).",
     inputSchema: { type: "object", properties: {
       pedido_id: { type: "string", description: "id do pedido (pedido_id de meus_pedidos_pendentes)." },
       recebido: { type: "string", description: "O que foi recebido e o resumo da análise." } }, required: ["pedido_id", "recebido"], additionalProperties: false },
