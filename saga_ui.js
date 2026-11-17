@@ -303,6 +303,7 @@
       '#sidebarSaga .nav-item{white-space:nowrap !important;}'+ // nome sempre numa linha só (12/11, Dr. Victor)
       '#sidebarSaga .nav-item{display:flex !important;align-items:center !important;gap:11px !important;padding:11px 16px 11px 22px !important;font-size:13px !important;color:#d5dbe4 !important;font-weight:500 !important;cursor:pointer !important;border-left:3px solid transparent !important;background:transparent !important;transition:all .2s !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-item{color:#22324a !important;}'+
+      '#sidebarSaga .nav-item[hidden]{display:none !important;}'+ // item de tela ainda não publicada (17/11)
       '#sidebarSaga .nav-item:hover{color:#ffffff !important;background:rgba(255,255,255,.06) !important;}'+
       '[data-theme="light"] #sidebarSaga .nav-item:hover{color:#13233a !important;background:rgba(19,38,66,.06) !important;}'+
       '#sidebarSaga .nav-item .nav-icon{width:16px !important;height:16px !important;flex:0 0 auto !important;color:#b3bdcc !important;}'+
@@ -683,7 +684,8 @@
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Teses e oportunidades</div>'
     // T192 (17/11, Dr. Victor): relatórios dos processos para os clientes (tela feita por outra conversa)
-    +'<div class="nav-item" data-tela="relatorios_clientes" onclick="sagaIrPara(\'relatorios_clientes.html\')">'
+    // ESCONDIDO (hidden) até a tela relatorios_clientes.html ser publicada pela conversa da T192: aí basta tirar o " hidden"
+    +'<div class="nav-item" hidden data-tela="relatorios_clientes" onclick="sagaIrPara(\'relatorios_clientes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5M9 17v-3M12 17v-5M15 17v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Relatórios</div>'
     // 17/11 (Dr. Victor, ideia do ADVBOX): parceiros (ANCREF, Sarmento) e quem indica clientes, pela Origem do cliente
