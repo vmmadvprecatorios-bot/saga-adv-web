@@ -397,7 +397,7 @@ async function carregarTudo(){
   var r=await Promise.all([
     _sb.from('teses').select('id,nome,ativo,area_direito_id,sigla,cor').order('nome'),
     _sb.from('areas_direito').select('id,nome,ativo,ordem').order('ordem'),
-    _sb.from('etiquetas_catalogo').select('id,nome,cor,categoria,ordem,ativo').in('categoria',['tese_situacao','produto_situacao','perfil_situacao_funcional']),
+    _sb.from('etiquetas_catalogo').select('id,nome,cor,categoria,ordem,ativo').in('categoria',['tese_situacao','produto_situacao','perfil_situacao_funcional','produto_viabilidade','produto_ticket','produto_escalavel']),
     _sb.from('teses_atualizacoes').select('id,tese_id,situacao_id,titulo,corpo,link,fixada,ativo,autor_id,criado_em,atualizado_em').order('criado_em',{ascending:false}).limit(2000),
     _sb.from('teses_leituras').select('atualizacao_id').eq('usuario_id',T.eu||''),
     _sb.from('produtos_juridicos').select('*').order('ordem').order('nome'),
@@ -467,6 +467,7 @@ function graficosProd(){
     graficoBarras('Por situação',itensDe(contar(l,function(p){return p.situacao_id||'';}),function(k){var c=catPorId(k);return c?c.nome:'Sem situação';},function(k){var c=catPorId(k);return c&&c.cor;},function(k){return 'prodSit:'+k;})),
     graficoBarras('Por área do direito',itensDe(contar(l,function(p){return p.area_id||'';}),function(k){return nomeArea(k)||'Sem área';},null,function(k){return 'area:'+k;})),
     graficoBarras('Esfera e pessoa',itensDe(contar(l,function(p){return (p.esferas||[]).concat(p.pessoa_tipo||[]);}),function(k){return k==='pf'?'Pessoa física':k==='pj'?'Empresa (PJ)':nomeDe(ESFERAS,k);},null,function(k){return (k==='pf'||k==='pj'?'pessoa:':'esfera:')+k;})),
+    graficoBarras('Viabilidade da tese',itensDe(contar(l,function(p){return p.viabilidade_id||'';}),function(k){var c=catPorId(k);return c?c.nome:'Sem classificação';},function(k){var c=catPorId(k);return c&&c.cor;})),
     graficoBarras('Para quem (situação funcional)',itensDe(contar(l,function(p){return (p.publico_criterios||{}).situacoes||[];}))),
     graficoBarras('Material de estudo',[{r:'Com arquivos na pasta',v:l.filter(function(p){return arquivosDe(p.id).length;}).length},{r:'Com vídeos, áudios ou links',v:l.filter(function(p){return (p.links||[]).length;}).length},{r:'Sem material ainda',v:l.filter(function(p){return !arquivosDe(p.id).length&&!(p.links||[]).length;}).length}])
   ]);
@@ -497,7 +498,7 @@ function desenharBotoes(){
   if(T.aba==='atualizacoes'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Nova atualização</button>';
   else if(T.aba==='prateleira'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo produto</button>';
   else if(T.aba==='radar'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo item no radar</button>';
-  if(p.admin&&T.aba!=='radar')b='<button class="btn" type="button" id="btnOpcoes">Organizar situações</button>'+b;
+  if(p.admin&&T.aba!=='radar')b='<button class="btn" type="button" id="btnOpcoes">'+(T.aba==='prateleira'?'Organizar opções':'Organizar situações')+'</button>'+b;
   if(PODE_CLIENTES&&T.aba!=='radar')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
   $('botoesTopo').innerHTML=b;
   var ac=$('btnAcharClientes');if(ac)ac.onclick=abrirEscolhaTese;
@@ -747,6 +748,16 @@ function chipsProd(p){
     (p.pessoa_tipo||[]).map(function(e){return '<span class="chip">'+(e==='pj'?'PJ':'PF')+'</span>';}).join('')+
     (cr.situacoes||[]).map(function(e){return '<span class="chip jul">'+esc(e)+'</span>';}).join('')+(p.ativo?'':'<span class="chip neg">Fora da prateleira</span>')+'</div>';
 }
+function htmlClassif(p){
+  var it=[['Viabilidade',p.viabilidade_id],['Ticket',p.ticket_id],['Escalável',p.escalavel_id]].filter(function(x){return x[1]&&catPorId(x[1]);});
+  if(!it.length)return '';
+  return '<div class="bloco"><b>Classificação</b><div class="chips" style="margin-top:4px">'+it.map(function(x){var c=catPorId(x[1]);return '<span class="chip sit" style="--c:'+esc(c.cor||'#8a94a8')+'" title="'+esc(x[0])+'"><i></i>'+esc(x[0])+': '+esc(c.nome)+'</span>';}).join('')+'</div></div>';
+}
+function htmlPaginas(p){
+  var ls=[['Página do site',p.site_url],['Página 3Pj (captação de leads)',p.site_3pj_url],['Pasta no Google Drive',p.drive_pasta_url]].filter(function(x){return urlSegura(x[1]);});
+  if(!ls.length)return '';
+  return '<div class="bloco"><b>Páginas e pasta</b><div class="links-prod">'+ls.map(function(x){return '<a class="link-prod" href="'+esc(urlSegura(x[1]))+'" target="_blank" rel="noopener noreferrer">'+(x[0].indexOf('Pasta')===0?ICO.pasta:ICO.doc)+'<span><b>'+esc(x[0])+'</b><i>abre em outra aba</i></span></a>';}).join('')+'</div></div>';
+}
 /* cartão da tese (como um cartão do Trello): texto à esquerda, público, prazo, vídeos e anexos à direita */
 function abrirPasta(id){
   var p=T.produtos.find(function(x){return x.id===id;});if(!p)return;
@@ -762,7 +773,7 @@ function abrirPasta(id){
     '</div><aside class="pc-lado">'+
       (cr.prazo?'<div class="pc-aviso pz"><b>Prazo</b><div>'+esc(cr.prazo)+'</div></div>':'')+
       (cr.nao_pode?'<div class="pc-aviso np"><b>Quem não pode</b><div>'+esc(cr.nao_pode)+'</div></div>':'')+
-      htmlCriterios(p,true)+htmlLinks(p)+
+      htmlClassif(p)+htmlCriterios(p,true)+htmlPaginas(p)+htmlLinks(p)+
       '<div class="bloco pc-anexos"><div class="pc-anx-cab"><b>Anexos ('+n+')</b>'+(pode?'<button class="btn btn-sm" type="button" data-anexar="'+p.id+'">+ Anexar documento</button>':'')+'</div><div id="pastaArqs"></div></div>'+
     '</aside></div></div>'+
     '<div class="md-rod"><span class="esq">'+(T.perm.editar?'<button class="btn" type="button" data-editar-prod="'+p.id+'">Editar</button>':'')+(T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span>'+btnClientes(p.tese_id)+'<button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
@@ -831,10 +842,16 @@ function formProduto(id,base){
     '<div class="grade2"><div class="campo"><label for="ppPub">Quem tem direito (público-alvo)</label><textarea id="ppPub" rows="3">'+v('publico')+'</textarea></div>'+
     '<div class="campo"><label for="ppDoc">Documentos necessários</label><textarea id="ppDoc" rows="3">'+v('documentos')+'</textarea></div></div>'+
     '<div class="campo"><label for="ppFun">Fundamento e jurisprudência</label><textarea id="ppFun" rows="3">'+v('fundamento')+'</textarea></div>'+
+    '<div class="grade3"><div class="campo"><label for="ppViab">Viabilidade da tese</label><select id="ppViab">'+opcoesSel('produto_viabilidade',p&&p.viabilidade_id,'Sem classificação')+'</select></div>'+
+    '<div class="campo"><label for="ppTicket">Ticket</label><select id="ppTicket">'+opcoesSel('produto_ticket',p&&p.ticket_id,'Sem classificação')+'</select></div>'+
+    '<div class="campo"><label for="ppEsc">Escalável</label><select id="ppEsc">'+opcoesSel('produto_escalavel',p&&p.escalavel_id,'Sem classificação')+'</select></div></div>'+
+    '<div class="grade3"><div class="campo"><label for="ppSite">Página do site</label><input id="ppSite" maxlength="500" placeholder="https://victormoraisadv.com.br/..." value="'+v('site_url')+'"></div>'+
+    '<div class="campo"><label for="ppSite3">Página 3Pj (captação)</label><input id="ppSite3" maxlength="500" placeholder="https://..." value="'+v('site_3pj_url')+'"></div>'+
+    '<div class="campo"><label for="ppDrive">Pasta no Google Drive</label><input id="ppDrive" maxlength="500" placeholder="https://drive.google.com/..." value="'+v('drive_pasta_url')+'"></div></div>'+
     '<div class="campo"><label for="ppCor">Cor da tese (para achar depois os aptos na Base de dados)</label><input id="ppCor" type="color" value="'+esc((p&&p.cor)||'#c9a24a')+'" class="cor-esc"></div>'+
     '<div class="campo"><label for="ppEtq">Etiquetas (separe por vírgula)</label><input id="ppEtq" value="'+esc(p?(p.etiquetas||[]).join(', '):(base.etiquetas||[]).join(', '))+'"></div>'+htmlFormPublico(p)+'</div>'+
     '<div class="md-rod"><span class="esq">'+(p?'<button class="btn" type="button" id="ppAtivo">'+(p.ativo?'Tirar da prateleira':'Voltar para a prateleira')+'</button>':'')+(p&&T.perm.excluir?'<button class="btn btn-perigo" type="button" data-excluir-prod="'+p.id+'">Excluir</button>':'')+'</span><button class="btn" type="button" data-fechar="moForm">Cancelar</button><button class="btn btn-ouro" type="button" id="ppSalvar">Salvar</button></div>';
-  $('ppSit').onchange=function(){novaOpcao(this,'produto_situacao');};
+  $('ppSit').onchange=function(){novaOpcao(this,'produto_situacao');};$('ppViab').onchange=function(){novaOpcao(this,'produto_viabilidade');};$('ppTicket').onchange=function(){novaOpcao(this,'produto_ticket');};$('ppEsc').onchange=function(){novaOpcao(this,'produto_escalavel');};
   ligarFormPublico();
   fechar('moLer');abrir('moForm');
   $('ppSalvar').onclick=async function(){
@@ -842,7 +859,7 @@ function formProduto(id,base){
       etiquetas:$('ppEtq').value.split(',').map(function(x){return x.trim();}).filter(Boolean)};
     if(!d.nome){toast('Escreva o nome do produto.');return;}
     var pub=lerFormPublico();if(pub.linkRuim){toast('Algum link não começa com https:// — confira os vídeos e links.');return;}
-    d.cor=$('ppCor').value||null;d.publico_criterios=pub.criterios;d.esferas=pub.esferas;d.pessoa_tipo=pub.pessoa_tipo;d.links=pub.links;d.explicacao=pub.explicacao||null;
+    d.cor=$('ppCor').value||null;var urls=[['site_url','ppSite'],['site_3pj_url','ppSite3'],['drive_pasta_url','ppDrive']];for(var ui=0;ui<urls.length;ui++){var uv=$(urls[ui][1]).value.trim();if(uv&&!urlSegura(uv)){toast('O endereço precisa começar com https://');return;}d[urls[ui][0]]=uv||null;}d.viabilidade_id=$('ppViab').value||null;d.ticket_id=$('ppTicket').value||null;d.escalavel_id=$('ppEsc').value||null;d.publico_criterios=pub.criterios;d.esferas=pub.esferas;d.pessoa_tipo=pub.pessoa_tipo;d.links=pub.links;d.explicacao=pub.explicacao||null;
     this.disabled=true;
     var r=p?await _sb.from('produtos_juridicos').update(d).eq('id',p.id).select('id').single():await _sb.from('produtos_juridicos').insert(d).select('id').single();
     this.disabled=false;if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));return;}
@@ -996,10 +1013,11 @@ async function excluirRadar(id){
 }
 
 /* ---------- organizar situações (administrador: renomear, cor, ordem, desativar) ---------- */
+var CAT_NOMES={tese_situacao:'Situações das atualizações',produto_situacao:'Situações dos produtos',produto_viabilidade:'Viabilidade da tese',produto_ticket:'Ticket',produto_escalavel:'Escalável'};
 function organizarOpcoes(cat){
   var lista=T.cat.filter(function(c){return c.categoria===cat;}).sort(function(a,b){return (a.ordem||0)-(b.ordem||0);});
   $('mdForm').className='md';
-  $('mdForm').innerHTML='<div class="md-cab"><div><h2>Organizar situações</h2><p>Renomeie, troque a cor, mude a ordem ou desative (o que já foi usado continua no histórico).</p></div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
+  $('mdForm').innerHTML='<div class="md-cab"><div><h2>Organizar '+esc((CAT_NOMES[cat]||'opções').toLowerCase())+'</h2><p>Renomeie, troque a cor, mude a ordem ou desative (o que já foi usado continua no histórico).</p>'+(/^produto_/.test(cat)?'<select class="sel" id="opcCat" style="margin-top:8px">'+['produto_situacao','produto_viabilidade','produto_ticket','produto_escalavel'].map(function(k){return '<option value="'+k+'"'+(k===cat?' selected':'')+'>'+esc(CAT_NOMES[k])+'</option>';}).join('')+'</select>':'')+'</div><button class="md-x" type="button" data-fechar="moForm" aria-label="Fechar">✕</button></div>'+
     '<div class="md-corpo" id="opcLista">'+lista.map(function(c,i){return '<div class="opc-linha" data-opc="'+c.id+'"><input type="color" value="'+esc(c.cor||'#8a94a8')+'"><input type="text" value="'+esc(c.nome)+'" maxlength="60"><button class="btn btn-sm" type="button" data-sobe'+(i?'':' disabled')+'>↑</button><button class="btn btn-sm" type="button" data-desce'+(i<lista.length-1?'':' disabled')+'>↓</button><label class="chk"><input type="checkbox"'+(c.ativo?' checked':'')+'> Ativa</label></div>';}).join('')+
     '<div class="opc-linha"><input type="text" id="opcNova" placeholder="Nova opção" maxlength="60"><button class="btn btn-sm" type="button" id="opcAdd">Adicionar</button></div></div>'+
     '<div class="md-rod"><button class="btn" type="button" data-fechar="moForm">Fechar</button><button class="btn btn-ouro" type="button" id="opcSalvar">Salvar</button></div>';
@@ -1009,7 +1027,7 @@ function organizarOpcoes(cat){
     if(e.target.closest('[data-desce]')&&l.nextElementSibling&&l.nextElementSibling.dataset.opc)l.parentNode.insertBefore(l.nextElementSibling,l);
     box.querySelectorAll('[data-opc]').forEach(function(x,i,arr){x.querySelector('[data-sobe]').disabled=!i;x.querySelector('[data-desce]').disabled=i===arr.length-1;});});
   $('opcAdd').onclick=async function(){var n=$('opcNova').value.trim();if(!n)return;var r=await _sb.from('etiquetas_catalogo').insert({categoria:cat,nome:n,cor:'#8a94a8',ordem:lista.length+1}).select('id,nome,cor,categoria,ordem,ativo').single();if(r.error){toast(esc(r.error.message));return;}T.cat.push(r.data);organizarOpcoes(cat);};
-  abrir('moForm');
+  abrir('moForm');var oc=$('opcCat');if(oc)oc.onchange=function(){organizarOpcoes(this.value);};
   $('opcSalvar').onclick=async function(){
     var linhas=box.querySelectorAll('[data-opc]'),erro=null;this.disabled=true;
     for(var i=0;i<linhas.length;i++){var l=linhas[i],ins=l.querySelectorAll('input');var r=await _sb.from('etiquetas_catalogo').update({cor:ins[0].value,nome:ins[1].value.trim()||'Sem nome',ordem:i+1,ativo:ins[2].checked}).eq('id',l.dataset.opc);if(r.error)erro=r.error;}

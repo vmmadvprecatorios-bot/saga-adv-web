@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.15",
+  versao: "3.16",
   data: "17/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.16", data: "17/11/2026", mudou: "Teses e oportunidades: a Prateleira recebeu a planilha de produtos do escritório (84 produtos; ideias sem material como \"Ideia\"); cada cartão mostra a Classificação (viabilidade, ticket, escalável), as páginas do site e a pasta no Google Drive, com os links do áudio, vídeo, mapa mental, slides e resumo do NotebookLM; \"Organizar opções\" edita também viabilidade, ticket e escalável." },
     { versao: "3.15", data: "17/11/2026", mudou: "PAINEL GERAL (o Dashboard renomeado, 1º item do menu): prazo fatal nos próximos 5 dias, atrasados e para hoje; faixa dos robôs (administrador); cartões de Meu dia, Intimações, Jurídico, Captação, Dinheiro, Prêmio e Equipe que levam à lista certa; produtividade por pessoa. MENU reorganizado (Meu dia primeiro; nomes curtos; Precatórios em Processos; Editor de PDF em Gestão; itens novos Relatórios, Parceiros e Modelos). Tela nova PARCEIROS (ANCREF, Sarmento e quem indica)." },
     { versao: "3.14", data: "17/11/2026", mudou: "Ficha do cliente: cada aba de processo mostra só os documentos DAQUELE processo; documento PESSOAL (RG, CPF, comprovante, certidão...) é marcado pelo botão do cartão de identidade ao lado do documento, com o dono (cliente ou herdeiro/parte), e aparece no quadro \"Documentos pessoais\" de toda aba em que essa pessoa é parte; [[Puxar de outra pessoa]] traz para a aba os documentos pessoais de outra pessoa da ficha sem copiar o arquivo; [[Tirar desta aba]] só desfaz a ligação." },
     { versao: "3.13", data: "17/11/2026", mudou: "Cores em dobro: cada cor tem a versão Normal e a versão Vidro, escolhida dentro do cartão (Clássicos, Tecnológicos e Campanhas); cor nova Ônix (preto e cinza); no Vidro, fundo animado (Brasas de neon, Rede de dados, Circuito de luz) com intensidade e velocidade." },
@@ -805,6 +806,7 @@ window.SAGA_MANUAL = {
             "**Público da tese** (em [[Editar]] do produto): marque a esfera, pessoa física ou empresa, a situação (ativo, aposentado, pensionista), os órgãos, cargos e UFs, os anos de ingresso e de aposentadoria, \"aposentado há menos de N anos\", a idade, o que a pessoa precisa ter (precatório, dívida com o fisco...), quem não pode, o prazo e onde achar. Vídeo grande ou do NotebookLM entra por link do Google Drive ou do YouTube em [[+ Adicionar vídeo ou link]].",
             "**Radar de oportunidades**: teses que podem render ações novas.",
             "[[Mostrar gráficos]] (nas três abas): barras e meses que resumem o que está na tela; clicar numa barra filtra por ela (clicar de novo tira o filtro). A escolha de mostrar ou esconder fica neste navegador.",
+            "Cada produto tem a **Classificação** (viabilidade, ticket e escalável: menus que o administrador organiza em [[Organizar opções]]) e, quando houver, a **Página do site**, a **Página 3Pj** e a **Pasta no Google Drive** com os materiais (áudio, vídeo, mapa mental, slides, resumo e versão para WhatsApp). Os links do Drive só abrem para quem tem acesso à pasta no Drive.",
             "Clique numa tese da Prateleira para abrir o **cartão** dela: resumo em destaque e o texto à esquerda; à direita o **prazo** (amarelo), **quem não pode** (vermelho), o público, os vídeos e os **anexos** ([[+ Anexar documento]] ou arrastar). Em [[Editar]] há a **cor da tese**, usada também para achar os aptos na Base de dados.",
             "[[Achar clientes para uma tese]]: escolha a tese e o SAGA abre **Clientes por perfil** com os clientes do Jurídico que ainda não têm essa tese e, quando o produto tem o público preenchido, já com a situação, o órgão, o cargo, a UF, os anos e a idade aplicados. O mesmo botão aparece na tese escolhida no Blog, em cada cartão do \"Por tese\", na leitura de uma atualização e na pasta do produto.",
             "Quem pode publica com [[+ Nova atualização]]."
