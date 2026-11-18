@@ -284,7 +284,6 @@
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section{height:22px !important;min-height:22px !important;padding:0 !important;margin:6px 12px !important;font-size:0 !important;letter-spacing:0 !important;overflow:hidden !important;background:transparent !important;border-top:1px solid var(--border-soft) !important;justify-content:center !important;border-radius:6px;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section[data-grupo]::after{margin:0 !important;width:6px !important;height:6px !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-section[data-grupo]:hover{background:color-mix(in srgb,var(--gold) 12%,transparent) !important;}'+
-        '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat{opacity:0 !important;}'+
         '#sidebarSaga.collapsed:not(.sg-aberto) .nav-item{color:transparent !important;font-size:0 !important;}'+
         '#sidebarSaga.collapsed.sg-aberto{width:232px !important;min-width:232px !important;margin-right:-168px !important;box-shadow:14px 0 34px rgba(0,0,0,.28) !important;}}'+
       // celular (12/11, Dr. Victor): grupos abrem e fecham como no computador (toque no título); faixa de toque maior
@@ -484,11 +483,21 @@
   function _estiloNumerosMenu(){
     if(!document.getElementById('sagaChatEstilo')){
       var st=document.createElement('style');st.id='sagaChatEstilo';
-      st.textContent='#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:16px;height:16px;padding:0 4px;border-radius:5px;background:rgba(229,72,77,.2) !important;color:#ff9b9e !important;font-size:9.5px;font-weight:500;display:inline-flex;align-items:center;justify-content:center;line-height:1;}'
-        +'#sidebarSaga .nav-badge-dia{background:rgba(96,150,240,.2) !important;color:#a9c8ff !important}#sidebarSaga .nav-badge-dia.atrasada{background:rgba(229,72,77,.2) !important;color:#ff9b9e !important}'
-        // menu claro (Grafite claro): cores fortes para aparecer sobre o fundo claro
-        +'html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-chat,html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-dia.atrasada{background:#9C7A43 !important;color:#fff !important;font-weight:700}'
-        +'html[data-cor="grafite"] body[data-theme="light"] #sidebarSaga .nav-badge-dia{background:#1A1A1A !important;color:#fff !important;font-weight:700}'
+      // 18/11 (Dr. Victor): números padronizados. Contagem = cor de destaque do tema, discreta; pede ação (atrasado, marcação) = vermelho suave.
+      st.textContent='#sidebarSaga .nav-item{position:relative}'
+        // cores relativas ao texto do menu (o menu é escuro no Azul claro e claro no Grafite claro): funcionam em todos os temas
+        +'#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:16px;height:16px;padding:0 4px;border-radius:5px;background:color-mix(in srgb,var(--sg-num-cor,var(--gold)) 30%,transparent) !important;color:inherit !important;font-size:9.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-variant-numeric:tabular-nums;transition:background .3s cubic-bezier(.22,.78,.25,1),color .3s cubic-bezier(.22,.78,.25,1)}'
+        +'#sidebarSaga .nav-badge-chat.atrasada,#sidebarSaga .nav-badge-mencao,#sidebarSaga .nav-section .nav-soma.atrasada{background:color-mix(in srgb,#e5484d 80%,transparent) !important;color:#fff !important}'
+        +'#sidebarSaga .nav-badge-mencao{margin-left:auto;margin-right:4px;width:16px;height:16px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:1}'
+        +'#sidebarSaga .nav-badge-mencao+.nav-badge-chat{margin-left:0 !important}'
+        // soma do grupo: só aparece com o grupo FECHADO
+        +'#sidebarSaga .nav-section .nav-soma{display:none;margin-left:auto;margin-right:8px;min-width:16px;height:16px;padding:0 4px;border-radius:5px;font-size:9.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1;align-items:center;justify-content:center;background:color-mix(in srgb,var(--sg-num-cor,var(--gold)) 30%,transparent);color:inherit;font-variant-numeric:tabular-nums}'
+        +'#sidebarSaga .nav-section.fechado .nav-soma.tem{display:inline-flex}'
+        // menu RECOLHIDO no computador: o número vira bolinha em cima do ícone; a soma do grupo fica na divisória
+        +'@media(min-width:761px){#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat{position:absolute;top:3px;left:36px;margin:0 !important;min-width:15px;height:15px;padding:0 3px;border-radius:8px;font-size:8.5px !important;font-weight:600;color:var(--sg-num-letra,#0d1626) !important;background:var(--sg-num-cor,#c1cde0) !important}'
+        +'#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat.atrasada{color:#fff !important;background:color-mix(in srgb,#e5484d 85%,transparent) !important}'
+        +'#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-mencao{display:none !important}'
+        +'#sidebarSaga.collapsed:not(.sg-aberto) .nav-section .nav-soma{margin:0 4px 0 0;min-width:14px;height:14px;font-size:8.5px;padding:0 3px}}'
         +'';
       document.head.appendChild(st);
     }
@@ -656,7 +665,7 @@
     +'Minhas Tarefas<span class="nav-badge-chat nav-badge-dia" id="navBadgeTarefas" style="display:none"></span></div>'
     +'<div class="nav-item" data-tela="monitoramento" onclick="sagaIrPara(\'monitoramento_multi_oab.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 016 6c0 4.5 2 6 2 6H4s2-1.5 2-6a6 6 0 016-6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 19a2 2 0 004 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Intimações</div>'
+    +'Intimações<span class="nav-badge-chat nav-badge-dia" id="navBadgeIntimacoes" style="display:none" title="Intimações abertas que chegaram hoje"></span></div>'
     +'<div class="nav-item" data-tela="agenda" onclick="sagaIrPara(\'calendario_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Agenda<span class="nav-badge-chat nav-badge-dia" id="navBadgeAgenda" style="display:none" title="Compromissos de hoje"></span></div>'
@@ -666,7 +675,7 @@
     +'Pedidos do Saga IA<span class="nav-badge-chat nav-badge-dia" id="navBadgePedidosClaude" style="display:none" title="Pedidos do Saga IA em aberto"></span></div>'
     +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Notas</div>'
+    +'Notas<span class="nav-badge-chat nav-badge-dia" id="navBadgeNotas" style="display:none" title="Notas compartilhadas com você ainda não abertas"></span></div>'
     +'</div><div class="nav-section" data-grupo="processos" role="button" tabindex="0" aria-expanded="true">Processos</div><div class="nav-grupo" data-grupo="processos">'
     +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -682,12 +691,12 @@
     +'Clientes por perfil</div>'
     +'<div class="nav-item" data-tela="teses" onclick="sagaIrPara(\'teses.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Teses e oportunidades</div>'
+    +'Teses e oportunidades<span class="nav-badge-chat nav-badge-dia" id="navBadgeTeses" style="display:none" title="Atualizações de tese e achados do radar não vistos"></span></div>'
     // T192 (17/11, Dr. Victor): relatórios dos processos para os clientes (tela feita por outra conversa)
     // tela relatorios_clientes.html publicada em 17/11 (blocos 244 e 245)
     +'<div class="nav-item" data-tela="relatorios_clientes" onclick="sagaIrPara(\'relatorios_clientes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5M9 17v-3M12 17v-5M15 17v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
-    +'Relatórios</div>'
+    +'Relatórios<span class="nav-badge-chat nav-badge-dia" id="navBadgeRelatorios" style="display:none" title="Pedidos de relatório para você preparar"></span></div>'
     // 17/11 (Dr. Victor, ideia do ADVBOX): parceiros (ANCREF, Sarmento) e quem indica clientes, pela Origem do cliente
     +'<div class="nav-item" data-tela="parceiros" onclick="sagaIrPara(\'parceiros.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 12l4-4 4 3 3-2 7 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 8l-4 4 5 5 2-1M21 14l-5 4-3-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -725,7 +734,7 @@
     +'</div><div class="nav-section" data-grupo="comunicacao" role="button" tabindex="0" aria-expanded="true">Comunicação</div><div class="nav-grupo" data-grupo="comunicacao">'
     +'<div class="nav-item" data-tela="chat" onclick="sagaIrPara(\'chat_interno_padrao_metalico.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Chat<span class="nav-badge-chat" id="navBadgeChat" style="display:none"></span></div>'
+    +'Chat<span class="nav-badge-mencao" id="navBadgeMencao" style="display:none" title="Alguém marcou você no chat">@</span><span class="nav-badge-chat nav-badge-dia" id="navBadgeChat" style="display:none"></span></div>'
     +'<div class="nav-item" data-tela="premios" onclick="sagaIrPara(\'premios.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 4h8v5a4 4 0 01-8 0V4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4M12 13v4M8.5 20h7M9.5 17h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Normas e prêmio</div>'
@@ -737,7 +746,7 @@
     +'Manual</div>'
     +'<div class="nav-item" data-tela="sugestoes" onclick="sagaIrPara(\'sugestoes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    +'Sugestões</div>'
+    +'Sugestões<span class="nav-badge-chat nav-badge-dia" id="navBadgeSugestoes" style="display:none" title="Sugestões novas para analisar"></span></div>'
     +'</div><div class="nav-section" data-grupo="admin" role="button" tabindex="0" aria-expanded="true">Administração</div><div class="nav-grupo" data-grupo="admin">'
     +'<div class="nav-item sem-permissao" data-tela="atividades" onclick="sagaIrPara(\'registro_atividades.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M8 6h12M8 12h12M8 18h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg>'
@@ -1060,6 +1069,8 @@
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
       _perfilAtual=r.data;
+      // Sons (18/11): a escolha salva no perfil vale em qualquer computador
+      try{var ps=(r.data.preferencias||{}).sons;if(ps&&typeof ps==='object')localStorage.setItem('saga-sons',JSON.stringify(Object.assign({},SONS_PADRAO,ps)));}catch(e){}
       // Regra de 09/11 (Dr. Victor): só o administrador geral apaga, exclui ou remove; para os outros os botões somem (o banco também recusa)
       document.documentElement.classList.toggle('saga-pode-apagar',!!r.data.eh_administrador);
       var av=document.getElementById('avatarTop');if(av)definirIniciaisAvatar(av,iniciais(r.data.nome_completo));try{localStorage.setItem('saga-iniciais',iniciais(r.data.nome_completo));}catch(e){}
@@ -1968,6 +1979,113 @@
   }
 
 
+  // 18/11 (Dr. Victor; bloco 255): os outros números do menu numa chamada só (menu_contadores, SECURITY INVOKER)
+  function porNumero(id,n,titulo,alerta){
+    var el=document.getElementById(id);if(!el)return;
+    if(n===null||n===undefined){el.style.display='none';return;}
+    el.textContent=n>99?'99+':String(n);el.style.display=n>0?'':'none';
+    if(titulo)el.title=titulo;el.classList.toggle('atrasada',!!alerta);
+  }
+  async function contarMenu(){
+    var r=await global._sb.rpc('menu_contadores');
+    if(r.error||!r.data||typeof r.data!=='object'){
+      if(r.error)console.warn('[SAGA] números do menu (menu_contadores): '+(r.error.message||r.error.code));
+      return;
+    }
+    var d=r.data;
+    porNumero('navBadgeIntimacoes',d.intimacoes_hoje,(d.intimacoes_hoje||0)+' intimação(ões) aberta(s) que chegaram hoje');
+    porNumero('navBadgeRelatorios',d.relatorios,(d.relatorios||0)+' pedido(s) de relatório para você preparar');
+    porNumero('navBadgeSugestoes',d.sugestoes,(d.sugestoes||0)+' sugestão(ões) nova(s) para analisar');
+    porNumero('navBadgeNotas',d.notas,(d.notas||0)+' nota(s) compartilhada(s) com você ainda não aberta(s)');
+    porNumero('navBadgeTeses',d.teses,(d.teses||0)+' atualização(ões) de tese ou achado(s) do radar não visto(s)');
+    // Marcações no chat: @ ao lado do número do Chat (vermelho) e mapa por conversa para a tela do chat
+    var men=d.chat_mencoes||{},totM=0;Object.keys(men).forEach(function(k){totM+=men[k]||0;});
+    var bm=document.getElementById('navBadgeMencao');
+    if(bm){bm.style.display=totM>0?'':'none';bm.title=totM+' marcação(ões) para você no chat';}
+    var bc=document.getElementById('navBadgeChat');if(bc)bc.classList.toggle('atrasada',totM>0);
+    var assin=JSON.stringify(men);
+    if(assin!==global.sagaChatMencoesAssin){global.sagaChatMencoesAssin=assin;global.sagaChatMencoes=men;
+      document.dispatchEvent(new CustomEvent('saga-chat-mencoes',{detail:{porConversa:men,total:totM}}));}
+    // Sons de intimação nova e de aviso urgente: só quando o horário do mais recente passa do já visto
+    somSeNovo('intimacao',d.intimacao_ultima_em);
+    somSeNovo('urgente',d.urgente_ultimo_em);
+  }
+
+  /* =====================================================================
+     SONS (18/11, Dr. Victor): poucos e discretos, gerados no próprio navegador (Web Audio; nenhum arquivo de fora).
+     chat = mensagem nova (padrão ligado), mencao = alguém marcou você (padrão ligado),
+     intimacao = intimação nova (padrão desligado), urgente = erro de robô / prazo de tarefa (padrão desligado).
+     Escolha em Configurações > Preferências > Sons: localStorage 'saga-sons' e usuarios.preferencias.sons.
+     Regras: o navegador só deixa tocar depois de a pessoa clicar/teclar na página; com várias abas abertas só UMA toca
+     (marca em localStorage 'saga-som-ultimo' + navigator.locks; a aba à vista tem a vez); o mesmo som no máximo 1 vez a cada 4 s.
+     ===================================================================== */
+  var SONS_PADRAO={ligado:true,chat:true,mencao:true,intimacao:false,urgente:false,volume:'medio'};
+  var SONS_DESENHO={
+    chat:   {pico:.10,notas:[[880,0,.11,'sine'],[1175,.12,.16,'sine']]},
+    mencao: {pico:.13,notas:[[988,0,.1,'triangle'],[1319,.1,.1,'triangle'],[1568,.2,.2,'triangle']]},
+    intimacao:{pico:.13,notas:[[523,0,.14,'sine'],[392,.13,.3,'sine']]},
+    urgente:{pico:.11,notas:[[740,0,.13,'triangle'],[740,.2,.13,'triangle'],[587,.4,.24,'triangle']]}
+  };
+  var _somCtx=null,_somLiberado=false;
+  function sonsConfig(){var c={};try{c=JSON.parse(localStorage.getItem('saga-sons')||'{}')||{};}catch(e){}return Object.assign({},SONS_PADRAO,c);}
+  function somLiberar(){
+    _somLiberado=true;
+    try{if(!_somCtx){var AC=global.AudioContext||global.webkitAudioContext;if(AC)_somCtx=new AC();}if(_somCtx&&_somCtx.state==='suspended')_somCtx.resume();}catch(e){}
+  }
+  if(typeof document!=='undefined'){document.addEventListener('pointerdown',somLiberar,true);document.addEventListener('keydown',somLiberar,true);}
+  function somPodeTocar(){return _somLiberado||!!(global.navigator&&navigator.userActivation&&navigator.userActivation.hasBeenActive);}
+  function somDesenhar(tipo,volume){
+    var d=SONS_DESENHO[tipo];if(!d)return false;
+    if(!_somCtx)somLiberar();var c=_somCtx;if(!c)return false;
+    if(c.state==='suspended'){try{c.resume();}catch(e){}}
+    var mult={baixo:.5,medio:1,alto:1.7}[volume||'medio']||1,t0=c.currentTime+.02;
+    d.notas.forEach(function(nn){
+      var o=c.createOscillator(),g=c.createGain();o.type=nn[3];o.frequency.setValueAtTime(nn[0],t0+nn[1]);
+      g.gain.setValueAtTime(0.0001,t0+nn[1]);g.gain.linearRampToValueAtTime(d.pico*mult,t0+nn[1]+.012);
+      g.gain.exponentialRampToValueAtTime(0.0001,t0+nn[1]+nn[2]);
+      o.connect(g);g.connect(c.destination);o.start(t0+nn[1]);o.stop(t0+nn[1]+nn[2]+.05);
+    });
+    return true;
+  }
+  // tocar(tipo, chave): chave = o que gerou o som (ex.: chat:<id da mensagem>), para as abas não tocarem o mesmo duas vezes
+  function somTocar(tipo,chave,op){
+    op=op||{};var cfg=sonsConfig();
+    if(op.teste){somLiberar();return somDesenhar(tipo,op.volume||cfg.volume);}
+    if(!cfg.ligado||!cfg[tipo]||!somPodeTocar())return false;
+    var executar=function(){
+      var u={},agora=Date.now();try{u=JSON.parse(localStorage.getItem('saga-som-ultimo')||'{}')||{};}catch(e){}
+      if(chave&&u['c:'+chave])return;
+      if(u['t:'+tipo]&&agora-u['t:'+tipo]<4000)return;
+      Object.keys(u).forEach(function(k){if(agora-u[k]>120000)delete u[k];});
+      if(chave)u['c:'+chave]=agora;u['t:'+tipo]=agora;
+      try{localStorage.setItem('saga-som-ultimo',JSON.stringify(u));}catch(e){}
+      somDesenhar(tipo,cfg.volume);
+    };
+    setTimeout(function(){
+      if(global.navigator&&navigator.locks&&navigator.locks.request)navigator.locks.request('saga-som',function(){executar();}).catch(function(){executar();});
+      else executar();
+    },document.hidden?450:0);
+    return true;
+  }
+  // Intimação e aviso urgente: compara o horário do mais recente com o já visto NESTE navegador (1ª leitura só guarda)
+  function somSeNovo(tipo,quando){
+    if(!quando)return;
+    var k='saga-som-visto-'+tipo,visto=null;try{visto=localStorage.getItem(k);}catch(e){}
+    if(visto&&new Date(quando)<=new Date(visto))return;
+    try{localStorage.setItem(k,quando);}catch(e){}
+    if(visto)somTocar(tipo,tipo+':'+quando);
+  }
+  // Mensagem nova do chat (tempo real): som de marcação se o texto marca a pessoa; nada se a conversa está aberta e à vista
+  function somMensagemChat(m){
+    if(!m||!_perfilAtual||m.autor_id===_perfilAtual.id)return;
+    if(global.sagaChatAberta===m.conversa_id&&!document.hidden)return;
+    var marcou=String(m.conteudo||'').indexOf(']('+_perfilAtual.id+')')>=0&&/@\[/.test(String(m.conteudo||''));
+    somTocar(marcou?'mencao':'chat','chat:'+m.id);
+  }
+  global.SagaSons={config:sonsConfig,padrao:SONS_PADRAO,tocar:somTocar,
+    testar:function(tipo,volume){return somTocar(tipo,null,{teste:true,volume:volume});},
+    guardar:function(cfg){try{localStorage.setItem('saga-sons',JSON.stringify(Object.assign({},SONS_PADRAO,cfg||{})));}catch(e){}}};
+
   // Contador de mensagens nao lidas do Chat: numero no item do menu lateral
   // e numero no titulo da aba do navegador. Atualiza na hora quando chega mensagem (tempo real).
   var _chatCanal=null,_chatTimer=null,_tituloOriginal=null;
@@ -2011,16 +2129,22 @@
         var rp=await global._sb.rpc('pedidos_claude_contar');
         if(!rp.error){var np=rp.data||0;bp.textContent=np>99?'99+':String(np);bp.style.display=np>0?'':'none';bp.title=np+' pedido(s) do Saga IA em aberto';}
       }
+      await contarMenu();
       guardarNumerosMoldura();
     }catch(e){}
   }
-  function agendarContagemChat(){clearTimeout(_chatTimer);_chatTimer=setTimeout(contarChat,400);}
+  var _menuTimer=null;
+  function agendarContagemChat(){
+    clearTimeout(_chatTimer);_chatTimer=setTimeout(contarChat,400);
+    // a marcação (chat_marcar) é gravada logo depois da mensagem: confere as marcações um pouco depois
+    clearTimeout(_menuTimer);_menuTimer=setTimeout(function(){if(global._sb&&_perfilAtual)contarMenu().then(guardarNumerosMoldura,function(){});},1800);
+  }
   function ligarContadorChat(){
     _estiloNumerosMenu();
     contarChat();
     if(global._sb&&!_chatCanal){
       _chatCanal=global._sb.channel('saga-chat-contador')
-        .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_mensagens'},agendarContagemChat)
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'chat_mensagens'},function(p){agendarContagemChat();try{somMensagemChat(p&&p.new);}catch(e){}})
         .subscribe();
     }
     document.addEventListener('visibilitychange',function(){if(!document.hidden){agendarContagemChat();contarDia();contarNaoLidas();}});
@@ -2234,11 +2358,51 @@
       ev.preventDefault();global.sagaIrPara(a.getAttribute('href'));
     });
   }
-  var IDS_NUMEROS=['navBadgeChat','navBadgeAgenda','navBadgeTarefas','navBadgeBuscas','navBadgePedidosClaude','notifCount','onlineText'];
+  var IDS_NUMEROS=['navBadgeChat','navBadgeMencao','navBadgeAgenda','navBadgeTarefas','navBadgeBuscas','navBadgePedidosClaude','navBadgeIntimacoes','navBadgeNotas','navBadgeTeses','navBadgeRelatorios','navBadgeSugestoes','notifCount','onlineText'];
   function guardarNumerosMoldura(){
     var g={};
     IDS_NUMEROS.forEach(function(id){var el=document.getElementById(id);if(el)g[id]={t:el.textContent,o:el.style.display==='none',a:el.classList.contains('atrasada')};});
     try{sessionStorage.setItem('saga-numeros',JSON.stringify(g));}catch(e){}
+    atualizarSomasMenu();
+  }
+  // Menu recolhido: o texto do item fica transparente; o número usa a cor dos ícones (que muda com cada tema)
+  var _corNumObs=false;
+  function corDosNumeros(sb){
+    // sonda escondida com o desenho do item ATIVO: a cor de destaque do ícone em cada tema
+    var sonda=sb.querySelector('.sg-sonda-num');
+    // (dentro de um invólucro escondido, sozinha: o deslize de destaque do saga_guard não a trata como item do menu)
+    if(!sonda){var inv=document.createElement('div');inv.hidden=true;inv.setAttribute('aria-hidden','true');inv.className='sg-sonda-inv';
+      inv.innerHTML='<div class="nav-item ativo sg-sonda-num"><svg class="nav-icon" viewBox="0 0 24 24"></svg></div>';sb.appendChild(inv);sonda=inv.firstChild;}
+    var ic=sonda.querySelector('.nav-icon');
+    if(ic){var c=getComputedStyle(ic).color;if(c){sb.style.setProperty('--sg-num-cor',c);
+      var m=c.match(/\d+(\.\d+)?/g)||[0,0,0],lum=(0.299*m[0]+0.587*m[1]+0.114*m[2])/255;
+      sb.style.setProperty('--sg-num-letra',lum>0.55?'#0d1626':'#ffffff');}}
+    if(!_corNumObs&&global.MutationObserver){_corNumObs=true;
+      var mo=new MutationObserver(function(){setTimeout(function(){corDosNumeros(sb);},60);});
+      mo.observe(document.documentElement,{attributes:true,attributeFilter:['data-cor','data-theme','class']});
+      if(document.body)mo.observe(document.body,{attributes:true,attributeFilter:['data-theme','class']});}
+  }
+  // 18/11 (Dr. Victor): grupo FECHADO do menu mostra a soma dos números dos itens dele (em vermelho se algum pede ação)
+  function atualizarSomasMenu(){
+    var sb=document.getElementById('sidebarSaga');if(!sb)return;
+    corDosNumeros(sb);
+    sb.querySelectorAll('.nav-section[data-grupo]').forEach(function(sec){
+      var id=sec.getAttribute('data-grupo'),g=sb.querySelector('.nav-grupo[data-grupo="'+id+'"]');if(!g)return;
+      var soma=0,alerta=false,partes=[];
+      g.querySelectorAll('.nav-item').forEach(function(it){
+        if(it.hidden||it.classList.contains('sem-permissao')||it.classList.contains('perm-pendente'))return;
+        var b=it.querySelector('.nav-badge-chat');if(!b||b.style.display==='none')return;
+        var n=parseInt(b.textContent,10);if(!(n>0))return;
+        soma+=n;if(b.classList.contains('atrasada'))alerta=true;
+        var nome='';it.childNodes.forEach(function(x){if(x.nodeType===3)nome+=x.textContent;});
+        partes.push(nome.trim()+': '+b.textContent);
+      });
+      var s=sec.querySelector('.nav-soma');
+      if(!s){if(!soma)return;s=document.createElement('span');s.className='nav-soma';s.setAttribute('aria-hidden','true');sec.appendChild(s);}
+      s.textContent=soma>99?'99+':String(soma);
+      s.classList.toggle('tem',soma>0);s.classList.toggle('atrasada',alerta);
+      s.title=partes.join(' · ');
+    });
   }
   function restaurarNumerosMoldura(){
     var g=null;try{g=JSON.parse(sessionStorage.getItem('saga-numeros')||'null');}catch(e){}
@@ -2247,6 +2411,7 @@
       var el=document.getElementById(id),v=g[id];if(!el||!v)return;
       el.textContent=v.t;el.style.display=v.o?'none':'';if(v.a)el.classList.add('atrasada');
     });
+    atualizarSomasMenu();
   }
   // Coloca o HTML dos menus pelo <template> (e nao por innerHTML): innerHTML durante a leitura da pagina faz o navegador
   // desistir de segurar a primeira imagem (link rel=expect) e os menus passam a piscar na troca de tela.

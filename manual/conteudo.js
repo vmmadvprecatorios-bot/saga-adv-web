@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.19",
+  versao: "3.20",
   data: "18/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.20", data: "18/11/2026", mudou: "NÚMEROS NO MENU: cada item mostra quantas coisas esperam por você (Minhas Tarefas, Intimações de hoje, Agenda, Pedidos do Saga IA, Notas compartilhadas, Teses e oportunidades, Relatórios a preparar, Pedidos de busca, Chat e, para o administrador, Sugestões novas); vermelho = pede ação; grupo fechado mostra a soma; com o menu recolhido o número fica em cima do ícone. CHAT: @ vermelho na conversa em que você foi marcado, abas Não lidas e Marcações, e a conversa abre na mensagem que marcou você. SONS em Configurações > Preferências > Sons (mensagem nova e marcação ligados; intimação nova e aviso urgente desligados; volume; botão para ouvir)." },
     { versao: "3.19", data: "18/11/2026", mudou: "Tela nova Processos > RELATÓRIOS: pedir o relatório processual do cliente, acompanhar (pedido, em preparação, pronto, enviado ao cliente) e ver na hora QUANDO foi o último relatório enviado, em verde, amarelo ou vermelho; o relatório fica na pasta \"Relatórios processuais\" da ficha e aparece nos dois lugares; na ficha, o quadro Relatórios em cada processo; avisos no sino; o Claude (SAGA no Claude) também consulta e registra." },
     { versao: "3.18", data: "17/11/2026", mudou: "Minhas Tarefas: passar o mouse no cartão não aumenta mais o cartão nem empurra os outros; tipo, quem passou a tarefa, compartilhamento e os atalhos Ficha e Intimações ficam na janela da tarefa (clique no cartão)." },
     { versao: "3.17", data: "17/11/2026", mudou: "Teses e oportunidades: botão [[Editar público]] no cartão de cada tese abre uma janela só com o público (quem tem direito, esfera, pessoa, situação, órgão, cargo, UF, anos, o que precisa ter, quem não pode, prazo); nos cartões, \"PF\" e \"PJ\" agora aparecem como \"Pessoa física\" e \"Empresa\" (para não confundir com Polícia Federal)." },
@@ -151,6 +152,17 @@ window.SAGA_MANUAL = {
           img: "sino",
           marcas: ["Sino com o número de avisos não lidos."]
         },
+        { id: "numeros_menu", titulo: "Os números do menu da esquerda",
+          quando: "Para saber, de relance, o que está esperando por você em cada tela.",
+          passos: [
+            "Cada item do menu mostra um número pequeno quando há algo para você: **Minhas Tarefas** (de hoje + atrasadas), **Intimações** (abertas que chegaram hoje), **Agenda** (compromissos de hoje), **Pedidos do Saga IA** (em aberto), **Notas** (compartilhadas com você e ainda não abertas), **Teses e oportunidades** (atualizações e achados do radar não vistos), **Relatórios** (pedidos para você preparar), **Pedidos de busca** (a fazer, para quem atende), **Chat** (mensagens não lidas) e, só para o administrador, **Sugestões** (novas).",
+            "Número na cor do tema = só contagem. Número **vermelho** = pede ação (tarefa atrasada; no Chat, alguém marcou você, com o **@** ao lado).",
+            "Grupo **fechado** (Meu dia, Processos...) mostra a **soma** dos números dos itens dele ao lado do título.",
+            "Com o menu **recolhido**, o número fica numa bolinha em cima do ícone. Parar o mouse no número mostra o que ele conta.",
+            "Os números se atualizam sozinhos (a cada minuto e na hora em que chega mensagem no chat)."
+          ],
+          dicas: ["O número some quando não há nada: não precisa zerar nada à mão.", "Os sons ficam em Configurações > Preferências > Sons."]
+        },
         { id: "foto", titulo: "Menu da foto: perfil, preferências e sair",
           quando: "Para mudar os seus dados, a senha, as preferências ou sair do sistema.",
           passos: [
@@ -172,6 +184,7 @@ window.SAGA_MANUAL = {
             "Em cada cartão escolha a versão: **Normal** (telas lisas) ou **Vidro** (placas de vidro sobre um fundo). Clique no cartão ou em Normal/Vidro para ver como fica; a cor só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
             "**Efeitos de movimento**: Ligados (janelas abrem e fecham suaves) ou Desligados (troca na hora).",
             "**Cadeado contra voltar sem querer**: Automático (trava sozinho depois de alguns segundos na tela; você escolhe quantos, padrão 20), Manual (só trava quando você clica no cadeado) ou Desligado. A escolha vale neste e nos outros computadores.",
+            "**Sons**: Ligados ou Desligados e, um por um, **Mensagem nova no chat**, **Alguém marcou você no chat**, **Intimação nova chegou** e **Aviso urgente no sino** (prazo de tarefa; para o administrador, erro de robô), com o **volume** (Baixo, Médio, Alto) e o botão ▶ para ouvir. Começam ligados só os do chat. O navegador só toca depois que você clicar uma vez na página e, com várias abas abertas, só uma toca. A escolha vale em qualquer computador.",
             "**Tamanho da letra**: Normal, Grande ou Maior."
           ],
           img: "preferencias_cores",
@@ -708,6 +721,7 @@ window.SAGA_MANUAL = {
             "Abra **Chat Interno**. Escolha a conversa na lista (Todas, Individuais, Grupos) ou clique em [[+ Nova conversa ou grupo]].",
             "Na conversa nova, a **lista dos colegas** já aparece aberta: em **Conversa Direta**, clique em uma pessoa; em **Grupo**, dê o nome e marque duas ou mais pessoas. Digite no campo para filtrar pelo nome. Num grupo que já existe, o administrador do grupo adiciona pessoas pela mesma lista.",
             "Escreva e envie. Use **@nome** para chamar alguém e anexe arquivos quando precisar.",
+            "Cada conversa mostra quantas mensagens você ainda não leu e um **@** vermelho quando alguém marcou você. As abas **Não lidas** e **Marcações** (com o número) separam essas conversas. Ao abrir a conversa com marcação, a tela vai até a mensagem que marcou você e ela acende de leve; o aviso do sino sai sozinho.",
             "Assunto de cliente ou processo: registre também na ficha (comentário), para ficar no histórico do processo."
           ],
           img: "chat",
