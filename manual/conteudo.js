@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.18",
-  data: "17/11/2026",
+  versao: "3.19",
+  data: "18/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.19", data: "18/11/2026", mudou: "Tela nova Processos > RELATÓRIOS: pedir o relatório processual do cliente, acompanhar (pedido, em preparação, pronto, enviado ao cliente) e ver na hora QUANDO foi o último relatório enviado, em verde, amarelo ou vermelho; o relatório fica na pasta \"Relatórios processuais\" da ficha e aparece nos dois lugares; na ficha, o quadro Relatórios em cada processo; avisos no sino; o Claude (SAGA no Claude) também consulta e registra." },
     { versao: "3.18", data: "17/11/2026", mudou: "Minhas Tarefas: passar o mouse no cartão não aumenta mais o cartão nem empurra os outros; tipo, quem passou a tarefa, compartilhamento e os atalhos Ficha e Intimações ficam na janela da tarefa (clique no cartão)." },
     { versao: "3.17", data: "17/11/2026", mudou: "Teses e oportunidades: botão [[Editar público]] no cartão de cada tese abre uma janela só com o público (quem tem direito, esfera, pessoa, situação, órgão, cargo, UF, anos, o que precisa ter, quem não pode, prazo); nos cartões, \"PF\" e \"PJ\" agora aparecem como \"Pessoa física\" e \"Empresa\" (para não confundir com Polícia Federal)." },
     { versao: "3.16", data: "17/11/2026", mudou: "Teses e oportunidades: a Prateleira recebeu a planilha de produtos do escritório (84 produtos; ideias sem material como \"Ideia\"); cada cartão mostra a Classificação (viabilidade, ticket, escalável), as páginas do site e a pasta no Google Drive, com os links do áudio, vídeo, mapa mental, slides e resumo do NotebookLM; \"Organizar opções\" edita também viabilidade, ticket e escalável." },
@@ -787,6 +788,20 @@ window.SAGA_MANUAL = {
           img: "disparos_enviar",
           marcas: ["Modelo (Automático = o da tese do processo).", "Remetente (Automático = rodízio).", "Prévia do e-mail com os dados do cliente.", "Pôr na fila."],
           atencao: ["Outlook/Hotmail pessoal provavelmente não funciona (a Microsoft bloqueou o login por senha). Prefira Gmail, Locaweb ou Hostinger.", "O Gmail gratuito aguenta cerca de 500 e-mails por dia; muitos e-mails para listas frias levam a conta para o spam. Suba o limite aos poucos."]
+        },
+        { id: "relatorios", titulo: "Relatórios dos clientes: pedir, enviar e ver o último",
+          quando: "Quando o cliente pede notícias do processo (ou o escritório decide mandar um relatório) e para saber, na hora, QUANDO foi o último relatório enviado a ele.",
+          passos: [
+            "Abra **Processos > Relatórios**. Cada linha é um processo, com o **Último relatório enviado** em cor: verde (recente), amarelo (está ficando antigo) e vermelho (passou do prazo). Ligado **Todos os ativos do Jurídico**, aparecem também os que nunca receberam relatório.",
+            "Para pedir: [[+ Pedir relatório]], procure o cliente (nome, CPF, código VMM ou número do processo), escolha o processo, diga **quem pediu** (o cliente ou pedido interno), quem prepara e o prazo, e clique em [[Pedir relatório]]. Quem prepara recebe o aviso no sino. Na ficha, o quadro **Relatórios** de cada processo tem o mesmo botão.",
+            "Clique na linha para abrir **Relatórios do processo**. Quem prepara usa [[Começar a preparar]] e guarda o arquivo em **Guardar o relatório** (clique ou solte o arquivo): ele vai para a pasta **Relatórios processuais** da ficha e o pedido fica **Pronto**. Relatório guardado direto na pasta da ficha também fica pronto sozinho.",
+            "Depois de mandar ao cliente, clique em [[Enviado ao cliente]], escolha por onde foi (WhatsApp, E-mail, Em mãos...) e a data. Pronto: o **último relatório** passa a ser este, aqui e na ficha. Quem pediu recebe o aviso no sino.",
+            "Relatório que já estava na pasta e foi enviado sem pedido: na janela do processo, [[Registrar envio]] ao lado dele.",
+            "Os números do alto filtram a lista (pedidos em aberto, prontos para enviar, vermelhos, nunca enviado). A lista também vira **Kanban** (Pedido, Em preparação, Pronto, Enviados) e **Cartões**."
+          ],
+          img: "relatorios",
+          marcas: ["Pedir relatório.", "Números que filtram a lista.", "Lista, Kanban ou Cartões.", "Último relatório enviado, com a cor.", "Pedido em aberto e a situação."],
+          dicas: ["Pedido parado (mais de 5 dias, ou prazo vencido) avisa quem prepara no sino, uma vez por dia.", "Administrador: [[Prazos das cores]] muda quantos dias valem o verde e o amarelo e o aviso de pedido parado; só ele cancela um pedido.", "No Claude ligado ao SAGA: \"quando foi o último relatório do cliente X?\" e ele também pede, guarda e marca o envio (sempre com o seu OK).", "Futuro (Área do cliente): o cliente vai ver o último relatório enviado e a data."]
         },
         { id: "buscas", titulo: "Pedidos de busca (Lemit, Data Solution)",
           quando: "Quem pede: precisa de telefone ou endereço do cliente/parente. Quem atende (Administrativo): faz a consulta.",

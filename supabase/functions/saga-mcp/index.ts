@@ -45,7 +45,7 @@ const INSTRUCOES =
   "criar_compromisso, mudar_situacao_processo, mudar_campo_processo, guardar_arquivo_na_pasta_do_cliente): ANTES de cada uma, mostre à " +
   "pessoa, em uma frase, exatamente o que vai mudar (em qual cliente/processo, de quê para quê) e só chame depois do OK dela. " +
   "Uma mudança por chamada; no máximo 60 por hora. REGRA: TODA mudança no SAGA passa por este conector; NUNCA abra o SAGA no navegador para mudar algo (o navegador fica só para o que não é do SAGA: cálculos, sites de tribunais). Não sabe se existe ferramenta? Chame 'o_que_posso_fazer'; se não existir, diga à pessoa para fazer pela tela. " +
-  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), horarios_de_atendimento, marcar_atendimento, responder_atendimento, material_marketing e disparo_de_email (fila de e-mails da Captação; mostre a prévia antes de pôr na fila). Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
+  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), relatorio_do_cliente (quando foi o último relatório ao cliente; pedir, preparar, enviar), horarios_de_atendimento, marcar_atendimento, responder_atendimento, material_marketing e disparo_de_email (fila de e-mails da Captação; mostre a prévia antes de pôr na fila). Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
   "EXCLUIR (excluir_processo, excluir_compromisso e outras 'excluir_'): só o ADMINISTRADOR; diga exatamente o que será excluído e só chame depois do OK EXPLÍCITO dele nesta conversa; para colaborador a ferramenta recusa (colaborador não apaga nada no SAGA). " +
   "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió. " +
   "DOCUMENTOS (guardar na pasta do cliente o arquivo que a pessoa anexou na conversa): NÃO mande o arquivo em base64. Com o OK da pessoa, chame 'preparar_envio_de_arquivo' (processo, pasta opcional, nome do arquivo). " +
@@ -597,6 +597,22 @@ const FERRAMENTAS: Ferramenta[] = [
       p_leitura: (a.leitura && typeof a.leitura === "object") ? a.leitura : null }),
   },
   {
+    name: "relatorio_do_cliente", title: "Relatório do processo para o cliente (tela Relatórios)", muda: true,
+    description: "Relatórios processuais enviados ao cliente (tela Relatórios do SAGA; o relatório é o documento da pasta \"Relatórios processuais\" da ficha). acao 'ver' (só consulta): QUANDO foi o último relatório enviado (dias_desde_o_ultimo, cor verde/amarelo/vermelho), pedido em aberto, histórico e relatórios guardados; use antes de fazer um relatório novo. MUDA O SAGA: 'pedir' (solicitante cliente|interno, prazo AAAA-MM-DD, observacao), 'situacao' (situacao em_preparacao|pronto|enviado|pedido; 'enviado' exige canal: WhatsApp, E-mail, Em mãos...; enviado_em opcional; cancelar só o administrador), 'garantir_pasta' (cria a pasta \"Relatórios processuais\" se faltar: chame antes de preparar_envio_de_arquivo com pasta='Relatórios processuais'), 'ligar_documento' (documento_id do relatório guardado: o pedido em aberto fica pronto) e 'registrar_envio' (documento_id + canal: marca como enviado ao cliente, com ou sem pedido). Depois de gerar o relatório com a skill de relatório: garantir_pasta → preparar_envio_de_arquivo → confirmar_envio_de_arquivo → ligar_documento; quando a pessoa disser que enviou, situacao=enviado." + PEDIR_OK,
+    inputSchema: { type: "object", properties: { acao: { type: "string", enum: ["ver", "pedir", "situacao", "garantir_pasta", "ligar_documento", "registrar_envio"] },
+      processo_id: { type: "string" }, pedido_id: { type: "string" }, documento_id: { type: "string" },
+      situacao: { type: "string", enum: ["pedido", "em_preparacao", "pronto", "enviado", "cancelado"] }, solicitante: { type: "string", enum: ["cliente", "interno"] },
+      prazo: { type: "string", description: "AAAA-MM-DD" }, observacao: { type: "string" }, canal: { type: "string" },
+      enviado_em: { type: "string", description: "AAAA-MM-DDTHH:MM-03:00 (opcional; padrão agora)" }, texto: { type: "string" } }, required: ["acao"], additionalProperties: false },
+    rpc: "conector_relatorio", args: (a) => {
+      if (a.prazo != null && a.prazo !== "" && !ehData(a.prazo)) throw new ErroArgs("Prazo no formato AAAA-MM-DD.");
+      return { p_acao: String(a.acao ?? ""), p_processo: uuidOuNulo(a.processo_id, "o id do processo"), p_id: uuidOuNulo(a.pedido_id, "o id do pedido"),
+        p_situacao: a.situacao ? String(a.situacao) : null, p_documento: uuidOuNulo(a.documento_id, "o id do documento"),
+        p_solicitante: a.solicitante ? String(a.solicitante) : null, p_prazo: a.prazo || null, p_observacao: texto(a.observacao, 2000),
+        p_canal: texto(a.canal, 60), p_enviado_em: a.enviado_em ? String(a.enviado_em) : null, p_texto: texto(a.texto, 1000) };
+    },
+  },
+  {
     name: "horarios_de_atendimento", title: "Horários livres para atendimento",
     description: "Horários da grade de atendimento de uma pessoa (livre, ocupado ou passado) entre duas datas (até 31 dias) e a lista de quem atende. Use antes de marcar_atendimento.",
     inputSchema: { type: "object", properties: { usuario_id: { type: "string" }, de: { type: "string", description: "AAAA-MM-DD" }, ate: { type: "string", description: "AAAA-MM-DD" } }, required: ["usuario_id", "de", "ate"], additionalProperties: false },
@@ -814,7 +830,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.7.1" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.8" },
         instructions: INSTRUCOES,
       });
     }
