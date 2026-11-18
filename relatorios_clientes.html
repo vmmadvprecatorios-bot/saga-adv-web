@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611171344"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Relatórios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:90ch;line-height:1.5}
+.topo-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:11px;font-size:12px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s;white-space:nowrap}
+.btn:hover{border-color:var(--gold)}.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ouro{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:12px 14px;text-align:left;transition:border-color .2s}
+.kpi:hover{border-color:var(--gold)}.kpi.active{border-color:color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}
+.kpi b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{font-size:11px;color:var(--muted)}
+.kpi.vermelho b{color:var(--danger,#e5484d)}.kpi.amarelo b{color:var(--warning,#d97706)}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
+.pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
+.pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0}
+.ent:focus{border-color:var(--gold)}
+.ent.busca{flex:1;min-width:220px}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);cursor:pointer}
+.resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px}
+.resumo b{color:var(--text);font-weight:600}
+.tabela-wrap{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);overflow:auto}
+table.tab{width:100%;border-collapse:collapse;font-size:12.5px;min-width:860px}
+table.tab th{text-align:left;font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--border-soft);white-space:nowrap;position:sticky;top:0;background:var(--panel-solid);cursor:pointer;user-select:none}
+table.tab td{padding:10px 12px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+table.tab tr:last-child td{border-bottom:0}
+table.tab tbody tr{cursor:pointer;transition:background .2s}
+table.tab tbody tr:hover{background:color-mix(in srgb,var(--gold) 6%,transparent)}
+.nome a{color:var(--text);text-decoration:none;font-weight:600}.nome a:hover{text-decoration:underline}
+.cod{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.num-cnj{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.mini{font-size:11px;color:var(--muted);line-height:1.5}
+.pag{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:12px;color:var(--muted)}
+.kanban{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
+.col{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);min-width:220px;display:flex;flex-direction:column}
+.col h3{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between}
+.col .itens{padding:8px;display:flex;flex-direction:column;gap:8px}
+.cartoes{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.cartao{border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid);padding:11px 12px;cursor:pointer;transition:border-color .2s,transform .2s cubic-bezier(.22,.78,.25,1);display:flex;flex-direction:column;gap:5px;text-align:left}
+.cartao:hover{border-color:var(--gold);transform:translateY(-1px)}
+.cartao .nome{font-size:12.5px}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;border:1px dashed var(--border-soft);border-radius:14px}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.col .vazio{padding:16px 8px;border:0;font-size:11.5px}
+.erro-caixa{padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12.5px;line-height:1.55}
+.erro-caixa b{display:block;margin-bottom:3px}
+.lista-busca{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}
+.lista-busca button{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:8px 10px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel);font-size:12px}
+.lista-busca button:hover{border-color:var(--gold)}
+.lista-busca small{color:var(--muted);font-variant-numeric:tabular-nums}
+@media(max-width:760px){
+  .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
+  .ent.busca{min-width:0;width:100%;flex-basis:100%}
+  .kanban{grid-template-columns:repeat(4,82vw)}
+}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611171344">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Relatórios</h1>
+      <p>Relatórios processuais dos clientes: quem pediu, quem prepara, quando foi enviado e, principalmente, <b>quando foi o último</b>. O relatório fica na pasta "Relatórios processuais" da ficha do cliente: o que é guardado lá aparece aqui, e o que é feito aqui aparece na ficha.</p>
+    </div>
+    <div class="topo-acoes">
+      <button class="btn btn-ouro" type="button" id="btnPedir">+ Pedir relatório</button>
+      <button class="btn" type="button" id="btnPrazos" hidden>Prazos das cores</button>
+      <button class="btn" type="button" id="btnAtualizar">Atualizar</button>
+    </div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="barra">
+    <div class="pills" role="group" aria-label="Como ver">
+      <button class="pill active" type="button" data-visao="lista">Lista</button>
+      <button class="pill" type="button" data-visao="kanban">Kanban</button>
+      <button class="pill" type="button" data-visao="cartoes">Cartões</button>
+    </div>
+    <input class="ent busca" id="fBusca" type="search" autocomplete="off" placeholder="Buscar por cliente, código, número do processo ou tese">
+    <select class="ent" id="fResp" aria-label="Responsável"><option value="">Todos os responsáveis</option></select>
+    <label class="chk" title="Mostra também os processos ativos do Jurídico que ainda não têm relatório"><input type="checkbox" id="fAtivos" checked> Todos os ativos do Jurídico</label>
+  </div>
+  <div class="resumo" id="resumo">Carregando…</div>
+  <div id="area"></div>
+</main>
+</div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611171344"></script>
+<script src="saga_tribunais.js?v=202611171344"></script>
+<script src="saga_relatorios.js?v=202611171344"></script>
+<script>
+/* =====================================================================
+   SAGA · Relatórios (T192, blocos 244 e 245; 17/11/2026, pedido do Dr. Victor)
+   Lista dos processos com relatório (pedido ou guardado na pasta) e, ligando "Todos os ativos
+   do Jurídico", também os que nunca receberam relatório. Dados: relatorios_painel.
+   Janelas e ações: saga_relatorios.js (SagaRelatorios), as mesmas da ficha.
+   ===================================================================== */
+var R={lista:[],erro:null,visao:'lista',filtro:'todos',busca:'',resp:'',ativos:true,pag:0,ordem:'ultimo',cfg:null,admin:false};
+var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
+var POR_PAG=50;
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function dataLoc(d){return d?new Date(d).toLocaleDateString('pt-BR'):'';}
+function linkFicha(x){return FICHA+'?pessoa_id='+encodeURIComponent(x.pessoa_id)+'&processo_id='+encodeURIComponent(x.processo_id);}
+function dias(x){return SagaRelatorios.diasDesde(x.ultimo_envio);}
+function cor(x){return SagaRelatorios.corDias(dias(x),R.cfg);}
+function rotulo(x){return (x.nome||'Cliente')+(x.codigo?' · '+x.codigo:'');}
+
+async function carregar(){
+  $('resumo').textContent='Carregando…';
+  var r=await _sb.rpc('relatorios_painel',{p_incluir_ativos:R.ativos});
+  if(r.error){R.erro=r.error.message||String(r.error);R.lista=[];desenhar();return;}
+  R.erro=null;R.lista=r.data||[];
+  // responsáveis da lista
+  var vistos={},opts='<option value="">Todos os responsáveis</option>';
+  R.lista.forEach(function(x){var id=x.aberto&&x.aberto.responsavel_id||x.responsavel_id,n=x.aberto&&x.aberto.responsavel||x.responsavel;if(id&&!vistos[id]){vistos[id]=n||'—';}});
+  Object.keys(vistos).sort(function(a,b){return vistos[a].localeCompare(vistos[b],'pt-BR');}).forEach(function(id){opts+='<option value="'+esc(id)+'">'+esc(vistos[id])+'</option>';});
+  $('fResp').innerHTML=opts;$('fResp').value=vistos[R.resp]?R.resp:'';if(!vistos[R.resp])R.resp='';
+  desenhar();
+}
+function passaFiltro(x,f){
+  var ab=x.aberto,c=cor(x);
+  switch(f||R.filtro){
+    case 'abertos':return !!ab;
+    case 'pedido':return ab&&ab.situacao==='pedido';
+    case 'em_preparacao':return ab&&ab.situacao==='em_preparacao';
+    case 'pronto':return ab&&ab.situacao==='pronto';
+    case 'nunca':return !x.ultimo_envio;
+    case 'vermelho':return c==='vermelho';
+    case 'sem_envio':return x.docs_sem_envio>0;
+    default:return true;
+  }
+}
+function filtrados(){
+  var b=semAcento(R.busca.trim());
+  var l=R.lista.filter(function(x){
+    if(!passaFiltro(x))return false;
+    if(R.resp){var id=x.aberto&&x.aberto.responsavel_id||x.responsavel_id;if(id!==R.resp)return false;}
+    if(b&&semAcento([x.nome,x.codigo,x.numero,String(x.numero||'').replace(/\D/g,''),x.tese,x.responsavel].join(' ')).indexOf(b)<0)return false;
+    return true;
+  });
+  // ordem: pedido em aberto primeiro, depois quem está há mais tempo sem relatório (nunca enviado no fim do grupo dos sem pedido)
+  l.sort(function(a,b){
+    if(!!a.aberto!==!!b.aberto)return a.aberto?-1:1;
+    if(a.aberto&&b.aberto)return a.aberto.criado_em<b.aberto.criado_em?-1:1;
+    var da=dias(a),db=dias(b);
+    if(da==null&&db==null)return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
+    if(da==null)return 1;if(db==null)return -1;
+    return db-da;
+  });
+  return l;
+}
+function kpis(){
+  var t={todos:R.lista.length,abertos:0,pronto:0,vermelho:0,nunca:0,sem_envio:0};
+  R.lista.forEach(function(x){if(x.aberto)t.abertos++;if(x.aberto&&x.aberto.situacao==='pronto')t.pronto++;if(cor(x)==='vermelho')t.vermelho++;if(!x.ultimo_envio)t.nunca++;if(x.docs_sem_envio>0)t.sem_envio++;});
+  var it=[['todos','Processos na lista',''],['abertos','Pedidos em aberto',''],['pronto','Prontos, falta enviar','amarelo'],
+          ['vermelho','Último há mais de '+(R.cfg?R.cfg.amarelo:120)+' dias','vermelho'],['nunca','Nunca enviado',''],['sem_envio','Guardados sem envio marcado','amarelo']];
+  $('kpis').innerHTML=it.map(function(k){return '<button type="button" class="kpi '+k[2]+(R.filtro===k[0]?' active':'')+'" data-filtro="'+k[0]+'"><b>'+t[k[0]]+'</b><span>'+esc(k[1])+'</span></button>';}).join('');
+}
+function celulaUltimo(x){return SagaRelatorios.seloUltimo(x.ultimo_envio,x.ultimo_canal)+(x.envios>1?'<div class="mini">'+x.envios+' relatórios enviados</div>':'');}
+function celulaAberto(x){
+  var a=x.aberto;
+  if(!a)return x.docs_sem_envio>0?'<span class="mini">'+x.docs_sem_envio+' guardado'+(x.docs_sem_envio>1?'s':'')+' sem envio marcado</span>':'<span class="mini">—</span>';
+  var h=new Date();var hoje=h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');
+  return SagaRelatorios.seloSituacao(a.situacao)+'<div class="mini">'+(a.solicitante==='cliente'?'O cliente pediu':'Interno')+' · '+esc(a.pedido_por||'—')+' em '+esc(dataLoc(a.criado_em))+
+    (a.prazo?' · <span style="'+(a.prazo<hoje?'color:var(--danger,#e5484d)':'')+'">prazo '+esc(a.prazo.split('-').reverse().join('/'))+'</span>':'')+'</div>';
+}
+function htmlNome(x){
+  return '<div class="nome"><a href="'+esc(linkFicha(x))+'" data-ficha>'+esc(x.nome||'Cliente')+'</a></div><div class="cod">'+esc(x.codigo||'')+'</div>';
+}
+function htmlNumero(x){
+  if(!x.numero)return '<span class="mini">sem número</span>';
+  var ic='';try{if(window.SagaTribunais&&SagaTribunais.icone)ic=' '+SagaTribunais.icone(x.numero);}catch(e){}
+  return '<span class="num-cnj">'+esc(SagaRelatorios.cnj(x.numero))+'</span>'+ic;
+}
+function desenharLista(l){
+  var tot=l.length,ini=R.pag*POR_PAG;if(ini>=tot){R.pag=0;ini=0;}
+  var pg=l.slice(ini,ini+POR_PAG);
+  return '<div class="tabela-wrap"><table class="tab"><thead><tr><th>Cliente</th><th>Processo</th><th>Tese</th><th>Último relatório enviado</th><th>Pedido em aberto</th><th>Responsável</th></tr></thead><tbody>'+
+    pg.map(function(x){return '<tr data-proc="'+esc(x.processo_id)+'"><td>'+htmlNome(x)+'</td><td>'+htmlNumero(x)+'</td><td class="mini">'+esc(x.tese||'—')+'</td><td>'+celulaUltimo(x)+'</td><td>'+celulaAberto(x)+'</td><td class="mini">'+esc((x.aberto&&x.aberto.responsavel)||x.responsavel||'—')+'</td></tr>';}).join('')+
+    '</tbody></table></div>'+(tot>POR_PAG?'<div class="pag"><span>'+(ini+1)+'–'+Math.min(ini+POR_PAG,tot)+' de '+tot+'</span><button class="btn" type="button" data-pag="-1"'+(R.pag?'':' disabled')+'>Anterior</button><button class="btn" type="button" data-pag="1"'+(ini+POR_PAG<tot?'':' disabled')+'>Próxima</button></div>':'');
+}
+function htmlCartao(x){
+  return '<div class="cartao" data-proc="'+esc(x.processo_id)+'">'+htmlNome(x)+'<div>'+htmlNumero(x)+'</div><div class="mini">'+esc(x.tese||'')+'</div><div>'+celulaUltimo(x)+'</div>'+(x.aberto?'<div>'+celulaAberto(x)+'</div>':'')+'</div>';
+}
+function desenharKanban(l){
+  var cols=[['pedido','Pedido'],['em_preparacao','Em preparação'],['pronto','Pronto, falta enviar'],['enviado','Enviados (30 dias)']];
+  return '<div class="kanban">'+cols.map(function(c){
+    var it=l.filter(function(x){return c[0]==='enviado'?(!x.aberto&&x.ultimo_envio&&dias(x)<=30):(x.aberto&&x.aberto.situacao===c[0]);});
+    return '<div class="col"><h3><span>'+esc(c[1])+'</span><span>'+it.length+'</span></h3><div class="itens">'+(it.length?it.map(htmlCartao).join(''):'<div class="vazio">Nada aqui.</div>')+'</div></div>';
+  }).join('')+'</div>';
+}
+function desenhar(){
+  var area=$('area');
+  if(R.erro){
+    area.innerHTML='<div class="erro-caixa"><b>Não consegui carregar os relatórios.</b>Motivo: '+esc(R.erro)+'<br>Tente "Atualizar". Se continuar, avise o administrador com esta mensagem.</div>';
+    $('resumo').textContent='';$('kpis').innerHTML='';return;
+  }
+  kpis();
+  var l=filtrados();
+  if(!l.length){
+    area.innerHTML='<div class="vazio"><b>'+(R.lista.length?'Nada encontrado com estes filtros.':'Nenhum relatório ainda.')+'</b>'+(R.lista.length?'':'Use "+ Pedir relatório" ou guarde um relatório na pasta "Relatórios processuais" da ficha do cliente: ele aparece aqui.')+'</div>';
+    $('resumo').innerHTML='';return;
+  }
+  area.innerHTML=R.visao==='kanban'?desenharKanban(l):(R.visao==='cartoes'?'<div class="cartoes">'+l.map(htmlCartao).join('')+'</div>':desenharLista(l));
+  var ab=l.filter(function(x){return x.aberto;}).length;
+  $('resumo').innerHTML='<b>'+l.length+'</b> processo'+(l.length>1?'s':'')+(ab?' · <b>'+ab+'</b> com pedido em aberto':'')+' · cores: verde até '+R.cfg.verde+' dias, amarelo até '+R.cfg.amarelo+', vermelho acima';
+}
+function achar(id){return R.lista.filter(function(x){return x.processo_id===id;})[0];}
+function abrirDetalhe(x){SagaRelatorios.detalhe({processo_id:x.processo_id,pessoa_id:x.pessoa_id,rotulo:rotulo(x)+(x.numero?' · '+SagaRelatorios.cnj(x.numero):''),depois:carregar});}
+
+// "+ Pedir relatório": achar o cliente e o processo
+function janelaBusca(){
+  SagaRelatorios.estilos();
+  var mo=document.getElementById('srBusca');
+  if(!mo){mo=document.createElement('div');mo.id='srBusca';mo.className='sr-mo';mo.setAttribute('data-saga-movimento-proprio','');mo.innerHTML='<div class="sr-md"></div>';document.body.appendChild(mo);
+    mo.addEventListener('mousedown',function(e){if(e.target===mo)mo.classList.remove('aberto');});}
+  var md=mo.firstChild,seq=0;
+  md.innerHTML='<div class="sr-cab"><div><h2>Pedir relatório</h2><p>Procure o cliente pelo nome, CPF, código (VMM-...) ou número do processo.</p></div><button class="sr-x" type="button" data-f>✕</button></div>'+
+    '<div class="sr-corpo"><div class="sr-campo"><label for="bTermo">Cliente ou processo</label><input id="bTermo" type="search" autocomplete="off" placeholder="Digite pelo menos 2 letras"></div><div class="lista-busca" id="bLista"></div></div>';
+  md.querySelector('[data-f]').addEventListener('click',function(){mo.classList.remove('aberto');});
+  var t=null;
+  $('bTermo').addEventListener('input',function(){clearTimeout(t);t=setTimeout(buscar,280);});
+  async function buscar(){
+    var termo=$('bTermo').value.trim(),n=++seq,lista=$('bLista');
+    if(termo.length<2){lista.innerHTML='';return;}
+    lista.innerHTML='<div class="mini">Procurando…</div>';
+    var r=await _sb.rpc('busca_global',{p_termo:termo});if(n!==seq)return;
+    if(r.error){lista.innerHTML='<div class="erro-caixa">A busca falhou: '+esc(r.error.message||'')+'</div>';return;}
+    var d=r.data||{},pes=(d.pessoas||[]).slice(0,10),pro=(d.processos||[]).slice(0,10);
+    var ids=pes.map(function(p){return p.id;});
+    var procs=[];
+    if(ids.length){var q=await _sb.from('processos').select('id,pessoa_id,codigo,numero_processo_cnj').in('pessoa_id',ids).or('excluido_logico.is.null,excluido_logico.eq.false').order('criado_em');if(!q.error)procs=q.data||[];}
+    pro.forEach(function(p){if(!procs.some(function(x){return x.id===p.id;}))procs.push({id:p.id,pessoa_id:p.pessoa_id||(p.pessoa&&p.pessoa.id),codigo:p.codigo,numero_processo_cnj:p.numero_processo_cnj,_nome:p.pessoa&&p.pessoa.nome_completo});});
+    var nomes={};pes.forEach(function(p){nomes[p.id]=p.nome_completo;});
+    if(n!==seq)return;
+    lista.innerHTML=procs.length?procs.map(function(p){var nm=nomes[p.pessoa_id]||p._nome||'Cliente';return '<button type="button" data-p="'+esc(p.id)+'" data-pes="'+esc(p.pessoa_id||'')+'" data-nome="'+esc(nm+(p.codigo?' · '+p.codigo:''))+'"><span>'+esc(nm)+'</span><small>'+esc([p.codigo,p.numero_processo_cnj?SagaRelatorios.cnj(p.numero_processo_cnj):'sem número'].filter(Boolean).join(' · '))+'</small></button>';}).join(''):'<div class="mini">Nenhum processo encontrado para "'+esc(termo)+'".</div>';
+  }
+  $('bLista').addEventListener('click',function(e){
+    var b=e.target.closest('[data-p]');if(!b)return;
+    mo.classList.remove('aberto');
+    var x=achar(b.dataset.p);
+    if(x&&x.aberto){abrirDetalhe(x);SagaRelatorios.toast('Este processo já tem um pedido de relatório em aberto: veja abaixo.','');return;}
+    SagaRelatorios.pedir({processo_id:b.dataset.p,rotulo:b.dataset.nome,depois:carregar});
+  });
+  requestAnimationFrame(function(){mo.classList.add('aberto');setTimeout(function(){$('bTermo').focus();},80);});
+}
+
+// Prazos das cores (só o administrador)
+function janelaPrazos(){
+  SagaRelatorios.estilos();
+  var mo=document.getElementById('srPrazos');
+  if(!mo){mo=document.createElement('div');mo.id='srPrazos';mo.className='sr-mo';mo.setAttribute('data-saga-movimento-proprio','');mo.innerHTML='<div class="sr-md"></div>';document.body.appendChild(mo);
+    mo.addEventListener('mousedown',function(e){if(e.target===mo)mo.classList.remove('aberto');});}
+  var md=mo.firstChild,c=R.cfg;
+  md.innerHTML='<div class="sr-cab"><div><h2>Prazos das cores</h2><p>Quanto tempo desde o último relatório enviado para cada cor. Vale para todos (tela Relatórios, ficha e conector).</p></div><button class="sr-x" type="button" data-f>✕</button></div>'+
+    '<div class="sr-corpo"><div class="sr-linha2"><div class="sr-campo"><label for="pVerde">Verde até (dias)</label><input id="pVerde" type="number" min="1" max="3650" value="'+c.verde+'"></div>'+
+    '<div class="sr-campo"><label for="pAmarelo">Amarelo até (dias)</label><input id="pAmarelo" type="number" min="2" max="3650" value="'+c.amarelo+'"></div></div>'+
+    '<div class="sr-campo"><label for="pAviso">Avisar no sino o pedido parado há mais de (dias)</label><input id="pAviso" type="number" min="1" max="365" value="'+(c.aviso_dias||5)+'"></div>'+
+    '<div class="sr-aviso">Acima do amarelo fica vermelho. O aviso de pedido parado vai para quem prepara, uma vez por dia (8h35).</div><div class="sr-erro" id="pErro"></div></div>'+
+    '<div class="sr-rod"><button class="sr-btn" type="button" data-f>Cancelar</button><button class="sr-btn ouro" type="button" id="pOk">Salvar prazos</button></div>';
+  md.querySelectorAll('[data-f]').forEach(function(b){b.addEventListener('click',function(){mo.classList.remove('aberto');});});
+  $('pOk').addEventListener('click',async function(){
+    this.disabled=true;
+    var r=await _sb.rpc('relatorios_config_salvar',{p_verde:parseInt($('pVerde').value,10),p_amarelo:parseInt($('pAmarelo').value,10),p_aviso_dias:parseInt($('pAviso').value,10)});
+    this.disabled=false;
+    if(r.error){var e=$('pErro');e.innerHTML='<b>Não salvei.</b> '+esc(r.error.message||'');e.classList.add('ver');return;}
+    R.cfg=r.data;SagaRelatorios.limparCache();await SagaRelatorios.config();mo.classList.remove('aberto');SagaRelatorios.toast('Prazos salvos.','success');desenhar();
+  });
+  requestAnimationFrame(function(){mo.classList.add('aberto');});
+}
+
+function lerEstado(){return {visao:R.visao,filtro:R.filtro,busca:R.busca,resp:R.resp,ativos:R.ativos,pag:R.pag};}
+function aplicarEstado(o){
+  if(!o)return;
+  R.visao=o.visao||R.visao;R.filtro=o.filtro||R.filtro;R.busca=o.busca||'';R.resp=o.resp||'';R.ativos=o.ativos!==false;R.pag=o.pag||0;
+  $('fBusca').value=R.busca;$('fAtivos').checked=R.ativos;
+  document.querySelectorAll('.pill[data-visao]').forEach(function(x){x.classList.toggle('active',x.dataset.visao===R.visao);});
+}
+function ligar(){
+  document.querySelectorAll('.pill[data-visao]').forEach(function(b){b.addEventListener('click',function(){
+    if(R.visao===b.dataset.visao)return;
+    document.querySelectorAll('.pill[data-visao]').forEach(function(x){x.classList.toggle('active',x===b);});
+    R.visao=b.dataset.visao;setTimeout(desenhar,0);
+  });});
+  $('kpis').addEventListener('click',function(e){var k=e.target.closest('[data-filtro]');if(!k)return;R.filtro=(R.filtro===k.dataset.filtro?'todos':k.dataset.filtro);R.pag=0;desenhar();});
+  $('fBusca').addEventListener('input',function(){R.busca=this.value;R.pag=0;desenhar();});
+  $('fResp').addEventListener('change',function(){R.resp=this.value;R.pag=0;desenhar();});
+  $('fAtivos').addEventListener('change',function(){R.ativos=this.checked;R.pag=0;carregar();});
+  $('btnAtualizar').addEventListener('click',carregar);
+  $('btnPedir').addEventListener('click',janelaBusca);
+  $('btnPrazos').addEventListener('click',janelaPrazos);
+  $('area').addEventListener('click',function(e){
+    if(e.target.closest('a[data-ficha]'))return; // o link abre a ficha (Ctrl+clique: outra aba)
+    if(e.target.closest('.saga-trib, [data-tribunal], .trib-btn'))return;
+    var pg=e.target.closest('[data-pag]');if(pg){R.pag+=parseInt(pg.dataset.pag,10);desenhar();document.querySelector('main.content').scrollTo&&window.scrollTo({top:0,behavior:'smooth'});return;}
+    var el=e.target.closest('[data-proc]');if(!el)return;
+    var x=achar(el.dataset.proc);if(x)abrirDetalhe(x);
+  });
+}
+async function init(){
+  ligar();
+  await SagaUI.carregar('relatorios_clientes');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  SagaRelatorios.estilos();
+  R.cfg=await SagaRelatorios.config();
+  R.admin=typeof sagaPodeApagar==='function'&&sagaPodeApagar();
+  $('btnPrazos').hidden=!R.admin;
+  if(window.SagaVolta)aplicarEstado(SagaVolta.estado('relatorios'));
+  await carregar();
+  if(window.SagaVolta)SagaVolta.registrar('relatorios',{ler:lerEstado,aplicar:function(){},rolagem:['.tabela-wrap','.kanban']});
+  var q=new URLSearchParams(location.search).get('processo');
+  if(q){var x=achar(q);if(x)abrirDetalhe(x);}
+}
+init().catch(function(e){R.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+</script>
+</body>
+</html>

@@ -684,8 +684,8 @@
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h11v16H6a2 2 0 00-2 2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 19a2 2 0 012-2h11M8 7h6M8 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Teses e oportunidades</div>'
     // T192 (17/11, Dr. Victor): relatórios dos processos para os clientes (tela feita por outra conversa)
-    // ESCONDIDO (hidden) até a tela relatorios_clientes.html ser publicada pela conversa da T192: aí basta tirar o " hidden"
-    +'<div class="nav-item" hidden data-tela="relatorios_clientes" onclick="sagaIrPara(\'relatorios_clientes.html\')">'
+    // tela relatorios_clientes.html publicada em 17/11 (blocos 244 e 245)
+    +'<div class="nav-item" data-tela="relatorios_clientes" onclick="sagaIrPara(\'relatorios_clientes.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 3v5h5M9 17v-3M12 17v-5M15 17v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Relatórios</div>'
     // 17/11 (Dr. Victor, ideia do ADVBOX): parceiros (ANCREF, Sarmento) e quem indica clientes, pela Origem do cliente
@@ -1419,6 +1419,7 @@
     if(n&&n.referencia_tabela==='pedidos_claude')return {titulo:'Pedidos do Claude',tela:'pedidos_claude.html'};
     if(n&&n.referencia_tabela==='disparos')return {titulo:'Disparos de e-mail',tela:'disparos_email.html'};
     if(n&&n.referencia_tabela==='premios')return {titulo:'Prêmio da Captação',tela:'premios.html'};
+    if(n&&n.referencia_tabela==='relatorios')return {titulo:'Relatórios',tela:'relatorios_clientes.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1449,6 +1450,7 @@
     {chave:'saude',titulo:'Saúde do sistema',tipos:[],tela:'configuracoes_padrao_metalico.html?aba=saude',um:'aviso de saúde do sistema',varios:'avisos de saúde do sistema',cor:'#e5484d'},
     {chave:'pedidos_claude',titulo:'Pedidos do Saga IA',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Saga IA',varios:'avisos de pedidos do Saga IA',cor:'#c9a84c'},
     {chave:'premios',titulo:'Prêmio da Captação',tipos:[],tela:'premios.html',um:'aviso do prêmio',varios:'avisos do prêmio',cor:'#c9a84c'},
+    {chave:'relatorios',titulo:'Relatórios',tipos:[],tela:'relatorios_clientes.html',um:'aviso de relatório',varios:'avisos de relatórios',cor:'#0ea5e9'},
     {chave:'disparos',titulo:'Disparos de e-mail',tipos:[],tela:'disparos_email.html',um:'aviso dos disparos de e-mail',varios:'avisos dos disparos de e-mail',cor:'#f97316'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
@@ -1477,6 +1479,8 @@
     // Disparos de e-mail (bloco 206, T179): remetente com erro ou e-mails que não saíram
     if(n&&n.referencia_tabela==='disparos'){for(var de=0;de<GRUPOS_NOTIF.length;de++){if(GRUPOS_NOTIF[de].chave==='disparos')return GRUPOS_NOTIF[de];}}
     // Prêmio da Captação (blocos 222-224, T164): validação, fechamento, ajuste e estorno
+    // Relatórios dos clientes (blocos 244 e 245, T192): pedido novo, pronto, enviado e pedido parado
+    if(n&&n.referencia_tabela==='relatorios'){for(var rl=0;rl<GRUPOS_NOTIF.length;rl++){if(GRUPOS_NOTIF[rl].chave==='relatorios')return GRUPOS_NOTIF[rl];}}
     if(n&&n.referencia_tabela==='premios'){for(var pm=0;pm<GRUPOS_NOTIF.length;pm++){if(GRUPOS_NOTIF[pm].chave==='premios')return GRUPOS_NOTIF[pm];}}
     return grupoDoTipo(n&&n.tipo);
   }
@@ -1601,6 +1605,11 @@
     if(n.referencia_tabela==='saude'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=saude');return;}
     if(n.referencia_tabela==='pedidos_claude'){global.sagaIrPara('pedidos_claude.html');return;}
     if(n.referencia_tabela==='premios'){global.sagaIrPara('premios.html?aba=meu');return;}
+    if(n.referencia_tabela==='relatorios'){
+      try{var rq=n.referencia_id?await global._sb.from('relatorios_pedidos').select('processo_id').eq('id',n.referencia_id).maybeSingle():null;
+        if(rq&&rq.data&&rq.data.processo_id){global.sagaIrPara('relatorios_clientes.html?processo='+encodeURIComponent(rq.data.processo_id));return;}}catch(e){}
+      global.sagaIrPara('relatorios_clientes.html');return;
+    }
     if(n.referencia_tabela==='disparos'){global.sagaIrPara(n.referencia_id?'disparos_email.html?aba=contas':'disparos_email.html?aba=erros');return;}
     if(n.referencia_tabela==='meta_anuncios'){global.sagaIrPara('marketing_campanhas_padrao_metalico.html?aba=painel');return;}
     // parcela vencida (bloco 167): abre a ficha do cliente no bloco Pagamentos; sem achar a parcela, a aba Parcelas do Financeiro
