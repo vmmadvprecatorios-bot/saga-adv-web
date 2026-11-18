@@ -748,6 +748,8 @@ async function trocarSenha(){
 }
 async function sairDeTodos(){
   if(!(await sagaConfirmar('Sair de todos os aparelhos','Encerrar o SAGA em todos os computadores e celulares, inclusive neste e o SAGA no Claude (o conector)? Você precisará entrar de novo e reconectar o conector no Claude.','Sair de todos')))return;
+  // 18/11 (bloco 238): o login do conector do administrador/isentos é protegido no banco; aqui ele sai de propósito
+  try{await _sb.rpc('conector_desligar_meu');}catch(e){}
   try{await _sb.auth.signOut({scope:'global'});}catch(e){}
   try{localStorage.removeItem('saga-permissoes');}catch(e){}
   window.location.href='login_padrao_metalico.html';
