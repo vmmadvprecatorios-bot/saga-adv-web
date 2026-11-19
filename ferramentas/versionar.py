@@ -15,4 +15,9 @@ for f in glob.glob('*.html'):
         sys.exit('PARADO: ' + f + ' encolheu; nada foi gravado neste arquivo.')
     with open(f, 'w', encoding='utf-8') as a:
         a.write(novo)
+# 19/11 (Dr. Victor: "aplico e não reflete"): a versão publicada também vai para versao.txt; ao abrir, cada tela
+# confere esse arquivo (saga_guard.js, bloco "Versão nova do SAGA") e, se estiver com os arquivos antigos guardados
+# pelo navegador, recarrega sozinha (ou avisa "Atualizar agora" se a pessoa já estiver mexendo).
+with open('versao.txt', 'w', encoding='utf-8') as a:
+    a.write(v + '\n')
 print('versão', v)

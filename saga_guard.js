@@ -1595,3 +1595,33 @@
     tinta:tinta,fatia:fatia,larguraAnel:larguraAnel,coresVariadas:coresVariadas,rgb:function(c,r){return hx(rgb(c,r));}
   };
 })();
+
+/* ===== Versão nova do SAGA (19/11, Dr. Victor: "aplico no sistema, vou em outra parte e não está aplicando") =====
+   O site (GitHub Pages) deixa cada tela guardada no navegador por até ~10 min: uma tela aberta logo depois de uma
+   publicação podia vir com os arquivos antigos (o Ctrl+F5 só renova a tela em que se está). Ao abrir, a tela confere
+   versao.txt (gravado pelo ferramentas/versionar.py) e, se a versão no ar for mais nova que a dela, recarrega sozinha
+   antes de a pessoa mexer (uma vez por versão, nesta aba); se a pessoa já mexeu, aparece o aviso "Atualizar agora". */
+(function(){
+  try{
+    if(window.top!==window)return;
+    var sc=document.currentScript,m=sc&&/[?&]v=(\d{12})/.exec(sc.src||'');if(!m)return;
+    var minha=m[1],mexeu=false,inicio=Date.now();
+    ['pointerdown','keydown'].forEach(function(ev){window.addEventListener(ev,function(){mexeu=true;},{capture:true,once:true});});
+    function avisar(){
+      if(document.getElementById('sagaVersaoNova'))return;
+      var d=document.createElement('div');d.id='sagaVersaoNova';d.setAttribute('role','status');
+      d.style.cssText='position:fixed;left:50%;bottom:18px;z-index:2147483000;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:14px;'+
+        'background:var(--panel,#212e44);color:var(--text,#e7eaf0);border:1px solid var(--border,rgba(255,255,255,.14));box-shadow:0 14px 34px -12px rgba(0,0,0,.55);font:13px Montserrat,Arial,sans-serif;'+
+        'opacity:0;transform:translate(-50%,10px);transition:opacity .32s cubic-bezier(.22,.78,.25,1),transform .32s cubic-bezier(.22,.78,.25,1);max-width:calc(100vw - 32px)';
+      d.innerHTML='<span>Há uma versão nova do SAGA.</span><button type="button" class="btn-primary" style="white-space:nowrap">Atualizar agora</button>';
+      d.querySelector('button').onclick=function(){location.reload();};
+      document.body.appendChild(d);requestAnimationFrame(function(){requestAnimationFrame(function(){d.style.opacity='1';d.style.transform='translate(-50%,0)';});});
+    }
+    fetch('versao.txt?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
+      var nova=(String(t).match(/\d{12}/)||[])[0];if(!nova||nova<=minha)return;
+      var chave='saga-recarregou-'+nova,ja=null;try{ja=sessionStorage.getItem(chave);}catch(e){}
+      if(!ja&&!mexeu&&Date.now()-inicio<8000){try{sessionStorage.setItem(chave,'1');}catch(e){}location.reload();return;}
+      if(document.body)avisar();else document.addEventListener('DOMContentLoaded',avisar);
+    }).catch(function(){});
+  }catch(e){}
+})();
