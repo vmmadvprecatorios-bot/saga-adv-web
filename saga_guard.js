@@ -32,9 +32,9 @@
   try{cor=localStorage.getItem('saga-cor-salva')||localStorage.getItem('saga-cor')||'azul';}catch(e){}
   if(cor&&cor!=='azul')html.setAttribute('data-cor',cor);
   // fundo de cada cor antes da 1ª imagem ([escuro, claro]; a mesma lista do SAGA_FUNDOS no saga_ui.js)
-  var FUNDOS={azul:['#172234','#DAE3F1'],grafite:['#1A1A1A','#E7E6E4'],novembro:['#0B1B2C','#D6E8F5'],rosa:['#1E1219','#F4D7E5'],natal:['#0E1D16','#DDEEE4'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0'],
+  var FUNDOS={azul:['#172234','#DAE3F1'],grafite:['#191714','#E7E6E4'],novembro:['#0B1B2C','#D6E8F5'],rosa:['#1E1219','#F4D7E5'],natal:['#0E1D16','#DDEEE4'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0'],
     // 17/11 (Dr. Victor): cores em dobro (versão normal das cores de vidro) e o Ônix (preto e cinza)
-    profundo:['#0A1B2E','#D7E5F4'],ciano:['#06181E','#D7EFF4'],ambar:['#140F0A','#F2E6D9'],aurora:['#100C22','#DFDAF1'],onix:['#0E0E0F','#E0E0E0'],
+    profundo:['#0A1B2E','#D7E5F4'],ciano:['#06181E','#D7EFF4'],ambar:['#140F0A','#F2E6D9'],aurora:['#100C22','#DFDAF1'],onix:['#070707','#E0E0E0'],
     rubi:['#2B0505','#FACACC'],bordo:['#1F080F','#EAB7C4'],ouro:['#261A00','#FFF0A6'],lima:['#0E1F08','#D2F3A7'],aco:['#06141B','#BFC6C6'],marsala:['#331015','#DFCFBB'],cafe:['#241A13','#FAF3E9'],mel:['#221C05','#FCECC3']};
   html.style.background=(FUNDOS[cor]||FUNDOS.azul)[tema==='light'?1:0];
   html.style.colorScheme=tema==='light'?'light':'dark';
@@ -71,11 +71,13 @@
       var lB=op.luzDestaque!=null?op.luzDestaque:.6,lD=op.luzDestaque!=null?Math.min(.95,op.luzDestaque+.12):.72;
       var halo=op.halo?(function(){var n=parseInt(op.halo.replace('#',''),16);return [n>>16&255,n>>8&255,n&255];})():null;
       // escuro
-      var f=hsl2rgb(hf,sb,.08),f2=hsl2rgb(hf,sb,.14),vid=hsl2rgb(hf,sb,.18);
+      // luzFundo (19/11, Dr. Victor: Ônix x Grafite bem diferentes no escuro): o Ônix usa fundo mais preto; sem op = .08 de sempre
+      var lz=op.luzFundo!=null?op.luzFundo/.08:1;
+      var f=hsl2rgb(hf,sb,.08*lz),f2=hsl2rgb(hf,sb,.14*lz),vid=hsl2rgb(hf,sb,.18*lz);
       var bri=ajustar(h,saB,lB,f2,3.2,true),dest=ajustar(h,saD,lD,f2,4.5,true),tx=hsl2rgb(hf,stx,.94),mu=ajustar(hf,smu,.7,f2,4.5,true);
-      var mo=[hx(hsl2rgb(hf,sb*.8,.10)),hx(hsl2rgb(hf,sb*.8,.13)),hx(hsl2rgb(hf,sb*.8,.16))];
+      var mo=[hx(hsl2rgb(hf,sb*.8,.10*lz)),hx(hsl2rgb(hf,sb*.8,.13*lz)),hx(hsl2rgb(hf,sb*.8,.16*lz))];
       v.e={fundo:hx(f),navy2:rgba(f,.55),navy3:rgba(f2,.6),panel:rgba(vid,.58),panel2:rgba(vid,.66),solid:hx(f2),borda:'rgba(220,232,245,.16)',borda2:'rgba(220,232,245,.09)',texto:hx(tx),muted:hx(mu),gold:hx(bri),gold2:hx(dest),
-        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(hf,sb,.06))+' 0%,'+hx(hsl2rgb(hf,sb,.17))+' 60%,'+hx(hsl2rgb(hf,sb*.8,.32))+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(halo||bri,.30)+',transparent 70%)',
+        ceu:'linear-gradient(180deg,'+hx(hsl2rgb(hf,sb,.06*lz))+' 0%,'+hx(hsl2rgb(hf,sb,.17*lz))+' 60%,'+hx(hsl2rgb(hf,sb*.8,.32*lz))+' 100%)',halo:'radial-gradient(900px 600px at 78% 18%,'+rgba(halo||bri,.30)+',transparent 70%)',
         montes:montes(mo,true,[1,1,1]),cidade:cidade(mo,true,[1,1,1],hx(bri)),grade:rgba(bri,.22),veu:'linear-gradient(180deg,'+rgba(f,.30)+','+rgba(f,.70)+')',vidro:rgba(vid,.40),vidro2:rgba(vid,.66),brilho:hx(bri)};
       // claro (19/11, Dr. Victor: "o modo claro está muito puxado para o branco; mais puxado para a cor; o que é branco no
       // escuro vai para o preto no claro e vice-versa"): céu, fundo e vidro TINGIDOS da cor (nada de branco puro) e a
@@ -97,11 +99,13 @@
     // conta do "A sua cor", com a semente fixa de cada uma (variáveis --vl-*, regras do vidro-livre no saga_tema.css)
     window.SAGA_VIDRO_SEMENTES={
       'vidro-azul':{cor:'#4B8AF5',satFundo:.45},
-      'vidro-grafite':{cor:'#D4B98A',satFundo:.0,satDestaque:.45},
+      // 19/11 (Dr. Victor): o tom QUENTE fica só no Grafite (cinza grafite levemente quente, destaque champanhe)
+      'vidro-grafite':{cor:'#D4B98A',matizFundo:34,satFundo:.16,satDestaque:.45,halo:'#C9A46A'},
       'vidro-novembro':{cor:'#3A9DE6',satFundo:.55},
       'vidro-rosa':{cor:'#E85A93',satFundo:.35},
       'vidro-natal':{cor:'#E0454E',matizFundo:150,satFundo:.40},
-      'vidro-onix':{cor:'#E8E8E8',satFundo:.0,satDestaque:0,luzDestaque:.82,halo:'#B9874F'},
+      // 19/11 (Dr. Victor): Ônix = preto e cinza NEUTROS (sem o brilho amarelado), fundo bem preto, brilho prata
+      'vidro-onix':{cor:'#E8E8E8',satFundo:.0,satDestaque:0,luzDestaque:.82,halo:'#C8CDD2',luzFundo:.045},
       // 19/11: paletas do Dr. Victor em vidro
       'vidro-rubi':{cor:'#C71F24'},'vidro-bordo':{cor:'#991D3C'},'vidro-ouro':{cor:'#D4A200'},'vidro-lima':{cor:'#76C52C'},'vidro-aco':{cor:'#4A5C6A',satFundo:.35},'vidro-marsala':{cor:'#6D2932',matizFundo:33,satFundo:.3},'vidro-cafe':{cor:'#B08968',satFundo:.35},'vidro-mel':{cor:'#CC961F'}};
     // 19/11 (modo claro com a cor): as 4 cores de vidro antigas usam a conta só no CLARO (o escuro delas fica no saga_tema.css)

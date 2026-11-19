@@ -867,3 +867,15 @@ html:is([data-cor="rubi"],[data-cor="bordo"],[data-cor="ouro"],[data-cor="lima"]
 html:is([data-cor="rubi"],[data-cor="bordo"],[data-cor="ouro"],[data-cor="lima"],[data-cor="aco"],[data-cor="marsala"],[data-cor="cafe"],[data-cor="mel"]) body[data-theme="light"] #sidebarSaga :is(.nav-item.active,.nav-item.ativo){background:var(--t-ativobg)!important;font-weight:600}
 html:is([data-cor="rubi"],[data-cor="bordo"],[data-cor="ouro"],[data-cor="lima"],[data-cor="aco"],[data-cor="marsala"],[data-cor="cafe"],[data-cor="mel"]) body[data-theme="light"] :is(.panel,.card,.modal,.modal-box){background-color:var(--panel)}
 /* ===== fim das PALETAS NOVAS ===== */
+
+/* ===== ÔNIX × GRAFITE no ESCURO (19/11, Dr. Victor: "estão praticamente iguais"; o tom quente fica SÓ no Grafite) =====
+   Grafite = cinza grafite levemente quente (com o champanhe); Ônix = preto e cinza neutros, fundo bem mais preto.
+   As versões vidro mudaram na semente (SAGA_VIDRO_SEMENTES no saga_guard.js: Grafite matiz quente, Ônix neutro e luzFundo). */
+html[data-cor="grafite"] body[data-theme="dark"]{--navy-1:#191714!important;--navy-2:#1D1B18!important;--navy-3:#22201C!important;--panel:#272420!important;--panel-2:#2F2C27!important;--panel-solid:#272420!important;--border:rgba(240,228,205,.13)!important;--border-soft:rgba(240,228,205,.08)!important;--muted:#A39D93!important}
+html[data-cor="grafite"]:has(> body[data-theme="dark"]),html[data-cor="grafite"] body[data-theme="dark"]{background:radial-gradient(1200px 640px at 70% -10%,#2E2A24,#1A1815 55%,#151310) fixed!important}
+html[data-cor="grafite"] body[data-theme="dark"] #topbarSaga{background:#211F1B!important;border-bottom-color:rgba(240,228,205,.08)!important}
+html[data-cor="grafite"] body[data-theme="dark"] #sidebarSaga{background:#1E1C19!important;border-right-color:rgba(240,228,205,.08)!important}
+html[data-cor="grafite"] body[data-theme="dark"] tbody tr:nth-child(odd) > td{background:#272420}
+html[data-cor="grafite"] body[data-theme="dark"] tbody tr:nth-child(even) > td{background:#2C2925}
+html[data-cor="onix"] body[data-theme="dark"]{--navy-1:#070707!important;--navy-2:#0A0A0A!important;--navy-3:#0E0E0E!important;--panel:#151515!important;--panel-2:#1D1D1D!important;--panel-solid:#151515!important;--t-zeb1:#151515;--t-zeb2:#1B1B1B;--t-zebh:#242424;--t-top:#0E0E0E;--t-lat:linear-gradient(180deg,#1C1C1C 0%,#121212 45%,#090909 100%)}
+html[data-cor="onix"]:has(> body[data-theme="dark"]),html[data-cor="onix"] body[data-theme="dark"]{background:radial-gradient(1200px 640px at 70% -10%,#1E1E1E,#070707 55%,#050505) fixed!important}
