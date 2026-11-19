@@ -1510,7 +1510,11 @@
   // cores variadas das fatias: conferidas (contraste e daltonismo) no claro e no escuro
   var VARIADAS={escuro:['#3987e5','#d95926','#199e70','#c98500','#d55181','#0ca30c','#9085e9','#e66767'],claro:['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#6250d6','#e34948']};
   function ler(k,l,p){try{var v=localStorage.getItem(k);return l.indexOf(v)>=0?v:p;}catch(e){return p;}}
-  function estado(){return {acabamento:ler('saga-graf-acabamento',ACAB,'atual'),rosca:ler('saga-graf-rosca',ROSCA,'hoje'),cores:ler('saga-graf-cores',CORES,'tema')};}
+  // 19/11 (Dr. Victor, decisão final): SEM escolha. Padrão único do sistema para todos: Metal escovado, rosca como
+  // hoje e as cores das fatias do próprio tema. O quadro de Preferências saiu; as escolhas antigas são apagadas.
+  var PADRAO={acabamento:'escovado',rosca:'hoje',cores:'tema'};
+  function estado(){return {acabamento:PADRAO.acabamento,rosca:PADRAO.rosca,cores:PADRAO.cores};}
+  try{['saga-graf-acabamento','saga-graf-rosca','saga-graf-cores'].forEach(function(k){if(localStorage.getItem(k)!==null)localStorage.removeItem(k);});}catch(e){}
   var S=null;
   function avisar(){document.dispatchEvent(new CustomEvent('saga-graficos-mudou',{detail:S}));}
   function aplicar(){
@@ -1621,7 +1625,7 @@
     pintarAgora:autoPintar,
     ACABAMENTOS:ACAB.slice(),NOMES:NOMES,DESCRICOES:DESC,
     estado:function(){return {acabamento:S.acabamento,rosca:S.rosca,cores:S.cores};},
-    definir:function(k,v){if(['acabamento','rosca','cores'].indexOf(k)<0)return;try{localStorage.setItem('saga-graf-'+k,v);}catch(e){}aplicar();},
+    definir:function(){/* sem escolha desde 19/11: padrão único (Metal escovado) */},
     // anel(c,{cor,len,acc,circ,separar,ref,r}): pinta e desenha uma fatia de rosca de círculo (r padrão 40, centro 50,50)
     anel:function(c,o){var r=o.r||40,w=larguraAnel(14);c.style.stroke=tinta(o.cor,{ref:o.ref||c,forma:'anel',cx:50,cy:50,ri:r-w/2,ro:r+w/2});return fatia(c,{len:o.len,acc:o.acc,circ:o.circ||2*Math.PI*r,separar:o.separar,w:w});},
     tinta:tinta,fatia:fatia,larguraAnel:larguraAnel,coresVariadas:coresVariadas,rgb:function(c,r){return hx(rgb(c,r));}

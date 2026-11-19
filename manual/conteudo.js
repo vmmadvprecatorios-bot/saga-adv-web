@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.32",
+  versao: "3.33",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.33", data: "19/11/2026", mudou: "Gráficos: padrão único para todos, **Metal escovado** (rosca como sempre e as cores do tema). O quadro Gráficos saiu das Preferências." },
     { versao: "3.32", data: "19/11/2026", mudou: "Gráficos: a escolha de Preferências > Gráficos passa a valer em TODAS as telas, inclusive Intimações e as planilhas do Jurídico e da Captação, e em qualquer gráfico novo. As três escolhas ficam em caixas numeradas. O SAGA confere sozinho se há versão nova e recarrega a tela (ou avisa Atualizar agora)." },
     { versao: "3.31", data: "19/11/2026", mudou: "Preferências > **Gráficos** reorganizado: cartões coloridos com a prévia de cada acabamento, formato da rosca e cores das fatias lado a lado, e o botão **Aplicar no sistema** (antes a escolha valia sem botão e parecia não ter efeito)." },
     { versao: "3.30", data: "19/11/2026", mudou: "Preferências: novo quadro **Gráficos** com seis acabamentos para as roscas e barras (Como hoje, Metal escovado, Cromo polido, Esmalte com friso, Vidro metalizado, Titânio acetinado), formato da rosca (Como hoje ou Premium) e cores das fatias (Tons do tema ou Cores variadas). Cada pessoa escolhe o seu." },
@@ -194,7 +195,6 @@ window.SAGA_MANUAL = {
             "**Tema**: Claro ou Escuro (também pelo botão sol/lua no alto).",
             "**Cor do tema**: um cartão por cor, em três grupos: **Clássicos** (Azul, que é o padrão, Grafite e **Ônix**, preto e cinza), **Tecnológicos** (Azul profundo, Ciano holográfico, Âmbar de reator, Aurora violeta e \"A sua cor\") **Paletas** (Rubi, Bordô, Ouro, Lima, Aço, Marsala, Café e Mel) e **Campanhas** (Novembro Azul, Rosa e Natal). Cada cor tem claro e escuro.",
             "Em cada cartão escolha a versão: **Normal** (telas lisas) ou **Vidro** (placas de vidro sobre um fundo). Clique no cartão ou em Normal/Vidro para ver como fica; a cor só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
-            "**Gráficos**: escolha o acabamento das roscas e barras de todas as telas: **Como hoje** (cor lisa), **Metal escovado**, **Cromo polido**, **Esmalte com friso** (contorno prata ou ouro, conforme o tema), **Vidro metalizado** ou **Titânio acetinado**. Em **Formato da rosca**, **Premium** deixa a rosca mais grossa, com as fatias separadas e as pontas arredondadas. Em **Cores das fatias**, **Cores variadas** põe cada fatia numa cor diferente (mais fácil de distinguir, inclusive para quem é daltônico); **Tons do tema** é como era. Clicar nos cartões só mostra a prévia ali mesmo; para valer em todas as telas, clique em [[Aplicar no sistema]] ([[Cancelar]] volta para a escolha que está valendo). Vale só para você.",
             "**Efeitos de movimento**: Ligados (janelas abrem e fecham suaves) ou Desligados (troca na hora).",
             "**Cadeado contra voltar sem querer**: Automático (trava sozinho depois de alguns segundos na tela; você escolhe quantos, padrão 20), Manual (só trava quando você clica no cadeado) ou Desligado. A escolha vale neste e nos outros computadores.",
             "**Sons**: Ligados ou Desligados e, um por um, **Mensagem nova no chat**, **Alguém marcou você no chat**, **Intimação nova chegou** e **Aviso urgente no sino** (prazo de tarefa; para o administrador, erro de robô), com o **volume** (Baixo, Médio, Alto) e o botão ▶ para ouvir. Começam ligados só os do chat. O navegador só toca depois que você clicar uma vez na página e, com várias abas abertas, só uma toca. A escolha vale em qualquer computador.",
