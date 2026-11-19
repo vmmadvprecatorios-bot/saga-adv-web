@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191312"></script>
+<script src="saga_guard.js?v=202611191346"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Chat Interno</title>
@@ -355,7 +355,7 @@
     .seletor-papel button{padding:4px 6px;}
   }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191312">
+<link rel="stylesheet" href="saga_tema.css?v=202611191346">
 </head>
 <body data-theme="dark">
 
@@ -504,6 +504,7 @@
       </div>
 
       <!-- Mensagens (ocultas ate selecionar) -->
+      <div id="cdFaixa" hidden></div>
       <div class="mensagens-scroll" id="mensagensScroll" style="display:none;flex-direction:column;gap:14px;"></div>
 
       <!-- Barra de envio (oculta ate selecionar) -->
@@ -530,7 +531,8 @@
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611191312"></script>
+<script src="saga_ui.js?v=202611191346"></script>
+<script src="saga_chat_documentos.js?v=202611191346"></script>
 <script>
 // ===== CLIENTE SUPABASE =====
 var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
@@ -706,7 +708,7 @@ function iniciaisConversa(c) {
 // ===== CONVERSAS =====
 async function carregarConversas() {
   var res = await _sb.from('chat_conversas')
-    .select('id,tipo,nome_grupo,criado_em,criado_por_id,participantes:chat_participantes!conversa_id(usuario_id,papel,oculta_em,entrou_em)');
+    .select('id,tipo,nome_grupo,finalidade,criado_em,criado_por_id,participantes:chat_participantes!conversa_id(usuario_id,papel,oculta_em,entrou_em)');
   if (res.error) { showToast('Erro ao carregar conversas: ' + res.error.message, 'erro'); return; }
 
   var convs = res.data || [];
@@ -1009,7 +1011,7 @@ function ajustarBarraEnvio(conv) {
 async function carregarMensagens(conversaId, versao) {
   try {
     var q = _sb.from('chat_mensagens')
-      .select('id,conteudo,editada,criado_em,autor_id,conversa_id,autor:usuarios!autor_id(id,nome_completo),anexos:chat_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime)')
+      .select('id,conteudo,editada,criado_em,autor_id,conversa_id,autor:usuarios!autor_id(id,nome_completo),anexos:chat_anexos(id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime,destino_documento_id,destino_pessoa_id,destino_processo_id,ignorado,destino_pessoa:pessoas(nome_completo))')
       .eq('conversa_id', conversaId);
     var conv = state.conversas.find(function(c){ return c.id === conversaId; });
     if (conv && conv.ocultaEm) q = q.gt('criado_em', conv.ocultaEm);
@@ -1028,10 +1030,11 @@ async function carregarMensagens(conversaId, versao) {
 async function carregarAnexosMensagem(msgId) {
   var msg = state.mensagens.find(function(m){ return m.id === msgId; });
   if (!msg) return;
-  var r = await _sb.from('chat_anexos').select('id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime').eq('mensagem_id', msgId);
+  var r = await _sb.from('chat_anexos').select('id,nome_arquivo,caminho_storage,tamanho_bytes,tipo_mime,destino_documento_id,destino_pessoa_id,destino_processo_id,ignorado,destino_pessoa:pessoas(nome_completo)').eq('mensagem_id', msgId);
   if (r.error || !r.data || !r.data.length) return;
   msg.anexos = r.data;
   substituirMensagemNaTela(msg);
+  atualizarFaixaDocs();
 }
 
 function substituirMensagemNaTela(msg) {
@@ -1043,9 +1046,17 @@ function substituirMensagemNaTela(msg) {
   carregarMiniaturas();
 }
 
+// 19/11 (T194, bloco 268): no grupo "Recebimento de documentação" cada arquivo de documento ganha o selo e o "Mandar para a ficha"
+function grupoDocs() { return !!(window.SagaChatDocs && state.conversaAtiva && SagaChatDocs.ehGrupo(state.conversaAtiva)); }
 function htmlAnexos(anexos) {
   if (!anexos || !anexos.length) return '';
+  var docs = grupoDocs();
   return '<div class="anexos-msg">' + anexos.map(function(a){
+    return '<div class="anexo-com-selo">' + htmlAnexoUm(a) + (docs ? SagaChatDocs.selo(a) : '') + '</div>';
+  }).join('') + '</div>';
+}
+function htmlAnexoUm(a) {
+  if (true) {
     if (ehImagem(a)) {
       return '<div class="anexo-imagem" title="' + esc(a.nome_arquivo) + '" onclick="abrirAnexo(\'' + a.id + '\')">' +
         '<img data-caminho="' + esc(a.caminho_storage) + '" alt="' + esc(a.nome_arquivo) + '" class="carregando-img sk"></div>';
@@ -1057,8 +1068,30 @@ function htmlAnexos(anexos) {
       '<button class="baixar-arq" title="Abrir ou baixar" onclick="abrirAnexo(\'' + a.id + '\')">' +
         '<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 21h16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
       '</button></div>';
-  }).join('') + '</div>';
+  }
 }
+function atualizarFaixaDocs() {
+  var f = document.getElementById('cdFaixa'); if (!f) return;
+  if (!grupoDocs()) { f.innerHTML = ''; f.hidden = true; return; }
+  f.hidden = false; f.innerHTML = SagaChatDocs.faixa(state.mensagens);
+}
+document.addEventListener('click', function(ev){
+  var b = ev.target.closest && ev.target.closest('[data-cd-encaminhar],[data-cd-ignorar],[data-cd-ir]');
+  if (!b || !window.SagaChatDocs) return;
+  if (b.hasAttribute('data-cd-ir')) {
+    var el = document.querySelector('[data-msg-id="' + b.getAttribute('data-cd-ir') + '"]');
+    if (el) el.scrollIntoView({ behavior: localStorage.getItem('saga-movimento') === 'reduzido' ? 'auto' : 'smooth', block: 'center' });
+    return;
+  }
+  var id = b.getAttribute('data-cd-encaminhar') || b.getAttribute('data-cd-ignorar');
+  var a = acharAnexo(id); if (!a) return;
+  var msg = state.mensagens.find(function(m){ return (m.anexos || []).indexOf(a) >= 0; });
+  function pronto(texto) { if (msg) substituirMensagemNaTela(msg); atualizarFaixaDocs(); if (texto) showToast(texto); }
+  if (b.hasAttribute('data-cd-encaminhar')) { SagaChatDocs.encaminhar(a, function(_, texto){ pronto(texto); }); return; }
+  b.disabled = true;
+  SagaChatDocs.ignorar(a).then(function(){ pronto('Marcado como não é documento de cliente.'); })
+    .catch(function(e){ b.disabled = false; showToast('Não marcou: ' + (e.message || e), 'erro'); });
+});
 
 function acharAnexo(id) {
   for (var i = 0; i < state.mensagens.length; i++) {
@@ -1144,6 +1177,7 @@ function renderMensagens() {
   var scroll = document.getElementById('mensagensScroll');
   if (!state.mensagens.length) {
     scroll.innerHTML = '<div style="text-align:center;font-size:12px;color:var(--muted);margin:auto;padding:40px">Nenhuma mensagem ainda. Seja o primeiro a escrever!</div>';
+    atualizarFaixaDocs();
     return;
   }
   var grupos = agruparPorData(state.mensagens);
@@ -1152,6 +1186,7 @@ function renderMensagens() {
     return htmlMensagem(item.msg);
   }).join('');
   carregarMiniaturas();
+  atualizarFaixaDocs();
 }
 
 function appendMensagem(m) {
