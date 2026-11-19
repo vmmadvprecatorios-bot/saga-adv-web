@@ -177,13 +177,31 @@
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){window.sagaVidroAnimar();observar();});else{window.sagaVidroAnimar();observar();}
   })();
 
-  var temSessao=false;
-  try{
-    var bruto=localStorage.getItem(CHAVE);
-    var s=bruto?JSON.parse(bruto):null;
-    if(s&&s.currentSession)s=s.currentSession;
-    temSessao=!!(s&&(s.refresh_token||s.access_token));
-  }catch(e){}
+  // 19/11 (Dr. Victor: "vi o sistema por dentro antes do login"): login guardado no navegador NÃO basta para mostrar
+  // a tela. Só aparece na hora (sem esperar o servidor) quando a sessão é CONFIÁVEL: chave de acesso ainda dentro da
+  // validade, conferida hoje pelo saga_ui.js (saga-sessao-conferida, até o corte das 20h) e uso recente. Senão (ex.:
+  // computador ligado de manhã com o login de ontem), a tela fica COBERTA (só o fundo do tema) até o saga_ui.js
+  // conferir a sessão no servidor (evento 'saga-sessao-ok'); sem sessão válida vai direto para o login.
+  var MARCA_OK='saga-sessao-conferida';
+  function lerToken(){
+    try{var b=localStorage.getItem(CHAVE),t=b?JSON.parse(b):null;if(t&&t.currentSession)t=t.currentSession;return t&&(t.refresh_token||t.access_token)?t:null;}catch(e){return null;}
+  }
+  function sessaoConfiavel(){
+    var t=lerToken();if(!t)return false;
+    try{
+      if(!((t.expires_at||0)*1000>Date.now()+30000))return false;
+      var m=JSON.parse(localStorage.getItem(MARCA_OK)||'null'),u=t.user&&t.user.id;
+      if(!m||!u||m.u!==u||!(m.ate>Date.now()))return false;
+      // parado há mais de 25 min: confere antes (as regras de inatividade podem ter vencido o login)
+      var ult=parseInt(localStorage.getItem('saga-ultima-atividade')||'0',10);
+      if(ult&&Date.now()-ult>25*60000)return false;
+      return true;
+    }catch(e){return false;}
+  }
+  var temSessao=!!lerToken();
+  var sessaoOk=temSessao&&sessaoConfiavel();
+  if(!temSessao){try{localStorage.removeItem(MARCA_OK);}catch(e){}}
+  window.sagaSessaoConfiavel=sessaoConfiavel;
 
   var estilo=document.createElement('style');
   estilo.id='sagaGuardEstilo';
@@ -237,15 +255,61 @@
     return;
   }
 
+  // Aviso discreto enquanto confere (só aparece se demorar): fora do body (que está escondido), sem nada do sistema
+  var portao=null,portaoTimer=null,portaoInicio=Date.now(),portaoErro='';
+  function textoPortao(){
+    var seg=(Date.now()-portaoInicio)/1000;
+    if(navigator.onLine===false)return ['Este computador está sem internet.','Assim que a internet voltar, o SAGA confere o seu login e abre sozinho.',true];
+    if(portaoErro)return ['Não consegui falar com o servidor do SAGA.','Motivo: '+portaoErro+'. Tentando de novo a cada 5 segundos.',true];
+    if(seg>6)return ['Ainda conferindo o seu login…','A internet pode estar lenta. O SAGA continua tentando.',true];
+    return ['Conferindo o seu login…','',false];
+  }
+  function pintarPortao(){
+    if(!portao)return;var t=textoPortao();
+    portao.querySelector('b').textContent=t[0];portao.querySelector('span').textContent=t[1];
+    portao.querySelector('a').style.display=t[2]?'':'none';
+  }
+  function abrirPortao(){
+    if(sessaoOk||portao)return;
+    var escuro=tema!=='light';
+    portao=document.createElement('div');portao.id='sagaPortao';portao.setAttribute('role','status');portao.setAttribute('aria-live','polite');
+    portao.style.cssText='position:fixed;inset:0;z-index:2147483001;display:flex;align-items:center;justify-content:center;padding:24px 16px;font-family:Montserrat,Arial,sans-serif;text-align:center;color:'+(escuro?'#dfe6f2':'#1c2a3f')+';opacity:0;transition:opacity .32s cubic-bezier(.22,.78,.25,1)';
+    portao.innerHTML='<div style="max-width:360px;display:flex;flex-direction:column;align-items:center;gap:10px">'+
+      '<div style="width:120px;height:2px;border-radius:2px;overflow:hidden;background:'+(escuro?'rgba(255,255,255,.12)':'rgba(0,0,0,.08)')+'"><i style="display:block;width:40%;height:100%;background:currentColor;opacity:.6;animation:sagaFio 1.1s ease-in-out infinite;position:relative;left:-40%"></i></div>'+
+      '<b style="font-weight:500;font-size:14px"></b><span style="font-size:12.5px;opacity:.75;line-height:1.5"></span>'+
+      '<a href="'+LOGIN+'" style="font-size:12.5px;color:inherit;opacity:.85">Ir para a tela de entrada</a></div>';
+    (document.body?document.documentElement:document.documentElement).appendChild(portao);
+    pintarPortao();
+    requestAnimationFrame(function(){if(portao)portao.style.opacity='1';});
+    portaoTimer=setInterval(pintarPortao,1000);
+  }
+  function fecharPortao(){
+    clearTimeout(portaoEspera);clearInterval(portaoTimer);
+    if(!portao)return;var p=portao;portao=null;p.style.opacity='0';setTimeout(function(){p.remove();},reduzAgora()?0:320);
+  }
+  function reduzAgora(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
+  var portaoEspera=sessaoOk?0:setTimeout(abrirPortao,700);
+  window.addEventListener('online',pintarPortao);window.addEventListener('offline',pintarPortao);
+  document.addEventListener('saga-sessao-rede',function(ev){portaoErro=(ev.detail&&ev.detail.erro)||'sem resposta do servidor';abrirPortao();pintarPortao();});
+
   // Menus aparecem so com as letras ja carregadas (sem trocar de fonte na frente do usuario)
-  var molduraPedida=false;
+  var molduraPedida=false,molduraEsperando=false,mostrarEsperando=false;
   function mostrarMoldura(){
+    // 19/11: sessão ainda não conferida: nada aparece (nem o menu); fica anotado para depois
+    if(!sessaoOk){molduraEsperando=true;return;}
     if(molduraPedida)return;molduraPedida=true;
     // Os menus aparecem na hora, junto com a primeira imagem da tela (esperar as letras deixava tudo apagado por instantes)
     html.classList.remove('saga-entrando');
   }
-  // Telas antigas sem o menu padrao (data-simples): basta ter login salvo; aparecem quando a pagina termina de carregar
+  // saga_ui.js conferiu a sessão no servidor: libera o que estava esperando, com o movimento de sempre
+  document.addEventListener('saga-sessao-ok',function(){
+    if(sessaoOk)return;sessaoOk=true;portaoErro='';fecharPortao();
+    if(molduraEsperando||mostrarEsperando)mostrarMoldura();
+    if(mostrarEsperando&&typeof mostrar==='function')mostrar();
+  });
+  // Telas antigas sem o menu padrao (data-simples): sem sessão confiável, passam pelo login (ele devolve para o Ponto)
   if(document.currentScript&&document.currentScript.dataset.simples){
+    if(!sessaoOk){location.replace(LOGIN);return;}
     html.classList.remove('saga-carregando','saga-fixando');
     document.addEventListener('DOMContentLoaded',mostrarMoldura);
     return;
@@ -677,6 +741,7 @@
 
   var jaMostrou=false;
   function mostrar(){
+    if(!sessaoOk){mostrarEsperando=true;return;}
     mostrarMoldura();
     if(jaMostrou)return;jaMostrou=true;
     clearTimeout(fioTimer);if(fio)fio.classList.remove('ativo');
@@ -709,7 +774,7 @@
     esperarDados();
     setTimeout(function(){html.classList.remove('saga-fixando');},400);
   });
-  // Rede de seguranca: se algo travar, a tela aparece mesmo assim
+  // Rede de seguranca: se algo travar, a tela aparece mesmo assim (mas só com a sessão conferida: 19/11)
   setTimeout(function(){mostrar();html.classList.remove('saga-fixando');},8000);
 
   // Transicao entre paginas: quando a outra pagina nao participa (ex.: login), o navegador cancela sem erro aparente
@@ -720,9 +785,19 @@
   window.addEventListener('pageswap',calarTransicao);
   window.addEventListener('pagereveal',calarTransicao);
 
+  // 19/11: ao sair da página para a memória do navegador, ela é guardada ESCONDIDA; ao voltar, só reaparece depois
+  // de conferir o login (sem login vai para a tela de entrada sem mostrar nada; ex.: saiu do sistema e apertou voltar)
+  window.addEventListener('pagehide',function(ev){if(ev.persisted)html.classList.add('saga-entrando');});
   // Volta pelo botao do navegador (pagina guardada em cache): nao fica apagada
   window.addEventListener('pageshow',function(ev){
     if(ev.persisted){
+      if(!lerToken()){try{localStorage.removeItem(MARCA_OK);}catch(e){}location.replace(LOGIN);return;}
+      molduraPedida=false;
+      if(!sessaoConfiavel()){
+        sessaoOk=false;molduraEsperando=true;portaoInicio=Date.now();portaoErro='';
+        portaoEspera=setTimeout(abrirPortao,700);
+        document.dispatchEvent(new CustomEvent('saga-reconferir'));
+      }
       saindo=false;html.classList.remove('saga-carregando');mostrarMoldura();
       // a cópia guardada pelo navegador é de antes da última troca: reaplica cor, modo e letra salvos agora
       try{

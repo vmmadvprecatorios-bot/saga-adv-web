@@ -1899,7 +1899,7 @@
     try{if(_canalPresenca)await _canalPresenca.untrack();}catch(e){}
     // 17/11: só este navegador (scope local). O padrão (global) apagava também o login do conector do Claude.
     try{await global._sb.auth.signOut({scope:'local'});}catch(e){}
-    try{localStorage.removeItem(CHAVE_ATIVIDADE);}catch(e){}
+    try{localStorage.removeItem(CHAVE_ATIVIDADE);localStorage.removeItem('saga-sessao-conferida');}catch(e){}
     try{localStorage.removeItem('saga-permissoes');sessionStorage.removeItem(CHAVE_ACESSO);}catch(e){}
     window.location.href='login_padrao_metalico.html'+(motivo==='inatividade'||motivo==='desligado'||motivo==='acesso'||motivo==='fim_dia'||motivo==='inatividade_fora'?'?motivo='+motivo:'');
   };
@@ -2770,21 +2770,58 @@
     if(sb&&global.ResizeObserver){try{new ResizeObserver(function(){var x=document.getElementById('sagaTravaPonto');if(x)posicionarTrava(x);}).observe(sb);}catch(e){}}
   }
 
+  // ===== Sessão conferida antes de mostrar qualquer coisa (19/11, Dr. Victor: "vi o sistema por dentro antes do login") =====
+  // O saga_guard.js só mostra a tela na hora quando a sessão é confiável (saga-sessao-conferida, gravada aqui depois de
+  // conferir no servidor; vale até o corte das 20h de quem tem corte, senão 12 h). Nos outros casos a tela fica coberta
+  // até o evento 'saga-sessao-ok'. Falha de internet NÃO manda para o login nem mostra a tela: avisa e tenta de novo.
+  var MARCA_SESSAO='saga-sessao-conferida';
+  function erroDeRede(e){
+    if(!e)return false;var t=String(e.message||e)+' '+(e.name||'');
+    return e.name==='AuthRetryableFetchError'||e.status===0||/fetch|network|rede|timeout|Load failed|NetworkError/i.test(t);
+  }
+  async function sessaoNoServidor(){
+    if(!global._sb)return true;
+    for(var i=0;i<720;i++){
+      var ses=null,erro=null;
+      try{ses=await global._sb.auth.getSession();erro=ses&&ses.error;}catch(e){erro=e;}
+      if(ses&&ses.data&&ses.data.session)return true;
+      if(!erroDeRede(erro)||!idSessaoLocal())return false;
+      document.dispatchEvent(new CustomEvent('saga-sessao-rede',{detail:{tentativa:i+1,erro:(navigator.onLine===false?'sem internet':'servidor não respondeu')+(erro&&erro.message?' ('+String(erro.message).slice(0,80)+')':'')}}));
+      await new Promise(function(ok){setTimeout(ok,5000);});
+    }
+    return false;
+  }
+  async function conferirSessaoDaTela(){
+    if(!(await sessaoNoServidor())){
+      try{localStorage.removeItem(MARCA_SESSAO);}catch(e){}
+      window.location.replace('login_padrao_metalico.html');return false;
+    }
+    // Login diário (bloco 181): login de antes do corte das 20h sai; as regras de horário valem para a inatividade
+    if(!(await conferirLoginDiario()))return false;
+    // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
+    if(await verificarInatividade())return false;
+    return true;
+  }
+  function sessaoConferida(){
+    var g=_regrasLogin,ate=Date.now()+12*3600000;
+    if(g&&g.ok&&!g.isento&&_proximoCorte)ate=Math.min(ate,_proximoCorte);
+    if(!g||g.erro)ate=Date.now()+10*60000;
+    try{localStorage.setItem(MARCA_SESSAO,JSON.stringify({u:idSessaoLocal(),ate:ate}));}catch(e){}
+    document.dispatchEvent(new CustomEvent('saga-sessao-ok'));
+  }
+  // Página devolvida pela memória do navegador com a sessão sem conferir: confere de novo antes de aparecer
+  document.addEventListener('saga-reconferir',async function(){
+    if(await conferirSessaoDaTela())sessaoConferida();
+  });
+
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
     // Sem login valido: vai para o login sem mostrar nada da tela (saga_guard.js a mantem escondida)
-    if(global._sb){
-      try{
-        var ses=await global._sb.auth.getSession();
-        if(!ses.data||!ses.data.session){window.location.replace('login_padrao_metalico.html');return;}
-      }catch(e){}
-    }
-    // Login diário (bloco 181): login de antes do corte das 20h sai; as regras de horário valem para a inatividade
-    if(!(await conferirLoginDiario()))return;
-    // Sessao parada alem do limite (ex.: computador ligado a noite toda): sai antes de montar a tela
-    if(await verificarInatividade())return;
+    if(!(await conferirSessaoDaTela()))return;
     // Horario e local de acesso (a tela continua escondida enquanto confere)
     if(!(await verificarAcesso(false)))return;
+    // 19/11: sessão conferida no servidor: o saga_guard.js pode mostrar a tela (e as próximas abrem sem esperar)
+    sessaoConferida();
     // Entrada só pela internet do escritório (chave em Ponto > Configurações): espera a autorização do administrador
     await conferirEntradaRede();
     registrarEntrada();
