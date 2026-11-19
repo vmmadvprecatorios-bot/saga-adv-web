@@ -1492,3 +1492,106 @@
     salvar:salvar
   };
 })();
+
+/* ===== Gráficos metalizados (19/11, Dr. Victor: "colocar todos e eu seleciono qual quero usar") =====
+   Cada pessoa escolhe em Configurações > Preferências > Gráficos (acompanha a conta, chaves saga-graf-*):
+   acabamento (saga-graf-acabamento: atual, escovado, cromo, esmalte, vidro, acetinado), formato da rosca
+   (saga-graf-rosca: hoje, premium) e cores das fatias (saga-graf-cores: tema, variadas).
+   Fica no html: data-graf, data-graf-rosca, data-graf-cores. Barras feitas em HTML ganham o brilho pelo
+   saga_tema.css (bloco "GRÁFICOS METALIZADOS"); desenho em SVG pede a tinta a sagaGraficos.tinta(cor,{ref,forma})
+   (forma anel/barra/coluna) e as roscas usam sagaGraficos.fatia(...). Mudou a escolha, o tema ou o claro/escuro:
+   evento 'saga-graficos-mudou' no document (os gráficos se redesenham). */
+(function(){
+  'use strict';
+  var NS='http://www.w3.org/2000/svg';
+  var ACAB=['atual','escovado','cromo','esmalte','vidro','acetinado'],ROSCA=['hoje','premium'],CORES=['tema','variadas'];
+  var NOMES={atual:'Como hoje',escovado:'Metal escovado',cromo:'Cromo polido',esmalte:'Esmalte com friso',vidro:'Vidro metalizado',acetinado:'Titânio acetinado'};
+  var DESC={atual:'Cor chapada, sem brilho (o de sempre).',escovado:'Faixas de luz na diagonal, como alumínio escovado.',cromo:'Volume de tubo com reflexo forte. O mais chamativo.',esmalte:'Cor lisa com friso de metal (prata ou ouro, conforme o tema).',vidro:'Cor translúcida, borda clara e reflexo no alto.',acetinado:'Degradê suave e fosco. O mais discreto.'};
+  // cores variadas das fatias: conferidas (contraste e daltonismo) no claro e no escuro
+  var VARIADAS={escuro:['#3987e5','#d95926','#199e70','#c98500','#d55181','#0ca30c','#9085e9','#e66767'],claro:['#2a78d6','#eb6834','#1baf7a','#eda100','#e87ba4','#008300','#6250d6','#e34948']};
+  function ler(k,l,p){try{var v=localStorage.getItem(k);return l.indexOf(v)>=0?v:p;}catch(e){return p;}}
+  function estado(){return {acabamento:ler('saga-graf-acabamento',ACAB,'atual'),rosca:ler('saga-graf-rosca',ROSCA,'hoje'),cores:ler('saga-graf-cores',CORES,'tema')};}
+  var S=null;
+  function avisar(){document.dispatchEvent(new CustomEvent('saga-graficos-mudou',{detail:S}));}
+  function aplicar(){
+    var s=estado(),h=document.documentElement,mudou=!S||s.acabamento!==S.acabamento||s.rosca!==S.rosca||s.cores!==S.cores;S=s;
+    h.setAttribute('data-graf',s.acabamento);h.setAttribute('data-graf-rosca',s.rosca);h.setAttribute('data-graf-cores',s.cores);
+    if(mudou&&document.body)avisar();return s;
+  }
+  aplicar();
+  window.addEventListener('storage',function(e){if(!e.key||e.key.indexOf('saga-graf-')===0)aplicar();});
+  document.addEventListener('saga-preferencias-chegaram',function(e){var ks=(e.detail&&e.detail.chaves)||[];if(ks.some(function(k){return String(k).indexOf('saga-graf-')===0;}))aplicar();});
+  // tema ou claro/escuro trocou: as tintas do SVG são refeitas
+  var aguardando=null;
+  function temaMudou(){if(aguardando)return;aguardando=setTimeout(function(){aguardando=null;avisar();},60);}
+  try{new MutationObserver(temaMudou).observe(document.documentElement,{attributes:true,attributeFilter:['data-cor']});}catch(e){}
+  function vigiarBody(){try{new MutationObserver(temaMudou).observe(document.body,{attributes:true,attributeFilter:['data-theme']});}catch(e){}}
+  if(document.body)vigiarBody();else document.addEventListener('DOMContentLoaded',vigiarBody);
+
+  // ---- cores ----
+  var tela=null;
+  function rgb(cor,ref){
+    var m=/^#([0-9a-f]{6})$/i.exec(String(cor||'').trim());
+    if(m){var n=parseInt(m[1],16);return [n>>16&255,n>>8&255,n&255];}
+    var pai=ref&&ref.isConnected?(ref instanceof SVGElement?(ref.ownerSVGElement||ref).parentNode:ref):document.body;
+    if(!pai)return [128,128,128];
+    var s=document.createElement('span');s.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';s.style.color=cor;
+    pai.appendChild(s);var c=getComputedStyle(s).color;s.remove();
+    try{if(!tela){tela=document.createElement('canvas');tela.width=tela.height=1;}var x=tela.getContext('2d',{willReadFrequently:true});x.clearRect(0,0,1,1);x.fillStyle='#000';x.fillStyle=c;x.fillRect(0,0,1,1);var d=x.getImageData(0,0,1,1).data;return [d[0],d[1],d[2]];}
+    catch(e){var p=String(c).match(/[\d.]+/g);return p?[+p[0],+p[1],+p[2]]:[128,128,128];}
+  }
+  function hx(a){return '#'+a.map(function(v){v=Math.max(0,Math.min(255,Math.round(v)));return (v<16?'0':'')+v.toString(16);}).join('');}
+  function mix(a,b,t){return hx(a.map(function(v,i){return v+(b[i]-v)*t;}));}
+  function friso(){var c=document.documentElement.getAttribute('data-cor')||'';return /grafite|ambar|ouro|mel|cafe|marsala|natal/.test(c)?['#fff2c4','#9c7a35']:['#f4f7fa','#7d8794'];}
+  function paradas(ac,a){
+    var L=function(t){return mix(a,[255,255,255],t);},D=function(t){return mix(a,[0,0,0],t);},C=hx(a),f=friso();
+    if(ac==='cromo')return [[0,D(.55)],[.16,C],[.36,L(.6)],[.5,L(.2)],[.7,D(.22)],[.9,D(.5)],[1,L(.25)]];
+    if(ac==='esmalte')return [[0,f[0]],[.07,f[1]],[.13,D(.12)],[.5,L(.1)],[.62,C],[.87,D(.2)],[.93,f[1]],[1,f[0]]];
+    if(ac==='vidro')return [[0,L(.65),.95],[.09,C,.5],[.45,L(.25),.6],[.8,C,.72],[.91,L(.4),.9],[1,L(.7),1]];
+    if(ac==='acetinado')return [[0,L(.24)],[.55,C],[1,D(.2)]];
+    return [[0,L(.3)],[.17,D(.28)],[.36,L(.42)],[.48,C],[.6,D(.3)],[.78,L(.32)],[1,D(.36)]];
+  }
+  function htmlParadas(l){return l.map(function(p){return '<stop offset="'+(+p[0]).toFixed(4)+'" stop-color="'+p[1]+'"'+(p[2]!=null?' stop-opacity="'+p[2]+'"':'')+'/>';}).join('');}
+  var defs=null,feitos={};
+  function caixa(){
+    if(defs&&defs.isConnected)return defs;
+    var s=document.createElementNS(NS,'svg');s.setAttribute('width','0');s.setAttribute('height','0');s.setAttribute('aria-hidden','true');s.setAttribute('focusable','false');s.id='sagaGraficosTintas';
+    s.style.cssText='position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+    defs=document.createElementNS(NS,'defs');s.appendChild(defs);document.body.appendChild(s);feitos={};return defs;
+  }
+  // tinta(cor,{ref, forma:'anel'|'barra'|'coluna', cx, cy, ri, ro}) -> 'url(#...)' ou a própria cor (Como hoje)
+  function tinta(cor,o){
+    o=o||{};var ac=o.acabamento||S.acabamento;if(ac==='atual'||!document.body)return cor;
+    var a=rgb(cor,o.ref),forma=o.forma||'barra',id='sgg-'+ac+'-'+forma+'-'+hx(a).slice(1)+'-'+(friso()[1].slice(1));
+    if(forma==='anel')id+=('-'+o.cx+'-'+o.cy+'-'+o.ri+'-'+o.ro).replace(/\./g,'_');
+    var d=caixa();if(feitos[id]&&document.getElementById(id))return 'url(#'+id+')';
+    var st=paradas(ac,a),g;
+    if(forma==='anel'){
+      if(ac==='escovado')g='<linearGradient id="'+id+'" gradientUnits="userSpaceOnUse" x1="'+(o.cx-o.ro)+'" y1="'+(o.cy-o.ro)+'" x2="'+(o.cx+o.ro)+'" y2="'+(o.cy+o.ro)+'">'+htmlParadas(st)+'</linearGradient>';
+      else{var k=o.ri/o.ro;st=st.map(function(p){return [k+p[0]*(1-k),p[1],p[2]];});st.unshift([0,st[0][1],st[0][2]]);g='<radialGradient id="'+id+'" gradientUnits="userSpaceOnUse" cx="'+o.cx+'" cy="'+o.cy+'" r="'+o.ro+'">'+htmlParadas(st)+'</radialGradient>';}
+    }else{
+      var dir=forma==='coluna'?(ac==='escovado'?'x2="0.35" y2="1"':'x2="1" y2="0"'):(ac==='escovado'?'x2="1" y2="0.35"':'x2="0" y2="1"');
+      g='<linearGradient id="'+id+'" x1="0" y1="0" '+dir+'>'+htmlParadas(st)+'</linearGradient>';
+    }
+    d.insertAdjacentHTML('beforeend',g);feitos[id]=1;return 'url(#'+id+')';
+  }
+  // fatia da rosca (stroke-dasharray num círculo): no formato premium, pontas arredondadas e espaço maior
+  function larguraAnel(base){base=base||14;return S.rosca==='premium'?Math.round(base*1.3):base;}
+  function fatia(c,o){
+    var prem=S.rosca==='premium',w=o.w||larguraAnel(),g=o.separar?(prem?5:2.2):0,d,ini,cap='butt';
+    if(prem&&o.len-g-w>0.5){d=o.len-g-w;ini=o.acc+g/2+w/2;cap='round';}
+    else if(prem){d=Math.max(0,o.len-g);ini=o.acc+g/2;}
+    else{d=Math.max(0,o.len-g);ini=o.acc;}
+    var arco=d.toFixed(2)+' '+(o.circ-d).toFixed(2),off=(-ini).toFixed(2);
+    if(c.getAttribute('stroke-dasharray')!==arco)c.setAttribute('stroke-dasharray',arco);
+    if(c.getAttribute('stroke-dashoffset')!==off)c.setAttribute('stroke-dashoffset',off);
+    c.style.strokeLinecap=cap;return arco;
+  }
+  function coresVariadas(){var claro=document.body&&document.body.getAttribute('data-theme')==='light';return VARIADAS[claro?'claro':'escuro'].slice();}
+  window.sagaGraficos={
+    ACABAMENTOS:ACAB.slice(),NOMES:NOMES,DESCRICOES:DESC,
+    estado:function(){return {acabamento:S.acabamento,rosca:S.rosca,cores:S.cores};},
+    definir:function(k,v){if(['acabamento','rosca','cores'].indexOf(k)<0)return;try{localStorage.setItem('saga-graf-'+k,v);}catch(e){}aplicar();},
+    tinta:tinta,fatia:fatia,larguraAnel:larguraAnel,coresVariadas:coresVariadas,rgb:function(c,r){return hx(rgb(c,r));}
+  };
+})();

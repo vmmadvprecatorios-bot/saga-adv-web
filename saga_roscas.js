@@ -18,6 +18,12 @@ button.sr-leg{cursor:pointer}button.sr-leg:hover,button.sr-leg:focus-visible{bac
 
 .sr-graficos[hidden],.sr-secao[hidden]{display:none!important}.sr-dinheiro .n{font-size:13px;line-height:1.15;max-width:78px;text-align:center}.sr-leg b{white-space:nowrap}.sr-negativo b{color:var(--danger)}@container(min-width:1051px) and (max-width:1250px){.sr-graficos[data-colunas="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @container(max-width:600px){.sr-moeda .sr-leg{display:grid;grid-template-columns:9px minmax(0,1fr);gap:1px 7px}.sr-moeda .sr-leg span{white-space:normal;overflow-wrap:anywhere}.sr-moeda .sr-leg b{grid-column:2}.sr-moeda .sr-leg-lista{max-height:240px}}
+
+/* 19/11 (Dr. Victor): cores variadas das fatias e rosca premium (Configurações > Preferências > Gráficos) */
+html[data-graf-cores="variadas"] .sr-graficos{--g1:#3987e5;--g2:#d95926;--g3:#199e70;--g4:#c98500;--g5:#d55181;--g6:#0ca30c;--g7:#9085e9;--g8:#e66767}
+html[data-graf-cores="variadas"] body[data-theme="light"] .sr-graficos{--g1:#2a78d6;--g2:#eb6834;--g3:#1baf7a;--g4:#eda100;--g5:#e87ba4;--g6:#008300;--g7:#6250d6;--g8:#e34948}
+html[data-graf-rosca="premium"] .sr-rosca .trilho,html[data-graf-rosca="premium"] .sr-rosca .sr-fatia{stroke-width:18}
+html[data-graf-rosca="premium"] .sr-rosca .sr-fatia:hover,html[data-graf-rosca="premium"] .sr-rosca .sr-fatia:focus-visible{stroke-width:20}
 `;
   var moeda=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
   var curta=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1});
@@ -76,10 +82,13 @@ button.sr-leg{cursor:pointer}button.sr-leg:hover,button.sr-leg:focus-visible{bac
           var c=card._fatias.get(id),novo=!c;
           if(!c){c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','sr-fatia');c.setAttribute('cx','50');c.setAttribute('cy','50');c.setAttribute('r','40');c.setAttribute('role','button');c.setAttribute('tabindex','0');c.dataset.graf=g.id;c.dataset.v=id;c.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title'));card._fatias.set(id,c);card.querySelector('.sr-arcos').appendChild(c);}
           var len=peso?Math.abs(v)/peso*circ:0,vis=Math.max(0,len-(positivas>1&&peso>positivas?2.2:0));
-          c.style.stroke=cor;c.style.display=v?'':'none';c.classList.toggle('ativa',ativa);c.setAttribute('aria-pressed',String(ativa));c.setAttribute('aria-label',x.nome+': '+extenso(v));c.querySelector('title').textContent=x.nome+': '+extenso(v);
-          var arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2),offset=(-acc).toFixed(2);
+          var SG=window.sagaGraficos,wA=SG?SG.larguraAnel(14):14;
+          c.style.stroke=SG?SG.tinta(cor,{ref:card,forma:'anel',cx:50,cy:50,ri:40-wA/2,ro:40+wA/2}):cor;c.style.display=v?'':'none';c.classList.toggle('ativa',ativa);c.setAttribute('aria-pressed',String(ativa));c.setAttribute('aria-label',x.nome+': '+extenso(v));c.querySelector('title').textContent=x.nome+': '+extenso(v);
+          var arco;
+          if(SG)arco=SG.fatia(c,{len:len,acc:acc,circ:circ,separar:positivas>1&&peso>positivas,w:wA});
+          else{arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2);var offset=(-acc).toFixed(2);
           if(c.getAttribute('stroke-dasharray')!==arco)c.setAttribute('stroke-dasharray',arco);
-          if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);
+          if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);}
           if(novo&&v&&!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)c.animate([{strokeDasharray:'0 '+circ},{strokeDasharray:arco}],{duration:650,easing:'cubic-bezier(.22,1,.36,1)'});
           acc+=len;
           var b=card._legendas.get(id);
@@ -100,6 +109,7 @@ button.sr-leg{cursor:pointer}button.sr-leg:hover,button.sr-leg:focus-visible{bac
       if(g.escolher)g.escolher(item);
       else{selecionados.set(gid,selecionados.get(gid)===id?null:id);atualizar(grupos);}
     }
+    document.addEventListener('saga-graficos-mudou',function(){if(grupos.length&&!ocultos)atualizar(grupos);});
     btn.onclick=function(){ocultos=!ocultos;try{localStorage.setItem(op.chave,ocultos?'1':'0');}catch(e){}atualizar(grupos,true);if(!ocultos&&window.sagaRecolher)window.sagaRecolher(painel,false);};
     painel.onclick=function(e){var b=e.target.closest('[data-graf]');if(b)escolher(b.dataset.graf,b.dataset.v);};
     painel.onkeydown=function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();escolher(b.dataset.graf,b.dataset.v);}};

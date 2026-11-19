@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191629"></script>
+<script src="saga_guard.js?v=202611192110"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Configurações</title>
@@ -60,6 +60,13 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .seg button.active{background:var(--gold);color:#fff}
 .linha-opcao{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
 .linha-opcao:last-child{border-bottom:0}
+/* 19/11: Preferências > Gráficos (cartões do mesmo tamanho, em grade) */
+.pr-graf-texto{flex:1 1 220px;min-width:0}.pr-graf-op{flex:1 1 420px;min-width:0;max-width:640px;display:flex;flex-direction:column;gap:10px}
+.pr-graf-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.pr-graf{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 6px 8px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 3%,transparent);color:var(--text);font:inherit;font-size:11px;line-height:1.25;text-align:center;cursor:pointer;transition:border-color .3s cubic-bezier(.22,.78,.25,1),background .3s cubic-bezier(.22,.78,.25,1)}
+.pr-graf:hover{border-color:var(--border)}.pr-graf.active{border-color:color-mix(in srgb,var(--gold) 70%,transparent);background:color-mix(in srgb,var(--gold) 12%,transparent)}
+.pr-graf svg{width:58px;height:58px;display:block}.pr-graf .pr-graf-trilho{stroke:color-mix(in srgb,var(--text) 8%,transparent)}
+.pr-graf-segs{display:flex;flex-wrap:wrap;gap:10px 18px}
 .linha-opcao .t{font-size:13px;font-weight:600}
 .linha-opcao .s{font-size:11px;color:var(--muted);margin-top:2px}
 /* Interruptor estilo iPhone */
@@ -215,7 +222,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   .sd-filtro select{min-width:0;flex:1 1 100%}}
 .pr-cad{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.pr-cad-seg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);transition:opacity .26s cubic-bezier(.22,.78,.25,1)}.pr-cad-seg.apagado{opacity:.5}.pr-cad-seg select{width:auto;min-width:64px}@media(max-width:760px){.pr-cad{align-items:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191629">
+<link rel="stylesheet" href="saga_tema.css?v=202611192110">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -323,6 +330,17 @@ html.saga-sem-movimento .arm-lido i{animation:none}
             </div>
             <div class="pr-vidro-nota" id="prVidroAnimNota"></div>
           </div>
+        </div>
+      </div>
+      <div class="linha-opcao pr-graf-linha">
+        <div class="pr-graf-texto"><div class="t">Gráficos</div><div class="s">Acabamento das roscas e barras de todas as telas. A escolha é só sua e vale no computador e no celular.</div></div>
+        <div class="pr-graf-op">
+          <div class="pr-graf-grade" id="prGrafAcab" role="group" aria-label="Acabamento dos gráficos"></div>
+          <div class="pr-graf-segs">
+            <div><div class="pr-vidro-rot">Formato da rosca</div><div class="seg" id="prGrafRosca"><button type="button" data-v="hoje">Como hoje</button><button type="button" data-v="premium">Premium</button></div></div>
+            <div><div class="pr-vidro-rot">Cores das fatias</div><div class="seg" id="prGrafCores"><button type="button" data-v="tema">Tons do tema</button><button type="button" data-v="variadas">Cores variadas</button></div></div>
+          </div>
+          <div class="pr-vidro-nota">Premium: rosca mais grossa, com as fatias separadas e as pontas arredondadas. Cores variadas: cada fatia numa cor diferente (safira, cobre, jade, ouro...), mais fácil de distinguir, inclusive para quem é daltônico.</div>
         </div>
       </div>
       <div class="linha-opcao">
@@ -502,8 +520,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611191629"></script>
-<script src="saga_teses.js?v=202611191629"></script>
+<script src="saga_ui.js?v=202611192110"></script>
+<script src="saga_teses.js?v=202611192110"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)
@@ -779,6 +797,31 @@ async function sairDeTodos(){
 
 /* ----- Preferencias ----- */
 function prefs(){return (state.eu&&state.eu.preferencias)||{};}
+/* 19/11 (Dr. Victor): Gráficos metalizados. Acabamento, formato da rosca e cores das fatias (window.sagaGraficos, saga_guard.js) */
+var PR_GRAF_DADOS=[40,22,15,12,11];
+function prGrafCores(){
+  var e=window.sagaGraficos?sagaGraficos.estado():{cores:'tema'};
+  if(e.cores==='variadas'&&window.sagaGraficos)return sagaGraficos.coresVariadas();
+  return ['var(--gold)','color-mix(in srgb,var(--gold) 58%,#000)','color-mix(in srgb,var(--gold) 52%,#fff)','color-mix(in srgb,var(--gold) 34%,#000)','color-mix(in srgb,var(--gold) 28%,#fff)'];
+}
+function montarGraficos(){
+  var grade=document.getElementById('prGrafAcab');if(!grade||!window.sagaGraficos)return;
+  var SG=window.sagaGraficos,e=SG.estado(),cores=prGrafCores(),w=SG.larguraAnel(14),circ=2*Math.PI*40,tot=PR_GRAF_DADOS.reduce(function(a,b){return a+b;},0);
+  grade.innerHTML=SG.ACABAMENTOS.map(function(ac){
+    return '<button type="button" class="pr-graf'+(ac===e.acabamento?' active':'')+'" data-v="'+ac+'" aria-pressed="'+(ac===e.acabamento)+'" title="'+SG.DESCRICOES[ac]+'"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" class="pr-graf-trilho" style="stroke-width:'+w+'"></circle><g transform="rotate(-90 50 50)"></g></svg><span>'+SG.NOMES[ac]+'</span></button>';
+  }).join('');
+  grade.querySelectorAll('.pr-graf').forEach(function(b){
+    var g=b.querySelector('g'),acc=0;
+    PR_GRAF_DADOS.forEach(function(v,i){
+      var c=document.createElementNS('http://www.w3.org/2000/svg','circle'),len=v/tot*circ;
+      c.setAttribute('cx','50');c.setAttribute('cy','50');c.setAttribute('r','40');c.setAttribute('fill','none');c.style.strokeWidth=w;g.appendChild(c);
+      c.style.stroke=SG.tinta(cores[i%cores.length],{ref:b,forma:'anel',cx:50,cy:50,ri:40-w/2,ro:40+w/2,acabamento:b.dataset.v});
+      SG.fatia(c,{len:len,acc:acc,circ:circ,separar:true,w:w});acc+=len;
+    });
+  });
+  marcarSeg('prGrafRosca',e.rosca);marcarSeg('prGrafCores',e.cores);
+}
+document.addEventListener('saga-graficos-mudou',function(){montarGraficos();});
 function marcarSeg(id,valor){document.querySelectorAll('#'+id+' button').forEach(function(b){b.classList.toggle('active',b.dataset.v===String(valor));});}
 async function salvarPreferencias(mudancas,msg){
   // 09/11: a mudança é SOMADA no banco ao que já está gravado (minhas_preferencias_salvar, bloco 134).
@@ -825,6 +868,7 @@ function salvarSonsPref(c,msg){
 function preencherPreferencias(){
   var tema=document.body.getAttribute('data-theme')||'dark';marcarSeg('prTema',tema);
   montarCores();
+  montarGraficos();
   var mov='ligado';try{mov=localStorage.getItem('saga-movimento')==='reduzido'?'reduzido':'ligado';}catch(e){}marcarSeg('prMov',mov);
   pintarCadeadoPref();
   pintarSonsPref();
@@ -1355,6 +1399,18 @@ function ligarEventos(){
     if(atual!==b.dataset.v){var t=document.getElementById('themeToggle');if(t)t.click();else{document.body.setAttribute('data-theme',b.dataset.v);try{localStorage.setItem('saga-tema',b.dataset.v);}catch(e){}}}
     _sb.from('usuarios').update({tema_preferido:b.dataset.v}).eq('id',state.eu.id).then(function(){},function(){});
   });});
+  // Gráficos (19/11): o clique vale na hora em todas as telas e acompanha a conta (chaves saga-graf-*)
+  document.getElementById('prGrafAcab').addEventListener('click',function(ev){
+    var b=ev.target.closest('.pr-graf');if(!b||!window.sagaGraficos)return;
+    document.querySelectorAll('#prGrafAcab .pr-graf').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});
+    setTimeout(function(){sagaGraficos.definir('acabamento',b.dataset.v);},window.sagaMq&&sagaMq().matches?0:420);
+    showToast('Gráficos: '+sagaGraficos.NOMES[b.dataset.v]+'.','success');
+  });
+  [['prGrafRosca','rosca'],['prGrafCores','cores']].forEach(function(par){document.querySelectorAll('#'+par[0]+' button').forEach(function(b){b.addEventListener('click',function(){
+    marcarSeg(par[0],b.dataset.v);if(!window.sagaGraficos)return;
+    setTimeout(function(){sagaGraficos.definir(par[1],b.dataset.v);},window.sagaMq&&sagaMq().matches?0:420);
+    showToast(par[1]==='rosca'?(b.dataset.v==='premium'?'Rosca premium.':'Rosca como hoje.'):(b.dataset.v==='variadas'?'Fatias em cores variadas.':'Fatias nos tons do tema.'),'success');
+  });});});
   document.querySelectorAll('#prMov button').forEach(function(b){b.addEventListener('click',function(){
     marcarSeg('prMov',b.dataset.v);
     if(window.sagaDefinirMovimento)sagaDefinirMovimento(b.dataset.v==='reduzido');

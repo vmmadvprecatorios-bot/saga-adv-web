@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191629"></script>
+<script src="saga_guard.js?v=202611192110"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Marketing</title>
@@ -386,7 +386,7 @@ body[data-theme="light"] .mp{--mp-barra:#2F6CD6}
 .gasto-linha .nao-soma{font-size:9.5px;font-weight:500;color:var(--muted);border:1px dashed var(--border-soft);border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap}
 @media(max-width:700px){.mp-graf{height:180px}.mp-rank{grid-template-columns:1fr}.mp-robo .acoes{width:100%}.mp .mp-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191629">
+<link rel="stylesheet" href="saga_tema.css?v=202611192110">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -626,12 +626,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611191629"></script>
-<script src="saga_texto.js?v=202611191629"></script>
-<script src="saga_roscas.js?v=202611191629"></script>
-<script src="saga_origem.js?v=202611191629"></script>
-<script src="saga_mencoes.js?v=202611191629"></script>
-<script src="saga_pdf.js?v=202611191629"></script>
+<script src="saga_ui.js?v=202611192110"></script>
+<script src="saga_texto.js?v=202611192110"></script>
+<script src="saga_roscas.js?v=202611192110"></script>
+<script src="saga_origem.js?v=202611192110"></script>
+<script src="saga_mencoes.js?v=202611192110"></script>
+<script src="saga_pdf.js?v=202611192110"></script>
 <script>
 /* =====================================================================
    MARKETING (dados reais do banco; bloco 144, 10/11/2026)
@@ -1836,6 +1836,7 @@ function passoBonito(max){
   return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p;
 }
 function moedaEixo(n){return n>=1000?'R$ '+(n/1000).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mil':'R$ '+n.toLocaleString('pt-BR',{maximumFractionDigits:0});}
+document.addEventListener('saga-graficos-mudou',function(){desenharGraficoMes();});
 function desenharGraficoMes(){
   var el=document.getElementById('mpGraf');
   if(!el||!el.isConnected||!el.offsetParent)return;
@@ -1860,6 +1861,7 @@ function desenharGraficoMes(){
     if(h>0.5){
       var r=Math.min(4,w/2,h),top=yb-h;
       var p=add(svg,'path',{'class':'col',d:'M'+x+','+yb+'L'+x+','+(top+r)+'Q'+x+','+top+' '+(x+r)+','+top+'L'+(x+w-r)+','+top+'Q'+(x+w)+','+top+' '+(x+w)+','+(top+r)+'L'+(x+w)+','+yb+'Z'});
+      if(window.sagaGraficos&&sagaGraficos.estado().acabamento!=='atual')p.style.fill=sagaGraficos.tinta('var(--mp-barra)',{ref:el,forma:'coluna'});
       if(mov){p.style.transform='scaleY(0)';barras.push(p);}
       if(i===iMax||i===n-1)add(svg,'text',{x:x+w/2,y:top-6,'text-anchor':'middle','class':'valor'}).textContent=moedaEixo(Math.round(l.investido));
     }

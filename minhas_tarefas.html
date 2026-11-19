@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191629"></script>
+<script src="saga_guard.js?v=202611192110"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -1731,6 +1731,7 @@
 [data-theme="light"] .tr-graficos{--g1:#052659;--g2:#245568;--g3:#5483B3;--g4:#2E8B8B;--g5:#123747;--g6:#477C8B;--g7:#3F6FB0;--g8:#7DA0CA;--g-venc:#d6452d;--g-hoje:#e08a00;--g-ok:#2563EB}
 .tr-graf{background:var(--panel);border:1px solid var(--border-soft);border-radius:15px;padding:13px 14px;min-width:0}.tr-graf h4{margin:0 0 8px;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--muted);font-weight:700}
 .tr-graf-corpo{display:flex;align-items:center;height:200px;gap:12px;min-width:0}.tr-rosca{position:relative;width:104px;height:104px;flex:0 0 auto}.tr-rosca svg{width:100%;height:100%;display:block}
+html[data-graf-rosca="premium"] .tr-rosca .trilho,html[data-graf-rosca="premium"] .tr-rosca .tr-fatia{stroke-width:18!important}
 .tr-rosca .trilho{fill:none;stroke:color-mix(in srgb,var(--text) 9%,transparent);stroke-width:14}.tr-rosca .tr-fatia{fill:none;stroke-width:14;cursor:pointer;transition:opacity .2s,stroke-width .2s}.tr-rosca .tr-fatia.sem-clique{cursor:default}.tr-rosca .tr-fatia:hover{stroke-width:16}.tr-rosca.filtrada .tr-fatia:not(.ativa){opacity:.3}
 .tr-rosca .centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-size:20px;font-weight:700;line-height:1;color:var(--text)}.tr-rosca .centro small{font-size:8.5px;font-weight:600;letter-spacing:.4px;color:var(--muted);margin-top:3px;text-transform:uppercase}
 .tr-leg-lista{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.tr-leg{display:flex;align-items:center;gap:7px;width:100%;padding:3px 5px;border:0;border-radius:7px;background:none;color:var(--text);font:inherit;font-size:11px;text-align:left;min-width:0}
@@ -1863,7 +1864,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191629">
+<link rel="stylesheet" href="saga_tema.css?v=202611192110">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2419,12 +2420,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611191629"></script>
-<script src="saga_etiquetas.js?v=202611191629"></script>
-<script src="saga_mencoes.js?v=202611191629"></script>
-<script src="saga_prazos.js?v=202611191629"></script>
-<script src="saga_texto.js?v=202611191629"></script>
-<script src="saga_tribunais.js?v=202611191629"></script>
+<script src="saga_ui.js?v=202611192110"></script>
+<script src="saga_etiquetas.js?v=202611192110"></script>
+<script src="saga_mencoes.js?v=202611192110"></script>
+<script src="saga_prazos.js?v=202611192110"></script>
+<script src="saga_texto.js?v=202611192110"></script>
+<script src="saga_tribunais.js?v=202611192110"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -3439,6 +3440,8 @@ function contarRoscaTarefa(el,alvo){
   function passo(ts){if(inicio===null)inicio=ts;var k=Math.min(1,(ts-inicio)/600);el.textContent=Math.round(de+(alvo-de)*(1-Math.pow(1-k,3)));if(k<1)el._quadro=requestAnimationFrame(passo);else el._quadro=null;}
   el._quadro=requestAnimationFrame(passo);
 }
+// 19/11: acabamento dos gráficos (Preferências) mudou: redesenha as roscas
+document.addEventListener('saga-graficos-mudou',function(){if(!graficosTarefasOcultos&&document.getElementById('graficosTarefas'))renderGraficosTarefas();});
 function renderGraficosTarefas(){
   var root=document.getElementById('graficosTarefas');
   var btn=document.getElementById('btnGraficosTarefas');
@@ -3463,10 +3466,13 @@ function renderGraficosTarefas(){
       var c=card._fatias.get(x.v),novo=!c;
       if(!c){c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','tr-fatia');c.setAttribute('cx','50');c.setAttribute('cy','50');c.setAttribute('r','40');c.setAttribute('role','button');c.setAttribute('tabindex','0');c.dataset.graf=g.k;c.dataset.v=x.v;c.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title'));card._fatias.set(x.v,c);card.querySelector('.tr-arcos').appendChild(c);}
       var len=total?x.n/total*circ:0,vis=Math.max(0,len-(positivas>1&&total>positivas?2.2:0));
-      c.style.stroke=x.cor;c.style.display=x.n?'':'none';c.classList.toggle('ativa',!!x.ativa);c.setAttribute('aria-pressed',String(!!x.ativa));c.setAttribute('aria-label',x.nome+': '+x.n);c.querySelector('title').textContent=(x.dica||x.nome)+': '+x.n;
-      var arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2),offset=(-acc).toFixed(2);
+      var SG=window.sagaGraficos,wA=SG?SG.larguraAnel(14):14;
+      c.style.stroke=SG?SG.tinta(x.cor,{ref:card,forma:'anel',cx:50,cy:50,ri:40-wA/2,ro:40+wA/2}):x.cor;c.style.display=x.n?'':'none';c.classList.toggle('ativa',!!x.ativa);c.setAttribute('aria-pressed',String(!!x.ativa));c.setAttribute('aria-label',x.nome+': '+x.n);c.querySelector('title').textContent=(x.dica||x.nome)+': '+x.n;
+      var arco;
+      if(SG)arco=SG.fatia(c,{len:len,acc:acc,circ:circ,separar:positivas>1&&total>positivas,w:wA});
+      else{arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2);var offset=(-acc).toFixed(2);
       if(c.getAttribute('stroke-dasharray')!==arco)c.setAttribute('stroke-dasharray',arco);
-      if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);
+      if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);}
       if(novo&&x.n&&!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)c.animate([{strokeDasharray:'0 '+circ},{strokeDasharray:arco}],{duration:650,easing:'cubic-bezier(.22,1,.36,1)'});
       acc+=len;
       var b=card._legendas.get(x.v);
