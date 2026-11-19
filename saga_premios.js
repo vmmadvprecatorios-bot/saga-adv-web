@@ -242,8 +242,8 @@ function htmlHistorico(){
   var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Captados e validados por mês">';
   hs.forEach(function(x,i){
     var cx=i*larg+larg/2,hc=(x.captados||0)/max*110,hv=(x.validados||0)/max*110;
-    svg+='<rect x="'+(cx-17)+'" y="'+(base-hc)+'" width="15" height="'+hc+'" rx="3" fill="color-mix(in srgb,var(--text) 22%,transparent)"><title>'+esc(mesNome(x.mes))+': '+x.captados+' captados</title></rect>';
-    svg+='<rect x="'+(cx+2)+'" y="'+(base-hv)+'" width="15" height="'+hv+'" rx="3" fill="var(--gold)"><title>'+esc(mesNome(x.mes))+': '+x.validados+' validados</title></rect>';
+    svg+='<rect x="'+(cx-17)+'" y="'+(base-hc)+'" width="15" height="'+hc+'" rx="3" data-sg="coluna" fill="color-mix(in srgb,var(--text) 22%,transparent)"><title>'+esc(mesNome(x.mes))+': '+x.captados+' captados</title></rect>';
+    svg+='<rect x="'+(cx+2)+'" y="'+(base-hv)+'" width="15" height="'+hv+'" rx="3" data-sg="coluna" fill="var(--gold)"><title>'+esc(mesNome(x.mes))+': '+x.validados+' validados</title></rect>';
     if(x.validados)svg+='<text x="'+(cx+9.5)+'" y="'+(base-hv-4)+'" font-size="10" text-anchor="middle" fill="currentColor">'+x.validados+'</text>';
     svg+='<text x="'+cx+'" y="'+(base+16)+'" font-size="10" text-anchor="middle" fill="currentColor" opacity=".7">'+esc(mesCurto(x.mes))+'</text>';
     if(x.vale&&Number(x.total))svg+='<text x="'+cx+'" y="'+(base+31)+'" font-size="9.5" text-anchor="middle" fill="currentColor" opacity=".85">'+esc(rs(x.total).replace(/,\d\d$/,''))+'</text>';

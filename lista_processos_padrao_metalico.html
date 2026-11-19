@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611192140"></script>
+<script src="saga_guard.js?v=202611192157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Processos em Andamento</title>
@@ -464,7 +464,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
   [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
 .proxima-providencia{margin-top:6px;min-width:0;max-width:100%}.providencia-link{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;max-width:100%;border:1px solid var(--border-soft);border-left:4px solid var(--prazo-cor,var(--muted));border-radius:7px;padding:5px 7px;background:var(--panel);color:var(--text);font-size:10px;line-height:1.5;text-decoration:none;overflow-wrap:anywhere}.providencia-link:active{transform:scale(.98)}.providencia-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.providencia-prazo{background:var(--prazo-cor,var(--panel-2));color:var(--prazo-texto,var(--muted));border-radius:4px;padding:1px 4px}.providencia-link[data-situacao-prazo="muito-atrasada"]{outline:1px solid var(--prazo-muito-contorno)}.providencia-concluida{color:var(--muted);border-left-width:1px}.providencia-mais{color:var(--muted);font-weight:700}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611192140">
+<link rel="stylesheet" href="saga_tema.css?v=202611192157">
 </head>
 <body data-theme="dark">
 
@@ -724,18 +724,18 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611192140"></script>
-<script src="saga_teses.js?v=202611192140"></script>
-<script src="saga_etiquetas.js?v=202611192140"></script>
-<script src="saga_partes.js?v=202611192140"></script>
-<script src="saga_roscas.js?v=202611192140"></script>
-<script src="saga_paineis.js?v=202611192140"></script>
-<script src="saga_xlsx.js?v=202611192140"></script>
-<script src="saga_fichas.js?v=202611192140"></script>
-<script src="saga_origem.js?v=202611192140"></script>
-<script src="saga_planilha.js?v=202611192140"></script>
-<script src="saga_recursos.js?v=202611192140"></script>
-<script src="saga_tribunais.js?v=202611192140"></script>
+<script src="saga_ui.js?v=202611192157"></script>
+<script src="saga_teses.js?v=202611192157"></script>
+<script src="saga_etiquetas.js?v=202611192157"></script>
+<script src="saga_partes.js?v=202611192157"></script>
+<script src="saga_roscas.js?v=202611192157"></script>
+<script src="saga_paineis.js?v=202611192157"></script>
+<script src="saga_xlsx.js?v=202611192157"></script>
+<script src="saga_fichas.js?v=202611192157"></script>
+<script src="saga_origem.js?v=202611192157"></script>
+<script src="saga_planilha.js?v=202611192157"></script>
+<script src="saga_recursos.js?v=202611192157"></script>
+<script src="saga_tribunais.js?v=202611192157"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -1346,6 +1346,7 @@ function renderPainelAcomp(){
     abrir:function(id){verFicha(id);},
     aoMudar:function(){state.page=1;if(state.view==='kanban')renderKanban();else renderLista();}});
 }
+document.addEventListener('saga-graficos-mudou',function(){if(document.getElementById('graficosProcessos'))renderGraficosProcessos();});
 function renderGraficosProcessos(){
   renderPainelAcomp();
   var secao=document.querySelector('.pr-graficos-secao');secao.hidden=!state.permissoes.visualizar;if(secao.hidden)return;
@@ -1374,9 +1375,12 @@ function renderGraficosProcessos(){
       if(!c){c=document.createElementNS('http://www.w3.org/2000/svg','circle');c.setAttribute('class','pr-fatia');c.setAttribute('cx','50');c.setAttribute('cy','50');c.setAttribute('r','40');c.setAttribute('role','button');c.setAttribute('tabindex','0');c.dataset.graf=g.k;c.dataset.v=x.v;c.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title'));card._fatias.set(x.v,c);card.querySelector('.pr-arcos').appendChild(c);}
       var len=total?x.n/total*circ:0,vis=Math.max(0,len-(positivas>1&&total>positivas?2.2:0));
       c.style.stroke=x.cor;c.style.display=x.n?'':'none';c.classList.toggle('ativa',!!x.ativa);c.setAttribute('aria-pressed',String(!!x.ativa));c.setAttribute('aria-label',x.nome+': '+x.n);c.querySelector('title').textContent=(x.dica||x.nome)+': '+x.n;
-      var arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2),offset=(-acc).toFixed(2);
+      var arco;
+      // 19/11: acabamento, formato e cores escolhidos em Preferências > Gráficos (sagaGraficos, saga_guard.js)
+      if(window.sagaGraficos&&sagaGraficos.anel)arco=sagaGraficos.anel(c,{cor:x.cor,len:len,acc:acc,circ:circ,separar:positivas>1&&total>positivas,ref:card});
+      else{arco=vis.toFixed(2)+' '+(circ-vis).toFixed(2);var offset=(-acc).toFixed(2);
       if(c.getAttribute('stroke-dasharray')!==arco)c.setAttribute('stroke-dasharray',arco);
-      if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);
+      if(c.getAttribute('stroke-dashoffset')!==offset)c.setAttribute('stroke-dashoffset',offset);}
       if(novo&&x.n&&!(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches)c.animate([{strokeDasharray:'0 '+circ},{strokeDasharray:arco}],{duration:650,easing:'cubic-bezier(.22,1,.36,1)'});
       acc+=len;
       var b=card._legendas.get(x.v);

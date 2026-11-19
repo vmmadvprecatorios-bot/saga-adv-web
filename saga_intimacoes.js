@@ -1704,7 +1704,7 @@
     var soma=g.itens.reduce(function(s,x){return s+x.n;},0),total=g.total!=null?g.total:soma,acc=0,folga=total>g.itens.length?2.2:0;
     var arcos=g.itens.map(function(x){
       var len=soma?x.n/soma*CIRC:0,vis=Math.max(0,len-(g.itens.length>1?folga:0)),clic=g.k!=='prazos'&&!x.sem&&x.v!=null;
-      var s='<circle class="si-fatia'+(clic?'':' sem-clique')+(clic&&g.atual===x.v?' ativa':'')+'" cx="50" cy="50" r="'+RAIO+'" transform="rotate(-90 50 50)" style="stroke:'+esc(x.cor)+'" stroke-dasharray="'+vis.toFixed(2)+' '+(CIRC-vis).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'"'+(clic?' data-graf="'+g.k+'" data-v="'+esc(x.v)+'"':'')+'><title>'+esc(x.nome)+': '+x.n+'</title></circle>';
+      var s='<circle class="si-fatia'+(clic?'':' sem-clique')+(clic&&g.atual===x.v?' ativa':'')+'" cx="50" cy="50" r="'+RAIO+'" transform="rotate(-90 50 50)" style="stroke:'+esc(x.cor)+'" data-sg-cor="'+esc(x.cor)+'" data-sg-len="'+len.toFixed(3)+'" data-sg-acc="'+acc.toFixed(3)+'" data-sg-sep="'+(g.itens.length>1&&folga?1:0)+'" stroke-dasharray="'+vis.toFixed(2)+' '+(CIRC-vis).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'"'+(clic?' data-graf="'+g.k+'" data-v="'+esc(x.v)+'"':'')+'><title>'+esc(x.nome)+': '+x.n+'</title></circle>';
       acc+=len;return s;
     }).join('');
     var legenda=g.itens.map(function(x){
@@ -1719,11 +1719,20 @@
     function passo(ts){if(ini===null)ini=ts;var k=Math.min(1,(ts-ini)/600),e=1-Math.pow(1-k,3);el.textContent=Math.round(alvo*e);if(k<1)requestAnimationFrame(passo);}
     requestAnimationFrame(passo);
   }
+  // 19/11 (Dr. Victor): acabamento, formato e cores escolhidos em Preferências > Gráficos (sagaGraficos, saga_guard.js)
+  function pintarRoscasIntim(el){
+    if(!el||!window.sagaGraficos||!sagaGraficos.anel)return;
+    el.querySelectorAll('.si-fatia[data-sg-cor]').forEach(function(c){
+      sagaGraficos.anel(c,{cor:c.dataset.sgCor,len:+c.dataset.sgLen,acc:+c.dataset.sgAcc,circ:CIRC,r:RAIO,separar:c.dataset.sgSep==='1',ref:c.closest('.si-graf')});
+    });
+  }
+  document.addEventListener('saga-graficos-mudou',function(){document.querySelectorAll('.si-graficos').forEach(pintarRoscasIntim);});
   function renderGraficos(el){
     if(!el)return;
     var gs=dadosGraficos();
     el.className='si-graficos';
     el.innerHTML=gs.map(htmlRosca).join('');
+    pintarRoscasIntim(el);
     S.sigGraf=S.sigGraf||{};
     var reduz=window.matchMedia&&(window.sagaMq?sagaMq():{matches:false,addEventListener:function(){}}).matches;
     gs.forEach(function(g){

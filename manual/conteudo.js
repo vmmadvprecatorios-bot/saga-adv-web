@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.31",
+  versao: "3.32",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.32", data: "19/11/2026", mudou: "Gráficos: a escolha de Preferências > Gráficos passa a valer em TODAS as telas, inclusive Intimações e as planilhas do Jurídico e da Captação, e em qualquer gráfico novo. As três escolhas ficam em caixas numeradas. O SAGA confere sozinho se há versão nova e recarrega a tela (ou avisa Atualizar agora)." },
     { versao: "3.31", data: "19/11/2026", mudou: "Preferências > **Gráficos** reorganizado: cartões coloridos com a prévia de cada acabamento, formato da rosca e cores das fatias lado a lado, e o botão **Aplicar no sistema** (antes a escolha valia sem botão e parecia não ter efeito)." },
     { versao: "3.30", data: "19/11/2026", mudou: "Preferências: novo quadro **Gráficos** com seis acabamentos para as roscas e barras (Como hoje, Metal escovado, Cromo polido, Esmalte com friso, Vidro metalizado, Titânio acetinado), formato da rosca (Como hoje ou Premium) e cores das fatias (Tons do tema ou Cores variadas). Cada pessoa escolhe o seu." },
     { versao: "3.29", data: "19/11/2026", mudou: "Preferências: botão **Usar as escolhas deste aparelho em todos** (manda para a conta tudo o que está neste aparelho, inclusive a foto de fundo). Conserto: quando o celular abria primeiro, cada aparelho ficava com as escolhas antigas dele; agora, nas escolhas antigas, vale a do computador." },

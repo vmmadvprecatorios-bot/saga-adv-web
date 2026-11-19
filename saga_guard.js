@@ -1579,8 +1579,8 @@
   function larguraAnel(base,rosca){base=base||14;return (rosca||S.rosca)==='premium'?Math.round(base*1.3):base;}
   function fatia(c,o){
     var prem=(o.rosca||S.rosca)==='premium',w=o.w||larguraAnel(14,o.rosca),g=o.separar?(prem?5:2.2):0,d,ini,cap='butt';
-    if(prem&&o.len-g-w>0.5){d=o.len-g-w;ini=o.acc+g/2+w/2;cap='round';}
-    else if(prem){d=Math.max(0,o.len-g);ini=o.acc+g/2;}
+    if(prem&&o.separar&&o.len-g-w>0.5){d=o.len-g-w;ini=o.acc+g/2+w/2;cap='round';} // fatia única (sem separar): anel inteiro, sem corte no alto
+    else if(prem&&o.separar){d=Math.max(0,o.len-g);ini=o.acc+g/2;}
     else{d=Math.max(0,o.len-g);ini=o.acc;}
     var arco=d.toFixed(2)+' '+(o.circ-d).toFixed(2),off=(-ini).toFixed(2);
     if(c.getAttribute('stroke-dasharray')!==arco)c.setAttribute('stroke-dasharray',arco);
@@ -1588,10 +1588,42 @@
     c.style.strokeLinecap=cap;return arco;
   }
   function coresVariadas(){var claro=document.body&&document.body.getAttribute('data-theme')==='light';return VARIADAS[claro?'claro':'escuro'].slice();}
+  // ---- PINTOR AUTOMÁTICO (19/11, Dr. Victor: "todo lugar que tiver esse tipo de gráfico tem que atualizar") ----
+  // Qualquer rosca de qualquer tela (círculo SVG com stroke-dasharray) e qualquer forma marcada com data-sg="barra|coluna"
+  // recebe o acabamento escolhido, sem a tela precisar fazer nada; gráfico novo já vale sozinho. As roscas que já se
+  // pintam pelo motor (.sr-fatia, .tr-fatia, .pr-fatia, .si-fatia e as prévias das Preferências) ficam de fora;
+  // [data-sg-ignorar] tira um bloco do pintor. A cor original fica em data-sg-cor ("Como hoje" a devolve).
+  var SEL_AUTO='svg circle[stroke-dasharray]:not(.sr-fatia):not(.tr-fatia):not(.pr-fatia):not(.si-fatia):not(.trilho),svg [data-sg]';
+  function autoPintar(){
+    if(!document.body)return;var ac=S.acabamento;
+    document.querySelectorAll(SEL_AUTO).forEach(function(el){try{
+      if(el.closest('[data-sg-ignorar],.pr-graf,#sagaGraficosTintas'))return;
+      var tipo=el.getAttribute('data-sg')||'anel',prop=tipo==='anel'?'stroke':'fill';
+      var cor=el.getAttribute('data-sg-cor');
+      if(!cor){cor=el.style[prop]||el.getAttribute(prop);if(!cor||cor==='none'||/^url\(/.test(cor))return;el.setAttribute('data-sg-cor',cor);}
+      var nova;
+      if(ac==='atual')nova=cor;
+      else if(tipo==='anel'){var r=parseFloat(el.getAttribute('r'))||0;if(r<6)return;var w=parseFloat(getComputedStyle(el).strokeWidth)||parseFloat(el.getAttribute('stroke-width'))||8;
+        nova=tinta(cor,{ref:el,forma:'anel',cx:parseFloat(el.getAttribute('cx'))||0,cy:parseFloat(el.getAttribute('cy'))||0,ri:Math.max(0,r-w/2),ro:r+w/2});}
+      else nova=tinta(cor,{ref:el,forma:tipo==='coluna'?'coluna':'barra'});
+      if(el.style[prop]!==nova)el.style[prop]=nova;
+    }catch(e){}});
+  }
+  var autoPedido=0;
+  function pedirAuto(){if(autoPedido)return;autoPedido=requestAnimationFrame(function(){autoPedido=0;autoPintar();});}
+  document.addEventListener('saga-graficos-mudou',pedirAuto);
+  function ligarAuto(){
+    try{new MutationObserver(function(ms){for(var i=0;i<ms.length;i++){var t=ms[i].target;if(t&&t.closest&&t.closest('#sagaGraficosTintas'))continue;pedirAuto();return;}}).observe(document.body,{childList:true,subtree:true});}catch(e){}
+    pedirAuto();
+  }
+  if(document.body)ligarAuto();else document.addEventListener('DOMContentLoaded',ligarAuto);
   window.sagaGraficos={
+    pintarAgora:autoPintar,
     ACABAMENTOS:ACAB.slice(),NOMES:NOMES,DESCRICOES:DESC,
     estado:function(){return {acabamento:S.acabamento,rosca:S.rosca,cores:S.cores};},
     definir:function(k,v){if(['acabamento','rosca','cores'].indexOf(k)<0)return;try{localStorage.setItem('saga-graf-'+k,v);}catch(e){}aplicar();},
+    // anel(c,{cor,len,acc,circ,separar,ref,r}): pinta e desenha uma fatia de rosca de círculo (r padrão 40, centro 50,50)
+    anel:function(c,o){var r=o.r||40,w=larguraAnel(14);c.style.stroke=tinta(o.cor,{ref:o.ref||c,forma:'anel',cx:50,cy:50,ri:r-w/2,ro:r+w/2});return fatia(c,{len:o.len,acc:o.acc,circ:o.circ||2*Math.PI*r,separar:o.separar,w:w});},
     tinta:tinta,fatia:fatia,larguraAnel:larguraAnel,coresVariadas:coresVariadas,rgb:function(c,r){return hx(rgb(c,r));}
   };
 })();
