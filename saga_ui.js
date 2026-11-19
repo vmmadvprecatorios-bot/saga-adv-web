@@ -694,6 +694,10 @@
     +'<div class="nav-item" data-tela="pedidos_claude" onclick="sagaIrPara(\'pedidos_claude.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 5a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2h-6l-4 4v-4H6a2 2 0 01-2-2V5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 6.5l.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1-1.5-1.5 2.1-.3z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>'
     +'Pedidos do Saga IA<span class="nav-badge-chat nav-badge-dia" id="navBadgePedidosClaude" style="display:none" title="Pedidos do Saga IA em aberto"></span></div>'
+    // Escritório de agentes (19/11, blocos 258-262): o que os agentes entregaram para o Dr. Victor e a Hevelyn aprovarem
+    +'<div class="nav-item" data-tela="agentes_aprovar" onclick="sagaIrPara(\'agentes_aprovar.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 12.3l2.4 2.4 4.8-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    +'Para aprovar<span class="nav-badge-chat nav-badge-dia" id="navBadgeParaAprovar" style="display:none" title="Entregas dos agentes esperando aprovação"></span></div>'
     +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Notas<span class="nav-badge-chat nav-badge-dia" id="navBadgeNotas" style="display:none" title="Notas compartilhadas com você ainda não abertas"></span></div>'
@@ -1118,7 +1122,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -1453,6 +1457,7 @@
     if(n&&n.referencia_tabela==='disparos')return {titulo:'Disparos de e-mail',tela:'disparos_email.html'};
     if(n&&n.referencia_tabela==='premios')return {titulo:'Prêmio da Captação',tela:'premios.html'};
     if(n&&n.referencia_tabela==='relatorios')return {titulo:'Relatórios',tela:'relatorios_clientes.html'};
+    if(n&&n.referencia_tabela==='agente_entregas')return {titulo:'Para aprovar',tela:'agentes_aprovar.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1484,6 +1489,7 @@
     {chave:'pedidos_claude',titulo:'Pedidos do Saga IA',tipos:[],tela:'pedidos_claude.html',um:'aviso de pedido do Saga IA',varios:'avisos de pedidos do Saga IA',cor:'#c9a84c'},
     {chave:'premios',titulo:'Prêmio da Captação',tipos:[],tela:'premios.html',um:'aviso do prêmio',varios:'avisos do prêmio',cor:'#c9a84c'},
     {chave:'relatorios',titulo:'Relatórios',tipos:[],tela:'relatorios_clientes.html',um:'aviso de relatório',varios:'avisos de relatórios',cor:'#0ea5e9'},
+    {chave:'agentes',titulo:'Para aprovar',tipos:[],tela:'agentes_aprovar.html',um:'entrega para aprovar',varios:'entregas para aprovar',cor:'#c9a84c'},
     {chave:'disparos',titulo:'Disparos de e-mail',tipos:[],tela:'disparos_email.html',um:'aviso dos disparos de e-mail',varios:'avisos dos disparos de e-mail',cor:'#f97316'},
     {chave:'outros',titulo:'Outros avisos',tipos:null,tela:null,um:'aviso',varios:'avisos',cor:'#64748b'}
   ];
@@ -1514,6 +1520,7 @@
     // Prêmio da Captação (blocos 222-224, T164): validação, fechamento, ajuste e estorno
     // Relatórios dos clientes (blocos 244 e 245, T192): pedido novo, pronto, enviado e pedido parado
     if(n&&n.referencia_tabela==='relatorios'){for(var rl=0;rl<GRUPOS_NOTIF.length;rl++){if(GRUPOS_NOTIF[rl].chave==='relatorios')return GRUPOS_NOTIF[rl];}}
+    if(n&&n.referencia_tabela==='agente_entregas'){for(var ae=0;ae<GRUPOS_NOTIF.length;ae++){if(GRUPOS_NOTIF[ae].chave==='agentes')return GRUPOS_NOTIF[ae];}}
     if(n&&n.referencia_tabela==='premios'){for(var pm=0;pm<GRUPOS_NOTIF.length;pm++){if(GRUPOS_NOTIF[pm].chave==='premios')return GRUPOS_NOTIF[pm];}}
     return grupoDoTipo(n&&n.tipo);
   }
@@ -1637,6 +1644,7 @@
     if(n.referencia_tabela==='armazenamento'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=armazenamento');return;}
     if(n.referencia_tabela==='saude'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=saude');return;}
     if(n.referencia_tabela==='pedidos_claude'){global.sagaIrPara('pedidos_claude.html');return;}
+    if(n.referencia_tabela==='agente_entregas'){global.sagaIrPara('agentes_aprovar.html');return;}
     if(n.referencia_tabela==='premios'){global.sagaIrPara('premios.html?aba=meu');return;}
     if(n.referencia_tabela==='relatorios'){
       try{var rq=n.referencia_id?await global._sb.from('relatorios_pedidos').select('processo_id').eq('id',n.referencia_id).maybeSingle():null;
@@ -2019,6 +2027,7 @@
     porNumero('navBadgeRelatorios',d.relatorios,(d.relatorios||0)+' pedido(s) de relatório para você preparar');
     porNumero('navBadgeSugestoes',d.sugestoes,(d.sugestoes||0)+' sugestão(ões) nova(s) para analisar');
     porNumero('navBadgeNotas',d.notas,(d.notas||0)+' nota(s) compartilhada(s) com você ainda não aberta(s)');
+    porNumero('navBadgeParaAprovar',d.para_aprovar,(d.para_aprovar||0)+' entrega(s) dos agentes para aprovar'+(d.para_aprovar_vencendo?' ('+d.para_aprovar_vencendo+' com prazo em até 2 dias)':''),(d.para_aprovar_vencendo||0)>0);
     porNumero('navBadgeTeses',d.teses,(d.teses||0)+' atualização(ões) de tese ou achado(s) do radar não visto(s)');
     // Marcações no chat: @ ao lado do número do Chat (vermelho) e mapa por conversa para a tela do chat
     var men=d.chat_mencoes||{},totM=0;Object.keys(men).forEach(function(k){totM+=men[k]||0;});
@@ -2188,6 +2197,7 @@
     agenda:['compromissos.visualizar'],
     tarefas:['tarefas.visualizar'],
     pedidos_claude:['conector_claude.usar'],
+    agentes_aprovar:['agentes.aprovar'],
     chat:['chat.usar'],
     ponto:['ponto.bater','ponto.visualizar_proprio','ponto.visualizar_equipe'],
     colaboradores:['colaboradores.visualizar','usuarios.convidar','usuarios.gerenciar_papeis'],
@@ -2380,7 +2390,7 @@
       ev.preventDefault();global.sagaIrPara(a.getAttribute('href'));
     });
   }
-  var IDS_NUMEROS=['navBadgeChat','navBadgeMencao','navBadgeAgenda','navBadgeTarefas','navBadgeBuscas','navBadgePedidosClaude','navBadgeIntimacoes','navBadgeNotas','navBadgeTeses','navBadgeRelatorios','navBadgeSugestoes','notifCount','onlineText'];
+  var IDS_NUMEROS=['navBadgeChat','navBadgeMencao','navBadgeAgenda','navBadgeTarefas','navBadgeBuscas','navBadgePedidosClaude','navBadgeParaAprovar','navBadgeIntimacoes','navBadgeNotas','navBadgeTeses','navBadgeRelatorios','navBadgeSugestoes','notifCount','onlineText'];
   function guardarNumerosMoldura(){
     var g={};
     IDS_NUMEROS.forEach(function(id){var el=document.getElementById(id);if(el)g[id]={t:el.textContent,o:el.style.display==='none',a:el.classList.contains('atrasada')};});

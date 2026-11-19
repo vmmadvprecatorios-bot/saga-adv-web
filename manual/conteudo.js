@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.24",
+  versao: "3.25",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.25", data: "19/11/2026", mudou: "Tela nova Meu dia > PARA APROVAR (Escritório de agentes): o Agente: Triagem classifica o que chega (intimações, andamentos do CNJ, pedidos) com o prazo em dias úteis e o Agente: Manutenção entrega o relatório do dia; o Dr. Victor e a Hevelyn aprovam, mandam ajustar ou reprovam; aprovar cria a tarefa. Regras do Escritório de agentes (nada sai para fora sem aprovação; o agente para na assinatura; senhas só no Chrome/Google)." },
     { versao: "3.24", data: "19/11/2026", mudou: "CORES NOVAS: grupo **Paletas** em Preferências > Cor do tema, com 8 cores tiradas das paletas que o Dr. Victor escolheu: Rubi, Bordô, Ouro, Lima, Aço, Marsala, Café e Mel, cada uma em Normal e Vidro, no claro e no escuro. Começam liberadas só para o administrador (ele libera para a equipe em Cores da equipe)." },
     { versao: "3.23", data: "19/11/2026", mudou: "Ficha do cliente ORGANIZADA E RETRÁTIL: cada bloco (Processo, Dados do processo, Recursos, Andamentos do CNJ, Checklists, Atendimentos, Comentários, Retorno, Partes, Responsável, Pastas, Tarefas, Pagamentos, Notas, Ações...) abre e recolhe pelo título, com um resumo quando fechado; [[Abrir tudo]] e [[Recolher tudo]]; Colunas: As duas, Só a do meio ou Só a lateral (a que fica ocupa a largura toda); [[Organizar blocos]]: o que aparece, a ordem e a coluna de cada bloco. Tudo lembrado neste navegador; o cartão de cima com o nome fica sempre fixo. MODO CLARO COM A COR: no claro, fundo, painéis e menu ficam tingidos da cor do tema (cada cor bem diferente da outra) e o claro inverte o escuro: a barra de cima fica escura na cor do tema e o menu lateral fica claro, com a letra escura." },
     { versao: "3.22", data: "19/11/2026", mudou: "TELA DE ENTRADA NOVA (Vidro tecnológico, escolhida pelo Dr. Victor): cartão de vidro com a rede de pontos de luz no fundo, botão Entrar, Mostrar a senha, Entrar com o Google, Esqueci a senha e o erro à vista acima do botão. Nenhuma tela do sistema aparece antes de o login ser conferido (aviso \"Conferindo o seu login…\"). Com uma janela aberta, a tela de trás não rola." },
@@ -636,6 +637,39 @@ window.SAGA_MANUAL = {
             "**Links dos tribunais**: o endereço da consulta processual de cada tribunal (é o que o botão do tribunal abre). Mais de um link para o mesmo tribunal vira um menu.",
             "**Seção da Justiça Federal no e-Proc** (cada estado tem o seu endereço): cadastre com **JF + estado** (ex.: JFRJ, JFES, JFRS). Quando chega uma seção nova, o SAGA cria sozinho o lugar marcado **(configurar)** e avisa no sino: é só trocar pelo link certo e salvar.",
             "Só quem tem permissão mexe nessas listas."
+          ]
+        }
+      ]
+    },
+
+    /* ----------------------------------------------------------------- */
+    { id: "agentes", titulo: "Para aprovar (Escritório de agentes)", quem: "Dr. Victor e Hevelyn (permissão Aprova o trabalho dos agentes)",
+      resumo: "O que os agentes do SAGA entregaram e espera a sua decisão: aprovar, mandar ajustar ou reprovar. Nada sai para fora sem aprovação.",
+      secoes: [
+        { id: "aprovar", titulo: "Aprovar, mandar ajustar ou reprovar",
+          quando: "Todo dia, e sempre que o número aparecer ao lado de Para aprovar no menu (vermelho = prazo em até 2 dias ou urgente).",
+          passos: [
+            "Abra **Meu dia > Para aprovar**. Cada cartão é uma entrega de um agente: o **Agente: Triagem** classifica o que chega (intimação, andamento importante do CNJ, pedido da equipe) e o **Agente: Manutenção** entrega o relatório do dia.",
+            "Leia **O que é**, **O que fazer**, **Prazo** (em dias úteis; o SAGA calcula a data pela publicação no DJEN, sem os feriados próprios do tribunal: confira) e **Ao aprovar** (o que vai acontecer).",
+            "[[Aprovar]]: faz o que está em Ao aprovar (por exemplo, cria a tarefa para o responsável do processo, com o prazo). No relatório da Manutenção o botão é [[Ciente]].",
+            "[[Mandar ajustar]]: escreva o que está errado ou faltando. O agente refaz na próxima rodada e a entrega volta como **Versão 2**, mostrando o seu pedido de ajuste.",
+            "[[Reprovar]]: escreva o motivo. A entrega para e o motivo serve para o agente não repetir o erro.",
+            "Várias entregas parecidas: marque as caixinhas e use [[Aprovar os marcados]].",
+            "Em **Voltaram para ajuste** ficam as que esperam o agente refazer; em **Decididas**, o histórico dos últimos 60 dias (quem decidiu e quando)."
+          ],
+          dicas: ["No rodapé aparece a **aprovação de primeira** de cada agente nos últimos 30 dias: é a medida de qualidade do Escritório de agentes.",
+                  "Se aprovar der erro, a mensagem aparece e nada é gravado pela metade: tente de novo ou mande ajustar."]
+        },
+        { id: "regras", titulo: "Regras do Escritório de agentes",
+          quando: "Para saber o que os agentes podem e não podem fazer.",
+          passos: [
+            "Nada sai para fora (protocolo, e-mail, WhatsApp, cliente) sem aprovação de uma pessoa.",
+            "No protocolo, o agente deixa tudo pronto no sistema do tribunal e **para na tela da assinatura**: só o Dr. Victor (ou a Hevelyn) põe o token e assina.",
+            "Senhas dos tribunais ficam só no gerenciador de senhas do Chrome/Google de quem usa; nunca no chat, no SAGA, nas Notas ou no conector. O código do autenticador e o token ficam com quem assina.",
+            "Os agentes não apagam nada (só o administrador apaga) e cada coisa que fazem fica no Registro de atividades com o nome do agente.",
+            "O administrador escolhe, no fim da tela Para aprovar, o que os agentes podem fazer sozinhos (por exemplo, atualizar o resumo interno); o resto passa pela aprovação.",
+            "A Manutenção, por enquanto, só lê: aponta dados errados (processo protocolado sem número, número CNJ com dígito errado, ativo sem responsável, documento fora de pasta, cliente sem CPF, fichas com o mesmo nome, intimação sem processo, tarefa sem coluna, robô com erro) e não conserta nada.",
+            "Os agentes aparecem na **Saúde do sistema** (Configurações): verde funcionando, amarelo erro passageiro, vermelho parado ou com erro repetido (avisa o administrador no sino)."
           ]
         }
       ]

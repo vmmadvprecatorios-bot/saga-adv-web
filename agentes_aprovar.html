@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611190139"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Para aprovar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:86ch;line-height:1.5}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:11px;font-size:12px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s}
+.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ouro{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
+.pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
+.pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
+.ent:focus{border-color:var(--gold)}
+.resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px}
+.resumo b{color:var(--text);font-weight:600}
+.grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+.grupo-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
+.grupo-cab h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
+.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
+.lnk{font-size:11.5px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:9px;padding:6px 10px;white-space:nowrap;transition:border-color .2s}
+.lnk:hover{border-color:var(--gold)}
+.ped{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:start}
+.ped:last-child{border-bottom:0}
+.ped .oque{font-size:13.5px;font-weight:600;line-height:1.4}
+.ped .det{font-size:12px;color:var(--muted);line-height:1.5;margin-top:3px}
+.ped .det b{color:var(--text);font-weight:500}
+.selos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.selo{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.selo.amarelo{color:var(--warning,#d97706);border-color:color-mix(in srgb,var(--warning,#d97706) 50%,transparent)}
+.selo.vermelho{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent)}
+.selo.ok{color:var(--success,#16a34a);border-color:color-mix(in srgb,var(--success,#16a34a) 50%,transparent)}
+.ped .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.recebido{font-size:12px;line-height:1.5;margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--text) 4%,transparent)}
+.vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;border:1px dashed var(--border-soft);border-radius:14px}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.erro-caixa{padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12.5px;line-height:1.55}
+.erro-caixa b{display:block;margin-bottom:3px}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:360px}
+.toast.success{border-color:color-mix(in srgb,#16a34a 50%,var(--border))}.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}
+.mo{position:fixed;inset:0;z-index:2500;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s linear .26s}
+.mo.aberto{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s}
+html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
+.md{width:100%;max-width:520px;display:flex;flex-direction:column;border-radius:18px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);transform:translateY(10px) scale(.985);transition:transform .34s cubic-bezier(.22,.78,.25,1)}
+.mo.aberto .md{transform:none}
+.md-cab{padding:16px 18px 10px;border-bottom:1px solid var(--border-soft)}
+.md-cab h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.md-cab p{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.md-corpo{padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.md-corpo label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.md-corpo textarea{min-height:110px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:10px;font-size:12.5px;outline:0;resize:vertical}
+.md-corpo textarea:focus{border-color:var(--gold)}
+.md-rod{display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 16px}
+@media(max-width:760px){
+  .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
+  .ped{grid-template-columns:1fr}.ped .acoes{justify-content:flex-start}
+  .ent{min-width:0;width:100%;flex-basis:100%}
+}
+.ped.sel{border-left:3px solid var(--gold)}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.cab-ent{display:flex;gap:8px;align-items:flex-start}
+.cab-ent input[type=checkbox]{margin-top:3px}
+.campos{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;font-size:12.5px;line-height:1.5;margin-top:6px}
+.campos dt{color:var(--muted)}.campos dd{margin:0}
+.ajuste-ant{font-size:12px;line-height:1.5;margin-top:6px;padding:8px 10px;border-radius:10px;border:1px dashed color-mix(in srgb,var(--gold) 45%,transparent)}
+.regras{margin-top:6px;font-size:12px;line-height:1.6}.regras li{margin-left:16px}
+.lote{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-4px 0 12px;font-size:12px}
+.lote[hidden]{display:none}
+.rodape-q{margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.7}
+.rodape-q b{color:var(--text);font-weight:600}
+.auton{margin-top:16px}.auton .ped{grid-template-columns:minmax(0,1fr) auto}
+.btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611190139">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Para aprovar</h1>
+      <p>O que os agentes do Escritório de agentes entregaram: a Triagem classifica o que chega (intimações, andamentos do CNJ, pedidos) e a Manutenção confere o sistema todo dia. Aprove, mande ajustar (o comentário volta para o agente) ou reprove. Nada sai para fora sem aprovação. Aprovam: Dr. Victor e Hevelyn.</p>
+    </div>
+    <button class="btn" type="button" id="btnAtualizar">Atualizar</button>
+  </div>
+  <div class="barra">
+    <div class="pills" role="group" aria-label="Quais entregas">
+      <button class="pill active" type="button" data-sit="pendentes">Para aprovar<b id="nPend"></b></button>
+      <button class="pill" type="button" data-sit="ajuste">Voltaram para ajuste<b id="nAjuste"></b></button>
+      <button class="pill" type="button" data-sit="decididas">Decididas</button>
+    </div>
+    <div class="pills" role="group" aria-label="Qual agente">
+      <button class="pill active" type="button" data-ag="">Todos</button>
+      <button class="pill" type="button" data-ag="triagem">Triagem</button>
+      <button class="pill" type="button" data-ag="manutencao">Manutenção</button>
+    </div>
+    <input class="ent" id="fBusca" type="search" autocomplete="off" placeholder="Buscar por cliente, código, número ou assunto">
+  </div>
+  <div class="lote" id="barraLote" hidden><span id="loteN"></span><button class="btn btn-ouro" type="button" id="loteAprovar">Aprovar os marcados</button><button class="btn" type="button" id="loteLimpar">Desmarcar</button></div>
+  <div class="resumo" id="resumo">Carregando…</div>
+  <div id="area"></div>
+  <div class="rodape-q" id="qualidade"></div>
+  <section class="grupo auton" id="autonomia" hidden></section>
+</main>
+</div>
+
+<div class="mo" id="janela" role="dialog" aria-modal="true" aria-labelledby="jTitulo" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jTitulo">Mandar ajustar</h2><p id="jSub"></p></div>
+  <div class="md-corpo"><label for="jTexto" id="jRot">O que o agente precisa ajustar</label><textarea id="jTexto" maxlength="4000"></textarea></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="jOk">Mandar ajustar</button></div>
+</div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611190139"></script>
+<script>
+/* =====================================================================
+   SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
+   Entregas dos agentes (agente_entregas): Aprovar / Mandar ajustar / Reprovar, um a um ou em lote.
+   Dados: agente_entregas_painel; decisão: agente_entrega_decidir / agente_entregas_decidir_lote;
+   o que roda sozinho (só o administrador): agente_autonomia_salvar. Erros sempre à vista.
+   ===================================================================== */
+var P={sit:'pendentes',ag:'',lista:[],busca:'',erro:null,dados:null,marcados:{},janela:null};
+var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
+var REGRAS={protocolada_sem_numero:'"Protocolada" sem número CNJ',cnj_invalido:'Número CNJ com dígito errado',ativo_sem_responsavel:'Ativo do Jurídico sem responsável',
+  documento_sem_pasta:'Documento fora de pasta',cpf_ausente_ou_invalido:'Cliente do Jurídico sem CPF ou com CPF inválido',nome_repetido:'Fichas com o mesmo nome',
+  intimacao_sem_processo:'Intimação sem processo há mais de 7 dias',tarefa_sem_coluna:'Tarefa aberta sem coluna',robo_vermelho:'Robô com erro (vermelho)',pedido_agente_parado:'Pedido ao agente parado'};
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},6000);}
+function dataBR(d){if(!d)return '';var s=String(d).slice(0,10).split('-');return s[2]+'/'+s[1]+'/'+s[0];}
+function dataHoraBR(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('pt-BR')+' às '+x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function semAcento(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();}
+function linkFicha(e){return e.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(e.pessoa_id)+(e.processo_id?'&processo_id='+encodeURIComponent(e.processo_id):''):null;}
+function cnj(n){return window.sagaFmt&&sagaFmt.cnj?sagaFmt.cnj(n):(n||'');}
+
+async function carregar(){
+  $('resumo').textContent='Carregando…';
+  var r=await _sb.rpc('agente_entregas_painel',{p_situacao:P.sit,p_agente:P.ag||null,p_busca:null});
+  if(r.error){P.erro=r.error.message||String(r.error);P.lista=[];desenhar();return;}
+  P.erro=null;P.dados=r.data||{};P.lista=P.dados.entregas||[];P.marcados={};
+  var c=P.dados.contagem||{};
+  $('nPend').textContent=c.pendentes?String(c.pendentes):'';$('nAjuste').textContent=c.ajuste?String(c.ajuste):'';
+  desenhar();desenharQualidade();desenharAutonomia();
+}
+function filtrados(){
+  var b=semAcento(P.busca.trim());if(!b)return P.lista;
+  return P.lista.filter(function(e){return semAcento([e.titulo,e.resumo,e.cliente,e.codigo,e.numero,e.agente_nome].join(' ')).indexOf(b)>=0;});
+}
+function seloPrazo(e){
+  if(!e.prazo)return '';
+  var d=e.dias_prazo,cls=d<0?'vermelho':(d<=2?'amarelo':'');
+  return '<span class="selo '+cls+'">'+(d<0?'Prazo vencido em ':(d===0?'Prazo hoje, ':'Prazo: '))+esc(dataBR(e.prazo))+'</span>';
+}
+function seloSit(e){
+  var m={pendente:['Para aprovar',''],ajustar:['Voltou para ajuste','amarelo'],aprovado:['Aprovada','ok'],executado:['Aprovada e feita','ok'],reprovado:['Reprovada','vermelho'],erro:['Erro','vermelho'],substituida:['Substituída','']}[e.situacao]||[e.situacao,''];
+  return '<span class="selo '+m[1]+'">'+esc(m[0])+(e.decidido_por?' · '+esc(e.decidido_por)+' em '+esc(dataHoraBR(e.decidido_em)):'')+'</span>';
+}
+function camposConteudo(e){
+  var c=e.conteudo||{},h='';
+  if(e.tipo==='relatorio_manutencao'){
+    var pr=c.por_regra||{},ks=Object.keys(pr);
+    h+='<ul class="regras">'+(ks.length?ks.map(function(k){return '<li>'+esc(REGRAS[k]||k)+': <b>'+esc(pr[k])+'</b></li>';}).join(''):'<li>Nada para corrigir hoje.</li>')+'</ul>';
+    var ex=(c.exemplos||[]).slice(0,8);
+    if(ex.length)h+='<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px">Ver exemplos ('+ex.length+')</summary><ul class="regras">'+ex.map(function(x){
+      var f=x.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(x.pessoa_id)+(x.processo_id?'&processo_id='+encodeURIComponent(x.processo_id):''):null;
+      return '<li>'+esc(x.descricao)+(f?' · <a class="lnk" style="padding:1px 6px" href="'+esc(f)+'">ficha ↗</a>':'')+'</li>';}).join('')+'</ul></details>';
+    h+='<div class="det">Só leitura: a Manutenção não conserta nada nesta etapa. "Ciente" tira o relatório da lista.</div>';
+    return h;
+  }
+  var linhas=[];
+  if(c.o_que_e)linhas.push(['O que é',c.o_que_e]);
+  if(c.providencia)linhas.push(['O que fazer',c.providencia]);
+  if(c.prazo)linhas.push(['Prazo',dataBR(c.prazo)+(c.prazo_dias?' ('+c.prazo_dias+' dias úteis)':'')]);
+  if(c.calculo_prazo)linhas.push(['Cálculo',c.calculo_prazo]);
+  if(c.conferir)linhas.push(['Conferir',c.conferir]);
+  if(c.proximo_agente)linhas.push(['Próximo agente',c.proximo_agente]);
+  var a=e.acao||{};
+  linhas.push(['Ao aprovar',a.tipo==='tarefa'?'cria a tarefa "'+(a.titulo||e.titulo)+'"'+(a.prazo?' com prazo '+dataBR(a.prazo):''):(a.tipo==='concluir_intimacao'?'conclui a intimação (só ciência)':'nada além de registrar')]);
+  return '<dl class="campos">'+linhas.map(function(l){return '<dt>'+esc(l[0])+'</dt><dd>'+esc(l[1])+'</dd>';}).join('')+'</dl>';
+}
+function htmlEntrega(e){
+  var pend=e.situacao==='pendente',f=linkFicha(e),a=e.acao||{};
+  var rotAprovar=a.tipo==='nada'||!a.tipo?'Ciente':'Aprovar';
+  return '<div class="ped" data-id="'+esc(e.id)+'"><div class="cab-ent">'+
+    (pend?'<input type="checkbox" data-marcar="'+esc(e.id)+'" aria-label="Marcar para aprovar em lote">':'')+
+    '<div style="min-width:0;flex:1"><div class="oque">'+esc(e.titulo)+'</div>'+
+    '<div class="det">'+esc(e.agente_nome)+(e.cliente?' · <b>'+esc(e.cliente)+'</b>':'')+(e.codigo?' · '+esc(e.codigo):'')+(e.numero?' · <span class="num-cnj">'+esc(cnj(e.numero))+'</span>':'')+'</div>'+
+    camposConteudo(e)+
+    (e.versao>1&&e.anterior&&e.anterior.comentario_ajuste?'<div class="ajuste-ant"><b>Versão '+esc(e.versao)+'.</b> Pedido de ajuste anterior: '+esc(e.anterior.comentario_ajuste)+'</div>':'')+
+    (e.situacao==='ajustar'?'<div class="ajuste-ant"><b>Ajuste pedido:</b> '+esc(e.comentario_ajuste)+'<br>O agente refaz na próxima rodada.</div>':'')+
+    (e.situacao==='reprovado'?'<div class="ajuste-ant"><b>Motivo:</b> '+esc(e.motivo_reprovacao)+'</div>':'')+
+    (e.erro?'<div class="erro-caixa" style="margin-top:6px"><b>Erro ao executar</b>'+esc(e.erro)+'</div>':'')+
+    '<div class="selos">'+seloSit(e)+seloPrazo(e)+(e.prioridade==='urgente'?'<span class="selo vermelho">Urgente</span>':(e.prioridade==='alta'?'<span class="selo amarelo">Prioridade alta</span>':''))+
+      (e.versao>1?'<span class="selo">Versão '+esc(e.versao)+'</span>':'')+'<span class="selo">Entregue em '+esc(dataHoraBR(e.criado_em))+'</span></div>'+
+    '</div></div><div class="acoes">'+
+    (f?'<a class="lnk" href="'+esc(f)+'">Ficha ↗</a>':'')+
+    (e.intimacao_id?'<a class="lnk" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(e.intimacao_id)+'">Intimação ↗</a>':'')+
+    (pend&&P.dados.pode_aprovar?'<button class="btn btn-ouro" type="button" data-aprovar="'+esc(e.id)+'">'+rotAprovar+'</button><button class="btn" type="button" data-ajustar="'+esc(e.id)+'">Mandar ajustar</button><button class="btn btn-perigo" type="button" data-reprovar="'+esc(e.id)+'">Reprovar</button>':'')+
+    '</div></div>';
+}
+function desenhar(){
+  var area=$('area');
+  if(P.erro){area.innerHTML='<div class="erro-caixa"><b>Não consegui carregar as entregas dos agentes.</b>Motivo: '+esc(P.erro)+'<br>Tente "Atualizar". Se continuar, avise o administrador com esta mensagem.</div>';$('resumo').textContent='';return;}
+  var l=filtrados();
+  if(!l.length){
+    area.innerHTML='<div class="vazio"><b>'+(P.busca?'Nada encontrado nesta busca.':({pendentes:'Nada para aprovar agora.',ajuste:'Nada voltou para ajuste.',decididas:'Nenhuma entrega decidida nos últimos 60 dias.'}[P.sit]))+'</b>'+
+      (P.sit==='pendentes'&&!P.busca?'Quando a Triagem classificar uma intimação ou a Manutenção entregar o relatório do dia, aparece aqui.':'')+'</div>';
+    $('resumo').innerHTML='';atualizarLote();return;
+  }
+  area.innerHTML='<section class="grupo">'+l.map(htmlEntrega).join('')+'</section>';
+  var c=P.dados.contagem||{};
+  $('resumo').innerHTML=P.sit==='pendentes'?'<b>'+l.length+'</b> para aprovar'+(c.vencendo?' · <b>'+c.vencendo+'</b> com prazo em até 2 dias':'')+(c.urgentes?' · <b>'+c.urgentes+'</b> urgente(s)':''):'<b>'+l.length+'</b> entrega(s)';
+  atualizarLote();
+}
+function desenharQualidade(){
+  var q=(P.dados&&P.dados.qualidade)||[];
+  $('qualidade').innerHTML=q.length?'Aprovação de primeira (30 dias): '+q.map(function(x){return '<b>'+esc(x.agente_nome)+'</b> '+(x.percentual==null?'—':x.percentual+'%')+' ('+x.decididas+' decididas, '+x.ajustes+' ajustes, '+x.reprovadas+' reprovadas)';}).join(' · '):'';
+}
+function desenharAutonomia(){
+  var box=$('autonomia'),d=P.dados||{};
+  if(!d.eh_admin){box.hidden=true;return;}
+  box.hidden=false;
+  box.innerHTML='<div class="grupo-cab"><div><h2>O que os agentes fazem sozinhos</h2><small>Só o administrador muda. O que sai para fora nunca roda sozinho.</small></div></div>'+
+    (d.autonomia||[]).map(function(a){return '<div class="ped"><div><div class="oque" style="font-weight:500">'+esc(a.nome)+'</div></div><div class="acoes">'+
+      (a.tipo==='saida'?'<span class="selo">Sempre com aprovação</span>':'<button class="btn'+(a.sozinho?' btn-ouro':'')+'" type="button" data-auton="'+esc(a.tipo)+'" data-sozinho="'+(a.sozinho?'1':'0')+'">'+(a.sozinho?'Roda sozinho':'Passa pela aprovação')+'</button>')+'</div></div>';}).join('');
+}
+function atualizarLote(){
+  var ids=Object.keys(P.marcados).filter(function(k){return P.marcados[k];});
+  $('barraLote').hidden=!ids.length;$('loteN').textContent=ids.length+' marcada(s)';
+}
+async function decidir(id,decisao,comentario){
+  var el=document.querySelector('.ped[data-id="'+id+'"]');
+  var gravando=Promise.resolve(_sb.rpc('agente_entrega_decidir',{p_id:id,p_decisao:decisao,p_comentario:comentario||null})).then(function(r){if(r.error)throw r.error;return r;});
+  try{
+    if(el&&window.sagaRiscar&&decisao==='aprovar')await sagaRiscar(el,{texto:'.oque',esperar:gravando,recolher:true});else await gravando;
+    toast(decisao==='aprovar'?'Aprovado.':(decisao==='ajustar'?'Mandado ajustar: o agente refaz na próxima rodada.':'Reprovado.'),'success');
+  }catch(e){toast('Não consegui gravar: '+((e&&e.message)||'erro desconhecido'),'error');}
+  await carregar();
+  if(window.SagaUI&&SagaUI.contarDia)try{SagaUI.contarDia();}catch(e){}
+}
+async function aprovarLote(){
+  var ids=Object.keys(P.marcados).filter(function(k){return P.marcados[k];});if(!ids.length)return;
+  var ok=window.sagaConfirmar?await sagaConfirmar('Aprovar '+ids.length+' entrega(s)','Cada uma faz o que diz em "Ao aprovar" (ex.: cria a tarefa).','Aprovar',false):confirm('Aprovar '+ids.length+' entrega(s)?');
+  if(!ok)return;
+  $('loteAprovar').disabled=true;
+  var r=await _sb.rpc('agente_entregas_decidir_lote',{p_ids:ids,p_decisao:'aprovar',p_comentario:null});
+  $('loteAprovar').disabled=false;
+  if(r.error){toast('Não consegui aprovar o lote: '+(r.error.message||''),'error');return;}
+  var er=(r.data&&r.data.erros)||[];
+  toast(r.data.ok+' aprovada(s)'+(er.length?'; '+er.length+' com erro: '+er.map(function(x){return x.erro;}).join(' | '):'.'),er.length?'error':'success');
+  await carregar();
+}
+function abrirJanela(e,modo){
+  P.janela={id:e.id,modo:modo};
+  $('jTitulo').textContent=modo==='ajustar'?'Mandar ajustar':'Reprovar';
+  $('jRot').textContent=modo==='ajustar'?'O que o agente precisa ajustar':'Motivo da reprovação (o agente aprende com ele)';
+  $('jOk').textContent=modo==='ajustar'?'Mandar ajustar':'Reprovar';
+  $('jSub').textContent=e.titulo;$('jTexto').value='';
+  $('janela').classList.add('aberto');setTimeout(function(){$('jTexto').focus();},60);
+}
+function fecharJanela(){$('janela').classList.remove('aberto');P.janela=null;}
+async function confirmarJanela(){
+  var j=P.janela;if(!j)return;var t=$('jTexto').value.trim();
+  if(!t){toast(j.modo==='ajustar'?'Escreva o que precisa ajustar.':'Escreva o motivo.','error');return;}
+  fecharJanela();await decidir(j.id,j.modo==='ajustar'?'ajustar':'reprovar',t);
+}
+async function trocarAutonomia(b){
+  var novo=b.dataset.sozinho!=='1';
+  var r=await _sb.rpc('agente_autonomia_salvar',{p_tipo:b.dataset.auton,p_sozinho:novo});
+  if(r.error){toast('Não consegui mudar: '+(r.error.message||''),'error');return;}
+  toast('Salvo.','success');await carregar();
+}
+function ligar(){
+  document.querySelectorAll('.pill[data-sit]').forEach(function(b){b.addEventListener('click',function(){
+    if(P.sit===b.dataset.sit)return;document.querySelectorAll('.pill[data-sit]').forEach(function(x){x.classList.toggle('active',x===b);});P.sit=b.dataset.sit;setTimeout(carregar,0);});});
+  document.querySelectorAll('.pill[data-ag]').forEach(function(b){b.addEventListener('click',function(){
+    if(P.ag===b.dataset.ag)return;document.querySelectorAll('.pill[data-ag]').forEach(function(x){x.classList.toggle('active',x===b);});P.ag=b.dataset.ag;setTimeout(carregar,0);});});
+  $('fBusca').addEventListener('input',function(){P.busca=this.value;desenhar();});
+  $('btnAtualizar').addEventListener('click',carregar);
+  $('loteAprovar').addEventListener('click',aprovarLote);
+  $('loteLimpar').addEventListener('click',function(){P.marcados={};document.querySelectorAll('[data-marcar]').forEach(function(c){c.checked=false;});atualizarLote();});
+  $('area').addEventListener('change',function(e){var c=e.target.closest('[data-marcar]');if(c){P.marcados[c.dataset.marcar]=c.checked;atualizarLote();}});
+  $('area').addEventListener('click',function(e){
+    var b=e.target.closest('[data-aprovar],[data-ajustar],[data-reprovar]');if(!b)return;
+    var id=b.dataset.aprovar||b.dataset.ajustar||b.dataset.reprovar,ent=P.lista.filter(function(x){return x.id===id;})[0];if(!ent)return;
+    if(b.dataset.aprovar)decidir(id,'aprovar',null);else abrirJanela(ent,b.dataset.ajustar?'ajustar':'reprovar');
+  });
+  $('autonomia').addEventListener('click',function(e){var b=e.target.closest('[data-auton]');if(b)trocarAutonomia(b);});
+  $('janela').addEventListener('click',function(e){if(e.target===$('janela')||e.target.closest('[data-fechar]'))fecharJanela();});
+  $('jOk').addEventListener('click',confirmarJanela);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('janela').classList.contains('aberto'))fecharJanela();});
+  try{if(localStorage.getItem('saga-movimento')==='reduzido')document.documentElement.classList.add('sem-movimento');}catch(e){}
+}
+async function init(){
+  ligar();
+  await SagaUI.carregar('agentes_aprovar');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  await carregar();
+}
+init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+</script>
+</body>
+</html>
