@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.21",
+  versao: "3.22",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.22", data: "19/11/2026", mudou: "TELA DE ENTRADA NOVA (Vidro tecnológico, escolhida pelo Dr. Victor): cartão de vidro com a rede de pontos de luz no fundo, botão Entrar, Mostrar a senha, Entrar com o Google, Esqueci a senha e o erro à vista acima do botão. Nenhuma tela do sistema aparece antes de o login ser conferido (aviso \"Conferindo o seu login…\"). Com uma janela aberta, a tela de trás não rola." },
     { versao: "3.21", data: "19/11/2026", mudou: "Ficha do cliente: parte nova PAGAMENTOS E PARCELAS (honorários parcelados, acordo, pensão; cliente com ou sem processo). Pagou A MENOS: somar a diferença na próxima parcela, criar uma parcela só com a diferença ou dar desconto (com motivo). Pagou A MAIS: abater das próximas ou das últimas parcelas. Desmarcar desfaz. Extrato em PDF de cada pagamento." },
     { versao: "3.20", data: "18/11/2026", mudou: "NÚMEROS NO MENU: cada item mostra quantas coisas esperam por você (Minhas Tarefas, Intimações de hoje, Agenda, Pedidos do Saga IA, Notas compartilhadas, Teses e oportunidades, Relatórios a preparar, Pedidos de busca, Chat e, para o administrador, Sugestões novas); vermelho = pede ação; grupo fechado mostra a soma; com o menu recolhido o número fica em cima do ícone. CHAT: @ vermelho na conversa em que você foi marcado, abas Não lidas e Marcações, e a conversa abre na mensagem que marcou você. SONS em Configurações > Preferências > Sons (mensagem nova e marcação ligados; intimação nova e aviso urgente desligados; volume; botão para ouvir)." },
     { versao: "3.19", data: "18/11/2026", mudou: "Tela nova Processos > RELATÓRIOS: pedir o relatório processual do cliente, acompanhar (pedido, em preparação, pronto, enviado ao cliente) e ver na hora QUANDO foi o último relatório enviado, em verde, amarelo ou vermelho; o relatório fica na pasta \"Relatórios processuais\" da ficha e aparece nos dois lugares; na ficha, o quadro Relatórios em cada processo; avisos no sino; o Claude (SAGA no Claude) também consulta e registra." },
@@ -111,15 +112,15 @@ window.SAGA_MANUAL = {
           quando: "Quando o colaborador começa o dia ou abre o SAGA num computador novo.",
           passos: [
             "Abra o endereço do SAGA no navegador (Chrome ou Edge).",
-            "Digite o seu **e-mail** e a sua **senha**.",
-            "Marque **Manter conectado** só no computador do escritório que é seu.",
-            "Clique em [[Entrar no Sistema]]. O SAGA abre sempre no **Ponto**: aproveite e bata o ponto.",
-            "Esqueceu a senha? Clique em **Esqueci a senha** e siga o e-mail que chega."
+            "Digite o seu **e-mail** e a sua **senha** (o **Mostrar** ao lado da senha deixa ver o que foi digitado).",
+            "Clique em [[Entrar]]. O SAGA abre sempre no **Ponto**: aproveite e bata o ponto. Quem usa o e-mail do Google pode clicar em **Entrar com o Google**.",
+            "Se algo estiver errado (e-mail ou senha que não conferem, sem internet), o motivo aparece em vermelho logo acima do botão.",
+            "Esqueceu a senha? Clique em **Esqueci a senha**, confira o e-mail e siga o link que chega (veja também o spam)."
           ],
           img: "login",
-          marcas: ["E-mail de acesso.", "Senha (pessoal, não empreste).", "Entrar no Sistema.", "Esqueci a senha: manda o e-mail para criar uma senha nova."],
+          marcas: ["E-mail de acesso.", "Senha (pessoal, não empreste).", "Entrar.", "Esqueci a senha: manda o e-mail para criar uma senha nova.", "Entrar com o Google (e-mail do Google cadastrado pelo administrador)."],
           dicas: ["Primeiro acesso: você recebe um convite por e-mail do administrador. Abra o link, crie a senha e preencha os seus dados."],
-          atencao: ["O administrador pode limitar o acesso por horário e por local. Fora do combinado, o SAGA avisa e não deixa entrar.", "Se ficar muito tempo parado, o SAGA sai sozinho por segurança: é só entrar de novo."]
+          atencao: ["O administrador pode limitar o acesso por horário e por local. Fora do combinado, o SAGA avisa e não deixa entrar.", "Se ficar muito tempo parado, o SAGA sai sozinho por segurança: é só entrar de novo.", "Nenhuma tela do sistema aparece antes de o login ser conferido. Se a internet estiver lenta ao abrir, aparece só \"Conferindo o seu login…\" (e o motivo, se não conseguir): espere ou clique em \"Ir para a tela de entrada\"."]
         },
         { id: "tela", titulo: "Conhecer a tela",
           quando: "Para se localizar em qualquer tela do SAGA: a barra do alto e o menu da esquerda são sempre os mesmos.",
