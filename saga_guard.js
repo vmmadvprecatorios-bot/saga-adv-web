@@ -34,7 +34,8 @@
   // fundo de cada cor antes da 1ª imagem ([escuro, claro]; a mesma lista do SAGA_FUNDOS no saga_ui.js)
   var FUNDOS={azul:['#172234','#DAE3F1'],grafite:['#1A1A1A','#E7E6E4'],novembro:['#0B1B2C','#D6E8F5'],rosa:['#1E1219','#F4D7E5'],natal:['#0E1D16','#DDEEE4'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0'],
     // 17/11 (Dr. Victor): cores em dobro (versão normal das cores de vidro) e o Ônix (preto e cinza)
-    profundo:['#0A1B2E','#D7E5F4'],ciano:['#06181E','#D7EFF4'],ambar:['#140F0A','#F2E6D9'],aurora:['#100C22','#DFDAF1'],onix:['#0E0E0F','#E0E0E0']};
+    profundo:['#0A1B2E','#D7E5F4'],ciano:['#06181E','#D7EFF4'],ambar:['#140F0A','#F2E6D9'],aurora:['#100C22','#DFDAF1'],onix:['#0E0E0F','#E0E0E0'],
+    rubi:['#2B0505','#FACACC'],bordo:['#1F080F','#EAB7C4'],ouro:['#261A00','#FFF0A6'],lima:['#0E1F08','#D2F3A7'],aco:['#06141B','#BFC6C6'],marsala:['#331015','#DFCFBB'],cafe:['#241A13','#FAF3E9'],mel:['#221C05','#FCECC3']};
   html.style.background=(FUNDOS[cor]||FUNDOS.azul)[tema==='light'?1:0];
   html.style.colorScheme=tema==='light'?'light':'dark';
   // 12/11 (T151b): "Vidro com a sua cor" (coringa). A partir da cor escolhida monta as variáveis do claro (--vl-c-*)
@@ -100,7 +101,9 @@
       'vidro-novembro':{cor:'#3A9DE6',satFundo:.55},
       'vidro-rosa':{cor:'#E85A93',satFundo:.35},
       'vidro-natal':{cor:'#E0454E',matizFundo:150,satFundo:.40},
-      'vidro-onix':{cor:'#E8E8E8',satFundo:.0,satDestaque:0,luzDestaque:.82,halo:'#B9874F'}};
+      'vidro-onix':{cor:'#E8E8E8',satFundo:.0,satDestaque:0,luzDestaque:.82,halo:'#B9874F'},
+      // 19/11: paletas do Dr. Victor em vidro
+      'vidro-rubi':{cor:'#C71F24'},'vidro-bordo':{cor:'#991D3C'},'vidro-ouro':{cor:'#D4A200'},'vidro-lima':{cor:'#76C52C'},'vidro-aco':{cor:'#4A5C6A',satFundo:.35},'vidro-marsala':{cor:'#6D2932',matizFundo:33,satFundo:.3},'vidro-cafe':{cor:'#B08968',satFundo:.35},'vidro-mel':{cor:'#CC961F'}};
     // 19/11 (modo claro com a cor): as 4 cores de vidro antigas usam a conta só no CLARO (o escuro delas fica no saga_tema.css)
     window.SAGA_VIDRO_CLARO={vidro:{cor:'#3C86D6',satFundo:.5},'vidro-ciano':{cor:'#14A8B0',satFundo:.5},'vidro-ambar':{cor:'#D27A1E',satFundo:.45},'vidro-aurora':{cor:'#7C5CE6',satFundo:.45}};
     // põe as variáveis no html (vale para o claro e o escuro; o tema troca sem refazer a conta)

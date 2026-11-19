@@ -50,7 +50,7 @@
   // 17/11 (Dr. Victor): CORES EM DOBRO. Cada cor tem a versão NORMAL e a versão VIDRO (familia = a mesma cor; par = a
   // outra versão). Em Configurações > Preferências cada cor é UM cartão com a escolha "Normal / Vidro" dentro.
   // Grupos: Clássicos (Azul, Grafite, Ônix), Tecnológicos (Azul profundo, Ciano, Âmbar, Aurora, A sua cor) e Campanhas.
-  global.SAGA_GRUPOS_CORES=[{id:'classicos',nome:'Clássicos'},{id:'vidro',nome:'Tecnológicos'},{id:'campanhas',nome:'Campanhas'}];
+  global.SAGA_GRUPOS_CORES=[{id:'classicos',nome:'Clássicos'},{id:'vidro',nome:'Tecnológicos'},{id:'paletas',nome:'Paletas'},{id:'campanhas',nome:'Campanhas'}];
   global.SAGA_CORES=[{id:'azul',nome:'Azul',descricao:'Padrão do sistema',escuro:'Azul Marinho',claro:'Azul Porcelana',grupo:'classicos',padrao:true,familia:'azul'},
     {id:'vidro-azul',nome:'Azul',descricao:'O Azul do sistema em vidro',escuro:'Vidro Azul Marinho',claro:'Vidro Azul Porcelana',vidro:true,grupo:'classicos',familia:'azul'},
     {id:'grafite',nome:'Grafite',descricao:'Grafite com detalhes em champanhe',escuro:'Grafite Noturno',claro:'Grafite Linho',grupo:'classicos',familia:'grafite'},
@@ -76,14 +76,32 @@
     {id:'rosa',nome:'Rosa',descricao:'Outubro Rosa: prevenção do câncer de mama',escuro:'Rosa Noite',claro:'Rosa Pétala',mes:10,grupo:'campanhas',familia:'rosa'},
     {id:'vidro-rosa',nome:'Rosa',descricao:'Outubro Rosa em vidro',escuro:'Vidro Rosa Noite',claro:'Vidro Rosa Pétala',vidro:true,grupo:'campanhas',familia:'rosa'},
     {id:'natal',nome:'Natal',descricao:'Verde, vermelho e dourado de fim de ano',escuro:'Natal Pinheiro',claro:'Natal Neve',mes:12,grupo:'campanhas',familia:'natal'},
-    {id:'vidro-natal',nome:'Natal',descricao:'Natal em vidro: fundo verde, destaque vermelho',escuro:'Vidro Natal Pinheiro',claro:'Vidro Natal Neve',vidro:true,grupo:'campanhas',familia:'natal'}];
+    {id:'vidro-natal',nome:'Natal',descricao:'Natal em vidro: fundo verde, destaque vermelho',escuro:'Vidro Natal Pinheiro',claro:'Vidro Natal Neve',vidro:true,grupo:'campanhas',familia:'natal'},
+    // 19/11 (Dr. Victor): PALETAS que ele mandou (tons do escuro ao claro de cada uma; ferramentas/gerar_paletas.js); cada uma em normal e vidro (semente)
+    {id:'rubi',nome:'Rubi',descricao:'Paleta vermelho rubi',escuro:'Rubi Noite',claro:'Rubi Dia',grupo:'paletas',familia:'rubi'},
+    {id:'vidro-rubi',nome:'Rubi',descricao:'Paleta vermelho rubi em vidro',escuro:'Vidro Rubi Noite',claro:'Vidro Rubi Dia',vidro:true,grupo:'paletas',familia:'rubi'},
+    {id:'bordo',nome:'Bordô',descricao:'Paleta vinho bordô',escuro:'Bordô Noite',claro:'Bordô Dia',grupo:'paletas',familia:'bordo'},
+    {id:'vidro-bordo',nome:'Bordô',descricao:'Paleta vinho bordô em vidro',escuro:'Vidro Bordô Noite',claro:'Vidro Bordô Dia',vidro:true,grupo:'paletas',familia:'bordo'},
+    {id:'ouro',nome:'Ouro',descricao:'Paleta amarelo ouro',escuro:'Ouro Noite',claro:'Ouro Dia',grupo:'paletas',familia:'ouro'},
+    {id:'vidro-ouro',nome:'Ouro',descricao:'Paleta amarelo ouro em vidro',escuro:'Vidro Ouro Noite',claro:'Vidro Ouro Dia',vidro:true,grupo:'paletas',familia:'ouro'},
+    {id:'lima',nome:'Lima',descricao:'Paleta verde lima',escuro:'Lima Noite',claro:'Lima Dia',grupo:'paletas',familia:'lima'},
+    {id:'vidro-lima',nome:'Lima',descricao:'Paleta verde lima em vidro',escuro:'Vidro Lima Noite',claro:'Vidro Lima Dia',vidro:true,grupo:'paletas',familia:'lima'},
+    {id:'aco',nome:'Aço',descricao:'Paleta azul aço e cinza',escuro:'Aço Noite',claro:'Aço Dia',grupo:'paletas',familia:'aco'},
+    {id:'vidro-aco',nome:'Aço',descricao:'Paleta azul aço e cinza em vidro',escuro:'Vidro Aço Noite',claro:'Vidro Aço Dia',vidro:true,grupo:'paletas',familia:'aco'},
+    {id:'marsala',nome:'Marsala',descricao:'Paleta marsala com areia',escuro:'Marsala Noite',claro:'Marsala Dia',grupo:'paletas',familia:'marsala'},
+    {id:'vidro-marsala',nome:'Marsala',descricao:'Paleta marsala com areia em vidro',escuro:'Vidro Marsala Noite',claro:'Vidro Marsala Dia',vidro:true,grupo:'paletas',familia:'marsala'},
+    {id:'cafe',nome:'Café',descricao:'Paleta marrom café e creme',escuro:'Café Noite',claro:'Café Dia',grupo:'paletas',familia:'cafe'},
+    {id:'vidro-cafe',nome:'Café',descricao:'Paleta marrom café e creme em vidro',escuro:'Vidro Café Noite',claro:'Vidro Café Dia',vidro:true,grupo:'paletas',familia:'cafe'},
+    {id:'mel',nome:'Mel',descricao:'Paleta dourado mel',escuro:'Mel Noite',claro:'Mel Dia',grupo:'paletas',familia:'mel'},
+    {id:'vidro-mel',nome:'Mel',descricao:'Paleta dourado mel em vidro',escuro:'Vidro Mel Noite',claro:'Vidro Mel Dia',vidro:true,grupo:'paletas',familia:'mel'}];
   // a outra versão (normal ↔ vidro) da mesma cor
   global.sagaCorPar=function(id){var c=global.SAGA_CORES.find(function(x){return x.id===id;});if(!c)return null;
     var p=global.SAGA_CORES.find(function(x){return x.familia===c.familia&&x.id!==c.id;});return p?p.id:null;};
   // cor de fundo de cada tema antes da 1ª imagem da tela ([escuro, claro]); o saga_guard.js tem a mesma lista
   // (as versões vidro das cores normais e o Vidro Ônix saem da semente, SAGA_VIDRO_SEMENTES no saga_guard.js)
   global.SAGA_FUNDOS={azul:['#172234','#DAE3F1'],grafite:['#1A1A1A','#E7E6E4'],novembro:['#0B1B2C','#D6E8F5'],rosa:['#1E1219','#F4D7E5'],natal:['#0E1D16','#DDEEE4'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0'],
-    profundo:['#0A1B2E','#D7E5F4'],ciano:['#06181E','#D7EFF4'],ambar:['#140F0A','#F2E6D9'],aurora:['#100C22','#DFDAF1'],onix:['#0E0E0F','#E0E0E0']};
+    profundo:['#0A1B2E','#D7E5F4'],ciano:['#06181E','#D7EFF4'],ambar:['#140F0A','#F2E6D9'],aurora:['#100C22','#DFDAF1'],onix:['#0E0E0F','#E0E0E0'],
+    rubi:['#2B0505','#FACACC'],bordo:['#1F080F','#EAB7C4'],ouro:['#261A00','#FFF0A6'],lima:['#0E1F08','#D2F3A7'],aco:['#06141B','#BFC6C6'],marsala:['#331015','#DFCFBB'],cafe:['#241A13','#FAF3E9'],mel:['#221C05','#FCECC3']};
   global.sagaFundoCor=function(cor,claro){var sem=global.SAGA_VIDRO_SEMENTES&&global.SAGA_VIDRO_SEMENTES[cor];
     if(sem&&global.sagaVidroLivre){try{var vs=global.sagaVidroLivre(sem.cor,sem);return claro?vs.c.fundo:vs.e.fundo;}catch(e){}}
     if(cor==='vidro-livre'&&global.sagaVidroLivre){try{var vl=global.sagaVidroLivre(localStorage.getItem('saga-vidro-cor')||'#5AA9FF');return claro?vl.c.fundo:vl.e.fundo;}catch(e){}}

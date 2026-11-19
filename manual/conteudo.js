@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.23",
+  versao: "3.24",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.24", data: "19/11/2026", mudou: "CORES NOVAS: grupo **Paletas** em Preferências > Cor do tema, com 8 cores tiradas das paletas que o Dr. Victor escolheu: Rubi, Bordô, Ouro, Lima, Aço, Marsala, Café e Mel, cada uma em Normal e Vidro, no claro e no escuro. Começam liberadas só para o administrador (ele libera para a equipe em Cores da equipe)." },
     { versao: "3.23", data: "19/11/2026", mudou: "Ficha do cliente ORGANIZADA E RETRÁTIL: cada bloco (Processo, Dados do processo, Recursos, Andamentos do CNJ, Checklists, Atendimentos, Comentários, Retorno, Partes, Responsável, Pastas, Tarefas, Pagamentos, Notas, Ações...) abre e recolhe pelo título, com um resumo quando fechado; [[Abrir tudo]] e [[Recolher tudo]]; Colunas: As duas, Só a do meio ou Só a lateral (a que fica ocupa a largura toda); [[Organizar blocos]]: o que aparece, a ordem e a coluna de cada bloco. Tudo lembrado neste navegador; o cartão de cima com o nome fica sempre fixo. MODO CLARO COM A COR: no claro, fundo, painéis e menu ficam tingidos da cor do tema (cada cor bem diferente da outra) e o claro inverte o escuro: a barra de cima fica escura na cor do tema e o menu lateral fica claro, com a letra escura." },
     { versao: "3.22", data: "19/11/2026", mudou: "TELA DE ENTRADA NOVA (Vidro tecnológico, escolhida pelo Dr. Victor): cartão de vidro com a rede de pontos de luz no fundo, botão Entrar, Mostrar a senha, Entrar com o Google, Esqueci a senha e o erro à vista acima do botão. Nenhuma tela do sistema aparece antes de o login ser conferido (aviso \"Conferindo o seu login…\"). Com uma janela aberta, a tela de trás não rola." },
     { versao: "3.21", data: "19/11/2026", mudou: "Ficha do cliente: parte nova PAGAMENTOS E PARCELAS (honorários parcelados, acordo, pensão; cliente com ou sem processo). Pagou A MENOS: somar a diferença na próxima parcela, criar uma parcela só com a diferença ou dar desconto (com motivo). Pagou A MAIS: abater das próximas ou das últimas parcelas. Desmarcar desfaz. Extrato em PDF de cada pagamento." },
@@ -183,7 +184,7 @@ window.SAGA_MANUAL = {
           passos: [
             "Menu da foto > **Preferências** (ou Configurações > Preferências).",
             "**Tema**: Claro ou Escuro (também pelo botão sol/lua no alto).",
-            "**Cor do tema**: um cartão por cor, em três grupos: **Clássicos** (Azul, que é o padrão, Grafite e **Ônix**, preto e cinza), **Tecnológicos** (Azul profundo, Ciano holográfico, Âmbar de reator, Aurora violeta e \"A sua cor\") e **Campanhas** (Novembro Azul, Rosa e Natal). Cada cor tem claro e escuro.",
+            "**Cor do tema**: um cartão por cor, em três grupos: **Clássicos** (Azul, que é o padrão, Grafite e **Ônix**, preto e cinza), **Tecnológicos** (Azul profundo, Ciano holográfico, Âmbar de reator, Aurora violeta e \"A sua cor\") **Paletas** (Rubi, Bordô, Ouro, Lima, Aço, Marsala, Café e Mel) e **Campanhas** (Novembro Azul, Rosa e Natal). Cada cor tem claro e escuro.",
             "Em cada cartão escolha a versão: **Normal** (telas lisas) ou **Vidro** (placas de vidro sobre um fundo). Clique no cartão ou em Normal/Vidro para ver como fica; a cor só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
             "**Efeitos de movimento**: Ligados (janelas abrem e fecham suaves) ou Desligados (troca na hora).",
             "**Cadeado contra voltar sem querer**: Automático (trava sozinho depois de alguns segundos na tela; você escolhe quantos, padrão 20), Manual (só trava quando você clica no cadeado) ou Desligado. A escolha vale neste e nos outros computadores.",
