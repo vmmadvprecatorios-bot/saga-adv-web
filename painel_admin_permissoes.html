@@ -160,7 +160,8 @@ const moduleList = [
   {key:'calendario',   name:'Calendário',             short:'CA'},
   {key:'chat',         name:'Chat Interno',           short:'CH'},
   {key:'ponto',        name:'Ponto Eletrônico',       short:'PT'},
-  {key:'biblioteca',   name:'Biblioteca de Modelos',  short:'BM'},
+  {key:'biblioteca',   name:'Modelos (e arquivos)',   short:'BM'},
+  {key:'peticoes',     name:'Petições e cálculos',    short:'PC'},
   {key:'marketing',    name:'Marketing/Campanhas',    short:'MK'},
   {key:'tarefas',      name:'Minhas Tarefas',         short:'MT'},
   {key:'multi_oab',    name:'Monitoramento Multi-OAB',short:'MO'},
@@ -225,6 +226,14 @@ const NIVEL_ACTIONS = {
   sugestoes:    {
     editar:     [['sugestoes','responder']],
     admin_total:[['sugestoes','responder']]
+  },
+  // Petições e cálculos (bloco 265, T194, 19/11): só o Jurídico (Dr. Victor, Hevelyn, estagiários de direito) ou quem ele liberar.
+  // Visualizar/Comentar = faz petições pelos modelos (ficha e Modelos); Editar/Admin = também faz e confere os cálculos.
+  peticoes:     {
+    visualizar: [['peticoes','gerar']],
+    comentar:   [['peticoes','gerar']],
+    editar:     [['peticoes','gerar'],['calculos','fazer']],
+    admin_total:[['peticoes','gerar'],['calculos','fazer']]
   },
   // SAGA no Claude (bloco 151): Visualizar = usa o conector do SAGA no Claude (só consultas, com as permissões da própria pessoa)
   conector_claude: {
