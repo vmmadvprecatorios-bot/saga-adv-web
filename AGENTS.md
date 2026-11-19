@@ -24,6 +24,8 @@ Desde 12/11/2026 uma conversa do Claude, o **Diário de bordo**, coordena todas 
 - `saga_ui.js`: barra superior, menu lateral, permissões e notificações.
 - `saga_guard.js`: esconde a tela até confirmar o login; cuida das animações e transições gerais.
 - `saga_tema.css`: tema (claro/escuro, cores como variáveis). Use as variáveis, não cores soltas.
+- Modo claro (19/11): no claro, fundo/painéis/menu tingidos da cor e barra de cima ESCURA + menu lateral CLARO (inverso do escuro). As cores normais do claro saem de `ferramentas/gerar_claros.js` (bloco gerado no fim do saga_tema.css; não editar à mão). O modo escuro não muda.
+- Ficha do cliente (19/11): blocos retráteis e organizáveis pelo `saga_ficha_blocos.js` (seções com data-bloco; bloco novo: data-bloco + entrada em BLOCOS). O cartão de cima é fixo.
 - `ponto_calculo.js`: cálculo do ponto, cópia fiel do Apps Script da planilha. **Não altere** sem pedido explícito.
 - `saga_intimacoes.js`: tela de intimações.
 - Regra de 06/11 (Dr. Victor): todo recurso novo usa os efeitos de movimento do sistema: entrada e saída suaves (abrir/fechar janelas, cartões que somem ou mudam de lugar, recolher/expandir blocos, com `window.sagaRecolher` do saga_guard.js), curva `cubic-bezier(.22,.78,.25,1)`, 200 a 420 ms, nunca troca seca. Tudo deve respeitar a chavinha "Efeitos de movimento" (localStorage `saga-movimento`='reduzido' desliga: troca na hora).
