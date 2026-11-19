@@ -777,6 +777,91 @@
   // Rede de seguranca: se algo travar, a tela aparece mesmo assim (mas só com a sessão conferida: 19/11)
   setTimeout(function(){mostrar();html.classList.remove('saga-fixando');},8000);
 
+  // ===== Janela aberta = tela de trás parada (19/11, Dr. Victor) =====
+  // "Com qualquer janela aberta no sistema (pop-up, modal, janela de detalhe), a tela de trás NÃO se move (roda do
+  // mouse, toque, teclado) até fechar a da frente." Janela = camada fixa visível que cobre a tela (o fundo escuro das
+  // janelas) ou [role=dialog][aria-modal=true] / <dialog open> por cima. Enquanto houver uma (empilhadas: até fechar
+  // todas), html.saga-janela-aberta trava a rolagem da página (a posição fica; a largura não muda, scrollbar-gutter),
+  // a roda e o toque só rolam o que está DENTRO da janela da frente (sem passar para trás: overscroll-behavior:contain)
+  // e as teclas de rolar só valem com o foco dentro dela. Menu lateral e barra de cima continuam com as regras deles.
+  (function(){
+    var FORA='#sidebarSaga,#topbarSaga,#sagaPortao,#sagaTravaPonto,#sagaAguardaEntrada,#sagaCarregando,#sagaVidroAnim,#overlay,#toast-container,[data-saga-sem-trava]';
+    var cand=new Set(),ativas=[],travado=false,pedido=false;
+    var st=document.createElement('style');st.id='sagaTravaJanela';
+    st.textContent='html.saga-janela-aberta,html.saga-janela-aberta body{overflow:hidden !important;}'+
+      '[data-saga-janela-ativa],[data-saga-janela-ativa] *{overscroll-behavior:contain;}';
+    (document.head||html).appendChild(st);
+    var NAO_TAG=/^(TD|TH|TR|TBODY|THEAD|TABLE|SPAN|A|B|I|EM|STRONG|SMALL|P|LI|UL|OL|INPUT|SELECT|OPTION|TEXTAREA|BUTTON|LABEL|IMG|BR|SCRIPT|STYLE|LINK|svg|path|g|circle|rect|line|text|use)$/i;
+    function olhar(el){try{if(el&&el.nodeType===1&&!NAO_TAG.test(el.tagName)&&!el.closest(FORA)&&getComputedStyle(el).position==='fixed')cand.add(el);}catch(e){}}
+    function varrer(raiz){if(!raiz||raiz.nodeType!==1)return;olhar(raiz);var l=raiz.querySelectorAll('*');for(var i=0;i<l.length;i++)olhar(l[i]);}
+    function ehAberta(el){
+      if(!el.isConnected)return false;
+      var cs=getComputedStyle(el);
+      if(cs.display==='none'||cs.visibility==='hidden'||cs.pointerEvents==='none'||parseFloat(cs.opacity)<0.05)return false;
+      if(el.tagName==='DIALOG'&&el.open)return true;
+      if(el.getAttribute('role')==='dialog'&&el.getAttribute('aria-modal')==='true')return true;
+      var r=el.getBoundingClientRect();
+      return r.width>=innerWidth*0.9&&r.height>=innerHeight*0.85;
+    }
+    function conferir(){
+      var novas=[];
+      cand.forEach(function(el){if(!el.isConnected){cand.delete(el);return;}if(ehAberta(el))novas.push(el);});
+      document.querySelectorAll('dialog[open],[role="dialog"][aria-modal="true"]').forEach(function(el){if(novas.indexOf(el)<0&&!el.closest(FORA)&&ehAberta(el))novas.push(el);});
+      // a da frente por último (z-index maior; empate: a que vem depois no documento)
+      novas.sort(function(a,b){var za=parseInt(getComputedStyle(a).zIndex,10)||0,zb=parseInt(getComputedStyle(b).zIndex,10)||0;if(za!==zb)return za-zb;return a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING?-1:1;});
+      ativas.forEach(function(el){if(novas.indexOf(el)<0)el.removeAttribute('data-saga-janela-ativa');});
+      novas.forEach(function(el){el.setAttribute('data-saga-janela-ativa','');});
+      ativas=novas;
+      var deve=ativas.length>0;
+      if(deve!==travado){travado=deve;html.classList.toggle('saga-janela-aberta',deve);}
+    }
+    window.sagaJanelaAberta=function(){conferir();return ativas.length>0;};
+    function frente(){return ativas[ativas.length-1]||null;}
+    function liberado(t){return !!(t&&t.closest&&t.closest('#sidebarSaga,#topbarSaga'));}
+    // algum bloco rolável entre o alvo e a janela consegue rolar nessa direção?
+    function podeRolar(alvo,jan,dx,dy){
+      for(var el=alvo;el&&el.nodeType===1;el=el.parentElement){
+        var cs=getComputedStyle(el);
+        if(dy&&/(auto|scroll|overlay)/.test(cs.overflowY)&&el.scrollHeight>el.clientHeight+1){if(dy<0?el.scrollTop>0:el.scrollTop+el.clientHeight<el.scrollHeight-1)return true;}
+        if(dx&&/(auto|scroll|overlay)/.test(cs.overflowX)&&el.scrollWidth>el.clientWidth+1){if(dx<0?el.scrollLeft>0:el.scrollLeft+el.clientWidth<el.scrollWidth-1)return true;}
+        if(el===jan)break;
+      }
+      return false;
+    }
+    function decidir(ev,dx,dy){
+      if(!travado)return;var t=ev.target;if(liberado(t))return;
+      var j=frente();
+      if(!j||!j.contains(t)){if(ev.cancelable)ev.preventDefault();return;}
+      if(Math.abs(dx)>Math.abs(dy))dy=0;else dx=0;
+      if(!podeRolar(t,j,dx,dy)&&ev.cancelable)ev.preventDefault();
+    }
+    document.addEventListener('wheel',function(ev){if(ev.ctrlKey)return;decidir(ev,ev.deltaX,ev.deltaY);},{capture:true,passive:false});
+    var tx=0,ty=0;
+    document.addEventListener('touchstart',function(ev){var p=ev.touches&&ev.touches[0];if(p){tx=p.clientX;ty=p.clientY;}},{capture:true,passive:true});
+    document.addEventListener('touchmove',function(ev){if(!travado||!ev.touches||ev.touches.length!==1)return;var p=ev.touches[0];decidir(ev,tx-p.clientX,ty-p.clientY);tx=p.clientX;ty=p.clientY;},{capture:true,passive:false});
+    var TECLAS={' ':1,PageUp:1,PageDown:1,Home:1,End:1,ArrowUp:1,ArrowDown:1};
+    document.addEventListener('keydown',function(ev){
+      if(!travado||!TECLAS[ev.key]||ev.defaultPrevented)return;
+      var a=document.activeElement,j=frente();
+      if(a&&j&&j.contains(a)&&a!==j)return; // dentro da janela: as teclas valem (campos, listas, a própria rolagem dela)
+      if(a&&a.closest&&a.closest('#sidebarSaga,#topbarSaga'))return;
+      if(a&&(a.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)))return;
+      ev.preventDefault();
+    },true);
+    function iniciar(){
+      varrer(document.body);conferir();
+      new MutationObserver(function(lista){
+        lista.forEach(function(m){if(m.type==='childList')m.addedNodes.forEach(varrer);else olhar(m.target);});
+        if(!pedido){pedido=true;requestAnimationFrame(function(){pedido=false;conferir();});}
+      }).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class','style','hidden','open','aria-modal']});
+      // a janela que abre pela transição do CSS só fica visível no fim dela
+      ['transitionend','transitionrun','animationend'].forEach(function(t){document.addEventListener(t,function(){requestAnimationFrame(conferir);},true);});
+      setInterval(conferir,400);
+      addEventListener('resize',conferir);
+    }
+    if(document.body)iniciar();else document.addEventListener('DOMContentLoaded',iniciar);
+  })();
+
   // Transicao entre paginas: quando a outra pagina nao participa (ex.: login), o navegador cancela sem erro aparente
   function calarTransicao(ev){
     var vt=ev&&ev.viewTransition;if(!vt)return;
