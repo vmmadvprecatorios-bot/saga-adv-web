@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191233"></script>
+<script src="saga_guard.js?v=202611191245"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Configurações</title>
@@ -215,7 +215,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   .sd-filtro select{min-width:0;flex:1 1 100%}}
 .pr-cad{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.pr-cad-seg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);transition:opacity .26s cubic-bezier(.22,.78,.25,1)}.pr-cad-seg.apagado{opacity:.5}.pr-cad-seg select{width:auto;min-width:64px}@media(max-width:760px){.pr-cad{align-items:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191233">
+<link rel="stylesheet" href="saga_tema.css?v=202611191245">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -500,8 +500,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611191233"></script>
-<script src="saga_teses.js?v=202611191233"></script>
+<script src="saga_ui.js?v=202611191245"></script>
+<script src="saga_teses.js?v=202611191245"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)
@@ -846,12 +846,12 @@ async function salvarAvisos(){
 }
 /* ----- Cor do tema (Azul padrão, Grafite...) ----- */
 document.addEventListener('click',function(e){if(e.target&&e.target.id==='prCorSalvar')salvarCorTema();else if(e.target&&e.target.id==='prCorDesfazer')desfazerCorTema();});
-var AMOSTRAS={azul:['#172234','#212e44','#4b8af5','#e8ecf1','#ffffff','#1f3e6d'],grafite:['#1A1A1A','#242424','#D4B98A','#F3F2EF','#FFFFFF','#1A1A1A'],
+var AMOSTRAS={azul:['#172234','#212e44','#4b8af5','#CBD8EB','#EFF3F8','#1554C1'],grafite:['#1A1A1A','#242424','#D4B98A','#DEDCD9','#F4F4F3','#745B34'],
   vidro:['#0A1B2E','#1B3B5A','#5AA9FF','#E1E8F0','#7DB8F2','#1F5E9E'],'vidro-ciano':['#04161C','#0B2F38','#22D3EE','#DDF3F3','#4FE3DE','#0B6E73'],
   'vidro-ambar':['#120D08','#3A2618','#FF8A3D','#F6ECDD','#FFB547','#8A4E0C'],'vidro-aurora':['#0E0A1F','#2E2459','#8F7BFF','#ECE8FA','#B39BFF','#5233B5'],
-  novembro:['#0B1B2C','#1C5C93','#3A9DE6','#E3F0FA','#FFFFFF','#1670B3'],rosa:['#1E1219','#8A2E5A','#E85A93','#F9E8EF','#FFFFFF','#B8336A'],natal:['#0E1D16','#1E5A3C','#DB444C','#F1EFE6','#E9C46A','#B3262E'],
+  novembro:['#0B1B2C','#1C5C93','#3A9DE6','#C6DEF1','#EDF4FA','#11609C'],rosa:['#1E1219','#8A2E5A','#E85A93','#EFC8DA','#F9EEF3','#A91E5A'],natal:['#0E1D16','#1E5A3C','#DB444C','#D0E7DA','#F0F7F3','#BC242C'],
   // 17/11: versões normais das cores de vidro e o Ônix (as versões vidro das cores normais vêm da semente: amostraCor)
-  profundo:['#0A1522','#213C5A','#4C9BF0','#E4EAF1','#FFFFFF','#116DD0'],ciano:['#091D23','#21525A','#4CDBF0','#E3EFF2','#FFFFFF','#0B7889'],ambar:['#1D150E','#5D371D','#FA8C42','#EFEAE6','#FFFFFF','#B84C05'],aurora:['#0F0C1F','#281F5B','#8B77F8','#E7E5F0','#FFFFFF','#3716F3'],onix:['#0E0E0E','#2B2B2B','#D9D9D9','#EBEBEB','#FFFFFF','#292929']};
+  profundo:['#0A1522','#213C5A','#4C9BF0','#C8DAEF','#EEF3F9','#0E5CAF'],ciano:['#091D23','#21525A','#4CDBF0','#C8E8EF','#EEF7F9','#0A6C7B'],ambar:['#1D150E','#5D371D','#FA8C42','#EDDBC9','#F9F4EE','#9D4807'],aurora:['#0F0C1F','#281F5B','#8B77F8','#D2CBEB','#F1EFF8','#3E1CC4'],onix:['#0E0E0E','#2B2B2B','#D9D9D9','#D6D6D6','#F4F4F4','#2E2E2E']};
 function amostraCor(id){var sem=window.SAGA_VIDRO_SEMENTES&&SAGA_VIDRO_SEMENTES[id];if(sem&&window.sagaVidroLivre){try{return sagaVidroLivre(sem.cor,sem).amostra;}catch(e){}}return AMOSTRAS[id]||AMOSTRAS.azul;}
 function coresDisponiveis(){return window.SAGA_CORES||[{id:'azul',nome:'Azul',descricao:'Padrão do sistema'}];}
 function corAtual(){return state.eu.tema_cor_fixo||(window.sagaTemaDoMes&&sagaTemaDoMes())||prefs().cor||'azul';}

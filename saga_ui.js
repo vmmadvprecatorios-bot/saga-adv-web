@@ -82,11 +82,13 @@
     var p=global.SAGA_CORES.find(function(x){return x.familia===c.familia&&x.id!==c.id;});return p?p.id:null;};
   // cor de fundo de cada tema antes da 1ª imagem da tela ([escuro, claro]); o saga_guard.js tem a mesma lista
   // (as versões vidro das cores normais e o Vidro Ônix saem da semente, SAGA_VIDRO_SEMENTES no saga_guard.js)
-  global.SAGA_FUNDOS={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0'],
-    profundo:['#0A1B2E','#E9EEF4'],ciano:['#06181E','#E6F5F5'],ambar:['#140F0A','#F8F1E7'],aurora:['#100C22','#F0EDFA'],onix:['#0E0E0F','#EEEEEC']};
+  global.SAGA_FUNDOS={azul:['#172234','#DAE3F1'],grafite:['#1A1A1A','#E7E6E4'],novembro:['#0B1B2C','#D6E8F5'],rosa:['#1E1219','#F4D7E5'],natal:['#0E1D16','#DDEEE4'],vidro:['#0A1B2E','#E1E8F0'],'vidro-ciano':['#04161C','#DDF3F3'],'vidro-ambar':['#120D08','#F6ECDD'],'vidro-aurora':['#0E0A1F','#ECE8FA'],'vidro-livre':['#0A1B2E','#E1E8F0'],
+    profundo:['#0A1B2E','#D7E5F4'],ciano:['#06181E','#D7EFF4'],ambar:['#140F0A','#F2E6D9'],aurora:['#100C22','#DFDAF1'],onix:['#0E0E0F','#E0E0E0']};
   global.sagaFundoCor=function(cor,claro){var sem=global.SAGA_VIDRO_SEMENTES&&global.SAGA_VIDRO_SEMENTES[cor];
     if(sem&&global.sagaVidroLivre){try{var vs=global.sagaVidroLivre(sem.cor,sem);return claro?vs.c.fundo:vs.e.fundo;}catch(e){}}
     if(cor==='vidro-livre'&&global.sagaVidroLivre){try{var vl=global.sagaVidroLivre(localStorage.getItem('saga-vidro-cor')||'#5AA9FF');return claro?vl.c.fundo:vl.e.fundo;}catch(e){}}
+    // 19/11 (modo claro com a cor): as 4 cores de vidro antigas usam a conta do vidro só no claro
+    var vcl=claro&&global.SAGA_VIDRO_CLARO&&global.SAGA_VIDRO_CLARO[cor];if(vcl&&global.sagaVidroLivre){try{return global.sagaVidroLivre(vcl.cor,vcl).c.fundo;}catch(e){}}
     var f=global.SAGA_FUNDOS[cor]||global.SAGA_FUNDOS.azul;return claro?f[1]:f[0];};
   // "Tema do mês" (12/11): o administrador liga e escolhe a cor de cada mês (padrão: out Rosa, nov Novembro Azul, dez Natal);
   // vale para toda a equipe, menos para quem tem a cor fixada pelo administrador
@@ -117,7 +119,8 @@
       o.efeito=localStorage.getItem('saga-vidro-efeito')||'nenhum';o.intensidade=+localStorage.getItem('saga-vidro-intensidade')||2;o.velocidade=+localStorage.getItem('saga-vidro-velocidade')||2;}catch(e){}if(o.fundo==='imagem'&&!o.imagem)o.fundo='montanhas';return o;},
     aplicar:function(){var h=document.documentElement,o=global.sagaVidro.opcoes();h.setAttribute('data-vidro-fundo',o.fundo);h.classList.toggle('vidro-fosco',o.fosco);
       var sem=global.SAGA_VIDRO_SEMENTES&&global.SAGA_VIDRO_SEMENTES[h.getAttribute('data-cor')||''];
-      if(global.sagaVidroAplicarLivre){if(sem)global.sagaVidroAplicarLivre(sem.cor,sem);else global.sagaVidroAplicarLivre(o.cor);}
+      var vcl=!sem&&global.SAGA_VIDRO_CLARO&&global.SAGA_VIDRO_CLARO[h.getAttribute('data-cor')||''];
+      if(global.sagaVidroAplicarLivre){if(sem)global.sagaVidroAplicarLivre(sem.cor,sem);else if(vcl)global.sagaVidroAplicarLivre(vcl.cor,vcl);else global.sagaVidroAplicarLivre(o.cor);}
       if(sem||(h.getAttribute('data-cor')||'')==='vidro-livre'){var claro=(document.body&&document.body.getAttribute('data-theme'))==='light';h.style.background=global.sagaFundoCor(h.getAttribute('data-cor'),claro);h.style.setProperty('--vd-fundo-html',h.style.background);}
       if(o.fundo==='imagem'&&o.imagem)h.style.setProperty('--vidro-img','url("'+o.imagem+'")');else h.style.removeProperty('--vidro-img');
       if(global.sagaVidroAnimar)global.sagaVidroAnimar();},

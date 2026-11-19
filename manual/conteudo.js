@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.22",
+  versao: "3.23",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.23", data: "19/11/2026", mudou: "Ficha do cliente ORGANIZADA E RETRÁTIL: cada bloco (Processo, Dados do processo, Recursos, Andamentos do CNJ, Checklists, Atendimentos, Comentários, Retorno, Partes, Responsável, Pastas, Tarefas, Pagamentos, Notas, Ações...) abre e recolhe pelo título, com um resumo quando fechado; [[Abrir tudo]] e [[Recolher tudo]]; Colunas: As duas, Só a do meio ou Só a lateral (a que fica ocupa a largura toda); [[Organizar blocos]]: o que aparece, a ordem e a coluna de cada bloco. Tudo lembrado neste navegador; o cartão de cima com o nome fica sempre fixo. MODO CLARO COM A COR: no claro, fundo, painéis e menu ficam tingidos da cor do tema (cada cor bem diferente da outra) e o claro inverte o escuro: a barra de cima fica escura na cor do tema e o menu lateral fica claro, com a letra escura." },
     { versao: "3.22", data: "19/11/2026", mudou: "TELA DE ENTRADA NOVA (Vidro tecnológico, escolhida pelo Dr. Victor): cartão de vidro com a rede de pontos de luz no fundo, botão Entrar, Mostrar a senha, Entrar com o Google, Esqueci a senha e o erro à vista acima do botão. Nenhuma tela do sistema aparece antes de o login ser conferido (aviso \"Conferindo o seu login…\"). Com uma janela aberta, a tela de trás não rola." },
     { versao: "3.21", data: "19/11/2026", mudou: "Ficha do cliente: parte nova PAGAMENTOS E PARCELAS (honorários parcelados, acordo, pensão; cliente com ou sem processo). Pagou A MENOS: somar a diferença na próxima parcela, criar uma parcela só com a diferença ou dar desconto (com motivo). Pagou A MAIS: abater das próximas ou das últimas parcelas. Desmarcar desfaz. Extrato em PDF de cada pagamento." },
     { versao: "3.20", data: "18/11/2026", mudou: "NÚMEROS NO MENU: cada item mostra quantas coisas esperam por você (Minhas Tarefas, Intimações de hoje, Agenda, Pedidos do Saga IA, Notas compartilhadas, Teses e oportunidades, Relatórios a preparar, Pedidos de busca, Chat e, para o administrador, Sugestões novas); vermelho = pede ação; grupo fechado mostra a soma; com o menu recolhido o número fica em cima do ícone. CHAT: @ vermelho na conversa em que você foi marcado, abas Não lidas e Marcações, e a conversa abre na mensagem que marcou você. SONS em Configurações > Preferências > Sons (mensagem nova e marcação ligados; intimação nova e aviso urgente desligados; volume; botão para ouvir)." },
@@ -187,6 +188,7 @@ window.SAGA_MANUAL = {
             "**Efeitos de movimento**: Ligados (janelas abrem e fecham suaves) ou Desligados (troca na hora).",
             "**Cadeado contra voltar sem querer**: Automático (trava sozinho depois de alguns segundos na tela; você escolhe quantos, padrão 20), Manual (só trava quando você clica no cadeado) ou Desligado. A escolha vale neste e nos outros computadores.",
             "**Sons**: Ligados ou Desligados e, um por um, **Mensagem nova no chat**, **Alguém marcou você no chat**, **Intimação nova chegou** e **Aviso urgente no sino** (prazo de tarefa; para o administrador, erro de robô), com o **volume** (Baixo, Médio, Alto) e o botão ▶ para ouvir. Começam ligados só os do chat. O navegador só toca depois que você clicar uma vez na página e, com várias abas abertas, só uma toca. A escolha vale em qualquer computador.",
+            "**Modo claro com a cor** (19/11): no tema Claro, o fundo, os painéis e o menu ficam tingidos da cor escolhida, e o claro é o inverso do escuro: a barra de cima fica escura na cor do tema e o menu lateral fica claro, com a letra escura.",
             "**Tamanho da letra**: Normal, Grande ou Maior."
           ],
           img: "preferencias_cores",
@@ -458,6 +460,20 @@ window.SAGA_MANUAL = {
           img: "ficha_topo",
           marcas: ["Nome do cliente.", "Editar dados do cliente.", "Aba de um processo.", "Localização: contatos do cliente e dos parentes.", "+ Novo Processo para este cliente.", "+ Recurso (agravo, apelação...) do processo aberto."],
           dicas: ["Telefone confirmado com o cliente? Clique em validar (✓): ele vira o contato principal de confiança."]
+        },
+        { id: "blocos", titulo: "Organizar a ficha: recolher blocos, colunas e a ordem",
+          quando: "Quando a ficha tem informação demais na tela e você quer ver só o que usa.",
+          passos: [
+            "O **cartão de cima** (nome, código, contatos e as abas dos processos) fica sempre fixo. Todo o resto é dividido em **blocos**.",
+            "Clique no **título de um bloco** (ou na setinha) para **recolher**; clique de novo para **abrir**. Fechado, o título mostra um resumo (ex.: \"2 itens abertos\", \"3 comentários\", o nome do responsável).",
+            "Na barra **Blocos da ficha**: [[Abrir tudo]] e [[Recolher tudo]].",
+            "**Colunas**: [[As duas]], [[Só a do meio]] ou [[Só a lateral]]. A coluna que fica ocupa a largura toda; a faixa fina do lado traz a outra de volta.",
+            "[[Organizar blocos]]: marque quais blocos aparecem, mude a **ordem** (▲▼) e a **coluna** de cada um (**Meio** ou **Lado**). [[Voltar ao padrão]] desfaz tudo.",
+            "A escolha fica guardada **neste navegador** e vale para todas as fichas. Link que leva a um bloco (ex.: aviso de parcela vencida, andamento novo, menção num comentário) abre o bloco sozinho."
+          ],
+          img: "ficha_blocos",
+          marcas: ["Abrir tudo e Recolher tudo.", "Colunas: as duas, só a do meio ou só a lateral.", "Organizar blocos.", "Bloco recolhido: clique no título para abrir.", "Janela Organizar blocos: aparece ou não, coluna e ordem."],
+          dicas: ["No celular as colunas ficam uma embaixo da outra; recolher e organizar funcionam igual.", "Recolher não apaga nada: é só a forma de ver a ficha."]
         },
         { id: "processo", titulo: "Trabalhar dentro de um processo",
           quando: "Para registrar o que aconteceu com o processo e com o cliente.",

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191233"></script>
+<script src="saga_guard.js?v=202611191245"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -368,26 +368,101 @@ span.ps-origem-btn{cursor:default}
 </style>
 
 
+<style>
+/* ===== Ficha organizada e retrátil (19/11, Dr. Victor; saga_ficha_blocos.js): blocos que abrem e recolhem, colunas e "Organizar blocos" ===== */
+.fb-barra{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 26px;border-top:1px solid var(--border-soft);border-bottom:1px solid var(--border-soft);font-size:12.5px;color:var(--muted);position:relative}
+.fb-barra-tit{color:var(--text);font-weight:600;cursor:help}
+.fb-esp{flex:1}
+.fb-barra .fb-b{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:12px;padding:6px 11px;border-radius:9px;cursor:pointer;border:1px solid var(--sb-sec-borda,var(--border));background:var(--sb-sec,transparent);color:var(--text)}
+.fb-barra .fb-b:hover{background:var(--sb-sec-hover,var(--panel-2))}
+.fb-grupo{display:inline-flex;align-items:center;gap:4px;margin-left:6px}
+.fb-rot{margin-right:2px}
+.fb-barra .fb-grupo .fb-b.active{background:var(--sb-escolha);border-color:var(--sb-escolha-borda);color:var(--text)}
+.fb-cab{cursor:pointer;user-select:none;border-radius:9px;transition:background .2s,color .2s}
+.fb-cab:hover{color:var(--text)}
+.fb-cab:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.fb-seta{display:inline-grid;place-items:center;width:16px;height:16px;flex:0 0 16px;color:var(--gold);transform:rotate(90deg);transition:transform 320ms cubic-bezier(.22,.78,.25,1)}
+.fb-fechado > .fb-cab .fb-seta{transform:rotate(0deg)}
+.fb-resumo{margin-left:auto;font-size:11.5px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%;opacity:0;transition:opacity 260ms ease}
+.fb-fechado > .fb-cab .fb-resumo{opacity:1}
+.fb-cab .fb-resumo:empty{display:none}
+.fb-fechado > .fb-cab{padding:9px 12px;margin-bottom:0;border:1px solid var(--border-soft);background:color-mix(in srgb,var(--panel-2) 70%,transparent)}
+.fb-fechado > .fb-cab:hover{background:var(--panel-2)}
+.fb-fechado > .fb-cab :is(button,a):not(.fb-seta){display:none}
+.fb-bloco.fb-fechado{margin-bottom:10px}
+.fb-bloco.fb-oculto{display:none!important}
+/* títulos que o próprio quadro desenha ficam no título do bloco (os botões continuam) */
+[data-bloco="dados"] #processDataHeading > .secao-titulo,[data-bloco="recursos"] .rec-tit,[data-bloco="andamentos"] .and-tit,#secaoPartes > .secao-titulo{display:none!important}
+[data-bloco="dados"] #processDataHeading{justify-content:flex-end}
+[data-bloco="dados"] #processDataHeading:empty{display:none}
+[data-bloco="retorno"] .fb-corpo > .bloco-retorno-destaque{margin-bottom:0}
+.fb-corpo{min-width:0}
+.fb-cab{justify-content:flex-start!important}
+.fb-cab > span:not(.fb-seta):not(.fb-resumo){flex:0 1 auto!important}
+.fb-cab > .fb-seta{flex:0 0 16px!important}
+.fb-cab > :is(button,.pasta-topo-btn){margin-left:auto}
+[data-bloco="recursos"] .rec-quadro,[data-bloco="andamentos"] .and-quadro{margin-top:0;padding-top:0;border-top:0}
+[data-bloco="recursos"] .rec-cab,[data-bloco="andamentos"] .and-cab{justify-content:flex-end}
+/* colunas: a que fica ocupa a largura toda; uma faixa fina traz a outra de volta */
+.fb-trilho{display:none}
+.ficha-corpo[data-fb-colunas="meio"]{grid-template-columns:minmax(0,1fr) 44px}
+.ficha-corpo[data-fb-colunas="meio"] > .coluna-lateral{display:none}
+.ficha-corpo[data-fb-colunas="meio"] > .coluna-principal{border-right:0}
+.ficha-corpo[data-fb-colunas="lado"]{grid-template-columns:44px minmax(0,1fr)}
+.ficha-corpo[data-fb-colunas="lado"] > .coluna-principal{display:none}
+.ficha-corpo[data-fb-colunas="lado"] > .coluna-lateral{grid-column:2;grid-row:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 22px;align-items:start}
+.ficha-corpo[data-fb-colunas="lado"] > .fb-trilho{grid-column:1;grid-row:1;border-left:0;border-right:1px solid var(--border-soft)}
+.ficha-corpo:not([data-fb-colunas="ambas"]) > .fb-trilho:not([hidden]){display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 0;border:0;border-left:1px solid var(--border-soft);background:transparent;color:var(--muted);cursor:pointer;font:inherit;align-self:stretch}
+.fb-trilho:hover{color:var(--text);background:color-mix(in srgb,var(--gold) 6%,transparent)!important}
+.fb-trilho i{font-style:normal;width:28px;height:28px;display:grid;place-items:center;border-radius:9px;border:1px solid var(--border);font-size:15px}
+.ficha-corpo[data-fb-colunas="lado"] > .fb-trilho i{transform:scaleX(-1)}
+.fb-trilho span{writing-mode:vertical-rl;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+/* janela "Organizar blocos" */
+.fb-org{position:absolute;right:20px;top:calc(100% + 6px);z-index:60;width:min(470px,calc(100vw - 32px));max-height:min(70vh,640px);overflow:auto;background:var(--panel-solid,var(--panel));border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);padding:14px 16px;color:var(--text);font-size:13px}
+.fb-org-topo b{display:block;font-size:14px}.fb-org-topo span{display:block;color:var(--muted);font-size:12px;margin:2px 0 6px}
+.fb-org-sec{margin:12px 0 4px;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fb-org-l{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--border-soft)}
+.fb-org-l.fb-org-off .fb-org-nome span{opacity:.55}
+.fb-org-nome{display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0}.fb-org-nome small{color:var(--muted)}
+.fb-org-col{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--border-soft);border-radius:9px}
+.fb-org-col button,.fb-org-mv button{font:inherit;font-size:11.5px;padding:2px 8px;border-radius:7px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer}
+.fb-org-col button.active{background:var(--sb-escolha);border-color:var(--sb-escolha-borda);color:var(--text)}
+.fb-org-mv{display:inline-flex;gap:2px}.fb-org-mv button{padding:2px 6px}.fb-org-mv button:disabled{opacity:.3;cursor:default}
+.fb-org-pe{display:flex;gap:8px;align-items:center;margin-top:12px}
+::view-transition-group(*){animation-duration:380ms;animation-timing-function:cubic-bezier(.22,.78,.25,1)}
+@container ficha (max-width:760px){
+  .fb-barra{padding:10px 16px}.fb-barra-dica,.fb-grupo{display:none}
+  .ficha-corpo[data-fb-colunas]{grid-template-columns:1fr}
+  .ficha-corpo[data-fb-colunas] > .coluna-principal{display:block;grid-column:auto;grid-row:auto}
+  .ficha-corpo[data-fb-colunas] > .coluna-lateral{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;grid-column:auto;grid-row:auto}
+  .ficha-corpo[data-fb-colunas] > .fb-trilho{display:none!important}
+  .coluna-lateral > [data-bloco="retorno"]{grid-column:1/-1}
+}
+@container ficha (max-width:560px){
+  .ficha-corpo[data-fb-colunas] > .coluna-lateral{grid-template-columns:minmax(0,1fr)}
+  .fb-org{right:8px}
+}
+</style>
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611191233"></script>
-<script src="saga_fichas.js?v=202611191233"></script>
-<script src="saga_teses.js?v=202611191233"></script>
-<script src="saga_mencoes.js?v=202611191233"></script>
-<script src="saga_texto.js?v=202611191233"></script>
-<script src="saga_partes.js?v=202611191233"></script>
-<script src="saga_etiquetas.js?v=202611191233"></script>
-<script src="saga_origem.js?v=202611191233"></script>
-<script src="saga_planilha.js?v=202611191233"></script>
-<script src="saga_recursos.js?v=202611191233"></script>
-<script src="saga_andamentos.js?v=202611191233"></script>
-<script src="saga_tribunais.js?v=202611191233"></script>
-<script src="saga_atendimentos.js?v=202611191233"></script>
-<script src="saga_pagamentos.js?v=202611191233"></script>
-<script src="saga_disparos.js?v=202611191233"></script>
-<script src="saga_relatorios.js?v=202611191233"></script>
-<script src="saga_timbrado.js?v=202611191233"></script>
-<script src="saga_peticoes.js?v=202611191233"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611191233">
+<script src="saga_ui.js?v=202611191245"></script>
+<script src="saga_fichas.js?v=202611191245"></script>
+<script src="saga_teses.js?v=202611191245"></script>
+<script src="saga_mencoes.js?v=202611191245"></script>
+<script src="saga_texto.js?v=202611191245"></script>
+<script src="saga_partes.js?v=202611191245"></script>
+<script src="saga_etiquetas.js?v=202611191245"></script>
+<script src="saga_origem.js?v=202611191245"></script>
+<script src="saga_planilha.js?v=202611191245"></script>
+<script src="saga_recursos.js?v=202611191245"></script>
+<script src="saga_andamentos.js?v=202611191245"></script>
+<script src="saga_tribunais.js?v=202611191245"></script>
+<script src="saga_atendimentos.js?v=202611191245"></script>
+<script src="saga_pagamentos.js?v=202611191245"></script>
+<script src="saga_disparos.js?v=202611191245"></script>
+<script src="saga_relatorios.js?v=202611191245"></script>
+<script src="saga_timbrado.js?v=202611191245"></script>
+<script src="saga_peticoes.js?v=202611191245"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611191245">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -416,22 +491,29 @@ span.ps-origem-btn{cursor:default}
         <nav class="process-tabs" id="processTabs" aria-label="Processos vinculados à cliente"></nav>
       </header>
 
+      <div class="fb-barra" id="fichaBlocosBarra" hidden></div>
       <div class="ficha-corpo process-content-frame" id="processContentFrame">
         <div class="coluna-principal">
-          <section class="secao">
+          <section class="secao" data-bloco="processo" data-titulo="Processo (situação, fase, etiquetas, petição)">
             <div class="process-summary" id="processStatusTags"></div>
+          </section>
+          <section class="secao" data-bloco="dados" data-titulo="Dados do processo">
             <div class="process-data-title" id="processDataHeading"></div>
             <div class="grid-dados" id="processDataGrid"></div>
+          </section>
+          <section class="secao" data-bloco="recursos" data-titulo="Recursos deste processo">
             <div id="processRecursos"></div>
+          </section>
+          <section class="secao" data-bloco="andamentos" data-titulo="Andamentos no tribunal (CNJ)">
             <div id="processAndamentos"></div>
           </section>
 
-          <section class="secao" id="secaoResumoAgente" hidden>
+          <section class="secao" id="secaoResumoAgente" data-bloco="resumo_agente" hidden>
             <div class="secao-titulo ra-cab"><span style="display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Resumo do agente de petições</span><span class="ra-quando" id="resumoAgenteQuando"></span></div>
             <div id="resumoAgenteCorpo"></div>
           </section>
 
-          <section class="secao">
+          <section class="secao" data-bloco="checklists">
             <div class="secao-titulo secao-titulo-actions"><span>Checklists</span></div>
             <div class="checklist-list" id="checklistList"></div>
             <div class="menu-modelos-checklist">
@@ -440,12 +522,12 @@ span.ps-origem-btn{cursor:default}
             </div>
           </section>
 
-          <section class="secao" id="secaoAtendimentos" hidden>
+          <section class="secao" id="secaoAtendimentos" data-bloco="atendimentos" hidden>
             <div class="secao-titulo secao-titulo-actions"><span style="display:flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Atendimentos</span><button class="sat-b btn-sm peq" type="button" id="btnMarcarAtendimentoFicha" title="Marcar um atendimento com este cliente (presencial, WhatsApp ou Google Meet)">+ Marcar atendimento</button></div>
             <div id="atendimentosFicha"></div>
           </section>
 
-          <section class="secao" id="secaoHistorico">
+          <section class="secao" id="secaoHistorico" data-bloco="comentarios">
             <div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke="currentColor" stroke-width="1.5"/></svg>Comentários e Histórico</div>
             <div class="caixa-novo-comentario">
               <div class="mini-avatar-comentario" id="avatarComentario">VM</div>
@@ -462,16 +544,16 @@ span.ps-origem-btn{cursor:default}
         </div>
 
         <aside class="coluna-lateral">
-          <section class="bloco-retorno-destaque atencao" id="blocoRetorno"></section>
-          <section class="bloco-lateral" id="secaoPartes"></section>
-          <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>Responsável</div><div class="responsavel-bloco" id="processResponsible"></div></section>
-          <section class="bloco-lateral" id="secaoDocumentos"><div class="secao-titulo pastas-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Pastas do cliente</span><button type="button" class="pasta-topo-btn" id="btnNovaPasta" title="Criar pastas: pré-prontas (marcar) ou livre">+ Pasta</button></div><div id="processRelatorios"></div><div class="docs-pessoais arvore-pastas" id="docsPessoais" hidden></div><div class="arvore-pastas" id="documentList"></div><button class="btn-anexar-documento" id="btnAnexarDocumento">+ Anexar documento</button><input class="hidden" id="documentInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt"></section>
-          <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Tarefas</div><div class="tarefa-list" id="taskList"></div><button class="btn-nova-tarefa-mini" id="btnAddTask">+ Adicionar tarefa</button></section>
-          <section class="bloco-lateral" id="secaoPagamentos" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Pagamentos</div><div id="pagamentosFicha"></div><button class="btn-nova-tarefa-mini" id="btnNovoPagamento" type="button" hidden>+ Novo pagamento</button></section>
-          <section class="bloco-lateral" id="secaoEmails" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-6 18-3-8-9-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>E-mails enviados</div><div id="emailsFicha"></div><button class="btn-nova-tarefa-mini" id="btnEnviarEmail" type="button" hidden>+ Enviar e-mail</button></section>
-          <section class="bloco-lateral" id="secaoAgente" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Agente de petições</div><div class="ag-lista" id="agenteLista"></div><button class="btn-nova-tarefa-mini" id="btnPedirAgente" hidden>+ Pedir ao agente</button></section>
-          <section class="bloco-lateral" id="secaoNotas" hidden><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Notas</div><div class="notas-ficha" id="notasFicha"></div><button class="btn-nova-tarefa-mini" id="btnNovaNotaFicha" type="button">+ Nova nota sobre o cliente</button></section>
-          <section class="bloco-lateral"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Ações</div><div class="botoes-acao-lateral"><button class="btn-acao-lateral" id="btnVerMovimentacoes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Intimações do processo</button><button class="btn-acao-lateral" id="btnVerTarefasProcesso" title="Abre a tela de Tarefas só com as tarefas deste processo (Ctrl+clique abre em outra aba)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Tarefas do processo</button></div></section>
+          <section class="bloco-lateral" data-bloco="retorno" data-titulo="Retorno agendado"><section class="bloco-retorno-destaque atencao" id="blocoRetorno"></section></section>
+          <section class="bloco-lateral" data-bloco="partes" data-titulo="Partes do processo"><div id="secaoPartes"></div></section>
+          <section class="bloco-lateral" data-bloco="responsavel"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/></svg>Responsável</div><div class="responsavel-bloco" id="processResponsible"></div></section>
+          <section class="bloco-lateral" id="secaoDocumentos" data-bloco="pastas"><div class="secao-titulo pastas-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 6.5A1.5 1.5 0 014.5 5H10l2 2.5h7.5A1.5 1.5 0 0121 9v9.5a1.5 1.5 0 01-1.5 1.5h-15A1.5 1.5 0 013 18.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Pastas do cliente</span><button type="button" class="pasta-topo-btn" id="btnNovaPasta" title="Criar pastas: pré-prontas (marcar) ou livre">+ Pasta</button></div><div id="processRelatorios"></div><div class="docs-pessoais arvore-pastas" id="docsPessoais" hidden></div><div class="arvore-pastas" id="documentList"></div><button class="btn-anexar-documento" id="btnAnexarDocumento">+ Anexar documento</button><input class="hidden" id="documentInput" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt"></section>
+          <section class="bloco-lateral" data-bloco="tarefas"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Tarefas</div><div class="tarefa-list" id="taskList"></div><button class="btn-nova-tarefa-mini" id="btnAddTask">+ Adicionar tarefa</button></section>
+          <section class="bloco-lateral" id="secaoPagamentos" hidden data-bloco="pagamentos"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Pagamentos</div><div id="pagamentosFicha"></div><button class="btn-nova-tarefa-mini" id="btnNovoPagamento" type="button" hidden>+ Novo pagamento</button></section>
+          <section class="bloco-lateral" id="secaoEmails" hidden data-bloco="emails"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M3 11l18-8-6 18-3-8-9-2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>E-mails enviados</div><div id="emailsFicha"></div><button class="btn-nova-tarefa-mini" id="btnEnviarEmail" type="button" hidden>+ Enviar e-mail</button></section>
+          <section class="bloco-lateral" id="secaoAgente" hidden data-bloco="agente"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 4h10l4 4v12H5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 11h8M8 15h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Agente de petições</div><div class="ag-lista" id="agenteLista"></div><button class="btn-nova-tarefa-mini" id="btnPedirAgente" hidden>+ Pedir ao agente</button></section>
+          <section class="bloco-lateral" id="secaoNotas" hidden data-bloco="notas"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Notas</div><div class="notas-ficha" id="notasFicha"></div><button class="btn-nova-tarefa-mini" id="btnNovaNotaFicha" type="button">+ Nova nota sobre o cliente</button></section>
+          <section class="bloco-lateral" data-bloco="acoes"><div class="secao-titulo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/></svg>Ações</div><div class="botoes-acao-lateral"><button class="btn-acao-lateral" id="btnVerMovimentacoes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5"/></svg>Intimações do processo</button><button class="btn-acao-lateral" id="btnVerTarefasProcesso" title="Abre a tela de Tarefas só com as tarefas deste processo (Ctrl+clique abre em outra aba)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Tarefas do processo</button></div></section>
         </aside>
       </div>
 
@@ -5212,7 +5294,8 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611191233"></script>
-<script src="saga_ficha_atividades.js?v=202611191233"></script>
+<script src="saga_localizacao.js?v=202611191245"></script>
+<script src="saga_ficha_blocos.js?v=202611191245"></script>
+<script src="saga_ficha_atividades.js?v=202611191245"></script>
 </body>
 </html>
