@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.20",
-  data: "18/11/2026",
+  versao: "3.21",
+  data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.21", data: "19/11/2026", mudou: "Ficha do cliente: parte nova PAGAMENTOS E PARCELAS (honorários parcelados, acordo, pensão; cliente com ou sem processo). Pagou A MENOS: somar a diferença na próxima parcela, criar uma parcela só com a diferença ou dar desconto (com motivo). Pagou A MAIS: abater das próximas ou das últimas parcelas. Desmarcar desfaz. Extrato em PDF de cada pagamento." },
     { versao: "3.20", data: "18/11/2026", mudou: "NÚMEROS NO MENU: cada item mostra quantas coisas esperam por você (Minhas Tarefas, Intimações de hoje, Agenda, Pedidos do Saga IA, Notas compartilhadas, Teses e oportunidades, Relatórios a preparar, Pedidos de busca, Chat e, para o administrador, Sugestões novas); vermelho = pede ação; grupo fechado mostra a soma; com o menu recolhido o número fica em cima do ícone. CHAT: @ vermelho na conversa em que você foi marcado, abas Não lidas e Marcações, e a conversa abre na mensagem que marcou você. SONS em Configurações > Preferências > Sons (mensagem nova e marcação ligados; intimação nova e aviso urgente desligados; volume; botão para ouvir)." },
     { versao: "3.19", data: "18/11/2026", mudou: "Tela nova Processos > RELATÓRIOS: pedir o relatório processual do cliente, acompanhar (pedido, em preparação, pronto, enviado ao cliente) e ver na hora QUANDO foi o último relatório enviado, em verde, amarelo ou vermelho; o relatório fica na pasta \"Relatórios processuais\" da ficha e aparece nos dois lugares; na ficha, o quadro Relatórios em cada processo; avisos no sino; o Claude (SAGA no Claude) também consulta e registra." },
     { versao: "3.18", data: "17/11/2026", mudou: "Minhas Tarefas: passar o mouse no cartão não aumenta mais o cartão nem empurra os outros; tipo, quem passou a tarefa, compartilhamento e os atalhos Ficha e Intimações ficam na janela da tarefa (clique no cartão)." },
@@ -530,6 +531,22 @@ window.SAGA_MANUAL = {
           img: "ficha_localizacao",
           marcas: ["Localização.", "Pedir busca."],
           atencao: ["CPF da consulta diferente do CPF da ficha: tudo vem desmarcado. Confira antes de gravar.", "Lido de print: confira cada número com atenção (a leitura de imagem pode trocar um dígito). Use o zoom do navegador em 100% ou mais antes de tirar o print.", "Renda, score, consumo, veículos e empresas NÃO entram no SAGA (LGPD), venham do PDF ou do print."]
+        },
+        { id: "pagamentos", titulo: "Pagamentos e parcelas do cliente",
+          quando: "Quando o cliente paga em parcelas (honorários parcelados, acordo, Pix todo mês) ou recebe parcelas de alguém (pensão, acordo da outra parte). Vale também para cliente sem processo.",
+          passos: [
+            "Na ficha, coluna da direita, bloco **Pagamentos** (logo depois de Tarefas), clique em [[+ Novo pagamento]].",
+            "Escolha o **tipo** (Honorários parcelados, Pensão alimentícia, Acordo da outra parte, Outro), o **processo** (ou \"Sem processo\"), quem paga, o **valor total** OU o **valor de cada parcela**, o **nº de parcelas**, o **1º vencimento** e se repete **Mensal**, **Quinzenal** ou **Semanal**. Clique em [[Criar parcelas]]: o SAGA monta as parcelas sozinho.",
+            "O cartão mostra quanto foi **pago**, quanto **falta**, a **próxima parcela** e, em vermelho, as **atrasadas**.",
+            "Quando o cliente pagar, clique no quadradinho da parcela, informe a **data**, o **valor pago** e a **forma** (PIX, transferência...) e clique em [[Marcar como paga]]. A parcela é riscada e vai para **Pagas**.",
+            "**Pagou a menos?** Digite o valor que entrou (ex.: R$ 300 numa parcela de R$ 500): aparece \"Faltaram R$ 200. O que fazer com a diferença?\". Escolha [[Somar na próxima parcela]] (a próxima fica maior), [[Criar uma parcela só com a diferença]] (escolha a data) ou [[Dar desconto]] (perdoa a diferença; escreva o motivo).",
+            "**Pagou a mais?** Escolha [[Abater das próximas parcelas]] (as próximas ficam menores ou já pagas, como \"coberta pela parcela N\") ou [[Abater das últimas parcelas]] (o pagamento termina antes).",
+            "Marcou errado? Clique de novo no quadradinho da parcela paga e confirme: ela volta para \"a pagar\" e o que foi feito com a diferença é desfeito.",
+            "[[Extrato em PDF]] no cartão: todas as parcelas, o que foi pago, quando, os descontos e o que falta (bom para mandar ao cliente).",
+            "O lápis do cartão muda o total, o número de parcelas ou as datas (só as que faltam pagar são refeitas); o lápis da parcela muda o vencimento ou o valor de uma só."
+          ],
+          dicas: ["Honorários parcelados: cada parcela paga entra sozinha no Financeiro como RECEBIDA, sem lançar à mão. Todas as parcelas do escritório ficam em Financeiro > Parcelas (a receber, atrasadas, pagas).", "Parcela vencida e não paga gera aviso no sino.", "Pelo SAGA no Claude dá para pedir: \"marque a parcela 3 do fulano como paga, R$ 300 no Pix, e some o resto na próxima\"."],
+          atencao: ["Honorários: só quem lança no Financeiro registra e marca. Os outros tipos: quem edita processos.", "Só o administrador remove um pagamento (ele sai da ficha, mas o histórico fica). Tudo fica no Registro de atividades."]
         }
       ]
     },

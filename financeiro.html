@@ -695,7 +695,8 @@ function renderParcelas(){
   if(!state.temParcelas)return;
   var hoje=hojeISO(),mes=hoje.slice(0,7);
   var dias=function(iso){var a=String(iso).slice(0,10).split('-'),h=hoje.split('-');return Math.round((new Date(+a[0],+a[1]-1,+a[2])-new Date(+h[0],+h[1]-1,+h[2]))/86400000);};
-  var val=function(p){return Number(p.pago_em&&p.valor_pago!=null?p.valor_pago:p.valor||0);};
+  // bloco 263: parcela coberta pelo pagamento a mais de outra conta 0 (o valor está na que cobriu)
+  var val=function(p){if(p.pago_em&&p.coberta_por_numero!=null)return 0;return Number(p.pago_em&&p.valor_pago!=null?p.valor_pago:p.valor||0);};
   var temOutros=state.parcelas.some(function(p){return p.honorarios===false;});
   if(!temOutros)state.tipoParc='honorarios';
   renderPills('filtroParcelas',[['abertas','A receber'],['atrasadas','Atrasadas'],['pagas','Pagas'],['todas','Todas']],state.filtroParc,function(v){state.filtroParc=v;renderParcelas();});
@@ -730,7 +731,8 @@ function renderParcelas(){
   tb.innerHTML=lista.map(function(p){
     total+=val(p);
     var d=dias(p.vencimento),sit;
-    if(p.pago_em)sit=etq('Paga em '+dataBR(p.pago_em),'#2fae7a')+(p.forma?'<div class="sub">'+esc(p.forma)+'</div>':'');
+    if(p.pago_em&&p.coberta_por_numero!=null)sit=etq('Coberta pela parcela '+p.coberta_por_numero,'#2fae7a')+'<div class="sub">pagamento a mais em '+dataBR(p.pago_em)+'</div>';
+    else if(p.pago_em)sit=etq('Paga em '+dataBR(p.pago_em),'#2fae7a')+(p.forma?'<div class="sub">'+esc(p.forma)+'</div>':'')+(Number(p.desconto||0)>0?'<div class="sub">desconto de '+moeda(p.desconto)+'</div>':'');
     else if(d<0)sit=etq('Atrasada há '+(-d)+' dia'+(d===-1?'':'s'),'#e5636a');
     else sit=etq(d===0?'Vence hoje':'Vence em '+d+' dia'+(d===1?'':'s'),d<=7?'#e0a93b':'#4b8af5');
     var proc=p.numero_processo_cnj?(window.sagaFmt?sagaFmt.cnj(p.numero_processo_cnj):p.numero_processo_cnj):(p.processo_id?'Sem número':'—');

@@ -113,6 +113,14 @@
       '.spg-parc:first-child{border-top:0}' +
       '.spg-parc .n{color:var(--muted)}.spg-parc .d small{display:block;color:var(--muted);font-size:9.5px}.spg-parc .v{font-weight:600;text-align:right}' +
       '.spg-parc.atraso .d{color:var(--danger,#e5484d);font-weight:600}' +
+      '.spg-parc .d small.aj{color:var(--gold)}.spg-parc .v small{display:block;font-size:9px;font-weight:400;color:var(--muted)}.spg-parc .v s{font-weight:400}' +
+      '.spg-dif{display:flex;flex-direction:column;gap:8px;padding:10px;border-radius:10px;border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 6%,transparent)}' +
+      '.spg-dif-tit{font-size:11.5px;font-weight:600;color:var(--text)}' +
+      '.spg-opcs{display:flex;flex-direction:column;gap:6px}' +
+      '.spg-opc{font:inherit;text-align:left;display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:9px;border:1px solid var(--border-soft,var(--border));background:transparent;color:var(--text);cursor:pointer;transition:border-color .25s ' + CURVA + ',background-color .25s ' + CURVA + '}' +
+      '.spg-opc b{font-size:11.5px;font-weight:600}.spg-opc span{font-size:10.5px;color:var(--muted);line-height:1.4}' +
+      '.spg-opc:hover{border-color:var(--gold)}.spg-opc.active{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}' +
+      '.spg-opc-extra{padding-left:2px}' +
       '.spg-parc.paga .v,.spg-parc.paga .d{color:var(--muted)}' +
       '.spg-parc.saindo .d,.spg-parc.saindo .v,.spg-parc.saindo .n{text-decoration:line-through;text-decoration-color:var(--success,#2fae7a);opacity:.55;transition:opacity .32s ' + CURVA + '}' +
       '.spg-chk{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border);background:transparent;display:grid;place-items:center;color:transparent;cursor:pointer;padding:0;transition:background-color .25s ' + CURVA + ',border-color .25s ' + CURVA + ',color .25s ' + CURVA + ',transform .2s ' + CURVA + '}' +
@@ -209,32 +217,63 @@
   }
 
   /* ---------- bloco da ficha ---------- */
+  // bloco 263: parcela paga a menos/a mais. Conta de cada parcela no total: a pagar = valor; paga = valor pago + desconto;
+  // coberta (paga junto com outra que veio a mais) = 0. Sempre: total = pago + descontos + o que falta.
+  function coberta(p){ return !!(p && p.pago_em && p.coberta_por_numero != null); }
+  function pagoDe(p){ return coberta(p) ? 0 : Number(p.valor_pago != null ? p.valor_pago : p.valor || 0); }
+  function contaDe(p){ return !p.pago_em ? Number(p.valor || 0) : (coberta(p) ? 0 : pagoDe(p) + Number(p.desconto || 0)); }
+  function porVencimento(x, y){ var a = String(x.vencimento).slice(0, 10), b = String(y.vencimento).slice(0, 10); return a < b ? -1 : a > b ? 1 : x.numero - y.numero; }
   function resumo(a){
     var ps = a.parcelas || [], hoje = isoHoje();
     var pagas = ps.filter(function(p){ return !!p.pago_em; });
-    var abertas = ps.filter(function(p){ return !p.pago_em; });
-    var pago = pagas.reduce(function(s, p){ return s + Number(p.valor_pago != null ? p.valor_pago : p.valor); }, 0);
+    var abertas = ps.filter(function(p){ return !p.pago_em; }).sort(porVencimento);
+    var pago = pagas.reduce(function(s, p){ return s + pagoDe(p); }, 0);
+    var desconto = pagas.reduce(function(s, p){ return s + (coberta(p) ? 0 : Number(p.desconto || 0)); }, 0);
     var falta = abertas.reduce(function(s, p){ return s + Number(p.valor || 0); }, 0);
     var atrasadas = abertas.filter(function(p){ return String(p.vencimento).slice(0, 10) < hoje; });
-    return { pagas: pagas, abertas: abertas, pago: pago, falta: falta, atrasadas: atrasadas, total: Number(a.valor_total || 0), n: ps.length };
+    return { pagas: pagas, abertas: abertas, pago: pago, desconto: desconto, falta: falta, atrasadas: atrasadas, total: Number(a.valor_total || 0), n: ps.length };
+  }
+  // frase do que foi feito com a diferença (pagou a menos ou a mais)
+  function textoAjuste(p){
+    var aj = p && p.ajuste; if (!aj) return '';
+    var ef = Array.isArray(aj.efeitos) ? aj.efeitos : [];
+    var nums = function(f){ return ef.filter(f).map(function(e){ return e.numero; }); };
+    var lista = function(ns){ return ns.length === 1 ? 'a parcela ' + ns[0] : 'as parcelas ' + ns.slice(0, -1).join(', ') + ' e ' + ns[ns.length - 1]; };
+    if (aj.falta != null) {
+      var f = moeda(aj.falta);
+      if (aj.tipo === 'desconto') return 'faltaram ' + f + ': desconto' + (aj.motivo ? ' (' + aj.motivo + ')' : '');
+      if (aj.tipo === 'nova') { var nv = nums(function(e){ return e.criada; }); return 'faltaram ' + f + ': viraram ' + (nv.length ? 'a parcela ' + nv[0] : 'uma parcela nova'); }
+      var px = nums(function(){ return true; });
+      return 'faltaram ' + f + ': somados ' + (px.length ? 'na parcela ' + px[0] : 'na próxima parcela');
+    }
+    if (aj.sobra != null) {
+      var todas = nums(function(){ return true; });
+      return 'pagou ' + moeda(aj.sobra) + ' a mais: abatido ' + (todas.length ? (todas.length === 1 ? 'da parcela ' + todas[0] : 'das parcelas ' + lista(todas).replace(/^as parcelas /, '')) : 'das próximas');
+    }
+    return '';
   }
   var ICONE_OK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.2 4.2L19 7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var ICONE_LAPIS = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1L20 7l-3-3L5 16l-1 4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
   function htmlParcela(a, p, n){
-    var paga = !!p.pago_em, d = diasAte(p.vencimento), atraso = !paga && d < 0;
-    var quando = paga
-      ? 'venceu ' + dBr(p.vencimento) + '<small>paga em ' + esc(dBr(p.pago_em)) + (p.forma ? ' · ' + esc(p.forma) : '') + (p.observacao ? ' · ' + esc(p.observacao) : '') + '</small>'
-      : (atraso ? 'venceu ' + dBr(p.vencimento) + '<small>atrasada há ' + (-d) + ' dia' + (-d === 1 ? '' : 's') + '</small>' : (d === 0 ? 'vence hoje' : 'vence ' + dBr(p.vencimento)) + (p.observacao ? '<small>' + esc(p.observacao) + '</small>' : ''));
-    var valor = paga ? moeda(p.valor_pago != null ? p.valor_pago : p.valor) : moeda(p.valor);
+    var paga = !!p.pago_em, cob = coberta(p), d = diasAte(p.vencimento), atraso = !paga && d < 0, aj = textoAjuste(p);
+    var venc = (d > 0 ? 'vence ' : 'venceu ') + dBr(p.vencimento);
+    var quando = cob
+      ? venc + '<small>coberta pelo pagamento a mais da parcela ' + esc(p.coberta_por_numero) + ' (' + esc(dBr(p.pago_em)) + ')</small>'
+      : paga
+      ? venc + '<small>paga em ' + esc(dBr(p.pago_em)) + (p.forma ? ' · ' + esc(p.forma) : '') + (p.observacao ? ' · ' + esc(p.observacao) : '') + '</small>' +
+          (aj ? '<small class="aj">' + esc(aj) + '</small>' : '')
+      : (atraso ? 'venceu ' + dBr(p.vencimento) + '<small>atrasada há ' + (-d) + ' dia' + (-d === 1 ? '' : 's') + (p.observacao ? ' · ' + esc(p.observacao) : '') + '</small>' : (d === 0 ? 'vence hoje' : 'vence ' + dBr(p.vencimento)) + (p.observacao ? '<small>' + esc(p.observacao) + '</small>' : ''));
+    var valor = cob ? '<s>' + moeda(p.valor) + '</s>' : paga ? moeda(pagoDe(p)) + (Number(p.desconto || 0) > 0 ? '<small>+ ' + moeda(p.desconto) + ' desc.</small>' : '') : moeda(p.valor);
+    var titulo = cob ? 'Paga junto com a parcela ' + p.coberta_por_numero + ': para desfazer, desmarque a parcela ' + p.coberta_por_numero : paga ? 'Paga (clique para desmarcar)' : 'Marcar como paga';
     return '<div class="spg-parc' + (paga ? ' paga' : '') + (atraso ? ' atraso' : '') + '" data-parc="' + esc(p.id) + '">' +
-      '<button type="button" class="spg-chk" data-marcar="' + esc(p.id) + '" aria-pressed="' + paga + '" ' + (a.pode_mexer ? '' : 'disabled ') +
-        'title="' + (paga ? 'Paga (clique para desmarcar)' : 'Marcar como paga') + '" aria-label="Parcela ' + p.numero + ' de ' + n + (paga ? ', paga' : ', marcar como paga') + '">' + ICONE_OK + '</button>' +
+      '<button type="button" class="spg-chk" data-marcar="' + esc(p.id) + '" aria-pressed="' + paga + '" ' + (a.pode_mexer && !cob ? '' : 'disabled ') +
+        'title="' + esc(titulo) + '" aria-label="Parcela ' + p.numero + ' de ' + n + (paga ? ', paga' : ', marcar como paga') + '">' + ICONE_OK + '</button>' +
       '<span class="n">' + p.numero + '/' + n + '</span><span class="d">' + quando + '</span><span class="v">' + valor + '</span>' +
       (a.pode_mexer && !paga ? '<button type="button" class="spg-ep" data-editar-parc="' + esc(p.id) + '" title="Mudar o vencimento ou o valor desta parcela" aria-label="Editar a parcela ' + p.numero + '">' + ICONE_LAPIS + '</button>' : '<span></span>') +
       '</div>';
   }
   function htmlAcordo(a){
-    var r = resumo(a), n = r.n || a.n_parcelas, pct = r.total > 0 ? Math.min(100, Math.round(r.pago / r.total * 100)) : 0;
+    var r = resumo(a), n = r.n || a.n_parcelas, pct = r.total > 0 ? Math.min(100, Math.round((r.pago + r.desconto) / r.total * 100)) : 0;
     var proc = a.numero_processo_cnj ? 'Processo ' + esc(a.numero_processo_cnj) : (a.processo_id ? 'Processo sem número' : 'Sem processo (só do cliente)');
     var sub = [proc];
     if (a.pagador) sub.push('Quem paga: ' + esc(a.pagador));
@@ -254,6 +293,7 @@
         (a.pode_mexer ? '<button type="button" class="spg-ed" data-editar-ac="' + esc(a.id) + '" title="Editar este pagamento" aria-label="Editar este pagamento">' + ICONE_LAPIS + '</button>' : '') + '</div>' +
       '<div class="spg-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Quanto já foi pago"><i style="width:' + pct + '%"></i></div>' +
       '<div class="spg-res"><span>Pago <b>' + moeda(r.pago) + '</b> de <b>' + moeda(r.total) + '</b></span><span>' + r.pagas.length + ' de ' + n + ' parcela' + (n === 1 ? '' : 's') + '</span></div>' +
+      '<div class="spg-res"><span>Falta <b>' + moeda(r.falta) + '</b></span>' + (r.desconto > 0 ? '<span>Desconto <b>' + moeda(r.desconto) + '</b></span>' : '') + '</div>' +
       proxHtml +
       (abertasVisiveis.length ? '<div class="spg-parcs">' + abertasVisiveis.map(function(p){ return htmlParcela(a, p, n); }).join('') + '</div>' : '') +
       (resto.length ? '<div class="spg-parcs spg-mais"' + (maisAberto ? '' : ' hidden') + '>' + resto.map(function(p){ return htmlParcela(a, p, n); }).join('') + '</div>' +
@@ -262,6 +302,7 @@
         '<div class="spg-parcs spg-pagas"' + (pagasAberto ? '' : ' hidden') + '>' + r.pagas.slice().reverse().map(function(p){ return htmlParcela(a, p, n); }).join('') + '</div>' : '') +
       (a.honorarios ? '<div class="spg-nota">Honorários: cada parcela paga entra no Financeiro como recebida.</div>' : '') +
       (a.observacao ? '<div class="spg-nota">' + esc(a.observacao) + '</div>' : '') +
+      '<button type="button" class="spg-mais-bt" data-extrato="' + esc(a.id) + '" title="Extrato deste pagamento em PDF (o que foi pago, quando, e o que falta)">Extrato em PDF</button>' +
       '</div>';
   }
   function desenhar(){
@@ -293,6 +334,7 @@
       if (b.dataset.marcar) { var x = parcelaPorId(b.dataset.marcar); if (x) (x.p.pago_em ? desmarcar(x.a, x.p) : abrirMarcar(x.a, x.p)); return; }
       if (b.dataset.editarParc) { var y = parcelaPorId(b.dataset.editarParc); if (y) abrirParcela(y.a, y.p); return; }
       if (b.dataset.editarAc) { var a = acordoPorId(b.dataset.editarAc); if (a) abrirAcordo(a); return; }
+      if (b.dataset.extrato) { var ax = acordoPorId(b.dataset.extrato); if (ax) extrato(ax); return; }
       if (b.dataset.pagas || b.dataset.mais) {
         var id = b.dataset.pagas || b.dataset.mais, conj = b.dataset.pagas ? atual.pagasAbertas : atual.maisAbertas;
         var alvo = b.dataset.pagas ? b.nextElementSibling : b.previousElementSibling;
@@ -334,18 +376,110 @@
     }, 250);
   }
 
+  /* ---------- extrato do pagamento em PDF (SagaPdf: página branca com a marca do escritório) ---------- */
+  function carregarPdf(){
+    if (global.SagaPdf) return Promise.resolve(global.SagaPdf);
+    return new Promise(function(ok, falha){
+      var meu = document.querySelector('script[src*="saga_pagamentos.js"]'), v = meu ? (meu.getAttribute('src').split('?')[1] || '') : '';
+      var sc = document.createElement('script'); sc.src = 'saga_pdf.js' + (v ? '?' + v : '');
+      sc.onload = function(){ global.SagaPdf ? ok(global.SagaPdf) : falha(new Error('o gerador de PDF não carregou')); };
+      sc.onerror = function(){ falha(new Error('não foi possível carregar o gerador de PDF (saga_pdf.js)')); };
+      document.head.appendChild(sc);
+    });
+  }
+  async function extrato(a){
+    var pdf;
+    try { pdf = await carregarPdf(); } catch(e) { aviso('Não foi possível gerar o extrato: ' + erroTxt(e), 'erro'); return; }
+    var r = resumo(a), n = r.n || a.n_parcelas, cli = (atual && atual.ctx && atual.ctx.pessoaNome) || '';
+    var todas = (a.parcelas || []).slice().sort(porVencimento), hoje = isoHoje();
+    var linhas = todas.map(function(p){
+      var sit, val, pago = '';
+      if (coberta(p)) { sit = 'Coberta pela parcela ' + p.coberta_por_numero; val = moeda(p.valor); pago = '—'; }
+      else if (p.pago_em) { sit = 'Paga em ' + dBr(p.pago_em) + (p.forma ? ' (' + p.forma + ')' : ''); val = moeda(p.valor); pago = moeda(pagoDe(p)) + (Number(p.desconto || 0) > 0 ? ' + ' + moeda(p.desconto) + ' desc.' : ''); }
+      else { sit = String(p.vencimento).slice(0, 10) < hoje ? 'Atrasada' : 'A pagar'; val = moeda(p.valor); pago = '—'; }
+      var obs = [textoAjuste(p), p.observacao].filter(Boolean).join(' · ');
+      return '<tr><td>' + p.numero + '/' + n + '</td><td>' + dBr(p.vencimento) + '</td><td class="num">' + val + '</td><td>' + esc(sit) + '</td><td class="num">' + esc(pago) + '</td><td>' + esc(obs) + '</td></tr>';
+    }).join('');
+    var html = '<div class="kpis"><div class="forte"><span>Total</span><b>' + moeda(r.total) + '</b></div><div><span>Pago</span><b>' + moeda(r.pago) + '</b></div>' +
+      (r.desconto > 0 ? '<div><span>Desconto</span><b>' + moeda(r.desconto) + '</b></div>' : '') +
+      '<div' + (r.atrasadas.length ? ' class="ruim"' : '') + '><span>Falta pagar</span><b>' + moeda(r.falta) + '</b></div><div><span>Parcelas pagas</span><b>' + r.pagas.length + ' de ' + n + '</b></div></div>' +
+      '<p style="font-size:8.5pt;margin:0 0 8px">' + esc([a.tipo_nome, a.descricao].filter(Boolean).join(' · ')) + (a.pagador ? ' · Quem paga: ' + esc(a.pagador) : '') +
+        (a.numero_processo_cnj ? ' · Processo ' + esc(global.sagaFmt && global.sagaFmt.cnj ? global.sagaFmt.cnj(a.numero_processo_cnj) : a.numero_processo_cnj) : '') + '</p>' +
+      '<table class="tab"><thead><tr><th>Parcela</th><th>Vencimento</th><th class="num">Valor</th><th>Situação</th><th class="num">Pago</th><th>Observação</th></tr></thead><tbody>' + linhas + '</tbody></table>' +
+      '<p style="font-size:7.5pt;color:#5f6f86;margin-top:10px">Extrato gerado em ' + dBr(hoje) + '.</p>';
+    try {
+      pdf.imprimir({ titulo: 'Extrato de pagamento', subtitulo: cli, arquivo: 'Extrato de pagamento - ' + (cli || 'cliente'), paginas: [html] });
+    } catch(e) { aviso('Não foi possível gerar o extrato: ' + erroTxt(e), 'erro'); }
+  }
+
   /* ---------- marcar e desmarcar uma parcela ---------- */
   function abrirMarcar(a, p){
     var n = (a.parcelas || []).length || a.n_parcelas, hoje = isoHoje(), formaSel = null;
+    var outras = (a.parcelas || []).filter(function(x){ return !x.pago_em && x.id !== p.id; }).sort(porVencimento);
+    var prox = outras[0] || null, faltaOutras = outras.reduce(function(s, x){ return s + Number(x.valor || 0); }, 0);
+    var ultimaVenc = (a.parcelas || []).reduce(function(m, x){ var v = String(x.vencimento).slice(0, 10); return v > m ? v : m; }, '');
+    var vencDif = ultimaVenc ? vencimento(ultimaVenc, a.periodicidade, 2) : hoje;
+    var modo = null, ultimoTipo = null;
     var ov = janela('Parcela ' + p.numero + '/' + n + ' paga', esc(a.descricao || a.tipo_nome || 'Pagamento') + ' · vencimento ' + dBr(p.vencimento) + ' · ' + moeda(p.valor),
       '<div class="spg-g2"><div class="spg-campo"><label for="spgData">Data do pagamento</label><input class="spg-in" id="spgData" data-s="data" type="date" max="' + hoje + '" value="' + hoje + '"></div>' +
       '<div class="spg-campo"><label for="spgValor">Valor pago (R$)</label><input class="spg-in" id="spgValor" data-s="valor" inputmode="numeric" autocomplete="off" value="' + paraCampo(p.valor) + '"></div></div>' +
+      '<div class="spg-dif" data-s="dif" hidden></div>' +
       '<div class="spg-campo"><span class="spg-rot">Forma de pagamento</span><div data-s="forma"></div></div>' +
       '<div class="spg-campo"><label for="spgObsP">Observação (opcional)</label><input class="spg-in" id="spgObsP" data-s="obs" maxlength="200" autocomplete="off" placeholder="Ex.: pagou pelo filho; comprovante no WhatsApp"></div>' +
       (a.honorarios ? '<div class="spg-hon">Honorários: o valor entra no Financeiro como <b>recebido</b> nesta data.</div>' : '') +
       '<div class="spg-erro" data-s="erro" role="alert"></div>',
       '<span class="esp"></span><button type="button" class="btn-secondary" data-fechar>Cancelar</button><button type="button" class="btn-primary" data-s="ok">Marcar como paga</button>');
-    ligarMoeda(ov.q('valor'));
+    var difEl = ov.q('dif');
+    // o que fazer com a diferença (bloco 263): aparece só quando o valor pago é diferente da parcela
+    function opcao(k, titulo, texto, extra){
+      return '<button type="button" class="spg-opc' + (k === modo ? ' active' : '') + '" data-modo="' + k + '" aria-pressed="' + (k === modo) + '"><b>' + titulo + '</b><span>' + texto + '</span></button>' + (extra || '');
+    }
+    function desenharDif(){
+      var valor = lerMoeda(ov.q('valor').value), dif = valor ? Math.round((Number(p.valor) - valor) * 100) / 100 : 0;
+      var tipo = !valor || dif === 0 ? null : (dif > 0 ? 'menos' : 'mais');
+      if (!tipo) { if (!difEl.hidden) recolher(difEl, true); ultimoTipo = null; return; }
+      var ab = Math.abs(dif), html;
+      if (tipo !== ultimoTipo || !modo) modo = tipo === 'menos' ? (prox ? 'proxima' : 'nova') : 'proxima';
+      ultimoTipo = tipo;
+      if (tipo === 'menos') {
+        html = '<div class="spg-dif-tit">Faltaram ' + moeda(ab) + '. O que fazer com a diferença?</div><div class="spg-opcs">' +
+          (prox ? opcao('proxima', 'Somar na próxima parcela', 'A parcela ' + prox.numero + ' (' + dBr(prox.vencimento) + ') passa de ' + moeda(prox.valor) + ' para ' + moeda(Number(prox.valor) + ab) + '.') : '') +
+          opcao('nova', 'Criar uma parcela só com a diferença', 'Uma parcela nova de ' + moeda(ab) + ', na data que escolher.',
+            modo === 'nova' ? '<div class="spg-campo spg-opc-extra"><label for="spgVencDif">Vencimento da diferença</label><input class="spg-in" id="spgVencDif" data-s="vencDif" type="date" value="' + esc(ov._vencDif || vencDif) + '"></div>' : '') +
+          opcao('desconto', 'Dar desconto', 'Perdoa os ' + moeda(ab) + ': aparece como desconto neste pagamento e o motivo vai para o registro.',
+            modo === 'desconto' ? '<div class="spg-campo spg-opc-extra"><label for="spgMotivo">Motivo do desconto</label><input class="spg-in" id="spgMotivo" data-s="motivo" maxlength="200" autocomplete="off" placeholder="Ex.: combinado com o Dr. Victor; arredondamento" value="' + esc(ov._motivo || '') + '"></div>' : '') +
+          '</div>';
+      } else if (ab > faltaOutras + 0.001) {
+        modo = null;
+        html = '<div class="spg-dif-tit">Pagou ' + moeda(ab) + ' a mais.</div><div class="spg-previa erro">O valor passa em ' + moeda(Math.round((ab - faltaOutras) * 100) / 100) + ' o que falta pagar neste pagamento (' + moeda(faltaOutras) + ' nas outras parcelas). Corrija o valor ou aumente o total do pagamento.</div>';
+      } else {
+        var efeito = function(lista){
+          var resta = ab, cob = [], parcial = null;
+          lista.some(function(x){ if (resta <= 0) return true; if (Number(x.valor) <= resta) { cob.push(x.numero); resta = Math.round((resta - Number(x.valor)) * 100) / 100; } else { parcial = x; return true; } return false; });
+          var t = [];
+          if (cob.length) t.push((cob.length === 1 ? 'a parcela ' + cob[0] + ' fica paga' : 'as parcelas ' + cob.join(', ') + ' ficam pagas'));
+          if (parcial && resta > 0) t.push('a parcela ' + parcial.numero + ' passa para ' + moeda(Number(parcial.valor) - resta));
+          return t.join(' e ') + '.';
+        };
+        html = '<div class="spg-dif-tit">Pagou ' + moeda(ab) + ' a mais. Onde abater?</div><div class="spg-opcs">' +
+          opcao('proxima', 'Abater das próximas parcelas', 'Adiantou: ' + efeito(outras)) +
+          opcao('ultimas', 'Abater das últimas parcelas', 'Termina antes: ' + efeito(outras.slice().reverse())) +
+          '</div>';
+      }
+      if (ov.q('vencDif')) ov._vencDif = ov.q('vencDif').value;
+      if (ov.q('motivo')) ov._motivo = ov.q('motivo').value;
+      difEl.innerHTML = html;
+      if (difEl.hidden) recolher(difEl, false);
+    }
+    difEl.addEventListener('click', function(e){
+      var b = e.target.closest('button[data-modo]'); if (!b || b.dataset.modo === modo) return;
+      if (ov.q('vencDif')) ov._vencDif = ov.q('vencDif').value;
+      if (ov.q('motivo')) ov._motivo = ov.q('motivo').value;
+      modo = b.dataset.modo; desenharDif();
+      var f = ov.q('motivo') || ov.q('vencDif'); if (f && b.dataset.modo !== 'nova') try { f.focus(); } catch(x) {}
+    });
+    difEl.addEventListener('input', function(e){ if (e.target.dataset.s === 'motivo') ov._motivo = e.target.value; if (e.target.dataset.s === 'vencDif') ov._vencDif = e.target.value; });
+    ligarMoeda(ov.q('valor'), desenharDif);
     var cat = catalogo('pagamento_forma', { campo: 'Forma de pagamento', vazio: 'Não informada', nova: '+ Nova forma', editar: 'Editar forma', novaT: 'Nova forma', salvar: 'Salvar forma', erro: 'Não foi possível salvar a forma.', carregar: 'Não foi possível carregar as formas de pagamento.' });
     if (cat) { cat.carregar().then(function(){ cat.montar(ov.q('forma'), { valor: function(){ return formaSel; }, escolher: function(e){ formaSel = e; } }); }); }
     else ov.q('forma').innerHTML = '<input class="spg-in" data-s="formaTxt" maxlength="40" placeholder="Ex.: PIX">';
@@ -355,13 +489,22 @@
       if (!data) { erro.textContent = 'Informe a data do pagamento.'; return; }
       if (data > hoje) { erro.textContent = 'A data do pagamento não pode ser depois de hoje.'; return; }
       if (!valor || valor <= 0) { erro.textContent = 'Informe o valor pago.'; return; }
+      var dif = Math.round((Number(p.valor) - valor) * 100) / 100, motivo = null, vDif = null;
+      if (dif !== 0) {
+        if (!modo) { erro.textContent = dif < 0 ? 'O valor pago passa o que falta pagar: corrija o valor ou aumente o total.' : 'Escolha o que fazer com a diferença.'; return; }
+        if (modo === 'desconto') { motivo = (ov.q('motivo') ? ov.q('motivo').value : '').trim(); if (motivo.length < 5) { erro.textContent = 'Escreva o motivo do desconto (pelo menos 5 letras).'; try { ov.q('motivo').focus(); } catch(x) {} return; } }
+        if (modo === 'nova') { vDif = ov.q('vencDif') ? ov.q('vencDif').value : ''; if (!vDif) { erro.textContent = 'Informe o vencimento da parcela da diferença.'; return; } }
+      }
       var forma = formaSel ? formaSel.nome : (ov.q('formaTxt') ? ov.q('formaTxt').value.trim() : '');
       ocupar(ov, true);
-      var r = await sb().rpc('pagamento_parcela_marcar', { p_parcela: p.id, p_pago: true, p_valor: valor, p_data: data, p_forma: forma || null, p_obs: ov.q('obs').value.trim() || null });
+      var r = await sb().rpc('pagamento_parcela_marcar', { p_parcela: p.id, p_pago: true, p_valor: valor, p_data: data, p_forma: forma || null, p_obs: ov.q('obs').value.trim() || null,
+        p_diferenca: dif !== 0 ? modo : null, p_venc_diferenca: vDif || null, p_motivo: motivo });
       ocupar(ov, false);
       if (r.error) { erro.textContent = 'Não foi possível marcar: ' + erroTxt(r.error); return; }
       ov.fechar();
-      aviso('Parcela ' + p.numero + '/' + n + ' marcada como paga' + (a.honorarios ? ' e lançada no Financeiro.' : '.'), 'ok');
+      var extra = dif > 0 ? (modo === 'proxima' ? ' Os ' + moeda(dif) + ' que faltaram foram somados na próxima parcela.' : modo === 'nova' ? ' Os ' + moeda(dif) + ' que faltaram viraram uma parcela nova.' : ' Desconto de ' + moeda(dif) + ' registrado.')
+        : dif < 0 ? ' Os ' + moeda(-dif) + ' a mais foram abatidos das ' + (modo === 'ultimas' ? 'últimas' : 'próximas') + ' parcelas.' : '';
+      aviso('Parcela ' + p.numero + '/' + n + ' marcada como paga' + (a.honorarios ? ' e lançada no Financeiro.' : '.') + extra, 'ok');
       saidaRiscada(p.id, recarregar);
     });
     setTimeout(function(){ try { ov.q('valor').focus(); ov.q('valor').select(); } catch(e) {} }, 60);
@@ -376,7 +519,9 @@
   }
   async function desmarcar(a, p){
     var n = (a.parcelas || []).length || a.n_parcelas;
-    var ok = await confirmar('Desmarcar a parcela?', 'A parcela ' + p.numero + '/' + n + ' volta para "a pagar"' + (a.honorarios ? ' e o valor sai do Financeiro' : '') + '. Fica no registro de atividades.', 'Desmarcar', false);
+    var aj = textoAjuste(p);
+    var ok = await confirmar('Desmarcar a parcela?', 'A parcela ' + p.numero + '/' + n + ' volta para "a pagar"' + (a.honorarios ? ' e o valor sai do Financeiro' : '') +
+      (aj ? '. O que foi feito com a diferença (' + aj + ') também é desfeito' : '') + '. Fica no registro de atividades.', 'Desmarcar', false);
     if (!ok) return;
     var r = await sb().rpc('pagamento_parcela_marcar', { p_parcela: p.id, p_pago: false, p_valor: null, p_data: null, p_forma: null, p_obs: null });
     if (r.error) { aviso('Não foi possível desmarcar: ' + erroTxt(r.error), 'erro'); return; }
@@ -448,7 +593,7 @@
       if (!n || n < 1 || n > 240) { previa.classList.add('erro'); previa.textContent = 'O número de parcelas vai de 1 a 240.'; return; }
       if (!total) { previa.textContent = 'Digite o valor total ou o valor de cada parcela.'; return; }
       var pagoJa = 0, nPagas = 0;
-      if (a) (a.parcelas || []).forEach(function(p){ if (p.pago_em && p.numero <= n) { pagoJa += Number(p.valor_pago != null ? p.valor_pago : p.valor); nPagas++; } });
+      if (a) (a.parcelas || []).forEach(function(p){ if (p.pago_em && p.numero <= n) { pagoJa += contaDe(p); nPagas++; } });
       var faltam = n - nPagas, resta = Math.round((total - pagoJa) * 100) / 100;
       if (a && temPaga && faltam > 0 && resta <= 0) { previa.classList.add('erro'); previa.textContent = 'O que já foi pago (' + moeda(pagoJa) + ') cobre o total: aumente o total ou diminua o número de parcelas.'; return; }
       var txt;

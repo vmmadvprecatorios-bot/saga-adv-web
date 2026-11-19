@@ -505,12 +505,18 @@ const FERRAMENTAS: Ferramenta[] = [
   },
   {
     name: "marcar_parcela", title: "Marcar parcela paga (ou desmarcar)", muda: true,
-    description: "MUDA O SAGA: marca uma parcela como paga (data, valor, forma do menu) ou desmarca (pago=false). Parcela de honorários paga entra no Financeiro como receita confirmada (desmarcar tira)." + PEDIR_OK,
+    description: "MUDA O SAGA: marca uma parcela como paga (data, valor, forma do menu) ou desmarca (pago=false). Parcela de honorários paga entra no Financeiro como receita confirmada (desmarcar tira). VALOR DIFERENTE DA PARCELA (bloco 263): pagou A MENOS → diferenca 'proxima' (soma na próxima parcela; padrão), 'nova' (parcela nova só com a diferença; vencimento_diferenca AAAA-MM-DD opcional, padrão depois da última) ou 'desconto' (perdoa; motivo obrigatório, mín. 5 letras); pagou A MAIS → 'proxima' (abate das próximas; a coberta inteira fica paga; padrão) ou 'ultimas' (abate das últimas). Pergunte à pessoa o destino da diferença antes de chamar. Desmarcar desfaz o que foi feito com a diferença." + PEDIR_OK,
     inputSchema: { type: "object", properties: { parcela_id: { type: "string" }, pago: { type: "boolean" }, valor: { type: "number" }, data: { type: "string", description: "AAAA-MM-DD" },
-      forma: { type: "string" }, observacao: { type: "string" } }, required: ["parcela_id"], additionalProperties: false },
+      forma: { type: "string" }, observacao: { type: "string" },
+      diferenca: { type: "string", enum: ["proxima", "nova", "desconto", "ultimas"], description: "o que fazer quando o valor pago é diferente da parcela" },
+      vencimento_diferenca: { type: "string", description: "AAAA-MM-DD (só com diferenca 'nova')" }, motivo: { type: "string", description: "motivo do desconto (só com diferenca 'desconto')" } },
+      required: ["parcela_id"], additionalProperties: false },
     rpc: "conector_parcela_marcar", args: (a) => {
       if (a.data != null && !ehData(a.data)) throw new ErroArgs("Data no formato AAAA-MM-DD.");
-      return { p_parcela: exigeUuid(a.parcela_id, "o id da parcela"), p_pago: a.pago == null ? true : !!a.pago, p_valor: num(a.valor, "valor"), p_data: a.data ?? null, p_forma: texto(a.forma, 80), p_obs: texto(a.observacao, 2000) };
+      if (a.vencimento_diferenca != null && !ehData(a.vencimento_diferenca)) throw new ErroArgs("vencimento_diferenca no formato AAAA-MM-DD.");
+      if (a.diferenca != null && !["proxima", "nova", "desconto", "ultimas"].includes(String(a.diferenca))) throw new ErroArgs("diferenca: proxima, nova, desconto ou ultimas.");
+      return { p_parcela: exigeUuid(a.parcela_id, "o id da parcela"), p_pago: a.pago == null ? true : !!a.pago, p_valor: num(a.valor, "valor"), p_data: a.data ?? null, p_forma: texto(a.forma, 80), p_obs: texto(a.observacao, 2000),
+        p_diferenca: a.diferenca ?? null, p_venc_diferenca: a.vencimento_diferenca ?? null, p_motivo: texto(a.motivo, 200) };
     },
   },
   {
@@ -830,7 +836,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.8" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "2.9" },
         instructions: INSTRUCOES,
       });
     }
