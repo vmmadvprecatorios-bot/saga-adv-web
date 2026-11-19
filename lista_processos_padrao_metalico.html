@@ -1319,12 +1319,26 @@ function dadosGraficosProcessos(){
   var base=state.baseProcessos||[],filtrados=base.filter(function(p){return processoNoEscopo(p);});
   var fases=Array.from(new Set(statusDisponiveisProcessos().map(function(s){return s.fase||'Sem fase';})));
   var porFase=fases.map(function(f,k){return {v:f,nome:rotuloFaseProcessos(f),cor:'var(--g'+(k%8+1)+')',n:filtrados.filter(function(p){return (statusDoProcesso(p).fase||'Sem fase')===f;}).length,ativa:faseAtualProcessos()===f};});
+  // 19/11 (Dr. Victor pelo Diário de bordo): cada planilha só tem a PRÓPRIA fase, então "Por fase" mostrava a outra zerada.
+  // Jurídico: "Por andamento" (os mesmos grupos das abas: ativos protocolados/não protocolados, encerrados, sacados; clicar filtra).
+  // Captação: "Por etapa" (o agrupamento das etapas do funil: status_funil.etapa). Grupo com zero não aparece.
+  var primeiro={k:'fase',titulo:'Por fase',itens:porFase};
+  if(FASE_FIXA==='juridico'&&window.SagaPlanilha&&SagaPlanilha.grupoDe){
+    var cont={sim:0,nao:0,encerrado:0,sacado:0},prot=SagaPlanilha.protocoloAtual?SagaPlanilha.protocoloAtual():'';
+    filtrados.forEach(function(p){var g=SagaPlanilha.grupoDe(p);if(g==='ativo')g=SagaPlanilha.protocolado(p)?'sim':'nao';if(cont[g]!=null)cont[g]++;});
+    primeiro={k:'andamento',titulo:'Por andamento',itens:[['sim','Ativos protocolados','var(--g1)'],['nao','Ativos não protocolados','var(--g2)'],['encerrado','Encerrados','var(--g3)'],['sacado','Sacados','var(--g4)']]
+      .map(function(x){return {v:x[0],nome:x[1],cor:x[2],n:cont[x[0]],ativa:prot===x[0],dica:x[1]+' (clique para filtrar)'};}).filter(function(x){return x.n>0||x.ativa;})};
+  }else if(FASE_FIXA==='captacao'){
+    var etapas=[];statusDisponiveisProcessos().forEach(function(s){var e=s.etapa||'Sem etapa';if(etapas.indexOf(e)<0)etapas.push(e);});
+    filtrados.forEach(function(p){var e=statusDoProcesso(p).etapa||'Sem etapa';if(etapas.indexOf(e)<0)etapas.push(e);});
+    primeiro={k:'fase',titulo:'Por etapa',itens:etapas.map(function(e,k){return {v:e,nome:e,cor:e==='Sem etapa'?'var(--g-sem)':'var(--g'+(k%8+1)+')',n:filtrados.filter(function(p){return (statusDoProcesso(p).etapa||'Sem etapa')===e;}).length};}).filter(function(x){return x.n>0;})};
+  }
   var status=agruparRoscaProcessos(base.filter(function(p){return processoNoEscopo(p,'status');}),'status',7,state.filtroStatus);
   var resp=agruparRoscaProcessos(base.filter(function(p){return processoNoEscopo(p,'responsavel');}),'responsavel',6,state.filtroResponsavel);
   [[status,'status_id',state.filtroStatus],[resp,'responsavel_id',state.filtroResponsavel]].forEach(function(g){g[0].forEach(function(x){x.n=filtrados.filter(function(p){return x.valores.indexOf(p[g[1]]||'')!==-1;}).length;x.ativa=!!g[2]&&x.valores.some(function(id){return filtroProcessoContem(g[2],id);});});});
   var ids=Array.from(new Set(base.map(function(p){return p.area_direito_id||'';}).concat(state.filtroArea!=='*'?[state.filtroArea||'']:[])));
   var areas=ids.map(function(id,k){var a=catalogoTeses&&catalogoTeses.area(id);return {v:id,nome:a?a.nome:id?'Área indisponível':'Sem área',cor:id?'var(--g'+(k%8+1)+')':'var(--g-sem)',n:filtrados.filter(function(p){return (p.area_direito_id||'')===id;}).length,ativa:state.filtroArea!=='*'&&(state.filtroArea||'')===id};});
-  return [{k:'fase',titulo:'Por fase',itens:porFase},{k:'status',titulo:'Por status',itens:status},{k:'area',titulo:'Por área do direito',itens:areas},{k:'responsavel',titulo:'Por responsável',itens:resp}];
+  return [primeiro,{k:'status',titulo:'Por status',itens:status},{k:'area',titulo:'Por área do direito',itens:areas},{k:'responsavel',titulo:'Por responsável',itens:resp}];
 }
 
 function contarRoscaProcesso(el,alvo){
@@ -1396,6 +1410,7 @@ function renderGraficosProcessos(){
 function aplicarFatiaProcesso(chave,valor){
   var x=(gruposRoscasProcessos[chave]||[]).find(function(i){return i.v===valor;});if(!x)return;
   if(chave==='fase')return;
+  if(chave==='andamento'){var atualP=window.SagaPlanilha&&SagaPlanilha.protocoloAtual?SagaPlanilha.protocoloAtual():'';var bt=document.querySelector('#spBarra [data-protocolo="'+(atualP===valor?'':valor)+'"]');if(bt)bt.click();return;}
   else if(chave==='area'){state.filtroArea=state.filtroArea!=='*'&&(state.filtroArea||'')===valor?'*':valor||null;state.filtroTese=null;}
   else{
     var campo=chave==='status'?'filtroStatus':'filtroResponsavel',atual=state[campo];
