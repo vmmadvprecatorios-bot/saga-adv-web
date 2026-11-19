@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.26",
+  versao: "3.27",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.27", data: "19/11/2026", mudou: "Vidro: fundo novo **Limpo** (só a cor do tema, sem desenho). Fundos animados: saíram Planeta e aurora, Radar holográfico, Horizonte neon e Túnel de luz; ficam Brasas, Rede, Circuito, Chuva de código, Viagem pelas estrelas, Galáxia e Constelações." },
     { versao: "3.26", data: "19/11/2026", mudou: "Vidro: 8 fundos animados novos em Preferências > Fundo animado: Chuva de código, Viagem pelas estrelas, Galáxia, Planeta e aurora, Radar holográfico, Horizonte neon, Constelações e Túnel de luz, na cor do tema; o Circuito de luz passou a mostrar todos os pulsos." },
     { versao: "3.25", data: "19/11/2026", mudou: "Tela nova Meu dia > PARA APROVAR (Escritório de agentes): o Agente: Triagem classifica o que chega (intimações, andamentos do CNJ, pedidos) com o prazo em dias úteis e o Agente: Manutenção entrega o relatório do dia; o Dr. Victor e a Hevelyn aprovam, mandam ajustar ou reprovam; aprovar cria a tarefa. Regras do Escritório de agentes (nada sai para fora sem aprovação; o agente para na assinatura; senhas só no Chrome/Google)." },
     { versao: "3.24", data: "19/11/2026", mudou: "CORES NOVAS: grupo **Paletas** em Preferências > Cor do tema, com 8 cores tiradas das paletas que o Dr. Victor escolheu: Rubi, Bordô, Ouro, Lima, Aço, Marsala, Café e Mel, cada uma em Normal e Vidro, no claro e no escuro. Começam liberadas só para o administrador (ele libera para a equipe em Cores da equipe)." },
@@ -202,9 +203,9 @@ window.SAGA_MANUAL = {
           quando: "Quando o colaborador escolheu uma cor na versão Vidro e quer mudar o que aparece atrás das placas.",
           passos: [
             "Escolha uma cor na versão **Vidro** e salve. Aparece o quadro **Vidro tecnológico**.",
-            "**Fundo**: Montanhas à noite, Cidade, Grade técnica ou Minha imagem ([[Usar uma imagem minha]]: a imagem fica só neste computador).",
+            "**Fundo**: **Limpo** (só a cor do tema, sem desenho nem imagem), Montanhas à noite, Cidade, Grade técnica ou Minha imagem ([[Usar uma imagem minha]]: a imagem fica só neste computador).",
             "**Vidro normal** ou **Vidro mais fosco** (mais fosco = menos do fundo aparece através das placas).",
-            "**Fundo animado**: Parado, **Brasas de neon** (partículas subindo), **Rede de dados** (pontos ligados por linhas), **Circuito de luz** (pulsos de luz correndo por linhas), **Chuva de código** (caracteres descendo em colunas), **Viagem pelas estrelas** (estrelas vindo na sua direção), **Galáxia** (espiral girando devagar), **Planeta e aurora** (planeta com anel no canto), **Radar holográfico** (feixe que varre e acende pontos), **Horizonte neon** (chão em grade com um sol), **Constelações** (estrelas que se ligam e mostram um nome) ou **Túnel de luz** (anéis vindo do fundo), sempre na cor do tema.",
+            "**Fundo animado**: Parado, **Brasas de neon** (partículas subindo), **Rede de dados** (pontos ligados por linhas), **Circuito de luz** (pulsos de luz correndo por linhas), **Chuva de código** (caracteres descendo em colunas), **Viagem pelas estrelas** (estrelas vindo na sua direção), **Galáxia** (espiral girando devagar) ou **Constelações** (estrelas que se ligam e mostram um nome), sempre na cor do tema.",
             "**Intensidade** (Leve, Média, Forte) e **Velocidade** (Lenta, Normal, Rápida). Vale na hora."
           ],
           img: "preferencias_vidro",

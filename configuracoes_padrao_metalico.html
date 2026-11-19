@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191427"></script>
+<script src="saga_guard.js?v=202611191526"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Configurações</title>
@@ -215,7 +215,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   .sd-filtro select{min-width:0;flex:1 1 100%}}
 .pr-cad{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.pr-cad-seg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);transition:opacity .26s cubic-bezier(.22,.78,.25,1)}.pr-cad-seg.apagado{opacity:.5}.pr-cad-seg select{width:auto;min-width:64px}@media(max-width:760px){.pr-cad{align-items:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191427">
+<link rel="stylesheet" href="saga_tema.css?v=202611191526">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -307,14 +307,14 @@ html.saga-sem-movimento .arm-lido i{animation:none}
       <div class="linha-opcao pr-vidro" id="prVidro" hidden>
         <div><div class="t">Vidro tecnológico</div><div class="s">O fundo atrás das placas de vidro e o quanto o vidro deixa ver. Vale na hora e fica guardado só neste computador (a imagem também: não vai para o banco).</div></div>
         <div class="pr-vidro-op">
-          <div class="seg" id="prVidroFundo"><button type="button" data-v="montanhas">Montanhas à noite</button><button type="button" data-v="cidade">Cidade</button><button type="button" data-v="grade">Grade técnica</button><button type="button" data-v="imagem">Minha imagem</button></div>
+          <div class="seg" id="prVidroFundo"><button type="button" data-v="limpo">Limpo</button><button type="button" data-v="montanhas">Montanhas à noite</button><button type="button" data-v="cidade">Cidade</button><button type="button" data-v="grade">Grade técnica</button><button type="button" data-v="imagem">Minha imagem</button></div>
           <div class="pr-vidro-linha" id="prVidroCorWrap" hidden><label class="pr-vidro-cor" title="Escolha qualquer cor: o sistema monta o claro e o escuro com leitura garantida"><input type="color" id="prVidroCor" value="#5aa9ff"><span>Escolher a cor</span></label><span class="pr-vidro-rapidas" id="prVidroRapidas"></span></div>
           <div class="pr-vidro-linha"><button type="button" class="btn-secondary" id="prVidroImg">Usar uma imagem minha</button><button type="button" class="btn-secondary" id="prVidroTirar" hidden>Tirar a imagem</button><input type="file" id="prVidroArq" accept="image/*" hidden></div>
           <div class="seg" id="prVidroFosco"><button type="button" data-v="0">Vidro normal</button><button type="button" data-v="1">Vidro mais fosco</button></div>
           <!-- 17/11 (Dr. Victor): fundo animado (desenhado pelo saga_guard.js, sagaVidroAnimar) -->
           <div class="pr-vidro-anim">
             <div class="pr-vidro-rot">Fundo animado</div>
-            <div class="seg" id="prVidroEfeito"><button type="button" data-v="nenhum">Parado</button><button type="button" data-v="brasas">Brasas de neon</button><button type="button" data-v="rede">Rede de dados</button><button type="button" data-v="circuito">Circuito de luz</button><button type="button" data-v="chuva">Chuva de código</button><button type="button" data-v="estrelas">Viagem pelas estrelas</button><button type="button" data-v="galaxia">Galáxia</button><button type="button" data-v="planeta">Planeta e aurora</button><button type="button" data-v="radar">Radar holográfico</button><button type="button" data-v="horizonte">Horizonte neon</button><button type="button" data-v="constelacao">Constelações</button><button type="button" data-v="tunel">Túnel de luz</button></div>
+            <div class="seg" id="prVidroEfeito"><button type="button" data-v="nenhum">Parado</button><button type="button" data-v="brasas">Brasas de neon</button><button type="button" data-v="rede">Rede de dados</button><button type="button" data-v="circuito">Circuito de luz</button><button type="button" data-v="chuva">Chuva de código</button><button type="button" data-v="estrelas">Viagem pelas estrelas</button><button type="button" data-v="galaxia">Galáxia</button><button type="button" data-v="constelacao">Constelações</button></div>
             <div class="pr-vidro-linha" id="prVidroAnimAjustes">
               <div><div class="pr-vidro-rot">Intensidade</div><div class="seg" id="prVidroInt"><button type="button" data-v="1">Leve</button><button type="button" data-v="2">Média</button><button type="button" data-v="3">Forte</button></div></div>
               <div><div class="pr-vidro-rot">Velocidade</div><div class="seg" id="prVidroVel"><button type="button" data-v="1">Lenta</button><button type="button" data-v="2">Normal</button><button type="button" data-v="3">Rápida</button></div></div>
@@ -500,8 +500,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611191427"></script>
-<script src="saga_teses.js?v=202611191427"></script>
+<script src="saga_ui.js?v=202611191526"></script>
+<script src="saga_teses.js?v=202611191526"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)

@@ -117,7 +117,7 @@
   })();
   // 12/11 (T151): Vidro tecnológico: fundo e "mais fosco" escolhidos pela pessoa, antes da 1ª imagem
   try{var vf=localStorage.getItem('saga-vidro-fundo')||'montanhas',vi=vf==='imagem'?localStorage.getItem('saga-vidro-imagem'):null;
-    if(vf==='imagem'&&!vi)vf='montanhas';html.setAttribute('data-vidro-fundo',vf);
+    if(vf==='imagem'&&!vi)vf='montanhas';if(['montanhas','cidade','grade','imagem','limpo'].indexOf(vf)<0)vf='montanhas';html.setAttribute('data-vidro-fundo',vf);
     if(localStorage.getItem('saga-vidro-fosco')==='1')html.classList.add('vidro-fosco');
     if(vi)html.style.setProperty('--vidro-img','url("'+vi+'")');}catch(e){}
   // coringa: monta as cores da pessoa antes da 1ª imagem (a cor fica em saga-vidro-cor)
@@ -126,17 +126,19 @@
     else if(window.SAGA_VIDRO_CLARO[cor]){var vc=window.SAGA_VIDRO_CLARO[cor],vl2=window.sagaVidroAplicarLivre(vc.cor,vc);if(tema==='light')html.style.background=vl2.c.fundo;}}catch(e){}
   try{html.style.setProperty('--vd-fundo-html',html.style.background);}catch(e){}
   // 17/11 (Dr. Victor): FUNDO ANIMADO do Vidro tecnológico (brasas de neon, rede de dados, circuito), na cor do tema.
-  // 19/11 (Dr. Victor, "gostei de todas"): + 8 fundos de código, espaço e futuristas (chuva, estrelas, galaxia, planeta,
-  // radar, horizonte, constelacao, tunel), cada um em NOVOS[chave] com montar(S) e quadro(S,ve,k,alfa); S = estado
-  // (ctx, W, H, claro, rgba, branco, escuro). Medidos em 1920x1080 Forte: 0,08 a 0,82 ms por quadro.
+  // 19/11 (Dr. Victor): + fundos de código e espaço (chuva, estrelas, galaxia, constelacao), cada um em NOVOS[chave]
+  // com montar(S) e quadro(S,ve,k,alfa); S = estado (ctx, W, H, claro, rgba, branco, escuro). Medidos em 1920x1080
+  // Forte: até 0,67 ms por quadro. Planeta, radar, horizonte e túnel saíram no mesmo dia (pedido dele); efeito salvo
+  // que não existe mais (ou desconhecido) volta para "nenhum" (parado) e a escolha é regravada (EFEITOS_OK).
   // Um canvas fixo atrás de tudo (#sagaVidroAnim), só com uma cor de vidro e fora das janelas embutidas; no máximo 30
   // quadros por segundo, para quando a aba está escondida e fica PARADO com "Efeitos de movimento" desligado.
-  // Escolhas deste navegador: saga-vidro-efeito (nenhum|brasas|rede|circuito|chuva|estrelas|galaxia|planeta|radar|horizonte|constelacao|tunel), saga-vidro-intensidade (1..3) e
+  // Escolhas deste navegador: saga-vidro-efeito (nenhum|brasas|rede|circuito|chuva|estrelas|galaxia|constelacao), saga-vidro-intensidade (1..3) e
   // saga-vidro-velocidade (1..3). window.sagaVidroAnimar() relê tudo (chamado pelo sagaVidro.aplicar do saga_ui.js).
   (function(){
     var cv=null,ctx=null,raf=0,ult=0,itens=[],cfg=null,W=0,H=0,dpr=1,cor=[90,169,255],claro=false,t0=0,pulsos=[];
-    var INT=[0,.55,1,1.6],VEL=[0,.55,1,1.7],TAU=6.2832,NOVOS={},S=null;
+    var INT=[0,.55,1,1.6],VEL=[0,.55,1,1.7],TAU=6.2832,NOVOS={},S=null,EFEITOS_OK=['nenhum','brasas','rede','circuito','chuva','estrelas','galaxia','constelacao'];
     function ler(){var o={efeito:'nenhum',int:2,vel:2};try{o.efeito=localStorage.getItem('saga-vidro-efeito')||'nenhum';o.int=+localStorage.getItem('saga-vidro-intensidade')||2;o.vel=+localStorage.getItem('saga-vidro-velocidade')||2;}catch(e){}
+      if(EFEITOS_OK.indexOf(o.efeito)<0){o.efeito='nenhum';try{localStorage.setItem('saga-vidro-efeito','nenhum');}catch(e){}}
       o.int=Math.max(1,Math.min(3,o.int));o.vel=Math.max(1,Math.min(3,o.vel));return o;}
     function parado(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
     function ativo(){var h=document.documentElement;return (h.getAttribute('data-cor')||'').indexOf('vidro')===0&&!h.classList.contains('saga-embed')&&cfg&&cfg.efeito!=='nenhum';}
@@ -191,65 +193,10 @@
         for(var i=0;i<S.itens.length;i++){var p=S.itens[i];p.o+=p.v*ve;c.fillStyle=S.branco((.25+.35*Math.sin(p.o))*alfa,.5);c.fillRect(p.x,p.y,p.r,p.r);}
         c.globalCompositeOperation='source-over';}};
 
-    /* 4. Planeta e aurora: planeta com anel no canto de baixo à direita (desenhado uma vez); aurora ondulando no polo e estrelas piscando. */
-    NOVOS.planeta={
-      montar:function(S){var R=S.R=Math.min(S.W,S.H)*.36,cx=S.pcx=S.W*.86,cy=S.pcy=S.H*1.02,o=document.createElement('canvas');o.width=S.W;o.height=S.H;var g=o.getContext('2d');
-        function anel(frente){g.save();g.translate(cx,cy);g.rotate(-.22);g.beginPath();if(frente)g.ellipse(0,0,R*1.95,R*.36,0,0,Math.PI);else g.ellipse(0,0,R*1.95,R*.36,0,Math.PI,TAU);
-          g.lineWidth=R*.16;g.strokeStyle=S.rgba(.16);g.stroke();g.lineWidth=1.2;g.strokeStyle=S.rgba(.45);g.stroke();g.beginPath();if(frente)g.ellipse(0,0,R*1.7,R*.30,0,0,Math.PI);else g.ellipse(0,0,R*1.7,R*.30,0,Math.PI,TAU);g.lineWidth=1;g.strokeStyle=S.rgba(.28);g.stroke();g.restore();}
-        anel(false);
-        var gr=g.createRadialGradient(cx-R*.45,cy-R*.55,R*.1,cx,cy,R);gr.addColorStop(0,S.claro?S.branco(.95,.7):S.escuro(.95,.55));gr.addColorStop(.6,S.escuro(.97,.8));gr.addColorStop(1,S.escuro(.98,.9));
-        g.fillStyle=gr;g.beginPath();g.arc(cx,cy,R,0,TAU);g.fill();
-        g.save();g.beginPath();g.arc(cx,cy,R,0,TAU);g.clip();for(var f=0;f<5;f++){g.fillStyle=S.rgba(.04+f*.01);g.fillRect(cx-R,cy-R*.8+f*R*.22,R*2,R*.07);}g.restore();
-        var at=g.createRadialGradient(cx,cy,R*.96,cx,cy,R*1.12);at.addColorStop(0,S.rgba(.55));at.addColorStop(1,S.rgba(0));g.fillStyle=at;g.beginPath();g.arc(cx,cy,R*1.12,0,TAU);g.arc(cx,cy,R*.98,0,TAU,true);g.fill();
-        anel(true);S.off=o;S.t=0;
-        S.itens=[];var ne=Math.round(120*S.k*Math.min(1.5,Math.max(.6,S.area)));for(var e=0;e<ne;e++)S.itens.push({x:rnd(0,S.W),y:rnd(0,S.H),o:rnd(0,TAU),v:rnd(.015,.05),r:rnd(.6,1.6)});},
-      quadro:function(S,ve,k,alfa){var c=S.ctx,R=S.R,cx=S.pcx,cy=S.pcy;S.t+=.012*ve;
-        for(var i=0;i<S.itens.length;i++){var p=S.itens[i];p.o+=p.v*ve;c.fillStyle=S.branco((.2+.3*Math.sin(p.o))*alfa,.5);c.fillRect(p.x,p.y,p.r,p.r);}
-        c.globalAlpha=alfa;c.drawImage(S.off,0,0,S.W,S.H);c.globalAlpha=1;
-        c.globalCompositeOperation=S.claro?'source-over':'lighter';
-        for(var b=0;b<2;b++){var g=c.createRadialGradient(cx,cy,R*.99,cx,cy,R*(1.5+b*.15));g.addColorStop(0,S.rgba((b?.22:.32)*alfa*k));g.addColorStop(.35,b?S.branco(.10*alfa*k,.4):S.rgba(.14*alfa*k));g.addColorStop(1,S.rgba(0));
-          c.fillStyle=g;c.beginPath();var a0=-2.75,a1=-1.25,n=48;
-          for(var j=0;j<=n;j++){var a=a0+(a1-a0)*j/n,h=R*(.18+.16*Math.sin(a*7+S.t*(1.3+b*.4)+b)+.10*Math.sin(a*13-S.t*.9))*(Math.sin((j/n)*Math.PI));c.lineTo(cx+Math.cos(a)*(R+h+R*.02),cy+Math.sin(a)*(R+h+R*.02));}
-          for(var j2=n;j2>=0;j2--){var a2=a0+(a1-a0)*j2/n;c.lineTo(cx+Math.cos(a2)*R*1.01,cy+Math.sin(a2)*R*1.01);}c.fill();}
-        c.globalCompositeOperation='source-over';}};
 
-    /* 5. Radar holográfico: anéis, marcas de grau e um feixe que varre; os pontos acendem quando o feixe passa. */
-    NOVOS.radar={
-      montar:function(S){var R=S.R=Math.min(S.W,S.H)*.44,cx=S.rx=S.W*.7,cy=S.ry=S.H*.56,o=document.createElement('canvas');o.width=S.W;o.height=S.H;var g=o.getContext('2d');
-        g.strokeStyle=S.rgba(.22);g.lineWidth=1;for(var i=1;i<=4;i++){g.beginPath();g.arc(cx,cy,R*i/4,0,TAU);g.stroke();}
-        g.setLineDash([3,6]);g.beginPath();g.moveTo(cx-R,cy);g.lineTo(cx+R,cy);g.moveTo(cx,cy-R);g.lineTo(cx,cy+R);g.stroke();g.setLineDash([]);
-        for(var d=0;d<360;d+=5){var a=(d-90)*Math.PI/180,l=d%30===0?12:5;g.strokeStyle=S.rgba(d%30===0?.45:.22);g.beginPath();g.moveTo(cx+Math.cos(a)*(R+3),cy+Math.sin(a)*(R+3));g.lineTo(cx+Math.cos(a)*(R+3+l),cy+Math.sin(a)*(R+3+l));g.stroke();
-          if(d%30===0){g.fillStyle=S.rgba(.5);g.font='10px ui-monospace,Consolas,monospace';g.textAlign='center';g.textBaseline='middle';g.fillText(('00'+d).slice(-3),cx+Math.cos(a)*(R+26),cy+Math.sin(a)*(R+26));}}
-        S.off=o;S.ang=0;S.itens=[];var nb=Math.round(10*S.k);for(var b=0;b<nb;b++)S.itens.push({r:rnd(.15,.95),a:rnd(0,TAU),v:rnd(-.0006,.0006),luz:0});},
-      quadro:function(S,ve,k,alfa){var c=S.ctx,R=S.R,cx=S.rx,cy=S.ry,ant=S.ang;S.ang=(S.ang+.021*ve)%TAU;
-        c.globalAlpha=alfa;c.drawImage(S.off,0,0,S.W,S.H);c.globalAlpha=1;var ab=.95;
-        if(c.createConicGradient){var cg=c.createConicGradient(S.ang-ab,cx,cy);cg.addColorStop(0,S.rgba(0));cg.addColorStop(ab/TAU,S.rgba(.30*alfa));cg.addColorStop(ab/TAU+.0001,S.rgba(0));cg.addColorStop(1,S.rgba(0));c.fillStyle=cg;}
-        else c.fillStyle=S.rgba(.1*alfa);
-        c.beginPath();c.moveTo(cx,cy);c.arc(cx,cy,R,S.ang-ab,S.ang);c.closePath();c.fill();
-        c.strokeStyle=S.branco(.7*alfa,.3);c.lineWidth=1.2;c.beginPath();c.moveTo(cx,cy);c.lineTo(cx+Math.cos(S.ang)*R,cy+Math.sin(S.ang)*R);c.stroke();
-        c.globalCompositeOperation=S.claro?'source-over':'lighter';
-        for(var i=0;i<S.itens.length;i++){var p=S.itens[i];p.a=(p.a+p.v*ve+TAU)%TAU;var d=(S.ang-p.a+TAU)%TAU;if(d<(S.ang-ant+TAU)%TAU+.02)p.luz=1;else p.luz*=Math.pow(.975,ve);
-          if(p.luz<.03)continue;var x=cx+Math.cos(p.a)*p.r*R,y=cy+Math.sin(p.a)*p.r*R;c.fillStyle=S.branco(p.luz*.9*alfa,.4);c.beginPath();c.arc(x,y,2.2,0,TAU);c.fill();
-          c.strokeStyle=S.rgba(p.luz*.5*alfa);c.beginPath();c.arc(x,y,4+(1-p.luz)*10,0,TAU);c.stroke();}
-        c.globalCompositeOperation='source-over';}};
 
-    /* 6. Horizonte neon: chão em grade com perspectiva vindo na direção da tela, sol listrado e estrelas no alto. */
-    NOVOS.horizonte={
-      montar:function(S){var h0=S.h0=S.H*.6,r=S.H*.22,sx=S.W*.66,o=document.createElement('canvas');o.width=S.W;o.height=S.H;var g=o.getContext('2d');
-        var gr=g.createLinearGradient(0,h0-r*1.6,0,h0);gr.addColorStop(0,S.branco(.32,.5));gr.addColorStop(1,S.rgba(.38));g.fillStyle=gr;
-        g.save();g.beginPath();g.rect(0,0,S.W,h0);g.clip();g.beginPath();g.arc(sx,h0-r*.35,r,0,TAU);g.fill();g.globalCompositeOperation='destination-out';
-        for(var i=0;i<7;i++){var y=h0-r*.35+i*r*.13,hh=1.5+i*1.4;g.fillRect(sx-r,y,r*2,hh);}g.restore();
-        var hl=g.createLinearGradient(0,h0-60,0,h0+4);hl.addColorStop(0,S.rgba(0));hl.addColorStop(1,S.rgba(.22));g.fillStyle=hl;g.fillRect(0,h0-60,S.W,64);
-        g.fillStyle=S.branco(.5,.5);for(var e=0;e<Math.round(80*S.k);e++){g.globalAlpha=rnd(.15,.7);var s=rnd(.6,1.5);g.fillRect(rnd(0,S.W),rnd(0,h0*.8),s,s);}g.globalAlpha=1;
-        S.off=o;S.fase=0;},
-      quadro:function(S,ve,k,alfa){var c=S.ctx,h0=S.h0,H=S.H,W=S.W,vx=W*.66;S.fase=(S.fase+.012*ve)%1;
-        c.globalAlpha=alfa*(S.claro?.8:1);c.drawImage(S.off,0,0,W,H);c.globalAlpha=1;
-        c.lineWidth=1;c.strokeStyle=S.rgba(.75*alfa);c.beginPath();c.moveTo(0,h0);c.lineTo(W,h0);c.stroke();
-        var gv=c.createLinearGradient(0,h0,0,H);gv.addColorStop(0,S.rgba(0));gv.addColorStop(1,S.rgba(.42*alfa*Math.min(1.2,k)));c.strokeStyle=gv;c.beginPath();
-        var esp=W*.09;for(var j=-24;j<=24;j++){c.moveTo(vx+j*esp*.08,h0);c.lineTo(vx+j*esp*2.2,H);}c.stroke();
-        for(var i=1;i<=26;i++){var d=i-S.fase;if(d<.6)continue;var y=h0+(H-h0)*1.2/d;if(y>H)continue;var t=(y-h0)/(H-h0);c.strokeStyle=S.rgba(.42*t*alfa*Math.min(1.2,k)+.02);c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}}};
 
-    /* 7. Constelações: estrelas paradas que piscam; de tempos em tempos uma constelação se desenha ligando pontos, mostra o nome e some. */
+    /* 4. Constelações: estrelas paradas que piscam; de tempos em tempos uma constelação se desenha ligando pontos, mostra o nome e some. */
     NOVOS.constelacao={
       NOMES:['Balança','Têmis','Toga','Martelo','Codex','Pretório','Lex','Ágora','Tribuna','Pena de Ouro'],
       montar:function(S){var n=Math.round(140*S.k*Math.min(1.5,Math.max(.6,S.area)));S.itens=[];for(var i=0;i<n;i++)S.itens.push({x:rnd(0,S.W),y:rnd(0,S.H),o:rnd(0,TAU),v:rnd(.01,.04),r:rnd(.7,1.9)});
@@ -268,18 +215,6 @@
           for(var s2=0;s2<tot;s2++){if(F.p<s2+1)break;var E=it[F.ar[s2][1]];c.fillStyle=S.branco(.75*alfa*sai,.5);c.beginPath();c.arc(E.x,E.y,2,0,TAU);c.fill();}
           if(F.p>tot){var R0=it[F.ref],an=Math.min(1,(F.p-tot)/1.5)*sai;c.fillStyle=S.rgba(.6*alfa*an);c.fillText(F.nome.toUpperCase().split('').join(' '),R0.x+8,R0.y-8);}}}};
 
-    /* 8. Túnel de luz: anéis que vêm do fundo para a frente, com uma curva suave, e partículas correndo pelas paredes. */
-    NOVOS.tunel={
-      montar:function(S){S.t=0;S.itens=[];for(var i=0;i<28;i++)S.itens.push({z:(i+1)/28});S.part=[];var np=Math.round(140*S.k);for(var p=0;p<np;p++)S.part.push({a:rnd(0,TAU),z:rnd(.05,1),v:rnd(.6,1.4)});},
-      centro:function(S,z){return [S.W*.64+Math.sin(S.t*.6+z*3)*S.W*.06*(z),S.H*.48+Math.cos(S.t*.45+z*2.5)*S.H*.06*(z)];},
-      quadro:function(S,ve,k,alfa){var c=S.ctx,base=Math.min(S.W,S.H)*.07;S.t+=.01*ve;c.globalCompositeOperation=S.claro?'source-over':'lighter';
-        for(var i=0;i<S.itens.length;i++){var r=S.itens[i];r.z-=.0032*ve;if(r.z<=.04)r.z+=1;var R=base/r.z;if(R>Math.max(S.W,S.H)*1.3)continue;var C=this.centro(S,r.z),
-          a=Math.sin(Math.PI*Math.min(1,(1-r.z)*1.15))*.38*alfa*Math.min(1.3,k);c.strokeStyle=S.rgba(a);c.lineWidth=.6+1.6*(1-r.z);c.beginPath();c.ellipse(C[0],C[1],R,R*.88,0,0,TAU);c.stroke();}
-        c.lineWidth=1.2;c.strokeStyle=S.branco(.5*alfa,.4);c.beginPath();
-        for(var j=0;j<S.part.length;j++){var p=S.part[j];p.z-=.006*p.v*ve;if(p.z<=.05){p.z=1;p.a=rnd(0,TAU);}var C1=this.centro(S,p.z),R1=base/p.z,z2=p.z+.03,C2=this.centro(S,z2),R2=base/z2;
-          c.moveTo(C2[0]+Math.cos(p.a)*R2,C2[1]+Math.sin(p.a)*R2*.88);c.lineTo(C1[0]+Math.cos(p.a)*R1,C1[1]+Math.sin(p.a)*R1*.88);}c.stroke();
-        var gc=c.createRadialGradient(this.centro(S,1)[0],this.centro(S,1)[1],0,this.centro(S,1)[0],this.centro(S,1)[1],base*4);gc.addColorStop(0,S.branco(.35*alfa,.5));gc.addColorStop(1,S.rgba(0));c.fillStyle=gc;c.fillRect(0,0,S.W,S.H);
-        c.globalCompositeOperation='source-over';}};
     function estado(){var k=INT[cfg.int];return {ctx:ctx,W:W,H:H,dpr:dpr,claro:claro,k:k,alfa:claro?.75:1,area:W*H/(1280*720),rgba:rgba,
       branco:function(a,t){var m=claro?0:255;return 'rgba('+Math.round(cor[0]+(m-cor[0])*t)+','+Math.round(cor[1]+(m-cor[1])*t)+','+Math.round(cor[2]+(m-cor[2])*t)+','+Math.max(0,a).toFixed(3)+')';},
       escuro:function(a,t){var b=claro?[255,255,255]:[4,8,14];return 'rgba('+Math.round(cor[0]+(b[0]-cor[0])*t)+','+Math.round(cor[1]+(b[1]-cor[1])*t)+','+Math.round(cor[2]+(b[2]-cor[2])*t)+','+a+')';}};}

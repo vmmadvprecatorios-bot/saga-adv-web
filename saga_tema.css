@@ -589,7 +589,7 @@ html:is([data-cor="profundo"],[data-cor="ciano"],[data-cor="ambar"],[data-cor="a
  Vale com html[data-cor^="vidro"]: vidro (azul profundo), vidro-ciano, vidro-ambar, vidro-aurora e
  vidro-livre (o "coringa": a pessoa escolhe a cor e o saga_guard.js monta as variáveis --vl-e-* / --vl-c-*
  no html, com contraste conferido). Começa liberado só para o administrador.
- Fundo atrás de tudo (body::before / ::after): html[data-vidro-fundo="montanhas"|"cidade"|"grade"|"imagem"].
+ Fundo atrás de tudo (body::before / ::after): html[data-vidro-fundo="montanhas"|"cidade"|"grade"|"imagem"|"limpo"] (limpo = só a cor de fundo do tema, 19/11).
  Desfoque SÓ no menu lateral, na barra de cima, no fundo das janelas e nos painéis do Dashboard; listas,
  planilha e cartões ficam translúcidos SEM desfoque. html.vidro-fosco = "Vidro mais fosco".
  ===================================================================== */
@@ -611,6 +611,7 @@ html[data-cor^="vidro"] body[data-theme]{background:transparent!important}
 html[data-cor^="vidro"] body[data-theme]::before{content:""!important;display:block!important;position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--vd-montes) center bottom/cover no-repeat,var(--vd-halo),var(--vd-ceu)}
 html[data-cor^="vidro"][data-vidro-fundo="cidade"] body[data-theme]::before{background:var(--vd-cidade) center bottom/cover no-repeat,var(--vd-halo),var(--vd-ceu)}
 html[data-cor^="vidro"][data-vidro-fundo="grade"] body[data-theme]::before{background:var(--vd-halo),var(--vd-ceu)}
+html[data-cor^="vidro"][data-vidro-fundo="limpo"] body[data-theme]::before{background:var(--navy-1)}
 html[data-cor^="vidro"][data-vidro-fundo="imagem"] body[data-theme]::before{background:var(--vd-veu),var(--vidro-img,none) center/cover no-repeat,var(--vd-ceu)}
 html[data-cor^="vidro"][data-vidro-fundo="grade"] body[data-theme]::after{content:""!important;display:block!important;position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(var(--vd-grade) 1px,transparent 1px),linear-gradient(90deg,var(--vd-grade) 1px,transparent 1px);background-size:48px 48px;-webkit-mask-image:radial-gradient(ellipse at 50% 40%,#000 30%,transparent 78%);mask-image:radial-gradient(ellipse at 50% 40%,#000 30%,transparent 78%)}
 html.saga-embed[data-cor^="vidro"] body[data-theme]::before,html.saga-embed[data-cor^="vidro"][data-vidro-fundo] body[data-theme]::after{display:none!important}
