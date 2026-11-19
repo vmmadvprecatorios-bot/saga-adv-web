@@ -251,7 +251,8 @@ window.SagaPeticoes = (function(){
     mostrar();
     try{
       if(!(await podeFazer())) throw new Error('você não tem a permissão para fazer petições. Peça ao administrador (Painel de permissões > Petições)');
-      var r = await Promise.all([carregarBase(), sb().rpc('peticao_dados', { p_processo_id: S.ctx.processoId })]);
+      var r = await Promise.all([carregarBase(), sb().rpc('peticao_dados', { p_processo_id: S.ctx.processoId }), sb().rpc('calculo_do_processo', { p_processo_id: S.ctx.processoId })]);
+      S.calc = (r[2] && !r[2].error && r[2].data) ? r[2].data : null;
       var dr = r[1];
       if(dr.error) throw new Error('não consegui ler os dados da ficha: ' + dr.error.message);
       S.dados = dr.data || {};
@@ -289,6 +290,9 @@ window.SagaPeticoes = (function(){
     var m = S.lista.filter(function(x){ return x.id === id; })[0]; if(!m) return;
     S.modelo = m;
     S.valores = mapear(S.dados);
+    /* cálculo do PSS salvo no processo (bloco 267): os valores dele entram nos campos da petição */
+    var cp = S.calc && S.calc.atual && S.calc.atual.resultado && S.calc.atual.resultado.campos_peticao;
+    if(cp) Object.keys(cp).forEach(function(k){ if(cp[k]){ S.valores[k] = cp[k]; S.origem[k] = 'cálculo do PSS (versão ' + S.calc.atual.versao + (S.calc.atual.situacao === 'conferido' ? ', conferido' : ', rascunho') + ')'; } });
     var campos = SagaTimbrado.camposDoModelo(m);
     var chPadrao = (m.timbrado_chave && TIMBRADOS_PROIBIDOS.indexOf(m.timbrado_chave) < 0) ? m.timbrado_chave : 'vmm';
     var htmlCampos = campos.map(function(c){
@@ -304,6 +308,8 @@ window.SagaPeticoes = (function(){
     conteudo('<h3 id="ptTitulo">' + esc(m.titulo) + '</h3>'
       + '<div class="pt-sub">' + esc((S.dados.pessoa || {}).nome || '') + ' · confira os campos. O que vier da ficha já está preenchido; o que faltar fica em amarelo aqui e sai destacado na petição para completar.</div>'
       + '<div class="pt-resumo" id="ptResumo"></div>'
+      + (ehPss() ? '<div class="pt-linha" style="margin-top:0"><button type="button" class="btn-secondary btn-secundario" id="ptCalculo" style="font:inherit;font-size:12.5px;padding:8px 14px;border-radius:10px;border:1px solid var(--sb-sec-borda,var(--border));background:var(--sb-sec,transparent);color:var(--text);cursor:pointer">' + (S.calc && S.calc.atual ? 'Ver ou refazer o cálculo do PSS' : 'Fazer o cálculo do PSS (preenche os valores)') + '</button>'
+        + '<span style="font-size:12px;color:var(--muted)">' + (S.calc && S.calc.atual ? 'Cálculo ' + (S.calc.atual.situacao === 'conferido' ? 'conferido' : 'em rascunho') + ', versão ' + S.calc.atual.versao : 'Este processo ainda não tem cálculo salvo.') + '</span></div>' : '')
       + '<div class="pt-linha"><label>Papel timbrado<select id="ptTimbrado">' + S.timbrados.map(function(t){ return '<option value="' + esc(t.chave) + '"' + (t.chave === chPadrao ? ' selected' : '') + '>' + esc(t.nome) + '</option>'; }).join('') + '</select></label>'
       + '<label>Versão<select id="ptVersao"><option value="cores">Colorida</option><option value="impressao">Para imprimir</option></select></label>'
       + '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="ptGuardar" checked> Guardar na pasta "Petições" do cliente</label></div>'
@@ -313,6 +319,17 @@ window.SagaPeticoes = (function(){
       + '<button type="button" class="btn-secondary btn-secundario" id="ptWord">Baixar Word</button><button type="button" class="btn-confirmar-bib btn-primario" id="ptPdf">Baixar PDF</button></div>');
     document.querySelectorAll('[data-pt-campo]').forEach(function(i){ i.addEventListener('input', function(){ i.parentNode.classList.toggle('falta', !i.value.trim() && ['data','cidade'].indexOf(i.getAttribute('data-pt-campo')) < 0); resumo(); }); });
     document.getElementById('ptVoltar').onclick = function(){ abrir(S.ctx); };
+    var bc = document.getElementById('ptCalculo');
+    if(bc) bc.onclick = function(){
+      garantirCalculos().then(function(){
+        window.SagaCalculos.abrir({ sb: sb(), processoId: S.ctx.processoId, titulo: ((S.dados.pessoa || {}).nome || '') + (S.dados.processo && S.dados.processo.codigo ? ' · ' + S.dados.processo.codigo : ''),
+          aoSalvar: function(x){
+            var cp2 = (x && x.resultado && x.resultado.campos_peticao) || {};
+            Object.keys(cp2).forEach(function(k){ var i = document.querySelector('[data-pt-campo="' + k + '"]'); if(i && cp2[k]){ i.value = cp2[k]; i.dispatchEvent(new Event('input')); } });
+            S.calc = S.calc || {}; 
+          } });
+      }).catch(function(e){ var msg = document.getElementById('ptMsg'); if(msg) msg.innerHTML = '<div class="pt-erro"><b>Não abriu o cálculo:</b> ' + esc(e.message || e) + '</div>'; });
+    };
     document.getElementById('ptWord').onclick = function(){ gerar('docx'); };
     document.getElementById('ptPdf').onclick = function(){ gerar('pdf'); };
     resumo();
@@ -389,6 +406,22 @@ window.SagaPeticoes = (function(){
     }catch(e){
       msg.innerHTML = '<div class="pt-erro"><b>Não foi possível gerar o ' + (formato === 'pdf' ? 'PDF' : 'Word') + ':</b> ' + esc(e.message || e) + '</div>';
     }finally{ bw.disabled = bp.disabled = false; botao.textContent = txt; }
+  }
+
+  function ehPss(){
+    var p = (S.dados && S.dados.processo) || {}, m = S.modelo || {};
+    return /^PSS/i.test(p.tese_sigla || '') || /\bPSS\b/i.test(p.tese || '') || /\bPSS\b/i.test(m.titulo || '');
+  }
+  /* carrega o saga_calculos.js (mesma versão deste arquivo) só quando precisa: a ficha não precisa de outro script */
+  var VERSAO_ARQ = (function(){ try{ var s = document.currentScript && document.currentScript.src; var m = s && s.match(/[?&]v=(\d+)/); return m ? m[1] : ''; }catch(e){ return ''; } })();
+  var BASE_ARQ = (function(){ try{ var s = document.currentScript && document.currentScript.src; return s ? s.replace(/[^\/]*$/, '') : ''; }catch(e){ return ''; } })();
+  function garantirCalculos(){
+    if(window.SagaCalculos) return Promise.resolve();
+    return new Promise(function(ok, falha){
+      var s = document.createElement('script'); s.src = BASE_ARQ + 'saga_calculos.js' + (VERSAO_ARQ ? '?v=' + VERSAO_ARQ : '');
+      s.onload = function(){ ok(); }; s.onerror = function(){ falha(new Error('o arquivo do cálculo (saga_calculos.js) não carregou')); };
+      document.head.appendChild(s);
+    });
   }
 
   /* ---------------- tela Modelos: escolher cliente do Jurídico e processos (T194 etapa 4) ---------------- */
