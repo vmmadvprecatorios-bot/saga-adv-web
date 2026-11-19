@@ -86,7 +86,7 @@
     item.title = 'Papéis timbrados e modelos de petição';
     item.setAttribute('role', 'button');
     item.tabIndex = 0;
-    item.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 8h5M9 12h7M9 16h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Timbrados e modelos</span>';
+    item.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 8h5M9 12h7M9 16h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Petições e timbrados</span>';
     var cab = coluna.querySelector('.categorias-cabecalho');
     if(cab && cab.nextSibling) coluna.insertBefore(item, cab.nextSibling); else coluna.appendChild(item);
     item.addEventListener('click', abrir);
@@ -118,7 +118,13 @@
       '</section>';
     conteudo.appendChild(painel);
     criarModais();
-    try{ if(new URLSearchParams(location.search).get('aba') === 'timbrados') setTimeout(abrir, 50); }catch(e){}
+    /* 19/11 (T194, Dr. Victor): Biblioteca e Modelos viraram uma tela só ("Modelos"). Ela abre nas petições e timbrados;
+       ?aba=arquivos (ou voltar para uma pasta) abre os arquivos da antiga Biblioteca. */
+    try{
+      var qa = new URLSearchParams(location.search).get('aba');
+      var naPasta = history.state && history.state.bibliotecaPastas && (history.state.bibliotecaPastas.caminho || []).length > 1;
+      if(qa === 'timbrados' || (qa !== 'arquivos' && !naPasta)) setTimeout(abrir, 50);
+    }catch(e){ setTimeout(abrir, 50); }
   }
 
   function abrir(){
@@ -130,7 +136,7 @@
     document.getElementById('itemTimbradosBib').classList.add('ativa');
     document.querySelectorAll('.coluna-categorias .item-categoria-lateral.ativa').forEach(function(i){ i.classList.add('tb-era-ativa'); i.classList.remove('ativa'); });
     var h1 = document.querySelector('.header-pagina h1');
-    if(h1){ h1.setAttribute('data-tb-titulo', h1.textContent); h1.textContent = 'Timbrados e modelos'; }
+    if(h1){ h1.setAttribute('data-tb-titulo', h1.textContent); h1.textContent = 'Modelos'; }
     try{ var u = new URL(location.href); u.searchParams.set('aba', 'timbrados'); history.replaceState(history.state, '', u); }catch(e){}
     if(!S.carregado) carregar();
   }
@@ -142,7 +148,7 @@
     document.querySelectorAll('.coluna-categorias .tb-era-ativa').forEach(function(i){ i.classList.remove('tb-era-ativa'); });
     var h1 = document.querySelector('.header-pagina h1');
     if(h1 && h1.getAttribute('data-tb-titulo')){ h1.textContent = h1.getAttribute('data-tb-titulo'); h1.removeAttribute('data-tb-titulo'); }
-    try{ var u = new URL(location.href); u.searchParams.delete('aba'); history.replaceState(history.state, '', u); }catch(e){}
+    try{ var u = new URL(location.href); u.searchParams.set('aba', 'arquivos'); history.replaceState(history.state, '', u); }catch(e){}
   }
 
   /* ---------------- dados ---------------- */

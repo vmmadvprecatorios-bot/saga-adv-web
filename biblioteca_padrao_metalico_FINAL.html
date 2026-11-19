@@ -4,7 +4,7 @@
 <script src="saga_guard.js?v=202611190139"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VMMADV | Biblioteca</title>
+<title>VMMADV | Modelos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -377,7 +377,7 @@
 
     <div class="coluna-categorias">
       <div class="categorias-cabecalho">
-        <div class="titulo-categorias">Categorias</div>
+        <div class="titulo-categorias">Seções</div>
         <button class="btn-retrair-categorias" id="btnAlternarCategorias" type="button" aria-label="Recolher categorias" title="Recolher categorias">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -417,7 +417,7 @@
         <button class="btn-voltar-biblioteca" id="btnVoltarBiblioteca" type="button" aria-label="Voltar">
           <span aria-hidden="true">←</span> Voltar
         </button>
-        <h1>Biblioteca</h1>
+        <h1>Modelos</h1>
       </div>
       <div class="botoes-view" aria-label="Modo de visualizacao">
         <button class="btn-view ativo" type="button" data-view="grade" aria-pressed="true">Grade</button>
@@ -428,7 +428,7 @@
     <div class="breadcrumb-wrap" id="breadcrumbWrap">
       <div class="breadcrumb-item atual" data-id="raiz">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 9.5L12 3l9 6.5V21H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-        Biblioteca
+        Arquivos
       </div>
     </div>
 
@@ -449,7 +449,7 @@
 
     <div class="destino-pasta-atual" id="destinoPastaAtual" aria-live="polite">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      <span>Solte para mover para <strong id="nomeDestinoPastaAtual">Biblioteca</strong></span>
+      <span>Solte para mover para <strong id="nomeDestinoPastaAtual">Arquivos</strong></span>
     </div>
 
     <div class="cabecalho-lista" id="cabecalhoLista" aria-hidden="true">
@@ -467,7 +467,7 @@
 <div class="modal-overlay-bib" id="modalNovaPasta">
   <div class="modal-bib">
     <h3>Nova Pasta</h3>
-    <div class="modal-sub" id="subNovaPasta">Esta pasta sera criada dentro de "Biblioteca".</div>
+    <div class="modal-sub" id="subNovaPasta">Esta pasta sera criada dentro de "Arquivos".</div>
     <div class="modal-campo-bib">
       <label>Nome da pasta</label>
       <input type="text" id="inputNomePasta" placeholder="Ex: Direito Previdenciario">
@@ -615,7 +615,7 @@ function confirmarExclusao(mensagem, callback){
 
   // ===== ARVORE DE DADOS =====
   var arvore = {
-    raiz: { nome: 'Biblioteca', pastas: ['juridico', 'administrativo', 'treinamento', 'marketing-arquivos'], arquivos: [] },
+    raiz: { nome: 'Arquivos', pastas: ['juridico', 'administrativo', 'treinamento', 'marketing-arquivos'], arquivos: [] },
     juridico: { nome: 'Juridico', pastas: ['peticoes', 'procuracoes-raiz', 'timbrado-raiz'], arquivos: [] },
     administrativo: {
       nome: 'Administrativo',
@@ -745,7 +745,7 @@ function confirmarExclusao(mensagem, callback){
   }
 
   function nomeCaminhoPasta(id){
-    if(!id || id === 'raiz') return 'Biblioteca';
+    if(!id || id === 'raiz') return 'Arquivos';
     var caminho = montarBreadcrumbCategoria(id);
     return ['Biblioteca'].concat(caminho.map(function(categoria){ return categoria.nome; })).join(' / ');
   }
@@ -822,7 +822,7 @@ async function moverItem(payload, destinoId){
   animarEntradaBiblioteca();
 
   var destino = destinoCategoriaId ? buscarCategoriaPorId(destinoCategoriaId) : null;
-  var nomeDestino = destino ? destino.nome : 'Biblioteca';
+  var nomeDestino = destino ? destino.nome : 'Arquivos';
   showToast((payload.tipo === 'pasta' ? 'Pasta' : 'Arquivo') + ' movido para ' + nomeDestino + '.', 'sucesso');
   return true;
 }
@@ -896,7 +896,7 @@ function montarListaPastasDestino(atualId, nivel, resultado){
   var nivelAtual = nivel || 0;
 
   if(categoriaId === null){
-    lista.push({ id:'raiz', nome:'Biblioteca', nivel:nivelAtual });
+    lista.push({ id:'raiz', nome:'Arquivos', nivel:nivelAtual });
   } else {
     var categoria = buscarCategoriaPorId(categoriaId);
     if(!categoria) return lista;
@@ -1015,7 +1015,7 @@ function renderizarBreadcrumb(){
   if(!wrap) return;
 
   wrap.innerHTML = '';
-  var itens = [{ id:'raiz', nome:'Biblioteca' }].concat(montarBreadcrumbCategoria(state.categoriaAtualId));
+  var itens = [{ id:'raiz', nome:'Arquivos' }].concat(montarBreadcrumbCategoria(state.categoriaAtualId));
 
   itens.forEach(function(itemDados, indice){
     if(indice > 0){
@@ -1801,7 +1801,7 @@ function abrirVisualizador(arq){
   // Nesta etapa, os dados fictícios são neutralizados em execução e não são exibidos na interface.
   function neutralizarDadosFicticiosDaBiblioteca(){
     arvore = {
-      raiz: { nome:'Biblioteca', pastas:[], arquivos:[] }
+      raiz: { nome:'Arquivos', pastas:[], arquivos:[] }
     };
     caminhoAtual = ['raiz'];
     categoriasFixas = [];
@@ -2195,7 +2195,7 @@ async function inicializarBibliotecaReal(){
 
     document.getElementById('subNovaPasta').textContent = categoriaPai
       ? 'Esta pasta será criada dentro de "' + categoriaPai.nome + '".'
-      : 'Esta pasta será criada na raiz da Biblioteca.';
+      : 'Esta pasta será criada na raiz dos Arquivos.';
     document.getElementById('inputNomePasta').value = '';
     modalNovaPasta.classList.add('aberto');
   }
@@ -2415,7 +2415,7 @@ async function inicializarBibliotecaReal(){
     }
   }
 
-  SagaUI.carregar('biblioteca');
+  SagaUI.carregar('modelos'); // 19/11 (T194): Biblioteca juntada em Modelos
   inicializarBibliotecaReal();
 </script>
 
