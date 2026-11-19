@@ -8,7 +8,7 @@
    ===================================================================== */
 (function(){
 'use strict';
-var P={aba:'meu',mes:null,d:null,erro:null,quem:null,validar:{sit:'pendentes',busca:'',lista:null,erro:null},usuarios:null,abertos:{}};
+var P={aba:'meu',mes:null,d:null,erro:null,quem:null,pre:null,preErro:null,minhas:null,pags:null,pagsErro:null,validar:{sit:'pendentes',busca:'',lista:null,erro:null},usuarios:null,abertos:{}};
 var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
 var MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 var MES_C=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -77,6 +77,68 @@ async function carregar(){
   marcarAba();
   desenhar();
   if(P.d.pode_validar&&P.validar.lista===null)carregarValidar();
+  carregarExtras();
+}
+/* 19/11 (T194, bloco 269): pré-validados pelo cálculo do PSS e prêmio pago */
+async function carregarExtras(){
+  var tarefas=[];
+  if(P.d.pode_validar)tarefas.push(_sb.rpc('premio_pre_listar',{p_minhas:false}).then(function(r){P.preErro=r.error?erroMsg(r.error):null;P.pre=r.error?[]:(r.data||[]);}));
+  tarefas.push(_sb.rpc('premio_pre_listar',{p_minhas:true}).then(function(r){P.minhas=r.error?{erro:erroMsg(r.error)}:(r.data||[]);}));
+  tarefas.push(_sb.rpc('premio_pagamentos_listar',{p_usuario:null}).then(function(r){P.pagsErro=r.error?erroMsg(r.error):null;P.pags=r.error?[]:(r.data||[]);}));
+  await Promise.all(tarefas);
+  if(P.pre&&P.pre.length){var n=$('nValidar');if(n&&!n.textContent)n.textContent=String(P.pre.length);}
+  if(P.aba==='meu'||P.aba==='validar'||P.aba==='geral')desenhar();
+}
+function htmlPreValidar(){
+  if(P.preErro)return '<div class="erro-caixa"><b>Não consegui carregar os pré-validados.</b>Motivo: '+esc(P.preErro)+'</div>';
+  var l=P.pre||[];if(!l.length)return '';
+  return '<section class="painel"><h2>Pré-validados pelo sistema ('+l.length+')</h2><div class="ajuda" style="margin-bottom:8px">O cálculo do PSS foi conferido e deu valor a restituir (processo APTO). Confirme com 1 clique para o prêmio contar neste mês; se não estiver certo, diga o motivo.</div>'+
+    '<div class="tab-wrap" style="margin-top:0"><table class="t"><thead><tr><th>Cliente</th><th>Tese</th><th class="num">A restituir</th><th>Iniciou</th><th>Pegou a documentação</th><th></th></tr></thead><tbody>'+
+    l.map(function(x){var f=linkFicha(x.pessoa_id,x.processo_id);
+      return '<tr><td><a href="'+esc(f||'#')+'" style="color:inherit">'+esc(x.cliente||'Cliente')+'</a><div class="cod">'+esc(x.codigo||'')+' · desde '+esc(dataBR(x.criado_em))+'</div></td><td>'+esc(x.tese||'—')+' <span class="selo ok">APTO</span></td><td class="num">'+esc(rs(x.total_restituir))+'</td><td>'+esc(x.captador||'—')+'</td><td>'+esc(x.documentador||'—')+'</td>'+
+        '<td class="num" style="white-space:nowrap"><button class="btn btn-sm btn-ouro" type="button" data-pre-ok="'+esc(x.id)+'">Confirmar</button> <button class="btn btn-sm" type="button" data-pre-nao="'+esc(x.id)+'">Não confirmar</button></td></tr>';}).join('')+
+    '</tbody></table></div></section>';
+}
+async function decidirPre(id,ok){
+  var x=(P.pre||[]).filter(function(i){return i.id===id;})[0];if(!x)return;
+  if(ok){
+    var b=document.querySelector('[data-pre-ok="'+id+'"]');if(b)b.disabled=true;
+    var r=await _sb.rpc('premio_pre_decidir',{p_id:id,p_confirmar:true,p_motivo:null});
+    if(r.error){if(b)b.disabled=false;toast('Não confirmou: '+erroMsg(r.error),'erro');return;}
+    var tr=b&&b.closest('tr');if(tr&&window.sagaRiscar)sagaRiscar(tr,{recolher:true});
+    toast('Confirmado: o prêmio conta neste mês e quem ganha recebeu o aviso.','success');
+    setTimeout(function(){P.validar.lista=null;carregar();},450);return;
+  }
+  abrirJanela({titulo:'Não confirmar a pré-validação',sub:(x.cliente||'Cliente')+(x.codigo?' · '+x.codigo:''),botao:'Não confirmar',perigo:true,
+    corpo:'<div><label class="r" for="pMot">Motivo (a colaboradora recebe no sino)</label><textarea id="pMot" style="min-height:80px"></textarea></div>',
+    ok:async function(c){var r=await _sb.rpc('premio_pre_decidir',{p_id:id,p_confirmar:false,p_motivo:c.querySelector('#pMot').value});if(r.error)throw r.error;toast('Pré-validação não confirmada.','success');carregar();}});
+}
+function htmlPrevistos(){
+  if(!P.d||P.d.quem&&P.d.quem!==P.d.eu)return '';
+  var m=P.minhas;if(!m)return '';
+  if(m.erro)return '<div class="erro-caixa"><b>Não consegui carregar os seus pré-validados.</b>Motivo: '+esc(m.erro)+'</div>';
+  if(!m.length)return '';
+  var SIT={pendente:'<span class="selo amarelo">previsto · aguardando confirmação</span>',confirmada:'<span class="selo ok">confirmado</span>',descartada:'<span class="selo vermelho">não confirmado</span>'};
+  return '<section class="painel"><h2>Pré-validados pelo sistema</h2><div class="ajuda" style="margin-bottom:8px">Quando o cálculo do PSS de um cliente seu dá valor a restituir, o prêmio fica previsto aqui até o Dr. Victor ou a Hevelyn confirmarem.</div><div class="tab-wrap" style="margin-top:0"><table class="t"><thead><tr><th>Cliente</th><th>Tese</th><th>Situação</th><th>Quando</th></tr></thead><tbody>'+
+    m.map(function(x){return '<tr><td>'+esc(x.cliente||'Cliente')+'<div class="cod">'+esc(x.codigo||'')+'</div></td><td>'+esc(x.tese||'—')+'</td><td>'+(SIT[x.situacao]||esc(x.situacao))+(x.motivo&&x.situacao==='descartada'?'<div class="cod">'+esc(x.motivo)+'</div>':'')+'</td><td>'+esc(dataBR(x.decidido_em||x.criado_em))+'</td></tr>';}).join('')+
+    '</tbody></table></div></section>';
+}
+function htmlPagamentos(admin){
+  if(P.pagsErro)return '<div class="erro-caixa"><b>Não consegui carregar os pagamentos do prêmio.</b>Motivo: '+esc(P.pagsErro)+'</div>';
+  var quem=(P.d&&(P.d.quem||P.d.eu))||null;
+  var l=(P.pags||[]).filter(function(x){return admin||!quem||x.usuario_id===quem;});if(!l.length)return '';
+  return '<section class="painel"><h2>'+(admin?'Pagamento do prêmio (meses fechados)':'Pagamentos do prêmio')+'</h2><div class="tab-wrap" style="margin-top:0"><table class="t"><thead><tr><th>Mês</th>'+(admin?'<th>Pessoa</th>':'')+'<th class="num">Valor</th><th>Situação</th>'+(admin?'<th></th>':'')+'</tr></thead><tbody>'+
+    l.map(function(x){var mes=String(x.mes).slice(0,10);
+      return '<tr><td style="text-transform:capitalize">'+esc(mesNome(mes))+'</td>'+(admin?'<td>'+esc(x.nome||'')+'</td>':'')+'<td class="num">'+esc(rs(x.total))+'</td><td>'+(x.pago?'<span class="selo ok">Recebido em '+esc(dataBR(String(x.pago_em)+'T12:00:00'))+'</span>':'<span class="selo amarelo">A receber</span>')+'</td>'+
+        (admin?'<td class="num">'+(x.pago?'<button class="btn btn-sm" type="button" data-pag="'+esc(mes)+'|'+esc(x.usuario_id)+'|0">Desfazer</button>':'<button class="btn btn-sm btn-ouro" type="button" data-pag="'+esc(mes)+'|'+esc(x.usuario_id)+'|1">Marcar pago</button>')+'</td>':'')+'</tr>';}).join('')+
+    '</tbody></table></div></section>';
+}
+async function marcarPago(v,b){
+  var p=v.split('|');b.disabled=true;
+  var r=await _sb.rpc('premio_pagamento_marcar',{p_mes:p[0],p_usuario:p[1],p_pago:p[2]==='1',p_data:null});
+  if(r.error){b.disabled=false;toast('Não marcou: '+erroMsg(r.error),'erro');return;}
+  toast(p[2]==='1'?'Marcado como pago: a pessoa vê "Recebido" e recebeu o aviso.':'Voltou para "A receber".','success');
+  carregarExtras();
 }
 async function carregarValidar(){
   var r=await _sb.rpc('premio_a_validar',{p_busca:P.validar.busca||null,p_situacao:P.validar.sit});
@@ -149,6 +211,8 @@ function htmlMeu(){
   if((P.d.ajustes||[]).length)h+='<section class="painel"><h2>Ajustes deste mês</h2><div class="tab-wrap"><table class="t"><thead><tr><th>Quando</th><th>Motivo</th><th class="num">Valor</th></tr></thead><tbody>'+
     P.d.ajustes.filter(function(a){return a.usuario_id===P.d.quem;}).map(function(a){return '<tr><td>'+esc(dataBR(a.criado_em))+'</td><td>'+esc(a.motivo)+'</td><td class="num">'+esc(rs(a.valor))+'</td></tr>';}).join('')+'</tbody></table></div></section>';
   if(P.d.ranking&&P.d.ranking.length)h+='<section class="painel"><h2>Ranking do mês</h2><div class="barras-h">'+barrasH(P.d.ranking.map(function(r){return {nome:r.nome+' · nível '+r.nivel,n:r.validados};}))+'</div></section>';
+  h+=htmlPrevistos();
+  h+=htmlPagamentos(false);
   h+=htmlHistorico();
   return h;
 }
@@ -356,6 +420,7 @@ function editarPesos(){
 function htmlValidar(){
   var v=P.validar,h='<div class="barra"><div class="pills" role="group" aria-label="Quais processos"><button class="pill'+(v.sit==='pendentes'?' active':'')+'" type="button" data-vsit="pendentes">A validar</button><button class="pill'+(v.sit==='validados'?' active':'')+'" type="button" data-vsit="validados">Validados (120 dias)</button></div>'+
     '<input class="ent" id="vBusca" type="search" placeholder="Buscar por cliente, código ou número" value="'+esc(v.busca)+'" style="flex:1"></div>';
+  if(v.sit==='pendentes')h+=htmlPreValidar();
   h+='<div class="sub ajuda" style="margin-bottom:10px">Válido = documentação completa + cálculo pronto + valor a recuperar. O processo conta no mês em que é validado. Aparecem primeiro os cartões em "Documentos em mãos"; depois os do Jurídico ainda não validados.</div>';
   if(v.erro)return h+'<div class="erro-caixa"><b>Não consegui carregar a lista.</b>Motivo: '+esc(v.erro)+'</div>';
   if(v.lista===null)return h+'<div class="vazio">Carregando…</div>';
@@ -430,6 +495,7 @@ function htmlGeral(){
     '</tbody></table></div></section>';
   var aj=d.ajustes||[];
   if(aj.length)h+='<section class="painel"><h2>Ajustes de '+esc(mesNome(d.mes))+'</h2><div class="tab-wrap"><table class="t"><thead><tr><th>Pessoa</th><th>Motivo</th><th>Tipo</th><th class="num">Valor</th></tr></thead><tbody>'+aj.map(function(a){return '<tr><td>'+esc(a.nome)+'</td><td>'+esc(a.motivo)+'</td><td>'+(a.origem==='estorno'?'<span class="selo vermelho">estorno</span>':'<span class="selo">ajuste</span>')+'</td><td class="num">'+esc(rs(a.valor))+'</td></tr>';}).join('')+'</tbody></table></div></section>';
+  h+=htmlPagamentos(true);
   var fs=d.fechamentos||[];
   if(fs.length)h+='<section class="painel"><h2>Meses fechados</h2><div class="tab-wrap"><table class="t"><thead><tr><th>Mês</th><th>Fechado em</th><th class="num">Total</th><th></th></tr></thead><tbody>'+fs.map(function(f){return '<tr><td style="text-transform:capitalize">'+esc(mesNome(f.mes))+'</td><td>'+esc(dataBR(f.fechado_em))+'</td><td class="num">'+esc(rs(f.total))+'</td><td class="num"><button class="btn btn-sm" type="button" data-ir-mes="'+esc(String(f.mes).slice(0,10))+'">Ver</button></td></tr>';}).join('')+'</tbody></table></div></section>';
   return h;
@@ -511,6 +577,9 @@ function ligar(){
     if((t=e.target.closest('[data-vsit]'))){if(t.dataset.vsit===P.validar.sit)return;P.validar.sit=t.dataset.vsit;P.validar.lista=null;document.querySelectorAll('[data-vsit]').forEach(function(x){x.classList.toggle('active',x===t);});setTimeout(carregarValidar,0);return;}
     if((t=e.target.closest('[data-validar]'))){abrirValidar(t.dataset.validar);return;}
     if((t=e.target.closest('[data-cancelar]'))){abrirCancelar(t.dataset.cancelar);return;}
+    if((t=e.target.closest('[data-pre-ok]'))){decidirPre(t.dataset.preOk,true);return;}
+    if((t=e.target.closest('[data-pre-nao]'))){decidirPre(t.dataset.preNao,false);return;}
+    if((t=e.target.closest('[data-pag]'))){marcarPago(t.dataset.pag,t);return;}
     if(e.target.closest('#btnFechar')){fecharMes();return;}
     if(e.target.closest('#btnPdf')){pdf();return;}
     if(e.target.closest('#btnAjuste')){lancarAjuste();return;}

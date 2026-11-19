@@ -251,6 +251,7 @@ window.SagaCalculos = (function(){
   function blocoLeitor(){
     return '<div class="cl-leitor" id="clLeitor"><div class="cl-leitor-topo"><b>Ler os documentos</b> <span>Solte aqui o requisitório e o espelho do tribunal em PDF (ou escolha os arquivos) e o SAGA acha os valores para você conferir. O arquivo é lido neste computador e não é guardado.</span></div>'
       + '<div class="cl-leitor-acoes"><label class="cl-arq">Escolher PDFs<input type="file" id="clArquivos" accept="application/pdf,.pdf,.txt" multiple hidden></label>'
+      + '<button type="button" id="clDaPasta">Ler da pasta do cliente</button>'
       + '<button type="button" id="clColarAbrir">Colar o texto</button></div>'
       + '<div id="clColar" hidden><textarea id="clTexto" rows="4" placeholder="Cole aqui o texto copiado do requisitório ou do espelho"></textarea><div class="cl-botoes" style="margin-top:6px"><button type="button" id="clLerTexto">Ler o texto colado</button></div></div>'
       + '<div id="clLidos"></div></div>';
@@ -303,6 +304,31 @@ window.SagaCalculos = (function(){
       + (erros.length ? 'Não abriu: ' + erros.join('; ') + '.' : '');
     mostrarLidos(achados, nomes.length === 1 ? nomes[0] : nomes.length + ' arquivos', extra.trim());
   }
+  /* 19/11 (bloco 269, pedido B): pega sozinho o requisitório, o espelho e o demonstrativo já guardados na pasta do cliente */
+  var RX_DOC = /requisit|espelho|precat|\brpv\b|prc\d|demonstrat|extrato|loa\b|or[cç]ament/i;
+  async function lerDaPasta(){
+    var box = document.getElementById('clLidos');
+    box.innerHTML = '<div class="cl-sub">Procurando o requisitório e o espelho na pasta do cliente…</div>';
+    try{
+      var r = await sb().from('documentos').select('id,nome_arquivo,caminho_storage,criado_em').eq('processo_id', S.ctx.processoId)
+        .or('excluido_logico.is.null,excluido_logico.eq.false').order('criado_em', { ascending: false }).limit(200);
+      if(r.error) throw r.error;
+      var pdfs = (r.data || []).filter(function(d){ return /\.pdf$/i.test(d.nome_arquivo || ''); });
+      var alvo = pdfs.filter(function(d){ return RX_DOC.test(d.nome_arquivo || ''); }).slice(0, 8);
+      if(!alvo.length){
+        box.innerHTML = '<div class="cl-aviso"><b>Não achei o requisitório nem o espelho na pasta deste processo.</b> Procurei PDFs com "requisitório", "espelho", "precatório", "RPV", "demonstrativo" ou "LOA" no nome ('
+          + pdfs.length + ' PDF(s) na pasta). Guarde o documento na ficha com um desses nomes, ou solte o PDF aqui.</div>';
+        return;
+      }
+      var arquivos = [];
+      for(var i = 0; i < alvo.length; i++){
+        var dl = await sb().storage.from('documentos-clientes').download(alvo[i].caminho_storage);
+        if(dl.error) throw new Error('não consegui abrir "' + alvo[i].nome_arquivo + '" (' + dl.error.message + ')');
+        arquivos.push(new File([dl.data], alvo[i].nome_arquivo, { type: 'application/pdf' }));
+      }
+      await lerArquivos(arquivos);
+    }catch(e){ box.innerHTML = '<div class="cl-erro"><b>Não consegui ler a pasta do cliente:</b> ' + esc(e.message || e) + '</div>'; }
+  }
   function ligarLeitor(){
     var zona = document.getElementById('clLeitor'), inp = document.getElementById('clArquivos'); if(!zona) return;
     inp.onchange = function(){ lerArquivos(Array.prototype.slice.call(inp.files || [])); inp.value = ''; };
@@ -310,6 +336,7 @@ window.SagaCalculos = (function(){
     zona.addEventListener('dragleave', function(){ zona.classList.remove('arrastando'); });
     zona.addEventListener('drop', function(e){ e.preventDefault(); zona.classList.remove('arrastando'); lerArquivos(Array.prototype.slice.call((e.dataTransfer && e.dataTransfer.files) || [])); });
     document.getElementById('clColarAbrir').onclick = function(){ var c = document.getElementById('clColar'); if(window.sagaRecolher){ try{ window.sagaRecolher(c, !c.hidden ? false : true); return; }catch(x){} } c.hidden = !c.hidden; };
+    document.getElementById('clDaPasta').onclick = lerDaPasta;
     document.getElementById('clLerTexto').onclick = function(){ var t = document.getElementById('clTexto').value; mostrarLidos(lerTexto(t), 'o texto colado'); };
   }
 
@@ -416,6 +443,8 @@ window.SagaCalculos = (function(){
       + '<button type="button" class="pri" id="clConferir"' + (S.pode ? '' : ' disabled') + '>Conferi: salvar no processo</button></div>';
     CAMPOS.forEach(function(c){ if(c.k && c.f && c.f !== 'sim'){ var el = document.getElementById('cl_' + c.k); if(el) mascara(el, c.f); } });
     ligarLeitor();
+    /* sem cálculo salvo: já procura e lê sozinho os documentos da pasta (ele só confere) */
+    if(S.pode && !S.atual) lerDaPasta();
     var res = document.getElementById('clRes');
     function atualizar(){ var e = ler(); res.innerHTML = resultadoHtml(e, calcular(e)); }
     document.querySelectorAll('#calcModal input').forEach(function(i){ i.addEventListener('input', atualizar); i.addEventListener('change', atualizar); });
