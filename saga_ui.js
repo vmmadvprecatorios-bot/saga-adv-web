@@ -616,6 +616,10 @@
 
   // ===== Menu lateral: grupos Operação / Comunicação / Gestão que abrem e fecham (lembrado neste navegador) =====
   function gruposFechados(){try{return JSON.parse(localStorage.getItem('saga-menu-grupos')||'{}')||{};}catch(e){return {};}}
+  // 19/11: os grupos chegaram da conta (outro aparelho): abre e fecha igual, sem recarregar
+  global.sagaMenuGruposAplicar=function(){var sb=document.getElementById('sidebarSaga');if(!sb)return;var fech=gruposFechados();
+    sb.querySelectorAll('.nav-section[data-grupo]').forEach(function(sec){var id=sec.getAttribute('data-grupo'),g=sb.querySelector('.nav-grupo[data-grupo="'+id+'"]');if(!g)return;
+      var f=!!fech[id];if(g.hidden===f)return;sec.classList.toggle('fechado',f);sec.setAttribute('aria-expanded',f?'false':'true');if(global.sagaRecolher)global.sagaRecolher(g,f);else g.hidden=f;});};
   function ligarGruposMenu(sb){
     var fech=gruposFechados();
     sb.querySelectorAll('.nav-section[data-grupo]').forEach(function(sec){
@@ -1095,6 +1099,8 @@
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
       _perfilAtual=r.data;
+      // 19/11 (bloco 270): as escolhas pessoais guardadas na conta voltam neste aparelho (saga_guard.js, sagaSinc)
+      try{if(global.sagaSinc)global.sagaSinc.receber((r.data.preferencias||{}).sinc);}catch(e){}
       // Sons (18/11): a escolha salva no perfil vale em qualquer computador
       try{var ps=(r.data.preferencias||{}).sons;if(ps&&typeof ps==='object')localStorage.setItem('saga-sons',JSON.stringify(Object.assign({},SONS_PADRAO,ps)));}catch(e){}
       // Regra de 09/11 (Dr. Victor): só o administrador geral apaga, exclui ou remove; para os outros os botões somem (o banco também recusa)

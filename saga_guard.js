@@ -1,3 +1,130 @@
+// ===== Escolhas que acompanham a CONTA (19/11/2026, Dr. Victor; bloco 270) =====
+// "Todas as configurações que eu fizer no computador, quando eu acessar pelo telefone, têm que repetir."
+// Toda escolha pessoal guardada no navegador (localStorage 'saga-...') também vai para a conta da pessoa
+// (usuarios.preferencias.sinc, pela preferencias_sinc_salvar) e volta em qualquer aparelho ao entrar.
+// O navegador fica como cópia rápida (aplicada antes da 1ª imagem); a conta é a que vale; a última mudança vence
+// (cada chave leva a hora da mudança: localStorage 'saga-sinc-t'). A foto de fundo do Vidro vai para o lugar
+// privado preferencias-imagens/<id do login>/ e a conta guarda só o caminho ('saga-vidro-imagem-conta').
+// FICAM SÓ NESTE APARELHO (SINC_APARELHO): menu recolhido do computador, largura das colunas, modo da planilha
+// no celular, código do aparelho, trava do ponto, sessão/login, rolagem e estados temporários, cópias (foto, logo,
+// permissões) e o que já tem campo próprio no perfil (cor, letra, sons, cadeado, cor do vidro coringa).
+// Escolha NOVA guardada em localStorage com nome 'saga-...' já acompanha a conta sozinha; se for só do aparelho,
+// pôr o nome em SINC_APARELHO.
+(function(){
+  if(window.sagaSinc)return;
+  var SINC_APARELHO=/^(saga-sidebar-colapsada|saga-aparelho|saga-ponto-trava|saga-ponto-mudou|saga-ultima-atividade|saga-sessao-conferida|saga-entrada-.*|saga-acesso|saga-login-regras|saga-abas.*|saga-menu-rolagem|saga-processos-posicao|saga-som-.*|saga-permissoes|saga-logo|saga-foto|saga-iniciais|saga-escritorio|saga-fotos-equipe|saga-cor|saga-cor-salva|saga-letra|saga-sons|saga-cadeado|saga-vidro-cor|saga-vidro-imagem|saga-sinc-.*|saga-planilha-larg-.*|saga-planilha-celular2-.*|saga-pastas-abertas-.*|saga-ficha-ao-lado|saga-volta.*)$/;
+  function sincroniza(k){return typeof k==='string'&&/^saga[-_][a-z0-9_:-]{1,80}$/.test(k)&&!SINC_APARELHO.test(k);}
+  var LS=null;try{LS=window.localStorage;}catch(e){}
+  if(!LS||!window.Storage)return;
+  var P=Storage.prototype,set0=P.setItem,rem0=P.removeItem,quieto=0,pronto=false,pend={},timer=null,embutida=window.top!==window;
+  function tempos(){try{return JSON.parse(LS.getItem('saga-sinc-t')||'{}')||{};}catch(e){return {};}}
+  function gravarTempos(t){try{set0.call(LS,'saga-sinc-t',JSON.stringify(t));}catch(e){}}
+  function marcar(k,v){
+    // antes de a conta chegar nesta tela, a escolha vale como "provisória" (hora 1): o que vier da conta ganha.
+    // Assim um aparelho novo não derruba com os padrões dele o que a pessoa escolheu no outro.
+    if(v!==null&&v.length>30000)return; // grande demais para a conta: fica só aqui
+    var t=tempos(),hora=pronto?Date.now():1;if(!pronto&&t[k]>1)return;
+    t[k]=hora;gravarTempos(t);pend[k]={v:v,t:hora};agendar();
+  }
+  function agendar(){clearTimeout(timer);timer=setTimeout(enviar,1200);}
+  P.setItem=function(k,v){var antes=null;if(this===LS&&!quieto&&sincroniza(k)){try{antes=LS.getItem(k);}catch(e){}}
+    set0.call(this,k,v);
+    if(this===LS&&!quieto){if(sincroniza(k)&&antes!==String(v))marcar(k,String(v));if(k==='saga-vidro-imagem')fotoMudou();}};
+  P.removeItem=function(k){var tinha=false;if(this===LS&&!quieto&&sincroniza(k)){try{tinha=LS.getItem(k)!==null;}catch(e){}}
+    rem0.call(this,k);
+    if(this===LS&&!quieto){if(tinha)marcar(k,null);if(k==='saga-vidro-imagem')fotoMudou();}};
+  function emSilencio(fn){quieto++;try{fn();}finally{quieto--;}}
+  function sb(){return window._sb&&window._sb.rpc?window._sb:null;}
+  var enviando=false;
+  async function enviar(){
+    if(!pronto||embutida||enviando)return;var itens=pend,ks=Object.keys(itens);if(!ks.length)return;var c=sb();if(!c){agendar();return;}
+    pend={};enviando=true;
+    try{var r=await c.rpc('preferencias_sinc_salvar',{p_itens:itens});if(r.error)throw r.error;window.sagaSinc.ultimoErro=null;}
+    catch(e){ks.forEach(function(k){if(!pend[k])pend[k]=itens[k];});window.sagaSinc.ultimoErro={quando:new Date(),motivo:(e&&e.message)||String(e)};
+      try{console.warn('[SAGA] Não deu para guardar as escolhas na conta: '+((e&&e.message)||e)+'. Nova tentativa em 30 s.');}catch(x){}
+      clearTimeout(timer);timer=setTimeout(enviar,30000);}
+    finally{enviando=false;}
+    if(Object.keys(pend).length&&!timer)agendar();
+  }
+  function uid(){try{var t=JSON.parse(LS.getItem('sb-fmoskdxgjulagedzjxxk-auth-token')||'null');if(t&&t.currentSession)t=t.currentSession;return t&&t.user&&t.user.id||null;}catch(e){return null;}}
+  // ---- foto de fundo do Vidro: sobe para o lugar privado da pessoa e a conta guarda o caminho ----
+  var fotoTimer=null;
+  function fotoMudou(){clearTimeout(fotoTimer);fotoTimer=setTimeout(subirFoto,800);}
+  async function subirFoto(){
+    if(embutida)return;var c=sb(),id=uid();if(!c||!c.storage||!id){fotoTimer=setTimeout(subirFoto,3000);return;}
+    var d=null;try{d=LS.getItem('saga-vidro-imagem');}catch(e){}
+    var antigo=null;try{antigo=LS.getItem('saga-vidro-imagem-conta');}catch(e){}
+    if(!d){if(antigo){LS.setItem('saga-vidro-imagem-conta','');tirarFoto(c,antigo);}return;}
+    try{
+      var m=/^data:(image\/[a-z]+);base64,(.*)$/.exec(d);if(!m)return;
+      var bin=atob(m[2]),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+      var ext=m[1]==='image/png'?'png':m[1]==='image/webp'?'webp':'jpg',cam=id+'/fundo-'+Date.now()+'.'+ext;
+      var r=await c.storage.from('preferencias-imagens').upload(cam,new Blob([u8],{type:m[1]}),{contentType:m[1],upsert:false});
+      if(r.error)throw r.error;
+      LS.setItem('saga-vidro-imagem-conta',cam);
+      if(antigo&&antigo!==cam)tirarFoto(c,antigo);
+      window.sagaSinc.fotoErro=null;
+    }catch(e){window.sagaSinc.fotoErro={quando:new Date(),motivo:(e&&e.message)||String(e)};try{console.warn('[SAGA] A foto de fundo não foi para a conta: '+((e&&e.message)||e));}catch(x){}
+      try{document.dispatchEvent(new CustomEvent('saga-foto-fundo-erro',{detail:window.sagaSinc.fotoErro}));}catch(x){}}
+  }
+  function tirarFoto(c,cam){try{if(cam&&cam.indexOf(uid()+'/')===0)c.storage.from('preferencias-imagens').remove([cam]);}catch(e){}}
+  async function baixarFoto(cam){
+    var c=sb();if(!c||!c.storage)return;
+    if(!cam){emSilencio(function(){LS.removeItem('saga-vidro-imagem');});aplicar(['saga-vidro-imagem']);return;}
+    try{
+      var r=await c.storage.from('preferencias-imagens').createSignedUrl(cam,300);if(r.error)throw r.error;
+      var b=await (await fetch(r.data.signedUrl,{cache:'no-store'})).blob();
+      var d=await new Promise(function(ok,erro){var fr=new FileReader();fr.onload=function(){ok(fr.result);};fr.onerror=erro;fr.readAsDataURL(b);});
+      emSilencio(function(){LS.setItem('saga-vidro-imagem',d);});aplicar(['saga-vidro-imagem']);
+    }catch(e){window.sagaSinc.fotoErro={quando:new Date(),motivo:(e&&e.message)||String(e)};try{console.warn('[SAGA] Não deu para trazer a foto de fundo da conta: '+((e&&e.message)||e));}catch(x){}}
+  }
+  // ---- aplica na tela o que chegou da conta (o resto vale ao abrir a próxima tela) ----
+  function aplicar(ks){
+    try{
+      var tem=function(re){return ks.some(function(k){return re.test(k);});};
+      if(tem(/^saga-tema$/)&&document.body){var tm=LS.getItem('saga-tema')||'dark';if(document.body.getAttribute('data-theme')!==tm){document.body.setAttribute('data-theme',tm);document.documentElement.style.colorScheme=tm==='light'?'light':'dark';if(window.sagaAplicarCor)window.sagaAplicarCor(document.documentElement.getAttribute('data-cor')||'azul',{deOutraAba:true});}}
+      if(tem(/^saga-movimento$/)&&window.sagaDefinirMovimento){var red=LS.getItem('saga-movimento')==='reduzido';emSilencio(function(){window.sagaDefinirMovimento(red);});}
+      if(tem(/^saga-vidro-/)){if(window.sagaVidro)window.sagaVidro.aplicar();else if(window.sagaVidroAnimar)window.sagaVidroAnimar();}
+      if(tem(/^saga-menu-grupos$/)&&window.sagaMenuGruposAplicar)window.sagaMenuGruposAplicar();
+      document.dispatchEvent(new CustomEvent('saga-preferencias-chegaram',{detail:{chaves:ks}}));
+    }catch(e){}
+  }
+  // ---- recebe da conta (chamado pelo saga_ui.js com o perfil, e de novo ao voltar para a aba) ----
+  function receber(remoto){
+    remoto=remoto&&typeof remoto==='object'?remoto:{};
+    var t=tempos(),mudou=[],subir={},foto=undefined;
+    Object.keys(remoto).forEach(function(k){
+      var it=remoto[k];if(!it||typeof it!=='object'||!sincroniza(k))return;var rt=+it.t||0;
+      // mesma hora e valor diferente = algo mudou aqui antes de a conta chegar (padrão da tela): vale a conta
+      if(rt>(t[k]||0)||(rt>1&&rt===(t[k]||0))){
+        var v=(it.v===null||it.v===undefined)?null:String(it.v),atual=null;try{atual=LS.getItem(k);}catch(e){}
+        if(atual!==v){emSilencio(function(){try{if(v===null)LS.removeItem(k);else LS.setItem(k,v);}catch(e){}});mudou.push(k);if(k==='saga-vidro-imagem-conta')foto=v;}
+        t[k]=rt;
+      }else if((t[k]||0)>rt){var lv=null;try{lv=LS.getItem(k);}catch(e){}if(lv===null||lv.length<=30000)subir[k]={v:lv,t:t[k]};}
+    });
+    // o que só está neste aparelho (escolhas de antes de 19/11 ou feitas sem internet) também sobe
+    try{for(var i=0;i<LS.length;i++){var k=LS.key(i);if(!sincroniza(k)||remoto[k])continue;var lv2=LS.getItem(k);if(lv2!==null&&lv2.length>30000)continue;if(!t[k])t[k]=1;subir[k]={v:lv2,t:t[k]};}}catch(e){}
+    gravarTempos(t);
+    pronto=true;
+    Object.keys(subir).forEach(function(k){if(!pend[k])pend[k]=subir[k];});
+    if(Object.keys(pend).length)agendar();
+    if(mudou.length)aplicar(mudou);
+    if(foto!==undefined)baixarFoto(foto);
+    else{var d=null,cc=null;try{d=LS.getItem('saga-vidro-imagem');cc=LS.getItem('saga-vidro-imagem-conta');}catch(e){}
+      // a foto foi escolhida antes de existir a conta (ou noutra versão): sobe agora; ou falta a cópia neste aparelho
+      if(d&&!cc&&!remoto['saga-vidro-imagem-conta'])fotoMudou();else if(cc&&!d)baixarFoto(cc);}
+  }
+  var ultimaPuxada=0;
+  async function puxar(){
+    var c=sb(),id=uid();if(!c||!id||embutida)return;ultimaPuxada=Date.now();
+    try{var r=await c.from('usuarios').select('preferencias').eq('auth_user_id',id).maybeSingle();if(!r.error&&r.data)receber((r.data.preferencias||{}).sinc);}catch(e){}
+  }
+  // voltou para a aba (ex.: o celular ficou com o SAGA aberto e a pessoa mudou algo no computador): confere de novo
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&pronto&&Date.now()-ultimaPuxada>60000)puxar();
+    if(document.visibilityState==='hidden'&&Object.keys(pend).length)enviar();});
+  window.addEventListener('pagehide',function(){if(Object.keys(pend).length)enviar();});
+  window.sagaSinc={receber:function(r){ultimaPuxada=Date.now();receber(r);},puxar:puxar,enviar:enviar,sincroniza:sincroniza,ultimoErro:null,fotoErro:null};
+})();
 // SAGA GUARD - porta de entrada das telas internas.
 // Carregado no <head>, antes de qualquer conteudo aparecer:
 // 1) sem login salvo no navegador, vai direto para o login (nada da tela aparece);

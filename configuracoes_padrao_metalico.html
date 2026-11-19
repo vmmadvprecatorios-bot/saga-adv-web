@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191526"></script>
+<script src="saga_guard.js?v=202611191618"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Configurações</title>
@@ -215,7 +215,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   .sd-filtro select{min-width:0;flex:1 1 100%}}
 .pr-cad{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.pr-cad-seg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);transition:opacity .26s cubic-bezier(.22,.78,.25,1)}.pr-cad-seg.apagado{opacity:.5}.pr-cad-seg select{width:auto;min-width:64px}@media(max-width:760px){.pr-cad{align-items:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191526">
+<link rel="stylesheet" href="saga_tema.css?v=202611191618">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -295,6 +295,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   <section class="tab-pane" id="aba-preferencias">
     <div class="panel">
       <div class="panel-title">Aparência</div>
+      <p class="s" id="prSincNota" style="margin:-4px 0 10px;color:var(--muted)">As suas escolhas (cores, claro ou escuro, fundo e foto do Vidro, efeitos, grupos do menu, blocos da ficha, visões das telas) acompanham a sua conta: entrando pelo celular ou por outro computador, aparecem iguais. Só ficam neste aparelho o menu recolhido, a largura das colunas e o modo da planilha no celular.</p>
       <div class="linha-opcao">
         <div><div class="t">Tema</div><div class="s">Também dá para trocar no botão do sol e da lua, no alto da tela.</div></div>
         <div class="seg" id="prTema"><button type="button" data-v="light">Claro</button><button type="button" data-v="dark">Escuro</button></div>
@@ -305,7 +306,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
       </div>
       <!-- 12/11 (T151): opções do Vidro tecnológico (aparecem quando uma cor de vidro está escolhida) -->
       <div class="linha-opcao pr-vidro" id="prVidro" hidden>
-        <div><div class="t">Vidro tecnológico</div><div class="s">O fundo atrás das placas de vidro e o quanto o vidro deixa ver. Vale na hora e fica guardado só neste computador (a imagem também: não vai para o banco).</div></div>
+        <div><div class="t">Vidro tecnológico</div><div class="s">O fundo atrás das placas de vidro e o quanto o vidro deixa ver. Vale na hora e acompanha a sua conta: no celular ou em outro computador aparece igual (a imagem vai diminuída para um lugar privado só seu).</div></div>
         <div class="pr-vidro-op">
           <div class="seg" id="prVidroFundo"><button type="button" data-v="limpo">Limpo</button><button type="button" data-v="montanhas">Montanhas à noite</button><button type="button" data-v="cidade">Cidade</button><button type="button" data-v="grade">Grade técnica</button><button type="button" data-v="imagem">Minha imagem</button></div>
           <div class="pr-vidro-linha" id="prVidroCorWrap" hidden><label class="pr-vidro-cor" title="Escolha qualquer cor: o sistema monta o claro e o escuro com leitura garantida"><input type="color" id="prVidroCor" value="#5aa9ff"><span>Escolher a cor</span></label><span class="pr-vidro-rapidas" id="prVidroRapidas"></span></div>
@@ -500,8 +501,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611191526"></script>
-<script src="saga_teses.js?v=202611191526"></script>
+<script src="saga_ui.js?v=202611191618"></script>
+<script src="saga_teses.js?v=202611191618"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)
@@ -931,7 +932,9 @@ function desfazerCorTema(){
   document.querySelectorAll('#prCor [data-cor]').forEach(function(x){if(cc&&x.dataset.familia===(cc.familia||cc.id)&&x.dataset.cor!==c)trocarVersaoCartao(x,!!cc.vidro);var on=x.dataset.cor===c;x.classList.toggle('active',on);x.setAttribute('aria-pressed',on);});
   mostrarSalvarCor(false);
 }
-/* ----- Vidro tecnológico (T151): fundo, imagem própria e "mais fosco"; tudo neste navegador ----- */
+/* ----- Vidro tecnológico (T151): fundo, imagem própria e "mais fosco"; vale na hora e acompanha a conta (bloco 270, sagaSinc no saga_guard.js) ----- */
+// erro ao mandar a foto para a conta: aparece à vista (regra de 12/11)
+document.addEventListener('saga-foto-fundo-erro',function(e){var d=e.detail||{};showToast('A foto de fundo ficou só neste aparelho: não deu para guardar na sua conta ('+esc(d.motivo||'erro desconhecido')+'). Tente escolher a imagem de novo.','error');});
 function ehVidro(cor){var c=coresDisponiveis().find(function(x){return x.id===cor;});return !!(c&&c.vidro);}
 function mostrarVidro(cor){
   var w=document.getElementById('prVidro');if(!w||!window.sagaVidro)return;
@@ -977,7 +980,7 @@ async function usarImagemVidro(arq){
   try{
     var d=await diminuirImagem(arq,1920,.8);if(d.length>1800000)d=await diminuirImagem(arq,1366,.7);
     if(!sagaVidro.definir('imagem',d)){showToast('A imagem é grande demais para guardar neste navegador. Tente outra.','error');return;}
-    sagaVidro.definir('fundo','imagem');montarVidro();showToast('Imagem de fundo aplicada (fica só neste computador).','success');
+    sagaVidro.definir('fundo','imagem');montarVidro();showToast('Imagem de fundo aplicada. Ela também vai para a sua conta (aparece no celular e nos outros computadores).','success');
   }catch(e){showToast(esc(e.message||'Não deu para usar a imagem.'),'error');}
 }
 document.addEventListener('click',function(e){

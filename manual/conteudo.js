@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.27",
+  versao: "3.28",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.28", data: "19/11/2026", mudou: "AS ESCOLHAS ACOMPANHAM A CONTA: tema claro/escuro, cor, fundo do Vidro e a **foto de fundo**, fundo animado, efeitos de movimento, grupos do menu, blocos da ficha e as visões das telas valem em qualquer aparelho (entrar pelo celular ou por outro computador mostra igual; a última mudança vence). Ficam só no aparelho: menu recolhido do computador, largura das colunas e o modo da planilha no celular." },
     { versao: "3.27", data: "19/11/2026", mudou: "Vidro: fundo novo **Limpo** (só a cor do tema, sem desenho). Fundos animados: saíram Planeta e aurora, Radar holográfico, Horizonte neon e Túnel de luz; ficam Brasas, Rede, Circuito, Chuva de código, Viagem pelas estrelas, Galáxia e Constelações." },
     { versao: "3.26", data: "19/11/2026", mudou: "Vidro: 8 fundos animados novos em Preferências > Fundo animado: Chuva de código, Viagem pelas estrelas, Galáxia, Planeta e aurora, Radar holográfico, Horizonte neon, Constelações e Túnel de luz, na cor do tema; o Circuito de luz passou a mostrar todos os pulsos." },
     { versao: "3.25", data: "19/11/2026", mudou: "Tela nova Meu dia > PARA APROVAR (Escritório de agentes): o Agente: Triagem classifica o que chega (intimações, andamentos do CNJ, pedidos) com o prazo em dias úteis e o Agente: Manutenção entrega o relatório do dia; o Dr. Victor e a Hevelyn aprovam, mandam ajustar ou reprovam; aprovar cria a tarefa. Regras do Escritório de agentes (nada sai para fora sem aprovação; o agente para na assinatura; senhas só no Chrome/Google)." },
@@ -193,7 +194,8 @@ window.SAGA_MANUAL = {
             "**Cadeado contra voltar sem querer**: Automático (trava sozinho depois de alguns segundos na tela; você escolhe quantos, padrão 20), Manual (só trava quando você clica no cadeado) ou Desligado. A escolha vale neste e nos outros computadores.",
             "**Sons**: Ligados ou Desligados e, um por um, **Mensagem nova no chat**, **Alguém marcou você no chat**, **Intimação nova chegou** e **Aviso urgente no sino** (prazo de tarefa; para o administrador, erro de robô), com o **volume** (Baixo, Médio, Alto) e o botão ▶ para ouvir. Começam ligados só os do chat. O navegador só toca depois que você clicar uma vez na página e, com várias abas abertas, só uma toca. A escolha vale em qualquer computador.",
             "**Modo claro com a cor** (19/11): no tema Claro, o fundo, os painéis e o menu ficam tingidos da cor escolhida, e o claro é o inverso do escuro: a barra de cima fica escura na cor do tema e o menu lateral fica claro, com a letra escura.",
-            "**Tamanho da letra**: Normal, Grande ou Maior."
+            "**Tamanho da letra**: Normal, Grande ou Maior.",
+            "**Vale em todos os aparelhos** (19/11): tudo o que você escolhe aqui e nas telas (claro/escuro, cor, Vidro e foto de fundo, efeitos, grupos do menu, blocos da ficha, visões e gráficos das telas) fica guardado na sua conta e aparece igual no celular e em outro computador. Só ficam no aparelho: o menu recolhido do computador, a largura das colunas e o modo da planilha no celular."
           ],
           img: "preferencias_cores",
           marcas: ["Tema claro ou escuro.", "Cor do tema: um cartão por cor, em grupos.", "Normal ou Vidro, dentro do cartão."],
@@ -203,14 +205,14 @@ window.SAGA_MANUAL = {
           quando: "Quando o colaborador escolheu uma cor na versão Vidro e quer mudar o que aparece atrás das placas.",
           passos: [
             "Escolha uma cor na versão **Vidro** e salve. Aparece o quadro **Vidro tecnológico**.",
-            "**Fundo**: **Limpo** (só a cor do tema, sem desenho nem imagem), Montanhas à noite, Cidade, Grade técnica ou Minha imagem ([[Usar uma imagem minha]]: a imagem fica só neste computador).",
+            "**Fundo**: **Limpo** (só a cor do tema, sem desenho nem imagem), Montanhas à noite, Cidade, Grade técnica ou Minha imagem ([[Usar uma imagem minha]]: a imagem vai diminuída para um lugar privado da sua conta e aparece também no celular e nos outros computadores).",
             "**Vidro normal** ou **Vidro mais fosco** (mais fosco = menos do fundo aparece através das placas).",
             "**Fundo animado**: Parado, **Brasas de neon** (partículas subindo), **Rede de dados** (pontos ligados por linhas), **Circuito de luz** (pulsos de luz correndo por linhas), **Chuva de código** (caracteres descendo em colunas), **Viagem pelas estrelas** (estrelas vindo na sua direção), **Galáxia** (espiral girando devagar) ou **Constelações** (estrelas que se ligam e mostram um nome), sempre na cor do tema.",
             "**Intensidade** (Leve, Média, Forte) e **Velocidade** (Lenta, Normal, Rápida). Vale na hora."
           ],
           img: "preferencias_vidro",
           marcas: ["Fundo atrás das placas.", "Vidro normal ou mais fosco.", "Fundo animado.", "Intensidade e velocidade."],
-          dicas: ["Tudo isso fica guardado só neste computador (em outro computador você escolhe de novo).", "Com os **Efeitos de movimento** desligados o fundo animado aparece parado.", "O fundo animado é leve: para sozinho quando a aba do SAGA fica escondida e não deixa as telas mais lentas."]
+          dicas: ["Tudo isso acompanha a sua conta: no celular ou em outro computador aparece igual (se mudar num aparelho, o outro acompanha ao abrir a próxima tela ou ao voltar para a aba do SAGA).", "Com os **Efeitos de movimento** desligados o fundo animado aparece parado.", "O fundo animado é leve: para sozinho quando a aba do SAGA fica escondida e não deixa as telas mais lentas."]
         },
         { id: "privacidade", titulo: "Gravar a tela ou mostrar o sistema sem expor clientes",
           quando: "Quando o colaborador vai gravar um vídeo, compartilhar a tela numa reunião ou mostrar o SAGA a alguém de fora.",
