@@ -45,8 +45,11 @@ window.SagaTimbrado = (function(){
   }
 
   /* Preenche os campos {chave} do modelo. Campo vazio fica como [Rótulo] para completar no Word. */
-  function preencher(blocos, campos, valores){
+  /* 19/11 (T194): com opc.realce, o campo que faltar sai como ⟦[Rótulo]⟧: destacado em amarelo no Word e em
+     laranja no PDF, para a pessoa achar o que completar. */
+  function preencher(blocos, campos, valores, opc){
     valores = valores || {};
+    var realce = !!(opc && opc.realce);
     var rot = {};
     (campos || []).forEach(function(c){ rot[c.chave] = c.rotulo || c.chave; });
     function troca(s){
@@ -55,7 +58,7 @@ window.SagaTimbrado = (function(){
         if(v == null || String(v).trim() === ''){
           if(k === 'data') return dataPorExtenso();
           if(k === 'cidade') return 'Maceió/AL';
-          return '[' + (rot[k] || k) + ']';
+          return realce ? '\u27e6[' + (rot[k] || k) + ']\u27e7' : '[' + (rot[k] || k) + ']';
         }
         return String(v).trim();
       });
@@ -81,6 +84,7 @@ window.SagaTimbrado = (function(){
   function construtorDocx(W){
     var LINKS = [];
     function run(t, rpr){
+      t = String(t == null ? '' : t).replace(/[\u27e6\u27e7]/g, '');
       return '<w:r>' + (rpr ? '<w:rPr>' + rpr + '</w:rPr>' : '') + '<w:t xml:space="preserve">' + escXml(t) + '</w:t></w:r>';
     }
     function hiperlink(url, texto, extra){
@@ -95,8 +99,9 @@ window.SagaTimbrado = (function(){
       extra = extra || '';
       texto = limpar(texto);
       var out = '';
-      texto.split(/(\[\[.+?\]\]|\*\*.+?\*\*|__.+?__)/).forEach(function(parte){
+      texto.split(/(\u27e6.+?\u27e7|\[\[.+?\]\]|\*\*.+?\*\*|__.+?__)/).forEach(function(parte){
         if(!parte) return;
+        if(parte.charAt(0) === '\u27e6'){ out += run(parte.slice(1, -1), extra + '<w:highlight w:val="yellow"/>'); return; }
         if(parte.indexOf('[[') === 0 && /\]\]$/.test(parte)){
           var miolo = parte.slice(2, -2), i = miolo.indexOf('|');
           var rotulo = i >= 0 ? miolo.slice(0, i) : miolo, url = i >= 0 ? miolo.slice(i + 1) : miolo;
@@ -359,8 +364,9 @@ window.SagaTimbrado = (function(){
   function pedacos(texto, base){
     texto = limpar(texto);
     var out = [];
-    texto.split(/(\[\[.+?\]\]|\*\*.+?\*\*|__.+?__)/).forEach(function(parte){
+    texto.split(/(\u27e6.+?\u27e7|\[\[.+?\]\]|\*\*.+?\*\*|__.+?__)/).forEach(function(parte){
       if(!parte) return;
+      if(parte.charAt(0) === '\u27e6'){ out.push(Object.assign({}, base, { t: parte.slice(1, -1), color:'C2410C', b:1 })); return; }
       if(parte.indexOf('[[') === 0 && /\]\]$/.test(parte)){
         var m = parte.slice(2, -2), i = m.indexOf('|');
         out.push(Object.assign({}, base, { t: i >= 0 ? m.slice(0, i) : m, link: (i >= 0 ? m.slice(i + 1) : m).trim(), color:'0563C1', sub:1 }));
@@ -474,6 +480,7 @@ window.SagaTimbrado = (function(){
     }
     function escrever(page, p, x, y){
       if(!p.t) return;
+      p.t = String(p.t).replace(/[\u27e6\u27e7]/g, '');
       if(p.sp) page.pushOperators(PDFLib.setCharacterSpacing(p.sp));
       page.drawText(p.t, { x:x, y:y, size:p.s, font:p.f, color:hexCor(PDFLib, p.r.color) });
       if(p.sp) page.pushOperators(PDFLib.setCharacterSpacing(0));
@@ -798,7 +805,7 @@ window.SagaTimbrado = (function(){
   /* opcoes: { sb, timbrado, modelo | blocos, valores, formato:'docx'|'pdf', impressao } */
   async function gerar(o){
     var t = o.timbrado; if(!t) throw new Error('Escolha o papel timbrado.');
-    var blocos = o.blocos || preencher((o.modelo && o.modelo.blocos) || [], (o.modelo && o.modelo.campos) || [], o.valores);
+    var blocos = o.blocos || preencher((o.modelo && o.modelo.blocos) || [], (o.modelo && o.modelo.campos) || [], o.valores, { realce: !!o.realce });
     if(!blocos.length) throw new Error('O modelo está vazio.');
     var imp = !!o.impressao && (o.formato === 'pdf' ? !!t.fundo_pdf_impressao : !!t.arquivo_docx_impressao);
     if(o.formato === 'pdf'){
