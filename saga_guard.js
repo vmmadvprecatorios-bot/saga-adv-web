@@ -1576,9 +1576,9 @@
     d.insertAdjacentHTML('beforeend',g);feitos[id]=1;return 'url(#'+id+')';
   }
   // fatia da rosca (stroke-dasharray num círculo): no formato premium, pontas arredondadas e espaço maior
-  function larguraAnel(base){base=base||14;return S.rosca==='premium'?Math.round(base*1.3):base;}
+  function larguraAnel(base,rosca){base=base||14;return (rosca||S.rosca)==='premium'?Math.round(base*1.3):base;}
   function fatia(c,o){
-    var prem=S.rosca==='premium',w=o.w||larguraAnel(),g=o.separar?(prem?5:2.2):0,d,ini,cap='butt';
+    var prem=(o.rosca||S.rosca)==='premium',w=o.w||larguraAnel(14,o.rosca),g=o.separar?(prem?5:2.2):0,d,ini,cap='butt';
     if(prem&&o.len-g-w>0.5){d=o.len-g-w;ini=o.acc+g/2+w/2;cap='round';}
     else if(prem){d=Math.max(0,o.len-g);ini=o.acc+g/2;}
     else{d=Math.max(0,o.len-g);ini=o.acc;}

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611192110"></script>
+<script src="saga_guard.js?v=202611192124"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Configurações</title>
@@ -60,13 +60,34 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .seg button.active{background:var(--gold);color:#fff}
 .linha-opcao{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--border-soft);flex-wrap:wrap}
 .linha-opcao:last-child{border-bottom:0}
-/* 19/11: Preferências > Gráficos (cartões do mesmo tamanho, em grade) */
-.pr-graf-texto{flex:1 1 220px;min-width:0}.pr-graf-op{flex:1 1 420px;min-width:0;max-width:640px;display:flex;flex-direction:column;gap:10px}
-.pr-graf-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
-.pr-graf{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 6px 8px;border:1px solid var(--border-soft);border-radius:12px;background:color-mix(in srgb,var(--text) 3%,transparent);color:var(--text);font:inherit;font-size:11px;line-height:1.25;text-align:center;cursor:pointer;transition:border-color .3s cubic-bezier(.22,.78,.25,1),background .3s cubic-bezier(.22,.78,.25,1)}
-.pr-graf:hover{border-color:var(--border)}.pr-graf.active{border-color:color-mix(in srgb,var(--gold) 70%,transparent);background:color-mix(in srgb,var(--gold) 12%,transparent)}
-.pr-graf svg{width:58px;height:58px;display:block}.pr-graf .pr-graf-trilho{stroke:color-mix(in srgb,var(--text) 8%,transparent)}
-.pr-graf-segs{display:flex;flex-wrap:wrap;gap:10px 18px}
+/* 19/11: Preferências > Gráficos (quadro largo: acabamento em cartões; formato e cores lado a lado) */
+.pr-graf-linha{display:flex;flex-direction:column;align-items:stretch;gap:16px}
+.pr-graf-cab .s{max-width:none}
+.pr-graf-secao{display:flex;flex-direction:column;gap:8px;min-width:0}
+.pr-graf-rot{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.pr-graf-rot span{text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px;opacity:.85}
+.pr-graf-grade{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.pr-graf-par{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.pr-graf-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:1180px){.pr-graf-grade{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:820px){.pr-graf-par{grid-template-columns:1fr}}
+@media (max-width:520px){.pr-graf-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pr-graf{position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;padding:12px 10px 11px;border:1px solid var(--border-soft);border-radius:14px;background:color-mix(in srgb,var(--text) 3%,transparent);color:var(--text);font:inherit;text-align:center;cursor:pointer;transition:border-color .3s cubic-bezier(.22,.78,.25,1),background .3s cubic-bezier(.22,.78,.25,1),box-shadow .3s cubic-bezier(.22,.78,.25,1),transform .3s cubic-bezier(.22,.78,.25,1)}
+.pr-graf:hover{border-color:var(--border);transform:translateY(-2px)}
+.pr-graf:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.pr-graf.active{border-color:color-mix(in srgb,var(--gold) 75%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 45%,transparent),0 12px 26px -16px color-mix(in srgb,var(--gold) 80%,transparent)}
+.pr-graf svg{display:block;width:100%;max-width:132px;height:auto;aspect-ratio:120/72}
+.pr-graf-duas .pr-graf svg{max-width:150px}
+.pr-graf b{font-size:12.5px;font-weight:600;line-height:1.25}
+.pr-graf small{font-size:11px;line-height:1.35;color:var(--muted)}
+.pr-graf .ok{position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--gold);color:var(--t-letra-botao,#0b1220);opacity:0;transform:scale(.5);transition:opacity .26s cubic-bezier(.22,.78,.25,1),transform .26s cubic-bezier(.22,.78,.25,1)}
+.pr-graf.active .ok{opacity:1;transform:none}
+.pr-graf .trilho-mini{fill:none;stroke:color-mix(in srgb,var(--text) 8%,transparent)}
+.pr-graf .base-mini{stroke:color-mix(in srgb,var(--text) 14%,transparent);stroke-width:1}
+.pr-graf-acoes{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border-soft)}
+.pr-graf-estado{flex:1 1 260px;min-width:0;font-size:12px;color:var(--muted)}
+.pr-graf-estado b{color:var(--text);font-weight:600}
+.pr-graf-estado.pendente{color:var(--warning)}
 .linha-opcao .t{font-size:13px;font-weight:600}
 .linha-opcao .s{font-size:11px;color:var(--muted);margin-top:2px}
 /* Interruptor estilo iPhone */
@@ -222,7 +243,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   .sd-filtro select{min-width:0;flex:1 1 100%}}
 .pr-cad{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.pr-cad-seg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);transition:opacity .26s cubic-bezier(.22,.78,.25,1)}.pr-cad-seg.apagado{opacity:.5}.pr-cad-seg select{width:auto;min-width:64px}@media(max-width:760px){.pr-cad{align-items:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611192110">
+<link rel="stylesheet" href="saga_tema.css?v=202611192124">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -332,15 +353,26 @@ html.saga-sem-movimento .arm-lido i{animation:none}
           </div>
         </div>
       </div>
-      <div class="linha-opcao pr-graf-linha">
-        <div class="pr-graf-texto"><div class="t">Gráficos</div><div class="s">Acabamento das roscas e barras de todas as telas. A escolha é só sua e vale no computador e no celular.</div></div>
-        <div class="pr-graf-op">
+      <div class="linha-opcao pr-graf-linha" id="prGraf">
+        <div class="pr-graf-cab"><div class="t">Gráficos</div><div class="s">Como ficam as roscas e as barras de todas as telas. Clique nos cartões para ver a prévia e depois em <b>Aplicar no sistema</b>. A escolha é só sua e vale no computador e no celular.</div></div>
+        <div class="pr-graf-secao">
+          <div class="pr-graf-rot">Acabamento <span>o brilho de cada fatia e de cada barra</span></div>
           <div class="pr-graf-grade" id="prGrafAcab" role="group" aria-label="Acabamento dos gráficos"></div>
-          <div class="pr-graf-segs">
-            <div><div class="pr-vidro-rot">Formato da rosca</div><div class="seg" id="prGrafRosca"><button type="button" data-v="hoje">Como hoje</button><button type="button" data-v="premium">Premium</button></div></div>
-            <div><div class="pr-vidro-rot">Cores das fatias</div><div class="seg" id="prGrafCores"><button type="button" data-v="tema">Tons do tema</button><button type="button" data-v="variadas">Cores variadas</button></div></div>
+        </div>
+        <div class="pr-graf-par">
+          <div class="pr-graf-secao">
+            <div class="pr-graf-rot">Formato da rosca</div>
+            <div class="pr-graf-duas" id="prGrafRosca" role="group" aria-label="Formato da rosca"></div>
           </div>
-          <div class="pr-vidro-nota">Premium: rosca mais grossa, com as fatias separadas e as pontas arredondadas. Cores variadas: cada fatia numa cor diferente (safira, cobre, jade, ouro...), mais fácil de distinguir, inclusive para quem é daltônico.</div>
+          <div class="pr-graf-secao">
+            <div class="pr-graf-rot">Cores das fatias</div>
+            <div class="pr-graf-duas" id="prGrafCores" role="group" aria-label="Cores das fatias"></div>
+          </div>
+        </div>
+        <div class="pr-graf-acoes">
+          <span class="pr-graf-estado" id="prGrafEstado" role="status"></span>
+          <button type="button" class="btn-secondary" id="prGrafCancelar" disabled>Cancelar</button>
+          <button type="button" class="btn-primary" id="prGrafAplicar" disabled>Aplicar no sistema</button>
         </div>
       </div>
       <div class="linha-opcao">
@@ -520,8 +552,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611192110"></script>
-<script src="saga_teses.js?v=202611192110"></script>
+<script src="saga_ui.js?v=202611192124"></script>
+<script src="saga_teses.js?v=202611192124"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)
@@ -797,31 +829,60 @@ async function sairDeTodos(){
 
 /* ----- Preferencias ----- */
 function prefs(){return (state.eu&&state.eu.preferencias)||{};}
-/* 19/11 (Dr. Victor): Gráficos metalizados. Acabamento, formato da rosca e cores das fatias (window.sagaGraficos, saga_guard.js) */
-var PR_GRAF_DADOS=[40,22,15,12,11];
-function prGrafCores(){
-  var e=window.sagaGraficos?sagaGraficos.estado():{cores:'tema'};
-  if(e.cores==='variadas'&&window.sagaGraficos)return sagaGraficos.coresVariadas();
+/* 19/11 (Dr. Victor): Gráficos metalizados. Acabamento, formato da rosca e cores das fatias (window.sagaGraficos, saga_guard.js).
+   Cada cartão desenha uma rosca e três barrinhas com o acabamento dele; os cartões de acabamento sempre em cores variadas
+   (mostram o brilho); os de formato e de cores usam a escolha atual. */
+var PR_GRAF_DADOS=[40,22,15,12,11],PR_GRAF_BARRAS=[.5,.85,.66];
+var PR_GRAF_TEXTO={rosca:{hoje:['Como hoje','Fina, fatias coladas'],premium:['Premium','Mais grossa, fatias separadas e pontas redondas']},
+  cores:{tema:['Tons do tema','Variações da cor do seu tema'],variadas:['Cores variadas','Cada fatia numa cor; fácil de distinguir, também para daltônicos']}};
+function prGrafCores(qual){
+  if(qual==='variadas'&&window.sagaGraficos)return sagaGraficos.coresVariadas();
   return ['var(--gold)','color-mix(in srgb,var(--gold) 58%,#000)','color-mix(in srgb,var(--gold) 52%,#fff)','color-mix(in srgb,var(--gold) 34%,#000)','color-mix(in srgb,var(--gold) 28%,#fff)'];
+}
+function prGrafDesenho(el,o){
+  var SG=window.sagaGraficos,NS='http://www.w3.org/2000/svg',cores=prGrafCores(o.cores),r=26,cx=34,cy=36,w=SG.larguraAnel(9,o.rosca),circ=2*Math.PI*r;
+  var tot=PR_GRAF_DADOS.reduce(function(a,b){return a+b;},0),acc=0,svg=el.querySelector('svg');
+  svg.innerHTML='<circle class="trilho-mini" cx="'+cx+'" cy="'+cy+'" r="'+r+'" style="stroke-width:'+w+'"></circle><g transform="rotate(-90 '+cx+' '+cy+')"></g><line class="base-mini" x1="70" x2="116" y1="62.5" y2="62.5"></line>';
+  var g=svg.querySelector('g');
+  PR_GRAF_DADOS.forEach(function(v,i){
+    var c=document.createElementNS(NS,'circle'),len=v/tot*circ;
+    c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',r);c.setAttribute('fill','none');c.style.strokeWidth=w;g.appendChild(c);
+    c.style.stroke=SG.tinta(cores[i%cores.length],{ref:el,forma:'anel',cx:cx,cy:cy,ri:r-w/2,ro:r+w/2,acabamento:o.acabamento});
+    SG.fatia(c,{len:len,acc:acc,circ:circ,separar:true,w:w,rosca:o.rosca});acc+=len;
+  });
+  PR_GRAF_BARRAS.forEach(function(h,i){
+    var bw=10,x=74+i*15,alt=Math.round(50*h),y=62-alt,rr=Math.min(o.rosca==='premium'?5:3,alt);
+    var p=document.createElementNS(NS,'path');
+    p.setAttribute('d','M'+x+' 62V'+(y+rr)+'Q'+x+' '+y+' '+(x+rr)+' '+y+'H'+(x+bw-rr)+'Q'+(x+bw)+' '+y+' '+(x+bw)+' '+(y+rr)+'V62Z');
+    p.style.fill=SG.tinta(cores[i%cores.length],{ref:el,forma:'coluna',acabamento:o.acabamento});svg.appendChild(p);
+  });
+}
+function prGrafCartao(grupo,v,ativo,nome,desc){
+  return '<button type="button" class="pr-graf'+(ativo?' active':'')+'" data-grupo="'+grupo+'" data-v="'+v+'" aria-pressed="'+ativo+'"'+(desc?'':' title="'+(window.sagaGraficos.DESCRICOES[v]||'')+'"')+'><span class="ok" aria-hidden="true">✓</span><svg viewBox="0 0 120 72" aria-hidden="true"></svg><b>'+nome+'</b>'+(desc?'<small>'+desc+'</small>':'')+'</button>';
+}
+var PR_GRAF_P=null; // escolha ainda não aplicada (prévia); null = igual à que vale no sistema
+function prGrafResumo(o){var SG=window.sagaGraficos;return '<b>'+SG.NOMES[o.acabamento]+'</b> · rosca '+PR_GRAF_TEXTO.rosca[o.rosca][0].toLowerCase()+' · '+PR_GRAF_TEXTO.cores[o.cores][0].toLowerCase();}
+function prGrafPendente(){var e=window.sagaGraficos.estado();return !!PR_GRAF_P&&['acabamento','rosca','cores'].some(function(k){return PR_GRAF_P[k]!==e[k];});}
+function prGrafBarra(){
+  var est=document.getElementById('prGrafEstado');if(!est||!window.sagaGraficos)return;
+  var pend=prGrafPendente();
+  est.classList.toggle('pendente',pend);
+  est.innerHTML=pend?'Prévia (ainda não aplicada): '+prGrafResumo(PR_GRAF_P)+'. Clique em Aplicar no sistema para valer em todas as telas.':'Valendo no sistema: '+prGrafResumo(window.sagaGraficos.estado())+'.';
+  document.getElementById('prGrafAplicar').disabled=!pend;document.getElementById('prGrafCancelar').disabled=!pend;
 }
 function montarGraficos(){
   var grade=document.getElementById('prGrafAcab');if(!grade||!window.sagaGraficos)return;
-  var SG=window.sagaGraficos,e=SG.estado(),cores=prGrafCores(),w=SG.larguraAnel(14),circ=2*Math.PI*40,tot=PR_GRAF_DADOS.reduce(function(a,b){return a+b;},0);
-  grade.innerHTML=SG.ACABAMENTOS.map(function(ac){
-    return '<button type="button" class="pr-graf'+(ac===e.acabamento?' active':'')+'" data-v="'+ac+'" aria-pressed="'+(ac===e.acabamento)+'" title="'+SG.DESCRICOES[ac]+'"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="40" fill="none" class="pr-graf-trilho" style="stroke-width:'+w+'"></circle><g transform="rotate(-90 50 50)"></g></svg><span>'+SG.NOMES[ac]+'</span></button>';
-  }).join('');
-  grade.querySelectorAll('.pr-graf').forEach(function(b){
-    var g=b.querySelector('g'),acc=0;
-    PR_GRAF_DADOS.forEach(function(v,i){
-      var c=document.createElementNS('http://www.w3.org/2000/svg','circle'),len=v/tot*circ;
-      c.setAttribute('cx','50');c.setAttribute('cy','50');c.setAttribute('r','40');c.setAttribute('fill','none');c.style.strokeWidth=w;g.appendChild(c);
-      c.style.stroke=SG.tinta(cores[i%cores.length],{ref:b,forma:'anel',cx:50,cy:50,ri:40-w/2,ro:40+w/2,acabamento:b.dataset.v});
-      SG.fatia(c,{len:len,acc:acc,circ:circ,separar:true,w:w});acc+=len;
-    });
+  var SG=window.sagaGraficos,e=PR_GRAF_P||SG.estado();
+  grade.innerHTML=SG.ACABAMENTOS.map(function(ac){return prGrafCartao('acabamento',ac,ac===e.acabamento,SG.NOMES[ac]);}).join('');
+  grade.querySelectorAll('.pr-graf').forEach(function(b){prGrafDesenho(b,{acabamento:b.dataset.v,rosca:e.rosca,cores:'variadas'});});
+  [['prGrafRosca','rosca',['hoje','premium']],['prGrafCores','cores',['tema','variadas']]].forEach(function(par){
+    var el=document.getElementById(par[0]);if(!el)return;
+    el.innerHTML=par[2].map(function(v){var t=PR_GRAF_TEXTO[par[1]][v];return prGrafCartao(par[1],v,e[par[1]]===v,t[0],t[1]);}).join('');
+    el.querySelectorAll('.pr-graf').forEach(function(b){var o={acabamento:e.acabamento,rosca:e.rosca,cores:e.cores};o[par[1]]=b.dataset.v;prGrafDesenho(b,o);});
   });
-  marcarSeg('prGrafRosca',e.rosca);marcarSeg('prGrafCores',e.cores);
+  prGrafBarra();
 }
-document.addEventListener('saga-graficos-mudou',function(){montarGraficos();});
+document.addEventListener('saga-graficos-mudou',function(){if(!prGrafPendente())PR_GRAF_P=null;montarGraficos();});
 function marcarSeg(id,valor){document.querySelectorAll('#'+id+' button').forEach(function(b){b.classList.toggle('active',b.dataset.v===String(valor));});}
 async function salvarPreferencias(mudancas,msg){
   // 09/11: a mudança é SOMADA no banco ao que já está gravado (minhas_preferencias_salvar, bloco 134).
@@ -1399,18 +1460,23 @@ function ligarEventos(){
     if(atual!==b.dataset.v){var t=document.getElementById('themeToggle');if(t)t.click();else{document.body.setAttribute('data-theme',b.dataset.v);try{localStorage.setItem('saga-tema',b.dataset.v);}catch(e){}}}
     _sb.from('usuarios').update({tema_preferido:b.dataset.v}).eq('id',state.eu.id).then(function(){},function(){});
   });});
-  // Gráficos (19/11): o clique vale na hora em todas as telas e acompanha a conta (chaves saga-graf-*)
-  document.getElementById('prGrafAcab').addEventListener('click',function(ev){
+  // Gráficos (19/11, Dr. Victor: "não tem botão de aplicar"): o clique nos cartões só mostra a PRÉVIA aqui;
+  // vale em todas as telas ao clicar em "Aplicar no sistema" (acompanha a conta, chaves saga-graf-*). Cancelar volta.
+  document.getElementById('prGraf').addEventListener('click',function(ev){
     var b=ev.target.closest('.pr-graf');if(!b||!window.sagaGraficos)return;
-    document.querySelectorAll('#prGrafAcab .pr-graf').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});
-    setTimeout(function(){sagaGraficos.definir('acabamento',b.dataset.v);},window.sagaMq&&sagaMq().matches?0:420);
-    showToast('Gráficos: '+sagaGraficos.NOMES[b.dataset.v]+'.','success');
+    var grupo=b.dataset.grupo,v=b.dataset.v;
+    PR_GRAF_P=PR_GRAF_P||sagaGraficos.estado();if(PR_GRAF_P[grupo]===v)return;PR_GRAF_P[grupo]=v;
+    b.parentNode.querySelectorAll('.pr-graf').forEach(function(x){x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b));});
+    setTimeout(montarGraficos,window.sagaMq&&sagaMq().matches?0:260);prGrafBarra();
   });
-  [['prGrafRosca','rosca'],['prGrafCores','cores']].forEach(function(par){document.querySelectorAll('#'+par[0]+' button').forEach(function(b){b.addEventListener('click',function(){
-    marcarSeg(par[0],b.dataset.v);if(!window.sagaGraficos)return;
-    setTimeout(function(){sagaGraficos.definir(par[1],b.dataset.v);},window.sagaMq&&sagaMq().matches?0:420);
-    showToast(par[1]==='rosca'?(b.dataset.v==='premium'?'Rosca premium.':'Rosca como hoje.'):(b.dataset.v==='variadas'?'Fatias em cores variadas.':'Fatias nos tons do tema.'),'success');
-  });});});
+  document.getElementById('prGrafAplicar').addEventListener('click',function(){
+    if(!PR_GRAF_P||!window.sagaGraficos)return;var p=PR_GRAF_P;PR_GRAF_P=null;
+    ['acabamento','rosca','cores'].forEach(function(k){sagaGraficos.definir(k,p[k]);});
+    var e=sagaGraficos.estado(),ok=e.acabamento===p.acabamento&&e.rosca===p.rosca&&e.cores===p.cores;
+    montarGraficos();
+    showToast(ok?'Gráficos aplicados em todas as telas: '+sagaGraficos.NOMES[e.acabamento]+'. As telas já abertas em outras abas mudam sozinhas.':'Não consegui guardar a escolha neste navegador (o armazenamento do navegador recusou). Tente de novo ou verifique se o navegador está em modo anônimo.',ok?'success':'error');
+  });
+  document.getElementById('prGrafCancelar').addEventListener('click',function(){PR_GRAF_P=null;montarGraficos();});
   document.querySelectorAll('#prMov button').forEach(function(b){b.addEventListener('click',function(){
     marcarSeg('prMov',b.dataset.v);
     if(window.sagaDefinirMovimento)sagaDefinirMovimento(b.dataset.v==='reduzido');
