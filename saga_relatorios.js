@@ -35,7 +35,9 @@
     if($('srEstilos'))return;
     var s=document.createElement('style');s.id='srEstilos';
     s.textContent=
-      '.sr-mo{position:fixed;inset:0;z-index:2600;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px 24px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px);overflow:auto;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .28s cubic-bezier(.22,.78,.25,1),visibility 0s linear .28s}'+
+      '.sr-mo{position:fixed;inset:0;z-index:2600;display:flex;align-items:safe center;justify-content:center;padding:24px 16px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px);overflow:auto;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .28s cubic-bezier(.22,.78,.25,1),visibility 0s linear .28s}'+
+      // 19/11 (Dr. Victor): janela de formulário abre NO MEIO da tela; a larga (lista que chega depois) fica no alto
+      '.sr-mo:has(.sr-md.largo){align-items:flex-start;padding-top:6vh}'+
       '.sr-mo.aberto{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .28s cubic-bezier(.22,.78,.25,1),visibility 0s}'+
       'html.sem-movimento .sr-mo,html.sem-movimento .sr-md{transition:none!important}'+
       '.sr-md{width:100%;max-width:560px;border-radius:18px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);color:var(--text);font-family:Montserrat,Arial,sans-serif;transform:translateY(10px) scale(.985);transition:transform .34s cubic-bezier(.22,.78,.25,1)}'+

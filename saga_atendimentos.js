@@ -68,7 +68,7 @@
     s.textContent =
       '.sat-ov{position:fixed;inset:0;z-index:1400;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(6,10,18,.55);opacity:0;transition:opacity 260ms ' + CURVA + '}' +
       '.sat-ov.aberto{opacity:1}.sat-ov.sem-mov,.sat-ov.sem-mov .sat-modal{transition:none!important}' +
-      '.sat-modal{background:var(--panel-solid,var(--panel,#1b2233));color:var(--text);border:1px solid var(--border);border-radius:16px;width:min(640px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.35);transform:translateY(14px) scale(.985);transition:transform 380ms ' + CURVA + '}' +
+      '.sat-modal{background:var(--panel-solid,var(--panel,#1b2233));color:var(--text);border:1px solid var(--border);border-radius:16px;width:min(640px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.35);transform:translateY(14px) scale(.985);transition:transform 380ms ' + CURVA + '}' +
       '.sat-ov.aberto .sat-modal{transform:none}' +
       '.sat-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px 12px;border-bottom:1px solid var(--border)}' +
       '.sat-cab h3{margin:0;font-size:17px;font-weight:600;color:var(--text)}' +
@@ -95,6 +95,10 @@
       '.sat-semana{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}' +
       '.sat-dia{font-size:12px;font-weight:600;margin:8px 0 5px;text-transform:capitalize;color:var(--text)}' +
       '.sat-slots{display:flex;flex-wrap:wrap;gap:6px}' +
+      // 19/11 (Dr. Victor: a janela "abre muito para cima"): os horários chegam depois e faziam a janela crescer até o alto
+      // da tela. A lista tem ALTURA FIXA e rola por dentro: a janela já abre do tamanho final, no meio da tela.
+      '.sat-horarios{height:min(240px,32vh);overflow:auto;overscroll-behavior:contain;border:1px solid var(--border);border-radius:12px;padding:4px 10px 10px}' +
+      '.sat-horarios>.sat-vazio{padding-top:8px}.sat-horarios:has(>.sat-vazio.sem-resp){height:auto}' +
       '.sat-slot{font:inherit;font-size:12.5px;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:5px 11px;cursor:pointer;font-variant-numeric:tabular-nums;transition:background-color .25s ' + CURVA + ',border-color .25s ' + CURVA + '}' +
       '.sat-slot.livre:hover{border-color:var(--gold)}' +
       '.sat-slot.ocupado,.sat-slot.passado{opacity:.42;cursor:not-allowed;text-decoration:line-through}' +
@@ -129,7 +133,7 @@
       '.sat-faixa input{width:auto;padding:6px 8px}' +
       '.sat-org{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border)}.sat-org input[type=text]{flex:1 1 auto}' +
       '.sat-org input[type=color]{width:34px;height:30px;padding:0;border:1px solid var(--border);border-radius:8px;background:none}' +
-      '@media (max-width:600px){.sat-ov{padding:8px;align-items:flex-end}.sat-modal{max-height:calc(100vh - 16px)}.sat-grade-dia{grid-template-columns:1fr}.sat-pe .sat-b{flex:1 1 auto;justify-content:center}}';
+      '@media (max-width:600px){.sat-ov{padding:8px;align-items:flex-end}.sat-modal{max-height:100%}.sat-grade-dia{grid-template-columns:1fr}.sat-pe .sat-b{flex:1 1 auto;justify-content:center}}';
     document.head.appendChild(s);
   }
 
@@ -431,7 +435,7 @@
       '<div class="sat-campo"><label>Quem vai atender *</label><select data-s="resp" aria-label="Quem vai atender"></select><div class="sat-dica" data-s="respDica" hidden></div></div>' +
       '<div class="sat-campo"><span class="sat-rot">Dia e horário *</span>' +
         '<div class="sat-semana"><button type="button" class="sat-b btn-sm peq" data-a="semAnt">‹ Semana anterior</button><span class="sat-dica" data-s="semTxt"></span><button type="button" class="sat-b btn-sm peq" data-a="semProx">Próxima semana ›</button></div>' +
-        '<div data-s="slots"></div>' +
+        '<div data-s="slots" class="sat-horarios"></div>' +
         '<div data-s="outroWrap" hidden><label class="sat-chk"><input type="checkbox" data-s="outroChk"> Outro horário (fora dos horários de atendimento)</label>' +
           '<div class="sat-linha2" data-s="outroCampos" hidden style="margin-top:6px"><input type="datetime-local" class="sat-in" data-s="outroIni" aria-label="Dia e hora"><select class="sat-in" data-s="outroDur" aria-label="Duração">' + durs + '</select></div></div></div>' +
       '<div class="sat-campo"><span class="sat-rot">Como vai ser *</span>' +
@@ -515,7 +519,7 @@
       var ate = new Date(de); ate.setDate(ate.getDate() + 6);
       q('semTxt').textContent = dCurta(de) + ' a ' + dCurta(ate);
       ov.querySelector('[data-a="semAnt"]').disabled = st.semana <= 0;
-      if (!st.resp) { box.innerHTML = ''; return; }
+      if (!st.resp) { box.innerHTML = '<div class="sat-vazio sem-resp">Escolha quem vai atender para ver os horários livres.</div>'; return; }
       if (!st.resp.tem_horarios) { box.innerHTML = '<div class="sat-vazio">Sem horários de atendimento definidos.' + (podeFora() ? ' Use "Outro horário" abaixo.' : '') + '</div>'; return; }
       box.innerHTML = '<div class="sat-vazio">Carregando os horários…</div>';
       var r = await sb().rpc('atendimento_horarios', { p_usuario: st.resp.id, p_de: isoDia(de), p_ate: isoDia(ate) });

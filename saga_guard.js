@@ -805,7 +805,12 @@
     var FORA='#sidebarSaga,#topbarSaga,#sagaPortao,#sagaTravaPonto,#sagaAguardaEntrada,#sagaCarregando,#sagaVidroAnim,#overlay,#toast-container,[data-saga-sem-trava]';
     var cand=new Set(),ativas=[],travado=false,pedido=false;
     var st=document.createElement('style');st.id='sagaTravaJanela';
-    st.textContent='html.saga-janela-aberta,html.saga-janela-aberta body{overflow:hidden !important;}'+
+    // SÓ o html (a janela do navegador): travar também o body o transformava numa caixa de rolagem própria e o menu
+    // lateral (position:sticky) passava a grudar no body, que não rola: com a página rolada o menu SUMIA para cima
+    // (19/11, Dr. Victor: "o menu lateral some com a janela aberta" e "dá uma tremidinha" quando uma janela passa).
+    // Quem rola é a janela do navegador (viewport): ela recebe o overflow do html ou, se o html não tiver, o do body
+    // (várias telas põem overflow no body). Por isso: html hidden e body visible, para o body nunca virar caixa própria.
+    st.textContent='html.saga-janela-aberta{overflow:hidden !important;}html.saga-janela-aberta body{overflow:visible !important;}'+
       '[data-saga-janela-ativa],[data-saga-janela-ativa] *{overscroll-behavior:contain;}';
     (document.head||html).appendChild(st);
     var NAO_TAG=/^(TD|TH|TR|TBODY|THEAD|TABLE|SPAN|A|B|I|EM|STRONG|SMALL|P|LI|UL|OL|INPUT|SELECT|OPTION|TEXTAREA|BUTTON|LABEL|IMG|BR|SCRIPT|STYLE|LINK|svg|path|g|circle|rect|line|text|use)$/i;
