@@ -798,9 +798,9 @@
       if(!el.isConnected)return false;
       var cs=getComputedStyle(el);
       if(cs.display==='none'||cs.visibility==='hidden'||cs.pointerEvents==='none'||parseFloat(cs.opacity)<0.05)return false;
-      if(el.tagName==='DIALOG'&&el.open)return true;
-      if(el.getAttribute('role')==='dialog'&&el.getAttribute('aria-modal')==='true')return true;
       var r=el.getBoundingClientRect();
+      // janela dentro de um fundo fechado (o pai está escondido): tamanho zero, não conta
+      if((el.tagName==='DIALOG'&&el.open)||(el.getAttribute('role')==='dialog'&&el.getAttribute('aria-modal')==='true'))return r.width>=60&&r.height>=36;
       return r.width>=innerWidth*0.9&&r.height>=innerHeight*0.85;
     }
     function conferir(){
