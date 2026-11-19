@@ -164,11 +164,11 @@ window.SagaPeticoes = (function(){
     if(document.getElementById('sagaPeticoesCss')) return;
     var s = document.createElement('style'); s.id = 'sagaPeticoesCss';
     s.textContent = [
-      '#peticaoModal{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overscroll-behavior:contain;background:color-mix(in srgb,#000 55%,transparent);opacity:0;visibility:hidden;transition:opacity .3s cubic-bezier(.22,.78,.25,1),visibility .3s}',
+      '#peticaoModal{position:fixed;inset:0;z-index:1200;display:flex;align-items:safe center;justify-content:center;padding:24px 16px;overscroll-behavior:contain;background:color-mix(in srgb,#000 55%,transparent);opacity:0;visibility:hidden;transition:opacity .3s cubic-bezier(.22,.78,.25,1),visibility .3s}',
       '#peticaoModal.aberto{opacity:1;visibility:visible}',
       '#peticaoModal.sem-movimento{transition:none}',
       /* 19/11 (Dr. Victor): janela SEM transparência, também nas cores de vidro (--panel-solid é a cor sólida do tema) */
-      '#peticaoModal .pt-caixa{background:var(--panel-solid,var(--panel));backdrop-filter:none;-webkit-backdrop-filter:none;overscroll-behavior:contain;color:var(--text);border:1px solid var(--border);border-radius:16px;width:min(880px,100%);max-height:90vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.35);transform:translateY(10px);transition:transform .32s cubic-bezier(.22,.78,.25,1)}',
+      '#peticaoModal .pt-caixa{background:var(--panel-solid,var(--panel));backdrop-filter:none;-webkit-backdrop-filter:none;overscroll-behavior:contain;color:var(--text);border:1px solid var(--border);border-radius:16px;width:min(880px,100%);box-sizing:border-box;max-height:100%;min-height:min(520px,100%);overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.35);transform:translateY(10px);transition:transform .32s cubic-bezier(.22,.78,.25,1)}',
       '#peticaoModal.aberto .pt-caixa{transform:none}',
       '#peticaoModal h3{margin:0 0 4px;font-size:18px}',
       '#peticaoModal .pt-sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}',
@@ -220,20 +220,10 @@ window.SagaPeticoes = (function(){
     document.body.appendChild(m);
     return m;
   }
-  /* 19/11 (Dr. Victor): com a janela aberta, a tela de trás NÃO rola; ao fechar, volta para onde estava.
-     (Quando a trava geral do saga_guard.js chegar, ela vale também; esta não atrapalha.) */
-  var trava = null;
-  function travarFundo(){
-    if(trava) return;
-    var b = document.body, h = document.documentElement;
-    trava = { y: window.scrollY, ob: b.style.overflow, oh: h.style.overflow };
-    b.style.overflow = 'hidden'; h.style.overflow = 'hidden';
-  }
-  function soltarFundo(){
-    if(!trava) return;
-    document.body.style.overflow = trava.ob; document.documentElement.style.overflow = trava.oh;
-    window.scrollTo(0, trava.y); trava = null;
-  }
+  /* Tela de trás parada: quem trava é o saga_guard.js ("Janela aberta = tela de trás parada"); a trava própria saiu
+     (19/11) para não brigar com a dele (html hidden e body visible). */
+  function travarFundo(){}
+  function soltarFundo(){}
   function mostrar(){ var m = modal(); travarFundo(); m.classList.toggle('sem-movimento', reduzido()); requestAnimationFrame(function(){ m.classList.add('aberto'); }); }
   function fechar(){ var m = document.getElementById('peticaoModal'); if(m) m.classList.remove('aberto'); soltarFundo(); }
   function conteudo(html){ document.getElementById('ptConteudo').innerHTML = html; }
