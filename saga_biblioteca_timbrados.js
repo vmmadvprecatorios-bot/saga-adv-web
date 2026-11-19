@@ -304,6 +304,10 @@
     m1.innerHTML = '<div class="modal-bib" role="dialog" aria-modal="true" aria-labelledby="tbGerarTitulo">' +
       '<h3 id="tbGerarTitulo">Gerar petição</h3>' +
       '<div class="modal-sub" id="tbGerarSub"></div>' +
+      /* 19/11 (T194 etapa 4): de quem é a petição? Cliente do Jurídico puxa da ficha (SagaPeticoes); cliente de fora preenche aqui */
+      '<div class="modal-campo-bib" id="tbGerarQuem" hidden><label>De quem é a petição?</label><div class="tb-versao" role="group">' +
+        '<button type="button" class="filter-pill" id="tbGerarCliente">Cliente do Jurídico (puxa os dados da ficha)</button>' +
+        '<button type="button" class="filter-pill active" id="tbGerarFora">Cliente de fora (preencher aqui)</button></div></div>' +
       '<div class="modal-campo-bib"><label for="tbGerarTimbrado">Papel timbrado</label><select id="tbGerarTimbrado"></select></div>' +
       '<div class="modal-campo-bib" id="tbGerarVersaoCampo"><label>Versão</label><div class="tb-versao" role="group">' +
         '<button type="button" class="filter-pill active" data-tb-versao="cores">Colorida (para enviar)</button>' +
@@ -323,6 +327,10 @@
     document.getElementById('tbGerarWord').addEventListener('click', function(){ gerar('docx'); });
     document.getElementById('tbGerarPdf').addEventListener('click', function(){ gerar('pdf'); });
     document.getElementById('tbGerarTimbrado').addEventListener('change', atualizarVersao);
+    document.getElementById('tbGerarCliente').addEventListener('click', function(){
+      var mod = S.modelo; fecharModal(m1);
+      if(window.SagaPeticoes) setTimeout(function(){ window.SagaPeticoes.escolherCliente({ sb: sb(), modelo: mod }); }, 220);
+    });
     m1.querySelectorAll('[data-tb-versao]').forEach(function(b){
       b.addEventListener('click', function(){
         if(b.disabled) return;
@@ -374,6 +382,9 @@
     }).join('');
     document.querySelectorAll('[data-tb-cnj]').forEach(function(i){ i.addEventListener('input', mascaraCnj); });
     document.getElementById('tbGerarMsg').innerHTML = '';
+    var quem = document.getElementById('tbGerarQuem');
+    quem.hidden = true;
+    if(window.SagaPeticoes){ window.SagaPeticoes.podeFazer().then(function(ok){ quem.hidden = !ok; }); }
     atualizarVersao();
     abrirModal(document.getElementById('modalGerarPeticaoTb'));
   }

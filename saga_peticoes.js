@@ -259,6 +259,12 @@ window.SagaPeticoes = (function(){
       var daTese = S.modelos.filter(function(m){ return tese && m.tese_id === tese; });
       var gerais = S.modelos.filter(function(m){ return !m.tese_id; });
       S.lista = daTese.concat(gerais);
+      /* vindo da tela Modelos (modelo já escolhido): vai direto ao formulário, com qualquer modelo */
+      if(S.ctx.modeloId){
+        S.lista = S.modelos.slice();
+        if(S.lista.some(function(m){ return m.id === S.ctx.modeloId; })){ ligarFechar(); escolher(S.ctx.modeloId); return; }
+        throw new Error('o modelo escolhido não está disponível para você');
+      }
       var nomeTese = (S.dados.processo || {}).tese || 'esta tese';
       var cartao = function(m){
         return '<button type="button" class="pt-modelo" data-pt-modelo="' + esc(m.id) + '"><b>' + esc(m.titulo) + '</b><span>' + esc(m.tipo_peca || 'Petição')
@@ -379,11 +385,80 @@ window.SagaPeticoes = (function(){
         + (nFalta ? ' ' + nFalta + ' campo(s) saíram destacados para completar.' : '') + aviso
         + (r.avisos && r.avisos.length ? '<br>' + r.avisos.map(esc).join('<br>') : '') + '</div>';
       if(docId && typeof S.ctx.aoGuardar === 'function'){ try{ S.ctx.aoGuardar(docId); }catch(e){} }
+      proximoDaFila(msg);
     }catch(e){
       msg.innerHTML = '<div class="pt-erro"><b>Não foi possível gerar o ' + (formato === 'pdf' ? 'PDF' : 'Word') + ':</b> ' + esc(e.message || e) + '</div>';
     }finally{ bw.disabled = bp.disabled = false; botao.textContent = txt; }
   }
 
-  return { botaoHtml: botaoHtml, ligar: ligar, abrir: abrir, podeFazer: podeFazer, mapear: mapear,
+  /* ---------------- tela Modelos: escolher cliente do Jurídico e processos (T194 etapa 4) ---------------- */
+  function proximoDaFila(msg){
+    var c = S.ctx; if(!c.fila || c.filaPos == null) return;
+    var prox = c.filaPos + 1;
+    if(prox >= c.fila.length){ msg.insertAdjacentHTML('beforeend', '<div class="pt-ok">Todas as ' + c.fila.length + ' petições desta escolha foram feitas.</div>'); return; }
+    var p = c.fila[prox];
+    msg.insertAdjacentHTML('beforeend', '<div class="pt-botoes"><button type="button" class="btn-confirmar-bib btn-primario" id="ptProximo">Próximo processo (' + (prox + 1) + ' de ' + c.fila.length + '): ' + esc(p.rotulo) + '</button></div>');
+    document.getElementById('ptProximo').onclick = function(){
+      abrir(Object.assign({}, c, { processoId: p.id, pessoaId: p.pessoaId, teseId: p.teseId, filaPos: prox }));
+    };
+  }
+  var buscaTimer = null;
+  async function escolherCliente(o){
+    o = o || {};
+    S.ctx = { sb: o.sb || window._sb };
+    modal();
+    conteudo('<h3 id="ptTitulo">Cliente do Jurídico</h3><div class="pt-sub">Carregando...</div>');
+    mostrar(); ligarFechar();
+    if(!(await podeFazer())){
+      conteudo('<h3 id="ptTitulo">Cliente do Jurídico</h3><div class="pt-erro"><b>Sem permissão:</b> só o Jurídico faz petições. Peça ao administrador (Painel de permissões &gt; Petições e cálculos).</div><div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" data-pt-fechar>Fechar</button></div>');
+      ligarFechar(); return;
+    }
+    var m = o.modelo || {};
+    conteudo('<h3 id="ptTitulo">' + esc(m.titulo || 'Fazer petição') + '</h3>'
+      + '<div class="pt-sub">Escolha um cliente do <b>Jurídico</b> (clientes só da Captação não aparecem) e marque um ou mais processos. A petição puxa os dados da ficha de cada processo marcado; o que faltar sai destacado.</div>'
+      + '<div class="pt-campo largo"><label for="ptBuscaCli">Buscar pelo nome, CPF, código (VMM-...) ou número do processo</label><input type="text" id="ptBuscaCli" autocomplete="off" placeholder="Digite pelo menos 3 letras"></div>'
+      + '<div id="ptCliRes" style="margin-top:10px"></div>'
+      + '<div id="ptCliMsg"></div>'
+      + '<div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" data-pt-fechar>Fechar</button><button type="button" class="btn-confirmar-bib btn-primario" id="ptCliIr" disabled>Fazer a petição</button></div>');
+    ligarFechar();
+    var inp = document.getElementById('ptBuscaCli'), res = document.getElementById('ptCliRes'), ir = document.getElementById('ptCliIr');
+    var atual = null;
+    function marcados(){ return Array.prototype.slice.call(res.querySelectorAll('[data-pt-proc]:checked')); }
+    function atualizarBotao(){ var n = marcados().length; ir.disabled = !n; ir.textContent = n > 1 ? 'Fazer as ' + n + ' petições (uma por processo)' : 'Fazer a petição'; }
+    function desenhar(lista){
+      if(!lista.length){ res.innerHTML = '<div class="pt-vazio">Nenhum cliente do Jurídico encontrado com esse termo.</div>'; return; }
+      res.innerHTML = lista.map(function(c, i){
+        var procs = (c.processos || []).map(function(p){
+          var sug = m.tese_id ? p.tese_id === m.tese_id : true;
+          return '<label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0 4px 6px;font-size:12.5px;color:var(--text)"><input type="checkbox" data-pt-proc="' + esc(p.id) + '" data-pt-pes="' + esc(c.pessoa_id) + '" data-pt-tese="' + esc(p.tese_id || '') + '" data-pt-rot="' + esc((p.codigo || '') + ' · ' + (p.tese || 'sem tese')) + '"' + (sug && (c.processos || []).length === 1 ? ' checked' : '') + '>'
+            + '<span><b>' + esc(p.codigo || 'sem código') + '</b> · ' + esc(p.tese || 'sem tese') + (p.numero ? ' · ' + esc(cnj(p.numero)) : ' · sem número') + (p.situacao ? ' · <span style="color:var(--muted)">' + esc(p.situacao) + '</span>' : '')
+            + (m.tese_id && !sug ? ' <span style="color:var(--muted)">(o modelo é de outra tese)</span>' : '') + '</span></label>';
+        }).join('');
+        return '<div class="pt-modelo" style="cursor:default;margin-bottom:8px"><b>' + esc(c.nome) + (c.codigo ? ' <span style="color:var(--muted);font-weight:400">' + esc(c.codigo) + '</span>' : '') + '</b>' + procs + '</div>';
+      }).join('');
+      res.querySelectorAll('[data-pt-proc]').forEach(function(x){ x.onchange = atualizarBotao; });
+      atualizarBotao();
+    }
+    inp.addEventListener('input', function(){
+      clearTimeout(buscaTimer);
+      var termo = inp.value.trim();
+      if(termo.length < 3){ res.innerHTML = ''; atualizarBotao(); return; }
+      buscaTimer = setTimeout(async function(){
+        res.innerHTML = '<div class="pt-vazio">Procurando...</div>';
+        var r = await S.ctx.sb.rpc('peticao_clientes_juridico', { p_busca: termo });
+        if(inp.value.trim() !== termo) return;
+        if(r.error){ res.innerHTML = '<div class="pt-erro"><b>Não deu para buscar:</b> ' + esc(r.error.message) + '</div>'; return; }
+        atual = r.data || []; desenhar(atual);
+      }, 350);
+    });
+    ir.onclick = function(){
+      var fila = marcados().map(function(x){ return { id: x.getAttribute('data-pt-proc'), pessoaId: x.getAttribute('data-pt-pes'), teseId: x.getAttribute('data-pt-tese') || null, rotulo: x.getAttribute('data-pt-rot') }; });
+      if(!fila.length) return;
+      abrir({ sb: S.ctx.sb, processoId: fila[0].id, pessoaId: fila[0].pessoaId, teseId: fila[0].teseId, modeloId: m.id, fila: fila, filaPos: 0 });
+    };
+    setTimeout(function(){ try{ inp.focus(); }catch(e){} }, 60);
+  }
+
+  return { botaoHtml: botaoHtml, escolherCliente: escolherCliente, ligar: ligar, abrir: abrir, podeFazer: podeFazer, mapear: mapear,
            _t: { inteiroExtenso: inteiroExtenso, reaisExtenso: reaisExtenso, qualificacao: qualificacao, idade: idade } };
 })();
