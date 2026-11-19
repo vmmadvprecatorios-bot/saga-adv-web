@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611191618"></script>
+<script src="saga_guard.js?v=202611191629"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Configurações</title>
@@ -215,7 +215,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   .sd-filtro select{min-width:0;flex:1 1 100%}}
 .pr-cad{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.pr-cad-seg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);transition:opacity .26s cubic-bezier(.22,.78,.25,1)}.pr-cad-seg.apagado{opacity:.5}.pr-cad-seg select{width:auto;min-width:64px}@media(max-width:760px){.pr-cad{align-items:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611191618">
+<link rel="stylesheet" href="saga_tema.css?v=202611191629">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -295,7 +295,8 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   <section class="tab-pane" id="aba-preferencias">
     <div class="panel">
       <div class="panel-title">Aparência</div>
-      <p class="s" id="prSincNota" style="margin:-4px 0 10px;color:var(--muted)">As suas escolhas (cores, claro ou escuro, fundo e foto do Vidro, efeitos, grupos do menu, blocos da ficha, visões das telas) acompanham a sua conta: entrando pelo celular ou por outro computador, aparecem iguais. Só ficam neste aparelho o menu recolhido, a largura das colunas e o modo da planilha no celular.</p>
+      <p class="s" id="prSincNota" style="margin:-4px 0 10px;color:var(--muted)">As suas escolhas (cores, claro ou escuro, fundo e foto do Vidro, efeitos, grupos do menu, blocos da ficha, visões das telas) acompanham a sua conta: entrando pelo celular ou por outro computador, aparecem iguais. Só ficam neste aparelho o menu recolhido, a largura das colunas e o modo da planilha no celular.
+        <br><button type="button" class="btn-secondary" id="prSincUsarEste" style="margin-top:8px">Usar as escolhas deste aparelho em todos</button> <span id="prSincMsg" class="s"></span></p>
       <div class="linha-opcao">
         <div><div class="t">Tema</div><div class="s">Também dá para trocar no botão do sol e da lua, no alto da tela.</div></div>
         <div class="seg" id="prTema"><button type="button" data-v="light">Claro</button><button type="button" data-v="dark">Escuro</button></div>
@@ -501,8 +502,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611191618"></script>
-<script src="saga_teses.js?v=202611191618"></script>
+<script src="saga_ui.js?v=202611191629"></script>
+<script src="saga_teses.js?v=202611191629"></script>
 <script>
 /* =====================================================================
    CONFIGURACOES (T31 + T24)
@@ -933,6 +934,15 @@ function desfazerCorTema(){
   mostrarSalvarCor(false);
 }
 /* ----- Vidro tecnológico (T151): fundo, imagem própria e "mais fosco"; vale na hora e acompanha a conta (bloco 270, sagaSinc no saga_guard.js) ----- */
+// 19/11: "Usar as escolhas deste aparelho em todos": o que está aqui (inclusive a foto) passa a valer na conta agora
+document.addEventListener('click',async function(e){var b=e.target.closest&&e.target.closest('#prSincUsarEste');if(!b||!window.sagaSinc||!sagaSinc.usarEsteAparelho)return;
+  if(!confirm('As escolhas DESTE aparelho (cores, Vidro e foto de fundo, efeitos, menu, ficha, visões) vão valer também no celular e nos outros computadores. Continuar?'))return;
+  var m=document.getElementById('prSincMsg');b.disabled=true;if(m)m.textContent='Guardando na sua conta…';
+  try{await sagaSinc.usarEsteAparelho();await new Promise(function(ok){setTimeout(ok,2600);});
+    var er=sagaSinc.ultimoErro||sagaSinc.fotoErro;
+    if(er){if(m){m.textContent='Não deu: '+(er.motivo||'erro')+'. Tente de novo.';m.style.color='var(--danger,#e05656)';}}
+    else{if(m){m.textContent='Pronto: guardado na conta. No celular, feche e abra o SAGA de novo.';m.style.color='';}showToast('Escolhas deste aparelho guardadas na sua conta.','success');}
+  }catch(x){if(m){m.textContent='Não deu: '+(x.message||x);m.style.color='var(--danger,#e05656)';}}finally{b.disabled=false;}});
 // erro ao mandar a foto para a conta: aparece à vista (regra de 12/11)
 document.addEventListener('saga-foto-fundo-erro',function(e){var d=e.detail||{};showToast('A foto de fundo ficou só neste aparelho: não deu para guardar na sua conta ('+esc(d.motivo||'erro desconhecido')+'). Tente escolher a imagem de novo.','error');});
 function ehVidro(cor){var c=coresDisponiveis().find(function(x){return x.id===cor;});return !!(c&&c.vidro);}

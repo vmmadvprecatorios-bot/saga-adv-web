@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.28",
+  versao: "3.29",
   data: "19/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.29", data: "19/11/2026", mudou: "Preferências: botão **Usar as escolhas deste aparelho em todos** (manda para a conta tudo o que está neste aparelho, inclusive a foto de fundo). Conserto: quando o celular abria primeiro, cada aparelho ficava com as escolhas antigas dele; agora, nas escolhas antigas, vale a do computador." },
     { versao: "3.28", data: "19/11/2026", mudou: "AS ESCOLHAS ACOMPANHAM A CONTA: tema claro/escuro, cor, fundo do Vidro e a **foto de fundo**, fundo animado, efeitos de movimento, grupos do menu, blocos da ficha e as visões das telas valem em qualquer aparelho (entrar pelo celular ou por outro computador mostra igual; a última mudança vence). Ficam só no aparelho: menu recolhido do computador, largura das colunas e o modo da planilha no celular." },
     { versao: "3.27", data: "19/11/2026", mudou: "Vidro: fundo novo **Limpo** (só a cor do tema, sem desenho). Fundos animados: saíram Planeta e aurora, Radar holográfico, Horizonte neon e Túnel de luz; ficam Brasas, Rede, Circuito, Chuva de código, Viagem pelas estrelas, Galáxia e Constelações." },
     { versao: "3.26", data: "19/11/2026", mudou: "Vidro: 8 fundos animados novos em Preferências > Fundo animado: Chuva de código, Viagem pelas estrelas, Galáxia, Planeta e aurora, Radar holográfico, Horizonte neon, Constelações e Túnel de luz, na cor do tema; o Circuito de luz passou a mostrar todos os pulsos." },
@@ -195,7 +196,7 @@ window.SAGA_MANUAL = {
             "**Sons**: Ligados ou Desligados e, um por um, **Mensagem nova no chat**, **Alguém marcou você no chat**, **Intimação nova chegou** e **Aviso urgente no sino** (prazo de tarefa; para o administrador, erro de robô), com o **volume** (Baixo, Médio, Alto) e o botão ▶ para ouvir. Começam ligados só os do chat. O navegador só toca depois que você clicar uma vez na página e, com várias abas abertas, só uma toca. A escolha vale em qualquer computador.",
             "**Modo claro com a cor** (19/11): no tema Claro, o fundo, os painéis e o menu ficam tingidos da cor escolhida, e o claro é o inverso do escuro: a barra de cima fica escura na cor do tema e o menu lateral fica claro, com a letra escura.",
             "**Tamanho da letra**: Normal, Grande ou Maior.",
-            "**Vale em todos os aparelhos** (19/11): tudo o que você escolhe aqui e nas telas (claro/escuro, cor, Vidro e foto de fundo, efeitos, grupos do menu, blocos da ficha, visões e gráficos das telas) fica guardado na sua conta e aparece igual no celular e em outro computador. Só ficam no aparelho: o menu recolhido do computador, a largura das colunas e o modo da planilha no celular."
+            "**Vale em todos os aparelhos** (19/11): tudo o que você escolhe aqui e nas telas (claro/escuro, cor, Vidro e foto de fundo, efeitos, grupos do menu, blocos da ficha, visões e gráficos das telas) fica guardado na sua conta e aparece igual no celular e em outro computador. Só ficam no aparelho: o menu recolhido do computador, a largura das colunas e o modo da planilha no celular. Para mandar de uma vez tudo o que está num aparelho para os outros: [[Usar as escolhas deste aparelho em todos]]."
           ],
           img: "preferencias_cores",
           marcas: ["Tema claro ou escuro.", "Cor do tema: um cartão por cor, em grupos.", "Normal ou Vidro, dentro do cartão."],
