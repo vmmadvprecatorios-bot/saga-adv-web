@@ -164,10 +164,11 @@ window.SagaPeticoes = (function(){
     if(document.getElementById('sagaPeticoesCss')) return;
     var s = document.createElement('style'); s.id = 'sagaPeticoesCss';
     s.textContent = [
-      '#peticaoModal{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;background:color-mix(in srgb,#000 45%,transparent);opacity:0;visibility:hidden;transition:opacity .3s cubic-bezier(.22,.78,.25,1),visibility .3s}',
+      '#peticaoModal{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overscroll-behavior:contain;background:color-mix(in srgb,#000 55%,transparent);opacity:0;visibility:hidden;transition:opacity .3s cubic-bezier(.22,.78,.25,1),visibility .3s}',
       '#peticaoModal.aberto{opacity:1;visibility:visible}',
       '#peticaoModal.sem-movimento{transition:none}',
-      '#peticaoModal .pt-caixa{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:16px;width:min(880px,100%);max-height:90vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.35);transform:translateY(10px);transition:transform .32s cubic-bezier(.22,.78,.25,1)}',
+      /* 19/11 (Dr. Victor): janela SEM transparência, também nas cores de vidro (--panel-solid é a cor sólida do tema) */
+      '#peticaoModal .pt-caixa{background:var(--panel-solid,var(--panel));backdrop-filter:none;-webkit-backdrop-filter:none;overscroll-behavior:contain;color:var(--text);border:1px solid var(--border);border-radius:16px;width:min(880px,100%);max-height:90vh;overflow:auto;padding:20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.35);transform:translateY(10px);transition:transform .32s cubic-bezier(.22,.78,.25,1)}',
       '#peticaoModal.aberto .pt-caixa{transform:none}',
       '#peticaoModal h3{margin:0 0 4px;font-size:18px}',
       '#peticaoModal .pt-sub{color:var(--muted);font-size:12.5px;margin-bottom:14px}',
@@ -190,6 +191,10 @@ window.SagaPeticoes = (function(){
       '#peticaoModal .pt-resumo{font-size:12.5px;margin:6px 0 12px;padding:9px 12px;border-radius:10px;border:1px solid var(--border)}',
       '#peticaoModal .pt-resumo.amarelo{border-color:color-mix(in srgb,#eab308 55%,transparent);background:color-mix(in srgb,#eab308 9%,transparent)}',
       '#peticaoModal .pt-botoes{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}',
+      '#peticaoModal .pt-botoes button{font:inherit;font-size:12.5px;padding:9px 16px;border-radius:10px;border:1px solid var(--sb-sec-borda,var(--border));background:var(--sb-sec,transparent);color:var(--text);cursor:pointer}',
+      '#peticaoModal .pt-botoes button.btn-primario{background:var(--sb-acao);border-color:var(--sb-acao-borda)}',
+      '#peticaoModal .pt-botoes button[disabled]{opacity:.55;cursor:progress}',
+      '#peticaoModal .pt-modelo{background:color-mix(in srgb,var(--text) 4%,var(--panel-solid,var(--panel)))}',
       '#peticaoModal .pt-erro{color:#dc2626;font-size:12.5px;margin-top:8px}',
       '#peticaoModal .pt-ok{color:var(--gold);font-size:12.5px;margin-top:8px}',
       '#peticaoModal .pt-vazio{color:var(--muted);font-size:13px;padding:14px 0}',
@@ -204,12 +209,33 @@ window.SagaPeticoes = (function(){
     m = document.createElement('div'); m.id = 'peticaoModal'; m.setAttribute('data-saga-movimento-proprio', '1');
     m.innerHTML = '<div class="pt-caixa" role="dialog" aria-modal="true" aria-labelledby="ptTitulo"><div id="ptConteudo"></div></div>';
     m.addEventListener('click', function(e){ if(e.target === m) fechar(); });
+    /* a roda do mouse fora do quadro (ou no fim dele) não passa para a tela de trás */
+    m.addEventListener('wheel', function(e){
+      var c = m.querySelector('.pt-caixa');
+      if(!c || !c.contains(e.target)){ e.preventDefault(); return; }
+      var noTopo = c.scrollTop <= 0 && e.deltaY < 0, noFim = c.scrollTop + c.clientHeight >= c.scrollHeight - 1 && e.deltaY > 0;
+      if(noTopo || noFim) e.preventDefault();
+    }, { passive: false });
     document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && m.classList.contains('aberto')) fechar(); });
     document.body.appendChild(m);
     return m;
   }
-  function mostrar(){ var m = modal(); m.classList.toggle('sem-movimento', reduzido()); requestAnimationFrame(function(){ m.classList.add('aberto'); }); }
-  function fechar(){ var m = document.getElementById('peticaoModal'); if(m) m.classList.remove('aberto'); }
+  /* 19/11 (Dr. Victor): com a janela aberta, a tela de trás NÃO rola; ao fechar, volta para onde estava.
+     (Quando a trava geral do saga_guard.js chegar, ela vale também; esta não atrapalha.) */
+  var trava = null;
+  function travarFundo(){
+    if(trava) return;
+    var b = document.body, h = document.documentElement;
+    trava = { y: window.scrollY, ob: b.style.overflow, oh: h.style.overflow };
+    b.style.overflow = 'hidden'; h.style.overflow = 'hidden';
+  }
+  function soltarFundo(){
+    if(!trava) return;
+    document.body.style.overflow = trava.ob; document.documentElement.style.overflow = trava.oh;
+    window.scrollTo(0, trava.y); trava = null;
+  }
+  function mostrar(){ var m = modal(); travarFundo(); m.classList.toggle('sem-movimento', reduzido()); requestAnimationFrame(function(){ m.classList.add('aberto'); }); }
+  function fechar(){ var m = document.getElementById('peticaoModal'); if(m) m.classList.remove('aberto'); soltarFundo(); }
   function conteudo(html){ document.getElementById('ptConteudo').innerHTML = html; }
 
   async function carregarBase(){
@@ -243,10 +269,10 @@ window.SagaPeticoes = (function(){
         + '. Aparecem só as petições desta tese e os modelos gerais. Para outra tese, use o botão no processo dela.</div>'
         + (daTese.length ? '<div class="pt-lista">' + daTese.map(cartao).join('') + '</div>' : '<div class="pt-vazio">Ainda não há petição pronta para ' + esc(nomeTese) + '. Use um modelo geral abaixo ou peça para cadastrar o modelo desta tese.</div>')
         + (gerais.length ? '<div class="pt-sub" style="margin:16px 0 8px">Modelos gerais</div><div class="pt-lista">' + gerais.map(cartao).join('') + '</div>' : '')
-        + '<div class="pt-botoes"><button type="button" class="btn-secundario" data-pt-fechar>Fechar</button></div>');
+        + '<div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" data-pt-fechar>Fechar</button></div>');
       document.querySelectorAll('[data-pt-modelo]').forEach(function(b){ b.onclick = function(){ escolher(b.getAttribute('data-pt-modelo')); }; });
     }catch(e){
-      conteudo('<h3 id="ptTitulo">Fazer petição</h3><div class="pt-erro"><b>Não deu para abrir:</b> ' + esc(e.message || e) + '</div><div class="pt-botoes"><button type="button" class="btn-secundario" data-pt-fechar>Fechar</button></div>');
+      conteudo('<h3 id="ptTitulo">Fazer petição</h3><div class="pt-erro"><b>Não deu para abrir:</b> ' + esc(e.message || e) + '</div><div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" data-pt-fechar>Fechar</button></div>');
     }
     ligarFechar();
   }
@@ -277,8 +303,8 @@ window.SagaPeticoes = (function(){
       + '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="ptGuardar" checked> Guardar na pasta "Petições" do cliente</label></div>'
       + '<div class="pt-campos">' + htmlCampos + '</div>'
       + '<div id="ptMsg"></div>'
-      + '<div class="pt-botoes"><button type="button" class="btn-secundario" id="ptVoltar">Voltar aos modelos</button>'
-      + '<button type="button" class="btn-secundario" id="ptWord">Baixar Word</button><button type="button" class="btn-confirmar-bib btn-primario" id="ptPdf">Baixar PDF</button></div>');
+      + '<div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" id="ptVoltar">Voltar aos modelos</button>'
+      + '<button type="button" class="btn-secondary btn-secundario" id="ptWord">Baixar Word</button><button type="button" class="btn-confirmar-bib btn-primario" id="ptPdf">Baixar PDF</button></div>');
     document.querySelectorAll('[data-pt-campo]').forEach(function(i){ i.addEventListener('input', function(){ i.parentNode.classList.toggle('falta', !i.value.trim() && ['data','cidade'].indexOf(i.getAttribute('data-pt-campo')) < 0); resumo(); }); });
     document.getElementById('ptVoltar').onclick = function(){ abrir(S.ctx); };
     document.getElementById('ptWord').onclick = function(){ gerar('docx'); };
