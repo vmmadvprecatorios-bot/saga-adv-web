@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611202035"></script>
+<script src="saga_guard.js?v=202611202039"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Para aprovar</title>
@@ -92,7 +92,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .auton{margin-top:16px}.auton .ped{grid-template-columns:minmax(0,1fr) auto}
 .btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611202035">
+<link rel="stylesheet" href="saga_tema.css?v=202611202039">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -144,7 +144,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611202035"></script>
+<script src="saga_ui.js?v=202611202039"></script>
 <script>
 /* =====================================================================
    SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
@@ -207,7 +207,7 @@ function camposConteudo(e){
   if(c.calculo_prazo)linhas.push(['Cálculo',c.calculo_prazo]);
   if(c.conferir)linhas.push(['Conferir',c.conferir]);
   if(c.proximo_agente&&!c.peca)linhas.push(['Próximo agente',c.proximo_agente]);
-  if(c.peca)linhas.push(['Petição',(c.peca.titulo||'')+' · a Renata '+(c.peca.imediata?'já está preparando':'prepara depois desta aprovação')]);
+  if(c.peca)linhas.push(['Petição',(c.peca.titulo||'')+' · espera o seu "Pode fazer" em Pedidos para a Renata (abaixo)']);
   if(e.tipo==='peticao'){
     if(c.modelo)linhas.push(['Modelo',c.modelo]);
     if(c.timbrado)linhas.push(['Papel timbrado',c.timbrado+(c.timbrado_motivo?' ('+c.timbrado_motivo+'; para trocar, mande ajustar)':'')]);
@@ -231,23 +231,66 @@ function proximaRodadaRenata(){
   for(var i=0;i<horas.length;i++){if(horas[i]>h||(horas[i]===h&&mi<35))return 'hoje às '+horas[i]+'h35';}
   return 'amanhã às 7h35';
 }
-var NOME_SIT_PECA={aguardando_aprovacao:['Espera a aprovação da triagem',''],na_fila:['Na fila da Renata',''],em_preparo:['A Renata está preparando',''],ajustar:['Voltou para ajuste: a Renata refaz','amarelo'],erro:['Erro: precisa de alguém','vermelho']};
-function desenharComRenata(){
-  var box=$('comRenata'),l=(P.dados&&P.dados.pecas_com_a_renata)||[];
-  if(!l.length||P.sit!=='pendentes'){box.hidden=true;box.innerHTML='';return;}
-  box.hidden=false;
-  box.innerHTML='<div class="grupo-cab"><div><h2>Com a Renata ('+l.length+')</h2><small>Petições pedidas que ainda não chegaram para aprovar. Ela trabalha 30 min depois de cada rodada da Luísa.</small></div></div>'+
-    l.map(function(k){var m=NOME_SIT_PECA[k.situacao]||[k.situacao,''],f=k.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'&processo_id='+encodeURIComponent(k.processo_id):null;
-      var amarelo=k.ultimo_erro&&k.situacao!=='erro';
-      return '<div class="ped"><div style="min-width:0;flex:1"><div class="oque" style="font-weight:500">'+esc(k.titulo)+'</div><div class="det">'+(k.cliente?'<b>'+esc(k.cliente)+'</b>':'')+(k.codigo?' · '+esc(k.codigo):'')+'</div>'+
-        (k.ultimo_erro?'<div class="'+(amarelo?'aviso-amarelo':'erro-caixa')+'" style="margin-top:6px"><b>'+(amarelo?'Erro passageiro ('+esc(k.tentativas)+'ª tentativa): tenta de novo na próxima rodada.':'Erro')+'</b> '+esc(k.ultimo_erro)+'</div>':'')+
-        (k.situacao==='na_fila'||k.situacao==='em_preparo'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata faz '+(k.situacao==='em_preparo'?'agora':'na próxima rodada ('+esc(proximaRodadaRenata())+')')+' e a petição aparece aqui em cima, em Para aprovar, com o Word.</div>':'')+
-        (k.situacao==='aguardando_aprovacao'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata começa depois que a triagem da Luísa deste processo for aprovada (acima).</div>':'')+
-        (k.situacao==='ajustar'?'<div class="det" style="margin-top:6px">Voltou para ajuste: a Renata refaz na próxima rodada ('+esc(proximaRodadaRenata())+').</div>':'')+
-        '<div class="selos"><span class="selo '+m[1]+'">'+esc(m[0])+'</span>'+(k.prazo?'<span class="selo">Prazo: '+esc(dataBR(k.prazo))+'</span>':'')+'<span class="selo">Pedida em '+esc(dataHoraBR(k.desde))+'</span></div></div>'+
-        '<div class="acoes">'+(f?'<a class="lnk" href="'+esc(f)+'">Ficha ↗</a>':'')+'</div></div>';}).join('');
+var NOME_SIT_PECA={aguardando_aprovacao:['Aguardando sua aprovação','amarelo'],depois:['Depois',''],na_fila:['Na fila da Renata',''],em_preparo:['A Renata está preparando',''],ajustar:['Voltou para ajuste: a Renata refaz','amarelo'],erro:['Erro: precisa de alguém','vermelho']};
+var NOME_PECA={impulso:'Impulso processual',manifestacao:'Manifestação',inicial_pss:'Inicial do PSS',outra:'Outra peça'};
+var PR={sit:'aguardando',ordem:'prioridade',marc:{}};
+function tempoParado(d){
+  if(!d)return '';var dias=Math.floor((Date.now()-new Date(d+'T12:00:00'))/86400000);
+  if(dias<45)return '';var meses=Math.floor(dias/30.4);
+  return meses>=24?'parado há '+Math.floor(meses/12)+' anos':(meses>=12?'parado há 1 ano'+(meses>12?' e '+(meses-12)+' '+(meses-12===1?'mês':'meses'):''):'parado há '+meses+' '+(meses===1?'mês':'meses'));
 }
-async function abrirWord(b){
+function desenharComRenata(){
+  var box=$('comRenata'),todos=(P.dados&&P.dados.pecas_com_a_renata)||[];
+  if(!todos.length||P.sit!=='pendentes'){box.hidden=true;box.innerHTML='';return;}
+  var grupos={aguardando:['aguardando_aprovacao'],depois:['depois'],fila:['na_fila','em_preparo','ajustar','erro']};
+  var cont={aguardando:0,depois:0,fila:0};todos.forEach(function(k){Object.keys(grupos).forEach(function(g){if(grupos[g].indexOf(k.situacao)>=0)cont[g]++;});});
+  var l=todos.filter(function(k){return grupos[PR.sit].indexOf(k.situacao)>=0;});
+  var pr={urgente:0,alta:1,normal:2,baixa:3};
+  l.sort(function(a,b){
+    if(PR.ordem==='prazo')return (a.prazo||'9999')<(b.prazo||'9999')?-1:((a.prazo||'9999')>(b.prazo||'9999')?1:0);
+    if(PR.ordem==='parado')return (a.parado_desde||'9999')<(b.parado_desde||'9999')?-1:1;
+    return (pr[a.prioridade]-pr[b.prioridade])||((a.prazo||'9999')<(b.prazo||'9999')?-1:1);
+  });
+  var pode=P.dados.pode_aprovar,decide=pode&&PR.sit!=='fila';
+  box.hidden=false;
+  box.innerHTML='<div class="grupo-cab"><div><h2>Pedidos para a Renata</h2><small>A Renata só começa uma peça depois do seu "Pode fazer". Ela trabalha de hora em hora (aos 35 min, 7h às 19h e 21h).</small></div>'+
+    '<div class="pills" role="group" aria-label="Quais pedidos">'+
+      [['aguardando','Aguardando sua aprovação'],['depois','Depois'],['fila','Na fila da Renata']].map(function(o){return '<button type="button" class="pill'+(PR.sit===o[0]?' active':'')+'" data-pr-sit="'+o[0]+'">'+o[1]+'<b>'+(cont[o[0]]?' '+cont[o[0]]:'')+'</b></button>';}).join('')+'</div>'+
+    '<label class="det" style="display:flex;gap:6px;align-items:center">Ordem <select id="prOrdem"><option value="prioridade"'+(PR.ordem==='prioridade'?' selected':'')+'>Prioridade</option><option value="prazo"'+(PR.ordem==='prazo'?' selected':'')+'>Prazo</option><option value="parado"'+(PR.ordem==='parado'?' selected':'')+'>Tempo parado</option></select></label></div>'+
+    (decide&&l.length?'<div class="lote" id="prLote" hidden><span id="prLoteN"></span><button class="btn btn-ouro" type="button" data-pr-lote="fazer">Pode fazer</button><button class="btn" type="button" data-pr-lote="depois">Depois</button><button class="btn btn-perigo" type="button" data-pr-lote="nao_fazer">Não fazer</button></div>':'')+
+    (!l.length?'<div class="vazio" style="padding:16px"><b>'+({aguardando:'Nada esperando a sua aprovação.',depois:'Nada guardado para depois.',fila:'Nada na fila da Renata.'}[PR.sit])+'</b></div>':'')+
+    l.map(function(k){var m=NOME_SIT_PECA[k.situacao]||[k.situacao,''],f=k.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'&processo_id='+encodeURIComponent(k.processo_id):null;
+      var amarelo=k.ultimo_erro&&k.situacao!=='erro',par=tempoParado(k.parado_desde);
+      var etq='<span class="selo">'+esc(NOME_PECA[k.peca]||k.peca||'Peça')+'</span>'+
+        (k.prioridade==='urgente'?'<span class="selo vermelho">Urgente</span>':(k.prioridade==='alta'?'<span class="selo amarelo">Prioridade alta</span>':(k.prioridade==='baixa'?'<span class="selo">Prioridade baixa</span>':'<span class="selo">Prioridade normal</span>')))+
+        (k.prazo?'<span class="selo'+((new Date(k.prazo)-Date.now())/86400000<=5?' vermelho':'')+'">Prazo: '+esc(dataBR(k.prazo))+'</span>':'<span class="selo">Sem prazo</span>')+
+        (par?'<span class="selo amarelo">'+esc(par)+'</span>':'')+
+        '<span class="selo '+m[1]+'">'+esc(m[0])+'</span>';
+      return '<div class="ped"><div class="cab-ent">'+(decide?'<input type="checkbox" data-pr-marcar="'+esc(k.id)+'"'+(PR.marc[k.id]?' checked':'')+' aria-label="Marcar '+esc(k.titulo)+'">':'')+
+        '<div style="min-width:0;flex:1"><div class="oque">'+esc(k.titulo)+'</div><div class="det">'+(k.cliente?'<b>'+esc(k.cliente)+'</b>':'')+(k.codigo?' · '+esc(k.codigo):'')+(k.origem==='calculo'?' · pedida pelo cálculo do PSS conferido':(k.origem==='luisa'?' · pedida pela Luísa':''))+'</div>'+
+        (k.porque?'<div class="det" style="margin-top:4px"><b>Por quê:</b> '+esc(k.porque)+'</div>':'')+
+        (k.situacao==='na_fila'||k.situacao==='em_preparo'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata faz '+(k.situacao==='em_preparo'?'agora':'na próxima rodada ('+esc(proximaRodadaRenata())+')')+' e a petição aparece aqui em cima, em Para aprovar, com o Word.</div>':'')+
+        (k.situacao==='depois'?'<div class="det" style="margin-top:6px">Guardada para depois'+(k.decidido_por?' por '+esc(k.decidido_por):'')+(k.decidido_em?' em '+esc(dataBR(k.decidido_em)):'')+'. A Renata não faz enquanto estiver aqui.</div>':'')+
+        (k.situacao==='ajustar'?'<div class="det" style="margin-top:6px">Voltou para ajuste: a Renata refaz na próxima rodada ('+esc(proximaRodadaRenata())+').</div>':'')+
+        (k.ultimo_erro?'<div class="'+(amarelo?'aviso-amarelo':'erro-caixa')+'" style="margin-top:6px"><b>'+(amarelo?'Erro passageiro ('+esc(k.tentativas)+'ª tentativa): tenta de novo na próxima rodada.':'Erro')+'</b> '+esc(k.ultimo_erro)+'</div>':'')+
+        '<div class="selos">'+etq+'<span class="selo">Pedida em '+esc(dataHoraBR(k.desde))+'</span></div></div></div>'+
+        '<div class="acoes">'+(f?'<a class="lnk" href="'+esc(f)+'">Ficha ↗</a>':'')+
+          (decide?'<button class="btn btn-ouro" type="button" data-pr-dec="fazer" data-pr-id="'+esc(k.id)+'">Pode fazer</button>'+(k.situacao!=='depois'?'<button class="btn" type="button" data-pr-dec="depois" data-pr-id="'+esc(k.id)+'">Depois</button>':'')+'<button class="btn btn-perigo" type="button" data-pr-dec="nao_fazer" data-pr-id="'+esc(k.id)+'">Não fazer</button>':'')+
+          (pode&&k.situacao==='na_fila'?'<button class="btn" type="button" data-pr-dec="depois" data-pr-id="'+esc(k.id)+'" title="Tira da fila da Renata">Depois</button>':'')+
+        '</div></div>';}).join('');
+  atualizarLotePr();
+}
+function atualizarLotePr(){
+  var ids=Object.keys(PR.marc).filter(function(k){return PR.marc[k];}),b=$('prLote');
+  if(b){b.hidden=!ids.length;$('prLoteN').textContent=ids.length+' marcado(s)';}
+}
+async function decidirPecas(ids,dec,motivo){
+  var r=await _sb.rpc('agente_pecas_decidir',{p_ids:ids,p_decisao:dec,p_motivo:motivo||null});
+  if(r.error){toast('Não consegui gravar: '+(r.error.message||''),'error');return;}
+  var er=(r.data&&r.data.erros)||[];
+  toast((dec==='fazer'?'Liberado para a Renata: ela faz na próxima rodada ('+proximaRodadaRenata()+').':(dec==='depois'?'Guardado para depois.':'Encerrado: a Renata não vai fazer.'))+(er.length?' Não mudou: '+er.map(function(x){return x.titulo+' ('+x.erro+')';}).join('; '):''),er.length?'error':'success');
+  PR.marc={};await carregar();
+}async function abrirWord(b){
   b.disabled=true;
   try{
     var r=await _sb.storage.from('documentos-clientes').createSignedUrl(b.dataset.word,300,{download:b.dataset.nome||true});
@@ -338,10 +381,16 @@ function abrirJanela(e,modo){
   $('jSub').textContent=e.titulo;$('jTexto').value='';
   $('janela').classList.add('aberto');setTimeout(function(){$('jTexto').focus();},60);
 }
+function abrirJanelaNaoFazer(){
+  $('jTitulo').textContent='Não fazer';$('jRot').textContent='Motivo (opcional): fica no histórico do pedido';$('jOk').textContent='Não fazer';
+  $('jSub').textContent=P.janela.ids.length>1?P.janela.ids.length+' pedidos marcados':'O pedido é encerrado; nada é apagado.';$('jTexto').value='';
+  $('janela').classList.add('aberto');setTimeout(function(){$('jTexto').focus();},60);
+}
 function fecharJanela(){$('janela').classList.remove('aberto');P.janela=null;}
 async function confirmarJanela(){
   var j=P.janela;if(!j)return;var t=$('jTexto').value.trim();
   if(j.modo==='protocolei'){fecharJanela();await protocolei(j.id,t);return;}
+  if(j.modo==='naofazer'){var ids=j.ids;fecharJanela();await decidirPecas(ids,'nao_fazer',t);return;}
   if(!t){toast(j.modo==='ajustar'?'Escreva o que precisa ajustar.':'Escreva o motivo.','error');return;}
   fecharJanela();await decidir(j.id,j.modo==='ajustar'?'ajustar':'reprovar',t);
 }
@@ -376,6 +425,18 @@ function ligar(){
     if(b.dataset.aprovar)decidir(id,'aprovar',null);else abrirJanela(ent,b.dataset.ajustar?'ajustar':'reprovar');
   });
   $('autonomia').addEventListener('click',function(e){var b=e.target.closest('[data-auton]');if(b)trocarAutonomia(b);});
+  $('comRenata').addEventListener('click',function(e){
+    var s1=e.target.closest('[data-pr-sit]');if(s1){if(PR.sit!==s1.dataset.prSit){PR.sit=s1.dataset.prSit;PR.marc={};setTimeout(desenharComRenata,0);}return;}
+    var d=e.target.closest('[data-pr-dec]');
+    if(d){if(d.dataset.prDec==='nao_fazer'){P.janela={id:d.dataset.prId,modo:'naofazer',ids:[d.dataset.prId]};abrirJanelaNaoFazer();}else decidirPecas([d.dataset.prId],d.dataset.prDec);return;}
+    var lt=e.target.closest('[data-pr-lote]');
+    if(lt){var ids=Object.keys(PR.marc).filter(function(k){return PR.marc[k];});if(!ids.length)return;
+      if(lt.dataset.prLote==='nao_fazer'){P.janela={modo:'naofazer',ids:ids};abrirJanelaNaoFazer();}else decidirPecas(ids,lt.dataset.prLote);}
+  });
+  $('comRenata').addEventListener('change',function(e){
+    var c=e.target.closest('[data-pr-marcar]');if(c){PR.marc[c.dataset.prMarcar]=c.checked;atualizarLotePr();return;}
+    if(e.target.id==='prOrdem'){PR.ordem=e.target.value;desenharComRenata();}
+  });
   $('janela').addEventListener('click',function(e){if(e.target===$('janela')||e.target.closest('[data-fechar]'))fecharJanela();});
   $('jOk').addEventListener('click',confirmarJanela);
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('janela').classList.contains('aberto'))fecharJanela();});
@@ -389,6 +450,6 @@ async function init(){
 }
 init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
 </script>
-<script src="saga_agentes_extra.js?v=202611202035"></script>
+<script src="saga_agentes_extra.js?v=202611202039"></script>
 </body>
 </html>
