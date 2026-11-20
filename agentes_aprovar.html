@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611202032"></script>
+<script src="saga_guard.js?v=202611202035"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Para aprovar</title>
@@ -92,7 +92,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .auton{margin-top:16px}.auton .ped{grid-template-columns:minmax(0,1fr) auto}
 .btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611202032">
+<link rel="stylesheet" href="saga_tema.css?v=202611202035">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -144,7 +144,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611202032"></script>
+<script src="saga_ui.js?v=202611202035"></script>
 <script>
 /* =====================================================================
    SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
@@ -202,7 +202,7 @@ function camposConteudo(e){
   }
   var linhas=[];
   if(c.o_que_e)linhas.push(['O que é',c.o_que_e]);
-  if(c.providencia)linhas.push(['O que fazer',c.providencia]);
+  if(c.providencia)linhas.push([e.tipo==='peca_nao_feita'?'Por que a Renata não fez':'O que fazer',c.providencia]);
   if(c.prazo)linhas.push(['Prazo',dataBR(c.prazo)+(c.prazo_dias?' ('+c.prazo_dias+' dias úteis)':'')]);
   if(c.calculo_prazo)linhas.push(['Cálculo',c.calculo_prazo]);
   if(c.conferir)linhas.push(['Conferir',c.conferir]);
@@ -224,6 +224,13 @@ function seloPeca(e){
   if(k.situacao==='aprovado')return '<span class="selo amarelo">Falta protocolar</span>';
   return '';
 }
+function proximaRodadaRenata(){
+  // rodadas da Renata: aos 35 min, das 7h às 19h e às 21h de Maceió (UTC-3)
+  var agora=new Date(),m=new Date(agora.getTime()-3*3600000),h=m.getUTCHours(),mi=m.getUTCMinutes();
+  var horas=[7,8,9,10,11,12,13,14,15,16,17,18,19,21];
+  for(var i=0;i<horas.length;i++){if(horas[i]>h||(horas[i]===h&&mi<35))return 'hoje às '+horas[i]+'h35';}
+  return 'amanhã às 7h35';
+}
 var NOME_SIT_PECA={aguardando_aprovacao:['Espera a aprovação da triagem',''],na_fila:['Na fila da Renata',''],em_preparo:['A Renata está preparando',''],ajustar:['Voltou para ajuste: a Renata refaz','amarelo'],erro:['Erro: precisa de alguém','vermelho']};
 function desenharComRenata(){
   var box=$('comRenata'),l=(P.dados&&P.dados.pecas_com_a_renata)||[];
@@ -234,6 +241,9 @@ function desenharComRenata(){
       var amarelo=k.ultimo_erro&&k.situacao!=='erro';
       return '<div class="ped"><div style="min-width:0;flex:1"><div class="oque" style="font-weight:500">'+esc(k.titulo)+'</div><div class="det">'+(k.cliente?'<b>'+esc(k.cliente)+'</b>':'')+(k.codigo?' · '+esc(k.codigo):'')+'</div>'+
         (k.ultimo_erro?'<div class="'+(amarelo?'aviso-amarelo':'erro-caixa')+'" style="margin-top:6px"><b>'+(amarelo?'Erro passageiro ('+esc(k.tentativas)+'ª tentativa): tenta de novo na próxima rodada.':'Erro')+'</b> '+esc(k.ultimo_erro)+'</div>':'')+
+        (k.situacao==='na_fila'||k.situacao==='em_preparo'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata faz '+(k.situacao==='em_preparo'?'agora':'na próxima rodada ('+esc(proximaRodadaRenata())+')')+' e a petição aparece aqui em cima, em Para aprovar, com o Word.</div>':'')+
+        (k.situacao==='aguardando_aprovacao'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata começa depois que a triagem da Luísa deste processo for aprovada (acima).</div>':'')+
+        (k.situacao==='ajustar'?'<div class="det" style="margin-top:6px">Voltou para ajuste: a Renata refaz na próxima rodada ('+esc(proximaRodadaRenata())+').</div>':'')+
         '<div class="selos"><span class="selo '+m[1]+'">'+esc(m[0])+'</span>'+(k.prazo?'<span class="selo">Prazo: '+esc(dataBR(k.prazo))+'</span>':'')+'<span class="selo">Pedida em '+esc(dataHoraBR(k.desde))+'</span></div></div>'+
         '<div class="acoes">'+(f?'<a class="lnk" href="'+esc(f)+'">Ficha ↗</a>':'')+'</div></div>';}).join('');
 }
@@ -379,6 +389,6 @@ async function init(){
 }
 init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
 </script>
-<script src="saga_agentes_extra.js?v=202611202032"></script>
+<script src="saga_agentes_extra.js?v=202611202035"></script>
 </body>
 </html>

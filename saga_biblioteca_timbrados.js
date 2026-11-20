@@ -30,6 +30,9 @@
     '.conteudo-biblioteca.modo-timbrados > :not(.header-pagina):not(#painelTimbrados){display:none!important}',
     '.conteudo-biblioteca.modo-timbrados .botoes-view{display:none!important}',
     '#painelTimbrados{display:none}',
+    /* com os modelos abertos, a pasta marcada da Biblioteca fica sem destaque (só "Petições e timbrados" marcado) */
+    'body.tb-modo-timbrados .coluna-categorias .item-categoria-lateral.ativa{background:transparent!important;color:var(--muted)!important;font-weight:500!important;box-shadow:none!important}',
+    'body.tb-modo-timbrados .coluna-categorias .destaque-pasta{opacity:0!important}',
     '.conteudo-biblioteca.modo-timbrados #painelTimbrados{display:block;animation:tbEntra .36s ' + EASE + ' both}',
     '.conteudo-biblioteca.modo-timbrados #painelTimbrados.sem-movimento{animation:none}',
     '@keyframes tbEntra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}',
@@ -98,16 +101,23 @@
     item.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 8h5M9 12h7M9 16h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Petições e timbrados</span>';
     var cab = coluna.querySelector('.categorias-cabecalho');
     if(cab && cab.nextSibling) coluna.insertBefore(item, cab.nextSibling); else coluna.appendChild(item);
-    item.addEventListener('click', abrir);
-    item.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); abrir(); } });
+    item.addEventListener('click', function(){ if(!S.aberto) abrir('clique'); });
+    item.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); abrir('clique'); } });
     /* clicar numa pasta normal sai do painel */
     coluna.addEventListener('click', function(e){
-      if(S.aberto && e.target.closest('.item-categoria-lateral, .btn-nova-categoria-lateral')) fechar();
+      if(S.aberto && e.target.closest('.item-categoria-lateral, .btn-nova-categoria-lateral')) fechar('clique');
     }, true);
     var volta = document.getElementById('btnVoltarBiblioteca');
-    if(volta) volta.addEventListener('click', function(e){ if(S.aberto){ e.stopImmediatePropagation(); fechar(); } }, true);
+    if(volta) volta.addEventListener('click', function(e){ if(S.aberto){ e.stopImmediatePropagation(); fechar('clique'); } }, true);
     var bc = document.getElementById('breadcrumbWrap');
-    if(bc) bc.addEventListener('click', function(){ if(S.aberto) fechar(); }, true);
+    if(bc) bc.addEventListener('click', function(){ if(S.aberto) fechar('clique'); }, true);
+    /* 20/11 (Dr. Victor: "fui para outra seção e não tinha como voltar aos modelos"): cada troca de seção vira uma
+       entrada do histórico (bibliotecaAba no history.state, mantendo o resto do state); voltar/avançar troca a seção */
+    window.addEventListener('popstate', function(e){
+      var aba = e.state && e.state.bibliotecaAba;
+      if(aba === 'timbrados' && !S.aberto) abrir('historico');
+      else if(aba !== 'timbrados' && S.aberto) fechar('historico');
+    });
 
     var painel = document.createElement('div');
     painel.id = 'painelTimbrados';
@@ -134,32 +144,40 @@
     try{
       var qa = new URLSearchParams(location.search).get('aba');
       var naPasta = history.state && history.state.bibliotecaPastas && (history.state.bibliotecaPastas.caminho || []).length > 1;
-      if(qa === 'timbrados' || (qa !== 'arquivos' && !naPasta)) setTimeout(abrir, 50);
-    }catch(e){ setTimeout(abrir, 50); }
+      if(qa === 'timbrados' || (qa !== 'arquivos' && !naPasta)) setTimeout(function(){ abrir('inicio'); }, 50);
+      else marcarAba('arquivos', false);
+    }catch(e){ setTimeout(function(){ abrir('inicio'); }, 50); }
   }
 
-  function abrir(){
+  function marcarAba(aba, nova){
+    try{
+      var u = new URL(location.href); u.searchParams.set('aba', aba);
+      var st = Object.assign({}, history.state || {}, { bibliotecaAba: aba });
+      if(nova) history.pushState(st, '', u); else history.replaceState(st, '', u);
+    }catch(e){}
+  }
+  function abrir(modo){
     var conteudo = document.querySelector('.conteudo-biblioteca');
     if(!conteudo) return;
     S.aberto = true;
     document.getElementById('painelTimbrados').classList.toggle('sem-movimento', reduzido());
     conteudo.classList.add('modo-timbrados');
     document.getElementById('itemTimbradosBib').classList.add('ativa');
-    document.querySelectorAll('.coluna-categorias .item-categoria-lateral.ativa').forEach(function(i){ i.classList.add('tb-era-ativa'); i.classList.remove('ativa'); });
+    document.body.classList.add('tb-modo-timbrados');
     var h1 = document.querySelector('.header-pagina h1');
     if(h1){ h1.setAttribute('data-tb-titulo', h1.textContent); h1.textContent = 'Modelos'; }
-    try{ var u = new URL(location.href); u.searchParams.set('aba', 'timbrados'); history.replaceState(history.state, '', u); }catch(e){}
+    if(modo !== 'historico') marcarAba('timbrados', modo === 'clique');
     if(!S.carregado) carregar();
   }
-  function fechar(){
+  function fechar(modo){
     var conteudo = document.querySelector('.conteudo-biblioteca');
     S.aberto = false;
     if(conteudo) conteudo.classList.remove('modo-timbrados');
     var it = document.getElementById('itemTimbradosBib'); if(it) it.classList.remove('ativa');
-    document.querySelectorAll('.coluna-categorias .tb-era-ativa').forEach(function(i){ i.classList.remove('tb-era-ativa'); });
+    document.body.classList.remove('tb-modo-timbrados');
     var h1 = document.querySelector('.header-pagina h1');
     if(h1 && h1.getAttribute('data-tb-titulo')){ h1.textContent = h1.getAttribute('data-tb-titulo'); h1.removeAttribute('data-tb-titulo'); }
-    try{ var u = new URL(location.href); u.searchParams.set('aba', 'arquivos'); history.replaceState(history.state, '', u); }catch(e){}
+    if(modo !== 'historico') marcarAba('arquivos', modo === 'clique');
   }
 
   /* ---------------- dados ---------------- */
