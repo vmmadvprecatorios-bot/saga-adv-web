@@ -705,6 +705,9 @@
     +'<div class="nav-item" data-tela="notas" onclick="sagaIrPara(\'notas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M5 4h14a1 1 0 011 1v9l-6 6H5a1 1 0 01-1-1V5a1 1 0 011-1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M14 20v-5a1 1 0 011-1h5M8 9h8M8 13h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Notas<span class="nav-badge-chat nav-badge-dia" id="navBadgeNotas" style="display:none" title="Notas compartilhadas com você ainda não abertas"></span></div>'
+    +'<div class="nav-item" data-tela="minha_parte" id="navMinhaParte" hidden onclick="sagaIrPara(\'financeiro.html?minha=1\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M14.5 9.5c-.4-.9-1.4-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1.1 1.6 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1.1 0-2.1-.6-2.5-1.5M12 6.5V8m0 8v1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Meus honorários</div>'
     +'</div><div class="nav-section" data-grupo="processos" role="button" tabindex="0" aria-expanded="true">Processos</div><div class="nav-grupo" data-grupo="processos">'
     +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -1128,7 +1131,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',minha_parte:'Meus honorários',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -2166,6 +2169,9 @@
         var rp=await global._sb.rpc('pedidos_claude_contar');
         if(!rp.error){var np=rp.data||0;bp.textContent=np>99?'99+':String(np);bp.style.display=np>0?'':'none';bp.title=np+' pedido(s) do Saga IA em aberto';}
       }
+      // Meus honorários (bloco 273): o item aparece só para quem tem parte na distribuição dos honorários
+      var mp=document.getElementById('navMinhaParte');
+      if(mp){var rm=await global._sb.rpc('distribuicao_tenho_parte');if(!rm.error)mp.hidden=rm.data!==true;}
       await contarMenu();
       guardarNumerosMoldura();
     }catch(e){}
