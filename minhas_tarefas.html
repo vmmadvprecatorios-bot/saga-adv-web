@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611201959"></script>
+<script src="saga_guard.js?v=202611202001"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -1864,7 +1864,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611201959">
+<link rel="stylesheet" href="saga_tema.css?v=202611202001">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -2420,12 +2420,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611201959"></script>
-<script src="saga_etiquetas.js?v=202611201959"></script>
-<script src="saga_mencoes.js?v=202611201959"></script>
-<script src="saga_prazos.js?v=202611201959"></script>
-<script src="saga_texto.js?v=202611201959"></script>
-<script src="saga_tribunais.js?v=202611201959"></script>
+<script src="saga_ui.js?v=202611202001"></script>
+<script src="saga_etiquetas.js?v=202611202001"></script>
+<script src="saga_mencoes.js?v=202611202001"></script>
+<script src="saga_prazos.js?v=202611202001"></script>
+<script src="saga_texto.js?v=202611202001"></script>
+<script src="saga_tribunais.js?v=202611202001"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2453,6 +2453,7 @@ var gerenciaTodasTarefas = false;
 var podeVerFichaTarefas = false, podeVerIntimacoesTarefas = false; // T161: atalhos para a ficha e as intimações
 var filtroProcessoUrl = null; // T161: minhas_tarefas.html?processo=<id> mostra só as tarefas desse processo // chave tarefas.gerenciar_todas (bloco 174): mexe em todas, menos apagar
 var catalogoEtiquetas = null, menuEtiquetaTarefa = null;
+var etiquetaImpulsoId; // bloco 281: id da etiqueta "Dar impulso processual" (undefined = ainda não buscada)
 function seloEtiquetaTarefa(t){ return SagaEtiquetas.selo(catalogoEtiquetas && catalogoEtiquetas.porId(t.etiquetaId)); }
 var usuarioLogadoId = null;
 var dadosColaboradores = [];
@@ -2644,6 +2645,9 @@ async function carregarDadosTarefas(){
       atualizarListasDeFiltro(); aplicarFiltrosERenderizar();
     }});
   await catalogoEtiquetas.carregar();
+  // 20/11 (Dr. Victor; bloco 281): "Dar impulso processual" é ETIQUETA (marca acao 'impulso'; vale mesmo renomeada)
+  if(etiquetaImpulsoId === undefined){ try{ var ri = await _sb.rpc('tarefa_etiqueta_impulso_id'); if(ri.error) throw ri.error; etiquetaImpulsoId = ri.data || null; }
+    catch(e){ etiquetaImpulsoId = null; mostrarToast('Não consegui achar a etiqueta "Dar impulso processual": ' + String((e && e.message) || 'erro desconhecido') + '. As tarefas de impulso são reconhecidas pelo título até recarregar a tela.', 'erro'); } }
   if(!menuEtiquetaTarefa) menuEtiquetaTarefa = catalogoEtiquetas.montar(document.getElementById('campoEtiquetaTarefa'), {
     valor:function(){ return catalogoEtiquetas.porId(estadoModalTarefa.etiquetaId); },
     podeEditar:function(){ return !estadoModalTarefa.somenteLeitura; },
@@ -3074,7 +3078,8 @@ document.getElementById('btnLimparFiltrosTarefas').addEventListener('click', fun
    para o administrador, "+ Nova etiqueta" e o lápis para renomear, mudar a cor ou
    tirar da lista (desativar: as tarefas continuam com ela; o banco recusa os outros).
 ===================================================================== */
-var ATALHOS_ETIQUETA = ['Dar impulso processual', 'Pedidos do Saga IA'];
+// 20/11 (bloco 281): "Dar impulso processual" virou etiqueta de verdade (aparece na lista abaixo, com o número); o atalho saiu
+var ATALHOS_ETIQUETA = ['Pedidos do Saga IA'];
 var estadoEditorEtiqueta = null; // {id|null}
 var mostrarEtiquetasDesativadas = false;
 function contarAbertasEtiqueta(fn){ return (window.SAGA_TASKS || []).filter(function(t){ return t.status !== 'concluida' && fn(t); }).length; }
@@ -3530,8 +3535,9 @@ document.querySelector('.grid-kpis-tarefas').addEventListener('click', function(
   aplicarFiltrosERenderizar();
 });
 
-// Tarefa "Dar impulso processual" (criada pelo sistema quando o processo fica parado; bloco 96)
-function tarefaDeImpulso(t){ return /impulso processual/i.test((t && t.titulo) || ''); }
+// Tarefa "Dar impulso processual" (criada pelo sistema quando o processo fica parado; bloco 96).
+// 20/11 (bloco 281): reconhecida pela ETIQUETA; o título fica como reserva (tarefa antiga que já tinha outra etiqueta)
+function tarefaDeImpulso(t){ return !!t && ((etiquetaImpulsoId && t.etiquetaId === etiquetaImpulsoId) || /^\s*dar impulso processual/i.test(t.titulo || '')); }
 // T166: pedido que o Claude registrou pelo conector (título começa com "Pedido do Claude:"; origem 'claude_pedido' no banco)
 function tarefaPedidoClaude(t){ return /^\s*Pedido do (Claude|Saga IA)\s*:/i.test((t && t.titulo) || ''); }
 function marcarTipoFiltro(texto){

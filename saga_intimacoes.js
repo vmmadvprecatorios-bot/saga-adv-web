@@ -357,7 +357,7 @@
   async function carregar(){
     var sb=S.sb;
     var r=await Promise.all([
-      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id,processo_candidatos,recurso_id').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
+      sb.from('intimacoes').select('id,fonte,data_disponibilizacao,tribunal,orgao,classe,tipo_comunicacao,tipo_documento,numero_processo,numero_processo_mascara,partes,advogados,resumo,link,advogados_ids,processo_id,responsavel_id,situacao,coluna_id,ordem,prazo,etiqueta,etiqueta_cor,concluida,concluida_em,historica,capturado_em,triagem,triagem_nota,triagem_em,triagem_por_id,tarefa_id,processo_candidatos,recurso_id,repetida_de').order('data_disponibilizacao',{ascending:false}).order('capturado_em',{ascending:false}).limit(3000),
       sb.from('intimacoes_colunas').select('*').order('ordem').order('criado_em'),
       sb.from('monitoramento_config').select('*').eq('tipo_alvo','oab').order('criado_em'),
       sb.from('usuarios').select('id,nome_completo,ativo,auth_user_id,numero_oab,uf_oab,possui_registro_oab').order('nome_completo'),
@@ -365,7 +365,9 @@
       catalogoEtiquetas.carregar()]);
     S.links=r[4].data||[];
     if(r[0].error){toast('Erro ao carregar as intimações: '+esc(r[0].error.message),'error');return false;}
-    S.itens=r[0].data||[];S.colunas=r[1].data||[];S.oabs=r[2].data||[];S.usuarios=r[3].data||[];
+    // 20/11 (bloco 280): a do CNJ que repete uma do e-mail não aparece como item: fica ligada à do e-mail (S.repetidas)
+    S.repetidas={};
+    S.itens=(r[0].data||[]).filter(function(i){if(i.repetida_de){(S.repetidas[i.repetida_de]=S.repetidas[i.repetida_de]||[]).push(i);return false;}return true;});S.colunas=r[1].data||[];S.oabs=r[2].data||[];S.usuarios=r[3].data||[];
     pedirSugestoes();
     var ids=[...new Set(S.itens.map(function(i){return i.processo_id;}).filter(Boolean))];
     S.processos={};
@@ -1096,6 +1098,8 @@
     var partes=(i.partes||[]).map(function(p){return '<span class="si-cli">'+esc(p.nome)+'</span>'+(p.polo?' <span class="si-sub" style="display:inline">('+(p.polo==='A'?'polo ativo':p.polo==='P'?'polo passivo':esc(p.polo))+')</span>':'');}).join('<br>');
     var advs=(i.advogados||[]).map(function(a){return esc(a.nome)+' (OAB '+esc(a.numero_oab)+'/'+esc(a.uf_oab)+')';}).join('<br>');
     var dados=[['Justiça',esc(j.sigla+' · '+j.rotulo)],['Classe',esc(i.classe||'—')],['Partes intimadas',partes||'—'],['Advogados',advs||'—'],['Do escritório',esc(advogadosDe(i).map(nomeUsuario).join(', ')||'—')],['Origem',i.fonte==='email'?'E-mail (radar)':'CNJ · Diário de Justiça Eletrônico Nacional']];
+    var reps=(S.repetidas&&S.repetidas[i.id])||[];
+    if(reps.length)dados.push(['Também chegou pelo CNJ',reps.map(function(x){return 'em '+esc(dataBR(x.data_disponibilizacao))+' (repetida desta, sem tarefa nem aviso novo)'+(x.link?' · <a href="'+esc(x.link)+'" target="_blank" rel="noopener">documento oficial ↗</a>':'');}).join('<br>')]);
     document.getElementById('siDados').innerHTML=dados.map(function(d){return '<div><div class="l">'+d[0]+'</div><div>'+d[1]+'</div></div>';}).join('');
     renderProcesso(i);
     renderTriagem(i);
@@ -1784,7 +1788,7 @@
     if(!S.sb||!S.itens)return 0;
     var ult='';S.itens.forEach(function(i){if(i.capturado_em&&i.capturado_em>ult)ult=i.capturado_em;});
     if(!ult)return 0;
-    var r=await S.sb.from('intimacoes').select('id',{count:'exact',head:true}).gt('capturado_em',ult);
+    var r=await S.sb.from('intimacoes').select('id',{count:'exact',head:true}).gt('capturado_em',ult).is('repetida_de',null);
     if(r.error)throw r.error;
     return r.count||0;
   }
