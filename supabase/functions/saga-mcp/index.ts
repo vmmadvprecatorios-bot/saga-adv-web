@@ -26,6 +26,17 @@ const URL_SB = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
 const RECURSO = "https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/saga-mcp";
 const METADADOS = RECURSO + "/.well-known/oauth-protected-resource";
+// Endereços próprios das agentes (20/11, Dr. Victor): o Claude não aceita o mesmo endereço de conector duas vezes na conta,
+// então a Luísa e a Renata usam .../saga-mcp/luisa e .../saga-mcp/renata. É o MESMO servidor; quem age continua sendo o login
+// autorizado (o dela). Só nomes desta lista; qualquer outro final é recusado.
+const AGENTES_ENDERECO = ["luisa", "renata"];
+function enderecoDoPedido(url: URL): { recurso: string; metadados: string } | null {
+  const m = /\/saga-mcp(?:\/([a-z]+))?(?:\/|$)/.exec(url.pathname);
+  const fim = m && m[1] && m[1] !== "well" ? m[1] : "";
+  if (fim && !AGENTES_ENDERECO.includes(fim)) return null;
+  const recurso = RECURSO + (fim ? "/" + fim : "");
+  return { recurso, metadados: recurso + "/.well-known/oauth-protected-resource" };
+}
 const EMISSOR = "https://fmoskdxgjulagedzjxxk.supabase.co/auth/v1";
 const VERSOES = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 const CORS: Record<string, string> = {
@@ -727,11 +738,11 @@ function motivoRecusa(erro: string): string {
   if (/user.*(not found|banned)/i.test(erro)) return "Este usuário do SAGA não existe mais ou está bloqueado: fale com o administrador.";
   return "Não consegui conferir o seu login no SAGA (" + erro.slice(0, 120) + "): reconecte o SAGA em Configurações > Conectores.";
 }
-function semLogin(invalido: boolean, erro = "") {
+function semLogin(invalido: boolean, erro = "", metadados = METADADOS) {
   const motivo = invalido ? motivoRecusa(erro) : "Entre no SAGA para usar o conector (falta o login).";
   console.warn(JSON.stringify({ saga_mcp_recusa: invalido ? "invalid_token" : "sem_token", motivo: erro.slice(0, 200) }));
   // cabeçalho SÓ com letras sem acento (com acento o servidor descarta o cabeçalho e o Claude não renova a chave)
-  const www = `Bearer ${invalido ? 'error="invalid_token", ' : ""}resource_metadata="${METADADOS}"`;
+  const www = `Bearer ${invalido ? 'error="invalid_token", ' : ""}resource_metadata="${metadados}"`;
   return json({ error: invalido ? "invalid_token" : "unauthorized", error_description: motivo }, 401, { "WWW-Authenticate": www });
 }
 const erroRpc = (id: unknown, code: number, message: string) => ({ jsonrpc: "2.0", id: id ?? null, error: { code, message } });
@@ -885,7 +896,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.0" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.1" },
         instructions: INSTRUCOES,
       });
     }
@@ -907,17 +918,19 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   // metadados do recurso protegido (RFC 9728): dizem ao Claude onde fica o login (o OAuth do Supabase)
+  const end = enderecoDoPedido(url);
+  if (!end) return json({ error: "Endereço do conector não reconhecido." }, 404);
   if (url.pathname.endsWith("/.well-known/oauth-protected-resource")) {
-    return json({ resource: RECURSO, authorization_servers: [EMISSOR], bearer_methods_supported: ["header"],
+    return json({ resource: end.recurso, authorization_servers: [EMISSOR], bearer_methods_supported: ["header"],
       resource_name: "SAGA · Victor Morais Advocacia", resource_documentation: "https://vmmadvprecatorios-bot.github.io/saga-adv-web/" });
   }
   if (req.method !== "POST") return json({ error: "Use POST (servidor MCP sem fluxo contínuo)." }, 405, { Allow: "POST, OPTIONS" });
   // login: a chave do OAuth (um login normal do SAGA) vem no cabeçalho Authorization
   const m = /^Bearer\s+(.+)$/i.exec(req.headers.get("authorization") || "");
-  if (!m) return semLogin(false);
+  if (!m) return semLogin(false, "", end.metadados);
   const token = m[1].trim();
   const u = await sbPublico.auth.getUser(token);
-  if (u.error || !u.data || !u.data.user) return semLogin(true, String(u.error?.message || u.error?.code || "usuário não encontrado"));
+  if (u.error || !u.data || !u.data.user) return semLogin(true, String(u.error?.message || u.error?.code || "usuário não encontrado"), end.metadados);
   let corpo: any;
   try { corpo = await req.json(); } catch { return json(erroRpc(null, -32700, "Não consegui ler o pedido (JSON inválido)."), 400); }
   try {
