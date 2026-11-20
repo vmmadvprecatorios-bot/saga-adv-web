@@ -736,6 +736,10 @@
     +'<div class="nav-item" data-tela="buscas" onclick="sagaIrPara(\'pedidos_busca.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M15.4 15.4L21 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10.5" cy="9" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M7.2 14a3.6 3.6 0 0 1 6.6 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
     +'Pedidos de busca<span class="nav-badge-chat nav-badge-dia" id="navBadgeBuscas" style="display:none" title="Pedidos de busca a fazer"></span></div>'
+    // 20/11 (Dr. Victor; blocos 290-292): fila dos autos que faltam para as agentes conhecerem o processo
+    +'<div class="nav-item" data-tela="autos_baixar" onclick="sagaIrPara(\'autos_baixar.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 4v10M8 10l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Autos para baixar</div>'
     +'<div class="nav-item" data-tela="cartas" onclick="sagaIrPara(\'cartas.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 6.5l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
     +'Cartas</div>'
@@ -1131,7 +1135,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',minha_parte:'Meus honorários',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',autos_baixar:'Autos para baixar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',minha_parte:'Meus honorários',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -2212,6 +2216,7 @@
     tarefas:['tarefas.visualizar'],
     pedidos_claude:['conector_claude.usar'],
     agentes_aprovar:['agentes.aprovar'],
+    autos_baixar:['agentes.aprovar','peticoes.gerar'],
     chat:['chat.usar'],
     ponto:['ponto.bater','ponto.visualizar_proprio','ponto.visualizar_equipe'],
     colaboradores:['colaboradores.visualizar','usuarios.convidar','usuarios.gerenciar_papeis'],

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611202101"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Autos para baixar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;line-height:1.1}
+.page-head p{color:var(--muted);font-size:12px;margin-top:4px;max-width:92ch;line-height:1.55}
+.cab-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:34px;padding:0 13px;border-radius:11px;font-size:12px;border:1px solid var(--border-soft);background:var(--panel);transition:transform .15s,border-color .15s,background .15s;white-space:nowrap}
+.btn:hover{border-color:color-mix(in srgb,var(--gold) 50%,var(--border-soft))}
+.btn:active{transform:scale(.96)}.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn-ouro{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 14%,var(--panel))}
+.btn-p{height:30px;padding:0 10px;font-size:11.5px;border-radius:9px}
+.numeros{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.num{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:12px 14px}
+.num b{display:block;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.num span{display:block;font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
+.num.destaque{border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);flex-wrap:wrap}
+.pill{height:30px;padding:0 11px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
+.pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.ent{height:34px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
+.ent:focus{border-color:var(--gold)}
+.grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+.grupo-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
+.grupo-cab h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
+.grupo-cab small{display:block;font-size:11px;color:var(--muted);margin-top:2px;line-height:1.45}
+.grupo-cab .tit{cursor:pointer;display:flex;gap:8px;align-items:flex-start}
+.grupo-cab .seta{display:inline-block;transition:transform .3s cubic-bezier(.22,.78,.25,1);color:var(--muted);margin-top:4px}
+.grupo.fechado .seta{transform:rotate(-90deg)}
+.it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:11px 16px;border-bottom:1px solid var(--border-soft);align-items:start}
+.it:last-child{border-bottom:0}
+.it .nome{font-size:13.5px;font-weight:600;line-height:1.4}
+.it .nome a{color:inherit;text-decoration:none}.it .nome a:hover{text-decoration:underline}
+.it .cod{font-size:11px;color:var(--muted);font-weight:500;margin-left:6px}
+.it .cnj{font-size:12.5px;margin-top:2px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.selos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.selo{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
+.selo.f1{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent)}
+.selo.f2,.selo.amarelo{color:var(--warning,#d97706);border-color:color-mix(in srgb,var(--warning,#d97706) 50%,transparent)}
+.selo.ok{color:var(--success,#16a34a);border-color:color-mix(in srgb,var(--success,#16a34a) 50%,transparent)}
+.selo.trib{color:var(--text)}
+.it .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.vazio{padding:30px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6}
+.vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
+.aviso{font-size:12px;line-height:1.55;color:var(--muted);padding:10px 14px;border:1px dashed var(--border-soft);border-radius:12px;margin-bottom:12px}
+.aviso b{color:var(--text);font-weight:600}
+.erro-caixa{padding:14px 16px;border-radius:14px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12.5px;line-height:1.55;margin-bottom:12px}
+.erro-caixa b{display:block;margin-bottom:3px}
+.toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 14px;border-radius:11px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);font-size:12px;max-width:380px}
+.toast.success{border-color:color-mix(in srgb,#16a34a 50%,var(--border))}.toast.error{border-color:color-mix(in srgb,#e5484d 60%,var(--border))}
+.mo{position:fixed;inset:0;z-index:2500;display:flex;align-items:safe center;justify-content:center;padding:18px;background:rgba(6,10,20,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s linear .26s}
+.mo.aberto{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s}
+html.sem-movimento .mo,html.sem-movimento .mo .md,html.sem-movimento .seta{transition:none}
+.md{width:100%;max-width:500px;max-height:100%;overflow:auto;display:flex;flex-direction:column;border-radius:18px;background:var(--panel-solid);border:1px solid var(--border);box-shadow:var(--shadow);transform:translateY(10px) scale(.985);transition:transform .34s cubic-bezier(.22,.78,.25,1)}
+.mo.aberto .md{transform:none}
+.md-cab{padding:16px 18px 10px;border-bottom:1px solid var(--border-soft)}
+.md-cab h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600}
+.md-cab p{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
+.md-corpo{padding:14px 18px;display:flex;flex-direction:column;gap:6px}
+.md-corpo label{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.md-corpo textarea,.md-corpo input{border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:10px;font-size:12.5px;outline:0}
+.md-corpo textarea{min-height:90px;resize:vertical}
+.md-corpo textarea:focus,.md-corpo input:focus{border-color:var(--gold)}
+.md-erro{font-size:12px;color:var(--danger,#e5484d);min-height:16px}
+.md-rod{display:flex;justify-content:flex-end;gap:8px;padding:10px 18px 16px}
+@media(max-width:760px){
+  .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
+  .it{grid-template-columns:1fr}.it .acoes{justify-content:flex-start}
+  .ent{min-width:0;width:100%;flex-basis:100%}
+}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611202101">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <div>
+      <h1>Autos para baixar</h1>
+      <p>Processos ATIVOS do Jurídico que ainda não têm o resumo do agente (ou cujo resumo ficou para trás) e precisam dos autos para a Luísa e a Renata conhecerem o processo. Baixe os autos no site do tribunal, salve na pasta <b>01 Entrada</b> (Agentes VMMADV) e marque <b>Baixei</b>. Quando a ficha do agente chega ao SAGA, o processo sai da fila sozinho. Senhas e token do tribunal nunca passam pelo SAGA.</p>
+    </div>
+    <div class="cab-acoes">
+      <button class="btn" type="button" id="btnLimite" hidden>Limite por dia</button>
+      <button class="btn" type="button" id="btnAtualizar">Atualizar</button>
+    </div>
+  </div>
+  <div id="erro"></div>
+  <div class="numeros" id="numeros"></div>
+  <div class="barra">
+    <div class="pills" role="group" aria-label="Tribunal" id="pTrib"></div>
+    <input class="ent" id="fBusca" type="search" autocomplete="off" placeholder="Buscar por cliente, código ou número">
+  </div>
+  <div id="area"></div>
+</main>
+</div>
+
+<div class="mo" id="janela" role="dialog" aria-modal="true" aria-labelledby="jTitulo" data-saga-movimento-proprio><div class="md">
+  <div class="md-cab"><h2 id="jTitulo"></h2><p id="jSub"></p></div>
+  <div class="md-corpo"><label for="jCampo" id="jRotulo"></label><textarea id="jCampo" maxlength="500"></textarea><input id="jNum" type="text" inputmode="numeric" maxlength="2" hidden><div class="md-erro" id="jErro" role="alert"></div></div>
+  <div class="md-rod"><button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="jOk"></button></div>
+</div></div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611202101"></script>
+<script src="saga_tribunais.js?v=202611202101"></script>
+<script>
+/* =====================================================================
+   SAGA · Autos para baixar (blocos 290-292; 20/11/2026, pedido do Dr. Victor)
+   Fila priorizada dos processos ativos do Jurídico sem resumo do agente (ou com resumo a atualizar):
+   1 intimação aberta ou peça pedida · 2 resumo a atualizar · 3 intimação recente · 4 impulso · 5 os demais.
+   Lote do dia = até o limite (configuracoes_sistema.extra.autos_fila.limite_dia; só o administrador muda).
+   Dados: autos_fila_painel; marcar: autos_fila_marcar (pegar, baixei, dispensar, voltar); limite: autos_fila_config_salvar.
+   ===================================================================== */
+var A={dados:null,trib:'',busca:'',erro:null,janela:null,fechados:{}};
+var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
+var FAIXAS={1:'Intimação aberta ou peça pedida',2:'Resumo a atualizar',3:'Intimação recente (60 dias)',4:'Tarefa de impulso aberta',5:'Os demais'};
+function $(id){return document.getElementById(id);}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},5200);}
+function dataBR(d){if(!d)return '';var s=String(d).slice(0,10).split('-');return s[2]+'/'+s[1]+'/'+s[0];}
+function dataHoraBR(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('pt-BR')+' às '+x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function cnj(n){try{if(window.sagaFmt&&sagaFmt.cnj)return sagaFmt.cnj(n);}catch(e){}var d=String(n||'').replace(/\D/g,'');return d.length===20?d.replace(/^(\d{7})(\d{2})(\d{4})(\d)(\d{2})(\d{4})$/,'$1-$2.$3.$4.$5.$6'):(n||'');}
+function linkFicha(x){return x.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(x.pessoa_id)+(x.processo_id?'&processo_id='+encodeURIComponent(x.processo_id):''):null;}
+function plural(n,um,varios){return n+' '+(n===1?um:varios);}
+
+async function carregar(){
+  var r=await _sb.rpc('autos_fila_painel',{p_tribunal:null});
+  if(r.error){A.erro=r.error.message||String(r.error);desenhar();return;}
+  A.erro=null;A.dados=r.data||{};
+  if(A.trib&&!(A.dados.por_tribunal||[]).some(function(t){return t.tribunal===A.trib;}))A.trib='';
+  desenhar();
+}
+function itens(){return (A.dados&&A.dados.itens)||[];}
+function filtrados(){
+  var b=semAcento(A.busca.trim());
+  return itens().filter(function(x){
+    if(A.trib&&x.tribunal!==A.trib)return false;
+    if(b&&semAcento([x.cliente,x.codigo,x.numero,String(x.numero||'').replace(/\D/g,''),x.motivo].join(' ')).indexOf(b)<0)return false;
+    return true;
+  });
+}
+function desenharNumeros(){
+  var d=A.dados||{},c=d.contagens||{};
+  var cx=[
+    {n:d.restante_hoje||0,t:'para baixar hoje (limite '+(d.limite_dia||5)+' por dia; '+plural(d.baixados_hoje||0,'baixado','baixados')+' hoje)',dest:true},
+    {n:c.na_fila||0,t:'na fila (sem resumo ou a atualizar)'},
+    {n:c.faixa_1||0,t:'com intimação aberta ou peça pedida'},
+    {n:c.aguardando_analise||0,t:'baixados, aguardando a análise'},
+    {n:c.em_dia||0,t:'com o resumo do agente em dia'},
+    {n:c.sem_numero||0,t:'ainda sem número (sem autos; contexto da ficha)'}
+  ];
+  $('numeros').innerHTML=cx.map(function(k){return '<div class="num'+(k.dest?' destaque':'')+'"><b>'+esc(k.n)+'</b><span>'+esc(k.t)+'</span></div>';}).join('');
+}
+function desenharTribunais(){
+  var tr=(A.dados&&A.dados.por_tribunal)||[],tot=tr.reduce(function(s,t){return s+t.na_fila;},0);
+  $('pTrib').innerHTML='<button class="pill'+(A.trib?'':' active')+'" type="button" data-trib="">Todos<b>'+tot+'</b></button>'+
+    tr.map(function(t){return '<button class="pill'+(A.trib===t.tribunal?' active':'')+'" type="button" data-trib="'+esc(t.tribunal)+'">'+esc(t.tribunal)+'<b>'+t.na_fila+'</b></button>';}).join('');
+}
+function htmlItem(x){
+  var f=linkFicha(x),m=x.marca||null,ms=m&&m.situacao;
+  var ic='';try{if(window.SagaTribunais&&SagaTribunais.icone)ic=SagaTribunais.icone(x.numero);}catch(e){}
+  var selos='<span class="selo trib">'+esc(x.tribunal||'?')+'</span><span class="selo f'+esc(x.faixa)+'">'+esc(x.motivo)+'</span>';
+  if(x.situacao==='a_atualizar'&&x.resumo_em)selos+='<span class="selo amarelo">Resumo de '+esc(dataBR(x.resumo_em))+'</span>';
+  if(x.ultima_intimacao&&x.faixa!==3)selos+='<span class="selo">Última intimação '+esc(dataBR(x.ultima_intimacao))+'</span>';
+  if(x.sigilo)selos+='<span class="selo amarelo">Sigilo</span>';
+  if(ms==='pegou')selos+='<span class="selo amarelo">'+esc(m.por||'Alguém')+' vai baixar · '+esc(dataHoraBR(m.em))+'</span>';
+  if(ms==='baixado')selos+='<span class="selo ok">Baixado por '+esc(m.por||'?')+' em '+esc(dataHoraBR(m.em))+': aguardando a análise</span>';
+  if(ms==='dispensado')selos+='<span class="selo">Dispensado por '+esc(m.por||'?')+': '+esc(m.observacao||'')+'</span>';
+  var ac='';
+  if(!ms)ac+='<button class="btn btn-p" type="button" data-acao="pegar">Vou baixar</button>';
+  if(ms!=='baixado'&&ms!=='dispensado')ac+='<button class="btn btn-p btn-ouro" type="button" data-acao="baixei">Baixei</button>';
+  if(ms!=='dispensado'&&ms!=='baixado')ac+='<button class="btn btn-p" type="button" data-acao="dispensar">Dispensar</button>';
+  if(ms)ac+='<button class="btn btn-p" type="button" data-acao="voltar">Voltar à fila</button>';
+  return '<div class="it" data-id="'+esc(x.processo_id)+'"><div>'+
+    '<div class="nome">'+(f?'<a href="'+esc(f)+'">'+esc(x.cliente||'Cliente')+'</a>':esc(x.cliente||'Cliente'))+(x.codigo?'<span class="cod">'+esc(x.codigo)+'</span>':'')+'</div>'+
+    '<div class="cnj"><span class="num-cnj">'+esc(cnj(x.numero))+'</span>'+ic+'</div>'+
+    '<div class="selos">'+selos+'</div></div><div class="acoes">'+ac+'</div></div>';
+}
+function grupo(chave,titulo,sub,lista,copiar,fechadoPadrao){
+  if(!lista.length)return '';
+  var fechado=chave in A.fechados?A.fechados[chave]:!!fechadoPadrao;
+  return '<section class="grupo'+(fechado?' fechado':'')+'" data-grupo="'+esc(chave)+'"><div class="grupo-cab"><div class="tit" data-recolher="'+esc(chave)+'"><span class="seta" aria-hidden="true">⌄</span><div><h2>'+esc(titulo)+'</h2><small>'+esc(sub)+'</small></div></div>'+
+    (copiar?'<button class="btn btn-p" type="button" data-copiar-grupo="'+esc(chave)+'">Copiar números ('+lista.length+')</button>':'')+
+    '</div><div class="grupo-corpo"'+(fechado?' hidden':'')+'>'+lista.map(htmlItem).join('')+'</div></section>';
+}
+function desenhar(){
+  if(A.erro){
+    $('erro').innerHTML='<div class="erro-caixa"><b>Não consegui carregar a fila de autos.</b>Motivo: '+esc(A.erro)+'<br>Tente "Atualizar". Se continuar, avise o administrador com esta mensagem.</div>';
+    if(!A.dados){$('numeros').innerHTML='';$('area').innerHTML='';return;}
+  }else $('erro').innerHTML='';
+  if(!A.dados)return;
+  $('btnLimite').hidden=!A.dados.pode_configurar;
+  $('btnLimite').textContent='Limite por dia: '+(A.dados.limite_dia||5);
+  desenharNumeros();desenharTribunais();
+  var l=filtrados();
+  var lote=l.filter(function(x){return x.lote_de_hoje;});
+  var baix=l.filter(function(x){return x.marca&&x.marca.situacao==='baixado';});
+  var disp=l.filter(function(x){return x.marca&&x.marca.situacao==='dispensado';});
+  var resto=l.filter(function(x){return !x.lote_de_hoje&&!(x.marca&&(x.marca.situacao==='baixado'||x.marca.situacao==='dispensado'));});
+  var h='';
+  if(!itens().length){
+    $('area').innerHTML='<div class="grupo"><div class="vazio"><b>Nenhum processo na fila.</b>Todos os processos ativos com número já têm o resumo do agente em dia.</div></div>';return;
+  }
+  if(!l.length){$('area').innerHTML='<div class="grupo"><div class="vazio"><b>Nada encontrado com este filtro.</b></div></div>';return;}
+  var d=A.dados;
+  if(!A.trib&&!A.busca&&(d.restante_hoje||0)===0)h+='<div class="aviso"><b>O lote de hoje está feito</b> ('+plural(d.baixados_hoje||0,'processo baixado','processos baixados')+', limite '+d.limite_dia+' por dia). A fila continua amanhã; para baixar mais hoje, o administrador pode subir o limite.</div>';
+  h+=grupo('lote','Lote de hoje','Os primeiros da fila, até o limite do dia. Copie os números, baixe os autos e marque "Baixei".',lote,true,false);
+  h+=grupo('baixados','Baixados: aguardando a análise','Os autos estão na pasta 01 Entrada; saem daqui quando a ficha do agente chegar ao SAGA.',baix,false,false);
+  [1,2,3,4,5].forEach(function(f){
+    var lf=resto.filter(function(x){return x.faixa===f;});
+    h+=grupo('f'+f,f+'. '+FAIXAS[f],plural(lf.length,'processo','processos'),lf,true,f>=4);
+  });
+  h+=grupo('disp','Dispensados','Não precisam dos autos agora (com o motivo). "Voltar à fila" desfaz.',disp,false,true);
+  $('area').innerHTML=h;
+}
+function copiar(chave){
+  var l=filtrados(),sel;
+  if(chave==='lote')sel=l.filter(function(x){return x.lote_de_hoje;});
+  else{var f=Number(String(chave).slice(1));sel=l.filter(function(x){return x.faixa===f&&!x.lote_de_hoje&&!(x.marca&&(x.marca.situacao==='baixado'||x.marca.situacao==='dispensado'));});}
+  var txt=sel.map(function(x){return cnj(x.numero);}).join('\n');
+  if(!txt){toast('Nada para copiar.','error');return;}
+  (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject(new Error('sem área de transferência'))).then(function(){
+    toast(plural(sel.length,'número copiado','números copiados')+(A.trib?' ('+A.trib+')':'')+'.','success');
+  }).catch(function(e){toast('Não consegui copiar: '+((e&&e.message)||'')+'. Selecione os números na tela.','error');});
+}
+async function marcar(id,acao,obs){
+  var r=await _sb.rpc('autos_fila_marcar',{p_processo:id,p_acao:acao,p_obs:obs||null});
+  if(r.error){toast('Não consegui marcar: '+(r.error.message||'erro desconhecido'),'error');return false;}
+  toast({pegar:'Marcado: você vai baixar.',baixei:'Marcado como baixado. Sai da fila quando a ficha do agente chegar.',dispensar:'Dispensado.',voltar:'Voltou para a fila.'}[acao]||'Feito.','success');
+  await carregar();return true;
+}
+// janela (dispensar / limite)
+function abrirJanela(tipo,x){
+  A.janela={tipo:tipo,x:x};$('jErro').textContent='';
+  var ehLim=tipo==='limite';
+  $('jCampo').hidden=ehLim;$('jNum').hidden=!ehLim;
+  if(ehLim){
+    $('jTitulo').textContent='Limite por dia';$('jSub').textContent='Quantos processos baixar e analisar por dia (1 a 30). Cada análise de autos gasta o uso da assinatura do Claude: comece pequeno.';
+    $('jRotulo').textContent='Processos por dia';$('jRotulo').htmlFor='jNum';$('jNum').value=String((A.dados&&A.dados.limite_dia)||5);$('jOk').textContent='Salvar limite';
+  }else{
+    $('jTitulo').textContent='Dispensar da fila';$('jSub').textContent=(x.cliente||'')+' · '+cnj(x.numero);
+    $('jRotulo').textContent='Motivo (obrigatório)';$('jRotulo').htmlFor='jCampo';$('jCampo').value='';$('jCampo').placeholder='Ex.: processo em segredo de justiça sem acesso; autos já estão com o parceiro';$('jOk').textContent='Dispensar';
+  }
+  $('janela').classList.add('aberto');setTimeout(function(){(ehLim?$('jNum'):$('jCampo')).focus();},60);
+}
+function fecharJanela(){$('janela').classList.remove('aberto');A.janela=null;}
+async function confirmarJanela(){
+  var j=A.janela;if(!j)return;
+  if(j.tipo==='limite'){
+    var n=parseInt($('jNum').value.replace(/\D/g,''),10);
+    if(!(n>=1&&n<=30)){$('jErro').textContent='Digite um número de 1 a 30.';return;}
+    $('jOk').disabled=true;
+    var r=await _sb.rpc('autos_fila_config_salvar',{p_limite:n});
+    $('jOk').disabled=false;
+    if(r.error){$('jErro').textContent='Não consegui salvar: '+(r.error.message||'');return;}
+    fecharJanela();toast('Limite salvo: '+n+' por dia.','success');await carregar();return;
+  }
+  var obs=$('jCampo').value.trim();
+  if(obs.length<5){$('jErro').textContent='Escreva o motivo (mínimo 5 letras).';return;}
+  $('jOk').disabled=true;var ok=await marcar(j.x.processo_id,'dispensar',obs);$('jOk').disabled=false;
+  if(ok)fecharJanela();
+}
+function recolher(chave){
+  var s=document.querySelector('.grupo[data-grupo="'+chave+'"]');if(!s)return;
+  var corpo=s.querySelector('.grupo-corpo'),fechar=!s.classList.contains('fechado');
+  A.fechados[chave]=fechar;s.classList.toggle('fechado',fechar);
+  if(window.sagaRecolher)try{sagaRecolher(corpo,fechar);return;}catch(e){}
+  corpo.hidden=fechar;
+}
+function ligar(){
+  $('pTrib').addEventListener('click',function(e){var b=e.target.closest('[data-trib]');if(!b)return;
+    if(A.trib===b.dataset.trib)return;
+    $('pTrib').querySelectorAll('.pill').forEach(function(x){x.classList.toggle('active',x===b);});
+    A.trib=b.dataset.trib;setTimeout(desenhar,420);});
+  $('fBusca').addEventListener('input',function(){A.busca=this.value;desenhar();});
+  $('btnAtualizar').addEventListener('click',carregar);
+  $('btnLimite').addEventListener('click',function(){abrirJanela('limite');});
+  $('area').addEventListener('click',function(e){
+    var c=e.target.closest('[data-copiar-grupo]');if(c){copiar(c.dataset.copiarGrupo);return;}
+    var t=e.target.closest('[data-recolher]');if(t){recolher(t.dataset.recolher);return;}
+    var b=e.target.closest('[data-acao]');if(!b)return;
+    var id=b.closest('.it').dataset.id,x=itens().filter(function(i){return i.processo_id===id;})[0];if(!x)return;
+    if(b.dataset.acao==='dispensar'){abrirJanela('dispensar',x);return;}
+    b.disabled=true;marcar(id,b.dataset.acao).then(function(){b.disabled=false;});
+  });
+  $('janela').addEventListener('click',function(e){if(e.target===$('janela')||e.target.closest('[data-fechar]'))fecharJanela();});
+  $('jOk').addEventListener('click',confirmarJanela);
+  $('jNum').addEventListener('input',function(){this.value=this.value.replace(/\D/g,'');});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('janela').classList.contains('aberto'))fecharJanela();});
+  try{if(localStorage.getItem('saga-movimento')==='reduzido')document.documentElement.classList.add('sem-movimento');}catch(e){}
+  if(window.SagaVolta){
+    var v=SagaVolta.estado('autos');if(v){A.trib=v.trib||'';A.busca=v.busca||'';$('fBusca').value=A.busca;}
+    SagaVolta.registrar('autos',{ler:function(){return {trib:A.trib,busca:A.busca};},aplicar:function(){},rolagem:['main.content']});
+  }
+}
+async function init(){
+  ligar();
+  await SagaUI.carregar('autos_baixar');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  try{if(window.SagaTribunais&&SagaTribunais.carregar)await SagaTribunais.carregar();}catch(e){}
+  await carregar();
+}
+init().catch(function(e){A.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+</script>
+</body>
+</html>
