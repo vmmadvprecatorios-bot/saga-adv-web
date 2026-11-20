@@ -25,6 +25,7 @@
 // pelo entregar_triagem (peca, peca_titulo, peca_instrucoes, peca_imediata).
 // Versão 3.3 (bloco 288, 20/11/2026, Dr. Victor): RECADOS para as agentes. meus_recados (o que o Dr. Victor/Hevelyn escreveram)
 // e responder_recado (a resposta vai para Para aprovar > Recados e para o sino de quem escreveu).
+// 3.3.1 (bloco 282): listar_tarefas aceita 'etiqueta' (p_etiqueta).
 // Publicar com verify_jwt = false (este código confere a chave sozinho).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import PizZip from "npm:pizzip@3.1.6";
@@ -148,8 +149,9 @@ const FERRAMENTAS: Ferramenta[] = [
     inputSchema: { type: "object", properties: {
       filtro: { type: "string", enum: ["abertas", "atrasadas", "hoje", "semana", "concluidas"], description: "abertas (padrão), atrasadas, hoje, semana (próximos 7 dias) ou concluidas (últimos 7 dias)." },
       de_todos: { type: "boolean", description: "Incluir as tarefas da equipe que a pessoa pode ver (padrão não)." },
-      limite: { type: "integer", minimum: 1, maximum: 100, description: "Máximo de tarefas (padrão 50)." } }, additionalProperties: false },
-    rpc: "conector_tarefas", args: (a) => ({ p_filtro: a.filtro == null ? "abertas" : String(a.filtro), p_todos: !!a.de_todos, p_limite: inteiro(a.limite) ?? 50 }),
+      limite: { type: "integer", minimum: 1, maximum: 100, description: "Máximo de tarefas (padrão 50)." },
+      etiqueta: { type: "string", description: "Só as tarefas com esta etiqueta (nome, ex.: 'Dar impulso processual'). Opcional." } }, additionalProperties: false },
+    rpc: "conector_tarefas", args: (a) => ({ p_filtro: a.filtro == null ? "abertas" : String(a.filtro), p_todos: !!a.de_todos, p_limite: inteiro(a.limite) ?? 50, p_etiqueta: texto(a.etiqueta, 120) || null }),
   },
   {
     name: "ver_agenda", title: "Agenda",
@@ -1006,7 +1008,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.3" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.3.1" },
         instructions: INSTRUCOES,
       });
     }
