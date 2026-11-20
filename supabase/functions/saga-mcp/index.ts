@@ -29,6 +29,9 @@
 // Publicar com verify_jwt = false (este código confere a chave sozinho).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 import PizZip from "npm:pizzip@3.1.6";
+// O gerador da tela (mesmo commit deste arquivo): import FIXO e relativo, para o empacotador da função levar junto
+// (import dinâmico com endereço montado em tempo de execução dá "Module not found" no servidor; achado na 1ª rodada da Renata, 20/11).
+import "../../../saga_timbrado.js";
 
 const URL_SB = Deno.env.get("SUPABASE_URL")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -928,7 +931,6 @@ let timbradoPronto: Promise<any> | null = null;
 async function carregarTimbrado() {
   if (!timbradoPronto) timbradoPronto = (async () => {
     (globalThis as any).PizZip = PizZip;
-    await import(new URL("../../../saga_timbrado.js", import.meta.url).href);
     const T = (globalThis as any).SagaTimbrado;
     if (!T || typeof T.gerar !== "function") throw new Error("o gerador de petições (saga_timbrado.js) não carregou no servidor");
     return T;
