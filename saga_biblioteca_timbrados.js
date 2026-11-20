@@ -51,6 +51,15 @@
     '.tb-versao .filter-pill,.tb-filtros .filter-pill{font:inherit;font-size:11.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--border-soft);background:transparent;color:var(--muted);cursor:pointer}',
     '.tb-versao .filter-pill.active,.tb-filtros .filter-pill.active{color:var(--text)}',
     '.tb-lista{display:flex;flex-direction:column;gap:8px}',
+    '.tb-ferr{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}',
+    '.tb-ferr .tb-busca{flex:1;min-width:220px;max-width:420px}',
+    '#tbBotoesEditor{display:inline-flex;gap:8px;flex-wrap:wrap}#tbBotoesEditor[hidden]{display:none}',
+    '.tb-area{background:color-mix(in srgb,var(--panel) 60%,transparent);border:1px solid var(--border-soft);border-radius:12px;padding:8px 12px;margin:0 0 8px}',
+    '.tb-area summary{cursor:pointer;font-size:13px;color:var(--text);padding:4px 0}',
+    '.tb-area summary span{font-size:11px;color:var(--muted);margin-left:6px}',
+    '.tb-area .tb-lista{margin:6px 0 8px}',
+    '.tb-subpasta{font-size:11px;letter-spacing:.04em;color:var(--gold);margin:8px 0 2px}',
+    '.tb-revisar{border-color:color-mix(in srgb,#d97706 55%,transparent)!important;color:#d97706!important}',
     '.tb-modelo{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border-soft);border-radius:12px;padding:12px 14px;flex-wrap:wrap}',
     '.tb-modelo .tb-mtxt{flex:1;min-width:200px}',
     '.tb-modelo b{font-size:13px;color:var(--text);display:block}',
@@ -106,6 +115,8 @@
       '<section class="tb-sec">' +
         '<h2>Modelos de petição</h2>' +
         '<p class="tb-sub">Escolha um modelo, preencha o que quiser (o que ficar em branco sai entre colchetes para completar no Word) e baixe em Word ou em PDF, já no papel timbrado, no Padrão VMM.</p>' +
+        '<div class="tb-ferr" id="tbFerr"><input type="search" class="tb-busca" id="tbBuscaModelos" placeholder="Buscar modelo, área ou subpasta" aria-label="Buscar modelo">' +
+          '<span id="tbBotoesEditor" hidden><button type="button" class="btn-secundario" id="tbNovoModelo">+ Novo modelo</button><button type="button" class="btn-secundario" id="tbImportarPasta">Importar pasta de petições</button></span></div>' +
         '<div class="tb-filtros" id="tbFiltros" role="group" aria-label="Filtrar por escritório"></div>' +
         '<div id="tbErroModelos"></div>' +
         '<div class="tb-lista" id="tbListaModelos"><div class="tb-vazio">Carregando os modelos...</div></div>' +
@@ -168,8 +179,23 @@
       document.getElementById('tbErroModelos').innerHTML = '';
     }catch(e){ S.modelos = []; mostrarErro('tbErroModelos', e.message); }
     S.carregado = true;
+    /* 20/11 (bloco 279): editor e importação dos modelos (saga_modelos_editor.js) para quem gerencia os modelos */
+    if(window.SagaModelosEditor && !S.ligouEditor){
+      S.ligouEditor = true;
+      SagaModelosEditor.podeEditar().then(function(ok){
+        S.podeEditar = ok; document.getElementById('tbBotoesEditor').hidden = !ok; desenharModelos();
+      });
+      document.getElementById('tbNovoModelo').addEventListener('click', function(){ SagaModelosEditor.abrir(null, { aoSalvar: recarregarModelos }); });
+      document.getElementById('tbImportarPasta').addEventListener('click', function(){ SagaModelosEditor.importar({ aoTerminar: recarregarModelos }); });
+      document.getElementById('tbBuscaModelos').addEventListener('input', function(){ S.busca = this.value; desenharModelos(); });
+    }
     desenharTimbrados();
     desenharFiltros();
+    desenharModelos();
+  }
+  async function recarregarModelos(){
+    try{ S.modelos = await SagaTimbrado.listarModelos(sb()); document.getElementById('tbErroModelos').innerHTML = ''; }
+    catch(e){ mostrarErro('tbErroModelos', e.message); }
     desenharModelos();
   }
   function mostrarErro(id, msg){
@@ -278,22 +304,51 @@
       });
     });
   }
+  function semAc(t){ return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  function htmlModelo(m){
+    return '<div class="tb-modelo">' +
+      '<div class="tb-mtxt"><b>' + esc(m.titulo) + '</b>' +
+        '<small>' + (m.timbrado_chave ? '<span class="tb-selo">' + esc(nomeTimbrado(m.timbrado_chave)) + '</span>' : '') +
+        (m.revisado === false ? '<span class="tb-selo tb-revisar">A revisar</span>' : '') +
+        (m.tipo_peca ? esc(m.tipo_peca) : '') + (m.teses && m.teses.nome ? ' · Tese: ' + esc(m.teses.nome) : '') + '</small>' +
+        (m.descricao ? '<small style="display:block;margin-top:3px">' + esc(m.descricao) + '</small>' : '') +
+      '</div>' +
+      (S.podeEditar ? '<button type="button" class="btn-secundario" data-tb-editar="' + esc(m.id) + '">Editar</button>' : '') +
+      '<button type="button" class="btn-confirmar-bib" data-tb-gerar="' + esc(m.id) + '">Gerar petição</button>' +
+    '</div>';
+  }
   function desenharModelos(){
     var l = document.getElementById('tbListaModelos');
-    var ms = S.modelos.filter(function(m){ return S.filtro === 'todos' || !m.timbrado_chave || m.timbrado_chave === S.filtro; });
-    if(!ms.length){ l.innerHTML = '<div class="tb-vazio">Nenhum modelo para este escritório ainda.</div>'; return; }
-    l.innerHTML = ms.map(function(m){
-      return '<div class="tb-modelo">' +
-        '<div class="tb-mtxt"><b>' + esc(m.titulo) + '</b>' +
-          '<small><span class="tb-selo">' + esc(nomeTimbrado(m.timbrado_chave)) + '</span>' +
-          (m.tipo_peca ? esc(m.tipo_peca) : '') + (m.teses && m.teses.nome ? ' · Tese: ' + esc(m.teses.nome) : '') + '</small>' +
-          (m.descricao ? '<small style="display:block;margin-top:3px">' + esc(m.descricao) + '</small>' : '') +
-        '</div>' +
-        '<button type="button" class="btn-confirmar-bib" data-tb-gerar="' + esc(m.id) + '">Gerar petição</button>' +
-      '</div>';
+    var b = semAc(S.busca);
+    var ms = S.modelos.filter(function(m){
+      if(!(S.filtro === 'todos' || !m.timbrado_chave || m.timbrado_chave === S.filtro)) return false;
+      return !b || semAc([m.titulo, m.area, m.subpasta, m.tipo_peca, m.descricao, m.teses && m.teses.nome].join(' ')).indexOf(b) >= 0;
+    });
+    if(!ms.length){ l.innerHTML = '<div class="tb-vazio">' + (b ? 'Nenhum modelo com essa busca.' : 'Nenhum modelo para este escritório ainda.') + '</div>'; return; }
+    /* agrupado por área e subpasta (20/11): os modelos sem área (os de antes) ficam em "Modelos do SAGA" */
+    var grupos = {}, ordem = [];
+    ms.forEach(function(m){
+      var a = m.area || 'Modelos do SAGA', sp = m.subpasta || '';
+      if(!grupos[a]){ grupos[a] = {}; ordem.push(a); }
+      (grupos[a][sp] = grupos[a][sp] || []).push(m);
+    });
+    ordem.sort(function(x, y){ return x === 'Modelos do SAGA' ? -1 : (y === 'Modelos do SAGA' ? 1 : x.localeCompare(y, 'pt-BR')); });
+    var uma = ordem.length === 1 && Object.keys(grupos[ordem[0]]).length === 1;
+    l.innerHTML = uma ? ms.map(htmlModelo).join('') : ordem.map(function(a){
+      var sps = Object.keys(grupos[a]).sort(function(x, y){ return x.localeCompare(y, 'pt-BR'); }), n = 0;
+      sps.forEach(function(sp){ n += grupos[a][sp].length; });
+      return '<details class="tb-area"' + (b || ordem.length <= 3 ? ' open' : '') + '><summary><b>' + esc(a) + '</b> <span>' + n + '</span></summary>' +
+        sps.map(function(sp){ return (sp ? '<div class="tb-subpasta">' + esc(sp) + '</div>' : '') + '<div class="tb-lista">' + grupos[a][sp].map(htmlModelo).join('') + '</div>'; }).join('') +
+      '</details>';
     }).join('');
-    l.querySelectorAll('[data-tb-gerar]').forEach(function(b){
-      b.addEventListener('click', function(){ abrirGerar(b.getAttribute('data-tb-gerar')); });
+    l.querySelectorAll('[data-tb-gerar]').forEach(function(x){
+      x.addEventListener('click', function(){ abrirGerar(x.getAttribute('data-tb-gerar')); });
+    });
+    l.querySelectorAll('[data-tb-editar]').forEach(function(x){
+      x.addEventListener('click', function(){
+        var m = S.modelos.filter(function(y){ return y.id === x.getAttribute('data-tb-editar'); })[0];
+        if(m && window.SagaModelosEditor) SagaModelosEditor.abrir(m, { aoSalvar: recarregarModelos });
+      });
     });
   }
 
