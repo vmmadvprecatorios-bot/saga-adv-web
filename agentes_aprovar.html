@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611201945"></script>
+<script src="saga_guard.js?v=202611201952"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Para aprovar</title>
@@ -36,6 +36,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
 .lnk{font-size:11.5px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:9px;padding:6px 10px;white-space:nowrap;transition:border-color .2s}
 .lnk:hover{border-color:var(--gold)}
+button.lnk{background:none;cursor:pointer;font-family:inherit}
 .ped{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:start}
 .ped:last-child{border-bottom:0}
 .ped .oque{font-size:13.5px;font-weight:600;line-height:1.4}
@@ -45,6 +46,9 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .selo{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
 .selo.amarelo{color:var(--warning,#d97706);border-color:color-mix(in srgb,var(--warning,#d97706) 50%,transparent)}
 .selo.vermelho{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent)}
+.doc-peca{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.aviso-amarelo{font-size:12px;padding:8px 10px;border-radius:9px;border:1px solid color-mix(in srgb,var(--warning,#d97706) 50%,transparent);background:color-mix(in srgb,var(--warning,#d97706) 9%,transparent);color:var(--text)}
+#comRenata{margin-top:14px}
 .selo.ok{color:var(--success,#16a34a);border-color:color-mix(in srgb,var(--success,#16a34a) 50%,transparent)}
 .ped .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .recebido{font-size:12px;line-height:1.5;margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--text) 4%,transparent)}
@@ -88,7 +92,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .auton{margin-top:16px}.auton .ped{grid-template-columns:minmax(0,1fr) auto}
 .btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611201945">
+<link rel="stylesheet" href="saga_tema.css?v=202611201952">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -99,7 +103,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
   <div class="page-head">
     <div>
       <h1>Para aprovar</h1>
-      <p>O que os agentes do Escritório de agentes entregaram: a Triagem classifica o que chega (intimações, andamentos do CNJ, pedidos) e a Manutenção confere o sistema todo dia. Aprove, mande ajustar (o comentário volta para o agente) ou reprove. Nada sai para fora sem aprovação. Aprovam: Dr. Victor e Hevelyn.</p>
+      <p>O que os agentes do Escritório de agentes entregaram: a Luísa classifica o que chega (intimações, andamentos do CNJ, pedidos) e confere o sistema todo dia; a Renata faz as petições pelos modelos do SAGA. Aprove, mande ajustar (o comentário volta para o agente) ou reprove. Nada sai para fora sem aprovação. Aprovam: Dr. Victor e Hevelyn.</p>
     </div>
     <button class="btn" type="button" id="btnAtualizar">Atualizar</button>
   </div>
@@ -111,7 +115,8 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
     </div>
     <div class="pills" role="group" aria-label="Qual agente">
       <button class="pill active" type="button" data-ag="">Todos</button>
-      <button class="pill" type="button" data-ag="triagem">Triagem</button>
+      <button class="pill" type="button" data-ag="triagem">Luísa</button>
+      <button class="pill" type="button" data-ag="renata">Renata</button>
       <button class="pill" type="button" data-ag="manutencao">Manutenção</button>
     </div>
     <input class="ent" id="fBusca" type="search" autocomplete="off" placeholder="Buscar por cliente, código, número ou assunto">
@@ -119,6 +124,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
   <div class="lote" id="barraLote" hidden><span id="loteN"></span><button class="btn btn-ouro" type="button" id="loteAprovar">Aprovar os marcados</button><button class="btn" type="button" id="loteLimpar">Desmarcar</button></div>
   <div class="resumo" id="resumo">Carregando…</div>
   <div id="area"></div>
+  <section class="grupo" id="comRenata" hidden></section>
   <div class="rodape-q" id="qualidade"></div>
   <section class="grupo auton" id="autonomia" hidden></section>
 </main>
@@ -138,7 +144,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611201945"></script>
+<script src="saga_ui.js?v=202611201952"></script>
 <script>
 /* =====================================================================
    SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
@@ -200,10 +206,44 @@ function camposConteudo(e){
   if(c.prazo)linhas.push(['Prazo',dataBR(c.prazo)+(c.prazo_dias?' ('+c.prazo_dias+' dias úteis)':'')]);
   if(c.calculo_prazo)linhas.push(['Cálculo',c.calculo_prazo]);
   if(c.conferir)linhas.push(['Conferir',c.conferir]);
-  if(c.proximo_agente)linhas.push(['Próximo agente',c.proximo_agente]);
+  if(c.proximo_agente&&!c.peca)linhas.push(['Próximo agente',c.proximo_agente]);
+  if(c.peca)linhas.push(['Petição',(c.peca.titulo||'')+' · a Renata '+(c.peca.imediata?'já está preparando':'prepara depois desta aprovação')]);
+  if(e.tipo==='peticao'){
+    if(c.modelo)linhas.push(['Modelo',c.modelo]);
+  }
   var a=e.acao||{};
-  linhas.push(['Ao aprovar',a.tipo==='tarefa'?'cria a tarefa "'+(a.titulo||e.titulo)+'"'+(a.prazo?' com prazo '+dataBR(a.prazo):''):(a.tipo==='concluir_intimacao'?'conclui a intimação (só ciência)':'nada além de registrar')]);
-  return '<dl class="campos">'+linhas.map(function(l){return '<dt>'+esc(l[0])+'</dt><dd>'+esc(l[1])+'</dd>';}).join('')+'</dl>';
+  linhas.push(['Ao aprovar',e.tipo==='peticao'?'cria para você a tarefa "'+(a.titulo||'Protocolar')+'"; depois de protocolar, clique em "Protocolei"':a.tipo==='tarefa'?'cria a tarefa "'+(a.titulo||e.titulo)+'"'+(a.prazo?' com prazo '+dataBR(a.prazo):''):(a.tipo==='concluir_intimacao'?'conclui a intimação (só ciência)':'nada além de registrar')]);
+  var h2='<dl class="campos">'+linhas.map(function(l){return '<dt>'+esc(l[0])+'</dt><dd>'+esc(l[1])+'</dd>';}).join('')+'</dl>';
+  if(e.documento)h2+='<div class="doc-peca"><button class="lnk" type="button" data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'">Abrir o Word ↓</button><span class="det">'+esc(e.documento.nome)+' · pasta Petições da ficha</span></div>';
+  return h2;
+}
+function seloPeca(e){
+  var k=e.peca;if(!k)return '';
+  if(k.situacao==='protocolado')return '<span class="selo ok">Protocolada'+(k.protocolado_em?' em '+esc(dataBR(k.protocolado_em))+(k.protocolado_por?' por '+esc(k.protocolado_por):''):'')+'</span>';
+  if(k.situacao==='aprovado')return '<span class="selo amarelo">Falta protocolar</span>';
+  return '';
+}
+var NOME_SIT_PECA={aguardando_aprovacao:['Espera a aprovação da triagem',''],na_fila:['Na fila da Renata',''],em_preparo:['A Renata está preparando',''],ajustar:['Voltou para ajuste: a Renata refaz','amarelo'],erro:['Erro: precisa de alguém','vermelho']};
+function desenharComRenata(){
+  var box=$('comRenata'),l=(P.dados&&P.dados.pecas_com_a_renata)||[];
+  if(!l.length||P.sit!=='pendentes'){box.hidden=true;box.innerHTML='';return;}
+  box.hidden=false;
+  box.innerHTML='<div class="grupo-cab"><div><h2>Com a Renata ('+l.length+')</h2><small>Petições pedidas que ainda não chegaram para aprovar. Ela trabalha 30 min depois de cada rodada da Luísa.</small></div></div>'+
+    l.map(function(k){var m=NOME_SIT_PECA[k.situacao]||[k.situacao,''],f=k.pessoa_id?FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'&processo_id='+encodeURIComponent(k.processo_id):null;
+      var amarelo=k.ultimo_erro&&k.situacao!=='erro';
+      return '<div class="ped"><div style="min-width:0;flex:1"><div class="oque" style="font-weight:500">'+esc(k.titulo)+'</div><div class="det">'+(k.cliente?'<b>'+esc(k.cliente)+'</b>':'')+(k.codigo?' · '+esc(k.codigo):'')+'</div>'+
+        (k.ultimo_erro?'<div class="'+(amarelo?'aviso-amarelo':'erro-caixa')+'" style="margin-top:6px"><b>'+(amarelo?'Erro passageiro ('+esc(k.tentativas)+'ª tentativa): tenta de novo na próxima rodada.':'Erro')+'</b> '+esc(k.ultimo_erro)+'</div>':'')+
+        '<div class="selos"><span class="selo '+m[1]+'">'+esc(m[0])+'</span>'+(k.prazo?'<span class="selo">Prazo: '+esc(dataBR(k.prazo))+'</span>':'')+'<span class="selo">Pedida em '+esc(dataHoraBR(k.desde))+'</span></div></div>'+
+        '<div class="acoes">'+(f?'<a class="lnk" href="'+esc(f)+'">Ficha ↗</a>':'')+'</div></div>';}).join('');
+}
+async function abrirWord(b){
+  b.disabled=true;
+  try{
+    var r=await _sb.storage.from('documentos-clientes').createSignedUrl(b.dataset.word,300,{download:b.dataset.nome||true});
+    if(r.error)throw r.error;
+    location.href=r.data.signedUrl;
+  }catch(e){toast('Não consegui abrir o Word: '+((e&&e.message)||'erro desconhecido')+'. Abra pela pasta Petições da ficha.','error');}
+  b.disabled=false;
 }
 function htmlEntrega(e){
   var pend=e.situacao==='pendente',f=linkFicha(e),a=e.acao||{};
@@ -218,10 +258,11 @@ function htmlEntrega(e){
     (e.situacao==='reprovado'?'<div class="ajuste-ant"><b>Motivo:</b> '+esc(e.motivo_reprovacao)+'</div>':'')+
     (e.erro?'<div class="erro-caixa" style="margin-top:6px"><b>Erro ao executar</b>'+esc(e.erro)+'</div>':'')+
     '<div class="selos">'+seloSit(e)+seloPrazo(e)+(e.prioridade==='urgente'?'<span class="selo vermelho">Urgente</span>':(e.prioridade==='alta'?'<span class="selo amarelo">Prioridade alta</span>':''))+
-      (e.versao>1?'<span class="selo">Versão '+esc(e.versao)+'</span>':'')+'<span class="selo">Entregue em '+esc(dataHoraBR(e.criado_em))+'</span></div>'+
+      (e.versao>1?'<span class="selo">Versão '+esc(e.versao)+'</span>':'')+seloPeca(e)+'<span class="selo">Entregue em '+esc(dataHoraBR(e.criado_em))+'</span></div>'+
     '</div></div><div class="acoes">'+
     (f?'<a class="lnk" href="'+esc(f)+'">Ficha ↗</a>':'')+
     (e.intimacao_id?'<a class="lnk" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(e.intimacao_id)+'">Intimação ↗</a>':'')+
+    (e.peca&&e.peca.situacao==='aprovado'&&P.dados.pode_aprovar?'<button class="btn btn-ouro" type="button" data-protocolei="'+esc(e.id)+'" title="Conclui a tarefa e a intimação e anota na ficha">Protocolei</button>':'')+
     (pend&&P.dados.pode_aprovar?'<button class="btn btn-ouro" type="button" data-aprovar="'+esc(e.id)+'">'+rotAprovar+'</button><button class="btn" type="button" data-ajustar="'+esc(e.id)+'">Mandar ajustar</button><button class="btn btn-perigo" type="button" data-reprovar="'+esc(e.id)+'">Reprovar</button>':'')+
     '</div></div>';
 }
@@ -232,9 +273,10 @@ function desenhar(){
   if(!l.length){
     area.innerHTML='<div class="vazio"><b>'+(P.busca?'Nada encontrado nesta busca.':({pendentes:'Nada para aprovar agora.',ajuste:'Nada voltou para ajuste.',decididas:'Nenhuma entrega decidida nos últimos 60 dias.'}[P.sit]))+'</b>'+
       (P.sit==='pendentes'&&!P.busca?'Quando a Triagem classificar uma intimação ou a Manutenção entregar o relatório do dia, aparece aqui.':'')+'</div>';
-    $('resumo').innerHTML='';atualizarLote();return;
+    $('resumo').innerHTML='';atualizarLote();desenharComRenata();return;
   }
   area.innerHTML='<section class="grupo">'+l.map(htmlEntrega).join('')+'</section>';
+  desenharComRenata();
   var c=P.dados.contagem||{};
   $('resumo').innerHTML=P.sit==='pendentes'?'<b>'+l.length+'</b> para aprovar'+(c.vencendo?' · <b>'+c.vencendo+'</b> com prazo em até 2 dias':'')+(c.urgentes?' · <b>'+c.urgentes+'</b> urgente(s)':''):'<b>'+l.length+'</b> entrega(s)';
   atualizarLote();
@@ -279,17 +321,25 @@ async function aprovarLote(){
 }
 function abrirJanela(e,modo){
   P.janela={id:e.id,modo:modo};
-  $('jTitulo').textContent=modo==='ajustar'?'Mandar ajustar':'Reprovar';
-  $('jRot').textContent=modo==='ajustar'?'O que o agente precisa ajustar':'Motivo da reprovação (o agente aprende com ele)';
-  $('jOk').textContent=modo==='ajustar'?'Mandar ajustar':'Reprovar';
+  $('jTitulo').textContent=modo==='ajustar'?'Mandar ajustar':(modo==='protocolei'?'Protocolei':'Reprovar');
+  $('jRot').textContent=modo==='ajustar'?'O que o agente precisa ajustar':(modo==='protocolei'?'Observação (opcional): número do protocolo, data, o que foi junto':'Motivo da reprovação (o agente aprende com ele)');
+  $('jOk').textContent=modo==='ajustar'?'Mandar ajustar':(modo==='protocolei'?'Marcar como protocolada':'Reprovar');
   $('jSub').textContent=e.titulo;$('jTexto').value='';
   $('janela').classList.add('aberto');setTimeout(function(){$('jTexto').focus();},60);
 }
 function fecharJanela(){$('janela').classList.remove('aberto');P.janela=null;}
 async function confirmarJanela(){
   var j=P.janela;if(!j)return;var t=$('jTexto').value.trim();
+  if(j.modo==='protocolei'){fecharJanela();await protocolei(j.id,t);return;}
   if(!t){toast(j.modo==='ajustar'?'Escreva o que precisa ajustar.':'Escreva o motivo.','error');return;}
   fecharJanela();await decidir(j.id,j.modo==='ajustar'?'ajustar':'reprovar',t);
+}
+async function protocolei(id,obs){
+  var r=await _sb.rpc('agente_peca_protocolei',{p_entrega:id,p_observacao:obs||null});
+  if(r.error){toast('Não consegui marcar o protocolo: '+(r.error.message||''),'error');return;}
+  toast('Marcada como protocolada: a tarefa e a intimação foram concluídas e a ficha foi anotada.','success');
+  await carregar();
+  if(window.SagaUI&&SagaUI.contarDia)try{SagaUI.contarDia();}catch(e){}
 }
 async function trocarAutonomia(b){
   var novo=b.dataset.sozinho!=='1';
@@ -308,6 +358,8 @@ function ligar(){
   $('loteLimpar').addEventListener('click',function(){P.marcados={};document.querySelectorAll('[data-marcar]').forEach(function(c){c.checked=false;});atualizarLote();});
   $('area').addEventListener('change',function(e){var c=e.target.closest('[data-marcar]');if(c){P.marcados[c.dataset.marcar]=c.checked;atualizarLote();}});
   $('area').addEventListener('click',function(e){
+    var w=e.target.closest('[data-word]');if(w){abrirWord(w);return;}
+    var pr=e.target.closest('[data-protocolei]');if(pr){var en=P.lista.filter(function(x){return x.id===pr.dataset.protocolei;})[0];if(en)abrirJanela(en,'protocolei');return;}
     var b=e.target.closest('[data-aprovar],[data-ajustar],[data-reprovar]');if(!b)return;
     var id=b.dataset.aprovar||b.dataset.ajustar||b.dataset.reprovar,ent=P.lista.filter(function(x){return x.id===id;})[0];if(!ent)return;
     if(b.dataset.aprovar)decidir(id,'aprovar',null);else abrirJanela(ent,b.dataset.ajustar?'ajustar':'reprovar');

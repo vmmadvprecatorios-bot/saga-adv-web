@@ -13,8 +13,10 @@
         valores, formato:'docx'|'pdf', impressao}) · SagaTimbrado.baixar(blob, nome)
    Nada sai do computador: os arquivos vêm do lugar privado 'timbrados'.
    ===================================================================== */
-window.SagaTimbrado = (function(){
+/* Também roda fora do navegador (conector saga-mcp, Renata: 20/11/2026): G = window ou globalThis. */
+(typeof window !== 'undefined' ? window : globalThis).SagaTimbrado = (function(){
   'use strict';
+  var G = typeof window !== 'undefined' ? window : globalThis;
   var BUCKET = 'timbrados';
   var VERSAO = (function(){
     try{ var s = document.currentScript && document.currentScript.src; var m = s && s.match(/[?&]v=(\d+)/); return m ? m[1] : ''; }catch(e){ return ''; }
@@ -757,8 +759,8 @@ window.SagaTimbrado = (function(){
     return cacheScripts[src];
   }
   async function libsDocx(){
-    if(!window.PizZip) await script('vendor/pizzip-3.1.6/pizzip.min.js');
-    return window.PizZip;
+    if(!G.PizZip) await script('vendor/pizzip-3.1.6/pizzip.min.js');
+    return G.PizZip;
   }
   async function libsPdf(){
     if(!window.PDFLib) await script('vendor/pdf-lib-1.17.1/pdf-lib.min.js');
