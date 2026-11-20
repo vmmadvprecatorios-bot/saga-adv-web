@@ -13,7 +13,7 @@ window.SagaPlanilha=(function(){
   'use strict';
   var cols=[],situacoes=[],sacados=new Set(),pronta=false,filtros={},faixas={},ordem=null,protocolo='',retorno='',minhas=false,
     // 12/11 (Dr. Victor; T110 parte 2): processos que o agente já leu (ficha com o resumo em processos_obsidian) e o filtro "Sem resumo do agente"
-    comResumo=null,semResumo=false,semNumero=false,protNovo=false,protPrazo=null,loteFiltro=null,loteFiltroDe=null,lotes=null,ocultas=null,editando=false,menuAberto=null;
+    comResumo=null,semResumo=false,semNumero=false,semCap=false,protNovo=false,protPrazo=null,loteFiltro=null,loteFiltroDe=null,lotes=null,ocultas=null,editando=false,menuAberto=null;
   var CHAVE=function(){return 'saga-planilha2-'+FASE_FIXA+'-'+(state.meuInternoId||'');};
   // Nome e ordem próprios da Captação (planilha de captação do escritório)
   function nomeCol(c,fase){return (fase||(typeof FASE_FIXA!=='undefined'?FASE_FIXA:''))==='captacao'&&c.nome_captacao?c.nome_captacao:c.nome;}
@@ -54,7 +54,11 @@ window.SagaPlanilha=(function(){
   function cnjValido(n){var d=String(n||'').replace(/\D/g,'');if(d.length!==20)return false;
     var base=d.slice(0,7)+d.slice(9,20)+'00',r=0;for(var i=0;i<base.length;i++)r=(r*10+(base.charCodeAt(i)-48))%97;return 98-r===parseInt(d.slice(7,9),10);}
   function semNumeroCnj(p){return FASE_FIXA==='juridico'&&grupoDe(p)==='ativo'&&!cnjValido(p.numero_processo_cnj);}
-  function contarSemNumero(){var q=document.querySelector('#spBarra .sp-qtd-numero');if(q)q.textContent=(state.baseProcessos||[]).filter(semNumeroCnj).length;}
+  // 20/11 (Dr. Victor): cartão da Captação sem captador com login (o nome antigo da planilha fica em "Captador anterior (planilha)").
+  // O captador conta no prêmio: não se distribui sozinho; o atalho "Sem captador (N)" mostra quais são, para o Dr. Victor ou a Hevelyn distribuírem.
+  function semCaptador(p){return FASE_FIXA==='captacao'&&!p.captador_id;}
+  function contarSemCap(){var q=document.querySelector('#spBarra .sp-qtd-semcap');if(q)q.textContent=(state.baseProcessos||[]).filter(semCaptador).length;}
+  function contarSemNumero(){contarSemCap();var q=document.querySelector('#spBarra .sp-qtd-numero');if(q)q.textContent=(state.baseProcessos||[]).filter(semNumeroCnj).length;}
   // 14/11 (Dr. Victor; bloco 203): situação "Protocolar novamente" (processo extinto que precisa de novo protocolo);
   // a opção é reconhecida pela acao 'protocolar_novamente' do menu (renomear não quebra). O banco cria a tarefa sozinho.
   function idsProtocolarNovamente(){return situacoes.filter(function(s){return s.acao==='protocolar_novamente';}).map(function(s){return String(s.id);});}
@@ -149,7 +153,7 @@ window.SagaPlanilha=(function(){
   function lerPreferencias(){
     // 09/11 (Dr. Victor): a tela abre sempre limpa (sem filtro, sem ordem escolhida, sem "Minhas fichas");
     // do que estava guardado só voltam as colunas escondidas e a ordem das colunas (o jeito da planilha)
-    try{var s=JSON.parse(localStorage.getItem(CHAVE())||'null');if(s){ocultas=s.ocultas||{};filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;protNovo=false;ordemCols=Array.isArray(s.ordemCols)?s.ordemCols:null;}}catch(e){}
+    try{var s=JSON.parse(localStorage.getItem(CHAVE())||'null');if(s){ocultas=s.ocultas||{};filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;semCap=false;protNovo=false;ordemCols=Array.isArray(s.ordemCols)?s.ordemCols:null;}}catch(e){}
     if(!ocultas)ocultas=padraoOcultas();
   }
   // Na Captação, o padrão mostra só as colunas da planilha de captação; as outras ficam em "Colunas"
@@ -164,6 +168,7 @@ window.SagaPlanilha=(function(){
     if(minhas&&String(p.captador_id||'')!==String(state.meuInternoId||''))return false;
     if(semResumo&&!semResumoAgente(p))return false;
     if(semNumero&&!semNumeroCnj(p))return false;
+    if(semCap&&!semCaptador(p))return false;
     if(protNovo&&!ehProtocolarNovamente(p))return false;
     if(loteFiltro&&!loteFiltro.has(String(p.id)))return false;
     if(retorno){var cr=colPorChave('captacao.data_retorno'),dr=cr&&(p.campos||{})[cr.id],hoje=hojeISO(),em7=hojeISO(new Date(Date.now()+7*864e5));
@@ -1149,6 +1154,7 @@ window.SagaPlanilha=(function(){
     var gruposAntes={};b.querySelectorAll('.sp-pills[role="group"]').forEach(function(g){gruposAntes[g.getAttribute('aria-label')]=g;});
     b.innerHTML=(capt?'<div class="sp-pills" role="group" aria-label="Data de retorno">'+[['','Todos os retornos'],['hoje','Retorno hoje'],['atrasados','Atrasados'],['semana','Próximos 7 dias']].map(function(o){return '<button type="button" class="sp-pill'+(retorno===o[0]?' ativo':'')+'" data-retorno="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'+
         '<button type="button" class="sp-pill sp-pill-solta'+(minhas?' ativo':'')+'" data-minhas aria-pressed="'+minhas+'">Minhas fichas</button>'+
+        '<button type="button" class="sp-pill sp-pill-solta'+(semCap?' ativo':'')+'" data-semcap aria-pressed="'+semCap+'" title="Cartões sem captador com login no SAGA. O nome antigo da planilha fica na coluna Captador anterior (planilha). Escolha o captador na própria célula (ou em Distribuir fichas) e o cartão sai da lista.">Sem captador <b class="sp-qtd-semcap">'+(state.baseProcessos||[]).filter(semCaptador).length+'</b></button>'+
         (state.permissoes&&state.permissoes.criar?'<button type="button" class="btn-secondary sp-btn" data-importar title="Colar do Excel ou escolher um arquivo .xlsx/.csv">Importar planilha</button>':'')+'<button type="button" class="btn-secondary sp-btn" data-distribuir>Distribuir fichas</button>':
       '<div class="sp-pills" role="group" aria-label="Protocolo">'+[['','Todos','Todos os processos do Jurídico'],['sim','Protocolados','Ativos e já protocolados'],['nao','Não protocolados','Ativos e ainda não protocolados'],['encerrado','Encerrados','Situação Encerrada ou Inviável (o valor a receber continua até o saque)'],['sacado','Sacados','O valor recebido no Financeiro cobre o esperado']].map(function(o){return '<button type="button" class="sp-pill'+(protocolo===o[0]?' ativo':'')+'" data-protocolo="'+o[0]+'" title="'+o[2]+'">'+o[1]+'</button>';}).join('')+'</div>'+
         '<button type="button" class="sp-pill sp-pill-solta'+(semNumero?' ativo':'')+'" data-semnumero aria-pressed="'+semNumero+'" title="Processos ativos sem número CNJ válido (vazio ou errado): o robô do CNJ e o radar não acompanham. Complete o número na própria célula e o processo sai da lista.">Sem número CNJ <b class="sp-qtd-numero">'+(state.baseProcessos||[]).filter(semNumeroCnj).length+'</b></button>'+
@@ -1194,6 +1200,7 @@ window.SagaPlanilha=(function(){
     b.querySelectorAll('[data-retorno]').forEach(function(x){x.onclick=function(){if(retorno===x.dataset.retorno)return;retorno=x.dataset.retorno;x.parentNode.querySelectorAll('.sp-pill').forEach(function(y){y.classList.toggle('ativo',y===x);});requestAnimationFrame(function(){setTimeout(aplicar,60);});};});
     var bm=b.querySelector('[data-minhas]');if(bm)bm.onclick=function(){minhas=!minhas;aplicar();};
     var bs=b.querySelector('[data-semresumo]');if(bs)bs.onclick=function(){semResumo=!semResumo;bs.classList.toggle('ativo',semResumo);bs.setAttribute('aria-pressed',String(semResumo));requestAnimationFrame(function(){setTimeout(aplicar,60);});};
+    var bsc=b.querySelector('[data-semcap]');if(bsc)bsc.onclick=function(){semCap=!semCap;bsc.classList.toggle('ativo',semCap);bsc.setAttribute('aria-pressed',String(semCap));requestAnimationFrame(function(){setTimeout(aplicar,60);});};
     var bn=b.querySelector('[data-semnumero]');if(bn)bn.onclick=function(){semNumero=!semNumero;bn.classList.toggle('ativo',semNumero);bn.setAttribute('aria-pressed',String(semNumero));requestAnimationFrame(function(){setTimeout(aplicar,60);});};
     var bp=b.querySelector('[data-protnovo]');if(bp)bp.onclick=function(){protNovo=!protNovo;bp.classList.toggle('ativo',protNovo);bp.setAttribute('aria-pressed',String(protNovo));if(protNovo&&protPrazo==null)lerProtPrazo();requestAnimationFrame(function(){setTimeout(aplicar,60);});};
     var bpp=b.querySelector('[data-protprazo]');if(bpp)bpp.onclick=mudarProtPrazo;
@@ -1219,7 +1226,7 @@ window.SagaPlanilha=(function(){
     w.querySelectorAll('[data-tese]').forEach(function(b){b.onclick=function(){state.filtroTese=b.dataset.tese?catalogoTeses.tese(b.dataset.tese):null;if(typeof renderDropdownsTeses==='function')renderDropdownsTeses();renderAbas();aplicarFiltros();};});
     var st=w.querySelector('[data-tipo]');if(st)st.onchange=function(){if(st.value)filtros[tipo.id]=new Set([st.value]);else delete filtros[tipo.id];aplicar();};
   }
-  function limpar(){filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;protNovo=false;loteFiltro=null;loteFiltroDe=null;renderLotes();guardar();renderBarra();}
+  function limpar(){filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;semCap=false;protNovo=false;loteFiltro=null;loteFiltroDe=null;renderLotes();guardar();renderBarra();}
 
   function estilos(){
     if(document.getElementById('spEstilo'))return;
@@ -2389,9 +2396,9 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
   function lerVisoes(){try{var v=JSON.parse(localStorage.getItem(CHAVE_VISOES())||'[]');return Array.isArray(v)?v:[];}catch(e){return [];}}
   function guardarVisoes(v){try{localStorage.setItem(CHAVE_VISOES(),JSON.stringify(v));}catch(e){aviso('Não foi possível guardar neste navegador.',true);}}
   function estadoAtual(){var f={};Object.keys(filtros).forEach(function(k){f[k]=Array.from(filtros[k]);});
-    return {ocultas:Object.assign({},ocultas||{}),filtros:f,faixas:copiaFaixas(),ordem:ordem,protocolo:protocolo,retorno:retorno,minhas:minhas,semResumo:semResumo,semNumero:semNumero,protNovo:protNovo,ordemCols:ordemCols?ordemCols.slice():null};}
+    return {ocultas:Object.assign({},ocultas||{}),filtros:f,faixas:copiaFaixas(),ordem:ordem,protocolo:protocolo,retorno:retorno,minhas:minhas,semResumo:semResumo,semNumero:semNumero,semCap:semCap,protNovo:protNovo,ordemCols:ordemCols?ordemCols.slice():null};}
   function aplicarVisao(v){var s=v.estado||{};ocultas=s.ocultas||padraoOcultas();filtros={};Object.keys(s.filtros||{}).forEach(function(k){filtros[k]=new Set(s.filtros[k]);});faixas={};Object.keys(s.faixas||{}).forEach(function(k){var x=s.faixas[k];if(x&&typeof x==='object')faixas[k]={de:x.de==null?null:x.de,ate:x.ate==null?null:x.ate,rel:x.rel||null,ano:x.ano||null,curto:!!x.curto};});
-    ordem=s.ordem||null;protocolo=s.protocolo||'';retorno=s.retorno||'';minhas=!!s.minhas;semResumo=!!s.semResumo;semNumero=!!s.semNumero;protNovo=!!s.protNovo;ordemCols=s.ordemCols||null;fecharMenu();aplicar();aviso('Visão "'+h(v.nome)+'" aplicada.');}
+    ordem=s.ordem||null;protocolo=s.protocolo||'';retorno=s.retorno||'';minhas=!!s.minhas;semResumo=!!s.semResumo;semNumero=!!s.semNumero;semCap=!!s.semCap;protNovo=!!s.protNovo;ordemCols=s.ordemCols||null;fecharMenu();aplicar();aviso('Visão "'+h(v.nome)+'" aplicada.');}
   // 17/11 (Dr. Victor): ao VOLTAR para a planilha (botão do mouse, seta do navegador) ela aparece como estava (SagaVolta)
   function voltarEstado(st){if(!st)return;var aviso0=aviso;aviso=function(){};try{aplicarVisao({nome:'',estado:st});}finally{aviso=aviso0;}}
   function menuVisoes(ancora){
@@ -2418,7 +2425,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       if(t.hasAttribute('data-salvar-v')){var nm=m.querySelector('[data-nome-v]').value.trim();if(!nm){m.querySelector('[data-nome-v]').focus();return;}
         var ja=vs.findIndex(function(v){return norm(v.nome)===norm(nm);});var nova={nome:nm,estado:estadoAtual(),em:new Date().toISOString()};
         if(ja>=0)vs[ja]=nova;else vs.push(nova);guardarVisoes(vs);desenhar();aviso(ja>=0?'Visão "'+h(nm)+'" atualizada.':'Visão "'+h(nm)+'" salva.');return;}
-      if(t.hasAttribute('data-padrao-v')){filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;protNovo=false;ordemCols=null;ocultas=padraoOcultas();fecharMenu();aplicar();aviso('Planilha de volta ao padrão.');}
+      if(t.hasAttribute('data-padrao-v')){filtros={};faixas={};ordem=null;protocolo='';retorno='';minhas=false;semResumo=false;semNumero=false;semCap=false;protNovo=false;ordemCols=null;ocultas=padraoOcultas();fecharMenu();aplicar();aviso('Planilha de volta ao padrão.');}
     });
     m.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.hasAttribute('data-nome-v')){e.preventDefault();m.querySelector('[data-salvar-v]').click();}});
   }
@@ -2463,5 +2470,5 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     });
   }
 
-  return {grupoDe:grupoDe,protocolado:function(p){return idsProtocolada().indexOf(String(p.situacao_acao_id||''))!==-1;},protocoloAtual:function(){return protocolo;},ehProtocolarNovamente:ehProtocolarNovamente,semNumeroCnj:semNumeroCnj,cnjValido:cnjValido,semResumoAgente:semResumoAgente,seloSemResumo:function(p){return semResumoAgente(p)?SELO_SEM_RESUMO:'';},contarSemResumo:contarSemResumo,dadosNovoNaColuna:dadosNovoNaColuna,esquecerNovoNaColuna:esquecerNovoNaColuna,exportarExcel:exportarExcel,pintarLote:pintarLote,retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,kanbanAgrupado:kanbanAgrupado,soltarNoGrupo:soltarNoGrupo,limpar:limpar,estado:estadoAtual,voltarEstado:voltarEstado,pronta:function(){return pronta;},_gerenciar:false};
+  return {grupoDe:grupoDe,protocolado:function(p){return idsProtocolada().indexOf(String(p.situacao_acao_id||''))!==-1;},protocoloAtual:function(){return protocolo;},ehProtocolarNovamente:ehProtocolarNovamente,semNumeroCnj:semNumeroCnj,semCaptador:semCaptador,cnjValido:cnjValido,semResumoAgente:semResumoAgente,seloSemResumo:function(p){return semResumoAgente(p)?SELO_SEM_RESUMO:'';},contarSemResumo:contarSemResumo,dadosNovoNaColuna:dadosNovoNaColuna,esquecerNovoNaColuna:esquecerNovoNaColuna,exportarExcel:exportarExcel,pintarLote:pintarLote,retornoDe:function(p){var c=colPorChave('captacao.data_retorno'),v=c&&(p.campos||{})[c.id];return v?String(v).slice(0,10):null;},renderFunil:renderFunil,mesmaEtapa:mesmaEtapa,fichaDados:fichaDados,formatar:formatarCampo,UFS:UFS,iniciar:iniciar,passa:passa,ordenar:ordenar,renderTabela:renderTabela,cartoesHtml:cartoesHtml,kanbanAgrupado:kanbanAgrupado,soltarNoGrupo:soltarNoGrupo,limpar:limpar,estado:estadoAtual,voltarEstado:voltarEstado,pronta:function(){return pronta;},_gerenciar:false};
 })();
