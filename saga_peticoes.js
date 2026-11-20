@@ -3,8 +3,8 @@
      sem tese, como a "Petição simples"). Outra tese = outro processo (outro cartão).
    - Os dados vêm da ficha pelo banco (peticao_dados, SECURITY INVOKER: só o que a pessoa já pode ver).
    - O que faltar sai DESTACADO (amarelo no Word, laranja no PDF) e entre colchetes, para completar.
-   - Timbrado: escolha livre entre VMM e Sarmento. O da ANCREF NUNCA entra em petição (a associação não é advogada;
-     o timbrado dela fica para o rol de documentos e papéis da associação). Decisão do Dr. Victor, 19/11.
+   - Timbrado: escolha livre entre VMM e Sarmento. O da ANCREF entra em petição SÓ quando o Dr. Victor pede (decisão de
+     20/11, que trocou a de 19/11): fica no fim da lista, nunca vem escolhido, e pede confirmação antes de gerar.
    - Só quem tem a permissão peticoes.gerar (Jurídico, Estagiário, administrador ou quem ele liberar no Painel).
    - Guarda na pasta "Petições" do cliente (cria a pasta se não existir) e registra no Registro de atividades.
    Uso: SagaPeticoes.botaoHtml(processo) + SagaPeticoes.ligar(raiz, {sb, processoId, pessoaId, teseId, aoGuardar})
@@ -12,7 +12,7 @@
 window.SagaPeticoes = (function(){
   'use strict';
   var BUCKET = 'documentos-clientes';
-  var TIMBRADOS_PROIBIDOS = ['ancref'];
+  var TIMBRADOS_PROIBIDOS = ['ancref'];  // nunca vêm escolhidos por padrão; a ANCREF só com confirmação (20/11)
   var S = { pode: null, modelos: null, timbrados: null, ctx: null, modelo: null, valores: {}, origem: {} };
 
   function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
@@ -231,7 +231,7 @@ window.SagaPeticoes = (function(){
   async function carregarBase(){
     if(!window.SagaTimbrado) throw new Error('o gerador de petições (saga_timbrado.js) não carregou nesta tela');
     if(!S.modelos) S.modelos = await SagaTimbrado.listarModelos(sb());
-    if(!S.timbrados) S.timbrados = (await SagaTimbrado.listar(sb())).filter(function(t){ return TIMBRADOS_PROIBIDOS.indexOf(t.chave) < 0; });
+    if(!S.timbrados) S.timbrados = (await SagaTimbrado.listar(sb())).sort(function(a, b){ return (TIMBRADOS_PROIBIDOS.indexOf(a.chave) >= 0) - (TIMBRADOS_PROIBIDOS.indexOf(b.chave) >= 0); });
   }
 
   async function abrir(ctx){
@@ -300,7 +300,7 @@ window.SagaPeticoes = (function(){
       + '<div class="pt-resumo" id="ptResumo"></div>'
       + (ehPss() ? '<div class="pt-linha" style="margin-top:0"><button type="button" class="btn-secondary btn-secundario" id="ptCalculo" style="font:inherit;font-size:12.5px;padding:8px 14px;border-radius:10px;border:1px solid var(--sb-sec-borda,var(--border));background:var(--sb-sec,transparent);color:var(--text);cursor:pointer">' + (S.calc && S.calc.atual ? 'Ver ou refazer o cálculo do PSS' : 'Fazer o cálculo do PSS (preenche os valores)') + '</button>'
         + '<span style="font-size:12px;color:var(--muted)">' + (S.calc && S.calc.atual ? 'Cálculo ' + (S.calc.atual.situacao === 'conferido' ? 'conferido' : 'em rascunho') + ', versão ' + S.calc.atual.versao : 'Este processo ainda não tem cálculo salvo.') + '</span></div>' : '')
-      + '<div class="pt-linha"><label>Papel timbrado<select id="ptTimbrado">' + S.timbrados.map(function(t){ return '<option value="' + esc(t.chave) + '"' + (t.chave === chPadrao ? ' selected' : '') + '>' + esc(t.nome) + '</option>'; }).join('') + '</select></label>'
+      + '<div class="pt-linha"><label>Papel timbrado<select id="ptTimbrado">' + S.timbrados.map(function(t){ return '<option value="' + esc(t.chave) + '"' + (t.chave === chPadrao ? ' selected' : '') + '>' + esc(t.nome) + (TIMBRADOS_PROIBIDOS.indexOf(t.chave) >= 0 ? ' (só quando o Dr. Victor pedir)' : '') + '</option>'; }).join('') + '</select></label>'
       + '<label>Versão<select id="ptVersao"><option value="cores">Colorida</option><option value="impressao">Para imprimir</option></select></label>'
       + '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="ptGuardar" checked> Guardar na pasta "Petições" do cliente</label></div>'
       + '<div class="pt-campos">' + htmlCampos + '</div>'
@@ -371,6 +371,11 @@ window.SagaPeticoes = (function(){
     var m = S.modelo, msg = document.getElementById('ptMsg');
     var t = S.timbrados.filter(function(x){ return x.chave === document.getElementById('ptTimbrado').value; })[0];
     if(!t){ msg.innerHTML = '<div class="pt-erro"><b>Erro:</b> escolha o papel timbrado.</div>'; return; }
+    if(TIMBRADOS_PROIBIDOS.indexOf(t.chave) >= 0){
+      var aviso = 'O timbrado da ' + t.nome + ' só entra em petição quando o Dr. Victor pede. Ele pediu esta petição neste timbrado?';
+      var ok = window.sagaConfirmar ? await sagaConfirmar('Petição no timbrado da ' + t.nome, aviso, 'Sim, ele pediu', false) : confirm(aviso);
+      if(!ok) return;
+    }
     var valores = {};
     document.querySelectorAll('[data-pt-campo]').forEach(function(i){ valores[i.getAttribute('data-pt-campo')] = i.value; });
     var imp = document.getElementById('ptVersao').value === 'impressao';
