@@ -221,7 +221,7 @@
   function montarRecados(){
     if($('axRecados'))return $('axRecados');
     var mo=janela('axRecados',
-      '<div class="md-cab"><h2>Recados para as agentes</h2><p>Escreva para a Luísa ou a Renata. Ela lê e responde na próxima rodada (a Luísa às 7h05, 12h05, 16h05 e 21h05); a resposta aparece aqui e no sino. O recado vale como pedido seu, mas as regras continuam: nada sai para fora sem aprovação, elas param na tela de assinatura e não apagam nada.</p></div>'+
+      '<div class="md-cab"><h2>Recados para as agentes</h2><p>Escreva para a Luísa ou a Renata. Ela lê e responde na próxima rodada dela; a resposta aparece aqui e no sino. O recado vale como pedido seu, mas as regras continuam: nada sai para fora sem aprovação, elas param na tela de assinatura e não apagam nada.</p></div>'+
       '<div class="md-corpo" style="gap:10px">'+
         '<div class="ax-novo"><div class="ax-linha"><span class="ax-nota">Para</span><div class="pills" role="group" aria-label="Para quem" id="axPara"><button class="pill active" type="button" data-para="luisa">Luísa</button><button class="pill" type="button" data-para="renata">Renata</button></div></div>'+
           '<div class="ax-ligado" id="axLigado" hidden></div>'+
