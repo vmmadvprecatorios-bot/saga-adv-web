@@ -1467,6 +1467,7 @@
     if(n&&n.referencia_tabela==='premios')return {titulo:'Prêmio da Captação',tela:'premios.html'};
     if(n&&n.referencia_tabela==='relatorios')return {titulo:'Relatórios',tela:'relatorios_clientes.html'};
     if(n&&n.referencia_tabela==='agente_entregas')return {titulo:'Para aprovar',tela:'agentes_aprovar.html'};
+    if(n&&n.referencia_tabela==='agente_recados')return {titulo:'Recados das agentes',tela:'agentes_aprovar.html'};
     var t=TIPOS_NOTIF[n.tipo];
     if(t)return t;
     if(n.referencia_tabela==='tarefas')return {titulo:'Tarefa',tela:'minhas_tarefas.html'};
@@ -1529,7 +1530,7 @@
     // Prêmio da Captação (blocos 222-224, T164): validação, fechamento, ajuste e estorno
     // Relatórios dos clientes (blocos 244 e 245, T192): pedido novo, pronto, enviado e pedido parado
     if(n&&n.referencia_tabela==='relatorios'){for(var rl=0;rl<GRUPOS_NOTIF.length;rl++){if(GRUPOS_NOTIF[rl].chave==='relatorios')return GRUPOS_NOTIF[rl];}}
-    if(n&&n.referencia_tabela==='agente_entregas'){for(var ae=0;ae<GRUPOS_NOTIF.length;ae++){if(GRUPOS_NOTIF[ae].chave==='agentes')return GRUPOS_NOTIF[ae];}}
+    if(n&&(n.referencia_tabela==='agente_entregas'||n.referencia_tabela==='agente_recados')){for(var ae=0;ae<GRUPOS_NOTIF.length;ae++){if(GRUPOS_NOTIF[ae].chave==='agentes')return GRUPOS_NOTIF[ae];}}
     if(n&&n.referencia_tabela==='premios'){for(var pm=0;pm<GRUPOS_NOTIF.length;pm++){if(GRUPOS_NOTIF[pm].chave==='premios')return GRUPOS_NOTIF[pm];}}
     return grupoDoTipo(n&&n.tipo);
   }
@@ -1654,6 +1655,7 @@
     if(n.referencia_tabela==='saude'){global.sagaIrPara('configuracoes_padrao_metalico.html?aba=saude');return;}
     if(n.referencia_tabela==='pedidos_claude'){global.sagaIrPara('pedidos_claude.html');return;}
     if(n.referencia_tabela==='agente_entregas'){global.sagaIrPara('agentes_aprovar.html');return;}
+    if(n.referencia_tabela==='agente_recados'){global.sagaIrPara('agentes_aprovar.html?recados='+encodeURIComponent(n.referencia_id||''));return;}
     if(n.referencia_tabela==='premios'){global.sagaIrPara('premios.html?aba=meu');return;}
     if(n.referencia_tabela==='relatorios'){
       try{var rq=n.referencia_id?await global._sb.from('relatorios_pedidos').select('processo_id').eq('id',n.referencia_id).maybeSingle():null;
