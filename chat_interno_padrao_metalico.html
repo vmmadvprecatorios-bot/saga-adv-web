@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611211252"></script>
+<script src="saga_guard.js?v=202611212041"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Chat Interno</title>
@@ -355,7 +355,7 @@
     .seletor-papel button{padding:4px 6px;}
   }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611211252">
+<link rel="stylesheet" href="saga_tema.css?v=202611212041">
 </head>
 <body data-theme="dark">
 
@@ -397,7 +397,7 @@
 <!-- MODAL: Confirmar Exclusao de Mensagem -->
 <div class="modal-gen-overlay" id="modalExcluirMsg">
   <div class="modal-gen-caixa">
-    <p>Excluir esta mensagem? Esta acao nao pode ser desfeita.</p>
+    <p>Excluir esta mensagem? Esta ação não pode ser desfeita.</p>
     <div class="modal-gen-botoes">
       <button class="btn-gen-cancelar" onclick="closeModal('modalExcluirMsg')">Cancelar</button>
       <button class="btn-gen-excluir" onclick="confirmarExclusao()">Excluir</button>
@@ -437,7 +437,7 @@
 <!-- MODAL: Confirmar Sair do Grupo -->
 <div class="modal-gen-overlay" id="modalSairGrupo">
   <div class="modal-gen-caixa">
-    <p>Sair deste grupo? Voce nao podera mais ver as mensagens enquanto nao for adicionado novamente.</p>
+    <p>Sair deste grupo? Você não poderá mais ver as mensagens enquanto não for adicionado novamente.</p>
     <div class="modal-gen-botoes">
       <button class="btn-gen-cancelar" onclick="closeModal('modalSairGrupo')">Cancelar</button>
       <button class="btn-gen-excluir" onclick="confirmarSairGrupo()">Sair</button>
@@ -531,8 +531,8 @@
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611211252"></script>
-<script src="saga_chat_documentos.js?v=202611211252"></script>
+<script src="saga_ui.js?v=202611212041"></script>
+<script src="saga_chat_documentos.js?v=202611212041"></script>
 <script>
 // ===== CLIENTE SUPABASE =====
 var SUPABASE_URL = 'https://fmoskdxgjulagedzjxxk.supabase.co';
@@ -1774,7 +1774,7 @@ async function confirmarSairGrupo() {
   document.getElementById('mensagensScroll').style.display = 'none';
   document.getElementById('barraEnvio').style.display = 'none';
   await carregarConversas();
-  showToast('Voce saiu do grupo.', 'sucesso');
+  showToast('Você saiu do grupo.', 'sucesso');
 }
 
 // ===== CONFIRMACAO GENERICA =====

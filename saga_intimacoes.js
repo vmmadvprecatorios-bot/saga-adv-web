@@ -393,12 +393,12 @@
     injetarCss();
     S.sb=o.sb;S.meuId=o.meuId;S.ehAdmin=!!o.ehAdmin;S.toast=o.toast;S.aoMudar=o.aoMudar;
     var p=await Promise.all([
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'monitoramento_oab',p_acao:'gerenciar'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'criar'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'editar'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'gerenciar_todas'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'visualizar'}),
-      S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'tarefas',p_acao:'visualizar'})]);
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(S.sb,{p_usuario_id:S.meuId,p_modulo:'monitoramento_oab',p_acao:'gerenciar'}):S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'monitoramento_oab',p_acao:'gerenciar'})),
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(S.sb,{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'criar'}):S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'criar'})),
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(S.sb,{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'editar'}):S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'editar'})),
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(S.sb,{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'gerenciar_todas'}):S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'movimentacoes_cnj',p_acao:'gerenciar_todas'})),
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(S.sb,{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'visualizar'}):S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'processos',p_acao:'visualizar'})),
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(S.sb,{p_usuario_id:S.meuId,p_modulo:'tarefas',p_acao:'visualizar'}):S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'tarefas',p_acao:'visualizar'}))]);
     S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.todas=p[3].data===true||S.ehAdmin;S.pode.verFicha=p[4].data===true||S.ehAdmin;S.pode.verTarefas=p[5].data===true||S.ehAdmin;S.pode.editar=p[2].data===true||S.pode.todas;
     if(!S.pode.editar)document.body.classList.add('si-so-leitura');
     if(S.ehAdmin){var c=await S.sb.from('configuracoes_sistema').select('extra').limit(1).maybeSingle();if(c.data&&c.data.extra&&Array.isArray(c.data.extra.monitoramento_horas))S.horas=c.data.extra.monitoramento_horas.map(Number);}
@@ -938,7 +938,7 @@
           '<div class="si-acoes" style="align-items:center"><button class="si-btn pri" type="button" id="siComentar">Comentar</button><span class="si-sub" style="margin:0">e marcar como</span><select id="siMoverCom" style="height:34px;padding:0 9px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2,var(--panel));color:var(--text);font:inherit;font-size:11.5px"></select></div>'+
         '</div>'+
         '<div>'+
-          '<div class="si-sec" style="margin-top:0">Triagem</div><div id="siTriagem"></div>'+
+          '<div class="si-sec" style="margin-top:0">Triagem da Luísa</div><div id="siTriagem"></div>'+
           '<div class="si-acoes" style="margin:12px 0 14px;justify-content:flex-end"><button class="si-btn sm" type="button" id="siConcluir">Concluir</button></div>'+
           '<div id="siSugPrazo"></div>'+
           '<div class="si-g2"><div class="si-campo"><label for="siColuna">Situação</label><select id="siColuna"></select></div>'+
@@ -1751,7 +1751,7 @@
       });
     });
     el.onclick=function(e){
-      var a=e.target.closest('[data-graf]');if(!a)return;
+      var a=e.target.closest('[data-graf]:not(html)');if(!a)return;
       var k=a.dataset.graf,v=a.dataset.v;S.f[k]=S.f[k]===v?'':v;
       if(k==='tribunal'){S.f.regiao='';S.f.orgao='';}
       guardarFiltros();mudou();

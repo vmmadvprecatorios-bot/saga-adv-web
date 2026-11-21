@@ -1052,7 +1052,7 @@ window.SagaPlanilha=(function(){
     var r=btn.getBoundingClientRect();m.style.left=Math.max(8,Math.min(r.left,innerWidth-m.offsetWidth-8))+'px';m.style.top=Math.min(r.bottom+6,innerHeight-m.offsetHeight-8)+'px';
     m.addEventListener('click',function(e){
       if(e.target.closest('[data-padrao]')){definirCorFoco('');fecharMenuFoco();aviso('Foco na cor padrão do tema.');return;}
-      var c=e.target.closest('[data-cor]');if(c){definirCorFoco(c.dataset.cor);fecharMenuFoco();aviso('Cor do foco alterada.');}
+      var c=e.target.closest('[data-cor]:not(html)');if(c){definirCorFoco(c.dataset.cor);fecharMenuFoco();aviso('Cor do foco alterada.');}
     });
     var outra=m.querySelector('[data-outra]');outra.addEventListener('input',function(e){definirCorFoco(e.target.value);});outra.addEventListener('change',function(e){definirCorFoco(e.target.value);aviso('Cor do foco alterada.');});
     setTimeout(function(){document.addEventListener('pointerdown',foraFoco,true);document.addEventListener('keydown',escFoco,true);},0);

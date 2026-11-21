@@ -182,7 +182,7 @@
     .rodape-esquerdo{display:none;}
   }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611211252">
+<link rel="stylesheet" href="saga_tema.css?v=202611212041">
 </head>
 <body>
 
@@ -275,7 +275,7 @@
     <!-- Estado 3: token invalido ou expirado -->
     <div id="estadoTokenInvalido" style="display:none;">
       <div class="aviso-estado erro-token">
-        <p>Este link de redefinicao e invalido ou ja expirou.</p>
+        <p>Este link de redefinição é inválido ou já expirou.</p>
         <p style="margin-top:14px;">
           <a href="login_padrao_metalico.html">Volte ao login</a>
           e solicite um novo link pela opcao "Esqueci a senha".
@@ -387,7 +387,7 @@ document.getElementById('formNovaSenha').addEventListener('submit', async functi
     return;
   }
   if (nova !== confirmar) {
-    showToast('As senhas nao coincidem. Verifique e tente novamente.', 'erro');
+    showToast('As senhas não coincidem. Verifique e tente novamente.', 'erro');
     return;
   }
 
@@ -401,7 +401,7 @@ document.getElementById('formNovaSenha').addEventListener('submit', async functi
       var msg = 'Erro ao definir a nova senha. Tente novamente.';
       var em  = (r.error.message || '').toLowerCase();
       if (em.indexOf('same password') >= 0 || em.indexOf('different from') >= 0) {
-        msg = 'A nova senha nao pode ser igual a senha anterior.';
+        msg = 'A nova senha não pode ser igual à senha anterior.';
       } else if (em.indexOf('weak') >= 0) {
         msg = 'Senha muito fraca. Use letras, numeros e ao menos 8 caracteres.';
       }
@@ -421,7 +421,7 @@ document.getElementById('formNovaSenha').addEventListener('submit', async functi
     }, 3000);
 
   } catch (ex) {
-    showToast('Falha de conexao. Tente novamente em alguns instantes.', 'erro');
+    showToast('Falha de conexão. Tente novamente em alguns instantes.', 'erro');
     btn.disabled    = false;
     btn.textContent = 'Confirmar nova senha';
   }

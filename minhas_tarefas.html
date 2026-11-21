@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611211252"></script>
+<script src="saga_guard.js?v=202611212041"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Minhas Tarefas</title>
@@ -1864,7 +1864,7 @@ button.tr-leg{cursor:pointer}button.tr-leg:hover,button.tr-leg:focus-visible{bac
   }
   @media (max-width:640px){.tr-linha-graficos .tr-graficos,.layout-tarefas-grid.calendario-oculto .tr-linha-graficos .tr-graficos{display:flex}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611211252">
+<link rel="stylesheet" href="saga_tema.css?v=202611212041">
 <script>/* modo embutido: a ficha do cliente abre esta tela dentro de uma janela, só com o formulário de nova tarefa */
 try{if(/[?&]embed=1\b/.test(location.search)){document.documentElement.classList.add('saga-embed');}}catch(e){}</script>
 <style>
@@ -1957,7 +1957,7 @@ html.saga-embed #modalTarefa{background:transparent}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M14.5 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <span class="mini-calendario-titulo" id="tituloMiniCalendario">Junho 2026</span>
-        <button type="button" class="btn-navegar-mini-calendario" id="btnMesProximoMiniCalendario" aria-label="Ver proximo mes">
+        <button type="button" class="btn-navegar-mini-calendario" id="btnMesProximoMiniCalendario" aria-label="Ver próximo mês">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9.5 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
@@ -2201,7 +2201,7 @@ html.saga-embed #modalTarefa{background:transparent}
           <div class="subsecao-processo-vinculado" id="subsecaoProcessoVinculado">
             <div class="campo-tf" style="position:relative; margin-bottom:8px;">
               <label for="inputBuscaProcesso">Buscar processo (numero ou cliente)</label>
-              <input type="text" id="inputBuscaProcesso" autocomplete="off" placeholder="Digite o numero do processo ou nome do cliente...">
+              <input type="text" id="inputBuscaProcesso" autocomplete="off" placeholder="Digite o número do processo ou nome do cliente...">
               <div class="resultado-autocomplete" id="resultadoAutocompleteProcesso"></div>
             </div>
             <div class="processo-selecionado-readonly" id="processoSelecionadoReadonly" style="display:none;">
@@ -2420,12 +2420,12 @@ html.saga-embed #modalTarefa{background:transparent}
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611211252"></script>
-<script src="saga_etiquetas.js?v=202611211252"></script>
-<script src="saga_mencoes.js?v=202611211252"></script>
-<script src="saga_prazos.js?v=202611211252"></script>
-<script src="saga_texto.js?v=202611211252"></script>
-<script src="saga_tribunais.js?v=202611211252"></script>
+<script src="saga_ui.js?v=202611212041"></script>
+<script src="saga_etiquetas.js?v=202611212041"></script>
+<script src="saga_mencoes.js?v=202611212041"></script>
+<script src="saga_prazos.js?v=202611212041"></script>
+<script src="saga_texto.js?v=202611212041"></script>
+<script src="saga_tribunais.js?v=202611212041"></script>
 <script>
 /* =====================================================================
    SISTEMA VMMADV - MINHAS TAREFAS
@@ -2627,15 +2627,15 @@ async function carregarDadosTarefas(){
   var sessao = await _sb.auth.getSession();
   if(!sessao.data || !sessao.data.session){ window.location.href = 'login_padrao_metalico.html'; return false; }
 
-  var eu = await _sb.from('usuarios').select('id,nome_completo,eh_administrador').eq('auth_user_id', sessao.data.session.user.id).maybeSingle();
+  var eu = ((window.sagaPerfilRpc&&await window.sagaPerfilRpc(sessao.data.session.user.id))||await _sb.from('usuarios').select('id,nome_completo,eh_administrador').eq('auth_user_id', sessao.data.session.user.id).maybeSingle());
   if(eu.error || !eu.data){ mostrarToast('Não foi possível identificar seu usuário.', 'erro'); return false; }
   usuarioLogadoId = eu.data.id;
   isAdmin = !!eu.data.eh_administrador;
   if(!isAdmin){ try{ var gt = await _sb.rpc('gerencio_todas_tarefas'); gerenciaTodasTarefas = gt.data === true; }catch(e){ gerenciaTodasTarefas = false; } }
   if(isAdmin){ podeVerFichaTarefas = podeVerIntimacoesTarefas = true; }
   else { try{ var pv = await Promise.all([
-      _sb.rpc('verificar_permissao',{p_usuario_id:usuarioLogadoId,p_modulo:'processos',p_acao:'visualizar'}),
-      _sb.rpc('verificar_permissao',{p_usuario_id:usuarioLogadoId,p_modulo:'movimentacoes_cnj',p_acao:'visualizar'})]);
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(_sb,{p_usuario_id:usuarioLogadoId,p_modulo:'processos',p_acao:'visualizar'}):_sb.rpc('verificar_permissao',{p_usuario_id:usuarioLogadoId,p_modulo:'processos',p_acao:'visualizar'})),
+      (window.sagaPermissaoRpc?window.sagaPermissaoRpc(_sb,{p_usuario_id:usuarioLogadoId,p_modulo:'movimentacoes_cnj',p_acao:'visualizar'}):_sb.rpc('verificar_permissao',{p_usuario_id:usuarioLogadoId,p_modulo:'movimentacoes_cnj',p_acao:'visualizar'}))]);
     podeVerFichaTarefas = pv[0].data === true; podeVerIntimacoesTarefas = pv[1].data === true; }catch(e){} }
   if(!catalogoEtiquetas) catalogoEtiquetas = SagaEtiquetas.criar({sb:_sb, admin:isAdmin,
     erro:function(msg){ mostrarToast(msg, 'erro'); },
@@ -2906,7 +2906,7 @@ function ativarVisaoKanban(){
 function navegarParaTarefaDaNotificacao(notificacao){
   var tarefa = encontrarTarefaDaNotificacao(notificacao);
   if(!tarefa){
-    mostrarToast('A tarefa relacionada a esta notificacao nao esta mais disponivel.', 'aviso');
+    mostrarToast('A tarefa relacionada a esta notificação não está mais disponível.', 'aviso');
     return;
   }
 
@@ -3509,7 +3509,7 @@ function aplicarFatiaTarefa(chave,valor){
   paginaAtualLista=1;aplicarFiltrosERenderizar();
 }
 document.getElementById('btnGraficosTarefas').addEventListener('click',function(){graficosTarefasOcultos=!graficosTarefasOcultos;try{localStorage.setItem('saga-tarefas-graficos-ocultos',graficosTarefasOcultos?'1':'0');}catch(e){}var raiz=document.getElementById('graficosTarefas');if(graficosTarefasOcultos){this.textContent='Mostrar gráficos';this.setAttribute('aria-expanded','false');window.sagaRecolher(raiz,true);}else{renderGraficosTarefas();window.sagaRecolher(raiz,false);}});
-document.getElementById('graficosTarefas').addEventListener('click',function(e){var b=e.target.closest('[data-graf]');if(b)aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);});
+document.getElementById('graficosTarefas').addEventListener('click',function(e){var b=e.target.closest('[data-graf]:not(html)');if(b)aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);});
 document.getElementById('graficosTarefas').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaTarefa(b.dataset.graf,b.dataset.v);}});
 
 function atualizarKpisTarefas(){
@@ -3669,12 +3669,12 @@ var organizacaoColunasKanban = {};
 var opcoesOrganizacaoKanban = {
   inteligente:{ rotulo:'Prioridade por prazo', curto:'Prazo', descricao:'Prazos proximos sobem automaticamente' },
   manual:{ rotulo:'Manual', curto:'Manual', descricao:'Definida ao arrastar os cards' },
-  prazo_proximo:{ rotulo:'Prazo mais proximo', curto:'Prazo', descricao:'Da data mais proxima para a mais distante' },
-  prazo_distante:{ rotulo:'Prazo mais distante', curto:'Prazo', descricao:'Da data mais distante para a mais proxima' },
-  titulo_az:{ rotulo:'Titulo, A a Z', curto:'A a Z', descricao:'Ordem alfabetica crescente' },
-  titulo_za:{ rotulo:'Titulo, Z a A', curto:'Z a A', descricao:'Ordem alfabetica decrescente' },
+  prazo_proximo:{ rotulo:'Prazo mais próximo', curto:'Prazo', descricao:'Da data mais próxima para a mais distante' },
+  prazo_distante:{ rotulo:'Prazo mais distante', curto:'Prazo', descricao:'Da data mais distante para a mais próxima' },
+  titulo_az:{ rotulo:'Título, A a Z', curto:'A a Z', descricao:'Ordem alfabética crescente' },
+  titulo_za:{ rotulo:'Título, Z a A', curto:'Z a A', descricao:'Ordem alfabética decrescente' },
   prioridade:{ rotulo:'Prioridade', curto:'Prioridade', descricao:'Urgente, alta, media e baixa' },
-  responsavel:{ rotulo:'Responsavel', curto:'Responsavel', descricao:'Em ordem alfabetica do responsavel' }
+  responsavel:{ rotulo:'Responsavel', curto:'Responsavel', descricao:'Em ordem alfabética do responsável' }
 };
 
 function obterOrganizacaoColuna(colunaId){
@@ -4098,7 +4098,7 @@ function criarCardTarefaEl(tarefa){
     '</div>' +
     '<div class="titulo-card-tarefa">' + escaparHtml(tarefa.titulo) + '</div>' +
     htmlStatusTarefa(tarefa, podeMexer) +
-    (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluida e arquivada</div>' : '') +
+    (tarefa.status === 'concluida' ? '<div class="selo-concluida-card">Concluída e arquivada</div>' : '') +
     metaProcessoHtml +
     numeroProcessoHtml +
     barraSubHtml +
@@ -4761,7 +4761,7 @@ function renderizarSelectCustomTarefa(selectId){
   var lista = componente.querySelector('.select-custom-tf-lista');
   var opcaoSelecionada = select.options[select.selectedIndex];
 
-  textoValor.textContent = opcaoSelecionada ? opcaoSelecionada.textContent : 'Selecione uma opcao';
+  textoValor.textContent = opcaoSelecionada ? opcaoSelecionada.textContent : 'Selecione uma opção';
   botaoValor.disabled = !!select.disabled;
   componente.classList.toggle('desabilitado', !!select.disabled);
   lista.innerHTML = '';
@@ -5563,7 +5563,7 @@ function abrirEventosDoDia(isoDate){
   lista.innerHTML = '';
 
   if(tarefas.length === 0){
-    lista.innerHTML = '<div class="estado-vazio-eventos-dia">Nao existem tarefas com prazo nesta data.<br>Use o botao Nova Tarefa para criar uma.</div>';
+    lista.innerHTML = '<div class="estado-vazio-eventos-dia">Não existem tarefas com prazo nesta data.<br>Use o botao Nova Tarefa para criar uma.</div>';
   } else {
     tarefas.forEach(function(tarefa){
       var item = document.createElement('button');

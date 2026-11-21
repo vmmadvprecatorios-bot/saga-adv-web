@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611211252"></script>
+<script src="saga_guard.js?v=202611212041"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Processos em Andamento</title>
@@ -464,7 +464,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
   [data-situacao-prazo="muito-atrasada"]{ --prazo-cor:var(--prazo-vermelho-escuro); --prazo-texto:var(--prazo-texto-claro); }
 .proxima-providencia{margin-top:6px;min-width:0;max-width:100%}.providencia-link{display:inline-flex;align-items:center;flex-wrap:wrap;gap:5px;max-width:100%;border:1px solid var(--border-soft);border-left:4px solid var(--prazo-cor,var(--muted));border-radius:7px;padding:5px 7px;background:var(--panel);color:var(--text);font-size:10px;line-height:1.5;text-decoration:none;overflow-wrap:anywhere}.providencia-link:active{transform:scale(.98)}.providencia-link:focus-visible{outline:2px solid var(--gold);outline-offset:2px}.providencia-prazo{background:var(--prazo-cor,var(--panel-2));color:var(--prazo-texto,var(--muted));border-radius:4px;padding:1px 4px}.providencia-link[data-situacao-prazo="muito-atrasada"]{outline:1px solid var(--prazo-muito-contorno)}.providencia-concluida{color:var(--muted);border-left-width:1px}.providencia-mais{color:var(--muted);font-weight:700}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611211252">
+<link rel="stylesheet" href="saga_tema.css?v=202611212041">
 </head>
 <body data-theme="dark">
 
@@ -474,7 +474,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <!-- MODAL EXCLUIR -->
 <div class="modal-overlay" id="modalConfirmarExclusao" style="display:none">
   <div class="modal" style="max-width:420px">
-    <div class="modal-head"><div><h3>Excluir processo</h3><p>Esta acao move o registro para a lixeira. Nao e permanente.</p></div><button class="modal-close" onclick="closeModal('modalConfirmarExclusao')">&#x2715;</button></div>
+    <div class="modal-head"><div><h3>Excluir processo</h3><p>Esta ação move o registro para a lixeira. Não é permanente.</p></div><button class="modal-close" onclick="closeModal('modalConfirmarExclusao')">&#x2715;</button></div>
     <div class="modal-body">
       <p style="font-size:12.5px;line-height:1.6">Tem certeza que deseja excluir o processo de <strong id="confirmarExclusaoNome" style="color:var(--gold-light)"></strong>?</p>
       <p style="font-size:11px;color:var(--muted);margin-top:10px">O processo continuara acessivel para restauracao pelo administrador.</p>
@@ -486,7 +486,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <!-- MODAL ATRIBUIR -->
 <div class="modal-overlay" id="modalAtribuir" style="display:none">
   <div class="modal" style="max-width:420px">
-    <div class="modal-head"><div><h3>Atribuir responsavel</h3><p id="atribuirProcessoNome" style="color:var(--gold-light);font-size:11px;margin-top:3px"></p></div><button class="modal-close" onclick="closeModal('modalAtribuir')">&#x2715;</button></div>
+    <div class="modal-head"><div><h3>Atribuir responsável</h3><p id="atribuirProcessoNome" style="color:var(--gold-light);font-size:11px;margin-top:3px"></p></div><button class="modal-close" onclick="closeModal('modalAtribuir')">&#x2715;</button></div>
     <div class="modal-body">
       <div class="form-field">
         <label>Responsavel</label>
@@ -503,7 +503,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 <!-- MODAL NOVO PROCESSO -->
 <div class="modal-overlay" id="modalNovoProcesso" style="display:none">
   <div class="modal" style="max-width:520px">
-    <div class="modal-head"><div><h3>Novo processo</h3><p>Cadastre um novo processo vinculando uma pessoa ja existente.</p></div><button class="modal-close" onclick="closeModal('modalNovoProcesso')">&#x2715;</button></div>
+    <div class="modal-head"><div><h3>Novo processo</h3><p>Cadastre um novo processo vinculando uma pessoa já existente.</p></div><button class="modal-close" onclick="closeModal('modalNovoProcesso')">&#x2715;</button></div>
     <div class="modal-body">
       <div class="form-field">
         <label>Pessoa (cliente)</label>
@@ -538,7 +538,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
       </div>
       <div class="form-field">
         <label>Responsavel</label>
-        <div class="dropdown-custom" id="dropdownNovoResponsavel"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovoResponsavel')"><span id="labelNovoResponsavel">Sem responsavel</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovoResponsavel"></div></div>
+        <div class="dropdown-custom" id="dropdownNovoResponsavel"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovoResponsavel')"><span id="labelNovoResponsavel">Sem responsável</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovoResponsavel"></div></div>
       </div>
       <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px;margin-top:13px">
         <div class="form-field" style="margin-bottom:0"><label>Valor da causa (R$)</label><input type="text" inputmode="numeric" id="inputNovoValorCausa" placeholder="0,00"></div>
@@ -663,7 +663,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
             <input type="date" id="inputPeriodoDe">
             <label>Data de inicio - ate</label>
             <input type="date" id="inputPeriodoAte">
-            <button class="btn-aplicar-periodo" onclick="aplicarFiltroPeriodo()">Aplicar periodo</button>
+            <button class="btn-aplicar-periodo" onclick="aplicarFiltroPeriodo()">Aplicar período</button>
           </div>
         </div>
         <button class="btn-limpar" onclick="limparFiltros()">Limpar filtros</button>
@@ -701,7 +701,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
         <div class="cartoes-mobile" id="cartoesMobile"></div>
         <div class="rodape-tabela">
           <div class="seletor-quantidade">
-            <span class="seletor-quantidade-label">Por pagina:</span>
+            <span class="seletor-quantidade-label">Por página:</span>
             <div class="pills-quantidade">
               <div class="pill-quantidade" data-qtd="5" onclick="alterarPageSize(5)">5</div>
               <div class="pill-quantidade ativo" data-qtd="20" onclick="alterarPageSize(20)">20</div>
@@ -724,18 +724,18 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
 </div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611211252"></script>
-<script src="saga_teses.js?v=202611211252"></script>
-<script src="saga_etiquetas.js?v=202611211252"></script>
-<script src="saga_partes.js?v=202611211252"></script>
-<script src="saga_roscas.js?v=202611211252"></script>
-<script src="saga_paineis.js?v=202611211252"></script>
-<script src="saga_xlsx.js?v=202611211252"></script>
-<script src="saga_fichas.js?v=202611211252"></script>
-<script src="saga_origem.js?v=202611211252"></script>
-<script src="saga_planilha.js?v=202611211252"></script>
-<script src="saga_recursos.js?v=202611211252"></script>
-<script src="saga_tribunais.js?v=202611211252"></script>
+<script src="saga_ui.js?v=202611212041"></script>
+<script src="saga_teses.js?v=202611212041"></script>
+<script src="saga_etiquetas.js?v=202611212041"></script>
+<script src="saga_partes.js?v=202611212041"></script>
+<script src="saga_roscas.js?v=202611212041"></script>
+<script src="saga_paineis.js?v=202611212041"></script>
+<script src="saga_xlsx.js?v=202611212041"></script>
+<script src="saga_fichas.js?v=202611212041"></script>
+<script src="saga_origem.js?v=202611212041"></script>
+<script src="saga_planilha.js?v=202611212041"></script>
+<script src="saga_recursos.js?v=202611212041"></script>
+<script src="saga_tribunais.js?v=202611212041"></script>
 <script>
 // ============================================================
 // VMMADV - LISTA DE PROCESSOS - FASE 3 - Supabase Integration
@@ -834,12 +834,12 @@ async function criarNovaPessoaRapida(){
   var r=await _sb.from('pessoas').insert({nome_completo:nome,cpf:cpf,situacao_vital:'vivo',criado_por_id:state.meuInternoId}).select('id,nome_completo,cpf').single();
   if(r.error){
     if(String(r.error.code)==='23505'){showToast(r.error.message&&/ficha com este CPF/.test(r.error.message)?r.error.message:'Já existe uma pessoa cadastrada com este CPF.','warning');return;}
-    showToast('Nao foi possivel cadastrar a pessoa. Verifique suas permissoes.','error');return;
+    showToast('Não foi possível cadastrar a pessoa. Verifique suas permissões.','error');return;
   }
   if(decisao.motivo&&!(await SagaFichas.registrar(_sb,r.data.id,decisao.motivo,decisao.parecidas)))showToast('Ficha criada, mas o motivo não foi gravado. Escreva o motivo num comentário da ficha.','warning');
   if(telDigitos.length>=10){
     var rt=await _sb.from('pessoas_telefones').insert({pessoa_id:r.data.id,numero:telDigitos,tipo:'celular',principal:true,whatsapp:true,validado:false,origem:'manual',criado_por_id:state.meuInternoId});
-    if(rt.error)showToast('Pessoa cadastrada, mas o telefone nao foi salvo. Adicione na Ficha do Cliente.','warning');
+    if(rt.error)showToast('Pessoa cadastrada, mas o telefone não foi salvo. Adicione na Ficha do Cliente.','warning');
   }
   selPessoaNovo(r.data);
   document.getElementById('novoPessoaCriarWrap').style.display='none';
@@ -847,7 +847,7 @@ async function criarNovaPessoaRapida(){
 }
 function renderNovoProcessoResponsavel(){
   var l=document.getElementById('listaNovoResponsavel');
-  var ops=[{id:null,nome_completo:'Sem responsavel'}].concat(state.responsaveis);
+  var ops=[{id:null,nome_completo:'Sem responsável'}].concat(state.responsaveis);
   l.innerHTML=ops.map(function(u){return '<div class="dropdown-custom-opcao" data-novo-resp-id="'+esc(u.id||'')+'">'+esc(u.nome_completo)+'</div>';}).join('');
   l.querySelectorAll('[data-novo-resp-id]').forEach(function(op){
     op.addEventListener('click',function(){
@@ -859,7 +859,7 @@ function renderNovoProcessoResponsavel(){
 }
 function selNovoResponsavel(u){
   state.novoResponsavel=u.id||null;
-  document.getElementById('labelNovoResponsavel').textContent=u.id?u.nome_completo:'Sem responsavel';
+  document.getElementById('labelNovoResponsavel').textContent=u.id?u.nome_completo:'Sem responsável';
   document.getElementById('dropdownNovoResponsavel').classList.remove('aberto');
 }
 
@@ -885,7 +885,7 @@ async function atualizarCatalogo(tabela,id,campos){
 }
 function avisarFalhaCatalogo(res,acao){
   if(res.motivo==='recusado')showToast('O banco recusou '+acao+'. Sua conta nao tem permissao de gravar nesta tabela.','error');
-  else showToast('Nao foi possivel '+acao.replace(/^a /,'')+'. Tente novamente.','error');
+  else showToast('Não foi possível '+acao.replace(/^a /,'')+'. Tente novamente.','error');
 }
 // Itens sem cor (ou com o cinza padrao) recebem uma cor da paleta, gravada no banco.
 async function colorirSemCor(tabela,lista){
@@ -1075,7 +1075,7 @@ async function salvarCorItem(tabela,lista,id,cor,btn){
 async function salvarCorStatus(id,cor,btn){await salvarCorItem('status_funil',state.todosStatus,id,cor,btn);}
 async function salvarNomeStatus(id,nome){
   nome=(nome||'').trim();
-  if(!nome){showToast('O nome do status nao pode ficar em branco.','warning');await carregarTodosStatus();return;}
+  if(!nome){showToast('O nome do status não pode ficar em branco.','warning');await carregarTodosStatus();return;}
   var res=await atualizarCatalogo('status_funil',id,{nome:nome});
   if(!res.ok){avisarFalhaCatalogo(res,'a mudanca de nome');await carregarTodosStatus();return;}
   var s=state.todosStatus.find(function(x){return String(x.id)===String(id);});if(s)s.nome=nome;
@@ -1111,7 +1111,7 @@ async function criarStatusCatalogo(){
   if(!fase){showToast('Selecione ou informe a fase.','warning');return;}
   var maiorOrdem=state.todosStatus.reduce(function(max,s){return Math.max(max,s.ordem||0);},0);
   var r=await _sb.from('status_funil').insert({nome:nome,cor:cor,fase:fase,ordem:maiorOrdem+1,ativo:true}).select('id');
-  if(r.error||!r.data||!r.data.length){showToast('Nao foi possivel criar o status. Verifique suas permissoes.','error');return;}
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível criar o status. Verifique suas permissões.','error');return;}
   document.getElementById('novoStatusCatNome').value='';
   showToast('Status criado.','success');
   await carregarTodosStatus();await carregarOpcoesFiltros();
@@ -1129,7 +1129,7 @@ async function pedirDesativarCatalogo(tipo,id,nome){
     document.getElementById('labelRealocarDestino').textContent='Mover os '+afetados+' processo(s) para';
     renderOpcoesRealocar();
   }else{
-    document.getElementById('subRealocarCatalogo').textContent='Nenhum processo usa esta opcao no momento.';
+    document.getElementById('subRealocarCatalogo').textContent='Nenhum processo usa esta opção no momento.';
     document.getElementById('campoRealocarDestinoWrap').style.display='none';
   }
   openModal('modalRealocarCatalogo');
@@ -1139,7 +1139,7 @@ function renderOpcoesRealocar(){
   var origem=state.realocar;
   var lista=(origem.tipo==='tese'?state.todasTeses:state.todosStatus).filter(function(x){return String(x.id)!==String(origem.id);});
   document.getElementById('labelRealocarDestinoValor').textContent='Selecione...';
-  l.innerHTML=lista.map(function(x){return '<div class="dropdown-custom-opcao" data-destino-id="'+esc(x.id)+'">'+esc(x.nome)+'</div>';}).join('')||'<div class="dropdown-custom-opcao" style="color:var(--muted)">Nenhuma outra opcao disponivel</div>';
+  l.innerHTML=lista.map(function(x){return '<div class="dropdown-custom-opcao" data-destino-id="'+esc(x.id)+'">'+esc(x.nome)+'</div>';}).join('')||'<div class="dropdown-custom-opcao" style="color:var(--muted)">Nenhuma outra opção disponível</div>';
   l.querySelectorAll('[data-destino-id]').forEach(function(op){
     op.addEventListener('click',function(){
       var id=op.getAttribute('data-destino-id');
@@ -1159,7 +1159,7 @@ async function confirmarRealocarEDesativar(){
   var rpc='realocar_e_desativar_status';
   var params=origem.tipo==='tese'?{p_tese_id:origem.id,p_tese_destino_id:origem.destinoId}:{p_status_id:origem.id,p_status_destino_id:origem.destinoId};
   var r=await _sb.rpc(rpc,params);
-  if(r.error){showToast('Nao foi possivel desativar: '+(r.error.message||'tente novamente.'),'error');return;}
+  if(r.error){showToast('Não foi possível desativar: '+(r.error.message||'tente novamente.'),'error');return;}
   closeModal('modalRealocarCatalogo');
   showToast((origem.tipo==='tese'?'Tipo de ação':'Status')+' desativado(a).','success');
   if(origem.tipo==='tese'){await carregarTodasTeses();}else{await carregarTodosStatus();}
@@ -1199,7 +1199,7 @@ function lockSvg(){return '<svg width="12" height="12" viewBox="0 0 24 24" fill=
 // Permissoes
 async function verificarPermissao(modulo,acao){
   if(!state.meuInternoId)return false;
-  var r=await _sb.rpc('verificar_permissao',{p_usuario_id:state.meuInternoId,p_modulo:modulo,p_acao:acao});
+  var r=await (window.sagaPermissaoRpc?window.sagaPermissaoRpc(_sb,{p_usuario_id:state.meuInternoId,p_modulo:modulo,p_acao:acao}):_sb.rpc('verificar_permissao',{p_usuario_id:state.meuInternoId,p_modulo:modulo,p_acao:acao}));
   return r.data===true;
 }
 async function carregarPermissoes(){
@@ -1211,7 +1211,7 @@ async function carregarPermissoes(){
 // Perfil
 async function carregarPerfil(){
   if(!state.session)return;
-  var r=await _sb.from('usuarios').select('id,nome_completo,email,eh_administrador').eq('auth_user_id',state.session.user.id).maybeSingle();
+  var r=((window.sagaPerfilRpc&&await window.sagaPerfilRpc(state.session.user.id))||await _sb.from('usuarios').select('id,nome_completo,email,eh_administrador').eq('auth_user_id',state.session.user.id).maybeSingle());
   if(r.data){state.admin=r.data.eh_administrador===true;state.meuInternoId=r.data.id;/* a bolinha do perfil (foto ou iniciais) é cuidada pelo saga_ui.js em todas as telas */}
 }
 
@@ -1420,7 +1420,7 @@ function aplicarFatiaProcesso(chave,valor){
   aplicarFiltros();
 }
 document.getElementById('btnGraficosProcessos').addEventListener('click',function(){graficosProcessosOcultos=!graficosProcessosOcultos;try{localStorage.setItem('saga-processos-graficos-ocultos',graficosProcessosOcultos?'1':'0');}catch(e){}var raiz=document.getElementById('graficosProcessos');if(graficosProcessosOcultos&&!state.erroGraficos){this.textContent='Mostrar gráficos';this.setAttribute('aria-expanded','false');window.sagaRecolher(raiz,true);}else{renderGraficosProcessos();if(!state.erroGraficos)window.sagaRecolher(raiz,false);}});
-document.getElementById('graficosProcessos').addEventListener('click',function(e){var b=e.target.closest('[data-graf]');if(b)aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);});
+document.getElementById('graficosProcessos').addEventListener('click',function(e){var b=e.target.closest('[data-graf]:not(html)');if(b)aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);});
 document.getElementById('graficosProcessos').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);}});
 
 // Query principal
@@ -1588,7 +1588,7 @@ function renderSkeleton(){
 function renderSemPermissao(){
   document.getElementById('tbodyPrincipal').innerHTML='';
   var ev=document.getElementById('estadoVazio');ev.style.display='flex';
-  ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.3"/></svg><b>Acesso restrito</b><p>Voce nao possui permissao para visualizar processos.</p>';
+  ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.3"/></svg><b>Acesso restrito</b><p>Você não possui permissão para visualizar processos.</p>';
 }
 function renderEstadoVazio(){
   document.getElementById('tbodyPrincipal').innerHTML='';
@@ -1790,7 +1790,7 @@ function renderKanbanInterno(){
       return '<div class="card-kanban" data-processo-id="'+esc(p.id)+'" draggable="'+(podeArrastar?'true':'false')+'" onclick="verFicha(\''+p.id+'\')">'
         +(sig?'<div class="card-sigilo">'+lockSvg()+' Sigiloso</div>':'')
         +'<div class="card-nome">'+borrar(pe.nome_completo||'N/D',sig)+(window.SagaPlanilha&&SagaPlanilha.seloSemResumo?SagaPlanilha.seloSemResumo(p):'')+'</div>'
-        +'<div class="card-cpf">'+(pe.cpf?'CPF '+mascaraCpf(pe.cpf):'CPF nao informado')+'</div>'
+        +'<div class="card-cpf">'+(pe.cpf?'CPF '+mascaraCpf(pe.cpf):'CPF não informado')+'</div>'
         +'<div class="card-tags">'+(te.nome?teseTag(te):'')+'</div>'+providenciaHtml(p)
         +'<div class="card-rodape">'
         +'<div style="display:flex;align-items:center;gap:6px">'
@@ -1810,14 +1810,14 @@ function renderKanbanInterno(){
           +'<div class="menu-ordenar-opcao" style="color:var(--danger)" onclick="event.stopPropagation();excluirColunaKanban(\''+s.id+'\')"><span>Excluir coluna</span></div><div style="margin:8px 0;border-top:1px solid var(--border-soft)"></div>':'')
         +'<div class="menu-ordenar-titulo">Organizar esta coluna</div>'
         +['padrao','alfabetica','data','prazo','valor_causa','valor_precatorio'].map(function(c){
-          var rot={padrao:'Padrao (mais recente)',alfabetica:'Ordem alfabetica',data:'Data de entrada',prazo:'Prazo mais proximo',valor_causa:'Valor da causa',valor_precatorio:'Valor do precatorio'}[c];
+          var rot={padrao:'Padrao (mais recente)',alfabetica:'Ordem alfabética',data:'Data de entrada',prazo:'Prazo mais próximo',valor_causa:'Valor da causa',valor_precatorio:'Valor do precatorio'}[c];
           return '<div class="menu-ordenar-opcao '+(pref.criterio===c?'selecionada':'')+'" data-criterio="'+c+'" onclick="event.stopPropagation();selecionarCriterioOrdenar(\''+s.id+'\',\''+c+'\')"><span>'+rot+'</span><div class="check-mini"></div></div>';
         }).join('')
         +'<div class="menu-ordenar-direcao">'
         +'<div class="pill-direcao '+(pref.direcao==='asc'?'ativo':'')+'" onclick="event.stopPropagation();selecionarDirecaoOrdenar(\''+s.id+'\',\'asc\')">Crescente</div>'
         +'<div class="pill-direcao '+(pref.direcao==='desc'?'ativo':'')+'" onclick="event.stopPropagation();selecionarDirecaoOrdenar(\''+s.id+'\',\'desc\')">Decrescente</div>'
         +'</div>'
-        +'<div class="nota-pessoal-filtro">Esta organizacao e pessoal e nao altera a visualizacao dos outros colaboradores.</div>'
+        +'<div class="nota-pessoal-filtro">Esta organização é pessoal e não altera a visualização dos outros colaboradores.</div>'
       +'</div></div>';
     return '<div class="coluna-kanban" data-coluna-id="'+esc(s.id)+'">'
       +'<div class="coluna-cabecalho"><span class="coluna-cor-dot" style="background:'+cor+'"></span><div class="coluna-titulo">'+esc(s.nome)+'</div><span class="coluna-contagem">'+gr.processos.length+'</span>'+menuOrdenar+'</div>'
@@ -2026,7 +2026,7 @@ async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proxi
     if(r.error){
       p.status_id=statusAnteriorId;
       renderKanban();
-      showToast('Nao foi possivel mover o processo: '+(r.error.message||'tente novamente.'),'error');
+      showToast('Não foi possível mover o processo: '+(r.error.message||'tente novamente.'),'error');
       return;
     }
     var novoStatus=state.statusList.find(function(s){return String(s.id)===String(novoStatusId);});
@@ -2192,7 +2192,7 @@ async function executarExclusao(){
   // Um update direto na tabela e recusado, porque a regra de leitura esconde processos excluidos.
   var r=await _sb.rpc('excluir_processo',{p_processo_id:state.processoParaExcluir});
   if(r.error)showToast('Erro ao excluir: '+(r.error.message||'tente novamente.'),'danger');
-  else if(r.data!==true)showToast('Este processo ja tinha sido excluido.','warning');
+  else if(r.data!==true)showToast('Este processo já tinha sido excluído.','warning');
   else{showToast('Processo movido para a lixeira.','success');state.processoParaExcluir=null;invalidarBaseProcessos();carregarProcessos();}
 }
 function abrirAtribuir(id){
@@ -2200,13 +2200,13 @@ function abrirAtribuir(id){
   var p=state.processos.find(function(x){return x.id===id;});
   document.getElementById('atribuirProcessoNome').textContent=(p&&p.pessoa&&p.pessoa.nome_completo)||'';
   state.responsavelAtribuirSelecionado=(p&&p.responsavel)||null;
-  document.getElementById('labelAtribuirResponsavel').textContent=(p&&p.responsavel&&p.responsavel.nome_completo)||'Sem responsavel';
+  document.getElementById('labelAtribuirResponsavel').textContent=(p&&p.responsavel&&p.responsavel.nome_completo)||'Sem responsável';
   renderOpcoesAtribuir(p?p.responsavel_id:null);
   openModal('modalAtribuir');
 }
 function renderOpcoesAtribuir(respAtualId){
   var l=document.getElementById('listaAtribuir');
-  var ops=[{id:null,nome_completo:'Sem responsavel'}].concat(state.responsaveis);
+  var ops=[{id:null,nome_completo:'Sem responsável'}].concat(state.responsaveis);
   l.innerHTML=ops.map(function(u){
     var sel=u.id===respAtualId||(!u.id&&!respAtualId);
     return '<div class="dropdown-custom-opcao '+(sel?'selecionada':'')+'" data-atribuir-id="'+esc(u.id||'')+'">'
@@ -2223,7 +2223,7 @@ function renderOpcoesAtribuir(respAtualId){
 }
 function selAtribuir(u){
   state.responsavelAtribuirSelecionado=u.id?u:null;
-  document.getElementById('labelAtribuirResponsavel').textContent=u.id?u.nome_completo:'Sem responsavel';
+  document.getElementById('labelAtribuirResponsavel').textContent=u.id?u.nome_completo:'Sem responsável';
   document.getElementById('dropdownAtribuir').classList.remove('aberto');
   renderOpcoesAtribuir(u.id||null);
 }
@@ -2232,7 +2232,7 @@ async function executarAtribuicao(){
   var respId=state.responsavelAtribuirSelecionado?state.responsavelAtribuirSelecionado.id:null;
   var r=await _sb.from('processos').update({responsavel_id:respId}).eq('id',state.processoParaAtribuir);
   if(r.error)showToast('Erro ao atribuir: '+(r.error.message||'tente novamente.'),'danger');
-  else{showToast('Responsavel atualizado.','success');state.processoParaAtribuir=null;closeModal('modalAtribuir');invalidarBaseProcessos();carregarProcessos();}
+  else{showToast('Responsável atualizado.','success');state.processoParaAtribuir=null;closeModal('modalAtribuir');invalidarBaseProcessos();carregarProcessos();}
 }
 
 // Novo Processo
@@ -2257,7 +2257,7 @@ function abrirNovoProcesso(){
   document.getElementById('labelNovaTese').textContent='Selecione o tipo de ação...';
   document.getElementById('labelNovoStatus').textContent='Selecione o status...';
   state.novoResponsavel=null;
-  document.getElementById('labelNovoResponsavel').textContent='Sem responsavel';
+  document.getElementById('labelNovoResponsavel').textContent='Sem responsável';
   renderNovoProcessoTese();renderNovoProcessoStatus();renderNovoProcessoResponsavel();
   // quem está criando já entra como responsável (pode trocar)
   var eu=(state.responsaveis||[]).find(function(u){return String(u.id)===String(state.meuInternoId);});
@@ -2339,7 +2339,7 @@ async function salvarNovoProcesso(){
   // Percentual de honorarios: vai para o financeiro do processo (expectativa = valor da causa x %)
   var txtPct=(document.getElementById('inputNovoHonorarios').value||'').trim();
   var pctHonorarios=txtPct?parseFloat(txtPct.replace('%','').replace(',','.')):null;
-  if(txtPct&&(isNaN(pctHonorarios)||pctHonorarios<0||pctHonorarios>100)){showToast('O percentual de honorarios deve ficar entre 0 e 100.','warning');return;}
+  if(txtPct&&(isNaN(pctHonorarios)||pctHonorarios<0||pctHonorarios>100)){showToast('O percentual de honorários deve ficar entre 0 e 100.','warning');return;}
   // "+" no título da coluna do Kanban: o processo nasce já naquela coluna
   var naColuna=window.SagaPlanilha&&SagaPlanilha.dadosNovoNaColuna?SagaPlanilha.dadosNovoNaColuna():null;
   if(naColuna){if(naColuna.campos)dados.campos=Object.assign({},dados.campos||{},naColuna.campos);else if(naColuna.campo)dados[naColuna.campo]=naColuna.valor;}
@@ -2351,7 +2351,7 @@ async function salvarNovoProcesso(){
   }else{
     if(pctHonorarios!==null&&r.data){
       var rf=await _sb.from('financeiro_processo').upsert({processo_id:r.data.id,percentual_honorarios:pctHonorarios},{onConflict:'processo_id'});
-      if(rf.error)showToast('Processo criado, mas o percentual de honorarios nao foi salvo: '+(rf.error.message||''),'warning');
+      if(rf.error)showToast('Processo criado, mas o percentual de honorários não foi salvo: '+(rf.error.message||''),'warning');
     }
     var extras=state.novoExtras?state.novoExtras.itens().filter(function(i){return i.pessoa_id!==state.novoPessoa.id;}):[];
     var falhas=extras.length&&r.data?await SagaPartes.salvarLote(_sb,r.data.id,extras):0;
@@ -2366,7 +2366,7 @@ function atualizarPreviaHonorarios(){
   var t=(document.getElementById('inputNovoHonorarios').value||'').trim();
   var pct=t?parseFloat(t.replace('%','').replace(',','.')):null;
   var el=document.getElementById('previaHonorarios');
-  if(vc&&pct!==null&&!isNaN(pct))el.textContent='Expectativa de honorarios: '+fmtMoeda(Math.round(vc*pct)/100)+' (vai automaticamente para o Financeiro)';
+  if(vc&&pct!==null&&!isNaN(pct))el.textContent='Expectativa de honorários: '+fmtMoeda(Math.round(vc*pct)/100)+' (vai automaticamente para o Financeiro)';
   else el.textContent=t||vc?'Informe valor da causa e percentual para calcular a expectativa.':'';
 }
 document.getElementById('inputNovoValorCausa').addEventListener('input',atualizarPreviaHonorarios);
@@ -2451,10 +2451,10 @@ async function init(){
 function ligarInteracoesSagaUI(){
   // Todas as interacoes da topbar sao ligadas dentro do saga_ui.js
 }
-init().catch(function(e){showToast('Erro ao inicializar: '+(e.message||'recarregue a pagina.'),'danger');});
+init().catch(function(e){showToast('Erro ao inicializar: '+(e.message||'recarregue a página.'),'danger');});
 document.addEventListener('saga-atualizar',function(){
   invalidarBaseProcessos();carregarProcessos();
-  showToast('Informacoes atualizadas.','success');
+  showToast('Informações atualizadas.','success');
 });
 </script>
 </body>

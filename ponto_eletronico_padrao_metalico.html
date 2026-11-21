@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611211252"></script>
+<script src="saga_guard.js?v=202611212041"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -238,7 +238,7 @@ tr.apagado td{color:var(--muted)}
   #roscasMeuPonto .centro .n{font-size:15px}
 .ap-apelido{width:100%;min-width:160px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text);font:inherit;font-size:12.5px}.ap-apelido:focus{outline:none;border-color:var(--gold)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611211252">
+<link rel="stylesheet" href="saga_tema.css?v=202611212041">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -667,13 +667,13 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611211252"></script>
-<script src="saga_texto.js?v=202611211252"></script>
-<script src="saga_ponto_relatorios.js?v=202611211252"></script>
+<script src="saga_ui.js?v=202611212041"></script>
+<script src="saga_texto.js?v=202611212041"></script>
+<script src="saga_ponto_relatorios.js?v=202611212041"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611211252"></script>
-<script src="saga_roscas.js?v=202611211252"></script>
-<script src="saga_pdf.js?v=202611211252"></script>
+<script src="ponto_calculo.js?v=202611212041"></script>
+<script src="saga_roscas.js?v=202611212041"></script>
+<script src="saga_pdf.js?v=202611212041"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -2585,7 +2585,7 @@ async function init(){
   await SagaUI.carregar('ponto');
   var s=await _sb.auth.getSession();
   if(!s.data||!s.data.session){window.location.href='login_padrao_metalico.html';return;}
-  var eu=await _sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle();
+  var eu=((window.sagaPerfilRpc&&await window.sagaPerfilRpc(s.data.session.user.id))||await _sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle());
   state.meuId=eu.data&&eu.data.id;
   state.hoje=hojeKey();var p=state.hoje.split('-').map(Number);state.ano=p[0];state.mes=p[1];
   var perms=await Promise.all([_sb.rpc('ponto_ve_equipe'),_sb.rpc('ponto_aprova'),_sb.rpc('ponto_gerencia'),_sb.rpc('eh_admin_sistema'),_sb.rpc('ponto_exporta')]);

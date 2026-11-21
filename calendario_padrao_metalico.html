@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611211252"></script>
+<script src="saga_guard.js?v=202611212041"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV Sistema | Calendario</title>
@@ -411,7 +411,7 @@
   .aviso-serie{font-size:11.5px;color:var(--muted);background:color-mix(in srgb,var(--gold) 8%,transparent);border:1px solid color-mix(in srgb,var(--gold) 25%,transparent);border-radius:9px;padding:9px 11px;margin:0 0 12px;line-height:1.45;}
   .aviso-serie[hidden]{display:none;}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611211252">
+<link rel="stylesheet" href="saga_tema.css?v=202611212041">
 </head>
 <body data-theme="dark">
 
@@ -449,11 +449,11 @@
 
     <div class="barra-calendario">
       <div class="navegacao-periodo">
-        <button class="btn-nav-cal" id="btnPeriodoAnterior" aria-label="Periodo anterior">
+        <button class="btn-nav-cal" id="btnPeriodoAnterior" aria-label="Período anterior">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <div class="periodo-texto" id="periodoTexto" title="Clique para navegar rapidamente">Junho de 2026</div>
-        <button class="btn-nav-cal" id="btnPeriodoSeguinte" aria-label="Proximo periodo">
+        <button class="btn-nav-cal" id="btnPeriodoSeguinte" aria-label="Próximo período">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
@@ -568,14 +568,14 @@
     <div class="campo-modal">
       <label>Processo vinculado (opcional)</label>
       <div class="typeahead-wrap">
-        <input type="text" id="compProcessoBusca" placeholder="Numero ou nome do cliente...">
+        <input type="text" id="compProcessoBusca" placeholder="Número ou nome do cliente...">
         <div class="typeahead-lista" id="typeaheadProcesso"></div>
       </div>
       <input type="hidden" id="compProcessoId">
     </div>
     <div class="campo-modal">
       <label>Observacao</label>
-      <textarea id="compObservacao" placeholder="Informacoes adicionais..."></textarea>
+      <textarea id="compObservacao" placeholder="Informações adicionais..."></textarea>
     </div>
     <div class="campo-modal" id="campoAtribuir">
       <label for="compResponsavel">Agenda de (para quem é)</label>
@@ -635,7 +635,7 @@
     </div>
     <div class="modal-botoes">
       <button class="btn-cancelar-modal" id="btnCancelarTarefa">Fechar</button>
-      <button class="btn-salvar-modal btn-concluir-tarefa-modal" id="btnConcluirTarefa">Marcar como concluida</button>
+      <button class="btn-salvar-modal btn-concluir-tarefa-modal" id="btnConcluirTarefa">Marcar como concluída</button>
     </div>
   </div>
 </div>
@@ -644,7 +644,7 @@
 <div class="modal-gen-overlay" id="modalConfirmarExclusao">
   <div class="modal-gen-caixa">
     <h4>Confirmar exclusao</h4>
-    <p id="textoConfirmarExclusao">Deseja realmente excluir este compromisso? Esta acao nao pode ser desfeita.</p>
+    <p id="textoConfirmarExclusao">Deseja realmente excluir este compromisso? Esta ação não pode ser desfeita.</p>
     <div class="modal-gen-botoes">
       <button class="btn-gen-cancelar" id="btnCancelarExclusao">Cancelar</button>
       <button class="btn-gen-danger" id="btnConfirmarExclusao">Excluir</button>
@@ -655,10 +655,10 @@
 <div id="toast-container"></div>
 
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611211252"></script>
-<script src="saga_roscas.js?v=202611211252"></script>
-<script src="saga_texto.js?v=202611211252"></script>
-<script src="saga_atendimentos.js?v=202611211252"></script>
+<script src="saga_ui.js?v=202611212041"></script>
+<script src="saga_roscas.js?v=202611212041"></script>
+<script src="saga_texto.js?v=202611212041"></script>
+<script src="saga_atendimentos.js?v=202611212041"></script>
 <script>
 // ================================================================
 // VMMADV - Calendario Conectado ao Supabase
@@ -884,7 +884,7 @@ async function inicializar() {
     }
 
   } catch(e) {
-    showToast('Erro ao inicializar. Recarregue a pagina.', 'erro');
+    showToast('Erro ao inicializar. Recarregue a página.', 'erro');
   }
 }
 
@@ -918,8 +918,8 @@ async function salvarPreferencias() {
       filtros: { categorias: categoriasMap },
       atualizado_em: new Date().toISOString()
     }, { onConflict: 'usuario_id,tela' });
-    if (r && r.error) showToast('Nao foi possivel salvar as categorias: ' + (r.error.message || ''), 'erro');
-  } catch(e) { showToast('Nao foi possivel salvar as categorias. Verifique a conexao.', 'erro'); }
+    if (r && r.error) showToast('Não foi possível salvar as categorias: ' + (r.error.message || ''), 'erro');
+  } catch(e) { showToast('Não foi possível salvar as categorias. Verifique a conexão.', 'erro'); }
 }
 
 // ================================================================
@@ -1002,7 +1002,7 @@ async function carregarEventos(transicao) {
 
   } catch(e) {
     if (versao !== versaoCarregamentoCalendario) return;
-    showToast('Erro ao carregar eventos do periodo.', 'erro');
+    showToast('Erro ao carregar eventos do período.', 'erro');
     compromissos = []; tarefas = [];
   }
 
@@ -1772,7 +1772,7 @@ function renderizarLegenda() {
 
     popover.querySelector('.btn-excluir-legenda').addEventListener('click', function(e) {
       e.stopPropagation();
-      document.getElementById('textoConfirmarExclusao').textContent = 'Deseja remover a categoria "' + cat.nome + '" da legenda? Os compromissos existentes com este tipo nao serao alterados.';
+      document.getElementById('textoConfirmarExclusao').textContent = 'Deseja remover a categoria "' + cat.nome + '" da legenda? Os compromissos existentes com este tipo não serão alterados.';
       _cbExcluir = function() {
         delete categoriasMap[tipo];
         salvarPreferencias();
@@ -2040,7 +2040,7 @@ document.getElementById('btnSalvarComp').addEventListener('click', async functio
   var obs     = document.getElementById('compObservacao').value.trim();
   var procId  = document.getElementById('compProcessoId').value || null;
 
-  if (!titulo)          { showToast('Informe o titulo do compromisso.', 'erro'); return; }
+  if (!titulo)          { showToast('Informe o título do compromisso.', 'erro'); return; }
   if (!inicio)          { showToast('Informe a data e hora de inicio.', 'erro'); return; }
   if (!tipoSelecionado) { showToast('Selecione o tipo do compromisso.', 'erro'); return; }
 
@@ -2110,7 +2110,7 @@ document.getElementById('btnSalvarComp').addEventListener('click', async functio
 
 // Excluir compromisso
 document.getElementById('btnExcluirComp').addEventListener('click', function() {
-  document.getElementById('textoConfirmarExclusao').textContent = 'Deseja excluir este compromisso? Esta acao nao pode ser desfeita.';
+  document.getElementById('textoConfirmarExclusao').textContent = 'Deseja excluir este compromisso? Esta ação não pode ser desfeita.';
   _cbExcluir = async function() {
     try {
       var r = await _sb.from('compromissos').delete().eq('id', editandoId);
@@ -2220,13 +2220,13 @@ document.getElementById('btnConcluirTarefa').addEventListener('click', async fun
       concluida_por_id: meuPerfilId
     }).eq('id', tarefaAberta.id).eq('responsavel_id', meuPerfilId);
     if (r.error) throw r.error;
-    showToast('Tarefa marcada como concluida.', 'sucesso');
+    showToast('Tarefa marcada como concluída.', 'sucesso');
     document.getElementById('modalTarefa').classList.remove('aberto');
     await carregarEventos();
   } catch(e) {
     showToast('Erro ao concluir a tarefa. Tente novamente.', 'erro');
   } finally {
-    btn.disabled = false; btn.textContent = 'Marcar como concluida';
+    btn.disabled = false; btn.textContent = 'Marcar como concluída';
   }
 });
 

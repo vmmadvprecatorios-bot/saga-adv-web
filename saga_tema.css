@@ -636,6 +636,9 @@ html[data-cor^="vidro"] body #sidebarSaga .nav-item :is(.nav-icon,svg){color:var
 html[data-cor^="vidro"] body #sidebarSaga .nav-item:hover{background:color-mix(in srgb,var(--text) 8%,transparent)!important}
 html[data-cor^="vidro"] body #sidebarSaga :is(.nav-item.active,.nav-item.ativo){border-left-color:var(--gold)!important;background:color-mix(in srgb,var(--gold) 18%,transparent)!important;box-shadow:inset 0 0 18px color-mix(in srgb,var(--vd-brilho) 14%,transparent)}
 html[data-cor^="vidro"] body #sidebarSaga :is(.nav-item.active,.nav-item.ativo) :is(.nav-icon,svg){color:var(--gold-light)!important}
+/* 21/11 (check-up): no CLARO o menu do vidro é claro: o item escolhido leva a letra escura do tema (antes ficava branca, contraste 1,5) */
+html[data-cor^="vidro"] body[data-theme="light"] #sidebarSaga :is(.nav-item.active,.nav-item.ativo){color:var(--text)!important;font-weight:600}
+html[data-cor^="vidro"] body[data-theme="light"] #sidebarSaga :is(.nav-item.active,.nav-item.ativo) :is(.nav-icon,svg){color:var(--gold)!important}
 /* janelas que abrem: o fundo escurecido desfoca a tela de trás e a janela fica de vidro */
 html[data-cor^="vidro"] body :is(.modal-overlay,.mo,.modal-gen-overlay,.modal-overlay-bib,.modal-confirm-overlay,.janela-fundo,.seletor-rapido-overlay){-webkit-backdrop-filter:blur(8px) saturate(120%);backdrop-filter:blur(8px) saturate(120%)}
 /* painéis do Dashboard: vidro com desfoque (são poucos) */

@@ -111,7 +111,7 @@ html[data-graf-rosca="premium"] .sr-rosca .sr-fatia:hover,html[data-graf-rosca="
     }
     document.addEventListener('saga-graficos-mudou',function(){if(grupos.length&&!ocultos)atualizar(grupos);});
     btn.onclick=function(){ocultos=!ocultos;try{localStorage.setItem(op.chave,ocultos?'1':'0');}catch(e){}atualizar(grupos,true);if(!ocultos&&window.sagaRecolher)window.sagaRecolher(painel,false);};
-    painel.onclick=function(e){var b=e.target.closest('[data-graf]');if(b)escolher(b.dataset.graf,b.dataset.v);};
+    painel.onclick=function(e){var b=e.target.closest('[data-graf]:not(html)');if(b)escolher(b.dataset.graf,b.dataset.v);};
     painel.onkeydown=function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();escolher(b.dataset.graf,b.dataset.v);}};
     return {atualizar:atualizar};
   }

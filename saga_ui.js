@@ -1095,13 +1095,73 @@
     }
   }
 
-  async function carregarPerfil(){
+  // ===== Início rápido de cada tela (21/11, check-up do Dr. Victor; bloco 350) =====
+  // window.sagaInicio(): perfil, permissões, cores, marca, equipe e os números do menu e do sino numa chamada
+  // só (saga_inicio, SECURITY INVOKER). A mesma resposta serve à tela: window.sagaPode('modulo.acao') diz se a
+  // pessoa pode algo (o administrador pode tudo) SEM pedir de novo ao banco; window.sagaPerfil() devolve o perfil.
+  // A segurança continua no banco (RLS e funções): a tela só mostra ou esconde. Sem o saga_inicio (erro), volta
+  // ao caminho antigo, pedido por pedido. Os números do sino e do menu da resposta valem uma vez (só na abertura).
+  var _inicioProm=null,_inicioDados=null,_inicioUsado={};
+  global.sagaInicio=function(forcar){
+    if(!global._sb)return Promise.resolve(null);
+    if(_inicioProm&&!forcar)return _inicioProm;
+    _inicioUsado=forcar?{notificacoes:1,dia:1}:{};
+    _inicioProm=Promise.resolve(global._sb.rpc('saga_inicio')).then(function(r){
+      if(r.error||!r.data||!r.data.perfil){
+        if(r.error)console.warn('[SAGA] início da tela (saga_inicio): '+(r.error.message||r.error.code)+' (seguindo pelo caminho antigo)');
+        return null;
+      }
+      if(r.data.erros)console.warn('[SAGA] início da tela, partes com erro:',r.data.erros);
+      _inicioDados=r.data;return r.data;
+    },function(e){console.warn('[SAGA] início da tela (saga_inicio): '+(e&&e.message||e));return null;});
+    return _inicioProm;
+  };
+  function usarDoInicio(parte){
+    if(!_inicioDados||_inicioUsado[parte]||!(parte in _inicioDados))return null;
+    _inicioUsado[parte]=1;return _inicioDados[parte];
+  }
+  global.sagaPerfil=function(){return global.sagaInicio().then(function(d){return d&&d.perfil||null;});};
+  // sagaPode(chave) -> Promise<boolean>; chave 'modulo.acao' (mesma regra do verificar_permissao do banco)
+  global.sagaPode=async function(chave){
+    var d=await global.sagaInicio();
+    if(d&&d.perfil){
+      if(d.perfil.ativo===false)return false;
+      if(d.perfil.eh_administrador)return true;
+      if(Array.isArray(d.permissoes))return d.permissoes.indexOf(chave)>=0;
+    }
+    // caminho antigo (sem o saga_inicio): a lista minhas_permissoes, pedida uma vez por tela
+    if(!global._sagaPermsAntigo)global._sagaPermsAntigo=Promise.resolve(global._sb.rpc('minhas_permissoes')).then(function(r){return Array.isArray(r.data)?r.data:[];},function(){return [];});
+    return (await global._sagaPermsAntigo).indexOf(chave)>=0;
+  };
+  // O perfil da própria pessoa que as telas pediam de novo (usuarios por auth_user_id): já veio no saga_inicio
+  global.sagaPerfilRpc=async function(authId){
+    try{var d=await global.sagaInicio();if(d&&d.perfil&&authId&&authId===idSessaoLocal())return {data:Object.assign({},d.perfil),error:null};}catch(e){}
+    return null;
+  };
+  // Troca direta do _sb.rpc('verificar_permissao',{...}) das telas: mesma resposta {data:true|false}, sem ir ao banco
+  // quando é a própria pessoa (a lista já veio no saga_inicio); para outra pessoa, pergunta ao banco como antes.
+  global.sagaPermissaoRpc=async function(sb,args){
+    try{var d=await global.sagaInicio();
+      if(d&&d.perfil&&args&&args.p_usuario_id&&args.p_usuario_id===d.perfil.id)return {data:await global.sagaPode(args.p_modulo+'.'+args.p_acao),error:null};
+    }catch(e){}
+    return (sb||global._sb).rpc('verificar_permissao',args);
+  };
+  // várias de uma vez: sagaPodeVarias(['processos.criar','processos.editar']) -> {'processos.criar':true,...}
+  global.sagaPodeVarias=async function(lista){
+    var out={};for(var i=0;i<lista.length;i++)out[lista[i]]=await global.sagaPode(lista[i]);return out;
+  };
+
+  async function carregarPerfil(forcar){
     if(!global._sb)return;
     try{
-      var s=await global._sb.auth.getSession();
-      if(!s.data||!s.data.session)return;
-      var authId=s.data.session.user.id;
-      var r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo,foto_url,preferencias,preferencias_notificacao,tema_cor_fixo,temas_modo').eq('auth_user_id',authId).single();
+      // 21/11 (check-up, bloco 350): perfil, permissões, cores e equipe numa chamada só (saga_inicio)
+      var ini=await global.sagaInicio(!!forcar);
+      var r={data:ini&&ini.perfil||null,error:null};
+      if(!r.data){
+        var s=await global._sb.auth.getSession();
+        if(!s.data||!s.data.session)return;
+        r=await global._sb.from('usuarios').select('id,nome_completo,email,eh_administrador,ativo,foto_url,preferencias,preferencias_notificacao,tema_cor_fixo,temas_modo').eq('auth_user_id',s.data.session.user.id).single();
+      }
       if(r.error||!r.data)return;
       // Colaborador desligado (inativo) com sessao ainda aberta: sai na hora
       if(r.data.ativo===false){await global.sagaLogout('desligado');return;}
@@ -1119,7 +1179,8 @@
       try{if(localStorage.getItem('saga-letra')!==letra){localStorage.setItem('saga-letra',letra);document.documentElement.style.zoom=letra==='1'?'':letra;}}catch(e){}
       // cor do tema: a fixada pelo administrador vale mais que a escolha da pessoa; sem nada, Azul
       // e só vale cor liberada pelo administrador (regra geral ou "todos os temas" para a pessoa)
-      try{var rg=await global._sb.rpc('temas_regra');if(!rg.error&&rg.data)global._sagaTemasRegra=rg.data;}catch(e){}
+      if(ini&&ini.temas_regra)global._sagaTemasRegra=ini.temas_regra;
+      else{try{var rg=await global._sb.rpc('temas_regra');if(!rg.error&&rg.data)global._sagaTemasRegra=rg.data;}catch(e){}}
       // cadeado (17/11): a escolha guardada no perfil vale em qualquer computador
       try{var cdp=(r.data.preferencias||{}).cadeado;if(cdp&&typeof cdp==='object'){var cdj=JSON.stringify({modo:cdp.modo,seg:cdp.seg});if(localStorage.getItem('saga-cadeado')!==cdj&&global.sagaCadeado)global.sagaCadeado.configurar({modo:cdp.modo,seg:cdp.seg});}}catch(e){}
       try{var vlc=(r.data.preferencias||{}).vidro_cor;if(vlc&&/^#[0-9a-f]{6}$/i.test(vlc)&&localStorage.getItem('saga-vidro-cor')!==vlc)localStorage.setItem('saga-vidro-cor',vlc);}catch(e){}
@@ -1178,6 +1239,10 @@
   async function carregarPresenca(){
     if(!global._sb)return;
     try{
+      if(!_colaboradoresAtivos){
+        var ini=await global.sagaInicio();
+        if(ini&&Array.isArray(ini.equipe))_colaboradoresAtivos=ini.equipe.filter(function(u){return u.ativo&&u.tem_login;});
+      }
       if(!_colaboradoresAtivos){
         var q=await global._sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');
         _colaboradoresAtivos=q.data||[];
@@ -1557,6 +1622,7 @@
   }
   async function carregarMarca(){
     if(!global._sb)return;
+    try{var ini=await global.sagaInicio();if(ini&&ini.escritorio){aplicarMarca(ini.escritorio.logo||null,ini.escritorio.nome||'');return;}}catch(e){}
     try{var r=await global._sb.rpc('escritorio_publico');if(!r.error&&r.data)aplicarMarca(r.data.logo||null,r.data.nome||'');}catch(e){}
   }
   // Troca só o texto das iniciais; mexer em textContent apagaria a foto (e ela reapareceria piscando)
@@ -1607,7 +1673,8 @@
   async function carregarFotosEquipe(){
     if(!global._sb)return;
     try{
-      var r=await global._sb.from('usuarios').select('id,nome_completo,foto_url');
+      var ini=await global.sagaInicio();
+      var r=ini&&Array.isArray(ini.equipe)?{data:ini.equipe}:await global._sb.from('usuarios').select('id,nome_completo,foto_url');
       if(r.error||!r.data)return;
       var lista=r.data.map(function(u){return {i:u.id,n:u.nome_completo,f:u.foto_url||''};});
       guardarFotos(lista);
@@ -1738,7 +1805,9 @@
   async function contarNaoLidas(){
     if(!global._sb||!_perfilAtual)return;
     try{
-      var r=await global._sb.from('notificacoes').select('tipo,referencia_tabela').eq('usuario_id',_perfilAtual.id).eq('lida',false).limit(1000);
+      var r=usarDoInicio('notificacoes');
+      if(r)r={data:r};
+      else r=await global._sb.from('notificacoes').select('tipo,referencia_tabela').eq('usuario_id',_perfilAtual.id).eq('lida',false).limit(1000);
       if(r.error)return;
       var g={};(r.data||[]).forEach(function(n){var k=grupoDe(n).chave;if(_avisosDesligados.indexOf(k)<0)g[k]=1;});
       atualizarBadgeNotif(Object.keys(g).length);
@@ -2032,7 +2101,9 @@
     if(titulo)el.title=titulo;el.classList.toggle('atrasada',!!alerta);
   }
   async function contarMenu(){
-    var r=await global._sb.rpc('menu_contadores');
+    aplicarMenuContadores(await global._sb.rpc('menu_contadores'));
+  }
+  function aplicarMenuContadores(r){
     if(r.error||!r.data||typeof r.data!=='object'){
       if(r.error)console.warn('[SAGA] números do menu (menu_contadores): '+(r.error.message||r.error.code));
       return;
@@ -2152,7 +2223,21 @@
   async function contarDia(){
     if(!global._sb||!_perfilAtual)return;
     try{
-      var r=await global._sb.rpc('resumo_do_dia');
+      var bb=document.getElementById('navBadgeBuscas'),bp=document.getElementById('navBadgePedidosClaude'),mp=document.getElementById('navMinhaParte');
+      var podeBuscas=bb&&_minhasPermissoes&&_minhasPermissoes.indexOf('buscas.atender')>=0;
+      var podePedidos=bp&&_minhasPermissoes&&_minhasPermissoes.indexOf('conector_claude.usar')>=0;
+      var ini=usarDoInicio('dia');
+      var res;
+      if(ini){var I=_inicioDados||{};res=[{data:ini},podeBuscas?{count:+I.buscas_a_fazer||0}:null,podePedidos&&('pedidos_claude' in I)?{data:I.pedidos_claude}:null,mp&&('minha_parte' in I)?{data:I.minha_parte}:null,I.menu?{data:I.menu}:null];}
+      else{
+        // 21/11 (check-up): os números do menu saem juntos, não um depois do outro
+        res=await Promise.all([global._sb.rpc('resumo_do_dia'),
+          podeBuscas?global._sb.from('pedidos_busca').select('id',{count:'exact',head:true}).eq('situacao','a_fazer'):null,
+          podePedidos?global._sb.rpc('pedidos_claude_contar'):null,
+          mp?global._sb.rpc('distribuicao_tenho_parte'):null,
+          global._sb.rpc('menu_contadores')]);
+      }
+      var r=res[0];
       if(r.error||!r.data||typeof r.data!=='object')return;
       var d=r.data;
       var ag=document.getElementById('navBadgeAgenda');
@@ -2164,21 +2249,18 @@
         tf.classList.toggle('atrasada',atr>0);
         tf.title=(hoje?hoje+' para hoje':'')+(hoje&&atr?' e ':'')+(atr?atr+' atrasada'+(atr>1?'s':''):'');
       }
-      var bb=document.getElementById('navBadgeBuscas');
-      if(bb&&_minhasPermissoes&&_minhasPermissoes.indexOf('buscas.atender')>=0){
-        var rb=await global._sb.from('pedidos_busca').select('id',{count:'exact',head:true}).eq('situacao','a_fazer');
+      if(podeBuscas&&res[1]){
+        var rb=res[1];
         if(!rb.error){var nb=rb.count||0;bb.textContent=nb>99?'99+':String(nb);bb.style.display=nb>0?'':'none';bb.title=nb+' pedido(s) de busca a fazer';}
       }
       // Pedidos do Claude em aberto (bloco 186, T166): só para quem usa o SAGA no Claude
-      var bp=document.getElementById('navBadgePedidosClaude');
-      if(bp&&_minhasPermissoes&&_minhasPermissoes.indexOf('conector_claude.usar')>=0){
-        var rp=await global._sb.rpc('pedidos_claude_contar');
+      if(podePedidos&&res[2]){
+        var rp=res[2];
         if(!rp.error){var np=rp.data||0;bp.textContent=np>99?'99+':String(np);bp.style.display=np>0?'':'none';bp.title=np+' pedido(s) do Saga IA em aberto';}
       }
       // Meus honorários (bloco 273): o item aparece só para quem tem parte na distribuição dos honorários
-      var mp=document.getElementById('navMinhaParte');
-      if(mp){var rm=await global._sb.rpc('distribuicao_tenho_parte');if(!rm.error)mp.hidden=rm.data!==true;}
-      await contarMenu();
+      if(mp&&res[3]){var rm=res[3];if(!rm.error)mp.hidden=rm.data!==true;}
+      if(res[4])aplicarMenuContadores(res[4]);else await contarMenu();
       guardarNumerosMoldura();
     }catch(e){}
   }
@@ -2198,7 +2280,12 @@
     }
     document.addEventListener('visibilitychange',function(){if(!document.hidden){agendarContagemChat();contarDia();contarNaoLidas();}});
     // Avisos do dia (tarefas de hoje, atrasadas, compromissos) entram no sino uma vez por dia
-    if(global._sb&&_perfilAtual)global._sb.rpc('gerar_avisos_do_dia').then(function(){contarNaoLidas();},function(){});
+    // 21/11 (check-up): não precisa rodar a cada tela; uma vez a cada 3 h neste navegador (a função do banco não repete aviso)
+    var chAv='saga-avisos-dia',hojeAv=(_perfilAtual&&_perfilAtual.id)+'|'+new Date().toLocaleDateString('sv-SE',{timeZone:'America/Maceio'}),feitoAv=null;
+    try{feitoAv=JSON.parse(localStorage.getItem(chAv)||'null');}catch(e){}
+    if(global._sb&&_perfilAtual&&!(feitoAv&&feitoAv.k===hojeAv&&feitoAv.ate>Date.now()))global._sb.rpc('gerar_avisos_do_dia').then(function(r){
+      if(r&&!r.error){try{localStorage.setItem(chAv,JSON.stringify({k:hojeAv,ate:Date.now()+3*3600000}));}catch(e){}}
+      contarNaoLidas();},function(){});
     contarDia();
     setInterval(function(){contarChat();contarDia();contarNaoLidas();},60000);
   }
@@ -2287,7 +2374,8 @@
     if(!global._sb||!_perfilAtual)return;
     var ok=false;
     try{
-      var r=await global._sb.rpc('minhas_permissoes');
+      var ini=await global.sagaInicio();
+      var r=ini&&Array.isArray(ini.permissoes)?{data:ini.permissoes}:await global._sb.rpc('minhas_permissoes');
       if(!r.error&&Array.isArray(r.data)){
         _minhasPermissoes=r.data;ok=true;
         try{localStorage.setItem('saga-permissoes',JSON.stringify({uid:idSessaoLocal(),perms:r.data}));}catch(e){}
@@ -2663,12 +2751,14 @@
   async function conferirPonto(){
     if(!global._sb||!_perfilAtual)return _ponto.aberto;
     try{
+      // 21/11 (check-up): quem é a pessoa no Ponto não muda de uma tela para outra: guardado nesta aba
+      if(!_ponto.colab){try{var pg=JSON.parse(sessionStorage.getItem('saga-ponto-colab')||'null');if(pg&&pg.u===_perfilAtual.id&&pg.ate>Date.now()){_ponto.colab=pg.c;_ponto.livre=!!pg.l;}}catch(e){}}
       if(!_ponto.colab){
         var c=await global._sb.rpc('ponto_meu_colaborador');
         if(c.error||!c.data){_ponto.aberto=false;return false;}
         _ponto.colab=c.data;
         var pc=await global._sb.from('ponto_colaboradores').select('regime').eq('id',c.data).maybeSingle();
-        if(pc.data&&pc.data.regime){var rg=await global._sb.from('ponto_regimes').select('livre').eq('nome',pc.data.regime).maybeSingle();_ponto.livre=!!(rg.data&&rg.data.livre);}
+        if(pc.data&&pc.data.regime){var rg=await global._sb.from('ponto_regimes').select('livre').eq('nome',pc.data.regime).maybeSingle();_ponto.livre=!!(rg.data&&rg.data.livre);}        try{sessionStorage.setItem('saga-ponto-colab',JSON.stringify({u:_perfilAtual.id,c:_ponto.colab,l:_ponto.livre,ate:Date.now()+30*60000}));}catch(e){}
       }
       var r=await global._sb.from('ponto_marcacoes').select('slot').eq('colaborador_id',_ponto.colab).eq('data',hojeLocal());
       if(r.error)return _ponto.aberto;
@@ -2722,7 +2812,8 @@
     global.addEventListener('pageshow',function(ev){if(ev.persisted){marcarAba();conferirPonto();}});
     // bateu o ponto em outra aba: confere de novo aqui
     global.addEventListener('storage',function(e){if(e.key==='saga-ponto-mudou')conferirPonto();});
-    conferirPonto();setInterval(conferirPonto,120000);
+    // 21/11 (check-up): a 1ª conferência espera a tela terminar de abrir (só importa ao fechar a aba)
+    setTimeout(conferirPonto,4000);setInterval(conferirPonto,120000);
     // navegação dentro do sistema (troca de tela, recarregar, voltar) não é "fechar"
     if(global.navigation&&global.navigation.addEventListener)global.navigation.addEventListener('navigate',function(){_navegando=Date.now();});
     // F5 / Ctrl+R (recarregar pelo teclado) também não é fechar
@@ -2866,6 +2957,7 @@
 
   async function carregar(telaAtiva){
     _telaAtual=telaAtiva||'';
+    if(idSessaoLocal())global.sagaInicio();
     // Sem login valido: vai para o login sem mostrar nada da tela (saga_guard.js a mantem escondida)
     if(!(await conferirSessaoDaTela()))return;
     // Horario e local de acesso (a tela continua escondida enquanto confere)
@@ -2895,9 +2987,9 @@
   }
 
   // 09/11: página devolvida pela memória do navegador (botão voltar): confere de novo no banco a cor, a letra e o perfil
-  global.addEventListener('pageshow',function(ev){if(ev.persisted&&_perfilAtual)carregarPerfil();});
+  global.addEventListener('pageshow',function(ev){if(ev.persisted&&_perfilAtual)carregarPerfil(true);});
 
-  global.SagaUI={conferirPonto:function(){try{localStorage.setItem('saga-ponto-mudou',String(Date.now()));}catch(e){}conferirTravaPonto(true);return conferirPonto();},abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil().then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes,contarDia:function(){return contarDia();}};
+  global.SagaUI={conferirPonto:function(){try{localStorage.setItem('saga-ponto-mudou',String(Date.now()));}catch(e){}conferirTravaPonto(true);return conferirPonto();},abrirNotificacao:function(n){return abrirNotificacao(n);},atualizarPerfil:function(){return carregarPerfil(true).then(contarNaoLidas).then(carregarMarca);},carregar:carregar,podeVerTela:podeVerTela,atualizarChat:agendarContagemChat,contarAvisos:contarNaoLidas,recarregarPresenca:carregarPresenca,recarregarNotificacoes:carregarNotificacoes,contarDia:function(){return contarDia();}};
 })(window);
 
 /* Copiar com um clique (07/11): qualquer botão com data-copiar="texto" (e data-copiar-rotulo="CPF") copia o texto.
