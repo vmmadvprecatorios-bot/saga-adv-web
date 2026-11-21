@@ -1284,7 +1284,10 @@ function renderTagsAtivas(){
 
 /* Roscas: mesmo desenho e atualização sem recriar os cartões da T40 em Tarefas. */
 var graficosProcessosOcultos=false,gruposRoscasProcessos={};
-try{graficosProcessosOcultos=localStorage.getItem('saga-processos-graficos-ocultos')==='1';}catch(e){}
+// 21/11 (check-up 2ª rodada): "Ocultar gráficos" lembrado POR TELA (Jurídico e Captação cada um o seu); a chave antiga vale como ponto de partida
+var graficosProcessosLido=false;
+function chaveGraficosProcessos(){return 'saga-processos-graficos-ocultos-'+(typeof FASE_FIXA==='string'&&FASE_FIXA?FASE_FIXA:'todas');}
+function lerGraficosProcessos(){if(graficosProcessosLido)return;graficosProcessosLido=true;try{var v=localStorage.getItem(chaveGraficosProcessos());if(v===null)v=localStorage.getItem('saga-processos-graficos-ocultos');graficosProcessosOcultos=v==='1';}catch(e){}}
 function nomeCurtoRoscaProcesso(nome){var p=nome.trim().split(/\s+/);return p.length>1?p[0]+' '+p[p.length-1]:nome;}
 function agruparRoscaProcessos(base,tipo,max,filtro){
   var campo=tipo==='status'?'status_id':'responsavel_id';
@@ -1364,6 +1367,7 @@ document.addEventListener('saga-graficos-mudou',function(){if(document.getElemen
 function renderGraficosProcessos(){
   renderPainelAcomp();
   var secao=document.querySelector('.pr-graficos-secao');secao.hidden=!state.permissoes.visualizar;if(secao.hidden)return;
+  lerGraficosProcessos();
   var root=document.getElementById('graficosProcessos');
   var btn=document.getElementById('btnGraficosProcessos');
   btn.textContent=graficosProcessosOcultos?'Mostrar gráficos':'Ocultar gráficos';btn.setAttribute('aria-expanded',String(!graficosProcessosOcultos));root.hidden=graficosProcessosOcultos||!!state.erroGraficos;
@@ -1419,7 +1423,7 @@ function aplicarFatiaProcesso(chave,valor){
   }
   aplicarFiltros();
 }
-document.getElementById('btnGraficosProcessos').addEventListener('click',function(){graficosProcessosOcultos=!graficosProcessosOcultos;try{localStorage.setItem('saga-processos-graficos-ocultos',graficosProcessosOcultos?'1':'0');}catch(e){}var raiz=document.getElementById('graficosProcessos');if(graficosProcessosOcultos&&!state.erroGraficos){this.textContent='Mostrar gráficos';this.setAttribute('aria-expanded','false');window.sagaRecolher(raiz,true);}else{renderGraficosProcessos();if(!state.erroGraficos)window.sagaRecolher(raiz,false);}});
+document.getElementById('btnGraficosProcessos').addEventListener('click',function(){lerGraficosProcessos();graficosProcessosOcultos=!graficosProcessosOcultos;try{localStorage.setItem(chaveGraficosProcessos(),graficosProcessosOcultos?'1':'0');}catch(e){}var raiz=document.getElementById('graficosProcessos');if(graficosProcessosOcultos&&!state.erroGraficos){this.textContent='Mostrar gráficos';this.setAttribute('aria-expanded','false');window.sagaRecolher(raiz,true);}else{renderGraficosProcessos();if(!state.erroGraficos)window.sagaRecolher(raiz,false);}});
 document.getElementById('graficosProcessos').addEventListener('click',function(e){var b=e.target.closest('[data-graf]:not(html)');if(b)aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);});
 document.getElementById('graficosProcessos').addEventListener('keydown',function(e){var b=e.target.closest('circle[data-graf]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();aplicarFatiaProcesso(b.dataset.graf,b.dataset.v);}});
 

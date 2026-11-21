@@ -343,7 +343,7 @@ window.SagaPlanilha=(function(){
         // 10/11 (bloco 142): selo curto do recurso (AI, AP...) antes do número; os detalhes aparecem ao passar o mouse
         if(c.campo_sistema==='processo.numero'&&!sig&&t&&FASE_FIXA==='juridico'&&!cnjValido(v))conteudo+='<span class="sp-sem-resumo sp-num-invalido" title="Este número não é um número CNJ válido (precisa de 20 dígitos e o dígito verificador certo). Confira e corrija na própria célula.">número inválido</span>';
         if(c.campo_sistema==='processo.numero'&&!sig&&window.SagaRecursos)conteudo='<span class="rec-pl" data-rec-proc="'+h(p.id)+'"></span>'+conteudo;
-        return '<td data-sp-cel="'+h(c.id)+'" class="'+(editavel(p,c)?'sp-editavel':'')+'" title="'+h(t)+'">'+conteudo+'</td>';
+        return '<td data-sp-cel="'+h(c.id)+'" class="'+(editavel(p,c)?'sp-editavel':'')+(c.campo_sistema==='processo.numero'?' sp-td-num':'')+'" title="'+h(t)+'">'+conteudo+'</td>';
       }).join('')+'<td>'+acoesBtns(p)+'</td></tr>';
     }).join('');
     tb.querySelectorAll('tr[data-sp-proc]').forEach(function(tr){tr.onclick=null;});
@@ -653,7 +653,7 @@ window.SagaPlanilha=(function(){
         else if(c.chave==='captacao.data_retorno'&&!sig){var iso=String(v).slice(0,10),cl=statusDe(p).etapa==='Sem sucesso'?'':iso<hoje?'atrasado':iso===hoje?'hoje':'';conteudo='<span class="sp-ret '+cl+'">'+h(t)+(cl==='atrasado'?' · atrasado':cl==='hoje'?' · hoje':'')+'</span>';}
         else if(cor)conteudo='<span class="sp-selo"><i style="background:'+h(cor)+'"></i>'+h(t)+'</span>';
         else conteudo=h(t);
-        return '<div class="sp-cc-campo"><span class="sp-cc-rot">'+h(nomeCol(c))+'</span><span class="sp-cc-val">'+conteudo+'</span></div>';
+        return '<div class="sp-cc-campo'+(c.campo_sistema==='processo.numero'?' sp-cc-num':'')+'"><span class="sp-cc-rot">'+h(nomeCol(c))+'</span><span class="sp-cc-val">'+conteudo+'</span></div>';
       }).filter(Boolean).slice(0,6);
       var nome=cNome?texto(p,cNome):pe.nome_completo;
       return '<div class="cartao-cliente sp-cc" data-sp-proc="'+h(p.id)+'" onclick="verFicha(\''+h(p.id)+'\')">'+
@@ -1234,6 +1234,8 @@ window.SagaPlanilha=(function(){
       '.sp-tabela{min-width:max-content}.sp-tabela th{padding:0;position:sticky;top:0;z-index:2;background:var(--panel)}'+
       '.sp-th{display:flex;align-items:center;gap:6px;width:100%;padding:13px 14px;border:0;background:none;color:inherit;font:inherit;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;white-space:nowrap;text-align:left}'+
       '.sp-th:hover,.sp-th.ativo{color:var(--gold-light)}.sp-funil{opacity:.7;font-size:10px}.sp-th:active{transform:scale(.97)}'+
+      // 21/11 (regra de 14/11: número do processo SEMPRE inteiro): a coluna do número nunca corta com reticências
+      '.sp-tabela td.sp-td-num{max-width:none!important;min-width:max-content!important;white-space:nowrap;text-overflow:clip;overflow:visible}.sp-cc-num{grid-column:1/-1}.sp-cc-num .sp-cc-val{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}'+
       '.sp-tabela td{max-width:260px;overflow:hidden;text-overflow:ellipsis}.sp-tabela td.sp-editavel{cursor:cell}.sp-tabela td.sp-editavel:hover{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--gold) 35%,transparent)}'+
       '.sp-tabela td.sp-salvando{opacity:.5}.sp-vazio{color:var(--muted)}.sp-codigo{font-family:\'JetBrains Mono\',ui-monospace,Menlo,monospace;font-size:11.5px;letter-spacing:.2px;color:var(--gold-light)}.sp-tabela td .saga-copiar{width:20px;height:20px}.sp-link{color:var(--gold-light);text-decoration:underline}.sp-link-ficha{cursor:pointer;color:inherit;text-decoration:none}.sp-link-ficha:hover{text-decoration:underline}'+
       '.sp-hon{display:flex;align-items:center;gap:4px;min-width:170px}.sp-hon .sp-editor{min-width:0;flex:1}.sp-hon-modo{flex:0 0 auto;height:28px;min-width:34px;padding:0 6px;border-radius:7px;border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));background:color-mix(in srgb,var(--gold) 10%,transparent);color:var(--text);font:inherit;font-size:11px;font-weight:600;cursor:pointer}.sp-hon-modo:hover{border-color:var(--gold)}.sp-hon-dica{flex:0 0 auto;font-size:10px;color:var(--muted);white-space:nowrap}'+
@@ -2234,7 +2236,8 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       '.sp-visao{display:flex;align-items:center;gap:4px}.sp-visao .sp-op{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-visao .sp-ico{flex:0 0 auto}'+
       '.sp-visao-nova{display:flex;gap:6px;padding:6px 2px 2px}.sp-visao-nova input{flex:1;min-width:0;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 9px;font:inherit;font-size:12px}'+
       '.sp-lote-form{display:grid;gap:12px}.sp-lote-form label{display:grid;gap:5px;font-size:12px;color:var(--muted)}.sp-lote-form select,.sp-lote-form input{background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:9px;padding:9px 10px;font:inherit;font-size:13px}'+
-      '.sp-lote-prog{height:6px;border-radius:4px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}.sp-lote-prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s '+CURVA+'}';
+      '.sp-lote-prog{height:6px;border-radius:4px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}.sp-lote-prog i{display:block;height:100%;width:0;background:var(--gold);transition:width .2s '+CURVA+'}'+
+      '.sp-lote-falhas{display:grid;gap:4px;margin-top:8px;max-height:260px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--border-soft);border-radius:9px;padding:8px}.sp-lote-falhas>div{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:10px;font-size:12px;color:var(--text);overflow-wrap:anywhere}.sp-lote-falhas>div>span:last-child{color:var(--muted)}.sp-lote-erro{color:var(--danger)!important}@media(max-width:600px){.sp-lote-falhas>div{grid-template-columns:1fr;gap:2px}}';
     document.head.appendChild(st);
   }
 
@@ -2313,24 +2316,38 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
     selC.onchange=async function(){
       col=cols.find(function(x){return x.id===selC.value;});ler=null;cx.innerHTML='';rot.hidden=!col;ok.disabled=!col;if(!col)return;
       var ops=await opcoesDe(col),campo;
-      if(ops){campo=document.createElement('select');campo.innerHTML='<option value="">— deixar vazio —</option>'+ops.map(function(o){return '<option value="'+h(o.id)+'">'+h(o.nome)+'</option>';}).join('');ler=function(){return campo.value||null;};}
-      else if(col.tipo==='sim_nao'){campo=document.createElement('select');campo.innerHTML='<option value="">— deixar vazio —</option><option value="true">Sim</option><option value="false">Não</option>';ler=function(){return campo.value===''?null:campo.value==='true';};}
-      else{campo=document.createElement('input');campo.type=col.tipo==='data'?'date':'text';aplicarMascara(campo,col,null);
+      // 21/11 (check-up 2ª rodada): o valor novo começa SEM escolha; "deixar vazio" é uma opção à parte e pede confirmação
+      var PRIMEIRA='<option value="" selected disabled>Escolha o valor novo…</option>',VAZIO='<option value="__vazio">— deixar vazio —</option>';
+      var semEscolha=function(){throw new Error('Escolha o valor novo (ou "deixar vazio").');};
+      if(ops){campo=document.createElement('select');campo.innerHTML=PRIMEIRA+ops.map(function(o){return '<option value="'+h(o.id)+'">'+h(o.nome)+'</option>';}).join('')+VAZIO;ler=function(){if(!campo.value)semEscolha();return campo.value==='__vazio'?null:campo.value;};}
+      else if(col.tipo==='sim_nao'){campo=document.createElement('select');campo.innerHTML=PRIMEIRA+'<option value="true">Sim</option><option value="false">Não</option>'+VAZIO;ler=function(){if(!campo.value)semEscolha();return campo.value==='__vazio'?null:campo.value==='true';};}
+      else{campo=document.createElement('input');campo.type=col.tipo==='data'?'date':'text';campo.placeholder='Valor novo (em branco = deixar vazio)';aplicarMascara(campo,col,null);
         ler=function(){var x=campo.value.trim();if(!x)return null;var m=tipoMascara(col);return m==='cpf'||m==='cnj'||m==='tel'?formatar(m,x):x;};}
       campo.id='spLoteCampo';cx.appendChild(campo);ok.textContent='Aplicar a '+ids.length;
     };
     ok.onclick=async function(){
-      if(!col||!ler)return;var valor;try{valor=ler();}catch(e){aviso(h(e.message),true);return;}
+      if(!col||!ler)return;var valor;try{valor=ler();}catch(e){j.q('#spLoteMsg').innerHTML='<span class="sp-lote-erro">'+h(e.message)+'</span>';return;}
+      if(valor===null||valor===''){
+        var tx='A coluna "'+nomeCol(col)+'" vai ficar VAZIA em '+ids.length+(ids.length===1?' processo':' processos')+'. O valor de antes fica no registro de alterações.';
+        var sim=window.sagaConfirmar?await sagaConfirmar('Deixar vazio?',tx,'Deixar vazio',true):confirm(tx);if(!sim)return;}
       ok.disabled=true;selC.disabled=true;var prog=j.q('#spLoteProg'),barra=prog.querySelector('i'),msg=j.q('#spLoteMsg');prog.hidden=false;
-      var feitos=0,pulados=0,erros=0,prox=0,prontos=0;
+      var feitos=0,pulados=0,erros=0,prox=0,prontos=0,falhas=[];
+      var nomeP=function(p,id){if(!p)return 'Processo '+id;var pe=p.pessoa||{},sig=!!p.sigilo&&!state.permissoes.editar_dados;return (sig?'(sigiloso)':(pe.nome_completo||'Sem nome'))+(p.codigo?' · '+p.codigo:'');};
       // 09/11: 6 gravações ao mesmo tempo (com milhares de linhas, uma por uma demorava muito)
       var trabalhar=async function(){while(prox<ids.length){var k=prox++,p=processo(ids[k]);
-        if(!p||!editavel(p,col)){pulados++;}
-        else{try{await gravar(p,col,valor);feitos++;}catch(e){erros++;}}
+        if(!p||!editavel(p,col)){pulados++;falhas.push({nome:nomeP(p,ids[k]),motivo:!p?'não está mais na lista':p.sigilo&&!state.permissoes.editar_dados?'processo sigiloso: só quem edita os dados sigilosos altera':'sem permissão para alterar esta coluna'});}
+        else{try{await gravar(p,col,valor);feitos++;}catch(e){erros++;falhas.push({nome:nomeP(p,ids[k]),motivo:'erro ao gravar'+(e&&e.message?': '+e.message:'')});}}
         prontos++;barra.style.width=Math.round(prontos/ids.length*100)+'%';msg.textContent=prontos.toLocaleString('pt-BR')+' de '+ids.length.toLocaleString('pt-BR')+'…';}};
       await Promise.all([trabalhar(),trabalhar(),trabalhar(),trabalhar(),trabalhar(),trabalhar()]);
-      j.fechar();redesenhar();
-      aviso(feitos+(feitos===1?' processo alterado':' processos alterados')+(pulados?'; '+pulados+' sem permissão para alterar':'')+(erros?'; '+erros+' com erro (tente de novo)':'')+'.',erros>0);
+      redesenhar();
+      var resumo=feitos+(feitos===1?' processo alterado':' processos alterados')+(pulados?'; '+pulados+' não puderam ser alterados':'')+(erros?'; '+erros+' com erro (tente de novo)':'')+'.';
+      aviso(resumo,erros>0);
+      if(!falhas.length){j.fechar();return;}
+      // a janela fica aberta com a lista de quem não foi alterado e o motivo (erros sempre à vista)
+      falhas.sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
+      msg.innerHTML='<b>'+h(resumo)+'</b><div class="sp-lote-falhas">'+falhas.map(function(f){return '<div><span>'+h(f.nome)+'</span><span class="'+(/^erro/.test(f.motivo)?'sp-lote-erro':'')+'">'+h(f.motivo)+'</span></div>';}).join('')+'</div>';
+      prog.hidden=true;ok.style.display='none';
+      var fch=ok.parentNode&&ok.parentNode.querySelectorAll('[data-fechar]');if(fch&&fch.length)fch[fch.length-1].textContent='Fechar';
     };
   }
 
