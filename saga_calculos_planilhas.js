@@ -287,7 +287,7 @@
     r5.p('A5', { f: '=' + q(A1) + 'B24', t: 'reais' }).p('B5', { f: '=' + q(A1) + 'B37', t: 'reais' }).p('C5', { f: '=B5*100/A5/100', t: 'pct' })
       .p('D5', { v: num(e.ir_devido), t: 'reais', fundo: 'entrada' }).p('E5', { v: num(e.ir_retido_principal), t: 'reais', fundo: 'entrada' })
       .p('H5', { v: num(e.ir_restituir_principal), t: 'reais', fundo: 'entrada' }).p('I5', { v: num(e.ir_selic), t: 'pct', casas: 6, fundo: 'entrada' })
-      .p('J5', { f: '=E5+H5', t: 'reais', conferir: true, nota: 'Fórmula da matriz: J5 = E5 + H5 (IR retido + IR a ser restituído). A coluna I (nº de meses / SELIC) não entra na conta. Conferir com o Dr. Victor.' });
+      .p('J5', { f: '=E5+H5', t: 'reais', nota: 'Fórmula da matriz: J5 = E5 + H5 (IR retido + IR a ser restituído); a coluna I (nº de meses / SELIC) não entra na conta. Mantida como na matriz (ajustar com o uso, decisão do Dr. Victor em 21/11).' });
     r5.p('A8', { v: 'Valor do PRC', fundo: 'secao', al: 'centro' }).p('B8', { v: 'Valor dos juros', fundo: 'secao', al: 'centro' }).p('C8', { v: '% juros', fundo: 'secao', al: 'centro' }).p('D8', { v: 'IR sobre os juros', fundo: 'secao', al: 'centro' })
       .p('E8', { v: 'IR retido na fonte', fundo: 'secao', al: 'centro' }).p('F8', { fundo: 'secao' }).p('G8', { fundo: 'secao' }).p('H8', { v: 'IR a ser restituído', fundo: 'secao', al: 'centro' }).p('I8', { v: 'SELIC (%)', fundo: 'secao', al: 'centro' }).p('J8', { v: 'Valor a ser restituído', fundo: 'secao', al: 'centro' });
     r5.p('A9', { f: '=A5', t: 'reais' }).p('B9', { f: '=A5-B5', t: 'reais' }).p('C9', { f: '=100%-C5', t: 'pct' }).p('D9', { v: 0, t: 'reais', fundo: 'entrada' })
@@ -317,7 +317,7 @@
     });
     lr++;
     r5.p('A' + lr, { v: 'Honorários totais', b: true }).p('J' + lr, { f: '=J15', t: 'reais', b: true }); var lrHon = lr; lr++;
-    r5.p('A' + lr, { v: 'Valor do autor', fundo: 'total' }).p('J' + lr, { f: '=J5-J' + lrHon, t: 'reais', fundo: 'total', conferir: true, nota: 'Fórmula da matriz: Valor do autor = J5 − honorários (deixa de fora o valor dos juros, J9). Conferir com o Dr. Victor.' }); lr++;
+    r5.p('A' + lr, { v: 'Valor do autor', fundo: 'total' }).p('J' + lr, { f: '=J29-J' + lrHon, t: 'reais', fundo: 'total', nota: 'Decisão do Dr. Victor (21/11): valor do autor = total (com os juros) − honorários, como no PSS (a matriz fazia J5 − honorários e deixava os juros de fora).' }); lr++;
     /* o total fica na linha 29, como na matriz, porque as fórmulas acima apontam para J29 */
     if(lr > 29){ /* muitas linhas: aponta para a linha certa */
       Object.keys(r5.a.celulas).forEach(function(k){ var x = r5.a.celulas[k]; if(x.f) x.f = x.f.replace(/J29/g, 'J' + lr); });
