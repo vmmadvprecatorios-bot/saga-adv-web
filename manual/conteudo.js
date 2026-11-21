@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.37",
+  versao: "3.38",
   data: "22/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.38", data: "22/11/2026", mudou: "Prints novos no sistema simulado: ficha (3 cartões e contatos; blocos e cartões Processo/Painel lateral; janela Criar pastas; janela Ler consulta com as miniaturas dos prints), Minhas Tarefas (quadro, menu de etiquetas e o botão **Filtros no celular**, parte nova), Captação (topo e lista com Por captador, Sem captador, Alterar… e Captador anterior), Painel geral (com Mais números recolhido) e Financeiro (aba Distribuição). Os prints agora aparecem inteiros, sem corte, também os de celular." },
     { versao: "3.37", data: "22/11/2026", mudou: "Manual em dia com as novidades de 19 a 21/11: capítulo **Para aprovar** refeito (Luísa e Renata; Pedidos para a Renata com Pode fazer, Depois e Não fazer e o Plano da peça; Ler e corrigir, Ver como vai sair, revisão da Luísa com o selo Revisada, Aprovar e Protocolei; Recados e Relatório em PDF; **Autos para baixar**); ficha em **3 cartões** (Cliente, Processo, Painel lateral) com o código para copiar; **Fazer petição** lendo os documentos do cliente; **Cálculo do PSS** lendo requisitório, espelho e demonstrativo (de onde veio cada dado; SELIC); **Planilhas e textos do SAGA**, **Editor de planilhas** e **Planilhas do PSS**; **Modelos** (petições, timbrados e arquivos; pastas; + Novo modelo, Importar pasta de petições, editor e A revisar); **Distribuição dos honorários** (Equipe e Jurídico) e **Meus honorários**; Minhas Tarefas (etiqueta Dar impulso processual, tarefa Manutenção: completar dados, botão Filtros no celular); Intimações (linha da Luísa com o prazo em dias úteis, Prazo vencendo, repetida CNJ × e-mail); Captação (Alterar…, Sem captador, Captador anterior, gráfico Por captador; passagem sozinha para o Jurídico; pré-validados do prêmio); Chat (grupo Recebimento de documentação); login (**Manter conectado**; login diário); botão **?** de ajuda; PDF com texto para selecionar e copiar; Painel geral (Mais números recolhido); SAGA no Claude (ferramentas novas); Saúde do sistema e Armazenamento; permissões novas. Prints novos no sistema simulado." },
     { versao: "3.36", data: "21/11/2026", mudou: "Agenda: **Ver no celular** (link pessoal para o Google Agenda e o iPhone, só leitura, com lembrete; Gerar link novo / Desligar) e aviso no **sino 30 minutos antes** de cada compromisso." },
     { versao: "3.35", data: "21/11/2026", mudou: "Preferências em **abas**: Aparência (tema, cor e letra), Vidro (só com cor de vidro), Tela (efeitos, cadeado, tela inicial e as escolhas que acompanham a conta), Avisos e sons e, para o administrador, Equipe (cores da equipe). A aba escolhida fica lembrada." },
@@ -385,7 +386,7 @@ window.SAGA_MANUAL = {
             "**Abrir a ficha**: clique no nome do cliente (Ctrl+clique abre em outra aba). O número do processo aparece sempre inteiro, nunca cortado."
           ],
           img: "captacao_lista",
-          marcas: ["Busca da lista.", "Visões salvas.", "Escolher colunas.", "Exportar Excel.", "Clique no nome para abrir a ficha."],
+          marcas: ["Gráfico Por captador (clique numa fatia para filtrar).", "Busca da lista (nome, CPF, número ou código).", "Sem captador (N): cartões ainda sem captador com login.", "Com linhas marcadas: Alterar… e Exportar marcados.", "Captador anterior (planilha): o nome que vinha da planilha antiga."],
           atencao: ["Marcar linhas e **Excluir marcados**: só o administrador.", "Coluna **Carta** é automática (vem da tela Cartas): não se edita à mão."]
         },
         { id: "funil", titulo: "Andar com o cliente pelo funil (Kanban)",
@@ -504,7 +505,7 @@ window.SAGA_MANUAL = {
             "[[Editar dados do cliente]]: dados pessoais e o **perfil** (situação funcional, órgão, cargo, matrícula, datas, nome da mãe)."
           ],
           img: "ficha_topo",
-          marcas: ["Nome do cliente.", "Editar dados do cliente.", "Aba de um processo.", "Localização: contatos do cliente e dos parentes.", "+ Novo Processo para este cliente.", "+ Recurso (agravo, apelação...) do processo aberto."],
+          marcas: ["Cartão Cliente: clique no título para recolher (fica uma linha com nome e código; as abas dos processos continuam à vista).", "Código do cliente, com o botão de copiar.", "Contatos: Recolher todos / Abrir todos e Ler consulta (PDF ou print).", "Cada grupo (Telefones, E-mails, Endereços) abre e recolhe pelo título; o número é quantos há.", "Abas dos processos e a Localização.", "+ Novo Processo e + Recurso."],
           dicas: ["Telefone confirmado com o cliente? Clique em validar (✓): ele vira o contato principal de confiança.", "A escolha dos cartões recolhidos fica guardada na sua conta e vale em qualquer aparelho."]
         },
         { id: "blocos", titulo: "Organizar a ficha: recolher blocos, colunas e a ordem",
@@ -518,7 +519,7 @@ window.SAGA_MANUAL = {
             "A escolha fica guardada **neste navegador** e vale para todas as fichas. Link que leva a um bloco (ex.: aviso de parcela vencida, andamento novo, menção num comentário) abre o bloco sozinho."
           ],
           img: "ficha_blocos",
-          marcas: ["Abrir tudo e Recolher tudo.", "Colunas: as duas, só a do meio ou só a lateral.", "Organizar blocos.", "Bloco recolhido: clique no título para abrir.", "Janela Organizar blocos: aparece ou não, coluna e ordem."],
+          marcas: ["Abrir tudo e Recolher tudo.", "Colunas: as duas, só a do meio ou só a lateral.", "Organizar blocos: quais aparecem, a ordem e a coluna.", "Cartão Processo: o título recolhe o cartão inteiro.", "Cartão Painel lateral: recolhido, o Processo ocupa a largura toda.", "Bloco recolhido: o título mostra um resumo; clique para abrir."],
           dicas: ["No celular as colunas ficam uma embaixo da outra; recolher e organizar funcionam igual.", "Recolher não apaga nada: é só a forma de ver a ficha."]
         },
         { id: "processo", titulo: "Trabalhar dentro de um processo",
@@ -566,6 +567,8 @@ window.SAGA_MANUAL = {
             "Clique em [[Criar]]. Depois, no **⋯** ao lado do nome de qualquer pasta: renomear, mover, subir/descer, nova subpasta, anexar documento aqui ou remover.",
             "As pastas **Pesquisa > Busca** e **Pesquisa > Espelhos do TRF** o SAGA cria sozinho."
           ],
+          img: "ficha_criar_pastas",
+          marcas: ["Pastas pré-prontas: marque só as que quer (a que já existe aparece marcada e apagada, \"já existe\").", "Organizar a lista (só o administrador).", "Pasta livre: outro nome e onde ela fica.", "Criar."],
           dicas: ["Administrador: [[Organizar a lista]] na mesma janela muda a lista de pastas pré-prontas de todo o escritório: renomear (clique no nome), ▲ ▼ para a ordem, ✕ para tirar da lista (as pastas já criadas nas fichas continuam), [[+ Pôr na lista]] para uma nova e [[Ver as tiradas da lista]] para trazer uma de volta."]
         },
         { id: "docs_pessoais", titulo: "Documentos do processo e documentos pessoais",
@@ -626,7 +629,7 @@ window.SAGA_MANUAL = {
             "**Enviar carta**: manda o endereço para a fila da tela Cartas."
           ],
           img: "ficha_localizacao",
-          marcas: ["Localização.", "Pedir busca."],
+          marcas: ["De quem é a consulta (o cliente ou um parente).", "Solte, escolha ou cole (Ctrl+V) o PDF ou os prints: aparecem as miniaturas.", "O ✕ tira um print.", "Ou cole o texto da consulta.", "Ler: o SAGA lê aqui no navegador e mostra para você conferir antes de gravar."],
           atencao: ["CPF da consulta diferente do CPF da ficha: tudo vem desmarcado. Confira antes de gravar.", "Lido de print: confira cada número com atenção (a leitura de imagem pode trocar um dígito). Use o zoom do navegador em 100% ou mais antes de tirar o print.", "Renda, score, consumo, veículos e empresas NÃO entram no SAGA (LGPD), venham do PDF ou do print."]
         },
         { id: "pagamentos", titulo: "Pagamentos e parcelas do cliente",
@@ -830,7 +833,17 @@ window.SAGA_MANUAL = {
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],
           img: "tarefas",
-          marcas: ["Nova Tarefa.", "Mostrar resumo (números, gráficos e calendário); o número vermelho são as atrasadas.", "Etiqueta: o menu de etiquetas.", "Mais filtros: tipo, situação, prioridade, tribunal e fase."]
+          marcas: ["Nova Tarefa.", "Mostrar resumo (números, gráficos e calendário); o número vermelho são as atrasadas.", "Etiqueta: o menu de etiquetas.", "Mais filtros: tipo, situação, prioridade, tribunal e fase.", "Tarefa da Manutenção: a lista do que falta completar nos seus processos."]
+        },
+        { id: "celular", titulo: "Minhas Tarefas no celular",
+          quando: "Quando você abre as tarefas pelo celular.",
+          passos: [
+            "No celular, a busca fica à vista e os outros filtros (etiqueta, responsável, prazo e Mais filtros) ficam guardados no botão [[Filtros]], ao lado da busca. Assim os cartões aparecem logo.",
+            "Toque em [[Filtros]] para abrir ou fechar. Um ponto no botão avisa que há algum filtro ligado.",
+            "Arraste o quadro para o lado para ver as outras colunas (tribunais)."
+          ],
+          img: "tarefas_celular",
+          marcas: ["Filtros: abre e fecha os filtros (o ponto aparece quando há filtro ligado)."]
         },
         { id: "etiquetas", titulo: "Filtrar e criar etiquetas",
           quando: "Para ver só as tarefas de um assunto (ex.: cumprimento, aguardando documento) ou criar uma etiqueta nova.",
@@ -844,7 +857,7 @@ window.SAGA_MANUAL = {
             "Para pôr a etiqueta numa tarefa: abra a tarefa e escolha em **Etiqueta**, na parte da direita."
           ],
           img: "tarefas_etiquetas",
-          marcas: ["Atalho Pedidos do Saga IA (e as etiquetas, com Dar impulso processual entre elas).", "Quantas tarefas abertas têm a etiqueta.", "Lápis: renomear, mudar a cor ou tirar da lista (só o administrador).", "+ Nova etiqueta (só o administrador)."],
+          marcas: ["Dar impulso processual: uma etiqueta como as outras (o atalho Pedidos do Saga IA aparece no alto do menu quando há pedidos).", "Quantas tarefas abertas têm a etiqueta.", "Setas ▲▼ (ordem) e lápis (renomear, cor ou tirar da lista): só o administrador.", "+ Nova etiqueta (só o administrador)."],
           dicas: ["Se aparecer \"Já existe uma etiqueta com esse nome\", use a que já existe (ou veja em Ver as tiradas da lista: pode estar só fora da lista)."]
         },
         { id: "colunas", titulo: "Colunas por tribunal e colunas ocultas",
@@ -1214,6 +1227,8 @@ window.SAGA_MANUAL = {
             "Só o administrador muda os percentuais, na aba **Distribuição** do Financeiro (Equipe em pontos da causa e Jurídico em % da sobra); a mudança fica no Registro de atividades.",
             "**Meus honorários** (menu Meu dia; aparece só para quem tem parte): cada colaborador vê só a própria parte, processo por processo, o que já foi pago e o que falta. Só você e quem cuida do Financeiro veem."
           ],
+          img: "financeiro_distribuicao",
+          marcas: ["Aba Distribuição do Financeiro.", "A regra da Equipe e do Jurídico (sai só da parte do Dr. Victor).", "Percentuais: só o administrador muda (Salvar percentuais).", "Cartão de cada um: previsto, a pagar (já recebido pelo escritório) e pago."],
           dicas: ["A linha do Dr. Victor aparece pelo valor LÍQUIDO (já sem a equipe e o Jurídico)."]
         },
         { id: "precatorios", titulo: "Precatórios e RPV: pagamento liberado e dinheiro a entrar",
@@ -1280,7 +1295,7 @@ window.SAGA_MANUAL = {
             "**Mais números**, embaixo, começa **recolhido** (o Painel abre mais rápido): clique no título para abrir os gráficos e quadros de antes (período, equipe, processos por situação, distribuição por UF). Eles só são buscados quando você abre, e o SAGA lembra a sua escolha."
           ],
           img: "dashboard",
-          marcas: ["Período.", "Aplicar."],
+          marcas: ["Prazo fatal nos próximos 5 dias, Atrasados e Para hoje (clique em \"N tarefas\" para abrir a lista).", "Faixa dos robôs (só o administrador).", "Cartão de um assunto: cada número abre a lista certa.", "Produtividade: últimos 7 ou 30 dias.", "Mais números (recolhido): clique para abrir."],
           dicas: ["O número de Minhas Tarefas \"Próximos 5 dias\" também está no filtro Prazo da tela de tarefas."]
         },
         { id: "parceiros", titulo: "Parceiros (ANCREF, Sarmento e quem indica)",
