@@ -341,6 +341,12 @@
     return pasta;
   }
 
+  function semErroDeDivisao(pasta){
+    (pasta.abas || []).forEach(function(ab){ Object.keys(ab.celulas || {}).forEach(function(r){
+      var c = ab.celulas[r]; if(!c || typeof c.f !== 'string' || c.f.indexOf('/') < 0 || /^=IFERROR\(/i.test(c.f)) return;
+      c.f = '=IFERROR(' + c.f.slice(1) + ',"")';
+    }); });
+  }
   async function montar(o){
     var sb = o.sb, pid = o.processoId;
     if(!pid) throw new Error('abra pelo processo (falta o processo)');
@@ -350,10 +356,17 @@
     if(!atual) avisos.push({ tipo: 'atencao', titulo: 'Este processo ainda não tem o cálculo do PSS salvo.', texto: 'A planilha veio com os campos em branco (amarelos). O mais seguro é fazer o cálculo na ficha (Cálculo do PSS, que lê o requisitório e o espelho) e montar de novo.' });
     else if(atual.situacao !== 'conferido') avisos.push({ tipo: 'atencao', titulo: 'O cálculo deste processo ainda é rascunho (versão ' + atual.versao + ').', texto: 'Confira e marque "Conferi" no Cálculo do PSS antes de juntar a planilha.' });
     var ficha = {}, cfg = {};
-    try{ var f = await sb.rpc('peticao_dados', { p_processo_id: pid }); if(!f.error) ficha = f.data || {}; else avisos.push({ tipo: 'atencao', titulo: 'Não li os dados da ficha.', texto: 'Motivo: ' + f.error.message + '. Preencha o processo, o juízo e as partes à mão.' }); }catch(e){}
+    try{ var f = await sb.rpc('peticao_dados', { p_processo_id: pid }); if(!f.error) ficha = f.data || {}; else avisos.push({ tipo: 'atencao', titulo: 'Não li os dados da ficha.', texto: 'Motivo: ' + (window.sagaErroBanco?window.sagaErroBanco(f.error):f.error.message) + '. Preencha o processo, o juízo e as partes à mão.' }); }catch(e){}
     try{ var c = await sb.rpc('calculos_config'); if(!c.error) cfg = c.data || {}; }catch(e){}
+    /* número do processo direto do cadastro quando a leitura da ficha não trouxe */
+    if(!ficha.processo || !ficha.processo.numero){
+      try{ var pr = await sb.from('processos').select('numero_processo_cnj,codigo').eq('id', pid).maybeSingle();
+        if(!pr.error && pr.data){ ficha.processo = ficha.processo || {}; ficha.processo.numero = ficha.processo.numero || pr.data.numero_processo_cnj; ficha.processo.codigo = ficha.processo.codigo || pr.data.codigo; } }catch(e){}
+    }
     var e = (atual && atual.entradas) || {};
     var pasta = construir(e, ficha, cfg);
+    /* sem cálculo salvo: conta com divisão fica em branco (em vez de dezenas de #DIV/0! vermelhos); com cálculo, o erro continua à vista */
+    if(!atual) semErroDeDivisao(pasta);
     var nomeCli = (ficha.pessoa && ficha.pessoa.nome) || '';
     return { titulo: 'Cálculo do PSS' + (nomeCli ? ' · ' + nomeCli : ''), pasta: pasta, calculo_id: atual ? atual.id : null, avisosTela: avisos };
   }
@@ -369,7 +382,7 @@
       acao: { rotulo: 'Montar de novo com o cálculo atual', fazer: async function(){
         if(S.pendente && !confirm('Há alterações não salvas. Montar de novo mesmo assim?')) return;
         try{ var m = await montar({ sb: o.sb, processoId: S.doc.processo_id }); S.avisosTela = (S.avisosTela || []).filter(function(a){ return !a.acao; }); o.aplicar(m.pasta, m.calculo_id); }
-        catch(e){ alert('Não consegui montar de novo: ' + (e.message || e)); }
+        catch(e){ alert('Não consegui montar de novo: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e)); }
       } } });
   }
 

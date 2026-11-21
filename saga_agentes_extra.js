@@ -152,7 +152,7 @@
       if(r.error)throw r.error;
       SagaPdf.imprimir(paginasRelatorio(r.data||{}));
     }catch(e){
-      er.hidden=false;er.innerHTML='<b>Não consegui gerar o relatório.</b>Motivo: '+esc((e&&e.message)||'erro desconhecido')+'<br>Tente de novo; se continuar, mande esta mensagem ao administrador.';
+      er.hidden=false;er.innerHTML='<b>Não consegui gerar o relatório.</b>Motivo: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'<br>Tente de novo; se continuar, mande esta mensagem ao administrador.';
     }finally{b.disabled=false;b.textContent='Gerar PDF';}
   }
   function kpi(rot,val,cls){return '<div'+(cls?' class="'+cls+'"':'')+'><span>'+esc(rot)+'</span><b>'+esc(val)+'</b></div>';}
@@ -272,7 +272,7 @@
       lista.innerHTML=pro.length?pro.map(function(p){var nome=(p.pessoa&&p.pessoa.nome_completo)||'Processo',rot=nome+(p.codigo?' · '+p.codigo:'');
         return '<button type="button" data-proc="'+esc(p.id)+'" data-rot="'+esc(rot)+'"><span>'+esc(nome)+'</span><small>'+esc(p.codigo||cnj(p.numero_processo_cnj)||'')+'</small></button>';}).join('')
         :'<div class="ax-nota">Nenhum processo encontrado para "'+esc(t)+'".</div>';
-    }catch(e){if(k===R.buscaN)lista.innerHTML='<div class="ax-nota" style="color:var(--danger,#e5484d)">A busca falhou: '+esc((e&&e.message)||'erro')+'</div>';}
+    }catch(e){if(k===R.buscaN)lista.innerHTML='<div class="ax-nota" style="color:var(--danger,#e5484d)">A busca falhou: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro')+'</div>';}
   }
   async function enviarNovo(){
     var t=$('axTexto').value.trim(),b=$('axEnviar');
@@ -285,7 +285,7 @@
     aviso('Recado enviado. '+((r.data&&r.data.quando_responde)||''),'success');
     await carregarRecados();
   }
-  function mostrarErroRec(tit,e){var er=$('axRecErro');er.hidden=false;er.innerHTML='<b>'+esc(tit)+'</b> Motivo: '+esc((e&&e.message)||String(e||'erro desconhecido'));}
+  function mostrarErroRec(tit,e){var er=$('axRecErro');er.hidden=false;er.innerHTML='<b>'+esc(tit)+'</b> Motivo: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||String(e||'erro desconhecido'));}
   async function carregarRecados(){
     var box=$('axConversas');$('axRecErro').hidden=true;
     var r=await sb().rpc('agente_recados_painel',{p_agente:R.ag||null,p_arquivadas:R.arquivadas});

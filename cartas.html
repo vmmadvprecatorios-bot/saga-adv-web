@@ -207,7 +207,7 @@ function dadosDe(l){
 async function carregar(){
   $('tbCartas').innerHTML='<tr><td colspan="11" class="vazio">Carregando…</td></tr>';
   var r=await _sb.from('cartas_fila').select('id,status,destinatario,logradouro,numero,complemento,bairro,cidade,uf,cep,criado_em,impressa_em,enviada_em,pessoa_id,processo_id,contato_id,pessoa:pessoas(id,nome_completo,cpf),processo:processos(id,numero_processo_cnj,valor_precatorio_origem,campos,tese_id,tese:teses(id,nome))').order('criado_em',{ascending:false}).limit(5000);
-  if(r.error){$('tbCartas').innerHTML='<tr><td colspan="11" class="vazio">Erro ao carregar: '+esc(r.error.message)+'</td></tr>';return;}
+  if(r.error){$('tbCartas').innerHTML='<tr><td colspan="11" class="vazio">Erro ao carregar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))+'</td></tr>';return;}
   C.linhas=r.data||[];
   var tes={};C.linhas.forEach(function(l){var t=l.processo&&l.processo.tese;if(t)tes[t.id]=t.nome;});
   var sel=$('selTese'),atual=sel.value;
@@ -259,7 +259,7 @@ async function mudarStatus(ids,st){
   if(!ids.length)return;
   if(st==='cancelada'){var ok=window.sagaConfirmar?await sagaConfirmar('Tirar da lista',ids.length+' carta(s) saem da lista (ficam em "Fora da lista").','Tirar',true):confirm('Tirar da lista?');if(!ok)return;}
   var r=await _sb.from('cartas_fila').update({status:st}).in('id',ids);
-  if(r.error){toast('Não foi possível mudar: '+esc(r.error.message),'error');return;}
+  if(r.error){toast('Não foi possível mudar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   toast(ids.length+' carta(s) marcada(s) como '+NOME_ST[st].toLowerCase()+'.','success');
   C.sel={};await carregar();
 }
@@ -363,7 +363,7 @@ async function salvarModelo(){
   var corpo=$('modCorpo').value,titulo=$('modTitulo').value.trim()||'Modelo';
   var proprio=C.modelos.find(function(m){return m.ativo&&(m.tese_id||null)===C.modAtual;});
   var r=proprio?await _sb.from('cartas_modelos').update({titulo:titulo,corpo:corpo,atualizado_em:new Date().toISOString()}).eq('id',proprio.id):await _sb.from('cartas_modelos').insert({tese_id:C.modAtual,titulo:titulo,corpo:corpo});
-  if(r.error){toast('Não foi possível salvar: '+esc(r.error.message),'error');return;}
+  if(r.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   await carregarModelos();listarModelos();toast('Modelo salvo.','success');
 }
 function previaModelo(){
@@ -422,7 +422,7 @@ async function init(){
   await carregarModelos();
   await carregar();
 }
-init().catch(function(e){toast('Erro ao abrir as cartas: '+esc(e.message||''),'error');});
+init().catch(function(e){toast('Erro ao abrir as cartas: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 </script>
 </body>
 </html>

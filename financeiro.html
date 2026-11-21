@@ -73,7 +73,7 @@ table{width:100%;border-collapse:collapse;min-width:860px}
 th{text-align:left;font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:12px 12px;border-bottom:1px solid var(--border-soft);white-space:nowrap}
 td{padding:11px 12px;font-size:12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
 tbody tr{cursor:pointer}
-td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:lining-nums tabular-nums}
 .cli{font-weight:600}.sub{font-size:10.5px;color:var(--muted);margin-top:2px}
 .vazio{padding:34px 16px;text-align:center;color:var(--muted);font-size:12px}
 .pos{color:var(--success)}.neg{color:var(--danger)}
@@ -482,9 +482,9 @@ async function carregarTudo(){
   ]);
   // (273) regra da equipe e do Jurídico; sem ela, as partes automáticas não aparecem (e o erro fica à vista)
   state.regra=r[6].error?null:r[6].data;state.equipeIds=r[7].error?[]:(r[7].data||[]);state.juridicoPadrao=r[8].error?[]:(r[8].data||[]);
-  if(r[6].error)showToast('Não consegui ler a regra da equipe e do Jurídico: '+esc(r[6].error.message),'error');
+  if(r[6].error)showToast('Não consegui ler a regra da equipe e do Jurídico: '+esc((window.sagaErroBanco?window.sagaErroBanco(r[6].error):r[6].error.message)),'error');
   state.escritorios=r[4].error?[]:(r[4].data||[]);
-  if(r[0].error){showToast('Não foi possível carregar o financeiro: '+esc(r[0].error.message),'error');}
+  if(r[0].error){showToast('Não foi possível carregar o financeiro: '+esc((window.sagaErroBanco?window.sagaErroBanco(r[0].error):r[0].error.message)),'error');}
   state.processos=r[0].data||[];
   state.lancamentos=r[1].data||[];
   state.rateios=r[2].data||[];
@@ -585,7 +585,7 @@ function abrirProcesso(id){
   state.jurIds=null;state.jurMudou=false;state._removidos=[];
   // (273) quem do Jurídico trabalhou neste processo (vazio no banco = perfil Jurídico)
   _sb.from('financeiro_processo').select('juridico_ids').eq('processo_id',id).maybeSingle().then(function(rj){
-    if(rj.error){showToast('Não consegui ler quem do Jurídico está neste processo: '+esc(rj.error.message),'error');return;}
+    if(rj.error){showToast('Não consegui ler quem do Jurídico está neste processo: '+esc((window.sagaErroBanco?window.sagaErroBanco(rj.error):rj.error.message)),'error');return;}
     if(state.procAberto&&state.procAberto.processo_id===id&&rj.data&&!state.jurMudou){state.jurIds=rj.data.juridico_ids;atualizarResumoModal();}
   });
   document.getElementById('mpTitulo').textContent=p.cliente;
@@ -718,7 +718,7 @@ async function salvarProcesso(){
     if(state.jurMudou)payload.juridico_ids=state.jurIds||[];
     if(payload.valor_recebido&&!payload.data_recebimento)payload.data_recebimento=hojeISO();
     var r=await _sb.from('financeiro_processo').upsert(payload,{onConflict:'processo_id'}).select('processo_id');
-    if(r.error||!r.data||!r.data.length)throw new Error(r.error?r.error.message:'Sem permissão para gravar o financeiro.');
+    if(r.error||!r.data||!r.data.length)throw new Error(r.error?(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message):'Sem permissão para gravar o financeiro.');
     var remover=(state._removidos||[]).filter(function(x){return x.id;}).map(function(x){return x.id;});
     if(remover.length){var rd=await _sb.from('financeiro_rateio').delete().in('id',remover);if(rd.error)throw rd.error;}
     for(var i=0;i<state.rateioModal.length;i++){
@@ -737,12 +737,12 @@ async function salvarProcesso(){
     }
     if(state.regra){
       var rc=await _sb.rpc('distribuicao_recalcular',{p_processo:p.processo_id});
-      if(rc.error)throw new Error('as partes da equipe e do Jurídico não foram refeitas: '+rc.error.message);
+      if(rc.error)throw new Error('as partes da equipe e do Jurídico não foram refeitas: '+(window.sagaErroBanco?window.sagaErroBanco(rc.error):rc.error.message));
     }
     state._removidos=[];
     fecharModal('modalProcesso');showToast('Valores do processo salvos.','success');
     await carregarTudo();
-  }catch(e){showToast('Não foi possível salvar: '+esc(e.message||''),'error');}
+  }catch(e){showToast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');}
   btn.disabled=false;btn.textContent='Salvar valores';
 }
 
@@ -877,7 +877,7 @@ async function salvarLancamento(){
   if(!payload.valor||payload.valor<=0){showToast('Informe um valor maior que zero.','error');return;}
   var l=state.lancEditando;
   var r=l?await _sb.from('financeiro_lancamentos').update(payload).eq('id',l.id).select('id'):await _sb.from('financeiro_lancamentos').insert(payload).select('id');
-  if(r.error||!r.data||!r.data.length){showToast('Não foi possível salvar: '+esc(r.error?r.error.message:'sem permissão.'),'error');return;}
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível salvar: '+esc(r.error?(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message):'sem permissão.'),'error');return;}
   fecharModal('modalLancamento');showToast(l?'Lançamento atualizado.':'Lançamento registrado.','success');
   await carregarTudo();
 }
@@ -915,7 +915,7 @@ function renderRegraDistribuicao(){
       b.disabled=true;b.textContent='Salvando...';
       var r=await _sb.rpc('distribuicao_config_salvar',{p_equipe_pp:e,p_juridico_pct:j});
       b.disabled=false;b.textContent='Salvar percentuais';
-      if(r.error){showToast('Não foi possível salvar: '+esc(r.error.message),'error');return;}
+      if(r.error){showToast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
       showToast('Percentuais salvos. As partes ainda não pagas foram refeitas.','success');await carregarTudo();
     });
   }
@@ -1058,7 +1058,7 @@ async function mostrarMinhaParte(veFinanceiro){
     (veFinanceiro?'<a class="btn-secondary" href="financeiro.html">Abrir o Financeiro completo</a>':'')+'</div><div id="minhaParteCorpo"><div class="panel vazio">Carregando...</div></div>';
   var r=await _sb.rpc('minha_distribuicao');
   var corpo=document.getElementById('minhaParteCorpo');
-  if(r.error){corpo.innerHTML='<div class="panel" style="color:var(--danger,#e5484d)">Não consegui ler a sua parte: '+esc(r.error.message)+'. Atualize a página; se continuar, avise o administrador.</div>';return;}
+  if(r.error){corpo.innerHTML='<div class="panel" style="color:var(--danger,#e5484d)">Não consegui ler a sua parte: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))+'. Atualize a página; se continuar, avise o administrador.</div>';return;}
   var L=Array.isArray(r.data)?r.data:[];
   if(!L.length){corpo.innerHTML='<div class="panel vazio">Você ainda não tem parte nos honorários de nenhum processo.</div>';return;}
   var prev=0,pago=0,aPagar=0;
@@ -1072,7 +1072,7 @@ async function mostrarMinhaParte(veFinanceiro){
     L.map(function(x){return '<tr><td>'+esc(x.cliente||'—')+(x.codigo?'<div class="sub">'+esc(x.codigo)+'</div>':'')+'</td><td>'+esc(x.tese||'—')+'</td><td>'+esc(ROTULO_ORIGEM[x.origem]||'Distribuição')+'</td><td>'+esc(ETAPA[x.etapa]||'—')+'</td><td class="num">'+moeda(x.valor)+'</td><td>'+(x.pago?'Pago'+(x.data_pagamento?' em '+dataBR(x.data_pagamento):''):'Previsto')+'</td></tr>';}).join('')+
     '</tbody></table></div><div class="sub" style="margin-top:8px">O valor acompanha o processo: usa o que o escritório recebeu; antes disso, a sentença ou a expectativa. Equipe = parte igual entre todos da equipe; Jurídico = parte de quem trabalhou no processo.</div></div>';
 }
-init().catch(function(e){showToast('Erro ao abrir o financeiro: '+esc(e.message||''),'error');});
+init().catch(function(e){showToast('Erro ao abrir o financeiro: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 </script>
 </body>
 </html>

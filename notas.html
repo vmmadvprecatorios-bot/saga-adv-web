@@ -154,7 +154,7 @@ body.arrastando-notas{user-select:none;-webkit-user-select:none;cursor:grabbing}
 .tel-q .acoes-q{display:flex;gap:2px}.tel-q .ico{height:30px;width:26px;min-width:26px}
 @media(max-width:620px){.tel-q{grid-template-columns:132px minmax(0,1fr) auto}.tel-q [data-tf=numero]{grid-column:1}.tel-q select{grid-column:2/4}.tel-q [data-tf=descricao]{grid-column:1/3}.tel-q .acoes-q{grid-column:3;justify-content:flex-end}}
 .tel{padding:5px 0;border-top:1px dashed color-mix(in srgb,var(--nc) 30%,transparent)}.tel:first-child{border-top:0;padding-top:0}
-.tel .num{display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}.tel .num span{flex:1;min-width:0}
+.tel .num{display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;font-variant-numeric:lining-nums tabular-nums}.tel .num span{flex:1;min-width:0}
 .tel .quem{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
 .cred-q .linha{gap:3px}.cred-q .linha .ico{height:30px;width:28px;min-width:28px}.cred-q .linha .mini{height:30px;min-width:0;padding:0 7px;font-size:10px}
 @media(max-width:620px){.cred-g{grid-template-columns:1fr}}
@@ -281,7 +281,7 @@ function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=docume
 function $(id){return document.getElementById(id);}
 function puro(v){return window.SagaTexto?SagaTexto.puro(v||''):String(v||'').replace(/<[^>]*>/g,' ');}
 function nomeDe(id){return (S.pessoas[id]||{}).nome_completo||'Colega';}
-function primeiro(id){return String(nomeDe(id)).split(' ')[0];}
+function primeiro(id){return window.sagaNomeExibicao?window.sagaNomeExibicao(nomeDe(id)):String(nomeDe(id)).split(' ')[0];}
 function ehMinha(n){return n.dono_id===S.eu;}
 function podeEditar(n){return ehMinha(n)||((S.comp[n.id]||[]).some(function(c){return c.usuario_id===S.eu&&c.pode_editar;}));}
 function compCom(n){return (S.comp[n.id]||[]).filter(function(c){return c.usuario_id!==S.eu;});}
@@ -295,7 +295,7 @@ function copiar(texto,rotulo){
 }
 async function pegarSenhaCred(id){
   var r=await _sb.rpc('nota_credencial_ver_senha',{p_cred:id});
-  if(r.error){toast('Não foi possível ler a senha: '+esc(r.error.message||''),'erro');return null;}
+  if(r.error){toast('Não foi possível ler a senha: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'erro');return null;}
   return r.data||'';
 }
 
@@ -309,7 +309,7 @@ async function carregar(){
     _sb.from('notas_compartilhadas').select('nota_id,usuario_id,pode_editar'),
     _sb.from('notas_credenciais').select('id,nota_id,ordem,nome,login,link,tem_senha').order('ordem')
   ]);
-  if(r[0].error){toast('Não foi possível carregar as notas: '+esc(r[0].error.message||''),'erro');return false;}
+  if(r[0].error){toast('Não foi possível carregar as notas: '+esc((window.sagaErroBanco?window.sagaErroBanco(r[0].error):r[0].error.message)||''),'erro');return false;}
   S.notas=r[0].data||[];
   S.comp={};(r[1].data||[]).forEach(function(c){(S.comp[c.nota_id]=S.comp[c.nota_id]||[]).push(c);});
   S.creds={};(r[2].data||[]).forEach(function(c){(S.creds[c.nota_id]=S.creds[c.nota_id]||[]).push(c);});
@@ -460,7 +460,7 @@ function fecharJanela(el,depois){
 /* ---------- ações no cartão ---------- */
 async function atualizarNota(id,campos,msg){
   var r=await _sb.from('notas').update(campos).eq('id',id).select(COLUNAS).single();
-  if(r.error){toast('Não foi possível salvar: '+esc(r.error.message||''),'erro');return null;}
+  if(r.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'erro');return null;}
   var i=S.notas.findIndex(function(n){return n.id===id;});if(i>=0)S.notas[i]=r.data;
   if(msg)toast(msg,'sucesso');
   return r.data;
@@ -469,7 +469,7 @@ async function apagarNota(n){
   var ok=window.sagaConfirmar?await sagaConfirmar('Apagar nota','Apagar "'+(n.titulo||'esta nota')+'" de vez? Isso não pode ser desfeito'+(compCom(n).length?' e ela some também para quem recebeu.':'.'),'Apagar',true):confirm('Apagar esta nota?');
   if(!ok)return;
   var r=await _sb.from('notas').delete().eq('id',n.id);
-  if(r.error){toast('Não foi possível apagar: '+esc(r.error.message||''),'erro');return;}
+  if(r.error){toast('Não foi possível apagar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'erro');return;}
   S.notas=S.notas.filter(function(x){return x.id!==n.id;});delete S.comp[n.id];fecharNota(true);sairDoCartao(n.id,desenhar);toast('Nota apagada.','sucesso');
 }
 async function sairDaNota(n){
@@ -903,12 +903,12 @@ async function salvarNota(){
   var id=e.id,r;
   if(id){r=await _sb.from('notas').update(campos).eq('id',id).select(COLUNAS).single();}
   else{campos.tipo=e.tipo;campos.ordem=-Date.now()/1000;r=await _sb.from('notas').insert(campos).select(COLUNAS).single();}
-  if(r.error){btn.disabled=false;toast('Não foi possível salvar: '+esc(r.error.message||''),'erro');return;}
+  if(r.error){btn.disabled=false;toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'erro');return;}
   id=r.data.id;
   if(temCreds(e.tipo)){
     var itensC=credsValidas.map(function(c){var o={id:c.id,nome:c.nome.trim(),login:c.login.trim(),link:c.link.trim()};if(c.senhaSuja)o.senha=c.senha;return o;});
     var rs=await _sb.rpc('nota_credenciais_salvar',{p_nota:id,p_itens:itensC});
-    if(rs.error){btn.disabled=false;toast('A nota foi salva, mas os acessos não: '+esc(rs.error.message||''),'erro');await carregar();desenhar();return;}
+    if(rs.error){btn.disabled=false;toast('A nota foi salva, mas os acessos não: '+esc((window.sagaErroBanco?window.sagaErroBanco(rs.error):rs.error.message)||''),'erro');await carregar();desenhar();return;}
     S.creds[id]=(rs.data||[]).map(function(c){return {id:c.id,nota_id:c.nota_id,ordem:c.ordem,nome:c.nome,login:c.login,link:c.link,tem_senha:c.tem_senha};});
   }
   var i=S.notas.findIndex(function(x){return x.id===id;});if(i>=0)S.notas[i]=r.data;else S.notas.unshift(r.data);
@@ -939,7 +939,7 @@ async function abrirCompartilhar(n){
     this.disabled=true;
     var rr=await _sb.rpc('nota_compartilhar',{p_nota:n.id,p_com:lista});
     this.disabled=false;
-    if(rr.error){toast('Não foi possível compartilhar: '+esc(rr.error.message||''),'erro');return;}
+    if(rr.error){toast('Não foi possível compartilhar: '+esc((window.sagaErroBanco?window.sagaErroBanco(rr.error):rr.error.message)||''),'erro');return;}
     S.comp[n.id]=lista.map(function(l){return {nota_id:n.id,usuario_id:l.usuario_id,pode_editar:l.pode_editar};});
     fecharJanela($('moComp'));desenhar();
     toast(lista.length?('Nota compartilhada com '+lista.length+(lista.length>1?' pessoas.':' pessoa.')):'Nota não está mais compartilhada.','sucesso');
@@ -971,7 +971,7 @@ async function init(){
   var id=qs.get('nota');
   if(id){var n=S.notas.find(function(x){return x.id===id;});if(n){if(n.arquivada){S.filtro='arq';document.querySelectorAll('#pillsFiltro .pill').forEach(function(p){p.classList.toggle('active',p.dataset.f==='arq');});desenhar();}abrirNota(n);}else toast('Nota não encontrada (ou você não tem acesso).','erro');}
 }
-init().catch(function(e){toast('Erro ao abrir as notas: '+esc(e.message||''),'erro');});
+init().catch(function(e){toast('Erro ao abrir as notas: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'erro');});
 </script>
 </body>
 </html>

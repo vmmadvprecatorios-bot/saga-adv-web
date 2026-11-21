@@ -8,11 +8,11 @@ window.SagaPecaTexto = (function(){
   'use strict';
   function sb(){ return window._sb; }
   function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
-  function erro(e){ return (e && e.message) || String(e || 'erro desconhecido'); }
+  function erro(e){ return (window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || String(e || 'erro desconhecido'); }
 
   async function ler(pecaId){
     var r = await sb().rpc('agente_peca_texto_ler', { p_peca: pecaId });
-    if(r.error) throw new Error(r.error.message || String(r.error));
+    if(r.error) throw new Error((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) || String(r.error));
     if(!r.data || !r.data.texto) throw new Error('Esta petição não tem texto no SAGA.');
     return r.data;
   }
@@ -43,7 +43,7 @@ window.SagaPecaTexto = (function(){
       versoes: d.versoes || [],
       aoSalvar: async function(blocos){
         var r = await sb().rpc('agente_peca_texto_salvar', { p_peca: pecaId, p_blocos: blocos, p_versao_base: d.versao });
-        if(r.error) throw new Error(r.error.message || String(r.error));
+        if(r.error) throw new Error((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) || String(r.error));
         if(r.data && r.data.versao) d.versao = r.data.versao;
         if(o.aoSalvar) try{ o.aoSalvar(); }catch(e){}
         return r.data;
@@ -78,7 +78,7 @@ window.SagaPecaTexto = (function(){
       aoBaixar: async function(){ var r = await sb().storage.from('documentos-clientes').createSignedUrl(caminho, 300, { download: nome || true }); if(!r.error) location.href = r.data.signedUrl; },
       obter: async function(){
         var r = await sb().storage.from('documentos-clientes').download(caminho);
-        if(r.error) throw new Error(r.error.message || String(r.error));
+        if(r.error) throw new Error((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) || String(r.error));
         var b = new Uint8Array(await r.data.arrayBuffer());
         return word ? await SagaVisor.pdfDeWord(b) : b;
       } });
@@ -94,11 +94,11 @@ window.SagaPecaTexto = (function(){
     var caminho = d.processo_id + '/' + (window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now())) + '_' + nome.replace(/[^a-zA-Z0-9._-]/g, '_');
     var tipo = formato === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     var up = await sb().storage.from('documentos-clientes').upload(caminho, new Blob([g.bytes], { type: tipo }), { contentType: tipo, upsert: false });
-    if(up.error) throw new Error('não consegui guardar o arquivo na pasta do cliente: ' + (up.error.message || up.error));
+    if(up.error) throw new Error('não consegui guardar o arquivo na pasta do cliente: ' + ((window.sagaErroBanco?window.sagaErroBanco(up.error):up.error.message) || up.error));
     var reg = await sb().rpc('agente_peca_arquivo_final', { p_peca: pecaId, p_caminho: caminho, p_nome: nome, p_tamanho: g.bytes.length, p_formato: formato });
     if(reg.error){
       try{ await sb().storage.from('documentos-clientes').remove([caminho]); }catch(e){}
-      throw new Error(reg.error.message || String(reg.error));
+      throw new Error((window.sagaErroBanco?window.sagaErroBanco(reg.error):reg.error.message) || String(reg.error));
     }
     if(o.baixar) SagaTimbrado.baixar(g.bytes, nome, tipo);
     return reg.data;

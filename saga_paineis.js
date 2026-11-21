@@ -194,7 +194,7 @@
       Promise.all([global._sb.rpc('parados_config_salvar',{p_ativo:form.querySelector('[data-a]').checked,p_dias:d,p_repetir:r}),
                    global._sb.rpc('acompanhamento_config_salvar',{p_ativo:form.querySelector('[data-na]').checked,p_dias:nd,p_repetir:nr})]).then(function(rs){
         b.disabled=false;var res=rs[0].error?rs[0]:rs[1];
-        if(res.error){aviso(res.error.message||'Não foi possível salvar.','danger');return;}
+        if(res.error){aviso((window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message)||'Não foi possível salvar.','danger');return;}
         S.auto=rs[0].data;S.acomp=rs[1].data;recolher(form,true);renderAuto(raiz,S.cfg);aviso('Cobrança automática atualizada.','success');
       },function(){b.disabled=false;aviso('Sem conexão. Tente de novo.','danger');});
     };

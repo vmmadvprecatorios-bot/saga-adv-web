@@ -25,7 +25,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
 .pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
 .pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
-.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:lining-nums tabular-nums}
 .ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
 .ent:focus{border-color:var(--gold)}
 .resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px}
@@ -33,7 +33,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
 .grupo-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
 .grupo-cab h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
-.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
+.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:lining-nums tabular-nums}
 .lnk{font-size:11.5px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:9px;padding:6px 10px;white-space:nowrap;transition:border-color .2s}
 .lnk:hover{border-color:var(--gold)}
 .vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;border:1px dashed var(--border-soft);border-radius:14px}
@@ -63,7 +63,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 }
 
 .parc-num{display:flex;gap:16px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
-.parc-num b{display:block;font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.parc-num b{display:block;font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--text);font-weight:700;font-variant-numeric:lining-nums tabular-nums;line-height:1.1}
 .parc-acoes{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .ico{width:30px;height:30px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel);font-size:12px;color:var(--muted);transition:border-color .2s}
 .ico:hover{border-color:var(--gold);color:var(--text)}
@@ -72,7 +72,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .parc-cli:last-child{border-bottom:0}
 .parc-cli a{color:var(--text);text-decoration:none}
 .parc-cli a:hover{color:var(--gold-light)}
-.parc-cli .cod{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.parc-cli .cod{font-size:11px;color:var(--muted);font-variant-numeric:lining-nums tabular-nums}
 .selo{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
 .selo.parc{color:var(--gold-light);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
 .selo.tirado{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
@@ -183,12 +183,12 @@ async function salvarNome(){
   $('jOk').disabled=true;
   var r=await _sb.rpc('parceiro_salvar',{p_id:P.editando?P.editando.id:null,p_nome:nome,p_ativo:true,p_ordem:null});
   $('jOk').disabled=false;
-  if(r.error){$('jErro').textContent='Não foi salvo: '+(r.error.message||String(r.error));return;}
+  if(r.error){$('jErro').textContent='Não foi salvo: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||String(r.error));return;}
   fecharJanela();toast(P.editando?'Parceiro renomeado.':'Parceiro criado.','success');carregar();
 }
 async function mudar(p,campos,msg){
   var r=await _sb.rpc('parceiro_salvar',Object.assign({p_id:p.id,p_nome:null,p_ativo:null,p_ordem:null},campos));
-  if(r.error){toast('Não foi salvo: '+(r.error.message||String(r.error)),'error');return false;}
+  if(r.error){toast('Não foi salvo: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||String(r.error)),'error');return false;}
   if(msg)toast(msg,'success');return true;
 }
 async function trocarOrdem(i,j){

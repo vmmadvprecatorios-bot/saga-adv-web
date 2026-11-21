@@ -71,7 +71,7 @@ th{text-align:left;font-size:10px;letter-spacing:.8px;text-transform:uppercase;p
 td{padding:11px 12px;font-size:12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
 tbody tr{cursor:pointer}
 tbody tr:hover td{background:color-mix(in srgb,var(--gold) 4%,transparent)}
-td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:lining-nums tabular-nums}
 .cli{font-weight:600}.sub{font-size:10.5px;color:var(--muted);margin-top:2px}
 .vazio{padding:34px 16px;text-align:center;color:var(--muted);font-size:12px}
 .vazio b{color:var(--text)}
@@ -141,7 +141,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 .pasta-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);font-size:12px;color:var(--text);white-space:nowrap;transition:background-color .22s var(--curva),border-color .22s var(--curva)}
 .pasta-chip:hover{border-color:color-mix(in srgb,var(--gold) 45%,var(--border-soft))}
 .pasta-chip.active{background:var(--sb-escolha,color-mix(in srgb,var(--gold) 14%,transparent));border-color:var(--sb-escolha-borda,color-mix(in srgb,var(--gold) 40%,transparent));font-weight:600}
-.pasta-chip .n{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pasta-chip .n{font-size:10.5px;color:var(--muted);font-variant-numeric:lining-nums tabular-nums}
 .pasta-chip.destaque .n{color:var(--text);background:color-mix(in srgb,#e0a93b 24%,transparent);padding:0 7px;border-radius:9px;font-weight:700}
 .pasta-chip .ico{display:inline-flex;color:var(--muted)}.pasta-chip .ico svg{width:13px;height:13px}
 .mk-faixa.sub .pasta-chip{height:28px;padding:0 10px;font-size:11.5px;border-radius:9px}
@@ -347,7 +347,7 @@ body[data-theme="light"] .mp{--mp-barra:#2F6CD6}
 .mp-dica.vis{opacity:1;transform:none}
 .mp-dica b{display:block;color:var(--text);font-size:14px;font-weight:600}
 .mp-dica .lin{display:flex;justify-content:space-between;gap:14px;margin-top:2px}
-.mp-dica .lin span:last-child{color:var(--text);font-variant-numeric:tabular-nums}
+.mp-dica .lin span:last-child{color:var(--text);font-variant-numeric:lining-nums tabular-nums}
 .mp table{min-width:760px}
 .mp table.estreita{min-width:520px}
 .mp .tabela-wrap tbody tr{cursor:default}
@@ -369,7 +369,7 @@ body[data-theme="light"] .mp{--mp-barra:#2F6CD6}
 .mp-anuncio .nums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px 8px;margin-top:8px}
 .mp-anuncio .nums div{min-width:0}
 .mp-anuncio .nums span{display:block;font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mp-anuncio .nums b{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mp-anuncio .nums b{font-size:12px;font-weight:600;font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
 .mp-anuncio .lk{font-size:10.5px;margin-top:7px;display:inline-block;color:var(--gold);text-decoration:underline}
 .mp-vazio{padding:22px 10px;text-align:center;color:var(--muted);font-size:12px}
 .mp-nota{font-size:10.5px;color:var(--muted);line-height:1.5;max-width:900px}
@@ -791,8 +791,8 @@ async function carregarTudo(){
     window.SagaOrigem?SagaOrigem.carregar(true):null,
     state.pode.verCampanhas?_sb.rpc('marketing_painel'):vazio
   ]);
-  if(r[0].error){showToast('Erro ao carregar campanhas: '+esc(r[0].error.message),'error');return;}
-  if(r[2].error){showToast('Erro ao carregar as artes: '+esc(r[2].error.message),'error');}
+  if(r[0].error){showToast('Erro ao carregar campanhas: '+esc((window.sagaErroBanco?window.sagaErroBanco(r[0].error):r[0].error.message)),'error');return;}
+  if(r[2].error){showToast('Erro ao carregar as artes: '+esc((window.sagaErroBanco?window.sagaErroBanco(r[2].error):r[2].error.message)),'error');}
   state.campanhas=r[0].data||[];state.gastos=r[1].data||[];state.materiais=r[2].data||[];state.usuarios=r[3].data||[];
   state.comentarios=r[4].data||[];
   state.temas=r[5].error?[]:(r[5].data||[]);
@@ -2018,7 +2018,7 @@ async function respostaRobo(r){
 async function atualizarMeta(btn){
   btn.disabled=true;var antes=btn.textContent;btn.textContent='Atualizando...';
   try{var x=await respostaRobo(await _sb.functions.invoke('meta-anuncios',{body:{acao:'atualizar'}}));showToast(esc(x.mensagem),x.ok?'success':'error');}
-  catch(e){showToast(esc(e.message||'Não consegui falar com o robô.'),'error');}
+  catch(e){showToast(esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'Não consegui falar com o robô.'),'error');}
   btn.disabled=false;btn.textContent=antes;
   await carregarTudo();
 }
@@ -2093,7 +2093,7 @@ async function salvarRobo(testar){
       var contasTxt=(x.d.contas||[]).filter(function(c){return !c.erro;}).map(function(c){return c.nome+(c.moeda?' ('+c.moeda+')':'');}).join(', ');
       res.className='rb-res '+(x.ok?'ok':'erro');res.textContent=x.mensagem+(x.ok&&contasTxt?' Conta: '+contasTxt+'.':'');
     }else{res.className='rb-res ok';res.textContent='Salvo.';}
-  }catch(e){res.className='rb-res erro';res.textContent=e.message||'Não consegui salvar.';}
+  }catch(e){res.className='rb-res erro';res.textContent=(window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'Não consegui salvar.';}
   bs.forEach(function(b){b.disabled=false;});
   await carregarTudo();
 }
@@ -2329,7 +2329,7 @@ async function init(){
   await carregarTudo();
   if(alvo){trocarAba('artes');abrirMaterial(alvo);}
 }
-init().catch(function(e){showToast('Erro ao abrir o marketing: '+esc(e.message||''),'error');});
+init().catch(function(e){showToast('Erro ao abrir o marketing: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 </script>
 </body>
 </html>

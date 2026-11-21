@@ -310,7 +310,7 @@ async function loadInvites(){
       aceito_em: c.aceito_em,
     };});
   }catch(e){
-    showToast('Erro ao carregar convites: ' + (e.message||'verifique sua conexão.'), 'error');
+    showToast('Erro ao carregar convites: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'verifique sua conexão.'), 'error');
     state.invites = [];
   }
   state.loading = false;
@@ -589,7 +589,7 @@ async function sendInvite(){
     if(envio.ok) showToast('Convite enviado para '+esc(payload.email)+'.');
     else showToast(esc(envio.msg), 'error');
   }catch(e){
-    showToast('Erro ao registrar convite: ' + (e.message||'tente novamente.'), 'error');
+    showToast('Erro ao registrar convite: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'tente novamente.'), 'error');
   }finally{
     btn.disabled = false;
     btn.textContent = 'Registrar convite';
@@ -708,7 +708,7 @@ function renderGuest(){
       }, 3000);
 
     }catch(err){
-      showToast('Erro ao criar conta: ' + (err.message||'tente novamente.'), 'error');
+      showToast('Erro ao criar conta: ' + ((window.sagaErroBanco?window.sagaErroBanco(err):err.message)||'tente novamente.'), 'error');
       submit.disabled = false;
       submit.textContent = 'Criar conta e entrar';
     }

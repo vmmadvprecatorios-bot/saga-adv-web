@@ -191,7 +191,7 @@ window.SagaOrigem = (function () {
         var r = await cliente().rpc('catalogo_salvar', { p_categoria: st.redes === 'sim' ? 'origem_rede' : 'origem_outra', p_id: null, p_nome: nome, p_cor: '#8a94a8', p_ativo: true, p_conta_protocolada: null });
         if (r.error) throw r.error;
         await carregar(true); st.origem = r.data; q('novaNome').value = ''; atualizar(true);
-      } catch (e) { if (typeof showToast === 'function') showToast('Não foi possível criar: ' + esc(e.message || e), 'error'); }
+      } catch (e) { if (typeof showToast === 'function') showToast('Não foi possível criar: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e), 'error'); }
       finally { btn.disabled = false; }
     });
     var achou = q('achou');

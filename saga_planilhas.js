@@ -16,7 +16,7 @@
   function aba(){ return S.pasta.abas[S.ativa]; }
   function cel(r, a){ a = a || aba(); return (a.celulas || {})[r]; }
   function toast(t, tipo){ var w = $('toastWrap'); if(!w) return; var d = document.createElement('div'); d.className = 'toast ' + (tipo || ''); d.textContent = t; w.appendChild(d); setTimeout(function(){ d.style.transition = 'opacity .4s'; d.style.opacity = '0'; setTimeout(function(){ d.remove(); }, 450); }, 3800); }
-  function msgErro(e){ var m = (e && (e.message || e.error_description)) || String(e || 'erro desconhecido'); if(/row-level security|permission denied|not allowed|violates/i.test(m)) m = 'sem permissão (' + m + ')'; return m; }
+  function msgErro(e){ var m = (e && (e.message|| e.error_description)) || String(e || 'erro desconhecido'); if(/row-level security|permission denied|not allowed|violates/i.test(m)) m = 'sem permissão (' + m + ')'; return m; }
 
   /* ================= janelas ================= */
   function janela(id, titulo, sub, corpo, rodape, larga){
@@ -881,7 +881,7 @@
     if(up.error) throw up.error;
     var ins = await _sb.from('documentos').insert({ processo_id: d.processo_id, pessoa_id: S.ctx.pessoa ? S.ctx.pessoa.id : d.pessoa_id, usuario_id: us.data.id, nome_arquivo: nome, caminho_storage: caminho,
       tipo_documento: tipo === 'pdf' ? 'pdf' : 'planilha', tamanho_bytes: bytes.length, pasta_id: pastaId, visivel_portal_cliente: false, excluido_logico: false }).select('id').single();
-    if(ins.error){ var rm = await _sb.storage.from(BUCKET).remove([caminho]); throw new Error((ins.error.message || 'o registro do documento foi recusado') + (rm.error ? ' (e o arquivo enviado ficou solto: avise o administrador)' : '')); }
+    if(ins.error){ var rm = await _sb.storage.from(BUCKET).remove([caminho]); throw new Error(((window.sagaErroBanco?window.sagaErroBanco(ins.error):ins.error.message) || 'o registro do documento foi recusado') + (rm.error ? ' (e o arquivo enviado ficou solto: avise o administrador)' : '')); }
     return ins.data.id;
   }
 
@@ -920,7 +920,7 @@
           var ex = await _sb.from('documentos_editaveis').select('id').eq('processo_id', proc).eq('modelo', modelo).eq('ativo', true).order('atualizado_em', { ascending: false }).limit(1);
           if(!ex.error && ex.data && ex.data.length){ location.replace('editor_planilha.html?doc=' + ex.data[0].id + '&v=' + (q.get('v') || '')); return; }
           var mo = await SagaCalculosPlanilhas.montar({ sb: _sb, processoId: proc, modelo: modelo });
-          S.pasta = mo.pasta; S.doc.modelo = modelo; S.doc.calculo_id = mo.calculo_id || null; S.doc.titulo = mo.titulo; S.pendente = true;
+          S.pasta = mo.pasta; S.doc.modelo = modelo; S.doc.calculo_id = mo.calculo_id || null; S.doc.titulo = mo.titulo; S.pendente = false; /* montada agora: 'Ainda não salvo' (nada foi mudado à mão) */
           (mo.avisosTela || []).forEach(function(a){ S.avisosTela.push(a); });
         } else S.pasta = M.pastaNova();
         S.doc.titulo = S.doc.titulo || 'Planilha';

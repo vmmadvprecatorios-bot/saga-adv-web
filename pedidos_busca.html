@@ -165,7 +165,7 @@ async function carregar(){
     _sb.from('pedidos_busca').select(CAMPOS).in('situacao',['pronto','nao_encontrado','cancelado']).order('concluido_em',{ascending:false}).limit(150)
   ]);
   var erro=r.find(function(x){return x.error;});
-  if(erro){$('pbQuadro').innerHTML='<div class="coluna-vazia">Não foi possível carregar os pedidos: '+esc(erro.error.message||'')+'</div>';return;}
+  if(erro){$('pbQuadro').innerHTML='<div class="coluna-vazia">Não foi possível carregar os pedidos: '+esc((window.sagaErroBanco?window.sagaErroBanco(erro.error):erro.error.message)||'')+'</div>';return;}
   B.pedidos=(r[0].data||[]).concat(r[1].data||[]);
   var faltam=[];B.pedidos.forEach(function(p){if(p.pessoa_id&&!B.pessoas[p.pessoa_id]&&faltam.indexOf(p.pessoa_id)<0)faltam.push(p.pessoa_id);});
   for(var i=0;i<faltam.length;i+=150){
@@ -250,7 +250,7 @@ function cartao(p){
 function pedido(id){return B.pedidos.find(function(p){return p.id===id;});}
 async function rpc(nome,args,ok){
   var r=await _sb.rpc(nome,args);
-  if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return false;}
+  if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}
   if(ok)toast(ok,'success');
   await carregar();return true;
 }
@@ -320,7 +320,7 @@ async function lerParaPedido(p,arquivos,daJanela){
     $('pbLOk').disabled=true;
     var r=await _sb.rpc('pedido_busca_registrar_leitura',{p_id:p.id,p_leitura:{arquivo_nome:nomeArq,dados:dados}});
     $('pbLOk').disabled=false;
-    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     fecharLeitura();toast('Informações guardadas no pedido ('+(imgs.length?'os prints não foram guardados':'o PDF não foi guardado')+'). Agora é só "Devolver pronto".','success');
     await carregar();
   };
@@ -397,7 +397,7 @@ async function init(){
   if(q){var p=pedido(q);if(p&&B.visao==='meus'&&p.pedido_por_id!==B.eu&&(B.atender||B.verTodos)){B.visao='todos';desenharVisoes();desenhar();}
     var el=document.querySelector('.pb-card[data-id="'+CSS.escape(q)+'"]');if(el)el.scrollIntoView({behavior:window.sagaMq&&sagaMq().matches?'auto':'smooth',block:'center'});}
 }
-init().catch(function(e){toast('Erro ao abrir os pedidos de busca: '+esc(e.message||''),'error');});
+init().catch(function(e){toast('Erro ao abrir os pedidos de busca: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 </script>
 </body>
 </html>

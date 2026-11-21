@@ -25,7 +25,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .kpi{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:12px 14px;text-align:left;transition:border-color .2s}
 .kpi:hover{border-color:var(--gold)}.kpi.active{border-color:color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 10%,var(--panel))}
-.kpi b{display:block;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi b{display:block;font-size:22px;font-weight:600;font-variant-numeric:lining-nums tabular-nums;line-height:1.1}
 .kpi span{font-size:11px;color:var(--muted)}
 .kpi.vermelho b{color:var(--danger,#e5484d)}.kpi.amarelo b{color:var(--warning,#d97706)}
 .barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
@@ -46,8 +46,8 @@ table.tab tr:last-child td{border-bottom:0}
 table.tab tbody tr{cursor:pointer;transition:background .2s}
 table.tab tbody tr:hover{background:color-mix(in srgb,var(--gold) 6%,transparent)}
 .nome a{color:var(--text);text-decoration:none;font-weight:600}.nome a:hover{text-decoration:underline}
-.cod{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.num-cnj{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cod{font-size:10.5px;color:var(--muted);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
+.num-cnj{font-size:11px;color:var(--muted);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
 .mini{font-size:11px;color:var(--muted);line-height:1.5}
 .pag{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:12px;color:var(--muted)}
 .kanban{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
@@ -66,7 +66,7 @@ table.tab tbody tr:hover{background:color-mix(in srgb,var(--gold) 6%,transparent
 .lista-busca{display:flex;flex-direction:column;gap:4px;max-height:260px;overflow:auto}
 .lista-busca button{display:flex;justify-content:space-between;gap:10px;text-align:left;padding:8px 10px;border-radius:9px;border:1px solid var(--border-soft);background:var(--panel);font-size:12px}
 .lista-busca button:hover{border-color:var(--gold)}
-.lista-busca small{color:var(--muted);font-variant-numeric:tabular-nums}
+.lista-busca small{color:var(--muted);font-variant-numeric:lining-nums tabular-nums}
 @media(max-width:760px){
   .content{padding:18px 14px 34px}.page-head h1{font-size:27px}
   .ent.busca{min-width:0;width:100%;flex-basis:100%}
@@ -257,7 +257,7 @@ function janelaBusca(){
     if(termo.length<2){lista.innerHTML='';return;}
     lista.innerHTML='<div class="mini">Procurando…</div>';
     var r=await _sb.rpc('busca_global',{p_termo:termo});if(n!==seq)return;
-    if(r.error){lista.innerHTML='<div class="erro-caixa">A busca falhou: '+esc(r.error.message||'')+'</div>';return;}
+    if(r.error){lista.innerHTML='<div class="erro-caixa">A busca falhou: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'')+'</div>';return;}
     var d=r.data||{},pes=(d.pessoas||[]).slice(0,10),pro=(d.processos||[]).slice(0,10);
     var ids=pes.map(function(p){return p.id;});
     var procs=[];
@@ -295,7 +295,7 @@ function janelaPrazos(){
     this.disabled=true;
     var r=await _sb.rpc('relatorios_config_salvar',{p_verde:parseInt($('pVerde').value,10),p_amarelo:parseInt($('pAmarelo').value,10),p_aviso_dias:parseInt($('pAviso').value,10)});
     this.disabled=false;
-    if(r.error){var e=$('pErro');e.innerHTML='<b>Não salvei.</b> '+esc(r.error.message||'');e.classList.add('ver');return;}
+    if(r.error){var e=$('pErro');e.innerHTML='<b>Não salvei.</b> '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'');e.classList.add('ver');return;}
     R.cfg=r.data;SagaRelatorios.limparCache();await SagaRelatorios.config();mo.classList.remove('aberto');SagaRelatorios.toast('Prazos salvos.','success');desenhar();
   });
   requestAnimationFrame(function(){mo.classList.add('aberto');});
@@ -343,7 +343,7 @@ async function init(){
   var q=new URLSearchParams(location.search).get('processo');
   if(q){var x=achar(q);if(x)abrirDetalhe(x);}
 }
-init().catch(function(e){R.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+init().catch(function(e){R.erro=(window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'Erro ao abrir a tela.';desenhar();});
 </script>
 </body>
 </html>

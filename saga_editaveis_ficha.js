@@ -65,7 +65,7 @@
           return '<a class="ed-item" href="' + url + '" data-doc="' + esc(d.id) + '" data-tipo="' + esc(d.tipo) + '"><span class="ed-ic">' + (d.tipo === 'planilha' ? 'XLS' : 'TXT') + '</span><span>' + esc(d.titulo) + '</span><small>v' + esc(d.versao) + ' · ' + esc(new Date(d.atualizado_em).toLocaleDateString('pt-BR')) + '</small></a>';
         }).join('') || '<div class="ed-vazio">Nenhuma planilha ou texto do SAGA neste processo.</div>';
         l.querySelectorAll('[data-tipo="texto"]').forEach(function(a){ a.onclick = function(ev){ ev.preventDefault(); abrirTexto(a.getAttribute('data-doc'), p, pes); }; });
-      }catch(e){ var l2 = document.getElementById('edLista'); if(l2) l2.innerHTML = '<div class="ed-erro">Não consegui ler as planilhas e os textos: ' + esc(e.message || e) + '</div>'; }
+      }catch(e){ var l2 = document.getElementById('edLista'); if(l2) l2.innerHTML = '<div class="ed-erro">Não consegui ler as planilhas e os textos: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>'; }
     }, 80);
   }
   /* clique abre na tela inteira; Ctrl+clique ou botão do meio, em outra aba (regra de 09/11) */
@@ -82,7 +82,7 @@
     var d = null;
     if(docId){
       var r = await sb().from('documentos_editaveis').select('*').eq('id', docId).maybeSingle();
-      if(r.error || !r.data){ toast('Não consegui abrir o texto: ' + ((r.error && r.error.message) || 'não encontrado'), 'error'); return; }
+      if(r.error || !r.data){ toast('Não consegui abrir o texto: ' + ((r.error && (window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)) || 'não encontrado'), 'error'); return; }
       d = r.data;
     }
     var titulo = d ? d.titulo : 'Texto livre';
@@ -99,7 +99,7 @@
       aoSalvar: async function(bl){
         var r = await sb().rpc('editavel_salvar', { p_id: d ? d.id : null, p_tipo: 'texto', p_titulo: titulo, p_conteudo: { blocos: bl }, p_versao_base: d ? d.versao : null,
           p_processo_id: d ? null : p.id, p_pessoa_id: null, p_pasta_id: null, p_modelo: null, p_calculo_id: null, p_nota: null });
-        if(r.error) throw new Error(r.error.message);
+        if(r.error) throw new Error((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message));
         if(!d) d = { id: r.data.id, versao: r.data.versao, titulo: titulo }; else d.versao = r.data.versao;
         desenhar();
         return { versao: r.data.versao };

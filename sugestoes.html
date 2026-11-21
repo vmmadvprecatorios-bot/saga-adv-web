@@ -33,7 +33,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .chk input{accent-color:var(--gold)}
 .resumo{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 .kpi{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel);font-size:11.5px;color:var(--muted);cursor:pointer;transition:border-color .3s cubic-bezier(.22,.78,.25,1)}
-.kpi b{font-size:16px;color:var(--text);font-variant-numeric:tabular-nums}
+.kpi b{font-size:16px;color:var(--text);font-variant-numeric:lining-nums tabular-nums}
 .kpi i{width:9px;height:9px;border-radius:50%;background:var(--c)}
 .kpi:hover,.kpi.active{border-color:var(--c)}
 #area{transition:opacity .26s cubic-bezier(.22,.78,.25,1)}
@@ -50,7 +50,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .sg-card.arrastando{opacity:.45}
 @keyframes sgEntra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .sg-topo{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.sg-num{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sg-num{font-size:10.5px;color:var(--muted);font-variant-numeric:lining-nums tabular-nums}
 .sg-tit{font-size:13px;font-weight:600;line-height:1.3;color:var(--text)}
 .sg-desc{color:var(--muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .sg-rod{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:10.5px}
@@ -79,7 +79,7 @@ table.lista{width:100%;border-collapse:collapse;font-size:12px;min-width:760px}
 .lista tr:last-child td{border-bottom:0}
 .lista tbody tr{cursor:pointer;transition:background .2s cubic-bezier(.22,.78,.25,1)}
 .lista tbody tr:hover{background:color-mix(in srgb,var(--gold) 6%,transparent)}
-.lista .num{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.lista .num{color:var(--muted);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
 .lista .tit{font-weight:600}
 /* janelas */
 .toast-wrap{position:fixed;right:18px;bottom:18px;z-index:3000;display:flex;flex-direction:column;gap:8px}
@@ -292,7 +292,7 @@ async function carregar(){
     _sb.from('sugestoes').select('id,numero,area_id,titulo,descricao,imagens,situacao,situacao_antes_arquivar,resposta,respondido_por_id,respondido_em,apoios,criado_por_id,criado_em,historico,atualizado_em').order('criado_em',{ascending:false}).limit(3000),
     _sb.from('sugestoes_comentarios').select('sugestao_id').eq('ativo',true).limit(10000)
   ]);
-  if(r[0].error){$('area').innerHTML='<div class="vazio">Não foi possível carregar as sugestões: '+esc(r[0].error.message||'')+'</div>';return;}
+  if(r[0].error){$('area').innerHTML='<div class="vazio">Não foi possível carregar as sugestões: '+esc((window.sagaErroBanco?window.sagaErroBanco(r[0].error):r[0].error.message)||'')+'</div>';return;}
   S.lista=r[0].data||[];
   S.nCom={};(r[1].data||[]).forEach(function(c){S.nCom[c.sugestao_id]=(S.nCom[c.sugestao_id]||0)+1;});
   montarQuem();
@@ -461,7 +461,7 @@ async function salvarNova(){
   var r=S.editando?await _sb.rpc('sugestao_editar',{p_id:S.editando.id,p_area_id:areaId,p_titulo:tit,p_descricao:desc,p_imagens:imgs})
                   :await _sb.rpc('sugestao_criar',{p_area_id:areaId,p_titulo:tit,p_descricao:desc,p_imagens:imgs});
   $('jnOk').disabled=false;
-  if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+  if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
   var eraEdicao=!!S.editando;fecharMo($('jNova'));S.novas=[];
   toast(eraEdicao?'Sugestão salva.':'Sugestão nº '+esc(r.data&&r.data.numero)+' enviada. O Dr. Victor foi avisado; obrigado!','success');
   await carregar();
@@ -531,7 +531,7 @@ function ligarDetalhe(x){
   var b,el;
   if((b=$('jdApoio')))b.onclick=async function(){
     var bt=this;bt.disabled=true;var r=await _sb.rpc('sugestao_apoiar',{p_id:x.id});bt.disabled=false;
-    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     toast(r.data&&r.data.apoia?'Anotado: você também quer esta melhoria.':'Apoio retirado.','success');await carregar();
   };
   if((b=$('jdEditar')))b.onclick=function(){fecharMo($('jDet'));abrirNova(null,x);};
@@ -540,18 +540,18 @@ function ligarDetalhe(x){
     var at=$('jdSits').querySelector('.pill.active'),sit=at?at.dataset.sit:x.situacao,resp=$('jdResp').value.trim();
     if(sit===x.situacao&&resp===(x.resposta||'')){toast('Nada mudou.','info');return;}
     var bt=this;bt.disabled=true;var r=await _sb.rpc('sugestao_decidir',{p_id:x.id,p_situacao:sit,p_resposta:resp||null});bt.disabled=false;
-    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     toast(sit==='arquivada'?'Sugestão arquivada.':'Salvo. '+esc(nomeUsu(x.criado_por_id))+' foi avisado(a) no sino.','success');await carregar();
   };
   if((b=$('jdArquivar')))b.onclick=async function(){
     if(!(await sagaConfirmar('Arquivar a sugestão?','Ela sai do quadro (sem avisar ninguém) e fica em "Mostrar arquivadas". Dá para tirar do arquivo depois.','Arquivar',false)))return;
     var r=await _sb.rpc('sugestao_decidir',{p_id:x.id,p_situacao:'arquivada',p_resposta:null});
-    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     toast('Sugestão arquivada.','success');fecharMo($('jDet'));await carregar();
   };
   if((b=$('jdDesarq')))b.onclick=async function(){
     var r=await _sb.rpc('sugestao_decidir',{p_id:x.id,p_situacao:x.situacao_antes_arquivar||'em_analise',p_resposta:null});
-    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     toast('A sugestão voltou para o quadro.','success');await carregar();
   };
   $('cmImg').onclick=function(){S.destinoImgs='cm';$('sgArquivo').value='';$('sgArquivo').click();};
@@ -559,7 +559,7 @@ function ligarDetalhe(x){
     var t=$('cmTexto').value.trim(),imgs=imagensProntas(S.imgsCm);if(!imgs)return;
     if(!t&&!imgs.length){toast('Escreva o comentário.','warning');$('cmTexto').focus();return;}
     this.disabled=true;var r=await _sb.rpc('sugestao_comentar',{p_id:x.id,p_texto:t,p_imagens:imgs});this.disabled=false;
-    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     $('cmTexto').value='';S.imgsCm=[];desenharPrevias('cm');
     S.nCom[x.id]=(S.nCom[x.id]||0)+1;await carregarComentarios(x.id);desenhar();
     var box=$('jdComents');if(box&&box.lastElementChild)box.lastElementChild.scrollIntoView({behavior:reduzido()?'auto':'smooth',block:'nearest'});
@@ -575,13 +575,13 @@ function ligarDetalhe(x){
     if(e.target.closest('[data-cm-salvar]')){
       var novo=cm.querySelector('textarea').value.trim();
       var r=await _sb.rpc('sugestao_comentario_editar',{p_id:c.id,p_texto:novo});
-      if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+      if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
       toast('Comentário salvo.','success');await carregarComentarios(x.id);return;
     }
     if(e.target.closest('[data-cm-remover]')){
       if(!(await sagaConfirmar('Remover o comentário?','Ele some da sugestão (fica no registro de alterações).','Remover')))return;
       var r2=await _sb.rpc('sugestao_comentario_remover',{p_id:c.id});
-      if(r2.error){toast('Não deu certo: '+esc(r2.error.message||''),'error');return;}
+      if(r2.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r2.error):r2.error.message)||''),'error');return;}
       S.nCom[x.id]=Math.max(0,(S.nCom[x.id]||1)-1);toast('Comentário removido.','success');await carregarComentarios(x.id);desenhar();
     }
   };
@@ -598,7 +598,7 @@ function ligarArrastar(){
     var x=sug(S.arrastando);S.arrastando=null;if(!x||x.situacao===col.dataset.col)return;
     var antes=x.situacao;x.situacao=col.dataset.col;desenhar(); // muda na hora; desfaz se o banco recusar
     var r=await _sb.rpc('sugestao_decidir',{p_id:x.id,p_situacao:col.dataset.col,p_resposta:null});
-    if(r.error){x.situacao=antes;desenhar();toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){x.situacao=antes;desenhar();toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     toast('Nº '+esc(x.numero)+': '+esc(SITM[col.dataset.col].nome)+(col.dataset.col==='arquivada'?'.':'. Quem sugeriu foi avisado(a).'),'success');
     setTimeout(carregar,420);
   });
@@ -614,7 +614,7 @@ function desenharAreas(){
 }
 async function gravarArea(id,campos,msg){
   var r=await _sb.from('etiquetas_catalogo').update(campos).eq('id',id);
-  if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return false;}
+  if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}
   if(msg)toast(msg,'success');await carregarAreas();desenharAreas();desenhar();return true;
 }
 function ligarAreas(){
@@ -629,7 +629,7 @@ function ligarAreas(){
     if(e.target.closest('[data-subir]')||e.target.closest('[data-descer]')){
       var j=e.target.closest('[data-subir]')?i-1:i+1;if(j<0||j>=S.areas.length)return;
       var l=S.areas.slice();var t=l[i];l[i]=l[j];l[j]=t;
-      for(var k=0;k<l.length;k++){if(l[k].ordem!==k){var r=await _sb.from('etiquetas_catalogo').update({ordem:k}).eq('id',l[k].id);if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');break;}}}
+      for(var k=0;k<l.length;k++){if(l[k].ordem!==k){var r=await _sb.from('etiquetas_catalogo').update({ordem:k}).eq('id',l[k].id);if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');break;}}}
       await carregarAreas();desenharAreas();desenhar();
     }
     if(e.target.closest('[data-remover]')){
@@ -643,7 +643,7 @@ function ligarAreas(){
     var n=$('jaNova').value.trim();if(n.length<2){toast('Escreva o nome da aba.','warning');$('jaNova').focus();return;}
     if(S.areas.some(function(a){return norm(a.nome)===norm(n);})){toast('Já existe uma aba com esse nome.','warning');return;}
     var r=await _sb.from('etiquetas_catalogo').insert({categoria:'sugestao_area',nome:n.slice(0,60),cor:'#8a94a8',ordem:S.areas.length,ativo:true});
-    if(r.error){toast('Não deu certo: '+esc(r.error.message||''),'error');return;}
+    if(r.error){toast('Não deu certo: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     $('jaNova').value='';toast('Aba criada.','success');await carregarAreas();desenharAreas();desenhar();
   };
 }
@@ -721,7 +721,7 @@ async function init(){
   }
   if(q.get('id')||q.get('nova'))history.replaceState(null,'',location.pathname);
 }
-init().catch(function(e){toast('Erro ao abrir as sugestões: '+esc(e.message||''),'error');});
+init().catch(function(e){toast('Erro ao abrir as sugestões: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 </script>
 </body>
 </html>

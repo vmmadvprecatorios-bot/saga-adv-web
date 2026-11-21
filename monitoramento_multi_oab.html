@@ -129,7 +129,7 @@ document.getElementById('intimAvisos').addEventListener('click',async function(e
 async function conferirNovasIntim(){
   if(document.hidden||!SagaIntimacoes.pronto||!SagaIntimacoes.pronto())return;
   try{var n=await SagaIntimacoes.novasDesdeCarga();_erroNovasIntim='';if(n!==_novasIntim){_novasIntim=n;pintarAvisosIntim();}}
-  catch(err){_erroNovasIntim=(err&&err.message)||'erro de ligação';pintarAvisosIntim();}
+  catch(err){_erroNovasIntim=(window.sagaErroBanco?window.sagaErroBanco(err):(err&&err.message))||'erro de ligação';pintarAvisosIntim();}
 }
 setInterval(conferirNovasIntim,120000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)conferirNovasIntim();});
@@ -171,7 +171,7 @@ async function init(){
   if(qs.get('andamentos')&&window.SagaAndamentos)SagaAndamentos.janela({sb:_sb});
   if(qs.get('intimacao')||qs.get('processo_id')||qs.get('modo')||qs.get('tribunal')||qs.get('andamentos'))history.replaceState(null,'',location.pathname);
 }
-init().catch(function(e){toast('Erro ao abrir as intimações: '+esc(e.message||''),'erro');});
+init().catch(function(e){toast('Erro ao abrir as intimações: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'erro');});
 </script>
 </body>
 </html>

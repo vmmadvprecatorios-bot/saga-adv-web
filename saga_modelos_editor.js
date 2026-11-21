@@ -256,7 +256,7 @@ window.SagaModelosEditor = (function(){
         var r = blocosDoWord(paragrafos(xml.asText()));
         linha.blocos = r.blocos; linha.campos = r.campos; linha.avisos = r.avisos;
         if(r.blocos.length < 4){ linha.avisos.push('quase sem texto'); }
-      }catch(e){ linha.erro = 'não consegui ler: ' + ((e && e.message) || e) + (/encrypt|password|senha/i.test(String(e)) ? ' (Word com senha)' : ''); linha.incluir = false; }
+      }catch(e){ linha.erro = 'não consegui ler: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || e) + (/encrypt|password|senha/i.test(String(e)) ? ' (Word com senha)' : ''); linha.incluir = false; }
       out.push(linha);
       if(i % 10 === 9) await new Promise(function(ok){ setTimeout(ok, 0); });
     }
@@ -286,7 +286,7 @@ window.SagaModelosEditor = (function(){
       E.imp.linhas = await processar(lista);
       msg.innerHTML = '<div class="me-amarelo">Confira a lista. Os modelos entram como <b>"A revisar"</b>: o número do processo, o CPF/CNPJ, o nome do cliente e a qualificação já viraram campos, mas o texto pode ter outro dado de cliente (nome de parente, valores, datas). Abra cada um no editor antes de usar.</div>';
       desenharImportacao(f);
-    }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Erro ao ler a pasta:</b> ' + esc((e && e.message) || e) + '</div>'; }
+    }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Erro ao ler a pasta:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || e) + '</div>'; }
   }
   async function importar(o){
     if(!(await podeEditar())){ toast('Só o administrador (ou quem gerencia os modelos) importa modelos.', 'error'); return; }
@@ -312,7 +312,7 @@ window.SagaModelosEditor = (function(){
       var itens = e.dataTransfer.items, lista = [];
       try{
         for(var i = 0; i < itens.length; i++){ var en = itens[i].webkitGetAsEntry && itens[i].webkitGetAsEntry(); if(en) await entradasDaPasta(en, '', lista); }
-      }catch(err){ f.querySelector('#meImpMsg').innerHTML = '<div class="me-erro"><b>Erro ao abrir a pasta:</b> ' + esc(err.message || err) + '</div>'; return; }
+      }catch(err){ f.querySelector('#meImpMsg').innerHTML = '<div class="me-erro"><b>Erro ao abrir a pasta:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(err):err.message)|| err) + '</div>'; return; }
       receberArquivos(f, lista);
     });
     f.querySelector('#meImpFechar').onclick = function(){ fechar(f); };
@@ -463,7 +463,7 @@ window.SagaModelosEditor = (function(){
       var ok = window.sagaConfirmar ? await sagaConfirmar('Tirar o modelo da lista', 'O modelo "' + (m.titulo || '') + '" some da lista, mas fica guardado no banco.', 'Tirar da lista', true) : confirm('Tirar da lista?');
       if(!ok) return;
       var r = await sb().rpc('modelo_peticao_desativar', { p_id: m.id });
-      if(r.error){ f.querySelector('#meMsg').innerHTML = '<div class="me-erro"><b>Não consegui tirar:</b> ' + esc(r.error.message) + '</div>'; return; }
+      if(r.error){ f.querySelector('#meMsg').innerHTML = '<div class="me-erro"><b>Não consegui tirar:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)) + '</div>'; return; }
       fechar(f); toast('Modelo tirado da lista.', 'success'); if(E.aoSalvar) E.aoSalvar();
     };
   }
@@ -483,7 +483,7 @@ window.SagaModelosEditor = (function(){
     b.disabled = true; var t = b.textContent; b.textContent = 'Salvando...';
     var r = await sb().rpc('modelo_peticao_salvar', { p_id: E.modelo ? E.modelo.id : null, p_dados: d });
     b.disabled = false; b.textContent = t;
-    if(r.error){ msg.innerHTML = '<div class="me-erro"><b>Não consegui salvar:</b> ' + esc(r.error.message) + '</div>'; return; }
+    if(r.error){ msg.innerHTML = '<div class="me-erro"><b>Não consegui salvar:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)) + '</div>'; return; }
     E.modelo = Object.assign({}, E.modelo || {}, d, { id: r.data.id });
     msg.innerHTML = '<div class="me-ok">Modelo salvo.</div>';
     if(E.aoSalvar) try{ E.aoSalvar(); }catch(e){}
@@ -498,7 +498,7 @@ window.SagaModelosEditor = (function(){
       var r = await SagaTimbrado.gerar({ sb: sb(), timbrado: tim, modelo: { titulo: d.titulo, campos: d.campos, blocos: d.blocos }, valores: {}, formato: 'docx', realce: true });
       SagaTimbrado.baixar(r.bytes, SagaTimbrado.nomeArquivo('Teste - ' + (d.titulo || 'modelo')) + '.docx', r.tipo);
       msg.innerHTML = '<div class="me-ok">Word de teste baixado (os campos saem destacados em amarelo).' + (r.avisos && r.avisos.length ? '<br>' + r.avisos.map(esc).join('<br>') : '') + '</div>';
-    }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui gerar o Word:</b> ' + esc((e && e.message) || e) + '</div>'; }
+    }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui gerar o Word:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || e) + '</div>'; }
     b.disabled = false; b.textContent = t;
   }
 
@@ -564,7 +564,7 @@ window.SagaModelosEditor = (function(){
     if(pv) pv.onclick = async function(){
       var msg = f.querySelector('#meMsg'); pv.disabled = true; var t = pv.textContent; pv.textContent = 'Gerando...';
       try{ await o.aoPrevia(blocosAtuais()); msg.innerHTML = '<div class="me-ok">Prévia baixada (não vai para a pasta do cliente).</div>'; }
-      catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui gerar a prévia:</b> ' + esc((e && e.message) || e) + '</div>'; }
+      catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui gerar a prévia:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || e) + '</div>'; }
       pv.disabled = false; pv.textContent = t;
     };
     var sv = f.querySelector('#meSalvar');
@@ -576,7 +576,7 @@ window.SagaModelosEditor = (function(){
         var r = await o.aoSalvar(bl);
         mudou = false;
         msg.innerHTML = '<div class="me-ok">' + (r && r.sem_mudanca ? 'Nada mudou: o texto continua na versão ' + esc(r.versao) + '.' : (o.msgSalvo ? esc(typeof o.msgSalvo === 'function' ? o.msgSalvo(r) : o.msgSalvo) : 'Correções salvas (versão ' + esc(r && r.versao) + '). O Word final sai deste texto quando você aprovar.')) + '</div>';
-      }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui salvar:</b> ' + esc((e && e.message) || e) + '</div>'; }
+      }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui salvar:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || e) + '</div>'; }
       sv.disabled = false; sv.textContent = t;
     };
     return f;

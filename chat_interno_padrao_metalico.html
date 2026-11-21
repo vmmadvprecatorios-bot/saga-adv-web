@@ -709,7 +709,7 @@ function iniciaisConversa(c) {
 async function carregarConversas() {
   var res = await _sb.from('chat_conversas')
     .select('id,tipo,nome_grupo,finalidade,criado_em,criado_por_id,participantes:chat_participantes!conversa_id(usuario_id,papel,oculta_em,entrou_em)');
-  if (res.error) { showToast('Erro ao carregar conversas: ' + res.error.message, 'erro'); return; }
+  if (res.error) { showToast('Erro ao carregar conversas: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
 
   var convs = res.data || [];
   var ids = convs.map(function(c){ return c.id; });
@@ -895,7 +895,7 @@ function irParaMinhaMarcacao(convId) {
     }
   }
   _sb.rpc('chat_mencoes_lidas', { p_conversa: convId }).then(function(r){
-    if (r.error) { showToast('Não consegui tirar o aviso da marcação do sino: ' + esc(r.error.message || ''), 'aviso'); return; }
+    if (r.error) { showToast('Não consegui tirar o aviso da marcação do sino: ' + esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) || ''), 'aviso'); return; }
     delete state.mencoes[convId];
     renderConversas();
     if (window.SagaUI) { if (SagaUI.contarDia) SagaUI.contarDia(); if (SagaUI.contarAvisos) SagaUI.contarAvisos(); }
@@ -1017,11 +1017,11 @@ async function carregarMensagens(conversaId, versao) {
     if (conv && conv.ocultaEm) q = q.gt('criado_em', conv.ocultaEm);
     var res = await q.order('criado_em', { ascending: false }).limit(200);
     if (versao !== versaoAberturaConversa || !state.conversaAtiva || state.conversaAtiva.id !== conversaId) return false;
-    if (res.error) { showToast('Erro ao carregar mensagens: ' + res.error.message, 'erro'); return false; }
+    if (res.error) { showToast('Erro ao carregar mensagens: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return false; }
     state.mensagens = (res.data || []).reverse();
     return true;
   } catch(e) {
-    if (versao === versaoAberturaConversa) showToast('Erro ao carregar mensagens: ' + (e.message || e), 'erro');
+    if (versao === versaoAberturaConversa) showToast('Erro ao carregar mensagens: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e), 'erro');
     return false;
   }
 }
@@ -1090,7 +1090,7 @@ document.addEventListener('click', function(ev){
   if (b.hasAttribute('data-cd-encaminhar')) { SagaChatDocs.encaminhar(a, function(_, texto){ pronto(texto); }); return; }
   b.disabled = true;
   SagaChatDocs.ignorar(a).then(function(){ pronto('Marcado como não é documento de cliente.'); })
-    .catch(function(e){ b.disabled = false; showToast('Não marcou: ' + (e.message || e), 'erro'); });
+    .catch(function(e){ b.disabled = false; showToast('Não marcou: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e), 'erro'); });
 });
 
 function acharAnexo(id) {
@@ -1105,7 +1105,7 @@ async function abrirAnexo(id) {
   var a = acharAnexo(id);
   if (!a) return;
   var r = await _sb.storage.from('chat-anexos').createSignedUrl(a.caminho_storage, 300, ehImagem(a) ? undefined : { download: a.nome_arquivo });
-  if (r.error) { showToast('Não foi possível abrir o arquivo: ' + r.error.message, 'erro'); return; }
+  if (r.error) { showToast('Não foi possível abrir o arquivo: ' + (window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message), 'erro'); return; }
   window.open(r.data.signedUrl, '_blank', 'noopener');
 }
 
@@ -1305,7 +1305,7 @@ async function enviarMensagem() {
 
   if (res.error) {
     _enviando = false;
-    showToast('Erro ao enviar: ' + res.error.message, 'erro');
+    showToast('Erro ao enviar: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro');
     textarea.value = texto;
     state.anexosPendentes = arquivos;
     renderAnexosPendentes();
@@ -1322,7 +1322,7 @@ async function enviarMensagem() {
     }
   }
   atualizarPreviewConversa(res.data);
-  if (marcados.length) _sb.rpc('chat_marcar', { p_mensagem: res.data.id, p_usuarios: marcados }).then(function(r){ if (r.error) showToast('A mensagem foi enviada, mas o aviso de marcação não: ' + esc(r.error.message || ''), 'aviso'); });
+  if (marcados.length) _sb.rpc('chat_marcar', { p_mensagem: res.data.id, p_usuarios: marcados }).then(function(r){ if (r.error) showToast('A mensagem foi enviada, mas o aviso de marcação não: ' + esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) || ''), 'aviso'); });
 
   if (arquivos.length) {
     var aviso = document.getElementById('enviandoAnexos');
@@ -1484,7 +1484,7 @@ async function salvarEdicao(id) {
   var novo = aplicarTokens(ta.value.trim(), state.mencoesEdicao);
   if (!novo) { showToast('A mensagem não pode estar vazia.', 'aviso'); return; }
   var res = await _sb.from('chat_mensagens').update({ conteudo: novo, editada: true }).eq('id', id);
-  if (res.error) { showToast('Erro ao editar: ' + res.error.message, 'erro'); return; }
+  if (res.error) { showToast('Erro ao editar: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
   var idx = state.mensagens.findIndex(function(m){ return m.id === id; });
   if (idx !== -1) { state.mensagens[idx].conteudo = novo; state.mensagens[idx].editada = true; }
   state.editandoMsgId = null;
@@ -1511,7 +1511,7 @@ async function confirmarExclusao() {
   var caminhos = ((alvo && alvo.anexos) || []).map(function(a){ return a.caminho_storage; });
   if (caminhos.length) await _sb.storage.from('chat-anexos').remove(caminhos);
   var res = await _sb.from('chat_mensagens').delete().eq('id', id);
-  if (res.error) { showToast('Erro ao excluir: ' + res.error.message, 'erro'); return; }
+  if (res.error) { showToast('Erro ao excluir: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
   state.mensagens = state.mensagens.filter(function(m){ return m.id !== id; });
   var el = document.querySelector('[data-msg-id="' + id + '"]');
   if (el) el.remove();
@@ -1704,7 +1704,7 @@ function toggleMembro(id) {
 function renderChipsMembros() {
   document.getElementById('chipsMembros').innerHTML = state.novaConversa.membrosGrupo.map(function(id){
     var nome = state.usuarios[id] || 'Desconhecido';
-    return '<div class="chip-membro">' + esc(nome.split(' ')[0]) +
+    return '<div class="chip-membro">' + esc(window.sagaNomeExibicao ? window.sagaNomeExibicao(nome) : nome.split(' ')[0]) +
       '<button onclick="toggleMembro(\'' + id + '\')">x</button></div>';
   }).join('');
 }
@@ -1731,12 +1731,12 @@ function verificarConversaDiretaExistente(outroId) {
 
 async function criarConversaDireta(outroId) {
   var rc = await _sb.from('chat_conversas').insert({ tipo: 'direto', criado_por_id: state.meuInternoId }).select().single();
-  if (rc.error) { showToast('Erro ao criar conversa: ' + rc.error.message, 'erro'); return; }
+  if (rc.error) { showToast('Erro ao criar conversa: ' + (window.sagaErroBanco?window.sagaErroBanco(rc.error):rc.error.message), 'erro'); return; }
   var rp = await _sb.from('chat_participantes').insert([
     { conversa_id: rc.data.id, usuario_id: state.meuInternoId, entrou_em: new Date().toISOString() },
     { conversa_id: rc.data.id, usuario_id: outroId, entrou_em: new Date().toISOString() }
   ]);
-  if (rp.error) { showToast('Erro ao adicionar participantes: ' + rp.error.message, 'erro'); return; }
+  if (rp.error) { showToast('Erro ao adicionar participantes: ' + (window.sagaErroBanco?window.sagaErroBanco(rp.error):rp.error.message), 'erro'); return; }
   closeModal('modalNovaConversa');
   await carregarConversas();
   await abrirConversa(rc.data.id);
@@ -1747,12 +1747,12 @@ async function criarConversaGrupo() {
   if (!nome) { showToast('Informe o nome do grupo.', 'aviso'); return; }
   if (!state.novaConversa.membrosGrupo.length) { showToast('Adicione pelo menos um membro.', 'aviso'); return; }
   var rc = await _sb.from('chat_conversas').insert({ tipo: 'grupo', nome_grupo: nome, criado_por_id: state.meuInternoId }).select().single();
-  if (rc.error) { showToast('Erro ao criar grupo: ' + rc.error.message, 'erro'); return; }
+  if (rc.error) { showToast('Erro ao criar grupo: ' + (window.sagaErroBanco?window.sagaErroBanco(rc.error):rc.error.message), 'erro'); return; }
   var ids = [state.meuInternoId].concat(state.novaConversa.membrosGrupo);
   var rp = await _sb.from('chat_participantes').insert(ids.map(function(uid){
     return { conversa_id: rc.data.id, usuario_id: uid, entrou_em: new Date().toISOString(), papel: uid === state.meuInternoId ? 'admin' : 'comentador' };
   }));
-  if (rp.error) { showToast('Erro ao adicionar membros: ' + rp.error.message, 'erro'); return; }
+  if (rp.error) { showToast('Erro ao adicionar membros: ' + (window.sagaErroBanco?window.sagaErroBanco(rp.error):rp.error.message), 'erro'); return; }
   closeModal('modalNovaConversa');
   await carregarConversas();
   await abrirConversa(rc.data.id);
@@ -1766,7 +1766,7 @@ async function confirmarSairGrupo() {
     .delete()
     .eq('conversa_id', state.conversaAtiva.id)
     .eq('usuario_id', state.meuInternoId);
-  if (res.error) { showToast('Erro ao sair do grupo: ' + res.error.message, 'erro'); return; }
+  if (res.error) { showToast('Erro ao sair do grupo: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
   unsubscribeConversa();
   state.conversaAtiva = null;
   document.getElementById('estadoVazioChat').style.display = 'flex';
@@ -1819,7 +1819,7 @@ function pedirApagarConversa() {
     });
     var res = await _sb.from('chat_participantes').update({ oculta_em: new Date(marco).toISOString() })
       .eq('conversa_id', state.conversaAtiva.id).eq('usuario_id', state.meuInternoId);
-    if (res.error) { showToast('Erro ao apagar conversa: ' + res.error.message, 'erro'); return; }
+    if (res.error) { showToast('Erro ao apagar conversa: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
     fecharJanelaConversa();
     await carregarConversas();
     showToast('Conversa apagada.', 'sucesso');
@@ -1835,7 +1835,7 @@ function pedirApagarGrupo() {
     var caminhos = (ra.data || []).map(function(a){ return a.caminho_storage; });
     for (var i = 0; i < caminhos.length; i += 100) await _sb.storage.from('chat-anexos').remove(caminhos.slice(i, i + 100));
     var res = await _sb.from('chat_conversas').delete().eq('id', conv.id);
-    if (res.error) { showToast('Erro ao apagar grupo: ' + res.error.message, 'erro'); return; }
+    if (res.error) { showToast('Erro ao apagar grupo: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
     closeModal('modalGrupo');
     fecharJanelaConversa();
     await carregarConversas();
@@ -1848,7 +1848,7 @@ async function entrarNoGrupoComoAdmin() {
   var conv = state.conversaAtiva;
   if (!conv || !state.souAdminSistema) return;
   var res = await _sb.from('chat_participantes').insert({ conversa_id: conv.id, usuario_id: state.meuInternoId, papel: 'admin' });
-  if (res.error) { showToast('Erro ao entrar no grupo: ' + res.error.message, 'erro'); return; }
+  if (res.error) { showToast('Erro ao entrar no grupo: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
   await recarregarConversaAtiva();
   showToast('Você entrou no grupo como administrador.', 'sucesso');
 }
@@ -1906,7 +1906,7 @@ async function salvarNomeGrupo() {
   var nome = document.getElementById('inputRenomearGrupo').value.trim();
   if (!nome) { showToast('Informe o nome do grupo.', 'aviso'); return; }
   var res = await _sb.from('chat_conversas').update({ nome_grupo: nome }).eq('id', state.conversaAtiva.id);
-  if (res.error) { showToast('Erro ao renomear: ' + res.error.message, 'erro'); return; }
+  if (res.error) { showToast('Erro ao renomear: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
   await recarregarConversaAtiva();
   renderGerenciarGrupo();
   showToast('Nome do grupo atualizado.', 'sucesso');
@@ -1916,7 +1916,7 @@ async function mudarPapel(usuarioId, papel) {
   var res = await _sb.from('chat_participantes').update({ papel: papel })
     .eq('conversa_id', state.conversaAtiva.id).eq('usuario_id', usuarioId);
   if (res.error) {
-    var msg = /pelo menos um administrador/i.test(res.error.message) ? 'O grupo precisa de pelo menos um administrador.' : res.error.message;
+    var msg = /pelo menos um administrador/i.test(res.error.message) ? 'O grupo precisa de pelo menos um administrador.' : (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message);
     showToast(msg, 'erro');
     return;
   }
@@ -1930,7 +1930,7 @@ function pedirRemoverMembro(usuarioId) {
   pedirConfirmacao('Remover ' + nome + ' do grupo? A pessoa deixa de ver as mensagens e arquivos do grupo.', 'Remover', async function(){
     var res = await _sb.from('chat_participantes').delete()
       .eq('conversa_id', state.conversaAtiva.id).eq('usuario_id', usuarioId);
-    if (res.error) { showToast('Erro ao remover: ' + res.error.message, 'erro'); return; }
+    if (res.error) { showToast('Erro ao remover: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
     await recarregarConversaAtiva();
     abrirGerenciarGrupo();
   });
@@ -1952,7 +1952,7 @@ function renderCandidatosGrupo(termo) {
 
 async function adicionarMembro(usuarioId) {
   var res = await _sb.from('chat_participantes').insert({ conversa_id: state.conversaAtiva.id, usuario_id: usuarioId, papel: 'comentador' });
-  if (res.error) { showToast('Erro ao adicionar: ' + res.error.message, 'erro'); return; }
+  if (res.error) { showToast('Erro ao adicionar: ' + (window.sagaErroBanco?window.sagaErroBanco(res.error):res.error.message), 'erro'); return; }
   document.getElementById('inputAddMembro').value = '';
   document.getElementById('candidatosGrupo').style.display = 'none';
   await recarregarConversaAtiva();
@@ -2013,7 +2013,7 @@ async function init() {
       if (!document.hidden && state.conversaAtiva) marcarComoLida(state.conversaAtiva.id);
     });
   } catch(e) {
-    showToast('Erro ao inicializar: ' + (e.message || e), 'erro');
+    showToast('Erro ao inicializar: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e), 'erro');
   }
 }
 

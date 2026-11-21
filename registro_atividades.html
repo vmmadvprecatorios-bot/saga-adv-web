@@ -45,7 +45,7 @@ html[data-cor="grafite"] body[data-theme="dark"] .btn-ouro,html[data-cor="grafit
 .ev{display:grid;grid-template-columns:52px 170px 92px minmax(0,1fr);gap:10px;align-items:start;padding:10px 14px;border-bottom:1px solid var(--border-soft);font-size:12px;animation:evEntra .32s cubic-bezier(.22,.78,.25,1) both}
 .ev:last-child{border-bottom:0}
 .ev:hover{background:color-mix(in srgb,var(--gold) 5%,transparent)}
-.ev .hora{color:var(--muted);font-variant-numeric:tabular-nums;padding-top:2px}
+.ev .hora{color:var(--muted);font-variant-numeric:lining-nums tabular-nums;padding-top:2px}
 .ev .quem{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ev .quem small{display:block;font-weight:500;color:var(--muted);font-size:10.5px}
 .acao{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:10.5px;font-weight:600;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 13%,transparent);color:var(--c);width:max-content}
@@ -168,7 +168,7 @@ async function buscar(maisUma){
   var r=await q.range(A.pagina*POR_PAGINA,A.pagina*POR_PAGINA+POR_PAGINA-1);
   if(pedido!==A.pedido)return;
   if(r.error){
-    $('area').innerHTML='<div class="lista"><div class="vazio"><b>O registro ainda não está ligado</b>'+(/atividades_log|does not exist|schema cache/i.test(r.error.message||'')?'Ele começa a funcionar quando o bloco 120 for aplicado no banco.':esc(r.error.message))+'</div></div>';
+    $('area').innerHTML='<div class="lista"><div class="vazio"><b>O registro ainda não está ligado</b>'+(/atividades_log|does not exist|schema cache/i.test(r.error.message||'')?'Ele começa a funcionar quando o bloco 120 for aplicado no banco.':esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)))+'</div></div>';
     $('btnMais').hidden=true;$('resumoTopo').textContent='';return;
   }
   var novas=r.data||[];A.linhas=A.linhas.concat(novas);A.acabou=novas.length<POR_PAGINA;
@@ -227,7 +227,7 @@ async function init(){
   $('fModulo').innerHTML='<option value="">Todos os módulos</option>'+MODULOS.map(function(m){return '<option>'+esc(m)+'</option>';}).join('');
   await buscar(false);
 }
-init().catch(function(e){toast('Erro ao abrir o registro: '+esc(e.message||''),'error');});
+init().catch(function(e){toast('Erro ao abrir o registro: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 </script>
 </body>
 </html>

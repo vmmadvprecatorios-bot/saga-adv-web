@@ -472,7 +472,7 @@ async function loadData(){
     _sb.from('usuarios').select('id,nome_completo,cargo_titulo,ativo,auth_user_id,eh_administrador,usuarios_papeis!usuarios_papeis_usuario_id_fkey(papel_id)').eq('ativo',true).order('nome_completo'),
     _sb.from('usuarios_permissoes_extra').select('usuario_id,permissao_id,concedida,motivo')
   ]);
-  for(const r of[papRes,permRes,ppRes,usrRes,extRes]){if(r.error)throw new Error(r.error.message)}
+  for(const r of[papRes,permRes,ppRes,usrRes,extRes]){if(r.error)throw new Error((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))}
 
   _papeis=papRes.data||[];
   _permCatalog=permRes.data||[];

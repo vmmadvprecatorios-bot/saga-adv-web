@@ -320,7 +320,7 @@ async function converter(entrada,op){
   var bytes=entrada instanceof Uint8Array?entrada:new Uint8Array(entrada);
   if(bytes[0]===0xD0&&bytes[1]===0xCF)throw new Error('este é um Word antigo (.doc). Abra no Word e use Arquivo > Salvar como > "Documento do Word (.docx)" ou direto "PDF"');
   if(!(bytes[0]===0x50&&bytes[1]===0x4B))throw new Error('o arquivo não é um Word .docx (pode estar corrompido ou ser outro formato com a extensão trocada)');
-  var zip;try{zip=new window.PizZip(bytes);}catch(e){throw new Error('o .docx está corrompido ('+((e&&e.message)||'não abriu')+')');}
+  var zip;try{zip=new window.PizZip(bytes);}catch(e){throw new Error('o .docx está corrompido ('+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'não abriu')+')');}
   if(zip.file('word/document.xml')==null){
     if(zip.file('EncryptedPackage')||zip.file('EncryptionInfo'))throw new Error('o Word está protegido por senha. Abra no Word, tire a senha e tente de novo');
     throw new Error('não achei o texto dentro do .docx (arquivo incompleto ou de outro programa)');

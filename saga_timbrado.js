@@ -783,7 +783,7 @@
     if(cacheArquivos[caminho]) return cacheArquivos[caminho];
     var r = await sb.storage.from(BUCKET).download(caminho);
     if(r.error){
-      var msg = r.error.message || String(r.error);
+      var msg = (window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) || String(r.error);
       throw new Error('Não foi possível baixar o arquivo do timbrado (' + caminho + '): ' + msg + '.');
     }
     var buf = new Uint8Array(await r.data.arrayBuffer());
@@ -794,12 +794,12 @@
 
   async function listar(sb){
     var r = await sb.from('timbrados').select('*').eq('ativo', true).order('ordem');
-    if(r.error) throw new Error('Não foi possível ler os papéis timbrados: ' + r.error.message);
+    if(r.error) throw new Error('Não foi possível ler os papéis timbrados: ' + (window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message));
     return r.data || [];
   }
   async function listarModelos(sb){
     var r = await sb.from('modelos_peticao').select('*, teses(nome)').eq('ativo', true).order('ordem').order('titulo');
-    if(r.error) throw new Error('Não foi possível ler os modelos de petição: ' + r.error.message);
+    if(r.error) throw new Error('Não foi possível ler os modelos de petição: ' + (window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message));
     return r.data || [];
   }
 

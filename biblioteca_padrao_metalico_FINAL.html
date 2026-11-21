@@ -812,7 +812,7 @@ async function moverItem(payload, destinoId){
   }
 
   if(resposta.error){
-    showToast('Não foi possível mover o item: ' + resposta.error.message, 'erro');
+    showToast('Não foi possível mover o item: ' + (window.sagaErroBanco?window.sagaErroBanco(resposta.error):resposta.error.message), 'erro');
     return false;
   }
 
@@ -1528,7 +1528,7 @@ function renderizarTudo(){
     });
 
     if(resposta.error){
-      showToast('Não foi possível criar a categoria: ' + resposta.error.message, 'erro');
+      showToast('Não foi possível criar a categoria: ' + (window.sagaErroBanco?window.sagaErroBanco(resposta.error):resposta.error.message), 'erro');
       return;
     }
 
@@ -1580,7 +1580,7 @@ function abrirModalRenomear(tipo, id, nomeAtual, pastaPaiId){
       : await _sb.from('biblioteca_arquivos').update({ nome_arquivo:novoNome }).eq('id', contextoRenomear.id);
 
     if(resposta.error){
-      showToast('Não foi possível renomear o item: ' + resposta.error.message, 'erro');
+      showToast('Não foi possível renomear o item: ' + (window.sagaErroBanco?window.sagaErroBanco(resposta.error):resposta.error.message), 'erro');
       return;
     }
 
@@ -1632,7 +1632,7 @@ function abrirModalRenomear(tipo, id, nomeAtual, pastaPaiId){
   modalGerar.addEventListener('click', function(e){ if(e.target === modalGerar) modalGerar.classList.remove('aberto'); });
 
   document.getElementById('btnConfirmarGerar').addEventListener('click', function(){
-    showToast('Documento gerado com sucesso! Disponivel para download.', 'sucesso');
+    showToast('Documento gerado com sucesso! Disponível para download.', 'sucesso');
     modalGerar.classList.remove('aberto');
   });
 
@@ -2401,7 +2401,7 @@ async function inicializarBibliotecaReal(){
         : await _sb.from('biblioteca_arquivos').update({ ativo:false }).eq('id', id);
 
       if(resposta.error){
-        var mensagemErro = String(resposta.error.message || '');
+        var mensagemErro = String((window.sagaErroBanco?window.sagaErroBanco(resposta.error):resposta.error.message) || '');
         if(tipo === 'pasta' && /(foreign key|restrict|violates)/i.test(mensagemErro)){
           mostrarErroNoModalExclusao('Não foi possível excluir "' + nome + '" porque existem subpastas vinculadas. Mova ou exclua as subpastas primeiro.');
           return;

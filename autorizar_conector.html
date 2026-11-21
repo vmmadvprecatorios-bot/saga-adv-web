@@ -117,7 +117,7 @@ async function iniciar() {
   // já autorizado antes: o Supabase manda direto de volta
   if (!d.data.authorization_id && d.data.redirect_url) { location.replace(d.data.redirect_url); return; }
   var cliente = d.data.client || {}, app = cliente.name || cliente.client_name || 'Aplicativo', destino = d.data.redirect_uri || '', host = hostDe(destino);
-  var nome = (eu.data.nome_completo || '').split(' ')[0];
+  var pn = String(eu.data.nome_completo || '').trim().split(/\s+/); var nome = (/^(dr|dra|sr|sra|prof|profa)\.?$/i.test(pn[0] || '') && pn[1]) ? pn[0] + ' ' + pn[1] : (pn[0] || '');
   var email = (s.data.session.user && s.data.session.user.email) || '';
   var ini = (eu.data.nome_completo || '?').trim().split(/\s+/).map(function (x) { return x.charAt(0); }).slice(0, 2).join('').toUpperCase();
   var quem = '<div class="quem"><span class="ini" aria-hidden="true">' + esc(ini) + '</span><div><div class="rot">Você está conectando o Claude como</div>'

@@ -115,7 +115,7 @@ window.SagaChatDocs = (function(){
       var h = pes.map(function(p){ return '<button type="button" data-pes="' + esc(p.id) + '" data-nome="' + esc(p.nome_completo || '') + '" data-codigo="' + esc(p.codigo || '') + '"><span>' + esc(p.nome_completo || '(sem nome)') + '</span><small>' + esc(p.codigo || '') + '</small></button>'; }).join('')
         + pro.filter(function(p){ return p.pessoa_id; }).map(function(p){ return '<button type="button" data-proc="' + esc(p.id) + '" data-proc-pes="' + esc(p.pessoa_id) + '" data-nome="' + esc((p.pessoa && p.pessoa.nome_completo) || '') + '"><span>' + esc((p.pessoa && p.pessoa.nome_completo) || 'Processo') + '</span><small>' + esc(p.codigo || cnj(p.numero_processo_cnj) || '') + '</small></button>'; }).join('');
       lista.innerHTML = h || '<div class="vazio">Nada encontrado para "' + esc(t) + '". Confira o nome, o CPF ou o código; cliente novo se cadastra na Captação (Novo).</div>';
-    }catch(e){ if(n === G.busca) lista.innerHTML = '<div class="vazio" style="color:#dc2626">A busca falhou: ' + esc((e && e.message) || 'erro') + '</div>'; }
+    }catch(e){ if(n === G.busca) lista.innerHTML = '<div class="vazio" style="color:#dc2626">A busca falhou: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || 'erro') + '</div>'; }
   }
   async function escolherPessoa(p, procId){
     G.pessoa = p; $('cdBuscaBloco').hidden = true; $('cdLista').innerHTML = '';
@@ -145,7 +145,7 @@ window.SagaChatDocs = (function(){
       var pessoal = pastas.filter(function(x){ return chave(x.nome) === 'documentos pessoais'; })[0];
       if(pessoal) $('cdPasta').value = pessoal.id;
       $('cdPasta').disabled = false;
-    }catch(e){ $('cdErro').innerHTML = '<div class="cd-erro">Não consegui ler os cartões e as pastas deste cliente. Motivo: ' + esc((e && e.message) || 'erro') + '.</div>'; }
+    }catch(e){ $('cdErro').innerHTML = '<div class="cd-erro">Não consegui ler os cartões e as pastas deste cliente. Motivo: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || 'erro') + '.</div>'; }
     conferir();
   }
   function encaminhar(anexo, aoTerminar){
@@ -167,32 +167,32 @@ window.SagaChatDocs = (function(){
       var us = await sb().from('usuarios').select('id').eq('auth_user_id', uid).maybeSingle();
       if(us.error || !us.data) throw new Error('não achei o seu cadastro de usuário');
       var dl = await sb().storage.from('chat-anexos').download(a.caminho_storage);
-      if(dl.error) throw new Error('não consegui baixar o arquivo do chat (' + dl.error.message + ')');
+      if(dl.error) throw new Error('não consegui baixar o arquivo do chat (' + (window.sagaErroBanco?window.sagaErroBanco(dl.error):dl.error.message) + ')');
       var nome = a.nome_arquivo || 'documento';
       caminho = procId + '/' + novoId() + '_' + nome.replace(/[^a-zA-Z0-9._-]/g, '_');
       var tipo = a.tipo_mime || dl.data.type || 'application/octet-stream';
       var up = await sb().storage.from(BUCKET).upload(caminho, dl.data, { contentType: tipo });
-      if(up.error){ caminho = null; throw new Error('o envio para a pasta do cliente falhou (' + up.error.message + ')'); }
+      if(up.error){ caminho = null; throw new Error('o envio para a pasta do cliente falhou (' + (window.sagaErroBanco?window.sagaErroBanco(up.error):up.error.message) + ')'); }
       var ext = (nome.split('.').pop() || '').toLowerCase();
       var ins = await sb().from('documentos').insert({ processo_id: procId, pessoa_id: G.pessoa.id, usuario_id: us.data.id, nome_arquivo: nome, caminho_storage: caminho,
         tipo_documento: ext === 'pdf' ? 'pdf' : (/^image\//.test(tipo) ? 'imagem' : (ext || 'arquivo')), tamanho_bytes: a.tamanho_bytes || dl.data.size, pasta_id: pastaId, visivel_portal_cliente: false, excluido_logico: false }).select('id').single();
       if(ins.error){
         var rm = await sb().storage.from(BUCKET).remove([caminho]);
-        throw new Error((ins.error.message || 'o registro do documento foi recusado') + (rm.error ? ' (e o arquivo enviado ficou solto: avise o administrador)' : ''));
+        throw new Error(((window.sagaErroBanco?window.sagaErroBanco(ins.error):ins.error.message) || 'o registro do documento foi recusado') + (rm.error ? ' (e o arquivo enviado ficou solto: avise o administrador)' : ''));
       }
       var dest = await sb().rpc('chat_anexo_destino', { p_anexo: a.id, p_documento: ins.data.id });
-      if(dest.error) throw new Error('o documento foi guardado na ficha, mas o chat não marcou o destino (' + dest.error.message + ')');
+      if(dest.error) throw new Error('o documento foi guardado na ficha, mas o chat não marcou o destino (' + (window.sagaErroBanco?window.sagaErroBanco(dest.error):dest.error.message) + ')');
       a.destino_documento_id = ins.data.id; a.destino_pessoa_id = G.pessoa.id; a.destino_processo_id = procId; a.ignorado = false;
       a.destino_pessoa = { nome_completo: G.pessoa.nome_completo };
       fechar();
       if(typeof G.aoTerminar === 'function'){ try{ G.aoTerminar(a, 'Guardado na ficha de ' + (G.pessoa.nome_completo || 'cliente') + '.'); }catch(e){} }
     }catch(e){
-      err.innerHTML = '<div class="cd-erro"><b>Não guardou:</b> ' + esc(e.message || e) + '.</div>';
+      err.innerHTML = '<div class="cd-erro"><b>Não guardou:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '.</div>';
     }finally{ b.textContent = 'Guardar na ficha'; conferir(); }
   }
   async function ignorar(anexo){
     var r = await sb().rpc('chat_anexo_destino', { p_anexo: anexo.id, p_ignorar: true });
-    if(r.error) throw new Error(r.error.message);
+    if(r.error) throw new Error((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message));
     anexo.ignorado = true;
   }
   try{ if(document.head) css(); }catch(e){}

@@ -141,12 +141,12 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
 .gb-rot{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gb-barra{height:9px;border-radius:0 4px 4px 0;background:color-mix(in srgb,var(--text) 6%,transparent);overflow:hidden}
 .gb-barra i{display:block;height:100%;border-radius:0 4px 4px 0;background:var(--gc,var(--gold))}
-.gb-v{font-variant-numeric:tabular-nums;font-weight:600;min-width:20px;text-align:right}
+.gb-v{font-variant-numeric:lining-nums tabular-nums;font-weight:600;min-width:20px;text-align:right}
 .gm{display:flex;align-items:flex-end;gap:4px;height:118px}
 .gm-col{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px}
 .gm-col i{display:block;width:100%;max-width:22px;border-radius:4px 4px 0 0;background:var(--gold)}
 .gm-col.zero i{background:color-mix(in srgb,var(--text) 10%,transparent)}
-.gm-col b{font-size:10px;font-weight:600;font-variant-numeric:tabular-nums;min-height:12px}
+.gm-col b{font-size:10px;font-weight:600;font-variant-numeric:lining-nums tabular-nums;min-height:12px}
 .gm-col span{font-size:9.5px;color:var(--muted)}
 .pub-chips{display:flex;flex-wrap:wrap;gap:4px}.pub-chip{font-size:10.5px;padding:1px 8px;border-radius:7px;background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--text);border:1px solid color-mix(in srgb,var(--gold) 30%,transparent)}.pub-chip.esf{font-weight:600}.pub-chip.pes{background:color-mix(in srgb,var(--text) 7%,transparent);border-color:var(--border-soft)}
 .pub-crit ul{margin:4px 0 0;padding-left:18px;font-size:13px;line-height:1.6}.pub-crit li b{display:inline;font-size:12px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:600}.pub-nota{font-size:11.5px;color:var(--muted);margin:6px 0 0}
@@ -584,7 +584,7 @@ async function novaOpcao(sel,cat){
   if(sel.value!=='__nova')return;
   var nome=prompt('Nome da nova opção:');sel.value='';if(!nome||!nome.trim())return;
   var r=await _sb.from('etiquetas_catalogo').insert({categoria:cat,nome:nome.trim(),cor:'#8a94a8',ordem:opcoes(cat).length+1}).select('id,nome,cor,categoria,ordem,ativo').single();
-  if(r.error){toast('Não foi possível criar: '+esc(r.error.message));return;}
+  if(r.error){toast('Não foi possível criar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
   T.cat.push(r.data);var at=r.data.id;sel.innerHTML=opcoesSel(cat,at,sel.dataset.vazio||'');sel.value=at;montarFiltros();
 }
 function formPost(id){
@@ -607,16 +607,16 @@ function formPost(id){
     if(!dados.titulo){toast('Escreva o título.');return;}
     if(dados.link&&!/^https?:\/\//i.test(dados.link)){toast('O link precisa começar com https://');return;}
     this.disabled=true;var r=p?await _sb.from('teses_atualizacoes').update(dados).eq('id',p.id):await _sb.from('teses_atualizacoes').insert(dados);this.disabled=false;
-    if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));return;}
+    if(r.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
     fechar('moForm');toast(p?'Atualização salva.':'Atualização publicada. A equipe foi avisada no sino.');carregarTudo();
   };
-  var arq=$('fpArq');if(arq)arq.onclick=async function(){var r=await _sb.from('teses_atualizacoes').update({ativo:!p.ativo}).eq('id',p.id);if(r.error){toast('Não foi possível: '+esc(r.error.message));return;}fechar('moForm');toast(p.ativo?'Atualização arquivada (some para a equipe).':'Atualização reativada.');carregarTudo();};
+  var arq=$('fpArq');if(arq)arq.onclick=async function(){var r=await _sb.from('teses_atualizacoes').update({ativo:!p.ativo}).eq('id',p.id);if(r.error){toast('Não foi possível: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}fechar('moForm');toast(p.ativo?'Atualização arquivada (some para a equipe).':'Atualização reativada.');carregarTudo();};
 }
 async function excluirPost(id){
   var p=T.posts.find(function(x){return x.id===id;});if(!p||!T.perm.excluir)return;
   if(!await confirmar('Excluir atualização?','A atualização <b>'+esc(p.titulo)+'</b> será apagada de vez do sistema, para toda a equipe. Isso não pode ser desfeito.','Excluir de vez'))return;
   var r=await _sb.from('teses_atualizacoes').delete().eq('id',id);
-  if(r.error){toast('Não foi possível excluir: '+esc(r.error.message));return;}
+  if(r.error){toast('Não foi possível excluir: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
   fechar('moLer');fechar('moForm');toast('Atualização excluída.');carregarTudo();
 }
 
@@ -738,7 +738,7 @@ function htmlKanbanProd(lista){
 }
 async function mudarProduto(id,campo,valor){
   var d={};d[campo]=valor||null;var r=await _sb.from('produtos_juridicos').update(d).eq('id',id);
-  if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));desenharProdutos();return;}
+  if(r.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));desenharProdutos();return;}
   var p=T.produtos.find(function(x){return x.id===id;});if(p)p[campo]=valor||null;desenharProdutos();
 }
 function siglaTese(id){var t=T.teses.find(function(x){return x.id===id;});return t?(t.sigla||''):'';}
@@ -806,9 +806,9 @@ async function enviarArquivos(pid,files){
     toast('Enviando '+esc(f.name)+' ('+(i+1)+' de '+files.length+')...');
     var caminho=pid+'/'+Date.now()+'-'+nomeSeguro(f.name);
     var up=await _sb.storage.from('produtos-arquivos').upload(caminho,f,{contentType:f.type||undefined,upsert:false});
-    if(up.error){toast('Não foi possível enviar '+esc(f.name)+': '+esc(/size|large|exceed/i.test(up.error.message)?'arquivo maior que o limite do armazenamento':up.error.message));continue;}
+    if(up.error){toast('Não foi possível enviar '+esc(f.name)+': '+esc(/size|large|exceed/i.test(up.error.message)?'arquivo maior que o limite do armazenamento':(window.sagaErroBanco?window.sagaErroBanco(up.error):up.error.message)));continue;}
     var r=await _sb.from('produtos_arquivos').insert({produto_id:pid,nome:f.name,caminho:caminho,tipo:f.type||null,tamanho:f.size}).select('id,produto_id,nome,caminho,tipo,tamanho,criado_em').single();
-    if(r.error){toast('Arquivo enviado, mas não foi registrado: '+esc(r.error.message));continue;}
+    if(r.error){toast('Arquivo enviado, mas não foi registrado: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));continue;}
     if(r.data)T.arquivos.push(r.data);ok++;
   }
   if(ok)toast(ok+(ok===1?' arquivo guardado na pasta.':' arquivos guardados na pasta.'));
@@ -826,8 +826,8 @@ async function tirarArquivo(id){
   var a=T.arquivos.find(function(x){return x.id===id;});if(!a)return;
   if(!await confirmar('Tirar arquivo da pasta?','O arquivo <b>'+esc(a.nome)+'</b> será apagado do sistema.','Apagar arquivo'))return;
   var s=await _sb.storage.from('produtos-arquivos').remove([a.caminho]);
-  if(s.error){toast('Não foi possível apagar: '+esc(s.error.message));return;}
-  var r=await _sb.from('produtos_arquivos').delete().eq('id',id);if(r.error){toast(esc(r.error.message));return;}
+  if(s.error){toast('Não foi possível apagar: '+esc((window.sagaErroBanco?window.sagaErroBanco(s.error):s.error.message)));return;}
+  var r=await _sb.from('produtos_arquivos').delete().eq('id',id);if(r.error){toast(esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
   T.arquivos=T.arquivos.filter(function(x){return x.id!==id;});desenharArquivos(a.produto_id);desenharProdutos();
 }
 function formProduto(id,base){
@@ -864,12 +864,12 @@ function formProduto(id,base){
     d.cor=$('ppCor').value||null;var urls=[['site_url','ppSite'],['site_3pj_url','ppSite3'],['drive_pasta_url','ppDrive']];for(var ui=0;ui<urls.length;ui++){var uv=$(urls[ui][1]).value.trim();if(uv&&!urlSegura(uv)){toast('O endereço precisa começar com https://');return;}d[urls[ui][0]]=uv||null;}d.viabilidade_id=$('ppViab').value||null;d.ticket_id=$('ppTicket').value||null;d.escalavel_id=$('ppEsc').value||null;d.publico_criterios=pub.criterios;d.esferas=pub.esferas;d.pessoa_tipo=pub.pessoa_tipo;d.links=pub.links;d.explicacao=pub.explicacao||null;
     this.disabled=true;
     var r=p?await _sb.from('produtos_juridicos').update(d).eq('id',p.id).select('id').single():await _sb.from('produtos_juridicos').insert(d).select('id').single();
-    this.disabled=false;if(r.error){toast('Não foi possível salvar: '+esc(r.error.message));return;}
+    this.disabled=false;if(r.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
     if(base.radarId&&r.data){await _sb.from('radar_oportunidades').update({status:'incorporado',produto_id:r.data.id}).eq('id',base.radarId);}
     fechar('moForm');toast(base.radarId?'Incorporado à prateleira.':'Produto salvo.');await carregarTudo();
     if(!p&&r.data&&!base.radarId){trocarAba('prateleira');abrirPasta(r.data.id);}
   };
-  var at=$('ppAtivo');if(at)at.onclick=async function(){var r=await _sb.from('produtos_juridicos').update({ativo:!p.ativo}).eq('id',p.id);if(r.error){toast(esc(r.error.message));return;}fechar('moForm');carregarTudo();};
+  var at=$('ppAtivo');if(at)at.onclick=async function(){var r=await _sb.from('produtos_juridicos').update({ativo:!p.ativo}).eq('id',p.id);if(r.error){toast(esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}fechar('moForm');carregarTudo();};
 }
 /* janela curta: editar só o público de uma tese já criada (17/11, Dr. Victor) */
 function formPublico(id){
@@ -882,7 +882,7 @@ function formPublico(id){
   $('ppSalvarPub').onclick=async function(){
     var pub=lerFormPublico(),d={publico:$('ppPub').value.trim(),publico_criterios:pub.criterios,esferas:pub.esferas,pessoa_tipo:pub.pessoa_tipo};
     this.disabled=true;var r=await _sb.from('produtos_juridicos').update(d).eq('id',p.id);this.disabled=false;
-    if(r.error){toast('Não foi possível salvar o público: '+esc(r.error.message));return;}
+    if(r.error){toast('Não foi possível salvar o público: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
     Object.assign(p,d);fechar('moForm');toast('Público da tese salvo.');desenharProdutos();setTimeout(function(){abrirPasta(p.id);},230);
   };
 }
@@ -890,9 +890,9 @@ async function excluirProduto(id){
   var p=T.produtos.find(function(x){return x.id===id;});if(!p||!T.perm.excluir)return;
   var arqs=arquivosDe(id);
   if(!await confirmar('Excluir produto?','O produto <b>'+esc(p.nome)+'</b>'+(arqs.length?' e os '+arqs.length+' arquivos da pasta':'')+' serão apagados de vez do sistema. Isso não pode ser desfeito.','Excluir de vez'))return;
-  if(arqs.length){var s=await _sb.storage.from('produtos-arquivos').remove(arqs.map(function(a){return a.caminho;}));if(s.error){toast('Não foi possível apagar os arquivos: '+esc(s.error.message));return;}}
+  if(arqs.length){var s=await _sb.storage.from('produtos-arquivos').remove(arqs.map(function(a){return a.caminho;}));if(s.error){toast('Não foi possível apagar os arquivos: '+esc((window.sagaErroBanco?window.sagaErroBanco(s.error):s.error.message)));return;}}
   var r=await _sb.from('produtos_juridicos').delete().eq('id',id);
-  if(r.error){toast('Não foi possível excluir: '+esc(r.error.message));return;}
+  if(r.error){toast('Não foi possível excluir: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
   fechar('moLer');fechar('moForm');toast('Produto excluído.');carregarTudo();
 }
 
@@ -986,7 +986,7 @@ function verRadar(id){
 }
 async function statusRadar(id,st){
   if(st==='incorporado'){var it=T.radar.find(function(x){return x.id===id;});incorporar(it);return;}
-  var r=await _sb.from('radar_oportunidades').update({status:st}).eq('id',id);if(r.error){toast(esc(r.error.message));desenharRadar();return;}
+  var r=await _sb.from('radar_oportunidades').update({status:st}).eq('id',id);if(r.error){toast(esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));desenharRadar();return;}
   var it2=T.radar.find(function(x){return x.id===id;});if(it2)it2.status=st;fechar('moLer');desenharRadar();desenharBotoes();
 }
 function incorporar(it){
@@ -1018,14 +1018,14 @@ function formRadar(id){
     if(!d.titulo){toast('Escreva o título.');return;}
     if((d.link&&!/^https?:\/\//i.test(d.link))||(d.link_extra&&!/^https?:\/\//i.test(d.link_extra))){toast('Os links precisam começar com https://');return;}
     this.disabled=true;var q=r?await _sb.from('radar_oportunidades').update(d).eq('id',r.id):await _sb.from('radar_oportunidades').insert(d);this.disabled=false;
-    if(q.error){toast('Não foi possível salvar: '+esc(q.error.message));return;}fechar('moForm');toast('Item do radar salvo.');carregarTudo();
+    if(q.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(q.error):q.error.message)));return;}fechar('moForm');toast('Item do radar salvo.');carregarTudo();
   };
 }
 async function excluirRadar(id){
   var r=T.radar.find(function(x){return x.id===id;});if(!r||!T.perm.excluir)return;
   if(!await confirmar('Excluir item do radar?','O item <b>'+esc(r.titulo)+'</b> e o histórico dele serão apagados de vez. Se o radar diário trouxer esse tema de novo, ele volta como item novo.','Excluir de vez'))return;
   var q=await _sb.from('radar_oportunidades').delete().eq('id',id);
-  if(q.error){toast('Não foi possível excluir: '+esc(q.error.message));return;}
+  if(q.error){toast('Não foi possível excluir: '+esc((window.sagaErroBanco?window.sagaErroBanco(q.error):q.error.message)));return;}
   fechar('moLer');fechar('moForm');toast('Item excluído.');carregarTudo();
 }
 
@@ -1043,7 +1043,7 @@ function organizarOpcoes(cat){
     if(e.target.closest('[data-sobe]')&&l.previousElementSibling)l.parentNode.insertBefore(l,l.previousElementSibling);
     if(e.target.closest('[data-desce]')&&l.nextElementSibling&&l.nextElementSibling.dataset.opc)l.parentNode.insertBefore(l.nextElementSibling,l);
     box.querySelectorAll('[data-opc]').forEach(function(x,i,arr){x.querySelector('[data-sobe]').disabled=!i;x.querySelector('[data-desce]').disabled=i===arr.length-1;});});
-  $('opcAdd').onclick=async function(){var n=$('opcNova').value.trim();if(!n)return;var r=await _sb.from('etiquetas_catalogo').insert({categoria:cat,nome:n,cor:'#8a94a8',ordem:lista.length+1}).select('id,nome,cor,categoria,ordem,ativo').single();if(r.error){toast(esc(r.error.message));return;}T.cat.push(r.data);organizarOpcoes(cat);};
+  $('opcAdd').onclick=async function(){var n=$('opcNova').value.trim();if(!n)return;var r=await _sb.from('etiquetas_catalogo').insert({categoria:cat,nome:n,cor:'#8a94a8',ordem:lista.length+1}).select('id,nome,cor,categoria,ordem,ativo').single();if(r.error){toast(esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}T.cat.push(r.data);organizarOpcoes(cat);};
   abrir('moForm');var oc=$('opcCat');if(oc)oc.onchange=function(){organizarOpcoes(this.value);};
   $('opcSalvar').onclick=async function(){
     var linhas=box.querySelectorAll('[data-opc]'),erro=null;this.disabled=true;
@@ -1153,7 +1153,7 @@ async function init(){
   await carregarTudo();
   var post=q.get('post');if(post){trocarAba('atualizacoes');lerPost(post);}
 }
-init().catch(function(e){toast('Erro ao abrir: '+esc(e.message||''));});
+init().catch(function(e){toast('Erro ao abrir: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''));});
 </script>
 </body>
 </html>

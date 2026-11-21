@@ -39,7 +39,7 @@ window.SagaPontoRelatorios=(function(){
       var q=C.sb.from(tabela).select(campos).gte('data',ini).lte('data',fim).order('colaborador_id').order('data');
       if(ord)q=q.order(ord);
       var r=await q.range(de,de+999);
-      if(r.error)throw new Error('não deu para ler '+tabela+': '+(r.error.message||r.error.code||'erro'));
+      if(r.error)throw new Error('não deu para ler '+tabela+': '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||r.error.code||'erro'));
       lista=lista.concat(r.data||[]);
       if(!r.data||r.data.length<1000)return lista;
       de+=1000;
@@ -60,7 +60,7 @@ window.SagaPontoRelatorios=(function(){
   }
   async function justificativas(ini,fim){
     var r=await C.sb.from('ponto_justificativas').select('colaborador_id,data,tipo,status,horas_abonar_min').gte('data',ini).lte('data',fim);
-    if(r.error)throw new Error('não deu para ler as justificativas: '+(r.error.message||'erro'));
+    if(r.error)throw new Error('não deu para ler as justificativas: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'erro'));
     var m={};(r.data||[]).forEach(function(j){(m[j.colaborador_id+'|'+j.data]=m[j.colaborador_id+'|'+j.data]||[]).push(j);});
     return m;
   }
@@ -146,7 +146,7 @@ window.SagaPontoRelatorios=(function(){
     });
     if(!linhas.length&&!diretoria.length)return {vazio:'Nada a relatar em '+br(diaKey)+' (dia sem expediente e sem registros).'};
     var pj=await C.sb.from('ponto_justificativas').select('id',{count:'exact',head:true}).eq('status','pendente');
-    if(pj.error)throw new Error('não deu para contar as justificativas pendentes: '+(pj.error.message||'erro'));
+    if(pj.error)throw new Error('não deu para contar as justificativas pendentes: '+((window.sagaErroBanco?window.sagaErroBanco(pj.error):pj.error.message)||'erro'));
     var pend=pj.count||0;
     linhas.sort(function(a,b){return a.ordem-b.ordem;});
     var corpo=numeros([['presentes',presentes+' de '+previstos,'forte'],['horas trabalhadas (equipe)',PC.hhmm(horas)||'00:00'],['faltas',faltas.length,faltas.length?'ruim':''],
@@ -217,7 +217,7 @@ window.SagaPontoRelatorios=(function(){
     var p=partesMes(k),fk=fechKey(k),hoje=C.state.hoje;
     var dados=await coletarMes(k);
     var b=await C.sb.from('ponto_banco_horas').select('colaborador_id,mes,transportar,fechado_em,descontar,compensar').in('mes',[mesAnterior(k),k]);
-    if(b.error)throw new Error('não deu para ler o banco de horas: '+(b.error.message||'erro'));
+    if(b.error)throw new Error('não deu para ler o banco de horas: '+((window.sagaErroBanco?window.sagaErroBanco(b.error):b.error.message)||'erro'));
     var ant={},gravado={};(b.data||[]).forEach(function(r){if(r.mes===k)gravado[r.colaborador_id]=r;else ant[r.colaborador_id]=r;});
     var equipe=[],diretoria=[],desc=0,comp=0,alerta=[],descontar=[],out=[],lim=C.state.cfg.limite_alerta,nGravados=0;
     dados.forEach(function(x){
@@ -260,7 +260,7 @@ window.SagaPontoRelatorios=(function(){
     '#prConteudo .pr-cab h3{margin:0;font-family:"Cormorant Garamond",serif;font-size:22px;color:var(--text)}#prConteudo .pr-cab .sub{margin:2px 0 12px}'+
     '#prConteudo .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 6px}'+
     '#prConteudo .kpis>div{background:var(--panel);border:1px solid var(--border-soft,var(--border));border-top:3px solid var(--gold);border-radius:12px;padding:10px 12px}'+
-    '#prConteudo .kpis>div.ruim{border-top-color:var(--danger,#e5484d)}#prConteudo .kpis>div>span{display:block;font-size:11px;color:var(--muted)}#prConteudo .kpis b{display:block;font-size:20px;color:var(--text);font-variant-numeric:tabular-nums}'+
+    '#prConteudo .kpis>div.ruim{border-top-color:var(--danger,#e5484d)}#prConteudo .kpis>div>span{display:block;font-size:11px;color:var(--muted)}#prConteudo .kpis b{display:block;font-size:20px;color:var(--text);font-variant-numeric:lining-nums tabular-nums}'+
     '#prConteudo .secao{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:18px 0 4px}#prConteudo .pr-dica{margin:0 0 6px}'+
     '#prConteudo .mini{font-size:11.5px;color:var(--muted)}#prConteudo .pr-apagado{color:var(--muted);opacity:.6}#prConteudo .pr-aviso{color:var(--warning,#e0a93b)}'+
     '#prConteudo .obs{border:1px solid var(--border-soft,var(--border));border-left:3px solid var(--gold);border-radius:10px;padding:9px 12px;background:var(--panel);font-size:13px;color:var(--text);margin:4px 0}#prConteudo .obs p{margin:3px 0}'+
@@ -335,7 +335,7 @@ window.SagaPontoRelatorios=(function(){
     }catch(e){
       if(minha!==versao)return;
       alvo.classList.remove('carregando');ultimo=null;
-      erro.innerHTML='<div class="pr-erro"><b>Não deu para montar o relatório:</b> '+esc((e&&e.message)||'erro desconhecido')+'. Os dados não foram alterados. Clique em Atualizar para tentar de novo; se continuar, avise o administrador com esta mensagem.</div>';
+      erro.innerHTML='<div class="pr-erro"><b>Não deu para montar o relatório:</b> '+esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Os dados não foram alterados. Clique em Atualizar para tentar de novo; se continuar, avise o administrador com esta mensagem.</div>';
     }
   }
   function pdf(){

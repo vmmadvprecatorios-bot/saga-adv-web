@@ -91,7 +91,7 @@
             if(o.alterou)o.alterou(e,p);
             if(op.alterou)op.alterou(e,p);
             atualizar();renderMenu();editor.hidden=true;
-          }catch(err){msg.textContent=err.message||TX.erro;}
+          }catch(err){msg.textContent=(window.sagaErroBanco?window.sagaErroBanco(err):err.message)||TX.erro;}
           finally{ocupado=false;editor.querySelectorAll('button,input').forEach(function(b){b.disabled=false;});}
         };
         editor.querySelector('.se-nome').focus();

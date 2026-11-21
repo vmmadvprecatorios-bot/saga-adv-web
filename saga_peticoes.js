@@ -244,7 +244,7 @@ window.SagaPeticoes = (function(){
       var r = await Promise.all([carregarBase(), sb().rpc('peticao_dados', { p_processo_id: S.ctx.processoId }), sb().rpc('calculo_do_processo', { p_processo_id: S.ctx.processoId })]);
       S.calc = (r[2] && !r[2].error && r[2].data) ? r[2].data : null;
       var dr = r[1];
-      if(dr.error) throw new Error('não consegui ler os dados da ficha: ' + dr.error.message);
+      if(dr.error) throw new Error('não consegui ler os dados da ficha: ' + (window.sagaErroBanco?window.sagaErroBanco(dr.error):dr.error.message));
       S.dados = dr.data || {};
       var tese = (S.dados.processo || {}).tese_id || S.ctx.teseId || null;
       var daTese = S.modelos.filter(function(m){ return tese && m.tese_id === tese; });
@@ -264,12 +264,14 @@ window.SagaPeticoes = (function(){
       conteudo('<h3 id="ptTitulo">Fazer petição · ' + esc((S.dados.pessoa || {}).nome || '') + '</h3>'
         + '<div class="pt-sub">Processo de ' + esc(nomeTese) + (S.dados.processo && S.dados.processo.codigo ? ' · ' + esc(S.dados.processo.codigo) : '')
         + '. Aparecem só as petições desta tese e os modelos gerais. Para outra tese, use o botão no processo dela.</div>'
-        + (daTese.length ? '<div class="pt-lista">' + daTese.map(cartao).join('') + '</div>' : '<div class="pt-vazio">Ainda não há petição pronta para ' + esc(nomeTese) + '. Use um modelo geral abaixo ou peça para cadastrar o modelo desta tese.</div>')
+        + (daTese.length ? '<div class="pt-lista">' + daTese.map(cartao).join('') + '</div>'
+          : (gerais.length ? '<div class="pt-vazio">Ainda não há petição pronta para ' + esc(nomeTese) + '. Use um modelo geral abaixo ou cadastre o modelo desta tese em <a href="biblioteca_padrao_metalico_FINAL.html" target="_blank" rel="noopener">Modelos ↗</a>.</div>'
+            : '<div class="pt-vazio"><b>Nenhum modelo de petição disponível para este processo.</b><br>Não há modelo de ' + esc(nomeTese) + ' nem modelo geral cadastrado (ou você não tem acesso a eles). Cadastre ou importe os modelos em <a href="biblioteca_padrao_metalico_FINAL.html" target="_blank" rel="noopener">Modelos &gt; Petições e timbrados ↗</a>; quem não gerencia os modelos pede ao administrador.</div>'))
         + (gerais.length ? '<div class="pt-sub" style="margin:16px 0 8px">Modelos gerais</div><div class="pt-lista">' + gerais.map(cartao).join('') + '</div>' : '')
         + '<div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" data-pt-fechar>Fechar</button></div>');
       document.querySelectorAll('[data-pt-modelo]').forEach(function(b){ b.onclick = function(){ escolher(b.getAttribute('data-pt-modelo')); }; });
     }catch(e){
-      conteudo('<h3 id="ptTitulo">Fazer petição</h3><div class="pt-erro"><b>Não deu para abrir:</b> ' + esc(e.message || e) + '</div><div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" data-pt-fechar>Fechar</button></div>');
+      conteudo('<h3 id="ptTitulo">Fazer petição</h3><div class="pt-erro"><b>Não deu para abrir:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div><div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" data-pt-fechar>Fechar</button></div>');
     }
     ligarFechar();
   }
@@ -319,7 +321,7 @@ window.SagaPeticoes = (function(){
             Object.keys(cp2).forEach(function(k){ var i = document.querySelector('[data-pt-campo="' + k + '"]'); if(i && cp2[k]){ i.value = cp2[k]; i.dispatchEvent(new Event('input')); } });
             S.calc = S.calc || {}; 
           } });
-      }).catch(function(e){ var msg = document.getElementById('ptMsg'); if(msg) msg.innerHTML = '<div class="pt-erro"><b>Não abriu o cálculo:</b> ' + esc(e.message || e) + '</div>'; });
+      }).catch(function(e){ var msg = document.getElementById('ptMsg'); if(msg) msg.innerHTML = '<div class="pt-erro"><b>Não abriu o cálculo:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>'; });
     };
     ligarDocs(campos);
     document.getElementById('ptWord').onclick = function(){ gerar('docx'); };
@@ -335,14 +337,14 @@ window.SagaPeticoes = (function(){
 
   async function pastaPeticoes(pessoaId){
     var r = await sb().from('pastas_cliente').select('id,nome').eq('pessoa_id', pessoaId).is('pai_id', null).eq('ativo', true);
-    if(r.error) throw new Error('não consegui ler as pastas do cliente (' + r.error.message + ')');
+    if(r.error) throw new Error('não consegui ler as pastas do cliente (' + (window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) + ')');
     var chave = function(s){ return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); };
     var achou = (r.data || []).filter(function(p){ return chave(p.nome) === 'peticoes'; })[0];
     if(achou) return achou.id;
     var c = await sb().rpc('pastas_cliente_criar_varias', { p_pessoa: pessoaId, p_nomes: ['Petições'] });
     if(c.error){
       var ins = await sb().from('pastas_cliente').insert({ pessoa_id: pessoaId, pai_id: null, nome: 'Petições' }).select('id').single();
-      if(ins.error) throw new Error('não consegui criar a pasta "Petições" (' + ins.error.message + ')');
+      if(ins.error) throw new Error('não consegui criar a pasta "Petições" (' + (window.sagaErroBanco?window.sagaErroBanco(ins.error):ins.error.message) + ')');
       return ins.data.id;
     }
     var r2 = await sb().from('pastas_cliente').select('id,nome').eq('pessoa_id', pessoaId).is('pai_id', null).eq('ativo', true);
@@ -359,12 +361,12 @@ window.SagaPeticoes = (function(){
     var pastaId = await pastaPeticoes(pessoaId);
     var caminho = procId + '/' + crypto.randomUUID() + '_' + nome.replace(/[^a-zA-Z0-9._-]/g, '_');
     var up = await sb().storage.from(BUCKET).upload(caminho, new Blob([bytes], { type: tipo }), { contentType: tipo });
-    if(up.error) throw new Error('o envio do arquivo falhou (' + up.error.message + ')');
+    if(up.error) throw new Error('o envio do arquivo falhou (' + (window.sagaErroBanco?window.sagaErroBanco(up.error):up.error.message) + ')');
     var ins = await sb().from('documentos').insert({ processo_id: procId, pessoa_id: pessoaId, usuario_id: us.data.id, nome_arquivo: nome, caminho_storage: caminho,
       tipo_documento: /\.pdf$/i.test(nome) ? 'pdf' : 'word', tamanho_bytes: bytes.length, pasta_id: pastaId, visivel_portal_cliente: false, excluido_logico: false }).select('id').single();
     if(ins.error){
       var rm = await sb().storage.from(BUCKET).remove([caminho]);
-      throw new Error((ins.error.message || 'o registro do documento foi recusado') + (rm.error ? ' (e o arquivo enviado ficou solto: avise o administrador)' : ''));
+      throw new Error(((window.sagaErroBanco?window.sagaErroBanco(ins.error):ins.error.message) || 'o registro do documento foi recusado') + (rm.error ? ' (e o arquivo enviado ficou solto: avise o administrador)' : ''));
     }
     return ins.data.id;
   }
@@ -392,7 +394,7 @@ window.SagaPeticoes = (function(){
       var docId = null, aviso = '';
       if(querGuardar){
         try{ docId = await guardar(r.bytes, nome, r.tipo); aviso = ' Guardada na pasta "Petições" do cliente.'; }
-        catch(e){ aviso = '<br><span class="pt-erro">Baixou, mas NÃO guardou na pasta do cliente. Motivo: ' + esc(e.message || e) + '.</span>'; }
+        catch(e){ aviso = '<br><span class="pt-erro">Baixou, mas NÃO guardou na pasta do cliente. Motivo: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '.</span>'; }
       }
       try{ await sb().rpc('peticao_registrar', { p_processo_id: S.ctx.processoId, p_modelo_id: m.id, p_titulo: m.titulo, p_formato: formato, p_documento_id: docId, p_faltando: nFalta }); }catch(e){}
       msg.innerHTML = '<div class="pt-ok">Pronto: ' + esc(nome) + (r.paginas ? ' (' + r.paginas + (r.paginas === 1 ? ' página' : ' páginas') + ')' : '') + ' foi baixado.'
@@ -401,7 +403,7 @@ window.SagaPeticoes = (function(){
       if(docId && typeof S.ctx.aoGuardar === 'function'){ try{ S.ctx.aoGuardar(docId); }catch(e){} }
       proximoDaFila(msg);
     }catch(e){
-      msg.innerHTML = '<div class="pt-erro"><b>Não foi possível gerar o ' + (formato === 'pdf' ? 'PDF' : 'Word') + ':</b> ' + esc(e.message || e) + '</div>';
+      msg.innerHTML = '<div class="pt-erro"><b>Não foi possível gerar o ' + (formato === 'pdf' ? 'PDF' : 'Word') + ':</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>';
     }finally{ bw.disabled = bp.disabled = false; botao.textContent = txt; }
   }
 
@@ -466,7 +468,7 @@ window.SagaPeticoes = (function(){
     }).catch(function(e){
       /* enquanto o arquivo não estiver publicado (404), a caixa simplesmente não aparece; outro erro fica à vista */
       fetch(BASE_ARQ + 'saga_peticao_docs.js', { method: 'HEAD', cache: 'no-store' }).then(function(r){
-        if(r.status !== 404) div.innerHTML = '<div class="pt-erro"><b>A leitura dos documentos não carregou:</b> ' + esc(e.message || e) + ' (código ' + r.status + ')</div>';
+        if(r.status !== 404) div.innerHTML = '<div class="pt-erro"><b>A leitura dos documentos não carregou:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + ' (código ' + r.status + ')</div>';
       }).catch(function(){ div.innerHTML = '<div class="pt-erro"><b>A leitura dos documentos não carregou:</b> sem ligação com o site. Atualize a página.</div>'; });
     });
   }
@@ -527,7 +529,7 @@ window.SagaPeticoes = (function(){
         res.innerHTML = '<div class="pt-vazio">Procurando...</div>';
         var r = await S.ctx.sb.rpc('peticao_clientes_juridico', { p_busca: termo });
         if(inp.value.trim() !== termo) return;
-        if(r.error){ res.innerHTML = '<div class="pt-erro"><b>Não deu para buscar:</b> ' + esc(r.error.message) + '</div>'; return; }
+        if(r.error){ res.innerHTML = '<div class="pt-erro"><b>Não deu para buscar:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)) + '</div>'; return; }
         atual = r.data || []; desenhar(atual);
       }, 350);
     });

@@ -437,10 +437,10 @@ input[type="checkbox"]{accent-color:var(--gold);width:14px;height:14px;cursor:po
 .pr-rosca .centro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;font-size:20px;font-weight:700;line-height:1;color:var(--text)}.pr-rosca .centro small{font-size:8.5px;font-weight:600;letter-spacing:.4px;color:var(--muted);margin-top:3px;text-transform:uppercase}
 .pr-leg-lista{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}.pr-leg{display:flex;align-items:center;gap:7px;width:100%;padding:3px 5px;border:0;border-radius:7px;background:none;color:var(--text);font:inherit;font-size:11px;text-align:left;min-width:0}
 button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{background:color-mix(in srgb,var(--text) 7%,transparent);outline:0}.pr-leg.ativa{background:color-mix(in srgb,var(--gold) 14%,transparent);font-weight:700}
-.pr-leg i{width:9px;height:9px;border-radius:3px;flex:0 0 auto;background:var(--c)}.pr-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pr-leg b{font-variant-numeric:tabular-nums;color:var(--muted);font-size:10.5px}
+.pr-leg i{width:9px;height:9px;border-radius:3px;flex:0 0 auto;background:var(--c)}.pr-leg span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pr-leg b{font-variant-numeric:lining-nums tabular-nums;color:var(--muted);font-size:10.5px}
 @media(max-width:1180px){.pr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.pr-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.pr-graf{flex:0 0 86%;scroll-snap-align:start}}
-.pr-graficos-secao{container-type:inline-size}@container(max-width:1050px){.pr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}@container(max-width:600px){.pr-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.pr-graf{flex:0 0 86%;scroll-snap-align:start}}.pr-graficos[hidden]{display:none!important}.pr-graficos-barra{display:flex;justify-content:flex-end;margin:-7px 0 7px}.pr-toggle{font:inherit;font-size:10.5px;color:var(--muted);padding:5px 8px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);cursor:pointer}.pr-toggle:active{transform:scale(.96)}.pr-rosca .pr-fatia{transition:opacity .2s,stroke-width .2s,stroke-dasharray .6s,stroke-dashoffset .6s}.pr-rosca .pr-fatia{transform-box:fill-box;transform-origin:center}.pr-rosca .pr-fatia:focus-visible{stroke-width:16;outline:none}.pr-leg-lista{max-height:196px;overflow-y:auto}.pr-leg:active{transform:scale(.97)}.pr-rosca .centro .n{font-variant-numeric:tabular-nums}@media (min-resolution:100000dppx){.pr-rosca .pr-fatia{transition:none}}
+.pr-graficos-secao{container-type:inline-size}@container(max-width:1050px){.pr-graficos{grid-template-columns:repeat(2,minmax(0,1fr))}}@container(max-width:600px){.pr-graficos{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px}.pr-graf{flex:0 0 86%;scroll-snap-align:start}}.pr-graficos[hidden]{display:none!important}.pr-graficos-barra{display:flex;justify-content:flex-end;margin:-7px 0 7px}.pr-toggle{font:inherit;font-size:10.5px;color:var(--muted);padding:5px 8px;border:1px solid var(--border-soft);border-radius:8px;background:var(--panel);cursor:pointer}.pr-toggle:active{transform:scale(.96)}.pr-rosca .pr-fatia{transition:opacity .2s,stroke-width .2s,stroke-dasharray .6s,stroke-dashoffset .6s}.pr-rosca .pr-fatia{transform-box:fill-box;transform-origin:center}.pr-rosca .pr-fatia:focus-visible{stroke-width:16;outline:none}.pr-leg-lista{max-height:196px;overflow-y:auto}.pr-leg:active{transform:scale(.97)}.pr-rosca .centro .n{font-variant-numeric:lining-nums tabular-nums}@media (min-resolution:100000dppx){.pr-rosca .pr-fatia{transition:none}}
 
 
 .pr-erro{padding:12px;margin-bottom:14px;border:1px solid var(--border-soft);border-radius:12px;color:var(--muted);font-size:12px}.pr-erro[hidden]{display:none}.pr-erro button{font:inherit;color:var(--gold);margin-left:8px}
@@ -479,7 +479,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
       <p style="font-size:12.5px;line-height:1.6">Tem certeza que deseja excluir o processo de <strong id="confirmarExclusaoNome" style="color:var(--gold-light)"></strong>?</p>
       <p style="font-size:11px;color:var(--muted);margin-top:10px">O processo continuara acessivel para restauracao pelo administrador.</p>
     </div>
-    <div class="modal-foot"><button class="btn-secondary" onclick="closeModal('modalConfirmarExclusao')">Cancelar</button><button class="btn-danger-solid" onclick="executarExclusao()">Confirmar exclusao</button></div>
+    <div class="modal-foot"><button class="btn-secondary" onclick="closeModal('modalConfirmarExclusao')">Cancelar</button><button class="btn-danger-solid" onclick="executarExclusao()">Confirmar exclusão</button></div>
   </div>
 </div>
 
@@ -489,7 +489,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
     <div class="modal-head"><div><h3>Atribuir responsável</h3><p id="atribuirProcessoNome" style="color:var(--gold-light);font-size:11px;margin-top:3px"></p></div><button class="modal-close" onclick="closeModal('modalAtribuir')">&#x2715;</button></div>
     <div class="modal-body">
       <div class="form-field">
-        <label>Responsavel</label>
+        <label>Responsável</label>
         <div class="dropdown-custom" id="dropdownAtribuir">
           <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownAtribuir')"><span id="labelAtribuirResponsavel">Selecione...</span><div class="chevron-dd"></div></div>
           <div class="dropdown-custom-lista" id="listaAtribuir"></div>
@@ -537,7 +537,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
         <div class="dropdown-custom" id="dropdownNovoStatus"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovoStatus')"><span id="labelNovoStatus">Selecione o status...</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovoStatus"></div></div>
       </div>
       <div class="form-field">
-        <label>Responsavel</label>
+        <label>Responsável</label>
         <div class="dropdown-custom" id="dropdownNovoResponsavel"><div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownNovoResponsavel')"><span id="labelNovoResponsavel">Sem responsável</span><div class="chevron-dd"></div></div><div class="dropdown-custom-lista" id="listaNovoResponsavel"></div></div>
       </div>
       <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px;margin-top:13px">
@@ -624,7 +624,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Novo Processo
         </button>
         <button class="btn-secondary" id="btnGerenciarCatalogos" style="display:none" onclick="abrirGerenciarCatalogos()" title="Gerenciar tipos de ação e status">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V19a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H5a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H11a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.4 1z" stroke="currentColor" stroke-width="1.7"/></svg>Catalogos
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 13a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V19a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H5a2 2 0 110-4h.2a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H11a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.4 1z" stroke="currentColor" stroke-width="1.7"/></svg>Catálogos
         </button>
       </div>
     </div>
@@ -653,11 +653,11 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
           <div class="dropdown-custom-lista" id="listaStatus"><div class="dropdown-custom-opcao" style="color:var(--muted)">Carregando...</div></div>
         </div>
         <div class="dropdown-custom" id="dropdownResponsavel">
-          <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownResponsavel')"><span id="labelFiltroResponsavel">Responsavel</span><div class="chevron-dd"></div></div>
+          <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownResponsavel')"><span id="labelFiltroResponsavel">Responsável</span><div class="chevron-dd"></div></div>
           <div class="dropdown-custom-lista" id="listaResponsaveis"><div class="dropdown-custom-opcao" style="color:var(--muted)">Carregando...</div></div>
         </div>
         <div class="dropdown-custom" id="dropdownPeriodo">
-          <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownPeriodo')"><span id="labelFiltroPeriodo">Periodo</span><div class="chevron-dd"></div></div>
+          <div class="dropdown-custom-valor" onclick="toggleDropdown('dropdownPeriodo')"><span id="labelFiltroPeriodo">Período</span><div class="chevron-dd"></div></div>
           <div class="dropdown-custom-lista filtro-periodo-lista">
             <label>Data de inicio - de</label>
             <input type="date" id="inputPeriodoDe">
@@ -690,7 +690,7 @@ button.pr-leg{cursor:pointer}button.pr-leg:hover,button.pr-leg:focus-visible{bac
             <thead>
               <tr>
                 <th class="checkbox-col"><input type="checkbox" id="chkTodos"></th>
-                <th>Cliente</th><th>Tipo de ação</th><th>Status</th><th>Responsavel</th>
+                <th>Cliente</th><th>Tipo de ação</th><th>Status</th><th>Responsável</th>
                 <th>Inicio</th><th>Prazo</th><th>Valor da causa</th><th></th>
               </tr>
             </thead>
@@ -749,7 +749,7 @@ var state={
   session:null,meuInternoId:null,
   permissoes:{visualizar:false,criar:false,editar:false,excluir:false,atribuir:false,editar_dados:false},
   view:'lista',processos:[],totalProcessos:0,loading:false,
-  busca:'',filtroArea:'*',filtroTese:null,filtroStatus:null,filtroResponsavel:null,
+  busca:'',filtroArea:'*',filtroTese:null,filtroStatus:null,filtroResponsavel:null,filtroCaptador:null,
   filtroPeriodoDe:null,filtroPeriodoAte:null,page:1,pageSize:50,
   teses:[],statusList:[],responsaveis:[],
   processoParaExcluir:null,processoParaAtribuir:null,responsavelAtribuirSelecionado:null,
@@ -833,7 +833,7 @@ async function criarNovaPessoaRapida(){
   }
   var r=await _sb.from('pessoas').insert({nome_completo:nome,cpf:cpf,situacao_vital:'vivo',criado_por_id:state.meuInternoId}).select('id,nome_completo,cpf').single();
   if(r.error){
-    if(String(r.error.code)==='23505'){showToast(r.error.message&&/ficha com este CPF/.test(r.error.message)?r.error.message:'Já existe uma pessoa cadastrada com este CPF.','warning');return;}
+    if(String(r.error.code)==='23505'){showToast((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)&&/ficha com este CPF/.test(r.error.message)?(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message):'Já existe uma pessoa cadastrada com este CPF.','warning');return;}
     showToast('Não foi possível cadastrar a pessoa. Verifique suas permissões.','error');return;
   }
   if(decisao.motivo&&!(await SagaFichas.registrar(_sb,r.data.id,decisao.motivo,decisao.parecidas)))showToast('Ficha criada, mas o motivo não foi gravado. Escreva o motivo num comentário da ficha.','warning');
@@ -1159,7 +1159,7 @@ async function confirmarRealocarEDesativar(){
   var rpc='realocar_e_desativar_status';
   var params=origem.tipo==='tese'?{p_tese_id:origem.id,p_tese_destino_id:origem.destinoId}:{p_status_id:origem.id,p_status_destino_id:origem.destinoId};
   var r=await _sb.rpc(rpc,params);
-  if(r.error){showToast('Não foi possível desativar: '+(r.error.message||'tente novamente.'),'error');return;}
+  if(r.error){showToast('Não foi possível desativar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'tente novamente.'),'error');return;}
   closeModal('modalRealocarCatalogo');
   showToast((origem.tipo==='tese'?'Tipo de ação':'Status')+' desativado(a).','success');
   if(origem.tipo==='tese'){await carregarTodasTeses();}else{await carregarTodosStatus();}
@@ -1228,6 +1228,7 @@ async function carregarOpcoesFiltros(){
   await catalogoTeses.carregar();state.teses=catalogoTeses.todasTeses();
   var s=await _sb.from('status_funil').select('id,nome,cor,fase,ordem,etapa').eq('ativo',true).order('ordem');state.statusList=s.data||[];
   var u=await _sb.from('usuarios').select('id,nome_completo').eq('ativo',true).not('auth_user_id','is',null).order('nome_completo');state.responsaveis=u.data||[];
+  if(window.sagaEquipe){try{await window.sagaEquipe();}catch(e){}}
   renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();
 }
 
@@ -1244,7 +1245,7 @@ async function restaurarPreferencias(){
   if(!state.meuInternoId)return;
   // 09/11 (Dr. Victor): a lista é grande; ao abrir, vem SEMPRE limpa (sem filtro), com 50 por página e na ordem de
   // cadastro (o mais novo em cima). Os filtros de antes não voltam sozinhos; as "Visões" salvas continuam no menu.
-  state.filtroArea='*';state.busca='';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;
+  state.filtroArea='*';state.busca='';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;state.filtroCaptador=null;
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.pageSize=50;
   sincronizarUI();
   // Veio de um gráfico do Dashboard (?area=...): abre já filtrado pela área
@@ -1256,7 +1257,7 @@ function sincronizarUI(){
   document.querySelectorAll('.pill-quantidade').forEach(function(p){p.classList.toggle('ativo',p.getAttribute('data-qtd')==state.pageSize||(p.getAttribute('data-qtd')==='todos'&&state.pageSize==='todos'));});
   document.getElementById('labelFiltroTese').textContent=state.filtroTese?state.filtroTese.nome:'Tipo de ação';
   document.getElementById('labelFiltroStatus').textContent=state.filtroStatus?state.filtroStatus.nome:'Status';
-  document.getElementById('labelFiltroResponsavel').textContent=state.filtroResponsavel?((state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0])||'Responsavel'):'Responsavel';
+  document.getElementById('labelFiltroResponsavel').textContent=state.filtroResponsavel?((state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0])||'Responsável'):'Responsável';
   if(state.filtroPeriodoDe)document.getElementById('inputPeriodoDe').value=state.filtroPeriodoDe;
   if(state.filtroPeriodoAte)document.getElementById('inputPeriodoAte').value=state.filtroPeriodoAte;
   atualizarLabelPeriodo();renderTagsAtivas();renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();
@@ -1266,15 +1267,16 @@ function atualizarLabelPeriodo(){
   if(de&&ate)document.getElementById('labelFiltroPeriodo').textContent=fmtData(de)+' a '+fmtData(ate);
   else if(de)document.getElementById('labelFiltroPeriodo').textContent='De '+fmtData(de);
   else if(ate)document.getElementById('labelFiltroPeriodo').textContent='Ate '+fmtData(ate);
-  else document.getElementById('labelFiltroPeriodo').textContent='Periodo';
+  else document.getElementById('labelFiltroPeriodo').textContent='Período';
 }
 function renderTagsAtivas(){
   var tags=[];
   if(state.filtroArea!=='*')tags.push({label:'Área: '+(catalogoTeses.area(state.filtroArea)?.nome||'Sem área'),fn:function(){state.filtroArea='*';state.filtroTese=null;renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroTese)tags.push({label:'Tipo de ação: '+state.filtroTese.nome,fn:function(){state.filtroTese=null;document.getElementById('labelFiltroTese').textContent='Tipo de ação';renderDropdownsTeses();aplicarFiltros();}});
   if(state.filtroStatus)tags.push({label:'Status: '+state.filtroStatus.nome,fn:function(){state.filtroStatus=null;document.getElementById('labelFiltroStatus').textContent='Status';renderDropdownsStatus();aplicarFiltros();}});
-  if(state.filtroResponsavel)tags.push({label:'Resp.: '+(state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0]),fn:function(){state.filtroResponsavel=null;document.getElementById('labelFiltroResponsavel').textContent='Responsavel';renderDropdownsResponsavel();aplicarFiltros();}});
-  if(state.filtroPeriodoDe||state.filtroPeriodoAte)tags.push({label:'Periodo',fn:function(){state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';atualizarLabelPeriodo();aplicarFiltros();}});
+  if(state.filtroResponsavel)tags.push({label:'Resp.: '+(state.filtroResponsavel.sem?'Sem responsável':state.filtroResponsavel.nome_completo.split(' ')[0]),fn:function(){state.filtroResponsavel=null;document.getElementById('labelFiltroResponsavel').textContent='Responsável';renderDropdownsResponsavel();aplicarFiltros();}});
+  if(state.filtroCaptador)tags.push({label:'Captador: '+(state.filtroCaptador.sem?'Sem captador':String(state.filtroCaptador.nome_completo||'').split(' ')[0]),fn:function(){state.filtroCaptador=null;aplicarFiltros();}});
+  if(state.filtroPeriodoDe||state.filtroPeriodoAte)tags.push({label:'Período',fn:function(){state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';atualizarLabelPeriodo();aplicarFiltros();}});
   var c=document.getElementById('tagsAtivas');
   if(!tags.length){c.style.display='none';return;}
   c.style.display='flex';
@@ -1287,14 +1289,14 @@ var graficosProcessosOcultos=false,gruposRoscasProcessos={};
 try{graficosProcessosOcultos=localStorage.getItem('saga-processos-graficos-ocultos')==='1';}catch(e){}
 function nomeCurtoRoscaProcesso(nome){var p=nome.trim().split(/\s+/);return p.length>1?p[0]+' '+p[p.length-1]:nome;}
 function agruparRoscaProcessos(base,tipo,max,filtro){
-  var campo=tipo==='status'?'status_id':'responsavel_id';
+  var campo=tipo==='status'?'status_id':tipo==='captador'?'captador_id':'responsavel_id';
   var mapa=new Map();
   function item(id,p){
     var s=tipo==='status'?statusDoProcesso(p||{status_id:id}):null;
-    var r=tipo==='responsavel'?state.responsaveis.find(function(r){return r.id===id;})||(p&&p.responsavel)||{}:null;
-    var nome=tipo==='status'?s.nome||'Sem status':id?r.nome_completo||'Responsável indisponível':'Sem responsável';
+    var r=tipo!=='status'?state.responsaveis.find(function(r){return r.id===id;})||(tipo==='responsavel'&&p&&p.responsavel)||{nome_completo:window.sagaNomePessoa&&window.sagaNomePessoa(id)}:null;
+    var nome=tipo==='status'?s.nome||'Sem status':id?r.nome_completo||'Pessoa sem cadastro':tipo==='captador'?'Sem captador':'Sem responsável';
     var cor=tipo==='status'&&s.cor&&CSS.supports('color',s.cor)?s.cor:null;
-    return {v:id,nome:tipo==='responsavel'?nomeCurtoRoscaProcesso(nome):nome,dica:nome,cor:!id?'var(--g-sem)':cor,n:0,valores:[id]};
+    return {v:id,nome:tipo!=='status'?nomeCurtoRoscaProcesso(nome):nome,dica:nome,cor:!id?'var(--g-sem)':cor,n:0,valores:[id]};
   }
   base.forEach(function(p){var id=p[campo]||'';if(!mapa.has(id))mapa.set(id,item(id,p));mapa.get(id).n++;});
   var selecionados=filtro?(filtro.ids||[filtro.id||'']):[];
@@ -1335,10 +1337,12 @@ function dadosGraficosProcessos(){
   }
   var status=agruparRoscaProcessos(base.filter(function(p){return processoNoEscopo(p,'status');}),'status',7,state.filtroStatus);
   var resp=agruparRoscaProcessos(base.filter(function(p){return processoNoEscopo(p,'responsavel');}),'responsavel',6,state.filtroResponsavel);
-  [[status,'status_id',state.filtroStatus],[resp,'responsavel_id',state.filtroResponsavel]].forEach(function(g){g[0].forEach(function(x){x.n=filtrados.filter(function(p){return x.valores.indexOf(p[g[1]]||'')!==-1;}).length;x.ativa=!!g[2]&&x.valores.some(function(id){return filtroProcessoContem(g[2],id);});});});
+  // 21/11 (check-up 2ª rodada): na Captação o útil é "Por captador" (o responsável é do Jurídico e fica vazio)
+  var cap=FASE_FIXA==='captacao'?agruparRoscaProcessos(base.filter(function(p){return processoNoEscopo(p,'captador');}),'captador',6,state.filtroCaptador):null;
+  [[status,'status_id',state.filtroStatus],[resp,'responsavel_id',state.filtroResponsavel]].concat(cap?[[cap,'captador_id',state.filtroCaptador]]:[]).forEach(function(g){g[0].forEach(function(x){x.n=filtrados.filter(function(p){return x.valores.indexOf(p[g[1]]||'')!==-1;}).length;x.ativa=!!g[2]&&x.valores.some(function(id){return filtroProcessoContem(g[2],id);});});});
   var ids=Array.from(new Set(base.map(function(p){return p.area_direito_id||'';}).concat(state.filtroArea!=='*'?[state.filtroArea||'']:[])));
   var areas=ids.map(function(id,k){var a=catalogoTeses&&catalogoTeses.area(id);return {v:id,nome:a?a.nome:id?'Área indisponível':'Sem área',cor:id?'var(--g'+(k%8+1)+')':'var(--g-sem)',n:filtrados.filter(function(p){return (p.area_direito_id||'')===id;}).length,ativa:state.filtroArea!=='*'&&(state.filtroArea||'')===id};});
-  return [primeiro,{k:'status',titulo:'Por status',itens:status},{k:'area',titulo:'Por área do direito',itens:areas},{k:'responsavel',titulo:'Por responsável',itens:resp}];
+  return [primeiro,{k:'status',titulo:'Por status',itens:status},{k:'area',titulo:'Por área do direito',itens:areas},cap?{k:'captador',titulo:'Por captador',itens:cap}:{k:'responsavel',titulo:'Por responsável',itens:resp}];
 }
 
 function contarRoscaProcesso(el,alvo){
@@ -1350,7 +1354,7 @@ function contarRoscaProcesso(el,alvo){
   function passo(ts){if(inicio===null)inicio=ts;var k=Math.min(1,(ts-inicio)/600);el.textContent=Math.round(de+(alvo-de)*(1-Math.pow(1-k,3)));if(k<1)el._quadro=requestAnimationFrame(passo);else el._quadro=null;}
   el._quadro=requestAnimationFrame(passo);
 }
-function nomeUsuarioPainel(id){var u=(state.responsaveis||[]).find(function(r){return r.id===id;});return u?u.nome_completo:'';}
+function nomeUsuarioPainel(id){var u=(state.responsaveis||[]).find(function(r){return r.id===id;});return u?u.nome_completo:(id&&window.sagaNomePessoa&&window.sagaNomePessoa(id))||(id?'Pessoa sem cadastro':'');}
 function renderPainelAcomp(){
   var raiz=document.getElementById('painelAcompanhamento');if(!raiz||!window.SagaPaineis)return;
   if(!state.permissoes.visualizar||(FASE_FIXA!=='juridico'&&FASE_FIXA!=='captacao')){raiz.hidden=true;return;}
@@ -1413,7 +1417,7 @@ function aplicarFatiaProcesso(chave,valor){
   if(chave==='andamento'){var atualP=window.SagaPlanilha&&SagaPlanilha.protocoloAtual?SagaPlanilha.protocoloAtual():'';var bt=document.querySelector('#spBarra [data-protocolo="'+(atualP===valor?'':valor)+'"]');if(bt)bt.click();return;}
   else if(chave==='area'){state.filtroArea=state.filtroArea!=='*'&&(state.filtroArea||'')===valor?'*':valor||null;state.filtroTese=null;}
   else{
-    var campo=chave==='status'?'filtroStatus':'filtroResponsavel',atual=state[campo];
+    var campo=chave==='status'?'filtroStatus':chave==='captador'?'filtroCaptador':'filtroResponsavel',atual=state[campo];
     var igual=atual&&(x.v==='__outros__'?Array.isArray(atual.ids):!atual.ids&&(atual.id||'')===valor);
     state[campo]=igual?null:x.v==='__outros__'?{ids:x.valores.slice(),nome:'Outros',nome_completo:'Outros'}:{id:valor||null,sem:!valor,nome:x.dica||x.nome,nome_completo:x.dica||x.nome};
   }
@@ -1439,6 +1443,7 @@ function processoNoEscopo(p,ignorar){
   if(ignorar!=='fase'&&faseAtualProcessos()!==FASE_TODAS&&(statusDoProcesso(p).fase||'Sem fase')!==faseAtualProcessos())return false;
   if(ignorar!=='status'&&!filtroProcessoContem(state.filtroStatus,p.status_id))return false;
   if(ignorar!=='responsavel'&&!filtroProcessoContem(state.filtroResponsavel,p.responsavel_id))return false;
+  if(ignorar!=='captador'&&!filtroProcessoContem(state.filtroCaptador,p.captador_id))return false;
   if(window.SagaPlanilha&&!SagaPlanilha.passa(p))return false;
   if(state.view==='kanban'&&state.buscaKanban){var b=state.buscaKanban.trim().toLowerCase(),pe=p.pessoa||{};if(String(pe.nome_completo||'').toLowerCase().indexOf(b)===-1&&String(pe.cpf||'').toLowerCase().indexOf(b)===-1)return false;}
   return true;
@@ -1551,7 +1556,7 @@ async function carregarProcessos(){
     state.baseProcessos=linhas;state.erroGraficos=false;
   }catch(e){
     if(pedido!==state.pedidoProcessos)return;
-    showToast('Erro ao carregar: '+esc(e.message||'verifique a conexão.'),'danger');state.baseProcessos=[];state.erroGraficos=true;
+    showToast('Erro ao carregar: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'verifique a conexão.'),'danger');state.baseProcessos=[];state.erroGraficos=true;
   }
   state.loading=false;renderSeletorFaseKanban();
   if(state.view==='lista')renderLista();else renderKanban();
@@ -1566,13 +1571,13 @@ function aplicarFiltroPeriodo(){
 function limparFiltros(){
   if(window.SagaPlanilha)SagaPlanilha.limpar();
   state.faseLista=state.faseKanbanAtiva=FASE_TODAS;state.buscaKanban='';document.getElementById('buscaKanban').value='';
-  state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;if(window.SagaPaineis)SagaPaineis.limpar();
+  state.filtroArea='*';state.filtroTese=null;state.filtroStatus=null;state.filtroResponsavel=null;state.filtroCaptador=null;if(window.SagaPaineis)SagaPaineis.limpar();
   state.filtroPeriodoDe=null;state.filtroPeriodoAte=null;state.busca='';
   document.getElementById('inputBusca').value='';
   document.getElementById('inputPeriodoDe').value='';document.getElementById('inputPeriodoAte').value='';
   document.getElementById('labelFiltroTese').textContent='Tipo de ação';
   document.getElementById('labelFiltroStatus').textContent='Status';
-  document.getElementById('labelFiltroResponsavel').textContent='Responsavel';
+  document.getElementById('labelFiltroResponsavel').textContent='Responsável';
   atualizarLabelPeriodo();renderDropdownsTeses();renderDropdownsStatus();renderDropdownsResponsavel();aplicarFiltros();
 }
 
@@ -1593,7 +1598,7 @@ function renderSemPermissao(){
 function renderEstadoVazio(){
   document.getElementById('tbodyPrincipal').innerHTML='';
   var ev=document.getElementById('estadoVazio');ev.style.display='flex';
-  var tem=state.filtroArea!=='*'||state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
+  var tem=state.filtroArea!=='*'||state.filtroTese||state.filtroStatus||state.filtroResponsavel||state.filtroCaptador||state.busca||state.filtroPeriodoDe||state.filtroPeriodoAte;
   if(tem)ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.3"/><line x1="20" y1="20" x2="16" y2="16" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum resultado</b><p>Nenhum processo encontrado. <button onclick="limparFiltros()" style="color:var(--gold-light);text-decoration:underline;background:none;border:none;cursor:pointer;font:inherit;padding:0">Limpar filtros</button></p>';
   else ev.innerHTML='<svg width="48" height="48" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" stroke-width="1.3"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="1.3"/></svg><b>Nenhum processo cadastrado</b><p>Clique em "Novo Processo" para comecar.</p>';
 }
@@ -1657,7 +1662,7 @@ function renderLista(){
     return '<div class="cartao-cliente" onclick="verFicha(\''+p.id+'\')">'
       +'<div class="cartao-topo"><div><div class="cartao-nome">'+borrar(pe.nome_completo||'N/D',sig)+'</div><div class="cartao-cpf">'+borrar(mascaraCpf(pe.cpf||''),sig)+'</div></div>'+statusBadge(st)+'</div>'
       +'<div class="cartao-linha"><span class="cartao-label">Tipo de ação</span>'+teseTag(te)+'</div>'
-      +'<div class="cartao-linha"><span class="cartao-label">Responsavel</span>'+(re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar" data-saga-nome="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted)">N/A</span>')+'</div>'
+      +'<div class="cartao-linha"><span class="cartao-label">Responsável</span>'+(re.nome_completo?'<div class="responsavel-cell"><div class="mini-avatar" data-saga-nome="'+esc(re.nome_completo)+'">'+iniciais(re.nome_completo)+'</div>'+esc((re.nome_completo||'').split(' ')[0])+'</div>':'<span style="color:var(--muted)">N/A</span>')+'</div>'
       +providenciaHtml(p)+'<div class="cartao-rodape">'+prazoHtml(p.data_prazo)+acoesBtns(p)+'</div>'
       +'</div>';
   }).join('');
@@ -2026,7 +2031,7 @@ async function moverProcessoKanban(processoId,novoStatusId,colunaDestinoEl,proxi
     if(r.error){
       p.status_id=statusAnteriorId;
       renderKanban();
-      showToast('Não foi possível mover o processo: '+(r.error.message||'tente novamente.'),'error');
+      showToast('Não foi possível mover o processo: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'tente novamente.'),'error');
       return;
     }
     var novoStatus=state.statusList.find(function(s){return String(s.id)===String(novoStatusId);});
@@ -2120,7 +2125,7 @@ function renderDropdownsResponsavel(){
 }
 function selTese(t){state.filtroTese=t;document.getElementById('labelFiltroTese').textContent=t?t.nome:'Tipo de ação';fecharTodosDropdowns();renderDropdownsTeses();aplicarFiltros();}
 function selStatus(s){state.filtroStatus=s;document.getElementById('labelFiltroStatus').textContent=s?s.nome:'Status';fecharTodosDropdowns();renderDropdownsStatus();aplicarFiltros();}
-function selResp(u){state.filtroResponsavel=u;document.getElementById('labelFiltroResponsavel').textContent=u?(u.sem?'Sem responsável':u.nome_completo.split(' ')[0]||'Responsavel'):'Responsavel';fecharTodosDropdowns();renderDropdownsResponsavel();aplicarFiltros();}
+function selResp(u){state.filtroResponsavel=u;document.getElementById('labelFiltroResponsavel').textContent=u?(u.sem?'Sem responsável':u.nome_completo.split(' ')[0]||'Responsável'):'Responsável';fecharTodosDropdowns();renderDropdownsResponsavel();aplicarFiltros();}
 
 // Acoes por linha
 // Posicao da tela (aba de fase, pagina, rolagem): guardada ao sair e restaurada ao voltar da ficha ou de outra tela
@@ -2133,13 +2138,13 @@ function guardarPosicao(){
   }catch(e){}
 }
 function lerEstadoVolta(){
-  return {busca:state.busca||'',filtroArea:state.filtroArea,filtroTese:state.filtroTese,filtroStatus:state.filtroStatus,filtroResponsavel:state.filtroResponsavel,
+  return {busca:state.busca||'',filtroArea:state.filtroArea,filtroTese:state.filtroTese,filtroStatus:state.filtroStatus,filtroResponsavel:state.filtroResponsavel,filtroCaptador:state.filtroCaptador,
     filtroPeriodoDe:state.filtroPeriodoDe,filtroPeriodoAte:state.filtroPeriodoAte,pageSize:state.pageSize,page:state.page||1,view:state.view,
     faseLista:state.faseLista||null,faseKanbanAtiva:state.faseKanbanAtiva||null,buscaKanban:state.buscaKanban||'',
     planilha:window.SagaPlanilha&&SagaPlanilha.pronta()&&SagaPlanilha.estado?SagaPlanilha.estado():null};
 }
 function aplicarEstadoVolta(v){
-  ['busca','filtroArea','filtroTese','filtroStatus','filtroResponsavel','filtroPeriodoDe','filtroPeriodoAte','pageSize'].forEach(function(k){if(v[k]!==undefined)state[k]=v[k];});
+  ['busca','filtroArea','filtroTese','filtroStatus','filtroResponsavel','filtroCaptador','filtroPeriodoDe','filtroPeriodoAte','pageSize'].forEach(function(k){if(v[k]!==undefined)state[k]=v[k];});
   if(state.busca==null)state.busca='';
   if(v.faseLista)state.faseLista=v.faseLista;
   if(v.faseKanbanAtiva)state.faseKanbanAtiva=v.faseKanbanAtiva;
@@ -2191,7 +2196,7 @@ async function executarExclusao(){
   // Mesma funcao do banco usada pela Ficha: confere a permissao e marca a exclusao.
   // Um update direto na tabela e recusado, porque a regra de leitura esconde processos excluidos.
   var r=await _sb.rpc('excluir_processo',{p_processo_id:state.processoParaExcluir});
-  if(r.error)showToast('Erro ao excluir: '+(r.error.message||'tente novamente.'),'danger');
+  if(r.error)showToast('Erro ao excluir: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'tente novamente.'),'danger');
   else if(r.data!==true)showToast('Este processo já tinha sido excluído.','warning');
   else{showToast('Processo movido para a lixeira.','success');state.processoParaExcluir=null;invalidarBaseProcessos();carregarProcessos();}
 }
@@ -2231,7 +2236,7 @@ async function executarAtribuicao(){
   if(!state.processoParaAtribuir)return;
   var respId=state.responsavelAtribuirSelecionado?state.responsavelAtribuirSelecionado.id:null;
   var r=await _sb.from('processos').update({responsavel_id:respId}).eq('id',state.processoParaAtribuir);
-  if(r.error)showToast('Erro ao atribuir: '+(r.error.message||'tente novamente.'),'danger');
+  if(r.error)showToast('Erro ao atribuir: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'tente novamente.'),'danger');
   else{showToast('Responsável atualizado.','success');state.processoParaAtribuir=null;closeModal('modalAtribuir');invalidarBaseProcessos();carregarProcessos();}
 }
 
@@ -2347,11 +2352,11 @@ async function salvarNovoProcesso(){
   var r=await _sb.from('processos').insert(dados).select('id').single();
   if(r.error){
     if(r.error.code==='23505')showToast('Esta pessoa já possui um processo com esse tipo de ação.','warning');
-    else showToast('Erro ao salvar: '+(r.error.message||'tente novamente.'),'danger');
+    else showToast('Erro ao salvar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'tente novamente.'),'danger');
   }else{
     if(pctHonorarios!==null&&r.data){
       var rf=await _sb.from('financeiro_processo').upsert({processo_id:r.data.id,percentual_honorarios:pctHonorarios},{onConflict:'processo_id'});
-      if(rf.error)showToast('Processo criado, mas o percentual de honorários não foi salvo: '+(rf.error.message||''),'warning');
+      if(rf.error)showToast('Processo criado, mas o percentual de honorários não foi salvo: '+((window.sagaErroBanco?window.sagaErroBanco(rf.error):rf.error.message)||''),'warning');
     }
     var extras=state.novoExtras?state.novoExtras.itens().filter(function(i){return i.pessoa_id!==state.novoPessoa.id;}):[];
     var falhas=extras.length&&r.data?await SagaPartes.salvarLote(_sb,r.data.id,extras):0;
@@ -2451,7 +2456,7 @@ async function init(){
 function ligarInteracoesSagaUI(){
   // Todas as interacoes da topbar sao ligadas dentro do saga_ui.js
 }
-init().catch(function(e){showToast('Erro ao inicializar: '+(e.message||'recarregue a página.'),'danger');});
+init().catch(function(e){showToast('Erro ao inicializar: '+((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'recarregue a página.'),'danger');});
 document.addEventListener('saga-atualizar',function(){
   invalidarBaseProcessos();carregarProcessos();
   showToast('Informações atualizadas.','success');
