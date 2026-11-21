@@ -16,7 +16,7 @@
 // remetente (vermelho + sino), limite do provedor pausa até o dia seguinte (amarelo), endereço recusado fica em "Com erro".
 // Atenção: o Supabase bloqueia as portas 25 e 587; os provedores usam a 465 (SSL). Outlook/Hotmail só aceita 587.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import nodemailer from "npm:nodemailer@6.9.16";
+import nodemailer from "npm:nodemailer@7.0.11";
 import { Buffer } from "node:buffer";
 import "./layout.js";
 // deno-lint-ignore no-explicit-any

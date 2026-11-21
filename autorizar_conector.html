@@ -2,6 +2,12 @@
 <html lang="pt-BR">
 <head>
 <script>
+// Segurança (21/11/2026, laudo achado 7): esta página NUNCA abre dentro de outra (iframe). Um site poderia escondê-la
+// e induzir o clique em "Autorizar". Se estiver dentro de outra página, some e tenta abrir sozinha na janela inteira.
+(function(){var dentro=true;try{dentro=window.self!==window.top;}catch(e){dentro=true;}
+if(dentro){window.SAGA_EMBUTIDA=true;document.documentElement.style.display='none';try{window.top.location.replace(window.self.location.href);}catch(e){}}})();
+</script>
+<script>
 // Tema e cor escolhidos no SAGA, antes de qualquer coisa aparecer
 (function(){try{var t=localStorage.getItem('saga-tema')||'dark',c=localStorage.getItem('saga-cor-salva')||localStorage.getItem('saga-cor')||'azul';
 if(c&&c!=='azul')document.documentElement.setAttribute('data-cor',c);
@@ -94,6 +100,8 @@ function erro(texto) {
 }
 function hostDe(u) { try { return new URL(u).hostname.toLowerCase(); } catch (e) { return ''; } }
 function doClaude(host) { return /(^|\.)claude\.(ai|com)$/.test(host); }
+// Retorno para o Claude: só https (http://claude.ai, outro esquema com o mesmo nome etc. são recusados; laudo, achado 7)
+function destinoClaude(u) { try { var x = new URL(u); return x.protocol === 'https:' && !x.username && !x.password && doClaude(x.hostname.toLowerCase()); } catch (e) { return false; } }
 // Conector local da pasta Agentes VMMADV (Claude Code no computador do escritório), liberado pelo Dr. Victor em 13/11/2026:
 // só este cliente e só com este endereço de retorno exato no próprio computador. As demais regras (login, conector_pode_usar) continuam valendo.
 var CONECTORES_LOCAIS = { '57461f09-e3cc-46ee-873a-6a89ac70b8d8': 'http://localhost:3118/callback' };
@@ -103,6 +111,7 @@ function conectorLocalLiberado(cliente, destino) {
 }
 
 async function iniciar() {
+  if (window.SAGA_EMBUTIDA) return; // dentro de outra página: não mostra nada e não autoriza
   if (!/^[A-Za-z0-9_-]{8,200}$/.test(ID)) { erro('Este link de autorização está incompleto.'); return; }
   var s = await _sb.auth.getSession();
   if (!s.data || !s.data.session) {
@@ -123,7 +132,7 @@ async function iniciar() {
   var quem = '<div class="quem"><span class="ini" aria-hidden="true">' + esc(ini) + '</span><div><div class="rot">Você está conectando o Claude como</div>'
     + '<div class="nome">' + esc(eu.data.nome_completo || '') + '</div>' + (email ? '<div class="mail">' + esc(email) + '</div>' : '') + '</div>'
     + '<button class="link-troca" type="button" id="btTrocar">Entrar com outra pessoa</button></div>';
-  if (!doClaude(host) && !conectorLocalLiberado(cliente, destino)) {
+  if (!destinoClaude(destino) && !conectorLocalLiberado(cliente, destino)) {
     mostrar('<h1>Pedido recusado por segurança</h1><p class="sub">O SAGA só se liga ao <b>Claude</b>. Este pedido vem de <b>' + esc(app) + '</b> e iria para <b>' + esc(host || 'endereço desconhecido') + '</b>.</p>'
       + '<div class="quadro alerta">Se você não pediu isso, apenas feche esta página. Nada foi liberado.</div>'
       + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Recusar e voltar</button></div>');
@@ -145,6 +154,7 @@ async function iniciar() {
     + '<li class="sim">' + ICO_SIM + '<span>Vale só o que <b>você já pode fazer</b> no SAGA; os valores, só se você vê o Financeiro. Tudo fica no <b>Registro de atividades</b> (com o antes e o depois).</span></li>'
     + '<li class="nao">' + ICO_NAO + '<span>Ele <b>não apaga nada</b>, e faz no máximo 60 mudanças por hora.</span></li>'
     + '</ul>'
+    + '<div class="quadro alerta"><b>Só autorize se você acabou de clicar em "Conectar" no Claude.</b> Se esta página apareceu sozinha, por um link de mensagem ou de outra pessoa, clique em Recusar.</div>'
     + '<div class="quadro">Depois de autorizar, você volta para o Claude (<b>' + esc(host) + '</b>). Para desligar, remova o conector nas configurações do Claude.</div>'
     + '<div class="botoes"><button class="btn-secondary" type="button" id="btRecusar">Recusar</button><button class="btn-primary" type="button" id="btAutorizar">Autorizar</button></div>');
   setTimeout(function () { $('btRecusar').onclick = recusar; $('btTrocar').onclick = trocarPessoa; $('btAutorizar').onclick = function () { aprovar(app); }; }, 260);
@@ -157,6 +167,7 @@ async function trocarPessoa() {
 }
 function travar() { document.querySelectorAll('.botoes button, #btTrocar').forEach(function (b) { b.disabled = true; }); }
 async function aprovar(app) {
+  if (window.SAGA_EMBUTIDA) return;
   travar();
   var r = await _sb.auth.oauth.approveAuthorization(ID, { skipBrowserRedirect: true });
   if (r.error || !r.data || !r.data.redirect_url) { erro('Não consegui autorizar: ' + ((r.error && r.error.message) || 'sem resposta do servidor.')); return; }
