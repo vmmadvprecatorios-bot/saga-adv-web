@@ -505,14 +505,14 @@ window.SagaModelosEditor = (function(){
   /* ================================================================
      TEXTO DE UMA PETIÇÃO PRONTA (20/11, Dr. Victor): a petição da Renata
      chega como texto; quem aprova lê e corrige aqui (cada salvar = versão nova).
-     o = { titulo, sub, aviso, blocos, podeCorrigir, versoes, aoSalvar(blocos) -> Promise, aoPrevia(blocos) -> Promise }
+     o = { titulo, sub, intro (texto de ajuda no lugar do parágrafo padrão, 21/11), msgSalvo (texto ou função(r) da mensagem depois de salvar), aviso, blocos, podeCorrigir, versoes, aoSalvar(blocos) -> Promise, aoPrevia(blocos) -> Promise }
      ================================================================ */
   function abrirTexto(o){
     E.blocos = JSON.parse(JSON.stringify(o.blocos || [])); E.campos = []; E.focoTxt = null; E.aoSalvar = null;
     var pode = !!o.podeCorrigir;
     var f = janela('meTexto',
       '<h3>' + esc(o.titulo || 'Petição') + '</h3>' +
-      '<p class="me-sub">' + (o.sub ? o.sub + '<br>' : '') + (pode
+      '<p class="me-sub">' + (o.sub ? o.sub + '<br>' : '') + (o.intro ? esc(o.intro) : pode
         ? 'Leia e corrija direto aqui: cada linha é um parágrafo da petição (o tipo fica à esquerda). O que a Renata não achou na ficha aparece entre <b>⟦[ ]⟧</b>: troque pelo dado certo. **nome** sai em negrito e versalete; __texto__ só em negrito. "Salvar correções" grava uma versão nova; o Word e o PDF finais saem do texto quando você aprovar.'
         : 'Só leitura: a petição já foi decidida.') + '</p>' +
       (o.aviso ? '<div class="me-amarelo">' + o.aviso + '</div>' : '') +
@@ -575,7 +575,7 @@ window.SagaModelosEditor = (function(){
       try{
         var r = await o.aoSalvar(bl);
         mudou = false;
-        msg.innerHTML = '<div class="me-ok">' + (r && r.sem_mudanca ? 'Nada mudou: o texto continua na versão ' + esc(r.versao) + '.' : 'Correções salvas (versão ' + esc(r && r.versao) + '). O Word final sai deste texto quando você aprovar.') + '</div>';
+        msg.innerHTML = '<div class="me-ok">' + (r && r.sem_mudanca ? 'Nada mudou: o texto continua na versão ' + esc(r.versao) + '.' : (o.msgSalvo ? esc(typeof o.msgSalvo === 'function' ? o.msgSalvo(r) : o.msgSalvo) : 'Correções salvas (versão ' + esc(r && r.versao) + '). O Word final sai deste texto quando você aprovar.')) + '</div>';
       }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui salvar:</b> ' + esc((e && e.message) || e) + '</div>'; }
       sv.disabled = false; sv.textContent = t;
     };

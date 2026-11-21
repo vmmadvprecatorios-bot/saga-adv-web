@@ -10,7 +10,7 @@
 (function(){
   'use strict';
   var EASE = 'cubic-bezier(.22,.78,.25,1)';
-  var S = { timbrados:[], modelos:[], filtro:'todos', admin:false, carregado:false, aberto:false, modelo:null };
+  var S = { timbrados:[], modelos:[], filtro:'todos', admin:false, carregado:false, aberto:false, modelo:null, pastas:[], pasta:null, podeOrganizar:false, abertas:{} };
 
   function sb(){ return window._sb; }
   function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
@@ -83,6 +83,25 @@
     '.tb-botoes-fim{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px}',
     '.tb-botoes-fim button{font:inherit;font-size:12.5px;padding:9px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--border-soft)}',
     '.tb-botoes-fim button[disabled]{opacity:.55;cursor:progress}',
+    /* 21/11 (Dr. Victor): pastas dos modelos em árvore na barra lateral */
+    '.tb-grupo-lateral{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:12px 10px 4px;opacity:.8}',
+    'body:not(.tb-modo-timbrados) #tbArvore{display:none}',
+    '#tbArvore{margin:2px 0 8px 6px;font-size:12.5px}',
+    '#tbArvore .tb-no{display:flex;align-items:center;gap:4px;padding:5px 8px;border-radius:8px;cursor:pointer;color:var(--muted);white-space:nowrap;overflow:hidden}',
+    '#tbArvore .tb-no:hover{background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--text)}',
+    '#tbArvore .tb-no.ativa{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--text)}',
+    '#tbArvore .tb-no .tb-seta{width:14px;flex:0 0 14px;text-align:center;font-size:10px;opacity:.8}',
+    '#tbArvore .tb-no .tb-nome{overflow:hidden;text-overflow:ellipsis;flex:1}',
+    '#tbArvore .tb-no .tb-n{font-size:10.5px;opacity:.75}',
+    '#tbArvore .tb-filhos{margin-left:12px}',
+    '.tb-caminho{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12px;color:var(--muted);margin:0 0 10px}',
+    '.tb-caminho button{font:inherit;font-size:12px;background:none;border:0;color:var(--gold);cursor:pointer;padding:2px 4px}',
+    '.tb-pastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:0 0 12px}',
+    '.tb-pasta{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid var(--border-soft);background:var(--panel);cursor:pointer;color:var(--text);font:inherit;font-size:13px;text-align:left}',
+    '.tb-pasta small{display:block;font-size:11px;color:var(--muted)}',
+    '.tb-org{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}',
+    '.tb-org button{font:inherit;font-size:11.5px;padding:6px 10px;border-radius:9px;cursor:pointer}',
+    '.tb-onde{font-size:10.5px;color:var(--muted);display:block;margin-top:2px}',
     '@media (max-width:640px){#modalGerarPeticaoTb .tb-campos{grid-template-columns:1fr}.tb-grade{grid-template-columns:1fr}}'
   ].join('\n');
   document.head.appendChild(css);
@@ -101,6 +120,19 @@
     item.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 8h5M9 12h7M9 16h7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>Petições e timbrados</span>';
     var cab = coluna.querySelector('.categorias-cabecalho');
     if(cab && cab.nextSibling) coluna.insertBefore(item, cab.nextSibling); else coluna.appendChild(item);
+    /* 21/11 (Dr. Victor): a barra lateral separa os MODELOS (com as pastas em árvore) dos ARQUIVOS da antiga Biblioteca */
+    var t1 = document.createElement('div'); t1.className = 'tb-grupo-lateral categoria-label'; t1.textContent = 'Modelos de petição';
+    coluna.insertBefore(t1, item);
+    var arv = document.createElement('div'); arv.id = 'tbArvore'; arv.setAttribute('role', 'tree'); arv.setAttribute('aria-label', 'Pastas dos modelos');
+    coluna.insertBefore(arv, item.nextSibling);
+    var t2 = document.createElement('div'); t2.className = 'tb-grupo-lateral categoria-label'; t2.textContent = 'Arquivos';
+    coluna.insertBefore(t2, arv.nextSibling);
+    arv.addEventListener('click', function(e){
+      var seta = e.target.closest('[data-tb-seta]');
+      if(seta){ e.stopPropagation(); var id = seta.getAttribute('data-tb-seta'); S.abertas[id] = !S.abertas[id]; desenharArvore(); return; }
+      var no = e.target.closest('[data-tb-pasta]'); if(!no) return;
+      escolherPasta(no.getAttribute('data-tb-pasta') || null);
+    });
     item.addEventListener('click', function(){ if(!S.aberto) abrir('clique'); });
     item.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); abrir('clique'); } });
     /* clicar numa pasta normal sai do painel */
@@ -125,7 +157,7 @@
       '<section class="tb-sec">' +
         '<h2>Modelos de petição</h2>' +
         '<p class="tb-sub">Escolha um modelo, preencha o que quiser (o que ficar em branco sai entre colchetes para completar no Word) e baixe em Word ou em PDF, já no papel timbrado, no Padrão VMM.</p>' +
-        '<div class="tb-ferr" id="tbFerr"><input type="search" class="tb-busca" id="tbBuscaModelos" placeholder="Buscar modelo, área ou subpasta" aria-label="Buscar modelo">' +
+        '<div class="tb-ferr" id="tbFerr"><input type="search" class="tb-busca" id="tbBuscaModelos" placeholder="Buscar em todos os modelos" aria-label="Buscar modelo">' +
           '<span id="tbBotoesEditor" hidden><button type="button" class="btn-secundario" id="tbNovoModelo">+ Novo modelo</button><button type="button" class="btn-secundario" id="tbImportarPasta">Importar pasta de petições</button></span></div>' +
         '<div class="tb-filtros" id="tbFiltros" role="group" aria-label="Filtrar por escritório"></div>' +
         '<div id="tbErroModelos"></div>' +
@@ -196,6 +228,7 @@
       S.modelos = await SagaTimbrado.listarModelos(c);
       document.getElementById('tbErroModelos').innerHTML = '';
     }catch(e){ S.modelos = []; mostrarErro('tbErroModelos', e.message); }
+    await carregarPastas();
     S.carregado = true;
     /* 20/11 (bloco 279): editor e importação dos modelos (saga_modelos_editor.js) para quem gerencia os modelos */
     if(window.SagaModelosEditor && !S.ligouEditor){
@@ -214,7 +247,108 @@
   async function recarregarModelos(){
     try{ S.modelos = await SagaTimbrado.listarModelos(sb()); document.getElementById('tbErroModelos').innerHTML = ''; }
     catch(e){ mostrarErro('tbErroModelos', e.message); }
+    await carregarPastas();
     desenharModelos();
+  }
+
+  /* ---------------- pastas dos modelos (21/11, bloco 306) ---------------- */
+  async function carregarPastas(){
+    try{
+      var r = await sb().rpc('modelos_pastas_listar');
+      if(r.error) throw r.error;
+      S.pastas = (r.data && r.data.pastas) || []; S.podeOrganizar = !!(r.data && r.data.pode_organizar);
+    }catch(e){ S.pastas = []; mostrarErro('tbErroModelos', 'Não consegui ler as pastas dos modelos: ' + ((e && e.message) || e)); }
+    var raiz = raizPasta();
+    if(raiz && S.abertas[raiz.id] == null) S.abertas[raiz.id] = true;
+    if(S.pasta && S.pasta !== 'sem' && !S.pastas.some(function(p){ return p.id === S.pasta; })) S.pasta = null;
+    desenharArvore();
+  }
+  function raizPasta(){ return S.pastas.filter(function(p){ return !p.pai_id; })[0] || null; }
+  function filhas(id){ return S.pastas.filter(function(p){ return p.pai_id === id; }).sort(function(a, b){ return (a.ordem - b.ordem) || a.nome.localeCompare(b.nome, 'pt-BR'); }); }
+  function pastaPor(id){ return S.pastas.filter(function(p){ return p.id === id; })[0] || null; }
+  function caminhoDe(id){ var c = [], p = pastaPor(id), g = 0; while(p && g++ < 30){ c.unshift(p); p = pastaPor(p.pai_id); } return c; }
+  function totalNa(id){ var n = S.modelos.filter(function(m){ return m.pasta_id === id; }).length; filhas(id).forEach(function(f){ n += totalNa(f.id); }); return n; }
+  function semPasta(){ return S.modelos.filter(function(m){ return !m.pasta_id || !pastaPor(m.pasta_id); }); }
+  function desenharArvore(){
+    var arv = document.getElementById('tbArvore'); if(!arv) return;
+    function no(p, nivel){
+      var fs = filhas(p.id), aberta = !!S.abertas[p.id];
+      return '<div class="tb-no' + (S.pasta === p.id ? ' ativa' : '') + '" data-tb-pasta="' + esc(p.id) + '" role="treeitem" title="' + esc(p.nome) + '">' +
+        '<span class="tb-seta"' + (fs.length ? ' data-tb-seta="' + esc(p.id) + '" aria-label="' + (aberta ? 'Recolher' : 'Abrir') + '"' : '') + '>' + (fs.length ? (aberta ? '▾' : '▸') : '') + '</span>' +
+        '<span class="tb-nome">' + esc(p.nome) + '</span><span class="tb-n">' + totalNa(p.id) + '</span></div>' +
+        (fs.length && aberta ? '<div class="tb-filhos">' + fs.map(function(f){ return no(f, nivel + 1); }).join('') + '</div>' : '');
+    }
+    var raiz = raizPasta(), sp = semPasta().length;
+    arv.innerHTML = (raiz ? no(raiz, 0) : '') + (sp ? '<div class="tb-no' + (S.pasta === 'sem' ? ' ativa' : '') + '" data-tb-pasta="sem"><span class="tb-seta"></span><span class="tb-nome">Sem pasta</span><span class="tb-n">' + sp + '</span></div>' : '');
+  }
+  function escolherPasta(id){
+    S.pasta = id;
+    if(id && id !== 'sem'){ caminhoDe(id).forEach(function(p){ S.abertas[p.id] = true; }); }
+    if(S.busca){ S.busca = ''; var bx = document.getElementById('tbBuscaModelos'); if(bx) bx.value = ''; }
+    desenharArvore(); desenharModelos();
+  }
+  /* janelinha própria para nome e para escolher pasta */
+  function pedir(titulo, rotulo, valor, opcoes){
+    return new Promise(function(ok){
+      var m = document.getElementById('modalPastaTb');
+      if(!m){
+        m = document.createElement('div'); m.className = 'modal-overlay-bib'; m.id = 'modalPastaTb';
+        m.innerHTML = '<div class="modal-bib" role="dialog" aria-modal="true" style="max-width:460px"><h3 id="tbPTit"></h3><div class="modal-campo-bib"><label for="tbPCampo" id="tbPRot"></label><div id="tbPCaixa"></div></div>' +
+          '<div id="tbPMsg"></div><div class="tb-botoes-fim"><button type="button" class="btn-secundario" id="tbPCancelar">Cancelar</button><button type="button" class="btn-confirmar-bib" id="tbPOk">Confirmar</button></div></div>';
+        document.body.appendChild(m);
+      }
+      m.querySelector('#tbPTit').textContent = titulo; m.querySelector('#tbPRot').textContent = rotulo; m.querySelector('#tbPMsg').innerHTML = '';
+      m.querySelector('#tbPCaixa').innerHTML = opcoes
+        ? '<select id="tbPCampo" style="width:100%">' + opcoes.map(function(o){ return '<option value="' + esc(o[0]) + '"' + (o[0] === valor ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>'
+        : '<input type="text" id="tbPCampo" style="width:100%" maxlength="120" value="' + esc(valor || '') + '">';
+      var campo = m.querySelector('#tbPCampo');
+      function fim(v){ m.classList.remove('aberto'); ok(v); }
+      m.querySelector('#tbPOk').onclick = function(){ var v = campo.value; if(!opcoes && !v.trim()){ m.querySelector('#tbPMsg').innerHTML = '<div class="tb-erro">Escreva o nome.</div>'; return; } fim(v); };
+      m.querySelector('#tbPCancelar').onclick = function(){ fim(null); };
+      m.onclick = function(e){ if(e.target === m) fim(null); };
+      campo.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); m.querySelector('#tbPOk').click(); } };
+      m.classList.add('aberto'); setTimeout(function(){ campo.focus(); if(campo.select) campo.select(); }, 60);
+    });
+  }
+  function opcoesPastas(){
+    var lista = [];
+    (function anda(id, prefixo){ filhas(id).forEach(function(p){ lista.push([p.id, prefixo + p.nome]); anda(p.id, prefixo + p.nome + ' › '); }); })(null, '');
+    return lista;
+  }
+  async function rpcOk(nome, args, msg){
+    var r = await sb().rpc(nome, args);
+    if(r.error){ toastTb('Não consegui ' + msg + ': ' + (r.error.message || r.error), 'error'); return null; }
+    return r.data || {};
+  }
+  function toastTb(m, t){ if(typeof window.showToast === 'function') window.showToast(m, t || 'info'); else if(t === 'error') alert(m); }
+  async function organizar(acao, alvo){
+    var p = pastaPor(S.pasta);
+    if(acao === 'nova'){
+      var nome = await pedir('Nova pasta', 'Nome da pasta (dentro de "' + (p ? p.nome : 'Petições') + '")', '');
+      if(!nome) return;
+      var r = await rpcOk('modelo_pasta_salvar', { p_id: null, p_nome: nome, p_pai: p ? p.id : null }, 'criar a pasta');
+      if(r){ S.abertas[p ? p.id : ''] = true; await carregarPastas(); escolherPasta(r.id); }
+    }else if(acao === 'renomear' && p){
+      var n2 = await pedir('Renomear pasta', 'Nome novo', p.nome); if(!n2 || n2 === p.nome) return;
+      if(await rpcOk('modelo_pasta_salvar', { p_id: p.id, p_nome: n2, p_pai: p.pai_id }, 'renomear')){ await carregarPastas(); desenharModelos(); }
+    }else if(acao === 'mover_pasta' && p){
+      var ops = opcoesPastas().filter(function(o){ return o[0] !== p.id && caminhoDe(o[0]).every(function(c){ return c.id !== p.id; }); });
+      var dest = await pedir('Mudar a pasta de lugar', 'Colocar "' + p.nome + '" dentro de', p.pai_id, ops); if(!dest || dest === p.pai_id) return;
+      if(await rpcOk('modelo_pasta_salvar', { p_id: p.id, p_nome: p.nome, p_pai: dest }, 'mudar a pasta de lugar')){ await carregarPastas(); escolherPasta(p.id); }
+    }else if((acao === 'subir' || acao === 'descer') && p){
+      var irm = filhas(p.pai_id), i = irm.indexOf(p), j = acao === 'subir' ? i - 1 : i + 1;
+      if(j < 0 || j >= irm.length) return;
+      var t = irm[i]; irm[i] = irm[j]; irm[j] = t;
+      if(await rpcOk('modelo_pastas_ordenar', { p_ids: irm.map(function(x){ return x.id; }) }, 'reordenar')){ await carregarPastas(); desenharModelos(); }
+    }else if(acao === 'tirar' && p){
+      var ok = window.sagaConfirmar ? await sagaConfirmar('Tirar a pasta da lista', 'A pasta "' + p.nome + '" sai da lista (fica guardada). Os modelos e as subpastas dela sobem para "' + ((pastaPor(p.pai_id) || {}).nome || 'Petições') + '". Nada é apagado.', 'Tirar da lista', true) : confirm('Tirar a pasta "' + p.nome + '" da lista? Os modelos dela sobem um nível.');
+      if(!ok) return;
+      if(await rpcOk('modelo_pasta_desativar', { p_id: p.id }, 'tirar a pasta da lista')){ S.pasta = p.pai_id; await carregarPastas(); desenharModelos(); }
+    }else if(acao === 'mover_modelo'){
+      var m = S.modelos.filter(function(x){ return x.id === alvo; })[0]; if(!m) return;
+      var d2 = await pedir('Mover modelo', 'Pasta de "' + m.titulo + '"', m.pasta_id || '', [['', '(sem pasta)']].concat(opcoesPastas())); if(d2 == null) return;
+      if(await rpcOk('modelos_mover', { p_modelos: [m.id], p_pasta: d2 || null }, 'mover o modelo')){ toastTb('Modelo movido.', 'success'); await recarregarModelos(); }
+    }
   }
   function mostrarErro(id, msg){
     var el = document.getElementById(id);
@@ -330,7 +464,9 @@
         (m.revisado === false ? '<span class="tb-selo tb-revisar">A revisar</span>' : '') +
         (m.tipo_peca ? esc(m.tipo_peca) : '') + (m.teses && m.teses.nome ? ' · Tese: ' + esc(m.teses.nome) : '') + '</small>' +
         (m.descricao ? '<small style="display:block;margin-top:3px">' + esc(m.descricao) + '</small>' : '') +
+        (S.busca && m.pasta_id && pastaPor(m.pasta_id) ? '<span class="tb-onde">Pasta: ' + caminhoDe(m.pasta_id).map(function(p){ return esc(p.nome); }).join(' › ') + '</span>' : '') +
       '</div>' +
+      (S.podeOrganizar ? '<button type="button" class="btn-secundario" data-tb-mover="' + esc(m.id) + '" title="Mudar de pasta">Mover</button>' : '') +
       (S.podeEditar ? '<button type="button" class="btn-secundario" data-tb-editar="' + esc(m.id) + '">Editar</button>' : '') +
       '<button type="button" class="btn-confirmar-bib" data-tb-gerar="' + esc(m.id) + '">Gerar petição</button>' +
     '</div>';
@@ -338,27 +474,32 @@
   function desenharModelos(){
     var l = document.getElementById('tbListaModelos');
     var b = semAc(S.busca);
-    var ms = S.modelos.filter(function(m){
-      if(!(S.filtro === 'todos' || !m.timbrado_chave || m.timbrado_chave === S.filtro)) return false;
-      return !b || semAc([m.titulo, m.area, m.subpasta, m.tipo_peca, m.descricao, m.teses && m.teses.nome].join(' ')).indexOf(b) >= 0;
-    });
-    if(!ms.length){ l.innerHTML = '<div class="tb-vazio">' + (b ? 'Nenhum modelo com essa busca.' : 'Nenhum modelo para este escritório ainda.') + '</div>'; return; }
-    /* agrupado por área e subpasta (20/11): os modelos sem área (os de antes) ficam em "Modelos do SAGA" */
-    var grupos = {}, ordem = [];
-    ms.forEach(function(m){
-      var a = m.area || 'Modelos do SAGA', sp = m.subpasta || '';
-      if(!grupos[a]){ grupos[a] = {}; ordem.push(a); }
-      (grupos[a][sp] = grupos[a][sp] || []).push(m);
-    });
-    ordem.sort(function(x, y){ return x === 'Modelos do SAGA' ? -1 : (y === 'Modelos do SAGA' ? 1 : x.localeCompare(y, 'pt-BR')); });
-    var uma = ordem.length === 1 && Object.keys(grupos[ordem[0]]).length === 1;
-    l.innerHTML = uma ? ms.map(htmlModelo).join('') : ordem.map(function(a){
-      var sps = Object.keys(grupos[a]).sort(function(x, y){ return x.localeCompare(y, 'pt-BR'); }), n = 0;
-      sps.forEach(function(sp){ n += grupos[a][sp].length; });
-      return '<details class="tb-area"' + (b || ordem.length <= 3 ? ' open' : '') + '><summary><b>' + esc(a) + '</b> <span>' + n + '</span></summary>' +
-        sps.map(function(sp){ return (sp ? '<div class="tb-subpasta">' + esc(sp) + '</div>' : '') + '<div class="tb-lista">' + grupos[a][sp].map(htmlModelo).join('') + '</div>'; }).join('') +
-      '</details>';
-    }).join('');
+    function doEscritorio(m){ return S.filtro === 'todos' || !m.timbrado_chave || m.timbrado_chave === S.filtro; }
+    var html = '';
+    if(b){
+      /* busca geral: procura em TODAS as pastas e mostra onde cada modelo está */
+      var achados = S.modelos.filter(function(m){
+        if(!doEscritorio(m)) return false;
+        var onde = m.pasta_id ? caminhoDe(m.pasta_id).map(function(p){ return p.nome; }).join(' ') : '';
+        return semAc([m.titulo, m.area, m.subpasta, m.tipo_peca, m.descricao, m.teses && m.teses.nome, onde].join(' ')).indexOf(b) >= 0;
+      });
+      l.innerHTML = achados.length ? '<div class="tb-caminho">Busca em todas as pastas · ' + achados.length + ' modelo(s)</div>' + achados.map(htmlModelo).join('') : '<div class="tb-vazio">Nenhum modelo com essa busca.</div>';
+    }else{
+      if(!S.pasta && raizPasta()) S.pasta = raizPasta().id;
+      var p = S.pasta === 'sem' ? null : pastaPor(S.pasta);
+      var ms = S.pasta === 'sem' ? semPasta() : S.modelos.filter(function(m){ return p && m.pasta_id === p.id; });
+      ms = ms.filter(doEscritorio);
+      var fs = p ? filhas(p.id) : [];
+      html += '<div class="tb-caminho">' + (S.pasta === 'sem' ? '<b>Sem pasta</b>' : caminhoDe(p && p.id).map(function(c, k, a){ return k < a.length - 1 ? '<button type="button" data-tb-ir="' + esc(c.id) + '">' + esc(c.nome) + '</button> ›' : '<b>' + esc(c.nome) + '</b>'; }).join(' ')) + '</div>';
+      if(S.podeOrganizar && S.pasta !== 'sem') html += '<div class="tb-org"><button type="button" class="btn-secundario" data-tb-org="nova">+ Nova pasta aqui</button>' +
+        (p && p.pai_id ? '<button type="button" class="btn-secundario" data-tb-org="renomear">Renomear</button><button type="button" class="btn-secundario" data-tb-org="mover_pasta">Mudar de lugar</button><button type="button" class="btn-secundario" data-tb-org="subir" title="Subir na lista">▲</button><button type="button" class="btn-secundario" data-tb-org="descer" title="Descer na lista">▼</button><button type="button" class="btn-perigo" data-tb-org="tirar">Tirar da lista</button>' : '') + '</div>';
+      if(fs.length) html += '<div class="tb-pastas">' + fs.map(function(f){ return '<button type="button" class="tb-pasta" data-tb-ir="' + esc(f.id) + '"><span aria-hidden="true">📁</span><span>' + esc(f.nome) + '<small>' + totalNa(f.id) + ' modelo(s)</small></span></button>'; }).join('') + '</div>';
+      html += ms.length ? ms.map(htmlModelo).join('') : (fs.length ? '' : '<div class="tb-vazio">Nenhum modelo nesta pasta' + (S.filtro !== 'todos' ? ' para este escritório' : '') + '.</div>');
+      l.innerHTML = html;
+    }
+    l.querySelectorAll('[data-tb-ir]').forEach(function(x){ x.addEventListener('click', function(){ escolherPasta(x.getAttribute('data-tb-ir')); }); });
+    l.querySelectorAll('[data-tb-org]').forEach(function(x){ x.addEventListener('click', function(){ organizar(x.getAttribute('data-tb-org')); }); });
+    l.querySelectorAll('[data-tb-mover]').forEach(function(x){ x.addEventListener('click', function(){ organizar('mover_modelo', x.getAttribute('data-tb-mover')); }); });
     l.querySelectorAll('[data-tb-gerar]').forEach(function(x){
       x.addEventListener('click', function(){ abrirGerar(x.getAttribute('data-tb-gerar')); });
     });

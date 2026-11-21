@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.33",
-  data: "19/11/2026",
+  versao: "3.34",
+  data: "21/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.34", data: "21/11/2026", mudou: "Ficha do cliente: **Telefones, E-mails e Endereços** do topo abrem e recolhem cada um pelo título (com a contagem; fechado mostra só o principal), [[Recolher todos]]/[[Abrir todos]], lembrado na sua conta. Botão [[Ler consulta (PDF ou print)]] no topo: a leitura preenche os contatos do alto da ficha (\"Não validado\") e a Localização sem repetir o que já existe, e anota um resumo no processo; o arquivo não é guardado." },
     { versao: "3.33", data: "19/11/2026", mudou: "Gráficos: padrão único para todos, **Metal escovado** (rosca como sempre e as cores do tema). O quadro Gráficos saiu das Preferências." },
     { versao: "3.32", data: "19/11/2026", mudou: "Gráficos: a escolha de Preferências > Gráficos passa a valer em TODAS as telas, inclusive Intimações e as planilhas do Jurídico e da Captação, e em qualquer gráfico novo. As três escolhas ficam em caixas numeradas. O SAGA confere sozinho se há versão nova e recarrega a tela (ou avisa Atualizar agora)." },
     { versao: "3.31", data: "19/11/2026", mudou: "Preferências > **Gráficos** reorganizado: cartões coloridos com a prévia de cada acabamento, formato da rosca e cores das fatias lado a lado, e o botão **Aplicar no sistema** (antes a escolha valia sem botão e parecia não ter efeito)." },
@@ -464,7 +465,9 @@ window.SAGA_MANUAL = {
           quando: "Sempre que for trabalhar com um cliente.",
           passos: [
             "Clique no nome do cliente na lista, no cartão ou na busca: a ficha abre na **tela inteira**. Ctrl+clique (ou o botão do meio do mouse) abre em outra aba.",
-            "No topo: nome, CPF, endereço e a **situação vital** (vivo ou falecido). Ao lado, telefones, e-mails e endereços, com copiar, **WhatsApp** e **validar**.",
+            "No topo: nome, CPF, endereço e a **situação vital** (vivo ou falecido). Embaixo, **Contatos**: telefones, e-mails e endereços, com copiar, **WhatsApp** e **validar**.",
+            "Cada grupo de contatos (Telefones, E-mails, Endereços) **abre e recolhe** clicando no título; o número entre parênteses é quantos há. Recolhido, mostra só o principal e \"+N\". [[Recolher todos]] deixa o topo curtinho. A escolha fica guardada na sua conta (vale no celular também).",
+            "[[Ler consulta (PDF ou print)]], ao lado de Contatos: veja a parte **Localização** abaixo (é a mesma leitura).",
             "Mais abaixo, uma **aba para cada processo** do cliente e o botão **Localização**.",
             "[[Editar dados do cliente]]: dados pessoais e o **perfil** (situação funcional, órgão, cargo, matrícula, datas, nome da mãe)."
           ],
@@ -552,7 +555,8 @@ window.SAGA_MANUAL = {
             "Clique em **Localização** na ficha.",
             "Há um bloco para o cliente e um para cada parente ([[+ Parente]]): telefones, e-mails e endereços. Grave tudo o que encontrar.",
             "[[Pedir busca]]: pede ao Administrativo uma consulta (Lemit, Data Solution) do cliente e/ou dos parentes escolhidos. Você recebe o aviso no sino quando ficar pronta e confere as informações antes de gravar.",
-            "[[Ler consulta (PDF, print ou texto)]]: se você mesmo tem a consulta, o SAGA lê e preenche só o que está vazio na ficha. Pode ser o **PDF** (solte ou escolha), o **print da tela** ou o texto copiado.",
+            "[[Ler consulta (PDF, print ou texto)]] (também no topo da ficha, ao lado de Contatos): se você mesmo tem a consulta, o SAGA lê e preenche só o que está vazio na ficha. Pode ser o **PDF** (solte ou escolha), o **print da tela** ou o texto copiado.",
+            "Ao gravar a consulta do **próprio cliente**, os telefones, e-mails e endereços novos vão para a Localização **e para os contatos do alto da ficha** (marcados \"Não validado\" até alguém confirmar; o que já existe não é repetido). O SAGA anota no processo um comentário curto, por exemplo \"Consulta Lemit lida em 21/11: +2 telefones, +1 e-mail no alto da ficha\". O arquivo **não é guardado**.",
             "**Pelo print**: na tela da Lemit ou da Data Solution, tire o print com **Win+Shift+S** (no Windows) e, na janela do SAGA, aperte **Ctrl+V**. A consulta tem mais de uma tela? Tire um print de cada parte e cole um depois do outro (aparecem as miniaturas; o ✕ tira um). Clique em [[Ler]] e confira: o SAGA lê no seu computador e não guarda as imagens.",
             "**Enviar carta**: manda o endereço para a fila da tela Cartas."
           ],
