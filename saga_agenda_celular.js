@@ -55,7 +55,7 @@
   function erroTexto(e){var m=(e&&(e.message||e.details))||String(e||'');
     if(/agenda_link|function .* does not exist|schema cache/i.test(m))return 'A agenda no celular ainda não foi ligada no banco (bloco 357). Avise o administrador.';
     if(/Failed to fetch|NetworkError|Load failed/i.test(m))return 'Sem ligação com o servidor agora. Confira a internet e tente de novo.';
-    return m||'Não foi possível concluir.';}
+    return window.sagaErroBanco?window.sagaErroBanco(e):(m||'Não foi possível concluir.');}
   function mostrarErro(msg){var d=corpo.querySelector('.agc-erro');if(!d){d=document.createElement('div');d.className='agc-erro';d.setAttribute('role','alert');corpo.insertBefore(d,corpo.firstChild);}d.textContent=msg;}
 
   async function carregar(){

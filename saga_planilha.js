@@ -2336,7 +2336,7 @@ try{Object.keys(kb.filtros).forEach(function(k){var f=kb.filtros[k];if(Array.isA
       // 09/11: 6 gravações ao mesmo tempo (com milhares de linhas, uma por uma demorava muito)
       var trabalhar=async function(){while(prox<ids.length){var k=prox++,p=processo(ids[k]);
         if(!p||!editavel(p,col)){pulados++;falhas.push({nome:nomeP(p,ids[k]),motivo:!p?'não está mais na lista':p.sigilo&&!state.permissoes.editar_dados?'processo sigiloso: só quem edita os dados sigilosos altera':'sem permissão para alterar esta coluna'});}
-        else{try{await gravar(p,col,valor);feitos++;}catch(e){erros++;falhas.push({nome:nomeP(p,ids[k]),motivo:'erro ao gravar'+(e&&e.message?': '+e.message:'')});}}
+        else{try{await gravar(p,col,valor);feitos++;}catch(e){erros++;falhas.push({nome:nomeP(p,ids[k]),motivo:'erro ao gravar: '+(window.sagaErroBanco?window.sagaErroBanco(e):((e&&e.message)||'sem detalhe'))});}}
         prontos++;barra.style.width=Math.round(prontos/ids.length*100)+'%';msg.textContent=prontos.toLocaleString('pt-BR')+' de '+ids.length.toLocaleString('pt-BR')+'…';}};
       await Promise.all([trabalhar(),trabalhar(),trabalhar(),trabalhar(),trabalhar(),trabalhar()]);
       redesenhar();

@@ -1233,7 +1233,7 @@ async function inicializar() {
     pgCarregar();
 
     var elNomeHeader = document.getElementById('nomeUsuarioHeader');
-    if (elNomeHeader) elNomeHeader.textContent = meuNome.split(' ')[0];
+    if (elNomeHeader) elNomeHeader.textContent = (window.sagaNomeExibicao?window.sagaNomeExibicao(meuNome):meuNome.split(' ')[0]);
 
     // 21/11 (ideia 10 do check-up): os quadros antigos ("Mais números") só carregam quando a pessoa abre
     pgMaisLigar();

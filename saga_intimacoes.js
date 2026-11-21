@@ -397,7 +397,7 @@
   // (em lotes de 1.000), depois da 1ª imagem: a tela não espera por ela. Erro fica à vista (aviso + quadro na janela).
   var LUISA='Luísa';
   function erroTriagem(e){var t=(e&&(e.code||'')+' '+(e.message||''))||'';
-    return /PGRST202|Could not find the function|42883/i.test(t)?'a classificação da '+LUISA+' ainda não foi ligada no banco (bloco 356)':'erro ao ler a classificação da '+LUISA+' ('+((e&&e.code)||'banco')+': '+((e&&e.message)||'sem detalhe')+')';}
+    return /PGRST202|Could not find the function|42883/i.test(t)?'a classificação da '+LUISA+' ainda não foi ligada no banco (bloco 356)':'erro ao ler a classificação da '+LUISA+' ('+(window.sagaErroBanco?window.sagaErroBanco(e):((e&&e.code)||'banco')+': '+((e&&e.message)||'sem detalhe'))+')';}
   function carregarTriagem(){
     if(!S.sb)return;
     var h=hojeISO(),ids=S.itens.filter(function(i){return !i.concluida||ehDeHoje(i,h);}).map(function(i){return i.id;});
