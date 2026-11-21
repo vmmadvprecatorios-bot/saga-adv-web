@@ -18,7 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
-    { versao: "3.38", data: "22/11/2026", mudou: "Prints novos no sistema simulado: ficha (3 cartões e contatos; blocos e cartões Processo/Painel lateral; janela Criar pastas; janela Ler consulta com as miniaturas dos prints), Minhas Tarefas (quadro, menu de etiquetas e o botão **Filtros no celular**, parte nova), Captação (topo e lista com Por captador, Sem captador, Alterar… e Captador anterior), Painel geral (com Mais números recolhido) e Financeiro (aba Distribuição). Os prints agora aparecem inteiros, sem corte, também os de celular." },
+    { versao: "3.38", data: "22/11/2026", mudou: "Ficha: parte nova **Linha do tempo do processo** (tudo o que aconteceu no processo numa lista: filtros por tipo, Só o importante, busca e Ver mais). Prints novos no sistema simulado: ficha (3 cartões e contatos; blocos e cartões Processo/Painel lateral; janela Criar pastas; janela Ler consulta com as miniaturas dos prints), Minhas Tarefas (quadro, menu de etiquetas e o botão **Filtros no celular**, parte nova), Captação (topo e lista com Por captador, Sem captador, Alterar… e Captador anterior), Painel geral (com Mais números recolhido) e Financeiro (aba Distribuição). Os prints agora aparecem inteiros, sem corte, também os de celular." },
     { versao: "3.37", data: "22/11/2026", mudou: "Manual em dia com as novidades de 19 a 21/11: capítulo **Para aprovar** refeito (Luísa e Renata; Pedidos para a Renata com Pode fazer, Depois e Não fazer e o Plano da peça; Ler e corrigir, Ver como vai sair, revisão da Luísa com o selo Revisada, Aprovar e Protocolei; Recados e Relatório em PDF; **Autos para baixar**); ficha em **3 cartões** (Cliente, Processo, Painel lateral) com o código para copiar; **Fazer petição** lendo os documentos do cliente; **Cálculo do PSS** lendo requisitório, espelho e demonstrativo (de onde veio cada dado; SELIC); **Planilhas e textos do SAGA**, **Editor de planilhas** e **Planilhas do PSS**; **Modelos** (petições, timbrados e arquivos; pastas; + Novo modelo, Importar pasta de petições, editor e A revisar); **Distribuição dos honorários** (Equipe e Jurídico) e **Meus honorários**; Minhas Tarefas (etiqueta Dar impulso processual, tarefa Manutenção: completar dados, botão Filtros no celular); Intimações (linha da Luísa com o prazo em dias úteis, Prazo vencendo, repetida CNJ × e-mail); Captação (Alterar…, Sem captador, Captador anterior, gráfico Por captador; passagem sozinha para o Jurídico; pré-validados do prêmio); Chat (grupo Recebimento de documentação); login (**Manter conectado**; login diário); botão **?** de ajuda; PDF com texto para selecionar e copiar; Painel geral (Mais números recolhido); SAGA no Claude (ferramentas novas); Saúde do sistema e Armazenamento; permissões novas. Prints novos no sistema simulado." },
     { versao: "3.36", data: "21/11/2026", mudou: "Agenda: **Ver no celular** (link pessoal para o Google Agenda e o iPhone, só leitura, com lembrete; Gerar link novo / Desligar) e aviso no **sino 30 minutos antes** de cada compromisso." },
     { versao: "3.35", data: "21/11/2026", mudou: "Preferências em **abas**: Aparência (tema, cor e letra), Vidro (só com cor de vidro), Tela (efeitos, cadeado, tela inicial e as escolhas que acompanham a conta), Avisos e sons e, para o administrador, Equipe (cores da equipe). A aba escolhida fica lembrada." },
@@ -546,6 +546,18 @@ window.SAGA_MANUAL = {
           img: "ficha_andamentos",
           marcas: ["Andamentos no tribunal (CNJ).", "Atualizar agora.", "Andamento importante (destacado)."],
           atencao: ["O CNJ pode atrasar alguns dias em relação ao site do tribunal. Para conferir na hora, use o botão do tribunal."]
+        },
+        { id: "linha_tempo", titulo: "Linha do tempo do processo",
+          quando: "Para ver, numa lista só, tudo o que já aconteceu no processo, do mais novo para o mais antigo.",
+          passos: [
+            "Na ficha, abra o bloco **Linha do tempo** (ele começa fechado e só busca os dados quando você abre, para a ficha não ficar lenta). Ao trocar de processo, a lista acompanha.",
+            "Aparecem juntos: intimações, andamentos do CNJ, comentários, tarefas, documentos, agenda, mudanças de etapa, petições da Renata e relatórios, cada um com o ícone, a data e quem fez.",
+            "Clique nos **tipos** no alto para ver só alguns (dá para marcar vários). **Só o importante** deixa só o que mais conta (intimação, petição, etapa, andamento importante...). A **busca** procura no que já está na lista.",
+            "Vêm 50 de cada vez: [[Ver mais]] traz os anteriores. Filtrou demais? [[Limpar filtros]].",
+            "Cada pessoa só vê na linha do tempo o que já pode ver no sistema. Se der erro, o motivo aparece com [[Tentar de novo]]."
+          ],
+          img: "ficha_linha_tempo",
+          marcas: ["Tipos: clique para ver só intimações, andamentos, comentários... (vários de uma vez).", "Só o importante.", "Busca na linha do tempo.", "Um acontecimento: ícone do tipo, título, data, quem fez e o resumo.", "Ver mais: os 50 anteriores."]
         },
         { id: "comentarios", titulo: "Comentários, menções e atendimentos",
           quando: "Para deixar um recado para a equipe sobre o processo, chamar um colega ou marcar atendimento com o cliente.",
