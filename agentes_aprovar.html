@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611210307"></script>
+<script src="saga_guard.js?v=202611210315"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Para aprovar</title>
@@ -91,8 +91,9 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .rodape-q b{color:var(--text);font-weight:600}
 .auton{margin-top:16px}.auton .ped{grid-template-columns:minmax(0,1fr) auto}
 .btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
+.plano-peca{margin-top:8px;border:1px solid var(--border-soft);border-radius:10px;padding:6px 10px;background:color-mix(in srgb,var(--panel) 70%,transparent)}.plano-peca summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--gold)}.plano-peca dl{margin:6px 0}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611210307">
+<link rel="stylesheet" href="saga_tema.css?v=202611210315">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -144,7 +145,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611210307"></script>
+<script src="saga_ui.js?v=202611210315"></script>
 <script>
 /* =====================================================================
    SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
@@ -281,6 +282,9 @@ function desenharComRenata(){
       return '<div class="ped"><div class="cab-ent">'+(decide?'<input type="checkbox" data-pr-marcar="'+esc(k.id)+'"'+(PR.marc[k.id]?' checked':'')+' aria-label="Marcar '+esc(k.titulo)+'">':'')+
         '<div style="min-width:0;flex:1"><div class="oque">'+esc(k.titulo)+'</div><div class="det">'+(k.cliente?'<b>'+esc(k.cliente)+'</b>':'')+(k.codigo?' · '+esc(k.codigo):'')+(k.origem==='calculo'?' · pedida pelo cálculo do PSS conferido':(k.origem==='luisa'?' · pedida pela Luísa':(k.origem==='refazer'?' · para REFAZER uma petição já decidida':'')))+'</div>'+
         (k.porque?'<div class="det" style="margin-top:4px"><b>Por quê:</b> '+esc(k.porque)+'</div>':'')+
+        htmlPlano(k)+
+        (k.orientacao?'<div class="aviso-amarelo" style="margin-top:6px"><b>Sua orientação para a Renata:</b> '+esc(k.orientacao)+'</div>':'')+
+        (k.nota_depois&&k.situacao==='depois'?'<div class="det" style="margin-top:4px"><b>Nota:</b> '+esc(k.nota_depois)+'</div>':'')+
         (k.situacao==='na_fila'||k.situacao==='em_preparo'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata faz '+(k.situacao==='em_preparo'?'agora':'na próxima rodada ('+esc(proximaRodadaRenata())+')')+' e a petição aparece aqui em cima, em Para aprovar, com o Word.</div>':'')+
         (k.situacao==='depois'?'<div class="det" style="margin-top:6px">Guardada para depois'+(k.decidido_por?' por '+esc(k.decidido_por):'')+(k.decidido_em?' em '+esc(dataBR(k.decidido_em)):'')+'. A Renata não faz enquanto estiver aqui.</div>':'')+
         (k.situacao==='em_revisao'||k.situacao==='revisao_ajustar'?(window.SagaAgentesExtra&&SagaAgentesExtra.revisaoNaFila?SagaAgentesExtra.revisaoNaFila(k):''):'')+
@@ -292,6 +296,25 @@ function desenharComRenata(){
           (pode&&k.situacao==='na_fila'?'<button class="btn" type="button" data-pr-dec="depois" data-pr-id="'+esc(k.id)+'" title="Tira da fila da Renata">Depois</button>':'')+
         '</div></div>';}).join('');
   atualizarLotePr();
+}
+/* 21/11 (Dr. Victor): ver a IDEIA antes de a Renata escrever (montado no banco: agente_peca_plano) */
+function htmlPlano(k){
+  var p=k.plano;if(!p)return '';
+  var L=[['Peça',p.peca],['Vai pedir',p.vai_pedir],['Endereçada a',p.enderecamento],['Modelo',p.modelo],['Papel timbrado',p.timbrado],['Fundamentos',p.fundamentos]];
+  if(p.refazer)L.splice(1,0,['O que muda',p.refazer]);
+  return '<details class="plano-peca"'+(k.situacao==='aguardando_aprovacao'?' open':'')+'><summary>Plano da peça</summary><dl class="campos">'+
+    L.filter(function(x){return x[1];}).map(function(x){return '<dt>'+esc(x[0])+'</dt><dd>'+esc(x[1])+'</dd>';}).join('')+
+    ((p.falta||[]).length?'<dt>Falta ou incerto</dt><dd>'+(p.falta||[]).map(esc).join('; ')+'</dd>':'')+
+    '</dl><div class="det">Quer mudar algo? Toque em "Pode fazer" e escreva a orientação: a Renata segue e a Luísa confere.</div></details>';
+}
+function abrirJanelaPeca(modo,ids){
+  P.janela={modo:modo,ids:ids};
+  $('jTitulo').textContent=modo==='fazer'?'Pode fazer':'Depois';
+  $('jRot').textContent=modo==='fazer'?'Orientação para a Renata (opcional; vale como instrução obrigatória): o que mudar no plano, a quem endereçar, pedido a incluir, outro modelo ou timbrado':'Nota (opcional): por que fica para depois, o que esperar';
+  $('jOk').textContent=modo==='fazer'?'Pode fazer':'Guardar para depois';
+  $('jSub').textContent=ids.length>1?ids.length+' pedidos marcados (a mesma '+(modo==='fazer'?'orientação':'nota')+' vale para todos)':'';
+  $('jTexto').value='';
+  $('janela').classList.add('aberto');setTimeout(function(){$('jTexto').focus();},60);
 }
 function atualizarLotePr(){
   var ids=Object.keys(PR.marc).filter(function(k){return PR.marc[k];}),b=$('prLote');
@@ -417,6 +440,7 @@ async function confirmarJanela(){
   var j=P.janela;if(!j)return;var t=$('jTexto').value.trim();
   if(j.modo==='protocolei'){fecharJanela();await protocolei(j.id,t);return;}
   if(j.modo==='naofazer'){var ids=j.ids;fecharJanela();await decidirPecas(ids,'nao_fazer',t);return;}
+  if(j.modo==='fazer'||j.modo==='depois'){var ids2=j.ids,md=j.modo;fecharJanela();await decidirPecas(ids2,md,t);return;}
   if(!t){toast(j.modo==='ajustar'?'Escreva o que precisa ajustar.':'Escreva o motivo.','error');return;}
   fecharJanela();await decidir(j.id,j.modo==='ajustar'?'ajustar':'reprovar',t);
 }
@@ -464,10 +488,10 @@ function ligar(){
   $('comRenata').addEventListener('click',function(e){
     var s1=e.target.closest('[data-pr-sit]');if(s1){if(PR.sit!==s1.dataset.prSit){PR.sit=s1.dataset.prSit;PR.marc={};setTimeout(desenharComRenata,0);}return;}
     var d=e.target.closest('[data-pr-dec]');
-    if(d){if(d.dataset.prDec==='nao_fazer'){P.janela={id:d.dataset.prId,modo:'naofazer',ids:[d.dataset.prId]};abrirJanelaNaoFazer();}else decidirPecas([d.dataset.prId],d.dataset.prDec);return;}
+    if(d){if(d.dataset.prDec==='nao_fazer'){P.janela={id:d.dataset.prId,modo:'naofazer',ids:[d.dataset.prId]};abrirJanelaNaoFazer();}else abrirJanelaPeca(d.dataset.prDec,[d.dataset.prId]);return;}
     var lt=e.target.closest('[data-pr-lote]');
     if(lt){var ids=Object.keys(PR.marc).filter(function(k){return PR.marc[k];});if(!ids.length)return;
-      if(lt.dataset.prLote==='nao_fazer'){P.janela={modo:'naofazer',ids:ids};abrirJanelaNaoFazer();}else decidirPecas(ids,lt.dataset.prLote);}
+      if(lt.dataset.prLote==='nao_fazer'){P.janela={modo:'naofazer',ids:ids};abrirJanelaNaoFazer();}else abrirJanelaPeca(lt.dataset.prLote,ids);}
   });
   $('comRenata').addEventListener('change',function(e){
     var c=e.target.closest('[data-pr-marcar]');if(c){PR.marc[c.dataset.prMarcar]=c.checked;atualizarLotePr();return;}
@@ -486,10 +510,10 @@ async function init(){
 }
 init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
 </script>
-<script src="saga_agentes_extra.js?v=202611210307"></script>
-<script src="saga_timbrado.js?v=202611210307"></script>
-<script src="saga_modelos_editor.js?v=202611210307"></script>
-<script src="saga_visor.js?v=202611210307"></script>
-<script src="saga_peca_texto.js?v=202611210307"></script>
+<script src="saga_agentes_extra.js?v=202611210315"></script>
+<script src="saga_timbrado.js?v=202611210315"></script>
+<script src="saga_modelos_editor.js?v=202611210315"></script>
+<script src="saga_visor.js?v=202611210315"></script>
+<script src="saga_peca_texto.js?v=202611210315"></script>
 </body>
 </html>
