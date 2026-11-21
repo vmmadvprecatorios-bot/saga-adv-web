@@ -1290,6 +1290,10 @@
     try{localStorage.setItem(CHAVE_ATIVIDADE,String(agora));}catch(e){}
   }
 
+  function manterConectado(){
+    try{var m=JSON.parse(localStorage.getItem('saga-manter-conectado')||'null');return !!(m&&m.u&&m.u===idSessaoLocal());}catch(e){return false;}
+  }
+  global.sagaManterConectado=manterConectado;
   async function verificarInatividade(){
     if(!global._sb)return false;
     // Login diário (bloco 181, T165): colaborador segue o horário dele (30 min sem uso fora dele) e cai às 20h.
@@ -1306,8 +1310,12 @@
         return false;
       }
     }
+    // 21/11 (Dr. Victor): com "Manter conectado" marcado no login deste aparelho, o administrador e os isentos
+    // não saem por tempo sem uso (só pelo Sair ou "Sair de todos os aparelhos")
+    if(g&&g.ok&&g.isento&&manterConectado())return false;
     if(minutosOciososForaDoExpediente()>=LIMITE_INATIVIDADE_MIN){
-      await global.sagaLogout('inatividade');
+      // a saída fica registrada (Ponto > Acessos e Registro de atividades), como as do login diário
+      await sairPorRegra('inatividade');
       return true;
     }
     return false;

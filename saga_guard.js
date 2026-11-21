@@ -12,7 +12,7 @@
 // pôr o nome em SINC_APARELHO.
 (function(){
   if(window.sagaSinc)return;
-  var SINC_APARELHO=/^(saga-sidebar-colapsada|saga-aparelho|saga-ponto-trava|saga-ponto-mudou|saga-ultima-atividade|saga-sessao-conferida|saga-entrada-.*|saga-acesso|saga-login-regras|saga-abas.*|saga-menu-rolagem|saga-processos-posicao|saga-som-.*|saga-permissoes|saga-logo|saga-foto|saga-iniciais|saga-escritorio|saga-fotos-equipe|saga-cor|saga-cor-salva|saga-letra|saga-sons|saga-cadeado|saga-vidro-cor|saga-vidro-imagem|saga-sinc-.*|saga-planilha-larg-.*|saga-planilha-celular2-.*|saga-pastas-abertas-.*|saga-ficha-ao-lado|saga-volta.*)$/;
+  var SINC_APARELHO=/^(saga-sidebar-colapsada|saga-aparelho|saga-ponto-trava|saga-ponto-mudou|saga-ultima-atividade|saga-manter-conectado|saga-manter-conectado-escolha|saga-sessao-conferida|saga-entrada-.*|saga-acesso|saga-login-regras|saga-abas.*|saga-menu-rolagem|saga-processos-posicao|saga-som-.*|saga-permissoes|saga-logo|saga-foto|saga-iniciais|saga-escritorio|saga-fotos-equipe|saga-cor|saga-cor-salva|saga-letra|saga-sons|saga-cadeado|saga-vidro-cor|saga-vidro-imagem|saga-sinc-.*|saga-planilha-larg-.*|saga-planilha-celular2-.*|saga-pastas-abertas-.*|saga-ficha-ao-lado|saga-volta.*)$/;
   function sincroniza(k){return typeof k==='string'&&/^saga[-_][a-z0-9_:-]{1,80}$/.test(k)&&!SINC_APARELHO.test(k);}
   var LS=null;try{LS=window.localStorage;}catch(e){}
   if(!LS||!window.Storage)return;
