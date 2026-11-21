@@ -47,7 +47,6 @@
     var pes = ficha.pessoa || {}, pro = ficha.processo || {};
     var adv = advogados(e, cfg), avisos = [];
     var nome = e.beneficiario || pes.nome || '', cpf = e.cpf_beneficiario || pes.cpf || '';
-    var sucSar = num(cfg.sucumbencia_sarmento); if(sucSar == null) sucSar = 0.456;
 
     /* ---------- 1. Apuração do PSS ---------- */
     var a = Aba(A1, [400, 160, 120]);
@@ -127,8 +126,8 @@
     var pc = num(e.pct_contratuais); if(pc == null) pc = 0.25;
     var ps = num(e.pct_sucumbencia);
     c.p('A11', { v: 'Honorários contratuais' }).p('B11', { v: pc, t: 'pct', fundo: 'entrada' }).p('J11', { f: '=ROUND(J8*B11,2)', t: 'reais' });
-    c.p('A12', { v: 'Honorários sucumbenciais' }).p('B12', { v: ps == null ? 0.1 : ps, t: 'pct', fundo: 'entrada', conferir: true,
-      nota: ps == null ? 'A matriz traz 10% de sucumbência e o cálculo do SAGA não tinha o percentual: ficou o da matriz. No Juizado é 0% (art. 55 da Lei 9.099/95).' : 'A matriz traz 10% de sucumbência; aqui veio o percentual do cálculo do processo (' + (ps * 100).toLocaleString('pt-BR') + '%). No Juizado é 0%.' })
+    c.p('A12', { v: 'Honorários sucumbenciais' }).p('B12', { v: ps == null ? 0 : ps, t: 'pct', fundo: 'entrada',
+      nota: 'Decisão do Dr. Victor (21/11): a sucumbência começa em 0% (no Juizado não há, art. 55 da Lei 9.099/95) e se digita o percentual quando a sentença ou o acórdão fixar.' })
       .p('J12', { f: '=ROUND(J8*B12,2)', t: 'reais' });
     c.p('A13', { v: 'Honorários totais', b: true }).p('B13', { f: '=SUM(B11,B12)', t: 'pct', b: true }).p('J13', { f: '=SUM(J11:J12)', t: 'reais', b: true });
     /* repartição dos contratuais */
@@ -156,10 +155,9 @@
     adv.lista.forEach(function(x, i){
       var r = l + 1 + i; linhasSuc[x.chave] = r;
       var pct, tot;
-      if(x.chave === 'sarmento') pct = { f: '=B12*' + (sucSar * 100).toLocaleString('en-US', { maximumFractionDigits: 6 }) + '%', t: 'pct', casas: 2 };
-      else pct = { f: '=B12' + feitos.map(function(rr){ return '-B' + rr; }).join(''), t: 'pct', casas: 2 };
-      if(x.chave === 'valdenor') tot = { f: '=(J12/25)*1', t: 'reais', conferir: true, nota: 'Fórmula da matriz para o Dr. Valdenor: (sucumbência ÷ 25) × 1, diferente das outras linhas (total × percentual). Mantida como na matriz: conferir com o Dr. Victor.' };
-      else tot = { f: '=ROUND(J8*B' + r + ',2)', t: 'reais' };
+      /* decisão do Dr. Victor (21/11): a sucumbência se divide nos MESMOS percentuais dos honorários contratuais */
+      pct = { f: '=IF(B11=0,0,B12*B' + linhasCont[x.chave] + '/B11)', t: 'pct', casas: 2, nota: i === 0 ? 'Decisão do Dr. Victor (21/11): a sucumbência se divide na mesma proporção dos honorários contratuais (ex.: 11,4% e 13,6% de 25% = 45,6% e 54,4%).' : null };
+      tot = i === adv.lista.length - 1 && adv.lista.length > 1 ? { f: '=J12-SUM(J' + (l + 1) + ':J' + (r - 1) + ')', t: 'reais' } : { f: '=ROUND(J8*B' + r + ',2)', t: 'reais' };
       c.p('A' + r, { v: x.nome }).p('B' + r, pct).p('C' + r, { f: '=C' + linhasCont[x.chave], t: 'texto' }).m('C' + r + ':D' + r).p('E' + r, { f: '=E' + linhasCont[x.chave] }).m('E' + r + ':F' + r).p('J' + r, tot);
       feitos.push(r);
     });
@@ -303,18 +301,18 @@
     adv.lista.forEach(function(x){
       contIR[x.chave] = lr;
       r5.p('A' + lr, { v: x.nome }).p('B' + lr, { f: '=' + q(CP) + 'B' + linhasCont[x.chave], t: 'pct', casas: 1 }).p('D' + lr, { f: '=' + q(CP) + 'C' + linhasCont[x.chave], t: 'texto' }).m('D' + lr + ':G' + lr).p('H' + lr, { v: x.oab }).m('H' + lr + ':I' + lr)
-        .p('J' + lr, x.chave === 'valdenor' ? { f: '=J29=B' + lr, conferir: true, nota: 'Como está na matriz: "=J29=B20" (compara em vez de multiplicar; mostra VERDADEIRO/FALSO). Provável erro de digitação (J29*B20). Conferir com o Dr. Victor.' } : { f: '=J29*B' + lr, t: 'reais' });
+        .p('J' + lr, { f: '=J29*B' + lr, t: 'reais', nota: x.chave === 'valdenor' ? 'Decisão do Dr. Victor (21/11): total × percentual (a matriz tinha "=J29=B20", que comparava em vez de multiplicar).' : null });
       lr++;
     });
-    r5.p('B18', { nota: 'Na matriz o IR-RRA vinha com Sarmento 11,4%, Victor 25% e Valdenor 1% (soma 37,4%, acima dos 25% do contrato). Aqui vêm os percentuais do contrato do cálculo do PSS. Conferir com o Dr. Victor.', conferir: true });
+    r5.p('B18', { nota: 'Decisão do Dr. Victor (21/11): percentuais do contrato (a matriz trazia 11,4% + 25% + 1% = 37,4%).' });
     lr++;
     r5.p('A' + lr, { v: 'Honorários sucumbenciais', fundo: 'secao' }).p('B' + lr, { v: 'Percentual', fundo: 'secao', al: 'centro' }).p('D' + lr, { v: 'CNPJ/CPF', fundo: 'secao', al: 'centro' }).p('H' + lr, { v: 'OAB', fundo: 'secao', al: 'centro' }).p('J' + lr, { v: 'Total', fundo: 'secao', al: 'centro' });
     lr++;
     var feitosIR = [];
     adv.lista.forEach(function(x){
-      var pctF = x.chave === 'sarmento' ? '=B14*' + (sucSar * 100).toLocaleString('en-US', { maximumFractionDigits: 6 }) + '%' : '=B14' + feitosIR.map(function(rr){ return '-B' + rr; }).join('');
+      var pctF = '=IF(B13=0,0,B14*B' + contIR[x.chave] + '/B13)';
       r5.p('A' + lr, { v: x.nome }).p('B' + lr, { f: pctF, t: 'pct', casas: 2 }).p('D' + lr, { f: '=D' + contIR[x.chave], t: 'texto' }).m('D' + lr + ':G' + lr).p('H' + lr, { f: '=H' + contIR[x.chave] }).m('H' + lr + ':I' + lr)
-        .p('J' + lr, { f: x.chave === 'valdenor' ? '=(J14/25)*1' : '=(J14/25)*12', t: 'reais', conferir: true, nota: 'Fórmula da matriz: (sucumbência ÷ 25) × ' + (x.chave === 'valdenor' ? '1' : '12') + ', e não total × percentual. Conferir com o Dr. Victor.' });
+        .p('J' + lr, { f: '=J29*B' + lr, t: 'reais', nota: feitosIR.length ? null : 'Decisão do Dr. Victor (21/11): mesma proporção dos honorários contratuais, total × percentual (a matriz usava sucumbência ÷ 25 × 12 e × 1).' });
       feitosIR.push(lr); lr++;
     });
     lr++;
