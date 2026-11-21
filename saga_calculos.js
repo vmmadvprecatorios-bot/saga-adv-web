@@ -76,6 +76,10 @@ window.SagaCalculos = (function(){
     if(sar) linhas.push({ nome: 'Sarmento, Camargo & Sarmento', pct: sar, valor: r2(total * sar) });
     if(vic) linhas.push({ nome: 'Dr. Victor de Medeiros Morais', pct: vic, valor: r2(total * vic) });
     if(val) linhas.push({ nome: 'Dr. Valdenor de Lima Morais', pct: val, valor: r2(total * val) });
+    /* como na skill (exemplo validado): o último advogado fica com a diferença, para a soma bater com os contratuais nos centavos */
+    if(linhas.length > 1 && Math.abs(linhas.reduce(function(a, l){ return a + l.pct; }, 0) - pc) < 1e-9){
+      linhas[linhas.length - 1].valor = r2(r2(total * pc) - linhas.slice(0, -1).reduce(function(a, l){ return a + l.valor; }, 0));
+    }
     var somaAdv = r2(linhas.reduce(function(a, l){ return a + l.valor; }, 0));
     if(linhas.length && Math.abs(somaAdv - G15) > 0.05) r.avisos.push('A soma da divisão entre os advogados (' + reais(somaAdv) + ') não bate com os honorários contratuais (' + reais(G15) + ').');
     r.cumprimento = { D6: D6, G6: G6, D9: r2(p2), G9: G9, D12: D12, G12: G12, total: total, honorarios_contratuais: G15, honorarios_sucumbencia: G16,
@@ -110,6 +114,13 @@ window.SagaCalculos = (function(){
 
   /* ---------------- interface ---------------- */
   var CAMPOS = [
+    { g: 'Identificação (da ficha ou dos documentos)' },
+    { k: 'beneficiario', r: 'Nome do beneficiário' },
+    { k: 'cpf_beneficiario', r: 'CPF do beneficiário', f: 'cpf' },
+    { k: 'processo_execucao', r: 'Processo de execução', ex: '0000000-00.0000.0.00.0000' },
+    { k: 'assunto', r: 'Assunto do processo', ex: 'Índice de 28,86% Lei 8.622/1993' },
+    { k: 'nm_meses', r: 'Nº de meses (NM, RRA)', f: 'int' },
+    { k: 'vendeu_prc', r: 'Vendeu o PRC (cessão de crédito)?', ex: 'Sim / Não' },
     { g: 'Requisitório e espelho do tribunal' },
     { k: 'prc', r: 'Sequencial do PRC/RPV', ex: 'PRC900003-AL' },
     { k: 'data_base', r: 'Data-base do requisitório', ex: '31/12/2019', f: 'data' },
@@ -149,6 +160,8 @@ window.SagaCalculos = (function(){
       if(f === 'reais'){ if(!d){ inp.value = ''; return; } var n = parseInt(d, 10) / 100; inp.value = n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
       else if(f === 'data'){ d = d.slice(0, 8); inp.value = d.length > 4 ? d.slice(0,2) + '/' + d.slice(2,4) + '/' + d.slice(4) : (d.length > 2 ? d.slice(0,2) + '/' + d.slice(2) : d); }
       else if(f === 'pct'){ inp.value = inp.value.replace(/[^\d,]/g, '').replace(/(,.*?),/g, '$1'); }
+      else if(f === 'int'){ inp.value = d.slice(0, 4); }
+      else if(f === 'cpf'){ d = d.slice(0, 11); inp.value = d.length > 9 ? d.slice(0,3) + '.' + d.slice(3,6) + '.' + d.slice(6,9) + '-' + d.slice(9) : d.length > 6 ? d.slice(0,3) + '.' + d.slice(3,6) + '.' + d.slice(6) : d.length > 3 ? d.slice(0,3) + '.' + d.slice(3) : d; }
     });
   }
   function lerPct(s){ var n = num(s); return n == null ? null : n / 100; }
@@ -160,8 +173,11 @@ window.SagaCalculos = (function(){
       if(c.f === 'sim') e[c.k] = el.checked;
       else if(c.f === 'pct') e[c.k] = lerPct(el.value);
       else if(c.f === 'reais') e[c.k] = num(el.value);
+      else if(c.f === 'int') e[c.k] = el.value.trim() ? parseInt(el.value, 10) : null;
       else e[c.k] = el.value.trim() || null;
     });
+    var org = {}; Object.keys(S.origem || {}).forEach(function(k){ if(e[k] != null && e[k] !== '') org[k] = S.origem[k]; });
+    if(Object.keys(org).length) e._origem = org;
     return e;
   }
   function valorCampo(c, v){
@@ -177,6 +193,29 @@ window.SagaCalculos = (function(){
     if(!ini || !fim || !valor) return null;
     return 'https://www3.bcb.gov.br/CALCIDADAO/publico/corrigirPelaSelic.do?method=corrigirPelaSelic&dataInicial=' + encodeURIComponent(ini)
       + '&dataFinal=' + encodeURIComponent(fim) + '&valorCorrecao=' + String(r2(valor).toFixed(2)).replace('.', ',');
+  }
+
+  /* SELIC pelo serviço público do Banco Central (série 11, SELIC diária): opção AO LADO da digitação, para conferir.
+     A fonte da skill continua sendo a Calculadora do Cidadão (com o print na pasta); o Dr. Victor decide se passa a valer. */
+  function dataBR(s){ var m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(s || '').trim()); return m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])) : null; }
+  async function selicBancoCentral(n){
+    var e = ler(), ini = n === 2 ? e.parcela2_data : (e.data_pagamento || e.data_base), fim = e.data_atualizacao, msg = document.getElementById('clMsg');
+    if(!dataBR(ini) || !dataBR(fim)){ msg.innerHTML = '<div class="cl-aviso">Preencha a data ' + (n === 2 ? 'da 2ª retenção' : 'do pagamento') + ' e a data final (dd/mm/aaaa) para buscar a SELIC.</div>'; return; }
+    msg.innerHTML = '<div class="cl-sub">Buscando a SELIC diária no Banco Central (' + esc(ini) + ' a ' + esc(fim) + ')…</div>';
+    try{
+      var u = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados?formato=json&dataInicial=' + encodeURIComponent(ini) + '&dataFinal=' + encodeURIComponent(fim);
+      var r = await fetch(u, { cache: 'no-store' });
+      if(!r.ok) throw new Error('o Banco Central respondeu erro ' + r.status);
+      var dados = await r.json(); if(!Array.isArray(dados) || !dados.length) throw new Error('o Banco Central não devolveu taxas para esse período');
+      var d0 = dataBR(ini), d1 = dataBR(fim), fator = 1, dias = 0;
+      dados.forEach(function(x){ var d = dataBR(x.data), v = parseFloat(String(x.valor).replace(',', '.')); if(d && isFinite(v) && d >= d0 && d < d1){ fator *= 1 + v / 100; dias++; } });
+      var pctTxt = ((fator - 1) * 100).toLocaleString('pt-BR', { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+      msg.innerHTML = '<div class="cl-aviso"><b>SELIC acumulada pelo Banco Central: ' + esc(pctTxt) + '%</b> (fator ' + fator.toFixed(8).replace('.', ',') + '; ' + dias + ' dias úteis, de ' + esc(ini) + ' até o dia anterior a ' + esc(fim) + ').'
+        + ' É uma conferência: a skill manda usar a Calculadora do Cidadão (com o print na pasta). Se os dois baterem, pode usar. <button type="button" id="clUsarBcb">Usar este percentual</button></div>';
+      document.getElementById('clUsarBcb').onclick = function(){ var el = document.getElementById('cl_selic_' + n); if(el){ el.value = pctTxt; el.dispatchEvent(new Event('change')); S.origem = S.origem || {}; S.origem['selic_' + n] = { arquivo: 'Banco Central (SELIC diária, série 11)', trecho: ini + ' a ' + fim }; mostrarOrigem('selic_' + n); } msg.innerHTML = ''; };
+    }catch(x){
+      msg.innerHTML = '<div class="cl-erro"><b>Não consegui buscar a SELIC no Banco Central:</b> ' + esc(x.message || x) + (/fetch|network|Failed/i.test(String(x.message || x)) ? ' (o navegador não alcançou o serviço do Banco Central: sem internet ou o serviço recusou o acesso).' : '') + ' Use a Calculadora do Cidadão.</div>';
+    }
   }
 
   /* ---------------- leitura dos documentos (requisitório, espelho do tribunal) ----------------
@@ -217,8 +256,9 @@ window.SagaCalculos = (function(){
     { k: 'data_base', r: /data[\s-]*base(?:\s+de\s+calculo)?/g, t: 'data' }
   ];
   /* acha os valores no texto; devolve {campo: {valor, outros:[...], trecho}} */
+  var RX_CPF = /\b(\d{3})\.?(\d{3})\.?(\d{3})-?(\d{2})\b/g, RX_CNJ = /\b(\d{7})-?(\d{2})\.?(\d{4})\.?(\d)\.?(\d{2})\.?(\d{4})\b/g;
   function lerTexto(texto){
-    var t = semAcento(texto).replace(/[ \t ]+/g, ' '), achados = {};
+    var t = semAcento(texto).replace(/[ \t ]+/g, ' '), achados = {};
     function guarda(k, v, trecho){
       if(v == null || v === '') return;
       var a = achados[k] || (achados[k] = { valor: v, outros: [], trecho: trecho });
@@ -245,12 +285,36 @@ window.SagaCalculos = (function(){
       var dd = RX_DATA.exec(depois2) || (function(){ var all = antes.match(/\d{2}\/\d{2}\/\d{4}/g); return all ? [all[all.length - 1]] : null; })();
       if(dd) guarda('data_pagamento', dd[0], 'depósito efetivado ' + dd[0]);
     }
+    /* identificação: CPF e nome perto de "beneficiário/requerente/exequente/credor"; número do processo; NM; assunto; cessão */
+    var rb = /(beneficiario|requerente|reqte|exequente|credor)\s*[:\-]?\s*/g, mb, orig = String(texto || '').replace(/[ \t ]+/g, ' '), origSem = semAcento(orig);
+    while((mb = rb.exec(t))){
+      var trecho = t.slice(mb.index, mb.index + 160);
+      RX_CPF.lastIndex = 0; var mc = RX_CPF.exec(trecho.slice(mb[0].length, 120));
+      if(mc) guarda('cpf_beneficiario', mc[1] + '.' + mc[2] + '.' + mc[3] + '-' + mc[4], trecho.slice(0, mb[0].length + mc.index + mc[0].length));
+      var pos = origSem.indexOf(mb[0].trim(), Math.max(0, mb.index - 5));
+      if(pos >= 0){
+        var resto = orig.slice(pos + mb[0].trim().length, pos + mb[0].trim().length + 120).replace(/^[\s:\-–]+/, '');
+        var nm = /^([A-ZÁÉÍÓÚÂÊÔÃÕÇÜ][A-ZÁÉÍÓÚÂÊÔÃÕÇÜ'.]+(?:\s+(?!CPF\b|CNPJ\b|RG\b|OAB\b)[A-ZÁÉÍÓÚÂÊÔÃÕÇÜ][A-ZÁÉÍÓÚÂÊÔÃÕÇÜ'.]*(?![a-záéíóúâêôãõçü])){1,8})/.exec(resto);
+        if(nm && !/^(CPF|CNPJ|NOME|VALOR|DATA)\b/.test(nm[1])) guarda('beneficiario', nm[1].trim(), mb[0].trim() + ' ' + nm[1].trim());
+      }
+    }
+    RX_CNJ.lastIndex = 0; var mj;
+    while((mj = RX_CNJ.exec(t))){
+      var ctx = t.slice(Math.max(0, mj.index - 50), mj.index);
+      if(/execu|origin|processo/.test(ctx)) guarda('processo_execucao', mj[1] + '-' + mj[2] + '.' + mj[3] + '.' + mj[4] + '.' + mj[5] + '.' + mj[6], (ctx.slice(-30) + mj[0]).replace(/\s+/g, ' ').trim());
+    }
+    var mn = /\b(?:nm|n[ºo°.]*\s*de\s*meses|numero\s+de\s+meses)\s*[:\-]?\s*(\d{1,3})\b/.exec(t);
+    if(mn) guarda('nm_meses', parseInt(mn[1], 10), mn[0]);
+    var ma = /assunto\s*[:\-]?\s*([^\n]{8,140})/.exec(origSem);
+    if(ma){ var pa = origSem.indexOf(ma[0]); var orA = orig.slice(pa, pa + ma[0].length).replace(/^assunto\s*[:\-]?\s*/i, '').trim(); guarda('assunto', orA, 'assunto: ' + orA.slice(0, 60)); }
+    if(/cessao\s+de\s+credito|cessionari/.test(t)){ var mcs = /[^\n]{0,40}(cessao\s+de\s+credito|cessionari)[^\n]{0,40}/.exec(t); guarda('vendeu_prc', 'Sim', mcs ? mcs[0].trim() : 'cessão de crédito'); }
     return achados;
   }
   function rotuloCampo(k){ var c = CAMPOS.filter(function(x){ return x.k === k; })[0]; return c ? c.r : k; }
+  function origemTxt(o){ if(!o) return ''; return (o.arquivo || 'texto colado') + (o.pagina ? ' · pág. ' + o.pagina : '') + (o.imagem ? ' (lida da imagem)' : ''); }
   function blocoLeitor(){
-    return '<div class="cl-leitor" id="clLeitor"><div class="cl-leitor-topo"><b>Ler os documentos</b> <span>Solte aqui o requisitório e o espelho do tribunal em PDF (ou escolha os arquivos) e o SAGA acha os valores para você conferir. O arquivo é lido neste computador e não é guardado.</span></div>'
-      + '<div class="cl-leitor-acoes"><label class="cl-arq">Escolher PDFs<input type="file" id="clArquivos" accept="application/pdf,.pdf,.txt" multiple hidden></label>'
+    return '<div class="cl-leitor" id="clLeitor"><div class="cl-leitor-topo"><b>Ler os documentos</b> <span>Solte aqui o requisitório, o espelho do tribunal e o demonstrativo (PDF, foto ou print) ou puxe da pasta do cliente: o SAGA acha os valores e mostra de onde veio cada um para você conferir. PDF escaneado é lido pela imagem. Tudo é lido neste computador.</span></div>'
+      + '<div class="cl-leitor-acoes"><label class="cl-arq">Escolher arquivos<input type="file" id="clArquivos" accept="application/pdf,.pdf,.txt,image/*" multiple hidden></label>'
       + '<button type="button" id="clDaPasta">Ler da pasta do cliente</button>'
       + '<button type="button" id="clColarAbrir">Colar o texto</button></div>'
       + '<div id="clColar" hidden><textarea id="clTexto" rows="4" placeholder="Cole aqui o texto copiado do requisitório ou do espelho"></textarea><div class="cl-botoes" style="margin-top:6px"><button type="button" id="clLerTexto">Ler o texto colado</button></div></div>'
@@ -263,70 +327,105 @@ window.SagaCalculos = (function(){
       box.innerHTML = '<div class="cl-aviso"><b>Não achei os valores em ' + esc(origem) + '.</b> ' + esc(avisoExtra || 'Confira se é o requisitório ou o espelho do tribunal; se for, copie o texto do PDF e use "Colar o texto", ou digite os valores.') + '</div>';
       return;
     }
-    var h = '<div class="cl-lidos-caixa"><div class="cl-aviso" style="margin-top:0"><b>Lido de ' + esc(origem) + ': confira cada número</b> antes de usar. Campo já preenchido com outro valor vem desmarcado.' + (avisoExtra ? ' ' + esc(avisoExtra) : '') + '</div><table><tbody>';
+    var h = '<div class="cl-lidos-caixa"><div class="cl-aviso" style="margin-top:0"><b>Lido de ' + esc(origem) + ': confira cada número</b> antes de usar (a coluna "De onde veio" mostra o arquivo, a página e o trecho). Campo já preenchido com outro valor vem desmarcado.' + (avisoExtra ? ' ' + esc(avisoExtra) : '') + '</div><table><tbody><tr><td><b>Campo</b></td><td><b>De onde veio</b></td><td><b>Valor</b></td></tr>';
     ks.forEach(function(k){
       var a = achados[k], c = CAMPOS.filter(function(x){ return x.k === k; })[0], el = document.getElementById('cl_' + k);
       var atual = el ? el.value.trim() : '', novo = valorCampo(c, a.valor);
       var marca = !atual || atual === novo;
+      var o = a.origem || {};
       h += '<tr><td><label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" data-cl-lido="' + esc(k) + '" data-cl-valor="' + esc(novo) + '"' + (marca ? ' checked' : '') + '> <span>' + esc(rotuloCampo(k))
-        + (a.outros.length ? '<br><small style="color:#b45309">Achei também: ' + a.outros.map(function(o){ return esc(valorCampo(c, o)); }).join(', ') + ' (mais de um beneficiário ou parcela? use o do cliente)</small>' : '')
-        + (atual && atual !== novo ? '<br><small>Hoje no campo: ' + esc(atual) + '</small>' : '') + '</span></label></td><td>' + esc(novo) + '</td></tr>';
+        + (a.outros.length ? '<br><small style="color:#b45309">Achei também: ' + a.outros.map(function(x){ return esc(valorCampo(c, x)); }).join(', ') + ' (mais de um beneficiário ou parcela? use o do cliente)</small>' : '')
+        + (atual && atual !== novo ? '<br><small>Hoje no campo: ' + esc(atual) + '</small>' : '') + '</span></label></td>'
+        + '<td style="text-align:left;font-size:11.5px"><b>' + esc(origemTxt(o)) + '</b>' + (a.trecho ? '<br><small style="color:var(--muted)">“' + esc(String(a.trecho).slice(0, 110)) + '”</small>' : '') + (o.imagem ? '<br><small style="color:#b45309">Lido da imagem: confira cada número.</small>' : '') + '</td>'
+        + '<td>' + esc(novo) + '</td></tr>';
     });
     h += '</tbody></table><div class="cl-botoes" style="margin-top:8px"><button type="button" id="clLidosDescartar">Descartar</button><button type="button" class="pri" id="clLidosUsar">Usar os marcados</button></div></div>';
     box.innerHTML = h;
     document.getElementById('clLidosDescartar').onclick = function(){ box.innerHTML = ''; };
     document.getElementById('clLidosUsar').onclick = function(){
-      var n = 0;
+      var n = 0; S.origem = S.origem || {};
       box.querySelectorAll('[data-cl-lido]').forEach(function(cb){
-        if(!cb.checked) return; var el = document.getElementById('cl_' + cb.getAttribute('data-cl-lido')); if(!el || el.disabled) return;
-        el.value = cb.getAttribute('data-cl-valor'); el.classList.add('cl-veio-doc'); el.dispatchEvent(new Event('change')); n++;
+        if(!cb.checked) return; var k = cb.getAttribute('data-cl-lido'), el = document.getElementById('cl_' + k); if(!el || el.disabled) return;
+        el.value = cb.getAttribute('data-cl-valor'); el.classList.add('cl-veio-doc');
+        var a = achados[k] || {}; S.origem[k] = Object.assign({}, a.origem || {}, { trecho: String(a.trecho || '').slice(0, 160) });
+        mostrarOrigem(k); el.dispatchEvent(new Event('change')); n++;
       });
-      box.innerHTML = '<div class="cl-ok">' + n + ' valor(es) preenchido(s) a partir do documento (contorno amarelo). Confira com o PDF e complete o que falta (LOA, demonstrativo, SELIC).</div>';
+      box.innerHTML = '<div class="cl-ok">' + n + ' valor(es) preenchido(s) a partir do documento (contorno amarelo; embaixo de cada um, de onde veio). Confira com o documento e complete o que falta (LOA, demonstrativo, SELIC).</div>';
     };
+  }
+  function mostrarOrigem(k){
+    var el = document.getElementById('cl_' + k); if(!el) return;
+    var box = el.parentNode, s = box.querySelector('.cl-origem'), o = (S.origem || {})[k];
+    if(!o){ if(s) s.remove(); return; }
+    if(!s){ s = document.createElement('small'); s.className = 'cl-origem'; box.appendChild(s); }
+    s.textContent = 'Veio de: ' + origemTxt(o) + (o.trecho ? ' · “' + String(o.trecho).slice(0, 70) + '”' : '');
+    s.title = o.trecho || '';
+  }
+  function juntarAchados(total, novos){
+    Object.keys(novos).forEach(function(k){
+      if(!total[k]){ total[k] = novos[k]; return; }
+      [novos[k].valor].concat(novos[k].outros || []).forEach(function(v){ if(String(v) !== String(total[k].valor) && total[k].outros.indexOf(v) < 0) total[k].outros.push(v); });
+    });
+  }
+  function versaoArq(){ var v = versao(); return v ? '?v=' + v : ''; }
+  function leitor(){
+    if(window.SagaLeitorDocs) return Promise.resolve(window.SagaLeitorDocs);
+    return new Promise(function(ok, falha){ var s = document.createElement('script'); s.src = 'saga_leitor_docs.js' + versaoArq(); s.onload = function(){ window.SagaLeitorDocs ? ok(window.SagaLeitorDocs) : falha(new Error('o leitor de documentos não carregou')); }; s.onerror = function(){ falha(new Error('não consegui carregar o leitor de documentos (saga_leitor_docs.js)')); }; document.head.appendChild(s); });
   }
   async function lerArquivos(lista){
     var box = document.getElementById('clLidos'); if(!lista || !lista.length) return;
-    box.innerHTML = '<div class="cl-sub">Lendo ' + lista.length + ' arquivo(s)...</div>';
-    var achados = {}, nomes = [], semTexto = [], erros = [];
+    box.innerHTML = '<div class="cl-sub" id="clProg">Lendo ' + lista.length + ' arquivo(s)...</div>';
+    var achados = {}, nomes = [], semTexto = [], erros = [], comImagem = [];
+    var L; try{ L = await leitor(); }catch(e){ box.innerHTML = '<div class="cl-erro"><b>Não consegui ler:</b> ' + esc(e.message || e) + '</div>'; return; }
     for(var i = 0; i < lista.length; i++){
       var f = lista[i]; nomes.push(f.name);
       try{
-        var txt = /\.txt$/i.test(f.name) || f.type === 'text/plain' ? await f.text() : await textoDoPdf(f);
-        if(txt.replace(/\s/g, '').length < 30){ semTexto.push(f.name); continue; }
-        var a = lerTexto(txt);
-        Object.keys(a).forEach(function(k){
-          if(!achados[k]) achados[k] = a[k];
-          else { [a[k].valor].concat(a[k].outros).forEach(function(v){ if(String(v) !== String(achados[k].valor) && achados[k].outros.indexOf(v) < 0) achados[k].outros.push(v); }); }
-        });
+        var r = await L.lerArquivo(f, { progresso: function(m){ var p = document.getElementById('clProg'); if(p) p.textContent = 'Lendo "' + f.name + '": ' + m; } });
+        if(r.texto.replace(/\s/g, '').length < 30){ semTexto.push(f.name); continue; }
+        if(r.paginas_imagem) comImagem.push(f.name);
+        juntarAchados(achados, L.acharNasPaginas(r.paginas, lerTexto, f.name));
       }catch(e){ erros.push(f.name + ' (' + (e.message || e) + ')'); }
     }
-    var extra = (semTexto.length ? 'Sem texto (PDF escaneado, só imagem): ' + semTexto.join(', ') + '; copie o texto ou digite os valores. ' : '')
+    var extra = (comImagem.length ? 'Lido da imagem (escaneado/foto): ' + comImagem.join(', ') + '; confira os números com atenção. ' : '')
+      + (semTexto.length ? 'Não achei texto em: ' + semTexto.join(', ') + ' (imagem ilegível?); digite os valores. ' : '')
       + (erros.length ? 'Não abriu: ' + erros.join('; ') + '.' : '');
     mostrarLidos(achados, nomes.length === 1 ? nomes[0] : nomes.length + ' arquivos', extra.trim());
   }
-  /* 19/11 (bloco 269, pedido B): pega sozinho o requisitório, o espelho e o demonstrativo já guardados na pasta do cliente */
-  var RX_DOC = /requisit|espelho|precat|\brpv\b|prc\d|demonstrat|extrato|loa\b|or[cç]ament/i;
+  /* 19/11 (bloco 269, pedido B) e 21/11 (bloco 322): pega sozinho o requisitório, o espelho e o demonstrativo já guardados na pasta
+     do cliente; o que já foi lido antes vem pronto (documentos_leituras), sem ler de novo */
+  var RX_DOC = /requisit|espelho|precat|\brpv\b|prc\d|demonstrat|extrato|loa\b|or[cç]ament|planilha|c[aá]lculo/i;
   async function lerDaPasta(){
     var box = document.getElementById('clLidos');
-    box.innerHTML = '<div class="cl-sub">Procurando o requisitório e o espelho na pasta do cliente…</div>';
+    box.innerHTML = '<div class="cl-sub" id="clProg">Procurando o requisitório e o espelho na pasta do cliente…</div>';
     try{
+      var L = await leitor();
       var r = await sb().from('documentos').select('id,nome_arquivo,caminho_storage,criado_em').eq('processo_id', S.ctx.processoId)
         .or('excluido_logico.is.null,excluido_logico.eq.false').order('criado_em', { ascending: false }).limit(200);
       if(r.error) throw r.error;
-      var pdfs = (r.data || []).filter(function(d){ return /\.pdf$/i.test(d.nome_arquivo || ''); });
-      var alvo = pdfs.filter(function(d){ return RX_DOC.test(d.nome_arquivo || ''); }).slice(0, 8);
+      var docs = (r.data || []).filter(function(d){ return /\.(pdf|png|jpe?g|webp)$/i.test(d.nome_arquivo || ''); });
+      var alvo = docs.filter(function(d){ return RX_DOC.test(d.nome_arquivo || ''); }).slice(0, 8);
       if(!alvo.length){
-        box.innerHTML = '<div class="cl-aviso"><b>Não achei o requisitório nem o espelho na pasta deste processo.</b> Procurei PDFs com "requisitório", "espelho", "precatório", "RPV", "demonstrativo" ou "LOA" no nome ('
-          + pdfs.length + ' PDF(s) na pasta). Guarde o documento na ficha com um desses nomes, ou solte o PDF aqui.</div>';
+        box.innerHTML = '<div class="cl-aviso"><b>Não achei o requisitório nem o espelho na pasta deste processo.</b> Procurei arquivos com "requisitório", "espelho", "precatório", "RPV", "demonstrativo", "planilha", "cálculo" ou "LOA" no nome ('
+          + docs.length + ' PDF/imagem na pasta). Guarde o documento na ficha com um desses nomes, ou solte o arquivo aqui.</div>';
         return;
       }
-      var arquivos = [];
+      var achados = {}, erros = [], guardados = 0, comImagem = [], semGuardar = [];
       for(var i = 0; i < alvo.length; i++){
-        var dl = await sb().storage.from('documentos-clientes').download(alvo[i].caminho_storage);
-        if(dl.error) throw new Error('não consegui abrir "' + alvo[i].nome_arquivo + '" (' + dl.error.message + ')');
-        arquivos.push(new File([dl.data], alvo[i].nome_arquivo, { type: 'application/pdf' }));
+        var d = alvo[i];
+        try{
+          var x = await L.lerDocumento(sb(), d, { progresso: function(m){ var p = document.getElementById('clProg'); if(p) p.textContent = 'Lendo "' + d.nome_arquivo + '" (' + (i + 1) + ' de ' + alvo.length + '): ' + m; } });
+          if(x.guardada) guardados++;
+          if(x.paginas_imagem) comImagem.push(d.nome_arquivo);
+          if(x.erroGuardar) semGuardar.push(d.nome_arquivo + ' (' + x.erroGuardar + ')');
+          juntarAchados(achados, L.acharNasPaginas(x.paginas, lerTexto, d.nome_arquivo));
+        }catch(e){ erros.push(d.nome_arquivo + ' (' + (e.message || e) + ')'); }
       }
-      await lerArquivos(arquivos);
+      var extra = 'Documentos lidos: ' + alvo.map(function(d){ return d.nome_arquivo; }).join(', ') + '.'
+        + (guardados ? ' ' + guardados + ' já tinham sido lidos antes (sem ler de novo).' : '')
+        + (comImagem.length ? ' Lido da imagem: ' + comImagem.join(', ') + '; confira com atenção.' : '')
+        + (semGuardar.length ? ' Não guardei a leitura de: ' + semGuardar.join('; ') + '.' : '')
+        + (erros.length ? ' Não abriu: ' + erros.join('; ') + '.' : '');
+      mostrarLidos(achados, 'a pasta do cliente', extra);
     }catch(e){ box.innerHTML = '<div class="cl-erro"><b>Não consegui ler a pasta do cliente:</b> ' + esc(e.message || e) + '</div>'; }
   }
   function ligarLeitor(){
@@ -337,7 +436,7 @@ window.SagaCalculos = (function(){
     zona.addEventListener('drop', function(e){ e.preventDefault(); zona.classList.remove('arrastando'); lerArquivos(Array.prototype.slice.call((e.dataTransfer && e.dataTransfer.files) || [])); });
     document.getElementById('clColarAbrir').onclick = function(){ var c = document.getElementById('clColar'); if(window.sagaRecolher){ try{ window.sagaRecolher(c, !c.hidden ? false : true); return; }catch(x){} } c.hidden = !c.hidden; };
     document.getElementById('clDaPasta').onclick = lerDaPasta;
-    document.getElementById('clLerTexto').onclick = function(){ var t = document.getElementById('clTexto').value; mostrarLidos(lerTexto(t), 'o texto colado'); };
+    document.getElementById('clLerTexto').onclick = function(){ var t = document.getElementById('clTexto').value, a = lerTexto(t); Object.keys(a).forEach(function(k){ a[k].origem = { arquivo: 'texto colado' }; }); mostrarLidos(a, 'o texto colado'); };
   }
 
   function css(){
@@ -352,7 +451,7 @@ window.SagaCalculos = (function(){
       '#calcModal .cl-g{grid-column:1/-1;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin:12px 0 2px}',
       '#calcModal .cl-campos{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}',
       '#calcModal .cl-campo{display:flex;flex-direction:column;gap:3px;min-width:0}#calcModal .cl-campo label{font-size:11.5px;color:var(--muted)}',
-      '#calcModal .cl-campo small{font-size:10.5px;color:var(--muted)}#calcModal .cl-campo a{font-size:11px;color:var(--gold)}',
+      '#calcModal .cl-campo small{font-size:10.5px;color:var(--muted)}#calcModal .cl-campo a{font-size:11px;color:var(--gold)}#calcModal .cl-campo small.cl-origem{color:#b45309;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '#calcModal .cl-res{position:sticky;top:0;align-self:start;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:color-mix(in srgb,var(--text) 3%,var(--panel-solid,var(--panel)))}',
       '#calcModal table{width:100%;border-collapse:collapse;font-size:12.5px}#calcModal td{padding:4px 0;border-bottom:1px solid var(--border-soft,var(--border))}#calcModal td:last-child{text-align:right;font-variant-numeric:tabular-nums}',
       '#calcModal .cl-total td{font-weight:700;border-bottom:0;padding-top:8px}',
@@ -426,7 +525,7 @@ window.SagaCalculos = (function(){
       var id = 'cl_' + c.k, v = valorCampo(c, ent[c.k]);
       if(c.f === 'sim'){ grade += '<label class="cl-campo" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="' + id + '"' + (ent[c.k] ? ' checked' : '') + '> <span style="font-size:12.5px">' + esc(c.r) + '</span></label>'; return; }
       grade += '<div class="cl-campo"><label for="' + id + '">' + esc(c.r) + '</label><input type="text" id="' + id + '" value="' + esc(v) + '"' + (c.f === 'reais' || c.f === 'data' ? ' inputmode="numeric"' : '') + ' placeholder="' + esc(c.ex ? 'Ex.: ' + c.ex : (c.f === 'reais' ? '0,00' : '')) + '">'
-        + (c.calc ? '<a href="#" data-cl-calc="' + c.calc + '">Abrir a Calculadora do Cidadão com estas datas ↗</a>' : '') + (c.dica ? '<small>' + esc(c.dica) + '</small>' : '') + '</div>';
+        + (c.calc ? '<a href="#" data-cl-calc="' + c.calc + '">Abrir a Calculadora do Cidadão com estas datas ↗</a><a href="#" data-cl-bcb="' + c.calc + '">Ou buscar a SELIC no Banco Central (para conferir)</a>' : '') + (c.dica ? '<small>' + esc(c.dica) + '</small>' : '') + '</div>';
     });
     if(abertos) grade += '</div>';
     var sit = S.atual ? ('Versão ' + S.atual.versao + ' · ' + (S.atual.situacao === 'conferido' ? 'conferido por ' + (S.atual.conferido_por_nome || '') + ' em ' + new Date(S.atual.conferido_em).toLocaleDateString('pt-BR') : 'rascunho de ' + (S.atual.criado_por_nome || '')) ) : 'Ainda não há cálculo salvo neste processo.';
@@ -438,10 +537,15 @@ window.SagaCalculos = (function(){
       + '<div class="cl-grade"><div>' + grade + '</div><div class="cl-res" id="clRes"></div></div>'
       + '<div id="clMsg"></div>'
       + '<div class="cl-botoes"><button type="button" data-cl-fechar>Fechar</button>'
-      + (window.SagaPdf ? '<button type="button" id="clPdf">Planilha em PDF</button>' : '')
+      + (window.SagaPdf ? '<button type="button" id="clPdf">Resumo em PDF</button>' : '')
+      + '<button type="button" id="clPlanilhas" title="Abre as planilhas do cálculo (apuração, cumprimento, individualizada, herdeiros e IR-RRA) para editar e exportar em PDF ou Excel">Planilhas do cálculo ↗</button>'
       + '<button type="button" id="clSalvar"' + (S.pode ? '' : ' disabled') + '>Salvar rascunho</button>'
       + '<button type="button" class="pri" id="clConferir"' + (S.pode ? '' : ' disabled') + '>Conferi: salvar no processo</button></div>';
     CAMPOS.forEach(function(c){ if(c.k && c.f && c.f !== 'sim'){ var el = document.getElementById('cl_' + c.k); if(el) mascara(el, c.f); } });
+    /* de onde veio cada dado lido dos documentos (fica salvo junto do cálculo) */
+    S.origem = Object.assign({}, ent._origem || {});
+    Object.keys(S.origem).forEach(mostrarOrigem);
+    CAMPOS.forEach(function(c){ if(!c.k) return; var el = document.getElementById('cl_' + c.k); if(el) el.addEventListener('input', function(){ if(S.origem && S.origem[c.k]){ delete S.origem[c.k]; el.classList.remove('cl-veio-doc'); mostrarOrigem(c.k); } }); });
     ligarLeitor();
     /* sem cálculo salvo: já procura e lê sozinho os documentos da pasta (ele só confere) */
     if(S.pode && !S.atual) lerDaPasta();
@@ -451,6 +555,12 @@ window.SagaCalculos = (function(){
     document.querySelectorAll('[data-cl-calc]').forEach(function(a){ a.onclick = function(ev){ ev.preventDefault(); var u = linkCalculadora(+a.getAttribute('data-cl-calc'));
       if(!u){ document.getElementById('clMsg').innerHTML = '<div class="cl-aviso">Para abrir a calculadora preencha a data do pagamento (ou a da 2ª retenção), a data final e os valores.</div>'; return; }
       window.open(u, '_blank', 'noopener'); }; });
+    document.querySelectorAll('[data-cl-bcb]').forEach(function(a){ a.onclick = function(ev){ ev.preventDefault(); selicBancoCentral(+a.getAttribute('data-cl-bcb')); }; });
+    var bpl = document.getElementById('clPlanilhas');
+    if(bpl) bpl.onclick = function(){
+      if(!S.atual){ document.getElementById('clMsg').innerHTML = '<div class="cl-aviso">Salve o cálculo (rascunho ou conferido) antes: as planilhas são montadas a partir do cálculo salvo.</div>'; return; }
+      window.open('editor_planilha.html?modelo=pss&processo=' + encodeURIComponent(S.ctx.processoId) + versaoArq().replace('?', '&'), '_blank', 'noopener');
+    };
     document.querySelector('[data-cl-fechar]').onclick = fechar;
     document.getElementById('clSalvar').onclick = function(){ salvar(false); };
     document.getElementById('clConferir').onclick = function(){ salvar(true); };
