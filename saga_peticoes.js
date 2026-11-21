@@ -303,6 +303,7 @@ window.SagaPeticoes = (function(){
       + '<div class="pt-linha"><label>Papel timbrado<select id="ptTimbrado">' + S.timbrados.map(function(t){ return '<option value="' + esc(t.chave) + '"' + (t.chave === chPadrao ? ' selected' : '') + '>' + esc(t.nome) + (TIMBRADOS_PROIBIDOS.indexOf(t.chave) >= 0 ? ' (só quando o Dr. Victor pedir)' : '') + '</option>'; }).join('') + '</select></label>'
       + '<label>Versão<select id="ptVersao"><option value="cores">Colorida</option><option value="impressao">Para imprimir</option></select></label>'
       + '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="ptGuardar" checked> Guardar na pasta "Petições" do cliente</label></div>'
+      + '<div id="ptDocs"></div>'
       + '<div class="pt-campos">' + htmlCampos + '</div>'
       + '<div id="ptMsg"></div>'
       + '<div class="pt-botoes"><button type="button" class="btn-secondary btn-secundario" id="ptVoltar">Voltar aos modelos</button>'
@@ -320,6 +321,7 @@ window.SagaPeticoes = (function(){
           } });
       }).catch(function(e){ var msg = document.getElementById('ptMsg'); if(msg) msg.innerHTML = '<div class="pt-erro"><b>Não abriu o cálculo:</b> ' + esc(e.message || e) + '</div>'; });
     };
+    ligarDocs(campos);
     document.getElementById('ptWord').onclick = function(){ gerar('docx'); };
     document.getElementById('ptPdf').onclick = function(){ gerar('pdf'); };
     resumo();
@@ -416,6 +418,56 @@ window.SagaPeticoes = (function(){
       var s = document.createElement('script'); s.src = BASE_ARQ + 'saga_calculos.js' + (VERSAO_ARQ ? '?v=' + VERSAO_ARQ : '');
       s.onload = function(){ ok(); }; s.onerror = function(){ falha(new Error('o arquivo do cálculo (saga_calculos.js) não carregou')); };
       document.head.appendChild(s);
+    });
+  }
+
+  /* 21/11 (Dr. Victor; conversa das planilhas): ler os documentos do cliente (RG, comprovante, requisitório...) e completar os campos.
+     O saga_peticao_docs.js (SagaPeticaoDocs, da outra conversa) é carregado só agora. Ele chama aplicar(novos):
+     novos = { chave: valor | {valor, origem} } preenche o campo VAZIO ou só com lacuna ⟦[ ]⟧;
+     novos.lacunas = { 'estado civil': 'casado', ... } troca a lacuna ⟦[rótulo]⟧ dentro de qualquer campo (ex.: na qualificação). */
+  function garantirScript(arq, global){
+    if(window[global]) return Promise.resolve();
+    return new Promise(function(ok, falha){
+      var s = document.createElement('script'); s.src = BASE_ARQ + arq + (VERSAO_ARQ ? '?v=' + VERSAO_ARQ : '');
+      s.onload = function(){ ok(); }; s.onerror = function(){ falha(new Error('o arquivo ' + arq + ' não carregou')); };
+      document.head.appendChild(s);
+    });
+  }
+  function soLacuna(v){ return !String(v || '').replace(/⟦\[[^\]]*\]⟧/g, '').trim(); }
+  function ligarDocs(campos){
+    var div = document.getElementById('ptDocs'); if(!div) return;
+    function valoresAgora(){ var v = {}; document.querySelectorAll('[data-pt-campo]').forEach(function(i){ v[i.getAttribute('data-pt-campo')] = i.value; }); return v; }
+    function aplicar(novos){
+      novos = novos || {}; var n = 0;
+      document.querySelectorAll('[data-pt-campo]').forEach(function(i){
+        var ch = i.getAttribute('data-pt-campo'), x = novos[ch], de = '';
+        if(x != null && ch !== 'lacunas'){
+          var val = typeof x === 'object' ? x.valor : x; de = typeof x === 'object' ? (x.origem || '') : '';
+          if(val != null && String(val).trim() && soLacuna(i.value)){ i.value = String(val); marcar(i, de); n++; }
+        }
+        if(novos.lacunas && /⟦\[/.test(i.value)){
+          var antes = i.value;
+          i.value = i.value.replace(/⟦\[([^\]]*)\]⟧/g, function(m, rot){ var y = novos.lacunas[rot]; var v2 = y && typeof y === 'object' ? y.valor : y; return v2 != null && String(v2).trim() ? String(v2) : m; });
+          if(i.value !== antes){ marcar(i, 'documentos do cliente'); n++; }
+        }
+      });
+      resumo();
+      return n;
+    }
+    function marcar(i, de){
+      i.style.outline = '2px solid #e0b000'; i.style.outlineOffset = '1px';
+      i.title = 'Preenchido pelos documentos do cliente' + (de ? ': ' + de : '') + '. Confira.';
+      i.dispatchEvent(new Event('input'));
+    }
+    garantirScript('saga_peticao_docs.js', 'SagaPeticaoDocs').then(function(){
+      if(!window.SagaPeticaoDocs || !SagaPeticaoDocs.montar) return;
+      SagaPeticaoDocs.montar(div, { sb: sb(), processoId: S.ctx.processoId || null, pessoaId: (S.dados && S.dados.pessoa && S.dados.pessoa.id) || null,
+        campos: campos.map(function(c){ return { chave: c.chave, rotulo: c.rotulo || c.chave }; }), valores: valoresAgora(), valoresAgora: valoresAgora, aplicar: aplicar });
+    }).catch(function(e){
+      /* enquanto o arquivo não estiver publicado (404), a caixa simplesmente não aparece; outro erro fica à vista */
+      fetch(BASE_ARQ + 'saga_peticao_docs.js', { method: 'HEAD', cache: 'no-store' }).then(function(r){
+        if(r.status !== 404) div.innerHTML = '<div class="pt-erro"><b>A leitura dos documentos não carregou:</b> ' + esc(e.message || e) + ' (código ' + r.status + ')</div>';
+      }).catch(function(){ div.innerHTML = '<div class="pt-erro"><b>A leitura dos documentos não carregou:</b> sem ligação com o site. Atualize a página.</div>'; });
     });
   }
 
