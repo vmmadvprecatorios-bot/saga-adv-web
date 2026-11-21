@@ -215,6 +215,25 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   .sd-tab td[data-r]::before{content:attr(data-r) ": ";color:var(--muted);font-size:11px}
   .sd-filtro select{min-width:0;flex:1 1 100%}}
 .pr-cad{display:flex;flex-direction:column;align-items:flex-end;gap:8px}.pr-cad-seg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);transition:opacity .26s cubic-bezier(.22,.78,.25,1)}.pr-cad-seg.apagado{opacity:.5}.pr-cad-seg select{width:auto;min-width:64px}@media(max-width:760px){.pr-cad{align-items:flex-start}}
+/* 21/11 (ideia 10 do check-up): Preferências em abas */
+.pr-abas{display:flex;flex-wrap:wrap;margin:0 0 14px;width:max-content;max-width:100%}
+.pr-abas button[hidden]{display:none}
+#prSincNota{margin:6px 0 12px!important;font-size:12.5px}
+#aba-preferencias[data-pr-aba="aparencia"] [data-pr]:not([data-pr~="aparencia"]),
+#aba-preferencias[data-pr-aba="vidro"] [data-pr]:not([data-pr~="vidro"]),
+#aba-preferencias[data-pr-aba="tela"] [data-pr]:not([data-pr~="tela"]),
+#aba-preferencias[data-pr-aba="avisos"] [data-pr]:not([data-pr~="avisos"]),
+#aba-preferencias[data-pr-aba="equipe"] [data-pr]:not([data-pr~="equipe"]){display:none!important}
+#aba-preferencias .pr-entra{animation:prEntra .3s cubic-bezier(.22,.78,.25,1)}
+@keyframes prEntra{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+html.saga-sem-movimento #aba-preferencias .pr-entra{animation:none}
+@media(min-width:1100px){
+  #aba-preferencias.ativo{grid-template-columns:minmax(0,1fr)}
+  #aba-preferencias.ativo[data-pr-aba="avisos"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #aba-preferencias.ativo>.pr-abas{grid-column:1/-1;order:0}
+  #aba-preferencias.ativo>.panel{max-width:980px}
+  #aba-preferencias.ativo[data-pr-aba="avisos"]>.panel{max-width:none}
+}
 </style>
 <link rel="stylesheet" href="saga_tema.css?v=202611211252">
 </head>
@@ -293,21 +312,23 @@ html.saga-sem-movimento .arm-lido i{animation:none}
   </section>
 
   <!-- PREFERENCIAS -->
-  <section class="tab-pane" id="aba-preferencias">
-    <div class="panel">
-      <div class="panel-title">Aparência</div>
-      <p class="s" id="prSincNota" style="margin:-4px 0 10px;color:var(--muted)">As suas escolhas (cores, claro ou escuro, fundo e foto do Vidro, efeitos, grupos do menu, blocos da ficha, visões das telas) acompanham a sua conta: entrando pelo celular ou por outro computador, aparecem iguais. Só ficam neste aparelho o menu recolhido, a largura das colunas e o modo da planilha no celular.
+  <section class="tab-pane" id="aba-preferencias" data-pr-aba="aparencia">
+    <!-- 21/11 (ideia 10 do check-up): Preferências em abas; cada linha/quadro diz em quais abas aparece (data-pr) -->
+    <div class="seg pr-abas" id="prAbas" role="tablist" aria-label="Partes das preferências"><button type="button" class="active" data-pr-ir="aparencia" role="tab">Aparência</button><button type="button" data-pr-ir="vidro" role="tab" hidden>Vidro</button><button type="button" data-pr-ir="tela" role="tab">Tela</button><button type="button" data-pr-ir="avisos" role="tab">Avisos e sons</button><button type="button" data-pr-ir="equipe" role="tab" hidden>Equipe</button></div>
+    <div class="panel" data-pr="aparencia vidro tela avisos">
+      <div class="panel-title" id="prPainelTit">Aparência</div>
+      <p class="s" data-pr="tela" id="prSincNota" style="margin:-4px 0 10px;color:var(--muted)">As suas escolhas (cores, claro ou escuro, fundo e foto do Vidro, efeitos, grupos do menu, blocos da ficha, visões das telas) acompanham a sua conta: entrando pelo celular ou por outro computador, aparecem iguais. Só ficam neste aparelho o menu recolhido, a largura das colunas e o modo da planilha no celular.
         <br><button type="button" class="btn-secondary" id="prSincUsarEste" style="margin-top:8px">Usar as escolhas deste aparelho em todos</button> <span id="prSincMsg" class="s"></span></p>
-      <div class="linha-opcao">
+      <div data-pr="aparencia" class="linha-opcao">
         <div><div class="t">Tema</div><div class="s">Também dá para trocar no botão do sol e da lua, no alto da tela.</div></div>
         <div class="seg" id="prTema"><button type="button" data-v="light">Claro</button><button type="button" data-v="dark">Escuro</button></div>
       </div>
-      <div class="linha-opcao">
+      <div data-pr="aparencia" class="linha-opcao">
         <div><div class="t">Cor do tema</div><div class="s" id="prCorAjuda">A cor do sistema. O claro e o escuro de cada cor continuam no botão do sol e da lua.</div></div>
         <div><div class="saga-cores" id="prCor"></div><div class="pr-cor-salvar" id="prCorSalvarWrap" aria-hidden="true"><button type="button" class="btn-primary" id="prCorSalvar" tabindex="-1">Salvar cor do tema</button><button type="button" class="btn-secondary" id="prCorDesfazer" tabindex="-1">Cancelar</button><span class="pr-cor-previa">Prévia: a cor ainda não foi salva.</span></div></div>
       </div>
       <!-- 12/11 (T151): opções do Vidro tecnológico (aparecem quando uma cor de vidro está escolhida) -->
-      <div class="linha-opcao pr-vidro" id="prVidro" hidden>
+      <div data-pr="vidro" class="linha-opcao pr-vidro" id="prVidro" hidden>
         <div><div class="t">Vidro tecnológico</div><div class="s">O fundo atrás das placas de vidro e o quanto o vidro deixa ver. Vale na hora e acompanha a sua conta: no celular ou em outro computador aparece igual (a imagem vai diminuída para um lugar privado só seu).</div></div>
         <div class="pr-vidro-op">
           <div class="seg" id="prVidroFundo"><button type="button" data-v="limpo">Limpo</button><button type="button" data-v="montanhas">Montanhas à noite</button><button type="button" data-v="cidade">Cidade</button><button type="button" data-v="grade">Grade técnica</button><button type="button" data-v="imagem">Minha imagem</button></div>
@@ -326,18 +347,18 @@ html.saga-sem-movimento .arm-lido i{animation:none}
           </div>
         </div>
       </div>
-      <div class="linha-opcao">
+      <div data-pr="tela" class="linha-opcao">
         <div><div class="t">Efeitos de movimento</div><div class="s">Telas, janelas e cartões entram e saem com movimento suave. Desligado, tudo troca na hora.</div></div>
         <div class="seg" id="prMov"><button type="button" data-v="ligado">Ligados</button><button type="button" data-v="reduzido">Desligados</button></div>
       </div>
-      <div class="linha-opcao">
+      <div data-pr="tela" class="linha-opcao">
         <div><div class="t">Cadeado contra voltar sem querer</div><div class="s">Com o cadeado da barra de cima travado, o botão de voltar do mouse e a seta do navegador não saem da tela (aparece um aviso). Links e o menu continuam funcionando. <b>Automático</b>: trava sozinho depois de alguns segundos na tela. <b>Manual</b>: só trava quando você clica no cadeado.</div></div>
         <div class="pr-cad">
           <div class="seg" id="prCad"><button type="button" data-v="auto">Automático</button><button type="button" data-v="manual">Manual</button><button type="button" data-v="desligado">Desligado</button></div>
           <label class="pr-cad-seg" id="prCadSegLinha">Trava depois de <select id="prCadSeg" aria-label="Segundos até o cadeado travar sozinho"><option value="5">5</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="45">45</option><option value="60">60</option><option value="120">120</option></select> segundos</label>
         </div>
       </div>
-      <div class="linha-opcao">
+      <div data-pr="avisos" class="linha-opcao">
         <div><div class="t">Sons</div><div class="s">Toques curtos e discretos quando chega algo. O navegador só toca depois que você clicar uma vez na página; com várias abas abertas, só uma toca. A escolha vale em qualquer computador.</div></div>
         <div class="pr-sons">
           <div class="seg" id="prSons"><button type="button" data-v="1">Ligados</button><button type="button" data-v="0">Desligados</button></div>
@@ -350,15 +371,15 @@ html.saga-sem-movimento .arm-lido i{animation:none}
           </div>
         </div>
       </div>
-      <div class="linha-opcao">
+      <div data-pr="aparencia" class="linha-opcao">
         <div><div class="t">Tamanho da letra</div><div class="s">Aumenta tudo no sistema, neste e nos outros aparelhos.</div></div>
         <div class="seg" id="prLetra"><button type="button" data-v="1">Normal</button><button type="button" data-v="1.1">Grande</button><button type="button" data-v="1.2">Maior</button></div>
       </div>
-      <div class="linha-opcao">
+      <div data-pr="tela" class="linha-opcao">
         <div><div class="t">Tela inicial</div><div class="s">Depois de entrar, o SAGA abre sempre o <b>Ponto</b>, para todos (regra do escritório): cada um já começa batendo o ponto.</div></div>
       </div>
     </div>
-    <div class="panel" id="painelCoresEquipe" hidden>
+    <div class="panel" id="painelCoresEquipe" data-pr="equipe" hidden>
       <div class="panel-title">Cor do tema da equipe</div>
       <div class="panel-sub">Só o administrador vê. Primeiro a regra do escritório (quais cores a equipe pode escolher); depois, se quiser, uma exceção para cada pessoa: "Todos os temas" para ela ou uma cor fixa (a pessoa só troca entre claro e escuro).</div>
       <div class="temas-regra" id="temasRegra"></div>
@@ -369,7 +390,7 @@ html.saga-sem-movimento .arm-lido i{animation:none}
       <div class="t" style="margin:16px 0 6px">Por colaborador</div>
       <div id="listaCoresEquipe"></div>
     </div>
-    <div class="panel">
+    <div class="panel" data-pr="avisos">
       <div class="panel-title" id="tituloAvisos">Avisos no sino</div>
       <div class="panel-sub">Escolha quais avisos aparecem no sino do alto da tela. Os desligados não somem do sistema: só deixam de chamar a sua atenção.</div>
       <div id="prAvisos"></div>
@@ -1451,6 +1472,41 @@ async function init(){
   var aba=new URLSearchParams(location.search).get('aba');if(aba&&document.getElementById('aba-'+aba))trocarAba(aba);
 }
 init().catch(function(e){showToast('Erro ao abrir as configurações: '+esc(e.message||''),'error');});
+</script>
+<script>
+/* 21/11 (ideia 10 do check-up): Preferências em abas (Aparência, Vidro, Tela e aparelhos, Avisos e sons, Cores da equipe).
+   Cada linha/quadro tem data-pr com as abas em que aparece; a aba escolhida fica em localStorage saga-pref-aba (acompanha a conta).
+   ?aba=preferencias&pr=vidro abre direto. Vidro só aparece com cor de vidro; Cores da equipe só para o administrador. */
+(function(){
+  var sec=document.getElementById('aba-preferencias'),barra=document.getElementById('prAbas');if(!sec||!barra)return;
+  var NOMES={aparencia:'Aparência',vidro:'Vidro',tela:'Tela e aparelhos',avisos:'Sons',equipe:'Cores da equipe'};
+  function ler(){try{return localStorage.getItem('saga-pref-aba')||'';}catch(e){return '';}}
+  function gravar(v){try{localStorage.setItem('saga-pref-aba',v);}catch(e){}}
+  function botao(a){return barra.querySelector('[data-pr-ir="'+a+'"]');}
+  function pode(a){var b=botao(a);return !!b&&!b.hidden;}
+  function ir(a,animar){
+    if(!pode(a))a='aparencia';
+    var mudou=sec.getAttribute('data-pr-aba')!==a;
+    sec.setAttribute('data-pr-aba',a);
+    barra.querySelectorAll('button').forEach(function(b){var on=b.getAttribute('data-pr-ir')===a;b.classList.toggle('active',on);b.setAttribute('aria-selected',on?'true':'false');});
+    var t=document.getElementById('prPainelTit');if(t)t.textContent=NOMES[a]||'Aparência';
+    if(mudou&&animar){sec.querySelectorAll(':scope>.panel').forEach(function(p){p.classList.remove('pr-entra');void p.offsetWidth;p.classList.add('pr-entra');});}
+  }
+  function conferirBotoes(){
+    var v=document.getElementById('prVidro'),e=document.getElementById('painelCoresEquipe');
+    botao('vidro').hidden=!v||v.hidden;botao('equipe').hidden=!e||e.hidden;
+    var atual=sec.getAttribute('data-pr-aba');
+    if(!pode(atual))ir('aparencia',false);
+    else{var q=ler();if(q&&q!==atual&&pode(q)&&!sec._escolheu)ir(q,false);}
+  }
+  barra.addEventListener('click',function(ev){var b=ev.target.closest('[data-pr-ir]');if(!b)return;sec._escolheu=true;var a=b.getAttribute('data-pr-ir');gravar(a);ir(a,true);});
+  var mo=new MutationObserver(conferirBotoes);
+  ['prVidro','painelCoresEquipe'].forEach(function(id){var el=document.getElementById(id);if(el)mo.observe(el,{attributes:true,attributeFilter:['hidden']});});
+  var pr=new URLSearchParams(location.search).get('pr');
+  if(pr){sec._escolheu=true;ir(pr,false);setTimeout(function(){ir(pr,false);},1500);}else ir(ler()||'aparencia',false);
+  conferirBotoes();
+  document.addEventListener('saga-preferencias-chegaram',function(){if(!sec._escolheu){var q=ler();if(q)ir(q,false);}});
+})();
 </script>
 </body>
 </html>

@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.34",
+  versao: "3.35",
   data: "21/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.35", data: "21/11/2026", mudou: "Preferências em **abas**: Aparência (tema, cor e letra), Vidro (só com cor de vidro), Tela (efeitos, cadeado, tela inicial e as escolhas que acompanham a conta), Avisos e sons e, para o administrador, Equipe (cores da equipe). A aba escolhida fica lembrada." },
     { versao: "3.34", data: "21/11/2026", mudou: "Ficha do cliente: **Telefones, E-mails e Endereços** do topo abrem e recolhem cada um pelo título (com a contagem; fechado mostra só o principal), [[Recolher todos]]/[[Abrir todos]], lembrado na sua conta. Botão [[Ler consulta (PDF ou print)]] no topo: a leitura preenche os contatos do alto da ficha (\"Não validado\") e a Localização sem repetir o que já existe, e anota um resumo no processo; o arquivo não é guardado." },
     { versao: "3.33", data: "19/11/2026", mudou: "Gráficos: padrão único para todos, **Metal escovado** (rosca como sempre e as cores do tema). O quadro Gráficos saiu das Preferências." },
     { versao: "3.32", data: "19/11/2026", mudou: "Gráficos: a escolha de Preferências > Gráficos passa a valer em TODAS as telas, inclusive Intimações e as planilhas do Jurídico e da Captação, e em qualquer gráfico novo. As três escolhas ficam em caixas numeradas. O SAGA confere sozinho se há versão nova e recarrega a tela (ou avisa Atualizar agora)." },
@@ -193,6 +194,7 @@ window.SAGA_MANUAL = {
           quando: "Quando o colaborador quer a tela mais clara, mais escura, com letra maior ou sem animações.",
           passos: [
             "Menu da foto > **Preferências** (ou Configurações > Preferências).",
+            "As Preferências ficam em **abas** no alto: **Aparência** (tema, cor e tamanho da letra), **Vidro** (aparece só quando uma cor de vidro está escolhida), **Tela** (efeitos de movimento, cadeado, tela inicial e as escolhas que acompanham a conta), **Avisos e sons** (sons e avisos no sino) e, só para o administrador, **Equipe** (cores da equipe). O SAGA lembra a última aba aberta.",
             "**Tema**: Claro ou Escuro (também pelo botão sol/lua no alto).",
             "**Cor do tema**: um cartão por cor, em três grupos: **Clássicos** (Azul, que é o padrão, Grafite e **Ônix**, preto e cinza), **Tecnológicos** (Azul profundo, Ciano holográfico, Âmbar de reator, Aurora violeta e \"A sua cor\") **Paletas** (Rubi, Bordô, Ouro, Lima, Aço, Marsala, Café e Mel) e **Campanhas** (Novembro Azul, Rosa e Natal). Cada cor tem claro e escuro.",
             "Em cada cartão escolha a versão: **Normal** (telas lisas) ou **Vidro** (placas de vidro sobre um fundo). Clique no cartão ou em Normal/Vidro para ver como fica; a cor só vale para todas as telas quando você clica em [[Salvar cor do tema]] ([[Cancelar]] volta para a anterior).",
