@@ -690,7 +690,8 @@ const teseOptions=['PSS','PASEP','28,86%','GDASS','Habilitação de Herdeiros','
 const responsavelOptions=[['Tuany Martiniano|Captação|TM','Tuany Martiniano'],['Hevelyn|Assistente Jurídica|HV','Hevelyn'],['Dr. Victor|Sócio/Admin|DV','Dr. Victor']];
 
 const checklistTemplates={documentacao:{nome:'Documentação Inicial',itens:['RG e CPF do cliente','Comprovante de residência','Procuração assinada']},movimentacoes:{nome:'Movimentações do Processo',itens:['Protocolo inicial','Citação da parte contrária','Sentença','Cumprimento de sentença']},localizacao:{nome:'Checklist de Localização',itens:['Confirmar endereço atualizado','Registrar cidade e UF','Verificar localização no processo']}};
-function esc(value){const el=document.createElement('div');el.textContent=value||'';return el.innerHTML;}
+// 21/11 (segurança das telas): escapa também aspas (texto dentro de atributo, ex.: title="...", não quebra o HTML)
+function esc(value){return String(value||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function maskCnjProcessNumber(value){
   const digits=String(value||'').replace(/\D/g,'').slice(0,20);
   let result=digits;
