@@ -1055,7 +1055,7 @@
         else if(arquivo&&!/\.txt$/i.test(arquivo.name)){const itens=await itensDoPdf(arquivo);texto=textoDosItens(itens);if(texto.trim())dados=lerConsulta(itens);}
         else if(arquivo)texto=await arquivo.text();
         if(!texto||!texto.trim()){showToast(arquivo?'Este PDF parece ser uma imagem (sem texto para ler). Tire o print da tela da consulta e cole aqui (Ctrl+V).':'Escolha o PDF, cole o print (Ctrl+V) ou cole o texto da consulta.','warning');return;}
-        if(!dados){dados=extrair(texto);dados.fonte=detectarFonte(texto);dados.ficha={};}
+        if(!dados){dados=extrair(texto);dados.fonte=detectarFonte(texto);dados.ficha={};const mc=String(texto).match(/\bCPF\b[^0-9]{0,12}(\d{3}\.?\d{3}\.?\d{3}-?\d{2})/i);if(mc)dados.ficha.cpf=digitos(mc[1]);}
         const temFicha=itensFicha(d,dados).length>0;
         if(!dados.telefone.length&&!dados.email.length&&!dados.endereco.length&&!dados.parentes.length&&!temFicha){showToast(porPrint?'Não encontrei telefone, e-mail, endereço nem dados da pessoa '+(arquivos.length>1?'nestes prints':'neste print')+'. Confira se o print pegou a consulta inteira e se a letra está legível (zoom 100% ou mais).':'Não encontrei telefone, e-mail ou endereço neste texto.','warning');return;}
         revisao=dados;Z.soltar();mostrarRevisao(d,dados);
@@ -1124,7 +1124,67 @@
     const novos=['telefone','email','endereco'].reduce((n,t)=>n+dados[t].filter(o=>!existentes.has(t+':'+chaveLocal(t,o))).length,0)+dados.parentes.filter(p=>!parJa(p)).length+fichaItens.length;
     delete d.dataset.cpfDiferente;
     box.innerHTML='<div class="loc2-rev">'+avisoPessoa(d,dados)+((dados.porPrint||/\(print\)/.test(dados.fonte||''))?'<div class="loc2-rev-alerta">Lido de print (imagem): confira cada número com atenção, porque a leitura de imagem pode trocar um dígito. O print não foi guardado.</div>':'')+'<div class="loc2-rev-topo">Fonte: <b>'+e(dados.fonte)+'</b> · <b>'+novos+' informação(ões) nova(s)</b>; o que já estava na ficha aparece apagado e não é gravado de novo. Confira e desmarque o que não servir.</div>'+fichaHtml+grupo('telefone','Telefones')+grupo('email','E-mails')+grupo('endereco','Endereços')+pars+'</div>';
-    if(d.dataset.cpfDiferente){box.querySelectorAll('[data-rev]').forEach(cb=>{cb.checked=false;});const nu=box.querySelector('input[name="loc2Hist"][value=""]');if(nu)nu.checked=true;}
+    if(!alvoSel&&(dados.telefone.length||dados.email.length||dados.endereco.length)){
+      // 21/11 (Dr. Victor): a leitura também preenche os contatos do ALTO da ficha (só do cliente; ficam "Não validado")
+      box.querySelector('.loc2-rev').insertAdjacentHTML('beforeend','<label class="loc2-rev-item loc2-rev-topo-ficha"><input type="checkbox" id="loc2Topo" checked><span>Pôr também nos <b>contatos do alto da ficha</b> <small>o que ainda não estiver lá; entram como "Não validado" até a equipe confirmar</small></span></label>');
+    }
+    if(d.dataset.cpfDiferente){box.querySelectorAll('[data-rev]').forEach(cb=>{cb.checked=false;});const nu=box.querySelector('input[name="loc2Hist"][value=""]');if(nu)nu.checked=true;const tp=box.querySelector('#loc2Topo');if(tp)tp.checked=false;}
+  }
+  /* 21/11 (Dr. Victor): contatos da consulta no ALTO da ficha (pessoas_telefones/emails/enderecos), sem repetir o que já está lá */
+  async function consultaParaTopo(itens){
+    const pid=L.pessoa,uid=state.usuario&&state.usuario.internoId;const feito={telefone:0,email:0,endereco:0},erros=[];
+    const tels=(state.telefones||[]).map(t=>{let d=digitos(t.numero);if(d.length===13&&d.startsWith('55'))d=d.slice(2);return d;});
+    const mails=(state.emails||[]).map(x=>String(x.email||'').trim().toLowerCase());
+    const ends=(state.enderecos||[]).map(x=>(digitos(x.cep)+'|'+semAcento(String(x.endereco||'')).replace(/[^a-z0-9]/gi,'').toLowerCase().slice(0,14)));
+    for(const it of itens){
+      const o=it.o;let r=null;
+      try{
+        if(it.tipo==='telefone'){
+          let d=digitos(o.valor);if(d.length===13&&d.startsWith('55'))d=d.slice(2);if(d.length<10)continue;
+          if(tels.some(t=>t===d||(t.length>=8&&d.slice(-8)===t.slice(-8)&&(t.length<10||t.slice(0,2)===d.slice(0,2)))))continue;
+          r=await _sb.from('pessoas_telefones').insert({pessoa_id:pid,numero:d,tipo:d.length===11?'celular':'fixo',principal:!(state.telefones||[]).length&&!tels.length,whatsapp:o.whatsapp===true,validado:false,origem:'consulta',criado_por_id:uid});
+          if(!r.error)tels.push(d);
+        }else if(it.tipo==='email'){
+          const v=String(o.valor||'').trim().toLowerCase();if(!v||mails.includes(v))continue;
+          r=await _sb.from('pessoas_emails').insert({pessoa_id:pid,email:v,principal:!mails.length,validado:false,origem:'consulta',criado_por_id:uid});
+          if(!r.error)mails.push(v);
+        }else{
+          const linha=o.logradouro?(nomeBonito(o.logradouro)+(o.numero?', '+o.numero:'')+(o.complemento?', '+nomeBonito(o.complemento):'')+(o.bairro?' - '+nomeBonito(o.bairro+' XX').replace(/ xx$/i,''):'')):nomeBonito(String(o.valor||'').trim());
+          if(!linha)continue;const cep=digitos(o.cep);
+          const ch=cep+'|'+semAcento(linha).replace(/[^a-z0-9]/gi,'').toLowerCase().slice(0,14);
+          if(ends.includes(ch))continue;
+          r=await _sb.from('pessoas_enderecos').insert({pessoa_id:pid,endereco:linha,cidade:o.cidade?nomeBonito(o.cidade):null,uf:o.uf?String(o.uf).toUpperCase():null,cep:cep||null,tipo:'residencial',principal:!ends.length,validado:false,origem:'consulta',criado_por_id:uid});
+          if(!r.error)ends.push(ch);
+        }
+        if(r&&r.error)throw r.error;
+        if(r)feito[it.tipo]++;
+      }catch(erro){erros.push(ROT[it.tipo]+': '+(erro.message||erro.code||'erro'));}
+    }
+    try{if(feito.telefone&&typeof recarregarTelefones==='function')await recarregarTelefones();if(feito.email&&typeof recarregarEmails==='function')await recarregarEmails();if(feito.endereco&&typeof recarregarEnderecos==='function')await recarregarEnderecos();}catch(erro){}
+    return {feito:feito,erros:erros};
+  }
+  function processoDaLeitura(){
+    try{const p=typeof getActiveProcess==='function'?getActiveProcess():null;if(p&&p.id)return p.id;}catch(erro){}
+    const lista=(typeof state!=='undefined'&&state.processos)||[];return lista[0]&&lista[0].id||null;
+  }
+  // comentário curto no processo (bloco 330: consulta_lida_comentar, não conta como movimentação do processo)
+  async function comentarLeitura(dados,alvo,loc,topo,parentes,feitos){
+    const proc=processoDaLeitura();if(!proc)return {ok:false,motivo:'esta ficha não tem processo para receber o comentário'};
+    const pl=(n,um,varios)=>n?'+'+n+' '+(n===1?um:varios):'';
+    const base=topo?topo.feito:loc;
+    const partes=[pl(base.telefone,'telefone','telefones'),pl(base.email,'e-mail','e-mails'),pl(base.endereco,'endereço','endereços')].filter(Boolean);
+    if(topo&&partes.length)partes[partes.length-1]+=' no alto da ficha';
+    const extras=[];const nLoc=loc.telefone+loc.email+loc.endereco;
+    if(topo&&nLoc)extras.push('Localização: +'+nLoc+' contato'+(nLoc===1?'':'s'));
+    if(parentes)extras.push(pl(parentes,'parente','parentes')+' na Localização');
+    if(feitos&&feitos.length)extras.push('dados da ficha: '+feitos.join(', '));
+    const fonte=String(dados.fonte||'de localização').replace(/\s*\(print\)\s*/i,'');
+    const quem=alvo?' (de '+alvoRotulo(alvo)+')':'';
+    const txt='Consulta '+fonte+quem+' lida em '+new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+': '+(partes.length?partes.join(', '):(extras.length?'nenhum contato novo no alto da ficha':'nenhuma informação nova'))+(extras.length?'; '+extras.join('; '):'')+'. O arquivo não foi guardado.';
+    const r=await _sb.rpc('consulta_lida_comentar',{p_processo:proc,p_texto:txt});
+    if(r.error)return {ok:false,motivo:r.error.message||'erro ao gravar o comentário'};
+    try{if(typeof carregarDetalhesProcesso==='function'&&typeof getActiveProcess==='function'&&getActiveProcess()&&getActiveProcess().id===proc){await carregarDetalhesProcesso(proc);if(typeof renderActiveProcess==='function')renderActiveProcess();}}catch(erro){}
+    return {ok:true,texto:txt};
   }
   // grava os "Dados da ficha" marcados (cliente: pessoas + perfil; parente: localizacao_alvos). Devolve o que mudou.
   async function gravarFicha(d,dados,alvo){
@@ -1187,11 +1247,17 @@
         const o=dados[t][Number(cb.dataset.i)];
         linhas.push(Object.assign({pessoa_id:L.pessoa,alvo_id:alvo,tipo:t,fonte:dados.fonte},o));
       });
-      let gravados=0,repetidos=0;
+      let gravados=0,repetidos=0;const novos={telefone:0,email:0,endereco:0};
       if(linhas.length){
         const r=await _sb.from('localizacao_contatos').insert(linhas);
-        if(!r.error)gravados=linhas.length;
-        else{for(const l of linhas){const r2=await _sb.from('localizacao_contatos').insert(l);if(!r2.error)gravados++;else if(r2.error.code==='23505')repetidos++;else throw r2.error;}}
+        if(!r.error){gravados=linhas.length;linhas.forEach(l=>{novos[l.tipo]++;});}
+        else{for(const l of linhas){const r2=await _sb.from('localizacao_contatos').insert(l);if(!r2.error){gravados++;novos[l.tipo]++;}else if(r2.error.code==='23505')repetidos++;else throw r2.error;}}
+      }
+      // contatos do alto da ficha (só quando a consulta é do próprio cliente)
+      const topoCb=d.querySelector('#loc2Topo');let topo=null;
+      if(!alvo&&topoCb&&topoCb.checked){
+        const itens=[];d.querySelectorAll('[data-rev]').forEach(cb=>{const t=cb.dataset.rev;if(t!=='telefone'&&t!=='email'&&t!=='endereco')return;if(cb.checked||cb.disabled)itens.push({tipo:t,o:dados[t][Number(cb.dataset.i)]});});
+        topo=await consultaParaTopo(itens);
       }
       const pars=Array.from(d.querySelectorAll('[data-rev="parente"]:checked')).map(cb=>dados.parentes[Number(cb.dataset.i)]);
       let novosPar=0;
@@ -1202,12 +1268,15 @@
       }
       let feitos=[];
       try{feitos=await gravarFicha(d,dados,alvo);}catch(erro){showToast('Os contatos foram gravados, mas os dados da ficha não: '+e(erro.message||''),'warning');}
+      const coment=await comentarLeitura(dados,alvo,novos,topo,novosPar,feitos);
       const pedido=d.dataset.pedido||null;
       if(pedido){const rc=await _sb.rpc('pedido_busca_conferido',{p_id:pedido});if(rc.error)showToast('Gravado, mas não deu para marcar a busca como conferida: '+e(rc.error.message||''),'warning');}
       L.abertos.add(alvo||'cliente');
       d.remove();
       await recarregar();
-      showToast(gravados+' contato(s) gravado(s)'+(repetidos?', '+repetidos+' já estavam na lista':'')+(novosPar?', '+novosPar+' parente(s) incluído(s)':'')+(feitos.length?'; na ficha: '+e(feitos.join(', ')):'')+'.'+(pedido?' Busca marcada como conferida.':' O PDF não foi guardado.'),'success');
+      showToast(gravados+' contato(s) gravado(s)'+(repetidos?', '+repetidos+' já estavam na lista':'')+(novosPar?', '+novosPar+' parente(s) incluído(s)':'')+(feitos.length?'; na ficha: '+e(feitos.join(', ')):'')+(topo?'; no alto da ficha: '+(topo.feito.telefone+topo.feito.email+topo.feito.endereco)+' novo(s)':'')+'.'+(coment.ok?' Resumo anotado no processo.':'')+(pedido?' Busca marcada como conferida.':' O arquivo não foi guardado.'),'success');
+      if(topo&&topo.erros.length)showToast('Não deu para pôr no alto da ficha: '+e(topo.erros.join('; ')),'warning');
+      if(!coment.ok)showToast('Contatos gravados, mas o resumo não foi anotado no processo: '+e(coment.motivo),'warning');
     }catch(erro){showToast('Não foi possível gravar: '+e(erro.message||''),'error');}
     finally{btn.disabled=false;}
   }
@@ -1232,6 +1301,7 @@
   +'.loc2-pop{position:fixed;z-index:4600;max-height:70vh;overflow:auto;min-width:230px;padding:5px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel-solid,var(--bg));box-shadow:0 16px 36px rgba(0,0,0,.3);animation:pastaMenu .2s cubic-bezier(.2,1.3,.4,1)}.loc2-pop button{display:flex;align-items:center;gap:8px;width:100%;padding:7px 10px;border:0;border-radius:8px;background:transparent;color:var(--text);font:inherit;font-size:11px;text-align:left;cursor:pointer}.loc2-pop button:hover,.loc2-pop button.ativo{background:color-mix(in srgb,var(--text) 7%,transparent)}.loc2-pop button i{width:9px;height:9px;flex:0 0 auto;border-radius:50%}.loc2-pop button small{margin-left:auto;color:var(--muted);font-size:9px}.loc2-pop button.perigo{color:var(--danger)}.loc2-pop hr{margin:4px 2px;border:0;border-top:1px solid var(--border-soft)}'
   +'.loc2-modal-larga{max-width:640px!important;width:100%}.loc2-ler-grade{display:grid;gap:10px}.loc2-zona{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 12px;padding:22px 12px;border:1.5px dashed color-mix(in srgb,var(--gold) 45%,transparent);border-radius:12px;color:var(--muted);font-size:11px;text-align:center;cursor:pointer}.loc2-zona b{color:var(--text);font-size:12px}.loc2-zona kbd{padding:0 4px;border:1px solid var(--border-soft);border-radius:4px;font:inherit;font-size:10px}.loc2-zona-nota{opacity:.8;font-size:10px}.loc2-zona.colado{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent);transition:background .32s cubic-bezier(.22,.78,.25,1)}.loc2-prints{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-bottom:4px}.loc2-print{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;width:96px;animation:loc2PrintEntra .32s cubic-bezier(.22,.78,.25,1)}@keyframes loc2PrintEntra{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}.loc2-print img,.loc2-print-doc,.loc2-print-mais>span{width:96px;height:64px;object-fit:cover;object-position:top;border:1px solid var(--border-soft);border-radius:8px;background:color-mix(in srgb,var(--text) 5%,transparent)}.loc2-print-doc,.loc2-print-mais>span{display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;font-weight:700}.loc2-print-mais>span{font-size:22px;font-weight:400;border-style:dashed}.loc2-print small{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9.5px}.loc2-print-x{position:absolute;top:-6px;right:-6px;width:20px;height:20px;padding:0;border:1px solid var(--border-soft);border-radius:999px;background:var(--panel-solid,var(--bg));color:var(--muted);font-size:10px;line-height:1;cursor:pointer}.loc2-print-x:hover{color:var(--danger,#e5484d);border-color:var(--danger,#e5484d)}html.saga-sem-movimento .loc2-print{animation:none}.loc2-zona.alvo{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 8%,transparent)}'
   +'.loc2-rev{display:flex;flex-direction:column;gap:12px;max-height:46vh;overflow:auto}.loc2-rev-topo{font-size:11px;color:var(--muted)}.loc2-rev-grupo{display:flex;flex-direction:column;gap:3px}.loc2-rev-grupo>b{font-size:11px;color:var(--text);margin-bottom:2px}.loc2-rev-item{display:flex;align-items:flex-start;gap:8px;padding:5px 6px;border-radius:7px;font-size:11.5px;color:var(--text);cursor:pointer}.loc2-rev-item:hover{background:color-mix(in srgb,var(--text) 5%,transparent)}.loc2-rev-item small{color:var(--muted);font-size:9.5px}.loc2-rev-item.ja{opacity:.55}.loc2-dica{color:var(--muted);font-size:10px;margin:2px 0 4px}'
+  +'.loc2-rev-topo-ficha{margin-top:2px;border:1px solid color-mix(in srgb,var(--gold) 35%,transparent);background:color-mix(in srgb,var(--gold) 6%,transparent)}'
   +'.loc2-end-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 10px}.loc2-end-grade .g2{grid-column:span 2}'
   +'.loc2-ger{display:flex;align-items:center;gap:6px;margin-bottom:6px}.loc2-ger input[type=color]{width:30px;height:28px;padding:0;border:1px solid var(--border-soft);border-radius:6px;background:none}.loc2-ger input[type=text]{flex:1;min-width:0;padding:6px 8px;border:1px solid var(--border-soft);border-radius:7px;background:color-mix(in srgb,var(--text) 4%,transparent);color:var(--text);font:inherit;font-size:11px}.loc2-ger small{color:var(--muted);font-size:9px}.loc2-ger button{width:28px;height:28px;border:1px solid var(--border-soft);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer}.loc2-ger button:disabled{opacity:.3}.loc2-ger button.perigo:hover{color:var(--danger);border-color:var(--danger)}'
   +'.loc2-selo{display:inline-block;margin-left:4px;padding:1px 7px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);font-size:9.5px;font-weight:700;vertical-align:1px;text-transform:none}.loc2-selo.wz{color:#16a34a;border-color:color-mix(in srgb,#16a34a 45%,transparent);background:color-mix(in srgb,#16a34a 10%,transparent)}.loc2-selo.sem{color:var(--muted)}.loc2-selo.np{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 45%,transparent)}.loc2-selo.q{font-weight:600}'
@@ -1251,6 +1321,11 @@
   +'@media(max-width:760px){.loc2-contato-linha{flex-direction:column}.loc2-status{max-width:100%}.loc2-end-grade{grid-template-columns:1fr 1fr}.loc2-alvo-conta{display:none}}';
   document.head.appendChild(css);
 
-  window.SagaLocalizacao={render:render,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,lerConsulta:lerConsulta,itensDoPdf:itensDoPdf,abrirPedido:abrirPedido,lerPedido:lerPedido,pedirBusca:abrirPedirBusca,lerArquivo:lerArquivo,lerArquivos:lerArquivos,textoDasImagens:textoDasImagens,dadosDoTextoDoPrint:dadosDoTextoDoPrint,zonaConsulta:zonaConsulta,ehImagem:ehImagem,paraPedido:paraPedido,resumoLeitura:resumoLeitura,fone:fone,cpfFmt:cpfFmt,cepFmt:cepFmt,_L:L};
+  async function abrirLerConsulta(opc){
+    const pid=state.pessoaRow&&state.pessoaRow.id;if(!pid){showToast('Abra um cliente antes de ler a consulta.','warning');return;}
+    if(L.pessoa!==pid||!L.cat.length)await carregar();
+    abrirLeitura(null,opc||{});
+  }
+  window.SagaLocalizacao={render:render,abrirLerConsulta:abrirLerConsulta,recarregar:recarregar,extrair:extrair,separarEndereco:separarEndereco,lerConsulta:lerConsulta,itensDoPdf:itensDoPdf,abrirPedido:abrirPedido,lerPedido:lerPedido,pedirBusca:abrirPedirBusca,lerArquivo:lerArquivo,lerArquivos:lerArquivos,textoDasImagens:textoDasImagens,dadosDoTextoDoPrint:dadosDoTextoDoPrint,zonaConsulta:zonaConsulta,ehImagem:ehImagem,paraPedido:paraPedido,resumoLeitura:resumoLeitura,fone:fone,cpfFmt:cpfFmt,cepFmt:cepFmt,_L:L};
   window.renderLocalizationView=render;
 })();
