@@ -26,6 +26,7 @@
     '#fichaCliente.fm>.localization-view{border:1px solid var(--border);border-radius:16px;background:var(--panel)}',
     '.fm-tit{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:0 0 10px;border-bottom:1px solid var(--border-soft);min-width:0}',
     '.fm-tit button{all:unset;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);white-space:nowrap;padding:4px 2px;min-height:28px}',
+    '.fm-tit button,.fm-tit button:hover,.fm-tit button:focus,.fm-tit button:active{background:none!important;border:0!important;box-shadow:none!important}',
     '.fm-tit button:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}',
     '.fm-seta{transition:transform .32s cubic-bezier(.22,.78,.25,1)}',
     '.fm-tit[data-fechado="1"] .fm-seta{transform:rotate(-90deg)}',
