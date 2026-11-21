@@ -159,50 +159,56 @@
       }
       mostrar(achados, { erros: erros, imagens: imagens, guardadas: guardadas, semTexto: semTexto, n: itens.length });
     }
-    function vazio(ch){ var v = (o.valores || {})[ch]; return v == null || String(v).trim() === '' || /⟦\[/.test(String(v)); }
+    /* combinado com a conversa da Renata (saga_peticoes.js, 21/11): campos = [{chave, rotulo}], valoresAgora() = valores na hora,
+       aplicar(novos) preenche só campo vazio ou com lacuna; novos[chave] = {valor, origem}; novos.lacunas = {'rótulo': valor} troca ⟦[rótulo]⟧ em qualquer campo */
+    function chaves(){ return (o.campos || []).map(function(c){ return typeof c === 'string' ? c : c.chave; }); }
+    function atuais(){ try{ return (typeof o.valoresAgora === 'function' ? o.valoresAgora() : o.valores) || {}; }catch(e){ return o.valores || {}; } }
+    function vazio(ch){ var v = atuais()[ch]; return v == null || String(v).trim() === '' || /^\s*(⟦\[[^\]]*\]⟧\s*)+$/.test(String(v)); }
+    function lacunasAbertas(){ var t = Object.keys(atuais()).map(function(k){ return String(atuais()[k] || ''); }).join('\n'), out = {}; var re = /⟦\[([^\]]+)\]⟧/g, m; while((m = re.exec(t))) out[m[1]] = true; return out; }
     function mostrar(achados, info){
-      var campos = o.campos || [], linhas = [];
+      var campos = chaves(), linhas = [], abertas = lacunasAbertas();
+      var endc = enderecoCompleto(achados);
       Object.keys(achados).forEach(function(k){
         var alvos = (CAMPO[k] || []).filter(function(c){ return campos.indexOf(c) >= 0; });
-        linhas.push({ k: k, a: achados[k], alvos: alvos });
-      });
-      /* qualificação com marca de "faltando": troca a marca pelo que foi achado */
-      var marcas = [];
-      ['qualificacao', 'autores_qualificacao'].forEach(function(ch){
-        var v = (o.valores || {})[ch]; if(!v || !/⟦\[/.test(v)) return;
-        Object.keys(MARCA).forEach(function(k){ if(achados[k] && v.indexOf('⟦[' + MARCA[k] + ']⟧') >= 0) marcas.push({ campo: ch, de: '⟦[' + MARCA[k] + ']⟧', para: achados[k].valor, k: k }); });
-        var endc = enderecoCompleto(achados); if(endc && v.indexOf('⟦[endereço completo com CEP]⟧') >= 0) marcas.push({ campo: ch, de: '⟦[endereço completo com CEP]⟧', para: endc, k: 'endereco' });
+        var lac = [];
+        Object.keys(MARCA).forEach(function(mk){ if(mk === k && abertas[MARCA[mk]]) lac.push(MARCA[mk]); });
+        if(k === 'endereco' && endc && abertas['endereço completo com CEP']) lac.push('endereço completo com CEP');
+        linhas.push({ k: k, a: achados[k], alvos: alvos, lac: lac });
       });
       var extra = (info.imagens.length ? ' Lido da imagem (escaneado/foto): ' + info.imagens.join(', ') + '; confira cada número.' : '') + (info.guardadas ? ' ' + info.guardadas + ' já tinha(m) sido lido(s) antes.' : '')
         + (info.semTexto.length ? ' Sem texto legível: ' + info.semTexto.join(', ') + '.' : '') + (info.erros.length ? ' Não abriu: ' + info.erros.join('; ') + '.' : '');
       if(!linhas.length){ res.innerHTML = '<div class="pd-aviso"><b>Não achei dados nos ' + info.n + ' documento(s).</b>' + esc(extra) + '</div>'; return; }
-      var h = '<div class="pd-aviso" style="margin-top:0"><b>Lido de ' + info.n + ' documento(s): confira cada dado</b> antes de usar. Marcado = vai para a petição (só campo vazio ou marcado como faltando).' + esc(extra) + '</div><table><tbody>';
+      var h = '<div class="pd-aviso" style="margin-top:0"><b>Lido de ' + info.n + ' documento(s): confira cada dado</b> antes de usar. Marcado = vai para a petição (só campo vazio ou lacuna ⟦[...]⟧; campo com dado não é trocado).' + esc(extra) + '</div><table><tbody>';
       var idx = 0;
       linhas.forEach(function(x){
-        var o2 = x.a.origem, pode = x.alvos.filter(vazio), usa = pode.length > 0 || marcas.some(function(m){ return m.k === x.k; });
-        var destino = x.alvos.length ? (pode.length ? 'vai para: ' + pode.join(', ') : 'campo já preenchido: ' + x.alvos.join(', ')) : (marcas.some(function(m){ return m.k === x.k; }) ? 'completa a qualificação' : 'este modelo não tem campo para isso');
-        h += '<tr><td><label style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" data-pd="' + (idx++) + '"' + (usa ? ' checked' : '') + (usa ? '' : ' disabled') + '> <span><b>' + esc(ROT[x.k] || x.k) + '</b><br><small>' + esc(destino) + '</small></span></label></td>'
-          + '<td>' + (x.k === 'filiacao' && x.a.outros.length ? '<select data-pd-escolha="' + (idx - 1) + '">' + [x.a.valor].concat(x.a.outros).map(function(v){ return '<option>' + esc(v) + '</option>'; }).join('') + '</select><br><small>Escolha qual nome é o da mãe.</small>' : esc(x.a.valor)) + (x.k !== 'filiacao' && x.a.outros.length ? '<br><small class="pd-amar">Achei também: ' + x.a.outros.slice(0, 4).map(esc).join(', ') + '</small>' : '') + '</td>'
+        var o2 = x.a.origem, pode = x.alvos.filter(vazio), usa = pode.length > 0 || x.lac.length > 0;
+        var destino = [];
+        if(pode.length) destino.push('vai para o campo ' + pode.join(', '));
+        if(x.lac.length) destino.push('completa a lacuna “' + x.lac.join('”, “') + '”' + (x.k === 'endereco' ? ' (com cidade/UF e CEP)' : ''));
+        if(!destino.length) destino.push(x.alvos.length ? 'campo já preenchido: ' + x.alvos.join(', ') : 'nenhum campo ou lacuna deste modelo usa isso');
+        h += '<tr><td><label style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" data-pd="' + idx + '"' + (usa ? ' checked' : ' disabled') + '> <span><b>' + esc(ROT[x.k] || x.k) + '</b><br><small>' + esc(destino.join('; ')) + '</small></span></label></td>'
+          + '<td>' + (x.k === 'filiacao' && x.a.outros.length ? '<select data-pd-escolha="' + idx + '">' + [x.a.valor].concat(x.a.outros).map(function(v){ return '<option>' + esc(v) + '</option>'; }).join('') + '</select><br><small>Escolha qual nome é o da mãe.</small>' : esc(x.a.valor)) + (x.k !== 'filiacao' && x.a.outros.length ? '<br><small class="pd-amar">Achei também: ' + x.a.outros.slice(0, 4).map(esc).join(', ') + '</small>' : '') + '</td>'
           + '<td><small><b>' + esc(o2.arquivo) + ' · pág. ' + o2.pagina + '</b>' + (o2.imagem ? ' <span class="pd-amar">(lido da imagem)</span>' : '') + '<br>“' + esc(o2.trecho) + '”</small></td></tr>';
-        x.idx = idx - 1;
+        x.idx = idx++;
       });
       h += '</tbody></table><div class="pd-botoes"><button type="button" data-pd-desc>Descartar</button><button type="button" class="pri" data-pd-usar>Usar os marcados</button></div>';
       res.innerHTML = h;
       res.querySelector('[data-pd-desc]').onclick = function(){ res.innerHTML = ''; };
       res.querySelector('[data-pd-usar]').onclick = function(){
-        var novos = {}, origens = {}, marc = {}, n = 0;
+        var novos = {}, lacunas = {}, pedidos = 0;
         linhas.forEach(function(x){
           var cb = res.querySelector('[data-pd="' + x.idx + '"]'); if(!cb || !cb.checked) return;
           var org = x.a.origem.arquivo + ' · pág. ' + x.a.origem.pagina + (x.a.origem.imagem ? ' (lido da imagem)' : '');
           var sel = res.querySelector('[data-pd-escolha="' + x.idx + '"]'), valor = sel ? sel.value : x.a.valor;
-          x.alvos.filter(vazio).forEach(function(c){ novos[c] = valor; origens[c] = 'documento: ' + org; n++; });
-          marcas.filter(function(m){ return m.k === x.k; }).forEach(function(m){ marc[m.campo] = (marc[m.campo] || o.valores[m.campo]).split(m.de).join(m.para); origens[m.campo] = 'ficha + documento: ' + org; });
+          x.alvos.filter(vazio).forEach(function(c){ novos[c] = { valor: valor, origem: org }; pedidos++; });
+          x.lac.forEach(function(l){ lacunas[l] = l === 'endereço completo com CEP' ? endc : valor; pedidos++; });
         });
-        Object.keys(marc).forEach(function(c){ novos[c] = marc[c]; n++; });
-        try{ if(typeof o.aplicar === 'function') o.aplicar(novos, origens); }
+        if(Object.keys(lacunas).length) novos.lacunas = lacunas;
+        if(!pedidos){ res.innerHTML = '<div class="pd-aviso">Nada marcado para usar.</div>'; return; }
+        var mudou;
+        try{ mudou = typeof o.aplicar === 'function' ? o.aplicar(novos) : 0; }
         catch(e){ res.innerHTML = '<div class="pd-erro">Não consegui pôr os dados na petição: ' + esc(e.message || e) + '</div>'; return; }
-        Object.keys(novos).forEach(function(c){ o.valores[c] = novos[c]; });
-        res.innerHTML = '<div class="pd-ok">' + n + ' campo(s) preenchido(s) com os documentos (de onde veio aparece em cada campo). Confira antes de gerar.</div>';
+        res.innerHTML = '<div class="pd-ok">' + (typeof mudou === 'number' ? mudou : pedidos) + ' campo(s) preenchido(s) com os documentos (contorno amarelo; passe o mouse para ver de onde veio). Confira antes de gerar.</div>';
       };
     }
   }
