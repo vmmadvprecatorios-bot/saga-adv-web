@@ -18,7 +18,7 @@ button{margin-top:6px;font:inherit;font-size:14px;padding:9px 16px;border-radius
 </style>
 </head>
 <body>
-<div class="c" id="c" role="status" aria-live="polite"><div class="i">…</div><h1>Um momento…</h1><p>Registrando o seu pedido.</p></div>
+<div class="c" id="c" role="status" aria-live="polite"><div class="i">…</div><h1>Um momento…</h1><p>Abrindo…</p></div>
 <script>
 (function(){
   var FUNCAO='https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/disparos-sair';
@@ -41,7 +41,16 @@ button{margin-top:6px;font:inherit;font-size:14px;padding:9px 16px;border-radius
       })
       .catch(function(e){mostrar(false,'Sem conexão','Não consegui falar com o servidor ('+(e&&e.message||'erro de rede')+'). Tente de novo ou responda o e-mail com a palavra SAIR.',true);});
   }
-  enviar();
+  // Pede um clique antes de descadastrar (laudo de segurança 21/11): antivírus e leitores de e-mail abrem os links
+  // sozinhos e descadastravam a pessoa sem ela querer. O botão do próprio programa de e-mail (List-Unsubscribe-Post)
+  // continua indo direto para a função, sem passar por aqui.
+  function perguntar(){
+    if(t!=='teste'&&t.length<32){mostrar(false,'Link incompleto','Copie o link inteiro do e-mail ou responda a mensagem com a palavra SAIR.');return;}
+    c.className='c';
+    c.innerHTML='<div class="i">?</div><h1>Não quer mais receber nossos e-mails?</h1><p>Confirme abaixo e o seu endereço sai da nossa lista.</p><button type="button">Confirmar: não quero mais receber</button>';
+    var b=c.querySelector('button');b.onclick=function(){b.disabled=true;b.textContent='Registrando…';enviar();};
+  }
+  perguntar();
 })();
 </script>
 </body>
