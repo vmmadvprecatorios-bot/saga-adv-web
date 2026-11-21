@@ -5,7 +5,7 @@
 (function(global){
   'use strict';
   var S={sb:null,cfg:null,modo:'unico',partes:[],papeis:[],pessoas:{},carregando:0,estilos:false};
-  var esc=function(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML;};
+  var esc=function(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');};
   var cpfFmt=function(c){var d=String(c||'').replace(/\D/g,'');return d.length===11?d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,'$1.$2.$3-$4'):d.length===14?d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5'):(c||'');};
   var pct=function(v){return v==null?'':String(Number(v)).replace('.',',')+'%';};
   var aviso=function(m,erro){if(global.showToast)global.showToast(m,erro?'error':'success');};

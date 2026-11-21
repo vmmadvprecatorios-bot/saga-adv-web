@@ -132,7 +132,7 @@ window._sb=_sb;
 var P={lista:[],admin:false,busca:'',ver:'ativos',abertos:{},erro:null,editando:null};
 var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function n(v){return Number(v||0).toLocaleString('pt-BR');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},4800);}
 function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}

@@ -26,7 +26,7 @@
   };
 
   function sb(){ return global._sb; }
-  function esc(t){ var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+  function esc(t){ var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function semMov(){ try { return localStorage.getItem('saga-movimento') === 'reduzido'; } catch(e) { return false; } }
   function aviso(msg, tipo){
     if (cfg.toast) { try { cfg.toast(msg, tipo || 'ok'); return; } catch(e) {} }

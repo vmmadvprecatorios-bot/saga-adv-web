@@ -18,7 +18,7 @@ var CORES_TEXTO={preto:[0,0,0],azul:[0.07,0.16,0.36],vermelho:[0.75,0.1,0.1]};
 var E={docs:[],paginas:[],sel:new Set(),numeracao:null,historico:[],seq:0,origem:null,nomeTocado:false,trabalhando:false,pendente:false,tela:'inicio',ferr:null,resultado:null};
 
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function semMovimento(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},5200);}
 function tamanhoTxt(b){if(b==null)return '';if(b<1024)return b+' B';if(b<1024*1024)return (b/1024).toFixed(0)+' KB';return (b/1024/1024).toFixed(b<10*1024*1024?2:1).replace('.',',')+' MB';}

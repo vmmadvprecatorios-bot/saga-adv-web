@@ -30,7 +30,7 @@ window.SagaPlanilha=(function(){
   // Colunas que só fazem sentido numa fase
   var SO_CAPTACAO=['processo.captador'];
 
-  function h(v){return esc(v==null?'':String(v));}
+  function h(v){return (window.sagaEsc||esc)(v==null?'':String(v));}
   function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
   function nomeUsuario(id){var u=(state.responsaveis||[]).find(function(x){return String(x.id)===String(id);});return u?u.nome_completo:'';}
   function nomeArea(id){try{var a=(catalogoTeses.todasAreas()||[]).find(function(x){return String(x.id)===String(id);});return a?a.nome:'';}catch(e){return '';}}

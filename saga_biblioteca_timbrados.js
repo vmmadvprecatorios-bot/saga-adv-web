@@ -13,7 +13,7 @@
   var S = { timbrados:[], modelos:[], filtro:'todos', admin:false, carregado:false, aberto:false, modelo:null, pastas:[], pasta:null, podeOrganizar:false, abertas:{} };
 
   function sb(){ return window._sb; }
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function toast(m, t){ if(typeof window.showToast === 'function') window.showToast(m, t || 'info'); }
   function reduzido(){ try{ return localStorage.getItem('saga-movimento') === 'reduzido'; }catch(e){ return false; } }
   function kb(n){ return n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }

@@ -176,7 +176,7 @@ var C={linhas:[],status:'a_enviar',tese:'',busca:'',sel:{},teses:[],modelos:[],a
 var STATUS=[['a_enviar','A enviar','#d97706'],['impressa','Impressas','#2563eb'],['enviada','Enviadas','#16a34a'],['devolvida','Devolvidas','#e5484d'],['respondida','Respondidas','#7c3aed'],['cancelada','Fora da lista','#8a94a8'],['todas','Todas','#8a94a8']];
 var NOME_ST={a_enviar:'A enviar',impressa:'Impressa',enviada:'Enviada',devolvida:'Devolvida',respondida:'Respondida',cancelada:'Fora da lista'};
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
 function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function dig(v){return String(v||'').replace(/\D/g,'');}

@@ -262,7 +262,7 @@ var TELA_AREA={ponto:'ponto',processos:'juridico',processos_juridico:'juridico',
   dashboard:'painel geral',parceiros:'parceiros',modelos:'biblioteca',biblioteca:'biblioteca',financeiro:'financeiro',minha_parte:'financeiro',precatorios:'precatórios',marketing:'marketing',treinamentos:'treinamentos',manual:'manual do saga',configuracoes:'configura',permissoes:'configura',atividades:'configura'};
 
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4800);}
 function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function reduzido(){return !!(window.sagaMq&&sagaMq().matches);}

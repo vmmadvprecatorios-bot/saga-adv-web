@@ -17,7 +17,7 @@
   var R={dados:null,ag:'',arquivadas:false,para:'luisa',proc:null,ent:null,buscaN:0,erro:null,abrirConversa:null};
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
   function $(id){return document.getElementById(id);}
-  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   function sb(){return window._sb;}
   function aviso(msg,tipo){
     var w=$('toastWrap');if(!w){alert(msg);return;}

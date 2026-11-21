@@ -10,7 +10,7 @@ window.SagaChatDocs = (function(){
   var BUCKET = 'documentos-clientes';
   var G = { anexo: null, pessoa: null, busca: 0, aoTerminar: null };
   function sb(){ return window._sb; }
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function $(id){ return document.getElementById(id); }
   function reduzido(){ try{ return localStorage.getItem('saga-movimento') === 'reduzido'; }catch(e){ return false; } }
   function novoId(){ try{ return crypto.randomUUID(); }catch(e){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); } }

@@ -193,7 +193,7 @@ var CORES_SIT={'Não expedido':'#8a94a8','Expedido':'#e0a93b','Expedido (CNJ)':'
 var ORDEM_SIT=['Pago (liberado para saque)','Pago (CNJ)','No orçamento','Expedido','Expedido (CNJ)','Não expedido','Sacado','Sem informação'];
 var MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
 function n(v){return new Intl.NumberFormat('pt-BR').format(v||0);}
 function rs(v){return v==null?'—':new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v));}

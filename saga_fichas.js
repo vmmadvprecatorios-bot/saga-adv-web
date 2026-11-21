@@ -28,7 +28,7 @@
     var menor=x.length<=y.length?x:y,maior=x.length<=y.length?y:x;
     return menor.every(function(w){return maior.indexOf(w)>=0;});
   }
-  function esc(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML;}
+  function esc(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   async function procurar(sb,o){
     o=o||{};var achados={},nome=normalizar(o.nome),cpf=digitos(o.cpf);
     var campos='id,nome_completo,cpf';

@@ -330,7 +330,7 @@ var state={escritorios:[],escTese:'',escFase:'',escPart:'',aba:'visao',processos
   procAberto:null,rateioModal:[],lancEditando:null,
   parcelas:[],temParcelas:false,filtroParc:'abertas',tipoParc:'honorarios',buscaPa:''};
 
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function moeda(n){return n==null||isNaN(n)?'—':Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function num(v){return v==null||v===''?null:Number(v);}
 function dataBR(d){if(!d)return '—';var p=String(d).slice(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}

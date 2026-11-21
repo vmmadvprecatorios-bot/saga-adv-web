@@ -24,7 +24,7 @@
     return melhor;
   }
   function corValida(n){return PALETA.some(function(p){return p[0]===n;});}
-  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
   // ---------- limpeza: só as marcas permitidas, sem atributos ----------
   function limparNo(no,saida){

@@ -8,7 +8,7 @@
   const ROT={telefone:'Telefones',email:'E-mails',endereco:'Endereços'};
   const UFS=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
   const L={pessoa:null,alvos:[],contatos:[],hist:[],cat:[],abertos:new Set(['cliente']),histAberto:false,carregando:false,root:null};
-  const e=s=>esc(s==null?'':String(s));
+  const e=s=>(window.sagaEsc||esc)(s==null?'':String(s));
   const podeEditar=()=>perms.pessoasEditar===true;
   const podeGerenciar=()=>perms.pessoasEtiquetasGerenciar===true||state.ehAdmin===true;
   const digitos=v=>String(v||'').replace(/\D/g,'');

@@ -340,8 +340,9 @@ let confirmAction        = null;
 /* ================================================================
    UTILITÁRIOS
 ================================================================ */
-function esc(t){const d=document.createElement('div');d.textContent=t||'';return d.innerHTML}
-function initials(n){return(n||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase()}
+function esc(t){const d=document.createElement('div');d.textContent=t||'';return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function initials(n){return esc((n||'?').split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase())}
+function corOk(v,p){return /^#[0-9a-f]{3,8}$/i.test(String(v||'').trim())?String(v).trim():(p||'#8b93a8')}
 function levelClass(l){return 'level level-'+l}
 function levelOptions(sel,disabled=false){return levels.map(l=>`<option value="${l}"${l===sel?' selected':''}${disabled?' disabled':''}>${levelLabels[l]}</option>`).join('')}
 
@@ -394,7 +395,7 @@ function exceptionModuleCount(c){
 }
 
 function avatarHtml(c,cl='avatar-lg'){
-  const bg=c.papel_cor||'#8b93a8';
+  const bg=corOk(c.papel_cor);
   return`<div class="${cl}" data-saga-nome="${esc(c.nome_completo)}" style="background:${bg}">${initials(c.nome_completo)}</div>`;
 }
 
@@ -592,17 +593,17 @@ function renderCollaborators(){
   document.getElementById('viewCounter').innerHTML=`<b>${filtered.length}</b> de ${_colaboradores.length} colaboradores`;
   const modo=modoColab();
   document.querySelectorAll('#collabModo .segment').forEach(b=>b.classList.toggle('active',b.dataset.modo===modo));
-  const cartao=c=>{const ec=exceptionModuleCount(c);return`<button class="collab-card panel" data-collab-card="${c.id}">${avatarHtml(c)}<span><span class="collab-name">${esc(c.nome_completo)}</span><span class="collab-role">${esc(c.cargo_titulo||'')}</span><span class="collab-meta"><span class="badge" style="background:${c.papel_cor}22;color:${c.papel_cor};border:1px solid ${c.papel_cor}55"><span class="dot" style="background:${c.papel_cor}"></span>${esc(c.papel_nome)}</span>${c.eh_administrador?'<span class="badge grant">Administrador</span>':`<span class="exception-count">${ec?ec+' módulo(s) com exceção':'Sem exceções'}</span>`}</span></span><span class="arrow">›</span></button>`;};
+  const cartao=c=>{const ec=exceptionModuleCount(c);return`<button class="collab-card panel" data-collab-card="${c.id}">${avatarHtml(c)}<span><span class="collab-name">${esc(c.nome_completo)}</span><span class="collab-role">${esc(c.cargo_titulo||'')}</span><span class="collab-meta"><span class="badge" style="background:${corOk(c.papel_cor)}22;color:${corOk(c.papel_cor)};border:1px solid ${corOk(c.papel_cor)}55"><span class="dot" style="background:${corOk(c.papel_cor)}"></span>${esc(c.papel_nome)}</span>${c.eh_administrador?'<span class="badge grant">Administrador</span>':`<span class="exception-count">${ec?ec+' módulo(s) com exceção':'Sem exceções'}</span>`}</span></span><span class="arrow">›</span></button>`;};
   const vazio=`<div class="panel empty"><h3>Nenhum colaborador encontrado</h3><p>Ajuste a busca ou o filtro de perfil.</p></div>`;
   if(modo==='cartoes'){root.innerHTML=`<div class="collab-grade">${filtered.map(cartao).join('')||vazio}</div>`;}
   else if(modo==='kanban'){
     const grupos=new Map();filtered.forEach(c=>{const k=c.papel_nome||'Sem perfil';if(!grupos.has(k))grupos.set(k,{cor:c.papel_cor||'#8b93a8',itens:[]});grupos.get(k).itens.push(c);});
     const cols=[...grupos.entries()].sort((a,b)=>a[0]==='Administrador'?-1:b[0]==='Administrador'?1:a[0].localeCompare(b[0],'pt-BR'));
-    root.innerHTML=cols.length?`<div class="collab-kanban">${cols.map(([nome,g])=>`<section class="collab-col"><div class="collab-col-cab"><span class="dot" style="background:${g.cor}"></span>${esc(nome)}<small>${g.itens.length}</small></div>${g.itens.map(cartao).join('')}</section>`).join('')}</div>`:vazio;
+    root.innerHTML=cols.length?`<div class="collab-kanban">${cols.map(([nome,g])=>`<section class="collab-col"><div class="collab-col-cab"><span class="dot" style="background:${corOk(g.cor)}"></span>${esc(nome)}<small>${g.itens.length}</small></div>${g.itens.map(cartao).join('')}</section>`).join('')}</div>`:vazio;
   }
   else root.innerHTML=`<div class="collab-list">${filtered.map(c=>{
     const ec=exceptionModuleCount(c);
-    return`<button class="collab-card panel" data-collab-card="${c.id}">${avatarHtml(c)}<span><span class="collab-name">${esc(c.nome_completo)}</span><span class="collab-role">${esc(c.cargo_titulo)}</span><span class="collab-meta"><span class="badge" style="background:${c.papel_cor}22;color:${c.papel_cor};border:1px solid ${c.papel_cor}55"><span class="dot" style="background:${c.papel_cor}"></span>${esc(c.papel_nome)}</span>${c.eh_administrador?'<span class="badge grant">Administrador</span>':`<span class="exception-count">${ec?ec+' módulo(s) com exceção':'Sem exceções'}</span>`}</span></span><span class="arrow">›</span></button>`;
+    return`<button class="collab-card panel" data-collab-card="${c.id}">${avatarHtml(c)}<span><span class="collab-name">${esc(c.nome_completo)}</span><span class="collab-role">${esc(c.cargo_titulo)}</span><span class="collab-meta"><span class="badge" style="background:${corOk(c.papel_cor)}22;color:${corOk(c.papel_cor)};border:1px solid ${corOk(c.papel_cor)}55"><span class="dot" style="background:${corOk(c.papel_cor)}"></span>${esc(c.papel_nome)}</span>${c.eh_administrador?'<span class="badge grant">Administrador</span>':`<span class="exception-count">${ec?ec+' módulo(s) com exceção':'Sem exceções'}</span>`}</span></span><span class="arrow">›</span></button>`;
   }).join('')||`<div class="panel empty"><svg width="30" height="30" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M16.5 16.5L20 20" stroke="currentColor" stroke-width="1.5"/></svg><h3>Nenhum colaborador encontrado</h3><p>Ajuste a busca ou o filtro de perfil.</p></div>`}</div>`;
   root.querySelectorAll('[data-collab-card]').forEach(b=>b.addEventListener('click',()=>openCollaborator(b.dataset.collabCard)));
 }
@@ -648,7 +649,7 @@ async function openCollaborator(id){
 
   document.getElementById('collabModalBody').innerHTML=`
     <div class="detail-top">
-      <div class="detail-person">${avatarHtml(c)}<span><h3>${esc(c.nome_completo)}</h3><p>${esc(c.cargo_titulo)} · Perfil base: <b style="color:${c.papel_cor}">${esc(c.papel_nome)}</b></p></span></div>
+      <div class="detail-person">${avatarHtml(c)}<span><h3>${esc(c.nome_completo)}</h3><p>${esc(c.cargo_titulo)} · Perfil base: <b style="color:${corOk(c.papel_cor)}">${esc(c.papel_nome)}</b></p></span></div>
       <div class="profile-change"><label for="changeProfile">Trocar perfil</label><select class="field" id="changeProfile"${canEdit?'':' disabled'}>${papelOptions}</select></div>
     </div>
     ${protectedNote}
@@ -701,7 +702,7 @@ async function openModule(key){
   document.getElementById('moduleModalTitle').textContent='Acesso ao módulo: '+m.name;
   document.getElementById('moduleModalBody').innerHTML=`<div class="perm-wrap"><table class="permission-table"><thead><tr><th>Colaborador</th><th>Perfil</th><th>Nível final</th><th>Origem</th><th>Alterar</th></tr></thead><tbody>${_colaboradores.map(c=>{
     const f=finalLevel(c,key),s=sourceFor(c,key),ce=canManageFor(c);
-    return`<tr><td><span style="display:flex;align-items:center;gap:8px">${avatarHtml(c,'small-avatar')}<span><b>${esc(c.nome_completo)}</b><small class="pop-meta">${esc(c.cargo_titulo)}</small></span></span></td><td><span class="badge" style="background:${c.papel_cor}22;color:${c.papel_cor};border:1px solid ${c.papel_cor}55">${esc(c.papel_nome)}</span></td><td><span class="${levelClass(f)}">${levelLabels[f]}</span></td><td><span class="badge ${s.type}">${s.label}</span></td><td><select class="permission-select" data-module-c="${c.id}"${ce?'':' disabled'}>${levelOptions(f,c.eh_administrador)}</select></td></tr>`;
+    return`<tr><td><span style="display:flex;align-items:center;gap:8px">${avatarHtml(c,'small-avatar')}<span><b>${esc(c.nome_completo)}</b><small class="pop-meta">${esc(c.cargo_titulo)}</small></span></span></td><td><span class="badge" style="background:${corOk(c.papel_cor)}22;color:${corOk(c.papel_cor)};border:1px solid ${corOk(c.papel_cor)}55">${esc(c.papel_nome)}</span></td><td><span class="${levelClass(f)}">${levelLabels[f]}</span></td><td><span class="badge ${s.type}">${s.label}</span></td><td><select class="permission-select" data-module-c="${c.id}"${ce?'':' disabled'}>${levelOptions(f,c.eh_administrador)}</select></td></tr>`;
   }).join('')}</tbody></table></div>`;
   document.querySelectorAll('[data-module-c]').forEach(sel=>sel.addEventListener('change',async()=>{
     const c=getCollab(sel.dataset.moduleC);if(!c)return;
@@ -723,7 +724,7 @@ function renderProfiles(){
   root.innerHTML=`<div class="profile-grid">${list.map(p=>{
     const users=_colaboradores.filter(c=>c.papel_id===p.id).length;
     const perms=_papPermMap[p.id]||new Set();
-    return`<article class="profile-card panel"><div class="profile-top"><span><span class="profile-title"><span class="profile-dot" style="background:${p.cor}"></span><h3>${esc(p.nome)}</h3></span><p class="profile-desc">${esc(p.descricao||'')}</p></span>${p.editavel?'<span class="badge default">Editável</span>':'<span class="badge grant">Protegido</span>'}</div><p class="profile-users">${users} colaborador(es) usando este perfil</p><div class="profile-mini-grid">${moduleList.map(m=>{const lv=computeLevel(perms,m.key);return`<span class="profile-mini level-${lv}" title="${esc(m.name)}: ${levelLabels[lv]}">${m.short}</span>`}).join('')}</div><div class="profile-actions"><button class="btn-secondary" data-edit-profile="${p.id}">${p.editavel?'Editar perfil':'Visualizar perfil'}</button>${p.editavel?`<button class="btn-danger" data-delete-profile="${p.id}">Excluir</button>`:''}</div></article>`;
+    return`<article class="profile-card panel"><div class="profile-top"><span><span class="profile-title"><span class="profile-dot" style="background:${corOk(p.cor)}"></span><h3>${esc(p.nome)}</h3></span><p class="profile-desc">${esc(p.descricao||'')}</p></span>${p.editavel?'<span class="badge default">Editável</span>':'<span class="badge grant">Protegido</span>'}</div><p class="profile-users">${users} colaborador(es) usando este perfil</p><div class="profile-mini-grid">${moduleList.map(m=>{const lv=computeLevel(perms,m.key);return`<span class="profile-mini level-${lv}" title="${esc(m.name)}: ${levelLabels[lv]}">${m.short}</span>`}).join('')}</div><div class="profile-actions"><button class="btn-secondary" data-edit-profile="${p.id}">${p.editavel?'Editar perfil':'Visualizar perfil'}</button>${p.editavel?`<button class="btn-danger" data-delete-profile="${p.id}">Excluir</button>`:''}</div></article>`;
   }).join('')}</div>`;
   root.querySelectorAll('[data-edit-profile]').forEach(b=>b.addEventListener('click',()=>openProfileModal(b.dataset.editProfile)));
   root.querySelectorAll('[data-delete-profile]').forEach(b=>b.addEventListener('click',()=>askDeleteProfile(b.dataset.deleteProfile)));
@@ -742,7 +743,7 @@ function openProfileModal(id=null){
     ${locked?'<div class="locked-note">Este perfil é protegido — permissões totais, não editáveis via painel.</div>':''}
     <div class="form-grid" style="margin-top:${locked?'14px':'0'}">
       <div class="form-group"><label for="profileName">Nome do perfil</label><input id="profileName" value="${esc(p.nome)}"${locked?' disabled':''}></div>
-      <div class="form-group"><label for="profileColor">Cor</label><input type="color" id="profileColor" value="${p.cor}"${locked?' disabled':''}></div>
+      <div class="form-group"><label for="profileColor">Cor</label><input type="color" id="profileColor" value="${esc(p.cor)}"${locked?' disabled':''}></div>
     </div>
     <div class="form-group" style="margin-top:12px"><label for="profileDesc">Descrição</label><textarea id="profileDesc"${locked?' disabled':''}>${esc(p.descricao||'')}</textarea></div>
     <div class="profile-perm-editor"><h4>Permissões padrão por módulo</h4><div class="profile-perm-grid">${moduleList.map(m=>{

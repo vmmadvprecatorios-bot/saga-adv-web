@@ -116,7 +116,7 @@
     m.innerHTML='<b>Abrir no '+e(info.sigla)+(info.secaoNome?' · '+e(info.uf):'')+'</b>'+links.map(function(l){
       var onde=misto?(l._secao?l._secao:info.sigla+' (2º grau)'):'';
       var sub=[onde,l.sistema].filter(Boolean).join(' · ');
-      return '<a role="menuitem" href="'+e(l.link)+'" target="_blank" rel="noopener noreferrer">'+e(l.nome||'Consulta processual')+(sub?'<small>'+e(sub)+'</small>':'')+'</a>';}).join('');
+      return '<a role="menuitem" href="'+e((window.sagaUrlSegura?sagaUrlSegura(l.link,{http:true}):(/^https?:\/\//i.test(String(l.link||''))?l.link:'')))+'" target="_blank" rel="noopener noreferrer">'+e(l.nome||'Consulta processual')+(sub?'<small>'+e(sub)+'</small>':'')+'</a>';}).join('');
     document.body.appendChild(m);menuAberto=m;
     var r=ancora.getBoundingClientRect(),w=m.offsetWidth,h=m.offsetHeight;
     var x=Math.min(Math.max(8,r.left),innerWidth-w-8),y=r.bottom+6;if(y+h>innerHeight-8)y=Math.max(8,r.top-h-6);
@@ -132,7 +132,7 @@
     var seguir=function(){
       var l=linksDe(info);
       if(!l.length){aviso('Ainda não há link do '+(info.secaoNome?info.sigla+' ('+info.secaoNome+')':info.sigla)+'. Cadastre em Intimações > Links dos tribunais.','warning');return;}
-      if(l.length===1){global.open(l[0].link,'_blank','noopener');return;}
+      if(l.length===1){var u0=(window.sagaUrlSegura?sagaUrlSegura(l[0].link,{http:true}):(/^https?:\/\//i.test(String(l[0].link||''))?l[0].link:''));if(u0)global.open(u0,'_blank','noopener');return;}
       menu(ancora,l,info);
     };
     if(L.lista)seguir();else carregar().then(seguir);

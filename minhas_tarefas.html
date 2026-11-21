@@ -2775,7 +2775,7 @@ async function salvarOrdemColuna(colunaId){
 function escaparHtml(texto){
   var div = document.createElement('div');
   div.textContent = texto || '';
-  return div.innerHTML;
+  return div.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function formatarDataBr(isoDate){

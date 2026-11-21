@@ -29,7 +29,7 @@ window.SagaModelosEditor = (function(){
   var E = { pode:null, teses:null, modelo:null, blocos:[], campos:[], focoTxt:null, aoSalvar:null, imp:null };
 
   function sb(){ return window._sb; }
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function toast(m, t){ if(typeof window.showToast === 'function') window.showToast(m, t || 'info'); }
 
   /* ---------------- estilos ---------------- */

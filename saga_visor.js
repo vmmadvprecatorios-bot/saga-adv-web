@@ -12,7 +12,7 @@ window.SagaVisor = (function(){
   var V = { pdf:null, zoom:1, gen:0, obs:null, el:null };
   var versao = (function(){ try{ var s = document.currentScript && document.currentScript.src; var m = /[?&]v=(\d+)/.exec(s || ''); return m ? m[1] : ''; }catch(e){ return ''; } })();
 
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function semMovimento(){ try{ return localStorage.getItem('saga-movimento') === 'reduzido'; }catch(e){ return false; } }
   function script(src){
     return new Promise(function(ok, falha){

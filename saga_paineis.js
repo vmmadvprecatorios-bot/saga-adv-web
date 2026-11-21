@@ -8,7 +8,7 @@
   'use strict';
   var S={faixa:null,pessoa:null,cfg:null,roscas:null,ocultos:false,pronto:false};
   try{S.ocultos=localStorage.getItem('saga-painel-acomp-oculto')==='1';}catch(e){}
-  var esc=function(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML;};
+  var esc=function(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');};
 
   var FAIXAS_JUR=[
     {id:'hoje',nome:'Movimentado hoje',min:0,max:0,cor:'#4b8af5'},

@@ -252,7 +252,7 @@ var TIPOS={
 };
 var CORES_NO=['#2563eb','#16a34a','#d97706','#7c3aed','#e5484d','#0891b2','#64748b'];
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
 function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function abrirMo(id){$(id).classList.add('aberto');}
@@ -326,7 +326,7 @@ function abrirItem(id){
   if(i.tipo==='pergunta')corpo+='<div class="tit">Resposta</div>';
   if(i.tipo==='fluxo')corpo+='<div class="fluxo-ver" id="fluxoVer">'+svgFluxo(i.fluxo||{},{modo:'tela'})+'</div><div class="dica">Clique numa caixa ligada a um treinamento para abri-lo.</div>';
   if(i.conteudo)corpo+='<div class="texto">'+textoRico(i.conteudo)+'</div>';
-  if(i.link)corpo+='<a class="btn" href="'+esc(i.link)+'" target="_blank" rel="noopener">Abrir material ↗</a>';
+  if((window.sagaUrlSegura?sagaUrlSegura(i.link,{http:true}):(/^https?:\/\//i.test(String(i.link||''))?i.link:'')))corpo+='<a class="btn" href="'+esc((window.sagaUrlSegura?sagaUrlSegura(i.link,{http:true}):(/^https?:\/\//i.test(String(i.link||''))?i.link:'')))+'" target="_blank" rel="noopener">Abrir material ↗</a>';
   if(T.acompanhar&&T.todas){
     var ls=(T.todas[i.id]||[]),ids=ls.map(function(l){return l.usuario_id;});
     var faltam=Object.keys(T.usuarios).filter(function(u){return T.usuarios[u].ativo!==false&&ids.indexOf(u)<0;});

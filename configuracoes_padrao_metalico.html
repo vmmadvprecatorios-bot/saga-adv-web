@@ -544,7 +544,7 @@ var AVISOS=[['chat','Chat','mensagens novas'],['tarefas','Tarefas','tarefas atri
 var catalogoTeses=null;
 var state={eu:null,authId:null,escritorio:null,admin:false};
 
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4200);}
 function iniciais(n){return String(n||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase()||'--';}
 function erroTexto(e){return (e&&(e.message||e.error_description))||'Não foi possível concluir.';}

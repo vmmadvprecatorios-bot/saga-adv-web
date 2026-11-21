@@ -847,7 +847,7 @@
     +'</div>'
     +'</div>';
 
-  function esc(v){var d=document.createElement('div');d.textContent=v||'';return d.innerHTML;}
+  function esc(v){var d=document.createElement('div');d.textContent=v||'';return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   function iniciais(nome){return String(nome||'').trim().split(/\s+/).slice(0,2).map(function(p){return p[0]||'';}).join('').toUpperCase()||'--';}
   function formatarDataRel(iso){
     if(!iso)return '';
@@ -3097,7 +3097,7 @@
 (function(global){
   var ICONE='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var OK='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  function esc(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML.replace(/"/g,'&quot;');}
+  function esc(t){var d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   function avisar(msg){if(typeof global.showToast==='function'){try{global.showToast(msg,'success');return;}catch(e){}}}
   global.sagaCopiar=function(texto,rotulo){
     texto=String(texto==null?'':texto);if(!texto)return Promise.resolve(false);

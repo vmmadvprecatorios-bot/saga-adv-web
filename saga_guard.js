@@ -1,3 +1,22 @@
+// ===== Texto de fora na tela, sempre seguro (21/11/2026, laudo de segurança, item ALTO 1) =====
+// Todo texto que vem do banco, de arquivo ou de outra pessoa e entra em HTML passa por sagaEsc
+// (troca & < > " ' e a crase), também dentro de atributo (title, alt, value, data-*).
+// Link que vem de fora passa por sagaUrlSegura: só https:, mailto: e tel: (e http: só quando liberado),
+// senão volta vazio. Texto dentro de onclick="f('...')": usar sagaEscJs (ou, melhor, data-* + addEventListener).
+(function(){
+  var MAPA={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'};
+  function sagaEsc(v){return String(v==null?'':v).replace(/[&<>"'`]/g,function(c){return MAPA[c];});}
+  function sagaUrlSegura(u,op){
+    op=op||{};var t=String(u==null?'':u).trim();if(!t)return '';
+    if(op.relativo&&/^(?![a-z][a-z0-9+.-]*:)(?!\/\/)[^\s]*$/i.test(t))return t;
+    var x;try{x=new URL(t);}catch(e){return '';}
+    var ok=['https:','mailto:','tel:'];if(op.http)ok.push('http:');if(op.blob)ok.push('blob:');if(op.data&&/^data:image\/(png|jpe?g|gif|webp);/i.test(t))return t;
+    return ok.indexOf(x.protocol)>=0?x.href:'';
+  }
+  function sagaEscJs(v){return sagaEsc(JSON.stringify(String(v==null?'':v)).slice(1,-1).replace(/'/g,"\\'"));}
+  window.sagaEsc=sagaEsc;window.sagaUrlSegura=sagaUrlSegura;window.sagaEscJs=sagaEscJs;
+})();
+
 // ===== Escolhas que acompanham a CONTA (19/11/2026, Dr. Victor; bloco 270) =====
 // "Todas as configurações que eu fizer no computador, quando eu acessar pelo telefone, têm que repetir."
 // Toda escolha pessoal guardada no navegador (localStorage 'saga-...') também vai para a conta da pessoa

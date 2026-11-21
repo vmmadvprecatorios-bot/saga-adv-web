@@ -15,7 +15,7 @@ window.SagaPeticoes = (function(){
   var TIMBRADOS_PROIBIDOS = ['ancref'];  // nunca vêm escolhidos por padrão; a ANCREF só com confirmação (20/11)
   var S = { pode: null, modelos: null, timbrados: null, ctx: null, modelo: null, valores: {}, origem: {} };
 
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function sb(){ return (S.ctx && S.ctx.sb) || window._sb; }
   function toast(m, t){ if(typeof window.showToast === 'function') window.showToast(m, t || 'info'); }
   function reduzido(){ try{ return localStorage.getItem('saga-movimento') === 'reduzido'; }catch(e){ return false; } }

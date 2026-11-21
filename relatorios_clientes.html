@@ -129,7 +129,7 @@ var R={lista:[],erro:null,visao:'lista',filtro:'todos',busca:'',resp:'',ativos:t
 var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
 var POR_PAG=50;
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function semAcento(s){return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function dataLoc(d){return d?new Date(d).toLocaleDateString('pt-BR'):'';}
 function linkFicha(x){return FICHA+'?pessoa_id='+encodeURIComponent(x.pessoa_id)+'&processo_id='+encodeURIComponent(x.processo_id);}

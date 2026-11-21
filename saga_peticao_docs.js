@@ -9,7 +9,7 @@
         SagaPeticaoDocs.extrair(texto) → {dado: {valor, trecho}}  (sem tela; usado nos testes e pela Renata) */
 (function(){
   'use strict';
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function semAcento(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
   function versao(){ var sc = document.querySelector('script[src*="saga_peticao_docs.js"]'); var m = sc && /[?&]v=([^&]+)/.exec(sc.src); return m ? m[1] : ''; }
   function leitor(){

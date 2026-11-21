@@ -95,7 +95,7 @@ var graficosIntimOcultos=false;
 try{graficosIntimOcultos=localStorage.getItem('saga-intimacoes-graficos-ocultos')==='1';}catch(e){}
 function pintarBotaoGraficosIntim(){var b=document.getElementById('btnGraficosIntim');if(!b)return;b.textContent=graficosIntimOcultos?'Mostrar gráficos':'Ocultar gráficos';b.setAttribute('aria-expanded',String(!graficosIntimOcultos));}
 try{var v=localStorage.getItem('saga-mon-visao');if(v==='lista'||v==='kanban')visao=v;}catch(e){}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},5000);}
 
 function renderTudo(){

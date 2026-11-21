@@ -1075,7 +1075,7 @@ function resolverSkeleton(id, val) {
 // Cada número leva à lista certa. Cada pessoa só vê o que já pode ver (a função conta pelo login dela).
 // ================================================================
 var pgDados = null, pgDias = 7;
-function pgEsc(v){ var d=document.createElement('div'); d.textContent=v==null?'':String(v); return d.innerHTML; }
+function pgEsc(v){ var d=document.createElement('div'); d.textContent=v==null?'':String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function pgN(v){ return Number(v||0).toLocaleString('pt-BR'); }
 function pgDin(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0}); }
 function pgLink(href, n, txt){ return '<a href="'+href+'">'+pgN(n)+' '+pgEsc(txt)+'</a>'; }
@@ -1730,7 +1730,7 @@ async function carregarStatusDistribuicao() {
               : 'background:linear-gradient(90deg,var(--warning),var(--gold-deep));');
       html += '<div class="barra-tese" data-dashboard-id="status-' + encodeURIComponent(d.id) + '">';
       html += '<div class="barra-tese-label">';
-      html += '<span class="barra-tese-nome">' + d.nome + '</span>';
+      html += '<span class="barra-tese-nome">' + pgEsc(d.nome) + '</span>';
       html += '<span><span class="barra-tese-pct">' + pct + '%</span> &nbsp;<span class="barra-tese-valor">' + numBR(d.total) + '</span></span>';
       html += '</div>';
       html += '<div class="barra-tese-trilho"><div class="barra-tese-fill" style="width:' + barra + '%;' + gradiente + '"></div></div>';

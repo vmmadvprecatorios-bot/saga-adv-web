@@ -187,7 +187,7 @@ var PROVEDORES={gmail:{nome:'Gmail',ajuda:'No Gmail é preciso a <b>senha de app
   outlook:{nome:'Outlook / Hotmail',ajuda:'<b>Atenção:</b> a Microsoft só aceita a porta 587 e, nas contas pessoais (Hotmail/Outlook.com), bloqueou o login por senha. Provavelmente NÃO vai funcionar daqui; use um Gmail, a Locaweb ou a Hostinger.'},
   outro:{nome:'Outro (servidor SMTP)',ajuda:'Informe o servidor de saída (SMTP) e a porta do seu provedor. Use a porta 465 (SSL): a 587 e a 25 são bloqueadas pelo servidor do SAGA.'}};
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},6000);}
 function dh(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('pt-BR')+' '+x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
 function hh(t){return String(t||'').slice(0,5);}

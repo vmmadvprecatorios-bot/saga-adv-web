@@ -6,7 +6,7 @@
    Arquivo à parte: a ficha só carrega este script (1 linha) e ele acompanha a troca de processo pela renderRelatorios. */
 (function(){
   'use strict';
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function sb(){ return window._sb; }
   function versao(){ var sc = document.querySelector('script[src*="saga_editaveis_ficha.js"]'); var m = sc && /[?&]v=([^&]+)/.exec(sc.src); return m ? m[1] : ''; }
   function toast(t, tipo){ if(window.showToast) showToast(t, tipo || 'info'); else alert(t); }

@@ -159,7 +159,7 @@ var REGRAS={protocolada_sem_numero:'"Protocolada" sem número CNJ',cnj_invalido:
   documento_sem_pasta:'Documento fora de pasta',cpf_ausente_ou_invalido:'Cliente do Jurídico sem CPF ou com CPF inválido',nome_repetido:'Fichas com o mesmo nome',
   intimacao_sem_processo:'Intimação sem processo há mais de 7 dias',tarefa_sem_coluna:'Tarefa aberta sem coluna',robo_vermelho:'Robô com erro (vermelho)',pedido_agente_parado:'Pedido ao agente parado'};
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},6000);}
 function dataBR(d){if(!d)return '';var s=String(d).slice(0,10).split('-');return s[2]+'/'+s[1]+'/'+s[0];}
 function dataHoraBR(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('pt-BR')+' às '+x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}

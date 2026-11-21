@@ -145,7 +145,7 @@ var COLUNAS=[['a_fazer','A fazer'],['em_andamento','Em andamento'],['pronto','Pr
 var SIT={a_fazer:'A fazer',em_andamento:'Em andamento',pronto:'Pronto',nao_encontrado:'Sem resultado',cancelado:'Cancelado'};
 var CAMPOS='id,pessoa_id,alvo_id,nome,cpf,parentesco,fontes,observacao,urgente,situacao,pedido_por_id,criado_em,atendido_por_id,iniciado_em,concluido_em,resposta,leituras,conferido_em,conferido_por_id';
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4800);}
 function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function dig(v){return String(v||'').replace(/\D/g,'');}

@@ -11,7 +11,7 @@
   var LARG = 96, ALT = 26;
   var S = { doc: null, pasta: null, ativa: 0, sel: null, calc: null, desfazer: [], refazer: [], pendente: false, pode: {}, ed: null, ctx: {}, clip: null, perms: [] };
   function $(id){ return document.getElementById(id); }
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function reduzido(){ try{ return localStorage.getItem('saga-movimento') === 'reduzido'; }catch(e){ return false; } }
   function aba(){ return S.pasta.abas[S.ativa]; }
   function cel(r, a){ a = a || aba(); return (a.celulas || {})[r]; }

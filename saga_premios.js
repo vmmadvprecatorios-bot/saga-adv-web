@@ -17,7 +17,7 @@ var PAPEIS={iniciou:'Iniciou',documentacao:'Pegou a documentação',os_dois:'Ini
 var TIPOS={escada:'Escada',mesmo_cliente:'Mesmo cliente',habilitacao:'Habilitação'};
 
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function rs(v){var n=Number(v||0);return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function num(v){return Number(v||0).toLocaleString('pt-BR');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},5200);}

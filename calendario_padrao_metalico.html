@@ -1402,7 +1402,7 @@ function renderizarLista() {
   var h = lista.querySelector('.al-dia.hoje');
   if (h && calendarioJaRenderizado === false) h.scrollIntoView({ block: 'nearest' });
 }
-function escaparHtml(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+function escaparHtml(v) { var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
 // ================================================================
 // VIEW: MES
@@ -1744,7 +1744,7 @@ function renderizarLegenda() {
       '<input type="text" class="input-nome-leg" value="' + cat.nome.replace(/"/g,'&quot;') + '">' +
       '<label>Cor</label>' +
       '<div class="popover-cor-wrap">' +
-        '<input type="color" class="input-cor-leg" value="' + (cat.cor.startsWith('#') ? cat.cor : '#4b8af5') + '">' +
+        '<input type="color" class="input-cor-leg" value="' + (/^#[0-9a-f]{3,8}$/i.test(cat.cor||'') ? cat.cor : '#4b8af5') + '">' +
         '<div class="popover-cor-preview" style="background:' + cat.cor + ';"></div>' +
       '</div>' +
       '<div class="popover-legenda-acoes">' +
@@ -1787,7 +1787,7 @@ function renderizarLegenda() {
       popover.classList.remove('aberto');
     });
 
-    item.innerHTML = '<div class="pontinho-legenda" style="background:' + cat.cor + ';"></div><span>' + cat.nome + '</span>';
+    item.innerHTML = '<div class="pontinho-legenda" style="background:' + escaparHtml(cat.cor) + ';"></div><span>' + escaparHtml(cat.nome) + '</span>';
     item.appendChild(popover);
 
     item.addEventListener('click', function(e) {
@@ -2253,7 +2253,7 @@ atualizarPeriodoTexto();
   'use strict';
   var colegas = null, compAtual = null, souAtendente = false;
   var $ = function(id){ return document.getElementById(id); };
-  var esc = function(t){ var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
+  var esc = function(t){ var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
   var hora = function(d){ return new Date(d).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' }); };
   var diaTxt = function(d){ return new Date(d).toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'2-digit' }); };
   var chaveDia = function(d){ var x = new Date(d); return x.getFullYear() + '-' + (x.getMonth()+1) + '-' + x.getDate(); };

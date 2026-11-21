@@ -11,7 +11,7 @@
    ===================================================================== */
 window.SagaPdf=(function(){
   'use strict';
-  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   function marca(){var logo='',nome='';try{logo=localStorage.getItem('saga-logo')||'';nome=localStorage.getItem('saga-escritorio')||'';}catch(e){}return {logo:logo,nome:nome||'Victor Morais Advocacia'};}
   function agora(){return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date()).replace(',',' às');}
   // Sempre no tema Azul claro (Azul Porcelana): marinho, linhas alternando branco e azul bem claro

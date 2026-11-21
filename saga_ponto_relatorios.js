@@ -15,7 +15,7 @@ window.SagaPontoRelatorios=(function(){
   var DIAS_CURTOS=['dom','seg','ter','qua','qui','sex','sáb'];
   var SIT_ABONOS=['Atestado médico','Falta abonada','Falta justificada','Folga compensatória','Folga concedida','Férias','Licença','Home office'];
 
-  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   function dois(n){return ('0'+n).slice(-2);}
   function br(k){return k.slice(8,10)+'/'+k.slice(5,7)+'/'+k.slice(0,4);}
   function brCurto(k){return k.slice(8,10)+'/'+k.slice(5,7);}

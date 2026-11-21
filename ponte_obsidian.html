@@ -112,7 +112,7 @@ window._sb=_sb;
 var P={sit:'pendente',linhas:[],abertos:{},ligando:null,pedido:0,cols:null};
 var CORES={pendente:'#d97706',aplicada:'#16a34a',descartada:'#8a94a8'};
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
 function quando(iso){return new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Maceio',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(iso));}
 function soDigitos(v){return String(v||'').replace(/\D/g,'');}

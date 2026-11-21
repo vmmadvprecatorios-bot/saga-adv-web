@@ -142,7 +142,7 @@ var A={dados:null,trib:'',busca:'',erro:null,janela:null,fechados:{}};
 var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
 var FAIXAS={1:'Intimação aberta ou peça pedida',2:'Resumo a atualizar',3:'Intimação recente (60 dias)',4:'Tarefa de impulso aberta',5:'Os demais'};
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},5200);}
 function dataBR(d){if(!d)return '';var s=String(d).slice(0,10).split('-');return s[2]+'/'+s[1]+'/'+s[0];}
 function dataHoraBR(d){if(!d)return '';var x=new Date(d);return x.toLocaleDateString('pt-BR')+' às '+x.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}

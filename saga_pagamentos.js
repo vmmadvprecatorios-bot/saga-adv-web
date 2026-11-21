@@ -21,7 +21,7 @@
   var atual = null; // {el, ctx, acordos, pagasAbertas:Set, maisAbertas:Set}
 
   function sb(){ return global._sb; }
-  function esc(t){ var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
+  function esc(t){ var d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function cor(v){ return /^#[0-9a-f]{6}$/i.test(v || '') ? v : '#8a94a8'; }
   function semMov(){ try { return localStorage.getItem('saga-movimento') === 'reduzido'; } catch(e) { return false; } }
   function aviso(msg, tipo){

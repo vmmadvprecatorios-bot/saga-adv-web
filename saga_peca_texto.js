@@ -7,7 +7,7 @@
 window.SagaPecaTexto = (function(){
   'use strict';
   function sb(){ return window._sb; }
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function erro(e){ return (window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || String(e || 'erro desconhecido'); }
 
   async function ler(pecaId){

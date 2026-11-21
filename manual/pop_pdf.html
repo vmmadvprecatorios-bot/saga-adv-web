@@ -95,7 +95,7 @@ ol.legenda .num{flex:0 0 4.6mm;height:4.6mm;border-radius:50%;background:#ea580c
 <script>
 (function(){
   var M=window.SAGA_MANUAL;
-  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+  function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
   function fmt(t){return esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[\[(.+?)\]\]/g,'<span class="bt">$1</span>');}
   // cabeçalho e rodapé das páginas (a capa não tem)
   var st=document.createElement('style');

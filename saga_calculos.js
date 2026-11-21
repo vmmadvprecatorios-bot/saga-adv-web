@@ -12,7 +12,7 @@
 window.SagaCalculos = (function(){
   'use strict';
   var S = { ctx: null, atual: null, pode: false };
-  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML; }
+  function esc(v){ var d = document.createElement('div'); d.textContent = v == null ? '' : String(v); return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
   function sb(){ return (S.ctx && S.ctx.sb) || window._sb; }
   function reduzido(){ try{ return localStorage.getItem('saga-movimento') === 'reduzido'; }catch(e){ return false; } }
   function r2(v){ return Math.round((Number(v) || 0) * 100) / 100; }

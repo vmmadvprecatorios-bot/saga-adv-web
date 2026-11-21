@@ -692,7 +692,7 @@ var CORES_STATUS={'Falta':'#e5484d','Horas negativas':'#e5484d','Marcação inco
 var state={meuId:null,meuColab:null,cfg:null,regimes:{},feriados:{},colabs:[],jornadas:[],ano:0,mes:0,hoje:'',
   pode:{equipe:false,aprova:false,gerencia:false},banco:{},bh:{ano:0,mes:0},mesCalc:null,relData:null,mc:{colab:null,ano:0,mes:0},usuarios:[]};
 
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function showToast(msg,tipo){var w=document.getElementById('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},5000);}
 function abrirModal(id){document.getElementById(id).classList.add('open');}
 function fecharModal(id){document.getElementById(id).classList.remove('open');}
