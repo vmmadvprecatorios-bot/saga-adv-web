@@ -2849,8 +2849,7 @@ async function setup(){
   SagaTexto.ligar(document.getElementById('commentInput'));
   SagaTexto.ligar(document.getElementById('editCommentInput'));
   setupModalsTelefone();
-  await carregarCatalogoEtiquetas();
-  await carregarModelosChecklist();
+  await Promise.all([carregarCatalogoEtiquetas(),carregarModelosChecklist()]);
   renderClientContacts();
   renderActiveProcess();
 }
@@ -3189,7 +3188,7 @@ async function carregarPermissoes(){
 }
 
 async function carregarListas(){
-  await carregarSituacoesAcao();
+  const pSituacoes=carregarSituacoesAcao();
   if(!catalogoTeses)catalogoTeses=SagaTeses.criar({sb:_sb,admin:state.ehAdmin,erro:msg=>showToast(esc(msg),'error'),mudou:()=>{
     state.teses=catalogoTeses.todasTeses();
     state.processos.forEach(p=>{const t=catalogoTeses.tese(p.teseId);if(t){p.tese=t.nome;if(t.area_direito_id)p.areaDireitoId=t.area_direito_id;}});
@@ -3197,13 +3196,16 @@ async function carregarListas(){
   }});
   const resultados=await Promise.all([
     catalogoTeses.carregar(),
-    _sb.from('usuarios').select('id,nome_completo').not('auth_user_id','is',null).order('nome_completo'),
-    _sb.from('status_funil').select('id,nome,fase,cor,ordem')
+    // 21/11 (check-up 2ª rodada): todos os usuários (também os sem login) para o NOME aparecer; o menu de escolha continua só com quem tem login
+    _sb.from('usuarios').select('id,nome_completo,auth_user_id').order('nome_completo'),
+    _sb.from('status_funil').select('id,nome,fase,cor,ordem'),
+    pSituacoes
   ]);
   state.statusFunil=resultados[2].error?[]:(resultados[2].data||[]);
   const usuariosResposta=resultados[1];
   state.teses=catalogoTeses.todasTeses();
-  state.responsaveis=usuariosResposta.error?[]:(usuariosResposta.data||[]);
+  state.todosUsuarios=usuariosResposta.error?[]:(usuariosResposta.data||[]);
+  state.responsaveis=state.todosUsuarios.filter(u=>u.auth_user_id);
   teseOptions.length=0;
   state.teses.forEach(item=>teseOptions.push(item.nome));
   responsavelOptions.length=0;
@@ -3214,8 +3216,9 @@ async function carregarListas(){
 const MODELOS_CHECKLIST_RESERVA=Object.keys(checklistTemplates).map((chave,k)=>({id:chave,chave,nome:checklistTemplates[chave].nome,itens:checklistTemplates[chave].itens.slice(),ordem:k+1,ativo:true}));
 async function carregarModelosChecklist(){
   try{
-    if(state.adminSistema===undefined){const a=await _sb.rpc('eh_admin_sistema');state.adminSistema=a.data===true;}
-    const r=await _sb.from('checklist_modelos').select('id,chave,nome,itens,ordem,ativo').order('ordem').order('criado_em');
+    const [a,r]=await Promise.all([state.adminSistema===undefined?_sb.rpc('eh_admin_sistema'):Promise.resolve(null),
+      _sb.from('checklist_modelos').select('id,chave,nome,itens,ordem,ativo').order('ordem').order('criado_em')]);
+    if(a)state.adminSistema=a.data===true;
     if(r.error)throw r.error;
     state.modelosChecklist=r.data&&r.data.length?r.data:MODELOS_CHECKLIST_RESERVA;state.modelosChecklistBanco=!!(r.data&&r.data.length);
   }catch(e){state.modelosChecklist=MODELOS_CHECKLIST_RESERVA;state.modelosChecklistBanco=false;}
@@ -3436,7 +3439,8 @@ function renderHeaderCliente(){
       meta.id='clienteSituacaoVital';
       meta.className='ficha-meta-linha';
       const contatos=header.querySelector('#ccBarra')||header.querySelector('#clientContactGrid');
-      header.insertBefore(meta,contatos||null);
+      // 21/11: com a ficha em 3 módulos o conteúdo do cartão fica dentro de .fm-cab-corpo; encaixa no pai certo
+      (contatos?contatos.parentNode:(header.querySelector('.fm-cab-corpo')||header)).insertBefore(meta,contatos||null);
     }
     const situacao=state.cliente.situacaoVital;
     const rotulo=situacao==='vivo'?'Vivo':situacao==='falecido'?'Falecido':'Não informado';
@@ -3485,7 +3489,8 @@ function renderHeaderCliente(){
 const SELECT_PROCESSO='id,codigo,codigos_antigos,pessoa_id,origem_id,tese_id,area_direito_id,status_id,situacao_acao_id,responsavel_id,numero_processo_cnj,tipo_acao,valor_precatorio_origem,valor_causa,data_inicio,data_prazo,excluido_logico,excluido_por_id,excluido_em,criado_por_id,criado_em,atualizado_em,campanha_origem_id,status_portal_id,sigilo';
 function mapearProcesso(row){
   const teseRow=(state.teses||[]).find(item=>item.id===row.tese_id);
-  const responsavelRow=(state.responsaveis||[]).find(item=>item.id===row.responsavel_id);
+  const responsavelRow=(state.responsaveis||[]).find(item=>item.id===row.responsavel_id)||(state.todosUsuarios||[]).find(item=>item.id===row.responsavel_id)
+    ||(row.responsavel_id&&typeof window.sagaNomePessoa==='function'&&window.sagaNomePessoa(row.responsavel_id)?{id:row.responsavel_id,nome_completo:window.sagaNomePessoa(row.responsavel_id)}:null);
   const statusRow=(state.statusFunil||[]).find(item=>item.id===row.status_id)||null;
   return {
     id:row.id,
@@ -3543,12 +3548,13 @@ async function carregarProcessosDaPessoa(pessoaId){
   }
   try{
     // Processos em que a pessoa é o titular e processos em que ela é parte (herdeiro, pensionista...)
+    const pPapeis=Promise.resolve(_sb.rpc('processos_da_pessoa',{p_pessoa_id:pessoaId})).catch(e=>({data:null,error:e}));
     const r=await _sb.from('processos').select(SELECT_PROCESSO).eq('pessoa_id',pessoaId).eq('excluido_logico',false).order('criado_em',{ascending:true});
     if(r.error)throw r.error;
     const linhas=(r.data||[]).slice();
     const papeis=new Map();
     try{
-      const rp=await _sb.rpc('processos_da_pessoa',{p_pessoa_id:pessoaId});
+      const rp=await pPapeis;
       (rp.data||[]).forEach(x=>papeis.set(x.processo_id,x));
       const faltam=(rp.data||[]).map(x=>x.processo_id).filter(id=>!linhas.some(l=>l.id===id));
       if(faltam.length){
@@ -3557,8 +3563,8 @@ async function carregarProcessosDaPessoa(pessoaId){
       }
     }catch(e){}
     state.processos=linhas.map(row=>{const proc=mapearProcesso(row);const info=papeis.get(row.id);proc.parteInfo=info&&!info.principal?{papel:info.papel,herdeiroDe:info.herdeiro_de}:null;return proc;});
-    await carregarHonorariosDosProcessos(state.processos);
-    if(window.SagaRecursos){try{await SagaRecursos.carregar(_sb,state.processos.map(p=>p.id));}catch(e){}}
+    await Promise.all([carregarHonorariosDosProcessos(state.processos),
+      window.SagaRecursos?Promise.resolve().then(()=>SagaRecursos.carregar(_sb,state.processos.map(p=>p.id))).catch(()=>{}):null]);
     if(!state.processos.some(proc=>proc.id===state.activeProcessId))state.activeProcessId=state.processos[0]?state.processos[0].id:null;
     return state.processos;
   }catch(erro){
@@ -3574,7 +3580,7 @@ async function carregarHistoricoStatus(pid){
     const r=await _sb.from('historico_status').select('id,usuario_id,status_anterior_id,status_novo_id,observacao,criado_em').eq('processo_id',pid).order('criado_em',{ascending:false}).limit(100);
     if(r.error)return [];
     const nomeStatus=id=>{const st=(state.statusFunil||[]).find(x=>x.id===id);return st?st.nome:'sem status';};
-    const nomeUsuario=id=>{const u=(state.responsaveis||[]).find(x=>x.id===id);return u?u.nome_completo:'o sistema';};
+    const nomeUsuario=id=>{const u=(state.todosUsuarios||state.responsaveis||[]).find(x=>x.id===id);return u?u.nome_completo:'o sistema';};
     return (r.data||[]).map(h=>({
       id:'h-'+h.id,tipo:'sistema',icone:'relogio',ts:h.criado_em,data:tsLabel(h.criado_em),
       texto:(h.observacao?h.observacao+'. ':'')+'Status: '+nomeStatus(h.status_anterior_id)+' → '+nomeStatus(h.status_novo_id)+' (por '+nomeUsuario(h.usuario_id)+')'
@@ -3967,6 +3973,20 @@ async function removerRetorno(){
 async function carregarDetalhesProcesso(pid){
   if(!pid||!perms.processosVisualizar)return null;
   try{
+    // 21/11 (ficha em ondas): comentários, documentos, tarefas, agenda, intimações, histórico, agente e pastas saem
+    // junto com a linha do processo (antes esperavam por ela)
+    const pDados=Promise.all([
+      carregarComentarios(pid),
+      carregarDocumentos(pid),
+      carregarTarefas(pid),
+      carregarCompromissos(pid),
+      carregarIntimacoesProcesso(pid),
+      carregarHistoricoStatus(pid),
+      carregarResumoAgente(pid),
+      carregarPedidosAgente(pid)
+    ]);
+    const pPastas=carregarPastas();
+    pDados.catch(()=>{});pPastas.catch(()=>{});
     const r=await _sb.from('processos').select(SELECT_PROCESSO).eq('id',pid).eq('excluido_logico',false).maybeSingle();
     if(r.error||!r.data)return null;
     const processo=mapearProcesso(r.data);
@@ -3980,22 +4000,13 @@ async function carregarDetalhesProcesso(pid){
     processo.checklists=Array.isArray(checklistsPorProcesso[pid])
       ? JSON.parse(JSON.stringify(checklistsPorProcesso[pid]))
       : [];
-    const dados=await Promise.all([
-      carregarComentarios(pid),
-      carregarDocumentos(pid),
-      carregarTarefas(pid),
-      carregarCompromissos(pid),
-      carregarIntimacoesProcesso(pid),
-      carregarHistoricoStatus(pid),
-      carregarResumoAgente(pid),
-      carregarPedidosAgente(pid)
-    ]);
+    const dados=await pDados;
     processo.resumoAgente=dados[6];
     processo.pedidosAgente=dados[7];
     processo.intimacoes=dados[4];
     processo.timeline=dados[0].concat(dados[5]).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
     processo.documentos=dados[1];
-    state.pastas=await carregarPastas();
+    state.pastas=await pPastas;
     processo.tarefas=dados[2];
     processo.compromissos=dados[3].lista;
     processo.retorno=dados[3].retorno;
@@ -4063,12 +4074,12 @@ async function carregarFicha(pessoaId,processoIdInicial){
     state.pessoaRow=rp.data;
     aplicarPessoaNoEstado(rp.data);
     carregarNotasFicha(pessoaId);
-    await carregarTelefones(pessoaId);
-    await carregarEmails(pessoaId);
-    await carregarEnderecos(pessoaId);
+    // 21/11 (ficha em ondas): telefones, e-mails, endereços e processos saem juntos; o cartão de cima aparece assim que os contatos chegam
+    const pProcessos=carregarProcessosDaPessoa(pessoaId);
+    await Promise.all([carregarTelefones(pessoaId),carregarEmails(pessoaId),carregarEnderecos(pessoaId)]);
     renderHeaderCliente();
     renderClientContacts();
-    await carregarProcessosDaPessoa(pessoaId);
+    await pProcessos;
     if(processoIdInicial&&state.processos.some(proc=>proc.id===processoIdInicial))state.activeProcessId=processoIdInicial;
     if(state.activeProcessId)await carregarDetalhesProcesso(state.activeProcessId);
     state.activeView='process';
@@ -5320,9 +5331,8 @@ async function init(){
       return;
     }
     await carregarPermissoes();
-    await carregarListas();
-    await carregarNotificacoes();
-    await setup();
+    // 21/11 (ficha em ondas, check-up 2ª rodada): listas, avisos e montagem da tela saem juntos (antes, um depois do outro)
+    await Promise.all([carregarListas(),carregarNotificacoes(),setup()]);
     const nav=document.getElementById('prototypeNav');
     if(nav)nav.style.display='none';
     const params=new URLSearchParams(window.location.search);
