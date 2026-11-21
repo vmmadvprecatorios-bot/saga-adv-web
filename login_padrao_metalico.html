@@ -51,6 +51,8 @@ setTimeout(function(){document.documentElement.classList.remove('saga-entrando')
   .campo{display:flex;flex-direction:column;gap:7px}
   .campo label{font-size:12.5px;font-weight:500;color:var(--apagado);letter-spacing:.02em}
   .rot{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+  .manter{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;min-height:32px;align-self:flex-start}
+  .manter input[type=checkbox]{width:16px;height:16px;min-width:16px;padding:0;margin:0;flex:0 0 16px;border-radius:4px}
   .rot a{font-size:12.5px;color:var(--destaque);text-decoration:none}.rot a:hover{text-decoration:underline}
   input{font:inherit;font-size:15px;width:100%;padding:12px 14px;border-radius:var(--raio);border:1px solid var(--borda);background:var(--campo);color:var(--texto);outline:0;transition:border-color .2s,box-shadow .2s}
   input::placeholder{color:var(--apagado);opacity:.7}
@@ -137,6 +139,11 @@ setTimeout(function(){document.documentElement.classList.remove('saga-entrando')
           <button type="button" id="olhoSenha" aria-pressed="false" aria-controls="loginSenha">Mostrar</button>
         </div>
       </div>
+      <!-- 21/11 (Dr. Victor): "Manter conectado" voltou (tinha saído na tela nova de 19/11). Marcado, o administrador
+           e quem é isento do login diário não saem por tempo sem uso; para a equipe valem as regras do login diário. -->
+      <label class="manter" for="manterConectado" title="Administrador e isentos do login diário: não sai sozinho por tempo sem uso, só pelo Sair. Para a equipe continuam as regras do login diário (corte das 20h e 30 min sem uso fora do horário).">
+        <input type="checkbox" id="manterConectado"> Manter conectado
+      </label>
       <p id="msgErro" role="alert" hidden></p>
       <button class="entrar" id="btnEntrar" type="submit">Entrar</button>
     </form>
@@ -251,6 +258,8 @@ var MSG_ACESSO_DESATIVADO = 'Seu acesso ao sistema foi desativado. Fale com o ad
     if (r.data && r.data.session) {
       if (await contaLiberada()) {
         try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
+        // volta do login pelo Google: aplica a escolha feita antes de sair para o Google
+        if (sessionStorage.getItem('saga-login-agora') === 'google') await gravarManterConectado(localStorage.getItem('saga-manter-conectado-escolha') === '1');
         window.location.replace(await telaInicial());
         return;
       }
@@ -303,6 +312,20 @@ async function telaInicialPadrao() {
   } catch (e) { return TELA_POS_LOGIN; }
 }
 
+// "Manter conectado" (21/11): fica SÓ neste aparelho (saga-manter-conectado = {u: id do login}); o saga_ui.js
+// só usa para o administrador e os isentos do login diário (login_regras.isento).
+async function gravarManterConectado(marcado) {
+  try {
+    if (marcado === undefined) marcado = document.getElementById('manterConectado').checked;
+    var s = await _sb.auth.getSession();
+    var id = s.data && s.data.session && s.data.session.user.id;
+    if (marcado && id) localStorage.setItem('saga-manter-conectado', JSON.stringify({ u: id, desde: Date.now() }));
+    else localStorage.removeItem('saga-manter-conectado');
+  } catch (e) {}
+}
+// a caixinha começa como ficou da última vez neste aparelho
+try { if (localStorage.getItem('saga-manter-conectado')) document.getElementById('manterConectado').checked = true; } catch (e) {}
+
 // Confere se a conta logada pertence a alguem da equipe e esta ativa
 // (liga a conta ao pre-cadastro pelo e-mail no primeiro acesso pelo Google)
 async function contaLiberada() {
@@ -329,6 +352,7 @@ document.getElementById('btnGoogle').addEventListener('click', async function ()
   btn.disabled = true;
   var volta = window.location.href.split('?')[0].split('#')[0];
   try { sessionStorage.setItem('saga-login-agora', 'google'); } catch (e) {}
+  try { localStorage.setItem('saga-manter-conectado-escolha', document.getElementById('manterConectado').checked ? '1' : '0'); } catch (e) {}
   var r = await _sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: volta, queryParams: { prompt: 'select_account' } } });
   if (r.error) { btn.disabled = false; try { sessionStorage.removeItem('saga-login-agora'); } catch (e) {} mostrarErroLogin('Não foi possível abrir o login do Google' + (r.error.message ? ' (' + r.error.message + ')' : '') + '. Tente de novo.'); }
 });
@@ -384,6 +408,7 @@ document.getElementById('formLogin').addEventListener('submit', async function (
 
     // Marca a entrada como atividade, para a contagem de inatividade do saga_ui.js
     try { localStorage.setItem('saga-ultima-atividade', String(Date.now())); } catch (e) {}
+    await gravarManterConectado();
     // Entrada no sistema (bloco 157): a 1ª tela grava este login com a hora do servidor
     try { sessionStorage.setItem('saga-login-agora', 'senha'); } catch (e) {}
     btn.textContent = 'Entrando...';
