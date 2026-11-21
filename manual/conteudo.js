@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.35",
+  versao: "3.36",
   data: "21/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.36", data: "21/11/2026", mudou: "Agenda: **Ver no celular** (link pessoal para o Google Agenda e o iPhone, só leitura, com lembrete; Gerar link novo / Desligar) e aviso no **sino 30 minutos antes** de cada compromisso." },
     { versao: "3.35", data: "21/11/2026", mudou: "Preferências em **abas**: Aparência (tema, cor e letra), Vidro (só com cor de vidro), Tela (efeitos, cadeado, tela inicial e as escolhas que acompanham a conta), Avisos e sons e, para o administrador, Equipe (cores da equipe). A aba escolhida fica lembrada." },
     { versao: "3.34", data: "21/11/2026", mudou: "Ficha do cliente: **Telefones, E-mails e Endereços** do topo abrem e recolhem cada um pelo título (com a contagem; fechado mostra só o principal), [[Recolher todos]]/[[Abrir todos]], lembrado na sua conta. Botão [[Ler consulta (PDF ou print)]] no topo: a leitura preenche os contatos do alto da ficha (\"Não validado\") e a Localização sem repetir o que já existe, e anota um resumo no processo; o arquivo não é guardado." },
     { versao: "3.33", data: "19/11/2026", mudou: "Gráficos: padrão único para todos, **Metal escovado** (rosca como sempre e as cores do tema). O quadro Gráficos saiu das Preferências." },
@@ -791,6 +792,19 @@ window.SAGA_MANUAL = {
           ],
           img: "marcar_atendimento",
           marcas: ["Cliente (cadastrado).", "Quem vai atender.", "Horário livre.", "Presencial ou telepresencial.", "Marcar atendimento."]
+        },
+        { id: "celular", titulo: "Ver a agenda no celular (Google Agenda ou iPhone)",
+          quando: "Para ter os seus compromissos do SAGA no calendário do celular, com lembrete.",
+          passos: [
+            "Na **Agenda**, clique em [[Ver no celular]].",
+            "Escolha **Só a minha agenda** ou **A minha + a do escritório** e clique em [[Gerar meu link]].",
+            "**Google Agenda**: no computador, abra calendar.google.com > **Outras agendas** > **+** > **Do URL**, cole o link e clique em **Adicionar agenda**. Em alguns minutos ela aparece também no app do celular. Para o lembrete, nos três pontinhos da agenda \"SAGA\" > Configurações > **Notificações de eventos** > 30 minutos.",
+            "**iPhone**: toque em [[Abrir no iPhone]] e confirme **Assinar** (o lembrete de 30 minutos já vem junto).",
+            "É **só leitura**: para marcar ou mudar, use o SAGA. O Google relê a agenda algumas vezes por dia; no SAGA tudo aparece na hora.",
+            "O link é **pessoal**: não mande para ninguém. Perdeu o celular? [[Gerar link novo]] (desliga o antigo na hora) ou [[Desligar o link]].",
+            "Para os colaboradores, o celular mostra só o **tipo e o código VMM** do compromisso (sem o nome do cliente).",
+            "Além disso, o SAGA avisa no **sino** 30 minutos antes de cada compromisso seu."
+          ]
         }
       ]
     },
