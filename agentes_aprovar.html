@@ -242,7 +242,7 @@ function proximaRodadaRenata(){
   for(var i=0;i<horas.length;i++){if(horas[i]>h||(horas[i]===h&&mi<35))return 'hoje às '+horas[i]+'h35';}
   return 'amanhã às 7h35';
 }
-var NOME_SIT_PECA={aguardando_aprovacao:['Aguardando sua aprovação','amarelo'],depois:['Depois',''],na_fila:['Na fila da Renata',''],em_preparo:['A Renata está preparando',''],ajustar:['Voltou para ajuste: a Renata refaz','amarelo'],erro:['Erro: precisa de alguém','vermelho']};
+var NOME_SIT_PECA={aguardando_aprovacao:['Aguardando sua aprovação','amarelo'],depois:['Depois',''],na_fila:['Na fila da Renata',''],em_preparo:['A Renata está preparando',''],ajustar:['Voltou para ajuste: a Renata refaz','amarelo'],em_revisao:['Na revisão da Luísa',''],revisao_ajustar:['Voltou da revisão: a Renata corrige','amarelo'],erro:['Erro: precisa de alguém','vermelho']};
 var NOME_PECA={impulso:'Impulso processual',manifestacao:'Manifestação',inicial_pss:'Inicial do PSS',outra:'Outra peça'};
 var PR={sit:'aguardando',ordem:'prioridade',marc:{}};
 function tempoParado(d){
@@ -253,7 +253,7 @@ function tempoParado(d){
 function desenharComRenata(){
   var box=$('comRenata'),todos=(P.dados&&P.dados.pecas_com_a_renata)||[];
   if(!todos.length||P.sit!=='pendentes'){box.hidden=true;box.innerHTML='';return;}
-  var grupos={aguardando:['aguardando_aprovacao'],depois:['depois'],fila:['na_fila','em_preparo','ajustar','erro']};
+  var grupos={aguardando:['aguardando_aprovacao'],depois:['depois'],fila:['na_fila','em_preparo','em_revisao','revisao_ajustar','ajustar','erro']};
   var cont={aguardando:0,depois:0,fila:0};todos.forEach(function(k){Object.keys(grupos).forEach(function(g){if(grupos[g].indexOf(k.situacao)>=0)cont[g]++;});});
   var l=todos.filter(function(k){return grupos[PR.sit].indexOf(k.situacao)>=0;});
   var pr={urgente:0,alta:1,normal:2,baixa:3};
@@ -282,6 +282,7 @@ function desenharComRenata(){
         (k.porque?'<div class="det" style="margin-top:4px"><b>Por quê:</b> '+esc(k.porque)+'</div>':'')+
         (k.situacao==='na_fila'||k.situacao==='em_preparo'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata faz '+(k.situacao==='em_preparo'?'agora':'na próxima rodada ('+esc(proximaRodadaRenata())+')')+' e a petição aparece aqui em cima, em Para aprovar, com o Word.</div>':'')+
         (k.situacao==='depois'?'<div class="det" style="margin-top:6px">Guardada para depois'+(k.decidido_por?' por '+esc(k.decidido_por):'')+(k.decidido_em?' em '+esc(dataBR(k.decidido_em)):'')+'. A Renata não faz enquanto estiver aqui.</div>':'')+
+        (k.situacao==='em_revisao'||k.situacao==='revisao_ajustar'?(window.SagaAgentesExtra&&SagaAgentesExtra.revisaoNaFila?SagaAgentesExtra.revisaoNaFila(k):''):'')+
         (k.situacao==='ajustar'?'<div class="det" style="margin-top:6px">Voltou para ajuste: a Renata refaz na próxima rodada ('+esc(proximaRodadaRenata())+').</div>':'')+
         (k.ultimo_erro?'<div class="'+(amarelo?'aviso-amarelo':'erro-caixa')+'" style="margin-top:6px"><b>'+(amarelo?'Erro passageiro ('+esc(k.tentativas)+'ª tentativa): tenta de novo na próxima rodada.':'Erro')+'</b> '+esc(k.ultimo_erro)+'</div>':'')+
         '<div class="selos">'+etq+'<span class="selo">Pedida em '+esc(dataHoraBR(k.desde))+'</span></div></div></div>'+

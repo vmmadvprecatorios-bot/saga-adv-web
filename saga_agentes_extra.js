@@ -7,6 +7,9 @@
    - Recados: agente_recados_painel / agente_recado_enviar / agente_recados_vistos / agente_recados_arquivar.
      A agente lê e responde pelo conector (meus_recados / responder_recado) na próxima rodada;
      a resposta chega no sino de quem escreveu (referencia_tabela 'agente_recados').
+   REVISÃO DAS PETIÇÕES (21/11/2026, Dr. Victor; blocos 300-302): a Luísa confere cada petição da Renata
+   antes de chegar aqui. Na entrega aparece o selo (Revisada / ponto não resolvido / Não revisada) e a lista
+   curta do que foi conferido; no quadro "Com a Renata", as que estão na revisão ou voltaram dela.
    Só para quem tem agentes.aprovar (o banco recusa os outros). Erros sempre à vista.
    ===================================================================== */
 (function(){
@@ -53,6 +56,10 @@
     '.ax-erro{margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12px;line-height:1.5}'+
     '.ax-erro[hidden]{display:none}'+
     '.ax-nota{font-size:11.5px;color:var(--muted);line-height:1.55}'+
+    '.ax-rev{margin-top:8px;padding:9px 11px;border-radius:10px;border:1px solid var(--border-soft);background:color-mix(in srgb,var(--panel) 70%,transparent);font-size:12px;line-height:1.55}'+
+    '.ax-rev.ok{border-color:color-mix(in srgb,var(--success,#30a46c) 45%,transparent)}'+
+    '.ax-rev.amarelo{border-color:color-mix(in srgb,var(--warning,#f5a524) 55%,transparent)}'+
+    '.ax-rev ul{margin:4px 0 0;padding-left:18px}.ax-rev li{margin:1px 0}.ax-rev .ax-rev-tit{font-weight:600}'+
     '.ax-conv{border:1px solid var(--border-soft);border-radius:12px;background:var(--panel);margin-top:10px;overflow:hidden}'+
     '.ax-conv-cab{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border-soft);font-size:12px}'+
     '.ax-conv-cab b{font-weight:600}.ax-conv-cab .ax-nota a{color:var(--text)}'+
@@ -168,6 +175,10 @@
     h+='<div class="secao">Resumo do período</div><div class="kpis">'+
       kpi('Rodadas de trabalho',tot.rod,'forte')+kpi('Itens lidos',tot.lidos)+kpi('Entregas feitas',tot.ent,'forte')+kpi('Aprovadas',tot.apr)+
       kpi('Aprovadas de primeira',pct(percGeral))+kpi('Mandadas ajustar',tot.ajus)+kpi('Reprovadas',tot.repr,tot.repr?'ruim':'')+kpi('Rodadas com falha',tot.falha,tot.falha?'ruim':'')+'</div>';
+    var rvq=d.revisao||{};
+    if(n(rvq.revisoes)>0)h+='<div class="secao">Revisão das petições (Luísa confere antes de chegar ao Dr. Victor)</div><div class="kpis">'+
+      kpi('Revisões feitas',n(rvq.revisoes),'forte')+kpi('Revisadas',n(rvq.revisadas))+kpi('Revisadas de primeira',n(rvq.revisadas_de_primeira))+
+      kpi('Voltaram para a Renata',n(rvq.voltaram))+kpi('Não resolvidas',n(rvq.nao_resolvidas),n(rvq.nao_resolvidas)?'ruim':'')+kpi('Sem revisão (tempo ou prazo)',n(rvq.nao_revisadas))+'</div>';
     // por agente
     function blocoAgente(a){
       var r=a.rodadas||{},dc=a.decisoes||{},en=a.entregas||{},rc=a.recados||{},s='';
@@ -357,6 +368,47 @@
     $('axBtnRelatorio').addEventListener('click',function(){abrir(montarRelatorio());});
     return true;
   }
+  /* ---------- revisão das petições (Luísa) ---------- */
+  function lista(arr){arr=(arr||[]).filter(function(x){return x&&String(x).trim();});return arr.length?'<ul style="margin:4px 0 0;padding-left:18px">'+arr.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'';}
+  function htmlRevisao(rv){
+    if(!rv||!rv.situacao)return '';
+    var au=rv.automatica||{},conf=(rv.conferido||[]).concat(au.conferido||[]),prob=rv.problemas||[],avs=au.avisos||[],autoProb=au.problemas||[];
+    var cls='amarelo',tit;
+    if(rv.situacao==='revisada'){cls='ok';tit='Revisada'+(rv.revisor?' pela '+rv.revisor:'')+(rv.em?' em '+dataHora(rv.em):'');}
+    else if(rv.situacao==='nao_resolvido'){tit='Revisão: '+(prob.length||1)+' ponto(s) não resolvido(s) depois de '+(rv.volta?Math.max(1,Number(rv.volta)-1):2)+' volta(s) para a Renata';}
+    else if(rv.situacao==='nao_revisada'){tit='Não revisada'+(rv.motivo?': '+rv.motivo:'')+'. Confira com atenção.';}
+    else return '';
+    var h='<div class="ax-rev '+cls+'" data-ax-rev><div class="ax-rev-tit">'+esc(tit)+'</div>';
+    if(rv.situacao!=='revisada'&&prob.length)h+='<div style="margin-top:4px"><b>O que ficou:</b>'+lista(prob)+'</div>';
+    if(rv.situacao==='revisada'&&prob.length)h+='<div style="margin-top:4px"><b>Observações da revisão:</b>'+lista(prob)+'</div>';
+    if(autoProb.length&&rv.situacao!=='revisada')h+='<div style="margin-top:4px"><b>Conferência automática achou:</b>'+lista(autoProb)+'</div>';
+    if(rv.comentario)h+='<div style="margin-top:4px"><b>Comentário:</b> '+esc(rv.comentario)+'</div>';
+    if(conf.length)h+='<div style="margin-top:4px"><b>Conferido:</b> '+esc(conf.join('; '))+'.</div>';
+    if(avs.length)h+='<div style="margin-top:4px"><b>Para conferir:</b>'+lista(avs)+'</div>';
+    return h+'</div>';
+  }
+  // texto do quadro "Com a Renata" para as que estão na revisão (chamado pelo agentes_aprovar.html)
+  function revisaoNaFila(k){
+    var rv=k.revisao||{};
+    if(k.situacao==='em_revisao')return '<div class="det" style="margin-top:6px">Na revisão da Luísa'+(k.revisao_desde?' desde '+esc(dataHora(k.revisao_desde)):'')+
+      (k.revisao_voltas?' (corrigida pela Renata, '+esc(k.revisao_voltas)+'ª volta)':'')+'. Revisada, aparece aqui em cima, em Para aprovar. Se passar de 2 h na revisão ou o prazo for em até 2 dias úteis, vem sozinha, marcada "Não revisada".</div>';
+    return '<div class="aviso-amarelo" style="margin-top:6px"><b>A Luísa pediu correção ('+esc(k.revisao_voltas||1)+'ª volta).</b> A Renata corrige na próxima rodada.'+lista(rv.problemas)+(rv.comentario?'<div>'+esc(rv.comentario)+'</div>':'')+'</div>';
+  }
+  function revisaoEntregas(){
+    var area=$('area');if(!area||!window.P)return;
+    area.querySelectorAll('.ped[data-id]').forEach(function(el){
+      if(el.querySelector('[data-ax-rev]'))return;
+      var e=(P.lista||[]).filter(function(x){return x.id===el.dataset.id;})[0];
+      if(!e||e.tipo!=='peticao'||!e.conteudo||!e.conteudo.revisao)return;
+      var h=htmlRevisao(e.conteudo.revisao);if(!h)return;
+      var sel=el.querySelector('.selos'),d=document.createElement('div');d.innerHTML=h;
+      if(sel)sel.parentNode.insertBefore(d.firstChild,sel);
+      var rv=e.conteudo.revisao,s2=document.createElement('span');
+      s2.className='selo '+(rv.situacao==='revisada'?'ok':'amarelo');
+      s2.textContent=rv.situacao==='revisada'?'Revisada':(rv.situacao==='nao_revisada'?'Não revisada':'Revisão: ponto não resolvido');
+      if(sel)sel.insertBefore(s2,sel.firstChild);
+    });
+  }
   // botão "Recado" em cada entrega (abre o recado já ligado a ela)
   function botoesEntregas(){
     var area=$('area');if(!area||!window.P||!P.dados||!P.dados.pode_aprovar)return;
@@ -373,10 +425,11 @@
   }
   function iniciar(){
     if(!porBotoes())return;
-    var area=$('area');if(area)new MutationObserver(function(){botoesEntregas();}).observe(area,{childList:true});
+    var area=$('area');if(area)new MutationObserver(function(){revisaoEntregas();botoesEntregas();}).observe(area,{childList:true});
     var tentativas=0;
     (function esperar(){ // espera a tela carregar (sessão e permissões) antes de contar
       if(window.P&&P.dados){
+        revisaoEntregas();
         if(!P.dados.pode_aprovar){var w=$('axBtnRecados');if(w)w.parentNode.hidden=true;return;}
         botoesEntregas();atualizarContagem();
         var q=new URLSearchParams(location.search);
@@ -388,6 +441,6 @@
     })();
     document.addEventListener('visibilitychange',function(){if(!document.hidden)atualizarContagem();});
   }
-  window.SagaAgentesExtra={abrirRecados:abrirRecados,abrirRelatorio:function(){abrir(montarRelatorio());},paginasRelatorio:paginasRelatorio};
+  window.SagaAgentesExtra={revisaoNaFila:revisaoNaFila,htmlRevisao:htmlRevisao,abrirRecados:abrirRecados,abrirRelatorio:function(){abrir(montarRelatorio());},paginasRelatorio:paginasRelatorio};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar);else iniciar();
 })();
