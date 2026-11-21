@@ -101,7 +101,7 @@ function toast(msg,tipo){var w=document.getElementById('toastWrap');var t=docume
 function renderTudo(){
   document.querySelectorAll('#pillsVisao .pill').forEach(function(b){b.classList.toggle('active',b.dataset.visao===visao);});
   var c=SagaIntimacoes.contagens();
-  var cards=[['hoje','Chegaram ou publicadas hoje',c.hoje,'#4b8af5'],['abertas','Abertas',c.abertas,'#e5484d'],['vencidas','Prazos vencidos',c.atrasadas,'#f97316'],['fora','Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']],fx=SagaIntimacoes.faixa();
+  var cards=[['hoje','Chegaram ou publicadas hoje',c.hoje,'#4b8af5'],['abertas','Abertas',c.abertas,'#e5484d'],['vencidas','Prazos vencidos',c.atrasadas,'#f97316'],['vencendo','Prazo vencendo (até 3 dias úteis)',c.vencendo,'#d99a1e'],['fora','Fora do SAGA (sem processo)',c.semProcesso,'#8b5cf6']],fx=SagaIntimacoes.faixa();
   document.getElementById('kpis').innerHTML=cards.map(function(k){return '<button type="button" class="kpi-card kpi-filtro'+(fx===k[0]?' ativo':'')+'" data-faixa="'+k[0]+'" aria-pressed="'+(fx===k[0])+'" title="'+(fx===k[0]?'Clique para tirar o filtro':'Clique para filtrar')+'" style="--c:'+k[3]+'"><span class="faixa"></span><div class="rotulo">'+esc(k[1])+'</div><div class="kpi-value">'+k[2]+'</div></button>';}).join('');
   SagaIntimacoes.montarFiltros(document.getElementById('intimFiltros'));
   pintarAvisosIntim();

@@ -242,6 +242,10 @@
   '.si-topo .data{margin-left:auto;font-weight:600}.si-topo .data+.si-mover{margin-left:2px}'+
   '.si-chk{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--border);background:none;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;padding:0}'+
   '.si-chk.on{background:var(--success);border-color:var(--success);color:#fff}'+
+  '.si-luisa{margin-top:5px;font-size:11px;line-height:1.35;color:var(--c,var(--muted));overflow-wrap:anywhere}.si-luisa b{font-weight:700}.si-luisa em{color:var(--muted);font-style:normal}'+
+  '.si-luisa-erro{border-color:color-mix(in srgb,var(--danger) 40%,transparent)!important;color:var(--danger)}'+
+  // 21/11 (check-up 2ª rodada): no celular cada botão pequeno do cartão ganha área de toque de 40 px, sem mudar o desenho
+  '@media (pointer:coarse){.si-chk,.si-mover,.si-copiar,.si-lig,.si-mov-col,[data-mover-col],.si-ag-mais{position:relative}.si-chk::after,.si-mover::after,.si-copiar::after,.si-mov-col::after,[data-mover-col]::after{content:"";position:absolute;left:50%;top:50%;width:40px;height:40px;transform:translate(-50%,-50%)}.si-chk{width:22px;height:22px}.si-lig{padding:6px 9px;font-size:10.5px}.si-lig::after{content:"";position:absolute;inset:-6px -2px}}'+
   '.si-tag{display:inline-block;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--c,#8a94a8) 15%,transparent);color:var(--c,#8a94a8);white-space:nowrap}'+
   '.si-trib{padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--text) 10%,transparent);color:var(--text);white-space:nowrap}'+
   '.si-uf{white-space:nowrap;padding:1px 6px;border-radius:999px;border:1px solid color-mix(in srgb,var(--info) 45%,transparent);background:color-mix(in srgb,var(--info) 12%,transparent);color:var(--text);font-weight:700;letter-spacing:.04em}'+
@@ -386,7 +390,83 @@
       (rr[0].data||[]).forEach(function(x){x.tipo=tiposRec[x.tipo_id]||null;S.recursos[x.id]=x;});
     }catch(e){}}
     S.carregado=true;
+    carregarTriagem();
     return true;
+  }
+  // 21/11 (ideia 7 do check-up; bloco 356): classificação da Luísa e prazo no cartão. UMA chamada para a lista inteira
+  // (em lotes de 1.000), depois da 1ª imagem: a tela não espera por ela. Erro fica à vista (aviso + quadro na janela).
+  var LUISA='Luísa';
+  function erroTriagem(e){var t=(e&&(e.code||'')+' '+(e.message||''))||'';
+    return /PGRST202|Could not find the function|42883/i.test(t)?'a classificação da '+LUISA+' ainda não foi ligada no banco (bloco 356)':'erro ao ler a classificação da '+LUISA+' ('+((e&&e.code)||'banco')+': '+((e&&e.message)||'sem detalhe')+')';}
+  function carregarTriagem(){
+    if(!S.sb)return;
+    var h=hojeISO(),ids=S.itens.filter(function(i){return !i.concluida||ehDeHoje(i,h);}).map(function(i){return i.id;});
+    if(!ids.length){S.tri={};return;}
+    var meu=S.triPedido=(S.triPedido||0)+1;
+    (async function(){
+      var novo={},erro='';
+      try{
+        for(var k=0;k<ids.length;k+=1000){
+          var r=await S.sb.rpc('intimacoes_triagem_info',{p_ids:ids.slice(k,k+1000)});
+          if(r.error){erro=erroTriagem(r.error);break;}
+          Object.assign(novo,r.data||{});
+        }
+      }catch(e){erro=erroTriagem({message:String(e&&e.message||e)});}
+      if(meu!==S.triPedido)return;
+      S.tri=novo;S.triErro=erro;S.triHora=new Date();
+      if(erro&&S.triAvisado!==erro){S.triAvisado=erro;toast(esc('Intimações: '+erro+'. O resto da tela funciona normalmente.'),'error');}
+      if(S.aoMudar)S.aoMudar();
+      var aberta=document.getElementById('siLuisaBox');if(aberta&&aberta.dataset.int){var ia=S.itens.find(function(x){return x.id===aberta.dataset.int;});if(ia)renderLuisa(ia);}
+    })();
+  }
+  function triDe(i){return (S.tri&&S.tri[i.id])||null;}
+  function diasUteisTxt(n){return n<0?'vencido há '+(-n)+(n===-1?' dia útil':' dias úteis'):n===0?'vence hoje':'falta'+(n===1?' 1 dia útil':'m '+n+' dias úteis');}
+  function corDias(n){return n==null?'var(--muted)':n<=0?'#e5484d':n<=3?'#d99a1e':'#2fae7a';}
+  function vencendo(i){var t=triDe(i);return !i.concluida&&!!t&&t.dias_uteis!=null&&t.dias_uteis>=0&&t.dias_uteis<=3;}
+  var ACAO_LUISA={tarefa:'criar a tarefa',concluir_intimacao:'só ciência (concluir a intimação)',nada:'nada a fazer'};
+  var PECA_LUISA={impulso:'impulso processual',manifestacao:'manifestação',inicial_pss:'inicial do PSS',outra:'petição'};
+  // linha discreta do cartão (sempre à vista, também no celular)
+  function htmlLuisa(i){
+    var t=triDe(i);if(!t||t.situacao==='sem_triagem')return '';
+    var cinza=function(txt,tit){return '<div class="si-luisa" style="--c:var(--muted)"'+(tit?' title="'+esc(tit)+'"':'')+'><b>'+LUISA+':</b> '+esc(txt)+'</div>';};
+    if(t.situacao==='aguardando')return cinza('aguardando a classificação');
+    if(t.situacao==='ignorado')return cinza('sem providência',t.ignorado_motivo||'');
+    if(t.situacao==='reprovado')return cinza('classificação recusada pelo Dr. Victor');
+    var pz='';
+    if(t.prazo){pz=' · prazo '+(t.prazo_dias&&t.prazo_de!=='pessoa'?t.prazo_dias+' dias úteis, ':'')+'até '+dataBR(t.prazo)+(t.prazo_de==='pessoa'?' (da equipe)':'');
+      if(!i.concluida&&t.dias_uteis!=null)pz+=' · '+diasUteisTxt(t.dias_uteis);}
+    var tit=[t.providencia?'O que fazer: '+t.providencia:'',t.peca?'Petição pedida à Renata: '+(t.peca_titulo||PECA_LUISA[t.peca]||'petição'):'',t.situacao==='em_aprovacao'?'Sugestão da '+LUISA+', esperando a aprovação em Para aprovar.':''].filter(Boolean).join('\n');
+    return '<div class="si-luisa" style="--c:'+(i.concluida?'var(--muted)':corDias(t.dias_uteis))+'" title="'+esc(tit)+'"><b>'+LUISA+':</b> '+esc((t.o_que_e||'classificada')+pz)+(t.situacao==='em_aprovacao'?' <em>(sugestão)</em>':'')+'</div>';
+  }
+  // quadro da janela da intimação
+  async function renderLuisa(i){
+    var box=document.getElementById('siLuisaBox');if(!box)return;
+    box.dataset.int=i.id;
+    var t=triDe(i);
+    if(!t&&!S.triErro){
+      box.innerHTML='<div class="si-agente sem"><h5>Classificação da '+LUISA+'</h5>Procurando…</div>';
+      var r=await S.sb.rpc('intimacoes_triagem_info',{p_ids:[i.id]});
+      box=document.getElementById('siLuisaBox');if(!box||box.dataset.int!==i.id)return;
+      if(r.error){box.innerHTML='<div class="si-agente sem si-luisa-erro"><h5>Classificação da '+LUISA+'</h5>'+esc(erroTriagem(r.error))+'. Tente de novo abrindo a intimação mais tarde; se continuar, avise o administrador.</div>';return;}
+      t=(r.data||{})[i.id]||null;if(t){S.tri=S.tri||{};S.tri[i.id]=t;}
+    }
+    if(S.triErro&&!t){box.innerHTML='<div class="si-agente sem si-luisa-erro"><h5>Classificação da '+LUISA+'</h5>'+esc(S.triErro)+'.</div>';return;}
+    if(!t||t.situacao==='sem_triagem'){box.innerHTML='';return;}
+    var h='<h5>Classificação da '+LUISA+' <small>'+({aguardando:'aguardando',em_aprovacao:'sugestão esperando a aprovação',triado:'aprovada',ignorado:'sem providência',reprovado:'recusada'}[t.situacao]||esc(t.situacao))+'</small></h5>';
+    if(t.situacao==='aguardando'){box.innerHTML='<div class="si-agente sem">'+h+'A '+LUISA+' ainda não leu esta intimação. Ela classifica as novas de hora em hora.</div>';return;}
+    if(t.situacao==='ignorado'){box.innerHTML='<div class="si-agente sem">'+h+esc(t.ignorado_motivo||'Sem providência para o escritório.')+'</div>';return;}
+    var linha=function(rot,v){return v?'<dt>'+esc(rot)+'</dt><dd>'+v+'</dd>':'';};
+    var pz='';
+    if(t.prazo){pz=esc((t.prazo_dias&&t.prazo_de!=='pessoa'?t.prazo_dias+' dias úteis, ':'')+'até '+dataBR(t.prazo))+
+      (!i.concluida&&t.dias_uteis!=null?' <span class="si-tag" style="--c:'+corDias(t.dias_uteis)+'">'+esc(diasUteisTxt(t.dias_uteis))+'</span>':'');}
+    var dec=[t.acao?ACAO_LUISA[t.acao]||t.acao:'',t.peca?'pedir a petição à Renata ('+(t.peca_titulo||PECA_LUISA[t.peca]||'petição')+')':''].filter(Boolean).join(' e ');
+    var avisos=[];
+    if(t.prazo_de==='pessoa'&&t.prazo_luisa)avisos.push('Vale o prazo que a equipe pôs ('+dataBR(t.prazo)+'); a '+LUISA+' sugeriu '+dataBR(t.prazo_luisa)+'.');
+    if(t.calculo_prazo)avisos.push('A contagem do SAGA não inclui os feriados próprios do tribunal: confira o prazo.');
+    box.innerHTML='<div class="si-agente">'+h+'<dl>'+linha('Tipo de ato',esc(t.o_que_e||''))+linha('O que fazer',esc(t.providencia||''))+linha('Prazo',pz)+linha('Conferir',esc(t.conferir||''))+linha('Ela decidiu',esc(dec))+'</dl>'+
+      avisos.map(function(a){return '<div class="si-ag-aviso">'+esc(a)+'</div>';}).join('')+
+      (t.entrega_id&&S.pode.aprovar?'<div class="si-acoes" style="margin-top:8px"><a class="si-btn sm" style="display:inline-flex;align-items:center;text-decoration:none" href="agentes_aprovar.html" title="Abrir Para aprovar (Ctrl+clique abre em outra aba)">Ver em Para aprovar ↗</a></div>':'')+
+      '<div class="si-sub" style="margin-top:6px">É sugestão da agente: quem decide é a equipe.</div></div>';
   }
   async function iniciar(o){
     await Promise.all([import('./saga_etiquetas.js'),import('./saga_teses.js'),import('./saga_mencoes.js')]);
@@ -401,6 +481,7 @@
       (window.sagaPermissaoRpc?window.sagaPermissaoRpc(S.sb,{p_usuario_id:S.meuId,p_modulo:'tarefas',p_acao:'visualizar'}):S.sb.rpc('verificar_permissao',{p_usuario_id:S.meuId,p_modulo:'tarefas',p_acao:'visualizar'}))]);
     S.pode.gerenciar=p[0].data===true;S.pode.criarProc=p[1].data===true;S.pode.todas=p[3].data===true||S.ehAdmin;S.pode.verFicha=p[4].data===true||S.ehAdmin;S.pode.verTarefas=p[5].data===true||S.ehAdmin;S.pode.editar=p[2].data===true||S.pode.todas;
     if(!S.pode.editar)document.body.classList.add('si-so-leitura');
+    S.pode.aprovar=S.ehAdmin;if(!S.ehAdmin&&window.sagaPode)window.sagaPode('agentes.aprovar').then(function(v){S.pode.aprovar=!!v;}).catch(function(){});
     if(S.ehAdmin){var c=await S.sb.from('configuracoes_sistema').select('extra').limit(1).maybeSingle();if(c.data&&c.data.extra&&Array.isArray(c.data.extra.monitoramento_horas))S.horas=c.data.extra.monitoramento_horas.map(Number);}
     catalogoEtiquetas=SagaEtiquetas.criar({sb:S.sb,admin:S.ehAdmin,
       reserva:ETIQUETAS.map(function(e,k){return {id:'reserva-'+k,nome:e[0],cor:e[1],ativo:true,reserva:true};}),
@@ -446,6 +527,7 @@
         if(faixa==='hoje'&&!ehDeHoje(i,hoje))return false;           // todas de hoje, inclusive as concluídas (riscadas)
         if(faixa==='abertas'&&i.concluida)return false;
         if(faixa==='vencidas'&&(i.concluida||!i.prazo||i.prazo>=hoje))return false;
+        if(faixa==='vencendo'&&!vencendo(i))return false;
         if(faixa==='fora'&&(i.concluida||i.processo_id))return false;
       }else{
         if(!semConclusao&&f.conclusao==='abertas'&&i.concluida)return false;
@@ -571,6 +653,7 @@
       htmlRecurso(i)+
       '<div class="si-cli">'+esc(cli||partesAtivas(i)||'Parte não identificada')+'</div>'+
       '<div class="si-doc">'+esc([i.tipo_documento,i.orgao].filter(Boolean).join(' · '))+'</div>'+
+      htmlLuisa(i)+
       (i.resumo&&!opc.compacto?'<div class="si-res">'+esc(i.resumo)+'</div>':'')+
       '<div class="si-rod">'+etiquetaSituacao(i)+
         (i.triagem==='tarefa'?'<span class="si-tag" style="--c:#4b8af5">Virou tarefa</span>':i.triagem==='vista'?'<span class="si-tag" style="--c:#8a94a8">Vista</span>':'')+
@@ -947,6 +1030,7 @@
           '<div class="si-campo"><label for="siCor">Cor da etiqueta</label><input id="siCor" type="color" style="padding:3px">'+
           '<div class="si-sub">A cor aparece no selo da etiqueta no cartão.</div></div></div>'+
           '<div class="si-acoes"><button class="si-btn" type="button" id="siSalvarPrazo">Salvar prazo e etiqueta</button></div>'+
+          '<div id="siLuisaBox"></div>'+
           '<div class="si-sec">Processo no SAGA</div><div id="siProcesso"></div>'+
           '<div class="si-sec">Dados</div><div class="si-dados" id="siDados"></div>'+
         '</div>'+
@@ -1103,6 +1187,7 @@
     document.getElementById('siDados').innerHTML=dados.map(function(d){return '<div><div class="l">'+d[0]+'</div><div>'+d[1]+'</div></div>';}).join('');
     renderProcesso(i);
     renderTriagem(i);
+    renderLuisa(i);
   }
   async function carregarHistorico(id){
     var r=await S.sb.from('intimacoes_comentarios').select('*').eq('intimacao_id',id).order('criado_em',{ascending:false});
@@ -1760,7 +1845,7 @@
   function contagens(){
     var l=S.itens.filter(function(i){return !i.concluida;}),h=hojeISO();
     return {abertas:l.length,hoje:S.itens.filter(function(i){return ehDeHoje(i,h);}).length,
-      atrasadas:l.filter(function(i){return i.prazo&&i.prazo<h;}).length,semProcesso:l.filter(function(i){return !i.processo_id;}).length};
+      atrasadas:l.filter(function(i){return i.prazo&&i.prazo<h;}).length,vencendo:l.filter(vencendo).length,triErro:S.triErro||'',semProcesso:l.filter(function(i){return !i.processo_id;}).length};
   }
 
   // 12/11 (Dr. Victor: "a intimação não aparece"): quantas intimações ABERTAS os filtros escondem agora
