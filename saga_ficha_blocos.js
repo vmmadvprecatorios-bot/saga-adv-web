@@ -23,6 +23,8 @@
     {k:'resumo_agente',col:'meio',nome:'Resumo do agente de petições'},
     {k:'checklists',col:'meio',nome:'Checklists',resumo:function(c){var q=c.querySelectorAll('.checklist-bloco').length;return q?n(q,'checklist','checklists'):'nenhum';}},
     {k:'atendimentos',col:'meio',nome:'Atendimentos'},
+    // 21/11 (ideia 3 do check-up): começa FECHADO e só carrega quando a pessoa abre (saga_linha_tempo.js)
+    {k:'linha_tempo',col:'meio',nome:'Linha do tempo',fechadoPadrao:true},
     {k:'comentarios',col:'meio',nome:'Comentários e histórico',resumo:function(c){var q=c.querySelectorAll('#timeline .item-timeline:not(.evento-sistema)').length;return q?n(q,'comentário','comentários'):'nenhum comentário';}},
     {k:'retorno',col:'lado',nome:'Retorno agendado',resumo:function(c){var t=c.querySelector('#blocoRetorno .titulo-retorno,#blocoRetorno h4,#blocoRetorno strong,#blocoRetorno b');return t?curto(t.textContent):'';}},
     {k:'partes',col:'lado',nome:'Partes do processo',resumo:function(c){var t=c.querySelector('#secaoPartes > .secao-titulo');var m=t&&t.textContent.match(/\((\d+)\)/);return m?n(m[1],'parte','partes'):'';}},
@@ -39,8 +41,10 @@
   function semMovimento(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
   function ler(){var p=null;try{p=JSON.parse(localStorage.getItem(CHAVE)||'null');}catch(e){}p=p&&typeof p==='object'?p:{};
     return {fechados:Array.isArray(p.fechados)?p.fechados:[],ocultos:Array.isArray(p.ocultos)?p.ocultos:[],colunas:['ambas','meio','lado'].indexOf(p.colunas)>=0?p.colunas:'ambas',
-      ordem:p.ordem&&Array.isArray(p.ordem.meio)&&Array.isArray(p.ordem.lado)?p.ordem:null};}
+      ordem:p.ordem&&Array.isArray(p.ordem.meio)&&Array.isArray(p.ordem.lado)?p.ordem:null,vistos:Array.isArray(p.vistos)?p.vistos:[]};}
   var P=ler();
+  // bloco novo que nasce fechado (fechadoPadrao): na 1ª vez entra na lista dos fechados; depois vale a escolha da pessoa
+  BLOCOS.forEach(function(d){if(d.fechadoPadrao&&P.vistos.indexOf(d.k)<0){P.vistos.push(d.k);if(P.fechados.indexOf(d.k)<0)P.fechados.push(d.k);try{localStorage.setItem(CHAVE,JSON.stringify(P));}catch(e){}}});
   function gravar(){try{localStorage.setItem(CHAVE,JSON.stringify(P));}catch(e){}}
   var B={};// k -> {def, el, cab, corpo, res}
   var corpoFicha,colMeio,colLado,barra,trilho;
