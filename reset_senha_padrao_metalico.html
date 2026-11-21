@@ -330,7 +330,7 @@ function showToast(msg, tipo) {
   var c = document.getElementById('toast-container');
   var t = document.createElement('div');
   t.className = 'toast ' + tipo;
-  t.innerHTML = msg;
+  t.textContent = msg; // texto puro: a mensagem pode vir do banco (laudo de segurança 21/11)
   c.appendChild(t);
   setTimeout(function () {
     t.style.opacity = '0';
