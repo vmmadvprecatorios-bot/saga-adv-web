@@ -592,6 +592,12 @@
   .pg-tab td .barra{ display:inline-block; vertical-align:middle; height:6px; border-radius:4px; background:color-mix(in srgb,var(--gold) 60%,transparent); margin-right:6px; transition:width .42s cubic-bezier(.22,.78,.25,1); }
   .pg-erro{ border:1px solid color-mix(in srgb,var(--danger) 55%,transparent); background:color-mix(in srgb,var(--danger) 10%,transparent); color:var(--text); border-radius:12px; padding:10px 14px; font-size:12.5px; margin-bottom:16px; }
   .pg-erro[hidden]{ display:none; }
+  .pg-mais-bt{ display:flex; align-items:center; gap:10px; width:100%; background:none; border:0; border-top:1px solid var(--border-soft); padding:14px 0 4px; cursor:pointer; text-align:left; }
+  .pg-mais-bt .pg-mais-seta{ color:var(--gold); transition:transform .32s cubic-bezier(.22,.78,.25,1); transform:rotate(-90deg); flex:0 0 auto; }
+  .pg-mais-bt[aria-expanded="true"] .pg-mais-seta{ transform:none; }
+  .pg-mais-res{ font-family:'Montserrat',sans-serif; font-size:12px; font-weight:400; color:var(--muted); }
+  .pg-mais-bt[aria-expanded="true"] .pg-mais-res{ display:none; }
+  .pg-mais-bt:focus-visible{ outline:2px solid var(--gold); outline-offset:4px; border-radius:8px; }
   .pg-mais-tit{ font-family:'Cormorant Garamond',serif; font-size:20px; font-weight:600; color:var(--text); margin:6px 0 12px; }
   .pg-entra{ animation:pgEntra .36s cubic-bezier(.22,.78,.25,1) both; }
   @keyframes pgEntra{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
@@ -636,7 +642,10 @@
         <div class="pg-periodo" role="group" aria-label="Período"><button type="button" class="active" data-pg-dias="7">Últimos 7 dias</button><button type="button" data-pg-dias="30">Últimos 30 dias</button></div></div>
       <div class="pg-tab-wrap"><table class="pg-tab"><thead><tr><th>Pessoa</th><th>Tarefas concluídas</th><th>Intimações tratadas</th><th>Processos movimentados</th></tr></thead><tbody id="pgProdCorpo"></tbody></table></div>
     </section>
-    <div class="pg-mais-tit">Mais números</div>
+    <!-- 21/11 (ideia 10 do check-up): "Mais números" começa RECOLHIDO e só busca os dados ao abrir (menos pedidos ao banco) -->
+    <section class="pg-mais" id="pgMais">
+      <button type="button" class="pg-mais-tit pg-mais-bt" id="pgMaisBt" aria-expanded="false" aria-controls="pgMaisCorpo"><svg class="pg-mais-seta" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Mais números <span class="pg-mais-res">quadros antigos: processos, status, prazos, UF, tarefas, avisos e CNJ</span></button>
+      <div id="pgMaisCorpo" hidden>
 
     <!-- ===== FILTROS ===== -->
     <div class="barra-filtros-dash">
@@ -821,6 +830,9 @@
       </div>
 
     </div>
+
+      </div>
+    </section>
 
   </div><!-- /conteudo -->
 </div><!-- /app -->
@@ -1219,19 +1231,12 @@ async function inicializar() {
     meuPerfilId = pr.data.id;
     meuNome     = pr.data.nome_completo;
     pgCarregar();
-    await carregarPermissoesRoscasDashboard();
 
     var elNomeHeader = document.getElementById('nomeUsuarioHeader');
     if (elNomeHeader) elNomeHeader.textContent = meuNome.split(' ')[0];
 
-    // Restaurar filtros salvos
-    await carregarPreferencias();
-
-    // Carregar equipe para o multiselect
-    carregarEquipe();
-
-    // Carregar todos os widgets
-    await carregarTudo();
+    // 21/11 (ideia 10 do check-up): os quadros antigos ("Mais números") só carregam quando a pessoa abre
+    pgMaisLigar();
 
   } catch(e) {
     showToast('Erro ao abrir o Painel geral: ' + ((e && e.message) || 'recarregue a página') + '.', 'erro');
@@ -1239,8 +1244,40 @@ async function inicializar() {
 }
 document.addEventListener('saga-atualizar', function() {
   pgCarregar();
-  carregarTudo();
+  if (pgMaisCarregado) carregarTudo();
 });
+
+// "Mais números" (21/11, ideia 10 do check-up): recolhido por padrão; a escolha fica lembrada (saga-painel-mais,
+// acompanha a conta); a 1ª abertura busca permissões, filtros, equipe e todos os quadros antigos.
+var pgMaisCarregado = false;
+function pgMaisAbrir(abrir, animar) {
+  var bt = document.getElementById('pgMaisBt'), corpo = document.getElementById('pgMaisCorpo');
+  if (!bt || !corpo) return;
+  bt.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+  try { localStorage.setItem('saga-painel-mais', abrir ? '1' : '0'); } catch (e) {}
+  if (animar && window.sagaRecolher) window.sagaRecolher(corpo, !abrir); else corpo.hidden = !abrir;
+  if (abrir && !pgMaisCarregado) {
+    pgMaisCarregado = true;
+    (async function() {
+      try {
+        await carregarPermissoesRoscasDashboard();
+        await carregarPreferencias();
+        carregarEquipe();
+        await carregarTudo();
+      } catch (e) {
+        pgMaisCarregado = false;
+        showToast('Erro ao carregar "Mais números": ' + ((e && e.message) || 'tente de novo') + '.', 'erro');
+      }
+    })();
+  }
+}
+function pgMaisLigar() {
+  var bt = document.getElementById('pgMaisBt');
+  if (!bt || bt._ligado) return; bt._ligado = true;
+  bt.addEventListener('click', function() { pgMaisAbrir(bt.getAttribute('aria-expanded') !== 'true', true); });
+  var guardado = null; try { guardado = localStorage.getItem('saga-painel-mais'); } catch (e) {}
+  if (guardado === '1') pgMaisAbrir(true, false);
+}
 
 // ================================================================
 // PREFERENCIAS

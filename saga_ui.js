@@ -823,6 +823,8 @@
     +'<button class="icon-btn" id="notifBtn" type="button" aria-label="Notificacoes"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 3h16l-2-3z" stroke="var(--gold)" stroke-width="1.6"/><path d="M9 21a3 3 0 006 0" stroke="var(--gold)" stroke-width="1.6"/></svg><span class="notif-count" id="notifCount" style="display:none">0</span></button>'
     +'<div class="popover notification-pop" id="notifPop"></div>'
     +'</div>'
+    // ajuda (21/11, ideia 8 do check-up): "?" abre o Manual na parte da tela aberta (ligarAjuda); Shift+? também
+    +'<a class="icon-btn" id="ajudaBtn" href="manual.html" aria-label="Ajuda desta tela (Manual do SAGA)" title="Ajuda desta tela (Manual)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="var(--gold)" stroke-width="1.6"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1" fill="var(--gold)"/></svg></a>'
     // cadeado (17/11, Dr. Victor): travado, o voltar do mouse e a seta do navegador não saem da tela
     +'<button class="icon-btn" id="cadeadoBtn" type="button" aria-pressed="false" aria-label="Travar a tela contra voltar sem querer" title="Cadeado"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2" stroke="var(--gold)" stroke-width="1.6"/><path class="cad-arco" d="M8 11V8a4 4 0 018 0v3" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="16" r="1.3" fill="var(--gold)"/></svg></button>'
     +'<button class="icon-btn" id="privBtn" type="button" aria-label="Modo privacidade" title="Ocultar dados dos clientes (para gravar tela)"><svg class="olho-aberto" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="var(--gold)" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="var(--gold)" stroke-width="1.6"/></svg><svg class="olho-fechado" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17.9 17.9A10.4 10.4 0 0112 20c-7 0-11-8-11-8a19 19 0 015.1-5.9M9.9 4.2A9.7 9.7 0 0112 4c7 0 11 8 11 8a19 19 0 01-2.2 3.2M14.1 14.1a3 3 0 11-4.2-4.2" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/><path d="M1 1l22 22" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"/></svg></button>'
@@ -2636,6 +2638,26 @@
     else if(cfg){_cad.destravadoAMao=false;if(_cad.cfg.modo==='manual')clearTimeout(_cad.timer);else cadAgendar();}
     cadPintar();
   }
+  // ===== Ajuda desta tela (21/11, ideia 8 do check-up) =====
+  // O "?" da barra de cima abre o Manual no capítulo da tela aberta (manual.html?tela=<data-tela>; o manual.html
+  // traduz pelo TELA_CAP). Tela sem item no menu (ficha, configurações, editor de planilhas) usa AJUDA_ARQ.
+  // É um link: clique abre na mesma aba, Ctrl+clique/botão do meio em outra. Shift+? (fora de campo de texto) abre também.
+  var AJUDA_ARQ={'ficha_cliente_padrao_metalico_final.html':'ficha','configuracoes_padrao_metalico.html':'configuracoes','editor_planilha.html':'ficha','minhas_tarefas.html':'tarefas'};
+  function ligarAjuda(){
+    var a=document.getElementById('ajudaBtn');if(!a)return;
+    var arq=(location.pathname.split('/').pop()||'').toLowerCase();
+    if(arq==='manual.html'){a.hidden=true;return;}
+    var tela='';try{tela=telaDoEndereco()||AJUDA_ARQ[arq]||'';}catch(e){tela=AJUDA_ARQ[arq]||'';}
+    a.href='manual.html'+(tela?'?tela='+encodeURIComponent(tela):'');
+    if(ligarAjuda._tecla)return;ligarAjuda._tecla=true;
+    document.addEventListener('keydown',function(ev){
+      if(ev.key!=='?'||ev.ctrlKey||ev.metaKey||ev.altKey)return;
+      var t=ev.target,tag=(t&&t.tagName||'').toLowerCase();
+      if(tag==='input'||tag==='textarea'||tag==='select'||(t&&t.isContentEditable))return;
+      if(window.sagaJanelaAberta&&window.sagaJanelaAberta())return;
+      var b=document.getElementById('ajudaBtn');if(b&&!b.hidden){ev.preventDefault();location.href=b.href;}
+    });
+  }
   function ligarCadeado(){
     if(_cad.ligado)return;
     if(document.documentElement.classList.contains('saga-embed')||window.top!==window)return;
@@ -2710,6 +2732,7 @@
       ligarTema();
       ligarPrivacidade();
       ligarCadeado();
+      ligarAjuda();
       ligarHamburger();
       // depois do ligarHamburger: no celular ele muda o menu de lugar (e mudar de lugar zera a rolagem)
       if(sb)ligarRolagemMenu(sb);

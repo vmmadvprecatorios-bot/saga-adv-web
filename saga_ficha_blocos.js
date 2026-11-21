@@ -88,8 +88,8 @@
   function aplicarColunas(animar){
     var faz=function(){corpoFicha.setAttribute('data-fb-colunas',P.colunas);
       if(barra)barra.querySelectorAll('[data-fb-col]').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-fb-col')===P.colunas);});
-      if(trilho){trilho.hidden=P.colunas==='ambas';trilho.querySelector('span').textContent=P.colunas==='meio'?'Coluna lateral escondida':'Coluna do meio escondida';
-        trilho.title=P.colunas==='meio'?'Mostrar a coluna lateral':'Mostrar a coluna do meio';}};
+      if(trilho){trilho.hidden=P.colunas==='ambas';trilho.querySelector('span').textContent=P.colunas==='meio'?'Painel lateral recolhido':'Processo recolhido';
+        trilho.title=P.colunas==='meio'?'Abrir o painel lateral':'Abrir o processo';}};
     if(animar&&!semMovimento()&&document.startViewTransition){try{document.startViewTransition(faz);return;}catch(e){}}
     faz();}
   function mudarColunas(c){if(P.colunas===c)return;P.colunas=c;gravar();aplicarColunas(true);}
