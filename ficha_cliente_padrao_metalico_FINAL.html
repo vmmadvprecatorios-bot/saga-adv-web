@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611210315"></script>
+<script src="saga_guard.js?v=202611210330"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ficha do Cliente</title>
@@ -444,26 +444,26 @@ span.ps-origem-btn{cursor:default}
 }
 </style>
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611210315"></script>
-<script src="saga_fichas.js?v=202611210315"></script>
-<script src="saga_teses.js?v=202611210315"></script>
-<script src="saga_mencoes.js?v=202611210315"></script>
-<script src="saga_texto.js?v=202611210315"></script>
-<script src="saga_partes.js?v=202611210315"></script>
-<script src="saga_etiquetas.js?v=202611210315"></script>
-<script src="saga_origem.js?v=202611210315"></script>
-<script src="saga_planilha.js?v=202611210315"></script>
-<script src="saga_recursos.js?v=202611210315"></script>
-<script src="saga_andamentos.js?v=202611210315"></script>
-<script src="saga_tribunais.js?v=202611210315"></script>
-<script src="saga_atendimentos.js?v=202611210315"></script>
-<script src="saga_pagamentos.js?v=202611210315"></script>
-<script src="saga_disparos.js?v=202611210315"></script>
-<script src="saga_relatorios.js?v=202611210315"></script>
-<script src="saga_timbrado.js?v=202611210315"></script>
-<script src="saga_peticoes.js?v=202611210315"></script>
-<script src="saga_visor.js?v=202611210315"></script>
-<link rel="stylesheet" href="saga_tema.css?v=202611210315">
+<script src="saga_ui.js?v=202611210330"></script>
+<script src="saga_fichas.js?v=202611210330"></script>
+<script src="saga_teses.js?v=202611210330"></script>
+<script src="saga_mencoes.js?v=202611210330"></script>
+<script src="saga_texto.js?v=202611210330"></script>
+<script src="saga_partes.js?v=202611210330"></script>
+<script src="saga_etiquetas.js?v=202611210330"></script>
+<script src="saga_origem.js?v=202611210330"></script>
+<script src="saga_planilha.js?v=202611210330"></script>
+<script src="saga_recursos.js?v=202611210330"></script>
+<script src="saga_andamentos.js?v=202611210330"></script>
+<script src="saga_tribunais.js?v=202611210330"></script>
+<script src="saga_atendimentos.js?v=202611210330"></script>
+<script src="saga_pagamentos.js?v=202611210330"></script>
+<script src="saga_disparos.js?v=202611210330"></script>
+<script src="saga_relatorios.js?v=202611210330"></script>
+<script src="saga_timbrado.js?v=202611210330"></script>
+<script src="saga_peticoes.js?v=202611210330"></script>
+<script src="saga_visor.js?v=202611210330"></script>
+<link rel="stylesheet" href="saga_tema.css?v=202611210330">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -1816,6 +1816,8 @@ async function desenharPdfVisor(){
       await pagina.render({canvasContext:canvas.getContext('2d'),viewport:vp,transform:dpr!==1?[dpr,0,0,dpr,0,0]:null}).promise;
       if(gen!==visor.gen)return;
       folha.appendChild(canvas);folha.classList.add('pronta');
+      // 21/11 (Dr. Victor): texto selecionável e copiável (saga_visor.js)
+      if(window.SagaVisor&&SagaVisor.camadaTexto){try{await SagaVisor.camadaTexto(await carregarPdfjs(),pagina,vp,folha);}catch(e){}}
     }catch(e){folha.dataset.feito='';}
   };
   const folhas=Array.from(lista.children);
@@ -1823,6 +1825,7 @@ async function desenharPdfVisor(){
     visor.observador=new IntersectionObserver(entradas=>entradas.forEach(e=>{if(e.isIntersecting)desenhar(e.target);}),{root:corpo,rootMargin:'600px 0px'});
     folhas.forEach(f=>visor.observador.observe(f));
   }else{for(const f of folhas)await desenhar(f);}
+  if(window.SagaVisor&&SagaVisor.textoTodas){carregarPdfjs().then(m=>SagaVisor.textoTodas(m,pdf,folhas,escala,()=>gen===visor.gen)).catch(()=>{});}
 }
 // Relatórios do processo (T192, bloco 244): último relatório enviado e pedido em aberto, ligado à tela Relatórios
 let _relTimer=null;
@@ -5301,8 +5304,8 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 
 </script>
 
-<script src="saga_localizacao.js?v=202611210315"></script>
-<script src="saga_ficha_blocos.js?v=202611210315"></script>
-<script src="saga_ficha_atividades.js?v=202611210315"></script>
+<script src="saga_localizacao.js?v=202611210330"></script>
+<script src="saga_ficha_blocos.js?v=202611210330"></script>
+<script src="saga_ficha_atividades.js?v=202611210330"></script>
 </body>
 </html>

@@ -54,9 +54,51 @@ window.SagaVisor = (function(){
     '.sv-aviso{margin:10px 12px 0;padding:8px 10px;border-radius:9px;border:1px solid rgba(224,169,59,.5);font-size:12px;color:var(--text,#eee)}',
     '.sv-giro{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:svgiro .8s linear infinite;vertical-align:-3px;margin-right:8px}',
     '@keyframes svgiro{to{transform:rotate(360deg)}}',
+    /* 21/11 (Dr. Victor): camada de texto do pdf.js, para selecionar e copiar (também no celular, pressionando) */
+    '.textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;-webkit-text-size-adjust:none;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:CanvasText;z-index:2}',
+    '.textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}',
+    '.textLayer span.markedContent{top:0;height:0}',
+    '.textLayer ::selection{background:rgba(40,110,255,.32);color:transparent}',
+    '.textLayer br::selection{background:transparent}',
+    '.textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;-webkit-user-select:none;user-select:none}',
+    '.textLayer.selecting .endOfContent{top:0}',
+    '.sv-pag .textLayer,.doc-visor-pagina .textLayer{-webkit-user-select:text;user-select:text}',
+    '.sv-semtexto{position:absolute;left:6px;bottom:4px;font-size:10px;color:#999}',
     '@media (max-width:640px){.sv-fundo{padding:0}.sv-caixa{border-radius:0;border:0}}'
   ].join('\n');
   document.head.appendChild(css);
+
+  /* camada de texto sobre a página desenhada (selecionar, copiar, Ctrl+F do navegador); PDF escaneado não tem texto */
+  async function camadaTexto(m, pagina, vp, folha){
+    try{
+      if(!m || !m.TextLayer) return false;
+      if(folha.querySelector('.textLayer')) return true;
+      if(folha._svTexto) return folha._svTexto;
+      folha._svTexto = true;
+      var tc = await pagina.getTextContent();
+      if(!tc || !tc.items || !tc.items.some(function(i){ return i.str && i.str.trim(); })){
+        if(!folha.querySelector('.sv-semtexto')){ var a = document.createElement('span'); a.className = 'sv-semtexto'; a.textContent = 'página só em imagem (escaneada): sem texto para copiar'; folha.appendChild(a); }
+        return false;
+      }
+      var div = document.createElement('div'); div.className = 'textLayer';
+      folha.style.setProperty('--scale-factor', vp.scale);
+      folha.appendChild(div);
+      var tl = new m.TextLayer({ textContentSource: tc, container: div, viewport: vp });
+      await tl.render();
+      var fim = document.createElement('div'); fim.className = 'endOfContent'; div.appendChild(fim);
+      div.addEventListener('mousedown', function(){ div.classList.add('selecting'); });
+      document.addEventListener('mouseup', function(){ div.classList.remove('selecting'); });
+      return true;
+    }catch(e){ return false; }
+  }
+
+  /* texto de TODAS as páginas logo ao abrir (sem desenhar a imagem), para o Ctrl+F do navegador achar em qualquer página; até 150 páginas */
+  async function textoTodas(m, pdf, folhas, escala, vivo){
+    for(var i = 0; i < folhas.length && i < 150; i++){
+      if(vivo && !vivo()) return;
+      try{ var pg = await pdf.getPage(+folhas[i].dataset.pagina); if(vivo && !vivo()) return; await camadaTexto(m, pg, pg.getViewport({ scale: escala }), folhas[i]); }catch(e){}
+    }
+  }
 
   function fechar(){
     var el = V.el; if(!el) return;
@@ -100,12 +142,14 @@ window.SagaVisor = (function(){
         var c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
         folha.insertBefore(c, folha.firstChild);
         await pg.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+        if(gen === V.gen) await camadaTexto(await pdfjs(), pg, pg.getViewport({ scale: escala }), folha);
       }catch(e){ folha.dataset.feito = ''; }
     }
     if('IntersectionObserver' in window){
       V.obs = new IntersectionObserver(function(ents){ ents.forEach(function(en){ if(en.isIntersecting) pinta(en.target); }); }, { root: corpo, rootMargin: '600px 0px' });
       lista.querySelectorAll('.sv-pag').forEach(function(x){ V.obs.observe(x); });
     }else lista.querySelectorAll('.sv-pag').forEach(pinta);
+    pdfjs().then(function(m){ textoTodas(m, pdf, lista.querySelectorAll('.sv-pag'), escala, function(){ return gen === V.gen; }); });
   }
 
   async function abrir(o){
@@ -148,5 +192,5 @@ window.SagaVisor = (function(){
     }
   }
 
-  return { abrir: abrir, fechar: fechar, pdfDeWord: pdfDeWord };
+  return { abrir: abrir, fechar: fechar, pdfDeWord: pdfDeWord, camadaTexto: camadaTexto, textoTodas: textoTodas };
 })();
