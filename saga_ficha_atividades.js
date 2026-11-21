@@ -105,7 +105,8 @@
       +'<div class="fa-rotulo">Comentários e histórico ('+coms.length+')</div><div class="fa-coms" id="faComs">'+htmlComentarios(coms,'Nenhum comentário ainda.')+'</div>'+caixaComentar();
     // 12/11 (Dr. Victor; T160): concluir (ou reabrir) a intimação pela própria ficha
     const podeIntim=typeof podeMexerIntimacoes==='function'&&podeMexerIntimacoes();
-    const rodape=(i.link?'<a class="btn-secondary fa-ir" href="'+e(i.link)+'" target="_blank" rel="noopener">Ver no tribunal ↗</a>':'')
+    const lkU=window.sagaUrlSegura?sagaUrlSegura(i.link,{http:true}):(/^https?:\/\//i.test(String(i.link||''))?i.link:'');
+    const rodape=(lkU?'<a class="btn-secondary fa-ir" href="'+e(lkU)+'" target="_blank" rel="noopener">Ver no tribunal ↗</a>':'')
       +'<a class="'+(podeIntim&&!i.concluida?'btn-secondary':'btn-primary')+' fa-ir" href="monitoramento_multi_oab.html?intimacao='+encodeURIComponent(id)+'">Abrir em Intimações ↗</a>'
       +(podeIntim?(i.concluida?'<button type="button" class="btn-secondary" id="faReabrirIntim">Reabrir intimação</button>':'<button type="button" class="btn-primary" id="faConcluirIntim">Concluir intimação</button>'):'');
     const d=janela(e((i.etiqueta?i.etiqueta+' · ':'')+(i.tipo_documento||'Intimação')),'Intimação deste processo',corpo,rodape);
