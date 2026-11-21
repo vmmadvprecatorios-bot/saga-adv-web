@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.36",
-  data: "21/11/2026",
+  versao: "3.37",
+  data: "22/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.37", data: "22/11/2026", mudou: "Manual em dia com as novidades de 19 a 21/11: capítulo **Para aprovar** refeito (Luísa e Renata; Pedidos para a Renata com Pode fazer, Depois e Não fazer e o Plano da peça; Ler e corrigir, Ver como vai sair, revisão da Luísa com o selo Revisada, Aprovar e Protocolei; Recados e Relatório em PDF; **Autos para baixar**); ficha em **3 cartões** (Cliente, Processo, Painel lateral) com o código para copiar; **Fazer petição** lendo os documentos do cliente; **Cálculo do PSS** lendo requisitório, espelho e demonstrativo (de onde veio cada dado; SELIC); **Planilhas e textos do SAGA**, **Editor de planilhas** e **Planilhas do PSS**; **Modelos** (petições, timbrados e arquivos; pastas; + Novo modelo, Importar pasta de petições, editor e A revisar); **Distribuição dos honorários** (Equipe e Jurídico) e **Meus honorários**; Minhas Tarefas (etiqueta Dar impulso processual, tarefa Manutenção: completar dados, botão Filtros no celular); Intimações (linha da Luísa com o prazo em dias úteis, Prazo vencendo, repetida CNJ × e-mail); Captação (Alterar…, Sem captador, Captador anterior, gráfico Por captador; passagem sozinha para o Jurídico; pré-validados do prêmio); Chat (grupo Recebimento de documentação); login (**Manter conectado**; login diário); botão **?** de ajuda; PDF com texto para selecionar e copiar; Painel geral (Mais números recolhido); SAGA no Claude (ferramentas novas); Saúde do sistema e Armazenamento; permissões novas. Prints novos no sistema simulado." },
     { versao: "3.36", data: "21/11/2026", mudou: "Agenda: **Ver no celular** (link pessoal para o Google Agenda e o iPhone, só leitura, com lembrete; Gerar link novo / Desligar) e aviso no **sino 30 minutos antes** de cada compromisso." },
     { versao: "3.35", data: "21/11/2026", mudou: "Preferências em **abas**: Aparência (tema, cor e letra), Vidro (só com cor de vidro), Tela (efeitos, cadeado, tela inicial e as escolhas que acompanham a conta), Avisos e sons e, para o administrador, Equipe (cores da equipe). A aba escolhida fica lembrada." },
     { versao: "3.34", data: "21/11/2026", mudou: "Ficha do cliente: **Telefones, E-mails e Endereços** do topo abrem e recolhem cada um pelo título (com a contagem; fechado mostra só o principal), [[Recolher todos]]/[[Abrir todos]], lembrado na sua conta. Botão [[Ler consulta (PDF ou print)]] no topo: a leitura preenche os contatos do alto da ficha (\"Não validado\") e a Localização sem repetir o que já existe, e anota um resumo no processo; o arquivo não é guardado." },
@@ -127,20 +128,22 @@ window.SAGA_MANUAL = {
           passos: [
             "Abra o endereço do SAGA no navegador (Chrome ou Edge).",
             "Digite o seu **e-mail** e a sua **senha** (o **Mostrar** ao lado da senha deixa ver o que foi digitado).",
+            "**Manter conectado**: marque a caixinha só no SEU computador ou celular. Para o administrador e para quem é liberado do login diário, o SAGA não sai mais sozinho por tempo sem uso naquele aparelho (só pelo Sair ou por \"Sair de todos os aparelhos\"). Para os outros colaboradores continuam as regras do escritório (saída às 20h e 30 minutos sem uso fora do horário).",
             "Clique em [[Entrar]]. O SAGA abre sempre no **Ponto**: aproveite e bata o ponto. Quem usa o e-mail do Google pode clicar em **Entrar com o Google**.",
             "Se algo estiver errado (e-mail ou senha que não conferem, sem internet), o motivo aparece em vermelho logo acima do botão.",
             "Esqueceu a senha? Clique em **Esqueci a senha**, confira o e-mail e siga o link que chega (veja também o spam)."
           ],
           img: "login",
-          marcas: ["E-mail de acesso.", "Senha (pessoal, não empreste).", "Entrar.", "Esqueci a senha: manda o e-mail para criar uma senha nova.", "Entrar com o Google (e-mail do Google cadastrado pelo administrador)."],
+          marcas: ["E-mail de acesso.", "Senha (pessoal, não empreste; Mostrar deixa ver o que foi digitado).", "Manter conectado (só no seu aparelho).", "Entrar.", "Esqueci a senha: manda o e-mail para criar uma senha nova."],
           dicas: ["Primeiro acesso: você recebe um convite por e-mail do administrador. Abra o link, crie a senha e preencha os seus dados."],
-          atencao: ["O administrador pode limitar o acesso por horário e por local. Fora do combinado, o SAGA avisa e não deixa entrar.", "Se ficar muito tempo parado, o SAGA sai sozinho por segurança: é só entrar de novo.", "Nenhuma tela do sistema aparece antes de o login ser conferido. Se a internet estiver lenta ao abrir, aparece só \"Conferindo o seu login…\" (e o motivo, se não conseguir): espere ou clique em \"Ir para a tela de entrada\"."]
+          atencao: ["O administrador pode limitar o acesso por horário e por local. Fora do combinado, o SAGA avisa e não deixa entrar.", "Se ficar muito tempo parado, o SAGA sai sozinho por segurança: é só entrar de novo.", "Nunca marque **Manter conectado** em computador de outra pessoa ou de uso público.", "Nenhuma tela do sistema aparece antes de o login ser conferido. Se a internet estiver lenta ao abrir, aparece só \"Conferindo o seu login…\" (e o motivo, se não conseguir): espere ou clique em \"Ir para a tela de entrada\"."]
         },
         { id: "tela", titulo: "Conhecer a tela",
           quando: "Para se localizar em qualquer tela do SAGA: a barra do alto e o menu da esquerda são sempre os mesmos.",
           passos: [
-            "No **menu da esquerda**, no alto, fica o **Painel geral** (a visão do escritório inteiro). Abaixo, as telas em grupos que abrem e fecham: **Meu dia** (Ponto, Minhas Tarefas, Intimações, Agenda, Pedidos do Saga IA, Notas), **Processos** (Jurídico, Captação, Precatórios e RPV, Clientes por perfil, Teses e oportunidades, Relatórios, Parceiros, Pedidos de busca, Cartas, Disparos de e-mail), **Gestão** (Financeiro, Marketing, Colaboradores, Modelos, Biblioteca, Editor de PDF), **Comunicação** (Chat, Normas e prêmio, Treinamentos, Manual, Sugestões) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver. Clique no nome do grupo para abrir ou fechar; com o menu **recolhido** (só os ícones), cada grupo vira uma linha fina com a setinha, que também abre e fecha o grupo. A escolha fica guardada neste navegador.",
-            "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **cadeado** (trava contra voltar sem querer), o **olho** (modo privacidade), atualizar, o **tema** (claro ou escuro) e a sua **foto**.",
+            "No **menu da esquerda**, no alto, fica o **Painel geral** (a visão do escritório inteiro). Abaixo, as telas em grupos que abrem e fecham: **Meu dia** (Ponto, Minhas Tarefas, Intimações, Agenda, Pedidos do Saga IA, Para aprovar, Notas, Meus honorários), **Processos** (Jurídico, Captação, Precatórios e RPV, Clientes por perfil, Teses e oportunidades, Relatórios, Parceiros, Pedidos de busca, Autos para baixar, Cartas, Disparos de e-mail), **Gestão** (Financeiro, Marketing, Colaboradores, Modelos, Editor de PDF), **Comunicação** (Chat, Normas e prêmio, Treinamentos, Manual, Sugestões) e **Administração** (só o administrador). Só aparece o que você tem permissão para ver. Clique no nome do grupo para abrir ou fechar; com o menu **recolhido** (só os ícones), cada grupo vira uma linha fina com a setinha, que também abre e fecha o grupo. A escolha fica guardada neste navegador.",
+            "No alto, da esquerda para a direita: o botão do menu, a **busca**, quem está online, o **sino**, o **cadeado** (trava contra voltar sem querer), o **olho** (modo privacidade), atualizar, o **?** (ajuda), o **tema** (claro ou escuro) e a sua **foto**.",
+            "**Ajuda da tela**: o botão **?** no alto (ou as teclas Shift + ?) abre este Manual já na parte da tela em que você está. Ctrl+clique abre o Manual em outra aba.",
             "Os números ao lado dos itens do menu (Agenda, Minhas Tarefas, Chat) mostram o que há para hoje ou o que não foi lido.",
             "O menu da esquerda **fica no lugar** quando você troca de tela (não volta para o topo). Com o mouse em cima dele, a roda do mouse rola só o menu, sem mexer na página."
           ],
@@ -207,7 +210,7 @@ window.SAGA_MANUAL = {
             "**Vale em todos os aparelhos** (19/11): tudo o que você escolhe aqui e nas telas (claro/escuro, cor, Vidro e foto de fundo, efeitos, grupos do menu, blocos da ficha, visões e gráficos das telas) fica guardado na sua conta e aparece igual no celular e em outro computador. Só ficam no aparelho: o menu recolhido do computador, a largura das colunas e o modo da planilha no celular. Para mandar de uma vez tudo o que está num aparelho para os outros: [[Usar as escolhas deste aparelho em todos]]."
           ],
           img: "preferencias_cores",
-          marcas: ["Tema claro ou escuro.", "Cor do tema: um cartão por cor, em grupos.", "Normal ou Vidro, dentro do cartão."],
+          marcas: ["Abas das Preferências: Aparência, Vidro, Tela, Avisos e sons e Equipe.", "Tema claro ou escuro.", "Cor do tema: um cartão por cor, em grupos.", "Normal ou Vidro, dentro do cartão."],
           dicas: ["As cores novas começam liberadas só para o administrador; ele libera para a equipe em Preferências > Cores da equipe.", "O administrador pode fixar a cor de um colaborador; nesse caso a escolha fica travada.", "**Tema do mês** (só o administrador liga, em Preferências > Cor do tema da equipe): o SAGA troca sozinho a cor de toda a equipe no mês de cada campanha (outubro Rosa, novembro Novembro Azul, dezembro Natal; dá para mudar cada mês). Nesse mês a sua escolha fica guardada e volta quando o mês acaba; quem tem a cor fixada continua com ela."]
         },
         { id: "vidro_fundo", titulo: "Vidro: fundo, fundo animado, intensidade e velocidade",
@@ -248,6 +251,14 @@ window.SAGA_MANUAL = {
             "Use o botão de voltar do mouse ou a seta do navegador (com o cadeado aberto).",
             "Em **Minhas Tarefas**, nas planilhas do **Jurídico** e da **Captação** e em **Intimações**, a tela volta como estava: filtros, busca, página, visão (Kanban, lista) e a rolagem.",
             "Abrir a tela pelo **menu da esquerda** continua abrindo a lista **limpa** (sem filtro, na ordem de cadastro). O avançar do navegador também volta a tela como estava."
+          ]
+        },
+        { id: "ler_pdf", titulo: "Ler um PDF no SAGA: selecionar, copiar e procurar",
+          quando: "Quando você abre um PDF dentro do SAGA (ficha do cliente, Para aprovar, Word convertido, \"Ver como vai sair\") e quer copiar um trecho ou achar uma palavra.",
+          passos: [
+            "Com o PDF aberto, **selecione o texto** com o mouse (no celular, toque e segure) e copie (Ctrl+C), como numa página da internet.",
+            "**Ctrl+F** acha a palavra em todas as páginas do PDF (até 150 páginas), logo ao abrir.",
+            "Página escaneada (só imagem) não tem texto: aparece o aviso discreto **página só em imagem (escaneada): sem texto para copiar**. Para tirar dados dela, use os leitores do SAGA (Ler consulta, Ler os documentos, Ler documentos do cliente), que leem a imagem."
           ]
         }
       ]
@@ -332,6 +343,15 @@ window.SAGA_MANUAL = {
             "Para tirar a autorização de uma internet, clique em [[Tirar autorização]] na mesma tabela. Só desativa: o histórico fica."
           ],
           atencao: ["As suas próprias entradas (administrador) nunca geram pedido nem aviso, de nenhuma internet e de nenhum aparelho.", "O aviso \"Fulano entrou no sistema\" da primeira entrada do dia continua: ele é só informativo."]
+        },
+        { id: "login_diario", titulo: "Login diário da equipe (saída às 20h e sem uso fora do horário)",
+          quando: "Para entender por que o SAGA pediu o login de novo e, para o administrador, quem fica fora dessa regra.",
+          passos: [
+            "Todo dia cada colaborador entra com e-mail e senha e depois bate o ponto.",
+            "Às **20h** o SAGA encerra os logins abertos (a tela vai para a entrada, com o motivo). Fora do seu horário de trabalho (fim de semana e feriado contam como fora), o login cai depois de **30 minutos sem uso**; dentro do horário, não cai.",
+            "Ficam fora dessa regra o administrador e quem está em Ponto > Cadastro > Configurações > **Login diário da equipe** (hoje a Hevelyn). Com **Manter conectado** marcado no aparelho, eles também não saem por tempo sem uso.",
+            "Toda saída por regra (fim do dia, tempo sem uso) fica registrada em Ponto > **Acessos**."
+          ]
         }
       ]
     },
@@ -359,7 +379,10 @@ window.SAGA_MANUAL = {
             "**Editar**: dê dois cliques na célula, mude e aperte Enter. Para repetir o valor de cima nas linhas de baixo, selecione as células com Shift e use [[Ctrl+D]] (ou o botão **Copiar o de cima**).",
             "**Colunas**: esconda, mude a ordem e a largura. **Visões**: salve um jeito de ver a lista (filtros + colunas) para usar de novo.",
             "**Exportar Excel**: baixa a lista como está na tela.",
-            "**Abrir a ficha**: clique no nome do cliente (Ctrl+clique abre em outra aba)."
+            "**Marcar linhas** (caixinha à esquerda): a barra de baixo traz [[Alterar…]] (põe o mesmo valor numa coluna em todas as marcadas; só quem edita processos), [[Exportar marcados]] (Excel só delas) e, para o administrador, Excluir marcados. No Alterar… o valor começa sem escolha; **deixar vazio** é uma opção à parte e pede confirmação. Se algum não puder ser alterado, a janela fica aberta com a lista (cliente, código e o motivo).",
+            "**Captador**: [[Sem captador]] mostra os cartões sem captador com login no SAGA (o captador conta no prêmio e não é distribuído sozinho): o Dr. Victor ou a Hevelyn escolhem o captador na própria célula ou em Distribuir fichas, e o cartão sai da lista. O nome que vinha da planilha antiga fica na coluna **Captador anterior (planilha)**.",
+            "**Gráficos** acima da lista: na Captação, **Por etapa** e **Por captador** (clicar numa fatia filtra a lista, com a etiqueta \"Captador: ...\"). [[Ocultar gráficos]] fica lembrado nesta tela.",
+            "**Abrir a ficha**: clique no nome do cliente (Ctrl+clique abre em outra aba). O número do processo aparece sempre inteiro, nunca cortado."
           ],
           img: "captacao_lista",
           marcas: ["Busca da lista.", "Visões salvas.", "Escolher colunas.", "Exportar Excel.", "Clique no nome para abrir a ficha."],
@@ -419,6 +442,8 @@ window.SAGA_MANUAL = {
             "**Normas da Captação**: as regras do dia a dia (quem capta, lotes e meta do dia, etapas do funil, documentação completa, quando o processo é válido, LGPD). Clique no título para abrir ou fechar.",
             "**Como funciona o prêmio**: a tabela dos níveis (valor de cada processo na escada), subir e descer de nível, plus, peso da tese, qualidade, prêmio cruzado, meta da equipe e o lembrete jurídico (CLT, art. 457, §§ 2º e 4º).",
             "**Validar** (o Dr. Victor e a Hevelyn): a lista dos cartões em **Documentos em mãos** e dos processos do Jurídico ainda não validados. Clique em [[Validar]], marque as 3 conferências (**documentação completa**, **cálculo pronto**, **valor a recuperar**), marque **de primeira** se a documentação não precisou de nada novo, confira quem iniciou e quem pegou a documentação e confirme. Quem ganha recebe o aviso no sino.",
+            "**Pré-validados pelo sistema**: quando o cálculo do PSS de um cliente seu é conferido e dá valor a restituir, o processo aparece como **previsto, aguardando confirmação** no seu progresso (e você recebe o aviso). Em **Validar**, o Dr. Victor ou a Hevelyn clicam em [[Confirmar]] (vira validado) ou [[Não confirmar]] (com o motivo). Teses sem cálculo continuam com a validação manual.",
+            "**Prêmio pago**: depois do mês fechado, o administrador marca o pagamento; no seu progresso aparece **Recebido em dd/mm**.",
             "**Painel geral** (só o administrador): todos lado a lado, **custo previsto do mês**, [[Fechar o mês para pagamento]] (grava os valores, que não mudam mais, define o nível do mês seguinte e avisa cada um), [[Baixar PDF]], [[Lançar ajuste]] e [[Quem participa]]. Clique numa pessoa para ver o progresso dela."
           ],
           dicas: ["O processo conta no **mês da validação**. Cada nível começa R$ 2,50 acima do anterior e sobe R$ 5 por processo até o platô; depois do platô todo processo do mês paga o valor do platô.",
@@ -454,7 +479,9 @@ window.SAGA_MANUAL = {
           passos: [
             "Abra a ficha do cliente e o processo.",
             "No topo do processo, clique em **Jurídico** (botões Captação | Jurídico) e confirme.",
-            "O status passa a ser o primeiro do Jurídico. Nada é apagado e a mudança fica no histórico."
+            "O status passa a ser o primeiro do Jurídico. Nada é apagado e a mudança fica no histórico.",
+            "**Passagem sozinha**: o cartão também vai SOZINHO da Captação para o Jurídico (situação **Documentação Recebida**) quando alguém guarda o 1º documento do cliente no cartão (fora das pastas \"Pesquisa\") ou põe o cartão em **Documentos em mãos**. A colaboradora da Captação continua como responsável pelo contato. \"Documentação pedida\" não muda a fase.",
+            "Chegou ao Jurídico vindo da Captação e a tese é **PSS**: o SAGA cria para o Dr. Victor a tarefa **Fazer o cálculo do PSS**. Quando o cálculo é conferido, o processo fica marcado como **apto** ou **sem direito**."
           ]
         }
       ]
@@ -468,6 +495,8 @@ window.SAGA_MANUAL = {
           quando: "Sempre que for trabalhar com um cliente.",
           passos: [
             "Clique no nome do cliente na lista, no cartão ou na busca: a ficha abre na **tela inteira**. Ctrl+clique (ou o botão do meio do mouse) abre em outra aba.",
+            "A ficha tem **três cartões**, cada um com o título e a setinha que recolhe o cartão inteiro: **Cliente** (o de cima: nome, código, contatos e as abas dos processos), **Processo** (a coluna do meio) e **Painel lateral** (retorno, partes, responsável, pastas, tarefas, pagamentos...). Recolhido, o Cliente fica numa linha só (nome · código) e as **abas dos processos continuam à vista**. Recolher o Painel lateral deixa o Processo na largura toda (e vice-versa). No celular os cartões ficam um embaixo do outro e cada um recolhe no lugar.",
+            "O **código do cliente** (VMM-01234) fica acima do nome, com o botão de **copiar** logo ao lado (também no celular); o código de cada processo (VMM-01234-PSS) fica no topo do processo.",
             "No topo: nome, CPF, endereço e a **situação vital** (vivo ou falecido). Embaixo, **Contatos**: telefones, e-mails e endereços, com copiar, **WhatsApp** e **validar**.",
             "Cada grupo de contatos (Telefones, E-mails, Endereços) **abre e recolhe** clicando no título; o número entre parênteses é quantos há. Recolhido, mostra só o principal e \"+N\". [[Recolher todos]] deixa o topo curtinho. A escolha fica guardada na sua conta (vale no celular também).",
             "[[Ler consulta (PDF ou print)]], ao lado de Contatos: veja a parte **Localização** abaixo (é a mesma leitura).",
@@ -476,7 +505,7 @@ window.SAGA_MANUAL = {
           ],
           img: "ficha_topo",
           marcas: ["Nome do cliente.", "Editar dados do cliente.", "Aba de um processo.", "Localização: contatos do cliente e dos parentes.", "+ Novo Processo para este cliente.", "+ Recurso (agravo, apelação...) do processo aberto."],
-          dicas: ["Telefone confirmado com o cliente? Clique em validar (✓): ele vira o contato principal de confiança."]
+          dicas: ["Telefone confirmado com o cliente? Clique em validar (✓): ele vira o contato principal de confiança.", "A escolha dos cartões recolhidos fica guardada na sua conta e vale em qualquer aparelho."]
         },
         { id: "blocos", titulo: "Organizar a ficha: recolher blocos, colunas e a ordem",
           quando: "Quando a ficha tem informação demais na tela e você quer ver só o que usa.",
@@ -552,6 +581,39 @@ window.SAGA_MANUAL = {
           marcas: ["Quadro Documentos pessoais (aparece em todas as abas em que a pessoa é parte).", "Puxar de outra pessoa (sem copiar o arquivo).", "Botão do cartão de identidade: marcar como pessoal, trocar o dono ou voltar a ser do processo.", "Tirar desta aba (só desfaz a ligação).", "Documentos do processo desta aba."],
           dicas: ["Quem organiza (marca, puxa, tira): quem pode anexar documentos. Os outros só veem.", "Tudo fica no Registro de atividades."]
         },
+        { id: "peticao", titulo: "Fazer petição pela ficha (e ler os documentos do cliente)",
+          quando: "Quem faz petições (Jurídico e Estagiário, ou quem o administrador liberar) quer uma petição já preenchida com os dados da ficha.",
+          passos: [
+            "Na ficha, abra a aba do processo e clique em [[Fazer petição]]. Aparecem só os modelos da **tese daquele processo** e os modelos gerais.",
+            "Escolha o modelo. Os dados vêm sozinhos da ficha (cliente, qualificação, endereço, número do processo, vara do CNJ, valores do cálculo, herdeiros). Confira o **Papel timbrado** (VMM é o padrão; ANCREF só quando o Dr. Victor pede, e o SAGA pergunta antes).",
+            "Faltou dado? Em **Ler documentos para preencher**, solte o RG ou CNH, o comprovante de residência, o requisitório, o espelho ou o contracheque (PDF com texto, PDF escaneado ou foto), ou clique em [[Ler da pasta do cliente]]. A leitura é feita no seu computador.",
+            "O SAGA mostra o que achou e **de onde veio** cada dado (arquivo, página e o trecho). Ele só oferece o que está **vazio** ou faltando (estado civil, profissão, CPF, endereço completo com CEP); o que já está preenchido vem desmarcado. Marque o que confere e clique em [[Usar os marcados]] (ou [[Descartar]]).",
+            "Os campos preenchidos pela leitura ficam com **contorno amarelo** e a origem embaixo. Confira com o documento.",
+            "Clique em [[Baixar Word]] ou [[Baixar PDF]]. O que faltar sai **destacado** (amarelo no Word, laranja no PDF, entre colchetes) para completar. A petição vai para a pasta **Petições** do cliente e fica no Registro de atividades."
+          ],
+          atencao: ["O que o leitor tira da imagem pode ter erro de leitura: confira cada número.", "O texto lido de um documento da pasta fica guardado no SAGA (não precisa ler de novo) e a Renata usa essa leitura nas petições dela. O CPF lido nunca vale: vale sempre o da ficha."]
+        },
+        { id: "calculo", titulo: "Cálculo do PSS lendo os documentos",
+          quando: "Para fazer ou conferir o cálculo do PSS de um processo (só quem tem a permissão de cálculos).",
+          passos: [
+            "Na ficha, no processo do PSS, clique em [[Fazer petição]] e depois em [[Fazer o cálculo do PSS (preenche os valores)]] (ou [[Ver ou refazer o cálculo do PSS]], se já existe um).",
+            "Em **Ler os documentos**, solte o **requisitório**, o **espelho do tribunal** e o **demonstrativo** (PDF com texto, escaneado ou foto) ou clique em [[Ler da pasta do cliente]]. Sem cálculo salvo, o SAGA já tenta ler sozinho os documentos da pasta pelo nome do arquivo.",
+            "Os valores lidos entram com **contorno amarelo** e, embaixo de cada um, **de onde veio** (arquivo, página e trecho; \"lido da imagem: confira\" quando veio de PDF escaneado). Também entram o beneficiário, o processo de execução, o assunto e se há cessão.",
+            "**SELIC**: use o link [[Abrir a Calculadora do Cidadão com estas datas]] e digite o percentual (é a fonte que vale). [[Ou buscar a SELIC no Banco Central]] mostra a conta do Banco Central só para conferir; se as duas baterem, [[Usar este percentual]].",
+            "[[Salvar rascunho]] guarda sem valer. [[Conferi: salvar no processo]] grava a versão conferida, com o seu nome (cada salvar é uma versão nova; nada se apaga). O cálculo conferido preenche as petições e marca o processo como apto ou sem direito.",
+            "[[Resumo em PDF]] tira o resumo. [[Planilhas do cálculo ↗]] abre as **Planilhas do PSS** (veja a parte \"Editor de planilhas e Planilhas do PSS\")."
+          ]
+        },
+        { id: "planilhas_textos", titulo: "Planilhas e textos do SAGA (na ficha)",
+          quando: "Para fazer uma planilha com fórmulas ou um texto livre ligado ao processo, sem sair do SAGA.",
+          passos: [
+            "Em **Pastas do cliente**, o quadro **Planilhas e textos do SAGA** lista o que já foi feito para o processo aberto.",
+            "[[+ Planilha]]: abre o **Editor de planilhas** (fórmulas como no Excel; veja o capítulo Cartas, buscas, teses, perfis e PDF).",
+            "[[+ Texto livre]]: abre uma folha para escrever qualquer texto no papel timbrado; depois, baixar em Word ou PDF.",
+            "[[Planilhas do PSS]]: monta as planilhas do PSS a partir do cálculo conferido do processo (ou abre as que já existem).",
+            "Tudo fica com **versões**: cada salvar guarda uma versão nova e nada se perde."
+          ]
+        },
         { id: "localizacao", titulo: "Localização: achar e contatar o cliente e os parentes",
           quando: "Quando o colaborador precisa achar o cliente (ou um parente) para conversar.",
           passos: [
@@ -602,14 +664,15 @@ window.SAGA_MANUAL = {
         { id: "tela", titulo: "A tela de Intimações",
           quando: "Todo dia, ao começar e ao longo do dia.",
           passos: [
-            "Abra **Intimações**. No alto: disponibilizadas hoje, abertas, prazos vencidos e fora do SAGA.",
+            "Abra **Intimações**. No alto: chegaram ou publicadas hoje, abertas, prazos vencidos, **Prazo vencendo (até 3 dias úteis)** e fora do SAGA. Clique num número para filtrar.",
+            "No cartão, a linha da **Luísa** (a agente que classifica as intimações) diz o que é a intimação, o prazo em **dias úteis** e até quando, e quanto falta: **verde** mais de 3 dias úteis, **amarelo** de 1 a 3, **vermelho** vencendo ou vencido. **(sugestão)** quer dizer que a classificação ainda espera a aprovação do Dr. Victor em Para aprovar; o prazo posto pela equipe vale sobre o dela (aparece \"da equipe\").",
             "Veja em **Kanban** (uma coluna por tribunal) ou **Lista**. Use **Só as novas** para ver o que ainda não foi tratado.",
             "A **Justiça Federal** fica na coluna do **TRF** da região, com a **etiqueta do estado** no cartão (ex.: no TRF-2, **RJ** ou **ES**). Tribunal sem intimação aberta fica **oculto** (veja a parte seguinte).",
             "Filtros: situação, período, tribunal, OAB, triagem e a busca (processo, parte, vara, etiqueta ou texto).",
             "[[Trazer para o SAGA em lote]]: cadastra de uma vez os processos das intimações que estão fora do SAGA (um por número)."
           ],
           img: "intimacoes",
-          marcas: ["Só as novas.", "Andamentos do CNJ.", "Trazer para o SAGA em lote.", "Cartão da intimação: clique para abrir."]
+          marcas: ["Prazo vencendo (até 3 dias úteis): clique para filtrar.", "Linha da Luísa: o que é, prazo em dias úteis, até quando e quanto falta (verde, amarelo ou vermelho).", "(sugestão): a classificação ainda espera a aprovação do Dr. Victor.", "Trazer para o SAGA em lote."]
         },
         { id: "colunas", titulo: "Tribunais, estados e colunas ocultas",
           quando: "Para achar rápido as intimações de cada tribunal e saber de qual estado elas vêm.",
@@ -625,7 +688,8 @@ window.SAGA_MANUAL = {
         { id: "tratar", titulo: "Tratar uma intimação (triagem, prazo e tarefa)",
           quando: "Para cada intimação nova.",
           passos: [
-            "Clique no cartão. Leia o texto (o SAGA destaca o prazo que encontrar).",
+            "Clique no cartão. Leia o texto (o SAGA destaca o prazo que encontrar). O quadro **Classificação da Luísa** mostra o que ela entendeu: o que é, o que fazer, o prazo em dias úteis e, se for o caso, a petição pedida à Renata.",
+            "A mesma intimação pode chegar duas vezes: pelo **e-mail do tribunal** e pelo **CNJ (Diário eletrônico)**. A do CNJ que repete uma do e-mail não vira outro cartão: fica ligada à do e-mail, em **Também chegou pelo CNJ** (com o link do documento oficial), sem tarefa nem aviso novo.",
             "**Triagem**: tem algo a fazer? Clique em [[Criar tarefa]]. Não exige nada? Clique em [[Vista (nada a fazer)]].",
             "**Prazo**: o SAGA sugere pelo texto (ex.: 15 dias) e conta em **dias úteis** (sem sábados, domingos, feriados do escritório e o recesso de 20/12 a 20/01). Use os atalhos 5, 10, 15, 30 ou escolha a data.",
             "**Etiqueta** (o que fazer) e a cor; depois [[Salvar prazo e etiqueta]].",
@@ -660,32 +724,90 @@ window.SAGA_MANUAL = {
 
     /* ----------------------------------------------------------------- */
     { id: "agentes", titulo: "Para aprovar (Escritório de agentes)", quem: "Dr. Victor e Hevelyn (permissão Aprova o trabalho dos agentes)",
-      resumo: "O que os agentes do SAGA entregaram e espera a sua decisão: aprovar, mandar ajustar ou reprovar. Nada sai para fora sem aprovação.",
+      resumo: "O escritório tem duas agentes que trabalham dentro do SAGA: a LUÍSA organiza (classifica o que chega, confere o sistema todo dia e revisa as petições) e a RENATA faz as petições. Tudo o que elas fazem chega em Meu dia > Para aprovar. Nada sai para fora sem aprovação de uma pessoa.",
       secoes: [
         { id: "aprovar", titulo: "Aprovar, mandar ajustar ou reprovar",
           quando: "Todo dia, e sempre que o número aparecer ao lado de Para aprovar no menu (vermelho = prazo em até 2 dias ou urgente).",
           passos: [
-            "Abra **Meu dia > Para aprovar**. Cada cartão é uma entrega de um agente: o **Agente: Triagem** classifica o que chega (intimação, andamento importante do CNJ, pedido da equipe) e o **Agente: Manutenção** entrega o relatório do dia.",
+            "Abra **Meu dia > Para aprovar**. Cada cartão é uma entrega: a **Luísa** classifica o que chega (intimação, andamento importante do CNJ, pedido da equipe) e entrega o relatório da **manutenção** do dia; a **Renata** entrega as petições. Os botões [[Luísa]], [[Renata]] e [[Luísa: manutenção]] no alto filtram a lista.",
             "Leia **O que é**, **O que fazer**, **Prazo** (em dias úteis; o SAGA calcula a data pela publicação no DJEN, sem os feriados próprios do tribunal: confira) e **Ao aprovar** (o que vai acontecer).",
-            "[[Aprovar]]: faz o que está em Ao aprovar (por exemplo, cria a tarefa para o responsável do processo, com o prazo). No relatório da Manutenção o botão é [[Ciente]].",
-            "[[Mandar ajustar]]: escreva o que está errado ou faltando. O agente refaz na próxima rodada e a entrega volta como **Versão 2**, mostrando o seu pedido de ajuste.",
-            "[[Reprovar]]: escreva o motivo. A entrega para e o motivo serve para o agente não repetir o erro.",
+            "[[Aprovar]]: faz o que está em Ao aprovar (por exemplo, cria a tarefa para o responsável do processo, com o prazo). No relatório da manutenção o botão é [[Ciente]].",
+            "[[Mandar ajustar]]: escreva o que está errado ou faltando. A agente refaz na próxima rodada e a entrega volta como **Versão 2**, mostrando o seu pedido de ajuste.",
+            "[[Reprovar]]: escreva o motivo. A entrega para e o motivo serve para a agente não repetir o erro.",
             "Várias entregas parecidas: marque as caixinhas e use [[Aprovar os marcados]].",
-            "Em **Voltaram para ajuste** ficam as que esperam o agente refazer; em **Decididas**, o histórico dos últimos 60 dias (quem decidiu e quando)."
+            "Em **Voltaram para ajuste** ficam as que esperam a agente refazer; em **Decididas**, o histórico dos últimos 60 dias (quem decidiu e quando)."
           ],
+          img: "agentes_aprovar",
+          marcas: ["Filtro por agente: Luísa, Renata e Luísa: manutenção.", "Recados e Relatório (PDF), no alto.", "Entrega da Luísa: o que é, o que fazer, prazo e o que acontece ao aprovar.", "Aprovar, Mandar ajustar ou Reprovar."],
           dicas: ["No rodapé aparece a **aprovação de primeira** de cada agente nos últimos 30 dias: é a medida de qualidade do Escritório de agentes.",
                   "Se aprovar der erro, a mensagem aparece e nada é gravado pela metade: tente de novo ou mande ajustar."]
         },
-        { id: "regras", titulo: "Regras do Escritório de agentes",
-          quando: "Para saber o que os agentes podem e não podem fazer.",
+        { id: "renata_pedidos", titulo: "Pedidos para a Renata: Pode fazer, Depois ou Não fazer",
+          quando: "Quando a Luísa (pela intimação), o cálculo do PSS conferido ou alguém da equipe pede uma petição. A Renata só começa depois do seu \"Pode fazer\".",
           passos: [
-            "Nada sai para fora (protocolo, e-mail, WhatsApp, cliente) sem aprovação de uma pessoa.",
-            "No protocolo, o agente deixa tudo pronto no sistema do tribunal e **para na tela da assinatura**: só o Dr. Victor (ou a Hevelyn) põe o token e assina.",
+            "Em **Para aprovar**, desça até o quadro **Pedidos para a Renata**. As abas [[Aguardando sua aprovação]], [[Depois]] e [[Na fila da Renata]] separam os pedidos.",
+            "Cada pedido mostra etiquetas: o **tipo** (impulso processual, manifestação, inicial do PSS...), a **prioridade**, o **prazo**, há quanto tempo o processo está **parado** e o **porquê** (o que a Luísa viu na intimação).",
+            "Abra **Plano da peça** para ver a ideia ANTES de a Renata escrever: que peça é, o que vai pedir, a quem é endereçada, o modelo, o papel timbrado, os fundamentos e o que falta ou está incerto.",
+            "[[Pode fazer]]: manda para a fila da Renata. Na janela, escreva a **orientação** se quiser mudar algo do plano (a quem endereçar, pedido a incluir, outro modelo ou timbrado): ela vale como instrução obrigatória para a Renata, e a Luísa confere se foi seguida.",
+            "[[Depois]]: tira da fila e guarda o pedido (volta quando você quiser, pela aba Depois). [[Não fazer]]: cancela, com o motivo se quiser (nada é apagado).",
+            "Vários pedidos de uma vez: marque as caixinhas e use os mesmos botões; a mesma orientação vale para todos os marcados.",
+            "A Renata trabalha de hora em hora (aos 35 minutos, das 7h às 19h e às 21h), na ordem de prioridade e prazo. Em **Na fila da Renata** você acompanha: na fila, sendo preparada, na revisão da Luísa, voltou para ajuste ou com erro (com o motivo)."
+          ],
+          img: "agentes_renata",
+          marcas: ["Pedidos para a Renata: aguardando, depois e na fila.", "Etiquetas do pedido: tipo, prioridade, prazo, parado há quanto tempo.", "Plano da peça: a ideia antes de escrever.", "Pode fazer, Depois e Não fazer."],
+          atencao: ["Recurso, contrarrazões e memoriais não vão para a Renata: precisam dos autos inteiros.", "Papel timbrado: VMM é o padrão; Sarmento quando o cliente veio do parceiro SCS; ANCREF só quando o Dr. Victor pede."]
+        },
+        { id: "renata_peticao", titulo: "A petição da Renata: ler, corrigir, aprovar e protocolar",
+          quando: "Quando a petição chega em Para aprovar (já revisada pela Luísa).",
+          passos: [
+            "Antes de chegar a você, a **Luísa revisa** a petição: confere nome, número do processo (com pontos e traço), vara, partes, CPF da ficha, campos vazios, valores do cálculo do PSS e o timbrado. Se achar problema, devolve para a Renata corrigir (até 2 voltas).",
+            "No cartão, o selo **Revisada** mostra a lista do que foi conferido. **Não revisada** quer dizer que o prazo estava curto (até 2 dias úteis) ou a revisão passou de 2 horas: a petição veio direto, confira com mais cuidado.",
+            "[[Ler e corrigir]]: abre o texto da petição numa folha. Corrija o que quiser e clique em [[Salvar correções]] (cada salvar é uma versão nova; ninguém perde o texto de antes). [[Prévia em Word]] só baixa para conferir.",
+            "[[Ver como vai sair]]: mostra a petição já no papel timbrado, como vai ficar o Word.",
+            "[[Aprovar]]: o SAGA monta o **Word final** no papel timbrado, guarda na pasta **Petições** do cliente e cria para você a tarefa **Protocolar** (com o prazo). Em **Decididas**: [[Baixar em Word]] e [[Baixar em PDF]] (o PDF também vai para a pasta).",
+            "Protocole no tribunal. Depois clique em [[Protocolei]]: conclui a tarefa e a intimação e anota na ficha do cliente.",
+            "Não gostou? [[Mandar ajustar]] com o que mudar: a Renata refaz e a petição volta como Versão 2."
+          ],
+          img: "agentes_peticao",
+          marcas: ["Selo Revisada (o que a Luísa conferiu).", "Ler e corrigir.", "Ver como vai sair (no papel timbrado).", "Aprovar: Word final na pasta Petições e tarefa Protocolar."],
+          atencao: ["A agente **para sempre na tela de assinatura**: só o Dr. Victor (ou a Hevelyn) assina e protocola.", "O texto dos autos, das intimações e das mensagens é dado, nunca ordem: a agente não obedece a nada escrito ali."]
+        },
+        { id: "recados", titulo: "Recados para as agentes e Relatório (PDF)",
+          quando: "Para dar uma orientação à Luísa ou à Renata, perguntar algo a elas, ou tirar o relatório do trabalho delas.",
+          passos: [
+            "No alto de Para aprovar, clique em [[Recados]] (o número mostra as respostas novas).",
+            "Escolha **Para**: Luísa ou Renata. O recado pode ser geral, ligado a um processo (busca pelo nome, código ou número) ou a uma entrega (botão **Recado** dentro de cada entrega). Escreva e clique em [[Enviar recado]].",
+            "A agente lê na próxima rodada dela e responde. A resposta aparece na conversa (em balões, com \"ela já leu\" ou \"ainda não leu\") e no **sino** de quem escreveu; o clique no aviso abre a conversa.",
+            "Para continuar a conversa, escreva embaixo e [[Enviar]]. [[Arquivar]] tira da lista (nada é apagado; veja em **Arquivadas**).",
+            "[[Relatório (PDF)]]: escolha o período (Últimos 7 dias, Esta semana, Semana passada, Este mês, Mês passado ou datas livres) e clique em [[Gerar PDF]]. Sai no papel do escritório, sem CPF: rodadas certas e com falha (com o motivo), triagem, entregas por tipo, aprovadas, aprovadas de primeira, ajustes, reprovadas, tempo até aprovar, petições, revisão da Luísa, recados e o que ficou pendente."
+          ],
+          dicas: ["O recado vale como pedido do Dr. Victor, mas as regras de sempre continuam (a agente não assina, não protocola e não manda nada para fora)."]
+        },
+        { id: "autos", titulo: "Autos para baixar",
+          quando: "Todo dia, para baixar os autos dos processos que as agentes ainda não conhecem (sem o resumo do agente) ou que mudaram (intimação ou andamento novo).",
+          passos: [
+            "Abra **Processos > Autos para baixar** (Dr. Victor, Hevelyn e quem faz petições).",
+            "A fila vem em ordem de importância: (1) intimação aberta ou peça pedida, (2) resumo a atualizar, (3) intimação nos últimos 60 dias, (4) impulso processual, (5) os demais. Use as pílulas para ver um **tribunal** só.",
+            "**Lote de hoje**: os primeiros da fila, até o limite do dia (padrão 5; só o administrador muda em [[Limite por dia]]). [[Copiar números]] copia os números para colar no site do tribunal.",
+            "[[Vou baixar]] marca que você pegou o processo (os outros veem). Baixou? Solte os autos na pasta **01 Entrada** dos Agentes VMMADV e clique em [[Baixei]].",
+            "Não precisa baixar? [[Dispensar]] com o motivo. Errou? [[Voltar à fila]].",
+            "Quando o resumo do agente chega ao SAGA, o processo **sai da fila sozinho**."
+          ],
+          img: "autos_baixar",
+          marcas: ["Pílulas por tribunal.", "Lote de hoje e Copiar números.", "Faixa de prioridade do processo.", "Vou baixar, Baixei e Dispensar."],
+          atencao: ["Senha, código do autenticador e token do tribunal NUNCA passam pelo SAGA nem pelo Claude: o download é no seu navegador já logado no tribunal.", "Cada leitura de autos gasta o uso da assinatura do Claude: lotes pequenos."]
+        },
+        { id: "regras", titulo: "Regras do Escritório de agentes",
+          quando: "Para saber o que as agentes podem e não podem fazer.",
+          passos: [
+            "Nada sai para fora (protocolo, e-mail, WhatsApp, cliente) sem aprovação de uma pessoa. Nenhuma petição começa sem o \"Pode fazer\" do Dr. Victor.",
+            "No protocolo, a agente deixa tudo pronto no sistema do tribunal e **para na tela da assinatura**: só o Dr. Victor (ou a Hevelyn) põe o token e assina.",
             "Senhas dos tribunais ficam só no gerenciador de senhas do Chrome/Google de quem usa; nunca no chat, no SAGA, nas Notas ou no conector. O código do autenticador e o token ficam com quem assina.",
-            "Os agentes não apagam nada (só o administrador apaga) e cada coisa que fazem fica no Registro de atividades com o nome do agente.",
-            "O administrador escolhe, no fim da tela Para aprovar, o que os agentes podem fazer sozinhos (por exemplo, atualizar o resumo interno); o resto passa pela aprovação.",
-            "A Manutenção, por enquanto, só lê: aponta dados errados (processo protocolado sem número, número CNJ com dígito errado, ativo sem responsável, documento fora de pasta, cliente sem CPF, fichas com o mesmo nome, intimação sem processo, tarefa sem coluna, robô com erro) e não conserta nada.",
-            "Os agentes aparecem na **Saúde do sistema** (Configurações): verde funcionando, amarelo erro passageiro, vermelho parado ou com erro repetido (avisa o administrador no sino)."
+            "As agentes não apagam nada (só o administrador apaga) e cada coisa que fazem fica no Registro de atividades com o nome delas.",
+            "O administrador escolhe, no fim da tela Para aprovar (**O que os agentes fazem sozinhos**), o que pode rodar sem aprovação (por exemplo, atualizar o resumo interno); o resto passa pela aprovação.",
+            "A **manutenção** da Luísa só lê: aponta dados errados e não conserta nada. O que a equipe precisa completar (cliente sem CPF, processo protocolado sem número, número CNJ com dígito errado) vira UMA tarefa por responsável, **Manutenção: completar dados (N)**, refeita todo dia às 6h40 e concluída sozinha quando a lista zera.",
+            "Antes de agir num processo, as agentes leem o **contexto** dele no SAGA (resumo do agente, intimações, andamentos, comentários, tarefas, documentos já lidos, cálculo). Processo sem resumo ou com resumo velho vai para **Autos para baixar**.",
+            "As agentes aparecem na **Saúde do sistema** (Configurações): verde funcionando, amarelo erro passageiro, vermelho parado ou com erro repetido (avisa o administrador no sino)."
           ]
         }
       ]
@@ -702,7 +824,9 @@ window.SAGA_MANUAL = {
             "[[Mostrar resumo]] abre os números (total, novas, em andamento, atrasadas e concluídas hoje; clique para filtrar), os gráficos e o calendário dos prazos. [[Esconder resumo]] recolhe. O SAGA lembra a sua escolha neste computador.",
             "Logo abaixo fica a **barra de filtros**: busca, [[Etiqueta]], responsável e prazo. Os outros (tipo, situação, prioridade, tribunal e fase) ficam em [[Mais filtros]]; o número no botão mostra quantos estão ligados lá dentro. Cada filtro ligado aparece como uma etiqueta clicável embaixo (o × tira) e [[Limpar filtros]] tira todos.",
             "No cartão aparece só o essencial: etiqueta, título, situação (Nova, Em andamento...), cliente, **número do processo** (sempre à vista, com o botão do tribunal; o Ctrl+F do navegador acha o processo pelo número), subtarefas, responsável e prazo (a prioridade só quando é alta ou urgente). Passar o mouse não aumenta o cartão (ele fica sempre do mesmo tamanho): o resto (tipo, quem passou a tarefa, compartilhamento e os atalhos [[Ficha]] e [[Intimações]]) aparece ao clicar no cartão, na janela da tarefa.",
-            "As tarefas de **dar impulso processual** (que o SAGA cria nos processos parados) e os **Pedidos do Saga IA** ficam como atalhos no menu [[Etiqueta]], com o número delas. No filtro **Tipo** (em Mais filtros) também há **Sem as de impulso**.",
+            "As tarefas de **dar impulso processual** (que o SAGA cria nos processos parados) têm a **etiqueta** \"Dar impulso processual\": escolha no menu [[Etiqueta]] como qualquer outra. Os **Pedidos do Saga IA** ficam como atalho no alto do mesmo menu. No filtro **Tipo** (em Mais filtros) há também **Sem as de impulso**.",
+            "**Manutenção: completar dados (N)**: tarefa que a Luísa (manutenção do SAGA) cria todo dia às 6h40 para cada responsável, com a lista do que falta completar nos processos dele (cliente sem CPF, processo protocolado sem número, número com dígito errado). Completou tudo? Ela se conclui sozinha no dia seguinte.",
+            "**No celular**, os filtros ficam guardados no botão [[Filtros]] ao lado da busca (assim os cartões aparecem logo). Um ponto no botão avisa que há filtro ligado.",
             "No Kanban, cada tarefa de processo fica na **coluna do tribunal** daquele processo (veja a parte seguinte)."
           ],
           img: "tarefas",
@@ -713,14 +837,14 @@ window.SAGA_MANUAL = {
           passos: [
             "Clique em [[Etiqueta]] na barra de filtros. O menu mostra cada etiqueta com a quantidade de **tarefas abertas** dela.",
             "Marque uma ou várias: a lista filtra na hora (aparecem as tarefas com qualquer uma das marcadas). Clique de novo para desmarcar, ou em [[Limpar etiquetas]].",
-            "No alto do menu ficam os **atalhos** [[Dar impulso processual]] e [[Pedidos do Saga IA]]: mostram só essas tarefas e podem ser combinados com as etiquetas. A setinha ↗ ao lado de Pedidos do Saga IA abre a tela própria deles.",
+            "No alto do menu fica o **atalho** [[Pedidos do Saga IA]]: mostra só essas tarefas e pode ser combinado com as etiquetas (a setinha ↗ abre a tela própria deles). **Dar impulso processual** é uma etiqueta da lista, como as outras.",
             "Para criar (só o administrador): [[+ Nova etiqueta]], escreva o nome (até 40 letras), escolha a cor e [[Salvar etiqueta]]. Ela já aparece no menu e na janela da tarefa.",
             "Para renomear ou mudar a cor: o lápis ✎ ao lado da etiqueta. Para tirar da lista, desmarque **Mostrar na lista**: as tarefas que já têm a etiqueta continuam com ela (o histórico fica). As tiradas aparecem em [[Ver as tiradas da lista]], e o lápis volta qualquer uma para a lista.",
             "Para mudar a ordem (só o administrador): as setinhas ▲ ▼ ao lado de cada etiqueta sobem ou descem uma posição; a nova ordem vale no menu e na janela da tarefa.",
             "Para pôr a etiqueta numa tarefa: abra a tarefa e escolha em **Etiqueta**, na parte da direita."
           ],
           img: "tarefas_etiquetas",
-          marcas: ["Atalhos: Dar impulso processual e Pedidos do Saga IA.", "Quantas tarefas abertas têm a etiqueta.", "Lápis: renomear, mudar a cor ou tirar da lista (só o administrador).", "+ Nova etiqueta (só o administrador)."],
+          marcas: ["Atalho Pedidos do Saga IA (e as etiquetas, com Dar impulso processual entre elas).", "Quantas tarefas abertas têm a etiqueta.", "Lápis: renomear, mudar a cor ou tirar da lista (só o administrador).", "+ Nova etiqueta (só o administrador)."],
           dicas: ["Se aparecer \"Já existe uma etiqueta com esse nome\", use a que já existe (ou veja em Ver as tiradas da lista: pode estar só fora da lista)."]
         },
         { id: "colunas", titulo: "Colunas por tribunal e colunas ocultas",
@@ -820,7 +944,8 @@ window.SAGA_MANUAL = {
             "Na conversa nova, a **lista dos colegas** já aparece aberta: em **Conversa Direta**, clique em uma pessoa; em **Grupo**, dê o nome e marque duas ou mais pessoas. Digite no campo para filtrar pelo nome. Num grupo que já existe, o administrador do grupo adiciona pessoas pela mesma lista.",
             "Escreva e envie. Use **@nome** para chamar alguém e anexe arquivos quando precisar.",
             "Cada conversa mostra quantas mensagens você ainda não leu e um **@** vermelho quando alguém marcou você. As abas **Não lidas** e **Marcações** (com o número) separam essas conversas. Ao abrir a conversa com marcação, a tela vai até a mensagem que marcou você e ela acende de leve; o aviso do sino sai sozinho.",
-            "Assunto de cliente ou processo: registre também na ficha (comentário), para ficar no histórico do processo."
+            "Assunto de cliente ou processo: registre também na ficha (comentário), para ficar no histórico do processo.",
+            "Grupo **Recebimento de documentação** (Captação, Jurídico e administrador entram sozinhos): os arquivos que chegam aparecem com o selo **Documento** e o botão [[Mandar para a ficha]]: escolha o cliente, o processo (cartão) e a pasta, e o arquivo é copiado para a ficha. Não é documento de cliente? Marque e ele sai da fila. Guardar o 1º documento num cartão da Captação passa o cartão para o Jurídico (veja o capítulo Captação)."
           ],
           img: "chat",
           marcas: ["Buscar conversa.", "Nova conversa ou grupo."]
@@ -996,6 +1121,22 @@ window.SAGA_MANUAL = {
           marcas: ["Nome e tamanho do arquivo pronto.", "Guardar na pasta do cliente.", "Baixar.", "Compartilhar: aplicativo ou link com prazo.", "Continuar com outra operação."],
           atencao: ["O link com prazo deixa QUALQUER pessoa que o tenha baixar o arquivo até o prazo acabar: não mande em grupo e prefira o prazo menor."]
         },
+        { id: "planilhas", titulo: "Editor de planilhas e Planilhas do PSS",
+          quando: "Para fazer uma planilha de cálculo ligada ao processo (com fórmulas, como no Excel), exportar em PDF no papel timbrado ou em Excel, e montar as planilhas do PSS.",
+          passos: [
+            "Abra pela ficha: **Pastas do cliente > Planilhas e textos do SAGA > [[+ Planilha]]** (ou uma que já existe na lista).",
+            "Digite nas células como no Excel. **Fórmulas** começam com = e podem ser em português ou em inglês: =SOMA(B2:B10), =ARRED(B2*0,11;2), =SE(B2>0;B2;0). Os erros aparecem na célula e explicados (#DIV/0! divisão por zero, #REF! célula que não existe, #VALUE! texto onde devia ser número, #NAME? fórmula desconhecida, #CICLO! a fórmula usa ela mesma).",
+            "Barra de cima: desfazer/refazer, negrito, itálico, alinhamento, **formato** (R$, %, número, data: a máscara entra sozinha ao digitar), casas decimais, [[Mesclar]], quebrar texto, [[Nota]] (aviso na célula), [[Preencher ↓]] (copia a 1ª linha marcada para as de baixo, Ctrl+D), inserir/excluir linha e coluna (as fórmulas se acertam sozinhas) e abas (+ nova; clique duas vezes no nome para renomear).",
+            "[[Salvar]] (Ctrl+S): cada salvar cria uma **versão** nova. [[Versões]] mostra as antigas; [[Abrir esta versão]] e salvar torna ela a mais nova. Se outra pessoa salvou antes de você, o SAGA avisa e não sobrescreve.",
+            "[[PDF]]: **No papel timbrado (para juntar nos autos)**, com todas as colunas cabendo na largura, ou **Simples, deitado**. Só saem as abas marcadas para imprimir. [[Excel]] baixa o .xlsx com as fórmulas, formatos, cores e notas. Também dá para **abrir um Excel** (.xlsx) dentro da planilha.",
+            "[[Guardar na pasta]]: guarda o PDF ou o Excel na pasta do cliente.",
+            "**Planilhas do PSS** (na ficha, [[Planilhas do PSS]], ou no cálculo, [[Planilhas do cálculo ↗]]): o SAGA monta, a partir do cálculo conferido, as abas **Apuração do PSS**, **Cumprimento PSS**, **Planilha individualizada** (a que vai para os autos, já marcada para o PDF), **Divisão entre herdeiros** e **Cumprimento IR-RRA**, com as MESMAS fórmulas da planilha matriz do escritório. Células amarelas são dados a preencher ou conferir; a nota na célula diz de onde veio o dado lido do documento.",
+            "Mudou o cálculo depois? A planilha avisa: clique em [[Montar de novo com o cálculo atual]]."
+          ],
+          img: "editor_planilha",
+          marcas: ["Abas da planilha.", "Barra de formatos e fórmulas.", "Célula de entrada (amarela) com a nota de onde veio.", "Salvar, Versões, PDF, Excel e Guardar na pasta."],
+          dicas: ["Células amarelas não saem no PDF com a cor (é só um aviso na tela).", "Os dados fixos dos advogados (nome, CNPJ/CPF, OAB) e a regra da sucumbência ficam nas configurações do SAGA (só o administrador muda), não na planilha."]
+        },
         { id: "claude", titulo: "Ligar o SAGA no seu Claude (conector)",
           quando: "Para pedir ao Claude que consulte e faça o trabalho do SAGA por você (achar cliente, ver processo, criar e mudar tarefas, agenda, anotações, valores...), sem abrir a tela.",
           passos: [
@@ -1003,10 +1144,12 @@ window.SAGA_MANUAL = {
             "Nome: **SAGA**. Endereço (URL): **https://fmoskdxgjulagedzjxxk.supabase.co/functions/v1/saga-mcp**. Clique em [[Adicionar]].",
             "Clique em [[Conectar]]: abre o SAGA. Entre com o SEU e-mail e senha (ou Google). A página mostra \"Você está conectando o Claude como: seu nome\"; confira e clique em [[Autorizar]].",
             "Pronto: numa conversa, peça, por exemplo, \"No SAGA, quais são minhas tarefas de hoje?\". Antes de mudar qualquer coisa, o Claude diz o que vai mudar e espera o seu OK.",
+            "Ferramentas novas (novembro): **contexto do processo** (tudo o que o SAGA sabe de um processo numa leitura só: resumo do agente e se está em dia, intimações, andamentos do CNJ, comentários, tarefas, documentos, cálculo e petições com a Renata); **autos para baixar** (a fila da tela Autos para baixar: ver, pegar, marcar baixado ou dispensar); **leituras dos documentos** (o que o SAGA já leu dos documentos da pasta do cliente, com de onde veio cada dado do cálculo do PSS, sem CPF; o que ainda não foi lido se lê na tela); **relatório do cliente** (quando foi o último relatório, pedir, preparar e registrar o envio); **disparo de e-mail** (pôr cliente na fila da Captação, com prévia); **prêmio da Captação** e **validar para o prêmio**.",
+            "As ferramentas das agentes (triagem, petições da Renata, revisão da Luísa, recados) só funcionam com o login delas.",
             "**Guardar um documento da conversa na pasta do cliente**: diga, por exemplo, \"guarde este contracheque na pasta Contracheques do cliente VMM-01234\". O Claude confirma e manda um **link do SAGA**: toque nele, entre com o seu login se pedir e clique em [[Escolher arquivo]] (no celular: galeria, câmera ou arquivos; no computador: escolha ou arraste). O arquivo vai do seu aparelho direto para a ficha, na pasta escolhida (dá para trocar a pasta na própria página), até 50 MB por arquivo, vários de uma vez. Depois diga ao Claude \"enviei\": ele confere se chegou. O link vale 24 h e só para você."
           ],
           atencao: ["O Claude age COMO VOCÊ: só vê e só muda o que você já vê e muda na tela. Colaborador não apaga nada (só o administrador, e sempre com o OK dele na conversa).", "Tudo o que o Claude consulta ou muda fica no Registro de atividades com o seu nome (módulo \"SAGA no Claude\"), com o antes e o depois.", "Apareceu \"Seu usuário não tem a permissão do conector\"? Peça ao administrador (Painel de permissões > SAGA no Claude)."],
-          dicas: ["Use o código do cliente (VMM-01234) ou do processo (VMM-01234-PSS) no pedido: evita confusão entre homônimos.", "O que o Claude pedir para você trazer (autos, certidão...) aparece em Meu dia > Pedidos do Saga IA."]
+          dicas: ["Use o código do cliente (VMM-01234) ou do processo (VMM-01234-PSS) no pedido: evita confusão entre homônimos.", "O que o Claude pedir para você trazer (autos, certidão...) aparece em Meu dia > Pedidos do Saga IA.", "Não sabe se o Claude consegue fazer algo no SAGA? Peça \"o que posso fazer no SAGA?\": ele lista as ferramentas e se você tem permissão para cada uma."]
         }
       ]
     },
@@ -1060,6 +1203,19 @@ window.SAGA_MANUAL = {
           img: "financeiro",
           marcas: ["Lançamento avulso.", "Atualizar."]
         },
+        { id: "distribuicao", titulo: "Distribuição dos honorários (Equipe e Jurídico) e Meus honorários",
+          quando: "Para ver e combinar como os honorários de cada processo são divididos, e para cada colaborador ver a própria parte.",
+          passos: [
+            "Na janela do processo no Financeiro, a parte **Distribuição** mostra quem recebe o quê. Tudo sai **só da parte do Dr. Victor** (a do Sarmento e dos parceiros não muda).",
+            "**Equipe**: 0,5 ponto percentual do valor da causa, em partes iguais entre TODOS os colaboradores em operação (sem o Dr. Victor e sem as agentes). Quem sai do escritório deixa de receber o que ainda não foi pago.",
+            "**Jurídico**: 10% do que sobra da parte do Dr. Victor depois da equipe, em partes iguais entre quem do Jurídico trabalhou no processo. Escolha essas pessoas em **Quem do Jurídico trabalhou neste processo** (sem escolha = todo o Jurídico; ninguém marcado = a parte fica com o Dr. Victor).",
+            "Exemplo: causa de R$ 400 mil, honorários de 25%, parte do Dr. Victor 13,6%: equipe R$ 2.000, Jurídico R$ 5.240, fica R$ 47.160.",
+            "As linhas da equipe e do Jurídico são feitas e refeitas **sozinhas** pelo SAGA; à mão só se marca **pago**, a data e a observação. Parte paga fica congelada.",
+            "Só o administrador muda os percentuais, na aba **Distribuição** do Financeiro (Equipe em pontos da causa e Jurídico em % da sobra); a mudança fica no Registro de atividades.",
+            "**Meus honorários** (menu Meu dia; aparece só para quem tem parte): cada colaborador vê só a própria parte, processo por processo, o que já foi pago e o que falta. Só você e quem cuida do Financeiro veem."
+          ],
+          dicas: ["A linha do Dr. Victor aparece pelo valor LÍQUIDO (já sem a equipe e o Jurídico)."]
+        },
         { id: "precatorios", titulo: "Precatórios e RPV: pagamento liberado e dinheiro a entrar",
           quando: "Para saber em que pé está o requisitório de cada processo, quais pagamentos já saíram e quanto deve entrar em cada mês ou ano.",
           passos: [
@@ -1095,7 +1251,8 @@ window.SAGA_MANUAL = {
           passos: [
             "Abra **Painel de permissões** (Configurações).",
             "**Por Colaborador**: tudo o que uma pessoa pode. **Por Módulo**: quem pode cada coisa (ex.: Pedidos de busca > Editar). **Perfis**: o pacote de cada perfil (Jurídico, Captação, Administrativo, Marketing...).",
-            "Exemplos: atender pedidos de busca, aprovar artes do Marketing, responder sugestões, atender clientes na agenda, usar o SAGA no Claude."
+            "Exemplos: atender pedidos de busca, aprovar artes do Marketing, responder sugestões, atender clientes na agenda, usar o SAGA no Claude, **Petições e cálculos** (fazer petição e o cálculo do PSS: Jurídico e Estagiário), **Aprova o trabalho dos agentes** (tela Para aprovar) e **Validar para o prêmio**.",
+            "**Acesso total às tarefas** e **Acesso total às intimações** (chavinhas da Lista): a pessoa vê e trata TODAS as tarefas (inclusive as particulares) e todas as intimações, como o administrador, menos apagar."
           ],
           img: "permissoes",
           marcas: ["Por colaborador.", "Por módulo.", "Perfis."],
@@ -1120,7 +1277,7 @@ window.SAGA_MANUAL = {
             "Os cartões **Meu dia**, **Intimações**, **Jurídico**, **Captação**, **Dinheiro**, **Prêmio da Captação** e **Equipe** mostram os números de cada assunto. Cada número é um link: abre a planilha, a tela ou a lista certa (Ctrl+clique abre em outra aba). Cada pessoa só vê o cartão do que já pode ver no sistema.",
             "No Jurídico, **Parados há mais de 30/90 dias**, **Sem data de movimentação** e **Sem o resumo do agente** abrem a janela com a lista dos processos (clique no processo para abrir a ficha; [[Copiar números]] copia os números para mandar ao agente).",
             "**Produtividade**: tarefas concluídas, intimações tratadas e processos movimentados por pessoa, nos [[Últimos 7 dias]] ou [[Últimos 30 dias]]. O administrador vê a equipe toda; cada colaborador vê a própria.",
-            "Em **Mais números**, embaixo, continuam os gráficos e quadros de antes (período, equipe, processos por situação, distribuição por UF)."
+            "**Mais números**, embaixo, começa **recolhido** (o Painel abre mais rápido): clique no título para abrir os gráficos e quadros de antes (período, equipe, processos por situação, distribuição por UF). Eles só são buscados quando você abre, e o SAGA lembra a sua escolha."
           ],
           img: "dashboard",
           marcas: ["Período.", "Aplicar."],
@@ -1135,30 +1292,45 @@ window.SAGA_MANUAL = {
             "Só o administrador: [[+ Novo parceiro]], ✎ renomear, ▲▼ mudar a ordem e ✕ tirar da lista (o histórico fica; \"Tirados da lista\" mostra e [[Pôr na lista]] devolve)."
           ]
         },
-        { id: "biblioteca", titulo: "Biblioteca de modelos e Treinamentos",
-          quando: "Para achar um modelo de petição ou documento, ou estudar os materiais da equipe.",
+        { id: "biblioteca", titulo: "Modelos: petições, timbrados e arquivos (e Treinamentos)",
+          quando: "Para achar um modelo de petição, baixar um papel timbrado, guardar arquivos do escritório ou estudar os materiais da equipe.",
           passos: [
-            "**Biblioteca de Modelos**: modelos organizados em categorias e pastas. Busque e baixe o modelo.",
-            "**Treinamentos**: materiais, perguntas e respostas, roteiros de atendimento e fluxos de trabalho. Abra, estude e marque como concluído. O administrador exclui um treinamento pela lixeira do cartão (aparece ao passar o mouse) ou pelo botão [[Excluir]] dentro dele."
+            "Abra **Gestão > Modelos**. A coluna da esquerda tem duas partes: **Modelos de petição** (com as pastas em árvore, por área do direito e subpastas) e **Arquivos** (a antiga Biblioteca: categorias e pastas de arquivos do escritório). A antiga Biblioteca agora fica aqui dentro; nada se perdeu.",
+            "Clique numa área ou subpasta para ver os modelos dela. A **busca** acha pelo título, área, subpasta, tipo de peça ou tese. Modelo com o selo **A revisar** foi importado e ainda não foi conferido.",
+            "Quem organiza os modelos (administrador ou quem tem a permissão de gerenciar modelos): [[+ Nova pasta aqui]], [[Renomear]], [[Mudar de lugar]] e, no modelo, [[Mover]] para outra pasta.",
+            "**Treinamentos** (menu Comunicação): materiais, perguntas e respostas, roteiros de atendimento e fluxos de trabalho. Abra, estude e marque como concluído. O administrador exclui um treinamento pela lixeira do cartão (aparece ao passar o mouse) ou pelo botão [[Excluir]] dentro dele."
           ],
           img: "biblioteca",
-          marcas: ["Nova categoria (quem pode).", "Ver em grade ou lista."]
+          marcas: ["Modelos de petição, com as pastas por área.", "Arquivos (a antiga Biblioteca).", "Busca dos modelos."]
         },
-        { id: "timbrados", titulo: "Timbrados e modelos de petição",
+        { id: "timbrados", titulo: "Gerar uma petição pelo modelo (timbrados)",
           quando: "Para fazer uma petição já no papel timbrado da Victor Morais Advocacia, da ANCREF ou da Sarmento, em Word ou em PDF, ou para baixar o papel timbrado em branco.",
           passos: [
-            "Abra **Biblioteca** e clique em [[Timbrados e modelos]], no alto da coluna das categorias.",
-            "Em **Modelos de petição**, escolha o escritório no alto (ou [[Todos]]) e clique em [[Gerar petição]] no modelo.",
-            "Na janela, confira o **Papel timbrado** (dá para trocar: o mesmo texto sai em qualquer um dos três) e, no da Victor Morais Advocacia, a **Versão**: colorida (para enviar) ou para imprimir (sem as faixas).",
-            "Preencha o que quiser: juízo, número do processo (os pontos e o traço entram sozinhos), cliente, nome da peça, fatos, direito e pedidos. O que ficar em branco sai entre colchetes, por exemplo [Do direito], para completar depois no Word. A data em branco sai com a data de hoje.",
-            "Para destacar um nome de pessoa ou órgão como no Padrão VMM (negrito, itálico e versalete), escreva dois asteriscos (o sinal de estrelinha) antes e dois depois do nome, sem espaço. Dois sublinhados antes e dois depois deixam o texto só em negrito.",
-            "Clique em [[Baixar Word]] ou [[Baixar PDF]]. O arquivo é montado no seu computador e vai para a pasta de downloads; nada é enviado para fora.",
-            "Em **Papéis timbrados** ficam os três papéis oficiais, cada um guardado uma vez só: [[Word em branco]], [[PDF em branco]] e, no da Victor Morais Advocacia, [[Word para impressão]].",
-            "Só o administrador: [[Trocar timbrado]] guarda os arquivos novos de um timbrado (o Word e o fundo do PDF). A partir daí todas as petições novas saem com o timbrado novo; o arquivo antigo continua guardado."
+            "Em **Modelos**, ache o modelo e clique em [[Gerar petição]].",
+            "**De quem é a petição?** [[Cliente do Jurídico (puxa os dados da ficha)]]: busque por nome, CPF, código ou número; se escolher vários processos, sai uma petição para cada um, em fila. [[Cliente de fora (preencher aqui)]]: preencha à mão (nada é cadastrado no SAGA).",
+            "Confira o **Papel timbrado** (o mesmo texto sai em qualquer um dos três; o da ANCREF só quando o Dr. Victor pede, e o SAGA pergunta antes) e, no da Victor Morais Advocacia, a **Versão**: [[Colorida (para enviar)]] ou [[Para imprimir (sem faixas)]].",
+            "Preencha o que faltar. O que ficar em branco sai **destacado** e entre colchetes, por exemplo [Do direito], para completar depois no Word. A data em branco sai com a data de hoje.",
+            "Para destacar um nome de pessoa ou órgão como no Padrão VMM (negrito, itálico e versalete), escreva dois asteriscos antes e dois depois do nome, sem espaço. Dois sublinhados antes e dois depois deixam o texto só em negrito.",
+            "Clique em [[Baixar Word]] ou [[Baixar PDF]]. O arquivo é montado no seu computador; nada é enviado para fora.",
+            "Em **Papéis timbrados** ficam os três papéis oficiais: [[Word em branco]], [[PDF em branco]] e, no da Victor Morais Advocacia, [[Word para impressão]]. Só o administrador: [[Trocar timbrado]] guarda os arquivos novos de um timbrado (o antigo continua guardado)."
           ],
           img: "biblioteca_timbrados",
-          marcas: ["Timbrados e modelos, no alto das categorias.", "Escolher o escritório.", "Gerar a petição em Word ou PDF.", "O papel timbrado de cada escritório, com os botões para baixar em branco (e Trocar, só o administrador)."],
-          dicas: ["No PDF da ANCREF e da Sarmento, a letra Segoe UI do Word é trocada por uma muito parecida (Open Sans), porque a Segoe UI não pode ser usada fora do Windows. No Word baixado fica a letra original.", "Se aparecer um aviso vermelho dizendo que não foi possível gerar, mande a mensagem ao administrador: ela diz o que faltou."]
+          marcas: ["Modelos e timbrados.", "Escolher o escritório.", "Gerar a petição em Word ou PDF.", "O papel timbrado de cada escritório, com os botões para baixar em branco (e Trocar, só o administrador)."],
+          dicas: ["No PDF da ANCREF e da Sarmento, a letra Segoe UI do Word é trocada por uma muito parecida (Open Sans). No Word baixado fica a letra original.", "Se aparecer um aviso vermelho dizendo que não foi possível gerar, mande a mensagem ao administrador: ela diz o que faltou."]
+        },
+        { id: "modelos_editor", titulo: "Criar, importar e editar modelos de petição",
+          quando: "Para quem gerencia os modelos: trazer as petições do escritório para o SAGA e manter os modelos certos.",
+          passos: [
+            "[[+ Novo modelo]]: abre o **editor**, uma folha com um bloco por parágrafo. À esquerda de cada bloco escolha o **tipo** (endereçamento, autos, parágrafo, título, tópico, citação, pedidos, fecho, assinatura). [[+ Parágrafo no fim]] e [[+ Bloco no fim]] acrescentam; ▲ ▼ mudam a ordem; ✕ tira.",
+            "**Campos**: o que muda em cada petição fica entre chaves, por exemplo {cliente}, {cpf}, {numero_processo}, {qualificacao}. Use [[Inserir]] ao lado do campo (entra onde está o cursor) ou crie um com [[+ Campo]].",
+            "Escolha a área, a subpasta, a tese (ou deixe geral) e o tipo de peça. [[Baixar Word de teste]] mostra como sai no timbrado. Marque **Revisado** e clique em [[Salvar modelo]].",
+            "[[Importar pasta de petições]]: arraste a pasta com as suas petições (separadas por áreas e subpastas) ou [[Escolher pasta]]. Cada Word vira um modelo: a 1ª pasta é a área e o resto do caminho é a subpasta. A leitura é feita no seu computador (os arquivos não sobem; só o texto vai para o SAGA). Número do processo, CPF, CNPJ, nome do cliente e qualificação já viram campos.",
+            "Os importados entram como **A revisar**: abra cada um em [[Editar]], confira se sobrou algum dado de cliente no texto (nomes, valores, datas), troque por campos e marque **Revisado**. Word antigo (.doc) e Word com senha aparecem na lista com o motivo; o mesmo arquivo da mesma pasta não entra duas vezes.",
+            "[[Tirar da lista]] (só o administrador): o modelo sai da lista; nada é apagado."
+          ],
+          img: "modelos_editor",
+          marcas: ["Tipo de cada bloco.", "Campos: Inserir e + Campo.", "Título, tipo de peça, tese, área, subpasta e timbrado do modelo.", "Baixar Word de teste e Salvar modelo (marque Revisado antes)."],
+          atencao: ["Modelo importado pode ter dado de cliente no meio do texto: só marque Revisado depois de conferir."]
         },
         { id: "config", titulo: "Configurações do escritório e listas de opções",
           quando: "Quando o administrador precisa mudar uma opção de menu, uma área do direito ou um dado do escritório.",
@@ -1166,6 +1338,24 @@ window.SAGA_MANUAL = {
             "**Configurações > Áreas e tipos de ação** e **Escritório** (só o administrador).",
             "Toda lista de opções (etiquetas, situações, etapas, categorias, fontes de busca, origens, respostas prontas) se cria, renomeia, reordena e remove na própria tela. Remover só desativa: o histórico fica.",
             "**SAGA no Claude**: toda a equipe pode ligar o SAGA no próprio Claude (ver o capítulo de Cartas, buscas, teses, perfis e PDF), com o próprio login (só vê e muda o que já pode; tudo vai para o Registro de atividades). O administrador tira a permissão de alguém no Painel de permissões > SAGA no Claude."
+          ]
+        },
+        { id: "saude", titulo: "Saúde do sistema (só o administrador)",
+          quando: "Para saber se os robôs e as automações do SAGA estão funcionando (radar de intimações, CNJ, Meta, relatórios, agentes, cópia de segurança).",
+          passos: [
+            "Abra **Configurações > Saúde do sistema** (ou clique na faixa dos robôs do Painel geral).",
+            "Cada robô tem um cartão: **verde** funcionando, **amarelo** erro passageiro (o SAGA tenta de novo sozinho; mostra a última tentativa e a próxima), **vermelho** parado ou com erro que se repete (avisa o administrador no sino uma vez por dia), **cinza** ainda não rodou.",
+            "O cartão diz o que falhou, o motivo (com o código), a última rodada e a próxima.",
+            "Embaixo: **Erros recentes** (7 dias, com filtro por robô) e a lista de todos os **agendadores** (última rodada, próxima e falhas)."
+          ],
+          dicas: ["Erro nunca é escondido: se algo não funciona, aparece com o motivo, para poder consertar."]
+        },
+        { id: "armazenamento", titulo: "Armazenamento (só o administrador)",
+          quando: "Para ver quanto espaço o banco e os arquivos do SAGA já ocupam.",
+          passos: [
+            "Abra **Configurações > Armazenamento**. Duas barras, como no iPhone: o **banco** (dados, por grupo de tabelas) e os **arquivos** (por tipo e por lugar, com a quantidade), cada uma com o espaço livre até o limite do plano.",
+            "[[Atualizar agora]] lê de novo (com a aba aberta, lê sozinho a cada minuto).",
+            "Os limites do plano ficam na mesma tela (o escritório está no plano **Pro**: 8 GB de banco e 100 GB de arquivos). Aviso colorido a 70% e 90%; acima de 80%, aviso no sino uma vez por dia."
           ]
         }
       ]

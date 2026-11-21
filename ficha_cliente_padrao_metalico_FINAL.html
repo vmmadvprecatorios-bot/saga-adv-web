@@ -5385,9 +5385,9 @@ init().catch(function(erro){showToast('Erro ao inicializar a ficha: recarregue a
 <script src="saga_localizacao.js?v=202611212305"></script>
 <script src="saga_ficha_blocos.js?v=202611212305"></script>
 <script src="saga_ficha_modulos.js?v=202611212305"></script>
-<script src="saga_linha_tempo.js?v=202611212305"></script>
 <script src="saga_ficha_atividades.js?v=202611212305"></script>
 <script src="saga_editaveis_ficha.js?v=202611212305"></script>
+<script src="saga_linha_tempo.js?v=202611212305"></script>
 <script>/* 21/11 (check-up 2ª rodada): todo campo de data desta tela no formato dd/mm/aaaa (window.sagaCampoData do saga_ui.js); o valor gravado continua AAAA-MM-DD */
 (function(){function ap(r){if(!window.sagaCampoData||!r||r.nodeType!==1)return;if(r.matches('input[type="date"]'))window.sagaCampoData(r);r.querySelectorAll('input[type="date"]').forEach(function(i){window.sagaCampoData(i);});}
 function ini(){ap(document.body);new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(ap);});}).observe(document.body,{childList:true,subtree:true});}
