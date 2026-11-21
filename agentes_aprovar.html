@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611210245"></script>
+<script src="saga_guard.js?v=202611210248"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Para aprovar</title>
@@ -92,7 +92,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .auton{margin-top:16px}.auton .ped{grid-template-columns:minmax(0,1fr) auto}
 .btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611210245">
+<link rel="stylesheet" href="saga_tema.css?v=202611210248">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -144,7 +144,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611210245"></script>
+<script src="saga_ui.js?v=202611210248"></script>
 <script>
 /* =====================================================================
    SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
@@ -222,11 +222,12 @@ function camposConteudo(e){
     // 20/11 (Dr. Victor): a petição chega como TEXTO; ele lê e corrige aqui e o Word/PDF final sai depois de aprovar
     var dec=e.situacao==='aprovado'||e.situacao==='executado';
     h2+='<div class="doc-peca"><button class="btn'+(e.situacao==='pendente'?' btn-ouro':'')+'" type="button" data-texto="'+esc(k.id)+'">'+(e.situacao==='pendente'?'Ler e corrigir':'Ler o texto')+'</button>'+
+      '<button class="btn" type="button" data-ver-peca="'+esc(k.id)+'">Ver como vai sair</button>'+
       '<span class="det">Texto no SAGA · versão '+esc(k.texto_versao||1)+(e.situacao==='pendente'?' · o Word e o PDF saem quando você aprovar':'')+'</span></div>';
-    if(dec)h2+='<div class="doc-peca"><button class="lnk" type="button" data-final="docx" data-peca="'+esc(k.id)+'"'+(e.documento?' data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'"':'')+'>Baixar em Word ↓</button>'+
+    if(dec)h2+='<div class="doc-peca">'+(e.documento?'<button class="btn" type="button" data-ver-doc="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'">Ver o Word final</button>':'')+'<button class="lnk" type="button" data-final="docx" data-peca="'+esc(k.id)+'"'+(e.documento?' data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'"':'')+'>Baixar em Word ↓</button>'+
       '<button class="lnk" type="button" data-final="pdf" data-peca="'+esc(k.id)+'"'+(k.pdf?' data-word="'+esc(k.pdf.caminho)+'" data-nome="'+esc(k.pdf.nome)+'"':'')+'>Baixar em PDF ↓</button>'+
       '<span class="det">'+(e.documento?esc(e.documento.nome)+' · pasta Petições da ficha':'O Word final ainda não foi gerado: toque em "Baixar em Word"')+'</span></div>';
-  }else if(e.documento)h2+='<div class="doc-peca"><button class="lnk" type="button" data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'">Abrir o Word ↓</button><span class="det">'+esc(e.documento.nome)+' · pasta Petições da ficha</span></div>';
+  }else if(e.documento)h2+='<div class="doc-peca"><button class="btn" type="button" data-ver-doc="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'">Ver</button><button class="lnk" type="button" data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'">Abrir o Word ↓</button><span class="det">'+esc(e.documento.nome)+' · pasta Petições da ficha</span></div>';
   return h2;
 }
 function seloPeca(e){
@@ -278,7 +279,7 @@ function desenharComRenata(){
         (par?'<span class="selo amarelo">'+esc(par)+'</span>':'')+
         '<span class="selo '+m[1]+'">'+esc(m[0])+'</span>';
       return '<div class="ped"><div class="cab-ent">'+(decide?'<input type="checkbox" data-pr-marcar="'+esc(k.id)+'"'+(PR.marc[k.id]?' checked':'')+' aria-label="Marcar '+esc(k.titulo)+'">':'')+
-        '<div style="min-width:0;flex:1"><div class="oque">'+esc(k.titulo)+'</div><div class="det">'+(k.cliente?'<b>'+esc(k.cliente)+'</b>':'')+(k.codigo?' · '+esc(k.codigo):'')+(k.origem==='calculo'?' · pedida pelo cálculo do PSS conferido':(k.origem==='luisa'?' · pedida pela Luísa':''))+'</div>'+
+        '<div style="min-width:0;flex:1"><div class="oque">'+esc(k.titulo)+'</div><div class="det">'+(k.cliente?'<b>'+esc(k.cliente)+'</b>':'')+(k.codigo?' · '+esc(k.codigo):'')+(k.origem==='calculo'?' · pedida pelo cálculo do PSS conferido':(k.origem==='luisa'?' · pedida pela Luísa':(k.origem==='refazer'?' · para REFAZER uma petição já decidida':'')))+'</div>'+
         (k.porque?'<div class="det" style="margin-top:4px"><b>Por quê:</b> '+esc(k.porque)+'</div>':'')+
         (k.situacao==='na_fila'||k.situacao==='em_preparo'?'<div class="det" style="margin-top:6px">Ainda não há o que aprovar: a Renata faz '+(k.situacao==='em_preparo'?'agora':'na próxima rodada ('+esc(proximaRodadaRenata())+')')+' e a petição aparece aqui em cima, em Para aprovar, com o Word.</div>':'')+
         (k.situacao==='depois'?'<div class="det" style="margin-top:6px">Guardada para depois'+(k.decidido_por?' por '+esc(k.decidido_por):'')+(k.decidido_em?' em '+esc(dataBR(k.decidido_em)):'')+'. A Renata não faz enquanto estiver aqui.</div>':'')+
@@ -443,6 +444,8 @@ function ligar(){
   $('loteLimpar').addEventListener('click',function(){P.marcados={};document.querySelectorAll('[data-marcar]').forEach(function(c){c.checked=false;});atualizarLote();});
   $('area').addEventListener('change',function(e){var c=e.target.closest('[data-marcar]');if(c){P.marcados[c.dataset.marcar]=c.checked;atualizarLote();}});
   $('area').addEventListener('click',function(e){
+    var vp=e.target.closest('[data-ver-peca]');if(vp){if(window.SagaPecaTexto)SagaPecaTexto.ver(vp.dataset.verPeca);return;}
+    var vd=e.target.closest('[data-ver-doc]');if(vd){if(window.SagaPecaTexto)SagaPecaTexto.verArquivo(vd.dataset.verDoc,vd.dataset.nome);return;}
     var tx=e.target.closest('[data-texto]');if(tx){if(window.SagaPecaTexto)SagaPecaTexto.abrir(tx.dataset.texto,{aoSalvar:carregar});else toast('O editor não carregou nesta tela (atualize a página).','error');return;}
     var fi=e.target.closest('[data-final]');if(fi){
       if(fi.dataset.word){abrirWord(fi);return;}
@@ -483,9 +486,10 @@ async function init(){
 }
 init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
 </script>
-<script src="saga_agentes_extra.js?v=202611210245"></script>
-<script src="saga_timbrado.js?v=202611210245"></script>
-<script src="saga_modelos_editor.js?v=202611210245"></script>
-<script src="saga_peca_texto.js?v=202611210245"></script>
+<script src="saga_agentes_extra.js?v=202611210248"></script>
+<script src="saga_timbrado.js?v=202611210248"></script>
+<script src="saga_modelos_editor.js?v=202611210248"></script>
+<script src="saga_visor.js?v=202611210248"></script>
+<script src="saga_peca_texto.js?v=202611210248"></script>
 </body>
 </html>

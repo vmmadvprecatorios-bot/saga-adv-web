@@ -745,6 +745,12 @@ const FERRAMENTAS: Ferramenta[] = [
     inputSchema: { type: "object", properties: { peca_id: { type: "string" }, motivo: { type: "string" }, passageiro: { type: "boolean" } }, required: ["peca_id", "motivo"], additionalProperties: false },
     rpc: "conector_peca_devolver", args: (a) => ({ p_peca: exigeUuid(a.peca_id, "o id da peça"), p_motivo: texto(a.motivo, 1500), p_passageiro: a.passageiro === true }),
   },
+  {
+    name: "refazer_peca", title: "Renata: pedir para refazer uma petição já decidida", muda: true,
+    description: "SÓ PARA LOGIN DE AGENTE (Renata). Use quando um RECADO do Dr. Victor ou da Hevelyn, sobre uma petição JÁ decidida (aprovada, protocolada ou reprovada), pede para refazer ou corrigir. Mande ref = o id da entrega do recado (recado.entrega.id) ou da peça antiga, o_que_mudar = o que o recado pede (com as palavras dele), titulo opcional e recado_id. Cria um pedido NOVO em Para aprovar > Pedidos para a Renata, ligado à petição antiga, que ESPERA o 'Pode fazer' do Dr. Victor (você NÃO começa a escrever agora). Depois responda o recado dizendo que o pedido novo está esperando o 'Pode fazer'. Se a entrega ainda está pendente, a ferramenta recusa: aí ele usa 'Mandar ajustar'.",
+    inputSchema: { type: "object", properties: { ref: { type: "string" }, o_que_mudar: { type: "string" }, titulo: { type: "string" }, recado_id: { type: "string" } }, required: ["ref", "o_que_mudar"], additionalProperties: false },
+    rpc: "conector_peca_refazer", args: (a) => ({ p_ref: exigeUuid(a.ref, "o id da entrega ou da peça"), p_instrucoes: texto(a.o_que_mudar, 3000), p_titulo: a.titulo ? texto(a.titulo, 300) : null, p_recado: a.recado_id ? exigeUuid(a.recado_id, "o id do recado") : null }),
+  },
   // Revisão (blocos 300-302, 21/11/2026, Dr. Victor): a Luísa confere cada petição da Renata antes de Para aprovar.
   {
     name: "revisoes_pendentes", title: "Luísa: petições da Renata para revisar",
@@ -1050,7 +1056,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.6" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.6.1" },
         instructions: INSTRUCOES,
       });
     }

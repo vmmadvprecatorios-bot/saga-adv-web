@@ -523,6 +523,7 @@ window.SagaModelosEditor = (function(){
       }).join(' · ') + '</div>' : '') +
       '<div class="me-msg" id="meMsg"></div>' +
       '<div class="me-botoes"><button type="button" class="btn-secundario" id="meFechar">Fechar</button>' +
+        (o.aoVer ? '<button type="button" class="btn-secundario" id="meVer">Ver como vai sair</button>' : '') +
         (o.aoPrevia ? '<button type="button" class="btn-secundario" id="mePrevia">Prévia em Word</button>' : '') +
         (pode ? '<button type="button" class="btn-confirmar-bib" id="meSalvar">Salvar correções</button>' : '') + '</div>');
     f.classList.toggle('me-so-ler', !pode);
@@ -557,6 +558,8 @@ window.SagaModelosEditor = (function(){
       }
       fechar(f);
     };
+    var vv = f.querySelector('#meVer');
+    if(vv) vv.onclick = function(){ o.aoVer(blocosAtuais()); };
     var pv = f.querySelector('#mePrevia');
     if(pv) pv.onclick = async function(){
       var msg = f.querySelector('#meMsg'); pv.disabled = true; var t = pv.textContent; pv.textContent = 'Gerando...';

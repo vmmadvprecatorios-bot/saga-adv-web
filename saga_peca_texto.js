@@ -48,12 +48,40 @@ window.SagaPecaTexto = (function(){
         if(o.aoSalvar) try{ o.aoSalvar(); }catch(e){}
         return r.data;
       },
+      aoVer: function(blocos){ verBlocos(d, blocos); },
       aoPrevia: async function(blocos){
         var t = await timbrado(d.timbrado_chave);
         var g = await SagaTimbrado.gerar({ sb: sb(), timbrado: t, blocos: blocos, formato: 'docx', titulo: d.titulo });
         SagaTimbrado.baixar(g.bytes, 'PREVIA - ' + nomeBase(d) + '.docx', g.tipo);
       }
     });
+  }
+
+  /* 21/11 (Dr. Victor): ver a petição DENTRO do SAGA, sem baixar (PDF no timbrado, gerado do texto) */
+  function verBlocos(d, blocos){
+    if(!window.SagaVisor){ alert('O visualizador não carregou nesta tela (atualize a página).'); return; }
+    SagaVisor.abrir({ titulo: d.titulo || 'Petição', sub: (d.cliente || '') + (d.codigo ? ' · ' + d.codigo : '') + ' · como vai sair (versão ' + (d.versao || 1) + ')',
+      carregando: 'Montando a petição no papel timbrado...',
+      obter: async function(){ var t = await timbrado(d.timbrado_chave); return await SagaTimbrado.gerar({ sb: sb(), timbrado: t, blocos: blocos || d.texto, formato: 'pdf', titulo: d.titulo }); } });
+  }
+  async function ver(pecaId){
+    var d;
+    try{ d = await ler(pecaId); }catch(e){ if(window.showToast) showToast('Não consegui abrir: ' + erro(e), 'error'); return; }
+    verBlocos(d, d.texto);
+  }
+  /* Ver um arquivo da pasta (PDF ou Word) sem baixar */
+  function verArquivo(caminho, nome){
+    if(!window.SagaVisor){ alert('O visualizador não carregou nesta tela (atualize a página).'); return; }
+    var word = /\.docx$/i.test(nome || caminho || '');
+    SagaVisor.abrir({ titulo: nome || 'Documento', sub: word ? 'Word mostrado como PDF (convertido aqui, nada sai do aparelho)' : 'PDF',
+      carregando: word ? 'Convertendo o Word para mostrar...' : 'Abrindo o PDF...',
+      aoBaixar: async function(){ var r = await sb().storage.from('documentos-clientes').createSignedUrl(caminho, 300, { download: nome || true }); if(!r.error) location.href = r.data.signedUrl; },
+      obter: async function(){
+        var r = await sb().storage.from('documentos-clientes').download(caminho);
+        if(r.error) throw new Error(r.error.message || String(r.error));
+        var b = new Uint8Array(await r.data.arrayBuffer());
+        return word ? await SagaVisor.pdfDeWord(b) : b;
+      } });
   }
 
   /* Gera o arquivo final (só depois de aprovar), guarda na pasta Petições e, se pedir, baixa. */
@@ -76,5 +104,5 @@ window.SagaPecaTexto = (function(){
     return reg.data;
   }
 
-  return { abrir: abrir, gerarFinal: gerarFinal };
+  return { abrir: abrir, gerarFinal: gerarFinal, ver: ver, verArquivo: verArquivo };
 })();
