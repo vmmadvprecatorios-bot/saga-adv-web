@@ -196,7 +196,7 @@ var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
 var CORES_GRUPO={ativo:'#16a34a',captacao:'#d97706',encerrado:'#8a94a8',sacado:'#2f6cd6'};
 var NOMES_GRUPO={ativo:'ativo no Jurídico',captacao:'Captação',encerrado:'encerrado',sacado:'sacado'};
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){return window.sagaEsc?window.sagaEsc(v):String(v==null?'':v).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];});}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
 function soDigitos(v){return String(v||'').replace(/\D/g,'');}
 function fmtCpf(v){return window.sagaFmt?sagaFmt.cpf(v):v;}
