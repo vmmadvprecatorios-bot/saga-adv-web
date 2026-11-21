@@ -130,7 +130,7 @@
         var alvo = docs.filter(function(d){ return d.pessoal || RX_PASTA.test(d.nome_arquivo || ''); }).slice(0, 12);
         if(!alvo.length){ res.innerHTML = '<div class="pd-aviso"><b>Não achei documentos pessoais nem do crédito na pasta.</b> Procurei por RG, CNH, comprovante, requisitório, espelho, contracheque ou documento marcado como pessoal (' + docs.length + ' PDF/imagem na pasta). Solte o arquivo aqui.</div>'; return; }
         ler(alvo.map(function(d){ return { doc: d }; }));
-      }catch(e){ res.innerHTML = '<div class="pd-erro"><b>Não consegui ler a pasta do cliente:</b> ' + esc(e.message || e) + '</div>'; }
+      }catch(e){ res.innerHTML = '<div class="pd-erro"><b>Não consegui ler a pasta do cliente:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>'; }
     };
     async function ler(itens){
       if(!itens.length) return;
@@ -155,7 +155,7 @@
               else [a[k].valor].concat(a[k].outros).forEach(function(v){ if(v !== cur.valor && cur.outros.indexOf(v) < 0) cur.outros.push(v); });
             });
           });
-        }catch(e){ erros.push(nome + ' (' + (e.message || e) + ')'); }
+        }catch(e){ erros.push(nome + ' (' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + ')'); }
       }
       mostrar(achados, { erros: erros, imagens: imagens, guardadas: guardadas, semTexto: semTexto, n: itens.length });
     }
@@ -207,7 +207,7 @@
         if(!pedidos){ res.innerHTML = '<div class="pd-aviso">Nada marcado para usar.</div>'; return; }
         var mudou;
         try{ mudou = typeof o.aplicar === 'function' ? o.aplicar(novos) : 0; }
-        catch(e){ res.innerHTML = '<div class="pd-erro">Não consegui pôr os dados na petição: ' + esc(e.message || e) + '</div>'; return; }
+        catch(e){ res.innerHTML = '<div class="pd-erro">Não consegui pôr os dados na petição: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>'; return; }
         res.innerHTML = '<div class="pd-ok">' + (typeof mudou === 'number' ? mudou : pedidos) + ' campo(s) preenchido(s) com os documentos (contorno amarelo; passe o mouse para ver de onde veio). Confira antes de gerar.</div>';
       };
     }

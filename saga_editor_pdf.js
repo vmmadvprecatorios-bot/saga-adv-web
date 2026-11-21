@@ -69,13 +69,13 @@ async function abrirArquivos(lista){
       aviso('erro','"'+f.name+'" não foi aberto.','Motivo: não é um arquivo PDF (o editor só abre .pdf). Para imagem ou Word, gere o PDF antes.');continue;
     }
     var bytes;
-    try{bytes=new Uint8Array(await f.arrayBuffer());}catch(e){aviso('erro','"'+f.name+'" não foi aberto.','Motivo: o navegador não conseguiu ler o arquivo do computador ('+((e&&e.message)||'erro desconhecido')+').');continue;}
+    try{bytes=new Uint8Array(await f.arrayBuffer());}catch(e){aviso('erro','"'+f.name+'" não foi aberto.','Motivo: o navegador não conseguiu ler o arquivo do computador ('+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+').');continue;}
     await abrirBytes(bytes,f.name,null);
   }
 }
 async function abrirBytes(bytes,nome,senha,origem){
   var pdfjs;
-  try{pdfjs=await carregarPdfjs();}catch(e){aviso('erro','O leitor de PDF não carregou.','Motivo: '+((e&&e.message)||'erro desconhecido')+'. Atualize a página (F5); se continuar, avise o administrador.');return false;}
+  try{pdfjs=await carregarPdfjs();}catch(e){aviso('erro','O leitor de PDF não carregou.','Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Atualize a página (F5); se continuar, avise o administrador.');return false;}
   if(bytes.length<5||String.fromCharCode.apply(null,bytes.subarray(0,1024).filter(function(c){return c<128;})).indexOf('%PDF')<0){
     aviso('erro','"'+nome+'" não foi aberto.','Motivo: o arquivo não começa como um PDF (pode estar corrompido, ser outro formato com a extensão .pdf ou ter vindo pela metade). Baixe de novo.');return false;
   }
@@ -105,7 +105,7 @@ async function abrirBytes(bytes,nome,senha,origem){
   var pend=E.pendente;guardarHistorico();E.pendente=pend||E.docs.length>1;
   for(var i=1;i<=pdf.numPages;i++){
     var pg;
-    try{pg=await pdf.getPage(i);}catch(e){aviso('erro','Página '+i+' de "'+nome+'" não abriu.','Motivo: '+((e&&e.message)||'erro')+'. As outras páginas foram abertas.');continue;}
+    try{pg=await pdf.getPage(i);}catch(e){aviso('erro','Página '+i+' de "'+nome+'" não abriu.','Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro')+'. As outras páginas foram abertas.');continue;}
     var v=pg.view;
     E.paginas.push({id:novoId(),doc:doc,idx:i-1,rotIntr:((pg.rotate||0)%360+360)%360,rotUser:0,x1:v[0],y1:v[1],w:v[2]-v[0],h:v[3]-v[1],anot:[],definitiva:true});
   }
@@ -228,7 +228,7 @@ async function renderMini(el,p){
     if(chaveMini(p)!==chave)return;
     var folha=el.querySelector('.folha');folha.innerHTML='';folha.appendChild(novo);
   }catch(e){
-    var f=el.querySelector('.folha');f.innerHTML='<span class="carregando" style="color:var(--danger,#e5484d);padding:8px;text-align:center">Não consegui mostrar esta página: '+esc((e&&e.message)||'erro')+'</span>';
+    var f=el.querySelector('.folha');f.innerHTML='<span class="carregando" style="color:var(--danger,#e5484d);padding:8px;text-align:center">Não consegui mostrar esta página: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro')+'</span>';
   }
 }
 function desenharResumo(){
@@ -521,7 +521,7 @@ function baixarBytes(bytes,nome,tipo){
   setTimeout(function(){URL.revokeObjectURL(url);},4000);
 }
 function falhaMontar(e,oque){
-  var m=(e&&e.message)||String(e||'erro desconhecido');
+  var m=(window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||String(e||'erro desconhecido');
   aviso('erro','Não consegui '+oque+'.','Motivo: '+m+'. Nada foi baixado. Tente de novo; se o erro continuar, avise o administrador com esta mensagem.');
 }
 async function trabalhar(botao,fn){
@@ -597,7 +597,7 @@ async function separar(){
     progresso(prog,1,1,'Pronto.');
     fecharJanela('jSeparar');
     mostrarResultado({titulo:'PDF separado',detalhe:arquivos.length+' arquivo'+(arquivos.length>1?'s':'')+'. "Baixar" traz todos juntos num .zip; cada um também tem o seu botão.',zip:base+' (separado).zip',arquivos:arquivos.map(function(a,i){return {nome:a.nome,bytes:a.bytes,tipo:'application/pdf',paginas:g[i].pags.length};})});
-  }catch(e){$('sepErro').textContent='Não consegui separar. Motivo: '+((e&&e.message)||'erro desconhecido')+'. Nada foi baixado.';}
+  }catch(e){$('sepErro').textContent='Não consegui separar. Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Nada foi baixado.';}
   finally{prog.classList.remove('ativo');$('sepOk').disabled=false;}
 }
 function progresso(el,i,n,txt){el.querySelector('i').style.width=(n?Math.round(i/n*100):0)+'%';el.querySelector('small').textContent=txt||'';}
@@ -803,7 +803,7 @@ async function calcularComp(){
         :'<b style="color:var(--warning,#d97706)">Este arquivo já está otimizado: comprimir não reduz.</b> O melhor resultado foi '+tamanhoTxt(melhor.bytes.length)+'. '+(orig?'Vamos manter o ORIGINAL, sem mudança.':'Vamos usar o PDF sem compressão.')+(nivel!=='forte'&&nivel!=='imagem'?' Se quiser tentar mais forte, escolha "Forte" e calcule de novo.':''))+'</div>';
     $('compResultado').hidden=false;$('compBaixar').disabled=false;
     $('compBaixar').textContent=ganhou?'Usar o comprimido':'Continuar com o original';
-  }catch(e){$('compErro').textContent='Não consegui comprimir. Motivo: '+((e&&e.message)||'erro desconhecido')+'. Nada mudou.';}
+  }catch(e){$('compErro').textContent='Não consegui comprimir. Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Nada mudou.';}
   finally{prog.classList.remove('ativo');$('compCalc').disabled=false;}
 }
 function baixarComp(){
@@ -844,7 +844,7 @@ async function desenharPalco(){
     cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
     cv.style.width=Math.round(vp.width/dpr)+'px';cv.style.height=Math.round(vp.height/dpr)+'px';
     await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;
-  }catch(e){toast('Não consegui mostrar a página: '+((e&&e.message)||'erro'),'error');}
+  }catch(e){toast('Não consegui mostrar a página: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro'),'error');}
   desenharCamada();
 }
 function desenharCamada(){
@@ -967,7 +967,7 @@ async function abrirDaFicha(docId){
     }
   }catch(e){
     tirarAviso(av);
-    aviso('erro','Não consegui abrir o documento da ficha.','Motivo: '+((e&&e.message)||'erro desconhecido')+'. Baixe o documento na ficha e arraste para cá.');
+    aviso('erro','Não consegui abrir o documento da ficha.','Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Baixe o documento na ficha e arraste para cá.');
   }
 }
 /* =====================================================================
@@ -1051,7 +1051,7 @@ async function receberArquivos(lista){
   if(imgs.length){abrirImagens(imgs);}
   if(pdfs.length){
     var antes=E.paginas.length;
-    for(var j=0;j<pdfs.length;j++){var by;try{by=new Uint8Array(await pdfs[j].arrayBuffer());}catch(e){aviso('erro','"'+pdfs[j].name+'" não foi aberto.','Motivo: o navegador não conseguiu ler o arquivo ('+((e&&e.message)||'erro')+').');continue;}await abrirBytes(by,pdfs[j].name,null);}
+    for(var j=0;j<pdfs.length;j++){var by;try{by=new Uint8Array(await pdfs[j].arrayBuffer());}catch(e){aviso('erro','"'+pdfs[j].name+'" não foi aberto.','Motivo: o navegador não conseguiu ler o arquivo ('+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro')+').');continue;}await abrirBytes(by,pdfs[j].name,null);}
     if(E.paginas.length>antes){
       if(E.tela!=='trabalho'||k)entrarTrabalho(k||(E.docs.length>1?'juntar':(E.ferr||'organizar')));
     }
@@ -1102,7 +1102,7 @@ async function converterWord(file){
       arquivos:[{nome:nome,bytes:r.bytes,tipo:'application/pdf',paginas:r.paginas}]});
   }catch(e){
     fecharJanela('jConverter');
-    aviso('erro','"'+file.name+'" não foi convertido.','Motivo: '+((e&&e.message)||'erro desconhecido')+'. Alternativa: abra no Word e use Arquivo > Salvar como > PDF; depois traga o PDF para cá.');
+    aviso('erro','"'+file.name+'" não foi convertido.','Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Alternativa: abra no Word e use Arquivo > Salvar como > PDF; depois traga o PDF para cá.');
   }
 }
 
@@ -1179,7 +1179,7 @@ async function gerarImagensPdf(){
     mostrarResultado({titulo:'Imagens convertidas em PDF',detalhe:r.paginas+' página'+(r.paginas!==1?'s':'')+' · '+tamanhoTxt(r.bytes.length)+'.',alerta:r.falhas.length>0,
       avisos:r.falhas.map(function(f){return '"'+f.nome+'" ficou de fora: '+f.motivo+'.';}),
       arquivos:[{nome:nome,bytes:r.bytes,tipo:'application/pdf',paginas:r.paginas}]});
-  }catch(e){$('imgErro').textContent='Não consegui gerar o PDF. Motivo: '+((e&&e.message)||'erro desconhecido')+'.';}
+  }catch(e){$('imgErro').textContent='Não consegui gerar o PDF. Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'.';}
   finally{prog.classList.remove('ativo');$('imgOk').disabled=!IMG.lista.length;}
 }
 
@@ -1206,7 +1206,7 @@ async function converterParaImagem(){
     }
     fecharJanela('jParaImagem');
     mostrarResultado({titulo:'PDF convertido em imagem',detalhe:arqs.length+(arqs.length>1?' imagens ':' imagem ')+fmt.toUpperCase()+' ('+dpi+' dpi)'+(arqs.length>1?'. "Baixar" traz todas juntas num .zip.':'.'),zip:base+' (imagens).zip',arquivos:arqs});
-  }catch(e){$('piErro').textContent='Não consegui converter. Motivo: '+((e&&e.message)||'erro desconhecido')+'.';}
+  }catch(e){$('piErro').textContent='Não consegui converter. Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'.';}
   finally{prog.classList.remove('ativo');$('piOk').disabled=false;}
 }
 
@@ -1298,7 +1298,7 @@ async function buscarCliente(){
     var h=pes.map(function(p){return '<button type="button" data-pes="'+esc(p.id)+'" data-nome="'+esc(p.nome_completo||'')+'"><span>'+esc(p.nome_completo||'(sem nome)')+'</span><small>'+esc(p.codigo||'')+'</small></button>';}).join('')
       +pro.filter(function(p){return p.pessoa_id||p.pessoa;}).map(function(p){return '<button type="button" data-proc="'+esc(p.id)+'"><span>'+esc((p.pessoa&&p.pessoa.nome_completo)||'Processo')+'</span><small>'+esc(p.codigo||p.numero_processo_cnj||'')+'</small></button>';}).join('');
     lista.innerHTML=h||'<div class="vazio">Nada encontrado para "'+esc(t)+'". Confira o nome, o CPF ou o código.</div>';
-  }catch(e){if(n===G.busca)lista.innerHTML='<div class="vazio" style="color:var(--danger,#e5484d)">A busca falhou: '+esc((e&&e.message)||'erro')+'</div>';}
+  }catch(e){if(n===G.busca)lista.innerHTML='<div class="vazio" style="color:var(--danger,#e5484d)">A busca falhou: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro')+'</div>';}
 }
 async function escolherPessoa(p,procId,pastaId){
   G.pessoa=p;$('gBuscaBloco').hidden=true;$('gLista').innerHTML='';
@@ -1321,7 +1321,7 @@ async function escolherPessoa(p,procId,pastaId){
     G.pastas=(r2.data||[]).map(function(x){return {id:x.id,nome:cam(x)};}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
     $('gPasta').innerHTML='<option value="">Documentos (sem pasta)</option>'+G.pastas.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.nome)+'</option>';}).join('');
     if(pastaId)$('gPasta').value=pastaId;$('gPasta').disabled=false;
-  }catch(e){$('guardarErro').textContent='Não consegui ler os processos e as pastas deste cliente. Motivo: '+((e&&e.message)||'erro')+'.';}
+  }catch(e){$('guardarErro').textContent='Não consegui ler os processos e as pastas deste cliente. Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro')+'.';}
   conferirGuardar();
 }
 function sagaCnj(n){try{return window.sagaFmt&&sagaFmt.cnj?sagaFmt.cnj(n):n;}catch(e){return n;}}
@@ -1334,7 +1334,7 @@ async function guardar(){
     var s=await _sb.auth.getSession();var uid=s.data&&s.data.session&&s.data.session.user&&s.data.session.user.id;
     if(!uid)throw new Error('sua sessão expirou; entre de novo no SAGA');
     var us=await _sb.from('usuarios').select('id').eq('auth_user_id',uid).maybeSingle();
-    if(us.error||!us.data)throw new Error('não achei o seu cadastro de usuário ('+((us.error&&us.error.message)||'sem cadastro')+')');
+    if(us.error||!us.data)throw new Error('não achei o seu cadastro de usuário ('+((us.error&&(window.sagaErroBanco?window.sagaErroBanco(us.error):us.error.message))||'sem cadastro')+')');
     var proc=G.processos.find(function(x){return x.id===procId;})||{};
     var pasta=G.pastas.find(function(x){return x.id===pastaId;});
     var onde=G.pessoa.nome_completo+' › '+(proc.codigo||'processo')+' › '+(pasta?pasta.nome:'Documentos');
@@ -1347,7 +1347,7 @@ async function guardar(){
       var up=await _sb.storage.from(BUCKET).upload(caminho,new Blob([a.bytes],{type:a.tipo}),{contentType:a.tipo});
       if(up.error)throw up.error;
       var ins=await _sb.from('documentos').insert({processo_id:procId,pessoa_id:G.pessoa.id,usuario_id:us.data.id,nome_arquivo:nome,caminho_storage:caminho,tipo_documento:ehPdf(a)?'pdf':'imagem',tamanho_bytes:a.bytes.length,pasta_id:pastaId,visivel_portal_cliente:false,excluido_logico:false}).select('id').single();
-      if(ins.error){var rm=await _sb.storage.from(BUCKET).remove([caminho]);throw new Error((ins.error.message||'o registro do documento foi recusado')+(rm.error?' (e o arquivo enviado ficou solto: avise o administrador)':''));}
+      if(ins.error){var rm=await _sb.storage.from(BUCKET).remove([caminho]);throw new Error(((window.sagaErroBanco?window.sagaErroBanco(ins.error):ins.error.message)||'o registro do documento foi recusado')+(rm.error?' (e o arquivo enviado ficou solto: avise o administrador)':''));}
       a.nome=nome;a.guardado={onde:onde,caminho:caminho,docId:ins.data.id,doc:{id:ins.data.id,processo_id:procId,pessoa_id:G.pessoa.id,pasta_id:pastaId,nome_arquivo:nome,caminho_storage:caminho,cliente_nome:G.pessoa.nome_completo}};
     }
     progresso(prog,1,1,'Pronto.');
@@ -1358,7 +1358,7 @@ async function guardar(){
     toast('Guardado na pasta do cliente.','success');
     if(E._depoisGuardar){var f=E._depoisGuardar;E._depoisGuardar=null;f();}
   }catch(e){
-    var m=(e&&e.message)||String(e||'erro desconhecido');
+    var m=(window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||String(e||'erro desconhecido');
     if(/row-level security|permission|not allowed|unauthorized|violates/i.test(m))m='você não tem permissão para guardar documentos neste cliente ('+m+')';
     $('guardarErro').textContent='Não guardei. Motivo: '+m+'. O arquivo continua aqui; você pode baixar.';
   }finally{prog.classList.remove('ativo');conferirGuardar();}
@@ -1383,7 +1383,7 @@ function abrirCompartilhar(){
 async function enviarArquivo(){
   var r=E.resultado;var files=r.arquivos.map(function(x,i){return new File([x.bytes],r.arquivos.length===1?nomeResultado(0):x.nome,{type:x.tipo});});
   try{await navigator.share({files:files,title:files[0].name});r.salvo=true;}
-  catch(e){if(e&&e.name==='AbortError')return;$('cpErro').textContent='O aparelho não conseguiu enviar: '+((e&&e.message)||'erro')+'. Baixe e anexe.';}
+  catch(e){if(e&&e.name==='AbortError')return;$('cpErro').textContent='O aparelho não conseguiu enviar: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro')+'. Baixe e anexe.';}
 }
 async function gerarLink(){
   var r=E.resultado;var a=r&&r.arquivos[0];if(!a)return;
@@ -1393,7 +1393,7 @@ async function gerarLink(){
     var u=await _sb.storage.from(BUCKET).createSignedUrl(a.guardado.caminho,horas*3600,{download:a.nome});
     if(u.error||!u.data)throw (u.error||new Error('o armazenamento não devolveu o link'));
     var reg=await _sb.rpc('documento_link_registrar',{p_documento:a.guardado.docId,p_horas:horas,p_meio:'Editor de PDF'});
-    if(reg.error)throw new Error('o link foi criado, mas o registro dele falhou ('+reg.error.message+'); por segurança, não use este link e avise o administrador');
+    if(reg.error)throw new Error('o link foi criado, mas o registro dele falhou ('+(window.sagaErroBanco?window.sagaErroBanco(reg.error):reg.error.message)+'); por segurança, não use este link e avise o administrador');
     var ate=new Date(Date.now()+horas*3600*1000);
     var quando=ate.toLocaleDateString('pt-BR')+' às '+ate.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     $('cpLink').value=u.data.signedUrl;$('cpValidade').textContent='Vale até '+quando+'. Depois disso o link para de funcionar.';
@@ -1401,7 +1401,7 @@ async function gerarLink(){
     $('cpWhats').href='https://wa.me/?text='+encodeURIComponent(msg);
     $('cpEmail').href='mailto:?subject='+encodeURIComponent(a.nome)+'&body='+encodeURIComponent(msg);
     $('cpLinkBloco').hidden=false;if(window.sagaRecolher){$('cpLinkBloco').hidden=true;window.sagaRecolher($('cpLinkBloco'),false);}
-  }catch(e){$('cpErro').textContent='Não gerei o link. Motivo: '+((e&&e.message)||'erro desconhecido')+'.';$('cpLinkBloco').hidden=true;}
+  }catch(e){$('cpErro').textContent='Não gerei o link. Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'.';$('cpLinkBloco').hidden=true;}
   finally{$('cpGerar').disabled=false;}
 }
 
@@ -1552,5 +1552,5 @@ async function init(){
   else{var f0=new URLSearchParams(location.search).get('ferramenta');if(f0&&ferrPorK(f0))escolherFerramenta(f0);}
 }
 window.SagaEditorPdf={montarPdf:montarPdf,estado:E,abrirBytes:abrirBytes,lerIntervalos:lerIntervalos,zipar:zipar,otimizarPdf:otimizarPdf,imagensParaPdf:imagensParaPdf,mostrarResultado:mostrarResultado,escolherFerramenta:escolherFerramenta};
-init().catch(function(e){aviso('erro','A tela do Editor de PDF não abriu direito.','Motivo: '+((e&&e.message)||'erro desconhecido')+'. Atualize a página (F5).');});
+init().catch(function(e){aviso('erro','A tela do Editor de PDF não abriu direito.','Motivo: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Atualize a página (F5).');});
 })();

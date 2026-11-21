@@ -161,7 +161,7 @@ th{color:var(--muted)!important;font-weight:600!important}
 .tabela-sem-mov .td-valor,.totalizador-valor{
   font-family:'Montserrat',system-ui,sans-serif!important;
   font-weight:700!important;
-  font-variant-numeric:tabular-nums;
+  font-variant-numeric:lining-nums tabular-nums;
   letter-spacing:-.3px!important;
   line-height:1.2!important;
 }
@@ -906,3 +906,9 @@ html[data-graf="vidro"] :is(.trilho i:empty,.tr i:empty,.gb-barra i:empty,.barra
 html[data-graf-cores="variadas"] :is(.si-graficos,.pr-graficos){--g1:#3987e5;--g2:#d95926;--g3:#199e70;--g4:#c98500;--g5:#d55181;--g6:#0ca30c;--g7:#9085e9;--g8:#e66767}
 html[data-graf-cores="variadas"] body[data-theme="light"] :is(.si-graficos,.pr-graficos){--g1:#2a78d6;--g2:#eb6834;--g3:#1baf7a;--g4:#eda100;--g5:#e87ba4;--g6:#008300;--g7:#6250d6;--g8:#e34948}
 html[data-graf-rosca="premium"] :is(.si-rosca,.pr-rosca) :is(.trilho,.si-fatia,.pr-fatia){stroke-width:18!important}
+
+/* ALGARISMOS ALINHADOS (21/11, check-up 2ª rodada): a Cormorant Garamond usa algarismos "de texto" (alturas diferentes:
+   "13" parecia "1 3"). lining-nums vale para todo o sistema por herança; na Montserrat não muda nada (já é o padrão dela). */
+html{font-variant-numeric:lining-nums}
+/* campo de data próprio (window.sagaCampoData, saga_ui.js): data que não existe fica marcada */
+input.saga-data-invalida{border-color:var(--danger,#e5484d)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--danger,#e5484d) 22%,transparent)!important}

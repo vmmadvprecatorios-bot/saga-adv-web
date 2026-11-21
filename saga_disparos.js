@@ -33,7 +33,7 @@
     if (typeof global.showToast === 'function') { global.showToast(esc(msg), tipo === 'erro' ? 'error' : tipo === 'alerta' ? 'warning' : 'success'); return; }
     try { global.alert(msg); } catch(e) {}
   }
-  function erroTxt(e){ var m = (e && (e.message || e.msg)) || 'tente de novo.'; return String(m).replace(/^erro do simulado em [a-z_]+: /, ''); }
+  function erroTxt(e){ var m = (e && ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e.msg)) || 'tente de novo.'; return String(m).replace(/^erro do simulado em [a-z_]+: /, ''); }
   function recolher(el, ocultar, fim){
     if (!el) { if (fim) fim(); return; }
     if (global.sagaRecolher && !semMov()) global.sagaRecolher(el, ocultar, fim);

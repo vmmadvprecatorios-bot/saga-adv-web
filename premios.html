@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611212057"></script>
+<script src="saga_guard.js?v=202611212157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Captação: normas e prêmio</title>
@@ -27,7 +27,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:12px;background:var(--panel);flex-wrap:wrap}
 .pill{height:32px;padding:0 13px;border-radius:9px;font-size:12px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
 .pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
-.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:lining-nums tabular-nums}
 .mesnav{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);padding:3px}
 .mesnav b{min-width:128px;text-align:center;font-size:12.5px;font-weight:600;text-transform:capitalize}
 .mesnav button{width:28px;height:28px;border-radius:8px}
@@ -40,13 +40,13 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
 .kpi{border:1px solid var(--border-soft);border-radius:13px;padding:11px 13px;background:color-mix(in srgb,var(--text) 2%,transparent)}
 .kpi small{display:block;font-size:10.5px;color:var(--muted);letter-spacing:.3px;text-transform:uppercase;font-weight:600}
-.kpi b{display:block;font-size:20px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.kpi b{display:block;font-size:20px;font-weight:600;margin-top:3px;font-variant-numeric:lining-nums tabular-nums}
 .kpi span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
 /* nível e barra de progresso */
 .topo-meu{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center}
 .selo-nivel{width:92px;height:92px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid color-mix(in srgb,var(--gold) 65%,transparent);background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--gold) 30%,transparent),color-mix(in srgb,var(--gold) 6%,transparent) 70%);box-shadow:0 0 0 6px color-mix(in srgb,var(--gold) 8%,transparent)}
 .selo-nivel small{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:600}
-.selo-nivel b{font-size:34px;line-height:1.05;font-weight:600;font-variant-numeric:tabular-nums}
+.selo-nivel b{font-size:34px;line-height:1.05;font-weight:600;font-variant-numeric:lining-nums tabular-nums}
 .prog-tit{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;margin-bottom:8px}
 .prog-tit b{font-weight:600}
 .prog{position:relative;height:20px;border-radius:999px;background:color-mix(in srgb,var(--text) 8%,transparent);overflow:hidden;border:1px solid var(--border-soft)}
@@ -54,7 +54,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .prog.batido .enche{background:linear-gradient(90deg,color-mix(in srgb,var(--success,#16a34a) 60%,transparent),var(--success,#16a34a))}
 html.sem-movimento .prog .enche{transition:none}
 .degraus{display:flex;margin-top:6px;gap:4px}
-.degrau{flex:1;text-align:center;font-size:10.5px;color:var(--muted);padding:4px 2px;border-radius:8px;border:1px solid transparent;font-variant-numeric:tabular-nums;transition:background .3s,color .3s,border-color .3s}
+.degrau{flex:1;text-align:center;font-size:10.5px;color:var(--muted);padding:4px 2px;border-radius:8px;border:1px solid transparent;font-variant-numeric:lining-nums tabular-nums;transition:background .3s,color .3s,border-color .3s}
 .degrau.feito{color:var(--text);background:color-mix(in srgb,var(--gold) 12%,transparent);border-color:color-mix(in srgb,var(--gold) 35%,transparent)}
 .degrau b{display:block;font-size:11.5px}
 .prog-msg{font-size:12.5px;margin-top:10px;line-height:1.5}
@@ -67,7 +67,7 @@ html.sem-movimento .prog .enche{transition:none}
 .tab-wrap{overflow-x:auto;margin-top:10px}
 table.t{border-collapse:collapse;width:100%;font-size:12px}
 table.t th{text-align:left;font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:8px;border-bottom:1px solid var(--border-soft);white-space:nowrap}
-table.t td{padding:8px;border-bottom:1px solid var(--border-soft);vertical-align:middle;font-variant-numeric:tabular-nums}
+table.t td{padding:8px;border-bottom:1px solid var(--border-soft);vertical-align:middle;font-variant-numeric:lining-nums tabular-nums}
 table.t tr:last-child td{border-bottom:0}
 table.t td.num,table.t th.num{text-align:right}
 table.t tr.linha-pessoa{cursor:pointer}
@@ -89,7 +89,7 @@ table.t tr.linha-pessoa:hover td{background:color-mix(in srgb,var(--text) 3%,tra
 .barras-h .lin .tr{height:9px;border-radius:9px;background:color-mix(in srgb,var(--text) 7%,transparent);overflow:hidden}
 .barras-h .lin .tr i{display:block;height:100%;border-radius:9px;background:color-mix(in srgb,var(--gold) 75%,transparent)}
 .barras-h .lin .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.barras-h .lin .q{text-align:right;font-variant-numeric:tabular-nums}
+.barras-h .lin .q{text-align:right;font-variant-numeric:lining-nums tabular-nums}
 .duas{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 /* textos (normas) */
 .bloco{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:10px;overflow:hidden}
@@ -146,7 +146,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
   .degrau{font-size:9.5px}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611212057">
+<link rel="stylesheet" href="saga_tema.css?v=202611212157">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -189,8 +189,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611212057"></script>
-<script src="saga_pdf.js?v=202611212057"></script>
-<script src="saga_premios.js?v=202611212057"></script>
+<script src="saga_ui.js?v=202611212157"></script>
+<script src="saga_pdf.js?v=202611212157"></script>
+<script src="saga_premios.js?v=202611212157"></script>
 </body>
 </html>

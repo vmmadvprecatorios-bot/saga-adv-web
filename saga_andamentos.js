@@ -79,7 +79,7 @@
       +'.and-item::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--c,var(--border))}'
       +'.and-item.imp{background:color-mix(in srgb,var(--c,var(--gold)) 6%,transparent)}'
       +'.and-l1{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--muted);font-size:10.5px}'
-      +'.and-data{color:var(--text);font-variant-numeric:tabular-nums;font-weight:600}'
+      +'.and-data{color:var(--text);font-variant-numeric:lining-nums tabular-nums;font-weight:600}'
       +'.and-tag{padding:1px 7px;border-radius:999px;border:1px solid var(--border-soft);font-size:9.5px;line-height:1.5}'
       +'.and-novo{border-color:color-mix(in srgb,var(--gold) 45%,transparent);background:color-mix(in srgb,var(--gold) 12%,transparent);color:var(--text);font-weight:600}'
       +'.and-nome{margin-top:4px;color:var(--text);font-size:12px;line-height:1.45}'
@@ -350,7 +350,7 @@
   }
   async function salvarRobo(args,ok){
     var r=await A.sb.rpc('datajud_config_salvar',Object.assign({p_ativo:null,p_chave:null,p_dias_aviso:null},args));
-    if(r.error){aviso(r.error.message||'Não consegui salvar.','error');return;}
+    if(r.error){aviso((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'Não consegui salvar.','error');return;}
     aviso(ok,'success');
     await robo();
   }

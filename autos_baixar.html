@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611212057"></script>
+<script src="saga_guard.js?v=202611212157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Autos para baixar</title>
@@ -26,14 +26,14 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .btn-p{height:30px;padding:0 10px;font-size:11.5px;border-radius:9px}
 .numeros{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
 .num{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);padding:12px 14px}
-.num b{display:block;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.num b{display:block;font-size:24px;font-weight:600;font-variant-numeric:lining-nums tabular-nums;line-height:1.1}
 .num span{display:block;font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
 .num.destaque{border-color:color-mix(in srgb,var(--gold) 50%,transparent)}
 .barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
 .pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel);flex-wrap:wrap}
 .pill{height:30px;padding:0 11px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
 .pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
-.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:lining-nums tabular-nums}
 .ent{height:34px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
 .ent:focus{border-color:var(--gold)}
 .grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
@@ -48,7 +48,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .it .nome{font-size:13.5px;font-weight:600;line-height:1.4}
 .it .nome a{color:inherit;text-decoration:none}.it .nome a:hover{text-decoration:underline}
 .it .cod{font-size:11px;color:var(--muted);font-weight:500;margin-left:6px}
-.it .cnj{font-size:12.5px;margin-top:2px;font-variant-numeric:tabular-nums;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.it .cnj{font-size:12.5px;margin-top:2px;font-variant-numeric:lining-nums tabular-nums;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
 .selos{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .selo{font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--border-soft);color:var(--muted);white-space:nowrap}
 .selo.f1{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 55%,transparent)}
@@ -86,7 +86,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md,html.sem-movimento .seta{trans
   .ent{min-width:0;width:100%;flex-basis:100%}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611212057">
+<link rel="stylesheet" href="saga_tema.css?v=202611212157">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -128,8 +128,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611212057"></script>
-<script src="saga_tribunais.js?v=202611212057"></script>
+<script src="saga_ui.js?v=202611212157"></script>
+<script src="saga_tribunais.js?v=202611212157"></script>
 <script>
 /* =====================================================================
    SAGA · Autos para baixar (blocos 290-292; 20/11/2026, pedido do Dr. Victor)
@@ -249,11 +249,11 @@ function copiar(chave){
   if(!txt){toast('Nada para copiar.','error');return;}
   (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject(new Error('sem área de transferência'))).then(function(){
     toast(plural(sel.length,'número copiado','números copiados')+(A.trib?' ('+A.trib+')':'')+'.','success');
-  }).catch(function(e){toast('Não consegui copiar: '+((e&&e.message)||'')+'. Selecione os números na tela.','error');});
+  }).catch(function(e){toast('Não consegui copiar: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'')+'. Selecione os números na tela.','error');});
 }
 async function marcar(id,acao,obs){
   var r=await _sb.rpc('autos_fila_marcar',{p_processo:id,p_acao:acao,p_obs:obs||null});
-  if(r.error){toast('Não consegui marcar: '+(r.error.message||'erro desconhecido'),'error');return false;}
+  if(r.error){toast('Não consegui marcar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'erro desconhecido'),'error');return false;}
   toast({pegar:'Marcado: você vai baixar.',baixei:'Marcado como baixado. Sai da fila quando a ficha do agente chegar.',dispensar:'Dispensado.',voltar:'Voltou para a fila.'}[acao]||'Feito.','success');
   await carregar();return true;
 }
@@ -280,7 +280,7 @@ async function confirmarJanela(){
     $('jOk').disabled=true;
     var r=await _sb.rpc('autos_fila_config_salvar',{p_limite:n});
     $('jOk').disabled=false;
-    if(r.error){$('jErro').textContent='Não consegui salvar: '+(r.error.message||'');return;}
+    if(r.error){$('jErro').textContent='Não consegui salvar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'');return;}
     fecharJanela();toast('Limite salvo: '+n+' por dia.','success');await carregar();return;
   }
   var obs=$('jCampo').value.trim();
@@ -328,7 +328,7 @@ async function init(){
   try{if(window.SagaTribunais&&SagaTribunais.carregar)await SagaTribunais.carregar();}catch(e){}
   await carregar();
 }
-init().catch(function(e){A.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+init().catch(function(e){A.erro=(window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'Erro ao abrir a tela.';desenhar();});
 </script>
 </body>
 </html>

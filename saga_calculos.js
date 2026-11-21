@@ -376,7 +376,7 @@ window.SagaCalculos = (function(){
     var box = document.getElementById('clLidos'); if(!lista || !lista.length) return;
     box.innerHTML = '<div class="cl-sub" id="clProg">Lendo ' + lista.length + ' arquivo(s)...</div>';
     var achados = {}, nomes = [], semTexto = [], erros = [], comImagem = [];
-    var L; try{ L = await leitor(); }catch(e){ box.innerHTML = '<div class="cl-erro"><b>Não consegui ler:</b> ' + esc(e.message || e) + '</div>'; return; }
+    var L; try{ L = await leitor(); }catch(e){ box.innerHTML = '<div class="cl-erro"><b>Não consegui ler:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>'; return; }
     for(var i = 0; i < lista.length; i++){
       var f = lista[i]; nomes.push(f.name);
       try{
@@ -384,7 +384,7 @@ window.SagaCalculos = (function(){
         if(r.texto.replace(/\s/g, '').length < 30){ semTexto.push(f.name); continue; }
         if(r.paginas_imagem) comImagem.push(f.name);
         juntarAchados(achados, L.acharNasPaginas(r.paginas, lerTexto, f.name));
-      }catch(e){ erros.push(f.name + ' (' + (e.message || e) + ')'); }
+      }catch(e){ erros.push(f.name + ' (' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + ')'); }
     }
     var extra = (comImagem.length ? 'Lido da imagem (escaneado/foto): ' + comImagem.join(', ') + '; confira os números com atenção. ' : '')
       + (semTexto.length ? 'Não achei texto em: ' + semTexto.join(', ') + ' (imagem ilegível?); digite os valores. ' : '')
@@ -418,7 +418,7 @@ window.SagaCalculos = (function(){
           if(x.paginas_imagem) comImagem.push(d.nome_arquivo);
           if(x.erroGuardar) semGuardar.push(d.nome_arquivo + ' (' + x.erroGuardar + ')');
           juntarAchados(achados, L.acharNasPaginas(x.paginas, lerTexto, d.nome_arquivo));
-        }catch(e){ erros.push(d.nome_arquivo + ' (' + (e.message || e) + ')'); }
+        }catch(e){ erros.push(d.nome_arquivo + ' (' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + ')'); }
       }
       var extra = 'Documentos lidos: ' + alvo.map(function(d){ return d.nome_arquivo; }).join(', ') + '.'
         + (guardados ? ' ' + guardados + ' já tinham sido lidos antes (sem ler de novo).' : '')
@@ -426,7 +426,7 @@ window.SagaCalculos = (function(){
         + (semGuardar.length ? ' Não guardei a leitura de: ' + semGuardar.join('; ') + '.' : '')
         + (erros.length ? ' Não abriu: ' + erros.join('; ') + '.' : '');
       mostrarLidos(achados, 'a pasta do cliente', extra);
-    }catch(e){ box.innerHTML = '<div class="cl-erro"><b>Não consegui ler a pasta do cliente:</b> ' + esc(e.message || e) + '</div>'; }
+    }catch(e){ box.innerHTML = '<div class="cl-erro"><b>Não consegui ler a pasta do cliente:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>'; }
   }
   function ligarLeitor(){
     var zona = document.getElementById('clLeitor'), inp = document.getElementById('clArquivos'); if(!zona) return;
@@ -453,7 +453,7 @@ window.SagaCalculos = (function(){
       '#calcModal .cl-campo{display:flex;flex-direction:column;gap:3px;min-width:0}#calcModal .cl-campo label{font-size:11.5px;color:var(--muted)}',
       '#calcModal .cl-campo small{font-size:10.5px;color:var(--muted)}#calcModal .cl-campo a{font-size:11px;color:var(--gold)}#calcModal .cl-campo small.cl-origem{color:#b45309;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '#calcModal .cl-res{position:sticky;top:0;align-self:start;border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:color-mix(in srgb,var(--text) 3%,var(--panel-solid,var(--panel)))}',
-      '#calcModal table{width:100%;border-collapse:collapse;font-size:12.5px}#calcModal td{padding:4px 0;border-bottom:1px solid var(--border-soft,var(--border))}#calcModal td:last-child{text-align:right;font-variant-numeric:tabular-nums}',
+      '#calcModal table{width:100%;border-collapse:collapse;font-size:12.5px}#calcModal td{padding:4px 0;border-bottom:1px solid var(--border-soft,var(--border))}#calcModal td:last-child{text-align:right;font-variant-numeric:lining-nums tabular-nums}',
       '#calcModal .cl-total td{font-weight:700;border-bottom:0;padding-top:8px}',
       '#calcModal .cl-selo{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;margin-bottom:8px}',
       '#calcModal .cl-selo.ok{color:#16a34a;background:color-mix(in srgb,#16a34a 14%,transparent)}#calcModal .cl-selo.nao{color:#dc2626;background:color-mix(in srgb,#dc2626 12%,transparent)}',

@@ -79,7 +79,7 @@
     // espera o destaque terminar de deslizar (~340 ms) antes de redesenhar: redesenhar no meio cortava o efeito
     var falta=420-(Date.now()-t0);if(falta>0)await new Promise(function(ok){setTimeout(ok,falta);});
     S.mudandoModo=false;
-    if(r.error){marcarModo(antes);aviso(r.error.message||'Não foi possível mudar o contrato.',true);return;}
+    if(r.error){marcarModo(antes);aviso((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'Não foi possível mudar o contrato.',true);return;}
     S.modo=m;desenhar();aviso(m==='por_parte'?'Contrato: um por herdeiro.':'Contrato: único para todas as partes.');
   }
 
@@ -88,7 +88,7 @@
     var ok=global.sagaConfirmar?await global.sagaConfirmar('Retirar parte','Retirar '+nomeDe(p.pessoa_id)+' deste processo? O histórico fica registrado e a pessoa continua cadastrada.','Retirar',true):true;
     if(!ok)return;
     var r=await S.sb.rpc('processo_parte_remover',{p_parte_id:id});
-    if(r.error){aviso(r.error.message||'Não foi possível retirar.',true);return;}
+    if(r.error){aviso((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'Não foi possível retirar.',true);return;}
     aviso('Parte retirada do processo.');
     await atualizar();
   }
@@ -170,7 +170,7 @@
       var b=this;b.disabled=true;
       var r=await S.sb.rpc('processo_parte_salvar',{p_processo_id:c.processoId,p_dados:dados});
       b.disabled=false;
-      if(r.error){erro.textContent=r.error.message||'Não foi possível salvar.';return;}
+      if(r.error){erro.textContent=(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'Não foi possível salvar.';return;}
       if(decisao&&decisao.motivo){try{var rp=await S.sb.from('processos_partes').select('pessoa_id').eq('id',r.data).maybeSingle();if(rp.data)await global.SagaFichas.registrar(S.sb,rp.data.pessoa_id,decisao.motivo,decisao.parecidas);}catch(x){}}
       fechar();aviso(edit?'Parte atualizada.':'Parte incluída no processo.');
       await atualizar();

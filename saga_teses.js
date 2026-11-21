@@ -69,7 +69,7 @@
           o.sb.from('teses').select('id,nome,descricao,cor,ativo,ordem,area_direito_id,sigla').order('ordem').order('nome')]);
         if(r[0].error||r[1].error)throw r[0].error||r[1].error;
         areas=r[0].data||[];teses=r[1].data||[];notificar();return true;
-      }catch(e){if(o.erro)o.erro(e.message||'Não foi possível carregar as áreas e tipos de ação.');return false;}
+      }catch(e){if(o.erro)o.erro((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'Não foi possível carregar as áreas e tipos de ação.');return false;}
     }
     async function gravar(tipo,item){
       if(!o.admin)throw new Error('Só o administrador geral cria ou altera áreas e tipos de ação.');
@@ -102,7 +102,7 @@
       async function executar(acao){
         if(ocupado)return;ocupado=true;form.querySelectorAll('button,input').forEach(b=>b.disabled=true);
         try{await acao();fechar();}
-        catch(e){form.querySelector('.st-erro').textContent=e.message||'Não foi possível salvar.';}
+        catch(e){form.querySelector('.st-erro').textContent=(window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'Não foi possível salvar.';}
         finally{ocupado=false;form.querySelectorAll('button,input').forEach(b=>b.disabled=false);}
       }
       form.querySelector('.st-cancelar').onclick=fechar;
@@ -156,7 +156,7 @@
         if(b.dataset.acao==='editar'){editor(ed,tipo,id,null);return;}
         if(!e)return;ocupado=true;root.setAttribute('aria-busy','true');
         try{if(b.dataset.acao==='ativo')await salvar(tipo,{...e,ativo:!e.ativo});else await mover(tipo,id,b.dataset.acao==='subir'?-1:1);}
-        catch(err){root.querySelector('.st-erro').textContent=err.message||'Não foi possível salvar.';}
+        catch(err){root.querySelector('.st-erro').textContent=(window.sagaErroBanco?window.sagaErroBanco(err):err.message)||'Não foi possível salvar.';}
         finally{ocupado=false;root.removeAttribute('aria-busy');}
       };
     }

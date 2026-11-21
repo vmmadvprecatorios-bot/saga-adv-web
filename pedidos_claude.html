@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611212057"></script>
+<script src="saga_guard.js?v=202611212157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Pedidos do Saga IA</title>
@@ -25,7 +25,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
 .pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
 .pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
-.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:lining-nums tabular-nums}
 .ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
 .ent:focus{border-color:var(--gold)}
 .resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px}
@@ -33,7 +33,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
 .grupo-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
 .grupo-cab h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
-.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
+.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:lining-nums tabular-nums}
 .lnk{font-size:11.5px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:9px;padding:6px 10px;white-space:nowrap;transition:border-color .2s}
 .lnk:hover{border-color:var(--gold)}
 .ped{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:start}
@@ -74,7 +74,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
   .ent{min-width:0;width:100%;flex-basis:100%}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611212057">
+<link rel="stylesheet" href="saga_tema.css?v=202611212157">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -115,7 +115,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611212057"></script>
+<script src="saga_ui.js?v=202611212157"></script>
 <script>
 /* =====================================================================
    SAGA · Pedidos do Claude (T166, blocos 185 e 186; 12/11/2026, pedido do Dr. Victor)
@@ -208,7 +208,7 @@ async function concluir(){
   try{
     if(el&&window.sagaRiscar)await sagaRiscar(el,{texto:'.oque',esperar:gravando,recolher:true});else await gravando;
     toast('Pedido concluído.','success');
-  }catch(e){toast('Não consegui concluir: '+((e&&e.message)||'erro desconhecido'),'error');}
+  }catch(e){toast('Não consegui concluir: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido'),'error');}
   $('jOk').disabled=false;
   await carregar();
   if(window.SagaUI&&SagaUI.contarDia)try{SagaUI.contarDia();}catch(e){}
@@ -217,7 +217,7 @@ async function reabrir(id){
   var ok=window.sagaConfirmar?await sagaConfirmar('Reabrir pedido','O pedido volta para os abertos (em Minhas Tarefas também).','Reabrir',false):confirm('Reabrir este pedido?');
   if(!ok)return;
   var r=await _sb.rpc('pedido_claude_concluir',{p_tarefa:id,p_recebido:null,p_concluir:false});
-  if(r.error){toast('Não consegui reabrir: '+(r.error.message||''),'error');return;}
+  if(r.error){toast('Não consegui reabrir: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
   toast('Pedido reaberto.','success');await carregar();
 }
 
@@ -244,7 +244,7 @@ async function init(){
   var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
   await carregar();
 }
-init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+init().catch(function(e){P.erro=(window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'Erro ao abrir a tela.';desenhar();});
 </script>
 </body>
 </html>

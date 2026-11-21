@@ -12,7 +12,7 @@
   var _pdfjs = null, _ocr = null;
   function pdfjs(){
     if(!_pdfjs) _pdfjs = import(new URL(PDFJS + 'pdf.min.mjs', location.href).href).then(function(m){ m.GlobalWorkerOptions.workerSrc = new URL(PDFJS + 'pdf.worker.min.mjs', location.href).href; return m; })
-      .catch(function(e){ _pdfjs = null; throw new Error('o leitor de PDF não carregou (' + (e.message || e) + ')'); });
+      .catch(function(e){ _pdfjs = null; throw new Error('o leitor de PDF não carregou (' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + ')'); });
     return _pdfjs;
   }
   function tesseract(){
@@ -60,7 +60,7 @@
     var lib = await pdfjs(), dados = new Uint8Array(await arquivo.arrayBuffer());
     var doc;
     try{ doc = await lib.getDocument({ data: dados }).promise; }
-    catch(e){ if(/password/i.test(e && (e.name + e.message))) throw new Error('o PDF tem senha: abra-o, salve uma cópia sem senha e tente de novo'); throw new Error('não consegui abrir o PDF (' + (e.message || e) + ')'); }
+    catch(e){ if(/password/i.test(e && (e.name + e.message))) throw new Error('o PDF tem senha: abra-o, salve uma cópia sem senha e tente de novo'); throw new Error('não consegui abrir o PDF (' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + ')'); }
     var maxPag = Math.min(doc.numPages, o.maxPaginas || 60), paginas = [], w2 = null, nImg = 0;
     try{
       for(var i = 1; i <= maxPag; i++){
@@ -98,7 +98,7 @@
       }
     }
     var dl = await sb.storage.from(BUCKET).download(doc.caminho_storage);
-    if(dl.error) throw new Error('não consegui abrir "' + doc.nome_arquivo + '" (' + dl.error.message + ')');
+    if(dl.error) throw new Error('não consegui abrir "' + doc.nome_arquivo + '" (' + (window.sagaErroBanco?window.sagaErroBanco(dl.error):dl.error.message) + ')');
     var f = new File([dl.data], doc.nome_arquivo || 'documento', { type: dl.data.type || (/\.pdf$/i.test(doc.nome_arquivo || '') ? 'application/pdf' : '') });
     var r = await lerArquivo(f, o);
     r.doc = doc;
@@ -108,7 +108,7 @@
       var s = await sb.rpc('leitura_documento_salvar', { p_documento: doc.id, p_metodo: r.metodo, p_texto: r.texto, p_paginas: r.total_paginas || r.paginas.length,
         p_paginas_imagem: r.paginas_imagem || 0, p_campos: Object.assign({}, o.campos || {}, { _paginas: tam }), p_tipo: o.tipo || null });
       if(s.error) r.erroGuardar = s.error.message;
-    }catch(e){ r.erroGuardar = e.message || String(e); }
+    }catch(e){ r.erroGuardar = (window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| String(e); }
     return r;
   }
   function splitPaginas(texto, tamanhos){

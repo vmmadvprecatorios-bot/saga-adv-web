@@ -30,14 +30,14 @@ window.SagaPdf=(function(){
     '.secao{font-size:7.5pt;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#1f3e6d;margin:14px 0 6px}'+
     '.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin:0 0 12px}'+
     '.kpis div{border:1px solid #d3dce9;border-radius:6px;padding:6px 8px;background:#f3f6fa;break-inside:avoid}'+
-    '.kpis div>span{display:block;font-size:6.8pt;letter-spacing:.6px;text-transform:uppercase;color:#5f6f86}.kpis b{display:block;font-size:11pt;color:#13233a;margin-top:1px;font-variant-numeric:tabular-nums}'+
+    '.kpis div>span{display:block;font-size:6.8pt;letter-spacing:.6px;text-transform:uppercase;color:#5f6f86}.kpis b{display:block;font-size:11pt;color:#13233a;margin-top:1px;font-variant-numeric:lining-nums tabular-nums}'+
     '.kpis .forte{background:#e3ebf6;border-color:#b9c8de}.kpis .ruim b{color:#b42318}'+
     'table.tab{width:100%;border-collapse:collapse;font-size:8pt}'+
     'table.tab thead{display:table-header-group}table.tab tr{break-inside:avoid}'+
     'table.tab th{background:#1f3e6d;color:#fff;font-weight:600;font-size:6.9pt;letter-spacing:.6px;text-transform:uppercase;text-align:left;padding:5px 6px;border:1px solid #1f3e6d}'+
     'table.tab td{padding:4px 6px;border:1px solid #dbe3ee;vertical-align:top}'+
     'table.tab tbody tr:nth-child(odd) td{background:#ffffff}table.tab tbody tr:nth-child(even) td{background:#eef2f7}'+
-    'table.tab .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}table.tab th.num{text-align:right}table.tab .c,table.tab th.c{text-align:center}'+
+    'table.tab .num{text-align:right;font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}table.tab th.num{text-align:right}table.tab .c,table.tab th.c{text-align:center}'+
     'table.tab tr.fds td{background:#e4e9f1!important;color:#6b7a90}table.tab tr.feriado td{background:#dde8f7!important;color:#2c5592}table.tab tr.apagado td{color:#a3adbd}'+
     'table.tab tr.total td{background:#d6e1f0!important;font-weight:700;border-top:2px solid #1f3e6d;color:#13233a}'+
     'table.tab tr.gap td{background:#fdf0f0!important;color:#b42318;font-style:italic}'+

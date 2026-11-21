@@ -507,12 +507,12 @@
       // 18/11 (Dr. Victor): números padronizados. Contagem = cor de destaque do tema, discreta; pede ação (atrasado, marcação) = vermelho suave.
       st.textContent='#sidebarSaga .nav-item{position:relative}'
         // cores relativas ao texto do menu (o menu é escuro no Azul claro e claro no Grafite claro): funcionam em todos os temas
-        +'#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:16px;height:16px;padding:0 4px;border-radius:5px;background:color-mix(in srgb,var(--sg-num-cor,var(--gold)) 30%,transparent) !important;color:inherit !important;font-size:9.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-variant-numeric:tabular-nums;transition:background .3s cubic-bezier(.22,.78,.25,1),color .3s cubic-bezier(.22,.78,.25,1)}'
+        +'#sidebarSaga .nav-badge-chat{margin-left:auto !important;min-width:16px;height:16px;padding:0 4px;border-radius:5px;background:color-mix(in srgb,var(--sg-num-cor,var(--gold)) 30%,transparent) !important;color:inherit !important;font-size:9.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;line-height:1;font-variant-numeric:lining-nums tabular-nums;transition:background .3s cubic-bezier(.22,.78,.25,1),color .3s cubic-bezier(.22,.78,.25,1)}'
         +'#sidebarSaga .nav-badge-chat.atrasada,#sidebarSaga .nav-badge-mencao,#sidebarSaga .nav-section .nav-soma.atrasada{background:color-mix(in srgb,#e5484d 80%,transparent) !important;color:#fff !important}'
         +'#sidebarSaga .nav-badge-mencao{margin-left:auto;margin-right:4px;width:16px;height:16px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:1}'
         +'#sidebarSaga .nav-badge-mencao+.nav-badge-chat{margin-left:0 !important}'
         // soma do grupo: só aparece com o grupo FECHADO
-        +'#sidebarSaga .nav-section .nav-soma{display:none;margin-left:auto;margin-right:8px;min-width:16px;height:16px;padding:0 4px;border-radius:5px;font-size:9.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1;align-items:center;justify-content:center;background:color-mix(in srgb,var(--sg-num-cor,var(--gold)) 30%,transparent);color:inherit;font-variant-numeric:tabular-nums}'
+        +'#sidebarSaga .nav-section .nav-soma{display:none;margin-left:auto;margin-right:8px;min-width:16px;height:16px;padding:0 4px;border-radius:5px;font-size:9.5px;font-weight:600;letter-spacing:0;text-transform:none;line-height:1;align-items:center;justify-content:center;background:color-mix(in srgb,var(--sg-num-cor,var(--gold)) 30%,transparent);color:inherit;font-variant-numeric:lining-nums tabular-nums}'
         +'#sidebarSaga .nav-section.fechado .nav-soma.tem{display:inline-flex}'
         // menu RECOLHIDO no computador: o número vira bolinha em cima do ícone; a soma do grupo fica na divisória
         +'@media(min-width:761px){#sidebarSaga.collapsed:not(.sg-aberto) .nav-item .nav-badge-chat{position:absolute;top:3px;left:36px;margin:0 !important;min-width:15px;height:15px;padding:0 3px;border-radius:8px;font-size:8.5px !important;font-weight:600;color:var(--sg-num-letra,#0d1626) !important;background:var(--sg-num-cor,#c1cde0) !important}'
@@ -831,7 +831,7 @@
     +'<button class="icon-btn" id="refreshBtn" type="button" aria-label="Atualizar informacoes"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 11-3-6.7L21 8" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke="var(--gold)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
     +'<button class="theme-toggle" id="themeToggle" type="button" aria-label="Alternar tema"><svg class="sun" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg><span class="knob"></span><svg class="moon" viewBox="0 0 24 24" fill="none"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
     +'<div class="avatar-wrap" id="avatarWrap">'
-    +'<div class="avatar" id="avatarTop" title="Menu do usuario">--</div>'
+    +'<div class="avatar" id="avatarTop" title="Menu do usuário">--</div>'
     +'<div class="popover avatar-pop" id="avatarPop" role="menu">'
     +'<div class="avatar-pop-info"><span class="avatar-pop-foto" id="avatarPopFoto" aria-hidden="true"></span>'
     +'<span class="avatar-pop-txt"><span class="avatar-pop-nome" id="avatarPopNome">--</span><span class="avatar-pop-email" id="avatarPopEmail"></span></span></div>'
@@ -1140,6 +1140,71 @@
     try{var d=await global.sagaInicio();if(d&&d.perfil&&authId&&authId===idSessaoLocal())return {data:Object.assign({},d.perfil),error:null};}catch(e){}
     return null;
   };
+  // ===== Nomes da equipe, nome de exibição e erros do banco (21/11, check-up 2ª rodada) =====
+  // window.sagaEquipe(): TODAS as pessoas da equipe (com e sem login, ativas e que saíram), do saga_inicio.
+  // window.sagaNomePessoa(id): nome já carregado (ou null); usar em listas para nenhum nome sumir.
+  var _equipeMapa=null;
+  global.sagaEquipe=async function(){
+    if(_equipeMapa)return Object.keys(_equipeMapa).map(function(k){return _equipeMapa[k];});
+    var d=await global.sagaInicio(),lista=d&&Array.isArray(d.equipe)?d.equipe:null;
+    if(!lista&&global._sb){var r=await global._sb.from('usuarios').select('id,nome_completo,foto_url,ativo,auth_user_id').order('nome_completo');
+      lista=(r.data||[]).map(function(u){return {id:u.id,nome_completo:u.nome_completo,foto_url:u.foto_url,ativo:u.ativo,tem_login:!!u.auth_user_id};});}
+    _equipeMapa={};(lista||[]).forEach(function(u){_equipeMapa[u.id]=u;});
+    return lista||[];
+  };
+  global.sagaNomePessoa=function(id){var u=_equipeMapa&&_equipeMapa[id];return u?u.nome_completo:null;};
+  // nome curto para saudação: "Dr. Victor de Medeiros" -> "Dr. Victor" (o título não fica sozinho)
+  global.sagaNomeExibicao=function(nome){
+    var p=String(nome||'').trim().split(/\s+/).filter(Boolean);if(!p.length)return '';
+    if(/^(dr|dra|sr|sra|srta|prof|profa|eng|adv)\.?$/i.test(p[0])&&p[1])return p[0]+' '+p[1];
+    return p[0];
+  };
+  // window.sagaErroBanco(e): erro do Supabase em português simples, SEMPRE com o código (regra "erros sempre à vista")
+  global.sagaErroBanco=function(e){
+    if(!e)return 'Erro desconhecido.';
+    if(typeof e==='string')e={message:e};
+    var msg=String(e.message||e.error_description||e.msg||e.hint||''),cod=String(e.code||e.status||'');
+    var low=msg.toLowerCase(),frase=null;
+    // mensagem própria (português, das funções do SAGA) vale ela mesma; o código só traduz quando a mensagem é a padrão em inglês ou vazia
+    if(/[áéíóúãõçâêô]|\b(não|já|para|cliente|ficha|processo|você)\b/i.test(msg))return msg.replace(/[.\s]+$/,'')+(cod?' (código '+cod+')':'');
+    if(/row-level security|permission denied|42501/.test(low+' '+cod))frase='Sem permissão para isso: o banco recusou pela regra de segurança';
+    else if(/duplicate key|23505/.test(low+' '+cod))frase='Já existe um registro igual';
+    else if(/violates foreign key|23503/.test(low+' '+cod))frase='Está ligado a um registro que não existe mais ou foi tirado da lista';
+    else if(/violates not-null|null value in column|23502/.test(low+' '+cod))frase='Falta preencher um campo obrigatório';
+    else if(/violates check constraint|23514/.test(low+' '+cod))frase='Valor fora do permitido';
+    else if(/statement timeout|canceling statement|timeout|57014/.test(low+' '+cod))frase='O banco demorou demais para responder; tente de novo';
+    else if(/failed to fetch|networkerror|load failed|network request failed/.test(low))frase='Sem conexão com o servidor (confira a internet)';
+    else if(/jwt expired|invalid jwt|not authenticated|401/.test(low+' '+cod))frase='Seu login venceu: entre de novo';
+    else if(/pgrst116|0 rows|no rows/i.test(low+' '+cod))frase='Registro não encontrado (pode ter sido tirado da lista)';
+    // mensagem já escrita em português pelas funções do SAGA (raise exception): vale ela mesma
+    if(!frase)frase=msg||'Erro sem descrição';
+    // sem ponto final: as telas montam a frase em volta ("Não foi possível salvar: ...")
+    return frase.replace(/[.\s]+$/,'')+(cod?' (código '+cod+')':'');
+  };
+  // window.sagaCampoData(input): campo de data dd/mm/aaaa próprio (o do navegador segue o idioma dele: 11/16/2026).
+  // Mantém input.value em AAAA-MM-DD (o que as telas já gravam); a pessoa digita só os números.
+  global.sagaCampoData=function(inp){
+    if(!inp||inp.dataset.sagaData)return inp;inp.dataset.sagaData='1';
+    var iso=inp.value||'';var vis=document.createElement('input');
+    vis.type='text';vis.inputMode='numeric';vis.placeholder='dd/mm/aaaa';vis.maxLength=10;vis.autocomplete='off';
+    vis.className=inp.className;vis.style.cssText=inp.style.cssText;if(inp.id)vis.setAttribute('aria-labelledby',inp.id);
+    vis.setAttribute('aria-label',inp.getAttribute('aria-label')||'Data (dd/mm/aaaa)');
+    function deIso(v){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(v||'');return m?m[3]+'/'+m[2]+'/'+m[1]:'';}
+    function paraIso(v){var m=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v||'');if(!m)return '';var d=new Date(+m[3],+m[2]-1,+m[1]);
+      return d.getFullYear()===+m[3]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[1]?m[3]+'-'+m[2]+'-'+m[1]:'';}
+    var desc=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+    vis.value=deIso(iso);
+    inp.type='hidden';inp.parentNode.insertBefore(vis,inp);
+    vis.addEventListener('input',function(){
+      var d=vis.value.replace(/\D/g,'').slice(0,8),r=d;if(d.length>4)r=d.slice(0,2)+'/'+d.slice(2,4)+'/'+d.slice(4);else if(d.length>2)r=d.slice(0,2)+'/'+d.slice(2);
+      vis.value=r;var v=paraIso(r);vis.classList.toggle('saga-data-invalida',r.length===10&&!v);
+      if(desc.get.call(inp)!==v){desc.set.call(inp,v);inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}));}
+    });
+    // valor posto pela tela depois (inp.value = '2026-11-16'): acompanha
+    Object.defineProperty(inp,'value',{configurable:true,get:function(){return desc.get.call(inp);},set:function(v){desc.set.call(inp,v);var t=deIso(v);if(vis.value!==t)vis.value=t;}});
+    inp._sagaVisivel=vis;return inp;
+  };
+
   // Troca direta do _sb.rpc('verificar_permissao',{...}) das telas: mesma resposta {data:true|false}, sem ir ao banco
   // quando é a própria pessoa (a lista já veio no saga_inicio); para outra pessoa, pergunta ao banco como antes.
   global.sagaPermissaoRpc=async function(sb,args){
@@ -1938,11 +2003,11 @@
       }
       if(pessoas.length){
         html+='<div class="pop-title">Pessoas</div>';
-        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+(p.codigo?' <span style="font-size:9px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap">'+esc(p.codigo)+'</span>':'')+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?(String(p.cpf).replace(/\D/g,'').length===14?'CNPJ ':'CPF ')+esc(global.sagaFmt.cpf(p.cpf)):'Sem CPF')+'</div></div></div>';}).join('');
+        html+=pessoas.map(function(p){return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id='+esc(p.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(p.nome_completo)+(p.codigo?' <span style="font-size:9px;font-weight:500;color:var(--muted);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap">'+esc(p.codigo)+'</span>':'')+'</div><div style="font-size:9px;color:var(--muted)">'+(p.cpf?(String(p.cpf).replace(/\D/g,'').length===14?'CNPJ ':'CPF ')+esc(global.sagaFmt.cpf(p.cpf)):'Sem CPF')+'</div></div></div>';}).join('');
       }
       if(processos.length){
         html+='<div class="pop-title">Processos</div>';
-        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+(pr.codigo?' <span style="font-size:9px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap">'+esc(pr.codigo)+'</span>':'')+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(global.sagaFmt.cnj(pr.numero_processo_cnj)):'Sem número do processo')+'</div></div></div>';}).join('');
+        html+=processos.map(function(pr){var pn=pr.pessoa&&pr.pessoa.nome_completo?pr.pessoa.nome_completo:'Sem cliente';return '<div class="pop-row" onclick="sagaIrPara(\'ficha_cliente_padrao_metalico_FINAL.html?processo_id='+esc(pr.id)+'\')"><span class="online-dot" style="background:var(--gold)"></span><div style="flex:1"><div style="font-size:11px;font-weight:600">'+esc(pn)+(pr.codigo?' <span style="font-size:9px;font-weight:500;color:var(--muted);font-variant-numeric:lining-nums tabular-nums;white-space:nowrap">'+esc(pr.codigo)+'</span>':'')+'</div><div style="font-size:9px;color:var(--muted)">'+(pr.numero_processo_cnj?esc(global.sagaFmt.cnj(pr.numero_processo_cnj)):'Sem número do processo')+'</div></div></div>';}).join('');
       }
       if(colaboradores.length){
         html+='<div class="pop-title">Colaboradores</div>';
@@ -2899,7 +2964,10 @@
       posicionarTrava(d);
       if(fade)requestAnimationFrame(function(){requestAnimationFrame(function(){d.style.opacity='1';});});
     }
-    d.querySelector('[data-texto]').textContent=(nome?'Olá, '+nome+'! ':'')+'Para usar o sistema hoje, primeiro bata o ponto de entrada. As outras telas são liberadas assim que o ponto for batido.';
+    var txtTrava=function(n){d.querySelector('[data-texto]').textContent=(n?'Olá, '+n+'! ':'')+'Para usar o sistema hoje, primeiro bata o ponto de entrada. As outras telas são liberadas assim que o ponto for batido.';};
+    txtTrava(global.sagaNomeExibicao?global.sagaNomeExibicao(nome):nome);
+    // o banco manda só a 1ª palavra ("Dr."): o nome de exibição sai do perfil
+    if(global.sagaPerfil)global.sagaPerfil().then(function(p){if(p&&p.nome_completo&&global.sagaNomeExibicao)txtTrava(global.sagaNomeExibicao(p.nome_completo));}).catch(function(){});
     if(!_trava.timer)_trava.timer=setInterval(function(){if(!document.hidden)conferirTravaPonto(true);},60000);
   }
   function tirarTravaPonto(){
@@ -3006,6 +3074,7 @@
     ligarBuscaGlobal();
     marcarConteudo();
     await carregarPerfil();
+    global.sagaEquipe();
     carregarMarca();
     await aplicarPermissoes(telaAtiva);
     // Presenca e contador do sino carregam em paralelo e nao seguram a tela

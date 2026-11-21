@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611212057"></script>
+<script src="saga_guard.js?v=202611212157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Gestão de Colaboradores</title>
@@ -87,7 +87,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 @media (min-resolution:100000dppx){*,*:before,*:after{transition:none!important;animation:none!important}}
 .perfil-dd{position:relative}.perfil-dd-btn{width:100%;height:38px;padding:0 11px;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;text-align:left;color:var(--text)}.perfil-dd-btn svg{color:var(--gold);flex-shrink:0;transition:transform .2s}.perfil-dd.open .perfil-dd-btn svg{transform:rotate(180deg)}.perfil-dd-menu{display:none;position:absolute;z-index:60;left:0;right:0;top:calc(100% + 4px);max-height:220px;overflow-y:auto;padding:5px;border:1px solid var(--border);border-radius:10px;background:var(--panel-solid);box-shadow:0 12px 30px rgba(0,0,0,.35)}.perfil-dd.open .perfil-dd-menu{display:block}.perfil-dd-item{display:block;width:100%;padding:8px 10px;border-radius:7px;background:none;border:0;color:var(--text);font:inherit;font-size:11px;text-align:left;cursor:pointer}.perfil-dd-item:hover{background:var(--panel-2)}.perfil-dd-item.sel{color:var(--gold);font-weight:600}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611212057">
+<link rel="stylesheet" href="saga_tema.css?v=202611212157">
 </head>
 <body data-theme="dark">
 
@@ -224,8 +224,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 <!-- Supabase JS SDK v2 (UMD) — apenas Anon Key (Publishable Key) no frontend -->
 <script src="vendor/supabase-js-2.118.0.js"></script>
-<script src="saga_ui.js?v=202611212057"></script>
-<script src="saga_roscas.js?v=202611212057"></script>
+<script src="saga_ui.js?v=202611212157"></script>
+<script src="saga_roscas.js?v=202611212157"></script>
 
 <script>
 // ============================================================
@@ -310,7 +310,7 @@ async function loadEmployees(){
       };
     });
   }catch(e){
-    showToast('Erro ao carregar colaboradores: '+(e.message||'verifique sua conexão.'),'error');
+    showToast('Erro ao carregar colaboradores: '+((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'verifique sua conexão.'),'error');
     state.employees = [];
   }
   state.loading = false;
@@ -634,7 +634,7 @@ async function confirmReset(){
     closeModal('resetModal');
     showToast('Link de redefinição enviado para <b>'+esc(emp.email)+'</b>.', 'success');
   }catch(e){
-    showToast('Erro ao enviar link de reset: '+(e.message||'tente novamente.'),'error');
+    showToast('Erro ao enviar link de reset: '+((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'tente novamente.'),'error');
   }finally{
     btn.disabled = false;
     btn.textContent = 'Confirmar reset';
@@ -661,7 +661,7 @@ async function openHistoryModal(employeeId){
     if(r.error) throw r.error;
     state.historyItems = r.data || [];
   }catch(e){
-    showToast('Erro ao carregar histórico: '+(e.message||''),'error');
+    showToast('Erro ao carregar histórico: '+((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');
     state.historyItems = [];
   }
   state.historyLoading = false;
@@ -939,7 +939,7 @@ async function sendInvite(){
     else showToast(esc(envio.msg), 'error');
     loadEmployees();
   } catch(e) {
-    showToast('Erro ao registrar convite: ' + (e.message || 'verifique sua conexao.'), 'error');
+    showToast('Erro ao registrar convite: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| 'verifique sua conexão.'), 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Enviar Convite';
@@ -1013,7 +1013,7 @@ function renderEquipe(){
   document.querySelectorAll('[data-eq-remover]').forEach(function(b){b.addEventListener('click',function(){removerPessoa(b.dataset.eqRemover);});});
 }
 async function atualizarEquipe(){
-  try{await carregarEquipe();equipe.carregada=true;}catch(e){showToast('Erro ao carregar a equipe: '+esc(e.message||''),'error');}
+  try{await carregarEquipe();equipe.carregada=true;}catch(e){showToast('Erro ao carregar a equipe: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');}
   renderEquipe();
 }
 function eqConfirmar(titulo,texto,botao){
@@ -1078,7 +1078,7 @@ async function salvarPessoa(){
   var btn=document.getElementById('eqmSalvar');btn.disabled=true;
   var r=await _sb.rpc('equipe_salvar',{p:p});
   btn.disabled=false;
-  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&r.error.message)||'Erro ao salvar.'),'error');return;}
+  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))||'Erro ao salvar.'),'error');return;}
   closeModal('equipeModal');showToast(state.eqId?'Cadastro atualizado.':'Pessoa incluída. O convite ainda não foi enviado.','success');
   await atualizarEquipe();await loadEmployees();renderEmployees();
 }
@@ -1091,13 +1091,13 @@ async function convidarPessoa(id,btn,silencioso){
     if(x.convite&&['pendente','aguardando_envio'].indexOf(x.convite.status)>=0&&new Date(x.convite.expira_em)>new Date())conviteId=x.convite.id;
     else{
       var ins=await _sb.from('convites').insert({email:String(x.u.email).toLowerCase(),nome_sugerido:x.u.nome_completo,papel_sugerido_id:x.papel?x.papel.id:null,convidado_por_id:state.meuInternoId,status:'aguardando_envio'}).select('id').single();
-      if(ins.error)throw new Error(ins.error.message);
+      if(ins.error)throw new Error((window.sagaErroBanco?window.sagaErroBanco(ins.error):ins.error.message));
       conviteId=ins.data.id;
     }
     var r=await _sb.functions.invoke('enviar-convite',{body:{convite_id:conviteId}});
     var d=r.data||{};
     if(r.error&&!d.erro){try{var ctx=r.error.context;d=ctx&&ctx.json?await ctx.json():d;}catch(e){}}
-    if(!d.ok)throw new Error(d.erro||d.mensagem||(r.error&&r.error.message)||'Falha no envio.');
+    if(!d.ok)throw new Error(d.erro||d.mensagem||(r.error&&(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))||'Falha no envio.');
     if(!silencioso)showToast(esc(d.mensagem||'Convite enviado.'),'success');
     return true;
   }catch(e){
@@ -1124,7 +1124,7 @@ async function removerPessoa(id){
   var x=equipe.lista.find(function(y){return y.u.id===id;});if(!x)return;
   if(!await eqConfirmar('Remover da equipe','Remover '+(x.u.nome_completo||x.u.email)+' do pré-cadastro? O convite pendente é cancelado. Se depois quiser incluir de novo, é só cadastrar outra vez.','Remover'))return;
   var r=await _sb.rpc('equipe_remover',{p_usuario:id});
-  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&r.error.message)||'Erro ao remover.'),'error');return;}
+  if(r.error||!r.data||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(r.error&&(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))||'Erro ao remover.'),'error');return;}
   showToast('Removido(a) da equipe.','success');await atualizarEquipe();await loadEmployees();renderEmployees();
 }
 // ============================================================
@@ -1177,13 +1177,13 @@ function renderAcesso(){
   document.querySelectorAll('[data-ac-liberar]').forEach(function(b){b.addEventListener('click',function(){liberarHoje(b.dataset.acLiberar);});});
   document.querySelectorAll('[data-ac-cancelar]').forEach(function(b){b.addEventListener('click',function(){cancelarLiberacao(b.dataset.acCancelar);});});
 }
-async function atualizarAcesso(){try{await carregarAcesso();}catch(e){showToast('Erro ao carregar o controle de acesso: '+esc(e.message||''),'error');return;}renderAcesso();}
+async function atualizarAcesso(){try{await carregarAcesso();}catch(e){showToast('Erro ao carregar o controle de acesso: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');return;}renderAcesso();}
 async function salvarConfigAcesso(){
   var ini=eqMin(document.getElementById('acInicio').value),fim=eqMin(document.getElementById('acFim').value),ligar=document.getElementById('acAtivo').checked;
   if(ini==null||fim==null||fim<=ini){showToast('Informe um horário de início e fim válido.','error');return;}
   if(ligar&&!acesso.cfg.acesso_ativo&&!await eqConfirmar('Ligar o controle de acesso','A partir de agora, a equipe só entra no sistema em dias úteis, das '+acHm(ini)+' às '+acHm(fim)+(document.getElementById('acLocal').checked?', e do escritório (ou em home office aprovado)':'')+'. Quem estiver fora disso sai do sistema em até 30 minutos. Você não é afetado. Ligar?','Ligar'))return;
   var r=await _sb.from('ponto_config').update({acesso_ativo:ligar,acesso_inicio_min:ini,acesso_fim_min:fim,acesso_exigir_local:document.getElementById('acLocal').checked}).eq('id',true);
-  if(r.error){showToast('Erro ao salvar: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Erro ao salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast(ligar?'Controle de acesso ligado.':'Configuração salva (controle desligado).','success');atualizarAcesso();
 }
 async function salvarRegraAcesso(id){
@@ -1193,18 +1193,18 @@ async function salvarRegraAcesso(id){
     if(linha.inicio_min==null||linha.fim_min==null||linha.fim_min<=linha.inicio_min){showToast('Informe o horário próprio (início e fim).','error');return;}
   }
   var r=modo==='padrao'?await _sb.from('acesso_regras').delete().eq('usuario_id',id):await _sb.from('acesso_regras').upsert(linha,{onConflict:'usuario_id'});
-  if(r.error){showToast('Erro ao salvar: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Erro ao salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast('Regra de acesso salva.','success');atualizarAcesso();
 }
 async function liberarHoje(id){
   if(!await eqConfirmar('Liberar hoje','Liberar '+(acesso.nomes[id]||'esta pessoa')+' para entrar hoje fora do horário e fora do escritório? Amanhã volta a valer a regra normal.','Liberar hoje'))return;
   var r=await _sb.from('acesso_liberacoes').insert({usuario_id:id,data:acHojeKey(),qualquer_horario:true,qualquer_local:true,motivo:'Liberado pelo administrador'});
-  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Erro: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast('Liberado para hoje.','success');atualizarAcesso();
 }
 async function cancelarLiberacao(libId){
   var r=await _sb.from('acesso_liberacoes').delete().eq('id',libId);
-  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Erro: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast('Liberação cancelada.','success');atualizarAcesso();
 }
 
@@ -1216,7 +1216,7 @@ async function trocarAbaColab(aba){
   document.querySelectorAll('[data-aba-col]').forEach(function(b){b.classList.toggle('active',b.dataset.abaCol===aba);});
   var jaTinha=!!equipe.carregada;
   if(aba==='equipe'&&!jaTinha){
-    try{await carregarEquipe();equipe.carregada=true;}catch(e){showToast('Erro ao carregar a equipe: '+esc(e.message||''),'error');}
+    try{await carregarEquipe();equipe.carregada=true;}catch(e){showToast('Erro ao carregar a equipe: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');}
     if(abaColabAtual!=='equipe')return; // a pessoa já trocou de aba enquanto carregava
     renderEquipe();
   }

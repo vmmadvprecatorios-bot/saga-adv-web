@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611212057"></script>
+<script src="saga_guard.js?v=202611212157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Para aprovar</title>
@@ -25,7 +25,7 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .pills{display:inline-flex;gap:3px;padding:3px;border:1px solid var(--border-soft);border-radius:11px;background:var(--panel)}
 .pill{height:30px;padding:0 12px;border-radius:8px;font-size:11.5px;font-weight:500;color:var(--muted);border:1px solid transparent;transition:background .2s cubic-bezier(.22,.78,.25,1),color .2s}
 .pill.active{color:var(--text);background:color-mix(in srgb,var(--gold) 14%,transparent);border-color:color-mix(in srgb,var(--gold) 45%,transparent)}
-.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:tabular-nums}
+.pill b{font-weight:600;opacity:.75;margin-left:5px;font-variant-numeric:lining-nums tabular-nums}
 .ent{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel-solid);padding:0 11px;font-size:12.5px;outline:0;flex:1;min-width:220px}
 .ent:focus{border-color:var(--gold)}
 .resumo{font-size:11.5px;color:var(--muted);margin:2px 2px 10px}
@@ -33,8 +33,8 @@ body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy
 .grupo{border:1px solid var(--border-soft);border-radius:14px;background:var(--panel);margin-bottom:12px;overflow:hidden}
 .grupo-cab{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--border-soft)}
 .grupo-cab h2{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;line-height:1.2}
-.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:tabular-nums}
-.lnk{font-size:11.5px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:9px;padding:6px 10px;white-space:nowrap;transition:border-color .2s}
+.grupo-cab small{display:block;font-family:Montserrat,Arial,sans-serif;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;font-variant-numeric:lining-nums tabular-nums}
+.lnk{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;height:36px;font-size:12px;color:var(--text);text-decoration:none;border:1px solid var(--border-soft);border-radius:11px;padding:0 12px;white-space:nowrap;vertical-align:middle;transition:border-color .2s}
 .lnk:hover{border-color:var(--gold)}
 button.lnk{background:none;cursor:pointer;font-family:inherit}
 .ped{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:12px 16px;border-bottom:1px solid var(--border-soft);align-items:start}
@@ -50,7 +50,7 @@ button.lnk{background:none;cursor:pointer;font-family:inherit}
 .aviso-amarelo{font-size:12px;padding:8px 10px;border-radius:9px;border:1px solid color-mix(in srgb,var(--warning,#d97706) 50%,transparent);background:color-mix(in srgb,var(--warning,#d97706) 9%,transparent);color:var(--text)}
 #comRenata{margin-top:14px}
 .selo.ok{color:var(--success,#16a34a);border-color:color-mix(in srgb,var(--success,#16a34a) 50%,transparent)}
-.ped .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.ped .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;align-content:flex-start}
 .recebido{font-size:12px;line-height:1.5;margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--text) 4%,transparent)}
 .vazio{padding:40px 16px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.6;border:1px dashed var(--border-soft);border-radius:14px}
 .vazio b{display:block;color:var(--text);font-size:14px;margin-bottom:4px}
@@ -93,7 +93,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
 .plano-peca{margin-top:8px;border:1px solid var(--border-soft);border-radius:10px;padding:6px 10px;background:color-mix(in srgb,var(--panel) 70%,transparent)}.plano-peca summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--gold)}.plano-peca dl{margin:6px 0}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611212057">
+<link rel="stylesheet" href="saga_tema.css?v=202611212157">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -145,7 +145,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611212057"></script>
+<script src="saga_ui.js?v=202611212157"></script>
 <script>
 /* =====================================================================
    SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
@@ -322,7 +322,7 @@ function atualizarLotePr(){
 }
 async function decidirPecas(ids,dec,motivo){
   var r=await _sb.rpc('agente_pecas_decidir',{p_ids:ids,p_decisao:dec,p_motivo:motivo||null});
-  if(r.error){toast('Não consegui gravar: '+(r.error.message||''),'error');return;}
+  if(r.error){toast('Não consegui gravar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
   var er=(r.data&&r.data.erros)||[];
   toast((dec==='fazer'?'Liberado para a Renata: ela faz na próxima rodada ('+proximaRodadaRenata()+').':(dec==='depois'?'Guardado para depois.':'Encerrado: a Renata não vai fazer.'))+(er.length?' Não mudou: '+er.map(function(x){return x.titulo+' ('+x.erro+')';}).join('; '):''),er.length?'error':'success');
   PR.marc={};await carregar();
@@ -332,7 +332,7 @@ async function decidirPecas(ids,dec,motivo){
     var r=await _sb.storage.from('documentos-clientes').createSignedUrl(b.dataset.word,300,{download:b.dataset.nome||true});
     if(r.error)throw r.error;
     location.href=r.data.signedUrl;
-  }catch(e){toast('Não consegui abrir o Word: '+((e&&e.message)||'erro desconhecido')+'. Abra pela pasta Petições da ficha.','error');}
+  }catch(e){toast('Não consegui abrir o Word: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Abra pela pasta Petições da ficha.','error');}
   b.disabled=false;
 }
 function htmlEntrega(e){
@@ -394,7 +394,7 @@ async function gerarFinalDepois(ents){
     if(!window.SagaPecaTexto){toast('O gerador do Word não carregou nesta tela: abra de novo e toque em "Baixar em Word".','error');return;}
     toast('Gerando o Word final de "'+en.titulo+'"...','info');
     try{await SagaPecaTexto.gerarFinal(en.peca.id,'docx',{baixar:false});toast('Word final guardado na pasta Petições da ficha.','success');}
-    catch(e){toast('A petição foi aprovada, mas o Word final não foi gerado: '+((e&&e.message)||'erro desconhecido')+'. Toque em "Baixar em Word" em Decididas para tentar de novo.','error');}
+    catch(e){toast('A petição foi aprovada, mas o Word final não foi gerado: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido')+'. Toque em "Baixar em Word" em Decididas para tentar de novo.','error');}
   }
 }
 async function decidir(id,decisao,comentario){
@@ -403,7 +403,7 @@ async function decidir(id,decisao,comentario){
   try{
     if(el&&window.sagaRiscar&&decisao==='aprovar')await sagaRiscar(el,{texto:'.oque',esperar:gravando,recolher:true});else await gravando;
     toast(decisao==='aprovar'?'Aprovado.':(decisao==='ajustar'?'Mandado ajustar: o agente refaz na próxima rodada.':'Reprovado.'),'success');ok=true;
-  }catch(e){toast('Não consegui gravar: '+((e&&e.message)||'erro desconhecido'),'error');}
+  }catch(e){toast('Não consegui gravar: '+((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro desconhecido'),'error');}
   if(ok&&decisao==='aprovar')await gerarFinalDepois([ent]);
   await carregar();
   if(window.SagaUI&&SagaUI.contarDia)try{SagaUI.contarDia();}catch(e){}
@@ -415,7 +415,7 @@ async function aprovarLote(){
   $('loteAprovar').disabled=true;
   var r=await _sb.rpc('agente_entregas_decidir_lote',{p_ids:ids,p_decisao:'aprovar',p_comentario:null});
   $('loteAprovar').disabled=false;
-  if(r.error){toast('Não consegui aprovar o lote: '+(r.error.message||''),'error');return;}
+  if(r.error){toast('Não consegui aprovar o lote: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
   var er=(r.data&&r.data.erros)||[];
   toast(r.data.ok+' aprovada(s)'+(er.length?'; '+er.length+' com erro: '+er.map(function(x){return x.erro;}).join(' | '):'.'),er.length?'error':'success');
   var comErro={};er.forEach(function(x){if(x.id)comErro[x.id]=1;});
@@ -446,7 +446,7 @@ async function confirmarJanela(){
 }
 async function protocolei(id,obs){
   var r=await _sb.rpc('agente_peca_protocolei',{p_entrega:id,p_observacao:obs||null});
-  if(r.error){toast('Não consegui marcar o protocolo: '+(r.error.message||''),'error');return;}
+  if(r.error){toast('Não consegui marcar o protocolo: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
   toast('Marcada como protocolada: a tarefa e a intimação foram concluídas e a ficha foi anotada.','success');
   await carregar();
   if(window.SagaUI&&SagaUI.contarDia)try{SagaUI.contarDia();}catch(e){}
@@ -454,7 +454,7 @@ async function protocolei(id,obs){
 async function trocarAutonomia(b){
   var novo=b.dataset.sozinho!=='1';
   var r=await _sb.rpc('agente_autonomia_salvar',{p_tipo:b.dataset.auton,p_sozinho:novo});
-  if(r.error){toast('Não consegui mudar: '+(r.error.message||''),'error');return;}
+  if(r.error){toast('Não consegui mudar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
   toast('Salvo.','success');await carregar();
 }
 function ligar(){
@@ -508,12 +508,12 @@ async function init(){
   var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
   await carregar();
 }
-init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
+init().catch(function(e){P.erro=(window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'Erro ao abrir a tela.';desenhar();});
 </script>
-<script src="saga_agentes_extra.js?v=202611212057"></script>
-<script src="saga_timbrado.js?v=202611212057"></script>
-<script src="saga_modelos_editor.js?v=202611212057"></script>
-<script src="saga_visor.js?v=202611212057"></script>
-<script src="saga_peca_texto.js?v=202611212057"></script>
+<script src="saga_agentes_extra.js?v=202611212157"></script>
+<script src="saga_timbrado.js?v=202611212157"></script>
+<script src="saga_modelos_editor.js?v=202611212157"></script>
+<script src="saga_visor.js?v=202611212157"></script>
+<script src="saga_peca_texto.js?v=202611212157"></script>
 </body>
 </html>

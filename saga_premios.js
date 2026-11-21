@@ -21,7 +21,7 @@ function esc(v){var d=document.createElement('div');d.textContent=v==null?'':Str
 function rs(v){var n=Number(v||0);return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
 function num(v){return Number(v||0).toLocaleString('pt-BR');}
 function toast(msg,tipo){var w=$('toastWrap');var t=document.createElement('div');t.className='toast '+(tipo||'');t.textContent=msg;w.appendChild(t);setTimeout(function(){t.remove();},5200);}
-function erroMsg(e){return (e&&(e.message||e.details||e.hint))||String(e||'erro desconhecido');}
+function erroMsg(e){return (e&&((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||e.details||e.hint))||String(e||'erro desconhecido');}
 function mesISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-01';}
 function mesAtual(){return mesISO(new Date());}
 function mesNome(iso){if(!iso)return '';var p=String(iso).slice(0,10).split('-');return MESES[Number(p[1])-1]+'/'+p[0];}

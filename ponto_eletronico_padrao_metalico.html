@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611212057"></script>
+<script src="saga_guard.js?v=202611212157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
@@ -63,7 +63,7 @@ table{width:100%;border-collapse:collapse;min-width:860px}
 th{text-align:left;font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:12px 12px;border-bottom:1px solid var(--border-soft);white-space:nowrap}
 td{padding:11px 12px;font-size:12px;border-bottom:1px solid var(--border-soft);vertical-align:middle}
 tbody tr{cursor:pointer}
-td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:lining-nums tabular-nums}
 .cli{font-weight:600}.sub{font-size:10.5px;color:var(--muted);margin-top:2px}
 .vazio{padding:34px 16px;text-align:center;color:var(--muted);font-size:12px}
 .pos{color:var(--success)}.neg{color:var(--danger)}
@@ -121,7 +121,7 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 }
 
 .hoje-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;margin-bottom:16px}
-.relogio{font-family:Montserrat,sans-serif;font-size:44px;font-weight:700;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.relogio{font-family:Montserrat,sans-serif;font-size:44px;font-weight:700;letter-spacing:1px;font-variant-numeric:lining-nums tabular-nums}
 .botoes-ponto{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
 .botoes-ponto.livre{grid-template-columns:repeat(2,minmax(0,1fr))}
 .btn-ponto{height:58px;border-radius:12px;border:1px solid var(--border);background:var(--panel-2);font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
@@ -132,11 +132,11 @@ td.num,th.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-n
 .msg-ponto.ok{border-color:var(--success)}.msg-ponto.erro{border-color:var(--danger);color:var(--danger)}
 .marcas-hoje{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .marca{font-size:11px;padding:4px 9px;border-radius:8px;background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid color-mix(in srgb,var(--gold) 25%,transparent)}
-.marca b{font-variant-numeric:tabular-nums}
+.marca b{font-variant-numeric:lining-nums tabular-nums}
 .resumo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .resumo-grid div{border:1px solid var(--border-soft);border-radius:10px;padding:9px 10px;background:var(--panel-2)}
 .resumo-grid span{display:block;font-size:10px;color:var(--muted)}
-.resumo-grid b{font-size:15px;font-variant-numeric:tabular-nums}
+.resumo-grid b{font-size:15px;font-variant-numeric:lining-nums tabular-nums}
 .perfil{margin-top:10px;padding:9px 12px;border-radius:10px;font-size:12px;font-weight:700}
 .perfil.ok{background:color-mix(in srgb,var(--success) 14%,transparent)}.perfil.alerta{background:color-mix(in srgb,var(--danger) 14%,transparent);color:var(--danger)}
 .nav-mes{display:flex;align-items:center;gap:8px}
@@ -198,7 +198,7 @@ tr.apagado td{color:var(--muted)}
   .linha-tempo{margin-top:14px;border-left:2px solid var(--border);padding-left:14px;display:grid;gap:8px}
   .lt-item{position:relative;font-size:12.5px;line-height:1.4}
   .lt-item::before{content:'';position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--c,var(--gold));border:2px solid var(--panel)}
-  .lt-hora{font-weight:700;font-variant-numeric:tabular-nums;margin-right:8px}
+  .lt-hora{font-weight:700;font-variant-numeric:lining-nums tabular-nums;margin-right:8px}
   .lt-orig{font-size:10.5px;font-weight:700;color:var(--c,var(--gold));margin-right:6px;text-transform:uppercase;letter-spacing:.4px}
   [data-theme="light"] .lt-orig{color:color-mix(in srgb,var(--c,var(--gold)) 58%,#1a1a1a)}
   .lt-cli{color:var(--muted)}
@@ -238,7 +238,7 @@ tr.apagado td{color:var(--muted)}
   #roscasMeuPonto .centro .n{font-size:15px}
 .ap-apelido{width:100%;min-width:160px;padding:6px 9px;border:1px solid var(--border);border-radius:8px;background:var(--panel-2);color:var(--text);font:inherit;font-size:12.5px}.ap-apelido:focus{outline:none;border-color:var(--gold)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611212057">
+<link rel="stylesheet" href="saga_tema.css?v=202611212157">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -667,13 +667,13 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611212057"></script>
-<script src="saga_texto.js?v=202611212057"></script>
-<script src="saga_ponto_relatorios.js?v=202611212057"></script>
+<script src="saga_ui.js?v=202611212157"></script>
+<script src="saga_texto.js?v=202611212157"></script>
+<script src="saga_ponto_relatorios.js?v=202611212157"></script>
 <script>if(window.SagaTexto){['atDesc','jDesc'].forEach(function(i){var e=document.getElementById(i);if(e)SagaTexto.ligar(e);});}</script>
-<script src="ponto_calculo.js?v=202611212057"></script>
-<script src="saga_roscas.js?v=202611212057"></script>
-<script src="saga_pdf.js?v=202611212057"></script>
+<script src="ponto_calculo.js?v=202611212157"></script>
+<script src="saga_roscas.js?v=202611212157"></script>
+<script src="saga_pdf.js?v=202611212157"></script>
 <script>
 /* =====================================================================
    PONTO ELETRONICO (modelo da planilha "Painel do Ponto VMMADV")
@@ -898,7 +898,7 @@ async function bater(botao,btn){
     msg.className='msg-ponto '+(r.data.ok?'ok':'erro');msg.textContent=r.data.mensagem;
     if(!r.data.ok&&r.data.fora)botaoPedirHo(msg);
     if(r.data.ok){await carregarMeuMes();carregarMinhasAtividades();if(window.SagaUI&&SagaUI.conferirPonto)SagaUI.conferirPonto();}
-  }catch(e){msg.className='msg-ponto erro';msg.textContent='Não foi possível registrar: '+(e.message||'tente de novo');}
+  }catch(e){msg.className='msg-ponto erro';msg.textContent='Não foi possível registrar: '+((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'tente de novo');}
   finally{document.querySelectorAll('[data-botao]').forEach(function(b){b.disabled=false;});}
 }
 // Batida recusada por estar fora do escritório: atalho para pedir home office do dia
@@ -969,7 +969,7 @@ async function salvarRelatorio(){
   var btn=document.getElementById('relSalvar');btn.disabled=true;
   var r=await _sb.rpc('salvar_relatorio_dia',{p_data:state.relData,p_texto:document.getElementById('relTexto').value});
   btn.disabled=false;
-  if(r.error||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||r.error.message),'error');return;}
+  if(r.error||!r.data.ok){showToast(esc((r.data&&r.data.mensagem)||(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   // a janela continua aberta, mostrando que ficou salva
   infoObs(new Date().toISOString(),true);
   var info=document.getElementById('relObsInfo');info.style.color='var(--success,#2fae7a)';setTimeout(function(){info.style.color='';},2500);
@@ -994,14 +994,14 @@ async function enviarJust(){
     var nomeArq=arq.name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9._-]+/g,'_').slice(-80);
     var caminho=state.meuId+'/'+Date.now()+'-'+nomeArq;
     var up=await _sb.storage.from('atestados').upload(caminho,arq,{contentType:arq.type||undefined});
-    if(up.error){btn.disabled=false;showToast('Não foi possível enviar o arquivo: '+esc(up.error.message),'error');return;}
+    if(up.error){btn.disabled=false;showToast('Não foi possível enviar o arquivo: '+esc((window.sagaErroBanco?window.sagaErroBanco(up.error):up.error.message)),'error');return;}
     doc='atestados/'+caminho;
   }
   var r=await _sb.rpc('enviar_justificativa',{p_data:document.getElementById('jData').value||null,p_tipo:document.getElementById('jTipo').value,
     p_slot:slot===''?null:Number(slot),p_horario_min:hora?minDeHora(hora):null,p_horas_min:horas?minDeHora(horas):null,
     p_descricao:document.getElementById('jDesc').value,p_documento:doc});
   btn.disabled=false;
-  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Erro: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast(esc(r.data.mensagem),r.data.ok?'success':'error');
   if(r.data.ok){['jData','jHora','jHoras','jDoc','jDesc','jArq'].forEach(function(i){document.getElementById(i).value='';});document.getElementById('jTipo').value='';document.getElementById('jSlot').value='';carregarMinhasJust();}
 }
@@ -1034,7 +1034,7 @@ async function pedirHo(){
   if(ate&&ate<data){showToast('O "Até" precisa ser no mesmo dia ou depois do primeiro dia.','error');return;}
   if(ate===data)ate=null;
   var r=await _sb.from('solicitacoes_home_office').insert({usuario_id:state.meuId,data_referencia:data,data_fim:ate,origem:'colaborador',solicitado_por_id:state.meuId,status:'pendente',comentario:document.getElementById('hoComentario').value.trim()||null});
-  if(r.error){showToast(r.error.code==='23505'?'Você já tem um pedido de home office começando em '+dataBR(data)+'.':'Erro: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast(r.error.code==='23505'?'Você já tem um pedido de home office começando em '+dataBR(data)+'.':'Erro: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast('Pedido de home office enviado. O administrador recebe o aviso no sino.','success');
   ['hoData','hoAte','hoComentario'].forEach(function(id){document.getElementById(id).value='';});document.getElementById('hoAte').min=state.hoje;carregarMeusHo();
 }
@@ -1124,7 +1124,7 @@ async function carregarAcessos(silencioso){
   if(!silencioso&&!tb.children.length)tb.innerHTML='<tr><td colspan="8" class="vazio">Carregando...</td></tr>';
   var r=await Promise.all([_sb.rpc('acessos_painel',{p_de:de,p_ate:ate}),state.redes?Promise.resolve():lerRedes()]);r=r[0];
   if(v!==acState.versao)return;
-  if(r.error){tb.innerHTML='<tr><td colspan="8" class="vazio">'+esc(r.error.message)+'</td></tr>';return;}
+  if(r.error){tb.innerHTML='<tr><td colspan="8" class="vazio">'+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))+'</td></tr>';return;}
   var linhas=(r.data&&r.data.linhas)||[],html=[],diaAtual=null,entraram=0,total=0;
   linhas.forEach(function(l){
     if(acState.modo==='7'&&l.data!==diaAtual){diaAtual=l.data;var dt=new Date(l.data+'T12:00:00');html.push('<tr class="dia-sep"><td colspan="8">'+esc(dt.toLocaleDateString('pt-BR',{weekday:'long'}))+', '+dataBR(l.data)+'</td></tr>');}
@@ -1150,7 +1150,7 @@ async function carregarAparelhos(){
   if(!state.pode.admin)return;
   var ti=document.getElementById('tbApIps'),ta=document.getElementById('tbAparelhos');if(!ti||!ta)return;
   var r=await _sb.rpc('aparelhos_painel');
-  if(r.error){ti.innerHTML='<tr><td colspan="6" class="vazio">'+esc(r.error.message)+'</td></tr>';ta.innerHTML='';return;}
+  if(r.error){ti.innerHTML='<tr><td colspan="6" class="vazio">'+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))+'</td></tr>';ta.innerHTML='';return;}
   var d=r.data||{},ips=d.ips||[],aps=d.aparelhos||[];
   var etq=function(ok,txtOk,txtNao){return '<span class="etq ip-local" style="--c:'+(ok?'var(--success)':'var(--warning)')+'">'+(ok?txtOk:txtNao)+'</span>';};
   var quando=function(x){return x?dataBR(dataLocalDe(x)).slice(0,5)+' '+horaDe(x):'';};
@@ -1169,15 +1169,15 @@ async function carregarAparelhos(){
   ti.querySelectorAll('[data-ap-ip]').forEach(function(b){b.addEventListener('click',async function(){
     if(!await (window.sagaConfirmar?sagaConfirmar('Autorizar a internet '+b.dataset.apIp+'?','Fica liberada de vez para toda a equipe com login ativo (entrada e ponto), sem pedido nem aviso no sino. Os pedidos abertos desta internet se resolvem sozinhos.','Autorizar',false):confirm('Autorizar a internet '+b.dataset.apIp+'?')))return;
     b.disabled=true;var rr=await _sb.rpc('ponto_rede_adicionar',{p_ip:b.dataset.apIp,p_nome:null});b.disabled=false;
-    if(rr.error||!rr.data||!rr.data.ok){showToast('Não foi possível autorizar: '+esc((rr.error&&rr.error.message)||'tente de novo'),'error');return;}
+    if(rr.error||!rr.data||!rr.data.ok){showToast('Não foi possível autorizar: '+esc((rr.error&&(window.sagaErroBanco?window.sagaErroBanco(rr.error):rr.error.message))||'tente de novo'),'error');return;}
     showToast('Internet '+esc(b.dataset.apIp)+' liberada para toda a equipe.','success');state.redes=null;carregarAparelhos();});});
   ti.querySelectorAll('[data-ap-ip-tirar]').forEach(function(b){b.addEventListener('click',async function(){
     var ip=b.dataset.apIpTirar;
     if(!await (window.sagaConfirmar?sagaConfirmar('Tirar a autorização da internet '+ip+'?','Quem entrar por ela volta a gerar pedido/aviso para você. Só desativa: o histórico fica.','Tirar autorização',true):confirm('Tirar a autorização da internet '+ip+'?')))return;
     b.disabled=true;var rr=await _sb.from('ponto_redes_escritorio').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('ip',ip).eq('ativo',true).select('id');b.disabled=false;
-    if(rr.error||!rr.data||!rr.data.length){showToast('Não foi possível tirar a autorização: '+esc((rr.error&&rr.error.message)||'internet não encontrada'),'error');return;}
+    if(rr.error||!rr.data||!rr.data.length){showToast('Não foi possível tirar a autorização: '+esc((rr.error&&(window.sagaErroBanco?window.sagaErroBanco(rr.error):rr.error.message))||'internet não encontrada'),'error');return;}
     showToast('Autorização da internet '+esc(ip)+' retirada.','success');state.redes=null;carregarAparelhos();});});
-  var salvarAp=async function(id,campos,msg){var rr=await _sb.rpc('aparelho_salvar',Object.assign({p_id:id},campos));if(rr.error){showToast('Não foi possível gravar: '+esc(rr.error.message),'error');return;}if(msg)showToast(msg,'success');carregarAparelhos();};
+  var salvarAp=async function(id,campos,msg){var rr=await _sb.rpc('aparelho_salvar',Object.assign({p_id:id},campos));if(rr.error){showToast('Não foi possível gravar: '+esc((window.sagaErroBanco?window.sagaErroBanco(rr.error):rr.error.message)),'error');return;}if(msg)showToast(msg,'success');carregarAparelhos();};
   ta.querySelectorAll('[data-ap-aut]').forEach(function(b){b.addEventListener('click',function(){salvarAp(b.dataset.apAut,{p_autorizado:b.dataset.v==='1'},b.dataset.v==='1'?'Computador autorizado.':'Autorização retirada.');});});
   ta.querySelectorAll('[data-ap-desativar]').forEach(function(b){b.addEventListener('click',async function(){if(!await (window.sagaConfirmar?sagaConfirmar('Desativar este computador?','Ele sai da lista de autorizados (o histórico fica).','Desativar',true):confirm('Desativar este computador?')))return;salvarAp(b.dataset.apDesativar,{p_ativo:false},'Computador desativado.');});});
   ta.querySelectorAll('[data-ap-reativar]').forEach(function(b){b.addEventListener('click',function(){salvarAp(b.dataset.apReativar,{p_ativo:true},'Computador reativado.');});});
@@ -1189,7 +1189,7 @@ async function autorizarEsteComputador(){
   if(!cod){showToast('Este navegador não guardou o código do computador. Recarregue a página.','error');return;}
   var apelido=window.prompt('Apelido deste computador (ex.: Recepção 1):','');if(apelido===null)return;
   var r=await _sb.rpc('aparelho_autorizar_este',{p_codigo:cod,p_apelido:apelido||null,p_navegador:(navigator.userAgent||'').slice(0,300)});
-  if(r.error){showToast('Não foi possível autorizar: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Não foi possível autorizar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast('Este computador foi autorizado'+(r.data&&r.data.apelido?' ('+esc(r.data.apelido)+')':'')+'. Quem bater o ponto nele estará no escritório.','success');carregarAparelhos();
 }
 
@@ -1213,7 +1213,7 @@ async function carregarPendencias(){
 async function decidir(id,decisao){
   var resp=(document.querySelector('[data-resp="'+id+'"]')||{}).value||null;
   var r=await _sb.rpc('decidir_justificativa',{p_id:id,p_decisao:decisao,p_resposta:resp});
-  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Erro: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast(esc(r.data.mensagem),r.data.ok?'success':'error');carregarEquipe();
 }
 async function decidirHo(id,status){
@@ -1289,7 +1289,7 @@ async function processarMesBanco(c,k,opc){
     var carga=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),ate).carga||0;
     var f=PC.fechamento(calc.dias,k+'-01',ate,ant&&ant.transportar!==null?ant.transportar:0,carga);
     var g=await _sb.rpc('ponto_gravar_fechamento',{p_colab:c.id,p_mes:k,p_anterior:f.anterior,p_periodo:f.periodo,p_total:f.total,p_descontar:f.descontar,p_compensar:f.compensar,p_excedente:f.excedente});
-    if(g.error||!g.data||!g.data.ok)throw new Error((g.data&&g.data.mensagem)||(g.error&&g.error.message)||'Falha no fechamento');
+    if(g.error||!g.data||!g.data.ok)throw new Error((g.data&&g.data.mensagem)||(g.error&&(window.sagaErroBanco?window.sagaErroBanco(g.error):g.error.message))||'Falha no fechamento');
     row={colaborador_id:c.id,mes:k,saldo_anterior:f.anterior,saldo_periodo:f.periodo,saldo_total:f.total,descontar:f.descontar,compensar:f.compensar,excedente:f.excedente,saldo_pos_fechamento:null,transportar:null,fechado_em:new Date().toISOString(),transportado_em:null,_ate:ate};
     state.banco[c.id+'|'+k]=row;mudou=true;
   }
@@ -1298,7 +1298,7 @@ async function processarMesBanco(c,k,opc){
     calc=calc||await dadosMes(c,p.a,p.m);
     var t=PC.transporte(calc.dias,diaSeguinte(fechKey),fimKey,row.compensar);
     var g2=await _sb.rpc('ponto_gravar_transporte',{p_colab:c.id,p_mes:k,p_pos:t.pos,p_transportar:t.transportar});
-    if(g2.error||!g2.data||!g2.data.ok)throw new Error((g2.data&&g2.data.mensagem)||(g2.error&&g2.error.message)||'Falha no transporte');
+    if(g2.error||!g2.data||!g2.data.ok)throw new Error((g2.data&&g2.data.mensagem)||(g2.error&&(window.sagaErroBanco?window.sagaErroBanco(g2.error):g2.error.message))||'Falha no transporte');
     row.saldo_pos_fechamento=t.pos;row.transportar=t.transportar;row.transportado_em=new Date().toISOString();mudou=true;
   }
   return mudou;
@@ -1380,7 +1380,7 @@ function renderBancoMeu(){
 function hm(min){return min===null||min===undefined?'':dois(Math.floor(min/60))+':'+dois(min%60);}
 function jornadaVigente(c){var j=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),state.hoje);return j&&j.carga?hm(j.entrada)+'–'+hm(j.saida)+' ('+PC.hhmm(j.carga)+')':'';}
 function proximoCodigo(){var n=0;state.colabs.forEach(function(c){var m=/^C(\d+)$/.exec(c.codigo||'');if(m)n=Math.max(n,Number(m[1]));});return 'C'+('00'+(n+1)).slice(-3);}
-function erroMsg(r){return r&&r.error?(r.error.message||'Erro ao gravar'):'';}
+function erroMsg(r){return r&&r.error?((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'Erro ao gravar'):'';}
 
 async function carregarUsuarios(){
   var r=await _sb.from('usuarios').select('id,nome_completo,email,ativo').eq('ativo',true).order('nome_completo');
@@ -1792,7 +1792,7 @@ async function adicionarRede(ip,btn){
   var nome=document.getElementById('redeNome').value.trim()||null;
   var r=await _sb.rpc('ponto_rede_adicionar',{p_ip:ip||null,p_nome:nome});
   if(btn)btn.disabled=false;
-  if(r.error||!r.data||!r.data.ok){showToast('Não foi possível cadastrar: '+esc((r.error&&r.error.message)||'tente de novo'),'error');return;}
+  if(r.error||!r.data||!r.data.ok){showToast('Não foi possível cadastrar: '+esc((r.error&&(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))||'tente de novo'),'error');return;}
   document.getElementById('redeNome').value='';
   showToast(r.data.novo?'Internet '+esc(r.data.ip)+' cadastrada como do escritório.':'A internet '+esc(r.data.ip)+' já estava na lista.','success');
   await carregarRedes();
@@ -1800,7 +1800,7 @@ async function adicionarRede(ip,btn){
 async function removerRede(id,ip){
   if(!await confirmar('Remover internet','Tirar a internet '+ip+' da lista do escritório? Quem bater o ponto por ela vai precisar da localização ou de home office aprovado. O histórico fica guardado.','Remover'))return;
   var r=await _sb.from('ponto_redes_escritorio').update({ativo:false,atualizado_em:new Date().toISOString()}).eq('id',id).select('id');
-  if(r.error||!r.data||!r.data.length){showToast('Não foi possível remover: '+esc((r.error&&r.error.message)||'sem permissão'),'error');return;}
+  if(r.error||!r.data||!r.data.length){showToast('Não foi possível remover: '+esc((r.error&&(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))||'sem permissão'),'error');return;}
   showToast('Internet removida da lista.','success');
   await carregarRedes();
 }
@@ -1971,7 +1971,7 @@ async function enviarEmailPonto(acao,btn){
     var r=await _sb.functions.invoke('ponto-relatorios',{body:{acao:acao}});
     var d=r.data||{};
     if(r.error&&!d.mensagem&&!d.msg){var ctx=r.error.context;try{d=ctx&&ctx.json?await ctx.json():d;}catch(e){}}
-    var msg=d.mensagem||d.msg||(r.error&&r.error.message)||'Pronto.';
+    var msg=d.mensagem||d.msg||(r.error&&(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))||'Pronto.';
     info.textContent=msg;showToast(esc(msg),d.ok?'success':'error');
   }catch(e){info.textContent='';showToast(esc(e.message),'error');}
   btn.disabled=false;carregarEnvios();
@@ -2059,7 +2059,7 @@ async function registrarAtividade(){
   var btn=document.getElementById('atRegistrar');btn.disabled=true;
   var r=await _sb.from('atividades').insert({canal:document.getElementById('atCanal').value,descricao:desc,pessoa_id:state.atPessoa?state.atPessoa.id:null});
   btn.disabled=false;
-  if(r.error){showToast('Erro: '+esc(r.error.message),'error');return;}
+  if(r.error){showToast('Erro: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}
   showToast('Atividade registrada às '+horaDe(new Date().toISOString())+'.','success');
   document.getElementById('atDesc').value='';state.atPessoa=null;
   document.getElementById('atClienteSel').style.display='none';document.getElementById('atCliente').style.display='';
@@ -2069,7 +2069,7 @@ async function carregarMinhasAtividades(){
   if(!state.meuId)return;
   var r=await _sb.rpc('relatorio_atividades',{p_usuario:state.meuId,p_ini:state.hoje,p_fim:state.hoje});
   var ev=r.data||[];
-  document.getElementById('atLista').innerHTML=r.error?'<div class="sub">Erro ao carregar: '+esc(r.error.message)+'</div>':htmlLinhaTempo(ev,[]).replace('Nenhuma atividade ainda.','Nenhuma atividade hoje ainda.');
+  document.getElementById('atLista').innerHTML=r.error?'<div class="sub">Erro ao carregar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))+'</div>':htmlLinhaTempo(ev,[]).replace('Nenhuma atividade ainda.','Nenhuma atividade hoje ainda.');
   // Observacoes de hoje (texto livre do relatorio do dia)
   var ob=document.getElementById('atObs');
   if(ob&&state.meuColab){
@@ -2127,7 +2127,7 @@ async function renderRelatorios(){
   var ro=await _sb.from('ponto_dias').select('colaborador_id,data,relatorio').gte('data',per.ini).lte('data',per.fim).not('relatorio','is',null);
   var obs={};(ro.data||[]).forEach(function(o){obs[o.colaborador_id+'|'+o.data]=o.relatorio;});
   var erro=res.find(function(r){return r.error;});
-  if(erro){alvo.innerHTML='<div class="vazio">Erro ao gerar o relatório: '+esc(erro.error.message)+'</div>';return;}
+  if(erro){alvo.innerHTML='<div class="vazio">Erro ao gerar o relatório: '+esc((window.sagaErroBanco?window.sagaErroBanco(erro.error):erro.error.message))+'</div>';return;}
   var dias=diasDoPeriodo(per.ini,per.fim);
   var dados=lista.map(function(c,i){
     var porDia={};(res[i].data||[]).forEach(function(e){var k=dataLocalDe(e.momento);(porDia[k]=porDia[k]||[]).push(e);});
@@ -2218,7 +2218,7 @@ async function pdfFolhaPonto(lista,a,m,btn){
     SagaPdf.imprimir({titulo:'Folha de ponto',subtitulo:mes,paisagem:true,
       arquivo:'Folha de ponto - '+(lista.length===1?lista[0].nome:'equipe')+' - '+mes,
       paginas:lista.map(function(c,i){return '<div class="compacta">'+folhaPontoHtml(c,calcs[i],a,m)+'</div>';})});
-  }catch(e){showToast('Erro ao montar o PDF: '+esc(e.message||''),'error');}
+  }catch(e){showToast('Erro ao montar o PDF: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');}
   finally{if(btn){btn.disabled=false;btn.textContent=txt;}}
 }
 function pdfLinhaTempo(eventos,gaps){
@@ -2302,7 +2302,7 @@ async function listarRelEscolha(){
   if(!pessoas.length){alvo.innerHTML='<div class="sub">Marque pelo menos uma pessoa.</div>';state.pr.carga=null;contarRelEscolha();return;}
   var v=++versaoPr;alvo.innerHTML='<div class="sub">Carregando…</div>';
   try{var carga=await carregarDadosRel(pessoas,ini,fim,state.cfg.intervalo_alerta_min||30);}
-  catch(e){alvo.innerHTML='<div class="sub">Erro: '+esc(e.message||'')+'</div>';return;}
+  catch(e){alvo.innerHTML='<div class="sub">Erro: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||'')+'</div>';return;}
   if(v!==versaoPr)return;
   state.pr.carga=carga;var h='';
   carga.dados.forEach(function(d){
@@ -2427,7 +2427,7 @@ function infoBaixar(){
   }
 }
 function nomePeriodoMeses(ki,kf){var a=partesMes(ki),b=partesMes(kf);if(ki===kf)return NOMES_MES[a.m-1]+' de '+a.a;if(a.a===b.a)return NOMES_MES[a.m-1]+' a '+NOMES_MES[b.m-1]+' de '+b.a;return NOMES_MES[a.m-1]+' de '+a.a+' a '+NOMES_MES[b.m-1]+' de '+b.a;}
-async function bxOcupado(btn,fn){var t=btn.textContent;btn.disabled=true;btn.textContent='Montando o PDF…';try{await fn(function(msg){btn.textContent=msg;});}catch(e){showToast('Erro ao montar o PDF: '+esc(e.message||''),'error');}finally{btn.disabled=false;btn.textContent=t;}}
+async function bxOcupado(btn,fn){var t=btn.textContent;btn.disabled=true;btn.textContent='Montando o PDF…';try{await fn(function(msg){btn.textContent=msg;});}catch(e){showToast('Erro ao montar o PDF: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');}finally{btn.disabled=false;btn.textContent=t;}}
 function baixarPontos(btn){
   var p=bxPeriodo(),pes=bxEscolhidos(),meses=mesesEntre(p.ini,p.fim).filter(function(k){return k<=state.hoje.slice(0,7);});
   bxOcupado(btn,async function(av){
@@ -2485,7 +2485,7 @@ function baixarRelatorios(btn){
 async function abrirAtestado(caminho){
   var w=window.open('','_blank');
   var r=await _sb.storage.from('atestados').createSignedUrl(caminho,300);
-  if(r.error||!r.data){if(w)w.close();showToast('Não foi possível abrir o atestado: '+esc(r.error?r.error.message:''),'error');return;}
+  if(r.error||!r.data){if(w)w.close();showToast('Não foi possível abrir o atestado: '+esc(r.error?(window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message):''),'error');return;}
   if(w)w.location.href=r.data.signedUrl;else window.location.href=r.data.signedUrl;
 }
 
@@ -2620,7 +2620,7 @@ async function init(){
   tickRelogio();setInterval(tickRelogio,1000);
   var alvo=new URLSearchParams(location.search).get('aba');if(alvo)trocarAba(alvo);
 }
-init().catch(function(e){showToast('Erro ao abrir o ponto: '+esc(e.message||''),'error');});
+init().catch(function(e){showToast('Erro ao abrir o ponto: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 </script>
 </body>
 </html>

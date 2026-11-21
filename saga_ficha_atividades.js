@@ -75,7 +75,7 @@
       ev.target.disabled=true;
       const r=await _sb.from('tarefas_comentarios').insert({tarefa_id:id,autor_id:state.usuario.internoId,texto:texto});
       ev.target.disabled=false;
-      if(r.error){showToast('Não foi possível comentar: '+(r.error.message||'sem acesso a esta tarefa.'),'error');return;}
+      if(r.error){showToast('Não foi possível comentar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||'sem acesso a esta tarefa.'),'error');return;}
       coms.push({autor:state.usuario.internoId,texto:texto,em:new Date().toISOString()});
       d.querySelector('#faComs').innerHTML=htmlComentarios(coms,'');ta.value='';
       showToast('Comentário salvo na tarefa.','success');
@@ -118,7 +118,7 @@
       ev.target.disabled=true;
       const r=await _sb.rpc('intimacao_comentar',{p_id:id,p_texto:t});
       ev.target.disabled=false;
-      if(r.error){showToast('Não foi possível comentar: '+(r.error.message||''),'error');return;}
+      if(r.error){showToast('Não foi possível comentar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
       coms.push({autor:state.usuario.internoId,texto:t,em:new Date().toISOString(),tipo:'comentario'});
       d.querySelector('#faComs').innerHTML=htmlComentarios(coms,'');ta.value='';
       showToast('Comentário salvo na intimação.','success');

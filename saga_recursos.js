@@ -222,7 +222,7 @@
     var sim=typeof global.sagaConfirmar==='function'?await global.sagaConfirmar('Remover recurso',(t?t.nome:'Recurso')+' '+(rec.numero||'')+' sai deste processo (fica no registro de alterações). As intimações que vieram por ele voltam a ficar sem processo.','Remover'):window.confirm('Remover este recurso?');
     if(!sim)return;
     var r=await R.sb.from('processos_recursos').update({ativo:false}).eq('id',rec.id);
-    if(r.error){aviso('Não foi possível remover: '+(r.error.message||''),'error');return;}
+    if(r.error){aviso('Não foi possível remover: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     R.porProcesso[rec.processo_id]=(R.porProcesso[rec.processo_id]||[]).filter(function(x){return x.id!==rec.id;});
     aviso('Recurso removido.');
     if(R.ctx&&R.ctx.aoMudar)R.ctx.aoMudar(rec.processo_id);
@@ -356,7 +356,7 @@
     if(opcoes(categoria,true).some(function(c){return c.nome.toLowerCase()===nome.toLowerCase();})){aviso('Já existe uma opção com esse nome.','warning');return null;}
     var ordem=opcoes(categoria,true).reduce(function(m,c){return Math.max(m,c.ordem||0);},0)+1;
     var r=await R.sb.from('etiquetas_catalogo').insert({categoria:categoria,nome:nome.slice(0,60),cor:'#8a94a8',ordem:ordem,ativo:true}).select('id,nome,cor,categoria,ordem,ativo,conta_encerrada').single();
-    if(r.error){aviso('Não foi possível criar: '+(r.error.message||''),'error');return null;}
+    if(r.error){aviso('Não foi possível criar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return null;}
     R.cat.push(r.data);return r.data;
   }
   function gerenciar(categoria,titulo,aoFechar){
@@ -376,7 +376,7 @@
     }
     async function salvar(id,campos){
       var r=await R.sb.from('etiquetas_catalogo').update(campos).eq('id',id);
-      if(r.error){aviso('Não foi possível salvar: '+(r.error.message||''),'error');return false;}
+      if(r.error){aviso('Não foi possível salvar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}
       Object.assign(op(id)||{},campos);return true;
     }
     pintar();

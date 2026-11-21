@@ -29,7 +29,7 @@
     if (typeof global.showToast === 'function') { global.showToast(msg, tipo === 'erro' ? 'error' : tipo === 'alerta' ? 'warning' : 'success'); return; }
     try { global.alert(msg); } catch(e) {}
   }
-  function erroTxt(e){ var m = (e && (e.message || e.msg)) || 'tente de novo.'; return String(m).replace(/^erro do simulado em [a-z_]+: /, ''); }
+  function erroTxt(e){ var m = (e && ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e.msg)) || 'tente de novo.'; return String(m).replace(/^erro do simulado em [a-z_]+: /, ''); }
   function dig(v){ return String(v == null ? '' : v).replace(/\D/g, ''); }
   function telLimpo(v){ var d = dig(v); if (d.length > 11 && d.indexOf('55') === 0) d = d.slice(2); return d; }
   function fmtTel(v){
@@ -54,7 +54,7 @@
   function dHora(d){ return new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
   function dQuando(d){ return new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); }
   function isoDia(d){ return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function primeiro(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
+  function primeiro(n){ if (global.sagaNomeExibicao) return global.sagaNomeExibicao(n); return String(n || '').trim().split(/\s+/)[0] || ''; }
   function recolher(el, ocultar){ if (!el) return; if (global.sagaRecolher) global.sagaRecolher(el, ocultar); else el.hidden = !!ocultar; }
   function confirmar(titulo, texto, botao){
     if (global.sagaConfirmar) return global.sagaConfirmar(titulo, texto, botao, false);
@@ -99,7 +99,7 @@
       // da tela. A lista tem ALTURA FIXA e rola por dentro: a janela já abre do tamanho final, no meio da tela.
       '.sat-horarios{height:min(240px,32vh);overflow:auto;overscroll-behavior:contain;border:1px solid var(--border);border-radius:12px;padding:4px 10px 10px}' +
       '.sat-horarios>.sat-vazio{padding-top:8px}.sat-horarios:has(>.sat-vazio.sem-resp){height:auto}' +
-      '.sat-slot{font:inherit;font-size:12.5px;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:5px 11px;cursor:pointer;font-variant-numeric:tabular-nums;transition:background-color .25s ' + CURVA + ',border-color .25s ' + CURVA + '}' +
+      '.sat-slot{font:inherit;font-size:12.5px;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:999px;padding:5px 11px;cursor:pointer;font-variant-numeric:lining-nums tabular-nums;transition:background-color .25s ' + CURVA + ',border-color .25s ' + CURVA + '}' +
       '.sat-slot.livre:hover{border-color:var(--gold)}' +
       '.sat-slot.ocupado,.sat-slot.passado{opacity:.42;cursor:not-allowed;text-decoration:line-through}' +
       '.sat-slot.active{background:var(--sb-escolha,rgba(127,127,127,.18));border-color:var(--sb-escolha-borda,var(--gold));box-shadow:inset 0 0 0 1px var(--sb-escolha-borda,var(--gold));font-weight:600}' +
@@ -462,8 +462,10 @@
       clearTimeout(tBusca); var t = q('cliTermo').value.trim();
       if (t.length < 2) { q('cliRes').hidden = true; return; }
       tBusca = setTimeout(async function(){
-        var r = await sb().rpc('busca_global', { p_termo: t });
+        var r;
+        try { r = await sb().rpc('busca_global', { p_termo: t }); } catch (ex) { r = { error: ex }; }
         if (q('cliTermo').value.trim() !== t) return;
+        if (r.error) { q('cliRes').innerHTML = '<div class="sat-vazio" style="color:var(--danger,#e5484d)">A busca de clientes falhou: ' + esc(window.sagaErroBanco ? window.sagaErroBanco(r.error) : (r.error.message || 'erro')) + '. Tente de novo.</div>'; q('cliRes').hidden = false; return; }
         var d = r.data || {}, vistos = {}, itens = [];
         (d.pessoas || []).forEach(function(p){ if (vistos[p.id]) return; vistos[p.id] = 1; itens.push({ id: p.id, nome: p.nome_completo || p.nome, sub: p.cpf ? 'CPF ' + fmtCpf(p.cpf) : '' }); });
         (d.contatos || []).forEach(function(c){ if (!c.pessoa_id || vistos[c.pessoa_id]) return; vistos[c.pessoa_id] = 1; itens.push({ id: c.pessoa_id, nome: c.nome_completo, sub: (c.onde || '') + (c.valor ? ': ' + c.valor : '') }); });
@@ -523,7 +525,7 @@
       if (!st.resp.tem_horarios) { box.innerHTML = '<div class="sat-vazio">Sem horários de atendimento definidos.' + (podeFora() ? ' Use "Outro horário" abaixo.' : '') + '</div>'; return; }
       box.innerHTML = '<div class="sat-vazio">Carregando os horários…</div>';
       var r = await sb().rpc('atendimento_horarios', { p_usuario: st.resp.id, p_de: isoDia(de), p_ate: isoDia(ate) });
-      if (r.error) { box.innerHTML = '<div class="sat-vazio">Não foi possível carregar os horários.</div>'; return; }
+      if (r.error) { box.innerHTML = '<div class="sat-vazio" style="color:var(--danger,#e5484d)">Não foi possível carregar os horários: ' + esc(window.sagaErroBanco ? window.sagaErroBanco(r.error) : (r.error.message || 'erro')) + '.</div>'; return; }
       var dias = {}, ordem = [];
       (r.data || []).forEach(function(h){ var k = isoDia(new Date(h.inicio)); if (!dias[k]) { dias[k] = []; ordem.push(k); } dias[k].push(h); });
       var livres = (r.data || []).filter(function(h){ return h.situacao === 'livre'; }).length;

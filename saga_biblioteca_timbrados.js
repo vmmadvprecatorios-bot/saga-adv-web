@@ -257,7 +257,7 @@
       var r = await sb().rpc('modelos_pastas_listar');
       if(r.error) throw r.error;
       S.pastas = (r.data && r.data.pastas) || []; S.podeOrganizar = !!(r.data && r.data.pode_organizar);
-    }catch(e){ S.pastas = []; mostrarErro('tbErroModelos', 'Não consegui ler as pastas dos modelos: ' + ((e && e.message) || e)); }
+    }catch(e){ S.pastas = []; mostrarErro('tbErroModelos', 'Não consegui ler as pastas dos modelos: ' + ((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || e)); }
     var raiz = raizPasta();
     if(raiz && S.abertas[raiz.id] == null) S.abertas[raiz.id] = true;
     if(S.pasta && S.pasta !== 'sem' && !S.pastas.some(function(p){ return p.id === S.pasta; })) S.pasta = null;
@@ -317,7 +317,7 @@
   }
   async function rpcOk(nome, args, msg){
     var r = await sb().rpc(nome, args);
-    if(r.error){ toastTb('Não consegui ' + msg + ': ' + (r.error.message || r.error), 'error'); return null; }
+    if(r.error){ toastTb('Não consegui ' + msg + ': ' + ((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message) || r.error), 'error'); return null; }
     return r.data || {};
   }
   function toastTb(m, t){ if(typeof window.showToast === 'function') window.showToast(m, t || 'info'); else if(t === 'error') alert(m); }
@@ -415,7 +415,7 @@
       caixa.innerHTML = ''; caixa.appendChild(cv);
       requestAnimationFrame(function(){ cv.classList.add('pronto'); });
     }catch(e){
-      caixa.innerHTML = '<span style="padding:10px;text-align:center;color:#d9534f">Não deu para mostrar a folha: ' + esc(e.message || e) + '</span>';
+      caixa.innerHTML = '<span style="padding:10px;text-align:center;color:#d9534f">Não deu para mostrar a folha: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</span>';
     }
   }
 
@@ -437,7 +437,7 @@
       }
       if(msg) msg.innerHTML = '';
     }catch(e){
-      if(msg) msg.innerHTML = '<div class="tb-erro"><b>Não baixou:</b> ' + esc(e.message || e) + '</div>';
+      if(msg) msg.innerHTML = '<div class="tb-erro"><b>Não baixou:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>';
     }finally{ b.disabled = false; b.textContent = txt; }
   }
 
@@ -639,7 +639,7 @@
       msg.innerHTML = '<div class="tb-ok">Pronto: ' + esc(nome) + (r.paginas ? ' (' + r.paginas + (r.paginas === 1 ? ' página' : ' páginas') + ')' : '') + ' foi baixado.' +
         (r.avisos && r.avisos.length ? '<br>' + r.avisos.map(esc).join('<br>') : '') + '</div>';
     }catch(e){
-      msg.innerHTML = '<div class="tb-erro"><b>Não foi possível gerar o ' + (formato === 'pdf' ? 'PDF' : 'Word') + ':</b> ' + esc(e.message || e) + '</div>';
+      msg.innerHTML = '<div class="tb-erro"><b>Não foi possível gerar o ' + (formato === 'pdf' ? 'PDF' : 'Word') + ':</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>';
     }finally{
       bw.disabled = bp.disabled = false; botao.textContent = txt;
     }
@@ -674,11 +674,11 @@
         var caminho = t.chave + '/' + carimbo + '_' + x[1] + '.' + x[2];
         var up = await sb().storage.from(SagaTimbrado.BUCKET).upload(caminho, arq, {
           contentType: x[2] === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', upsert:false });
-        if(up.error) throw new Error('não subiu ' + arq.name + ': ' + up.error.message);
+        if(up.error) throw new Error('não subiu ' + arq.name + ': ' + (window.sagaErroBanco?window.sagaErroBanco(up.error):up.error.message));
         subidos.push(caminho); mudar[x[1]] = caminho;
       }
       var r = await sb().from('timbrados').update(mudar).eq('id', t.id).select('*').single();
-      if(r.error) throw new Error('os arquivos subiram, mas o cadastro do timbrado não mudou: ' + r.error.message);
+      if(r.error) throw new Error('os arquivos subiram, mas o cadastro do timbrado não mudou: ' + (window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message));
       SagaTimbrado.esquecer();
       S.timbrados = S.timbrados.map(function(y){ return y.id === t.id ? r.data : y; });
       desenharTimbrados();
@@ -686,7 +686,7 @@
       setTimeout(function(){ fecharModal(document.getElementById('modalTrocarTimbradoTb')); }, reduzido() ? 0 : 900);
       toast('Timbrado ' + t.nome + ' trocado.', 'sucesso');
     }catch(e){
-      msg.innerHTML = '<div class="tb-erro"><b>Não foi possível trocar:</b> ' + esc(e.message || e) + '</div>';
+      msg.innerHTML = '<div class="tb-erro"><b>Não foi possível trocar:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>';
     }finally{ b.disabled = false; b.textContent = txt; }
   }
 

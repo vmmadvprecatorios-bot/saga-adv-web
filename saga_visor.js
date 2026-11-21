@@ -187,7 +187,7 @@ window.SagaVisor = (function(){
       await desenhar();
     }catch(e){
       if(V.el !== el) return;
-      corpo.innerHTML = '<div class="sv-msg"><b>Não consegui mostrar o documento aqui.</b><br>Motivo: ' + esc((e && e.message) || e) + '.' +
+      corpo.innerHTML = '<div class="sv-msg"><b>Não consegui mostrar o documento aqui.</b><br>Motivo: ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message)) || e) + '.' +
         (o.aoBaixar ? '<br><br><button type="button" data-sv="baixar" class="btn">Baixar para ver no aparelho</button>' : '') + '</div>';
     }
   }

@@ -34,7 +34,7 @@
     ]);
     L.carregando=false;
     const erro=[a,c,h,k].find(r=>r.error);
-    if(erro){showToast('Não foi possível carregar a localização: '+(erro.error.message||''),'error');}
+    if(erro){showToast('Não foi possível carregar a localização: '+((window.sagaErroBanco?window.sagaErroBanco(erro.error):erro.error.message)||''),'error');}
     L.pessoa=pid;L.alvos=a.data||[];L.contatos=c.data||[];L.hist=h.data||[];L.cat=k.data||[];
     const [cf,pb]=await Promise.all([
       _sb.from('cartas_fila').select('id,contato_id,status').eq('pessoa_id',pid).in('status',['a_enviar','impressa']),
@@ -132,7 +132,7 @@
       if(!alvos.length){showToast('Marque de quem é a busca.','warning');return false;}
       if(!fontes.length){showToast('Marque pelo menos uma fonte (Lemit, Data Solution...).','warning');return false;}
       const r=await _sb.rpc('pedido_busca_criar',{p_pessoa_id:L.pessoa,p_cliente:alvos.indexOf('')>=0,p_alvos:alvos.filter(Boolean),p_fontes:fontes,p_observacao:d.querySelector('#loc2PbObs').value.trim()||null,p_urgente:d.querySelector('#loc2PbUrg').checked});
-      if(r.error){showToast('Não foi possível pedir: '+e(r.error.message||''),'error');return false;}
+      if(r.error){showToast('Não foi possível pedir: '+e((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}
       const n=(r.data&&r.data.criados)||0,ja=(r.data&&r.data.ja_abertos)||[];
       await recarregar();
       showToast(n?(n===1?'Pedido de busca enviado.':n+' pedidos de busca enviados.')+' Quem atende foi avisado no sino.'+(ja.length?' Já havia pedido aberto para: '+e(ja.join(', '))+'.':''):'Nenhum pedido novo: já havia pedido aberto para '+e(ja.join(', '))+'.',n?'success':'info');
@@ -146,7 +146,7 @@
       if(fontesBusca().some(c=>semAcento(c.nome)===semAcento(nome))){showToast('Essa fonte já existe.','info');return;}
       const ordem=L.cat.filter(c=>c.categoria==='busca_fonte').reduce((m,c)=>Math.max(m,c.ordem||0),0)+1;
       const r=await _sb.from('etiquetas_catalogo').insert({categoria:'busca_fonte',nome:nome,cor:'#64748b',ordem:ordem}).select('id,nome,cor,categoria,ordem,ativo,acao').single();
-      if(r.error){showToast('Não foi possível criar: '+e(r.error.message||''),'error');return;}
+      if(r.error){showToast('Não foi possível criar: '+e((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
       L.cat.push(r.data);
       const marc=new Set(Array.from(box.querySelectorAll('[data-pb-fonte]:checked')).map(i=>i.dataset.pbFonte));marc.add(nome);
       box.innerHTML=fontesHtml(marc);
@@ -168,7 +168,7 @@
     const p=(L.pedidos||[]).find(x=>x.id===id);if(!p)return;
     if(!await sagaConfirmar('Cancelar pedido de busca','O pedido de "'+p.nome+'" sai da fila de quem atende. Fica registrado como cancelado.','Cancelar pedido'))return;
     const r=await _sb.rpc('pedido_busca_cancelar',{p_id:id,p_motivo:null});
-    if(r.error){showToast('Não foi possível cancelar: '+e(r.error.message||''),'error');return;}
+    if(r.error){showToast('Não foi possível cancelar: '+e((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     await recarregar();showToast('Pedido cancelado.','success');
   }
   function devolverPedido(id){
@@ -177,7 +177,7 @@
       '<div class="form-field"><label>O que está errado?</label><textarea id="loc2PbMotivo" rows="3" maxlength="1000" placeholder="Ex.: o PDF é de outra pessoa; faltou a Data Solution"></textarea></div>','Devolver',async d=>{
         const m=d.querySelector('#loc2PbMotivo').value.trim();if(!m){showToast('Escreva o que está errado.','warning');return false;}
         const r=await _sb.rpc('pedido_busca_devolver',{p_id:id,p_motivo:m});
-        if(r.error){showToast('Não foi possível devolver: '+e(r.error.message||''),'error');return false;}
+        if(r.error){showToast('Não foi possível devolver: '+e((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}
         await recarregar();showToast('Pedido devolvido. Quem atende foi avisado.','success');return true;
       });
   }
@@ -268,7 +268,7 @@
     const linha={pessoa_id:L.pessoa,processo_id:pr.data&&pr.data[0]?pr.data[0].id:null,contato_id:c.id,destinatario:alvo?alvo.nome:((state.cliente&&state.cliente.nome)||''),
       logradouro:c.logradouro||c.valor,numero:c.numero,complemento:c.complemento,bairro:c.bairro,cidade:c.cidade,uf:c.uf,cep:c.cep};
     const r=await _sb.from('cartas_fila').insert(linha).select('id,contato_id,status').single();
-    if(r.error){showToast('Não foi possível mandar para as cartas: '+(r.error.message||''),'error');return;}
+    if(r.error){showToast('Não foi possível mandar para as cartas: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     (L.cartas=L.cartas||[]).push(r.data);
     await recarregar();
     showToast('Endereço enviado para a lista de cartas'+(alvo?' (em nome de '+e(alvo.nome)+')':'')+'.','success');
@@ -336,7 +336,7 @@
   /* ---------------- ações ---------------- */
   async function atualizar(c,campos,msg){
     const r=await _sb.from('localizacao_contatos').update(campos).eq('id',c.id);
-    if(r.error){showToast('Não foi possível salvar: '+(r.error.message||''),'error');return false;}
+    if(r.error){showToast('Não foi possível salvar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}
     Object.assign(c,campos);
     await recarregarHist();
     if(msg)showToast(msg,'success');
@@ -374,7 +374,7 @@
     const c=L.contatos.find(x=>x.id===id);if(!c)return;
     if(!await sagaConfirmar('Remover contato','"'+(c.tipo==='telefone'?fone(c.valor):c.valor)+'" sai da lista. Fica registrado no histórico. Para número de outra pessoa, prefira o status "Engano".','Remover'))return;
     const r=await _sb.from('localizacao_contatos').update({ativo:false}).eq('id',id);
-    if(r.error){showToast('Não foi possível remover: '+(r.error.message||''),'error');return;}
+    if(r.error){showToast('Não foi possível remover: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
     await recarregar();showToast('Contato removido.','success');
   }
   async function subirParaTopo(c){
@@ -433,7 +433,7 @@
         if(!await sagaConfirmar('Remover parente','"'+a.nome+'" e os contatos dele saem da lista (ficam no histórico).','Remover'))return;
         await _sb.from('localizacao_contatos').update({ativo:false}).eq('alvo_id',alvoId).eq('ativo',true);
         const r=await _sb.from('localizacao_alvos').update({ativo:false}).eq('id',alvoId);
-        if(r.error){showToast('Não foi possível remover: '+(r.error.message||''),'error');return;}
+        if(r.error){showToast('Não foi possível remover: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
         await recarregar();showToast('Parente removido.','success');
       }
     });
@@ -460,7 +460,7 @@
       if(!nome){sel.value='';return;}
       const ordem=parentescos().reduce((m,p)=>Math.max(m,p.ordem||0),0)+1;
       const r=await _sb.from('etiquetas_catalogo').insert({categoria:'parentesco',nome:nome,cor:'#64748b',ordem:ordem}).select('id,nome,cor,categoria,ordem,ativo,acao').single();
-      if(r.error){showToast('Não foi possível criar: '+(r.error.message||''),'error');sel.value='';return;}
+      if(r.error){showToast('Não foi possível criar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');sel.value='';return;}
       L.cat.push(r.data);sel.innerHTML=opcoesParentesco(r.data.id);
     });
   }
@@ -474,7 +474,7 @@
         if(!nome){showToast('Digite o nome.','warning');return false;}
         const dados={nome:nome,parentesco_id:par==='__nova'?null:par,cpf:cpf};
         const r=a?await _sb.from('localizacao_alvos').update(dados).eq('id',a.id):await _sb.from('localizacao_alvos').insert(Object.assign({pessoa_id:L.pessoa,ordem:L.alvos.length+1},dados)).select('id').single();
-        if(r.error){showToast('Não foi possível salvar: '+(r.error.message||''),'error');return false;}
+        if(r.error){showToast('Não foi possível salvar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}
         if(!a&&r.data)L.abertos.add(r.data.id);
         await recarregar();showToast(a?'Parente atualizado.':'Parente incluído.','success');return true;
       });
@@ -510,7 +510,7 @@
       if(tipo==='endereco'){const o=lerEndereco(d);if(!o.logradouro){showToast('Preencha a rua.','warning');return false;}Object.assign(dados,o,{valor:[o.logradouro,o.numero].filter(Boolean).join(', ')});}
       else{const v=d.querySelector('#loc2Valor').value.trim();if(tipo==='telefone'&&digitos(v).length<10){showToast('Digite o telefone com DDD.','warning');return false;}if(tipo==='email'&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){showToast('E-mail inválido.','warning');return false;}dados.valor=tipo==='telefone'?digitos(v):v;}
       const r=await _sb.from('localizacao_contatos').insert(dados);
-      if(r.error){showToast(r.error.code==='23505'?'Este contato já está na lista.':'Não foi possível incluir: '+(r.error.message||''),'warning');return false;}
+      if(r.error){showToast(r.error.code==='23505'?'Este contato já está na lista.':'Não foi possível incluir: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'warning');return false;}
       L.abertos.add(alvoId||'cliente');await recarregar();showToast('Contato incluído.','success');return true;
     });
     if(tipo==='endereco')ligarCep(d);
@@ -527,7 +527,7 @@
     const box=d.querySelector('#loc2Ger');
     const pintar=()=>{box.innerHTML=desenharLinhas();};
     pintar();
-    const salvar=async(id,campos)=>{const r=await _sb.from('etiquetas_catalogo').update(campos).eq('id',id);if(r.error){showToast('Não foi possível salvar: '+(r.error.message||''),'error');return false;}Object.assign(L.cat.find(c=>c.id===id),campos);return true;};
+    const salvar=async(id,campos)=>{const r=await _sb.from('etiquetas_catalogo').update(campos).eq('id',id);if(r.error){showToast('Não foi possível salvar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return false;}Object.assign(L.cat.find(c=>c.id===id),campos);return true;};
     box.addEventListener('change',async ev=>{const linha=ev.target.closest('[data-gid]');if(!linha)return;const g=ev.target.dataset.g;if(g==='nome'&&ev.target.value.trim())await salvar(linha.dataset.gid,{nome:ev.target.value.trim()});if(g==='cor')await salvar(linha.dataset.gid,{cor:ev.target.value});desenhar();});
     box.addEventListener('click',async ev=>{
       const b=ev.target.closest('button[data-g]');if(!b)return;const id=b.closest('[data-gid]').dataset.gid;
@@ -540,7 +540,7 @@
       const nome=(window.prompt('Nome do novo status:')||'').trim();if(!nome)return;
       const ordem=L.cat.filter(c=>c.categoria===categoria).reduce((m,c)=>Math.max(m,c.ordem||0),0)+1;
       const r=await _sb.from('etiquetas_catalogo').insert({categoria:categoria,nome:nome,cor:'#8a94a8',ordem:ordem}).select('id,nome,cor,categoria,ordem,ativo,acao').single();
-      if(r.error){showToast('Não foi possível criar: '+(r.error.message||''),'error');return;}
+      if(r.error){showToast('Não foi possível criar: '+((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)||''),'error');return;}
       L.cat.push(r.data);pintar();desenhar();
     });
   }
@@ -1270,7 +1270,7 @@
       try{feitos=await gravarFicha(d,dados,alvo);}catch(erro){showToast('Os contatos foram gravados, mas os dados da ficha não: '+e(erro.message||''),'warning');}
       const coment=await comentarLeitura(dados,alvo,novos,topo,novosPar,feitos);
       const pedido=d.dataset.pedido||null;
-      if(pedido){const rc=await _sb.rpc('pedido_busca_conferido',{p_id:pedido});if(rc.error)showToast('Gravado, mas não deu para marcar a busca como conferida: '+e(rc.error.message||''),'warning');}
+      if(pedido){const rc=await _sb.rpc('pedido_busca_conferido',{p_id:pedido});if(rc.error)showToast('Gravado, mas não deu para marcar a busca como conferida: '+e((window.sagaErroBanco?window.sagaErroBanco(rc.error):rc.error.message)||''),'warning');}
       L.abertos.add(alvo||'cliente');
       d.remove();
       await recarregar();

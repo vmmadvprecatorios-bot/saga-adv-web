@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611212057"></script>
+<script src="saga_guard.js?v=202611212157"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Treinamentos</title>
@@ -125,7 +125,7 @@ body.canvas-aberto{overflow:hidden}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.dois{grid-template-columns:1fr}.cv-corpo{flex-direction:column}.cv-painel{width:auto;border-left:0;border-top:1px solid var(--border-soft);max-height:32vh;padding:10px 14px;gap:8px}.cv-painel textarea{min-height:56px!important}.cv-barra h2{flex-basis:100%}.busca{min-width:0}}
 
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611212057">
+<link rel="stylesheet" href="saga_tema.css?v=202611212157">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -235,8 +235,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611212057"></script>
-<script src="saga_pdf.js?v=202611212057"></script>
+<script src="saga_ui.js?v=202611212157"></script>
+<script src="saga_pdf.js?v=202611212157"></script>
 <script>
 /* =====================================================================
    SAGA · Treinamentos da equipe (T121) + Canvas de fluxos (T37) · bloco 121
@@ -347,7 +347,7 @@ async function alternarConcluido(){
     if(T.minhas[i.id]){var r=await _sb.from('treinamentos_leituras').delete().eq('treinamento_id',i.id).eq('usuario_id',T.meuId);if(r.error)throw r.error;}
     else{var r2=await _sb.from('treinamentos_leituras').insert({treinamento_id:i.id,usuario_id:T.meuId,concluido_em:new Date().toISOString()});if(r2.error)throw r2.error;}
     await carregar();abrirItem(i.id);toast(T.minhas[i.id]?'Marcado como concluído.':'Marcação desfeita.','success');
-  }catch(e){toast('Não foi possível salvar: '+esc(e.message||''),'error');}
+  }catch(e){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');}
   finally{b.disabled=false;}
 }
 
@@ -383,7 +383,7 @@ async function salvarEditor(){
     else{dados.ordem=T.itens.length+1;dados.ativo=true;dados.criado_por_id=T.meuId;r=await _sb.from('treinamentos').insert(dados).select('id').single();}
     if(r.error)throw r.error;
     fecharMo('moEditar');await carregar();toast(edicao.id?'Treinamento atualizado.':'Treinamento criado.','success');
-  }catch(e){toast('Não foi possível salvar: '+esc(e.message||''),'error');}
+  }catch(e){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');}
   finally{b.disabled=false;}
 }
 async function excluirItem(id){
@@ -391,7 +391,7 @@ async function excluirItem(id){
   var ok=window.sagaConfirmar?await sagaConfirmar('Excluir treinamento','Excluir "'+i.titulo+'" de vez? Ele sai da lista de todos, e as marcações de quem já concluiu também são apagadas. Não dá para desfazer.','Excluir',true):confirm('Excluir de vez?');
   if(!ok)return;
   var r=await _sb.from('treinamentos').delete().eq('id',id).select('id');
-  if(r.error||!r.data||!r.data.length){toast('Não foi possível excluir'+(r.error?': '+esc(r.error.message):'. Só o administrador geral exclui.'),'error');return;}
+  if(r.error||!r.data||!r.data.length){toast('Não foi possível excluir'+(r.error?': '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)):'. Só o administrador geral exclui.'),'error');return;}
   fecharMo('moVer');fecharMo('moEditar');
   var w=document.querySelector('.card-wrap[data-wrap="'+id+'"]');
   var fim=function(){carregar();toast('Treinamento excluído.','success');};
@@ -402,7 +402,7 @@ async function excluirItem(id){
 async function novaArea(){
   var nome=window.prompt('Nome da nova área:');if(!nome||!nome.trim())return null;
   var r=await _sb.from('treinamentos_areas').insert({nome:nome.trim(),ordem:areasAtivas().length+1}).select('id').single();
-  if(r.error){toast('Não foi possível criar a área: '+esc(r.error.message),'error');return null;}
+  if(r.error){toast('Não foi possível criar a área: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return null;}
   await carregar();return r.data.id;
 }
 function abrirAreas(){desenharAreas();abrirMo('moAreas');}
@@ -410,7 +410,7 @@ function desenharAreas(){
   var l=areasAtivas();
   $('areasLista').innerHTML=l.map(function(a,k){return '<div class="linha-area" data-area="'+esc(a.id)+'"><input type="text" value="'+esc(a.nome)+'" maxlength="60" aria-label="Nome da área"><button type="button" class="btn mini" data-mv="-1"'+(k===0?' disabled':'')+'>↑</button><button type="button" class="btn mini" data-mv="1"'+(k===l.length-1?' disabled':'')+'>↓</button><button type="button" class="btn mini" data-rm>Remover</button></div>';}).join('')||'<div class="dica">Nenhuma área.</div>';
 }
-async function salvarArea(id,dados){var r=await _sb.from('treinamentos_areas').update(dados).eq('id',id);if(r.error){toast('Não foi possível salvar: '+esc(r.error.message),'error');return;}await carregar();desenharAreas();}
+async function salvarArea(id,dados){var r=await _sb.from('treinamentos_areas').update(dados).eq('id',id);if(r.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)),'error');return;}await carregar();desenharAreas();}
 
 /* ---------------- Canvas: desenho do fluxo (SVG) ---------------- */
 function linhasTexto(t,largura,tam){var max=Math.max(6,Math.floor(largura/(tam*0.56))),pal=String(t||'').split(/\s+/),ls=[],cur='';pal.forEach(function(p){if((cur+' '+p).trim().length>max&&cur){ls.push(cur);cur=p;}else cur=(cur+' '+p).trim();});if(cur)ls.push(cur);return ls.slice(0,5);}
@@ -603,7 +603,7 @@ async function init(){
   (r[3].data||[]).forEach(function(u){if(u.auth_user_id||u.ativo!==false)T.usuarios[u.id]=u;});
   await carregar();
 }
-init().catch(function(e){toast('Erro ao abrir os treinamentos: '+esc(e.message||''),'error');});
+init().catch(function(e){toast('Erro ao abrir os treinamentos: '+esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)||''),'error');});
 
 </script>
 </body>
