@@ -82,6 +82,10 @@ window.SagaModelosEditor = (function(){
     '.me-tab th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px;border-bottom:1px solid var(--border-soft)}',
     '.me-tab td{padding:6px;border-bottom:1px solid var(--border-soft);vertical-align:top}',
     '.me-tab .av{color:#d97706;font-size:11px}',
+    '.me-so-ler .me-acoes-b,.me-so-ler #meMaisBloco{display:none}',
+    '.me-so-ler .me-folha textarea:disabled{opacity:1;color:var(--text);background:transparent;border-color:transparent;resize:none}',
+    '.me-so-ler .me-folha select:disabled{opacity:.6}',
+    '.me-versoes{font-size:12px;color:var(--muted);line-height:1.6;margin:6px 0 0}',
     '@media (max-width:860px){.me-corpo{grid-template-columns:1fr}.me-grade{grid-template-columns:1fr}.me-lado{position:static}.me-bloco{grid-template-columns:1fr}.me-folha{padding:18px 14px}}'
   ].join('\n');
   document.head.appendChild(css);
@@ -367,10 +371,12 @@ window.SagaModelosEditor = (function(){
     var folha = f.querySelector('#meFolha');
     folha.innerHTML = E.blocos.length ? E.blocos.map(htmlBloco).join('') : '<div class="me-fixo">Modelo vazio: clique em "+ Bloco" para começar.</div>';
     folha.querySelectorAll('textarea').forEach(function(t){ crescer(t); t.addEventListener('input', function(){ crescer(t); }); t.addEventListener('focus', function(){ E.focoTxt = t; }); });
+    if(f.classList.contains('me-so-ler')) folha.querySelectorAll('textarea,select,input').forEach(function(x){ x.disabled = true; });
     desenharCampos(f);
   }
   function desenharCampos(f){
     lerFolha(f);
+    if(!f.querySelector('#meCampos')) return;
     var usados = camposUsados(E.blocos), mapa = {};
     E.campos.forEach(function(c){ mapa[c.chave] = c; });
     usados.forEach(function(c){ if(!mapa[c.chave]){ E.campos.push(c); mapa[c.chave] = c; } });
@@ -496,5 +502,82 @@ window.SagaModelosEditor = (function(){
     b.disabled = false; b.textContent = t;
   }
 
-  return { abrir: abrir, importar: importar, podeEditar: podeEditar, _interno: { paragrafos: paragrafos, blocosDoWord: blocosDoWord } };
+  /* ================================================================
+     TEXTO DE UMA PETIÇÃO PRONTA (20/11, Dr. Victor): a petição da Renata
+     chega como texto; quem aprova lê e corrige aqui (cada salvar = versão nova).
+     o = { titulo, sub, aviso, blocos, podeCorrigir, versoes, aoSalvar(blocos) -> Promise, aoPrevia(blocos) -> Promise }
+     ================================================================ */
+  function abrirTexto(o){
+    E.blocos = JSON.parse(JSON.stringify(o.blocos || [])); E.campos = []; E.focoTxt = null; E.aoSalvar = null;
+    var pode = !!o.podeCorrigir;
+    var f = janela('meTexto',
+      '<h3>' + esc(o.titulo || 'Petição') + '</h3>' +
+      '<p class="me-sub">' + (o.sub ? o.sub + '<br>' : '') + (pode
+        ? 'Leia e corrija direto aqui: cada linha é um parágrafo da petição (o tipo fica à esquerda). O que a Renata não achou na ficha aparece entre <b>⟦[ ]⟧</b>: troque pelo dado certo. **nome** sai em negrito e versalete; __texto__ só em negrito. "Salvar correções" grava uma versão nova; o Word e o PDF finais saem do texto quando você aprovar.'
+        : 'Só leitura: a petição já foi decidida.') + '</p>' +
+      (o.aviso ? '<div class="me-amarelo">' + o.aviso + '</div>' : '') +
+      '<div class="me-folha" id="meFolha"></div>' +
+      '<div class="me-botoes" style="justify-content:flex-start"><button type="button" class="btn-secundario" id="meMaisBloco">+ Parágrafo no fim</button></div>' +
+      (o.versoes && o.versoes.length ? '<div class="me-versoes"><b>Versões:</b> ' + o.versoes.map(function(v){
+        return 'v' + esc(v.versao) + ' ' + esc(v.origem === 'renata' ? 'Renata' : (v.por || '')) + (v.em ? ' em ' + esc(new Date(v.em).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' })) : '');
+      }).join(' · ') + '</div>' : '') +
+      '<div class="me-msg" id="meMsg"></div>' +
+      '<div class="me-botoes"><button type="button" class="btn-secundario" id="meFechar">Fechar</button>' +
+        (o.aoPrevia ? '<button type="button" class="btn-secundario" id="mePrevia">Prévia em Word</button>' : '') +
+        (pode ? '<button type="button" class="btn-confirmar-bib" id="meSalvar">Salvar correções</button>' : '') + '</div>');
+    f.classList.toggle('me-so-ler', !pode);
+    desenharFolha(f);
+    var folha = f.querySelector('#meFolha'), mudou = false;
+    folha.onchange = function(e){
+      var s = e.target.closest('[data-me-tipo]'); if(!s) return;
+      lerFolha(f); var b = E.blocos[+s.getAttribute('data-me-tipo')], novo = s.value;
+      if(novo === 'pedidos'){ b.itens = String(b.texto || '').split('\n').filter(Boolean); delete b.texto; }
+      else if(b.tipo === 'pedidos'){ b.texto = (b.itens || []).join('\n'); delete b.itens; }
+      if(novo === 'fecho'){ b.cidade = b.cidade || 'Maceió/AL'; b.data = b.data || ''; }
+      b.tipo = novo; mudou = true; desenharFolha(f);
+    };
+    folha.onclick = function(e){
+      var b = e.target.closest('[data-me-sobe],[data-me-desce],[data-me-novo],[data-me-tira]'); if(!b) return;
+      lerFolha(f); mudou = true;
+      var i = +(b.getAttribute('data-me-sobe') || b.getAttribute('data-me-desce') || b.getAttribute('data-me-novo') || b.getAttribute('data-me-tira'));
+      if(b.hasAttribute('data-me-sobe') && i > 0){ var x = E.blocos.splice(i, 1)[0]; E.blocos.splice(i - 1, 0, x); }
+      else if(b.hasAttribute('data-me-desce') && i < E.blocos.length - 1){ var y = E.blocos.splice(i, 1)[0]; E.blocos.splice(i + 1, 0, y); }
+      else if(b.hasAttribute('data-me-novo')) E.blocos.splice(i + 1, 0, { tipo:'paragrafo', texto:'' });
+      else if(b.hasAttribute('data-me-tira')) E.blocos.splice(i, 1);
+      desenharFolha(f);
+      if(b.hasAttribute('data-me-novo')){ var t = f.querySelector('[data-me-txt="' + (i + 1) + '"]'); if(t) t.focus(); }
+    };
+    folha.oninput = function(){ mudou = true; };
+    f.querySelector('#meMaisBloco').onclick = function(){ lerFolha(f); mudou = true; E.blocos.push({ tipo:'paragrafo', texto:'' }); desenharFolha(f); var t = f.querySelector('[data-me-txt="' + (E.blocos.length - 1) + '"]'); if(t) t.focus(); };
+    function blocosAtuais(){ lerFolha(f); return E.blocos.filter(function(b){ return !(b.tipo === 'paragrafo' && !String(b.texto || '').trim()); }); }
+    f.querySelector('#meFechar').onclick = async function(){
+      if(pode && mudou){
+        var ok = window.sagaConfirmar ? await sagaConfirmar('Fechar sem salvar?', 'As correções feitas agora se perdem.', 'Fechar sem salvar', true) : confirm('Fechar sem salvar as correções?');
+        if(!ok) return;
+      }
+      fechar(f);
+    };
+    var pv = f.querySelector('#mePrevia');
+    if(pv) pv.onclick = async function(){
+      var msg = f.querySelector('#meMsg'); pv.disabled = true; var t = pv.textContent; pv.textContent = 'Gerando...';
+      try{ await o.aoPrevia(blocosAtuais()); msg.innerHTML = '<div class="me-ok">Prévia baixada (não vai para a pasta do cliente).</div>'; }
+      catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui gerar a prévia:</b> ' + esc((e && e.message) || e) + '</div>'; }
+      pv.disabled = false; pv.textContent = t;
+    };
+    var sv = f.querySelector('#meSalvar');
+    if(sv) sv.onclick = async function(){
+      var msg = f.querySelector('#meMsg'), bl = blocosAtuais();
+      if(!bl.length){ msg.innerHTML = '<div class="me-erro">O texto ficou vazio.</div>'; return; }
+      sv.disabled = true; var t = sv.textContent; sv.textContent = 'Salvando...';
+      try{
+        var r = await o.aoSalvar(bl);
+        mudou = false;
+        msg.innerHTML = '<div class="me-ok">' + (r && r.sem_mudanca ? 'Nada mudou: o texto continua na versão ' + esc(r.versao) + '.' : 'Correções salvas (versão ' + esc(r && r.versao) + '). O Word final sai deste texto quando você aprovar.') + '</div>';
+      }catch(e){ msg.innerHTML = '<div class="me-erro"><b>Não consegui salvar:</b> ' + esc((e && e.message) || e) + '</div>'; }
+      sv.disabled = false; sv.textContent = t;
+    };
+    return f;
+  }
+
+  return { abrir: abrir, abrirTexto: abrirTexto, importar: importar, podeEditar: podeEditar, _interno: { paragrafos: paragrafos, blocosDoWord: blocosDoWord } };
 })();

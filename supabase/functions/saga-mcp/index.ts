@@ -723,8 +723,8 @@ const FERRAMENTAS: Ferramenta[] = [
     rpc: "conector_pecas_pendentes", args: (a) => ({ p_limite: a.limite == null ? 5 : Math.max(1, Math.min(10, Math.round(Number(a.limite) || 5))) }),
   },
   {
-    name: "gerar_peticao", title: "Renata: gerar a petição em Word (pasta Petições)", muda: true, especial: "peticao",
-    description: "SÓ PARA LOGIN DE AGENTE (Renata). Monta o Word da petição pelo MODELO do SAGA, por cima do papel timbrado (o mesmo gerador da tela da ficha) e guarda na pasta Petições do cliente. Mande peca_id, modelo_id (um dos 'modelos' da peça), timbrado (o timbrado_usar; ANCREF só se o pedido veio com ancref) e valores: { chave_do_campo: texto } para os campos do modelo. Campo sem dado na ficha: NÃO invente, deixe sem mandar: sai destacado no Word para o Dr. Victor completar. Texto longo: parágrafos separados por linha em branco; **negrito** com dois asteriscos. Devolve o documento e a lista do que ficou faltando. Depois chame entregar_peticao.",
+    name: "gerar_peticao", title: "Renata: escrever a petição no SAGA (texto para o Dr. Victor ler)", muda: true, especial: "peticao",
+    description: "SÓ PARA LOGIN DE AGENTE (Renata). Preenche o MODELO do SAGA com os valores e grava a petição como TEXTO no SAGA (o Dr. Victor lê e corrige no editor em Para aprovar; o Word/PDF final no timbrado só é gerado quando ele aprovar). Mande peca_id, modelo_id (um dos 'modelos' da peça), timbrado (o timbrado_usar; ANCREF só se o pedido veio com ancref) e valores: { chave_do_campo: texto } para os campos do modelo. Campo sem dado na ficha: NÃO invente, deixe sem mandar: sai destacado para o Dr. Victor completar. Texto longo: parágrafos separados por linha em branco; **negrito** com dois asteriscos. Devolve a versão do texto e a lista do que ficou faltando. Depois chame entregar_peticao.",
     inputSchema: { type: "object", properties: { peca_id: { type: "string" }, modelo_id: { type: "string" }, timbrado: { type: "string", enum: ["vmm", "sarmento", "ancref"] },
       valores: { type: "object", additionalProperties: { type: "string" } }, nome_arquivo: { type: "string", description: "opcional, sem extensão" } },
       required: ["peca_id", "modelo_id", "valores"], additionalProperties: false },
@@ -977,25 +977,21 @@ async function gerarPeticao(args: Args, cliente: ReturnType<typeof createClient>
   }
   const campos: any[] = (P.modelo && P.modelo.campos) || [];
   const faltando = campos.filter((c) => !valores[c.chave] && !/^(data)$/.test(String(c.chave))).map((c) => String(c.rotulo || c.chave));
-  let r: any;
+  // 20/11 (Dr. Victor): a petição vai para o SAGA como TEXTO (blocos já preenchidos); ele lê e corrige no editor
+  // e o Word/PDF final só é gerado depois de aprovar (agente_peca_arquivo_final, pela tela).
+  let blocos: any[];
   try {
-    r = await T.gerar({ sb: cliente, timbrado: P.timbrado, modelo: P.modelo, valores, formato: "docx", realce: true });
+    blocos = T.preencher((P.modelo && P.modelo.blocos) || [], campos, valores, { realce: true });
+    if (!Array.isArray(blocos) || !blocos.length) throw new Error("o modelo ficou vazio");
   } catch (e) {
     const msg = String((e as Error)?.message || e);
-    await cliente.rpc("conector_peca_devolver", { p_peca: peca, p_motivo: "Erro ao montar o Word: " + msg, p_passageiro: true });
-    return falha("Não consegui montar o Word: " + msg + " (a peça volta para a fila).");
+    await cliente.rpc("conector_peca_devolver", { p_peca: peca, p_motivo: "Erro ao montar o texto: " + msg, p_passageiro: true });
+    return falha("Não consegui montar o texto da petição: " + msg + " (a peça volta para a fila).");
   }
-  const base = String(args.nome_arquivo || ((P.titulo || "Peticao") + (P.cliente ? " - " + P.cliente : "") + " - " + (P.timbrado?.nome || "")));
-  const nome = T.nomeArquivo(base) + ".docx";
-  const caminho = `${P.processo_id}/${crypto.randomUUID()}_${nome.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-  const up = await cliente.storage.from("documentos-clientes").upload(caminho, r.bytes, { contentType: TIPOS_ARQUIVO.docx, upsert: false });
-  if (up.error) return falha("Não consegui guardar o Word na pasta do cliente: " + textoErro(up.error.message || String(up.error)));
-  const reg = await cliente.rpc("conector_peca_documento", { p_peca: peca, p_caminho: caminho, p_nome: nome, p_tamanho: r.bytes.length, p_faltando: faltando, p_avisos: (r.avisos || []).map(String) });
-  if (reg.error) {
-    try { await cliente.storage.from("documentos-clientes").remove([caminho]); } catch { /* sem registro: o arquivo solto sai */ }
-    return falha(textoErro(reg.error.message || String(reg.error)));
-  }
-  return { content: [{ type: "text", text: JSON.stringify({ ...(reg.data as any), arquivo: nome, timbrado: P.timbrado?.nome, modelo: P.modelo?.titulo,
+  const reg = await cliente.rpc("conector_peca_texto", { p_peca: peca, p_blocos: blocos, p_faltando: faltando, p_avisos: [] });
+  if (reg.error) return falha(textoErro(reg.error.message || String(reg.error)));
+  return { content: [{ type: "text", text: JSON.stringify({ ...(reg.data as any), timbrado: P.timbrado?.nome, modelo: P.modelo?.titulo,
+    onde: "O texto ficou no SAGA (Para aprovar > Ler e corrigir); o Word final sai quando o Dr. Victor aprovar.",
     proximo_passo: "Chame entregar_peticao com o resumo e o que conferir" + (faltando.length ? " (diga que estes campos saíram destacados: " + faltando.join(", ") + ")" : "") + "." }) }] };
 }
 
@@ -1031,7 +1027,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.4" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.5" },
         instructions: INSTRUCOES,
       });
     }

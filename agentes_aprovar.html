@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611202217"></script>
+<script src="saga_guard.js?v=202611202239"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Para aprovar</title>
@@ -92,7 +92,7 @@ html.sem-movimento .mo,html.sem-movimento .mo .md{transition:none}
 .auton{margin-top:16px}.auton .ped{grid-template-columns:minmax(0,1fr) auto}
 .btn-perigo{border-color:color-mix(in srgb,var(--danger,#e5484d) 50%,transparent)}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611202217">
+<link rel="stylesheet" href="saga_tema.css?v=202611202239">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -144,7 +144,7 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611202217"></script>
+<script src="saga_ui.js?v=202611202239"></script>
 <script>
 /* =====================================================================
    SAGA · Para aprovar (Escritório de agentes, etapa 1; blocos 258-262; 19/11/2026, Dr. Victor)
@@ -217,7 +217,16 @@ function camposConteudo(e){
   var a=e.acao||{};
   linhas.push(['Ao aprovar',e.tipo==='peticao'?'cria para você a tarefa "'+(a.titulo||'Protocolar')+'"; depois de protocolar, clique em "Protocolei"':a.tipo==='tarefa'?'cria a tarefa "'+(a.titulo||e.titulo)+'"'+(a.prazo?' com prazo '+dataBR(a.prazo):''):(a.tipo==='concluir_intimacao'?'conclui a intimação (só ciência)':'nada além de registrar')]);
   var h2='<dl class="campos">'+linhas.map(function(l){return '<dt>'+esc(l[0])+'</dt><dd>'+esc(l[1])+'</dd>';}).join('')+'</dl>';
-  if(e.documento)h2+='<div class="doc-peca"><button class="lnk" type="button" data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'">Abrir o Word ↓</button><span class="det">'+esc(e.documento.nome)+' · pasta Petições da ficha</span></div>';
+  var k=e.peca||{};
+  if(e.tipo==='peticao'&&k.tem_texto){
+    // 20/11 (Dr. Victor): a petição chega como TEXTO; ele lê e corrige aqui e o Word/PDF final sai depois de aprovar
+    var dec=e.situacao==='aprovado'||e.situacao==='executado';
+    h2+='<div class="doc-peca"><button class="btn'+(e.situacao==='pendente'?' btn-ouro':'')+'" type="button" data-texto="'+esc(k.id)+'">'+(e.situacao==='pendente'?'Ler e corrigir':'Ler o texto')+'</button>'+
+      '<span class="det">Texto no SAGA · versão '+esc(k.texto_versao||1)+(e.situacao==='pendente'?' · o Word e o PDF saem quando você aprovar':'')+'</span></div>';
+    if(dec)h2+='<div class="doc-peca"><button class="lnk" type="button" data-final="docx" data-peca="'+esc(k.id)+'"'+(e.documento?' data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'"':'')+'>Baixar em Word ↓</button>'+
+      '<button class="lnk" type="button" data-final="pdf" data-peca="'+esc(k.id)+'"'+(k.pdf?' data-word="'+esc(k.pdf.caminho)+'" data-nome="'+esc(k.pdf.nome)+'"':'')+'>Baixar em PDF ↓</button>'+
+      '<span class="det">'+(e.documento?esc(e.documento.nome)+' · pasta Petições da ficha':'O Word final ainda não foi gerado: toque em "Baixar em Word"')+'</span></div>';
+  }else if(e.documento)h2+='<div class="doc-peca"><button class="lnk" type="button" data-word="'+esc(e.documento.caminho)+'" data-nome="'+esc(e.documento.nome)+'">Abrir o Word ↓</button><span class="det">'+esc(e.documento.nome)+' · pasta Petições da ficha</span></div>';
   return h2;
 }
 function seloPeca(e){
@@ -353,13 +362,24 @@ function atualizarLote(){
   var ids=Object.keys(P.marcados).filter(function(k){return P.marcados[k];});
   $('barraLote').hidden=!ids.length;$('loteN').textContent=ids.length+' marcada(s)';
 }
+async function gerarFinalDepois(ents){
+  // petição com texto no SAGA: gera o Word final no timbrado e guarda na pasta Petições
+  for(var i=0;i<ents.length;i++){
+    var en=ents[i];if(!en||en.tipo!=='peticao'||!en.peca||!en.peca.tem_texto||en.documento)continue;
+    if(!window.SagaPecaTexto){toast('O gerador do Word não carregou nesta tela: abra de novo e toque em "Baixar em Word".','error');return;}
+    toast('Gerando o Word final de "'+en.titulo+'"...','info');
+    try{await SagaPecaTexto.gerarFinal(en.peca.id,'docx',{baixar:false});toast('Word final guardado na pasta Petições da ficha.','success');}
+    catch(e){toast('A petição foi aprovada, mas o Word final não foi gerado: '+((e&&e.message)||'erro desconhecido')+'. Toque em "Baixar em Word" em Decididas para tentar de novo.','error');}
+  }
+}
 async function decidir(id,decisao,comentario){
-  var el=document.querySelector('.ped[data-id="'+id+'"]');
+  var el=document.querySelector('.ped[data-id="'+id+'"]'),ent=P.lista.filter(function(x){return x.id===id;})[0],ok=false;
   var gravando=Promise.resolve(_sb.rpc('agente_entrega_decidir',{p_id:id,p_decisao:decisao,p_comentario:comentario||null})).then(function(r){if(r.error)throw r.error;return r;});
   try{
     if(el&&window.sagaRiscar&&decisao==='aprovar')await sagaRiscar(el,{texto:'.oque',esperar:gravando,recolher:true});else await gravando;
-    toast(decisao==='aprovar'?'Aprovado.':(decisao==='ajustar'?'Mandado ajustar: o agente refaz na próxima rodada.':'Reprovado.'),'success');
+    toast(decisao==='aprovar'?'Aprovado.':(decisao==='ajustar'?'Mandado ajustar: o agente refaz na próxima rodada.':'Reprovado.'),'success');ok=true;
   }catch(e){toast('Não consegui gravar: '+((e&&e.message)||'erro desconhecido'),'error');}
+  if(ok&&decisao==='aprovar')await gerarFinalDepois([ent]);
   await carregar();
   if(window.SagaUI&&SagaUI.contarDia)try{SagaUI.contarDia();}catch(e){}
 }
@@ -373,6 +393,8 @@ async function aprovarLote(){
   if(r.error){toast('Não consegui aprovar o lote: '+(r.error.message||''),'error');return;}
   var er=(r.data&&r.data.erros)||[];
   toast(r.data.ok+' aprovada(s)'+(er.length?'; '+er.length+' com erro: '+er.map(function(x){return x.erro;}).join(' | '):'.'),er.length?'error':'success');
+  var comErro={};er.forEach(function(x){if(x.id)comErro[x.id]=1;});
+  await gerarFinalDepois(P.lista.filter(function(x){return ids.indexOf(x.id)>=0&&!comErro[x.id];}));
   await carregar();
 }
 function abrirJanela(e,modo){
@@ -420,6 +442,14 @@ function ligar(){
   $('loteLimpar').addEventListener('click',function(){P.marcados={};document.querySelectorAll('[data-marcar]').forEach(function(c){c.checked=false;});atualizarLote();});
   $('area').addEventListener('change',function(e){var c=e.target.closest('[data-marcar]');if(c){P.marcados[c.dataset.marcar]=c.checked;atualizarLote();}});
   $('area').addEventListener('click',function(e){
+    var tx=e.target.closest('[data-texto]');if(tx){if(window.SagaPecaTexto)SagaPecaTexto.abrir(tx.dataset.texto,{aoSalvar:carregar});else toast('O editor não carregou nesta tela (atualize a página).','error');return;}
+    var fi=e.target.closest('[data-final]');if(fi){
+      if(fi.dataset.word){abrirWord(fi);return;}
+      if(!window.SagaPecaTexto){toast('O gerador não carregou nesta tela (atualize a página).','error');return;}
+      fi.disabled=true;var tt=fi.textContent;fi.textContent='Gerando...';
+      SagaPecaTexto.gerarFinal(fi.dataset.peca,fi.dataset.final,{baixar:true}).then(function(){toast((fi.dataset.final==='pdf'?'PDF':'Word')+' guardado na pasta Petições da ficha e baixado.','success');carregar();})
+        .catch(function(er){toast('Não consegui gerar o '+(fi.dataset.final==='pdf'?'PDF':'Word')+': '+((er&&er.message)||'erro desconhecido'),'error');fi.disabled=false;fi.textContent=tt;});
+      return;}
     var w=e.target.closest('[data-word]');if(w){abrirWord(w);return;}
     var pr=e.target.closest('[data-protocolei]');if(pr){var en=P.lista.filter(function(x){return x.id===pr.dataset.protocolei;})[0];if(en)abrirJanela(en,'protocolei');return;}
     var b=e.target.closest('[data-aprovar],[data-ajustar],[data-reprovar]');if(!b)return;
@@ -452,6 +482,9 @@ async function init(){
 }
 init().catch(function(e){P.erro=(e&&e.message)||'Erro ao abrir a tela.';desenhar();});
 </script>
-<script src="saga_agentes_extra.js?v=202611202217"></script>
+<script src="saga_agentes_extra.js?v=202611202239"></script>
+<script src="saga_timbrado.js?v=202611202239"></script>
+<script src="saga_modelos_editor.js?v=202611202239"></script>
+<script src="saga_peca_texto.js?v=202611202239"></script>
 </body>
 </html>
