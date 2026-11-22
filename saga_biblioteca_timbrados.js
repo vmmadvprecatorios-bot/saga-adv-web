@@ -99,6 +99,9 @@
     '.tb-pastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:0 0 12px}',
     '.tb-pasta{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid var(--border-soft);background:var(--panel);cursor:pointer;color:var(--text);font:inherit;font-size:13px;text-align:left}',
     '.tb-pasta small{display:block;font-size:11px;color:var(--muted)}',
+    /* 22/11 (Dr. Victor: "não quero pasta amarela do Windows; pastas no padrão do sistema"): ícone fino em linha, na cor do tema */
+    '.tb-pasta .tb-pasta-ico{flex:0 0 34px;width:34px;height:34px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}',
+    '#bibArvore .ba-ico{color:var(--gold)}',
     '.tb-org{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}',
     '.tb-org button{font:inherit;font-size:11.5px;padding:6px 10px;border-radius:9px;cursor:pointer}',
     '.tb-onde{font-size:10.5px;color:var(--muted);display:block;margin-top:2px}',
@@ -542,7 +545,7 @@
       html += '<div class="tb-caminho"><button type="button" data-ba-ir="raiz">Arquivos</button> <span class="tb-sep">›</span> ' + (S.pasta === 'sem' ? (rz ? '<button type="button" data-tb-ir="' + esc(rz.id) + '">' + esc(rz.nome) + '</button> <span class="tb-sep">›</span> ' : '') + '<b>Sem pasta</b>' : caminhoDe(p && p.id).map(function(c, k, a){ return k < a.length - 1 ? '<button type="button" data-tb-ir="' + esc(c.id) + '">' + esc(c.nome) + '</button> <span class="tb-sep">›</span>' : '<b>' + esc(c.nome) + '</b>'; }).join(' ')) + '</div>';
       if(S.podeOrganizar && S.pasta !== 'sem') html += '<div class="tb-org"><button type="button" class="btn-secundario" data-tb-org="nova">+ Nova pasta aqui</button>' +
         (p && p.pai_id ? '<button type="button" class="btn-secundario" data-tb-org="renomear">Renomear</button><button type="button" class="btn-secundario" data-tb-org="mover_pasta">Mudar de lugar</button><button type="button" class="btn-secundario" data-tb-org="subir" title="Subir na lista">▲</button><button type="button" class="btn-secundario" data-tb-org="descer" title="Descer na lista">▼</button><button type="button" class="btn-perigo" data-tb-org="tirar">Tirar da lista</button>' : '') + '</div>';
-      if(fs.length) html += '<div class="tb-pastas">' + fs.map(function(f){ return '<button type="button" class="tb-pasta" data-tb-ir="' + esc(f.id) + '"><span aria-hidden="true">📁</span><span>' + esc(f.nome) + '<small>' + totalNa(f.id) + ' modelo(s)</small></span></button>'; }).join('') + '</div>';
+      if(fs.length) html += '<div class="tb-pastas">' + fs.map(function(f){ return '<button type="button" class="tb-pasta" data-tb-ir="' + esc(f.id) + '"><span class="tb-pasta-ico" aria-hidden="true">' + ICO.pasta.replace(/width="13" height="13"/, 'width="18" height="18"') + '</span><span>' + esc(f.nome) + '<small>' + totalNa(f.id) + ' modelo(s)</small></span></button>'; }).join('') + '</div>';
       html += ms.length ? ms.map(htmlModelo).join('') : (fs.length ? '' : '<div class="tb-vazio">Nenhum modelo nesta pasta' + (S.filtro !== 'todos' ? ' para este escritório' : '') + '.</div>');
       l.innerHTML = html;
     }
