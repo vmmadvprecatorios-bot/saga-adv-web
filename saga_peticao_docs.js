@@ -123,11 +123,14 @@
     if(bp) bp.onclick = async function(){
       res.innerHTML = '<div class="pd-ok" style="color:var(--muted)">Procurando na pasta do cliente…</div>';
       try{
-        var q = o.sb.from('documentos').select('id,nome_arquivo,caminho_storage,criado_em,processo_id,pessoa_id,pessoal').or('excluido_logico.is.null,excluido_logico.eq.false').order('criado_em', { ascending: false }).limit(300);
+        var q = o.sb.from('documentos').select('id,nome_arquivo,caminho_storage,criado_em,processo_id,pessoa_id,pessoal,pasta_id').or('excluido_logico.is.null,excluido_logico.eq.false').order('criado_em', { ascending: false }).limit(300);
         q = o.pessoaId ? q.or('processo_id.eq.' + o.processoId + ',and(pessoal.eq.true,pessoa_id.eq.' + o.pessoaId + ')') : q.eq('processo_id', o.processoId);
         var r = await q; if(r.error) throw r.error;
         var docs = (r.data || []).filter(function(d){ return /\.(pdf|png|jpe?g|webp)$/i.test(d.nome_arquivo || ''); });
-        var alvo = docs.filter(function(d){ return d.pessoal || RX_PASTA.test(d.nome_arquivo || ''); }).slice(0, 12);
+        /* 22/11 (bloco 391): também o que está nas pastas Documentos pessoais / probatórios / Requisitório, qualquer que seja o nome */
+        var pIds = docs.map(function(d){ return d.pasta_id; }).filter(Boolean).filter(function(v, i, a){ return a.indexOf(v) === i; }), pOk = {};
+        if(pIds.length){ var rp = await o.sb.from('pastas_cliente').select('id,nome').in('id', pIds); if(!rp.error) (rp.data || []).forEach(function(p){ if(/pessoa|probat|requisit|espelho/i.test(p.nome || '')) pOk[p.id] = true; }); }
+        var alvo = docs.filter(function(d){ return d.pessoal || pOk[d.pasta_id] || RX_PASTA.test(d.nome_arquivo || ''); }).slice(0, 12);
         if(!alvo.length){ res.innerHTML = '<div class="pd-aviso"><b>Não achei documentos pessoais nem do crédito na pasta.</b> Procurei por RG, CNH, comprovante, requisitório, espelho, contracheque ou documento marcado como pessoal (' + docs.length + ' PDF/imagem na pasta). Solte o arquivo aqui.</div>'; return; }
         ler(alvo.map(function(d){ return { doc: d }; }));
       }catch(e){ res.innerHTML = '<div class="pd-erro"><b>Não consegui ler a pasta do cliente:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>'; }

@@ -44,7 +44,7 @@
   function chave(a){a=String(a||'').toLowerCase();return ({triagem:'luisa',manutencao:'luisa',coordenador:'luisa',luisa:'luisa',redator:'renata',renata:'renata'})[a]||a;}
   var NOME={luisa:'Luísa',renata:'Renata'};
   var TIPOS={classificacao_intimacao:'Triagem de intimação',classificacao_andamento:'Triagem de andamento do CNJ',classificacao_pedido:'Triagem de pedido da equipe',
-    relatorio_manutencao:'Conferência diária do sistema',peticao:'Petição pronta'};
+    relatorio_manutencao:'Conferência diária do sistema',peticao:'Petição pronta',extrato_honorarios:'Extrato dos honorários'};
   function tipoNome(t){return TIPOS[t]||String(t||'').replace(/_/g,' ').replace(/^./,function(c){return c.toUpperCase();});}
   var SIT={pendente:'Aguardando aprovação',ajustar:'Voltou para ajuste',aprovado:'Aprovada',executado:'Aprovada',reprovado:'Reprovada',
     substituida:'Refeita (versão nova)',erro:'Erro ao executar',cancelado:'Cancelada'};

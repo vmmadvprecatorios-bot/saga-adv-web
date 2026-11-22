@@ -394,18 +394,34 @@ window.SagaCalculos = (function(){
   /* 19/11 (bloco 269, pedido B) e 21/11 (bloco 322): pega sozinho o requisitório, o espelho e o demonstrativo já guardados na pasta
      do cliente; o que já foi lido antes vem pronto (documentos_leituras), sem ler de novo */
   var RX_DOC = /requisit|espelho|precat|\brpv\b|prc\d|demonstrat|extrato|loa\b|or[cç]ament|planilha|c[aá]lculo/i;
+  /* pastas onde ficam o requisitório, o espelho e o demonstrativo (e as subpastas delas): Documentos probatórios, Requisitório, Espelhos */
+  var RX_PASTA_CRED = /probat|requisit|espelho|precat|\brpv\b/i;
+  async function pastasDoCredito(docs){
+    var ids = docs.map(function(d){ return d.pasta_id; }).filter(Boolean).filter(function(v, i, a){ return a.indexOf(v) === i; }), ok = {};
+    if(!ids.length) return ok;
+    var rp = await sb().from('pastas_cliente').select('id,nome,pai_id').in('id', ids);
+    if(rp.error) return ok;
+    var mapa = {}; (rp.data || []).forEach(function(p){ mapa[p.id] = p; });
+    var pais = (rp.data || []).map(function(p){ return p.pai_id; }).filter(function(x){ return x && !mapa[x]; });
+    if(pais.length){ var rq = await sb().from('pastas_cliente').select('id,nome,pai_id').in('id', pais); if(!rq.error) (rq.data || []).forEach(function(p){ mapa[p.id] = p; }); }
+    ids.forEach(function(id){ var p = mapa[id], n = 0; while(p && n++ < 4){ if(RX_PASTA_CRED.test(p.nome || '')){ ok[id] = true; break; } p = mapa[p.pai_id]; } });
+    return ok;
+  }
   async function lerDaPasta(){
     var box = document.getElementById('clLidos');
     box.innerHTML = '<div class="cl-sub" id="clProg">Procurando o requisitório e o espelho na pasta do cliente…</div>';
     try{
       var L = await leitor();
-      var r = await sb().from('documentos').select('id,nome_arquivo,caminho_storage,criado_em').eq('processo_id', S.ctx.processoId)
+      var r = await sb().from('documentos').select('id,nome_arquivo,caminho_storage,criado_em,pasta_id').eq('processo_id', S.ctx.processoId)
         .or('excluido_logico.is.null,excluido_logico.eq.false').order('criado_em', { ascending: false }).limit(200);
       if(r.error) throw r.error;
       var docs = (r.data || []).filter(function(d){ return /\.(pdf|png|jpe?g|webp)$/i.test(d.nome_arquivo || ''); });
-      var alvo = docs.filter(function(d){ return RX_DOC.test(d.nome_arquivo || ''); }).slice(0, 8);
+      /* 22/11 (Dr. Victor, bloco 391): também tudo o que está nas pastas "Documentos probatórios" e "Requisitório", qualquer que seja o nome do arquivo */
+      var pastasProb = await pastasDoCredito(docs);
+      var alvo = docs.filter(function(d){ return pastasProb[d.pasta_id] || RX_DOC.test(d.nome_arquivo || ''); })
+        .sort(function(a, b){ return (RX_DOC.test(b.nome_arquivo || '') ? 1 : 0) - (RX_DOC.test(a.nome_arquivo || '') ? 1 : 0); }).slice(0, 8);
       if(!alvo.length){
-        box.innerHTML = '<div class="cl-aviso"><b>Não achei o requisitório nem o espelho na pasta deste processo.</b> Procurei arquivos com "requisitório", "espelho", "precatório", "RPV", "demonstrativo", "planilha", "cálculo" ou "LOA" no nome ('
+        box.innerHTML = '<div class="cl-aviso"><b>Não achei o requisitório nem o espelho na pasta deste processo.</b> Procurei nas pastas "Documentos probatórios" e "Requisitório" e arquivos com "requisitório", "espelho", "precatório", "RPV", "demonstrativo", "planilha", "cálculo" ou "LOA" no nome ('
           + docs.length + ' PDF/imagem na pasta). Guarde o documento na ficha com um desses nomes, ou solte o arquivo aqui.</div>';
         return;
       }

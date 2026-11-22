@@ -81,7 +81,7 @@ const INSTRUCOES =
   "criar_compromisso, mudar_situacao_processo, mudar_campo_processo, guardar_arquivo_na_pasta_do_cliente): ANTES de cada uma, mostre à " +
   "pessoa, em uma frase, exatamente o que vai mudar (em qual cliente/processo, de quê para quê) e só chame depois do OK dela. " +
   "Uma mudança por chamada; no máximo 60 por hora. REGRA: TODA mudança no SAGA passa por este conector; NUNCA abra o SAGA no navegador para mudar algo (o navegador fica só para o que não é do SAGA: cálculos, sites de tribunais). Não sabe se existe ferramenta? Chame 'o_que_posso_fazer'; se não existir, diga à pessoa para fazer pela tela. " +
-  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), relatorio_do_cliente (quando foi o último relatório ao cliente; pedir, preparar, enviar), horarios_de_atendimento, marcar_atendimento, responder_atendimento, material_marketing e disparo_de_email (fila de e-mails da Captação; mostre a prévia antes de pôr na fila). Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
+  "Outras mudanças: ver_financeiro_processo/mudar_financeiro_processo (valores, recebido, zerar expectativa), alterar_compromisso, concluir_compromisso, agendar_retorno, etiqueta_processo, mudar_dados_cliente, contato_cliente, parte_do_processo, recurso_do_processo, mudar_fase_processo, criar_cliente (regra do cliente repetido), criar_processo, ver_pagamentos_cliente, combinar_pagamento, marcar_parcela, mudar_parcela, lancamento_financeiro, distribuicao_honorarios, extrato_dos_honorarios (extrato do saque dos honorários: achar o processo, preparar para aprovar ou lançar), etiqueta_tarefa, origem_do_cliente, checklist_processo, documento_do_cliente, nota, carta, incorporar_intimacao, pedido_de_busca (o PDF da consulta nunca passa pelo Claude), relatorio_do_cliente (quando foi o último relatório ao cliente; pedir, preparar, enviar), horarios_de_atendimento, marcar_atendimento, responder_atendimento, material_marketing e disparo_de_email (fila de e-mails da Captação; mostre a prévia antes de pôr na fila). Cancelar tarefa ou compromisso sem ser administrador = concluir com o comentário \"Cancelado: motivo\". " +
   "EXCLUIR (excluir_processo, excluir_compromisso e outras 'excluir_'): só o ADMINISTRADOR; diga exatamente o que será excluído e só chame depois do OK EXPLÍCITO dele nesta conversa; para colaborador a ferramenta recusa (colaborador não apaga nada no SAGA). " +
   "Para escolher responsável, coluna da tarefa, situação ou tipo de agenda, use 'equipe_e_opcoes'. Datas em AAAA-MM-DD, horas de Maceió. " +
   "DOCUMENTOS (guardar na pasta do cliente o arquivo que a pessoa anexou na conversa): NÃO mande o arquivo em base64. Com o OK da pessoa, chame 'preparar_envio_de_arquivo' (processo, pasta opcional, nome do arquivo). " +
@@ -576,6 +576,22 @@ const FERRAMENTAS: Ferramenta[] = [
     description: "MUDA O SAGA: põe (sem id) ou muda uma linha da distribuição dos honorários do processo (rateio da tela Financeiro). dados: usuario_id (colaborador, de equipe_e_opcoes) ou beneficiario_externo, percentual (da causa; a soma não passa dos honorários) ou valor_fixo, pago, data_pagamento, observacao." + PEDIR_OK,
     inputSchema: { type: "object", properties: { processo_id: { type: "string" }, linha_id: { type: "string" }, dados: { type: "object" } }, required: ["processo_id", "dados"], additionalProperties: false },
     rpc: "conector_distribuicao_salvar", args: (a) => ({ p_processo: exigeUuid(a.processo_id, "o id do processo"), p_id: uuidOuNulo(a.linha_id, "o id da linha"), p_dados: (a.dados && typeof a.dados === "object") ? a.dados : {} }),
+  },
+  // Extrato dos honorários (22/11/2026, Dr. Victor; bloco 390): o escritório recebe os HONORÁRIOS (o cliente saca o próprio precatório/RPV).
+  {
+    name: "extrato_dos_honorarios", title: "Extrato dos honorários recebidos (achar o processo, preparar ou lançar)", muda: true, precisa: ["financeiro.visualizar", "financeiro.editar", "agentes.trabalhar"],
+    description: "Extrato do saque dos HONORÁRIOS do escritório (alvará, RPV, precatório): você lê o extrato (foto/PDF que a pessoa mandou) e passa os dados lidos. acao: 'achar' = procura o processo pelo numero_lido (CNJ, recurso, RPV), pelo beneficiario_lido (nome do cliente ou da parte) ou codigo (VMM-...) e devolve os candidatos com o esperado × já recebido; 'preparar' = AGENTE (Luísa): põe o lançamento em Para aprovar (nada é lançado até o Dr. Victor aprovar); 'lancar' = só PESSOA com Financeiro: editar, depois do OK dela: grava o recebido (somar ao já recebido ou substituir), a data e o IR retido, anota na ficha e registra; 'sem_processo' = não achou o processo: fica na lista \"Sem processo\" do Financeiro, à vista, para ligar à mão; 'listar' = pagamentos já lidos (dados.situacao: sem_processo|para_aprovar|lancado). dados: data_pagamento (AAAA-MM-DD), valor_bruto, ir_retido, outros_descontos, valor_liquido, numero_lido, beneficiario_lido, origem (alvara|rpv|precatorio|outro), banco, arquivo_nome, codigo. NUNCA mande CPF. Antes de 'preparar' ou 'lancar', mostre à pessoa o que foi lido, o processo achado e a diferença esperado × recebido. Para o extrato ir à pasta do cliente, use antes preparar_envio_de_arquivo (pasta Requisitório) e mande documento_id." + PEDIR_OK,
+    inputSchema: { type: "object", properties: {
+      acao: { type: "string", enum: ["achar", "preparar", "lancar", "sem_processo", "listar"] },
+      processo_id: { type: "string" }, documento_id: { type: "string", description: "Extrato já guardado na pasta do processo (opcional)." },
+      modo: { type: "string", enum: ["somar", "substituir"], description: "somar (padrão: saque em partes) ou substituir o recebido anterior." },
+      lancar_mesmo_repetido: { type: "boolean" }, dados: { type: "object" } }, required: ["acao"], additionalProperties: false },
+    rpc: "conector_extrato_honorarios", args: (a) => {
+      const d = (a.dados && typeof a.dados === "object") ? { ...(a.dados as Record<string, unknown>) } : {};
+      for (const k of Object.keys(d)) if (/cpf/i.test(k)) delete d[k];
+      return { p_acao: String(a.acao ?? ""), p_processo: uuidOuNulo(a.processo_id, "o id do processo"), p_dados: d,
+        p_documento: uuidOuNulo(a.documento_id, "o id do documento"), p_modo: a.modo === "substituir" ? "substituir" : "somar", p_forcar: a.lancar_mesmo_repetido === true };
+    },
   },
   {
     name: "excluir_registro", title: "Excluir tarefa, lançamento ou linha da distribuição (administrador)", muda: true, exclui: true, admin: true,
@@ -1083,7 +1099,7 @@ async function tratar(msg: any, token: string): Promise<unknown | null> {
       return resultado(id, {
         protocolVersion: VERSOES.includes(pedida) ? pedida : VERSOES[0],
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.8" },
+        serverInfo: { name: "saga", title: "SAGA · Victor Morais Advocacia", version: "3.9" },
         instructions: INSTRUCOES,
       });
     }
