@@ -94,7 +94,7 @@ export function tipoDoMovimento(m) {
   if (/baixa|arquiv|remetid/.test(s)) return "Baixa / remessa";
   return "Movimentação";
 }
-const capital = (s) => { const t = String(s || "").trim().toLowerCase(); return t.replace(/(^|[\s\-/(])([a-zà-ú])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E|Em|Para|Por|Com|A|O|Ao|Na|No)\b/g, (w) => w.toLowerCase()).replace(/^./, (c) => c.toUpperCase()); };
+const capital = (s) => { const t = String(s || "").trim().toLowerCase(); return t.replace(/(^|[\s\-/(])([a-zà-ú])/g, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E|Em|Para|Por|Com|A|O|Ao|Na|No)\b/g, (w) => w.toLowerCase()).replace(/^./, (c) => c.toUpperCase()).replace(/\b(Ac|Al|Ap|Am|Ba|Ce|Df|Es|Go|Ma|Mt|Ms|Mg|Pa|Pb|Pr|Pe|Pi|Rj|Rn|Rs|Ro|Rr|Sc|Sp|Se|To)$/, (u) => u.toUpperCase()); };
 const limpo = (s, n = 300) => String(s || "").replace(/\s+/g, " ").trim().slice(0, n);
 
 /* ---------- avisos que não são intimação (o e-mail inteiro) ---------- */
