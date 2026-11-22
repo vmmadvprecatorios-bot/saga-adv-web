@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.38",
+  versao: "3.39",
   data: "22/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.39", data: "22/11/2026", mudou: "Agenda: a parte **Ver a agenda no celular** ganhou o print (janela Agenda no celular, no sistema simulado) e as marcas; o aviso no sino 30 minutos antes vale também para cada data de um compromisso que se repete." },
     { versao: "3.38", data: "22/11/2026", mudou: "Ficha: parte nova **Linha do tempo do processo** (tudo o que aconteceu no processo numa lista: filtros por tipo, Só o importante, busca e Ver mais). Prints novos no sistema simulado: ficha (3 cartões e contatos; blocos e cartões Processo/Painel lateral; janela Criar pastas; janela Ler consulta com as miniaturas dos prints), Minhas Tarefas (quadro, menu de etiquetas e o botão **Filtros no celular**, parte nova), Captação (topo e lista com Por captador, Sem captador, Alterar… e Captador anterior), Painel geral (com Mais números recolhido) e Financeiro (aba Distribuição). Os prints agora aparecem inteiros, sem corte, também os de celular." },
     { versao: "3.37", data: "22/11/2026", mudou: "Manual em dia com as novidades de 19 a 21/11: capítulo **Para aprovar** refeito (Luísa e Renata; Pedidos para a Renata com Pode fazer, Depois e Não fazer e o Plano da peça; Ler e corrigir, Ver como vai sair, revisão da Luísa com o selo Revisada, Aprovar e Protocolei; Recados e Relatório em PDF; **Autos para baixar**); ficha em **3 cartões** (Cliente, Processo, Painel lateral) com o código para copiar; **Fazer petição** lendo os documentos do cliente; **Cálculo do PSS** lendo requisitório, espelho e demonstrativo (de onde veio cada dado; SELIC); **Planilhas e textos do SAGA**, **Editor de planilhas** e **Planilhas do PSS**; **Modelos** (petições, timbrados e arquivos; pastas; + Novo modelo, Importar pasta de petições, editor e A revisar); **Distribuição dos honorários** (Equipe e Jurídico) e **Meus honorários**; Minhas Tarefas (etiqueta Dar impulso processual, tarefa Manutenção: completar dados, botão Filtros no celular); Intimações (linha da Luísa com o prazo em dias úteis, Prazo vencendo, repetida CNJ × e-mail); Captação (Alterar…, Sem captador, Captador anterior, gráfico Por captador; passagem sozinha para o Jurídico; pré-validados do prêmio); Chat (grupo Recebimento de documentação); login (**Manter conectado**; login diário); botão **?** de ajuda; PDF com texto para selecionar e copiar; Painel geral (Mais números recolhido); SAGA no Claude (ferramentas novas); Saúde do sistema e Armazenamento; permissões novas. Prints novos no sistema simulado." },
     { versao: "3.36", data: "21/11/2026", mudou: "Agenda: **Ver no celular** (link pessoal para o Google Agenda e o iPhone, só leitura, com lembrete; Gerar link novo / Desligar) e aviso no **sino 30 minutos antes** de cada compromisso." },
@@ -952,8 +953,10 @@ window.SAGA_MANUAL = {
             "É **só leitura**: para marcar ou mudar, use o SAGA. O Google relê a agenda algumas vezes por dia; no SAGA tudo aparece na hora.",
             "O link é **pessoal**: não mande para ninguém. Perdeu o celular? [[Gerar link novo]] (desliga o antigo na hora) ou [[Desligar o link]].",
             "Para os colaboradores, o celular mostra só o **tipo e o código VMM** do compromisso (sem o nome do cliente).",
-            "Além disso, o SAGA avisa no **sino** 30 minutos antes de cada compromisso seu."
-          ]
+            "Além disso, o SAGA avisa no **sino** 30 minutos antes de cada compromisso seu (também em cada data de um compromisso que se repete, menos as já concluídas)."
+          ],
+          img: "agenda_celular",
+          marcas: ["Ver no celular (na barra da Agenda).", "O seu link pessoal, com Copiar.", "Passo a passo do Google Agenda.", "Abrir no iPhone (assinar direto).", "O que entra: só a sua agenda ou a sua + a do escritório.", "Gerar link novo (desliga o antigo) ou Desligar o link."]
         }
       ]
     },
