@@ -264,6 +264,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
       <button class="pill active" type="button" data-aba="atualizacoes">Atualizações de teses<b id="qtdNovas" hidden></b></button>
       <button class="pill" type="button" data-aba="prateleira">Prateleira de produtos</button>
       <button class="pill" type="button" data-aba="radar">Radar de oportunidades<b id="qtdRadar" hidden></b></button>
+      <button class="pill" type="button" data-aba="base" id="abaBase" hidden title="Só o administrador geral">Base de dados</button>
     </div>
     <div class="vis" id="visoes" role="group" aria-label="Modo de ver"></div>
   </div>
@@ -293,6 +294,8 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
     <div class="graf-bloco" id="grafRad"></div>
     <div id="radarConteudo"></div>
   </section>
+
+  <section class="aba-pane" id="aba-base"></section>
 </main>
 </div>
 
@@ -312,6 +315,7 @@ window._sb=_sb;
 </script>
 <script src="saga_ui.js?v=202611221420"></script>
 <script src="saga_texto.js?v=202611221420"></script>
+<script src="saga_teses_base.js?v=202611221420"></script>
 <script>
 /* =====================================================================
    SAGA · Teses e oportunidades (blocos 110 e 111)
@@ -343,7 +347,8 @@ var ICO={
 var VISOES={
   atualizacoes:[['blog','Blog','blog'],['tempo','Linha do tempo','tempo'],['teses','Por tese','grade'],['lista','Lista','lista']],
   prateleira:[['cartoes','Cartões','grade'],['lista','Lista','lista'],['kanban','Kanban','kanban']],
-  radar:[['cartoes','Cartões','blog'],['lista','Lista','lista'],['kanban','Kanban','kanban'],['agenda','Julgamentos','agenda']]
+  radar:[['cartoes','Cartões','blog'],['lista','Lista','lista'],['kanban','Kanban','kanban'],['agenda','Julgamentos','agenda']],
+  base:[]
 };
 function $(id){return document.getElementById(id);}
 function esc(v){return window.sagaEsc?window.sagaEsc(v):String(v==null?'':v).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];});}
@@ -498,8 +503,9 @@ function desenharBotoes(){
   if(T.aba==='atualizacoes'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Nova atualização</button>';
   else if(T.aba==='prateleira'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo produto</button>';
   else if(T.aba==='radar'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo item no radar</button>';
-  if(p.admin&&T.aba!=='radar')b='<button class="btn" type="button" id="btnOpcoes">'+(T.aba==='prateleira'?'Organizar opções':'Organizar situações')+'</button>'+b;
-  if(PODE_CLIENTES&&T.aba!=='radar')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
+  if(p.admin&&T.aba!=='radar'&&T.aba!=='base')b='<button class="btn" type="button" id="btnOpcoes">'+(T.aba==='prateleira'?'Organizar opções':'Organizar situações')+'</button>'+b;
+  if(T.aba==='base')b='';
+  if(PODE_CLIENTES&&T.aba!=='radar'&&T.aba!=='base')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
   $('botoesTopo').innerHTML=b;
   var ac=$('btnAcharClientes');if(ac)ac.onclick=abrirEscolhaTese;
   var n=$('btnNovo');if(n)n.onclick=function(){if(T.aba==='atualizacoes')formPost(null);else if(T.aba==='prateleira')formProduto(null);else formRadar(null);};
@@ -1070,6 +1076,7 @@ function trocarAba(a){
   document.querySelectorAll('.aba-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+a);});
   try{var u=new URL(location.href);u.searchParams.set('aba',a);u.searchParams.delete('post');history.replaceState(history.state,'',u);}catch(e){}
   desenharBotoes();desenharVisoes();
+  if(a==='base'&&window.SagaTesesBase)SagaTesesBase.abrir();
 }
 function ligar(){
   // T132: link "Achar clientes": clique normal troca de tela com o movimento do sistema; Ctrl+clique abre em outra aba
@@ -1149,7 +1156,8 @@ async function init(){
   var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
   var r=await Promise.all([_sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle(),_sb.rpc('teses_minhas_permissoes')]);
   T.eu=r[0].data&&r[0].data.id;if(r[1].data)T.perm=r[1].data;
-  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
+  if(window.SagaTesesBase)await SagaTesesBase.liberar();
+  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a==='base'&&$('abaBase').hidden)a='';if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
   await carregarTudo();
   var post=q.get('post');if(post){trocarAba('atualizacoes');lerPost(post);}
 }

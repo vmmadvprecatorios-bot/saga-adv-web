@@ -669,6 +669,16 @@ const FERRAMENTAS: Ferramenta[] = [
       p_documento: a.documento_id ? exigeUuid(a.documento_id, "o id do documento") : null }),
   },
   {
+    name: "base_de_dados_das_teses", title: "Base de dados das teses (só o administrador)", precisa: ["permissoes.gerenciar"],
+    description: "SÓ O ADMINISTRADOR GERAL (o banco recusa os outros). Cruza o perfil dos clientes com o público de cada tese da Prateleira. Sem 'tese': resumo por tese (aptos_sem_a_tese, a_confirmar, falta_dado com o que falta, ja_tem). Com 'tese' (sigla como PSS, IRRRA, GOE, ou parte do nome): a lista de clientes daquela tese (estado: oportunidade = aptos + a confirmar; apto; confirmar; falta; tem), com código, situação, órgão e link da ficha, sem CPF. Apto = cumpre todos os critérios com os dados do SAGA; a confirmar = dado da planilha do Jurídico ou algo que só o cliente informa. Doença grave nunca é filtro (LGPD). A conta é refeita toda madrugada.",
+    inputSchema: { type: "object", properties: {
+      tese: { type: "string", description: "Opcional: sigla ou nome da tese" },
+      estado: { type: "string", enum: ["oportunidade", "apto", "confirmar", "falta", "tem"] },
+      fase: { type: "string", enum: ["juridico", "captacao"] },
+      limite: { type: "integer", minimum: 1, maximum: 100 } }, additionalProperties: false },
+    rpc: "conector_teses_base", args: (a) => ({ p: { tese: a.tese || null, estado: a.estado || null, fase: a.fase || null, limite: a.limite || 30 } }),
+  },
+  {
     name: "autos_para_baixar", title: "Fila: autos para baixar", muda: true,
     description: "Fila dos processos ATIVOS do Jurídico que precisam dos AUTOS (sem resumo do agente ou com resumo a atualizar), em ordem de prioridade (1 intimação aberta ou peça pedida; 2 resumo a atualizar; 3 intimação recente; 4 impulso; 5 os demais) e com o limite por dia. acao 'ver' (padrão; só consulta): contagens, por tribunal e o lote_de_hoje (opcional tribunal, ex.: TRF5, para a lista daquele tribunal). Marcar um processo (MUDA O SAGA): 'pegar' (vou baixar), 'baixei' (autos salvos na pasta 01 Entrada, aguardando a análise da entrada-vmm), 'dispensar' (obs = motivo) ou 'voltar' (devolve à fila). Quando a ficha do agente chega ao SAGA pela ponte, o processo sai da fila sozinho. Senhas, código do autenticador e token do tribunal NUNCA passam pelo SAGA nem pelo Claude: o download é feito no navegador já logado da pessoa. Para marcar:" + PEDIR_OK,
     inputSchema: { type: "object", properties: { acao: { type: "string", enum: ["ver", "pegar", "baixei", "dispensar", "voltar"] },
