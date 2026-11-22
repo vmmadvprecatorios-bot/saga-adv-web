@@ -10,7 +10,7 @@
 //  - manual (gestor logado, pela tela, ou o servidor com a chave): acao "teste" | "diario" | "semanal" (previa:true marca o assunto)
 // Envio pelo Gmail do administrador geral: segredos GMAIL_USUARIO e GMAIL_SENHA_APP.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import nodemailer from "npm:nodemailer@6.9.16";
+import nodemailer from "npm:nodemailer@7.0.11"; // 22/11: 6.9.16 tinha falhas conhecidas (laudo de segurança)
 import "./ponto_calculo.js";
 
 // deno-lint-ignore no-explicit-any
@@ -163,7 +163,7 @@ async function transportarMes(b: Base, k: string, hoje: string) {
 }
 
 /* ---------- e-mail: visual do SAGA ---------- */
-const esc = (t: unknown) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const esc = (t: unknown) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 const hmEmail = (m: number | null | undefined) => (m === null || m === undefined ? "" : PC.hhmm(m));
 const hm = (m: number | null) => (m === null || m === undefined ? "" : PC.hhmmRelogio(m));
 function saldoEmail(m: number | null | undefined) {

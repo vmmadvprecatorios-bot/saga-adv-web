@@ -3,6 +3,8 @@
 <head>
 <script src="saga_guard.js?v=202611220550"></script>
 <meta charset="UTF-8">
+<!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Ponto Eletrônico</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1811,8 +1813,8 @@ function carregarLeaflet(){
   if(window.L)return Promise.resolve(window.L);
   if(MAPA.carregando)return MAPA.carregando;
   MAPA.carregando=new Promise(function(ok,erro){
-    var css=document.createElement('link');css.rel='stylesheet';css.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';document.head.appendChild(css);
-    var js=document.createElement('script');js.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    var css=document.createElement('link');css.rel='stylesheet';css.href='vendor/leaflet-1.9.4/leaflet.css';document.head.appendChild(css);
+    var js=document.createElement('script');js.src='vendor/leaflet-1.9.4/leaflet.js';
     js.onload=function(){ok(window.L);};js.onerror=erro;document.head.appendChild(js);
   });
   return MAPA.carregando;
