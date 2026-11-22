@@ -29,7 +29,9 @@
     '.agc-passo ol{margin:8px 0 2px;padding-left:20px;font-size:12.5px;color:var(--muted);line-height:1.55}',
     '.agc-erro{border:1px solid color-mix(in srgb,#e5484d 55%,transparent);background:color-mix(in srgb,#e5484d 10%,transparent);color:var(--text);border-radius:10px;padding:9px 12px;font-size:12.5px;margin:8px 0}',
     '.agc-aviso{border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:10px;padding:9px 12px;font-size:12.5px;color:var(--text);margin:8px 0}',
-    '.agc-ok{font-size:12px;color:var(--gold);margin-left:4px}'
+    '.agc-ok{font-size:12px;color:var(--gold);margin-left:4px}',
+    /* 22/11: 'Desligar o link' do mesmo tamanho do 'Gerar link novo' (botões finos, regra de 08/11); só a cor de perigo muda */
+    '.agc-acoes .agc-perigo{font-weight:500!important;color:var(--danger,#e5484d)!important;border-color:color-mix(in srgb,var(--danger,#e5484d) 45%,transparent)!important;background:color-mix(in srgb,var(--danger,#e5484d) 10%,transparent)!important}'
   ].join('\n');document.head.appendChild(css);
 
   // botão na barra da Agenda (ao lado de "Meus horários")
@@ -89,7 +91,7 @@
         '<div class="agc-acoes"><a class="btn-hoje" href="'+h(url.replace(/^https:/,'webcal:'))+'">Abrir no iPhone</a></div>'+
         '<details class="agc-passo"><summary>Trocar ou desligar o link</summary>'+
           '<p class="agc-p" style="margin-top:8px">Gerar um link novo desliga o atual na hora (o celular que usava o antigo para de receber). Use se o celular for perdido ou o link for parar em outra mão.</p>'+seg()+
-          '<div class="agc-acoes"><button type="button" class="btn-hoje" data-agc-gerar>Gerar link novo</button><button type="button" class="btn-excluir-modal" data-agc-desligar>Desligar o link</button></div></details>'+
+          '<div class="agc-acoes"><button type="button" class="btn-hoje" data-agc-gerar>Gerar link novo</button><button type="button" class="btn-hoje perigo agc-perigo" data-agc-desligar>Desligar o link</button></div></details>'+
         '<p class="agc-info">O SAGA também avisa no sino 30 minutos antes de cada compromisso seu.</p>';
     }
     corpo.innerHTML=h1;
