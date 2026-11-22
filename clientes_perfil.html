@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611221517"></script>
+<script src="saga_guard.js?v=202611222146"></script>
 <meta charset="UTF-8">
 <!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
@@ -121,7 +121,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:12px}
   .tb td[data-r]::before{content:attr(data-r);display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611221517">
+<link rel="stylesheet" href="saga_tema.css?v=202611222146">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -161,6 +161,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:12px}
     <div class="campo"><div class="rot"><span>Ano de aposentadoria</span></div><div class="faixa"><input class="ent" id="fApo1" inputmode="numeric" maxlength="4" placeholder="de" aria-label="Aposentadoria de"><span>até</span><input class="ent" id="fApo2" inputmode="numeric" maxlength="4" placeholder="até" aria-label="Aposentadoria até"></div></div>
     <div class="campo"><div class="rot"><span>Já tem a tese</span></div><div class="mm" id="mmTem" data-vazio="Qualquer"></div></div>
     <div class="campo"><div class="rot"><span>Ainda não tem a tese</span></div><div class="mm" id="mmNao" data-vazio="Nenhuma"></div></div>
+    <div class="campo" id="campoListagemAl" hidden><label for="fListagemAl">Listagem de Alagoas</label><select class="ent" id="fListagemAl" title="Servidores e pensionistas federais da listagem do SINTSEP/AL (só o administrador geral)"><option value="">Tanto faz</option><option value="sim">Está na listagem</option><option value="nao">Não está na listagem</option></select></div>
   </section>
   <div class="resumo-topo"><span id="resumo">Carregando…</span><span class="ordem"><label for="fOrdem">Ordenar por</label><select class="ent" id="fOrdem"><option value="nome">Nome</option><option value="idade">Idade (mais velhos primeiro)</option><option value="ingresso">Ano de ingresso</option><option value="aposentadoria">Ano de aposentadoria</option><option value="cadastro">Cadastro mais recente</option></select></span></div>
   <div id="area"></div>
@@ -186,8 +187,8 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611221517"></script>
-<script src="saga_pdf.js?v=202611221517"></script>
+<script src="saga_ui.js?v=202611222146"></script>
+<script src="saga_pdf.js?v=202611222146"></script>
 <script>
 /* =====================================================================
    SAGA · Clientes por perfil (bloco 138): clientes_perfil_opcoes / clientes_perfil_buscar
@@ -351,10 +352,11 @@ function filtros(){
     texto:$('fTexto').value.trim(),situacao_funcional:C.sel.sit,orgao:C.sel.orgao,cargo:$('fCargo').value.trim(),uf:C.sel.uf,
     situacao_vital:$('fVital').value,idade_de:$('fIdade1').value,idade_ate:$('fIdade2').value,
     ingresso_de:$('fIng1').value,ingresso_ate:$('fIng2').value,aposentadoria_de:$('fApo1').value,aposentadoria_ate:$('fApo2').value,
-    tese_tem:C.sel.tem,tese_nao_tem:C.sel.nao,fase:C.fase,so_com_perfil:C.quem==='perfil',ordem:$('fOrdem').value
+    tese_tem:C.sel.tem,tese_nao_tem:C.sel.nao,fase:C.fase,so_com_perfil:C.quem==='perfil',ordem:$('fOrdem').value,
+    listagem_al:$('fListagemAl').value
   };
 }
-function filtrosAtivos(){var f=filtros(),k=0;['texto','cargo','situacao_vital','idade_de','idade_ate','ingresso_de','ingresso_ate','aposentadoria_de','aposentadoria_ate'].forEach(function(c){if(f[c])k++;});['situacao_funcional','orgao','uf','tese_tem','tese_nao_tem'].forEach(function(c){if(f[c].length)k++;});return k;}
+function filtrosAtivos(){var f=filtros(),k=0;['texto','cargo','situacao_vital','listagem_al','idade_de','idade_ate','ingresso_de','ingresso_ate','aposentadoria_de','aposentadoria_ate'].forEach(function(c){if(f[c])k++;});['situacao_funcional','orgao','uf','tese_tem','tese_nao_tem'].forEach(function(c){if(f[c].length)k++;});return k;}
 function marcarBotaoFiltros(){var k=filtrosAtivos();$('nFiltros').textContent=k?' · '+k+(k===1?' ativo':' ativos'):'';}
 var celular=window.matchMedia('(max-width:760px)');
 function ajustarFiltrosCelular(){var sec=$('filtros');if(celular.matches){if(!sec.dataset.mexido)sec.hidden=true;}else{sec.hidden=false;}var ab=!sec.hidden;$('btnFiltros').setAttribute('aria-expanded',String(ab));$('btnFiltros').firstChild.textContent=ab?'Esconder filtros':'Mostrar filtros';}
@@ -397,7 +399,7 @@ function desenhar(){
         var g=p.grupo||'captacao';
         return '<a class="tese" style="--g:'+(CORES_GRUPO[g]||'#8a94a8')+'" href="'+urlFicha(l.pessoa_id,p.id)+'" data-ficha title="'+esc((p.numero?fmtCnj(p.numero)+' · ':'')+(p.tese||'Sem tese')+' · '+(NOMES_GRUPO[g]||g))+'"><i></i><span>'+esc(p.tese||'Sem tese')+'</span></a>';
       }).join('');
-      return '<tr><td class="c-nome"><a class="nome-cliente" href="'+urlFicha(l.pessoa_id)+'" data-ficha>'+esc(l.nome||'Sem nome')+'</a>'+(l.situacao_vital==='falecido'?' <span class="chip falecido">falecido</span>':'')+(subs?'<span class="sub">'+esc(subs)+'</span>':'')+'</td>'+
+      return '<tr><td class="c-nome"><a class="nome-cliente" href="'+urlFicha(l.pessoa_id)+'" data-ficha>'+esc(l.nome||'Sem nome')+'</a>'+(l.situacao_vital==='falecido'?' <span class="chip falecido">falecido</span>':'')+(l.na_listagem_al?' <span class="chip" title="'+(l.na_listagem_al==='cpf'?'Achado na listagem do SINTSEP/AL pelo CPF':'Achado na listagem do SINTSEP/AL só pelo nome: conferir')+'">listagem AL'+(l.na_listagem_al==='cpf'?'':' (nome)')+'</span>':'')+(subs?'<span class="sub">'+esc(subs)+'</span>':'')+'</td>'+
         '<td class="c-perfil" data-r="Perfil">'+linhaPerfil(l.perfil)+'</td>'+
         '<td class="num" data-r="Idade">'+(l.idade!=null?l.idade+' anos':'—')+'</td>'+
         '<td class="num" data-r="Ingresso">'+(l.ano_ingresso||'—')+'</td>'+
@@ -408,7 +410,7 @@ function desenhar(){
   $('pag').hidden=pags<=1;$('pgInfo').textContent='Página '+C.pagina+' de '+n(pags);
   $('pgAnt').disabled=C.pagina<=1;$('pgProx').disabled=C.pagina>=pags;
 }
-function filtrosVazios(){return {texto:'',situacao_funcional:[],orgao:[],cargo:'',uf:[],situacao_vital:'',idade_de:'',idade_ate:'',ingresso_de:'',ingresso_ate:'',aposentadoria_de:'',aposentadoria_ate:'',tese_tem:[],tese_nao_tem:[],fase:'todas',so_com_perfil:true,ordem:'nome'};}
+function filtrosVazios(){return {texto:'',situacao_funcional:[],orgao:[],cargo:'',uf:[],situacao_vital:'',idade_de:'',idade_ate:'',ingresso_de:'',ingresso_ate:'',aposentadoria_de:'',aposentadoria_ate:'',tese_tem:[],tese_nao_tem:[],fase:'todas',so_com_perfil:true,ordem:'nome',listagem_al:''};}
 
 /* ---------- PDF ---------- */
 function descreverFiltros(){
@@ -422,6 +424,7 @@ function descreverFiltros(){
   if(f.cargo)partes.push('Cargo/profissão: '+f.cargo);
   if(f.uf.length)partes.push('UF: '+f.uf.join(', '));
   if(f.situacao_vital)partes.push($('fVital').selectedOptions[0].textContent);
+  if(f.listagem_al)partes.push(f.listagem_al==='sim'?'Está na listagem de Alagoas (SINTSEP/AL)':'Não está na listagem de Alagoas');
   function faixa(r,a,b,suf){if(a||b)partes.push(r+': '+(a&&b?a+' a '+b:a?'a partir de '+a:'até '+b)+(suf||''));}
   faixa('Idade',f.idade_de,f.idade_ate,' anos');faixa('Ingresso',f.ingresso_de,f.ingresso_ate);faixa('Aposentadoria',f.aposentadoria_de,f.aposentadoria_ate);
   if(f.tese_tem.length)partes.push('Já tem: '+nomes(f.tese_tem,o.teses,'id'));
@@ -485,12 +488,13 @@ function ligar(){
   $('fCargo').addEventListener('input',function(){mudou(400);});
   ['fIdade1','fIdade2','fIng1','fIng2','fApo1','fApo2'].forEach(function(id){$(id).addEventListener('input',function(){var d=soDigitos(this.value);if(d!==this.value)this.value=d;mudou(450);});});
   $('fVital').addEventListener('change',function(){mudou(0);});
+  $('fListagemAl').addEventListener('change',function(){mudou(0);});
   $('fOrdem').addEventListener('change',function(){mudou(0);});
   $('pgAnt').addEventListener('click',function(){if(C.pagina>1){C.pagina--;buscar();window.scrollTo({top:0,behavior:'smooth'});}});
   $('pgProx').addEventListener('click',function(){C.pagina++;buscar();window.scrollTo({top:0,behavior:'smooth'});});
   $('btnLimpar').addEventListener('click',function(){
     ['fTexto','fCargo','fIdade1','fIdade2','fIng1','fIng2','fApo1','fApo2'].forEach(function(id){$(id).value='';});
-    $('fVital').value='';C.sel={sit:[],orgao:[],uf:[],tem:[],nao:[]};
+    $('fVital').value='';$('fListagemAl').value='';C.sel={sit:[],orgao:[],uf:[],tem:[],nao:[]};
     Object.keys(MM).forEach(function(k){MM[k].rotulo();});mudou(0);
   });
   $('btnPdf').addEventListener('click',salvarPdf);
@@ -553,6 +557,9 @@ async function init(){
   C.gerencia=perms.indexOf('etiquetas.gerenciar')>=0;
   if(!C.gerencia){var adm=await _sb.rpc('eh_admin_sistema');C.gerencia=adm.data===true;}
   $('btnOpcoesSit').hidden=!C.gerencia;
+  // Listagem de Alagoas (bloco 417): só o administrador geral (o banco ignora o filtro para os outros)
+  try{var pf=window.sagaPerfil?await window.sagaPerfil():null;$('campoListagemAl').hidden=!(pf&&pf.eh_administrador);}catch(e){}
+  if(new URLSearchParams(location.search).get('listagem_al')==='sim'&&!$('campoListagemAl').hidden){$('fListagemAl').value='sim';marcarBotaoFiltros();}
   await carregarOpcoes();
   await aplicarParametros();
   await buscar();

@@ -99,10 +99,51 @@
     '.tb-pastas{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin:0 0 12px}',
     '.tb-pasta{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid var(--border-soft);background:var(--panel);cursor:pointer;color:var(--text);font:inherit;font-size:13px;text-align:left}',
     '.tb-pasta small{display:block;font-size:11px;color:var(--muted)}',
+    /* 22/11 (Dr. Victor: "não quero pasta amarela do Windows; pastas no padrão do sistema"): ícone fino em linha, na cor do tema */
+    '.tb-pasta .tb-pasta-ico{flex:0 0 34px;width:34px;height:34px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent)}',
+    '#bibArvore .ba-ico{color:var(--gold)}',
     '.tb-org{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}',
     '.tb-org button{font:inherit;font-size:11.5px;padding:6px 10px;border-radius:9px;cursor:pointer}',
     '.tb-onde{font-size:10.5px;color:var(--muted);display:block;margin-top:2px}',
-    '@media (max-width:640px){#modalGerarPeticaoTb .tb-campos{grid-template-columns:1fr}.tb-grade{grid-template-columns:1fr}}'
+    '@media (max-width:640px){#modalGerarPeticaoTb .tb-campos{grid-template-columns:1fr}.tb-grade{grid-template-columns:1fr}}',
+    /* 22/11 (Dr. Victor: "tudo junto na mesma organização, tudo nos Arquivos"): UMA árvore só, como o explorador de
+       arquivos. Os dois grupos antigos (Modelos de petição / Arquivos) ficam escondidos; a árvore #bibArvore manda. */
+    '.coluna-categorias > :not(.categorias-cabecalho):not(#bibArvore){display:none!important}',
+    '.layout-biblioteca .coluna-categorias{width:280px}',
+    '.layout-biblioteca.categorias-retraidas #bibArvore{display:none}',
+    '#bibArvore{display:flex;flex-direction:column;gap:8px;min-width:0}',
+    '#bibArvore .ba-busca{width:100%;box-sizing:border-box;font-size:12.5px}',
+    '#bibArvore .ba-mob{display:none}',
+    '#bibArvore .ba-arv{font-size:12.5px;display:flex;flex-direction:column;gap:1px}',
+    '#bibArvore .ba-no{display:flex;align-items:flex-start;gap:6px;padding:6px 8px 6px calc(4px + var(--ba-nivel,0) * 14px);border-radius:8px;cursor:pointer;color:var(--muted);line-height:1.35;transition:background .25s ' + EASE + ',color .25s ' + EASE + '}',
+    '#bibArvore .ba-no:hover{background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--text)}',
+    '#bibArvore .ba-no.ativa{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--text);font-weight:600}',
+    '#bibArvore .ba-no:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}',
+    '#bibArvore .ba-seta{flex:0 0 16px;width:16px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:inherit;padding:0;cursor:pointer;border-radius:5px}',
+    '#bibArvore .ba-seta svg{transition:transform .3s ' + EASE + '}',
+    '#bibArvore .ba-seta[aria-expanded=true] svg{transform:rotate(90deg)}',
+    '#bibArvore .ba-seta:empty{cursor:default}',
+    '#bibArvore .ba-ico{flex:0 0 14px;height:18px;display:inline-flex;align-items:center;opacity:.85}',
+    '#bibArvore .ba-nome{flex:1;min-width:0;overflow-wrap:anywhere;white-space:normal}',
+    '#bibArvore .ba-n{flex:0 0 auto;font-size:10.5px;opacity:.75;padding-top:1px;font-variant-numeric:lining-nums tabular-nums}',
+    '#bibArvore .ba-raiz{color:var(--text);font-weight:600}',
+    '#bibArvore .ba-filhos[hidden]{display:none}',
+    '.conteudo-biblioteca.modo-timbrados #tbFerr .tb-busca,.conteudo-biblioteca .barra-filtros .busca,#ctSecao .ct-ferr,#ctSecao .ct-teses{display:none!important}',
+    '#painelTimbrados[data-vista=modelos] #ctSecao,#painelTimbrados[data-vista=modelos] #tbSecTimbrados,#painelTimbrados[data-vista=contestacoes] #tbSecModelos,#painelTimbrados[data-vista=contestacoes] #tbSecTimbrados,#painelTimbrados[data-vista=timbrados] #tbSecModelos,#painelTimbrados[data-vista=timbrados] #ctSecao,#painelTimbrados[data-vista=busca] #tbSecTimbrados{display:none!important}',
+    '#painelTimbrados:not([data-vista=busca]) #tbBuscaArq{display:none}',
+    '#painelTimbrados[data-vista=modelos] #tbMigalhas{display:none}',
+    '#tbMigalhas{margin:0 0 14px}',
+    '.tb-caminho .tb-sep{opacity:.6}',
+    '.ba-card-especial .icone-item-wrap{color:var(--gold)}',
+    '@media (max-width:760px){',
+    '  .layout-biblioteca .coluna-categorias{display:block!important;width:auto!important;overflow:visible!important;padding:12px 16px!important}',
+    '  #bibArvore .ba-mob{display:flex;align-items:center;gap:8px;width:100%;font:inherit;font-size:13px;padding:10px 12px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);color:var(--text);cursor:pointer;text-align:left}',
+    '  #bibArvore .ba-mob span{flex:1;min-width:0;overflow-wrap:anywhere}',
+    '  #bibArvore .ba-mob svg{transition:transform .3s ' + EASE + '}',
+    '  #bibArvore .ba-mob[aria-expanded=true] svg{transform:rotate(180deg)}',
+    '  #bibArvore .ba-no{padding-top:9px;padding-bottom:9px}',
+    '  .categorias-cabecalho{display:none!important}',
+    '}'
   ].join('\n');
   document.head.appendChild(css);
 
@@ -153,8 +194,10 @@
 
     var painel = document.createElement('div');
     painel.id = 'painelTimbrados';
+    painel.setAttribute('data-vista', 'modelos');
     painel.innerHTML =
-      '<section class="tb-sec">' +
+      '<div class="tb-caminho" id="tbMigalhas"></div>' +
+      '<section class="tb-sec" id="tbSecModelos">' +
         '<h2>Modelos de petição</h2>' +
         '<p class="tb-sub">Escolha um modelo, preencha o que quiser (o que ficar em branco sai entre colchetes para completar no Word) e baixe em Word ou em PDF, já no papel timbrado, no Padrão VMM.</p>' +
         '<div class="tb-ferr" id="tbFerr"><input type="search" class="tb-busca" id="tbBuscaModelos" placeholder="Buscar em todos os modelos" aria-label="Buscar modelo">' +
@@ -163,21 +206,23 @@
         '<div id="tbErroModelos"></div>' +
         '<div class="tb-lista" id="tbListaModelos"><div class="tb-vazio">Carregando os modelos...</div></div>' +
       '</section>' +
-      '<section class="tb-sec">' +
+      '<section class="tb-sec" id="tbSecTimbrados">' +
         '<h2>Papéis timbrados</h2>' +
         '<p class="tb-sub">Os papéis oficiais de cada escritório, guardados uma vez só. Toda petição gerada aqui sai por cima deles. Para mudar o timbrado de todas as petições, basta trocar os arquivos do timbrado.</p>' +
         '<div id="tbErroTimbrados"></div>' +
         '<div class="tb-grade" id="tbGradeTimbrados"><div class="tb-vazio">Carregando os papéis timbrados...</div></div>' +
-      '</section>';
+      '</section>' +
+      '<section class="tb-sec" id="tbBuscaArq"></section>';
     conteudo.appendChild(painel);
     criarModais();
+    montarArvoreUnica(coluna);
     /* 19/11 (T194, Dr. Victor): Biblioteca e Modelos viraram uma tela só ("Modelos"). Ela abre nas petições e timbrados;
        ?aba=arquivos (ou voltar para uma pasta) abre os arquivos da antiga Biblioteca. */
     try{
       var qa = new URLSearchParams(location.search).get('aba');
       var naPasta = history.state && history.state.bibliotecaPastas && (history.state.bibliotecaPastas.caminho || []).length > 1;
       if(qa === 'timbrados' || (qa !== 'arquivos' && !naPasta)) setTimeout(function(){ abrir('inicio'); }, 50);
-      else marcarAba('arquivos', false);
+      else { marcarAba('arquivos', false); setTimeout(function(){ if(!S.carregado) carregar(); }, 50); }
     }catch(e){ setTimeout(function(){ abrir('inicio'); }, 50); }
   }
 
@@ -200,6 +245,7 @@
     if(h1){ h1.setAttribute('data-tb-titulo', h1.textContent); h1.textContent = 'Modelos'; }
     if(modo !== 'historico') marcarAba('timbrados', modo === 'clique');
     if(!S.carregado) carregar();
+    marcarNo(noDaVista());
   }
   function fechar(modo){
     var conteudo = document.querySelector('.conteudo-biblioteca');
@@ -210,6 +256,7 @@
     var h1 = document.querySelector('.header-pagina h1');
     if(h1 && h1.getAttribute('data-tb-titulo')){ h1.textContent = h1.getAttribute('data-tb-titulo'); h1.removeAttribute('data-tb-titulo'); }
     if(modo !== 'historico') marcarAba('arquivos', modo === 'clique');
+    marcarNo(noDaBiblioteca());
   }
 
   /* ---------------- dados ---------------- */
@@ -243,6 +290,7 @@
     desenharTimbrados();
     desenharFiltros();
     desenharModelos();
+    desenharArvoreUnica();
   }
   async function recarregarModelos(){
     try{ S.modelos = await SagaTimbrado.listarModelos(sb()); document.getElementById('tbErroModelos').innerHTML = ''; }
@@ -278,14 +326,17 @@
         '<span class="tb-nome">' + esc(p.nome) + '</span><span class="tb-n">' + totalNa(p.id) + '</span></div>' +
         (fs.length && aberta ? '<div class="tb-filhos">' + fs.map(function(f){ return no(f, nivel + 1); }).join('') + '</div>' : '');
     }
+    desenharArvoreUnica();
     var raiz = raizPasta(), sp = semPasta().length;
     arv.innerHTML = (raiz ? no(raiz, 0) : '') + (sp ? '<div class="tb-no' + (S.pasta === 'sem' ? ' ativa' : '') + '" data-tb-pasta="sem"><span class="tb-seta"></span><span class="tb-nome">Sem pasta</span><span class="tb-n">' + sp + '</span></div>' : '');
   }
   function escolherPasta(id){
     S.pasta = id;
-    if(id && id !== 'sem'){ caminhoDe(id).forEach(function(p){ S.abertas[p.id] = true; }); }
-    if(S.busca){ S.busca = ''; var bx = document.getElementById('tbBuscaModelos'); if(bx) bx.value = ''; }
+    if(id && id !== 'sem'){ caminhoDe(id).forEach(function(p){ S.abertas[p.id] = true; U.abertos['m:' + p.id] = true; }); }
+    if(S.busca){ S.busca = ''; var bx = document.getElementById('tbBuscaModelos'); if(bx) bx.value = ''; limparBuscaGeral(); }
+    vista('modelos');
     desenharArvore(); desenharModelos();
+    marcarNo('m:' + (id || ''));
   }
   /* janelinha própria para nome e para escolher pasta */
   function pedir(titulo, rotulo, valor, opcoes){
@@ -490,14 +541,16 @@
       var ms = S.pasta === 'sem' ? semPasta() : S.modelos.filter(function(m){ return p && m.pasta_id === p.id; });
       ms = ms.filter(doEscritorio);
       var fs = p ? filhas(p.id) : [];
-      html += '<div class="tb-caminho">' + (S.pasta === 'sem' ? '<b>Sem pasta</b>' : caminhoDe(p && p.id).map(function(c, k, a){ return k < a.length - 1 ? '<button type="button" data-tb-ir="' + esc(c.id) + '">' + esc(c.nome) + '</button> ›' : '<b>' + esc(c.nome) + '</b>'; }).join(' ')) + '</div>';
+      var rz = raizPasta();
+      html += '<div class="tb-caminho"><button type="button" data-ba-ir="raiz">Arquivos</button> <span class="tb-sep">›</span> ' + (S.pasta === 'sem' ? (rz ? '<button type="button" data-tb-ir="' + esc(rz.id) + '">' + esc(rz.nome) + '</button> <span class="tb-sep">›</span> ' : '') + '<b>Sem pasta</b>' : caminhoDe(p && p.id).map(function(c, k, a){ return k < a.length - 1 ? '<button type="button" data-tb-ir="' + esc(c.id) + '">' + esc(c.nome) + '</button> <span class="tb-sep">›</span>' : '<b>' + esc(c.nome) + '</b>'; }).join(' ')) + '</div>';
       if(S.podeOrganizar && S.pasta !== 'sem') html += '<div class="tb-org"><button type="button" class="btn-secundario" data-tb-org="nova">+ Nova pasta aqui</button>' +
         (p && p.pai_id ? '<button type="button" class="btn-secundario" data-tb-org="renomear">Renomear</button><button type="button" class="btn-secundario" data-tb-org="mover_pasta">Mudar de lugar</button><button type="button" class="btn-secundario" data-tb-org="subir" title="Subir na lista">▲</button><button type="button" class="btn-secundario" data-tb-org="descer" title="Descer na lista">▼</button><button type="button" class="btn-perigo" data-tb-org="tirar">Tirar da lista</button>' : '') + '</div>';
-      if(fs.length) html += '<div class="tb-pastas">' + fs.map(function(f){ return '<button type="button" class="tb-pasta" data-tb-ir="' + esc(f.id) + '"><span aria-hidden="true">📁</span><span>' + esc(f.nome) + '<small>' + totalNa(f.id) + ' modelo(s)</small></span></button>'; }).join('') + '</div>';
+      if(fs.length) html += '<div class="tb-pastas">' + fs.map(function(f){ return '<button type="button" class="tb-pasta" data-tb-ir="' + esc(f.id) + '"><span class="tb-pasta-ico" aria-hidden="true">' + ICO.pasta.replace(/width="13" height="13"/, 'width="18" height="18"') + '</span><span>' + esc(f.nome) + '<small>' + totalNa(f.id) + ' modelo(s)</small></span></button>'; }).join('') + '</div>';
       html += ms.length ? ms.map(htmlModelo).join('') : (fs.length ? '' : '<div class="tb-vazio">Nenhum modelo nesta pasta' + (S.filtro !== 'todos' ? ' para este escritório' : '') + '.</div>');
       l.innerHTML = html;
     }
     l.querySelectorAll('[data-tb-ir]').forEach(function(x){ x.addEventListener('click', function(){ escolherPasta(x.getAttribute('data-tb-ir')); }); });
+    l.querySelectorAll('[data-ba-ir]').forEach(function(x){ x.addEventListener('click', function(){ irNo(x.getAttribute('data-ba-ir')); }); });
     l.querySelectorAll('[data-tb-org]').forEach(function(x){ x.addEventListener('click', function(){ organizar(x.getAttribute('data-tb-org')); }); });
     l.querySelectorAll('[data-tb-mover]').forEach(function(x){ x.addEventListener('click', function(){ organizar('mover_modelo', x.getAttribute('data-tb-mover')); }); });
     l.querySelectorAll('[data-tb-gerar]').forEach(function(x){
@@ -688,6 +741,321 @@
     }catch(e){
       msg.innerHTML = '<div class="tb-erro"><b>Não foi possível trocar:</b> ' + esc((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + '</div>';
     }finally{ b.disabled = false; b.textContent = txt; }
+  }
+
+  /* =====================================================================
+     ÁRVORE ÚNICA (22/11/2026, Dr. Victor: "ficaram duas colunas, Arquivos e Petições separados: temos de deixar
+     tudo junto na mesma organização, tudo nos Arquivos"). Uma árvore só, como o explorador de arquivos:
+       Arquivos
+         Petições (pastas dos modelos, modelos_pastas) + "Sem pasta" + categorias antigas com "petição" no nome
+         Contestações > uma pasta por tese (saga_contestacoes.js)
+         Papéis timbrados + categorias antigas com "timbrado" no nome
+         as demais categorias da antiga Biblioteca (biblioteca_categorias)
+     Nada muda no banco: cada pasta continua onde estava (modelos_peticao.area/subpasta/pasta_id intactos, a Renata lê
+     igual); a árvore só junta na tela. Nomes inteiros (quebram linha), recuo por nível, setinha com o sagaRecolher,
+     o que está aberto fica neste navegador (saga-modelos-arvore). Busca única: modelos, contestações e arquivos.
+     No celular a árvore vira um menu que abre e fecha no alto.
+     ===================================================================== */
+  var U = { abertos:null, vista:'modelos', ctSigla:'', buscaQ:'', antesBusca:null, ctBuscou:false, contagem:{}, tBusca:null, tArq:0 };
+  try{ U.abertos = JSON.parse(localStorage.getItem('saga-modelos-arvore') || 'null'); }catch(e){}
+  if(!U.abertos || typeof U.abertos !== 'object') U.abertos = { raiz:true };
+  function guardarAbertos(){ try{ localStorage.setItem('saga-modelos-arvore', JSON.stringify(U.abertos)); }catch(e){} }
+  var CHEV = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="9 6 15 12 9 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var ICO = {
+    pasta:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    raiz:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 9.5L12 3l9 6.5V21H3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    doc:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 9h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+    escudo:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    folha:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M5 7h14" stroke="currentColor" stroke-width="1.6"/></svg>'
+  };
+  function bib(){ return typeof state !== 'undefined' && state && Array.isArray(state.categorias) ? state : null; }
+  function filhasBib(id){ var b = bib(); if(!b) return []; return b.categorias.filter(function(c){ return (c.categoria_pai_id || null) === (id || null); }).sort(function(a, c){ return String(a.nome).localeCompare(String(c.nome), 'pt-BR'); }); }
+  function contaBib(id){ var n = U.contagem[id] || 0; filhasBib(id).forEach(function(f){ n += contaBib(f.id); }); return n; }
+  function noBib(c){ return { k:'c:' + c.id, nome:c.nome, n:contaBib(c.id), ico:ICO.pasta, filhos:filhasBib(c.id).map(noBib) }; }
+  function noModelo(p){ return { k:'m:' + p.id, nome:p.nome, n:totalNa(p.id), ico:ICO.pasta, filhos:filhas(p.id).map(noModelo) }; }
+
+  function construir(){
+    var raizesBib = filhasBib(null), usadas = {};
+    function puxar(re){ return raizesBib.filter(function(c){ if(usadas[c.id] || !re.test(semAc(c.nome))) return false; usadas[c.id] = 1; return true; }).map(noBib); }
+    var filhos = [];
+    var rz = raizPasta();
+    var antigasPet = puxar(/petic/);
+    if(rz || S.carregado){
+      var np = rz ? noModelo(rz) : { k:'m:', nome:'Petições', n:0, ico:ICO.doc, filhos:[] };
+      np.ico = ICO.doc;
+      var sp = semPasta().length;
+      if(sp) np.filhos.push({ k:'m:sem', nome:'Sem pasta', n:sp, ico:ICO.pasta, filhos:[] });
+      np.filhos = np.filhos.concat(antigasPet);
+      filhos.push(np);
+    }else filhos = filhos.concat(antigasPet);
+    var r = window.SagaContestacoes && SagaContestacoes.resumo ? SagaContestacoes.resumo() : null;
+    if(r) filhos.push({ k:'ct', nome:'Contestações', n:r.total, ico:ICO.escudo, filhos:r.teses.map(function(t){ return { k:'ct:' + t.sigla, nome:t.nome, n:t.n, ico:ICO.pasta, filhos:[] }; }) });
+    var antigasTimb = puxar(/timbrad/);
+    if(S.carregado || antigasTimb.length) filhos.push({ k:'pt', nome:'Papéis timbrados', n:S.timbrados.length + antigasTimb.reduce(function(a, x){ return a + x.n; }, 0), ico:ICO.folha, filhos:antigasTimb });
+    raizesBib.forEach(function(c){ if(!usadas[c.id]) filhos.push(noBib(c)); });
+    return { k:'raiz', nome:'Arquivos', n:null, ico:ICO.raiz, filhos:filhos };
+  }
+  function atual(){
+    if(S.aberto){
+      if(U.vista === 'busca') return null;
+      if(U.vista === 'contestacoes') return U.ctSigla ? 'ct:' + U.ctSigla : 'ct';
+      if(U.vista === 'timbrados') return 'pt';
+      if(S.pasta === 'sem') return 'm:sem';
+      return 'm:' + (S.pasta || (raizPasta() || {}).id || '');
+    }
+    var b = bib();
+    return b && b.categoriaAtualId ? 'c:' + b.categoriaAtualId : 'raiz';
+  }
+  function caminhoNo(arv, k){
+    var achou = null;
+    (function anda(no, trilha){ if(achou) return; var t = trilha.concat([no]); if(no.k === k){ achou = t; return; } no.filhos.forEach(function(f){ anda(f, t); }); })(arv, []);
+    return achou || [];
+  }
+  function htmlNo(no, nivel, sel){
+    var tem = no.filhos.length > 0, aberto = !!U.abertos[no.k];
+    return '<div class="ba-item" data-ba-item="' + esc(no.k) + '">' +
+      '<div class="ba-no' + (no.k === 'raiz' ? ' ba-raiz' : '') + (no.k === sel ? ' ativa' : '') + '" data-ba="' + esc(no.k) + '" role="treeitem" tabindex="0" aria-level="' + (nivel + 1) + '"' +
+        (tem ? ' aria-expanded="' + aberto + '"' : '') + (no.k === sel ? ' aria-current="true"' : '') + ' title="' + esc(no.nome) + (no.n != null ? ' (' + no.n + ')' : '') + '" style="--ba-nivel:' + nivel + '">' +
+        '<button type="button" class="ba-seta"' + (tem ? ' data-ba-seta="' + esc(no.k) + '" aria-expanded="' + aberto + '" aria-label="' + (aberto ? 'Recolher ' : 'Abrir ') + esc(no.nome) + '"' : ' tabindex="-1" aria-hidden="true"') + '>' + (tem ? CHEV : '') + '</button>' +
+        '<span class="ba-ico">' + no.ico + '</span><span class="ba-nome">' + esc(no.nome) + '</span>' + (no.n != null ? '<span class="ba-n">' + no.n + '</span>' : '') +
+      '</div>' +
+      (tem ? '<div class="ba-filhos" role="group"' + (aberto ? '' : ' hidden') + '>' + no.filhos.map(function(f){ return htmlNo(f, nivel + 1, sel); }).join('') + '</div>' : '') +
+    '</div>';
+  }
+  function desenharArvoreUnica(){
+    var cx = document.querySelector('#bibArvore .ba-arv'); if(!cx) return;
+    var arv = construir(), sel = atual();
+    caminhoNo(arv, sel).slice(0, -1).forEach(function(n){ U.abertos[n.k] = true; });
+    var rz = raizPasta(); if(rz && U.abertos['m:' + rz.id] == null) U.abertos['m:' + rz.id] = true;
+    cx.innerHTML = htmlNo(arv, 0, sel);
+    rotuloCelular(arv, sel);
+    if(!S.aberto) cartoesRaiz();
+  }
+  function rotuloCelular(arv, sel){
+    var b = document.querySelector('#bibArvore .ba-mob span'); if(!b) return;
+    var cam = caminhoNo(arv || construir(), sel === undefined ? atual() : sel);
+    b.textContent = U.vista === 'busca' && S.aberto ? 'Busca: ' + U.buscaQ : (cam.length ? cam.map(function(n){ return n.nome; }).join(' › ') : 'Pastas');
+  }
+  function marcarNo(){
+    var sel = atual();
+    document.querySelectorAll('#bibArvore [data-ba]').forEach(function(el){
+      var ok = el.getAttribute('data-ba') === sel;
+      el.classList.toggle('ativa', ok);
+      if(ok) el.setAttribute('aria-current', 'true'); else el.removeAttribute('aria-current');
+    });
+    var alvo = sel && document.querySelector('#bibArvore [data-ba="' + (window.CSS && CSS.escape ? CSS.escape(sel) : sel) + '"]');
+    if(!alvo && sel){ desenharArvoreUnica(); return; }
+    var g = alvo && alvo.parentElement;
+    while(g && g.id !== 'bibArvore'){
+      if(g.classList.contains('ba-filhos') && g.hidden){
+        g.hidden = false;
+        var it = g.parentElement, k = it.getAttribute('data-ba-item'); U.abertos[k] = true;
+        it.querySelectorAll(':scope > .ba-no, :scope > .ba-no > .ba-seta').forEach(function(x){ x.setAttribute('aria-expanded', 'true'); });
+      }
+      g = g.parentElement;
+    }
+    rotuloCelular(null, sel);
+    desenharMigalhas();
+  }
+  function noDaVista(){ return atual(); }
+  function noDaBiblioteca(){ return atual(); }
+  function celular(){ return window.matchMedia && matchMedia('(max-width:760px)').matches; }
+  function fecharMenuCelular(){
+    var corpo = document.querySelector('#bibArvore .ba-corpo'), bt = document.querySelector('#bibArvore .ba-mob');
+    if(!celular() || !corpo || corpo.hidden) return;
+    bt.setAttribute('aria-expanded', 'false');
+    if(window.sagaRecolher) sagaRecolher(corpo, true); else corpo.hidden = true;
+  }
+  function vista(v){
+    U.vista = v;
+    var pn = document.getElementById('painelTimbrados'); if(pn) pn.setAttribute('data-vista', v);
+    desenharMigalhas();
+  }
+  function desenharMigalhas(){
+    var m = document.getElementById('tbMigalhas'); if(!m) return;
+    var partes = ['<button type="button" data-ba-ir="raiz">Arquivos</button>'];
+    if(U.vista === 'contestacoes'){
+      var r = window.SagaContestacoes && SagaContestacoes.resumo ? SagaContestacoes.resumo() : null;
+      var t = r && U.ctSigla ? r.teses.filter(function(x){ return x.sigla === U.ctSigla; })[0] : null;
+      partes.push(t ? '<button type="button" data-ba-ir="ct">Contestações</button>' : '<b>Contestações</b>');
+      if(t) partes.push('<b>' + esc(t.nome) + '</b>');
+    }else if(U.vista === 'timbrados') partes.push('<b>Papéis timbrados</b>');
+    else if(U.vista === 'busca') partes.push('<b>Busca em todos os modelos e arquivos: “' + esc(U.buscaQ) + '”</b>');
+    m.innerHTML = partes.join(' <span class="tb-sep">›</span> ');
+    m.querySelectorAll('[data-ba-ir]').forEach(function(x){ x.addEventListener('click', function(){ irNo(x.getAttribute('data-ba-ir')); }); });
+  }
+  function irBiblioteca(id){
+    if(S.aberto) fechar('clique');
+    var caminho = ['raiz'];
+    if(id && typeof montarBreadcrumbCategoria === 'function') caminho = caminho.concat(montarBreadcrumbCategoria(id).map(function(c){ return c.id; }));
+    if(typeof navegarParaCaminho === 'function') navegarParaCaminho(caminho, 'categoria');
+    cartoesRaiz();
+    marcarNo();
+  }
+  function irNo(k){
+    if(!k) return;
+    if(k !== 'busca') limparBuscaGeral();
+    if(k === 'raiz') irBiblioteca(null);
+    else if(k.indexOf('c:') === 0) irBiblioteca(k.slice(2));
+    else if(k.indexOf('m:') === 0){ if(!S.aberto) abrir('clique'); escolherPasta(k.slice(2) || (raizPasta() || {}).id || null); }
+    else if(k === 'ct' || k.indexOf('ct:') === 0){
+      if(!S.aberto) abrir('clique');
+      U.ctSigla = k === 'ct' ? '' : k.slice(3);
+      vista('contestacoes');
+      if(window.SagaContestacoes && SagaContestacoes.filtrar) SagaContestacoes.filtrar(U.ctSigla);
+      marcarNo();
+    }else if(k === 'pt'){ if(!S.aberto) abrir('clique'); vista('timbrados'); marcarNo(); }
+    fecharMenuCelular();
+    var cab = document.querySelector('.conteudo-biblioteca');
+    if(cab && cab.getBoundingClientRect().top < 0) cab.scrollIntoView({ block:'start', behavior: reduzido() ? 'auto' : 'smooth' });
+  }
+
+  /* ---------------- busca única ---------------- */
+  function limparBuscaGeral(){
+    var bx = document.getElementById('baBusca');
+    if(bx && bx.value) bx.value = '';
+    var tinha = !!U.buscaQ;
+    U.buscaQ = ''; U.antesBusca = null;
+    if(S.busca){ S.busca = ''; }
+    if(U.ctBuscou && window.SagaContestacoes && SagaContestacoes.buscar){ U.ctBuscou = false; SagaContestacoes.buscar(''); }
+    if(tinha && U.vista === 'busca') vista('modelos');
+  }
+  function buscaGeral(q){
+    q = String(q || '').trim();
+    if(!q){
+      var volta = U.antesBusca || 'raiz';
+      limparBuscaGeral(); irNo(volta); return;
+    }
+    if(!U.buscaQ) U.antesBusca = atual() || 'raiz';
+    U.buscaQ = q;
+    vista('busca');
+    if(!S.aberto) abrir('clique');
+    S.busca = q; desenharModelos();
+    if(window.SagaContestacoes && SagaContestacoes.buscar){ U.ctBuscou = true; SagaContestacoes.buscar(q); }
+    buscarArquivos(q);
+    marcarNo();
+  }
+  async function buscarArquivos(q){
+    var sec = document.getElementById('tbBuscaArq'); if(!sec) return;
+    var vez = ++U.tArq;
+    sec.innerHTML = '<h2>Arquivos</h2><div class="tb-vazio">Procurando nos arquivos...</div>';
+    try{
+      var termo = q.replace(/[%_\\]/g, function(c){ return '\\' + c; });
+      var r = await sb().from('biblioteca_arquivos').select('id,nome_arquivo,categoria_id').eq('ativo', true).ilike('nome_arquivo', '%' + termo + '%').order('nome_arquivo').limit(60);
+      if(vez !== U.tArq) return;
+      if(r.error) throw r.error;
+      var l = r.data || [];
+      var b = bib();
+      function ondeArq(cid){ if(!cid || typeof montarBreadcrumbCategoria !== 'function') return 'Arquivos'; return ['Arquivos'].concat(montarBreadcrumbCategoria(cid).map(function(c){ return c.nome; })).join(' › '); }
+      sec.innerHTML = '<h2>Arquivos</h2>' + (l.length ? '<div class="tb-lista">' + l.map(function(a){
+        return '<div class="tb-modelo"><div class="tb-mtxt"><b>' + esc(a.nome_arquivo) + '</b><span class="tb-onde">' + esc(ondeArq(a.categoria_id)) + '</span></div>' +
+          '<button type="button" class="btn-secundario" data-ba-arq="' + esc(a.categoria_id ? 'c:' + a.categoria_id : 'raiz') + '">Abrir a pasta</button></div>';
+      }).join('') + '</div>' : '<div class="tb-vazio">Nenhum arquivo com essa busca.</div>');
+      sec.querySelectorAll('[data-ba-arq]').forEach(function(x){ x.addEventListener('click', function(){ irNo(x.getAttribute('data-ba-arq')); }); });
+    }catch(e){
+      if(vez !== U.tArq) return;
+      sec.innerHTML = '<h2>Arquivos</h2><div class="tb-erro"><b>Não consegui procurar nos arquivos:</b> ' + esc((window.sagaErroBanco ? sagaErroBanco(e) : (e && e.message)) || e) + '<br>Os modelos e as contestações abaixo foram procurados normalmente.</div>';
+    }
+  }
+  async function contarArquivos(){
+    try{
+      var r = await sb().from('biblioteca_arquivos').select('categoria_id').eq('ativo', true).limit(10000);
+      if(r.error) throw r.error;
+      U.contagem = {};
+      (r.data || []).forEach(function(a){ var k = a.categoria_id || ''; U.contagem[k] = (U.contagem[k] || 0) + 1; });
+      desenharArvoreUnica();
+    }catch(e){ console.warn('[SAGA] Modelos: não contei os arquivos de cada pasta: ' + ((window.sagaErroBanco ? sagaErroBanco(e) : (e && e.message)) || e)); }
+  }
+
+  /* cartões de Petições, Contestações e Papéis timbrados na raiz dos Arquivos (como pastas) */
+  function cartoesRaiz(){
+    var b = bib(), grid = document.getElementById('gridItens');
+    if(!grid) return;
+    grid.querySelectorAll('.ba-card-especial').forEach(function(x){ x.remove(); });
+    if(S.aberto || !b || b.categoriaAtualId) return;
+    Array.prototype.forEach.call(grid.children, function(x){ if(!x.classList.contains('item-card') && /pasta está vazia/i.test(x.textContent)) x.remove(); });
+    var arv = construir(), lista = arv.filhos.filter(function(n){ return n.k.indexOf('c:') !== 0; });
+    var frag = document.createDocumentFragment();
+    lista.forEach(function(n){
+      var c = document.createElement('div');
+      c.className = 'item-card pasta-card ba-card-especial'; c.tabIndex = 0; c.setAttribute('role', 'button'); c.title = 'Abrir ' + n.nome;
+      c.innerHTML = '<div class="icone-item-wrap pasta">' + n.ico.replace(/width="13" height="13"/, 'width="20" height="20"') + '</div>' +
+        '<div class="nome-item-card">' + esc(n.nome) + '</div><div class="meta-item-card">' + (n.n || 0) + (n.k === 'pt' ? ' papel(is)' : n.k === 'ct' ? ' contestação(ões)' : ' modelo(s)') + '</div>';
+      c.addEventListener('click', function(){ irNo(n.k); });
+      c.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); irNo(n.k); } });
+      frag.appendChild(c);
+    });
+    grid.insertBefore(frag, grid.firstChild);
+    /* as pastas antigas que a árvore pôs dentro de Petições / Papéis timbrados não aparecem soltas na raiz */
+    filhasBib(null).forEach(function(c){
+      if(!/petic|timbrad/.test(semAc(c.nome))) return;
+      var card = grid.querySelector('.item-card[data-item-id="' + (window.CSS && CSS.escape ? CSS.escape(c.id) : c.id) + '"]');
+      if(card) card.style.display = 'none';
+    });
+  }
+
+  function montarArvoreUnica(coluna){
+    if(document.getElementById('bibArvore')) return;
+    var box = document.createElement('nav');
+    box.id = 'bibArvore'; box.setAttribute('aria-label', 'Pastas dos modelos e arquivos');
+    box.innerHTML = '<button type="button" class="ba-mob" aria-expanded="false" aria-controls="baCorpo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6"/></svg><span>Pastas</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+      '<input type="search" class="ba-busca" id="baBusca" placeholder="Buscar em modelos e arquivos" title="Buscar em todos os modelos, contestações e arquivos" aria-label="Buscar em todos os modelos e arquivos">' +
+      '<div class="ba-corpo" id="baCorpo"><div class="ba-arv" role="tree" aria-label="Arquivos"></div></div>';
+    var cab = coluna.querySelector('.categorias-cabecalho');
+    if(cab && cab.nextSibling) coluna.insertBefore(box, cab.nextSibling); else coluna.appendChild(box);
+    var tit = coluna.querySelector('.titulo-categorias'); if(tit) tit.textContent = 'Pastas';
+    var corpo = box.querySelector('.ba-corpo'), mob = box.querySelector('.ba-mob');
+    if(celular()) corpo.hidden = true;
+    if(window.matchMedia) matchMedia('(max-width:760px)').addEventListener('change', function(e){ corpo.hidden = e.matches; mob.setAttribute('aria-expanded', 'false'); });
+    mob.addEventListener('click', function(){
+      var abrirAgora = corpo.hidden;
+      mob.setAttribute('aria-expanded', String(abrirAgora));
+      if(window.sagaRecolher) sagaRecolher(corpo, !abrirAgora); else corpo.hidden = !abrirAgora;
+    });
+    var bx = box.querySelector('#baBusca');
+    bx.addEventListener('input', function(){ clearTimeout(U.tBusca); var v = bx.value; U.tBusca = setTimeout(function(){ buscaGeral(v); }, 320); });
+    var arv = box.querySelector('.ba-arv');
+    function alternar(k){
+      var it = arv.querySelector('[data-ba-item="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); if(!it) return;
+      var f = it.querySelector(':scope > .ba-filhos'); if(!f) return;
+      var abrirAgora = f.hidden;
+      U.abertos[k] = abrirAgora; guardarAbertos();
+      it.querySelectorAll(':scope > .ba-no, :scope > .ba-no > .ba-seta').forEach(function(x){ x.setAttribute('aria-expanded', String(abrirAgora)); });
+      var st = it.querySelector(':scope > .ba-no > .ba-seta'); if(st) st.setAttribute('aria-label', (abrirAgora ? 'Recolher ' : 'Abrir ') + (it.querySelector('.ba-nome') || {}).textContent);
+      if(window.sagaRecolher) sagaRecolher(f, !abrirAgora); else f.hidden = !abrirAgora;
+    }
+    arv.addEventListener('click', function(e){
+      var seta = e.target.closest('[data-ba-seta]');
+      if(seta){ e.stopPropagation(); alternar(seta.getAttribute('data-ba-seta')); return; }
+      var no = e.target.closest('[data-ba]'); if(no) irNo(no.getAttribute('data-ba'));
+    });
+    arv.addEventListener('keydown', function(e){
+      var no = e.target.closest('[data-ba]'); if(!no) return;
+      var k = no.getAttribute('data-ba'), exp = no.getAttribute('aria-expanded');
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); irNo(k); }
+      else if(e.key === 'ArrowRight' && exp === 'false'){ e.preventDefault(); alternar(k); }
+      else if(e.key === 'ArrowLeft' && exp === 'true'){ e.preventDefault(); alternar(k); }
+      else if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+        var vis = Array.prototype.filter.call(arv.querySelectorAll('[data-ba]'), function(x){ return x.offsetParent !== null; });
+        var i = vis.indexOf(no) + (e.key === 'ArrowDown' ? 1 : -1);
+        if(vis[i]){ e.preventDefault(); vis[i].focus(); }
+      }
+    });
+    /* a antiga Biblioteca redesenha a barra dela a cada troca de pasta: a árvore única acompanha */
+    if(typeof window.renderizarSidebar === 'function' && !window.renderizarSidebar._ba){
+      var o1 = window.renderizarSidebar;
+      window.renderizarSidebar = function(){ var r = o1.apply(this, arguments); desenharArvoreUnica(); return r; };
+      window.renderizarSidebar._ba = true;
+    }
+    if(typeof window.renderizarGrid === 'function' && !window.renderizarGrid._ba){
+      var o2 = window.renderizarGrid;
+      window.renderizarGrid = function(){ var r = o2.apply(this, arguments); cartoesRaiz(); return r; };
+      window.renderizarGrid._ba = true;
+    }
+    if(window.SagaContestacoes && SagaContestacoes.aoMudar) SagaContestacoes.aoMudar(function(){ desenharArvoreUnica(); if(U.vista === 'contestacoes') desenharMigalhas(); });
+    else { var tc = 0; (function esp(){ if(window.SagaContestacoes && SagaContestacoes.aoMudar){ SagaContestacoes.aoMudar(function(){ desenharArvoreUnica(); }); desenharArvoreUnica(); } else if(tc++ < 50) setTimeout(esp, 100); })(); }
+    var tb = 0; (function espSb(){ if(sb()) contarArquivos(); else if(tb++ < 100) setTimeout(espSb, 100); })();
+    desenharArvoreUnica();
   }
 
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar); else montar();

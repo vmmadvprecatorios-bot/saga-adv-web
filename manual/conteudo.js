@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.39",
+  versao: "3.40",
   data: "22/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.40", data: "22/11/2026", mudou: "Modelos: a coluna da esquerda virou **uma árvore só**, como o explorador de arquivos: **Arquivos** > Petições (áreas e subpastas), Contestações (por tese), Papéis timbrados e as pastas da antiga Biblioteca; nomes inteiros, setinha para abrir e fechar, **busca única** em modelos, contestações e arquivos; no celular a árvore abre e fecha no alto. Print novo no sistema simulado." },
     { versao: "3.39", data: "22/11/2026", mudou: "Agenda: a parte **Ver a agenda no celular** ganhou o print (janela Agenda no celular, no sistema simulado) e as marcas; o aviso no sino 30 minutos antes vale também para cada data de um compromisso que se repete." },
     { versao: "3.38", data: "22/11/2026", mudou: "Ficha: parte nova **Linha do tempo do processo** (tudo o que aconteceu no processo numa lista: filtros por tipo, Só o importante, busca e Ver mais). Prints novos no sistema simulado: ficha (3 cartões e contatos; blocos e cartões Processo/Painel lateral; janela Criar pastas; janela Ler consulta com as miniaturas dos prints), Minhas Tarefas (quadro, menu de etiquetas e o botão **Filtros no celular**, parte nova), Captação (topo e lista com Por captador, Sem captador, Alterar… e Captador anterior), Painel geral (com Mais números recolhido) e Financeiro (aba Distribuição). Os prints agora aparecem inteiros, sem corte, também os de celular." },
     { versao: "3.37", data: "22/11/2026", mudou: "Manual em dia com as novidades de 19 a 21/11: capítulo **Para aprovar** refeito (Luísa e Renata; Pedidos para a Renata com Pode fazer, Depois e Não fazer e o Plano da peça; Ler e corrigir, Ver como vai sair, revisão da Luísa com o selo Revisada, Aprovar e Protocolei; Recados e Relatório em PDF; **Autos para baixar**); ficha em **3 cartões** (Cliente, Processo, Painel lateral) com o código para copiar; **Fazer petição** lendo os documentos do cliente; **Cálculo do PSS** lendo requisitório, espelho e demonstrativo (de onde veio cada dado; SELIC); **Planilhas e textos do SAGA**, **Editor de planilhas** e **Planilhas do PSS**; **Modelos** (petições, timbrados e arquivos; pastas; + Novo modelo, Importar pasta de petições, editor e A revisar); **Distribuição dos honorários** (Equipe e Jurídico) e **Meus honorários**; Minhas Tarefas (etiqueta Dar impulso processual, tarefa Manutenção: completar dados, botão Filtros no celular); Intimações (linha da Luísa com o prazo em dias úteis, Prazo vencendo, repetida CNJ × e-mail); Captação (Alterar…, Sem captador, Captador anterior, gráfico Por captador; passagem sozinha para o Jurídico; pré-validados do prêmio); Chat (grupo Recebimento de documentação); login (**Manter conectado**; login diário); botão **?** de ajuda; PDF com texto para selecionar e copiar; Painel geral (Mais números recolhido); SAGA no Claude (ferramentas novas); Saúde do sistema e Armazenamento; permissões novas. Prints novos no sistema simulado." },
@@ -1325,13 +1326,15 @@ window.SAGA_MANUAL = {
         { id: "biblioteca", titulo: "Modelos: petições, timbrados e arquivos (e Treinamentos)",
           quando: "Para achar um modelo de petição, baixar um papel timbrado, guardar arquivos do escritório ou estudar os materiais da equipe.",
           passos: [
-            "Abra **Gestão > Modelos**. A coluna da esquerda tem duas partes: **Modelos de petição** (com as pastas em árvore, por área do direito e subpastas) e **Arquivos** (a antiga Biblioteca: categorias e pastas de arquivos do escritório). A antiga Biblioteca agora fica aqui dentro; nada se perdeu.",
-            "Clique numa área ou subpasta para ver os modelos dela. A **busca** acha pelo título, área, subpasta, tipo de peça ou tese. Modelo com o selo **A revisar** foi importado e ainda não foi conferido.",
+            "Abra **Gestão > Modelos**. A coluna da esquerda (**Pastas**) é uma árvore só, como o explorador de arquivos do computador: tudo fica dentro de **Arquivos**: **Petições** (as áreas do direito e as subpastas), **Contestações** (uma pasta por tese), **Papéis timbrados** e as pastas da antiga Biblioteca (Procurações, Planilhas, Treinamento, Outros). Nada se perdeu: só ficou tudo junto.",
+            "Clique no nome de uma pasta para ver o que tem nela; a **setinha** ao lado abre e fecha as subpastas (o SAGA lembra o que ficou aberto neste computador). No alto do conteúdo, o caminho (por exemplo Arquivos › Petições › Direito Tributário) leva de volta a qualquer pasta. Clicando em **Arquivos** aparecem todas as pastas em cartões.",
+            "A caixa **Buscar em modelos e arquivos**, no alto das pastas, procura em tudo de uma vez: modelos (título, área, subpasta, tipo de peça ou tese, mostrando a pasta de cada um), o texto das contestações e o nome dos arquivos. Apague o texto da busca para voltar à pasta onde estava. Modelo com o selo **A revisar** foi importado e ainda não foi conferido.",
+            "No celular, as pastas ficam num botão no alto (mostra onde você está, ex.: Arquivos › Petições): toque para abrir a árvore, escolha a pasta e ela se fecha sozinha.",
             "Quem organiza os modelos (administrador ou quem tem a permissão de gerenciar modelos): [[+ Nova pasta aqui]], [[Renomear]], [[Mudar de lugar]] e, no modelo, [[Mover]] para outra pasta.",
             "**Treinamentos** (menu Comunicação): materiais, perguntas e respostas, roteiros de atendimento e fluxos de trabalho. Abra, estude e marque como concluído. O administrador exclui um treinamento pela lixeira do cartão (aparece ao passar o mouse) ou pelo botão [[Excluir]] dentro dele."
           ],
           img: "biblioteca",
-          marcas: ["Modelos de petição, com as pastas por área.", "Arquivos (a antiga Biblioteca).", "Busca dos modelos."]
+          marcas: ["Busca única: modelos, contestações e arquivos.", "A árvore das pastas: tudo dentro de Arquivos (setinha abre e fecha).", "Petições, com as áreas e subpastas.", "Contestações (por tese), Papéis timbrados e as pastas da antiga Biblioteca.", "O caminho da pasta aberta (clique para voltar)."]
         },
         { id: "timbrados", titulo: "Gerar uma petição pelo modelo (timbrados)",
           quando: "Para fazer uma petição já no papel timbrado da Victor Morais Advocacia, da ANCREF ou da Sarmento, em Word ou em PDF, ou para baixar o papel timbrado em branco.",
