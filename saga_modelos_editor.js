@@ -190,7 +190,7 @@ window.SagaModelosEditor = (function(){
         poe({ tipo:'assinatura' }); fim = true; return;
       }
       if(/^(nestes\s+termos|termos\s+em\s+que|pede\s+(e\s+espera\s+)?deferimento)/i.test(cru)) return; /* o fecho já traz */
-      if(!viuQualif && /\b(vem|vêm)\b[\s\S]*(respeitosamente|presença|perante)/i.test(cru)){
+      if(!viuQualif && /\b(vem|vêm)\b[\s\S]*(respeitosamente|presença|perante|propor|ajuizar|apresentar|opor|interpor|requerer)/i.test(cru)){
         var tc = trocarCliente(t, achados);
         if(tc === t) avisos.push('nome do cliente não achado na qualificação: confira');
         poe({ tipo:'paragrafo', texto:tc }); viuQualif = true; return;
