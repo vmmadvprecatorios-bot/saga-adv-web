@@ -177,5 +177,6 @@ init().catch(function(e){toast('Erro ao abrir as intimações: '+esc((window.sag
 (function(){function ap(r){if(!window.sagaCampoData||!r||r.nodeType!==1)return;if(r.matches('input[type="date"]'))window.sagaCampoData(r);r.querySelectorAll('input[type="date"]').forEach(function(i){window.sagaCampoData(i);});}
 function ini(){ap(document.body);new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(ap);});}).observe(document.body,{childList:true,subtree:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ini);else ini();})();</script>
+<script src="saga_radar_email.js"></script>
 </body>
 </html>
