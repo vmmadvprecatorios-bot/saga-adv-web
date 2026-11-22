@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <script>
 // Página "não encontrada" (o GitHub Pages e a Vercel mostram esta página para endereço que não existe).
 // 1) Pedido de autorização do Claude (T66) que chegou num endereço torto, por exemplo quando o Site URL do Supabase
@@ -40,7 +42,7 @@ p b{color:var(--text);font-weight:600}
 .btn-primary:hover{background:color-mix(in srgb,var(--gold) 24%,var(--panel))}
 @media(max-width:520px){.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes .btn-primary{width:100%}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611220550">
+<link rel="stylesheet" href="saga_tema.css?v=202611221441">
 </head>
 <body>
 <main class="cartao" id="cartao">

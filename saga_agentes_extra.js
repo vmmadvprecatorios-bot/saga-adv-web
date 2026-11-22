@@ -10,6 +10,8 @@
    REVISÃO DAS PETIÇÕES (21/11/2026, Dr. Victor; blocos 300-302): a Luísa confere cada petição da Renata
    antes de chegar aqui. Na entrega aparece o selo (Revisada / ponto não resolvido / Não revisada) e a lista
    curta do que foi conferido; no quadro "Com a Renata", as que estão na revisão ou voltaram dela.
+   CUMPRIMENTO DE SENTENÇA (22/11/2026, Dr. Victor; bloco 385): tipo de peça novo "cumprimento" (nome no NOME_PECA da tela)
+   e, no Relatório, a tabela "Petições pedidas por tipo".
    Só para quem tem agentes.aprovar (o banco recusa os outros). Erros sempre à vista.
    ===================================================================== */
 (function(){
@@ -34,6 +36,10 @@
     return String((h/24).toFixed(1)).replace('.',',')+' dias';
   }
   function n(v){return v==null?0:Number(v)||0;}
+  /* CUMPRIMENTO DE SENTENÇA (22/11/2026, Dr. Victor; bloco 385): tipo de peça novo da Renata. O nome do tipo fica aqui e
+     entra no NOME_PECA da tela (agentes_aprovar.html), para a etiqueta dos "Pedidos para a Renata" sair certa. */
+  var NOME_PECA_X={impulso:'Impulso processual',manifestacao:'Manifestação',inicial_pss:'Inicial do PSS',cumprimento:'Cumprimento de sentença',outra:'Outra peça'};
+  try{if(typeof NOME_PECA==='object'&&NOME_PECA&&!NOME_PECA.cumprimento)NOME_PECA.cumprimento=NOME_PECA_X.cumprimento;}catch(e){}
   function cnj(x){return window.sagaFmt&&sagaFmt.cnj?sagaFmt.cnj(x):(x||'');}
   function chave(a){a=String(a||'').toLowerCase();return ({triagem:'luisa',manutencao:'luisa',coordenador:'luisa',luisa:'luisa',redator:'renata',renata:'renata'})[a]||a;}
   var NOME={luisa:'Luísa',renata:'Renata'};
@@ -186,7 +192,9 @@
         kpi('Rodadas',n(r.total))+kpi('Certas',n(r.ok))+kpi('Com falha',n(r.erro)+n(r.passageiro),(n(r.erro)+n(r.passageiro))?'ruim':'')+kpi('Entregas',n(en.total),'forte')+
         kpi('Aprovadas',n(dc.aprovadas))+kpi('De primeira',pct(dc.percentual_primeira))+kpi('Tempo até aprovar (média)',horas(dc.horas_media))+kpi('Tempo até aprovar (metade em até)',horas(dc.horas_mediana))+'</div>';
       if(a.triagem){var t=a.triagem;s+='<div class="kpis">'+kpi('Intimações triadas',n(t.intimacoes))+kpi('Andamentos do CNJ',n(t.andamentos_cnj))+kpi('Pedidos da equipe',n(t.pedidos))+kpi('Sem providência (ignorados)',n(t.ignorados))+'</div>';}
-      if(a.pecas){var k=a.pecas;s+='<div class="kpis">'+kpi('Petições pedidas',n(k.pedidas))+kpi('Petições prontas',n(k.prontas),'forte')+kpi('Petições aprovadas',n(k.aprovadas))+kpi('Protocoladas',n(k.protocoladas))+kpi('Com erro',n(k.com_erro),n(k.com_erro)?'ruim':'')+'</div>';}
+      if(a.pecas){var k=a.pecas;s+='<div class="kpis">'+kpi('Petições pedidas',n(k.pedidas))+kpi('Petições prontas',n(k.prontas),'forte')+kpi('Petições aprovadas',n(k.aprovadas))+kpi('Protocoladas',n(k.protocoladas))+kpi('Com erro',n(k.com_erro),n(k.com_erro)?'ruim':'')+'</div>';
+        var ptp=k.por_tipo||{},cps=Object.keys(ptp);
+        if(cps.length)s+='<table class="tab"><thead><tr><th>Petições pedidas por tipo</th><th class="num">Quantidade</th></tr></thead><tbody>'+cps.map(function(c){return '<tr><td>'+esc(NOME_PECA_X[c]||c)+'</td><td class="num">'+esc(n(ptp[c]))+'</td></tr>';}).join('')+'</tbody></table>';}
       var pt=en.por_tipo||[];
       s+=pt.length?'<table class="tab"><thead><tr><th>Entregas por tipo</th><th class="num">Quantidade</th></tr></thead><tbody>'+pt.map(function(x){return '<tr><td>'+esc(tipoNome(x.tipo))+'</td><td class="num">'+esc(x.n)+'</td></tr>';}).join('')+'</tbody></table>'
         :'<div class="nada">Nenhuma entrega no período.</div>';

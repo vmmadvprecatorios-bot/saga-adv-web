@@ -14,6 +14,8 @@ if(c&&c!=='azul')document.documentElement.setAttribute('data-cor',c);
 var F={azul:['#172234','#f3f5f8'],grafite:['#1A1A1A','#F3F2EF'],novembro:['#0B1B2C','#F0F7FD'],rosa:['#1E1219','#FDF3F7'],natal:['#0E1D16','#FAF8F2']};document.documentElement.style.background=(F[c]||F.azul)[t==='light'?1:0];}catch(e){}})();
 </script>
 <meta charset="UTF-8">
+<!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex">
 <title>VMMADV | Ligar o SAGA ao Claude</title>
@@ -59,7 +61,7 @@ h1{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;line-he
 @keyframes gira{to{transform:rotate(360deg)}}
 @media(max-width:520px){.quem{flex-wrap:wrap}.quem>div{flex:1;min-width:0}.link-troca{margin-left:48px;width:100%;text-align:left}.cartao{padding:20px 18px 18px}h1{font-size:24px}.botoes{flex-direction:column-reverse}.botoes button{width:100%}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611220550">
+<link rel="stylesheet" href="saga_tema.css?v=202611221441">
 </head>
 <body>
 <main class="cartao" id="cartao" aria-live="polite">

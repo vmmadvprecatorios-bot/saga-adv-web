@@ -15,7 +15,7 @@
 // O endereço do sistema vem de configuracoes_sistema.extra.url_sistema.
 // ================================================================
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import nodemailer from "npm:nodemailer@6.9.16";
+import nodemailer from "npm:nodemailer@7.0.11"; // 22/11: 6.9.16 tinha falhas conhecidas (laudo de segurança)
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -25,7 +25,7 @@ const CORS = {
 function resposta(status: number, corpo: Record<string, unknown>) {
   return new Response(JSON.stringify(corpo), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 }
-const esc = (t: unknown) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const esc = (t: unknown) => String(t ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });

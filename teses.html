@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611220550"></script>
+<script src="saga_guard.js?v=202611221441"></script>
 <meta charset="UTF-8">
+<!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VMMADV | Teses e oportunidades</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -244,7 +246,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
 .opc-linha{display:flex;align-items:center;gap:8px;margin-bottom:6px}.opc-linha input[type=text]{flex:1;min-width:0;height:32px;border-radius:8px;border:1px solid var(--border-soft);background:var(--panel);padding:0 9px;font-size:12px}.opc-linha input[type=color]{width:32px;height:30px;border:1px solid var(--border-soft);border-radius:7px;background:none;padding:0}
 @media(max-width:860px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.atu-grade{grid-template-columns:1fr}.teses-lista{position:static;flex-direction:row;overflow-x:auto;max-height:none}.teses-tit{display:none}.tese-item{flex:0 0 auto}.grade2,.grade3,.blocos,.agenda{grid-template-columns:1fr}.vis button span{display:none}.rad{grid-template-columns:1fr}.rad .acoes{justify-content:flex-start}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611220550">
+<link rel="stylesheet" href="saga_tema.css?v=202611221441">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -264,6 +266,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
       <button class="pill active" type="button" data-aba="atualizacoes">Atualizações de teses<b id="qtdNovas" hidden></b></button>
       <button class="pill" type="button" data-aba="prateleira">Prateleira de produtos</button>
       <button class="pill" type="button" data-aba="radar">Radar de oportunidades<b id="qtdRadar" hidden></b></button>
+      <button class="pill" type="button" data-aba="base" id="abaBase" hidden title="Só o administrador geral">Base de dados</button>
     </div>
     <div class="vis" id="visoes" role="group" aria-label="Modo de ver"></div>
   </div>
@@ -293,6 +296,8 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
     <div class="graf-bloco" id="grafRad"></div>
     <div id="radarConteudo"></div>
   </section>
+
+  <section class="aba-pane" id="aba-base"></section>
 </main>
 </div>
 
@@ -310,8 +315,9 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611220550"></script>
-<script src="saga_texto.js?v=202611220550"></script>
+<script src="saga_ui.js?v=202611221441"></script>
+<script src="saga_texto.js?v=202611221441"></script>
+<script src="saga_teses_base.js?v=202611221441"></script>
 <script>
 /* =====================================================================
    SAGA · Teses e oportunidades (blocos 110 e 111)
@@ -343,10 +349,11 @@ var ICO={
 var VISOES={
   atualizacoes:[['blog','Blog','blog'],['tempo','Linha do tempo','tempo'],['teses','Por tese','grade'],['lista','Lista','lista']],
   prateleira:[['cartoes','Cartões','grade'],['lista','Lista','lista'],['kanban','Kanban','kanban']],
-  radar:[['cartoes','Cartões','blog'],['lista','Lista','lista'],['kanban','Kanban','kanban'],['agenda','Julgamentos','agenda']]
+  radar:[['cartoes','Cartões','blog'],['lista','Lista','lista'],['kanban','Kanban','kanban'],['agenda','Julgamentos','agenda']],
+  base:[]
 };
 function $(id){return document.getElementById(id);}
-function esc(v){var d=document.createElement('div');d.textContent=v==null?'':String(v);return d.innerHTML;}
+function esc(v){return window.sagaEsc?window.sagaEsc(v):String(v==null?'':v).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];});}
 function toast(msg){var w=$('toastWrap');var t=document.createElement('div');t.className='toast';t.innerHTML=msg;w.appendChild(t);setTimeout(function(){t.remove();},4500);}
 function norm(v){return String(v==null?'':v).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function dataBR(iso){if(!iso)return '';var d=new Date(String(iso).length===10?iso+'T12:00:00':iso);return isNaN(d)?'':d.toLocaleDateString('pt-BR');}
@@ -498,8 +505,9 @@ function desenharBotoes(){
   if(T.aba==='atualizacoes'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Nova atualização</button>';
   else if(T.aba==='prateleira'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo produto</button>';
   else if(T.aba==='radar'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo item no radar</button>';
-  if(p.admin&&T.aba!=='radar')b='<button class="btn" type="button" id="btnOpcoes">'+(T.aba==='prateleira'?'Organizar opções':'Organizar situações')+'</button>'+b;
-  if(PODE_CLIENTES&&T.aba!=='radar')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
+  if(p.admin&&T.aba!=='radar'&&T.aba!=='base')b='<button class="btn" type="button" id="btnOpcoes">'+(T.aba==='prateleira'?'Organizar opções':'Organizar situações')+'</button>'+b;
+  if(T.aba==='base')b='';
+  if(PODE_CLIENTES&&T.aba!=='radar'&&T.aba!=='base')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
   $('botoesTopo').innerHTML=b;
   var ac=$('btnAcharClientes');if(ac)ac.onclick=abrirEscolhaTese;
   var n=$('btnNovo');if(n)n.onclick=function(){if(T.aba==='atualizacoes')formPost(null);else if(T.aba==='prateleira')formProduto(null);else formRadar(null);};
@@ -574,7 +582,7 @@ function htmlListaAtu(lista){
 async function lerPost(id){
   var p=T.posts.find(function(x){return x.id===id;});if(!p)return;
   $('mdLer').innerHTML='<div class="md-cab"><div><div class="post-topo">'+selo(catPorId(p.situacao_id))+'<span class="etq-tese">'+esc(nomeTese(p.tese_id)||'Geral')+'</span></div><h2>'+esc(p.titulo)+'</h2><div class="meta">'+esc(nomePessoa(p.autor_id)||'Escritório')+' · '+dataBR(p.criado_em)+'</div></div><button class="md-x" type="button" data-fechar="moLer" aria-label="Fechar">✕</button></div>'+
-    '<div class="md-corpo"><div class="corpo">'+(window.SagaTexto?SagaTexto.html(p.corpo):esc(p.corpo))+'</div>'+(p.link?'<a class="lnk" href="'+esc(p.link)+'" target="_blank" rel="noopener noreferrer">Abrir a fonte (decisão, notícia, informativo)</a>':'')+'</div>'+
+    '<div class="md-corpo"><div class="corpo">'+(window.SagaTexto?SagaTexto.html(p.corpo):esc(p.corpo))+'</div>'+(p.link?'<a class="lnk" href="'+esc(urlSegura(p.link))+'" target="_blank" rel="noopener noreferrer">Abrir a fonte (decisão, notícia, informativo)</a>':'')+'</div>'+
     '<div class="md-rod"><span class="esq">'+acoesPost(p)+'</span>'+btnClientes(p.tese_id)+'<button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
   abrir('moLer');
   if(!T.lidos[p.id]&&p.autor_id!==T.eu){T.lidos[p.id]=1;await _sb.from('teses_leituras').insert({atualizacao_id:p.id});desenharAtu();desenharBotoes();}
@@ -605,7 +613,7 @@ function formPost(id){
   $('fpSalvar').onclick=async function(){
     var dados={tese_id:$('fpTese').value||null,situacao_id:$('fpSit').value||null,titulo:$('fpTit').value.trim(),corpo:$('fpCorpo').value||'',link:$('fpLink').value.trim()||null,fixada:$('fpFix').checked};
     if(!dados.titulo){toast('Escreva o título.');return;}
-    if(dados.link&&!/^https?:\/\//i.test(dados.link)){toast('O link precisa começar com https://');return;}
+    if(dados.link&&!/^https:\/\//i.test(dados.link)){toast('O link precisa começar com https://');return;}
     this.disabled=true;var r=p?await _sb.from('teses_atualizacoes').update(dados).eq('id',p.id):await _sb.from('teses_atualizacoes').insert(dados);this.disabled=false;
     if(r.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message)));return;}
     fechar('moForm');toast(p?'Atualização salva.':'Atualização publicada. A equipe foi avisada no sino.');carregarTudo();
@@ -652,7 +660,7 @@ function htmlCriterios(p,lado){
   if(!l.length)return bt?'<div class="bloco pub-crit"><div class="pc-anx-cab"><b>Público da tese</b>'+bt+'</div><p class="pub-nota">Ainda não definido.</p></div>':'';
   return '<div class="bloco pub-crit">'+(bt?'<div class="pc-anx-cab"><b>Público da tese (o que o sistema usa para achar clientes)</b>'+bt+'</div>':'<b>Público da tese (o que o sistema usa para achar clientes)</b>')+'<ul>'+l.join('')+'</ul>'+(p.tese_id&&PODE_CLIENTES?'<p class="pub-nota">"Achar clientes para esta tese" já abre Clientes por perfil com situação, órgão, cargo, UF, anos e idade preenchidos.</p>':'')+'</div>';
 }
-function urlSegura(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
+function urlSegura(u){return window.sagaUrlSegura?window.sagaUrlSegura(u):(/^https:\/\//i.test(String(u||'').trim())?String(u).trim():'');}
 function htmlLinks(p){
   var ls=(p.links||[]).filter(function(x){return urlSegura(x.url);});if(!ls.length)return '';
   return '<div class="bloco"><b>Vídeos, áudios e links</b><div class="links-prod">'+ls.map(function(x){return '<a class="link-prod" href="'+esc(urlSegura(x.url))+'" target="_blank" rel="noopener noreferrer">'+(x.tipo==='video'?ICO.video:ICO.doc)+'<span><b>'+esc(x.titulo||x.url)+'</b><i>'+esc(nomeDe(LINK_TIPOS,x.tipo||'link'))+' · abre em outra aba</i></span></a>';}).join('')+'</div></div>';
@@ -914,7 +922,7 @@ function chipsRadar(r){
 }
 function acoesRadar(r,pequeno){
   var p=T.perm,s=pequeno?' btn-sm':'',h='';
-  if(r.link)h+='<a class="btn'+s+'" href="'+esc(r.link)+'" target="_blank" rel="noopener noreferrer">Fonte oficial</a>';
+  if(r.link)h+='<a class="btn'+s+'" href="'+esc(urlSegura(r.link))+'" target="_blank" rel="noopener noreferrer">Fonte oficial</a>';
   if(p.editar){
     if(r.status==='novo')h+='<button class="btn'+s+'" type="button" data-rad-st="analise" data-rad="'+r.id+'">Em análise</button>';
     if(r.status!=='incorporado'&&p.criar)h+='<button class="btn btn-ouro'+s+'" type="button" data-rad-inc="'+r.id+'">Incorporar à prateleira</button>';
@@ -978,7 +986,7 @@ function verRadar(id){
   $('mdLer').innerHTML='<div class="md-cab"><div>'+chipsRadar(r)+'<h2>'+esc(r.titulo)+'</h2><div class="meta">'+esc([r.tema,r.fonte,r.data?'radar de '+dataBR(r.data):'',CONF[r.confianca]].filter(Boolean).join(' · '))+'</div></div><button class="md-x" type="button" data-fechar="moLer" aria-label="Fechar">✕</button></div>'+
     '<div class="md-corpo">'+bl('O que foi decidido ou está em jogo',r.resumo)+'<div class="blocos">'+bl('Quem pode se beneficiar',r.quem_beneficia)+bl('Como estimar o valor',r.como_estimar)+bl('Prazo ou risco',r.prazo_risco)+bl('Como oferecer ao cliente',r.como_oferecer)+'</div>'+
     (hist.length?'<div class="bloco"><b>Fatos novos (radares seguintes)</b></div><div class="hist">'+hist.map(function(h){return '<div><span>'+dataBR(h.data)+'</span>'+esc(h.texto)+'</div>';}).join('')+'</div>':'')+
-    ((r.link||r.link_extra)?'<div style="display:flex;gap:14px;flex-wrap:wrap">'+(r.link?'<a class="lnk" href="'+esc(r.link)+'" target="_blank" rel="noopener noreferrer">Fonte oficial</a>':'')+(r.link_extra?'<a class="lnk" href="'+esc(r.link_extra)+'" target="_blank" rel="noopener noreferrer">Fonte complementar</a>':'')+'</div>':'')+
+    ((r.link||r.link_extra)?'<div style="display:flex;gap:14px;flex-wrap:wrap">'+(r.link?'<a class="lnk" href="'+esc(urlSegura(r.link))+'" target="_blank" rel="noopener noreferrer">Fonte oficial</a>':'')+(r.link_extra?'<a class="lnk" href="'+esc(urlSegura(r.link_extra))+'" target="_blank" rel="noopener noreferrer">Fonte complementar</a>':'')+'</div>':'')+
     (prod?'<div class="bloco"><b>Na prateleira</b><div><span class="lnk" data-prod="'+prod.id+'">'+esc(prod.nome)+'</span></div></div>':'')+
     '<p style="font-size:11px;color:var(--muted)">Material informativo do radar; validar com o advogado antes de oferecer ao cliente.</p></div>'+
     '<div class="md-rod"><span class="esq">'+acoesRadar(r,false)+'</span><button class="btn btn-ouro" type="button" data-fechar="moLer">Fechar</button></div>';
@@ -1016,7 +1024,7 @@ function formRadar(id){
     var d={titulo:$('rdTit').value.trim(),tipo:$('rdTipo').value,fase:$('rdFase').value,impacto:$('rdImp').value,area:t('rdArea'),tribunal:t('rdTrib'),data_julgamento:t('rdJul'),tema:t('rdTema'),fonte:t('rdFonte'),data:t('rdData'),
       resumo:$('rdRes').value.trim(),quem_beneficia:t('rdQuem'),como_estimar:t('rdEst'),prazo_risco:t('rdPrazo'),como_oferecer:t('rdOf'),link:t('rdLink'),link_extra:t('rdLink2'),confianca:t('rdConf'),destaque:$('rdDest').checked};
     if(!d.titulo){toast('Escreva o título.');return;}
-    if((d.link&&!/^https?:\/\//i.test(d.link))||(d.link_extra&&!/^https?:\/\//i.test(d.link_extra))){toast('Os links precisam começar com https://');return;}
+    if((d.link&&!/^https:\/\//i.test(d.link))||(d.link_extra&&!/^https:\/\//i.test(d.link_extra))){toast('Os links precisam começar com https://');return;}
     this.disabled=true;var q=r?await _sb.from('radar_oportunidades').update(d).eq('id',r.id):await _sb.from('radar_oportunidades').insert(d);this.disabled=false;
     if(q.error){toast('Não foi possível salvar: '+esc((window.sagaErroBanco?window.sagaErroBanco(q.error):q.error.message)));return;}fechar('moForm');toast('Item do radar salvo.');carregarTudo();
   };
@@ -1070,6 +1078,7 @@ function trocarAba(a){
   document.querySelectorAll('.aba-pane').forEach(function(p){p.classList.toggle('ativo',p.id==='aba-'+a);});
   try{var u=new URL(location.href);u.searchParams.set('aba',a);u.searchParams.delete('post');history.replaceState(history.state,'',u);}catch(e){}
   desenharBotoes();desenharVisoes();
+  if(a==='base'&&window.SagaTesesBase)SagaTesesBase.abrir();
 }
 function ligar(){
   // T132: link "Achar clientes": clique normal troca de tela com o movimento do sistema; Ctrl+clique abre em outra aba
@@ -1149,7 +1158,8 @@ async function init(){
   var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
   var r=await Promise.all([_sb.from('usuarios').select('id').eq('auth_user_id',s.data.session.user.id).maybeSingle(),_sb.rpc('teses_minhas_permissoes')]);
   T.eu=r[0].data&&r[0].data.id;if(r[1].data)T.perm=r[1].data;
-  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
+  if(window.SagaTesesBase)await SagaTesesBase.liberar();
+  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a==='base'&&$('abaBase').hidden)a='';if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
   await carregarTudo();
   var post=q.get('post');if(post){trocarAba('atualizacoes');lerPost(post);}
 }
