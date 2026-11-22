@@ -6,7 +6,7 @@
    processo, beneficiário/parte, origem e banco, com a página e o trecho de onde veio) → o SAGA acha o processo
    (extrato_honorarios_achar: número CNJ, recurso, parte do número/RPV, código VMM, nome do cliente ou da parte) →
    CONFERÊNCIA lado a lado (lido × processo × esperado/recebido, diferença em destaque) → só ao confirmar:
-   extrato na pasta "Requisitório" do cliente, extrato_honorarios_lancar (recebido, data, IR; anotação na ficha;
+   extrato em "Documentos probatórios > Extratos dos honorários" do cliente, extrato_honorarios_lancar (recebido, data, IR; anotação na ficha;
    registro; a distribuição se refaz pelos gatilhos). Sem processo: lista "Sem processo", à vista, para ligar à mão.
    Carregado por 1 linha no fim do financeiro.html. Só para quem tem "Financeiro: editar". */
 (function(){
@@ -274,7 +274,7 @@
       + '<div class="xh-busca"><input id="xhBusca" placeholder="Nome, número do processo ou código VMM"><button class="btn-secondary btn-sm" type="button" id="xhBuscar" style="height:34px">Procurar</button></div></div>';
     var conta = '<div class="xh-col"><h3>Esperado × recebido</h3><div id="xhConta"></div>'
       + '<div class="xh-modo" id="xhModo"><label><input type="radio" name="xhModo" value="somar"' + (c.modo !== 'substituir' ? ' checked' : '') + '> Somar ao que já foi recebido (saque em partes)</label><label><input type="radio" name="xhModo" value="substituir"' + (c.modo === 'substituir' ? ' checked' : '') + '> Substituir o recebido (o valor antigo estava errado)</label></div>'
-      + '<label class="xh-modo" style="flex-direction:row;gap:6px"><input type="checkbox" id="xhGuardar"' + (c.guardar === false ? '' : ' checked') + '> Guardar o extrato na pasta "Requisitório" do cliente</label>'
+      + '<label class="xh-modo" style="flex-direction:row;gap:6px"><input type="checkbox" id="xhGuardar"' + (c.guardar === false ? '' : ' checked') + '> Guardar o extrato na pasta "Documentos probatórios › Extratos dos honorários" do cliente</label>'
       + '<label class="xh-modo" style="flex-direction:row;gap:6px"><input type="checkbox" id="xhForcar"' + (c.forcar ? ' checked' : '') + '> Lançar mesmo assim se o SAGA achar que é repetido</label>'
       + '<div id="xhRes"></div></div>';
     box.innerHTML = abas + '<div class="xh-grid">' + lidos + proc + conta + '</div>'
@@ -381,9 +381,9 @@
       var r = await sb().rpc('extrato_honorarios_lancar', { p_processo: p.processo_id, p_dados: dadosParaBanco(c), p_documento: docId, p_modo: c.modo === 'substituir' ? 'substituir' : 'somar', p_extrato: c.extratoId || null, p_forcar: !!c.forcar });
       if(r.error) throw r.error;
       var d = r.data || {};
-      c.feito = 'Lançado'; c.feitoTxt = 'Lançado. ' + (d.anotacao || '') + (docId ? ' Extrato guardado na pasta "Requisitório".' : '');
+      c.feito = 'Lançado'; c.feitoTxt = 'Lançado. ' + (d.anotacao || '') + (docId ? ' Extrato guardado em Documentos probatórios › Extratos dos honorários.' : '');
       var ficha = FICHA + '?pessoa_id=' + encodeURIComponent(p.pessoa_id) + '&processo_id=' + encodeURIComponent(p.processo_id);
-      res.innerHTML = '<div class="xh-ok"><b>Lançado no Financeiro.</b> ' + esc(avisoDoc) + esc(d.anotacao || '') + (docId ? ' O extrato foi para a pasta "Requisitório".' : '') + ' A anotação foi para a ficha e para o Registro de atividades. <a class="btn-secondary btn-sm" href="' + esc(ficha) + '" target="_blank" rel="noopener">Abrir a ficha ↗</a></div>';
+      res.innerHTML = '<div class="xh-ok"><b>Lançado no Financeiro.</b> ' + esc(avisoDoc) + esc(d.anotacao || '') + (docId ? ' O extrato foi para Documentos probatórios › Extratos dos honorários.' : '') + ' A anotação foi para a ficha e para o Registro de atividades. <a class="btn-secondary btn-sm" href="' + esc(ficha) + '" target="_blank" rel="noopener">Abrir a ficha ↗</a></div>';
       ['xhSemProc', 'xhConfirmar'].forEach(function(id){ var b = $(id); if(b) b.disabled = true; });
       document.dispatchEvent(new Event('saga-atualizar'));
       contarPendentes();
