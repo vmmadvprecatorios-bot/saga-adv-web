@@ -100,9 +100,10 @@ window.SagaContestacoes = (function(){
     }
     erro.innerHTML = '';
     S.lista = (r.data && r.data.contestacoes) || [];
-    if(primeira && !S.lista.length && !S.gestor){ sec.hidden = true; return; }
+    if(!(S.busca || '').trim()) S.todas = S.lista.slice(); /* contagem por tese para a árvore (22/11) */
+    if(primeira && !S.lista.length && !S.gestor){ sec.hidden = true; avisar(); return; }
     sec.hidden = false;
-    desenharTeses(); desenhar();
+    desenharTeses(); desenhar(); avisar();
   }
 
   function desenharTeses(){
@@ -271,7 +272,7 @@ window.SagaContestacoes = (function(){
     var r = await sb().rpc('contestacao_desativar', { p_id: id });
     if(r.error){ b.disabled = false; b.textContent = 'Não tirou: ' + erroTxt(r.error); return; }
     var card = b.closest('.ct-card');
-    var fim = function(){ S.lista = S.lista.filter(function(x){ return x.id !== id; }); desenharTeses(); desenhar(); };
+    var fim = function(){ S.lista = S.lista.filter(function(x){ return x.id !== id; }); if(S.todas) S.todas = S.todas.filter(function(x){ return x.id !== id; }); desenharTeses(); desenhar(); avisar(); };
     if(card && window.sagaRecolher && !reduzido()){ try{ window.sagaRecolher(card, true, fim); return; }catch(e){} }
     fim();
   }
@@ -284,5 +285,30 @@ window.SagaContestacoes = (function(){
     if(tent++ < 200) setTimeout(esperar, 100);
   })();
 
-  return { recarregar: function(){ return carregar(false); } };
+  /* 22/11 (Dr. Victor: "tudo junto na mesma organização"): a árvore única dos Modelos (saga_biblioteca_timbrados.js)
+     mostra "Contestações > <tese>"; ela lê as teses daqui (resumo), filtra (filtrar) e manda a busca geral (buscar). */
+  var ouvintes = [];
+  function avisar(){ ouvintes.forEach(function(f){ try{ f(); }catch(e){} }); }
+  function resumo(){
+    var sec = document.getElementById('ctSecao');
+    if(!S.todas || (sec && sec.hidden && !S.gestor)) return null;
+    var cont = {}, ordem = [];
+    S.todas.forEach(function(c){ var k = c.tese_sigla || 'sem'; if(!cont[k]){ cont[k] = { sigla:k, nome:c.tese || 'Sem tese', n:0 }; ordem.push(k); } cont[k].n++; });
+    return { total:S.todas.length, teses:ordem.sort(function(a, b){ return cont[a].nome.localeCompare(cont[b].nome, 'pt-BR'); }).map(function(k){ return cont[k]; }) };
+  }
+  function filtrar(sigla){
+    S.tese = sigla || '';
+    var cx = document.getElementById('ctTeses');
+    if(cx) cx.querySelectorAll('[data-ct-tese]').forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-ct-tese') === S.tese); });
+    if((S.busca || '').trim()){ S.busca = ''; var bx = document.getElementById('ctBusca'); if(bx) bx.value = ''; return carregar(false); }
+    desenhar();
+  }
+  function buscar(q){
+    S.busca = q || ''; S.tese = '';
+    var bx = document.getElementById('ctBusca'); if(bx) bx.value = S.busca;
+    clearTimeout(S.temporizador);
+    return carregar(false);
+  }
+
+  return { recarregar: function(){ return carregar(false); }, resumo:resumo, filtrar:filtrar, buscar:buscar, aoMudar:function(f){ ouvintes.push(f); } };
 })();
