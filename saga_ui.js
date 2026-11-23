@@ -761,6 +761,10 @@
     +'<div class="nav-item" data-tela="modelos" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 6h14" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Modelos</div>'
+    // 23/11 (Dr. Victor): Planilhas = a pasta Planilhas de Modelos (lista de todas as planilhas e editor em tela inteira)
+    +'<div class="nav-item" data-tela="planilhas" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html?aba=planilhas\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 9.5h16M4 15h16M10 4v16" stroke="currentColor" stroke-width="1.5"/></svg>'
+    +'Planilhas</div>'
     +'<div class="nav-item" data-tela="biblioteca" hidden onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 4v16a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v16" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Biblioteca</div>'
@@ -1263,7 +1267,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',autos_baixar:'Autos para baixar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',minha_parte:'Meus honorários',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',autos_baixar:'Autos para baixar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',planilhas:'Planilhas',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',minha_parte:'Meus honorários',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -2385,6 +2389,7 @@
     // Painel geral (17/11): aberto para todos; cada cartão do painel só aparece para quem vê aquele assunto
     biblioteca:['biblioteca.visualizar'],
     modelos:['biblioteca.visualizar'],
+    planilhas:['documentos.visualizar'],
     relatorios_clientes:['processos.visualizar'],
     parceiros:['processos.visualizar','campanhas.visualizar'],
     financeiro:['financeiro.visualizar'],
@@ -2715,7 +2720,7 @@
   // O "?" da barra de cima abre o Manual no capítulo da tela aberta (manual.html?tela=<data-tela>; o manual.html
   // traduz pelo TELA_CAP). Tela sem item no menu (ficha, configurações, editor de planilhas) usa AJUDA_ARQ.
   // É um link: clique abre na mesma aba, Ctrl+clique/botão do meio em outra. Shift+? (fora de campo de texto) abre também.
-  var AJUDA_ARQ={'ficha_cliente_padrao_metalico_final.html':'ficha','configuracoes_padrao_metalico.html':'configuracoes','editor_planilha.html':'ficha','minhas_tarefas.html':'tarefas'};
+  var AJUDA_ARQ={'ficha_cliente_padrao_metalico_final.html':'ficha','configuracoes_padrao_metalico.html':'configuracoes','editor_planilha.html':'planilhas','minhas_tarefas.html':'tarefas'};
   function ligarAjuda(){
     var a=document.getElementById('ajudaBtn');if(!a)return;
     var arq=(location.pathname.split('/').pop()||'').toLowerCase();

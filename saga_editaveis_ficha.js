@@ -14,6 +14,8 @@
   function pode(p){ return perms().indexOf(p) >= 0; }
   function processoAtual(){ try{ return typeof getActiveProcess === 'function' ? getActiveProcess() : null; }catch(e){ return null; } }
   function pessoaAtual(){ try{ return (typeof state !== 'undefined' && state.pessoaRow) || null; }catch(e){ return null; } }
+  /* 23/11 (Dr. Victor): o editor abre em tela inteira com "Voltar para a ficha" (volta para este cliente e processo) */
+  function voltarFicha(){ var u = (location.pathname.split('/').pop() || 'ficha_cliente_padrao_metalico_FINAL.html') + location.search; return '&voltar=' + encodeURIComponent(u); }
   var carregando = {};
   function script(src){
     if(!carregando[src]) carregando[src] = new Promise(function(ok, falha){ var s = document.createElement('script'); s.src = src + (versao() ? '?v=' + versao() : ''); s.onload = ok; s.onerror = function(){ delete carregando[src]; falha(new Error('não consegui carregar ' + src)); }; document.head.appendChild(s); });
@@ -61,7 +63,7 @@
         if(r.error) throw r.error;
         var l = document.getElementById('edLista');
         l.innerHTML = (r.data || []).map(function(d){
-          var url = d.tipo === 'planilha' ? 'editor_planilha.html?doc=' + encodeURIComponent(d.id) + (versao() ? '&v=' + versao() : '') : '#';
+          var url = d.tipo === 'planilha' ? 'editor_planilha.html?doc=' + encodeURIComponent(d.id) + (versao() ? '&v=' + versao() : '') + voltarFicha() : '#';
           return '<a class="ed-item" href="' + url + '" data-doc="' + esc(d.id) + '" data-tipo="' + esc(d.tipo) + '"><span class="ed-ic">' + (d.tipo === 'planilha' ? 'XLS' : 'TXT') + '</span><span>' + esc(d.titulo) + '</span><small>v' + esc(d.versao) + ' · ' + esc(new Date(d.atualizado_em).toLocaleDateString('pt-BR')) + '</small></a>';
         }).join('') || '<div class="ed-vazio">Nenhuma planilha ou texto do SAGA neste processo.</div>';
         l.querySelectorAll('[data-tipo="texto"]').forEach(function(a){ a.onclick = function(ev){ ev.preventDefault(); abrirTexto(a.getAttribute('data-doc'), p, pes); }; });
@@ -69,7 +71,7 @@
     }, 80);
   }
   /* clique abre na tela inteira; Ctrl+clique ou botão do meio, em outra aba (regra de 09/11) */
-  function abrirUrl(ev, url){ url += (versao() ? '&v=' + versao() : ''); if(ev && (ev.ctrlKey || ev.metaKey || ev.button === 1)) window.open(url, '_blank', 'noopener'); else (window.sagaIrPara || function(u){ location.href = u; })(url); }
+  function abrirUrl(ev, url){ url += (versao() ? '&v=' + versao() : '') + voltarFicha(); if(ev && (ev.ctrlKey || ev.metaKey || ev.button === 1)) window.open(url, '_blank', 'noopener'); else (window.sagaIrPara || function(u){ location.href = u; })(url); }
 
   /* ---------- texto livre ---------- */
   async function timbradoPadrao(){

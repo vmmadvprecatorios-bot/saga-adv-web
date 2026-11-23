@@ -131,6 +131,8 @@
     '.conteudo-biblioteca.modo-timbrados #tbFerr .tb-busca,.conteudo-biblioteca .barra-filtros .busca,#ctSecao .ct-ferr,#ctSecao .ct-teses{display:none!important}',
     '#painelTimbrados[data-vista=modelos] #ctSecao,#painelTimbrados[data-vista=modelos] #tbSecTimbrados,#painelTimbrados[data-vista=contestacoes] #tbSecModelos,#painelTimbrados[data-vista=contestacoes] #tbSecTimbrados,#painelTimbrados[data-vista=timbrados] #tbSecModelos,#painelTimbrados[data-vista=timbrados] #ctSecao,#painelTimbrados[data-vista=busca] #tbSecTimbrados{display:none!important}',
     '#painelTimbrados:not([data-vista=busca]) #tbBuscaArq{display:none}',
+    /* 23/11 (Dr. Victor): pasta Planilhas (saga_planilhas_lista.js) */
+    '#painelTimbrados:not([data-vista=planilhas]) #plSecao,#painelTimbrados[data-vista=planilhas] #tbSecModelos,#painelTimbrados[data-vista=planilhas] #ctSecao,#painelTimbrados[data-vista=planilhas] #tbSecTimbrados{display:none!important}',
     '#painelTimbrados[data-vista=modelos] #tbMigalhas{display:none}',
     '#tbMigalhas{margin:0 0 14px}',
     '.tb-caminho .tb-sep{opacity:.6}',
@@ -188,8 +190,10 @@
        entrada do histórico (bibliotecaAba no history.state, mantendo o resto do state); voltar/avançar troca a seção */
     window.addEventListener('popstate', function(e){
       var aba = e.state && e.state.bibliotecaAba;
+      if(aba === 'planilhas'){ if(!S.aberto) abrir('historico'); irNo('pl'); return; }
       if(aba === 'timbrados' && !S.aberto) abrir('historico');
       else if(aba !== 'timbrados' && S.aberto) fechar('historico');
+      if(aba === 'timbrados' && U.vista === 'planilhas'){ vista('modelos'); marcarNo(); }
     });
 
     var painel = document.createElement('div');
@@ -221,7 +225,8 @@
     try{
       var qa = new URLSearchParams(location.search).get('aba');
       var naPasta = history.state && history.state.bibliotecaPastas && (history.state.bibliotecaPastas.caminho || []).length > 1;
-      if(qa === 'timbrados' || (qa !== 'arquivos' && !naPasta)) setTimeout(function(){ abrir('inicio'); }, 50);
+      if(qa === 'planilhas') setTimeout(function(){ abrir('inicio'); irNo('pl'); }, 50);
+      else if(qa === 'timbrados' || (qa !== 'arquivos' && !naPasta)) setTimeout(function(){ abrir('inicio'); }, 50);
       else { marcarAba('arquivos', false); setTimeout(function(){ if(!S.carregado) carregar(); }, 50); }
     }catch(e){ setTimeout(function(){ abrir('inicio'); }, 50); }
   }
@@ -759,6 +764,7 @@
   var U = { abertos:null, vista:'modelos', ctSigla:'', buscaQ:'', antesBusca:null, ctBuscou:false, contagem:{}, tBusca:null, tArq:0 };
   try{ U.abertos = JSON.parse(localStorage.getItem('saga-modelos-arvore') || 'null'); }catch(e){}
   if(!U.abertos || typeof U.abertos !== 'object') U.abertos = { raiz:true };
+  if(U.abertos.pl == null) U.abertos.pl = true;
   function guardarAbertos(){ try{ localStorage.setItem('saga-modelos-arvore', JSON.stringify(U.abertos)); }catch(e){} }
   var CHEV = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="9 6 15 12 9 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var ICO = {
@@ -766,6 +772,7 @@
     raiz:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 9.5L12 3l9 6.5V21H3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
     doc:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 9h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
     escudo:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
+    tabela:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M4 15h16M10 4v16" stroke="currentColor" stroke-width="1.6"/></svg>',
     folha:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M5 7h14" stroke="currentColor" stroke-width="1.6"/></svg>'
   };
   function bib(){ return typeof state !== 'undefined' && state && Array.isArray(state.categorias) ? state : null; }
@@ -792,6 +799,13 @@
     if(r) filhos.push({ k:'ct', nome:'Contestações', n:r.total, ico:ICO.escudo, filhos:r.teses.map(function(t){ return { k:'ct:' + t.sigla, nome:t.nome, n:t.n, ico:ICO.pasta, filhos:[] }; }) });
     var antigasTimb = puxar(/timbrad/);
     if(S.carregado || antigasTimb.length) filhos.push({ k:'pt', nome:'Papéis timbrados', n:S.timbrados.length + antigasTimb.reduce(function(a, x){ return a + x.n; }, 0), ico:ICO.folha, filhos:antigasTimb });
+    /* 23/11 (Dr. Victor): Planilhas, com a antiga pasta "Planilhas Contábeis" dentro */
+    var antigasPlan = puxar(/planilh/), rp = window.SagaPlanilhasLista && SagaPlanilhasLista.resumo ? SagaPlanilhasLista.resumo() : { total: null };
+    filhos.push({ k:'pl', nome:'Planilhas', n:rp.total, ico:ICO.tabela, filhos:[
+      { k:'pl:clientes', nome:'De clientes', n:null, ico:ICO.pasta, filhos:[] },
+      { k:'pl:escritorio', nome:'Do escritório', n:null, ico:ICO.pasta, filhos:[] },
+      { k:'pl:modelos', nome:'Modelos de planilha', n:null, ico:ICO.pasta, filhos:[] }
+    ].concat(antigasPlan) });
     raizesBib.forEach(function(c){ if(!usadas[c.id]) filhos.push(noBib(c)); });
     return { k:'raiz', nome:'Arquivos', n:null, ico:ICO.raiz, filhos:filhos };
   }
@@ -800,6 +814,7 @@
       if(U.vista === 'busca') return null;
       if(U.vista === 'contestacoes') return U.ctSigla ? 'ct:' + U.ctSigla : 'ct';
       if(U.vista === 'timbrados') return 'pt';
+      if(U.vista === 'planilhas'){ var tp = window.SagaPlanilhasLista && SagaPlanilhasLista.tipo ? SagaPlanilhasLista.tipo() : 'todas'; return /^(clientes|escritorio|modelos)$/.test(tp) ? 'pl:' + tp : 'pl'; }
       if(S.pasta === 'sem') return 'm:sem';
       return 'm:' + (S.pasta || (raizPasta() || {}).id || '');
     }
@@ -869,6 +884,11 @@
   function vista(v){
     U.vista = v;
     var pn = document.getElementById('painelTimbrados'); if(pn) pn.setAttribute('data-vista', v);
+    /* o endereço acompanha (?aba=planilhas abre direto; voltar do editor cai aqui) */
+    try{ var qa = new URLSearchParams(location.search).get('aba'); if((v === 'planilhas') !== (qa === 'planilhas')) marcarAba(v === 'planilhas' ? 'planilhas' : 'timbrados', false); }catch(e){}
+    /* o item do menu lateral acompanha (Planilhas × Modelos) */
+    var itMenu = document.querySelector('#sidebarSaga .nav-item[data-tela="' + (v === 'planilhas' ? 'planilhas' : 'modelos') + '"]');
+    if(itMenu && !itMenu.classList.contains('active')){ document.querySelectorAll('#sidebarSaga .nav-item.active').forEach(function(el){ el.classList.remove('active'); }); itMenu.classList.add('active'); }
     desenharMigalhas();
   }
   function desenharMigalhas(){
@@ -880,6 +900,7 @@
       partes.push(t ? '<button type="button" data-ba-ir="ct">Contestações</button>' : '<b>Contestações</b>');
       if(t) partes.push('<b>' + esc(t.nome) + '</b>');
     }else if(U.vista === 'timbrados') partes.push('<b>Papéis timbrados</b>');
+    else if(U.vista === 'planilhas') partes.push('<b>Planilhas</b>');
     else if(U.vista === 'busca') partes.push('<b>Busca em todos os modelos e arquivos: “' + esc(U.buscaQ) + '”</b>');
     m.innerHTML = partes.join(' <span class="tb-sep">›</span> ');
     m.querySelectorAll('[data-ba-ir]').forEach(function(x){ x.addEventListener('click', function(){ irNo(x.getAttribute('data-ba-ir')); }); });
@@ -905,6 +926,12 @@
       if(window.SagaContestacoes && SagaContestacoes.filtrar) SagaContestacoes.filtrar(U.ctSigla);
       marcarNo();
     }else if(k === 'pt'){ if(!S.aberto) abrir('clique'); vista('timbrados'); marcarNo(); }
+    else if(k === 'pl' || k.indexOf('pl:') === 0){
+      if(!S.aberto) abrir('clique');
+      vista('planilhas');
+      if(window.SagaPlanilhasLista) SagaPlanilhasLista.filtrar(k === 'pl' ? 'todas' : k.slice(3));
+      marcarNo();
+    }
     fecharMenuCelular();
     var cab = document.querySelector('.conteudo-biblioteca');
     if(cab && cab.getBoundingClientRect().top < 0) cab.scrollIntoView({ block:'start', behavior: reduzido() ? 'auto' : 'smooth' });
@@ -980,7 +1007,7 @@
       var c = document.createElement('div');
       c.className = 'item-card pasta-card ba-card-especial'; c.tabIndex = 0; c.setAttribute('role', 'button'); c.title = 'Abrir ' + n.nome;
       c.innerHTML = '<div class="icone-item-wrap pasta">' + n.ico.replace(/width="13" height="13"/, 'width="20" height="20"') + '</div>' +
-        '<div class="nome-item-card">' + esc(n.nome) + '</div><div class="meta-item-card">' + (n.n || 0) + (n.k === 'pt' ? ' papel(is)' : n.k === 'ct' ? ' contestação(ões)' : ' modelo(s)') + '</div>';
+        '<div class="nome-item-card">' + esc(n.nome) + '</div><div class="meta-item-card">' + (n.n || 0) + (n.k === 'pt' ? ' papel(is)' : n.k === 'ct' ? ' contestação(ões)' : n.k === 'pl' ? ' planilha(s)' : ' modelo(s)') + '</div>';
       c.addEventListener('click', function(){ irNo(n.k); });
       c.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); irNo(n.k); } });
       frag.appendChild(c);
@@ -1053,7 +1080,8 @@
       window.renderizarGrid._ba = true;
     }
     if(window.SagaContestacoes && SagaContestacoes.aoMudar) SagaContestacoes.aoMudar(function(){ desenharArvoreUnica(); if(U.vista === 'contestacoes') desenharMigalhas(); });
-    else { var tc = 0; (function esp(){ if(window.SagaContestacoes && SagaContestacoes.aoMudar){ SagaContestacoes.aoMudar(function(){ desenharArvoreUnica(); }); desenharArvoreUnica(); } else if(tc++ < 50) setTimeout(esp, 100); })(); }
+    var tpl = 0; (function espPl(){ if(window.SagaPlanilhasLista && SagaPlanilhasLista.aoMudar){ SagaPlanilhasLista.aoMudar(function(){ desenharArvoreUnica(); }); desenharArvoreUnica(); } else if(tpl++ < 50) setTimeout(espPl, 100); })();
+    if(window.SagaContestacoes && SagaContestacoes.aoMudar){} else { var tc = 0; (function esp(){ if(window.SagaContestacoes && SagaContestacoes.aoMudar){ SagaContestacoes.aoMudar(function(){ desenharArvoreUnica(); }); desenharArvoreUnica(); } else if(tc++ < 50) setTimeout(esp, 100); })(); }
     var tb = 0; (function espSb(){ if(sb()) contarArquivos(); else if(tb++ < 100) setTimeout(espSb, 100); })();
     desenharArvoreUnica();
   }

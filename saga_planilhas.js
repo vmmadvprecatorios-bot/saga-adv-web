@@ -31,62 +31,145 @@
   function fecharJanela(id){ var j = $(id); if(j) j.classList.remove('aberto'); }
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ var a = document.querySelector('.mo.aberto'); if(a){ a.classList.remove('aberto'); e.stopPropagation(); } } }, true);
 
-  /* ================= montagem da tela ================= */
+  /* ================= montagem da tela (23/11, Dr. Victor: "quero funcionalidades de planilha e poder VOLTAR") =================
+     Tela inteira: Voltar sempre à vista (volta para onde veio: lista de Planilhas em Modelos ou a ficha), barra de fórmulas
+     com a caixa de nome, letras e números fixos, congelar, arrastar para preencher, ordenar, filtrar, zoom e atalhos.
+     A grade DESENHA SÓ O QUE APARECE (camadas com as células visíveis; o resto é espaço vazio): 2.000 linhas ficam leves. */
   var CORES = [
     { k: '', r: 'Sem cor', c: 'transparent' }, { k: 'titulo', r: 'Título', c: 'color-mix(in srgb,var(--gold) 45%,var(--panel-solid))' },
-    { k: 'secao', r: 'Seção', c: 'color-mix(in srgb,var(--gold) 20%,var(--panel-solid))' }, { k: 'entrada', r: 'Dado a preencher', c: 'color-mix(in srgb,#eab308 30%,var(--panel-solid))' },
+    { k: 'secao', r: 'Seção', c: 'color-mix(in srgb,var(--gold) 20%,var(--panel-solid))' }, { k: 'entrada', r: 'Dado a preencher (não sai no PDF)', c: 'color-mix(in srgb,#eab308 30%,var(--panel-solid))' },
     { k: 'total', r: 'Total', c: 'color-mix(in srgb,var(--gold) 30%,var(--panel-solid))' }, { k: 'ok', r: 'Conferido', c: 'color-mix(in srgb,#16a34a 30%,var(--panel-solid))' },
     { k: 'aviso', r: 'Atenção', c: 'color-mix(in srgb,#e5484d 28%,var(--panel-solid))' }
   ];
+  /* cores de letra que se leem no claro e no escuro */
+  var CORES_TXT = [ { k: '', r: 'Automática' }, { k: '#d64545', r: 'Vermelho' }, { k: '#d97706', r: 'Laranja' }, { k: '#16a34a', r: 'Verde' }, { k: '#2f6fd6', r: 'Azul' }, { k: '#7c3aed', r: 'Roxo' }, { k: '#6b7280', r: 'Cinza' } ];
+  var ZOOMS = [50, 67, 75, 90, 100, 110, 125, 150, 175, 200];
+  var HW = 46, HH = 24;
+  function ico(p){ return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
+  var IC = {
+    voltar: ico('<path d="M15 18l-6-6 6-6"/>'), desfazer: ico('<path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 010 10h-3"/>'), refazer: ico('<path d="M15 14l5-5-5-5"/><path d="M20 9H9a5 5 0 000 10h3"/>'),
+    esq: ico('<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>'), centro: ico('<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>'), dir: ico('<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>'),
+    quebra: ico('<path d="M4 6h16M4 12h13a3 3 0 010 6h-4"/><path d="M15 16l-2 2 2 2"/><path d="M4 18h5"/>'), soma: ico('<path d="M17 5H7l6 7-6 7h10"/>'),
+    ordenar: ico('<path d="M7 4v16M4 17l3 3 3-3"/><path d="M14 6h6M14 12h4M14 18h2"/>'), filtro: ico('<path d="M4 5h16l-6 7.5V19l-4 2v-8.5z"/>'),
+    congelar: ico('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M9 4v16"/>'), bordas: ico('<rect x="4" y="4" width="16" height="16" rx="1"/><path d="M12 4v16M4 12h16" stroke-dasharray="2 2"/>'),
+    mesclar: ico('<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M8 12h8M10 10l-2 2 2 2M14 10l2 2-2 2"/>'), nota: ico('<path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4"/>'),
+    linhas: ico('<rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 12h16M12 8v8"/>'), mais: ico('<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>'),
+    letra: '<span class="pl-letra">A<i id="fCorTxtBarra"></i></span>', balde: ico('<path d="M6 11l6-6 7 7-6 6a2 2 0 01-2.8 0L6 13.8A2 2 0 016 11z"/><path d="M19 15s2 2.2 2 3.5a2 2 0 01-4 0c0-1.3 2-3.5 2-3.5z"/>')
+  };
   function montar(){
     var r = $('plRaiz');
     r.innerHTML =
-      '<div class="pl-topo"><div class="pl-nome"><input id="plTitulo" aria-label="Nome da planilha" maxlength="200">'
-      + '<div class="pl-info" id="plInfo"></div></div>'
+      '<div class="pl-topo">'
+      + '<button class="btn pl-voltar" id="plVoltar" type="button" title="Voltar para onde você estava (Alt+←)">' + IC.voltar + '<span>Voltar</span></button>'
+      + '<div class="pl-nome"><input id="plTitulo" aria-label="Nome da planilha" maxlength="200"><div class="pl-info" id="plInfo"></div></div>'
       + '<div class="pl-acoes">'
       + '<button class="btn btn-ouro" id="plSalvar" type="button" title="Salvar (Ctrl+S): cada vez cria uma versão nova">Salvar</button>'
-      + '<button class="btn" id="plVersoes" type="button">Versões</button>'
-      + '<button class="btn" id="plPdf" type="button">PDF</button>'
-      + '<button class="btn" id="plXlsx" type="button">Excel</button>'
-      + '<button class="btn" id="plGuardar" type="button" title="Guardar o PDF ou o Excel na pasta do cliente">Guardar na pasta</button>'
-      + '<label class="btn" id="plImportarRot" title="Abrir um Excel (.xlsx) nesta planilha">Importar Excel<input type="file" id="plImportar" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label>'
+      + '<button class="btn some-cel" id="plVersoes" type="button">Versões</button>'
+      + '<button class="btn some-cel" id="plPdf" type="button">PDF</button>'
+      + '<button class="btn some-cel" id="plXlsx" type="button">Excel</button>'
+      + '<button class="btn some-cel" id="plGuardar" type="button" title="Guardar o PDF ou o Excel na pasta do cliente">Guardar na pasta</button>'
+      + '<button class="btn ic" id="plMais" type="button" title="Mais: importar Excel, salvar como modelo…" aria-label="Mais ações">' + IC.mais + '</button>'
+      + '<input type="file" id="plImportar" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>'
       + '</div></div>'
       + '<div id="plAvisos"></div>'
-      + '<div class="pl-ferr" role="toolbar" aria-label="Formatar">'
-      + '<button class="btn ic" id="fDesfazer" type="button" title="Desfazer (Ctrl+Z)">↶</button><button class="btn ic" id="fRefazer" type="button" title="Refazer (Ctrl+Y)">↷</button><span class="sep"></span>'
+      + '<div class="pl-ferr" role="toolbar" aria-label="Formatar e organizar">'
+      + '<button class="btn ic" id="fDesfazer" type="button" title="Desfazer (Ctrl+Z)">' + IC.desfazer + '</button><button class="btn ic" id="fRefazer" type="button" title="Refazer (Ctrl+Y)">' + IC.refazer + '</button><span class="sep"></span>'
+      + '<button class="btn ic" id="fReais" type="button" title="Formato em reais (R$)">R$</button><button class="btn ic" id="fPct" type="button" title="Formato em porcentagem">%</button>'
       + '<select id="fFormato" title="Formato do número"><option value="">Automático</option><option value="reais">R$</option><option value="pct">%</option><option value="num">Número</option><option value="int">Inteiro</option><option value="data">Data</option><option value="texto">Texto</option></select>'
       + '<button class="btn ic" id="fMenos" type="button" title="Menos casas decimais">,0</button><button class="btn ic" id="fMais" type="button" title="Mais casas decimais">,00</button><span class="sep"></span>'
       + '<button class="btn ic" id="fB" type="button" title="Negrito (Ctrl+B)"><b>N</b></button><button class="btn ic" id="fI" type="button" title="Itálico (Ctrl+I)"><i>I</i></button>'
-      + '<button class="btn ic" id="fEsq" type="button" title="Alinhar à esquerda">⟸</button><button class="btn ic" id="fCentro" type="button" title="Centralizar">≡</button><button class="btn ic" id="fDir" type="button" title="Alinhar à direita">⟹</button>'
-      + '<button class="btn ic some-cel" id="fQuebra" type="button" title="Quebrar o texto em linhas">↵</button><span class="sep"></span>'
-      + '<span class="pl-cores" id="fCores">' + CORES.map(function(c){ return '<button type="button" data-cor="' + c.k + '" title="' + esc(c.r) + '" style="background:' + c.c + '"></button>'; }).join('') + '</span><span class="sep"></span>'
-      + '<button class="btn some-cel" id="fMesclar" type="button" title="Mesclar as células marcadas (ou desfazer)">Mesclar</button>'
-      + '<button class="btn" id="fNota" type="button" title="Nota ou aviso na célula">Nota</button><span class="sep"></span>'
-      + '<button class="btn some-cel" id="fLinIns" type="button" title="Inserir linha acima">+ Linha</button><button class="btn some-cel" id="fLinExc" type="button" title="Excluir as linhas marcadas">− Linha</button>'
-      + '<button class="btn some-cel" id="fColIns" type="button" title="Inserir coluna à esquerda">+ Coluna</button><button class="btn some-cel" id="fColExc" type="button" title="Excluir as colunas marcadas">− Coluna</button>'
-      + '<button class="btn some-cel" id="fPreencher" type="button" title="Copiar a 1ª linha marcada para as de baixo (Ctrl+D)">Preencher ↓</button>'
+      + '<button class="btn ic" id="fCorTxt" type="button" title="Cor da letra">' + IC.letra + '</button>'
+      + '<button class="btn ic" id="fFundo" type="button" title="Cor do fundo">' + IC.balde + '</button>'
+      + '<button class="btn ic" id="fBordas" type="button" title="Bordas">' + IC.bordas + '</button>'
+      + '<button class="btn ic" id="fMesclar" type="button" title="Mesclar as células marcadas (ou desfazer)">' + IC.mesclar + '</button><span class="sep"></span>'
+      + '<button class="btn ic" id="fEsq" type="button" title="Alinhar à esquerda">' + IC.esq + '</button><button class="btn ic" id="fCentro" type="button" title="Centralizar">' + IC.centro + '</button><button class="btn ic" id="fDir" type="button" title="Alinhar à direita">' + IC.dir + '</button>'
+      + '<button class="btn ic" id="fQuebra" type="button" title="Quebrar o texto em linhas">' + IC.quebra + '</button><span class="sep"></span>'
+      + '<button class="btn" id="fSoma" type="button" title="Autossoma (Alt+=): soma os números de cima (ou da esquerda)">' + IC.soma + '<span>Soma</span></button>'
+      + '<button class="btn" id="fOrdenar" type="button" title="Ordenar as linhas">' + IC.ordenar + '<span>Ordenar</span></button>'
+      + '<button class="btn" id="fFiltro" type="button" title="Filtrar as linhas pelo valor de uma coluna">' + IC.filtro + '<span>Filtro</span></button>'
+      + '<button class="btn" id="fCongelar" type="button" title="Deixar linhas e colunas paradas ao rolar">' + IC.congelar + '<span>Congelar</span></button><span class="sep"></span>'
+      + '<button class="btn" id="fLinhas" type="button" title="Inserir ou excluir linhas e colunas">' + IC.linhas + '<span>Linhas e colunas</span></button>'
+      + '<button class="btn ic" id="fNota" type="button" title="Nota ou aviso na célula">' + IC.nota + '</button>'
       + '</div>'
-      + '<div class="pl-barra"><div class="end" id="plEnd">A1</div><div class="fx">fx</div><input id="plFx" autocomplete="off" spellcheck="false" aria-label="Conteúdo ou fórmula da célula"></div>'
-      + '<div class="pl-grade-caixa" id="plCaixa"><table class="pl" id="plGrade"></table></div>'
-      + '<div class="pl-abas" id="plAbas"></div>'
-      + '<div class="pl-rod"><span id="plSoma"></span><span>Digite <b>=</b> para fórmula (SOMA, ARRED, SE ou em inglês: SUM, ROUND, IF). Clique numa célula enquanto escreve a fórmula para pôr a referência.</span></div>';
+      + '<div class="pl-barra"><input class="end" id="plEnd" aria-label="Célula (digite, ex.: B12 ou A1:C5, e Enter para ir)" title="Digite a célula (ex.: B12 ou A1:C5) e Enter para ir" spellcheck="false" autocomplete="off"><div class="fx">fx</div><input id="plFx" autocomplete="off" spellcheck="false" aria-label="Conteúdo ou fórmula da célula"></div>'
+      + '<div class="pl-grade-caixa" id="plCaixa" tabindex="0" role="grid" aria-label="Planilha"><div class="pl-vista" id="plVista"></div><div class="pl-espaco" id="plEspaco"></div></div>'
+      + '<div class="pl-pe"><div class="pl-abas" id="plAbas"></div>'
+      + '<div class="pl-status"><span id="plSoma"></span><span id="plFiltroInfo"></span>'
+      + '<label class="pl-zoom" title="Zoom (Ctrl + roda do mouse)">' + '<button type="button" class="btn ic" id="zMenos" aria-label="Diminuir o zoom">−</button><select id="plZoom" aria-label="Zoom">' + ZOOMS.map(function(z){ return '<option value="' + z + '">' + z + '%</option>'; }).join('') + '</select><button type="button" class="btn ic" id="zMais" aria-label="Aumentar o zoom">+</button></label></div></div>';
+    montarVista();
     ligarTela();
   }
 
-  /* ================= desenho da grade ================= */
-  function areaVisivel(){
-    var u = M.usada(aba());
-    return { cols: Math.max(u.colunas + 4, 14), lins: Math.max(u.linhas + 15, 50) };
-  }
+  /* ================= geometria (larguras, alturas, linhas escondidas pelo filtro, congelados) ================= */
+  var G = null;
+  function z(){ return (S.zoom || 100) / 100; }
   function largura(c){ var w = (aba().colunas || {})[M.colTxt(c)]; return w || LARG; }
+  function altura(l){ var h = (aba().linhas || {})[l]; return h || ALT; }
+  function congel(){ var cg = aba().congelar || {}; return { l: Math.max(0, cg.l | 0), c: Math.max(0, cg.c | 0) }; }
+  function geo(){
+    var a = aba(), u = M.usada(a), k = z(), cg = congel(), esc0 = escondidas();
+    var nc = Math.max(u.colunas + 8, 26, S.minC || 0, cg.c + 6), nl = Math.max(u.linhas + 60, 200, S.minL || 0, cg.l + 30);
+    var cx = [0], ly = [0];
+    for(var c = 1; c <= nc; c++) cx[c] = cx[c - 1] + Math.max(4, Math.round(largura(c) * k));
+    for(var l = 1; l <= nl; l++) ly[l] = ly[l - 1] + (esc0[l] ? 0 : Math.max(6, Math.round(altura(l) * k)));
+    var fc = Math.min(cg.c, nc), fl = Math.min(cg.l, nl);
+    G = { nc: nc, nl: nl, cx: cx, ly: ly, fc: fc, fl: fl, fw: cx[fc], fh: ly[fl], hw: Math.round(HW * Math.max(.8, Math.min(k, 1.3))), hh: Math.round(HH * Math.max(.85, Math.min(k, 1.3))) };
+    var esp = $('plEspaco'); if(esp){ esp.style.width = (G.hw + cx[nc]) + 'px'; esp.style.height = (G.hh + ly[nl]) + 'px'; }
+    S.vista.chave = '';
+    return G;
+  }
+  /* procura a coluna/linha que contém a posição x (busca binária no acumulado) */
+  function achar(arr, n, x){ var lo = 1, hi = n; if(x < 0) return 1; while(lo < hi){ var m = (lo + hi) >> 1; if(arr[m] <= x) lo = m + 1; else hi = m; } return lo; }
+
+  /* ================= filtro (só nesta tela; não muda o que vai para o PDF/Excel) ================= */
+  function filtroAtual(){ return (S.filtros || {})[S.ativa] || null; }
+  function escondidas(){
+    var f = filtroAtual(), out = {};
+    if(!f) return out;
+    var a = aba(), calc = S.calc;
+    Object.keys(f.ex).forEach(function(c){
+      var ex = f.ex[c]; if(!ex || !Object.keys(ex).length) return;
+      for(var l = f.l + 1; l <= f.l2; l++){ var r = M.ref(+c, l), ce = a.celulas[r], t = ce ? M.mostrar(calc.valor(S.ativa, r), ce) : ''; if(ex[t]) out[l] = 1; }
+    });
+    return out;
+  }
+
+  /* ================= desenho: só as células que aparecem ================= */
+  function montarVista(){
+    var v = $('plVista');
+    v.innerHTML =
+        '<div class="pl-clip" id="vCorpo"><div class="pl-in"></div></div>'
+      + '<div class="pl-clip" id="vTopo"><div class="pl-in"></div></div>'
+      + '<div class="pl-clip" id="vEsq"><div class="pl-in"></div></div>'
+      + '<div class="pl-clip" id="vCanto"><div class="pl-in"></div></div>'
+      + '<div class="pl-clip pl-hc" id="hColF"><div class="pl-in"></div></div><div class="pl-clip pl-hc" id="hColS"><div class="pl-in"></div></div>'
+      + '<div class="pl-clip pl-hl" id="hLinF"><div class="pl-in"></div></div><div class="pl-clip pl-hl" id="hLinS"><div class="pl-in"></div></div>'
+      + '<div class="pl-cantinho" id="hTudo" title="Marcar tudo (Ctrl+A)"></div>'
+      + '<div class="pl-linha-cong pl-lc-h" id="lcH"></div><div class="pl-linha-cong pl-lc-v" id="lcV"></div>';
+    S.vista = { chave: '', camadas: {} };
+    ['vCorpo', 'vTopo', 'vEsq', 'vCanto', 'hColF', 'hColS', 'hLinF', 'hLinS'].forEach(function(id){ S.vista.camadas[id] = $(id).firstChild; });
+  }
+  function medidas(){
+    var cx = $('plCaixa'), w = cx.clientWidth, h = cx.clientHeight;
+    var v = $('plVista'); v.style.width = w + 'px'; v.style.height = h + 'px';
+    $('plEspaco').style.marginTop = (-h) + 'px';
+    return { w: w, h: h };
+  }
+  function janelaVisivel(){
+    var cx = $('plCaixa'), sl = cx.scrollLeft, st = cx.scrollTop, m = S.med || medidas();
+    var bw = m.w - G.hw - G.fw, bh = m.h - G.hh - G.fh;
+    var c0 = Math.max(G.fc + 1, achar(G.cx, G.nc, G.fw + sl) - 2), c1 = Math.min(G.nc, achar(G.cx, G.nc, G.fw + sl + bw) + 2);
+    var l0 = Math.max(G.fl + 1, achar(G.ly, G.nl, G.fh + st) - 6), l1 = Math.min(G.nl, achar(G.ly, G.nl, G.fh + st + bh) + 6);
+    return { c0: c0, c1: c1, l0: l0, l1: l1, sl: sl, st: st, bw: bw, bh: bh };
+  }
   function mapaMesclas(){
-    var mestre = {}, coberto = {};
+    var mestre = {}, coberto = {}, lista = [];
     (aba().mesclas || []).forEach(function(m){
       var p = m.split(':'), a = M.endereco(p[0]), b = M.endereco(p[1]); if(!a || !b) return;
-      mestre[a.c + ',' + a.l] = { cs: b.c - a.c + 1, rs: b.l - a.l + 1 };
+      mestre[a.c + ',' + a.l] = { c2: b.c, l2: b.l }; lista.push({ c1: a.c, l1: a.l, c2: b.c, l2: b.l });
       for(var l = a.l; l <= b.l; l++) for(var c = a.c; c <= b.c; c++) if(c !== a.c || l !== a.l) coberto[c + ',' + l] = m;
     });
-    return { mestre: mestre, coberto: coberto };
+    return { mestre: mestre, coberto: coberto, lista: lista };
   }
   function classes(c, v){
     var k = [];
@@ -96,36 +179,130 @@
     if(c.q) k.push('quebra');
     if(c.fundo && /^[a-z]+$/.test(c.fundo)) k.push('f-' + c.fundo);
     if(c.cinza) k.push('f-cinza');
+    if(c.borda) k.push('bd');
     if(M.ehErro(v)) k.push('erro');
     return k.join(' ');
   }
-  function desenharGrade(){
-    var A = areaVisivel(), mm = mapaMesclas(), h = '<colgroup><col style="width:44px">';
-    S.area = A;
-    for(var c = 1; c <= A.cols; c++) h += '<col style="width:' + largura(c) + 'px">';
-    h += '</colgroup><thead><tr><th class="canto"></th>';
-    for(c = 1; c <= A.cols; c++) h += '<th data-col="' + c + '">' + M.colTxt(c) + '<span class="alca" data-alca="' + c + '"></span></th>';
-    h += '</tr></thead><tbody>';
-    var lin = aba().linhas || {};
-    for(var l = 1; l <= A.lins; l++){
-      h += '<tr' + (lin[l] ? ' style="height:' + lin[l] + 'px"' : '') + '><th class="lin" data-lin="' + l + '">' + l + '</th>';
-      for(c = 1; c <= A.cols; c++){
+  /* html das células de um retângulo (c0..c1, l0..l1), em coordenadas da planilha */
+  function htmlCelulas(c0, c1, l0, l1, mm){
+    var a = aba(), h = [], f = filtroAtual();
+    function vazioAte(c, l, lim){ var x = c; while(x < lim){ var r2 = M.ref(x + 1, l), o = a.celulas[r2]; if(mm.coberto[(x + 1) + ',' + l] || mm.mestre[(x + 1) + ',' + l] || (o && ((o.v !== undefined && o.v !== '') || o.f))) break; x++; } return x; }
+    for(var l = l0; l <= l1; l++){
+      var hl = G.ly[l] - G.ly[l - 1]; if(!hl) continue;
+      for(var c = c0; c <= c1; c++){
         var chave = c + ',' + l; if(mm.coberto[chave]) continue;
-        var r = M.ref(c, l), ce = cel(r), v = ce ? S.calc.valor(S.ativa, r) : '';
-        var me = mm.mestre[chave];
-        var st = ce && ce.fundo && /^#/.test(ce.fundo) ? ' style="background:' + esc(ce.fundo) + '33"' : '';
-        h += '<td data-c="' + c + '" data-l="' + l + '"' + (me ? ' colspan="' + me.cs + '" rowspan="' + me.rs + '"' : '') + ' class="' + classes(ce, v) + '"' + st
-          + (M.ehErro(v) ? ' title="' + esc(v.e + ': ' + (M.ERROS[v.e] || '')) + '"' : (ce && ce.nota ? ' title="' + esc(ce.nota) + '"' : '')) + '>'
-          + esc(ce ? M.mostrar(v, ce) : '') + (ce && ce.nota ? '<span class="nota' + (ce.conferir ? ' conferir' : '') + '"></span>' : '') + '</td>';
+        var r = M.ref(c, l), ce = a.celulas[r], x = G.cx[c - 1], y = G.ly[l - 1], w = G.cx[c] - x, hh = hl;
+        var me = mm.mestre[chave]; if(me){ w = G.cx[Math.min(me.c2, G.nc)] - x; hh = G.ly[Math.min(me.l2, G.nl)] - y; }
+        if(!ce){ h.push('<div class="c" style="left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + hh + 'px"></div>'); continue; }
+        var v = S.calc.valor(S.ativa, r), t = M.mostrar(v, ce), cls = classes(ce, v), st = 'left:' + x + 'px;top:' + y + 'px;width:' + w + 'px;height:' + hh + 'px';
+        if(ce.fundo && /^#[0-9a-f]{6}$/i.test(ce.fundo)) st += ';background:' + ce.fundo + '33';
+        if(ce.cor && /^#[0-9a-f]{6}$/i.test(ce.cor)) st += ';color:' + ce.cor;
+        /* texto que passa da célula entra nas vizinhas vazias (como no Excel) */
+        if(t && !me && !ce.q && typeof v !== 'number' && !M.ehErro(v) && (!ce.al || ce.al === 'esq')){
+          var prec = larguraTexto(t, ce) + 10;
+          if(prec > w){ var ate = vazioAte(c, l, Math.min(G.nc, c + 12)), ac = c; while(ac < ate && G.cx[ac] - x < prec) ac++;
+            if(ac > c){ var wl = G.cx[ac] - x; st = st.replace('width:' + w + 'px', 'width:' + wl + 'px'); cls += ' ov'; } }
+        }
+        var tit = M.ehErro(v) ? v.e + ': ' + (M.ERROS[v.e] || '') : (ce.nota || '');
+        h.push('<div class="c ' + cls + '" style="' + st + '"' + (tit ? ' title="' + esc(tit) + '"' : '') + '>' + esc(t)
+          + (ce.nota ? '<span class="nota' + (ce.conferir ? ' conferir' : '') + '"></span>' : '') + '</div>');
       }
-      h += '</tr>';
+      if(f && l === f.l) for(var fc0 = Math.max(c0, f.c1); fc0 <= Math.min(c1, f.c2); fc0++){
+        var ativo = f.ex[fc0] && Object.keys(f.ex[fc0]).length;
+        h.push('<button type="button" class="pl-fbtn' + (ativo ? ' on' : '') + '" data-fc="' + fc0 + '" style="left:' + (G.cx[fc0] - 19) + 'px;top:' + (G.ly[l - 1] + Math.max(1, (hl - 17) / 2)) + 'px" title="Filtrar esta coluna" aria-label="Filtrar a coluna ' + M.colTxt(fc0) + '">▾</button>');
+      }
     }
-    h += '</tbody>';
-    $('plGrade').innerHTML = h;
-    pintarSelecao();
+    /* mesclas que começam fora da janela mas aparecem dentro */
+    mm.lista.forEach(function(q){
+      if(q.c1 >= c0 && q.l1 >= l0) return;
+      if(q.c2 < c0 || q.c1 > c1 || q.l2 < l0 || q.l1 > l1) return;
+      if(q.c1 >= c0 && q.c1 <= c1 && q.l1 >= l0 && q.l1 <= l1) return;
+      var r = M.ref(q.c1, q.l1), ce = a.celulas[r], v = ce ? S.calc.valor(S.ativa, r) : '', x = G.cx[q.c1 - 1], y = G.ly[q.l1 - 1];
+      h.push('<div class="c ' + classes(ce, v) + '" style="left:' + x + 'px;top:' + y + 'px;width:' + (G.cx[q.c2] - x) + 'px;height:' + (G.ly[q.l2] - y) + 'px">' + esc(ce ? M.mostrar(v, ce) : '') + '</div>');
+    });
+    return h.join('');
+  }
+  var _mt = null, _mtCache = {};
+  function larguraTexto(t, ce){
+    var k = (ce && ce.b ? 'b' : 'r') + t; if(_mtCache[k] != null) return _mtCache[k] * z();
+    _mt = _mt || document.createElement('canvas').getContext('2d');
+    _mt.font = (ce && ce.b ? '700 ' : '400 ') + '12.5px Montserrat, Arial, sans-serif';
+    var w = _mt.measureText(String(t).split('\n')[0]).width;
+    if(Object.keys(_mtCache).length > 5000) _mtCache = {};
+    _mtCache[k] = w; return w * z();
+  }
+  function htmlCabCol(c0, c1, n){
+    var h = [];
+    for(var c = c0; c <= c1; c++){ var x = G.cx[c - 1], w = G.cx[c] - x; h.push('<div class="hc' + (c >= n.c1 && c <= n.c2 ? ' sel' : '') + '" data-col="' + c + '" style="left:' + x + 'px;width:' + w + 'px;height:' + G.hh + 'px">' + M.colTxt(c) + '</div>'); }
+    return h.join('');
+  }
+  function htmlCabLin(l0, l1, n){
+    var h = [], esc0 = filtroAtual();
+    for(var l = l0; l <= l1; l++){ var y = G.ly[l - 1], hh = G.ly[l] - y; if(!hh) continue; h.push('<div class="hl' + (l >= n.l1 && l <= n.l2 ? ' sel' : '') + (esc0 && l > esc0.l && l <= esc0.l2 ? ' filtrada' : '') + '" data-lin="' + l + '" style="top:' + y + 'px;height:' + hh + 'px;width:' + G.hw + 'px">' + l + '</div>'); }
+    return h.join('');
+  }
+  /* caixa da seleção, célula ativa, alça de preencher e marca do copiar (desenhadas em cada camada; cada uma corta o que não é dela) */
+  function htmlSelecao(){
+    if(!S.sel) return '';
+    var n = norm(S.sel), mm = S.vista.mm || mapaMesclas(), h = '';
+    function caixa(c1, l1, c2, l2, cls){ c2 = Math.min(c2, G.nc); l2 = Math.min(l2, G.nl); var x = G.cx[c1 - 1], y = G.ly[l1 - 1]; return '<div class="' + cls + '" style="left:' + x + 'px;top:' + y + 'px;width:' + (G.cx[c2] - x) + 'px;height:' + (G.ly[l2] - y) + 'px"></div>'; }
+    var me = mm.mestre[S.sel.c1 + ',' + S.sel.l1] || { c2: S.sel.c1, l2: S.sel.l1 };
+    if(n.c1 !== n.c2 || n.l1 !== n.l2) h += caixa(n.c1, n.l1, n.c2, n.l2, 'pl-selbox');
+    h += caixa(S.sel.c1, S.sel.l1, me.c2, me.l2, 'pl-ativa');
+    if(S.pode.criar && !S.ed){ var ax = G.cx[Math.min(Math.max(n.c2, me.c2), G.nc)], ay = G.ly[Math.min(Math.max(n.l2, me.l2), G.nl)]; h += '<div class="pl-alca" title="Arraste para preencher" style="left:' + (ax - 4) + 'px;top:' + (ay - 4) + 'px"></div>'; }
+    if(S.prev) h += caixa(S.prev.c1, S.prev.l1, S.prev.c2, S.prev.l2, 'pl-prev');
+    if(S.clip && S.clip.marca && S.clip.aba === S.ativa){ var k = S.clip.marca; h += caixa(k.c1, k.l1, k.c2, k.l2, 'pl-formiga'); }
+    if(S.refMarca && S.refMarca.aba === S.ativa){ var q = S.refMarca; h += caixa(q.c1, q.l1, q.c2, q.l2, 'pl-refbox'); }
+    return h;
+  }
+  var _raf = 0;
+  function agendar(){ if(_raf) return; _raf = requestAnimationFrame(function(){ _raf = 0; pintar(); }); }
+  /* pinta a tela: refaz o html das células só quando a janela visível muda; o resto é só deslocar */
+  function pintar(forcar){
+    if(!G || !S.pasta) return;
+    var J = janelaVisivel(), cam = S.vista.camadas, n = S.sel ? norm(S.sel) : { c1: 0, c2: -1, l1: 0, l2: -1 };
+    var chave = [J.c0, J.c1, J.l0, J.l1, S.ver, S.ativa].join(',');
+    var hw = G.hw, hh = G.hh;
+    /* posição das camadas */
+    function pos(id, l, t, w, h){ var e = $(id).style; e.left = l + 'px'; e.top = t + 'px'; e.width = Math.max(0, w) + 'px'; e.height = Math.max(0, h) + 'px'; }
+    var m = S.med;
+    pos('vCorpo', hw + G.fw, hh + G.fh, m.w - hw - G.fw, m.h - hh - G.fh);
+    pos('vTopo', hw + G.fw, hh, m.w - hw - G.fw, G.fh);
+    pos('vEsq', hw, hh + G.fh, G.fw, m.h - hh - G.fh);
+    pos('vCanto', hw, hh, G.fw, G.fh);
+    pos('hColF', hw, 0, G.fw, hh); pos('hColS', hw + G.fw, 0, m.w - hw - G.fw, hh);
+    pos('hLinF', 0, hh, hw, G.fh); pos('hLinS', 0, hh + G.fh, hw, m.h - hh - G.fh);
+    pos('hTudo', 0, 0, hw, hh);
+    var lcH = $('lcH'), lcV = $('lcV');
+    lcH.hidden = !G.fl; lcV.hidden = !G.fc; if(G.fl){ lcH.style.top = (hh + G.fh - 1) + 'px'; } if(G.fc){ lcV.style.left = (hw + G.fw - 1) + 'px'; }
+    var tx = -J.sl - G.fw, ty = -J.st - G.fh;
+    cam.vCorpo.style.transform = 'translate(' + tx + 'px,' + ty + 'px)';
+    cam.vTopo.style.transform = 'translate(' + tx + 'px,0)';
+    cam.vEsq.style.transform = 'translate(0,' + ty + 'px)';
+    cam.hColS.style.transform = 'translate(' + tx + 'px,0)';
+    cam.hLinS.style.transform = 'translate(0,' + ty + 'px)';
+    if(forcar || chave !== S.vista.chave){
+      S.vista.chave = chave;
+      var mm = S.vista.mm = mapaMesclas();
+      cam.vCorpo.innerHTML = htmlCelulas(J.c0, J.c1, J.l0, J.l1, mm) + '<div class="pl-sel" data-sel></div>';
+      cam.vTopo.innerHTML = G.fl ? htmlCelulas(J.c0, J.c1, 1, G.fl, mm) + '<div class="pl-sel" data-sel></div>' : '';
+      cam.vEsq.innerHTML = G.fc ? htmlCelulas(1, G.fc, J.l0, J.l1, mm) + '<div class="pl-sel" data-sel></div>' : '';
+      cam.vCanto.innerHTML = G.fc && G.fl ? htmlCelulas(1, G.fc, 1, G.fl, mm) + '<div class="pl-sel" data-sel></div>' : '';
+      S.vista.jan = J;
+    }
+    var J0 = S.vista.jan;
+    cam.hColF.innerHTML = G.fc ? htmlCabCol(1, G.fc, n) : '';
+    cam.hColS.innerHTML = htmlCabCol(J0.c0, J0.c1, n);
+    cam.hLinF.innerHTML = G.fl ? htmlCabLin(1, G.fl, n) : '';
+    cam.hLinS.innerHTML = htmlCabLin(J0.l0, J0.l1, n);
+    var hs = htmlSelecao();
+    document.querySelectorAll('#plVista [data-sel]').forEach(function(d){ d.innerHTML = hs; });
+    posicionarEditor();
   }
   function recalcular(){ S.calc = M.calcular(S.pasta); }
-  function redesenhar(){ recalcular(); desenharGrade(); desenharAbas(); desenharAvisos(); atualizarBarra(); }
+  function redesenhar(){ recalcular(); S.ver = (S.ver || 0) + 1; geo(); S.med = medidas(); pintar(true); desenharAbas(); desenharAvisos(); atualizarBarra(); somaSelecao(); }
+  function desenharGrade(){ geo(); S.med = medidas(); pintar(true); }
+  function pintarSelecao(){ pintar(); atualizarBarra(); somaSelecao(); }
 
   /* ================= abas ================= */
   function desenharAbas(){
@@ -133,21 +310,21 @@
     $('plAbas').innerHTML = S.pasta.abas.map(function(a, i){
       var n = Object.keys(todos[i] || {}).filter(function(r){ return M.ehErro(todos[i][r]); }).length;
       return '<button type="button" class="pl-aba' + (i === S.ativa ? ' active' : '') + '" data-aba="' + i + '" title="Clique duas vezes para renomear">' + esc(a.nome) + (n ? '<span class="err" title="' + n + ' célula(s) com erro">● ' + n + '</span>' : '') + '</button>';
-    }).join('') + '<button type="button" class="btn" id="plAbaNova" title="Nova aba">+</button>'
-      + (S.pasta.abas.length > 1 ? '<button type="button" class="btn" id="plAbaMenu" title="Mover ou tirar esta aba">⋯</button>' : '');
+    }).join('') + (S.pode.criar ? '<button type="button" class="btn ic" id="plAbaNova" title="Nova aba" aria-label="Nova aba">+</button>' : '')
+      + (S.pasta.abas.length > 1 && S.pode.criar ? '<button type="button" class="btn ic" id="plAbaMenu" title="Mover, renomear ou tirar esta aba" aria-label="Opções da aba">⋯</button>' : '');
     $('plAbas').querySelectorAll('[data-aba]').forEach(function(b){
       b.onclick = function(){ trocarAba(+b.getAttribute('data-aba')); };
       b.ondblclick = function(){ renomearAba(+b.getAttribute('data-aba')); };
     });
-    $('plAbaNova').onclick = novaAba;
+    if($('plAbaNova')) $('plAbaNova').onclick = novaAba;
     if($('plAbaMenu')) $('plAbaMenu').onclick = menuAba;
   }
   function trocarAba(i){
     if(i === S.ativa) return;
     if(S.ed && !S.ed.formula) confirmarEdicao();
-    S.ativa = i; S.pasta.ativa = i; S.sel = { c1: 1, l1: 1, c2: 1, l2: 1 };
-    desenharGrade(); desenharAbas(); atualizarBarra();
+    S.ativa = i; S.pasta.ativa = i; S.sel = { c1: 1, l1: 1, c2: 1, l2: 1 }; S.minC = 0; S.minL = 0;
     $('plCaixa').scrollTop = 0; $('plCaixa').scrollLeft = 0;
+    S.ver = (S.ver || 0) + 1; geo(); pintar(true); desenharAbas(); atualizarBarra(); somaSelecao(); infoFiltro();
   }
   function nomeAbaValido(n, ignorar){
     n = (n || '').trim();
@@ -158,7 +335,7 @@
     return '';
   }
   function pedirNome(titulo, atual, ignorar, feito){
-    var j = janela('jNomeAba', titulo, '', '<label class="rot" for="naNome">Nome</label><input class="campo" id="naNome" maxlength="31"><div class="erro-campo" id="naErro"></div>',
+    janela('jNomeAba', titulo, '', '<label class="rot" for="naNome">Nome</label><input class="campo" id="naNome" maxlength="31"><div class="erro-campo" id="naErro"></div>',
       '<button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="naOk">Pronto</button>');
     var i = $('naNome'); i.value = atual || ''; setTimeout(function(){ i.focus(); i.select(); }, 60);
     function ok(){ var e = nomeAbaValido(i.value, ignorar); if(e){ $('naErro').textContent = e; return; } fecharJanela('jNomeAba'); feito(i.value.trim()); }
@@ -177,71 +354,126 @@
     var i = S.ativa, n = S.pasta.abas.length;
     janela('jMenuAba', 'Aba "' + aba().nome + '"', 'Tirar a aba apaga só desta planilha (as versões salvas antes continuam guardadas).',
       '<div class="pl-acoes"><button class="btn" type="button" id="maEsq"' + (i === 0 ? ' disabled' : '') + '>◀ Mover para a esquerda</button><button class="btn" type="button" id="maDir"' + (i === n - 1 ? ' disabled' : '') + '>Mover para a direita ▶</button>'
-      + '<button class="btn" type="button" id="maRen">Renomear</button><button class="btn btn-perigo" type="button" id="maTirar">Tirar esta aba</button></div>',
+      + '<button class="btn" type="button" id="maRen">Renomear</button><button class="btn btn-perigo" type="button" id="maTirar">Tirar esta aba</button></div><div class="erro-campo" id="maErro"></div>',
       '<button class="btn" type="button" data-fechar>Fechar</button>');
-    function mover(d){ guardarDesfazer(); var a = S.pasta.abas.splice(i, 1)[0]; S.pasta.abas.splice(i + d, 0, a); S.ativa = i + d; fecharJanela('jMenuAba'); mudou(); }
+    function mover(d){ guardarDesfazer(); var a = S.pasta.abas.splice(i, 1)[0]; S.pasta.abas.splice(i + d, 0, a); S.ativa = i + d; S.pasta.ativa = S.ativa; S.filtros = {}; fecharJanela('jMenuAba'); mudou(); }
     $('maEsq').onclick = function(){ mover(-1); }; $('maDir').onclick = function(){ mover(1); };
     $('maRen').onclick = function(){ fecharJanela('jMenuAba'); renomearAba(i); };
     $('maTirar').onclick = function(){
       var nome = aba().nome, usadaEm = [];
-      S.pasta.abas.forEach(function(o, k){ if(k === i) return; Object.keys(o.celulas || {}).forEach(function(r){ var c = o.celulas[r]; if(c.f && c.f.toLowerCase().indexOf(nome.toLowerCase() + "'!") >= 0 || (c.f && c.f.toLowerCase().indexOf(nome.toLowerCase() + '!') >= 0)) usadaEm.push(o.nome + '!' + r); }); });
-      if(usadaEm.length && !confirm('Outras abas usam esta (' + usadaEm.slice(0, 5).join(', ') + (usadaEm.length > 5 ? '…' : '') + '): essas fórmulas vão mostrar #REF!. Tirar mesmo assim?')) return;
-      if(!usadaEm.length && !confirm('Tirar a aba "' + nome + '" desta planilha?')) return;
-      guardarDesfazer(); S.pasta.abas.splice(i, 1); S.ativa = Math.max(0, i - 1); S.pasta.ativa = S.ativa; fecharJanela('jMenuAba'); mudou();
+      S.pasta.abas.forEach(function(o, k){ if(k === i) return; Object.keys(o.celulas || {}).forEach(function(r){ var c = o.celulas[r]; if(c.f && (c.f.toLowerCase().indexOf(nome.toLowerCase() + "'!") >= 0 || c.f.toLowerCase().indexOf(nome.toLowerCase() + '!') >= 0)) usadaEm.push(o.nome + '!' + r); }); });
+      confirmar('Tirar a aba "' + nome + '"?', usadaEm.length ? 'Outras abas usam esta (' + usadaEm.slice(0, 5).join(', ') + (usadaEm.length > 5 ? '…' : '') + '): essas fórmulas vão mostrar #REF!. Dá para desfazer com Ctrl+Z.' : 'Dá para desfazer com Ctrl+Z; as versões salvas continuam guardadas.', 'Tirar a aba', function(){
+        guardarDesfazer(); S.pasta.abas.splice(i, 1); S.ativa = Math.max(0, i - 1); S.pasta.ativa = S.ativa; S.filtros = {}; mudou();
+      }, true);
     };
+  }
+  /* confirmação dentro da tela (no lugar do confirm do navegador) */
+  function confirmar(titulo, texto, rotulo, fazer, perigo){
+    janela('jConfirmar', titulo, esc(texto || ''), '', '<button class="btn" type="button" data-fechar>Cancelar</button><button class="btn ' + (perigo ? 'btn-perigo' : 'btn-ouro') + '" type="button" id="jcOk">' + esc(rotulo) + '</button>');
+    $('jcOk').onclick = function(){ fecharJanela('jConfirmar'); fazer(); };
+    setTimeout(function(){ var b = $('jcOk'); if(b) b.focus(); }, 60);
   }
 
   /* ================= seleção ================= */
   function norm(s){ return { c1: Math.min(s.c1, s.c2), l1: Math.min(s.l1, s.l2), c2: Math.max(s.c1, s.c2), l2: Math.max(s.l1, s.l2) }; }
-  function pintarSelecao(){
-    var g = $('plGrade'); if(!g || !S.sel) return;
-    g.querySelectorAll('td.sel,td.ativa').forEach(function(t){ t.classList.remove('sel', 'ativa'); });
-    g.querySelectorAll('th.sel').forEach(function(t){ t.classList.remove('sel'); });
-    var n = norm(S.sel);
-    for(var l = n.l1; l <= n.l2; l++) for(var c = n.c1; c <= n.c2; c++){
-      var td = g.querySelector('td[data-c="' + c + '"][data-l="' + l + '"]'); if(td) td.classList.add('sel');
-    }
-    var at = g.querySelector('td[data-c="' + S.sel.c1 + '"][data-l="' + S.sel.l1 + '"]'); if(at) at.classList.add('ativa');
-    for(c = n.c1; c <= n.c2; c++){ var th = g.querySelector('thead th[data-col="' + c + '"]'); if(th) th.classList.add('sel'); }
-    for(l = n.l1; l <= n.l2; l++){ var tl = g.querySelector('th[data-lin="' + l + '"]'); if(tl) tl.classList.add('sel'); }
-    somaSelecao();
-  }
   function ativaRef(){ return M.ref(S.sel.c1, S.sel.l1); }
+  function txtSel(){ var n = norm(S.sel); return M.ref(S.sel.c1, S.sel.l1) + (n.c1 !== n.c2 || n.l1 !== n.l2 ? ' · ' + M.ref(n.c1, n.l1) + ':' + M.ref(n.c2, n.l2) : ''); }
   function atualizarBarra(){
     if(!S.sel) return;
-    $('plEnd').textContent = M.ref(S.sel.c1, S.sel.l1) + (S.sel.c2 !== S.sel.c1 || S.sel.l2 !== S.sel.l1 ? ':' + M.ref(S.sel.c2, S.sel.l2) : '');
+    var e = $('plEnd'); if(document.activeElement !== e) e.value = txtSel();
     if(!S.ed) $('plFx').value = M.paraEditar(cel(ativaRef()));
     var c = cel(ativaRef()) || {};
     $('fFormato').value = c.t || '';
     $('fB').classList.toggle('ativo', !!c.b); $('fI').classList.toggle('ativo', !!c.i);
+    $('fReais').classList.toggle('ativo', c.t === 'reais'); $('fPct').classList.toggle('ativo', c.t === 'pct');
+    $('fEsq').classList.toggle('ativo', c.al === 'esq'); $('fCentro').classList.toggle('ativo', c.al === 'centro'); $('fDir').classList.toggle('ativo', c.al === 'dir');
+    $('fQuebra').classList.toggle('ativo', !!c.q);
+    var bar = $('fCorTxtBarra'); if(bar) bar.style.background = c.cor && /^#[0-9a-f]{6}$/i.test(c.cor) ? c.cor : 'var(--text)';
+    var cg = congel(); $('fCongelar').classList.toggle('ativo', !!(cg.l || cg.c)); $('fFiltro').classList.toggle('ativo', !!filtroAtual());
   }
   function somaSelecao(){
-    var n = norm(S.sel), s = 0, q = 0, nums = 0;
+    var n = norm(S.sel), s = 0, q = 0, nums = 0, mn = Infinity, mx = -Infinity, esc0 = escondidas(), t = 0;
     if(n.c1 === n.c2 && n.l1 === n.l2){ $('plSoma').innerHTML = ''; return; }
-    for(var l = n.l1; l <= n.l2; l++) for(var c = n.c1; c <= n.c2; c++){ var v = S.calc.valor(S.ativa, M.ref(c, l)); if(v !== '' && v != null) q++; if(typeof v === 'number'){ s += v; nums++; } }
-    $('plSoma').innerHTML = nums ? 'Soma: <b>' + esc(M.mostrar(s, { t: 'num', casas: 2 })) + '</b> · Média: <b>' + esc(M.mostrar(s / nums, { t: 'num', casas: 2 })) + '</b> · ' + q + ' preenchida(s)' : q + ' preenchida(s)';
+    var a = aba();
+    Object.keys(a.celulas).forEach(function(r){
+      var e = M.endereco(r); if(!e || e.c < n.c1 || e.c > n.c2 || e.l < n.l1 || e.l > n.l2 || esc0[e.l]) return;
+      if(++t > 200000) return;
+      var v = S.calc.valor(S.ativa, r); if(v !== '' && v != null) q++; if(typeof v === 'number'){ s += v; nums++; if(v < mn) mn = v; if(v > mx) mx = v; }
+    });
+    var f = function(x){ return esc(M.mostrar(x, { t: 'num', casas: 2 })); };
+    $('plSoma').innerHTML = nums ? 'Soma <b>' + f(s) + '</b> · Média <b>' + f(s / nums) + '</b> · Mín. <b>' + f(mn) + '</b> · Máx. <b>' + f(mx) + '</b> · <b>' + q + '</b> preenchida(s)' : '<b>' + q + '</b> preenchida(s)';
   }
-  function irPara(c, l, estender){
-    c = Math.max(1, c); l = Math.max(1, l);
+  function irPara(c, l, estender, semRolar){
+    c = Math.max(1, Math.min(c, 16384)); l = Math.max(1, Math.min(l, 100000));
     if(estender){ S.sel.c2 = c; S.sel.l2 = l; }
     else S.sel = { c1: c, l1: l, c2: c, l2: l };
-    if(c > S.area.cols - 2 || l > S.area.lins - 3){ S.area = null; desenharGrade(); } else pintarSelecao();
-    atualizarBarra(); rolarAte(estender ? S.sel.c2 : c, estender ? S.sel.l2 : l);
+    var cresceu = false;
+    if(c > G.nc - 4){ S.minC = c + 10; cresceu = true; }
+    if(l > G.nl - 10){ S.minL = l + 60; cresceu = true; }
+    if(cresceu) geo();
+    if(!semRolar) rolarAte(estender ? S.sel.c2 : c, estender ? S.sel.l2 : l);
+    pintar(); atualizarBarra(); somaSelecao();
   }
   function rolarAte(c, l){
-    var td = $('plGrade').querySelector('td[data-c="' + c + '"][data-l="' + l + '"]'), cx = $('plCaixa'); if(!td) return;
-    var r = td.getBoundingClientRect(), b = cx.getBoundingClientRect();
-    if(r.bottom > b.bottom - 4) cx.scrollTop += r.bottom - b.bottom + 8;
-    if(r.top < b.top + 30) cx.scrollTop -= (b.top + 30 - r.top);
-    if(r.right > b.right - 4) cx.scrollLeft += r.right - b.right + 8;
-    if(r.left < b.left + 46) cx.scrollLeft -= (b.left + 46 - r.left);
+    var cx = $('plCaixa'), m = S.med, bw = m.w - G.hw - G.fw, bh = m.h - G.hh - G.fh;
+    if(c > G.fc){ var x0 = G.cx[c - 1] - G.fw, x1 = G.cx[c] - G.fw; if(x0 < cx.scrollLeft) cx.scrollLeft = x0; else if(x1 > cx.scrollLeft + bw) cx.scrollLeft = x1 - bw + 2; }
+    if(l > G.fl){ var y0 = G.ly[l - 1] - G.fh, y1 = G.ly[l] - G.fh; if(y0 < cx.scrollTop) cx.scrollTop = y0; else if(y1 > cx.scrollTop + bh) cx.scrollTop = y1 - bh + 2; }
+  }
+  /* posição da tela (dentro da grade) → célula */
+  function celulaEm(px, py){
+    var cx = $('plCaixa'), x = px - G.hw, y = py - G.hh;
+    var X = x < G.fw ? x : x + cx.scrollLeft, Y = y < G.fh ? y : y + cx.scrollTop;
+    return { c: x < 0 ? 0 : achar(G.cx, G.nc, X), l: y < 0 ? 0 : achar(G.ly, G.nl, Y), x: x, y: y, X: X, Y: Y };
+  }
+  /* retângulo da célula na tela (dentro da grade) */
+  function retCelula(c, l, c2, l2){
+    var cx = $('plCaixa'); c2 = c2 || c; l2 = l2 || l;
+    var x = G.hw + G.cx[c - 1] - (c > G.fc ? cx.scrollLeft : 0), y = G.hh + G.ly[l - 1] - (l > G.fl ? cx.scrollTop : 0);
+    return { x: x, y: y, w: G.cx[Math.min(c2, G.nc)] - G.cx[c - 1], h: G.ly[Math.min(l2, G.nl)] - G.ly[l - 1] };
+  }
+  /* "região atual" em volta de uma célula (como o Ctrl+A do Excel): linhas e colunas seguidas com conteúdo */
+  function cheia(a, c, l){ var o = a.celulas[M.ref(c, l)]; return !!(o && ((o.v !== undefined && o.v !== '') || o.f)); }
+  function regiao(c, l){
+    var a = aba(), r = { c1: c, c2: c, l1: l, l2: l }, mudou0 = true, guarda = 0;
+    function linhaTem(ll, c1, c2){ for(var x = c1; x <= c2; x++) if(cheia(a, x, ll)) return true; return false; }
+    function colTem(cc, l1, l2){ for(var y = l1; y <= l2; y++) if(cheia(a, cc, y)) return true; return false; }
+    while(mudou0 && guarda++ < 5000){
+      mudou0 = false;
+      if(r.l1 > 1 && linhaTem(r.l1 - 1, Math.max(1, r.c1 - 1), r.c2 + 1)){ r.l1--; mudou0 = true; }
+      if(linhaTem(r.l2 + 1, Math.max(1, r.c1 - 1), r.c2 + 1)){ r.l2++; mudou0 = true; }
+      if(r.c1 > 1 && colTem(r.c1 - 1, Math.max(1, r.l1 - 1), r.l2 + 1)){ r.c1--; mudou0 = true; }
+      if(colTem(r.c2 + 1, Math.max(1, r.l1 - 1), r.l2 + 1)){ r.c2++; mudou0 = true; }
+    }
+    return r;
+  }
+  /* para ordenar/filtrar: tira do alto as linhas de TÍTULO (mescladas de lado a lado), como "Cálculo do PSS" */
+  function semTitulo(r){
+    var ms = (aba().mesclas || []).map(function(m){ var p = m.split(':'), x = M.endereco(p[0]), y = M.endereco(p[1]); return { c1: x.c, l1: x.l, c2: y.c, l2: y.l }; });
+    var guarda = 0;
+    while(r.l1 < r.l2 && guarda++ < 20){
+      var tit = ms.filter(function(q){ return q.l1 <= r.l1 && q.l2 >= r.l1 && q.c2 > q.c1 && !(q.c2 < r.c1 || q.c1 > r.c2); });
+      if(!tit.length) break;
+      r.l1 = Math.max.apply(null, tit.map(function(q){ return q.l2; })) + 1;
+    }
+    return r;
+  }
+  /* Ctrl+seta: vai até a borda dos dados (como no Excel) */
+  function pular(c, l, dc, dl){
+    var a = aba(), u = M.usada(a), limC = Math.max(u.colunas, 1), limL = Math.max(u.linhas, 1);
+    var cc = c + dc, ll = l + dl;
+    if(cc < 1 || ll < 1) return { c: Math.max(1, cc), l: Math.max(1, ll) };
+    var atual = cheia(a, c, l), prox = cheia(a, cc, ll);
+    if(atual && prox){ while(cc + dc >= 1 && ll + dl >= 1 && cheia(a, cc + dc, ll + dl)){ cc += dc; ll += dl; } return { c: cc, l: ll }; }
+    while(cc >= 1 && ll >= 1 && !cheia(a, cc, ll)){ if((dc > 0 && cc > limC) || (dl > 0 && ll > limL)) return { c: dc ? (dc > 0 ? limC : 1) : c, l: dl ? (dl > 0 ? limL : 1) : l }; cc += dc; ll += dl; }
+    return { c: Math.max(1, cc), l: Math.max(1, ll) };
   }
 
   /* ================= edição ================= */
-  function guardarDesfazer(){ S.desfazer.push(JSON.stringify(S.pasta)); if(S.desfazer.length > 80) S.desfazer.shift(); S.refazer = []; }
+  function guardarDesfazer(){ S.desfazer.push(JSON.stringify({ p: S.pasta, a: S.ativa })); if(S.desfazer.length > 80) S.desfazer.shift(); S.refazer = []; }
   function mudou(){ S.pendente = true; redesenhar(); estadoSalvo(); }
-  function desfazer(){ if(!S.desfazer.length) return; S.refazer.push(JSON.stringify(S.pasta)); S.pasta = JSON.parse(S.desfazer.pop()); S.ativa = Math.min(S.ativa, S.pasta.abas.length - 1); mudou(); }
-  function refazer(){ if(!S.refazer.length) return; S.desfazer.push(JSON.stringify(S.pasta)); S.pasta = JSON.parse(S.refazer.pop()); S.ativa = Math.min(S.ativa, S.pasta.abas.length - 1); mudou(); }
+  function voltarPara(txt){ var o = JSON.parse(txt); if(o && o.p){ S.pasta = o.p; S.ativa = Math.min(o.a || 0, S.pasta.abas.length - 1); } else { S.pasta = o; S.ativa = Math.min(S.ativa, S.pasta.abas.length - 1); } }
+  function desfazer(){ if(S.ed) cancelarEdicao(); if(!S.desfazer.length){ toast('Nada para desfazer.'); return; } S.refazer.push(JSON.stringify({ p: S.pasta, a: S.ativa })); voltarPara(S.desfazer.pop()); mudou(); }
+  function refazer(){ if(S.ed) cancelarEdicao(); if(!S.refazer.length){ toast('Nada para refazer.'); return; } S.desfazer.push(JSON.stringify({ p: S.pasta, a: S.ativa })); voltarPara(S.refazer.pop()); mudou(); }
   function gravarCelula(a, r, txt){
     var c = a.celulas[r] || {}, e = M.lerEntrada(txt, c);
     delete c.v; delete c.f;
@@ -252,21 +484,30 @@
   function comecarEdicao(inicial, viaBarra){
     if(!S.pode.criar){ toast('Você só pode ver esta planilha (sem permissão para editar documentos).', 'error'); return; }
     var r = ativaRef(), c = cel(r) || {};
-    var td = $('plGrade').querySelector('td[data-c="' + S.sel.c1 + '"][data-l="' + S.sel.l1 + '"]');
-    S.ed = { r: r, aba: S.ativa, original: M.paraEditar(c), formula: false };
+    S.ed = { r: r, aba: S.ativa, c: S.sel.c1, l: S.sel.l1, original: M.paraEditar(c), formula: false };
     var val = inicial != null ? inicial : S.ed.original;
     if(viaBarra){ S.ed.barra = true; S.ed.formula = String(val)[0] === '='; return; }
-    var ta = document.createElement('textarea'); ta.className = 'pl-ed'; ta.id = 'plEd'; ta.spellcheck = false;
-    var cx = $('plCaixa'), rr = td.getBoundingClientRect(), rb = cx.getBoundingClientRect();
-    ta.style.left = (rr.left - rb.left + cx.scrollLeft - 1) + 'px'; ta.style.top = (rr.top - rb.top + cx.scrollTop - 1) + 'px';
-    ta.style.minWidth = Math.max(rr.width + 2, 120) + 'px'; ta.style.height = Math.max(rr.height + 2, 28) + 'px';
-    ta.value = val; cx.appendChild(ta); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+    rolarAte(S.sel.c1, S.sel.l1);
+    var ta = document.createElement('textarea'); ta.className = 'pl-ed'; ta.id = 'plEd'; ta.spellcheck = false; ta.setAttribute('aria-label', 'Editar a célula ' + r);
+    ta.style.fontSize = (12.5 * z()) + 'px';
+    $('plVista').appendChild(ta);
+    S.ed.ta = ta; posicionarEditor();
+    ta.value = val; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
     $('plFx').value = val; S.ed.formula = String(val)[0] === '=';
     ajustarLargura(ta);
-    ta.addEventListener('input', function(){ mascara(ta, c); $('plFx').value = ta.value; S.ed.formula = ta.value[0] === '='; ajustarLargura(ta); });
+    ta.addEventListener('input', function(){ mascara(ta, c); $('plFx').value = ta.value; S.ed.formula = ta.value[0] === '='; S.ed.refPos = null; ajustarLargura(ta); });
     ta.addEventListener('keydown', teclaEditor);
+    pintar();
   }
-  function ajustarLargura(ta){ var n = Math.min(60, Math.max(ta.value.length + 2, 10)); ta.style.width = Math.max(parseFloat(ta.style.minWidth), n * 7.6) + 'px'; }
+  function posicionarEditor(){
+    var ta = $('plEd'); if(!ta || !S.ed || S.ed.aba !== S.ativa) { if(ta && S.ed && S.ed.aba !== S.ativa) ta.style.visibility = 'hidden'; return; }
+    ta.style.visibility = '';
+    var mm = S.vista.mm || mapaMesclas(), me = mm.mestre[S.ed.c + ',' + S.ed.l] || { c2: S.ed.c, l2: S.ed.l };
+    var R = retCelula(S.ed.c, S.ed.l, me.c2, me.l2);
+    ta.style.left = (R.x - 1) + 'px'; ta.style.top = (R.y - 1) + 'px';
+    ta.style.minWidth = Math.max(R.w + 2, 90) + 'px'; ta.style.minHeight = Math.max(R.h + 2, 24) + 'px';
+  }
+  function ajustarLargura(ta){ var lin = ta.value.split('\n'), n = Math.min(70, Math.max.apply(null, lin.map(function(x){ return x.length; })) + 2); ta.style.width = Math.max(parseFloat(ta.style.minWidth) || 90, n * 7.4 * z()) + 'px'; ta.style.height = Math.max(parseFloat(ta.style.minHeight) || 24, lin.length * 17 * z() + 8) + 'px'; }
   /* formata sozinho enquanto digita (regra de 04/11): R$ com centavos, data dd/mm/aaaa, % com vírgula */
   function mascara(inp, c){
     var v = inp.value; if(!c || !c.t || v[0] === '=') return;
@@ -279,35 +520,51 @@
   function textoEditado(){ var ta = $('plEd'); return ta ? ta.value : $('plFx').value; }
   function confirmarEdicao(mover){
     if(!S.ed) return;
-    var txt = textoEditado(), ed = S.ed; S.ed = null;
+    var txt = textoEditado(), ed = S.ed; S.ed = null; S.refMarca = null;
     var ta = $('plEd'); if(ta) ta.remove();
-    if(txt !== ed.original){
-      guardarDesfazer();
-      gravarCelula(S.pasta.abas[ed.aba], ed.r, txt);
-      if(ed.aba !== S.ativa){ S.ativa = ed.aba; S.pasta.ativa = ed.aba; var e = M.endereco(ed.r); S.sel = { c1: e.c, l1: e.l, c2: e.c, l2: e.l }; }
-      mudou();
-    } else if(ed.aba !== S.ativa){ S.ativa = ed.aba; desenharGrade(); desenharAbas(); }
-    if(mover) irPara(S.sel.c1 + (mover === 'dir' ? 1 : mover === 'esq' ? -1 : 0), S.sel.l1 + (mover === 'baixo' ? 1 : mover === 'cima' ? -1 : 0));
+    if(ed.aba !== S.ativa){ S.ativa = ed.aba; S.pasta.ativa = ed.aba; S.sel = { c1: ed.c, l1: ed.l, c2: ed.c, l2: ed.l }; geo(); }
+    if(txt !== ed.original){ guardarDesfazer(); gravarCelula(S.pasta.abas[ed.aba], ed.r, txt); mudou(); }
+    else { pintar(true); desenharAbas(); }
+    if(mover){
+      var n = norm(S.sel), dentro = n.c1 !== n.c2 || n.l1 !== n.l2;
+      var dc = mover === 'dir' ? 1 : mover === 'esq' ? -1 : 0, dl = mover === 'baixo' ? 1 : mover === 'cima' ? -1 : 0;
+      if(dentro) andarDentro(dc, dl); else irPara(S.sel.c1 + dc, S.sel.l1 + dl);
+    }
     atualizarBarra();
+    $('plCaixa').focus({ preventScroll: true });
   }
-  function cancelarEdicao(){ var ta = $('plEd'); if(ta) ta.remove(); var ed = S.ed; S.ed = null; if(ed && ed.aba !== S.ativa){ S.ativa = ed.aba; desenharGrade(); desenharAbas(); } atualizarBarra(); }
+  /* Enter/Tab com várias células marcadas: anda só dentro da seleção (como no Excel) */
+  function andarDentro(dc, dl){
+    var n = norm(S.sel), c = S.sel.c1 + dc, l = S.sel.l1 + dl, keep = { c2: S.sel.c2, l2: S.sel.l2, a1: S.sel.c2, b1: S.sel.l2 };
+    if(c > n.c2){ c = n.c1; l++; } if(c < n.c1){ c = n.c2; l--; }
+    if(l > n.l2){ l = n.l1; if(dl) c++; } if(l < n.l1){ l = n.l2; if(dl) c--; }
+    if(c > n.c2) c = n.c1; if(c < n.c1) c = n.c2;
+    S.sel = { c1: c, l1: l, c2: keep.c2 === c && keep.l2 === l ? keep.c2 : n.c1 === c ? n.c2 : n.c1, l2: n.l1 === l ? n.l2 : n.l1 };
+    S.sel = { c1: c, l1: l, c2: c === n.c1 ? n.c2 : n.c1, l2: l === n.l1 ? n.l2 : n.l1 };
+    rolarAte(c, l); pintar(); atualizarBarra();
+  }
+  function cancelarEdicao(){ var ta = $('plEd'); if(ta) ta.remove(); var ed = S.ed; S.ed = null; S.refMarca = null; if(ed && ed.aba !== S.ativa){ S.ativa = ed.aba; geo(); desenharAbas(); } pintar(true); atualizarBarra(); $('plCaixa').focus({ preventScroll: true }); }
   function teclaEditor(e){
     if(e.key === 'Enter' && !e.altKey){ e.preventDefault(); confirmarEdicao(e.shiftKey ? 'cima' : 'baixo'); return; }
-    if(e.key === 'Enter' && e.altKey){ e.preventDefault(); var t = e.target, p = t.selectionStart; t.value = t.value.slice(0, p) + '\n' + t.value.slice(t.selectionEnd); t.setSelectionRange(p + 1, p + 1); return; }
+    if(e.key === 'Enter' && e.altKey){ e.preventDefault(); var t = e.target, p = t.selectionStart; t.value = t.value.slice(0, p) + '\n' + t.value.slice(t.selectionEnd); t.setSelectionRange(p + 1, p + 1); $('plFx').value = t.value; ajustarLargura(t); return; }
     if(e.key === 'Tab'){ e.preventDefault(); confirmarEdicao(e.shiftKey ? 'esq' : 'dir'); return; }
     if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); cancelarEdicao(); return; }
+    /* setas sem ter mexido no texto (começou digitando): confirma e anda, como no Excel */
+    if(/^Arrow/.test(e.key) && S.ed && S.ed.digitando && !S.ed.formula){ e.preventDefault(); confirmarEdicao({ ArrowDown: 'baixo', ArrowUp: 'cima', ArrowRight: 'dir', ArrowLeft: 'esq' }[e.key]); }
   }
   /* clicar numa célula enquanto escreve a fórmula: põe a referência */
   function porReferencia(c, l, c2, l2){
     var alvo = $('plEd') || $('plFx');
-    var r = M.ref(c, l) + (c2 != null && (c2 !== c || l2 !== l) ? ':' + M.ref(c2, l2) : '');
+    var r = M.ref(c, l) + (c2 != null && (c2 !== c || l2 !== l) ? ':' + M.ref(Math.max(c, c2), Math.max(l, l2)) : '');
+    if(c2 != null && (c2 < c || l2 < l)) r = M.ref(Math.min(c, c2), Math.min(l, l2)) + ':' + M.ref(Math.max(c, c2), Math.max(l, l2));
     if(S.ed.aba !== S.ativa){ var n = aba().nome; r = (/^[A-Za-z_][A-Za-z0-9_]*$/.test(n) ? n : "'" + n.replace(/'/g, "''") + "'") + '!' + r; }
     var p = alvo.selectionStart, q = alvo.selectionEnd, v = alvo.value;
-    /* troca a referência que acabou de ser posta (arrastar) */
     if(S.ed.refPos != null && S.ed.refFim === p){ v = v.slice(0, S.ed.refPos) + v.slice(p); p = q = S.ed.refPos; }
     alvo.value = v.slice(0, p) + r + v.slice(q); S.ed.refPos = p; S.ed.refFim = p + r.length;
     alvo.focus(); alvo.setSelectionRange(p + r.length, p + r.length);
     if(alvo.id === 'plEd'){ $('plFx').value = alvo.value; ajustarLargura(alvo); }
+    S.refMarca = { aba: S.ativa, c1: Math.min(c, c2 || c), l1: Math.min(l, l2 || l), c2: Math.max(c, c2 || c), l2: Math.max(l, l2 || l) };
+    pintar();
   }
   function aceitaReferencia(){
     if(!S.ed || !S.ed.formula) return false;
@@ -319,6 +576,11 @@
   /* ================= ações na seleção ================= */
   function cadaCelula(fn, criar){
     var n = norm(S.sel), a = aba();
+    if((n.c2 - n.c1 + 1) * (n.l2 - n.l1 + 1) > 60000){
+      /* seleção enorme (coluna ou linha inteira): só as células que existem */
+      Object.keys(a.celulas).forEach(function(r){ var e = M.endereco(r); if(e.c >= n.c1 && e.c <= n.c2 && e.l >= n.l1 && e.l <= n.l2){ fn(a.celulas[r], r, e.c, e.l); if(!Object.keys(a.celulas[r]).length) delete a.celulas[r]; } });
+      return;
+    }
     for(var l = n.l1; l <= n.l2; l++) for(var c = n.c1; c <= n.c2; c++){
       var r = M.ref(c, l); if(!a.celulas[r] && criar) a.celulas[r] = {};
       if(a.celulas[r]) fn(a.celulas[r], r, c, l);
@@ -328,21 +590,20 @@
   function formatar(fn){ if(!S.pode.criar) return; guardarDesfazer(); cadaCelula(fn, true); mudou(); }
   function limparSelecao(){ if(!S.pode.criar) return; guardarDesfazer(); cadaCelula(function(c){ delete c.v; delete c.f; }); mudou(); }
   function alternar(p){ var at = (cel(ativaRef()) || {})[p]; formatar(function(c){ if(at) delete c[p]; else c[p] = true; }); }
-  function alinhar(al){ formatar(function(c){ if(c.al === al) delete c.al; else c.al = al; }); }
+  function alinhar(al){ var at = (cel(ativaRef()) || {}).al; formatar(function(c){ if(at === al) delete c.al; else c.al = al; }); }
   function casas(d){ formatar(function(c){ var base = c.casas != null ? c.casas : (c.t === 'int' ? 0 : 2); c.casas = Math.max(0, Math.min(10, base + d)); }); }
+  function formato(t){ var at = (cel(ativaRef()) || {}).t; formatar(function(c){ if(at === t) delete c.t; else c.t = t; delete c.casas; }); }
   function mesclar(){
     if(!S.pode.criar) return;
     var n = norm(S.sel), a = aba(), alvo = M.ref(n.c1, n.l1) + ':' + M.ref(n.c2, n.l2);
     a.mesclas = a.mesclas || [];
     var existe = a.mesclas.filter(function(m){ var p = m.split(':'), x = M.endereco(p[0]), y = M.endereco(p[1]); return !(y.c < n.c1 || x.c > n.c2 || y.l < n.l1 || x.l > n.l2); });
-    guardarDesfazer();
-    if(existe.length){ a.mesclas = a.mesclas.filter(function(m){ return existe.indexOf(m) < 0; }); }
-    else if(n.c1 !== n.c2 || n.l1 !== n.l2){
-      var cheias = 0; cadaCelula(function(c, r){ if(r !== M.ref(n.c1, n.l1) && (c.v !== undefined && c.v !== '' || c.f)) cheias++; });
-      if(cheias && !confirm('Mesclar mantém só o conteúdo da 1ª célula; ' + cheias + ' outra(s) célula(s) marcadas têm conteúdo e vão ficar escondidas. Mesclar mesmo assim?')){ S.desfazer.pop(); return; }
-      a.mesclas.push(alvo);
-    } else { S.desfazer.pop(); return; }
-    mudou();
+    if(existe.length){ guardarDesfazer(); a.mesclas = a.mesclas.filter(function(m){ return existe.indexOf(m) < 0; }); mudou(); return; }
+    if(n.c1 === n.c2 && n.l1 === n.l2){ toast('Marque duas ou mais células para mesclar.'); return; }
+    var cheias = 0; cadaCelula(function(c, r){ if(r !== M.ref(n.c1, n.l1) && (c.v !== undefined && c.v !== '' || c.f)) cheias++; });
+    function faz(){ guardarDesfazer(); a.mesclas.push(alvo); S.sel = { c1: n.c1, l1: n.l1, c2: n.c2, l2: n.l2 }; mudou(); }
+    if(cheias) confirmar('Mesclar as células?', 'Mesclar mantém só o conteúdo da 1ª célula; ' + cheias + ' outra(s) célula(s) marcadas têm conteúdo e vão ficar escondidas.', 'Mesclar', faz);
+    else faz();
   }
   function nota(){
     if(!S.pode.criar) return;
@@ -354,123 +615,512 @@
     $('ntOk').onclick = function(){ var t = $('ntTexto').value.trim(), cf = $('ntConferir').checked; fecharJanela('jNota'); guardarDesfazer(); var a = aba(), r = ativaRef(); a.celulas[r] = a.celulas[r] || {}; if(t){ a.celulas[r].nota = t; if(cf) a.celulas[r].conferir = true; else delete a.celulas[r].conferir; } else { delete a.celulas[r].nota; delete a.celulas[r].conferir; } if(!Object.keys(a.celulas[r]).length) delete a.celulas[r]; mudou(); };
     $('ntTirar').onclick = function(){ fecharJanela('jNota'); guardarDesfazer(); var a = aba(), r = ativaRef(); if(a.celulas[r]){ delete a.celulas[r].nota; delete a.celulas[r].conferir; if(!Object.keys(a.celulas[r]).length) delete a.celulas[r]; } mudou(); };
   }
-  function linhasColunas(eixo, inserir){
+  function linhasColunas(eixo, inserir, depois){
     if(!S.pode.criar) return;
-    var n = norm(S.sel); guardarDesfazer();
-    if(eixo === 'linha'){ if(inserir) M.inserir(S.pasta, S.ativa, 'linha', n.l1, 1); else M.excluir(S.pasta, S.ativa, 'linha', n.l1, n.l2 - n.l1 + 1); }
-    else { if(inserir) M.inserir(S.pasta, S.ativa, 'coluna', n.c1, 1); else M.excluir(S.pasta, S.ativa, 'coluna', n.c1, n.c2 - n.c1 + 1); }
-    S.sel = { c1: n.c1, l1: n.l1, c2: n.c1, l2: n.l1 }; S.area = null; mudou();
+    var n = norm(S.sel), qtd = eixo === 'linha' ? n.l2 - n.l1 + 1 : n.c2 - n.c1 + 1;
+    if(inserir && qtd > 500) qtd = 1;
+    guardarDesfazer(); S.filtros = {};
+    if(eixo === 'linha'){ if(inserir) M.inserir(S.pasta, S.ativa, 'linha', depois ? n.l2 + 1 : n.l1, qtd); else M.excluir(S.pasta, S.ativa, 'linha', n.l1, qtd); }
+    else { if(inserir) M.inserir(S.pasta, S.ativa, 'coluna', depois ? n.c2 + 1 : n.c1, qtd); else M.excluir(S.pasta, S.ativa, 'coluna', n.c1, qtd); }
+    S.sel = { c1: n.c1, l1: n.l1, c2: n.c1, l2: n.l1 }; mudou();
   }
-  function preencherAbaixo(){
+  /* copiar a 1ª linha (ou coluna) marcada para as outras: Ctrl+D / Ctrl+R */
+  function preencherAbaixo(){ var n = norm(S.sel); if(n.l2 === n.l1) return; preencher({ c1: n.c1, l1: n.l1, c2: n.c2, l2: n.l1 }, n, 'baixo', true); }
+  function preencherDireita(){ var n = norm(S.sel); if(n.c2 === n.c1) return; preencher({ c1: n.c1, l1: n.l1, c2: n.c1, l2: n.l2 }, n, 'dir', true); }
+  /* arrastar a alça: copia ou continua a série (1, 2, 3…; datas; "Parcela 1, Parcela 2"; fórmulas com as referências andando) */
+  function preencher(orig, alvo, dir, soCopia){
     if(!S.pode.criar) return;
-    var n = norm(S.sel); if(n.l2 === n.l1) return;
-    guardarDesfazer(); var a = aba();
-    for(var c = n.c1; c <= n.c2; c++){
-      var base = a.celulas[M.ref(c, n.l1)];
-      for(var l = n.l1 + 1; l <= n.l2; l++){
-        var r = M.ref(c, l);
-        if(!base){ delete a.celulas[r]; continue; }
-        var novo = JSON.parse(JSON.stringify(base)); delete novo.nota; delete novo.conferir;
-        if(novo.f) novo.f = M.transpor(base.f, 0, l - n.l1);
+    var a = aba(); guardarDesfazer();
+    var vert = dir === 'baixo' || dir === 'cima';
+    var nFontes = vert ? orig.l2 - orig.l1 + 1 : orig.c2 - orig.c1 + 1;
+    var linhas = vert ? [orig.c1, orig.c2] : [orig.l1, orig.l2];
+    for(var k = linhas[0]; k <= linhas[1]; k++){
+      var fontes = [];
+      for(var i = 0; i < nFontes; i++){ var c = vert ? k : orig.c1 + i, l = vert ? orig.l1 + i : k; fontes.push({ c: c, l: l, ce: a.celulas[M.ref(c, l)] }); }
+      var nums = fontes.map(function(f){ return f.ce && !f.ce.f && typeof f.ce.v === 'number' ? f.ce.v : null; });
+      var serie = !soCopia && nums.every(function(x){ return x !== null; }) && (nums.length >= 2 || (fontes[0].ce && fontes[0].ce.t === 'data'));
+      var passo = serie ? (nums.length >= 2 ? (nums[nums.length - 1] - nums[0]) / (nums.length - 1) : 1) : 0;
+      var txtNum = !soCopia && fontes.length === 1 && fontes[0].ce && typeof fontes[0].ce.v === 'string' ? /^(.*?)(\d+)$/.exec(fontes[0].ce.v) : null;
+      var de = vert ? (dir === 'baixo' ? orig.l2 + 1 : orig.l1 - 1) : (dir === 'dir' ? orig.c2 + 1 : orig.c1 - 1);
+      var ate = vert ? (dir === 'baixo' ? alvo.l2 : alvo.l1) : (dir === 'dir' ? alvo.c2 : alvo.c1);
+      var sentido = (dir === 'baixo' || dir === 'dir') ? 1 : -1, passoN = 0;
+      for(var p = de; sentido > 0 ? p <= ate : p >= ate; p += sentido){
+        passoN++;
+        var idx = sentido > 0 ? (passoN - 1) % nFontes : (nFontes - 1) - ((passoN - 1) % nFontes);
+        var f = fontes[idx], cc = vert ? k : p, ll = vert ? p : k, r = M.ref(cc, ll);
+        if(!f.ce){ delete a.celulas[r]; continue; }
+        var novo = JSON.parse(JSON.stringify(f.ce)); delete novo.nota; delete novo.conferir;
+        if(novo.f) novo.f = M.transpor(f.ce.f, cc - f.c, ll - f.l);
+        else if(serie) novo.v = Math.round(((sentido > 0 ? nums[nums.length - 1] : nums[0]) + passo * passoN * sentido) * 1e10) / 1e10;
+        else if(txtNum){ var base = parseInt(txtNum[2], 10) + passoN * sentido; novo.v = txtNum[1] + (base < 0 ? 0 : String(base).padStart(txtNum[2].length, '0')); }
         a.celulas[r] = novo;
       }
     }
+    S.sel = { c1: alvo.c1, l1: alvo.l1, c2: alvo.c2, l2: alvo.l2 };
     mudou();
   }
+  function autossoma(){
+    if(!S.pode.criar) return;
+    var n = norm(S.sel), a = aba();
+    function num(c, l){ return typeof S.calc.valor(S.ativa, M.ref(c, l)) === 'number'; }
+    if(n.l2 > n.l1 || n.c2 > n.c1){
+      /* várias células: total embaixo de cada coluna marcada */
+      guardarDesfazer();
+      for(var c = n.c1; c <= n.c2; c++){ var r = M.ref(c, n.l2 + 1); a.celulas[r] = Object.assign({}, a.celulas[M.ref(c, n.l2)] || {}, { f: '=SUM(' + M.ref(c, n.l1) + ':' + M.ref(c, n.l2) + ')' }); delete a.celulas[r].v; delete a.celulas[r].nota; delete a.celulas[r].conferir; a.celulas[r].b = true; }
+      S.sel = { c1: n.c1, l1: n.l2 + 1, c2: n.c2, l2: n.l2 + 1 }; mudou(); return;
+    }
+    var c0 = S.sel.c1, l0 = S.sel.l1, l = l0 - 1, faixa = '';
+    while(l >= 1 && !num(c0, l) && l > l0 - 2) l--;
+    if(l >= 1 && num(c0, l)){ var fim = l; while(l > 1 && num(c0, l - 1)) l--; faixa = M.ref(c0, l) + ':' + M.ref(c0, fim); }
+    else { var c1 = c0 - 1; if(c1 >= 1 && num(c1, l0)){ var fim2 = c1; while(c1 > 1 && num(c1 - 1, l0)) c1--; faixa = M.ref(c1, l0) + ':' + M.ref(fim2, l0); } }
+    comecarEdicao('=SOMA(' + faixa + ')');
+    var ta = $('plEd'); if(ta && !faixa){ ta.setSelectionRange(6, 6); }
+  }
 
-  /* ================= copiar e colar ================= */
+  /* ================= congelar ================= */
+  function congelar(l, c){
+    if(!S.pode.criar){ /* quem só vê também pode congelar na tela, sem salvar */ }
+    var a = aba(), ant = JSON.stringify(a.congelar || null);
+    if(l == null && c == null) delete a.congelar; else a.congelar = { l: Math.max(0, l | 0), c: Math.max(0, c | 0) };
+    if(!a.congelar || (!a.congelar.l && !a.congelar.c)) delete a.congelar;
+    if(JSON.stringify(a.congelar || null) !== ant && S.pode.criar){ S.pendente = true; estadoSalvo(); }
+    $('plCaixa').scrollTop = 0; $('plCaixa').scrollLeft = 0;
+    geo(); pintar(true); atualizarBarra();
+  }
+
+  /* ================= ordenar ================= */
+  function regiaoParaOrdenar(){
+    var n = norm(S.sel);
+    if(n.l2 - n.l1 >= 1 && n.c2 - n.c1 >= 1 && n.l2 - n.l1 < 100000) return { r: n, cab: false, escolhida: true };
+    var r = semTitulo(regiao(S.sel.c1, S.sel.l1));
+    /* 1ª linha é cabeçalho quando é texto e a de baixo tem número na coluna, ou quando está em negrito */
+    var a = aba(), c1 = a.celulas[M.ref(S.sel.c1, r.l1)], c2 = a.celulas[M.ref(S.sel.c1, r.l1 + 1)];
+    var v1 = c1 ? S.calc.valor(S.ativa, M.ref(S.sel.c1, r.l1)) : '', v2 = c2 ? S.calc.valor(S.ativa, M.ref(S.sel.c1, r.l1 + 1)) : '';
+    var cab = !!(c1 && (c1.b || c1.fundo === 'titulo' || c1.fundo === 'secao' || (typeof v1 === 'string' && typeof v2 === 'number')));
+    return { r: r, cab: cab };
+  }
+  function comparar(x, y){
+    var vx = x.k, vy = y.k;
+    var ex = vx === '' || vx == null, ey = vy === '' || vy == null;
+    if(ex || ey) return ex === ey ? 0 : ex ? 1 : -1;
+    if(typeof vx === 'number' && typeof vy === 'number') return vx - vy;
+    if(typeof vx === 'number') return -1; if(typeof vy === 'number') return 1;
+    return String(vx).localeCompare(String(vy), 'pt-BR', { numeric: true, sensitivity: 'base' });
+  }
+  function ordenar(desc, colOrd, R){
+    if(!S.pode.criar){ toast('Sem permissão para mudar esta planilha.', 'error'); return; }
+    var info = R || regiaoParaOrdenar(), r = info.r, a = aba(), col = colOrd || S.sel.c1;
+    var l1 = r.l1 + (info.cab ? 1 : 0);
+    if(r.l2 <= l1){ toast('Não há linhas para ordenar aqui.'); return; }
+    if(col < r.c1 || col > r.c2) col = r.c1;
+    var dentro = (a.mesclas || []).some(function(m){ var p = m.split(':'), x = M.endereco(p[0]), y = M.endereco(p[1]); return !(y.c < r.c1 || x.c > r.c2 || y.l < l1 || x.l > r.l2); });
+    if(dentro){ toast('Há células mescladas nessas linhas: desfaça a mescla antes de ordenar.', 'error'); return; }
+    var linhas = [];
+    for(var l = l1; l <= r.l2; l++){ var cels = {}; for(var c = r.c1; c <= r.c2; c++){ var x = a.celulas[M.ref(c, l)]; if(x) cels[c] = x; } linhas.push({ l: l, k: a.celulas[M.ref(col, l)] ? S.calc.valor(S.ativa, M.ref(col, l)) : '', cels: cels }); }
+    linhas.forEach(function(o){ if(M.ehErro(o.k)) o.k = String(o.k.e); });
+    var ordem = linhas.slice().sort(function(x, y){ var d = comparar(x, y); if(desc && !(x.k === '' || y.k === '')) d = -d; return d || x.l - y.l; });
+    guardarDesfazer();
+    for(l = l1; l <= r.l2; l++) for(c = r.c1; c <= r.c2; c++) delete a.celulas[M.ref(c, l)];
+    ordem.forEach(function(o, i){
+      var nl = l1 + i;
+      Object.keys(o.cels).forEach(function(c){ var x = JSON.parse(JSON.stringify(o.cels[c])); if(x.f) x.f = M.transpor(o.cels[c].f, 0, nl - o.l); a.celulas[M.ref(+c, nl)] = x; });
+    });
+    S.filtros = {};
+    mudou();
+    toast('Ordenado ' + (desc ? 'do maior para o menor (Z→A)' : 'do menor para o maior (A→Z)') + ' pela coluna ' + M.colTxt(col) + ', linhas ' + l1 + ' a ' + r.l2 + (info.cab ? ' (a linha ' + r.l1 + ' é o cabeçalho e ficou no lugar)' : '') + '. Ctrl+Z desfaz.', 'success');
+  }
+
+  /* ================= filtro ================= */
+  function alternarFiltro(){
+    S.filtros = S.filtros || {};
+    if(filtroAtual()){ delete S.filtros[S.ativa]; geo(); pintar(true); infoFiltro(); atualizarBarra(); return; }
+    var r = semTitulo(regiao(S.sel.c1, S.sel.l1));
+    if(r.l2 <= r.l1){ toast('Ponha a seleção dentro de uma tabela com cabeçalho e linhas embaixo para filtrar.'); return; }
+    S.filtros[S.ativa] = { l: r.l1, l2: r.l2, c1: r.c1, c2: r.c2, ex: {} };
+    geo(); pintar(true); infoFiltro(); atualizarBarra();
+    toast('Filtro ligado na linha ' + r.l1 + ' (colunas ' + M.colTxt(r.c1) + ' a ' + M.colTxt(r.c2) + '): clique no ▾ do cabeçalho. O filtro só esconde na tela; PDF e Excel saem completos.');
+  }
+  function infoFiltro(){
+    var f = filtroAtual(), el = $('plFiltroInfo'); if(!el) return;
+    if(!f){ el.innerHTML = ''; return; }
+    var esc0 = escondidas(), n = Object.keys(esc0).length, tot = f.l2 - f.l;
+    el.innerHTML = 'Filtro: <b>' + (tot - n) + '</b> de ' + tot + ' linha(s)' + (n ? ' <button type="button" class="lnk" id="plFiltroLimpar">Mostrar todas</button>' : '');
+    if($('plFiltroLimpar')) $('plFiltroLimpar').onclick = function(){ f.ex = {}; geo(); pintar(true); infoFiltro(); };
+  }
+  function abrirFiltroColuna(c, ancora){
+    var f = filtroAtual(); if(!f) return;
+    var a = aba(), vals = {}, ordemV = [];
+    for(var l = f.l + 1; l <= f.l2; l++){ var r = M.ref(c, l), ce = a.celulas[r], t = ce ? M.mostrar(S.calc.valor(S.ativa, r), ce) : ''; if(!(t in vals)){ vals[t] = 0; ordemV.push(t); } vals[t]++; }
+    ordemV.sort(function(x, y){ if(x === '') return 1; if(y === '') return -1; return x.localeCompare(y, 'pt-BR', { numeric: true }); });
+    var ex = Object.assign({}, f.ex[c] || {});
+    var pop = popover(ancora, '<div class="pl-fpop"><div class="pl-fpop-tit">Coluna ' + M.colTxt(c) + '</div>'
+      + '<div class="pl-fpop-ord"><button type="button" class="btn" data-o="az">Ordenar A→Z</button><button type="button" class="btn" data-o="za">Z→A</button></div>'
+      + '<input class="campo" id="fpBusca" placeholder="Buscar valor" aria-label="Buscar valor">'
+      + '<label class="pl-fpop-tudo"><input type="checkbox" id="fpTudo"> Marcar todos</label>'
+      + '<div class="pl-fpop-lista" id="fpLista"></div>'
+      + '<div class="pl-fpop-rod"><button type="button" class="btn" data-fechar-pop>Cancelar</button><button type="button" class="btn btn-ouro" id="fpOk">Aplicar</button></div></div>');
+    function desenha(){
+      var q = ($('fpBusca').value || '').toLowerCase();
+      $('fpLista').innerHTML = ordemV.filter(function(t){ return !q || t.toLowerCase().indexOf(q) >= 0; }).slice(0, 500).map(function(t, i){
+        return '<label><input type="checkbox" data-v="' + esc(t) + '"' + (ex[t] ? '' : ' checked') + '> <span>' + (t === '' ? '<i>(vazias)</i>' : esc(t)) + '</span><small>' + vals[t] + '</small></label>';
+      }).join('') + (ordemV.length > 500 ? '<div class="dica">Mostrando 500 valores; use a busca.</div>' : '');
+      $('fpTudo').checked = !ordemV.some(function(t){ return ex[t]; });
+      $('fpLista').querySelectorAll('input').forEach(function(i){ i.onchange = function(){ var v = i.getAttribute('data-v'); if(i.checked) delete ex[v]; else ex[v] = 1; $('fpTudo').checked = !ordemV.some(function(t){ return ex[t]; }); }; });
+    }
+    desenha();
+    $('fpBusca').oninput = desenha;
+    $('fpTudo').onchange = function(){ var on = this.checked; ordemV.forEach(function(t){ if(on) delete ex[t]; else ex[t] = 1; }); desenha(); };
+    $('fpOk').onclick = function(){ f.ex[c] = ex; fecharPopover(); geo(); pintar(true); infoFiltro(); somaSelecao(); };
+    pop.querySelectorAll('[data-o]').forEach(function(b){ b.onclick = function(){ fecharPopover(); ordenar(b.getAttribute('data-o') === 'za', c, { r: { l1: f.l, l2: f.l2, c1: f.c1, c2: f.c2 }, cab: true }); }; });
+    setTimeout(function(){ $('fpBusca').focus(); }, 30);
+  }
+
+  /* ================= menus pequenos (popover) ================= */
+  function popover(ancora, html){
+    fecharPopover();
+    var p = document.createElement('div'); p.className = 'pl-pop'; p.id = 'plPop'; p.setAttribute('role', 'menu'); p.innerHTML = html;
+    document.body.appendChild(p);
+    var r = ancora.getBoundingClientRect ? ancora.getBoundingClientRect() : ancora;
+    var w = p.offsetWidth, h = p.offsetHeight, vw = innerWidth, vh = innerHeight;
+    var x = Math.min(Math.max(8, r.left), vw - w - 8), y = r.bottom + 4; if(y + h > vh - 8) y = Math.max(8, (r.top || r.bottom) - h - 4);
+    p.style.left = x + 'px'; p.style.top = y + 'px';
+    requestAnimationFrame(function(){ p.classList.add('aberto'); });
+    p.querySelectorAll('[data-fechar-pop]').forEach(function(b){ b.onclick = fecharPopover; });
+    return p;
+  }
+  function fecharPopover(){ var p = $('plPop'); if(!p) return; p.id = ''; p.classList.remove('aberto'); setTimeout(function(){ p.remove(); }, reduzido() ? 0 : 200); }
+  function menu(ancora, itens){
+    var p = popover(ancora, itens.map(function(it, i){
+      if(it === '-') return '<div class="pl-pop-sep"></div>';
+      if(it.titulo) return '<div class="pl-pop-tit">' + esc(it.titulo) + '</div>';
+      return '<button type="button" role="menuitem" class="pl-pop-it" data-i="' + i + '"' + (it.off ? ' disabled' : '') + '>' + (it.cor !== undefined ? '<i class="pl-amostra" style="background:' + it.cor + '"></i>' : '') + '<span>' + esc(it.r) + '</span>' + (it.k ? '<small>' + esc(it.k) + '</small>' : '') + '</button>';
+    }).join(''));
+    p.querySelectorAll('[data-i]').forEach(function(b){ b.onclick = function(){ var it = itens[+b.getAttribute('data-i')]; fecharPopover(); if(it && it.f) it.f(); }; });
+    var pri = p.querySelector('[data-i]'); if(pri) pri.focus();
+    p.addEventListener('keydown', function(e){
+      var bs = Array.prototype.slice.call(p.querySelectorAll('[data-i]:not([disabled])')), i = bs.indexOf(document.activeElement);
+      if(e.key === 'ArrowDown'){ e.preventDefault(); (bs[i + 1] || bs[0]).focus(); } else if(e.key === 'ArrowUp'){ e.preventDefault(); (bs[i - 1] || bs[bs.length - 1]).focus(); }
+    });
+    return p;
+  }
+  document.addEventListener('mousedown', function(e){ var p = $('plPop'); if(p && !p.contains(e.target) && !e.target.closest('[data-abre-pop]')) fecharPopover(); }, true);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && $('plPop')){ fecharPopover(); e.stopPropagation(); $('plCaixa').focus({ preventScroll: true }); } }, true);
+  function menuContexto(x, y){
+    var n = norm(S.sel), ed = S.pode.criar, ql = n.l2 - n.l1 + 1, qc = n.c2 - n.c1 + 1;
+    menu({ left: x, bottom: y, top: y }, [
+      { r: 'Recortar', k: 'Ctrl+X', off: !ed, f: function(){ copiarParaArea(true); } },
+      { r: 'Copiar', k: 'Ctrl+C', f: function(){ copiarParaArea(false); } },
+      { r: 'Colar', k: 'Ctrl+V', off: !ed, f: colarDaArea },
+      '-',
+      { r: 'Inserir ' + (ql > 1 ? ql + ' linhas' : 'linha') + ' acima', off: !ed, f: function(){ linhasColunas('linha', true); } },
+      { r: 'Inserir ' + (ql > 1 ? ql + ' linhas' : 'linha') + ' abaixo', off: !ed, f: function(){ linhasColunas('linha', true, true); } },
+      { r: 'Excluir ' + (ql > 1 ? ql + ' linhas' : 'a linha') + ' ' + n.l1 + (ql > 1 ? ' a ' + n.l2 : ''), off: !ed, f: function(){ linhasColunas('linha', false); } },
+      { r: 'Inserir ' + (qc > 1 ? qc + ' colunas' : 'coluna') + ' à esquerda', off: !ed, f: function(){ linhasColunas('coluna', true); } },
+      { r: 'Excluir ' + (qc > 1 ? qc + ' colunas' : 'a coluna') + ' ' + M.colTxt(n.c1) + (qc > 1 ? ' a ' + M.colTxt(n.c2) : ''), off: !ed, f: function(){ linhasColunas('coluna', false); } },
+      '-',
+      { r: 'Limpar o conteúdo', k: 'Delete', off: !ed, f: limparSelecao },
+      { r: 'Limpar a formatação', off: !ed, f: function(){ formatar(function(c){ ['t', 'casas', 'b', 'i', 'al', 'q', 'fundo', 'cor', 'borda', 'cinza'].forEach(function(k){ delete c[k]; }); }); } },
+      { r: 'Ordenar A→Z', off: !ed, f: function(){ ordenar(false); } },
+      { r: 'Ordenar Z→A', off: !ed, f: function(){ ordenar(true); } },
+      { r: 'Nota…', off: !ed, f: nota }
+    ]);
+  }
+
+  /* ================= copiar e colar (também do e para o Excel) ================= */
   function copiar(cortar){
     var n = norm(S.sel), a = aba(), linhas = [], cels = [];
+    if((n.l2 - n.l1 + 1) * (n.c2 - n.c1 + 1) > 400000){ toast('Seleção grande demais para copiar.', 'error'); return ''; }
+    var esc0 = escondidas();
     for(var l = n.l1; l <= n.l2; l++){
+      if(esc0[l]) continue;
       var lin = [], cl = [];
-      for(var c = n.c1; c <= n.c2; c++){ var r = M.ref(c, l), ce = a.celulas[r]; lin.push(ce ? M.mostrar(S.calc.valor(S.ativa, r), ce) : ''); cl.push(ce ? JSON.parse(JSON.stringify(ce)) : null); }
+      for(var c = n.c1; c <= n.c2; c++){ var r = M.ref(c, l), ce = a.celulas[r], t = ce ? M.mostrar(S.calc.valor(S.ativa, r), ce) : ''; if(/[\t\n"]/.test(t)) t = '"' + t.replace(/"/g, '""') + '"'; lin.push(t); cl.push(ce ? JSON.parse(JSON.stringify(ce)) : null); }
       linhas.push(lin.join('\t')); cels.push(cl);
     }
     var txt = linhas.join('\n');
-    S.clip = { txt: txt, cels: cels, c: n.c1, l: n.l1, cortar: !!cortar, aba: S.ativa };
+    S.clip = { txt: txt, cels: cels, c: n.c1, l: n.l1, cortar: !!cortar, aba: S.ativa, marca: { c1: n.c1, l1: n.l1, c2: n.c2, l2: n.l2 } };
+    pintar();
     return txt;
   }
+  /* texto do Excel/Google: colunas por tabulação; célula com quebra de linha vem entre aspas */
+  function lerTabela(txt){
+    var s = String(txt || '').replace(/\r\n?/g, '\n'), lin = [], cel0 = '', linha = [], q = false;
+    for(var i = 0; i < s.length; i++){
+      var ch = s[i];
+      if(q){ if(ch === '"'){ if(s[i + 1] === '"'){ cel0 += '"'; i++; } else q = false; } else cel0 += ch; continue; }
+      if(ch === '"' && cel0 === ''){ q = true; continue; }
+      if(ch === '\t'){ linha.push(cel0); cel0 = ''; continue; }
+      if(ch === '\n'){ linha.push(cel0); lin.push(linha); linha = []; cel0 = ''; continue; }
+      cel0 += ch;
+    }
+    if(cel0 !== '' || linha.length) { linha.push(cel0); lin.push(linha); }
+    return lin;
+  }
   function colar(txt){
-    if(!S.pode.criar) return;
+    if(!S.pode.criar){ toast('Sem permissão para mudar esta planilha.', 'error'); return; }
     var a = aba(), n = norm(S.sel);
-    guardarDesfazer();
     if(S.clip && txt != null && txt.replace(/\r/g, '') === S.clip.txt){
+      guardarDesfazer();
       var dc = n.c1 - S.clip.c, dl = n.l1 - S.clip.l, origem = S.pasta.abas[S.clip.aba];
+      /* uma célula copiada e várias marcadas: repete em todas */
+      var repL = S.clip.cels.length === 1 && S.clip.cels[0].length === 1 ? n.l2 - n.l1 + 1 : S.clip.cels.length;
+      var repC = S.clip.cels.length === 1 && S.clip.cels[0].length === 1 ? n.c2 - n.c1 + 1 : (S.clip.cels[0] || []).length;
       if(S.clip.cortar){ S.clip.cels.forEach(function(lin, i){ lin.forEach(function(x, j){ delete origem.celulas[M.ref(S.clip.c + j, S.clip.l + i)]; }); }); }
-      S.clip.cels.forEach(function(lin, i){ lin.forEach(function(x, j){
-        var r = M.ref(n.c1 + j, n.l1 + i);
-        if(!x){ delete a.celulas[r]; return; }
-        var novo = JSON.parse(JSON.stringify(x)); if(novo.f && !S.clip.cortar) novo.f = M.transpor(x.f, dc, dl);
+      for(var i = 0; i < repL; i++) for(var j = 0; j < repC; j++){
+        var x = S.clip.cels[i % S.clip.cels.length][j % S.clip.cels[0].length], r = M.ref(n.c1 + j, n.l1 + i);
+        if(!x){ delete a.celulas[r]; continue; }
+        var novo = JSON.parse(JSON.stringify(x)); if(novo.f && !S.clip.cortar) novo.f = M.transpor(x.f, dc + j - (j % S.clip.cels[0].length), dl + i - (i % S.clip.cels.length));
         a.celulas[r] = novo;
-      }); });
+      }
       if(S.clip.cortar) S.clip = null;
+      S.sel = { c1: n.c1, l1: n.l1, c2: n.c1 + repC - 1, l2: n.l1 + repL - 1 };
     } else {
-      String(txt || '').replace(/\r/g, '').replace(/\n$/, '').split('\n').forEach(function(linha, i){
-        linha.split('\t').forEach(function(v, j){ gravarCelula(a, M.ref(n.c1 + j, n.l1 + i), v); });
-      });
+      var tab = lerTabela(txt); if(!tab.length) return;
+      if(tab.length * (tab[0] || []).length > 300000){ toast('O que foi colado é grande demais (mais de 300 mil células).', 'error'); return; }
+      guardarDesfazer();
+      tab.forEach(function(linha, i){ linha.forEach(function(v, j){ gravarCelula(a, M.ref(n.c1 + j, n.l1 + i), v); }); });
+      S.sel = { c1: n.c1, l1: n.l1, c2: n.c1 + Math.max(1, (tab[0] || []).length) - 1, l2: n.l1 + tab.length - 1 };
+      if(S.clip) S.clip.marca = null;
     }
     mudou();
+  }
+  async function copiarParaArea(cortar){
+    var t = copiar(cortar);
+    try{ await navigator.clipboard.writeText(t); toast(cortar ? 'Recortado: escolha onde colar e use Ctrl+V.' : 'Copiado.'); }catch(e){ toast('Copiado aqui na planilha (o navegador não deixou usar a área de transferência: use Ctrl+C).'); }
+  }
+  async function colarDaArea(){
+    try{ var t = await navigator.clipboard.readText(); colar(t); }
+    catch(e){ if(S.clip) colar(S.clip.txt); else toast('O navegador não deixou ler a área de transferência: use Ctrl+V.', 'error'); }
+  }
+
+  /* ================= voltar (23/11, Dr. Victor: "quero poder VOLTAR") ================= */
+  function destinoVoltar(){
+    var q = new URLSearchParams(location.search).get('voltar');
+    if(q && /^[a-z0-9_]+\.html(\?[\w\-=&%.,+]*)?$/i.test(q)) return q;
+    var d = S.doc || {};
+    if(d.processo_id || d.pessoa_id){ var pid = (S.ctx.pessoa && S.ctx.pessoa.id) || d.pessoa_id; if(pid) return FICHA + '?pessoa_id=' + encodeURIComponent(pid) + (d.processo_id ? '&processo_id=' + encodeURIComponent(d.processo_id) : ''); }
+    return 'biblioteca_padrao_metalico_FINAL.html?aba=planilhas';
+  }
+  function rotuloVoltar(){ var d = destinoVoltar(); return /^ficha_/.test(d) ? 'Voltar para a ficha' : /aba=planilhas/.test(d) ? 'Voltar para Planilhas' : 'Voltar'; }
+  function sair(){
+    S.pendente = false;
+    var d = destinoVoltar(), ref = '';
+    try{ var u = new URL(document.referrer); if(u.origin === location.origin) ref = u.pathname.split('/').pop() + u.search; }catch(e){}
+    /* veio de lá mesmo: volta pelo histórico (a tela de trás reaparece como estava: filtros, rolagem) */
+    if(ref && history.length > 1 && ref.split('?')[0] === d.split('?')[0]){ history.back(); setTimeout(function(){ location.href = d; }, 900); }
+    else location.href = d;
+  }
+  function voltar(){
+    if(S.ed) confirmarEdicao();
+    if(!S.pendente){ sair(); return; }
+    janela('jVoltar', 'Há alterações não salvas', 'Se sair agora, o que você mudou desde o último "Salvar" se perde.', '<div class="erro-campo" id="jvErro"></div>',
+      '<button class="btn" type="button" data-fechar>Continuar aqui</button><button class="btn btn-perigo" type="button" id="jvSair">Sair sem salvar</button>' + (S.pode.criar ? '<button class="btn btn-ouro" type="button" id="jvSalvar">Salvar e voltar</button>' : ''));
+    $('jvSair').onclick = function(){ fecharJanela('jVoltar'); sair(); };
+    if($('jvSalvar')){ $('jvSalvar').onclick = async function(){ this.disabled = true; this.textContent = 'Salvando…'; await salvar(); if(!S.pendente){ fecharJanela('jVoltar'); sair(); } else { this.disabled = false; this.textContent = 'Salvar e voltar'; $('jvErro').textContent = 'Não salvei (o motivo está no alto da planilha). Nada se perdeu: você continua aqui.'; } }; setTimeout(function(){ $('jvSalvar').focus(); }, 60); }
+  }
+
+  /* ================= zoom ================= */
+  function lerZoom(){ try{ var v = parseInt(localStorage.getItem('saga-planilha-zoom') || '100', 10); return ZOOMS.indexOf(v) >= 0 ? v : 100; }catch(e){ return 100; } }
+  function mudarZoom(v){
+    v = ZOOMS.reduce(function(m, x){ return Math.abs(x - v) < Math.abs(m - v) ? x : m; }, 100);
+    if(v === S.zoom) return;
+    var cx = $('plCaixa'), k = v / (S.zoom || 100);
+    S.zoom = v; try{ localStorage.setItem('saga-planilha-zoom', String(v)); }catch(e){}
+    $('plZoom').value = String(v); $('plVista').style.fontSize = (12.5 * z()) + 'px';
+    geo(); cx.scrollLeft *= k; cx.scrollTop *= k; pintar(true);
   }
 
   /* ================= eventos ================= */
   function ligarTela(){
-    var g = $('plCaixa'), arrastando = false, larg = null;
+    var g = $('plCaixa'), v = $('plVista'), arr = null;
+    S.zoom = lerZoom(); $('plZoom').value = String(S.zoom); v.style.fontSize = (12.5 * z()) + 'px';
     $('plTitulo').addEventListener('input', function(){ S.pendente = true; estadoSalvo(); });
-    g.addEventListener('mousedown', function(e){
-      var al = e.target.closest('[data-alca]');
-      if(al){ e.preventDefault(); var c = +al.getAttribute('data-alca'); larg = { c: c, x: e.clientX, w: largura(c) }; return; }
-      var th = e.target.closest('thead th[data-col]');
-      if(th){ var cc = +th.getAttribute('data-col'); if(S.ed) confirmarEdicao(); S.sel = { c1: cc, l1: 1, c2: cc, l2: S.area.lins }; pintarSelecao(); atualizarBarra(); return; }
-      var tl = e.target.closest('th[data-lin]');
-      if(tl){ var ll = +tl.getAttribute('data-lin'); if(S.ed) confirmarEdicao(); S.sel = { c1: 1, l1: ll, c2: S.area.cols, l2: ll }; pintarSelecao(); atualizarBarra(); return; }
-      var td = e.target.closest('td[data-c]'); if(!td) return;
+    $('plVoltar').onclick = voltar;
+    g.addEventListener('scroll', function(){ agendar(); if(S.ed) posicionarEditor(); }, { passive: true });
+    if(window.ResizeObserver) new ResizeObserver(function(){ if(!G) return; S.med = medidas(); pintar(true); }).observe(g);
+    g.addEventListener('wheel', function(e){ if(e.ctrlKey || e.metaKey){ e.preventDefault(); var i = ZOOMS.indexOf(S.zoom); mudarZoom(ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, i + (e.deltaY < 0 ? 1 : -1)))]); } }, { passive: false });
+    function local(e){ var b = v.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; }
+    /* borda de coluna/linha no cabeçalho (para arrastar a largura/altura) */
+    function bordaCab(p){
+      var P = celulaEm(p.x, p.y);
+      if(p.y < G.hh && p.x >= G.hw){ var c = P.c, xc = G.hw + G.cx[c] - (c > G.fc ? g.scrollLeft : 0), xa = G.hw + G.cx[c - 1] - (c > G.fc ? g.scrollLeft : 0); if(Math.abs(p.x - xc) <= 4) return { eixo: 'c', n: c }; if(c > 1 && Math.abs(p.x - xa) <= 4) return { eixo: 'c', n: c - 1 }; }
+      if(p.x < G.hw && p.y >= G.hh){ var l = P.l, yc = G.hh + G.ly[l] - (l > G.fl ? g.scrollTop : 0), ya = G.hh + G.ly[l - 1] - (l > G.fl ? g.scrollTop : 0); if(Math.abs(p.y - yc) <= 3) return { eixo: 'l', n: l }; if(l > 1 && Math.abs(p.y - ya) <= 3){ var lp = l - 1; while(lp > 1 && G.ly[lp] === G.ly[lp - 1]) lp--; return { eixo: 'l', n: lp }; } }
+      return null;
+    }
+    v.addEventListener('pointermove', function(e){
+      if(arr) return;
+      var p = local(e), b = bordaCab(p);
+      v.style.cursor = b ? (b.eixo === 'c' ? 'col-resize' : 'row-resize') : (p.x < G.hw && p.y >= G.hh ? 'e-resize' : (p.y < G.hh && p.x >= G.hw ? 's-resize' : ''));
+      if(!b && e.target.classList && e.target.classList.contains('pl-alca')) v.style.cursor = 'crosshair';
+    });
+    v.addEventListener('pointerdown', function(e){
       if(e.target.id === 'plEd') return;
-      var c2 = +td.getAttribute('data-c'), l2 = +td.getAttribute('data-l');
-      if(S.ed && aceitaReferencia()){ e.preventDefault(); S.refArr = { c: c2, l: l2 }; porReferencia(c2, l2); arrastando = 'ref'; return; }
+      if(e.button === 2) return;
+      fecharPopover();
+      var p = local(e), toque = e.pointerType === 'touch';
+      var fb = e.target.closest && e.target.closest('[data-fc]');
+      if(fb){ e.preventDefault(); abrirFiltroColuna(+fb.getAttribute('data-fc'), fb); return; }
+      if(e.target.classList && e.target.classList.contains('pl-alca')){ e.preventDefault(); if(S.ed) confirmarEdicao(); arr = { modo: 'alca', orig: norm(S.sel) }; v.setPointerCapture(e.pointerId); return; }
+      var b = bordaCab(p);
+      if(b && !toque){
+        e.preventDefault();
+        arr = { modo: b.eixo === 'c' ? 'larg' : 'alt', n: b.n, ini: b.eixo === 'c' ? p.x : p.y, base: b.eixo === 'c' ? largura(b.n) : altura(b.n) };
+        v.setPointerCapture(e.pointerId); return;
+      }
+      var P = celulaEm(p.x, p.y);
+      if(p.x < G.hw && p.y < G.hh){ e.preventDefault(); if(S.ed) confirmarEdicao(); var u = M.usada(aba()); S.sel = { c1: 1, l1: 1, c2: Math.max(u.colunas, 1), l2: Math.max(u.linhas, 1) }; pintarSelecao(); g.focus({ preventScroll: true }); return; }
+      /* referência na fórmula (clicar/arrastar com a fórmula aberta) */
+      if(S.ed && aceitaReferencia() && P.c && P.l){ e.preventDefault(); arr = { modo: 'ref', c: P.c, l: P.l }; porReferencia(P.c, P.l); v.setPointerCapture(e.pointerId); return; }
       if(S.ed) confirmarEdicao();
+      if(toque){ arr = { modo: 'toque', x: e.clientX, y: e.clientY, P: P }; return; }
       e.preventDefault();
-      if(e.shiftKey){ S.sel.c2 = c2; S.sel.l2 = l2; } else S.sel = { c1: c2, l1: l2, c2: c2, l2: l2 };
-      arrastando = 'sel'; pintarSelecao(); atualizarBarra();
+      if(p.y < G.hh){ if(e.shiftKey){ S.sel.c2 = P.c; S.sel.l1 = 1; S.sel.l2 = G.nl; } else S.sel = { c1: P.c, l1: 1, c2: P.c, l2: G.nl }; arr = { modo: 'cols' }; }
+      else if(p.x < G.hw){ if(e.shiftKey){ S.sel.l2 = P.l; S.sel.c1 = 1; S.sel.c2 = G.nc; } else S.sel = { c1: 1, l1: P.l, c2: G.nc, l2: P.l }; arr = { modo: 'lins' }; }
+      else { if(e.shiftKey){ S.sel.c2 = P.c; S.sel.l2 = P.l; } else S.sel = { c1: P.c, l1: P.l, c2: P.c, l2: P.l }; arr = { modo: 'sel' }; }
+      v.setPointerCapture(e.pointerId);
+      pintarSelecao(); g.focus({ preventScroll: true });
+    });
+    /* arrastar perto da borda rola a grade */
+    var rolagem = null;
+    function autoRolar(p){
+      var m = S.med, dx = p.x > m.w - 20 ? 18 : p.x < G.hw + G.fw + 4 && p.x >= G.hw ? -18 : 0, dy = p.y > m.h - 20 ? 18 : p.y < G.hh + G.fh + 4 && p.y >= G.hh ? -18 : 0;
+      clearInterval(rolagem); rolagem = null;
+      if((dx || dy) && arr && arr.modo !== 'larg' && arr.modo !== 'alt'){ rolagem = setInterval(function(){ g.scrollLeft += dx; g.scrollTop += dy; }, 40); }
+    }
+    v.addEventListener('pointermove', function(e){
+      if(!arr) return;
+      var p = local(e);
+      if(arr.modo === 'toque'){ if(Math.abs(e.clientX - arr.x) + Math.abs(e.clientY - arr.y) > 8) arr = null; return; }
+      if(arr.modo === 'larg' || arr.modo === 'alt'){
+        var nv = Math.max(arr.modo === 'larg' ? 24 : 14, Math.round(arr.base + ((arr.modo === 'larg' ? p.x : p.y) - arr.ini) / z()));
+        var a = aba(); if(arr.modo === 'larg'){ a.colunas = a.colunas || {}; a.colunas[M.colTxt(arr.n)] = nv; } else { a.linhas = a.linhas || {}; a.linhas[arr.n] = nv; }
+        arr.mexeu = true; geo(); pintar(true); return;
+      }
+      autoRolar(p);
+      var P = celulaEm(Math.max(G.hw, p.x), Math.max(G.hh, p.y));
+      if(arr.modo === 'ref'){ porReferencia(arr.c, arr.l, P.c, P.l); return; }
+      if(arr.modo === 'alca'){
+        var o = arr.orig, dBaixo = P.l - o.l2, dCima = o.l1 - P.l, dDir = P.c - o.c2, dEsq = o.c1 - P.c, mx = Math.max(dBaixo, dCima, dDir, dEsq);
+        if(mx <= 0){ S.prev = null; arr.dir = null; }
+        else if(mx === dBaixo){ S.prev = { c1: o.c1, l1: o.l1, c2: o.c2, l2: P.l }; arr.dir = 'baixo'; }
+        else if(mx === dCima){ S.prev = { c1: o.c1, l1: P.l, c2: o.c2, l2: o.l2 }; arr.dir = 'cima'; }
+        else if(mx === dDir){ S.prev = { c1: o.c1, l1: o.l1, c2: P.c, l2: o.l2 }; arr.dir = 'dir'; }
+        else { S.prev = { c1: P.c, l1: o.l1, c2: o.c2, l2: o.l2 }; arr.dir = 'esq'; }
+        pintar(); return;
+      }
+      if(arr.modo === 'cols') S.sel.c2 = P.c; else if(arr.modo === 'lins') S.sel.l2 = P.l; else { S.sel.c2 = P.c; S.sel.l2 = P.l; }
+      pintarSelecao();
+    });
+    function soltar(e){
+      clearInterval(rolagem); rolagem = null;
+      if(!arr) return;
+      var x = arr; arr = null;
+      if(x.modo === 'larg' || x.modo === 'alt'){ if(x.mexeu && S.pode.criar){ S.pendente = true; estadoSalvo(); } return; }
+      if(x.modo === 'alca'){ var pv = S.prev; S.prev = null; if(pv && x.dir) preencher(x.orig, pv, x.dir, e && e.ctrlKey); else pintar(); return; }
+      if(x.modo === 'toque' && e && e.type === 'pointerup'){
+        var P = x.P; if(!P.c || !P.l) return;
+        var mesma = S.sel && S.sel.c1 === P.c && S.sel.l1 === P.l && S.sel.c2 === P.c && S.sel.l2 === P.l;
+        if(p0Y(x) < G.hh) S.sel = { c1: P.c, l1: 1, c2: P.c, l2: G.nl };
+        else if(p0X(x) < G.hw) S.sel = { c1: 1, l1: P.l, c2: G.nc, l2: P.l };
+        else S.sel = { c1: P.c, l1: P.l, c2: P.c, l2: P.l };
+        pintarSelecao();
+        if(mesma && S.pode.criar) comecarEdicao();
+      }
+    }
+    function p0X(x){ return x.x - v.getBoundingClientRect().left; } function p0Y(x){ return x.y - v.getBoundingClientRect().top; }
+    v.addEventListener('pointerup', soltar); v.addEventListener('pointercancel', function(){ arr = null; clearInterval(rolagem); S.prev = null; });
+    v.addEventListener('dblclick', function(e){
+      var p = local(e), b = bordaCab(p);
+      if(b && b.eixo === 'c' && S.pode.criar){ ajustarColuna(b.n); return; }
+      if(p.x > G.hw && p.y > G.hh && e.target.id !== 'plEd' && !(e.target.closest && e.target.closest('[data-fc]'))) comecarEdicao();
+    });
+    v.addEventListener('contextmenu', function(e){
+      if(e.target.id === 'plEd') return;
+      e.preventDefault();
+      var p = local(e), P = celulaEm(p.x, p.y), n = norm(S.sel);
+      if(S.ed) confirmarEdicao();
+      if(P.c && P.l && !(P.c >= n.c1 && P.c <= n.c2 && P.l >= n.l1 && P.l <= n.l2)){ S.sel = { c1: P.c, l1: P.l, c2: P.c, l2: P.l }; pintarSelecao(); }
+      menuContexto(e.clientX, e.clientY);
+    });
+    g.addEventListener('keydown', teclaGrade);
+    document.addEventListener('copy', function(e){ if(S.ed || document.activeElement !== g) return; e.preventDefault(); e.clipboardData.setData('text/plain', copiar(false)); });
+    document.addEventListener('cut', function(e){ if(S.ed || document.activeElement !== g || !S.pode.criar) return; e.preventDefault(); e.clipboardData.setData('text/plain', copiar(true)); });
+    document.addEventListener('paste', function(e){ if(S.ed || document.activeElement !== g) return; e.preventDefault(); colar(e.clipboardData.getData('text/plain')); });
+    /* caixa de nome: digitar B12 ou A1:C5 (ou Aba!B2) e Enter */
+    var en = $('plEnd');
+    en.addEventListener('focus', function(){ en.select(); });
+    en.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){ e.preventDefault(); atualizarBarra(); g.focus({ preventScroll: true }); return; }
+      if(e.key !== 'Enter') return;
+      e.preventDefault();
+      var t = en.value.trim().replace(/\s/g, ''), ai = S.ativa, m0 = /^(?:'?([^'!]+)'?!)?\$?([A-Za-z]{1,3})\$?(\d+)(?::\$?([A-Za-z]{1,3})\$?(\d+))?$/.exec(t);
+      if(!m0){ toast('Escreva a célula assim: B12, A1:C5 ou Aba!B2.', 'error'); return; }
+      if(m0[1]){ ai = S.pasta.abas.findIndex(function(a){ return a.nome.toLowerCase() === m0[1].toLowerCase(); }); if(ai < 0){ toast('Não existe a aba "' + m0[1] + '".', 'error'); return; } }
+      if(ai !== S.ativa) trocarAba(ai);
+      var c1 = M.colNum(m0[2]), l1 = +m0[3], c2 = m0[4] ? M.colNum(m0[4]) : c1, l2 = m0[5] ? +m0[5] : l1;
+      irPara(c1, l1); if(m0[4]){ S.sel.c2 = c2; S.sel.l2 = l2; pintarSelecao(); }
       g.focus({ preventScroll: true });
     });
-    g.addEventListener('mouseover', function(e){
-      if(!arrastando) return; var td = e.target.closest('td[data-c]'); if(!td) return;
-      var c = +td.getAttribute('data-c'), l = +td.getAttribute('data-l');
-      if(arrastando === 'ref'){ porReferencia(S.refArr.c, S.refArr.l, c, l); return; }
-      S.sel.c2 = c; S.sel.l2 = l; pintarSelecao(); atualizarBarra();
-    });
-    document.addEventListener('mousemove', function(e){ if(!larg) return; var w = Math.max(30, larg.w + e.clientX - larg.x); var col = $('plGrade').querySelectorAll('colgroup col')[larg.c]; if(col) col.style.width = w + 'px'; larg.nw = w; });
-    document.addEventListener('mouseup', function(){
-      if(larg && larg.nw){ if(S.pode.criar){ guardarDesfazer(); var a = aba(); a.colunas = a.colunas || {}; a.colunas[M.colTxt(larg.c)] = Math.round(larg.nw); S.pendente = true; estadoSalvo(); } }
-      larg = null; arrastando = false;
-    });
-    g.addEventListener('dblclick', function(e){ var td = e.target.closest('td[data-c]'); if(td && e.target.id !== 'plEd') comecarEdicao(); });
-    g.tabIndex = 0;
-    g.addEventListener('keydown', teclaGrade);
-    g.addEventListener('copy', function(e){ if(S.ed) return; e.preventDefault(); e.clipboardData.setData('text/plain', copiar(false)); });
-    g.addEventListener('cut', function(e){ if(S.ed || !S.pode.criar) return; e.preventDefault(); e.clipboardData.setData('text/plain', copiar(true)); });
-    g.addEventListener('paste', function(e){ if(S.ed) return; e.preventDefault(); colar(e.clipboardData.getData('text/plain')); });
     /* barra de fórmula */
     var fx = $('plFx');
     fx.addEventListener('focus', function(){ if(!S.pode.criar){ fx.blur(); return; } if(!S.ed) comecarEdicao(null, true); });
-    fx.addEventListener('input', function(){ if(!S.ed) comecarEdicao(null, true); S.ed.formula = fx.value[0] === '='; var ta = $('plEd'); if(ta) ta.value = fx.value; else mascara(fx, cel(S.ed.r) || {}); });
+    fx.addEventListener('input', function(){ if(!S.ed) comecarEdicao(null, true); S.ed.formula = fx.value[0] === '='; S.ed.refPos = null; var ta = $('plEd'); if(ta){ ta.value = fx.value; ajustarLargura(ta); } else mascara(fx, cel(S.ed.r) || {}); });
     fx.addEventListener('keydown', function(e){
-      if(e.key === 'Enter'){ e.preventDefault(); confirmarEdicao('baixo'); g.focus({ preventScroll: true }); }
-      else if(e.key === 'Escape'){ e.preventDefault(); cancelarEdicao(); g.focus({ preventScroll: true }); }
-      else if(e.key === 'Tab'){ e.preventDefault(); confirmarEdicao('dir'); g.focus({ preventScroll: true }); }
+      if(e.key === 'Enter' && !e.altKey){ e.preventDefault(); confirmarEdicao('baixo'); }
+      else if(e.key === 'Escape'){ e.preventDefault(); cancelarEdicao(); }
+      else if(e.key === 'Tab'){ e.preventDefault(); confirmarEdicao('dir'); }
     });
-    fx.addEventListener('blur', function(){ setTimeout(function(){ if(S.ed && S.ed.barra && document.activeElement !== fx && !arrastando) confirmarEdicao(); }, 150); });
+    fx.addEventListener('blur', function(){ setTimeout(function(){ if(S.ed && S.ed.barra && document.activeElement !== fx && !arr) confirmarEdicao(); }, 150); });
     /* ferramentas */
     $('fDesfazer').onclick = desfazer; $('fRefazer').onclick = refazer;
     $('fFormato').onchange = function(){ var t = this.value; formatar(function(c){ if(t) c.t = t; else delete c.t; delete c.casas; }); };
+    $('fReais').onclick = function(){ formato('reais'); }; $('fPct').onclick = function(){ formato('pct'); };
     $('fMenos').onclick = function(){ casas(-1); }; $('fMais').onclick = function(){ casas(1); };
     $('fB').onclick = function(){ alternar('b'); }; $('fI').onclick = function(){ alternar('i'); }; $('fQuebra').onclick = function(){ alternar('q'); };
     $('fEsq').onclick = function(){ alinhar('esq'); }; $('fCentro').onclick = function(){ alinhar('centro'); }; $('fDir').onclick = function(){ alinhar('dir'); };
-    $('fCores').querySelectorAll('[data-cor]').forEach(function(b){ b.onclick = function(){ var k = b.getAttribute('data-cor'); formatar(function(c){ if(k) c.fundo = k; else delete c.fundo; }); }; });
-    $('fMesclar').onclick = mesclar; $('fNota').onclick = nota;
-    $('fLinIns').onclick = function(){ linhasColunas('linha', true); }; $('fLinExc').onclick = function(){ linhasColunas('linha', false); };
-    $('fColIns').onclick = function(){ linhasColunas('coluna', true); }; $('fColExc').onclick = function(){ linhasColunas('coluna', false); };
-    $('fPreencher').onclick = preencherAbaixo;
+    $('fCorTxt').setAttribute('data-abre-pop', '1'); $('fFundo').setAttribute('data-abre-pop', '1'); $('fBordas').setAttribute('data-abre-pop', '1');
+    $('fOrdenar').setAttribute('data-abre-pop', '1'); $('fCongelar').setAttribute('data-abre-pop', '1'); $('fLinhas').setAttribute('data-abre-pop', '1'); $('plMais').setAttribute('data-abre-pop', '1');
+    $('fCorTxt').onclick = function(){ menu(this, [{ titulo: 'Cor da letra' }].concat(CORES_TXT.map(function(c){ return { r: c.r, cor: c.k || 'var(--text)', f: function(){ formatar(function(x){ if(c.k) x.cor = c.k; else delete x.cor; }); } }; }))); };
+    $('fFundo').onclick = function(){ menu(this, [{ titulo: 'Cor do fundo' }].concat(CORES.map(function(c){ return { r: c.r, cor: c.c, f: function(){ formatar(function(x){ if(c.k) x.fundo = c.k; else delete x.fundo; }); } }; }))); };
+    $('fBordas').onclick = function(){ menu(this, [
+      { r: 'Contorno em todas as marcadas', f: function(){ formatar(function(x){ x.borda = true; }); } },
+      { r: 'Sem bordas', f: function(){ formatar(function(x){ delete x.borda; }); } }, '-',
+      { r: aba().bordas === 'marcadas' ? '✓ No PDF, linhas só nas células com borda' : 'No PDF, linhas só nas células com borda', f: function(){ guardarDesfazer(); var a = aba(); if(a.bordas === 'marcadas') delete a.bordas; else a.bordas = 'marcadas'; mudou(); } }
+    ]); };
+    $('fMesclar').onclick = mesclar; $('fNota').onclick = nota; $('fSoma').onclick = autossoma;
+    $('fOrdenar').onclick = function(){ menu(this, [
+      { r: 'A→Z (do menor para o maior) pela coluna ' + M.colTxt(S.sel.c1), off: !S.pode.criar, f: function(){ ordenar(false); } },
+      { r: 'Z→A (do maior para o menor) pela coluna ' + M.colTxt(S.sel.c1), off: !S.pode.criar, f: function(){ ordenar(true); } }
+    ]); };
+    $('fFiltro').onclick = alternarFiltro;
+    $('fCongelar').onclick = function(){ var cg = congel(); menu(this, [
+      { r: 'Congelar a 1ª linha', f: function(){ congelar(1, cg.c); } },
+      { r: 'Congelar até a linha ' + S.sel.l1, off: S.sel.l1 < 1, f: function(){ congelar(S.sel.l1, cg.c); } },
+      { r: 'Congelar a 1ª coluna', f: function(){ congelar(cg.l, 1); } },
+      { r: 'Congelar até a coluna ' + M.colTxt(S.sel.c1), f: function(){ congelar(cg.l, S.sel.c1); } },
+      { r: 'Congelar linhas e colunas acima e à esquerda de ' + M.ref(S.sel.c1, S.sel.l1), off: S.sel.c1 < 2 && S.sel.l1 < 2, f: function(){ congelar(S.sel.l1 - 1, S.sel.c1 - 1); } },
+      '-', { r: 'Descongelar tudo', off: !cg.l && !cg.c, f: function(){ congelar(null, null); } }
+    ]); };
+    $('fLinhas').onclick = function(){ var n = norm(S.sel), ql = n.l2 - n.l1 + 1, qc = n.c2 - n.c1 + 1, ed = !S.pode.criar; menu(this, [
+      { r: 'Inserir ' + (ql > 1 ? ql + ' linhas' : 'linha') + ' acima', off: ed, f: function(){ linhasColunas('linha', true); } },
+      { r: 'Inserir ' + (ql > 1 ? ql + ' linhas' : 'linha') + ' abaixo', off: ed, f: function(){ linhasColunas('linha', true, true); } },
+      { r: 'Excluir ' + (ql > 1 ? 'as linhas ' + n.l1 + ' a ' + n.l2 : 'a linha ' + n.l1), off: ed, f: function(){ linhasColunas('linha', false); } }, '-',
+      { r: 'Inserir ' + (qc > 1 ? qc + ' colunas' : 'coluna') + ' à esquerda', off: ed, f: function(){ linhasColunas('coluna', true); } },
+      { r: 'Inserir ' + (qc > 1 ? qc + ' colunas' : 'coluna') + ' à direita', off: ed, f: function(){ linhasColunas('coluna', true, true); } },
+      { r: 'Excluir ' + (qc > 1 ? 'as colunas ' + M.colTxt(n.c1) + ' a ' + M.colTxt(n.c2) : 'a coluna ' + M.colTxt(n.c1)), off: ed, f: function(){ linhasColunas('coluna', false); } }, '-',
+      { r: 'Preencher para baixo', k: 'Ctrl+D', off: ed || ql < 2, f: preencherAbaixo },
+      { r: 'Preencher para a direita', k: 'Ctrl+R', off: ed || qc < 2, f: preencherDireita },
+      { r: 'Ajustar a largura da coluna ao conteúdo', off: ed, f: function(){ for(var c = n.c1; c <= Math.min(n.c2, n.c1 + 50); c++) ajustarColuna(c, true); S.pendente = true; estadoSalvo(); geo(); pintar(true); } }
+    ]); };
+    $('plMais').onclick = function(){ menu(this, [
+      { r: 'Versões', f: versoes }, { r: 'Baixar em PDF', f: function(){ janelaPdf(false); } }, { r: 'Baixar em Excel (.xlsx)', f: function(){ baixarXlsx(); } },
+      { r: 'Guardar na pasta do cliente', off: !(S.doc && S.doc.processo_id), f: function(){ janelaPdf(true); } }, '-',
+      { r: 'Importar um Excel (.xlsx) nesta planilha', off: !S.pode.criar, f: function(){ $('plImportar').click(); } },
+      { r: 'Salvar uma cópia como modelo de planilha', off: !S.pode.criar, f: salvarComoModelo }
+    ]); };
+    $('plZoom').onchange = function(){ mudarZoom(+this.value); };
+    $('zMenos').onclick = function(){ var i = ZOOMS.indexOf(S.zoom); mudarZoom(ZOOMS[Math.max(0, i - 1)]); };
+    $('zMais').onclick = function(){ var i = ZOOMS.indexOf(S.zoom); mudarZoom(ZOOMS[Math.min(ZOOMS.length - 1, i + 1)]); };
     $('plSalvar').onclick = function(){ salvar(); };
     $('plVersoes').onclick = versoes;
     $('plPdf').onclick = function(){ janelaPdf(false); };
@@ -482,18 +1132,39 @@
     });
     window.addEventListener('beforeunload', function(e){ if(S.pendente){ e.preventDefault(); e.returnValue = ''; } });
   }
+  /* largura da coluna pelo maior texto (duplo clique na borda do cabeçalho) */
+  var _medir = null;
+  function ajustarColuna(c, semRedesenhar){
+    _medir = _medir || document.createElement('canvas').getContext('2d');
+    var a = aba(), mx = 30;
+    _medir.font = '600 12.5px Montserrat, Arial, sans-serif';
+    Object.keys(a.celulas).forEach(function(r){ var e = M.endereco(r); if(!e || e.c !== c) return; var ce = a.celulas[r]; if(ce.q) return; var t = M.mostrar(S.calc.valor(S.ativa, r), ce); String(t).split('\n').forEach(function(p){ mx = Math.max(mx, _medir.measureText(p).width + 16); }); });
+    if(!semRedesenhar) guardarDesfazer();
+    a.colunas = a.colunas || {}; a.colunas[M.colTxt(c)] = Math.min(600, Math.ceil(mx));
+    if(!semRedesenhar){ S.pendente = true; estadoSalvo(); geo(); pintar(true); }
+  }
   function teclaGrade(e){
     if(S.ed || e.target.id === 'plEd') return;
     var k = e.key, ctrl = e.ctrlKey || e.metaKey, s = S.sel;
     var cc = e.shiftKey ? s.c2 : s.c1, ll = e.shiftKey ? s.l2 : s.l1;
-    if(k === 'ArrowDown'){ e.preventDefault(); irPara(cc, ll + 1, e.shiftKey); return; }
-    if(k === 'ArrowUp'){ e.preventDefault(); irPara(cc, ll - 1, e.shiftKey); return; }
-    if(k === 'ArrowRight'){ e.preventDefault(); irPara(cc + 1, ll, e.shiftKey); return; }
-    if(k === 'ArrowLeft'){ e.preventDefault(); irPara(cc - 1, ll, e.shiftKey); return; }
-    if(k === 'Enter'){ e.preventDefault(); irPara(s.c1, s.l1 + (e.shiftKey ? -1 : 1)); return; }
-    if(k === 'Tab'){ e.preventDefault(); irPara(s.c1 + (e.shiftKey ? -1 : 1), s.l1); return; }
+    var esc0 = escondidas();
+    function proxLinha(l, d){ var x = l + d; while(x >= 1 && esc0[x]) x += d; return x < 1 ? l : x; }
+    var setas = { ArrowDown: [0, 1], ArrowUp: [0, -1], ArrowRight: [1, 0], ArrowLeft: [-1, 0] };
+    if(setas[k]){
+      e.preventDefault();
+      var d = setas[k];
+      if(ctrl){ var p = pular(cc, ll, d[0], d[1]); irPara(p.c, p.l, e.shiftKey); return; }
+      irPara(cc + d[0], d[1] ? proxLinha(ll, d[1]) : ll, e.shiftKey); return;
+    }
+    if(k === 'PageDown' || k === 'PageUp'){ e.preventDefault(); var pg = Math.max(1, Math.floor((S.med.h - G.hh - G.fh) / (ALT * z())) - 1); irPara(cc, Math.max(1, ll + (k === 'PageDown' ? pg : -pg)), e.shiftKey); return; }
+    if(k === 'Home'){ e.preventDefault(); if(ctrl) irPara(1, 1, e.shiftKey); else irPara(1, ll, e.shiftKey); return; }
+    if(k === 'End' && ctrl){ e.preventDefault(); var u = M.usada(aba()); irPara(Math.max(1, u.colunas), Math.max(1, u.linhas), e.shiftKey); return; }
+    if(k === 'Enter'){ e.preventDefault(); var n = norm(s); if(n.c1 !== n.c2 || n.l1 !== n.l2) andarDentro(0, e.shiftKey ? -1 : 1); else irPara(s.c1, proxLinha(s.l1, e.shiftKey ? -1 : 1)); return; }
+    if(k === 'Tab'){ e.preventDefault(); var n2 = norm(s); if(n2.c1 !== n2.c2 || n2.l1 !== n2.l2) andarDentro(e.shiftKey ? -1 : 1, 0); else irPara(s.c1 + (e.shiftKey ? -1 : 1), s.l1); return; }
     if(k === 'F2'){ e.preventDefault(); comecarEdicao(); return; }
+    if(k === 'Escape'){ if(S.clip && S.clip.marca){ S.clip.marca = null; pintar(); } return; }
     if(k === 'Delete' || k === 'Backspace'){ e.preventDefault(); limparSelecao(); return; }
+    if(e.altKey && (k === '=' || k === '+')){ e.preventDefault(); autossoma(); return; }
     if(ctrl){
       var kk = k.toLowerCase();
       if(kk === 'z'){ e.preventDefault(); if(e.shiftKey) refazer(); else desfazer(); return; }
@@ -501,10 +1172,32 @@
       if(kk === 'b'){ e.preventDefault(); alternar('b'); return; }
       if(kk === 'i'){ e.preventDefault(); alternar('i'); return; }
       if(kk === 'd'){ e.preventDefault(); preencherAbaixo(); return; }
-      if(kk === 'a'){ e.preventDefault(); S.sel = { c1: 1, l1: 1, c2: S.area.cols, l2: S.area.lins }; pintarSelecao(); atualizarBarra(); return; }
+      if(kk === 'r'){ e.preventDefault(); preencherDireita(); return; }
+      if(kk === 'a'){ e.preventDefault(); var r0 = regiao(s.c1, s.l1), n3 = norm(s), u2 = M.usada(aba()); if(r0.c1 === n3.c1 && r0.c2 === n3.c2 && r0.l1 === n3.l1 && r0.l2 === n3.l2 || (r0.c1 === r0.c2 && r0.l1 === r0.l2)) S.sel = { c1: 1, l1: 1, c2: Math.max(u2.colunas, 1), l2: Math.max(u2.linhas, 1) }; else S.sel = { c1: r0.c1, l1: r0.l1, c2: r0.c2, l2: r0.l2 }; pintarSelecao(); return; }
+      if(k === ';'){ e.preventDefault(); if(!S.pode.criar) return; var h = new Date(); guardarDesfazer(); var a = aba(), r = ativaRef(); a.celulas[r] = Object.assign(a.celulas[r] || {}, { v: M.dataSerie(h.getDate(), h.getMonth() + 1, h.getFullYear()), t: 'data' }); delete a.celulas[r].f; mudou(); return; }
+      if(k === '+' || k === '='){ e.preventDefault(); var i0 = ZOOMS.indexOf(S.zoom); mudarZoom(ZOOMS[Math.min(ZOOMS.length - 1, i0 + 1)]); return; }
+      if(k === '-'){ e.preventDefault(); var i1 = ZOOMS.indexOf(S.zoom); mudarZoom(ZOOMS[Math.max(0, i1 - 1)]); return; }
       return;
     }
-    if(k.length === 1 && !e.altKey){ e.preventDefault(); comecarEdicao(k); var ta = $('plEd'); if(ta){ mascara(ta, cel(ativaRef()) || {}); $('plFx').value = ta.value; } }
+    if(k.length === 1 && !e.altKey){ e.preventDefault(); comecarEdicao(k); if(S.ed) S.ed.digitando = true; var ta = $('plEd'); if(ta){ mascara(ta, cel(ativaRef()) || {}); $('plFx').value = ta.value; } }
+  }
+  /* cópia desta planilha como MODELO DE PLANILHA (sem cliente; aparece em Modelos > Planilhas) */
+  function salvarComoModelo(){
+    janela('jModelo', 'Salvar como modelo de planilha', 'Uma cópia desta planilha vira modelo (sem cliente) e aparece em Modelos &gt; Planilhas &gt; Modelos de planilha, para começar outras iguais. Apague antes os dados que não devem ir para o modelo.',
+      '<label class="rot" for="mdNome">Nome do modelo</label><input class="campo" id="mdNome" maxlength="200"><div class="erro-campo" id="mdErro"></div>',
+      '<button class="btn" type="button" data-fechar>Cancelar</button><button class="btn btn-ouro" type="button" id="mdOk">Salvar o modelo</button>');
+    $('mdNome').value = 'Modelo: ' + ($('plTitulo').value.trim() || 'Planilha');
+    $('mdOk').onclick = async function(){
+      var b = this, nome = $('mdNome').value.trim(); if(!nome){ $('mdErro').textContent = 'Dê um nome ao modelo.'; return; }
+      b.disabled = true; b.textContent = 'Salvando…';
+      try{
+        if(S.ed) confirmarEdicao();
+        var r = await _sb.rpc('editavel_salvar', { p_id: null, p_tipo: 'planilha', p_titulo: nome, p_conteudo: JSON.parse(JSON.stringify(S.pasta)), p_versao_base: null, p_processo_id: null, p_pessoa_id: null, p_pasta_id: null, p_modelo: 'modelo_planilha', p_calculo_id: null, p_nota: null });
+        if(r.error) throw r.error;
+        fecharJanela('jModelo'); toast('Modelo "' + nome + '" salvo em Modelos > Planilhas.', 'success');
+      }catch(e){ $('mdErro').textContent = 'Não salvei o modelo. Motivo: ' + msgErro(e) + '.'; }
+      finally{ b.disabled = false; b.textContent = 'Salvar o modelo'; }
+    };
   }
 
   /* ================= avisos (erros sempre à vista) ================= */
@@ -533,9 +1226,11 @@
     if(S.ctx.pessoa) partes.push('<a class="pl-chip" href="' + FICHA + '?pessoa_id=' + encodeURIComponent(S.ctx.pessoa.id) + (d.processo_id ? '&processo_id=' + encodeURIComponent(d.processo_id) : '') + '" target="_blank" rel="noopener">' + esc(S.ctx.pessoa.nome_completo || 'Cliente') + (S.ctx.pessoa.codigo ? ' · ' + esc(S.ctx.pessoa.codigo) : '') + ' ↗</a>');
     if(S.ctx.processo) partes.push('<span class="pl-chip">' + esc(S.ctx.processo.codigo || 'Processo') + (S.ctx.processo.numero_processo_cnj ? ' · ' + esc(fmtCnj(S.ctx.processo.numero_processo_cnj)) : '') + '</span>');
     partes.push('<span class="pl-chip ' + (S.pendente ? 'pendente' : 'salvo') + '">' + (S.pendente ? 'Alterações não salvas' : (d.id ? 'Salvo · versão ' + d.versao : 'Ainda não salvo')) + '</span>');
+    if(!S.ctx.pessoa && !S.ctx.processo) partes.unshift('<span class="pl-chip">' + (d.modelo === 'modelo_planilha' ? 'Modelo de planilha' : 'Do escritório (sem cliente)') + '</span>');
     if(!S.pode.criar) partes.push('<span class="pl-chip">Só leitura</span>');
     info.innerHTML = partes.join('');
     $('plSalvar').disabled = !S.pode.criar;
+    var vb = $('plVoltar'); if(vb){ vb.querySelector('span').textContent = rotuloVoltar(); vb.title = rotuloVoltar() + ' (Alt+←)'; }
   }
   function fmtCnj(n){ try{ return window.sagaFmt && sagaFmt.cnj ? sagaFmt.cnj(n) : n; }catch(e){ return n; } }
 
@@ -553,7 +1248,7 @@
         p_modelo: d.id ? null : (d.modelo || null), p_calculo_id: d.id ? null : (d.calculo_id || null), p_nota: nota || null });
       if(r.error) throw r.error;
       d.id = r.data.id; d.versao = r.data.versao; d.titulo = titulo; S.doc = d; S.pendente = false;
-      var u = new URL(location.href); if(u.searchParams.get('doc') !== d.id){ u.search = '?doc=' + d.id; history.replaceState(history.state, '', u.toString()); }
+      var u = new URL(location.href); if(u.searchParams.get('doc') !== d.id){ ['novo', 'modelo', 'modelo_planilha', 'processo', 'pessoa', 'pasta'].forEach(function(k){ u.searchParams.delete(k); }); u.searchParams.set('doc', d.id); history.replaceState(history.state, '', u.toString()); }
       S.avisosTela = (S.avisosTela || []).filter(function(a){ return !a.salvar; });
       toast('Salvo (versão ' + d.versao + ').', 'success');
       desenharAvisos();
@@ -620,6 +1315,7 @@
     var todos = S.calc.tudo();
     S.pasta.abas.forEach(function(a, i){
       var ws = wb.addWorksheet(a.nome, { pageSetup: { paperSize: 9, orientation: a.paisagem ? 'landscape' : 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0 } });
+      if(a.congelar && (a.congelar.l || a.congelar.c)) ws.views = [{ state: 'frozen', xSplit: a.congelar.c || 0, ySplit: a.congelar.l || 0 }];
       var u = M.usada(a);
       for(var c = 1; c <= Math.max(u.colunas, 1); c++) ws.getColumn(c).width = Math.max(4, Math.round(largura2(a, c) / 7.2));
       Object.keys(a.linhas || {}).forEach(function(l){ ws.getRow(+l).height = a.linhas[l] * 0.75; });
@@ -632,7 +1328,7 @@
           xc.value = (ce.t === 'data' && typeof ce.v === 'number') ? serieParaDate(ce.v) : ce.v;
         }
         var nf = numFmt(ce); if(nf) xc.numFmt = nf;
-        var fonte = {}; if(ce.b) fonte.bold = true; if(ce.i) fonte.italic = true; if(ce.fundo === 'titulo'){ fonte.color = { argb: 'FFFFFFFF' }; fonte.bold = true; }
+        var fonte = {}; if(ce.b) fonte.bold = true; if(ce.i) fonte.italic = true; if(ce.fundo === 'titulo'){ fonte.color = { argb: 'FFFFFFFF' }; fonte.bold = true; } else if(ce.cor && /^#[0-9a-f]{6}$/i.test(ce.cor)) fonte.color = { argb: 'FF' + ce.cor.slice(1).toUpperCase() };
         if(Object.keys(fonte).length) xc.font = fonte;
         var hex = ce.fundo ? (FUNDO_XLSX[ce.fundo] || (/^#[0-9a-f]{6}$/i.test(ce.fundo) ? ce.fundo.slice(1).toUpperCase() : null)) : null;
         if(hex) xc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF' + hex } };
@@ -658,8 +1354,9 @@
       await wb.xlsx.load(await arquivo.arrayBuffer());
       var nova = { formato: 1, ativa: 0, abas: [] }, avisos = [];
       wb.eachSheet(function(ws){
+        var vw = (ws.views || [])[0], cong = vw && vw.state === 'frozen' && (vw.xSplit || vw.ySplit) ? { l: vw.ySplit || 0, c: vw.xSplit || 0 } : null;
         if(ws.state && ws.state !== 'visible') avisos.push('A aba "' + ws.name + '" estava oculta no Excel e veio junto.');
-        var a = { nome: ws.name.slice(0, 31), celulas: {}, colunas: {}, linhas: {}, mesclas: [] };
+        var a = { nome: ws.name.slice(0, 31), celulas: {}, colunas: {}, linhas: {}, mesclas: [] }; if(cong) a.congelar = cong;
         (ws.columns || []).forEach(function(col, k){ if(col && col.width) a.colunas[M.colTxt(k + 1)] = Math.round(col.width * 7.2); });
         ws.eachRow({ includeEmpty: false }, function(row, l){
           if(row.height) a.linhas[l] = Math.round(row.height / 0.75);
@@ -681,7 +1378,7 @@
               var m = /\.(0+)/.exec(nf); if(ce.t && ce.t !== 'data' && m && m[1].length !== 2) ce.casas = m[1].length; if(ce.t === 'pct' && !m) ce.casas = 0;
             }
             if(ce.t === 'data' && typeof ce.v === 'number' && ce.v > 100000) delete ce.t;
-            if(xc.font){ if(xc.font.bold) ce.b = true; if(xc.font.italic) ce.i = true; }
+            if(xc.font){ if(xc.font.bold) ce.b = true; if(xc.font.italic) ce.i = true; var fa = xc.font.color && xc.font.color.argb; if(fa && /^[0-9a-f]{8}$/i.test(fa)){ var fh = fa.slice(2).toUpperCase(); if(fh !== '000000' && fh !== 'FFFFFF') ce.cor = '#' + fh.toLowerCase(); } }
             if(xc.alignment){ var h = xc.alignment.horizontal; if(h === 'left') ce.al = 'esq'; else if(h === 'center' || h === 'centerContinuous') ce.al = 'centro'; else if(h === 'right') ce.al = 'dir'; if(xc.alignment.wrapText) ce.q = true; }
             if(xc.fill && xc.fill.fgColor && xc.fill.fgColor.argb && xc.fill.pattern === 'solid'){ var hex = xc.fill.fgColor.argb.slice(-6).toUpperCase(); if(hex !== 'FFFFFF'){ var tok = Object.keys(FUNDO_XLSX).filter(function(k){ return FUNDO_XLSX[k] === hex; })[0]; ce.fundo = tok || '#' + hex; } }
             if(xc.note){ ce.nota = typeof xc.note === 'string' ? xc.note : ((xc.note.texts || []).map(function(t){ return t.text; }).join('')); }
@@ -696,7 +1393,7 @@
       if(!vazia && !confirm('Trocar o conteúdo desta planilha pelo do Excel "' + arquivo.name + '"? (Dá para desfazer com Ctrl+Z; as versões salvas continuam guardadas.)')) return;
       guardarDesfazer(); S.pasta = nova; S.ativa = 0; S.sel = { c1: 1, l1: 1, c2: 1, l2: 1 };
       if(!$('plTitulo').value.trim() || /^Planilha( \d+)?$/.test($('plTitulo').value.trim())) $('plTitulo').value = arquivo.name.replace(/\.xlsx$/i, '');
-      S.avisosTela = (S.avisosTela || []).filter(function(a){ return !a.importou; });
+      S.avisosTela = (S.avisosTela || []).filter(function(a){ return !a.importou && !a.importar; });
       S.avisosTela.push({ tipo: 'atencao', importou: true, titulo: 'Excel aberto: "' + arquivo.name + '" (' + nova.abas.length + ' aba(s)).', texto: 'O arquivo foi lido neste computador (não foi para nenhum site). Confira as contas: fórmulas que o SAGA ainda não conhece aparecem com #NAME?. ' + avisos.join(' ') + ' Salve para guardar no SAGA.' });
       mudou();
     }catch(e){ avisoErro('Não consegui abrir o Excel.', e); }
@@ -774,7 +1471,7 @@
           var cor = ce.fundo ? (FUNDO_PDF[ce.fundo] || (/^#[0-9a-f]{6}$/i.test(ce.fundo) ? hexRgb(ce.fundo) : null)) : null;
           if(cor) pg.drawRectangle({ x: x, y: Y, width: it.w, height: h, color: P.rgb(cor[0], cor[1], cor[2]) });
           if(a.bordas === 'marcadas' ? (ce.borda || cor) : (it.partes[0] || cor || ce.borda)) pg.drawRectangle({ x: x, y: Y, width: it.w, height: h, borderColor: P.rgb(0.79, 0.83, 0.88), borderWidth: 0.4 });
-          var txtCor = M.ehErro(it.v) ? P.rgb(0.75, 0.1, 0.1) : (ce.fundo === 'titulo' ? P.rgb(1, 1, 1) : (ce.cinza ? P.rgb(0.4, 0.45, 0.52) : P.rgb(0.07, 0.1, 0.16)));
+          var txtCor = M.ehErro(it.v) ? P.rgb(0.75, 0.1, 0.1) : (ce.fundo === 'titulo' ? P.rgb(1, 1, 1) : (ce.cinza ? P.rgb(0.4, 0.45, 0.52) : (ce.cor && /^#[0-9a-f]{6}$/i.test(ce.cor) ? P.rgb.apply(null, hexRgb(ce.cor)) : P.rgb(0.07, 0.1, 0.16))));
           it.partes.forEach(function(p, q){
             if(!p) return;
             var tw = it.fonte.widthOfTextAtSize(p, fs), al = ce.al || (it.num ? 'dir' : 'esq');
@@ -918,24 +1615,48 @@
         if(modelo){
           if(!window.SagaCalculosPlanilhas) throw new Error('os modelos de cálculo não carregaram');
           var ex = await _sb.from('documentos_editaveis').select('id').eq('processo_id', proc).eq('modelo', modelo).eq('ativo', true).order('atualizado_em', { ascending: false }).limit(1);
-          if(!ex.error && ex.data && ex.data.length){ location.replace('editor_planilha.html?doc=' + ex.data[0].id + '&v=' + (q.get('v') || '')); return; }
+          if(!ex.error && ex.data && ex.data.length){ location.replace('editor_planilha.html?doc=' + ex.data[0].id + '&v=' + encodeURIComponent(q.get('v') || '') + (q.get('voltar') ? '&voltar=' + encodeURIComponent(q.get('voltar')) : '')); return; }
           var mo = await SagaCalculosPlanilhas.montar({ sb: _sb, processoId: proc, modelo: modelo });
           S.pasta = mo.pasta; S.doc.modelo = modelo; S.doc.calculo_id = mo.calculo_id || null; S.doc.titulo = mo.titulo; S.pendente = false; /* montada agora: 'Ainda não salvo' (nada foi mudado à mão) */
           (mo.avisosTela || []).forEach(function(a){ S.avisosTela.push(a); });
+        } else if(q.get('modelo_planilha')){
+          /* começar de um MODELO DE PLANILHA (Modelos > Planilhas): o conteúdo do modelo vira uma planilha nova */
+          var mp = await _sb.from('documentos_editaveis').select('titulo,conteudo,modelo').eq('id', q.get('modelo_planilha')).maybeSingle();
+          if(mp.error) throw mp.error; if(!mp.data) throw new Error('modelo de planilha não encontrado (ou sem permissão para ver)');
+          S.pasta = mp.data.conteudo && mp.data.conteudo.abas ? JSON.parse(JSON.stringify(mp.data.conteudo)) : M.pastaNova();
+          S.doc.titulo = (q.get('titulo') || mp.data.titulo.replace(/^Modelo:\s*/i, '')).slice(0, 200);
+          S.pendente = true;
+          S.avisosTela.push({ tipo: 'atencao', titulo: 'Planilha nova a partir do modelo "' + mp.data.titulo + '".', texto: 'Ainda não foi salva: confira e clique em Salvar. O modelo continua como estava.' });
         } else S.pasta = M.pastaNova();
+        if(q.get('novo') === 'modelo'){ S.doc.modelo = 'modelo_planilha'; S.doc.processo_id = null; S.doc.pessoa_id = null; S.ctx = {}; S.doc.titulo = q.get('titulo') || 'Modelo: nova planilha'; }
+        else if(q.get('titulo') && !S.doc.titulo) S.doc.titulo = q.get('titulo').slice(0, 200);
         S.doc.titulo = S.doc.titulo || 'Planilha';
-        if(!S.ctx.pessoa) S.avisosTela.push({ tipo: 'atencao', titulo: 'Planilha sem cliente.', texto: 'Abra pela ficha do cliente (Pastas do cliente > + Planilha) para poder salvar e guardar na pasta.' });
       }
       $('plTitulo').value = (S.doc && S.doc.titulo) || 'Planilha';
       document.title = 'VMMADV | ' + $('plTitulo').value;
       S.ativa = Math.min(S.pasta.ativa || 0, S.pasta.abas.length - 1);
       S.sel = { c1: 1, l1: 1, c2: 1, l2: 1 };
       if(!S.pode.criar) S.avisosTela.push({ tipo: 'atencao', titulo: 'Só leitura.', texto: 'Seu perfil não tem a permissão de criar documentos dos clientes: dá para ver, baixar em PDF e em Excel, mas não salvar.' });
+      if(q.get('importar') === '1' && !docId && S.pode.criar){
+        S.avisosTela.push({ tipo: 'atencao', importar: true, titulo: 'Planilha nova a partir de um Excel.', texto: 'Escolha o arquivo (.xlsx): ele é lido neste computador e nada vai para site de fora.', acao: { rotulo: 'Escolher o arquivo Excel', fazer: function(){ $('plImportar').click(); } } });
+      }
       redesenhar(); estadoSalvo();
       $('plCaixa').focus({ preventScroll: true });
+      if(q.get('arquivo_bib') && !docId) abrirArquivoBiblioteca(q.get('arquivo_bib'));
     }catch(e){
       $('plRaiz').innerHTML = '<div class="aviso erro" style="margin-top:18px"><div><b>Não consegui abrir a planilha.</b>Motivo: ' + esc(msgErro(e)) + '. Atualize a página (F5) ou volte à ficha.</div></div>';
     }
+  }
+  /* arquivo .xlsx da pasta "Planilhas Contábeis" (Arquivos de Modelos): abre uma CÓPIA no editor; o original não muda */
+  async function abrirArquivoBiblioteca(id){
+    try{
+      var r = await _sb.from('biblioteca_arquivos').select('nome_arquivo,caminho_storage').eq('id', id).maybeSingle();
+      if(r.error) throw r.error; if(!r.data) throw new Error('arquivo não encontrado (ou sem permissão para ver os arquivos)');
+      if(!/\.xlsx$/i.test(r.data.nome_arquivo)) throw new Error('só arquivos .xlsx abrem no editor');
+      var b = await _sb.storage.from('biblioteca-arquivos').download(r.data.caminho_storage);
+      if(b.error) throw b.error;
+            await importarXlsx({ name: r.data.nome_arquivo, arrayBuffer: function(){ return b.data.arrayBuffer(); } });
+    }catch(e){ avisoErro('Não consegui abrir o arquivo da pasta Planilhas Contábeis.', e); }
   }
   /* troca o conteúdo pelo do modelo (ex.: cálculo mais novo) sem perder o histórico */
   function aplicarModelo(pasta, calculoId){ guardarDesfazer(); S.pasta = pasta; S.ativa = 0; if(calculoId) S.doc.calculo_id = calculoId; S.sel = { c1: 1, l1: 1, c2: 1, l2: 1 }; mudou(); }
