@@ -269,6 +269,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
       <button class="pill" type="button" data-aba="base" id="abaBase" hidden title="Só o administrador geral">Base de dados</button>
       <button class="pill" type="button" data-aba="listagem" id="abaListagemAl" hidden title="Só o administrador geral">Listagem de Alagoas</button>
       <button class="pill" type="button" data-aba="mapa" id="abaMapa" hidden title="Só o administrador geral">Mapa dos servidores</button>
+      <button class="pill" type="button" data-aba="base-unica" id="abaBaseUnica" hidden title="Só o administrador geral">Base única</button>
     </div>
     <div class="vis" id="visoes" role="group" aria-label="Modo de ver"></div>
   </div>
@@ -302,6 +303,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
   <section class="aba-pane" id="aba-base"></section>
   <section class="aba-pane" id="aba-listagem"></section>
   <section class="aba-pane" id="aba-mapa"></section>
+  <section class="aba-pane" id="aba-base-unica"></section>
 </main>
 </div>
 
@@ -324,6 +326,7 @@ window._sb=_sb;
 <script src="saga_teses_base.js?v=202611230044"></script>
 <script src="saga_listagem_al.js?v=202611230044"></script>
 <script src="saga_mapa_servidores.js?v=202611230044"></script>
+<script src="saga_servidores_base.js?v=202611230044"></script>
 <script>
 /* =====================================================================
    SAGA · Teses e oportunidades (blocos 110 e 111)
@@ -358,7 +361,8 @@ var VISOES={
   radar:[['cartoes','Cartões','blog'],['lista','Lista','lista'],['kanban','Kanban','kanban'],['agenda','Julgamentos','agenda']],
   base:[],
   listagem:[],
-  mapa:[]
+  mapa:[],
+  'base-unica':[]
 };
 function $(id){return document.getElementById(id);}
 function esc(v){return window.sagaEsc?window.sagaEsc(v):String(v==null?'':v).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];});}
@@ -514,8 +518,8 @@ function desenharBotoes(){
   else if(T.aba==='prateleira'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo produto</button>';
   else if(T.aba==='radar'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo item no radar</button>';
   if(p.admin&&T.aba!=='radar'&&T.aba!=='base')b='<button class="btn" type="button" id="btnOpcoes">'+(T.aba==='prateleira'?'Organizar opções':'Organizar situações')+'</button>'+b;
-  if(T.aba==='base'||T.aba==='listagem'||T.aba==='mapa')b='';
-  if(PODE_CLIENTES&&T.aba!=='radar'&&T.aba!=='base'&&T.aba!=='listagem'&&T.aba!=='mapa')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
+  if(T.aba==='base'||T.aba==='listagem'||T.aba==='mapa'||T.aba==='base-unica')b='';
+  if(PODE_CLIENTES&&T.aba!=='radar'&&T.aba!=='base'&&T.aba!=='listagem'&&T.aba!=='mapa'&&T.aba!=='base-unica')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
   $('botoesTopo').innerHTML=b;
   var ac=$('btnAcharClientes');if(ac)ac.onclick=abrirEscolhaTese;
   var n=$('btnNovo');if(n)n.onclick=function(){if(T.aba==='atualizacoes')formPost(null);else if(T.aba==='prateleira')formProduto(null);else formRadar(null);};
@@ -1089,6 +1093,7 @@ function trocarAba(a){
   if(a==='base'&&window.SagaTesesBase)SagaTesesBase.abrir();
   if(a==='listagem'&&window.SagaListagemAl)SagaListagemAl.abrir();
   if(a==='mapa'&&window.SagaMapaServidores)SagaMapaServidores.abrir();
+  if(a==='base-unica'&&window.SagaServidoresBase)SagaServidoresBase.abrir();
 }
 function ligar(){
   // T132: link "Achar clientes": clique normal troca de tela com o movimento do sistema; Ctrl+clique abre em outra aba
@@ -1171,7 +1176,8 @@ async function init(){
   if(window.SagaTesesBase)await SagaTesesBase.liberar();
   if(window.SagaListagemAl)await SagaListagemAl.liberar();
   if(window.SagaMapaServidores)await SagaMapaServidores.liberar();
-  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a==='base'&&$('abaBase').hidden)a='';if(a==='listagem'&&$('abaListagemAl').hidden)a='';if(a==='mapa'&&$('abaMapa').hidden)a='';if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
+  if(window.SagaServidoresBase)await SagaServidoresBase.liberar();
+  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a==='base'&&$('abaBase').hidden)a='';if(a==='listagem'&&$('abaListagemAl').hidden)a='';if(a==='mapa'&&$('abaMapa').hidden)a='';if(a==='base-unica'&&$('abaBaseUnica').hidden)a='';if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
   await carregarTudo();
   var post=q.get('post');if(post){trocarAba('atualizacoes');lerPost(post);}
 }
