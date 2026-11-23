@@ -9,8 +9,8 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.40",
-  data: "22/11/2026",
+  versao: "3.41",
+  data: "23/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
   escritorio: "Victor Morais Advocacia (VMMADV)",
@@ -18,6 +18,7 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
+    { versao: "3.41", data: "23/11/2026", mudou: "Teses e oportunidades: parte nova **Mapa dos servidores** (só o administrador): eventos do Portal da Transparência mês a mês com os meses em massa à parte, lista com a oportunidade de cada evento, clientes do SAGA com evento, conferência dos prováveis falecidos e exportação em CSV e PDF." },
     { versao: "3.40", data: "22/11/2026", mudou: "Modelos: a coluna da esquerda virou **uma árvore só**, como o explorador de arquivos: **Arquivos** > Petições (áreas e subpastas), Contestações (por tese), Papéis timbrados e as pastas da antiga Biblioteca; nomes inteiros, setinha para abrir e fechar, **busca única** em modelos, contestações e arquivos; no celular a árvore abre e fecha no alto. Print novo no sistema simulado." },
     { versao: "3.39", data: "22/11/2026", mudou: "Agenda: a parte **Ver a agenda no celular** ganhou o print (janela Agenda no celular, no sistema simulado) e as marcas; o aviso no sino 30 minutos antes vale também para cada data de um compromisso que se repete." },
     { versao: "3.38", data: "22/11/2026", mudou: "Ficha: parte nova **Linha do tempo do processo** (tudo o que aconteceu no processo numa lista: filtros por tipo, Só o importante, busca e Ver mais). Prints novos no sistema simulado: ficha (3 cartões e contatos; blocos e cartões Processo/Painel lateral; janela Criar pastas; janela Ler consulta com as miniaturas dos prints), Minhas Tarefas (quadro, menu de etiquetas e o botão **Filtros no celular**, parte nova), Captação (topo e lista com Por captador, Sem captador, Alterar… e Captador anterior), Painel geral (com Mais números recolhido) e Financeiro (aba Distribuição). Os prints agora aparecem inteiros, sem corte, também os de celular." },
@@ -1097,6 +1098,20 @@ window.SAGA_MANUAL = {
           img: "teses",
           marcas: ["Atualizações de teses.", "Prateleira de produtos.", "Radar de oportunidades.", "Achar clientes para uma tese.", "Nova atualização."],
           dicas: ["Ctrl+clique no botão abre os clientes em outra aba, e a tela de Teses continua aberta."]
+        },
+        { id: "mapa", titulo: "Mapa dos servidores (só o administrador)",
+          quando: "Para ver, mês a mês, o que aconteceu com os servidores federais, aposentados e pensionistas do Portal da Transparência (quem se aposentou, faleceu, ganhou pensão, teve abate-teto, PSS ou IR que parou) e achar as oportunidades, principalmente entre os clientes do SAGA.",
+          passos: [
+            "Abra **Teses e oportunidades > Mapa dos servidores** (o botão só aparece para o administrador geral; o banco recusa os outros).",
+            "**Visão geral**: os números do Mapa, o gráfico por **ano** (clique num ano para ver os meses e num mês para ver as pessoas) e os **meses em massa**, que ficam à parte. Mês em massa é quando a folha inteira muda de uma vez (ex.: 04/2026, PSS parou para 8.299 pessoas) e não é evento de cada pessoa.",
+            "**Eventos**: a lista com o mês, o evento, a pessoa no Portal (CPF sempre mascarado, ***.123.456-**), se é cliente do SAGA e a **oportunidade** (o que o evento pode significar e as teses da Prateleira ligadas; clicar na tese abre a Prateleira). Filtros: evento, órgão, lista, UF, cargo, período (mm/aaaa), cliente ou não, **Só prováveis falecidos**, **Sem vínculos temporários** (ligado) e **Incluir meses em massa** (desligado).",
+            "[[Oportunidades por evento]]: escreva o texto de cada evento, marque as teses ligadas e \"Só informativo\". Tese que pede um órgão (ex.: PRF: abate-teto) só aparece nos eventos daquele órgão.",
+            "**Clientes do SAGA**: os clientes com evento nos últimos meses (faleceu e deixou pensão = habilitação dos herdeiros; aposentou = abono de permanência, Tema 1.233, férias e licença-prêmio). As linhas de clientes ficam destacadas.",
+            "**Prováveis falecidos**: fichas do SAGA que aparecem como servidor que deixou pensão. Escolha as fichas, a situação da conferência e [[Aplicar]]. Em \"Falecimento confirmado\", a caixinha **marcar a ficha como falecida** muda a ficha. [[Organizar situações]] renomeia, muda a cor e a ordem e tira situações da lista.",
+            "[[Exportar para a Captação (CSV)]] e [[PDF]] levam a lista do filtro. Cada exportação e cada conferência vai para o Registro de atividades.",
+            "**Carga e LGPD**: de onde vêm os dados, os avisos da carga (meses que o Portal ocultou, renomeações de órgão e cargo) e as regras de uso."
+          ],
+          atencao: ["Dado público do Portal, mas com finalidade presa às teses do escritório (LGPD). Nada de CPF completo, matrícula ou endereço.", "IR ou PSS que parou pode indicar doença grave: é só informação, nunca filtro de captação.", "Provável falecido pode ser homônimo: confira antes de qualquer contato com a família.", "O aviso amarelo do alto mostra quando o público de uma tese parece largo demais (ex.: 3,17% e 28,86%): o botão [[Editar público]] abre a tese na Prateleira. Nada é mudado sozinho."]
         },
         { id: "perfil", titulo: "Clientes por perfil",
           quando: "Para achar clientes de um perfil (ex.: servidores aposentados de um órgão) e oferecer uma tese que eles ainda não têm.",
