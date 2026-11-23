@@ -115,19 +115,22 @@
     '#bibArvore .ba-busca{width:100%;box-sizing:border-box;font-size:12.5px}',
     '#bibArvore .ba-mob{display:none}',
     '#bibArvore .ba-arv{font-size:12.5px;display:flex;flex-direction:column;gap:1px}',
-    '#bibArvore .ba-no{display:flex;align-items:flex-start;gap:6px;padding:6px 8px 6px calc(4px + var(--ba-nivel,0) * 14px);border-radius:8px;cursor:pointer;color:var(--muted);line-height:1.35;transition:background .25s ' + EASE + ',color .25s ' + EASE + '}',
-    '#bibArvore .ba-no:hover{background:color-mix(in srgb,var(--gold) 8%,transparent);color:var(--text)}',
-    '#bibArvore .ba-no.ativa{background:color-mix(in srgb,var(--gold) 14%,transparent);color:var(--text);font-weight:600}',
+    '#bibArvore .ba-no{display:flex;align-items:flex-start;gap:6px;padding:6px 8px 6px calc(4px + var(--ba-nivel,0) * 14px);border-radius:8px;cursor:pointer;color:var(--text);font-size:13px;font-weight:500;line-height:1.35;border-left:3px solid transparent;transition:background .25s ' + EASE + ',color .25s ' + EASE + '}',
+    '#bibArvore .ba-no:hover{background:color-mix(in srgb,var(--text) 7%,transparent);color:var(--text)}',
+    '#bibArvore .ba-no.ativa{background:color-mix(in srgb,var(--gold) 18%,transparent);color:var(--text);font-weight:600;border-left-color:var(--gold)}',
+    '#bibArvore .ba-no.ativa .ba-ico{color:var(--gold);opacity:1}',
     '#bibArvore .ba-no:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}',
     '#bibArvore .ba-seta{flex:0 0 16px;width:16px;height:18px;display:inline-flex;align-items:center;justify-content:center;border:0;background:none;color:inherit;padding:0;cursor:pointer;border-radius:5px}',
     '#bibArvore .ba-seta svg{transition:transform .3s ' + EASE + '}',
     '#bibArvore .ba-seta[aria-expanded=true] svg{transform:rotate(90deg)}',
     '#bibArvore .ba-seta:empty{cursor:default}',
-    '#bibArvore .ba-ico{flex:0 0 14px;height:18px;display:inline-flex;align-items:center;opacity:.85}',
+    '#bibArvore .ba-ico{flex:0 0 14px;height:18px;display:inline-flex;align-items:center;color:color-mix(in srgb,var(--text) 82%,transparent);opacity:1}',
     '#bibArvore .ba-nome{flex:1;min-width:0;overflow-wrap:anywhere;white-space:normal}',
-    '#bibArvore .ba-n{flex:0 0 auto;font-size:10.5px;opacity:.75;padding-top:1px;font-variant-numeric:lining-nums tabular-nums}',
+    '#bibArvore .ba-n{flex:0 0 auto;font-size:10.5px;color:color-mix(in srgb,var(--text) 72%,transparent);padding-top:1px;font-variant-numeric:lining-nums tabular-nums}',
     '#bibArvore .ba-raiz{color:var(--text);font-weight:600}',
     '#bibArvore .ba-filhos[hidden]{display:none}',
+    /* 23/11 (Dr. Victor): a coluna das pastas rola SOZINHA, como o menu lateral (a tela de trás não sobe) */
+    '@media (min-width:761px){.coluna-categorias{position:sticky;top:var(--ba-topo,64px);align-self:flex-start;max-height:calc(100vh - var(--ba-topo,64px));max-height:calc(100dvh - var(--ba-topo,64px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}}',
     '.conteudo-biblioteca.modo-timbrados #tbFerr .tb-busca,.conteudo-biblioteca .barra-filtros .busca,#ctSecao .ct-ferr,#ctSecao .ct-teses{display:none!important}',
     '#painelTimbrados[data-vista=modelos] #ctSecao,#painelTimbrados[data-vista=modelos] #tbSecTimbrados,#painelTimbrados[data-vista=contestacoes] #tbSecModelos,#painelTimbrados[data-vista=contestacoes] #tbSecTimbrados,#painelTimbrados[data-vista=timbrados] #tbSecModelos,#painelTimbrados[data-vista=timbrados] #ctSecao,#painelTimbrados[data-vista=busca] #tbSecTimbrados{display:none!important}',
     '#painelTimbrados:not([data-vista=busca]) #tbBuscaArq{display:none}',
@@ -762,10 +765,30 @@
      No celular a árvore vira um menu que abre e fecha no alto.
      ===================================================================== */
   var U = { abertos:null, vista:'modelos', ctSigla:'', buscaQ:'', antesBusca:null, ctBuscou:false, contagem:{}, tBusca:null, tArq:0 };
-  try{ U.abertos = JSON.parse(localStorage.getItem('saga-modelos-arvore') || 'null'); }catch(e){}
-  if(!U.abertos || typeof U.abertos !== 'object') U.abertos = { raiz:true };
-  if(U.abertos.pl == null) U.abertos.pl = true;
-  function guardarAbertos(){ try{ localStorage.setItem('saga-modelos-arvore', JSON.stringify(U.abertos)); }catch(e){} }
+  /* 23/11 (Dr. Victor): a árvore abre com TUDO FECHADO (só as pastas do 1º nível à vista) e funciona como sanfona:
+     abrir uma pasta fecha as outras do mesmo nível. Não lembra mais o que estava aberto (saga-modelos-arvore apagada). */
+  U.abertos = { raiz:true };
+  try{ localStorage.removeItem('saga-modelos-arvore'); }catch(e){}
+  function guardarAbertos(){}
+  /* abre (ou fecha) um item da árvore com o movimento do sistema; abrir fecha os irmãos abertos (sanfona) */
+  function abrirItemArvore(it, abrir){
+    if(!it) return;
+    var f = it.querySelector(':scope > .ba-filhos'); if(!f) return;
+    var k = it.getAttribute('data-ba-item');
+    U.abertos[k] = !!abrir;
+    it.querySelectorAll(':scope > .ba-no, :scope > .ba-no > .ba-seta').forEach(function(x){ x.setAttribute('aria-expanded', String(!!abrir)); });
+    var st = it.querySelector(':scope > .ba-no > .ba-seta'); if(st) st.setAttribute('aria-label', (abrir ? 'Recolher ' : 'Abrir ') + ((it.querySelector('.ba-nome') || {}).textContent || ''));
+    if(f.hidden === !abrir) return;
+    if(window.sagaRecolher) sagaRecolher(f, !abrir); else f.hidden = !abrir;
+    if(abrir && it.parentElement){
+      Array.prototype.forEach.call(it.parentElement.children, function(irmao){
+        if(irmao === it || !irmao.classList || !irmao.classList.contains('ba-item')) return;
+        var fi = irmao.querySelector(':scope > .ba-filhos');
+        if(fi && !fi.hidden) abrirItemArvore(irmao, false);
+        else if(fi) U.abertos[irmao.getAttribute('data-ba-item')] = false;
+      });
+    }
+  }
   var CHEV = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true"><polyline points="9 6 15 12 9 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var ICO = {
     pasta:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>',
@@ -840,8 +863,12 @@
   function desenharArvoreUnica(){
     var cx = document.querySelector('#bibArvore .ba-arv'); if(!cx) return;
     var arv = construir(), sel = atual();
-    caminhoNo(arv, sel).slice(0, -1).forEach(function(n){ U.abertos[n.k] = true; });
-    var rz = raizPasta(); if(rz && U.abertos['m:' + rz.id] == null) U.abertos['m:' + rz.id] = true;
+    /* sanfona: só o caminho até a pasta escolhida fica aberto (os irmãos de cada nível fecham) */
+    var cam = caminhoNo(arv, sel);
+    /* a pasta clicada também abre (U.abrirSel); ao entrar na tela nada abre sozinho */
+    if(!(U.abrirSel && U.abrirSel === sel && sel !== 'raiz')) cam = cam.slice(0, -1);
+    U.abrirSel = null;
+    cam.forEach(function(n){ n.filhos.forEach(function(f){ if(cam.indexOf(f) < 0) U.abertos[f.k] = false; }); U.abertos[n.k] = true; });
     cx.innerHTML = htmlNo(arv, 0, sel);
     rotuloCelular(arv, sel);
     if(!S.aberto) cartoesRaiz();
@@ -862,11 +889,7 @@
     if(!alvo && sel){ desenharArvoreUnica(); return; }
     var g = alvo && alvo.parentElement;
     while(g && g.id !== 'bibArvore'){
-      if(g.classList.contains('ba-filhos') && g.hidden){
-        g.hidden = false;
-        var it = g.parentElement, k = it.getAttribute('data-ba-item'); U.abertos[k] = true;
-        it.querySelectorAll(':scope > .ba-no, :scope > .ba-no > .ba-seta').forEach(function(x){ x.setAttribute('aria-expanded', 'true'); });
-      }
+      if(g.classList.contains('ba-filhos') && g.hidden) abrirItemArvore(g.parentElement, true);
       g = g.parentElement;
     }
     rotuloCelular(null, sel);
@@ -886,9 +909,6 @@
     var pn = document.getElementById('painelTimbrados'); if(pn) pn.setAttribute('data-vista', v);
     /* o endereço acompanha (?aba=planilhas abre direto; voltar do editor cai aqui) */
     try{ var qa = new URLSearchParams(location.search).get('aba'); if((v === 'planilhas') !== (qa === 'planilhas')) marcarAba(v === 'planilhas' ? 'planilhas' : 'timbrados', false); }catch(e){}
-    /* o item do menu lateral acompanha (Planilhas × Modelos) */
-    var itMenu = document.querySelector('#sidebarSaga .nav-item[data-tela="' + (v === 'planilhas' ? 'planilhas' : 'modelos') + '"]');
-    if(itMenu && !itMenu.classList.contains('active')){ document.querySelectorAll('#sidebarSaga .nav-item.active').forEach(function(el){ el.classList.remove('active'); }); itMenu.classList.add('active'); }
     desenharMigalhas();
   }
   function desenharMigalhas(){
@@ -1032,6 +1052,18 @@
     if(cab && cab.nextSibling) coluna.insertBefore(box, cab.nextSibling); else coluna.appendChild(box);
     var tit = coluna.querySelector('.titulo-categorias'); if(tit) tit.textContent = 'Pastas';
     var corpo = box.querySelector('.ba-corpo'), mob = box.querySelector('.ba-mob');
+    /* 23/11 (Dr. Victor): a coluna rola sozinha, como o menu lateral: presa abaixo da barra de cima, com rolagem própria;
+       no fim (ou no começo) dela, ou quando cabe inteira, a roda do mouse NÃO passa para a tela de trás */
+    function topoColuna(){ var tb = document.getElementById('topbarSaga'); var t = tb ? Math.max(0, Math.round(tb.getBoundingClientRect().bottom)) : 64; coluna.style.setProperty('--ba-topo', t + 'px'); }
+    topoColuna(); setTimeout(topoColuna, 600); window.addEventListener('resize', topoColuna);
+    coluna.addEventListener('wheel', function(e){
+      if(celular() || e.ctrlKey) return;
+      var dy = e.deltaY; if(!dy) return;
+      var alvo = e.target.closest && e.target.closest('.coluna-categorias, input, textarea, select');
+      if(alvo && alvo !== coluna && /INPUT|TEXTAREA|SELECT/.test(alvo.tagName)) return;
+      var noFim = coluna.scrollTop + coluna.clientHeight >= coluna.scrollHeight - 1, noComeco = coluna.scrollTop <= 0;
+      if((dy > 0 && noFim) || (dy < 0 && noComeco)) e.preventDefault();
+    }, { passive:false });
     if(celular()) corpo.hidden = true;
     if(window.matchMedia) matchMedia('(max-width:760px)').addEventListener('change', function(e){ corpo.hidden = e.matches; mob.setAttribute('aria-expanded', 'false'); });
     mob.addEventListener('click', function(){
@@ -1042,19 +1074,22 @@
     var bx = box.querySelector('#baBusca');
     bx.addEventListener('input', function(){ clearTimeout(U.tBusca); var v = bx.value; U.tBusca = setTimeout(function(){ buscaGeral(v); }, 320); });
     var arv = box.querySelector('.ba-arv');
+    function itemDe(k){ return arv.querySelector('[data-ba-item="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); }
     function alternar(k){
-      var it = arv.querySelector('[data-ba-item="' + (window.CSS && CSS.escape ? CSS.escape(k) : k) + '"]'); if(!it) return;
+      var it = itemDe(k); if(!it) return;
       var f = it.querySelector(':scope > .ba-filhos'); if(!f) return;
-      var abrirAgora = f.hidden;
-      U.abertos[k] = abrirAgora; guardarAbertos();
-      it.querySelectorAll(':scope > .ba-no, :scope > .ba-no > .ba-seta').forEach(function(x){ x.setAttribute('aria-expanded', String(abrirAgora)); });
-      var st = it.querySelector(':scope > .ba-no > .ba-seta'); if(st) st.setAttribute('aria-label', (abrirAgora ? 'Recolher ' : 'Abrir ') + (it.querySelector('.ba-nome') || {}).textContent);
-      if(window.sagaRecolher) sagaRecolher(f, !abrirAgora); else f.hidden = !abrirAgora;
+      abrirItemArvore(it, f.hidden);
     }
     arv.addEventListener('click', function(e){
       var seta = e.target.closest('[data-ba-seta]');
       if(seta){ e.stopPropagation(); alternar(seta.getAttribute('data-ba-seta')); return; }
-      var no = e.target.closest('[data-ba]'); if(no) irNo(no.getAttribute('data-ba'));
+      var no = e.target.closest('[data-ba]'); if(!no) return;
+      var k = no.getAttribute('data-ba');
+      U.abrirSel = k;
+      irNo(k);
+      /* clicar no nome de uma pasta também abre a pasta (e fecha as outras do mesmo nível) */
+      var it2 = itemDe(k), f2 = it2 && it2.querySelector(':scope > .ba-filhos');
+      if(f2 && f2.hidden && k !== 'raiz') abrirItemArvore(it2, true);
     });
     arv.addEventListener('keydown', function(e){
       var no = e.target.closest('[data-ba]'); if(!no) return;

@@ -9,7 +9,7 @@
    ===================================================================== */
 window.SAGA_MANUAL = {
   codigo: "POP-SAGA-001",
-  versao: "3.42",
+  versao: "3.43",
   data: "23/11/2026",
   titulo: "Manual do SAGA",
   subtitulo: "Procedimento Operacional Padrão de uso do sistema do escritório",
@@ -18,7 +18,8 @@ window.SAGA_MANUAL = {
   pdf: "manual/POP_SAGA_ADV.pdf",
 
   revisoes: [
-    { versao: "3.42", data: "23/11/2026", mudou: "**Planilhas** no menu lateral (Gestão) e como pasta de Modelos: lista de todas as planilhas (de clientes, do escritório, modelos de planilha e Planilhas Contábeis), busca e + Nova planilha. O editor abre em **tela inteira** com o botão **Voltar** e funções de planilha: caixa de nome, arrastar para preencher, ordenar, filtrar, congelar, cores da letra e do fundo, bordas, autossoma, clique direito, zoom e atalhos do Excel. Print novo no sistema simulado." },
+    { versao: "3.43", data: "23/11/2026", mudou: "Modelos: a coluna **Pastas** abre com tudo fechado; abrir uma pasta fecha as outras do mesmo nível; a coluna rola sozinha (a tela de trás não sobe) e as letras ficam tão fortes quanto as do menu lateral. **Planilhas** fica só como pasta dentro de Modelos (o item do menu lateral saiu)." },
+    { versao: "3.42", data: "23/11/2026", mudou: "**Planilhas** como pasta de Modelos: lista de todas as planilhas (de clientes, do escritório, modelos de planilha e Planilhas Contábeis), busca e + Nova planilha. O editor abre em **tela inteira** com o botão **Voltar** e funções de planilha: caixa de nome, arrastar para preencher, ordenar, filtrar, congelar, cores da letra e do fundo, bordas, autossoma, clique direito, zoom e atalhos do Excel. Print novo no sistema simulado." },
     { versao: "3.41", data: "23/11/2026", mudou: "Teses e oportunidades: parte nova **Mapa dos servidores** (só o administrador): eventos do Portal da Transparência mês a mês com os meses em massa à parte, lista com a oportunidade de cada evento, clientes do SAGA com evento, conferência dos prováveis falecidos e exportação em CSV e PDF." },
     { versao: "3.40", data: "22/11/2026", mudou: "Modelos: a coluna da esquerda virou **uma árvore só**, como o explorador de arquivos: **Arquivos** > Petições (áreas e subpastas), Contestações (por tese), Papéis timbrados e as pastas da antiga Biblioteca; nomes inteiros, setinha para abrir e fechar, **busca única** em modelos, contestações e arquivos; no celular a árvore abre e fecha no alto. Print novo no sistema simulado." },
     { versao: "3.39", data: "22/11/2026", mudou: "Agenda: a parte **Ver a agenda no celular** ganhou o print (janela Agenda no celular, no sistema simulado) e as marcas; o aviso no sino 30 minutos antes vale também para cada data de um compromisso que se repete." },
@@ -1169,7 +1170,7 @@ window.SAGA_MANUAL = {
         { id: "planilhas", titulo: "Planilhas: a lista em Modelos e o editor em tela inteira",
           quando: "Para fazer ou abrir uma planilha de cálculo (com fórmulas, como no Excel), do cliente ou do escritório, exportar em PDF no papel timbrado ou em Excel, e montar as planilhas do PSS.",
           passos: [
-            "Abra pelo menu lateral **Gestão > Planilhas** (ou **Modelos > pasta Planilhas**). A lista mostra TODAS as planilhas do SAGA: [[De clientes]], [[Do escritório]] (sem cliente), [[Modelos de planilha]] e os arquivos Excel da pasta [[Planilhas Contábeis]]. Busque pelo nome da planilha, do cliente ou pelo código VMM.",
+            "Abra **Gestão > Modelos** e clique na pasta **Planilhas** da coluna Pastas. A lista mostra TODAS as planilhas do SAGA: [[De clientes]], [[Do escritório]] (sem cliente), [[Modelos de planilha]] e os arquivos Excel da pasta [[Planilhas Contábeis]]. Busque pelo nome da planilha, do cliente ou pelo código VMM.",
             "[[+ Nova planilha]]: **em branco, do escritório**; **em branco, para um cliente** (escolha o cliente e o processo); **a partir de um modelo de planilha**; **importar um Excel (.xlsx)** (lido neste computador); ou **modelo de planilha novo**. Pela ficha continua: **Pastas do cliente > Planilhas e textos do SAGA > [[+ Planilha]]**.",
             "A planilha abre em **tela inteira**. O botão [[Voltar]] (sempre no alto, à esquerda) leva de volta para onde você estava: a lista de Planilhas ou a ficha do cliente. Se houver mudança não salva, ele pergunta: [[Salvar e voltar]], [[Sair sem salvar]] ou [[Continuar aqui]]. A seta do navegador também volta.",
             "Trabalhe como no Excel: clique e arraste (ou Shift+clique) para marcar várias células; clique na letra da coluna ou no número da linha para marcar a coluna ou a linha inteira. Digite para escrever; **Enter** desce, **Tab** vai para a direita, **F2** edita, **Delete** apaga, **Ctrl+setas** pula até o fim dos dados, **Ctrl+Z/Ctrl+Y** desfazem e refazem, **Ctrl+C/Ctrl+V** copiam e colam (também do Excel e do Google Planilhas), **Ctrl+D** preenche para baixo, **Alt+=** é a autossoma e **Ctrl+;** põe a data de hoje.",
