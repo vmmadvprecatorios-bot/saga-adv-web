@@ -71,10 +71,43 @@
     L.forEach(function(x, i){ RX_DATA.lastIndex = 0; var m; while((m = RX_DATA.exec(x.t))){ var iso = isoDeBR(m[1] + '/' + m[2] + '/' + m[3]); if(iso && +m[3] >= 2015 && (!melhor || iso > melhor.valor)) melhor = { valor: iso, o: origemDe(L, i), semRotulo: true }; } });
     return melhor;
   }
+  /* 23/11 (extrato real do Dr. Victor: "Comprovante de Resgate Precatório Federal" do Banco do Brasil): o número do processo vem no campo
+     "Processo" com 20 dígitos SEM pontos (às vezes com um espaço antes do último); o do precatório e o do alvará vêm em campos próprios */
+  var RX_NAO_PROC = /precat|alvar|protocolo|autentica|ag[eê]ncia|conta|cpf|cnpj/i;
+  /* dígito verificador do CNJ (Res. 65/2008): NNNNNNN DD AAAA J TR OOOO → (N A J TR O DD) mod 97 = 1 */
+  function cnjValido(d){ if(!/^\d{20}$/.test(d) || typeof BigInt === 'undefined') return false; try{ return BigInt(d.slice(0, 7) + d.slice(9) + d.slice(7, 9)) % 97n === 1n; }catch(e){ return false; } }
+  /* a foto às vezes perde um dígito (no comprovante do BB o último vem separado por espaço): completa só se UMA opção fechar a conta */
+  function cnjCompletar(d){
+    if(d.length === 20) return { d: d, ok: cnjValido(d) };
+    if(d.length !== 19) return null;
+    var boas = [];
+    for(var k = 0; k <= 19; k++) for(var x = 0; x <= 9; x++){ var t = d.slice(0, k) + x + d.slice(k); if(cnjValido(t) && boas.indexOf(t) < 0) boas.push(t); }
+    var fim = boas.filter(function(t){ return t.slice(0, 19) === d; });
+    if(fim.length === 1) return { d: fim[0], ok: true, completado: true };
+    return boas.length === 1 ? { d: boas[0], ok: true, completado: true } : null;
+  }
+  function cnjFmt(d){ return d.slice(0, 7) + '-' + d.slice(7, 9) + '.' + d.slice(9, 13) + '.' + d.charAt(13) + '.' + d.slice(14, 16) + '.' + d.slice(16, 20); }
   function acharNumero(L){
-    for(var i = 0; i < L.length; i++){ RX_CNJ.lastIndex = 0; var m = RX_CNJ.exec(L[i].t); if(m) return { valor: m[0], o: origemDe(L, i) }; }
+    for(var j = 0; j < L.length; j++){
+      var mp = /^(?:n[uú]mero\s+do\s+)?processo\b\s*(?:n[ºo°.]*)?\s*[:\-]?\s*(.*)$/i.exec(L[j].t);
+      if(!mp) continue;
+      var dg = mp[1].replace(/[^\d]/g, '');
+      var cc = cnjCompletar(dg.length > 20 ? dg.slice(0, 20) : dg);
+      if(cc){ var oo = origemDe(L, j); if(cc.completado) oo.aviso = 'faltava um dígito na leitura: completei pela conferência do número CNJ'; else if(!cc.ok) oo.aviso = 'o dígito verificador deste número não confere: confira'; return { valor: cnjFmt(cc.d), o: oo }; }
+      if(dg.length >= 7) return { valor: mp[1].replace(/[^\d.\-\/]/g, ''), o: origemDe(L, j) };
+    }
+    for(var i = 0; i < L.length; i++){ if(RX_NAO_PROC.test(L[i].t)) continue; RX_CNJ.lastIndex = 0; var m = RX_CNJ.exec(L[i].t); if(m) return { valor: m[0], o: origemDe(L, i) }; }
     var rx = /(processo|autos|rpv|precat[oó]rio|requisi[cç][aã]o|alvar[aá]|conta\s+judicial)\s*(n[ºo°.]*\s*)?[:\-]?\s*([\d][\d.\-\/]{5,30}\d)/i;
     for(i = 0; i < L.length; i++){ var k = rx.exec(L[i].t); if(k) return { valor: k[3], o: origemDe(L, i) }; }
+    return null;
+  }
+  function acharPrecatorio(L){
+    for(var i = 0; i < L.length; i++){ var m = /precat[oó]rio\s*(?:n[ºo°.]*)?\s*[:\-]?\s*([\d][\d .\-\/]{9,40}\d)/i.exec(L[i].t); if(m){ var d = m[1].replace(/\D/g, ''); if(d.length >= 10) return { valor: d, o: origemDe(L, i) }; } }
+    return null;
+  }
+  /* "Contr.Prev.Oficial" do comprovante do BB é o PSS do SERVIDOR (cliente/herdeiro), não desconto dos honorários: só informação */
+  function acharContrPrev(L){
+    for(var i = 0; i < L.length; i++){ if(!/contr\.?\s*prev|contribui[cç][aã]o\s+previd[eê]nci[aá]ria\s+oficial/i.test(L[i].t)) continue; var v = dinheiroNaLinha(L[i].t); if(v != null) return { valor: v, o: origemDe(L, i) }; }
     return null;
   }
   function acharNome(L){
@@ -90,6 +123,8 @@
     return alt;
   }
   function acharOrigem(texto){
+    if(/resgate\s+(de\s+)?precat|precat[oó]rio\s+federal/i.test(texto)) return 'precatorio';
+    if(/resgate\s+(de\s+)?rpv|\bRPV\b\s+federal/i.test(texto)) return 'rpv';
     if(/alvar[aá]/i.test(texto)) return 'alvara';
     if(/\bRPV\b|requisi[cç][aã]o\s+de\s+pequeno/i.test(texto)) return 'rpv';
     if(/precat[oó]rio/i.test(texto)) return 'precatorio';
@@ -103,11 +138,13 @@
     function pos(k, r){ if(r){ c[k] = r.valor; c._o = c._o || {}; c._o[k] = r.o; } }
     pos('valor_bruto', acharValor(L, ROT.valor_bruto, function(t){ return !ROT.valor_liquido.test(t); }));
     pos('ir_retido', acharValor(L, ROT.ir_retido) || acharValor(L, RX_IR_CI, function(t){ return /imposto|irrf/i.test(t); }));
-    pos('outros_descontos', acharValor(L, ROT.outros_descontos, function(t){ return !ROT.ir_retido.test(t) && !RX_IR_CI.test(t); }));
+    pos('outros_descontos', acharValor(L, ROT.outros_descontos, function(t){ return !ROT.ir_retido.test(t) && !RX_IR_CI.test(t) && !/contr\.?\s*prev|oficial|dedu[cç]/i.test(t); }));
     pos('valor_liquido', acharValor(L, ROT.valor_liquido));
     var dt = acharData(L); pos('data_pagamento', dt); if(dt && dt.semRotulo) avisos.push('A data do pagamento não tinha rótulo: usei a data mais recente do extrato. Confira.');
     pos('numero_lido', acharNumero(L));
     pos('beneficiario_lido', acharNome(L));
+    pos('numero_precatorio', acharPrecatorio(L));
+    pos('contr_prev_cliente', acharContrPrev(L));
     c.origem = acharOrigem(texto); c.banco = acharBanco(texto);
     if(c.valor_bruto == null && c.valor_liquido != null) { c.valor_bruto = Math.round((c.valor_liquido + (c.ir_retido || 0) + (c.outros_descontos || 0)) * 100) / 100; avisos.push('O extrato não mostra o valor bruto: calculei líquido + IR + descontos. Confira.'); }
     if(c.valor_bruto != null && c.valor_liquido != null){
@@ -121,7 +158,7 @@
   /* extrato com vários pagamentos: separa pelo número de cada processo */
   function lerTexto(paginas){
     var L = linhasDe(paginas), idx = [], vistos = {};
-    L.forEach(function(x, i){ RX_CNJ.lastIndex = 0; var m; while((m = RX_CNJ.exec(x.t))){ var d = m[0].replace(/\D/g, ''); if(!vistos[d]){ vistos[d] = 1; idx.push(i); } } });
+    L.forEach(function(x, i){ if(RX_NAO_PROC.test(x.t)) return; RX_CNJ.lastIndex = 0; var m; while((m = RX_CNJ.exec(x.t))){ var d = m[0].replace(/\D/g, ''); if(!vistos[d]){ vistos[d] = 1; idx.push(i); } } });
     if(idx.length <= 1) return [lerBloco(L)];
     /* cada pagamento vai do número do processo até o próximo; o que vem antes do 1º (cabeçalho: data, banco) vale para todos */
     var out = [], cab = lerBloco(L.slice(0, idx[0])), todo = L.map(function(x){ return x.t; }).join('\n');
@@ -248,16 +285,22 @@
       var r = await sb().rpc('extrato_honorarios_achar', { p_numero: c.numero_lido || null, p_nome: c.beneficiario_lido || null, p_codigo: c.codigo || null });
       if(r.error) throw r.error;
       c.candidatos = Array.isArray(r.data) ? r.data : [];
+      if(!c.candidatos.length && c.numero_precatorio){
+        var r2 = await sb().rpc('extrato_honorarios_achar', { p_numero: c.numero_precatorio, p_nome: null, p_codigo: null });
+        if(r2.error) throw r2.error;
+        c.candidatos = Array.isArray(r2.data) ? r2.data : [];
+      }
       if(c.candidatos.length && (c.candidatos[0].pontos >= 90 || c.candidatos.length === 1)) c.escolhido = c.candidatos[0].processo_id;
     }catch(e){ c.erroAchar = erroTxt(e); }
   }
 
   /* ---- passo 2: conferência lado a lado ---- */
   var CAMPOS = [['data_pagamento', 'Data do pagamento', 'data'], ['valor_bruto', 'Valor bruto recebido', 'reais'], ['ir_retido', 'IR retido', 'reais'], ['outros_descontos', 'Outros descontos (PSS, tarifa...)', 'reais'],
-    ['valor_liquido', 'Valor líquido', 'reais'], ['numero_lido', 'Número do processo / RPV', 'texto'], ['beneficiario_lido', 'Cliente ou parte', 'texto'], ['banco', 'Banco', 'texto']];
+    ['valor_liquido', 'Valor líquido', 'reais'], ['numero_lido', 'Número do processo', 'texto'], ['numero_precatorio', 'Número do precatório / RPV', 'texto'], ['beneficiario_lido', 'Cliente ou parte', 'texto'], ['banco', 'Banco', 'texto'],
+    ['contr_prev_cliente', 'Contr. prev. oficial (PSS do cliente: só informação, não é desconto dos honorários)', 'reais']];
   function deOnde(c, k){
     var o = c._o && c._o[k]; if(!o) return c[k] != null && c[k] !== '' ? '<div class="xh-de">digitado ou calculado</div>' : '<div class="xh-de">não achei no extrato</div>';
-    return '<div class="xh-de' + (o.imagem ? ' img' : '') + '">' + esc((c.arquivo_nome || '') + ' · pág. ' + o.pagina + ' · "' + o.trecho + '"') + (o.imagem ? ' · <b>lido da imagem: confira</b>' : '') + '</div>';
+    return '<div class="xh-de' + (o.imagem ? ' img' : '') + '">' + esc((c.arquivo_nome || '') + ' · pág. ' + o.pagina + ' · "' + o.trecho + '"') + (o.imagem ? ' · <b>lido da imagem: confira</b>' : '') + (o.aviso ? ' · <b>' + esc(o.aviso) + '</b>' : '') + '</div>';
   }
   function valorCampo(c, k, t){ var v = c[k]; if(v == null) return ''; if(t === 'reais') return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); if(t === 'data') return dataBR(v); return String(v); }
   function mostrar(i){
@@ -341,7 +384,8 @@
   function dadosParaBanco(c){
     var lidos = {}; Object.keys(c._o || {}).forEach(function(k){ var o = c._o[k]; lidos[k] = { arquivo: c.arquivo_nome || '', pagina: o.pagina, trecho: semCpf(o.trecho), imagem: !!o.imagem }; });
     return { data_pagamento: c.data_pagamento || null, valor_bruto: c.valor_bruto, ir_retido: c.ir_retido, outros_descontos: c.outros_descontos, valor_liquido: c.valor_liquido,
-      numero_lido: c.numero_lido || null, beneficiario_lido: c.beneficiario_lido || null, origem: c.origem || null, banco: c.banco || null, arquivo_nome: c.arquivo_nome || null, dados_lidos: lidos };
+      numero_lido: c.numero_lido || null, beneficiario_lido: c.beneficiario_lido || null, origem: c.origem || null, banco: c.banco || null, arquivo_nome: c.arquivo_nome || null, dados_lidos: lidos,
+      observacao: [c.numero_precatorio ? 'Precatório/RPV nº ' + c.numero_precatorio : '', c.contr_prev_cliente ? 'Contr. prev. oficial do cliente (PSS; não é desconto dos honorários): ' + moeda(c.contr_prev_cliente) : ''].filter(Boolean).join('. ') || null };
   }
   async function meuId(){
     if(S.eu) return S.eu;
