@@ -43,6 +43,12 @@ window.SagaContestacoes = (function(){
     '.ct-acoes{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}',
     '.ct-acoes button{font:inherit;font-size:12px;padding:6px 10px;border-radius:9px;cursor:pointer;border:1px solid var(--border-soft);min-height:34px}',
     '.ct-sem{font-size:11.5px;color:var(--muted)}',
+    '.ct-topicos{display:flex;flex-direction:column;gap:6px}',
+    '.ct-rep{font-size:12px;line-height:1.45;border-left:2px solid color-mix(in srgb,var(--gold) 50%,transparent);padding-left:8px;overflow-wrap:anywhere}',
+    '.ct-rep b{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-right:4px}',
+    '.ct-obs{font-size:11.5px;color:var(--muted);font-style:italic;overflow-wrap:anywhere}',
+    '.ct-nota{border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px;margin:0 0 10px;background:var(--panel)}',
+    '.ct-nota > b{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}',
     '.ct-fundo{align-items:flex-start!important;padding-top:40px!important}',
     '.ct-texto{background:#fff;color:#1b1b1b;border-radius:8px;padding:24px 30px;font-family:"EB Garamond",Garamond,Georgia,serif;font-size:15px;line-height:1.55;max-height:62vh;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.25)}',
     '.ct-texto p{margin:0 0 10px;text-align:justify;overflow-wrap:anywhere}',
@@ -130,20 +136,35 @@ window.SagaContestacoes = (function(){
     return '<div class="ct-def"><b>' + titulo + '</b><ul>' + mostra.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' +
       (itens.length > 4 ? '<button type="button" class="ct-mais" data-ct-mais="' + esc(id) + '" data-ct-chave="' + chave + '">' + (aberto ? 'Mostrar menos' : 'Mais ' + (itens.length - 4)) + '</button>' : '') + '</div>';
   }
+  /* 23/11 (Dr. Victor: "uma nota com os tópicos de cada contestação"): preliminares, prejudiciais, mérito,
+     pedidos e qual réplica responde (resumo da contestação; a busca também olha esses tópicos) */
+  function temTopicos(res){
+    return ['preliminares','prejudiciais','merito','pedidos'].some(function(k){ return res[k] && res[k].length; });
+  }
+  function topicosHtml(res, id, tudo){
+    if(!temTopicos(res)) return '';
+    var lista = tudo ? function(t, itens){ return itens && itens.length ? '<div class="ct-def"><b>' + t + '</b><ul>' + itens.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>' : ''; }
+                     : function(t, itens, k){ return listaDef(t, itens, id, k); };
+    return '<div class="ct-topicos">' +
+      lista('Preliminares', res.preliminares, 'p') + lista('Prejudiciais', res.prejudiciais, 'j') +
+      lista('Mérito', res.merito, 'm') + lista('Pedidos', res.pedidos, 'd') +
+      (res.replica ? '<div class="ct-rep"><b>Réplica</b> ' + esc(res.replica) + '</div>' : '') +
+      (res.observacao && !/^Resumo automático/.test(res.observacao) ? '<div class="ct-obs">' + esc(res.observacao) + '</div>' : '') +
+      '</div>';
+  }
   function trechoHtml(t){
     if(!t) return '';
     return '<div class="ct-trecho">' + esc(t).replace(/⟦/g, '<mark>').replace(/⟧/g, '</mark>') + '</div>';
   }
   function htmlCard(c){
     var res = c.resumo || {};
-    var semDef = !(res.preliminares && res.preliminares.length) && !(res.merito && res.merito.length);
+    var semDef = !temTopicos(res);
     return '<article class="ct-card" data-ct-id="' + esc(c.id) + '">' +
       '<div class="ct-topo"><span class="ct-tipo">' + esc(c.tipo_rotulo || (c.tipo_n ? 'tipo ' + c.tipo_n : 'sem tipo')) + '</span>' +
         '<span class="ct-selo ' + (c.revisado ? 'rev">Revisada' : 'arev">A revisar') + '</span></div>' +
       '<h4 class="ct-tit">' + esc(c.titulo) + '</h4>' +
       trechoHtml(c.trecho) +
-      listaDef('Preliminares', res.preliminares, c.id, 'p') +
-      listaDef('Mérito', res.merito, c.id, 'm') +
+      topicosHtml(res, c.id) +
       (semDef ? '<div class="ct-sem">' + esc(res.observacao || 'Sem resumo das teses: leia o texto.') + '</div>' : '') +
       '<div class="ct-acoes">' +
         '<button type="button" class="btn-secundario" data-ct-ver="' + esc(c.id) + '">Ver o texto</button>' +
@@ -213,6 +234,7 @@ window.SagaContestacoes = (function(){
     var c = S.lista.find(function(x){ return x.id === id; }) || {};
     var f = janela('<h3 id="ctJanTit">' + esc(c.titulo || 'Contestação') + '</h3>' +
       '<p class="me-sub">' + esc([c.tese, c.tipo_rotulo, c.origem_caminho].filter(Boolean).join(' · ')) + '</p>' +
+      (temTopicos(c.resumo || {}) ? '<div class="ct-nota"><b>Nota de tópicos</b>' + topicosHtml(c.resumo, c.id, true) + '</div>' : '') +
       '<div id="ctJanCorpo"><div class="tb-vazio">Carregando o texto...</div></div>' +
       '<div class="me-botoes"><button type="button" class="btn-secundario" id="ctCopiar" disabled>Copiar o texto</button>' +
         (c.replica ? '<button type="button" class="btn-secundario" id="ctJanReplica">Ver a réplica deste tipo</button>' : '') +
@@ -223,7 +245,7 @@ window.SagaContestacoes = (function(){
     var corpo = f.querySelector('#ctJanCorpo');
     if(r.error){ corpo.innerHTML = '<div class="me-erro"><b>Não abriu o texto:</b> ' + esc(erroTxt(r.error)) + '</div>'; return; }
     var d = r.data || {};
-    corpo.innerHTML = '<div class="me-amarelo">Texto tirado do arquivo (conversão automática): pode ter quebras de linha ou palavras partidas. Nome e CPF da parte autora viram {parte_autora} e {cpf}.</div>' +
+    corpo.innerHTML = '<div class="me-amarelo">Texto tirado do arquivo (conversão automática): pode ter quebras de linha ou palavras partidas. Nome e CPF da parte autora viram {parte_autora} e [CPF].</div>' +
       '<div class="ct-texto">' + (d.texto ? textoHtml(d.texto, S.busca) : '<p>(sem texto)</p>') + '</div>';
     var bc = f.querySelector('#ctCopiar'); bc.disabled = !d.texto;
     bc.onclick = function(){
