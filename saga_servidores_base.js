@@ -5,7 +5,8 @@
    fichas do SAGA e, depois, as outras listagens, médicos, PGFN... (base_ligar_fonte).
    SÓ o administrador geral (o banco recusa os outros: base_checar).
    Partes: Visão geral, Pessoas (filtros: situação, falecidos entre meses, UF, órgão, fonte,
-   clientes) com etiquetas sempre à vista, A conferir (juntar / pessoas diferentes).
+   clientes) com etiquetas sempre à vista, A conferir (juntar / pessoas diferentes) e Listagens
+   (porta de entrada das listagens de processos, bloco 422: saga_base_listagens.js).
    CPF sempre mascarado; "Não enviar mais" fica na pessoa e toda exportação pula.
    ===================================================================== */
 (function(global){
@@ -103,7 +104,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
   function htmlPartes(){
     var p=B.painel||{};
     var bt=function(k,t){return '<button class="pill'+(B.parte===k?' active':'')+'" type="button" data-parte="'+k+'">'+t+'</button>';};
-    return bt('geral','Visão geral')+bt('pessoas','Pessoas')+bt('conferir','A conferir'+(p.a_conferir?' ('+num(p.a_conferir)+')':''));
+    return bt('geral','Visão geral')+bt('pessoas','Pessoas')+bt('conferir','A conferir'+(p.a_conferir?' ('+num(p.a_conferir)+')':''))+bt('listagens','Listagens');
   }
   function htmlRodada(){
     var r=(B.painel||{}).ultima_rodada;
@@ -133,7 +134,14 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
   function desenharParte(){
     var c=$('buCorpo');if(!c)return;
     if(!parado()){c.classList.add('entrando');requestAnimationFrame(function(){requestAnimationFrame(function(){c.classList.remove('entrando');});});}
-    if(B.parte==='pessoas')partePessoas(c);else if(B.parte==='conferir')parteConferir(c);else parteGeral(c);
+    if(B.parte==='pessoas')partePessoas(c);else if(B.parte==='conferir')parteConferir(c);else if(B.parte==='listagens')parteListagens(c);else parteGeral(c);
+  }
+
+  /* ---------- Listagens (porta de entrada; saga_base_listagens.js, carregado só quando abre) ---------- */
+  function parteListagens(c){
+    c.innerHTML='<div class="bu-vazio">Carregando…</div>';
+    carregar('saga_base_listagens.js','SagaBaseListagens').then(function(){global.SagaBaseListagens.montar(c,{abrirPessoa:abrirPessoa});})
+      .catch(function(e){c.innerHTML='<div class="bu-aviso verm">Não deu para abrir as Listagens: '+erro(e)+'</div>';});
   }
 
   /* ---------- Visão geral ---------- */
@@ -324,7 +332,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
     var r=await sb().rpc('base_painel');
     if(r.error){pane.innerHTML='<div class="bu-aviso verm">Não deu para abrir a Base única: '+erro(r.error)+'</div>';return;}
     B.painel=r.data||{};B.montado=true;
-    var q=new URLSearchParams(location.search),pt=q.get('base');if(pt&&/^(geral|pessoas|conferir)$/.test(pt))B.parte=pt;
+    var q=new URLSearchParams(location.search),pt=q.get('base');if(pt&&/^(geral|pessoas|conferir|listagens)$/.test(pt))B.parte=pt;
     desenhar();
   }
   async function liberar(){
