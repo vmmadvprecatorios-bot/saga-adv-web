@@ -24,6 +24,8 @@
     '.agc-link input{flex:1;min-width:0;font:12px ui-monospace,Menlo,monospace;padding:9px 10px;border:1px solid var(--border);border-radius:9px;background:var(--panel-2,var(--panel));color:var(--text)}',
     '.agc-info{font-size:12px;color:var(--muted);margin:0 0 14px}',
     '.agc-acoes{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}',
+    /* 23/11: o 'Gerar meu link' (btn-salvar-modal) só tinha o tamanho dentro de .modal-botoes: aparecia como texto solto */
+    '.agc-acoes .btn-salvar-modal{padding:10px 18px;border-radius:10px;font-size:12.5px;cursor:pointer}',
     '.agc-passo{border:1px solid var(--border-soft);border-radius:12px;padding:10px 14px;margin:8px 0}',
     '.agc-passo summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--text)}',
     '.agc-passo ol{margin:8px 0 2px;padding-left:20px;font-size:12.5px;color:var(--muted);line-height:1.55}',

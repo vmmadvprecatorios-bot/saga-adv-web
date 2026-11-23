@@ -912,3 +912,17 @@ html[data-graf-rosca="premium"] :is(.si-rosca,.pr-rosca) :is(.trilho,.si-fatia,.
 html{font-variant-numeric:lining-nums}
 /* campo de data próprio (window.sagaCampoData, saga_ui.js): data que não existe fica marcada */
 input.saga-data-invalida{border-color:var(--danger,#e5484d)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--danger,#e5484d) 22%,transparent)!important}
+
+/* =====================================================================
+ AGENDA NO VIDRO (23/11/2026, Dr. Victor: "com o Aço e a imagem de fundo a Agenda continua com cara do Azul").
+ As células do Mês e as faixas de hora da Semana/Dia pegavam o xadrez FIXO do Azul (#212e44/#2a3a54 no
+ escuro, branco/#eef2f7 no claro) em TODAS as cores de vidro: ficavam opacas e azul-marinho por cima da imagem.
+ Agora seguem o vidro como as tabelas: translúcidas na cor do tema (--panel-solid), sem desfoque (o desfoque fica
+ só no menu, barra de cima, janelas e painéis do Dashboard); "Vidro mais fosco" deixa opaco.
+ ===================================================================== */
+html[data-cor^="vidro"] body :is(.grade-mes > .celula-dia,.fundo-horas > .linha-hora,.coluna-horas > .hora-label):nth-child(odd){background:color-mix(in srgb,var(--panel-solid) 55%,transparent)}
+html[data-cor^="vidro"] body :is(.grade-mes > .celula-dia,.fundo-horas > .linha-hora,.coluna-horas > .hora-label):nth-child(even){background:color-mix(in srgb,var(--panel-solid) 72%,transparent)}
+html[data-cor^="vidro"].vidro-fosco body :is(.grade-mes > .celula-dia,.fundo-horas > .linha-hora,.coluna-horas > .hora-label){background:var(--panel-solid)}
+html[data-cor^="vidro"] body .grade-mes > .celula-dia:hover{background:color-mix(in srgb,var(--gold) 14%,var(--panel-solid))}
+html[data-cor^="vidro"] body .grade-mes > .celula-dia.hoje{background:color-mix(in srgb,var(--gold) 22%,color-mix(in srgb,var(--panel-solid) 60%,transparent))}
+html[data-cor^="vidro"] body .calendario-wrap{-webkit-backdrop-filter:none;backdrop-filter:none}
