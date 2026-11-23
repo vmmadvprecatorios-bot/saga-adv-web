@@ -761,10 +761,7 @@
     +'<div class="nav-item" data-tela="modelos" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="5" y="3" width="14" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M5 6h14" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Modelos</div>'
-    // 23/11 (Dr. Victor): Planilhas = a pasta Planilhas de Modelos (lista de todas as planilhas e editor em tela inteira)
-    +'<div class="nav-item" data-tela="planilhas" onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html?aba=planilhas\')">'
-    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M4 9.5h16M4 15h16M10 4v16" stroke="currentColor" stroke-width="1.5"/></svg>'
-    +'Planilhas</div>'
+    // 23/11 (Dr. Victor): Planilhas fica só como pasta dentro de Modelos (o item do menu lateral saiu no mesmo dia)
     +'<div class="nav-item" data-tela="biblioteca" hidden onclick="sagaIrPara(\'biblioteca_padrao_metalico_FINAL.html\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M4 4v16a1 1 0 001 1h14a1 1 0 001-1V4a1 1 0 00-1-1h-4a2 2 0 00-2 2v16" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v16" stroke="currentColor" stroke-width="1.5"/></svg>'
     +'Biblioteca</div>'
