@@ -273,6 +273,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
       <button class="pill" type="button" data-aba="servidores_al" id="abaServidoresAl" hidden title="Só o administrador geral">Servidores AL e Maceió</button>
       <button class="pill" type="button" data-aba="medicos" id="abaMedicos" hidden title="Só o administrador geral">Médicos</button>
       <button class="pill" type="button" data-aba="devedores" id="abaDevedores" hidden title="Só o administrador geral">Devedores/PGFN</button>
+      <button class="pill" type="button" data-aba="loa" id="abaLoa" hidden title="Precatórios da Lei Orçamentária: o administrador vê tudo; a Captação vê o próprio lote">Precatórios da LOA</button>
     </div>
     <div class="vis" id="visoes" role="group" aria-label="Modo de ver"></div>
   </div>
@@ -310,6 +311,7 @@ table.tab select.cel:hover,table.tab select.cel:focus{border-color:var(--border-
   <section class="aba-pane" id="aba-servidores_al"></section>
   <section class="aba-pane" id="aba-medicos"></section>
   <section class="aba-pane" id="aba-devedores"></section>
+  <section class="aba-pane" id="aba-loa"></section>
 </main>
 </div>
 
@@ -339,6 +341,7 @@ window._sb=_sb;
 <script src="saga_bases_publicas.js?v=202611240143"></script>
 <script src="saga_base_medicos.js?v=202611240143"></script>
 <script src="saga_base_devedores.js?v=202611240143"></script>
+<script src="saga_precatorios_loa.js?v=202611240143"></script>
 <script>
 /* =====================================================================
    SAGA · Teses e oportunidades (blocos 110 e 111)
@@ -377,7 +380,8 @@ var VISOES={
   'base-unica':[],
   servidores_al:[],
   medicos:[],
-  devedores:[]
+  devedores:[],
+  loa:[]
 };
 function $(id){return document.getElementById(id);}
 function esc(v){return window.sagaEsc?window.sagaEsc(v):String(v==null?'':v).replace(/[&<>"'`]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[c];});}
@@ -533,8 +537,8 @@ function desenharBotoes(){
   else if(T.aba==='prateleira'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo produto</button>';
   else if(T.aba==='radar'&&p.criar)b='<button class="btn btn-ouro" type="button" id="btnNovo">+ Novo item no radar</button>';
   if(p.admin&&T.aba!=='radar'&&T.aba!=='base')b='<button class="btn" type="button" id="btnOpcoes">'+(T.aba==='prateleira'?'Organizar opções':'Organizar situações')+'</button>'+b;
-  if(T.aba==='base'||T.aba==='listagem'||T.aba==='mapa'||T.aba==='base-unica'||T.aba==='servidores_al'||T.aba==='medicos'||T.aba==='devedores')b='';
-  if(PODE_CLIENTES&&T.aba!=='radar'&&T.aba!=='base'&&T.aba!=='listagem'&&T.aba!=='mapa'&&T.aba!=='base-unica'&&T.aba!=='servidores_al'&&T.aba!=='medicos'&&T.aba!=='devedores')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
+  if(T.aba==='base'||T.aba==='listagem'||T.aba==='mapa'||T.aba==='base-unica'||T.aba==='servidores_al'||T.aba==='medicos'||T.aba==='devedores'||T.aba==='loa')b='';
+  if(PODE_CLIENTES&&T.aba!=='radar'&&T.aba!=='base'&&T.aba!=='listagem'&&T.aba!=='mapa'&&T.aba!=='base-unica'&&T.aba!=='servidores_al'&&T.aba!=='medicos'&&T.aba!=='devedores'&&T.aba!=='loa')b='<button class="btn btn-clientes" type="button" id="btnAcharClientes">'+ICO_CLI+'Achar clientes para uma tese</button>'+b;
   $('botoesTopo').innerHTML=b;
   var ac=$('btnAcharClientes');if(ac)ac.onclick=abrirEscolhaTese;
   var n=$('btnNovo');if(n)n.onclick=function(){if(T.aba==='atualizacoes')formPost(null);else if(T.aba==='prateleira')formProduto(null);else formRadar(null);};
@@ -1112,6 +1116,7 @@ function trocarAba(a){
   if(a==='servidores_al'&&window.SagaServidoresAl)SagaServidoresAl.abrir();
   if(a==='medicos'&&window.SagaBaseMedicos)SagaBaseMedicos.abrir();
   if(a==='devedores'&&window.SagaBaseDevedores)SagaBaseDevedores.abrir();
+  if(a==='loa'&&window.SagaPrecatoriosLoa)SagaPrecatoriosLoa.abrir();
 }
 function ligar(){
   // T132: link "Achar clientes": clique normal troca de tela com o movimento do sistema; Ctrl+clique abre em outra aba
@@ -1198,7 +1203,8 @@ async function init(){
   if(window.SagaServidoresAl)await SagaServidoresAl.liberar();
   if(window.SagaBaseMedicos)await SagaBaseMedicos.liberar();
   if(window.SagaBaseDevedores)await SagaBaseDevedores.liberar();
-  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a==='base'&&$('abaBase').hidden)a='';if(a==='listagem'&&$('abaListagemAl').hidden)a='';if(a==='mapa'&&$('abaMapa').hidden)a='';if(a==='base-unica'&&$('abaBaseUnica').hidden)a='';if(a==='servidores_al'&&$('abaServidoresAl').hidden)a='';if(a==='medicos'&&$('abaMedicos').hidden)a='';if(a==='devedores'&&$('abaDevedores').hidden)a='';if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
+  if(window.SagaPrecatoriosLoa)await SagaPrecatoriosLoa.liberar();
+  var q=new URLSearchParams(location.search);var a=q.get('aba');if(a==='base'&&$('abaBase').hidden)a='';if(a==='listagem'&&$('abaListagemAl').hidden)a='';if(a==='mapa'&&$('abaMapa').hidden)a='';if(a==='base-unica'&&$('abaBaseUnica').hidden)a='';if(a==='servidores_al'&&$('abaServidoresAl').hidden)a='';if(a==='medicos'&&$('abaMedicos').hidden)a='';if(a==='devedores'&&$('abaDevedores').hidden)a='';if(a==='loa'&&$('abaLoa').hidden)a='';if(a&&$('aba-'+a))trocarAba(a);else{desenharBotoes();desenharVisoes();}
   await carregarTudo();
   var post=q.get('post');if(post){trocarAba('atualizacoes');lerPost(post);}
 }
