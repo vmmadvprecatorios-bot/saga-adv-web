@@ -79,6 +79,7 @@
   function fecharLinha(l){
     l.nome=String(l.nome||'').replace(/\s+/g,' ').trim();
     if(!l.qualidade)l.qualidade=l.nome&&(l.cpf||l.cnpj)?'completa':(l.nome?(l.cpf6?'completa':'so_nome'):'so_cpf');
+    if(!l.nome&&!l.cpf&&!l.cnpj){l.usar=false;l.problema=(l.problema?l.problema+'; ':'')+'sem nome e sem CPF/CNPJ inteiro: não identifica ninguém (fica fora)';}
     return l;
   }
 
