@@ -273,9 +273,10 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   }
 
   /* ---------- lista de eventos (Eventos e Clientes do SAGA) ---------- */
-  function estadoLista(chave,f){return {chave:chave,f:Object.assign({eventos:[],orgao:'',lista:'',uf:'',cargo:'',de:0,ate:0,mes:0,cliente:'',falecido:false,sem_temporarios:true,incluir_massa:false,busca:'',pagina:1},f||{}),dados:null,pedido:0};}
+  function estadoLista(chave,f){return {chave:chave,f:Object.assign({eventos:[],orgao:'',lista:'',uf:'',cargo:'',de:0,ate:0,mes:0,cliente:'',falecido:false,sem_temporarios:true,incluir_massa:false,busca:'',datas:SD()?SD().vazio():{},pagina:1},f||{}),dados:null,pedido:0};}
+  function SD(){return global.SagaServidoresDatas||null;}
   function irParaEventos(f){M.ev=estadoLista('ev',f);trocarParte('eventos');}
-  function paramsLista(L,extra){var f=L.f;var p={eventos:f.eventos,orgao:f.orgao,lista:f.lista,uf:f.uf,cargo:f.cargo,de:f.de||0,ate:f.ate||0,cliente:f.cliente,falecido:f.falecido,sem_temporarios:f.sem_temporarios,incluir_massa:f.incluir_massa,busca:f.busca,pagina:f.pagina,limite:LIM};if(f.mes)p.mes=f.mes;return Object.assign(p,extra||{});}
+  function paramsLista(L,extra){var f=L.f;var p={eventos:f.eventos,orgao:f.orgao,lista:f.lista,uf:f.uf,cargo:f.cargo,de:f.de||0,ate:f.ate||0,cliente:f.cliente,falecido:f.falecido,sem_temporarios:f.sem_temporarios,incluir_massa:f.incluir_massa,busca:f.busca,pagina:f.pagina,limite:LIM};if(f.mes)p.mes=f.mes;if(SD()&&SD().qtd(f.datas))Object.assign(p,SD().params(f.datas));return Object.assign(p,extra||{});}
   function parteLista(c,L,cabecalho){
     var f=L.f,pre=L.chave;
     c.innerHTML=(cabecalho||'')+'<div class="ms-filtros">'+
@@ -291,7 +292,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       '<label class="ms-chk"><input type="checkbox" id="'+pre+'Fal"'+(f.falecido?' checked':'')+'> Só prováveis falecidos</label>'+
       '<label class="ms-chk"><input type="checkbox" id="'+pre+'Temp"'+(f.sem_temporarios?' checked':'')+'> Sem vínculos temporários</label>'+
       '<label class="ms-chk"><input type="checkbox" id="'+pre+'Massa"'+(f.incluir_massa?' checked':'')+'> Incluir meses em massa</label>'+
-      '<button class="btn" type="button" id="'+pre+'Limpar">Limpar filtros</button></div>'+
+      '<button class="btn" type="button" id="'+pre+'Limpar">Limpar filtros</button>'+(SD()?SD().html(pre+'Dt',f.datas||(f.datas=SD().vazio())):'')+'</div>'+
       (f.mes?'<div class="ms-aviso">Mostrando só '+esc(mesTxt(f.mes))+'. <button class="btn" type="button" id="'+pre+'TirarMes">Tirar o mês</button></div>':'')+
       '<div class="ms-pag" style="justify-content:flex-start;margin:0 0 8px"><span id="'+pre+'Total"></span><span class="ms-acoes"><button class="btn" type="button" id="'+pre+'Csv">Exportar para a Captação (CSV)</button><button class="btn" type="button" id="'+pre+'Pdf">PDF</button>'+(pre==='ev'?'<button class="btn" type="button" id="'+pre+'Op">Oportunidades por evento</button>':'')+'</span></div>'+
       '<div id="'+pre+'Lista2"><div class="ms-vazio">Carregando…</div></div>';
@@ -307,6 +308,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     $(pre+'Fal').onchange=function(){f.falecido=this.checked;mudou();};
     $(pre+'Temp').onchange=function(){f.sem_temporarios=this.checked;mudou();};
     $(pre+'Massa').onchange=function(){f.incluir_massa=this.checked;mudou();};
+    if(SD())SD().ligar(pre+'Dt',f.datas,mudou);
     $(pre+'Limpar').onclick=function(){var n=pre==='cli'?estadoCli():estadoLista('ev');if(pre==='cli')M.cli=n;else M.ev=n;desenharParte();};
     var tmz=$(pre+'TirarMes');if(tmz)tmz.onclick=function(){f.mes=0;desenharParte();};
     $(pre+'Csv').onclick=function(){exportarCsv(L,this);};
@@ -320,10 +322,14 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(meu!==L.pedido)return;box.classList.remove('ms-carregando');
     if(r.error){box.innerHTML='<div class="ms-aviso verm">Não deu para buscar os eventos: '+erro(r.error)+'</div>';$(pre+'Total').textContent='';return;}
     L.dados=r.data||{total:0,linhas:[]};desenharLinhas(L);
+    var temDatas=SD()&&SD().qtd(L.f.datas);
+    if(temDatas&&!('datas_preparadas' in L.dados))box.insertAdjacentHTML('afterbegin','<div class="ms-aviso amar"><b>A lista abaixo NÃO está filtrada pelas datas:</b> o filtro por datas e tempo de serviço chega com o bloco 424.</div>');
+    else if(temDatas&&L.dados.datas_preparadas===false)box.insertAdjacentHTML('afterbegin','<div class="ms-aviso amar">As datas entram na tabela do Mapa na próxima preparação da noite (3h50). Até lá o filtro por datas não acha ninguém.</div>');
   }
   function htmlPessoa(l){
     return '<b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(LISTA[l.lista]||l.lista)+(l.no_portal?'':' · fora do Portal')+(l.temporario?' · temporário':'')+'</span>'+
-      '<span class="ms-sub">'+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'');
+      '<span class="ms-sub">'+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+
+      (SD()&&SD().curto({ingresso:l.ingresso,tempo_servico:l.tempo_servico,tempo_estimativa:l.lista==='S'&&l.no_portal})?'<span class="ms-sub">'+esc(SD().curto({ingresso:l.ingresso,tempo_servico:l.tempo_servico,tempo_estimativa:l.lista==='S'&&l.no_portal}))+'</span>':'');
   }
   function htmlDetalhe(l){
     var d=l.detalhe||{},p=[];
@@ -361,6 +367,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(f.cliente)p.push(f.cliente==='sim'?'clientes do SAGA':'não clientes');if(f.falecido)p.push('prováveis falecidos');
     if(f.de)p.push('de '+mesTxt(f.de));if(f.ate)p.push('até '+mesTxt(f.ate));if(f.busca)p.push('busca: '+f.busca);
     if(f.incluir_massa)p.push('com meses em massa');if(!f.sem_temporarios)p.push('com temporários');
+    if(SD())p=p.concat(SD().descricao(f.datas));
     return p.join(' · ')||'Sem filtro';
   }
   async function exportarCsv(L,b){
@@ -370,10 +377,10 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       if(r.error)throw r.error;var d=r.data||{},ls=d.linhas||[];
       if(!ls.length){aviso('Nada para exportar com esses filtros.','amar');return;}
       function c(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
-      var linhas=[['Nome no Portal','CPF (mascarado)','Situação','Órgão','UF','Cargo','Evento','Mês','Detalhe','Oportunidade','Teses','Cliente do SAGA','Código'].map(c).join(';')];
+      var linhas=[['Nome no Portal','CPF (mascarado)','Situação','Órgão','UF','Cargo','Evento','Mês','Detalhe','Oportunidade','Teses','Cliente do SAGA','Código','Ingresso no serviço público','Ingresso no órgão','Aposentadoria','Pensão desde','Anos de serviço público (estimativa para ativos)'].map(c).join(';')];
       ls.forEach(function(l){var o=oportunidade(l)||{produtos:[]},cs=l.clientes||[],dt=document.createElement('div');dt.innerHTML=htmlDetalhe(l);
         linhas.push([l.nome,cpfMask(l.cpf6),LISTA[l.lista]||l.lista,l.orgao||'',l.uf||'',l.cargo||'',EVT[l.evento]||l.evento,mesTxt(l.mes),dt.textContent,(o.informativo?'Só informativo. ':'')+(o.texto||''),o.produtos.map(function(p){return p.nome;}).join(' | '),
-          cs.map(function(k){return (k.nome||'')+(k.papel==='instituidor'?' (deixou a pensão)':'');}).join(' | '),cs.map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
+          cs.map(function(k){return (k.nome||'')+(k.papel==='instituidor'?' (deixou a pensão)':'');}).join(' | '),cs.map(function(k){return k.codigo||'';}).join(' | '),dataBR(l.ingresso),dataBR(l.ingresso_orgao),dataBR(l.aposentadoria),dataBR(l.pensao_inicio),l.tempo_servico==null?'':Math.floor(+l.tempo_servico)].map(c).join(';'));});
       var blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
       var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='mapa-servidores.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
       if(d.total>ls.length)aviso('Saíram as '+num(ls.length)+' primeiras de '+num(d.total)+' linhas (limite do arquivo). Filtre mais para pegar o resto.','amar');
