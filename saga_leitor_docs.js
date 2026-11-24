@@ -3,7 +3,7 @@
    lê a imagem com o Tesseract guardado no site (vendor/tesseract-6.0.1). Tudo NESTE computador (LGPD): o arquivo
    não vai para nenhum site. O texto lido de documento da pasta fica guardado (documentos_leituras) para não ler de
    novo e para a Renata e o conector usarem.
-   Uso: SagaLeitorDocs.lerArquivo(file, {progresso}) → {texto, paginas:[{n,texto,imagem}], metodo, paginas_imagem}
+   Uso: SagaLeitorDocs.lerArquivo(file, {progresso, de, maxPaginas}) (de/maxPaginas = ler só as páginas de..até) → {texto, paginas:[{n,texto,imagem}], metodo, paginas_imagem}
         SagaLeitorDocs.lerDocumento(sb, doc, {progresso, forcar}) → idem + {doc, guardada, erroGuardar} (usa a leitura guardada)
         SagaLeitorDocs.acharNasPaginas(paginas, fnLer) → junta o que fnLer(texto) acha em cada página, com a página e o trecho */
 (function(){
@@ -61,9 +61,9 @@
     var doc;
     try{ doc = await lib.getDocument({ data: dados }).promise; }
     catch(e){ if(/password/i.test(e && (e.name + e.message))) throw new Error('o PDF tem senha: abra-o, salve uma cópia sem senha e tente de novo'); throw new Error('não consegui abrir o PDF (' + ((window.sagaErroBanco?window.sagaErroBanco(e):e.message)|| e) + ')'); }
-    var maxPag = Math.min(doc.numPages, o.maxPaginas || 60), paginas = [], w2 = null, nImg = 0;
+    var maxPag = Math.min(doc.numPages, o.maxPaginas || 60), paginas = [], w2 = null, nImg = 0, pIni = Math.max(1, Math.min(maxPag, parseInt(o.de, 10) || 1));
     try{
-      for(var i = 1; i <= maxPag; i++){
+      for(var i = pIni; i <= maxPag; i++){
         prog('página ' + i + ' de ' + maxPag + '…');
         var pg = await doc.getPage(i), tc = await pg.getTextContent(), ult = null, linha = [], out = [];
         tc.items.forEach(function(it){ var y = it.transform ? Math.round(it.transform[5]) : 0; if(ult !== null && Math.abs(y - ult) > 2){ out.push(linha.join(' ')); linha = []; } linha.push(it.str); ult = y; if(it.hasEOL){ out.push(linha.join(' ')); linha = []; ult = null; } });
