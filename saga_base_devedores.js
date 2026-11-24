@@ -19,7 +19,7 @@
     subtituloPdf:'PGFN Dados Abertos',tituloLista:'Devedores/PGFN',palavra:['devedor','devedores'],
     rpcPainel:'pgfn_painel',rpcListar:'pgfn_listar',rpcCruzar:'pgfn_cruzar',
     filtroInicial:{uf:'AL'},
-    notaDestaque:'A base é o BRASIL todo: Alagoas inteira (qualquer valor) e, nas outras UFs, quem deve R$ 100 mil ou mais. Abre em Alagoas; escolha "Brasil todo" para ver todas. Atalhos com número: quantos há na base inteira (valor por devedor, somadas as inscrições).',
+    notaDestaque:'Base do BRASIL todo: Alagoas inteira e, nas outras UFs, quem deve R$ 100 mil ou mais. Abre em Alagoas; "Brasil todo" mostra todas. Número na faixa de valor = quantos há na base inteira.',
     textoCruzar:function(d){return u.num(d.certos)+' clientes certos (nome + 6 dígitos do CPF), '+u.num(d.a_conferir)+' a conferir (só o nome), '+u.num(d.empresas)+' empresas pelo CNPJ';},
     numeros:function(p){var n=p.por_negocio||{};function q(k){return (n[k]||{}).n||0;}
       return [
@@ -35,18 +35,19 @@
         {t:'Clientes do SAGA',v:u.num(p.clientes),filtro:{cliente:'sim'}},
         {t:'A conferir (só o nome)',v:u.num(p.a_conferir),filtro:{cliente:'conferir'}}];},
     filtros:[
-      {k:'busca',tipo:'busca',label:'Nome, CNPJ ou 6 dígitos do CPF'},
-      {k:'valor',tipo:'faixa',destaque:true,label:'Valor total da dívida',de:'valor_de',ate:'valor_ate',atalhos:[
-        ['Até R$ 10 mil','',10000],['R$ 10 mil a 50 mil',10000,50000],['R$ 50 mil a 100 mil',50000,100000],
+      {k:'busca',tipo:'busca',principal:true,label:'Nome, CNPJ ou 6 dígitos do CPF'},
+      {k:'valor',tipo:'faixa',principal:true,label:'Valor total da dívida',de:'valor_de',ate:'valor_ate',atalhos:[
+        ['Até R$ 10 mil','',10000,function(p){return (p.faixas||{})['ate_10mil'];}],['R$ 10 mil a 50 mil',10000,50000,function(p){return (p.faixas||{})['10mil_50mil'];}],['R$ 50 mil a 100 mil',50000,100000,function(p){return (p.faixas||{})['50mil_100mil'];}],
         ['R$ 100 mil a 1 mi',100000,1000000,function(p){return (p.faixas||{})['100mil_1mi'];}],
         ['Acima de R$ 1 mi',1000000,'',function(p){var f=p.faixas||{};return f['1mi_10mi']==null?null:(f['1mi_10mi']||0)+(f['mais_10mi']||0);}]]},
-      {k:'uf',tipo:'select',destaque:true,label:'UF',opcoes:[['AL','Alagoas (inteira)'],['','Brasil todo']].concat(UFS.filter(function(x){return x&&x!=='AL';}).map(function(x){return [x,x];}))},
-      {k:'tipo',tipo:'select',label:'Pessoa',opcoes:[['','PF e PJ'],['pf','Pessoa física'],['pj','Empresa']]},
-      {k:'negocio',tipo:'select',label:'Situação',opcoes:[['','Qualquer situação']].concat(Object.keys(NEG).map(function(k){return [k,NEG[k]];}))},
-      {k:'ajuizado',tipo:'select',label:'Execução fiscal',opcoes:[['','Com ou sem execução'],['sim','Com execução fiscal'],['nao','Sem execução fiscal']]},
-      {k:'cliente',tipo:'select',label:'No SAGA',opcoes:[['','Clientes ou não'],['nao','Não é cliente'],['sim','Já é cliente'],['conferir','A conferir (nome)']]},
-      {k:'papel',tipo:'select',label:'Papel',opcoes:[['','Principal ou corresponsável'],['principal','Devedor principal'],['corresponsavel','Corresponsável (sócio)']]},
-      {k:'ordem',tipo:'select',label:'Ordem',opcoes:[['','Maior dívida primeiro'],['antiga','Inscrição mais antiga'],['nome','Nome']]},
+      {k:'uf',tipo:'select',principal:true,label:'UF',curto:'UF',opcoes:[['AL','Alagoas (inteira)'],['','Brasil todo']].concat(UFS.filter(function(x){return x&&x!=='AL';}).map(function(x){return [x,x];}))},
+      {k:'natureza',tipo:'select',principal:true,exige:'natureza_ok',label:'Natureza da dívida',curto:'Natureza',opcoes:[['','Qualquer natureza'],['sida','Dívida geral (SIDA)'],['previdenciaria','Previdenciária'],['fgts','FGTS'],['multa_clt','Multa trabalhista (CLT)'],['multa_eleitoral','Multa eleitoral'],['multa_criminal','Multa criminal']]},
+      {k:'tipo',tipo:'select',label:'Pessoa',curto:'Pessoa',opcoes:[['','PF e PJ'],['pf','Pessoa física'],['pj','Empresa']]},
+      {k:'negocio',tipo:'select',label:'Situação',curto:'Situação',opcoes:[['','Qualquer situação']].concat(Object.keys(NEG).map(function(k){return [k,NEG[k]];}))},
+      {k:'ajuizado',tipo:'select',label:'Execução fiscal',curto:'Execução',opcoes:[['','Com ou sem execução'],['sim','Com execução fiscal'],['nao','Sem execução fiscal']]},
+      {k:'cliente',tipo:'select',label:'No SAGA',curto:'No SAGA',opcoes:[['','Clientes ou não'],['nao','Não é cliente'],['sim','Já é cliente'],['conferir','A conferir (nome)']]},
+      {k:'papel',tipo:'select',label:'Papel',curto:'Papel',opcoes:[['','Principal ou corresponsável'],['principal','Devedor principal'],['corresponsavel','Corresponsável (sócio)']]},
+      {k:'ordem',tipo:'select',label:'Ordem',curto:'Ordem',opcoes:[['','Maior dívida primeiro'],['antiga','Inscrição mais antiga'],['nome','Nome']]},
       {k:'rescindido',tipo:'chk',label:'Só com parcelamento rescindido'}],
     colunas:[
       {t:'Devedor',html:function(l){return '<b>'+esc(l.nome)+'</b><span class="bp-sub">'+esc(tipo(l))+' · '+esc(l.documento||'')+' · '+esc(papel(l))+'</span>'+u.htmlContato(l);}},
