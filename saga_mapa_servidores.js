@@ -697,12 +697,15 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   /* ---------- Abono de permanência e Tema 1.233 (24/11, blocos 425 e 426) ---------- */
   // Abono provável = "Outras remunerações eventuais" igual ao PSS do mês no Portal. Tema 1.233 do STJ (Dr. Victor):
   // o abono integra a base do 13º e do 1/3 de férias. Tudo ESTIMATIVA a conferir; só servidores ATIVOS do Mapa.
-  function estadoAbono(){return {uf:'AL',orgao:'',cargo:'',busca:'',cliente:'',abono:'',ferias_sem:false,d13_sem:false,ordem:'valor',
+  // 24/11 (bloco 428, Dr. Victor): o alvo é quem recebe o abono, pelos MAIORES SALÁRIOS (o reflexo no 1/3 e no 13º ninguém recebe: tema novo)
+  var FAIXAS_SAL={ate10:['','10000','até R$ 10 mil'],de10a20:['10000','20000','R$ 10 a 20 mil'],de20a30:['20000','30000','R$ 20 a 30 mil'],acima30:['30000','','acima de R$ 30 mil']};
+  function estadoAbono(){return {uf:'AL',orgao:'',cargo:'',busca:'',cliente:'',abono:'',faixa:'',ferias_sem:false,d13_sem:false,ordem:'salario',
     datas:SD()?SD().vazio():{},pagina:1,dados:null,pedido:0};}
   function reais(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
   function paramsAbono(A,extra){
     var p={uf:A.uf,orgao:A.orgao,cargo:A.cargo,busca:A.busca,cliente:A.cliente,abono:A.abono,ordem:A.ordem,pagina:A.pagina,limite:LIM};
     if(A.ferias_sem)p.ferias_sem=true;if(A.d13_sem)p.d13_sem=true;
+    if(A.faixa&&FAIXAS_SAL[A.faixa]){if(FAIXAS_SAL[A.faixa][0])p.bruto_min=FAIXAS_SAL[A.faixa][0];if(FAIXAS_SAL[A.faixa][1])p.bruto_max=FAIXAS_SAL[A.faixa][1];}
     if(SD()&&SD().qtd(A.datas))Object.assign(p,SD().params(A.datas,true));
     return Object.assign(p,extra||{});
   }
@@ -711,6 +714,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(A.cargo)p.push('cargo: '+A.cargo);if(A.busca)p.push('busca: '+A.busca);if(A.cliente)p.push(A.cliente==='sim'?'clientes do SAGA':'não clientes');
     if(A.abono)p.push({recebe:'recebe abono',nao:'não recebe abono',poderia:'poderia aposentar (35+ anos) e não recebe abono'}[A.abono]);
     if(A.ferias_sem)p.push('1/3 de férias sem o abono');if(A.d13_sem)p.push('13º sem o abono');
+    if(A.faixa&&FAIXAS_SAL[A.faixa])p.push('salário '+FAIXAS_SAL[A.faixa][2]);if(A.ordem==='salario')p.push('maiores salários primeiro');
     if(SD())p=p.concat(SD().descricao(A.datas));
     return p.join(' · ')||'Sem filtro';
   }
@@ -719,6 +723,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     function sel(id,lab,ops,at){return '<select id="'+id+'" aria-label="'+esc(lab)+'">'+ops.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===at?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';}
     c.innerHTML='<div class="ms-aviso"><b>Abono de permanência e Tema 1.233 (STJ).</b> O Portal não tem coluna "abono": ele vem em <b>"Outras remunerações eventuais"</b>, no mesmo valor do PSS do mês (abono provável). '+
         'Aqui aparece, por servidor ativo, se recebe o abono e se o <b>13º</b> e o <b>1/3 de férias</b> foram pagos sem ele nos últimos 5 anos, com a diferença <b>estimada</b>. '+
+        '<b>O alvo é quem recebe o abono, pelos maiores salários</b>: como o tema é novo, ninguém recebe o reflexo no 1/3 de férias e no 13º sem ação judicial; a conta abaixo é só informativa. '+
         '"Poderia aposentar" usa só os anos de serviço público (o Portal não traz idade, sexo nem tempo fora do serviço público). <b>Tudo estimativa a conferir</b> no contracheque e na certidão de tempo.</div>'+
       '<div class="ms-filtros">'+
         '<input class="ms-busca" id="abBusca" type="search" autocomplete="off" placeholder="Nome ou 6 dígitos do CPF" value="'+esc(A.busca)+'" aria-label="Buscar">'+
@@ -726,10 +731,11 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
         '<select id="abOrgao" aria-label="Órgão">'+opcoesOrgao(A.orgao)+'</select>'+
         '<input id="abCargo" type="search" autocomplete="off" placeholder="Cargo (pedaço)" value="'+esc(A.cargo)+'" aria-label="Cargo">'+
         sel('abAbono','Abono',[['','Recebendo abono ou não'],['recebe','Recebe abono'],['nao','Não recebe abono'],['poderia','Poderia aposentar (35+ anos) e não recebe']],A.abono)+
+        sel('abFaixa','Salário',[['','Qualquer salário']].concat(Object.keys(FAIXAS_SAL).map(function(k){return [k,'Salário '+FAIXAS_SAL[k][2]];})),A.faixa)+
         sel('abCli','Cliente',[['','Cliente do SAGA ou não'],['sim','Só clientes do SAGA'],['nao','Só quem não é cliente']],A.cliente)+
         '<label class="ms-chk"><input type="checkbox" id="abFerias"'+(A.ferias_sem?' checked':'')+'> 1/3 de férias sem o abono</label>'+
         '<label class="ms-chk"><input type="checkbox" id="abD13"'+(A.d13_sem?' checked':'')+'> 13º sem o abono</label>'+
-        sel('abOrdem','Ordem',[['valor','Maior diferença estimada primeiro'],['nome','Ordem do nome']],A.ordem)+
+        sel('abOrdem','Ordem',[['salario','Maiores salários primeiro'],['valor','Maior diferença estimada primeiro'],['nome','Ordem do nome']],A.ordem)+
         '<button class="btn" type="button" id="abLimpar">Limpar filtros</button>'+(SD()?SD().html('abDt',A.datas):'')+'</div>'+
       '<div id="abNums"></div>'+
       '<div class="ms-pag" style="justify-content:flex-start;margin:0 0 8px"><span id="abTotal"></span><span class="ms-acoes"><button class="btn" type="button" id="abCsv">Exportar para a Captação (CSV)</button><button class="btn" type="button" id="abPdf">PDF</button></span></div>'+
@@ -741,6 +747,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     $('abOrgao').onchange=function(){A.orgao=this.value;mudou();};
     $('abAbono').onchange=function(){A.abono=this.value;mudou();};
     $('abCli').onchange=function(){A.cliente=this.value;mudou();};
+    $('abFaixa').onchange=function(){A.faixa=this.value;mudou();};
     $('abOrdem').onchange=function(){A.ordem=this.value;mudou();};
     $('abFerias').onchange=function(){A.ferias_sem=this.checked;mudou();};
     $('abD13').onchange=function(){A.d13_sem=this.checked;mudou();};
@@ -749,7 +756,8 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     $('abCsv').onclick=function(){exportarAbono(this);};
     $('abPdf').onclick=function(){pdfAbono(this);};
     $('abNums').onclick=function(e){var b=e.target.closest('[data-ab]');if(!b)return;var k=b.dataset.ab;
-      if(k==='todos'){A.abono='';A.ferias_sem=false;A.d13_sem=false;}else if(k==='ferias')A.ferias_sem=!A.ferias_sem;else if(k==='d13')A.d13_sem=!A.d13_sem;else A.abono=A.abono===k?'':k;
+      if(k.indexOf('sal_')===0){var fx=k.slice(4);A.faixa=A.faixa===fx?'':fx;}
+      else if(k==='todos'){A.abono='';A.ferias_sem=false;A.d13_sem=false;A.faixa='';}else if(k==='ferias')A.ferias_sem=!A.ferias_sem;else if(k==='d13')A.d13_sem=!A.d13_sem;else A.abono=A.abono===k?'':k;
       A.pagina=1;parteAbono(c);};
     carregarAbono();
   }
@@ -760,7 +768,8 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       bt('poderia',num(r.poderia_sem_abono),'poderiam aposentar e não recebem','35+ anos de serviço · estimativa',A.abono==='poderia')+
       bt('ferias',num(r.ferias_sem),'com 1/3 de férias sem o abono','≈ '+reais(r.ferias_dif)+' (estimativa)',A.ferias_sem)+
       bt('d13',num(r.d13_sem),'com 13º sem o abono','≈ '+reais(r.d13_dif)+' (estimativa)',A.d13_sem)+
-      (r.a_conferir?bt('todos',num(r.a_conferir),'com mês que não fechou','conferir no contracheque',false):'')+'</div>';
+      (r.a_conferir?bt('todos',num(r.a_conferir),'com mês que não fechou','conferir no contracheque',false):'')+'</div>'+
+      (r.faixas?'<div class="ms-nums" aria-label="Por salário">'+Object.keys(FAIXAS_SAL).map(function(k){return bt('sal_'+k,num(r.faixas[k]),'salário '+FAIXAS_SAL[k][2],'bruto do último mês',A.faixa===k);}).join('')+'</div>':'');
   }
   async function carregarAbono(){
     var A=M.ab,box=$('abLista');if(!box)return;var meu=++A.pedido;box.classList.add('ms-carregando');
@@ -777,7 +786,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(extra.sem_carga){$('abNums').innerHTML='';$('abTotal').textContent='';
       box.innerHTML='<div class="ms-aviso amar"><b>A carga do abono ainda não foi feita.</b> Os meses do Portal (5 anos) são lidos numa noite, quando for a vez desta carga; depois disso esta lista mostra quem recebe o abono e o 13º e o 1/3 de férias sem ele.</div>';return;}
     A.dados=Object.assign({},extra,{total:r.total,linhas:r.linhas});P.total(r.total);A.pagina=P.pagina;
-    $('abNums').innerHTML=htmlNumsAbono(extra.resumo,A);
+    $('abNums').innerHTML=htmlNumsAbono(extra.resumo,A)+((A.faixa||A.ordem==='salario')&&extra.resumo&&!extra.resumo.faixas?'<div class="ms-aviso amar"><b>A lista abaixo NÃO está filtrada nem ordenada pelo salário:</b> isso chega com o bloco 428.</div>':'');
     var cg=extra.carga||{};
     $('abTotal').innerHTML=num(r.total)+' servidores'+(cg.mes_de?' · <span class="ms-sub" style="display:inline">meses lidos '+esc(mesTxt(cg.mes_de))+' a '+esc(mesTxt(cg.mes_ate))+(cg.em?', carga de '+esc(dataHora(cg.em)):'')+'</span>':'');
     desenharAbono();
@@ -791,7 +800,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
           :(l.abono_valor?'Não recebe agora<span class="ms-sub">último em '+esc(mesTxt(l.abono_ultimo_mes))+'</span>':'Não recebe'+((+l.tempo_servico||0)>=35?'<span class="ms-sub" style="color:#c98500">'+esc(SD()?SD().anos(l.tempo_servico):Math.floor(l.tempo_servico)+' anos')+' de serviço: poderia aposentar? (estimativa)</span>':''));
         var fe=l.ferias_sem?'<b>'+num(l.ferias_sem)+' sem o abono</b><span class="ms-sub">≈ '+esc(reais(l.ferias_dif))+' (estimativa)</span>':(l.ferias_meses?num(l.ferias_com||0)+' com o abono':'—');
         var d13=l.d13_sem?'<b>'+num(l.d13_sem)+' sem o abono</b><span class="ms-sub">≈ '+esc(reais(l.d13_dif))+' (estimativa)</span>':(l.d13_meses?num(l.d13_com||0)+' com o abono':'—');
-        return '<tr'+(cli?' class="ms-destaque"':'')+'><td data-r="Servidor"><b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+
+        return '<tr'+(cli?' class="ms-destaque"':'')+'><td data-r="Servidor"><b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+(l.rem_bruto!=null?'<span class="ms-sub">Salário bruto <b>'+esc(reais(l.rem_bruto))+'</b>'+(l.rem_mes?' em '+esc(mesTxt(l.rem_mes)):'')+'</span>':'')+
             (SD()?'<span class="ms-sub">'+esc(SD().curto({ingresso:l.ingresso,tempo_servico:l.tempo_servico,tempo_estimativa:true}))+'</span>':'')+'</td>'+
           '<td data-r="Abono">'+ab+'</td><td data-r="1/3 de férias">'+fe+'</td><td data-r="13º">'+d13+'</td>'+
           '<td data-r="No SAGA">'+(cli?l.clientes.map(function(k){return '<a href="'+FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'">'+esc(k.codigo||'Ficha')+'</a>';}).join(' '):'<span class="ms-sub">Não é cliente</span>')+'</td>'+
@@ -824,9 +833,9 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       var d=await linhasAbonoTodas(MAX_CSV),ls=d.linhas||[];
       if(d.sem_carga||!ls.length){aviso(d.sem_carga?'A carga do abono ainda não foi feita.':'Nada para exportar com esses filtros.','amar');return;}
       function c(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
-      var linhas=[['Nome no Portal','CPF (mascarado)','Órgão','UF','Cargo','Ingresso no serviço público','Anos de serviço (estimativa)','Abono (provável)','Abono desde','1/3 de férias sem o abono','Diferença estimada férias','13º sem o abono','Diferença estimada 13º','Cliente do SAGA'].map(c).join(';')];
+      var linhas=[['Nome no Portal','CPF (mascarado)','Órgão','UF','Cargo','Ingresso no serviço público','Anos de serviço (estimativa)','Abono (provável)','Abono desde','1/3 de férias sem o abono','Diferença estimada férias','13º sem o abono','Diferença estimada 13º','Salário bruto (último mês)','Cliente do SAGA'].map(c).join(';')];
       ls.forEach(function(l){linhas.push([l.nome,cpfMask(l.cpf6),l.orgao||'',l.uf||'',l.cargo||'',dataBR(l.ingresso),l.tempo_servico==null?'':Math.floor(+l.tempo_servico),l.recebe?'recebe '+l.abono_valor:'não recebe',l.abono_desde?(l.abono_desde_antes?'antes de ':'')+mesTxt(l.abono_desde):'',
-        l.ferias_sem||0,l.ferias_dif||0,l.d13_sem||0,l.d13_dif||0,(l.clientes||[]).map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
+        l.ferias_sem||0,l.ferias_dif||0,l.d13_sem||0,l.d13_dif||0,l.rem_bruto==null?'':l.rem_bruto,(l.clientes||[]).map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
       var blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
       var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='abono-tema-1233.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
       if(d.total>ls.length)aviso('Saíram os '+num(ls.length)+' primeiros de '+num(d.total)+' (limite do arquivo). Filtre mais para pegar o resto.','amar');
@@ -843,8 +852,8 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       if(d.sem_carga||!ls.length){aviso(d.sem_carga?'A carga do abono ainda não foi feita.':'Nada para pôr no PDF com esses filtros.','amar');return;}
       var h='<div class="kpis"><div class="forte"><span>Servidores</span><b>'+num(d.total)+'</b></div><div><span>Recebem abono</span><b>'+num(rs.recebem)+'</b></div><div><span>1/3 de férias sem o abono</span><b>'+num(rs.ferias_sem)+'</b></div><div><span>13º sem o abono</span><b>'+num(rs.d13_sem)+'</b></div><div><span>Diferença estimada</span><b>'+esc(reais((+rs.ferias_dif||0)+(+rs.d13_dif||0)))+'</b></div></div>'+
         '<div class="obs">'+esc(descricaoAbono(M.ab))+'. ESTIMATIVA pelo Portal da Transparência (abono provável = outras remunerações eventuais igual ao PSS); conferir no contracheque. CPF mascarado pelo próprio Portal.</div>'+
-        '<table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Órgão · cargo</th><th>Abono</th><th>Férias sem</th><th>13º sem</th><th>Diferença estimada</th></tr></thead><tbody>'+
-        ls.map(function(l){return '<tr><td>'+esc(l.nome)+'</td><td class="num">'+esc(cpfMask(l.cpf6))+'</td><td>'+esc((l.orgao||'')+(l.cargo?' · '+l.cargo:''))+'</td><td>'+(l.recebe?esc(reais(l.abono_valor)):'não recebe')+'</td><td class="num">'+num(l.ferias_sem)+'</td><td class="num">'+num(l.d13_sem)+'</td><td class="num">'+esc(reais((+l.ferias_dif||0)+(+l.d13_dif||0)))+'</td></tr>';}).join('')+'</tbody></table>';
+        '<table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Órgão · cargo</th><th>Salário</th><th>Abono</th><th>Férias sem</th><th>13º sem</th><th>Diferença estimada</th></tr></thead><tbody>'+
+        ls.map(function(l){return '<tr><td>'+esc(l.nome)+'</td><td class="num">'+esc(cpfMask(l.cpf6))+'</td><td>'+esc((l.orgao||'')+(l.cargo?' · '+l.cargo:''))+'</td><td class="num">'+(l.rem_bruto!=null?esc(reais(l.rem_bruto)):'')+'</td><td>'+(l.recebe?esc(reais(l.abono_valor)):'não recebe')+'</td><td class="num">'+num(l.ferias_sem)+'</td><td class="num">'+num(l.d13_sem)+'</td><td class="num">'+esc(reais((+l.ferias_dif||0)+(+l.d13_dif||0)))+'</td></tr>';}).join('')+'</tbody></table>';
       SagaPdf.imprimir({titulo:'Abono de permanência e Tema 1.233',subtitulo:'Mapa dos servidores · '+num(d.total)+' servidores (estimativa)',arquivo:'abono-tema-1233',paisagem:true,paginas:[h]});
       sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: gerou PDF do abono/Tema 1.233 ('+ls.length+' linhas; '+descricaoAbono(M.ab)+')',p_acao:'consultou'}).then(function(x){if(x.error)aviso('O PDF saiu, mas o registro falhou: '+erro(x.error),'erro');});
     }catch(e){aviso('Não deu para montar o PDF: '+erro(e),'erro');}
