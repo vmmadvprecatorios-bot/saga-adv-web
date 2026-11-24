@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611240143"></script>
+<script src="saga_guard.js?v=202611240157"></script>
 <meta charset="UTF-8">
 <!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
@@ -42,7 +42,7 @@ html.saga-sem-movimento .intim-aviso{animation:none}
 body.si-so-leitura .aviso-leitura{display:block}
 @media(max-width:760px){.content{padding:18px 14px 34px}.page-head h1{font-size:27px}.kpis{grid-template-columns:1fr 1fr;gap:9px}}
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611240143">
+<link rel="stylesheet" href="saga_tema.css?v=202611240157">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -80,12 +80,12 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611240143"></script>
-<script src="saga_texto.js?v=202611240143"></script>
-<script src="saga_prazos.js?v=202611240143"></script>
-<script src="saga_fichas.js?v=202611240143"></script>
-<script src="saga_intimacoes.js?v=202611240143"></script>
-<script src="saga_andamentos.js?v=202611240143"></script>
+<script src="saga_ui.js?v=202611240157"></script>
+<script src="saga_texto.js?v=202611240157"></script>
+<script src="saga_prazos.js?v=202611240157"></script>
+<script src="saga_fichas.js?v=202611240157"></script>
+<script src="saga_intimacoes.js?v=202611240157"></script>
+<script src="saga_andamentos.js?v=202611240157"></script>
 <script>
 /* =====================================================================
    INTIMAÇÕES (tela própria; o quadro, a lista, os filtros e as janelas vêm de saga_intimacoes.js)
@@ -179,6 +179,6 @@ init().catch(function(e){toast('Erro ao abrir as intimações: '+esc((window.sag
 (function(){function ap(r){if(!window.sagaCampoData||!r||r.nodeType!==1)return;if(r.matches('input[type="date"]'))window.sagaCampoData(r);r.querySelectorAll('input[type="date"]').forEach(function(i){window.sagaCampoData(i);});}
 function ini(){ap(document.body);new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(ap);});}).observe(document.body,{childList:true,subtree:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ini);else ini();})();</script>
-<script src="saga_radar_email.js?v=202611240143"></script>
+<script src="saga_radar_email.js?v=202611240157"></script>
 </body>
 </html>

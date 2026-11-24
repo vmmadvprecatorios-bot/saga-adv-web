@@ -17,15 +17,15 @@
   var LIM=50,MAX_CSV=20000,MAX_PDF=1000;
   // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js). A página continua em f.pagina; o tamanho fica na escolha da pessoa.
   var PAGS={};
-  function pagDe(chave,aoMudar){if(!PAGS[chave])PAGS[chave]=SagaPaginacao.criar({tela:'mapa-'+chave,rotulo:chave==='fal'?'fichas':'eventos',aoMudar:aoMudar});return PAGS[chave];}
+  function pagDe(chave,aoMudar){if(!PAGS[chave])PAGS[chave]=SagaPaginacao.criar({tela:'mapa-'+chave,rotulo:chave==='fal'?'fichas':chave==='ab'?'servidores':'eventos',aoMudar:aoMudar});return PAGS[chave];}
   function rolarTopo(){var a=$('aba-mapa');if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});}
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
   var EVT={aposentou:'Aposentou',faleceu:'Faleceu e deixou pensão',pensao_nova:'Pensão nova',perdeu_aposentadoria:'Saiu dos aposentados sem pensão',
     perdeu_pensao:'Pensão encerrada',entrou:'Entrou na lista',saiu:'Saiu da lista',voltou:'Voltou à lista',mudou_orgao:'Mudou de órgão',
     mudou_cargo:'Mudou de cargo',mudou_situacao:'Mudou de situação',abate_teto_comecou:'Abate-teto começou',abate_teto_parou:'Abate-teto parou',
-    pss_parou:'PSS parou',pss_voltou:'PSS voltou',ir_parou:'IR parou',ir_voltou:'IR voltou'};
+    pss_parou:'PSS parou',pss_voltou:'PSS voltou',ir_parou:'IR parou',ir_voltou:'IR voltou',abono_comecou:'Abono de permanência começou',abono_parou:'Abono de permanência parou'};
   var GRUPOS=[['De cada pessoa',['aposentou','faleceu','pensao_nova','perdeu_aposentadoria','perdeu_pensao']],
-    ['Na folha (abate-teto, PSS, IR)',['abate_teto_comecou','abate_teto_parou','pss_parou','pss_voltou','ir_parou','ir_voltou']],
+    ['Na folha (abate-teto, PSS, IR, abono)',['abate_teto_comecou','abate_teto_parou','pss_parou','pss_voltou','ir_parou','ir_voltou','abono_comecou','abono_parou']],
     ['Na lista (entradas, saídas, mudanças)',['entrou','saiu','voltou','mudou_orgao','mudou_cargo','mudou_situacao']]];
   var CLI_EVT=['faleceu','pensao_nova','aposentou','perdeu_aposentadoria','perdeu_pensao','abate_teto_comecou','pss_parou','ir_parou'];
   var LISTA={S:'Ativo',A:'Aposentado',P:'Pensionista'};
@@ -62,6 +62,7 @@
 #aba-mapa .ms-nums{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px}
 #aba-mapa .ms-num{border:1px solid var(--border-soft);border-radius:12px;padding:9px 10px;background:var(--panel);color:var(--text);font:inherit;text-align:left;min-height:64px;display:flex;flex-direction:column;gap:2px}
 #aba-mapa button.ms-num{cursor:pointer}
+#aba-mapa .ms-num.ms-num-on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--panel))}
 #aba-mapa button.ms-num:hover,#aba-mapa button.ms-num:focus-visible{border-color:var(--gold);outline:0}
 #aba-mapa .ms-num b{font-size:19px;font-variant-numeric:lining-nums tabular-nums}
 #aba-mapa .ms-num span{font-size:11px;color:var(--muted);line-height:1.25}
@@ -155,7 +156,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   function htmlPartes(){
     var c=(M.painel&&M.painel.conferencia)||{};
     var bt=function(k,t){return '<button class="pill'+(M.parte===k?' active':'')+'" type="button" data-parte="'+k+'">'+t+'</button>';};
-    return bt('geral','Visão geral')+bt('eventos','Eventos')+bt('clientes','Clientes do SAGA')+bt('falecidos','Prováveis falecidos'+(c.sem?' ('+num(c.sem)+' a conferir)':''))+bt('carga','Carga e LGPD');
+    return bt('geral','Visão geral')+bt('eventos','Eventos')+bt('clientes','Clientes do SAGA')+bt('falecidos','Prováveis falecidos'+(c.sem?' ('+num(c.sem)+' a conferir)':''))+bt('abono','Abono e Tema 1.233')+bt('carga','Carga e LGPD');
   }
   function htmlPreparo(){
     var p=M.painel||{};
@@ -188,6 +189,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     else if(M.parte==='eventos')parteLista(c,M.ev);
     else if(M.parte==='clientes')parteClientes(c);
     else if(M.parte==='falecidos')parteFalecidos(c);
+    else if(M.parte==='abono')parteAbono(c);
     else parteCarga(c);
   }
 
@@ -551,6 +553,163 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   }
 
   /* ---------- Carga e LGPD ---------- */
+  /* ---------- Abono de permanência e Tema 1.233 (24/11, blocos 425 e 426) ---------- */
+  // Abono provável = "Outras remunerações eventuais" igual ao PSS do mês no Portal. Tema 1.233 do STJ (Dr. Victor):
+  // o abono integra a base do 13º e do 1/3 de férias. Tudo ESTIMATIVA a conferir; só servidores ATIVOS do Mapa.
+  function estadoAbono(){return {uf:'AL',orgao:'',cargo:'',busca:'',cliente:'',abono:'',ferias_sem:false,d13_sem:false,ordem:'valor',
+    datas:SD()?SD().vazio():{},pagina:1,dados:null,pedido:0};}
+  function reais(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+  function paramsAbono(A,extra){
+    var p={uf:A.uf,orgao:A.orgao,cargo:A.cargo,busca:A.busca,cliente:A.cliente,abono:A.abono,ordem:A.ordem,pagina:A.pagina,limite:LIM};
+    if(A.ferias_sem)p.ferias_sem=true;if(A.d13_sem)p.d13_sem=true;
+    if(SD()&&SD().qtd(A.datas))Object.assign(p,SD().params(A.datas,true));
+    return Object.assign(p,extra||{});
+  }
+  function descricaoAbono(A){
+    var p=[];if(A.uf)p.push('UF '+A.uf);if(A.orgao){var o=(((M.painel||{}).orgaos)||[]).find(function(x){return x.cod===A.orgao;});p.push('órgão: '+(o?o.nome:A.orgao));}
+    if(A.cargo)p.push('cargo: '+A.cargo);if(A.busca)p.push('busca: '+A.busca);if(A.cliente)p.push(A.cliente==='sim'?'clientes do SAGA':'não clientes');
+    if(A.abono)p.push({recebe:'recebe abono',nao:'não recebe abono',poderia:'poderia aposentar (35+ anos) e não recebe abono'}[A.abono]);
+    if(A.ferias_sem)p.push('1/3 de férias sem o abono');if(A.d13_sem)p.push('13º sem o abono');
+    if(SD())p=p.concat(SD().descricao(A.datas));
+    return p.join(' · ')||'Sem filtro';
+  }
+  function parteAbono(c){
+    if(!M.ab)M.ab=estadoAbono();var A=M.ab;
+    function sel(id,lab,ops,at){return '<select id="'+id+'" aria-label="'+esc(lab)+'">'+ops.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===at?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';}
+    c.innerHTML='<div class="ms-aviso"><b>Abono de permanência e Tema 1.233 (STJ).</b> O Portal não tem coluna "abono": ele vem em <b>"Outras remunerações eventuais"</b>, no mesmo valor do PSS do mês (abono provável). '+
+        'Aqui aparece, por servidor ativo, se recebe o abono e se o <b>13º</b> e o <b>1/3 de férias</b> foram pagos sem ele nos últimos 5 anos, com a diferença <b>estimada</b>. '+
+        '"Poderia aposentar" usa só os anos de serviço público (o Portal não traz idade, sexo nem tempo fora do serviço público). <b>Tudo estimativa a conferir</b> no contracheque e na certidão de tempo.</div>'+
+      '<div class="ms-filtros">'+
+        '<input class="ms-busca" id="abBusca" type="search" autocomplete="off" placeholder="Nome ou 6 dígitos do CPF" value="'+esc(A.busca)+'" aria-label="Buscar">'+
+        '<select id="abUf" aria-label="UF">'+opcoesUf(A.uf)+'</select>'+
+        '<select id="abOrgao" aria-label="Órgão">'+opcoesOrgao(A.orgao)+'</select>'+
+        '<input id="abCargo" type="search" autocomplete="off" placeholder="Cargo (pedaço)" value="'+esc(A.cargo)+'" aria-label="Cargo">'+
+        sel('abAbono','Abono',[['','Recebendo abono ou não'],['recebe','Recebe abono'],['nao','Não recebe abono'],['poderia','Poderia aposentar (35+ anos) e não recebe']],A.abono)+
+        sel('abCli','Cliente',[['','Cliente do SAGA ou não'],['sim','Só clientes do SAGA'],['nao','Só quem não é cliente']],A.cliente)+
+        '<label class="ms-chk"><input type="checkbox" id="abFerias"'+(A.ferias_sem?' checked':'')+'> 1/3 de férias sem o abono</label>'+
+        '<label class="ms-chk"><input type="checkbox" id="abD13"'+(A.d13_sem?' checked':'')+'> 13º sem o abono</label>'+
+        sel('abOrdem','Ordem',[['valor','Maior diferença estimada primeiro'],['nome','Ordem do nome']],A.ordem)+
+        '<button class="btn" type="button" id="abLimpar">Limpar filtros</button>'+(SD()?SD().html('abDt',A.datas):'')+'</div>'+
+      '<div id="abNums"></div>'+
+      '<div class="ms-pag" style="justify-content:flex-start;margin:0 0 8px"><span id="abTotal"></span><span class="ms-acoes"><button class="btn" type="button" id="abCsv">Exportar para a Captação (CSV)</button><button class="btn" type="button" id="abPdf">PDF</button></span></div>'+
+      '<div id="abLista"><div class="ms-vazio">Carregando…</div></div>';
+    var tm=null;function mudou(){A.pagina=1;clearTimeout(tm);tm=setTimeout(carregarAbono,350);}
+    $('abBusca').oninput=function(){A.busca=this.value.trim();mudou();};
+    $('abCargo').oninput=function(){A.cargo=this.value.trim();mudou();};
+    $('abUf').onchange=function(){A.uf=this.value;mudou();};
+    $('abOrgao').onchange=function(){A.orgao=this.value;mudou();};
+    $('abAbono').onchange=function(){A.abono=this.value;mudou();};
+    $('abCli').onchange=function(){A.cliente=this.value;mudou();};
+    $('abOrdem').onchange=function(){A.ordem=this.value;mudou();};
+    $('abFerias').onchange=function(){A.ferias_sem=this.checked;mudou();};
+    $('abD13').onchange=function(){A.d13_sem=this.checked;mudou();};
+    if(SD())SD().ligar('abDt',A.datas,mudou);
+    $('abLimpar').onclick=function(){M.ab=estadoAbono();parteAbono(c);};
+    $('abCsv').onclick=function(){exportarAbono(this);};
+    $('abPdf').onclick=function(){pdfAbono(this);};
+    $('abNums').onclick=function(e){var b=e.target.closest('[data-ab]');if(!b)return;var k=b.dataset.ab;
+      if(k==='todos'){A.abono='';A.ferias_sem=false;A.d13_sem=false;}else if(k==='ferias')A.ferias_sem=!A.ferias_sem;else if(k==='d13')A.d13_sem=!A.d13_sem;else A.abono=A.abono===k?'':k;
+      A.pagina=1;parteAbono(c);};
+    carregarAbono();
+  }
+  function htmlNumsAbono(r,A){
+    r=r||{};function bt(k,v,t,sub,on){return '<button type="button" class="ms-num'+(on?' ms-num-on':'')+'" data-ab="'+k+'"><b>'+v+'</b><span>'+t+'</span>'+(sub?'<small>'+sub+'</small>':'')+'</button>';}
+    return '<div class="ms-nums">'+bt('todos',num(r.servidores),'servidores ativos no filtro','',false)+
+      bt('recebe',num(r.recebem),'recebem abono (provável)','',A.abono==='recebe')+
+      bt('poderia',num(r.poderia_sem_abono),'poderiam aposentar e não recebem','35+ anos de serviço · estimativa',A.abono==='poderia')+
+      bt('ferias',num(r.ferias_sem),'com 1/3 de férias sem o abono','≈ '+reais(r.ferias_dif)+' (estimativa)',A.ferias_sem)+
+      bt('d13',num(r.d13_sem),'com 13º sem o abono','≈ '+reais(r.d13_dif)+' (estimativa)',A.d13_sem)+
+      (r.a_conferir?bt('todos',num(r.a_conferir),'com mês que não fechou','conferir no contracheque',false):'')+'</div>';
+  }
+  async function carregarAbono(){
+    var A=M.ab,box=$('abLista');if(!box)return;var meu=++A.pedido;box.classList.add('ms-carregando');
+    var P=pagDe('ab',function(P){A.pagina=P.pagina;carregarAbono();rolarTopo();});P.pagina=A.pagina||1;
+    var extra={};
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('siape_abono_listar',{p:paramsAbono(A,{pagina:Math.floor(off/lim)+1,limite:lim})}).then(function(x){if(x.error)return x;extra=x.data||{};return {linhas:extra.linhas,total:extra.total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:500,progresso:function(a,t){if(meu===A.pedido&&t>500)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
+    if(meu!==A.pedido)return;box.classList.remove('ms-carregando');
+    if(r.error){
+      var falta=r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||'');
+      box.innerHTML=falta?'<div class="ms-aviso amar"><b>O abono ainda não está no banco:</b> chega com os blocos 425 e 426 e depois com a carga dos meses do Portal (numa noite).</div>':'<div class="ms-aviso verm">Não deu para buscar o abono: '+erro(r.error)+'</div>';
+      $('abTotal').textContent='';$('abNums').innerHTML='';return;
+    }
+    if(extra.sem_carga){$('abNums').innerHTML='';$('abTotal').textContent='';
+      box.innerHTML='<div class="ms-aviso amar"><b>A carga do abono ainda não foi feita.</b> Os meses do Portal (5 anos) são lidos numa noite, quando for a vez desta carga; depois disso esta lista mostra quem recebe o abono e o 13º e o 1/3 de férias sem ele.</div>';return;}
+    A.dados=Object.assign({},extra,{total:r.total,linhas:r.linhas});P.total(r.total);A.pagina=P.pagina;
+    $('abNums').innerHTML=htmlNumsAbono(extra.resumo,A);
+    var cg=extra.carga||{};
+    $('abTotal').innerHTML=num(r.total)+' servidores'+(cg.mes_de?' · <span class="ms-sub" style="display:inline">meses lidos '+esc(mesTxt(cg.mes_de))+' a '+esc(mesTxt(cg.mes_ate))+(cg.em?', carga de '+esc(dataHora(cg.em)):'')+'</span>':'');
+    desenharAbono();
+  }
+  function desenharAbono(){
+    var A=M.ab,box=$('abLista'),ls=(A.dados||{}).linhas||[];
+    if(!ls.length){box.innerHTML='<div class="ms-vazio">Nenhum servidor com esses filtros.</div>';return;}
+    box.innerHTML='<div class="ms-rolagem"><table class="ms-tab"><thead><tr><th>Servidor no Portal</th><th>Abono</th><th>1/3 de férias</th><th>13º</th><th>No SAGA</th><th></th></tr></thead><tbody>'+
+      ls.map(function(l){var cli=(l.clientes||[]).length;
+        var ab=l.recebe?'<b>Recebe</b> '+esc(reais(l.abono_valor))+(l.abono_desde?'<span class="ms-sub">desde '+(l.abono_desde_antes?'antes de ':'')+esc(mesTxt(l.abono_desde))+'</span>':'')
+          :(l.abono_valor?'Não recebe agora<span class="ms-sub">último em '+esc(mesTxt(l.abono_ultimo_mes))+'</span>':'Não recebe'+((+l.tempo_servico||0)>=35?'<span class="ms-sub" style="color:#c98500">'+esc(SD()?SD().anos(l.tempo_servico):Math.floor(l.tempo_servico)+' anos')+' de serviço: poderia aposentar? (estimativa)</span>':''));
+        var fe=l.ferias_sem?'<b>'+num(l.ferias_sem)+' sem o abono</b><span class="ms-sub">≈ '+esc(reais(l.ferias_dif))+' (estimativa)</span>':(l.ferias_meses?num(l.ferias_com||0)+' com o abono':'—');
+        var d13=l.d13_sem?'<b>'+num(l.d13_sem)+' sem o abono</b><span class="ms-sub">≈ '+esc(reais(l.d13_dif))+' (estimativa)</span>':(l.d13_meses?num(l.d13_com||0)+' com o abono':'—');
+        return '<tr'+(cli?' class="ms-destaque"':'')+'><td data-r="Servidor"><b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+
+            (SD()?'<span class="ms-sub">'+esc(SD().curto({ingresso:l.ingresso,tempo_servico:l.tempo_servico,tempo_estimativa:true}))+'</span>':'')+'</td>'+
+          '<td data-r="Abono">'+ab+'</td><td data-r="1/3 de férias">'+fe+'</td><td data-r="13º">'+d13+'</td>'+
+          '<td data-r="No SAGA">'+(cli?l.clientes.map(function(k){return '<a href="'+FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'">'+esc(k.codigo||'Ficha')+'</a>';}).join(' '):'<span class="ms-sub">Não é cliente</span>')+'</td>'+
+          '<td>'+(l.abono_valor||l.ferias_meses||l.d13_meses?'<button class="btn" type="button" data-ab-meses="'+(+l.id_portal)+'">Meses</button>':'')+'</td></tr>';
+      }).join('')+'</tbody></table></div>'+PAGS.ab.html();
+    PAGS.ab.ligar(box);
+    box.querySelectorAll('[data-ab-meses]').forEach(function(b){b.onclick=function(){abrirMesesAbono(+b.dataset.abMeses,b.closest('tr').querySelector('b').textContent);};});
+  }
+  async function abrirMesesAbono(id,nome){
+    var mo=janela(true),md=$('mdMapa');
+    md.innerHTML='<div class="md-cab"><div><h2>'+esc(nome)+'</h2><p>Carregando os meses…</p></div><button class="md-x" type="button" data-fechar-mapa aria-label="Fechar">✕</button></div>';
+    mo.classList.add('aberto');
+    var r=await sb().rpc('siape_abono_pessoa',{p_id_portal:id});
+    if(r.error){md.querySelector('p').innerHTML='Não deu para ler os meses: '+erro(r.error);return;}
+    var a=r.data||{},ms=a.meses||[];
+    var T={ferias:'1/3 de férias','13':'13º'},R={sem:'sem o abono',com:'com o abono','?':'não fechou: conferir'};
+    md.innerHTML='<div class="md-cab"><div><h2>'+esc(nome)+'</h2><p>Abono provável '+(a.abono_valor?esc(reais(a.abono_valor)):'—')+(a.abono_desde?' · desde '+(a.abono_desde_antes?'antes de ':'')+esc(mesTxt(a.abono_desde)):'')+' · meses lidos '+esc(mesTxt(a.mes_de))+' a '+esc(mesTxt(a.mes_ate))+'</p></div><button class="md-x" type="button" data-fechar-mapa aria-label="Fechar">✕</button></div>'+
+      '<div class="ms-aviso amar" style="margin-top:10px">Estimativa pelo Portal da Transparência: esperado = valor pago calculado com o abono. Conferir no contracheque antes de qualquer pedido.</div>'+
+      (ms.length?'<div class="ms-rolagem"><table class="ms-tab"><thead><tr><th>Mês</th><th>O quê</th><th>Pago</th><th>Esperado com o abono</th><th>Diferença</th><th>Situação</th></tr></thead><tbody>'+
+        ms.map(function(x){return '<tr><td class="n">'+esc(mesTxt(x.m))+'</td><td>'+esc(T[x.t]||x.t)+'</td><td class="n">'+esc(reais(x.pago))+'</td><td class="n">'+esc(reais(x.esperado))+'</td><td class="n">'+(x.dif?esc(reais(x.dif)):'—')+'</td><td>'+esc(R[x.r]||x.r||'')+'</td></tr>';}).join('')+'</tbody></table></div>'
+        :'<div class="ms-vazio">Nenhum mês de férias ou 13º com abono na janela lida.</div>');
+  }
+  async function linhasAbonoTodas(limite){
+    var r=await sb().rpc('siape_abono_listar',{p:paramsAbono(M.ab,{pagina:1,limite:limite})});
+    if(r.error)throw r.error;return r.data||{};
+  }
+  async function exportarAbono(b){
+    var txt=b.textContent;b.disabled=true;b.textContent='Exportando…';
+    try{
+      var d=await linhasAbonoTodas(MAX_CSV),ls=d.linhas||[];
+      if(d.sem_carga||!ls.length){aviso(d.sem_carga?'A carga do abono ainda não foi feita.':'Nada para exportar com esses filtros.','amar');return;}
+      function c(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
+      var linhas=[['Nome no Portal','CPF (mascarado)','Órgão','UF','Cargo','Ingresso no serviço público','Anos de serviço (estimativa)','Abono (provável)','Abono desde','1/3 de férias sem o abono','Diferença estimada férias','13º sem o abono','Diferença estimada 13º','Cliente do SAGA'].map(c).join(';')];
+      ls.forEach(function(l){linhas.push([l.nome,cpfMask(l.cpf6),l.orgao||'',l.uf||'',l.cargo||'',dataBR(l.ingresso),l.tempo_servico==null?'':Math.floor(+l.tempo_servico),l.recebe?'recebe '+l.abono_valor:'não recebe',l.abono_desde?(l.abono_desde_antes?'antes de ':'')+mesTxt(l.abono_desde):'',
+        l.ferias_sem||0,l.ferias_dif||0,l.d13_sem||0,l.d13_dif||0,(l.clientes||[]).map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
+      var blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
+      var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='abono-tema-1233.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+      if(d.total>ls.length)aviso('Saíram os '+num(ls.length)+' primeiros de '+num(d.total)+' (limite do arquivo). Filtre mais para pegar o resto.','amar');
+      var x=await sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: exportou CSV do abono/Tema 1.233 ('+ls.length+' linhas; '+descricaoAbono(M.ab)+')',p_acao:'consultou',p_depois:{filtros:paramsAbono(M.ab,{pagina:1,limite:MAX_CSV}),linhas:ls.length}});
+      if(x.error)aviso('O arquivo saiu, mas o registro da exportação falhou: '+erro(x.error),'erro');
+    }catch(e){aviso('Não deu para exportar: '+erro(e),'erro');}
+    finally{b.disabled=false;b.textContent=txt;}
+  }
+  async function pdfAbono(b){
+    b.disabled=true;
+    try{
+      await carregar('saga_pdf.js','SagaPdf');
+      var d=await linhasAbonoTodas(MAX_PDF),ls=d.linhas||[],rs=d.resumo||{};
+      if(d.sem_carga||!ls.length){aviso(d.sem_carga?'A carga do abono ainda não foi feita.':'Nada para pôr no PDF com esses filtros.','amar');return;}
+      var h='<div class="kpis"><div class="forte"><span>Servidores</span><b>'+num(d.total)+'</b></div><div><span>Recebem abono</span><b>'+num(rs.recebem)+'</b></div><div><span>1/3 de férias sem o abono</span><b>'+num(rs.ferias_sem)+'</b></div><div><span>13º sem o abono</span><b>'+num(rs.d13_sem)+'</b></div><div><span>Diferença estimada</span><b>'+esc(reais((+rs.ferias_dif||0)+(+rs.d13_dif||0)))+'</b></div></div>'+
+        '<div class="obs">'+esc(descricaoAbono(M.ab))+'. ESTIMATIVA pelo Portal da Transparência (abono provável = outras remunerações eventuais igual ao PSS); conferir no contracheque. CPF mascarado pelo próprio Portal.</div>'+
+        '<table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Órgão · cargo</th><th>Abono</th><th>Férias sem</th><th>13º sem</th><th>Diferença estimada</th></tr></thead><tbody>'+
+        ls.map(function(l){return '<tr><td>'+esc(l.nome)+'</td><td class="num">'+esc(cpfMask(l.cpf6))+'</td><td>'+esc((l.orgao||'')+(l.cargo?' · '+l.cargo:''))+'</td><td>'+(l.recebe?esc(reais(l.abono_valor)):'não recebe')+'</td><td class="num">'+num(l.ferias_sem)+'</td><td class="num">'+num(l.d13_sem)+'</td><td class="num">'+esc(reais((+l.ferias_dif||0)+(+l.d13_dif||0)))+'</td></tr>';}).join('')+'</tbody></table>';
+      SagaPdf.imprimir({titulo:'Abono de permanência e Tema 1.233',subtitulo:'Mapa dos servidores · '+num(d.total)+' servidores (estimativa)',arquivo:'abono-tema-1233',paisagem:true,paginas:[h]});
+      sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: gerou PDF do abono/Tema 1.233 ('+ls.length+' linhas; '+descricaoAbono(M.ab)+')',p_acao:'consultou'}).then(function(x){if(x.error)aviso('O PDF saiu, mas o registro falhou: '+erro(x.error),'erro');});
+    }catch(e){aviso('Não deu para montar o PDF: '+erro(e),'erro');}
+    finally{b.disabled=false;}
+  }
+
   function parteCarga(c){
     var p=M.painel||{},cg=p.cargas||{},mz=p.meses||{},al=p.alcance||{},orgs=al.orgaos||{};
     c.innerHTML='<div class="ms-bloco"><h3>De onde vêm os dados</h3><p class="sub">Portal da Transparência (SIAPE), cadastro e remuneração. Ativos desde '+esc(mesTxt(mz.de))+'; aposentados e pensionistas desde 01/2020; último mês carregado: '+esc(mesTxt(mz.ate))+'. '+num(cg.total)+' cargas mensais'+(cg.com_erro?', <b style="color:var(--danger,#d6452d)">'+num(cg.com_erro)+' com erro</b>':'')+'; última em '+esc(dataHora(cg.ultima))+'.</p>'+
@@ -574,7 +733,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     var r=await sb().rpc('siape_mapa_painel');
     if(r.error){pane.innerHTML='<div class="ms-aviso verm">Não deu para abrir o Mapa dos servidores: '+erro(r.error)+'</div>';return;}
     M.painel=r.data||{};M.montado=true;if(!M.ev)M.ev=estadoLista('ev');
-    var q=new URLSearchParams(location.search),pt=q.get('mapa');if(pt&&/^(geral|eventos|clientes|falecidos|carga)$/.test(pt))M.parte=pt;
+    var q=new URLSearchParams(location.search),pt=q.get('mapa');if(pt&&/^(geral|eventos|clientes|falecidos|abono|carga)$/.test(pt))M.parte=pt;
     desenhar();
   }
   async function liberar(){
