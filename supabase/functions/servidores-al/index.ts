@@ -289,7 +289,7 @@ async function lerZipLinhas(arquivo: string, porCab: (c: string[]) => void, porL
 
 // Leitura LEVE: percorre os bytes descompactados contando linhas; só decodifica as linhas que interessam
 // (de..ate, contando a partir de 0, sem o cabeçalho). Para de baixar assim que passa de "ate".
-async function lerZipFaixa(arquivo: string, de: number, ate: number, porLinha: (c: string[], n: number) => void): Promise<{ cab: string[]; total: number | null; parou: boolean }> {
+async function lerZipFaixa(arquivo: string, de: number, ate: number, porLinha: (c: string[], n: number) => void, contarTudo = false): Promise<{ cab: string[]; total: number | null; parou: boolean }> {
   if (!/^folha_(ativo|inativo)-\d{4}\.zip$/.test(arquivo)) throw new Error("Arquivo inválido.");
   const r = await fetch(`${BASE}/media/arquivo/${arquivo}`, { headers: { "User-Agent": "SAGA-ADV (leitura de dados publicos)" }, signal: AbortSignal.timeout(140_000) });
   if (!r.ok || !r.body) throw new Error(`erro ${r.status} ao baixar ${arquivo}`);
@@ -311,7 +311,7 @@ async function lerZipFaixa(arquivo: string, de: number, ate: number, porLinha: (
           if (n === 0) cab = t.split("|"); else if (t && !t.startsWith("ANO|")) porLinha(t.split("|"), n - 1);
         } else if (pedaco.length) pedaco = new Uint8Array(0);
         ini = k + 1;
-        if (n - 1 >= ate - 1 && n > 0) { parar = true; break; }
+        if (!contarTudo && n - 1 >= ate - 1 && n > 0) { parar = true; break; }
       }
       if (!parar && ini < chunk.length) pedaco = juntar(pedaco, chunk.subarray(ini));
       if (final) fim = true;
@@ -341,6 +341,41 @@ async function medirZip(arquivo: string, de = 0, ate = 0) {
   return { ok: true, arquivo, colunas: res.cab, total_linhas: res.total, parou_cedo: res.parou, faixa: [de, ate], lidas, por_mes: porMes, formatos_cpf: cpfs, segundos: (Date.now() - t0) / 1000 };
 }
 
+// ---------- CARGA DOS ZIPS DO ESTADO (bloco 462): uma faixa de 30 mil linhas por rodada ----------
+const ZIP_CAMPOS = ["MES", "MATRICULA", "NOME", "CPF", "VINCULO", "CARGO", "FUNCAO", "REMUNERACAO_BASE", "PROVENTOS",
+  "BENEFICIOS", "EVENTUAIS", "CONTRIBUICAO_PREVIDENCIARIA", "TOTAL"];
+async function rodadaZip() {
+  const inicio = new Date();
+  if (!dentroDaJanela()) return { ok: true, mensagem: "Fora do horário das cargas (22h às 6h de Maceió): nada feito." };
+  const lento0 = await loginLento();
+  if (lento0) { await registrarPausa(lento0, "estado_al_zip"); return { ok: true, mensagem: `Pausado: ${lento0}.` }; }
+  const job = await rpc("servpub_zip_proxima");
+  if (!job || job.nada) return { ok: true, mensagem: "Zips do Estado: nada na fila." };
+  let ok = true; let msg = ""; let enviados = 0; let achados = 0, nao = 0, amb = 0;
+  try {
+    const brutas: string[][] = [];
+    const res = await lerZipFaixa(job.arquivo, job.de, job.ate, (c) => { brutas.push(c); }, job.de === 0);
+    const ix = Object.fromEntries(ZIP_CAMPOS.map((k) => [k, res.cab.indexOf(k)]));
+    if (ix.NOME < 0 || ix.CPF < 0 || ix.MES < 0) throw new Error(`O arquivo ${job.arquivo} mudou de colunas: o leitor precisa de ajuste.`);
+    const linhas = brutas.map((c) => Object.fromEntries(ZIP_CAMPOS.filter((k) => ix[k] >= 0).map((k) => [k, c[ix[k]]])));
+    for (let i = 0; i < linhas.length; i += 400) {
+      const lento = await loginLento();
+      if (lento) throw new Error(`pausado no meio: ${lento} (a faixa será lida de novo; o que já entrou não se repete)`);
+      const r = await rpc("servpub_zip_receber", { p_carga: job.carga, p_linhas: linhas.slice(i, i + 400) });
+      enviados += Math.min(400, linhas.length - i); achados += r?.achados || 0; nao += r?.nao_achados || 0; amb += r?.ambiguos || 0;
+    }
+    await rpc("servpub_zip_fechar", { p_carga: job.carga, p_total: res.total });
+    msg = `Zip ${job.arquivo} linhas ${job.de}-${job.ate}: ${enviados} lidas, ${achados} ligadas, ${nao} não achadas, ${amb} ambíguas` +
+      (res.total != null ? ` (arquivo com ${res.total} linhas)` : "") + ".";
+  } catch (e) {
+    ok = false; msg = `Zip ${job.arquivo} linhas ${job.de}-${job.ate}: ${e instanceof Error ? e.message : String(e)}`;
+    await rpc("servpub_zip_erro", { p_carga: job.carga, p_erro: msg });
+  }
+  await admin.rpc("saude_rodada_registrar", { p_robo: "servidores_al", p_ok: ok, p_mensagem: msg, p_lidos: enviados, p_novos: achados,
+    p_detalhe: ok ? { ente: "estado_al_zip", nao_achados: nao, ambiguos: amb } : { codigo: "ZIP_ESTADO" }, p_inicio: inicio.toISOString() });
+  return { ok, mensagem: msg };
+}
+
 Deno.serve(async (req) => {
   const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
   try {
@@ -352,6 +387,7 @@ Deno.serve(async (req) => {
     if (acao === "rotina") return json(await rodada());
     if (acao === "rotina_maceio") return json(await rodadaMaceio());
     if (acao === "espiar_zip") return json(await espiarZip(String(corpo.arquivo || "")));
+    if (acao === "rotina_zip") return json(await rodadaZip());
     if (acao === "medir_zip") return json(await medirZip(String(corpo.arquivo || ""), Number(corpo.de) || 0, Number(corpo.ate) || 0));
     return json({ ok: false, mensagem: "Ação inválida." }, 400);
   } catch (e) {
