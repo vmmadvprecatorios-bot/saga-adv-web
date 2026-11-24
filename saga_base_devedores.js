@@ -1,5 +1,5 @@
 /* =====================================================================
-   SAGA · Teses e oportunidades > Devedores (Dívida Ativa da União, PGFN; blocos 445, 447 e 448)
+   SAGA · Teses e oportunidades > Devedores/PGFN (Dívida Ativa da União, PGFN; blocos 445, 447 e 448)
    Um registro por devedor (soma das inscrições): quanto deve, quanto está em execução fiscal,
    já negociado/parcelado, em negociação, parcelamento rescindido, protesto, garantia, suspenso.
    Tese: transação tributária. Base trimestral da PGFN (CPF mascarado na origem; CNPJ inteiro).
@@ -15,8 +15,8 @@
   function papel(l){var p=[];if(l.principal)p.push('principal');if(l.corresponsavel)p.push('corresponsável');if(l.solidario)p.push('solidário');return p.join(', ');}
   function tipo(l){return l.tipo_pessoa==='pj'?'Empresa':'Pessoa física';}
   var cfg={
-    id:'bpDev',pane:'aba-devedores',botao:'abaDevedores',base:'devedores',titulo:'Devedores da União (PGFN)',arquivo:'devedores-pgfn',
-    subtituloPdf:'PGFN Dados Abertos',tituloLista:'Devedores',palavra:['devedor','devedores'],
+    id:'bpDev',pane:'aba-devedores',botao:'abaDevedores',base:'devedores',titulo:'Devedores/PGFN (Dívida Ativa da União)',arquivo:'devedores-pgfn',
+    subtituloPdf:'PGFN Dados Abertos',tituloLista:'Devedores/PGFN',palavra:['devedor','devedores'],
     rpcPainel:'pgfn_painel',rpcListar:'pgfn_listar',rpcCruzar:'pgfn_cruzar',
     filtroInicial:{uf:'AL'},
     textoCruzar:function(d){return u.num(d.certos)+' clientes certos (nome + 6 dígitos do CPF), '+u.num(d.a_conferir)+' a conferir (só o nome), '+u.num(d.empresas)+' empresas pelo CNPJ';},
