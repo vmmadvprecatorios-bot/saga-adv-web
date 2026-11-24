@@ -106,13 +106,14 @@
     if(reduzido()){ j.style.transition = 'none'; j.firstChild.style.transition = 'none'; }
     j.addEventListener('click', clique);
     j.addEventListener('keydown', function(e){
+      if(e.key === 'Enter' && e.target.id === 'bpNumBusca'){ S.n.busca = e.target.value; S.n.pagina = 1; carregarNumeros(); return; }
       if(e.key === 'Enter' && e.target.id === 'bpBuscaTxt'){ S.busca = e.target.value; S.pagina = 1; carregar(); }
       if(e.key === 'Enter' && e.target.matches('.bp-nao input')){ var c = e.target.closest('[data-achado]'); decidir(c.getAttribute('data-achado'), 'nao_e', e.target.value, c); }
     });
     document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && j.classList.contains('aberto')) fechar(); });
     return j;
   }
-  function abrir(){ var j = janela(); requestAnimationFrame(function(){ j.classList.add('aberto'); }); carregar(); }
+  function abrir(aba){ if(aba) S.aba = aba; var j = janela(); requestAnimationFrame(function(){ j.classList.add('aberto'); }); if(S.aba === 'numeros') carregarNumeros(); else carregar(); }
   function fechar(){ var j = $('bpJanela'); if(j) j.classList.remove('aberto'); contar(); if(NA_FICHA) desenharFicha(); }
 
   function clique(e){
@@ -121,7 +122,8 @@
     var b = e.target.closest('[data-bp]'); if(!b) return;
     var a = b.getAttribute('data-bp'), card = b.closest('[data-achado]'), id = card && card.getAttribute('data-achado');
     if(a === 'fechar'){ fechar(); return; }
-    if(a === 'aba'){ S.aba = b.getAttribute('data-v'); carregar(); return; }
+    if(a === 'aba'){ S.aba = b.getAttribute('data-v'); if(S.aba === 'numeros') carregarNumeros(); else carregar(); return; }
+    if(a.indexOf('num_') === 0){ cliqueNumeros(a, b); return; }
     if(a === 'filtro'){ S.filtro = b.getAttribute('data-v'); S.pagina = 1; carregar(); return; }
     if(a === 'buscar'){ var t = $('bpBuscaTxt'); S.busca = t ? t.value : ''; S.pagina = 1; carregar(); return; }
     if(a === 'pag'){ S.pagina = Math.max(1, S.pagina + (+b.getAttribute('data-v'))); carregar(); return; }
@@ -192,7 +194,8 @@
   function desenhar(){
     var c = $('bpCorpo'), d = S.dados || {}, k = d.contagem || {};
     var h = '<div class="bp-abas"><button class="bp-btn' + (S.aba === 'conferir' ? ' active' : '') + '" type="button" data-bp="aba" data-v="conferir">Conferir achados<b>' + (k.pendentes || 0) + '</b></button>'
-      + '<button class="bp-btn' + (S.aba === 'comparar' ? ' active' : '') + '" type="button" data-bp="aba" data-v="comparar">Comparar com o Escavador</button></div>';
+      + '<button class="bp-btn' + (S.aba === 'comparar' ? ' active' : '') + '" type="button" data-bp="aba" data-v="comparar">Comparar com o Escavador</button>'
+      + '<button class="bp-btn' + (S.aba === 'numeros' ? ' active' : '') + '" type="button" data-bp="aba" data-v="numeros" title="Tenho o número do precatório ou processo: quem é a parte?">Número → parte</button></div>';
     h += htmlRobo(d);
     if(S.aba === 'comparar'){ c.innerHTML = h + htmlComparar(d); return; }
     h += '<div class="bp-filtros">' + [['pendentes', 'Para conferir', k.pendentes], ['seguro', 'Seguros', k.seguro], ['conferir', 'A conferir', k.conferir], ['decididos', 'Já conferidos', k.decididos]].concat(k.individuais ? [['individuais', 'Nome comum: individuais', k.individuais]] : []).map(function(f){
@@ -209,6 +212,112 @@
   }
   var PAG = null;
   function pag(){ if(!PAG) PAG = SagaPaginacao.criar({ tela: 'processos-achados', rotulo: 'achados', aoMudar: function(P){ S.pagina = P.pagina; carregar(); } }); return PAG; }
+
+  /* ---------------- NÚMERO → PARTE (24/11, Dr. Victor; blocos 455 e 456) ----------------
+     Cola os números (CNJ do precatório/processo ou PRC123456-AL do TRF5); o robô procura o credor: TRF5 pelo Portal de
+     Precatórios (certeza alta), DJEN do CNJ pelo número (e pelo processo de origem). TRF1 bloqueia robôs: "Abrir no TRF1"
+     no navegador da pessoa (o número vai copiado) e colar o nome do credor aqui (tela de apoio; nada é contornado). */
+  S.n = { filtro: '', lote: '', busca: '', pagina: 1, limite: 30, msg: '' };
+  var CERT = { certo: ['Certo', 'seguro'], provavel: ['Provável', 'conferir'], conferir: ['Conferir (vários)', 'conferir'], nada: ['Nada achado', 'decidido'] };
+  var SIT_N = { na_fila: 'na fila', buscando: 'buscando', feito: 'buscado', erro: 'com erro', sem_fonte: 'TRF1: abrir no navegador', manual: 'gravado à mão' };
+  async function carregarNumeros(){
+    var c = $('bpCorpo'); if(!c) return;
+    var f = S.n.filtro, p = { pagina: S.n.pagina, limite: S.n.limite, lote: S.n.lote || null, busca: S.n.busca || null };
+    if(['na_fila', 'sem_fonte', 'erro', 'manual'].indexOf(f) >= 0) p.situacao = f; else if(f) p.certeza = f;
+    try{
+      var r = await sb().rpc('busca_proc_partes_painel', { p: p });
+      if(r.error) throw r.error;
+      S.nd = r.data || {}; S.pode = S.nd.pode || S.pode;
+      desenharNumeros();
+    }catch(e){
+      c.innerHTML = '<div class="bp-abas"><button class="bp-btn" type="button" data-bp="aba" data-v="conferir">Conferir achados</button><button class="bp-btn active" type="button" data-bp="aba" data-v="numeros">Número → parte</button></div>'
+        + (e && e.code === 'PGRST202' ? '<div class="bp-vazio">O "número → parte" ainda está sendo instalado no banco (bloco 455, previsto para hoje às 19h). Volte depois.</div>'
+           : '<div class="bp-msg">Não consegui ler a lista "número → parte": ' + esc(erroTxt(e)) + '. <button class="bp-btn" type="button" data-bp="num_recarregar">Tentar de novo</button></div>');
+    }
+  }
+  function desenharNumeros(){
+    var c = $('bpCorpo'), d = S.nd || {}, k = d.contagem || {}, lista = d.lista || [], total = d.total || 0;
+    if(lista.length > S.n.limite) lista = lista.slice(0, S.n.limite);
+    var h = '<div class="bp-abas"><button class="bp-btn" type="button" data-bp="aba" data-v="conferir">Conferir achados</button>'
+      + '<button class="bp-btn" type="button" data-bp="aba" data-v="comparar">Comparar com o Escavador</button>'
+      + '<button class="bp-btn active" type="button" data-bp="aba" data-v="numeros">Número → parte</button></div>';
+    if(S.dados) h += htmlRobo(S.dados);
+    h += '<div class="bp-form"><label for="bpNumTxt">Cole os números (um por linha): número CNJ do precatório ou do processo, ou PRC/RPV do TRF5 (ex.: PRC224409-AL)</label>'
+      + '<textarea id="bpNumTxt" rows="4" placeholder="0249559-91.2022.4.05.0000&#10;PRC224409-AL&#10;0005492-19.2024.4.01.9198"></textarea>'
+      + '<label for="bpNumLote">De onde vieram (opcional, ex.: LOA 2027)</label><input type="text" id="bpNumLote" maxlength="60" value="' + esc(S.n.loteNovo || '') + '">'
+      + '<div><button class="bp-btn principal" type="button" data-bp="num_pedir">Pôr na fila</button> <span class="bp-sub">TRF5: credor pelo Portal de Precatórios (certeza alta). TRF3, TRF4, TRF2 e TRF6: pelas publicações do CNJ. TRF1: o tribunal bloqueia robôs; abra no navegador e cole o nome.</span></div>'
+      + (S.n.msg ? '<div class="bp-sub" style="margin-top:4px">' + esc(S.n.msg) + '</div>' : '') + '</div>';
+    h += '<div class="bp-filtros">' + [['', 'Todos', k.total], ['na_fila', 'Na fila', k.na_fila], ['sem_fonte', 'TRF1: abrir no navegador', k.sem_fonte], ['certo', 'Certos', k.certo], ['provavel', 'Prováveis', k.provavel],
+      ['conferir', 'Conferir (vários)', k.conferir], ['nada', 'Nada achado', k.nada], ['erro', 'Com erro', k.erro]].map(function(f){
+      return '<button class="bp-btn' + (S.n.filtro === f[0] ? ' active' : '') + '" type="button" data-bp="num_filtro" data-v="' + f[0] + '">' + f[1] + '<b>' + (f[2] || 0) + '</b></button>';
+    }).join('') + '</div>';
+    h += '<div class="bp-busca">' + ((d.lotes || []).length ? '<select id="bpNumLoteF" data-bp-lote aria-label="Lote"><option value="">Todos os lotes</option>' + d.lotes.map(function(l){ return '<option value="' + esc(l) + '"' + (S.n.lote === l ? ' selected' : '') + '>' + esc(l) + '</option>'; }).join('') + '</select>' : '')
+      + '<input id="bpNumBusca" type="search" placeholder="Buscar por número ou nome do credor" value="' + esc(S.n.busca) + '" aria-label="Buscar"><button class="bp-btn" type="button" data-bp="num_buscar">Buscar</button></div>';
+    h += '<div class="bp-lista">' + (lista.map(htmlNumero).join('') || '<div class="bp-vazio">Nenhum número nesta lista.</div>') + '</div>';
+    var paginas = Math.max(1, Math.ceil(total / S.n.limite));
+    if(paginas > 1) h += '<div class="bp-pag"><button class="bp-btn" type="button" data-bp="num_pag" data-v="-1"' + (S.n.pagina > 1 ? '' : ' disabled') + '>‹ Anteriores</button><span>Página ' + S.n.pagina + ' de ' + paginas + ' · ' + total.toLocaleString('pt-BR') + ' números</span><button class="bp-btn" type="button" data-bp="num_pag" data-v="1"' + (S.n.pagina < paginas ? '' : ' disabled') + '>Próximos ›</button></div>';
+    c.innerHTML = h;
+    var sel = $('bpNumLoteF'); if(sel) sel.onchange = function(){ S.n.lote = sel.value; S.n.pagina = 1; carregarNumeros(); };
+  }
+  function htmlNumero(n){
+    var cert = n.certeza && CERT[n.certeza], num = n.numero_fmt || n.numero;
+    var autores = (n.partes || []).filter(function(x){ return x.polo === 'A'; }).map(function(x){ return x.nome; }).filter(function(v, i, a){ return a.indexOf(v) === i; });
+    var link = urlOk(n.link);
+    var h = '<div class="bp-card ' + (n.certeza === 'certo' ? 'seguro' : (n.certeza === 'provavel' || n.certeza === 'conferir' || n.situacao === 'sem_fonte') ? 'conferir' : '') + '" data-numero="' + esc(n.id) + '"><div class="bp-topo">'
+      + (cert ? '<span class="bp-selo ' + cert[1] + '">' + cert[0] + '</span>' : '<span class="bp-selo decidido">' + esc(SIT_N[n.situacao] || n.situacao) + '</span>')
+      + '<span class="bp-num">' + esc(num) + '</span>' + (n.numero_cnj ? trib(n.numero_cnj) : '') + '<span class="bp-cod">' + esc(n.tribunal || '') + (n.lote ? ' · ' + esc(n.lote) : '') + '</span></div>';
+    if(n.credor) h += '<div style="margin-top:4px">Credor: <b>' + esc(n.credor) + '</b>' + (n.ficha ? ' · <a href="' + esc(FICHA + '?pessoa_id=' + encodeURIComponent(n.ficha)) + '">já tem ficha no SAGA ↗</a>' : '') + '</div>';
+    if(autores.length > 1) h += '<details class="bp-info"><summary style="cursor:pointer">' + autores.length + ' nomes no polo ativo (ação coletiva: confira qual é o credor deste número)</summary>' + autores.slice(0, 200).map(esc).join(' · ') + '</details>';
+    var info = [n.devedor ? 'Devedor: ' + n.devedor : '', n.orgao, n.assunto, n.origem ? 'Origem: ' + n.origem : '', n.fonte ? 'Fonte: ' + ({ trf5_num: 'Portal de Precatórios TRF5', djen_num: 'DJEN (CNJ) pelo número', djen_origem: 'DJEN (CNJ) pelo processo de origem', manual: 'gravado à mão' }[n.fonte] || n.fonte) : '',
+      n.ultima_busca_em ? 'consultado em ' + dataHora(n.ultima_busca_em) : ''].filter(Boolean).map(esc).join(' · ');
+    if(info) h += '<div class="bp-info">' + info + '</div>';
+    if(n.trecho) h += '<div class="bp-trecho">' + esc(n.trecho) + '</div>';
+    if(link) h += '<div class="bp-info"><a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Ver na fonte ↗</a></div>';
+    if(n.manual_obs) h += '<div class="bp-info">Obs.: ' + esc(n.manual_obs) + '</div>';
+    if(n.erro && n.situacao !== 'sem_fonte') h += '<div class="bp-erro ' + (n.situacao === 'erro' ? 'vermelho' : '') + '">' + esc(n.erro) + (n.situacao === 'erro' ? ' (parou depois de 3 tentativas)' : n.proxima_em ? ' (nova tentativa em ' + dataHora(n.proxima_em) + ')' : '') + '</div>';
+    if(n.situacao === 'sem_fonte') h += '<div class="bp-alerta">O TRF1 bloqueia robôs. Clique no ícone do tribunal ao lado do número (abre a consulta no seu navegador e copia o número), veja o credor e cole o nome abaixo.</div>'
+      + '<div class="bp-dec"><button class="bp-btn" type="button" data-bp="num_copiar" data-v="' + esc(num) + '">Copiar número</button></div>';
+    if(S.pode.editar && (n.situacao === 'sem_fonte' || n.certeza !== 'certo')){
+      h += '<div class="bp-nao aberto"><input type="text" maxlength="200" placeholder="Nome completo do credor" aria-label="Nome do credor">'
+        + '<input type="text" maxlength="300" placeholder="Observação (opcional)" aria-label="Observação" style="flex:1 1 160px">'
+        + '<button class="bp-btn principal" type="button" data-bp="num_manual">Gravar credor</button><button class="bp-btn" type="button" data-bp="num_nada">Não achei</button></div>';
+    }
+    return h + '</div>';
+  }
+  async function cliqueNumeros(a, b){
+    if(a === 'num_recarregar'){ carregarNumeros(); return; }
+    if(a === 'num_copiar'){ var v = b.getAttribute('data-v'); try{ await navigator.clipboard.writeText(v); toast('Número copiado: ' + v, 'success'); }catch(e){ toast('Não consegui copiar (' + erroTxt(e) + '): selecione o número e copie.', 'warning'); } return; }
+    if(a === 'num_filtro'){ S.n.filtro = b.getAttribute('data-v'); S.n.pagina = 1; carregarNumeros(); return; }
+    if(a === 'num_buscar'){ var t = $('bpNumBusca'); S.n.busca = t ? t.value : ''; S.n.pagina = 1; carregarNumeros(); return; }
+    if(a === 'num_pag'){ S.n.pagina = Math.max(1, S.n.pagina + (+b.getAttribute('data-v'))); carregarNumeros(); return; }
+    if(S.ocupado) return;
+    if(a === 'num_pedir'){
+      var linhas = ($('bpNumTxt').value || '').split(/[\r\n;,]+/).map(function(x){ return x.trim(); }).filter(Boolean), lote = ($('bpNumLote').value || '').trim();
+      if(!linhas.length){ toast('Cole pelo menos um número.', 'warning'); return; }
+      if(linhas.length > 5000){ toast('No máximo 5.000 números por vez.', 'warning'); return; }
+      S.ocupado = true; b.disabled = true; S.n.loteNovo = lote;
+      try{
+        var r = await sb().rpc('busca_proc_parte_pedir', { p_numeros: linhas, p_lote: lote || null });
+        if(r.error) throw r.error;
+        var d = r.data || {}, inv = d.invalidos || [];
+        S.n.msg = d.novos + ' número(s) novo(s) na fila, ' + d.ja_estavam + ' já estavam' + (inv.length ? '; ' + inv.length + ' não reconhecido(s): ' + inv.slice(0, 5).join(', ') + (inv.length > 5 ? '…' : '') : '')
+          + (d.robo_ligado ? '.' : '. O robô está DESLIGADO: busca quando o administrador ligar (das 22h às 6h).');
+        toast(S.n.msg, inv.length ? 'warning' : 'success');
+      }catch(e){ toast('Não pôs na fila: ' + erroTxt(e), 'error'); }
+      S.ocupado = false; carregarNumeros(); return;
+    }
+    if(a === 'num_manual' || a === 'num_nada'){
+      var card = b.closest('[data-numero]'), ins = card.querySelectorAll('.bp-nao input'), nome = ins[0].value.trim(), obs = ins[1].value.trim();
+      if(a === 'num_manual' && nome.length < 5){ toast('Escreva o nome completo do credor.', 'warning'); return; }
+      S.ocupado = true; card.querySelectorAll('button').forEach(function(x){ x.disabled = true; });
+      try{
+        var r2 = await sb().rpc('busca_proc_parte_manual', { p_id: card.getAttribute('data-numero'), p_credor: a === 'num_nada' ? null : nome, p_obs: obs || null, p_nada: a === 'num_nada' });
+        if(r2.error) throw r2.error;
+        toast(a === 'num_nada' ? 'Marcado como "não achei".' : 'Credor gravado.', 'success');
+      }catch(e){ toast('Não gravou: ' + erroTxt(e), 'error'); }
+      S.ocupado = false; carregarNumeros(); return;
+    }
+  }
 
   function htmlAchado(a){
     var pend = a.decisao === 'pendente';
@@ -329,9 +438,9 @@
     var ref = $('btnNovoProcesso'); if(!ref || $('bpBotao')) return;
     css();
     ref.insertAdjacentHTML('beforebegin', '<button class="btn-secondary" type="button" id="bpBotao" hidden title="Números de processo achados pelo robô no DJEN do CNJ e no Portal de Precatórios do TRF5, esperando a sua conferência">Processos achados<span class="bp-qtd">…</span></button>');
-    $('bpBotao').addEventListener('click', abrir);
+    $('bpBotao').addEventListener('click', function(){ abrir(); });
     contar();
-    if(/[?&]busca_processos=1/.test(location.search)) abrir();
+    var qa = /[?&]busca_processos=([a-z0-9]+)/.exec(location.search); if(qa) abrir(qa[1] === 'numeros' ? 'numeros' : null);
   }
 
   /* ---------------- quadro na ficha ---------------- */
