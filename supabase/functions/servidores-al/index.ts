@@ -249,6 +249,60 @@ async function espiarZip(arquivo: string) {
   return { ok: true, arquivo, tamanho, arquivos_no_zip: nomes.slice(0, 5), separador: sep, colunas: cols, exemplos };
 }
 
+// ---------- MEDIR um zip anual do Estado (só leitura): linhas por mês, ordem dos meses, formato do CPF, tempo ----------
+// Usa o descompactador nativo (DecompressionStream deflate-raw) depois do cabeçalho local do zip.
+async function abrirZipTexto(arquivo: string): Promise<{ leitor: ReadableStreamDefaultReader<string>; tamanho: string | null; nome: string }> {
+  if (!/^folha_(ativo|inativo)-\d{4}\.zip$/.test(arquivo)) throw new Error("Arquivo inválido.");
+  const r = await fetch(`${BASE}/media/arquivo/${arquivo}`, { headers: { "User-Agent": "SAGA-ADV (leitura de dados publicos)" }, signal: AbortSignal.timeout(140_000) });
+  if (!r.ok || !r.body) throw new Error(`erro ${r.status} ao baixar ${arquivo}`);
+  const bruto = r.body.getReader();
+  let buf = new Uint8Array(0);
+  while (buf.length < 30) { const { value, done } = await bruto.read(); if (done) throw new Error("zip vazio"); buf = juntar(buf, value); }
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  if (dv.getUint32(0, true) !== 0x04034b50) throw new Error("não é um zip");
+  const metodo = dv.getUint16(8, true), flag = dv.getUint16(6, true);
+  const nl = dv.getUint16(26, true), xl = dv.getUint16(28, true);
+  while (buf.length < 30 + nl + xl) { const { value, done } = await bruto.read(); if (done) throw new Error("zip cortado"); buf = juntar(buf, value); }
+  const nome = new TextDecoder().decode(buf.slice(30, 30 + nl));
+  if (metodo !== 8) throw new Error(`zip com método ${metodo} (esperado deflate)`);
+  const resto = buf.slice(30 + nl + xl);
+  const fonte = new ReadableStream<Uint8Array>({
+    start(c) { if (resto.length) c.enqueue(resto); },
+    async pull(c) { const { value, done } = await bruto.read(); if (done) c.close(); else c.enqueue(value); },
+    cancel() { bruto.cancel().catch(() => {}); },
+  });
+  void flag;
+  const leitor = fonte.pipeThrough(new DecompressionStream("deflate-raw")).pipeThrough(new TextDecoderStream("latin1")).getReader();
+  return { leitor, tamanho: r.headers.get("content-length"), nome };
+}
+function juntar(a: Uint8Array, b: Uint8Array) { const c = new Uint8Array(a.length + b.length); c.set(a); c.set(b, a.length); return c; }
+
+async function medirZip(arquivo: string) {
+  const t0 = Date.now();
+  const { leitor, tamanho, nome } = await abrirZipTexto(arquivo);
+  let resto = ""; let cab = ""; const porMes: Record<string, number> = {}; const ordem: string[] = []; const cpfs: Record<string, number> = {};
+  let linhas = 0; let iMes = -1; let iCpf = -1; let mudancas = 0; let ultimo = "";
+  try {
+    for (;;) {
+      const { value, done } = await leitor.read();
+      const pedaco = resto + (value || "");
+      const partes = pedaco.split("\n");
+      resto = done ? "" : (partes.pop() || "");
+      for (const l of partes) {
+        if (!l) continue;
+        if (!cab) { cab = l.replace(/\r$/, ""); const c = cab.split("|"); iMes = c.indexOf("ANO_MES"); iCpf = c.indexOf("CPF"); continue; }
+        const c = l.split("|"); const m = c[iMes] || "?"; linhas++;
+        porMes[m] = (porMes[m] || 0) + 1;
+        if (m !== ultimo) { mudancas++; if (!ordem.includes(m)) ordem.push(m); ultimo = m; }
+        if (linhas % 5000 === 1) { const f = (c[iCpf] || "").replace(/\d/g, "9"); cpfs[f] = (cpfs[f] || 0) + 1; }
+      }
+      if (done) break;
+    }
+  } finally { try { await leitor.cancel(); } catch (_e) { /* ok */ } }
+  return { ok: true, arquivo, nome, tamanho, colunas: cab.split("|"), linhas, por_mes: porMes, ordem_dos_meses: ordem,
+    trocas_de_mes: mudancas, formatos_cpf: cpfs, segundos: (Date.now() - t0) / 1000 };
+}
+
 Deno.serve(async (req) => {
   const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
   try {
@@ -260,6 +314,7 @@ Deno.serve(async (req) => {
     if (acao === "rotina") return json(await rodada());
     if (acao === "rotina_maceio") return json(await rodadaMaceio());
     if (acao === "espiar_zip") return json(await espiarZip(String(corpo.arquivo || "")));
+    if (acao === "medir_zip") return json(await medirZip(String(corpo.arquivo || "")));
     return json({ ok: false, mensagem: "Ação inválida." }, 400);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
