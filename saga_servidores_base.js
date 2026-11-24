@@ -12,7 +12,7 @@
 (function(global){
   'use strict';
   var B={montado:false,painel:null,parte:'geral',
-    f:{texto:'',situacao:'',fonte:'',clientes:false,de:'',ate:'',uf:'',orgao:'',pagina:1},
+    f:{texto:'',situacao:'',fonte:'',clientes:false,de:'',ate:'',uf:'',orgao:'',esfera:'',ente:'',pagina:1},entes:null,v423:null,
     lista:null,conf:null,pedido:0};
   var LIM=50,MAX_CSV=20000;
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
@@ -186,17 +186,38 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
 
   /* ---------- Pessoas ---------- */
   function irPessoas(filtro){
-    B.f={texto:'',situacao:filtro.situacao||'',fonte:filtro.fonte||'',clientes:!!filtro.clientes,de:'',ate:'',uf:'',orgao:'',pagina:1};
+    B.f={texto:'',situacao:filtro.situacao||'',fonte:filtro.fonte||'',clientes:!!filtro.clientes,de:'',ate:'',uf:filtro.uf||'',orgao:'',esfera:filtro.esfera||'',ente:filtro.ente||'',pagina:1};
     trocarParte('pessoas');
   }
   function opcoes(obj,atual,vazio){return '<option value="">'+esc(vazio)+'</option>'+Object.keys(obj).map(function(k){return '<option value="'+esc(k)+'"'+(k===atual?' selected':'')+'>'+esc(obj[k])+'</option>';}).join('');}
+
+  /* ---------- UF e esfera/ente (bloco 423) ---------- */
+  var UFS=['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+  var ESFERA={federal:'Federal',estadual:'Estadual',municipal:'Municipal'};
+  var UFORIG={historico_ativo:'pelo tempo de ativo',instituidor:'pela UF de quem deixou a pensão',orgao:'pelo órgão',listagem:'pela listagem',ficha:'pela ficha',manual:'à mão'};
+  function htmlUfs(at){
+    return '<option value="">Toda UF</option>'+(B.v423===false?'':'<option value="SEM"'+(at==='SEM'?' selected':'')+'>Sem UF</option>')+
+      UFS.map(function(u){return '<option'+(u===at?' selected':'')+'>'+u+'</option>';}).join('');
+  }
+  function htmlEntes(esf,at){
+    var l=(B.entes||[{esfera:'federal',ente:'União'}]).filter(function(e){return !esf||e.esfera===esf;});
+    return '<option value="">Todo ente</option>'+l.map(function(e){return '<option value="'+esc(e.ente)+'"'+(e.ente===at?' selected':'')+'>'+esc(e.ente)+' ('+esc(ESFERA[e.esfera]||e.esfera)+')</option>';}).join('');
+  }
+  async function carregarEntes(){
+    if(B.v423!==null){return;}
+    var r=await sb().rpc('base_entes');
+    if(r.error){B.v423=false;var u=$('buUf');if(u){var v=u.value;u.innerHTML=htmlUfs(v==='SEM'?'':v);}return;}
+    B.v423=true;B.entes=r.data||[];var e=$('buEnte');if(e)e.innerHTML=htmlEntes($('buEsfera').value,B.f.ente);
+  }
   function partePessoas(c){
     var F=B.f;
     c.innerHTML='<div class="bu-bloco"><div class="bu-filtros">'+
       '<input type="search" class="bu-busca" id="buTexto" placeholder="Nome, CPF (11 dígitos), 6 dígitos do meio ou CNPJ" value="'+esc(F.texto)+'" aria-label="Buscar pessoa">'+
       '<select id="buSit" aria-label="Situação">'+opcoes(SIT,F.situacao,'Toda situação')+'</select>'+
       '<select id="buFonte" aria-label="Fonte">'+opcoes(FONTE,F.fonte,'Toda fonte')+'</select>'+
-      '<input type="text" id="buUf" placeholder="UF" maxlength="2" style="width:64px;min-width:0" value="'+esc(F.uf)+'" aria-label="UF">'+
+      '<select id="buUf" aria-label="UF">'+htmlUfs(F.uf)+'</select>'+
+      '<select id="buEsfera" aria-label="Esfera">'+opcoes(ESFERA,F.esfera,'Toda esfera')+'</select>'+
+      '<select id="buEnte" aria-label="Ente da Federação">'+htmlEntes(F.esfera,F.ente)+'</select>'+
       '<input type="text" id="buOrgao" placeholder="Órgão (parte do nome)" value="'+esc(F.orgao)+'" aria-label="Órgão">'+
       '<input type="text" class="bu-mes" id="buDe" inputmode="numeric" placeholder="faleceu de mm/aaaa" value="'+esc(F.de)+'" aria-label="Faleceu a partir de">'+
       '<input type="text" class="bu-mes" id="buAte" inputmode="numeric" placeholder="até mm/aaaa" value="'+esc(F.ate)+'" aria-label="Faleceu até">'+
@@ -205,25 +226,30 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
       '<div id="buLista"><div class="bu-vazio">Carregando…</div></div></div>';
     ['buDe','buAte'].forEach(function(id){$(id).addEventListener('input',function(e){e.target.value=mesMascara(e.target.value);});});
     var tm=null;function mudou(){clearTimeout(tm);tm=setTimeout(function(){lerFiltros();B.f.pagina=1;carregarLista();},350);}
-    ['buTexto','buOrgao','buUf','buDe','buAte'].forEach(function(id){$(id).addEventListener('input',mudou);});
-    ['buSit','buFonte','buCli'].forEach(function(id){$(id).addEventListener('change',mudou);});
+    ['buTexto','buOrgao','buDe','buAte'].forEach(function(id){$(id).addEventListener('input',mudou);});
+    ['buSit','buFonte','buCli','buUf','buEnte'].forEach(function(id){$(id).addEventListener('change',mudou);});
+    $('buEsfera').addEventListener('change',function(){var e=$('buEnte');e.innerHTML=htmlEntes(this.value,'');mudou();});
+    carregarEntes();
     $('buLimpar').onclick=function(){irPessoas({});};
     $('buCsv').onclick=exportarCsv;
     carregarLista();
   }
   function lerFiltros(){
-    var F=B.f;F.texto=$('buTexto').value.trim();F.situacao=$('buSit').value;F.fonte=$('buFonte').value;F.uf=$('buUf').value.trim().toUpperCase();
+    var F=B.f;F.texto=$('buTexto').value.trim();F.situacao=$('buSit').value;F.fonte=$('buFonte').value;F.uf=$('buUf').value;F.esfera=$('buEsfera').value;F.ente=$('buEnte').value;
     F.orgao=$('buOrgao').value.trim();F.de=$('buDe').value;F.ate=$('buAte').value;F.clientes=$('buCli').checked;
   }
   function params(F,lim,pag){
-    return {p_texto:F.texto||null,p_situacao:F.situacao||null,p_fonte:F.fonte||null,p_so_clientes:!!F.clientes,
+    var o={p_texto:F.texto||null,p_situacao:F.situacao||null,p_fonte:F.fonte||null,p_so_clientes:!!F.clientes,
       p_falecido_de:mesNum(F.de),p_falecido_ate:mesNum(F.ate),p_uf:F.uf||null,p_orgao:F.orgao||null,p_limite:lim,p_offset:(pag-1)*lim};
+    if(F.esfera)o.p_esfera=F.esfera;if(F.ente)o.p_ente=F.ente;
+    return o;
   }
   async function carregarLista(){
     var box=$('buLista');if(!box)return;var F=B.f,meu=++B.pedido;box.classList.add('bu-carregando');
     if((F.de&&!mesNum(F.de))||(F.ate&&!mesNum(F.ate))){box.classList.remove('bu-carregando');box.innerHTML='<div class="bu-aviso amar">Mês inválido: use mm/aaaa (ex.: 03/2025).</div>';return;}
     var r=await sb().rpc('base_buscar',params(F,LIM,F.pagina));
     if(meu!==B.pedido)return;box.classList.remove('bu-carregando');
+    if(r.error&&(F.esfera||F.ente)&&(r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||''))){box.innerHTML='<div class="bu-aviso amar">O filtro por esfera e ente ainda não está no banco (chega com o bloco 423). Tire a esfera e o ente para buscar.</div>';return;}
     if(r.error){box.innerHTML='<div class="bu-aviso verm">Não deu para buscar: '+erro(r.error)+'</div>';return;}
     var d=r.data||{},ls=d.linhas||[];B.lista=d;
     if(!ls.length){box.innerHTML='<div class="bu-vazio">Ninguém com esses filtros.</div>';return;}
@@ -231,7 +257,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
     box.innerHTML='<div class="bu-rolagem"><table class="bu-tab"><thead><tr><th>Pessoa</th><th>Etiquetas</th><th>Órgão</th><th>Faleceu</th></tr></thead><tbody>'+
       ls.map(function(l){
         return '<tr><td><button type="button" class="bu-nome" data-pessoa="'+(+l.id)+'">'+esc(l.nome||'(sem nome na fonte)')+'</button>'+
-          '<span class="bu-sub">'+esc(l.doc||'sem CPF')+(l.uf?' · '+esc(l.uf):'')+'</span></td>'+
+          '<span class="bu-sub">'+esc(l.doc||'sem CPF')+(l.uf?' · '+esc(l.uf)+(UFORIG[l.uf_origem]?' ('+UFORIG[l.uf_origem]+')':''):' · sem UF')+'</span></td>'+
           '<td data-r="Etiquetas">'+htmlSelos(l.selos)+'</td><td data-r="Órgão">'+esc(l.orgao||'—')+'</td>'+
           '<td data-r="Faleceu" class="n">'+(l.falecido_mes?esc(mesTxt(l.falecido_mes)):'—')+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
@@ -249,7 +275,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
       var pula=0,linhas=[['Nome','CPF (mascarado)','Situação','Etiquetas','Órgão','UF','Faleceu (mês)','Cliente do SAGA']];
       ls.forEach(function(l){
         if((l.selos||[]).some(function(s){return s.acao==='nao_enviar';})){pula++;return;}
-        linhas.push([l.nome||'',l.doc||'',SIT[l.situacao]||l.situacao,(l.selos||[]).map(function(s){return s.nome;}).join(' | '),l.orgao||'',l.uf||'',l.falecido_mes?mesTxt(l.falecido_mes):'',l.ficha_id?'sim':'não']);
+        linhas.push([l.nome||'',l.doc||'',SIT[l.situacao]||l.situacao,(l.selos||[]).map(function(s){return s.nome;}).join(' | '),l.orgao||'',(l.uf||'')+(UFORIG[l.uf_origem]?' ('+UFORIG[l.uf_origem]+')':''),l.falecido_mes?mesTxt(l.falecido_mes):'',l.ficha_id?'sim':'não']);
       });
       var csv='﻿'+linhas.map(function(r){return r.map(function(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}).join(';');}).join('\r\n');
       var reg=await sb().rpc('base_registrar',{p_resumo:'Base única: exportou CSV ('+(linhas.length-1)+' pessoas; '+pula+' puladas por "Não enviar mais")',p_depois:{filtros:params(F,MAX_CSV,1),linhas:linhas.length-1,puladas:pula}});
