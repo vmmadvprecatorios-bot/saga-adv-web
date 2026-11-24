@@ -94,7 +94,27 @@
       '<div class="pl-rolagem" style="margin-top:12px"><table class="pl-tab"><thead><tr><th>LOA</th><th>Precatórios no orçamento</th></tr></thead><tbody>'+
       Object.keys(anos).sort().reverse().map(function(a){return '<tr><td data-r="LOA"><a href="#" data-ano="'+esc(a)+'">'+esc(a)+'</a></td><td class="n" data-r="Precatórios">'+num(anos[a])+'</td></tr>';}).join('')+
       '</tbody></table></div>'+
-      '<div class="pl-aviso" style="margin-top:12px"><b>Distribuídos:</b> '+num(d.total)+' · '+Object.keys(SIT).map(function(k){return esc(SIT[k])+' '+num((d.por_situacao||{})[k]);}).join(' · ')+'</div>';
+      '<div class="pl-aviso" style="margin-top:12px"><b>Distribuídos:</b> '+num(d.total)+' · '+Object.keys(SIT).map(function(k){return esc(SIT[k])+' '+num((d.por_situacao||{})[k]);}).join(' · ')+'</div>'+
+      '<div id="plRobo" style="margin-top:12px"><div class="pl-aviso">Conferindo o robô do TRF5…</div></div>';
+  }
+  /* ---------- robô do TRF5 (credor e saque): erros sempre à vista ---------- */
+  var SAQUE={sacado:'sacados (alvará no DJEN)',nao_sacado:'sem alvará no DJEN (indício)',cancelado:'cancelados',nao_sabido:'sem informação do saque'};
+  async function carregarRobo(){
+    var box=$('plRobo');if(!box)return;
+    var r=await sb().rpc('loa_robo_situacao');
+    if(r.error){box.innerHTML='<div class="pl-aviso amar"><b>Robô do TRF5 (credor e saque):</b> ainda não está no banco ('+erro(r.error)+'). Chega com o bloco do robô.</div>';return;}
+    var d=r.data||{},c=d.config||{},ps=d.por_situacao||{},sq=d.saque||{},er=d.erros||[];
+    var pend=(ps['trf5_cp:a_enviar']||0)+(ps['djen_orig:a_enviar']||0),env=(ps['trf5_cp:enviado']||0)+(ps['djen_orig:enviado']||0);
+    var cls=d.erro_vermelho>0?' pl-erro':(d.erro_amarelo>0||c.pausa_ate?' amar':'');
+    box.innerHTML='<div class="pl-aviso'+cls+'"><b>Robô do TRF5 (credor e saque):</b> '+(c.ativo?'ligado, só das 22h às 6h':'desligado')+
+      (c.pausa_ate&&new Date(c.pausa_ate)>new Date()?' · <b>em pausa</b> até '+esc(new Date(c.pausa_ate).toLocaleTimeString('pt-BR',{timeZone:'America/Maceio',hour:'2-digit',minute:'2-digit'}))+' ('+esc(c.pausa_motivo||'')+')':'')+
+      ' · na fila '+num(pend)+' · esperando resposta '+num(env)+' · consultados '+num((ps['trf5_cp:ok']||0))+
+      '<br>Saque (TRF5): '+Object.keys(SAQUE).map(function(k){return esc(SAQUE[k])+' '+num(sq[k]);}).join(' · ')+
+      (er.length?'<br><b>Erros:</b> '+er.slice(0,5).map(function(e){return esc(e.precatorio||'')+': '+esc(e.erro||'');}).join(' · ')+(d.erro_vermelho?' ('+num(d.erro_vermelho)+' sem nova tentativa)':' (o robô tenta de novo)'):'')+
+      '<div class="pl-mini" style="margin-top:6px"><button type="button" class="btn btn-sec" id="plRoboLiga">'+(c.ativo?'Desligar o robô':'Ligar o robô')+'</button>'+
+      '<button type="button" class="btn btn-sec" id="plRoboFila">Pôr 500 na fila (servidor público de AL primeiro)</button></div></div>';
+    $('plRoboLiga').onclick=async function(){var x=await sb().rpc('loa_robo_config',{p_ativo:!c.ativo,p_por_vez:null});if(x.error)aviso('Não deu para mudar o robô: '+erro(x.error),'erro');carregarRobo();};
+    $('plRoboFila').onclick=async function(){var x=await sb().rpc('loa_robo_fila',{p_quantos:500,p_filtros:{}});if(x.error)aviso('Não deu para pôr na fila: '+erro(x.error),'erro');else aviso(num(x.data)+' precatório(s) do TRF5 na fila do robô.','ok');carregarRobo();};
   }
 
   /* ---------- lista ---------- */
@@ -140,6 +160,7 @@
     if(l.idoso)c+='<span class="pl-chip ok">Idoso</span>';
     if(l.natureza)c+='<span class="pl-chip">'+(l.natureza==='alimentar'?'Alimentar':'Comum')+'</span>';
     if(l.pago_em)c+='<span class="pl-chip">depósito '+esc(data(l.pago_em))+'</span>';
+    if(l.saque==='sacado')c+='<span class="pl-chip">sacado</span>';else if(l.saque==='nao_sacado')c+='<span class="pl-chip alerta">sem alvará no DJEN</span>';else if(l.saque==='cancelado')c+='<span class="pl-chip risco">cancelado</span>';
     if(l.habilitacao)c+='<span class="pl-chip '+(l.habilitacao==='provavel'?'risco':'alerta')+'">'+esc(HAB[l.habilitacao])+'</span>';
     if(l.distribuido)c+='<span class="pl-chip">'+esc(l.distribuido.usuario)+' · '+esc(SIT[l.distribuido.situacao]||'')+'</span>';
     return c;
@@ -277,7 +298,7 @@
       c.querySelectorAll('[data-f]').forEach(function(b){b.onclick=function(){L.f=JSON.parse(b.dataset.f);irLista();};});
       c.querySelectorAll('[data-grupo]').forEach(function(a){a.onclick=function(e){e.preventDefault();L.f={grupo:a.dataset.grupo};irLista();};});
       c.querySelectorAll('[data-ano]').forEach(function(a){a.onclick=function(e){e.preventDefault();L.f={ano:a.dataset.ano};irLista();};});
-      return;}
+      carregarRobo();return;}
     if(L.parte==='lote'){c.innerHTML='<div id="plLote"></div>';carregarLote();return;}
     if(L.parte==='habilitacao')c.innerHTML='<div class="pl-aviso amar"><b>Habilitação provável:</b> credor que a Base única dá como falecido ANTES do pagamento (herdeiros a habilitar). "A conferir" = só o nome bate, sem CPF para confirmar. Confira sempre antes de qualquer contato.</div>';
     else c.innerHTML='';
