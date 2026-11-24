@@ -19,7 +19,7 @@
     subtituloPdf:'PGFN Dados Abertos',tituloLista:'Devedores/PGFN',palavra:['devedor','devedores'],
     rpcPainel:'pgfn_painel',rpcListar:'pgfn_listar',rpcCruzar:'pgfn_cruzar',
     filtroInicial:{uf:'AL'},
-    notaDestaque:'Base do BRASIL todo: Alagoas inteira e, nas outras UFs, quem deve R$ 100 mil ou mais. Abre em Alagoas; "Brasil todo" mostra todas. Número na faixa de valor = quantos há na base inteira.',
+    notaDestaque:'Base do BRASIL todo: Alagoas inteira e, nas outras UFs, quem deve R$ 100 mil ou mais. Abre em Alagoas; "Brasil todo" mostra todas. Número na faixa de valor = quantos há na base inteira. A PGFN não traz a cidade: a cidade das empresas vem em breve, pelo cadastro do CNPJ.',
     textoCruzar:function(d){return u.num(d.certos)+' clientes certos (nome + 6 dígitos do CPF), '+u.num(d.a_conferir)+' a conferir (só o nome), '+u.num(d.empresas)+' empresas pelo CNPJ';},
     numeros:function(p){var n=p.por_negocio||{};function q(k){return (n[k]||{}).n||0;}
       return [

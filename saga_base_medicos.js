@@ -16,8 +16,9 @@
   var cfg={
     id:'bpMed',pane:'aba-medicos',botao:'abaMedicos',base:'medicos',titulo:'Médicos (CNES)',arquivo:'medicos-cnes',
     subtituloPdf:'CNES do Ministério da Saúde',tituloLista:'Médicos',palavra:['médico','médicos'],
-    rpcPainel:'medicos_painel',rpcListar:'medicos_listar',rpcCruzar:'medicos_cruzar',
+    rpcPainel:'medicos_painel',rpcPainelFiltro:'medicos_painel_filtro',rpcListar:'medicos_listar',rpcCruzar:'medicos_cruzar',
     filtroInicial:{uf:'AL'},
+    notaDestaque:'Base: médicos que tiveram vínculo em ALAGOAS desde 2020, com TODOS os vínculos deles no Brasil. Escolher outra UF (ex.: DF) mostra esses médicos de Alagoas que também tiveram vínculo lá, não todos os médicos daquela UF.',
     textoCruzar:function(d){return u.num(d.a_conferir)+' médicos com o mesmo nome de uma ficha (a conferir: o CNES não traz CPF)';},
     numeros:function(p){return [
       {t:'Médicos na base',v:u.num(p.total),sub:'CNES '+u.comp(p.primeira_comp)+' a '+u.comp(p.ultima_comp)},
@@ -31,6 +32,7 @@
     filtros:[
       {k:'busca',tipo:'busca',principal:true,label:'Nome ou CRM'},
       {k:'uf',tipo:'select',principal:true,label:'UF',curto:'UF',opcoes:UFS.map(function(x){return [x,x||'Todas as UFs'];})},
+      {k:'municipios',tipo:'cidades',principal:true,label:'Cidades',depende:'uf',rpc:'medicos_cidades'},
       {k:'min_contrib',tipo:'select',principal:true,label:'Vínculos com contribuição',curto:'Vínculos',opcoes:[['','Qualquer nº de vínculos'],['2','2 ou mais agora'],['3','3 ou mais agora']]},
       {k:'categoria',tipo:'select',principal:true,label:'Tipo de vínculo',curto:'Vínculo',opcoes:[['','Qualquer tipo de vínculo']].concat(Object.keys(CAT).map(function(k){return [k,CAT[k]];}))},
       {k:'cliente',tipo:'select',label:'No SAGA',curto:'No SAGA',opcoes:[['','Clientes ou não'],['nao','Sem ficha'],['conferir','Mesmo nome de uma ficha']]},
