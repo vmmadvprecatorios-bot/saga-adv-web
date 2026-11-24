@@ -219,7 +219,7 @@
      no navegador da pessoa (o número vai copiado) e colar o nome do credor aqui (tela de apoio; nada é contornado). */
   S.n = { filtro: '', lote: '', busca: '', pagina: 1, limite: 30, msg: '' };
   var CERT = { certo: ['Certo', 'seguro'], provavel: ['Provável', 'conferir'], conferir: ['Conferir (vários)', 'conferir'], nada: ['Nada achado', 'decidido'] };
-  var SIT_N = { na_fila: 'na fila', buscando: 'buscando', feito: 'buscado', erro: 'com erro', sem_fonte: 'TRF1: abrir no navegador', manual: 'gravado à mão' };
+  var SIT_N = { na_fila: 'na fila', buscando: 'buscando', feito: 'buscado', erro: 'com erro', sem_fonte: 'abrir no navegador', manual: 'gravado à mão' };
   async function carregarNumeros(){
     var c = $('bpCorpo'); if(!c) return;
     var f = S.n.filtro, p = { pagina: S.n.pagina, limite: S.n.limite, lote: S.n.lote || null, busca: S.n.busca || null };
@@ -247,7 +247,7 @@
       + '<label for="bpNumLote">De onde vieram (opcional, ex.: LOA 2027)</label><input type="text" id="bpNumLote" maxlength="60" value="' + esc(S.n.loteNovo || '') + '">'
       + '<div><button class="bp-btn principal" type="button" data-bp="num_pedir">Pôr na fila</button> <span class="bp-sub">TRF5: credor pelo Portal de Precatórios (certeza alta). TRF3, TRF4, TRF2 e TRF6: pelas publicações do CNJ. TRF1: o tribunal bloqueia robôs; abra no navegador e cole o nome.</span></div>'
       + (S.n.msg ? '<div class="bp-sub" style="margin-top:4px">' + esc(S.n.msg) + '</div>' : '') + '</div>';
-    h += '<div class="bp-filtros">' + [['', 'Todos', k.total], ['na_fila', 'Na fila', k.na_fila], ['sem_fonte', 'TRF1: abrir no navegador', k.sem_fonte], ['certo', 'Certos', k.certo], ['provavel', 'Prováveis', k.provavel],
+    h += '<div class="bp-filtros">' + [['', 'Todos', k.total], ['na_fila', 'Na fila', k.na_fila], ['sem_fonte', 'Abrir no navegador (TRF1 e outros)', k.sem_fonte], ['certo', 'Certos', k.certo], ['provavel', 'Prováveis', k.provavel],
       ['conferir', 'Conferir (vários)', k.conferir], ['nada', 'Nada achado', k.nada], ['erro', 'Com erro', k.erro]].map(function(f){
       return '<button class="bp-btn' + (S.n.filtro === f[0] ? ' active' : '') + '" type="button" data-bp="num_filtro" data-v="' + f[0] + '">' + f[1] + '<b>' + (f[2] || 0) + '</b></button>';
     }).join('') + '</div>';
@@ -275,7 +275,7 @@
     if(link) h += '<div class="bp-info"><a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Ver na fonte ↗</a></div>';
     if(n.manual_obs) h += '<div class="bp-info">Obs.: ' + esc(n.manual_obs) + '</div>';
     if(n.erro && n.situacao !== 'sem_fonte') h += '<div class="bp-erro ' + (n.situacao === 'erro' ? 'vermelho' : '') + '">' + esc(n.erro) + (n.situacao === 'erro' ? ' (parou depois de 3 tentativas)' : n.proxima_em ? ' (nova tentativa em ' + dataHora(n.proxima_em) + ')' : '') + '</div>';
-    if(n.situacao === 'sem_fonte') h += '<div class="bp-alerta">O TRF1 bloqueia robôs. Clique no ícone do tribunal ao lado do número (abre a consulta no seu navegador e copia o número), veja o credor e cole o nome abaixo.</div>'
+    if(n.situacao === 'sem_fonte') h += '<div class="bp-alerta">' + esc(n.erro || 'Sem fonte pública para o robô.') + ' Clique no ícone do tribunal ao lado do número (abre a consulta no seu navegador e copia o número), veja o credor e cole o nome abaixo.</div>'
       + '<div class="bp-dec"><button class="bp-btn" type="button" data-bp="num_copiar" data-v="' + esc(num) + '">Copiar número</button></div>';
     if(S.pode.editar && (n.situacao === 'sem_fonte' || n.certeza !== 'certo')){
       h += '<div class="bp-nao aberto"><input type="text" maxlength="200" placeholder="Nome completo do credor" aria-label="Nome do credor">'
