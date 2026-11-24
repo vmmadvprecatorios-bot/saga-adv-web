@@ -17,7 +17,7 @@
   var LIM=50,MAX_CSV=20000,MAX_PDF=1000;
   // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js). A página continua em f.pagina; o tamanho fica na escolha da pessoa.
   var PAGS={};
-  function pagDe(chave,aoMudar){if(!PAGS[chave])PAGS[chave]=SagaPaginacao.criar({tela:'mapa-'+chave,rotulo:chave==='fal'?'fichas':chave==='ab'?'servidores':'eventos',aoMudar:aoMudar});return PAGS[chave];}
+  function pagDe(chave,aoMudar){if(!PAGS[chave])PAGS[chave]=SagaPaginacao.criar({tela:'mapa-'+chave,rotulo:chave==='fal'?'fichas':chave==='ab'?'servidores':chave==='ai'?'aposentados':'eventos',aoMudar:aoMudar});return PAGS[chave];}
   function rolarTopo(){var a=$('aba-mapa');if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});}
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
   var EVT={aposentou:'Aposentou',faleceu:'Faleceu e deixou pensão',pensao_nova:'Pensão nova',perdeu_aposentadoria:'Saiu dos aposentados sem pensão',
@@ -147,6 +147,146 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(typeof global.trocarAba==='function')global.trocarAba('prateleira');
     setTimeout(function(){if(typeof global.abrirPasta==='function')global.abrirPasta(id);},parado()?0:230);
   }
+  /* ---------- IR e aposentadoria por invalidez/incapacidade (24/11, bloco 427) ---------- */
+  // Dr. Victor (24/11, LGPD aprovado): dentro do SAGA pode tratar estes dados públicos para achar quem
+  // pode ter direito à ISENÇÃO DE IR; nada sai do sistema. Texto sempre neutro (nunca fala de doença),
+  // só o administrador geral, cada CSV/PDF vai para o Registro de atividades.
+  var NEUTRO='Possível isenção de IR a conferir com o cliente';
+  function estadoAposIr(){return {uf:'',orgao:'',busca:'',cliente:'',sit:'',tipo:'',meses:24,apos_de:'',apos_ate:'',ordem:'recente',pagina:1,dados:null,pedido:0};}
+  function paramsAposIr(A,extra){
+    var p={uf:A.uf,orgao:A.orgao,busca:A.busca,cliente:A.cliente,apos_ir:A.sit||'qualquer',apos_tipo:A.tipo,ir_meses:A.meses,
+      apos_de:A.apos_de,apos_ate:A.apos_ate,ordem:A.ordem==='nome'?'nome':'',pagina:A.pagina,limite:LIM};
+    return Object.assign(p,extra||{});
+  }
+  var TIPO_AP={invalidez:'Aposentadoria por invalidez',incapacidade:'Aposentadoria por incapacidade'};
+  function descricaoAposIr(A){
+    var p=[];if(A.uf)p.push('UF '+A.uf);if(A.orgao){var o=(((M.painel||{}).orgaos)||[]).find(function(x){return x.cod===A.orgao;});p.push('órgão: '+(o?o.nome:A.orgao));}
+    if(A.busca)p.push('busca: '+A.busca);if(A.cliente)p.push(A.cliente==='sim'?'clientes do SAGA':'não clientes');
+    p.push({'':'ainda paga IR ou IR parou',paga:'ainda paga IR',parou:'IR parou nos últimos '+A.meses+' meses'}[A.sit]);
+    if(A.tipo)p.push(TIPO_AP[A.tipo].toLowerCase());
+    if(A.apos_de||A.apos_ate)p.push('aposentou '+(A.apos_de&&A.apos_ate?'de '+A.apos_de+' a '+A.apos_ate:A.apos_de?'a partir de '+A.apos_de:'até '+A.apos_ate));
+    return p.join(' · ');
+  }
+  function parteAposIr(c){
+    if(!M.ai)M.ai=estadoAposIr();var A=M.ai;
+    function sel(id,lab,ops,at){return '<select id="'+id+'" aria-label="'+esc(lab)+'">'+ops.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(at)?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';}
+    function ano(id,lab,v){return '<input id="'+id+'" type="text" inputmode="numeric" maxlength="4" placeholder="'+esc(lab)+'" value="'+esc(v)+'" aria-label="'+esc(lab)+'" style="width:9em">';}
+    c.innerHTML='<div class="ms-aviso"><b>IR e aposentadoria.</b> Servidores federais do Mapa aposentados <b>por invalidez ou por incapacidade</b> que <b>ainda pagam IR</b> (possível isenção não pedida) ou cujo <b>IR parou</b> nos últimos meses (possível restituição dos 5 anos antes do pedido). '+
+        'Fonte: Portal da Transparência (tipo de aposentadoria e IR do mês); os meses em que o IR parou para a folha inteira ficam de fora. <b>'+NEUTRO+'</b>: a lista não diz o motivo e nada aqui é diagnóstico. Só o administrador vê; nada sai do SAGA além das exportações registradas.</div>'+
+      '<div class="ms-filtros">'+
+        '<input class="ms-busca" id="aiBusca" type="search" autocomplete="off" placeholder="Nome ou 6 dígitos do CPF" value="'+esc(A.busca)+'" aria-label="Buscar">'+
+        sel('aiSit','Situação do IR',[['','Ainda paga IR ou IR parou'],['paga','Ainda paga IR'],['parou','IR parou']],A.sit)+
+        sel('aiMeses','Parou em',[[12,'IR parou nos últimos 12 meses'],[24,'IR parou nos últimos 24 meses'],[36,'IR parou nos últimos 36 meses'],[60,'IR parou nos últimos 60 meses']],A.meses)+
+        sel('aiTipo','Tipo de aposentadoria',[['','Invalidez e incapacidade'],['invalidez','Só invalidez'],['incapacidade','Só incapacidade']],A.tipo)+
+        '<select id="aiUf" aria-label="UF">'+opcoesUf(A.uf)+'</select>'+
+        '<select id="aiOrgao" aria-label="Órgão">'+opcoesOrgao(A.orgao)+'</select>'+
+        sel('aiCli','Cliente',[['','Cliente do SAGA ou não'],['sim','Só clientes do SAGA'],['nao','Só quem não é cliente']],A.cliente)+
+        ano('aiDe','Aposentou de (ano)',A.apos_de)+ano('aiAte','Aposentou até (ano)',A.apos_ate)+
+        sel('aiOrdem','Ordem',[['recente','IR que parou mais recente primeiro'],['nome','Ordem do nome']],A.ordem)+
+        '<button class="btn" type="button" id="aiLimpar">Limpar filtros</button></div>'+
+      '<p class="ms-sub" style="margin:-4px 0 10px">Aposentados não têm UF no Portal: Alagoas aparece pelo órgão (UFAL e IFAL) e fica menor que o real.</p>'+
+      '<div id="aiNums"></div>'+
+      '<div class="ms-pag" style="justify-content:flex-start;margin:0 0 8px"><span id="aiTotal"></span><span class="ms-acoes"><button class="btn" type="button" id="aiCsv">Exportar para a Captação (CSV)</button><button class="btn" type="button" id="aiPdf">PDF</button></span></div>'+
+      '<div id="aiLista"><div class="ms-vazio">Carregando…</div></div>';
+    var tm=null;function mudou(){A.pagina=1;clearTimeout(tm);tm=setTimeout(carregarAposIr,350);}
+    function soAno(el,k){el.oninput=function(){this.value=this.value.replace(/\D/g,'').slice(0,4);var v=this.value;if(!v||v.length===4){A[k]=v;mudou();}};}
+    $('aiBusca').oninput=function(){A.busca=this.value.trim();mudou();};
+    $('aiSit').onchange=function(){A.sit=this.value;mudou();};
+    $('aiMeses').onchange=function(){A.meses=+this.value;mudou();};
+    $('aiTipo').onchange=function(){A.tipo=this.value;mudou();};
+    $('aiUf').onchange=function(){A.uf=this.value;mudou();};
+    $('aiOrgao').onchange=function(){A.orgao=this.value;mudou();};
+    $('aiCli').onchange=function(){A.cliente=this.value;mudou();};
+    $('aiOrdem').onchange=function(){A.ordem=this.value;mudou();};
+    soAno($('aiDe'),'apos_de');soAno($('aiAte'),'apos_ate');
+    $('aiLimpar').onclick=function(){M.ai=estadoAposIr();parteAposIr(c);};
+    $('aiCsv').onclick=function(){exportarAposIr(this);};
+    $('aiPdf').onclick=function(){pdfAposIr(this);};
+    $('aiNums').onclick=function(e){var b=e.target.closest('[data-ai]');if(!b)return;var k=b.dataset.ai;
+      if(k==='todos'){A.sit='';A.tipo='';A.cliente='';}else if(k==='paga'||k==='parou')A.sit=A.sit===k?'':k;
+      else if(k==='cli')A.cliente=A.cliente==='sim'?'':'sim';else A.tipo=A.tipo===k?'':k;
+      A.pagina=1;parteAposIr(c);};
+    carregarAposIr();
+  }
+  function htmlNumsAposIr(r,A,n){
+    r=r||{};function bt(k,v,t,sub,on){return '<button type="button" class="ms-num'+(on?' ms-num-on':'')+'" data-ai="'+k+'"><b>'+v+'</b><span>'+t+'</span>'+(sub?'<small>'+sub+'</small>':'')+'</button>';}
+    return '<div class="ms-nums">'+bt('todos',num((+r.paga||0)+(+r.parou||0)),'aposentados na lista','possível isenção a conferir',false)+
+      bt('paga',num(r.paga),'ainda pagam IR','isenção não pedida?',A.sit==='paga')+
+      bt('parou',num(r.parou),'IR parou','nos últimos '+n+' meses',A.sit==='parou')+
+      bt('invalidez',num(r.invalidez),'por invalidez','',A.tipo==='invalidez')+
+      bt('incapacidade',num(r.incapacidade),'por incapacidade','',A.tipo==='incapacidade')+
+      bt('cli',num(r.clientes),'já são clientes do SAGA','',A.cliente==='sim')+'</div>';
+  }
+  async function carregarAposIr(){
+    var A=M.ai,box=$('aiLista');if(!box)return;var meu=++A.pedido;box.classList.add('ms-carregando');
+    var P=pagDe('ai',function(P){A.pagina=P.pagina;carregarAposIr();rolarTopo();});P.pagina=A.pagina||1;
+    var extra={};
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('siape_apos_ir_listar',{p:paramsAposIr(A,{pagina:Math.floor(off/lim)+1,limite:lim})}).then(function(x){if(x.error)return x;extra=x.data||{};return {linhas:extra.linhas,total:extra.total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:500,progresso:function(a,t){if(meu===A.pedido&&t>500)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
+    if(meu!==A.pedido)return;box.classList.remove('ms-carregando');
+    if(r.error){
+      var falta=r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||'');
+      box.innerHTML=falta?'<div class="ms-aviso amar"><b>Esta lista ainda não está no banco:</b> chega com o bloco 427.</div>':'<div class="ms-aviso verm">Não deu para buscar a lista: '+erro(r.error)+'</div>';
+      $('aiTotal').textContent='';$('aiNums').innerHTML='';return;
+    }
+    A.dados=Object.assign({},extra,{total:r.total,linhas:r.linhas});P.total(r.total);A.pagina=P.pagina;
+    $('aiNums').innerHTML=htmlNumsAposIr(extra.resumo,A,extra.ir_meses||A.meses);
+    $('aiTotal').innerHTML=num(r.total)+' aposentados'+(extra.ultimo_mes?' · <span class="ms-sub" style="display:inline">IR do Portal até '+esc(mesTxt(extra.ultimo_mes))+'</span>':'');
+    desenharAposIr();
+  }
+  function situacaoIr(l){
+    return l.paga?'<b>Ainda paga IR</b>'+(l.rem_irrf?' '+esc(reais(l.rem_irrf))+'<span class="ms-sub">em '+esc(mesTxt(l.rem_mes))+'</span>':'')
+      :(l.parou_mes?'<b>IR parou</b> em '+esc(mesTxt(l.parou_mes))+'<span class="ms-sub">e continua sem IR</span>':'—');
+  }
+  function desenharAposIr(){
+    var A=M.ai,box=$('aiLista'),ls=(A.dados||{}).linhas||[];
+    if(!ls.length){box.innerHTML='<div class="ms-vazio">Nenhum aposentado com esses filtros.</div>';return;}
+    box.innerHTML='<div class="ms-rolagem"><table class="ms-tab"><thead><tr><th>Aposentado no Portal</th><th>Aposentadoria</th><th>IR</th><th>No SAGA</th></tr></thead><tbody>'+
+      ls.map(function(l){var cli=(l.clientes||[]).length;
+        return '<tr'+(cli?' class="ms-destaque"':'')+'><td data-r="Aposentado"><b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+'</td>'+
+          '<td data-r="Aposentadoria">'+esc(TIPO_AP[l.tipo]||'')+(l.aposentadoria?'<span class="ms-sub">desde '+esc(dataBR(l.aposentadoria))+'</span>':'')+'</td>'+
+          '<td data-r="IR">'+situacaoIr(l)+'<span class="ms-sub">'+esc(NEUTRO)+'</span></td>'+
+          '<td data-r="No SAGA">'+(cli?l.clientes.map(function(k){return '<a href="'+FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'">'+esc(k.codigo||'Ficha')+'</a>';}).join(' '):'<span class="ms-sub">Não é cliente</span>')+'</td></tr>';
+      }).join('')+'</tbody></table></div>'+PAGS.ai.html();
+    PAGS.ai.ligar(box);
+  }
+  async function linhasAposIrTodas(limite){
+    var r=await sb().rpc('siape_apos_ir_listar',{p:paramsAposIr(M.ai,{pagina:1,limite:limite})});
+    if(r.error)throw r.error;return r.data||{};
+  }
+  async function exportarAposIr(b){
+    var txt=b.textContent;b.disabled=true;b.textContent='Exportando…';
+    try{
+      var d=await linhasAposIrTodas(MAX_CSV),ls=d.linhas||[];
+      if(!ls.length){aviso('Nada para exportar com esses filtros.','amar');return;}
+      function c(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
+      var linhas=[['Nome no Portal','CPF (mascarado)','Órgão','UF','Cargo','Tipo de aposentadoria','Aposentou em','Situação do IR','IR do último mês','Mês','IR parou em','Observação','Cliente do SAGA'].map(c).join(';')];
+      ls.forEach(function(l){linhas.push([l.nome,cpfMask(l.cpf6),l.orgao||'',l.uf||'',l.cargo||'',TIPO_AP[l.tipo]||'',dataBR(l.aposentadoria),l.paga?'ainda paga IR':(l.parou_mes?'IR parou':''),
+        l.paga?l.rem_irrf:'',mesTxt(l.rem_mes),l.parou_mes?mesTxt(l.parou_mes):'',NEUTRO,(l.clientes||[]).map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
+      var blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
+      var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ir-aposentadoria.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+      if(d.total>ls.length)aviso('Saíram os '+num(ls.length)+' primeiros de '+num(d.total)+' (limite do arquivo). Filtre mais para pegar o resto.','amar');
+      var x=await sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: exportou CSV de IR e aposentadoria ('+ls.length+' linhas; '+descricaoAposIr(M.ai)+')',p_acao:'consultou',p_depois:{filtros:paramsAposIr(M.ai,{pagina:1,limite:MAX_CSV}),linhas:ls.length}});
+      if(x.error)aviso('O arquivo saiu, mas o registro da exportação falhou: '+erro(x.error),'erro');
+    }catch(e){aviso('Não deu para exportar: '+erro(e),'erro');}
+    finally{b.disabled=false;b.textContent=txt;}
+  }
+  async function pdfAposIr(b){
+    b.disabled=true;
+    try{
+      await carregar('saga_pdf.js','SagaPdf');
+      var d=await linhasAposIrTodas(MAX_PDF),ls=d.linhas||[],rs=d.resumo||{};
+      if(!ls.length){aviso('Nada para pôr no PDF com esses filtros.','amar');return;}
+      var h='<div class="kpis"><div class="forte"><span>Aposentados</span><b>'+num(d.total)+'</b></div><div><span>Ainda pagam IR</span><b>'+num(rs.paga)+'</b></div><div><span>IR parou</span><b>'+num(rs.parou)+'</b></div><div><span>Já são clientes</span><b>'+num(rs.clientes)+'</b></div></div>'+
+        '<div class="obs">'+esc(descricaoAposIr(M.ai))+'. '+esc(NEUTRO)+'. Fonte: Portal da Transparência (tipo de aposentadoria e IR do mês). CPF mascarado pelo próprio Portal. Documento interno do escritório.</div>'+
+        '<table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Órgão · cargo</th><th>Aposentadoria</th><th>IR</th></tr></thead><tbody>'+
+        ls.map(function(l){return '<tr><td>'+esc(l.nome)+'</td><td class="num">'+esc(cpfMask(l.cpf6))+'</td><td>'+esc((l.orgao||'')+(l.cargo?' · '+l.cargo:''))+'</td><td>'+esc((TIPO_AP[l.tipo]||'')+(l.aposentadoria?' · '+dataBR(l.aposentadoria):''))+'</td><td>'+(l.paga?'ainda paga ('+esc(mesTxt(l.rem_mes))+')':'parou em '+esc(mesTxt(l.parou_mes)))+'</td></tr>';}).join('')+'</tbody></table>';
+      SagaPdf.imprimir({titulo:'IR e aposentadoria',subtitulo:'Mapa dos servidores · '+num(d.total)+' aposentados · '+NEUTRO.toLowerCase(),arquivo:'ir-aposentadoria',paisagem:true,paginas:[h]});
+      sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: gerou PDF de IR e aposentadoria ('+ls.length+' linhas; '+descricaoAposIr(M.ai)+')',p_acao:'consultou'}).then(function(x){if(x.error)aviso('O PDF saiu, mas o registro falhou: '+erro(x.error),'erro');});
+    }catch(e){aviso('Não deu para montar o PDF: '+erro(e),'erro');}
+    finally{b.disabled=false;}
+  }
+
   function editarPublico(id){
     if(typeof global.trocarAba==='function')global.trocarAba('prateleira');
     setTimeout(function(){if(typeof global.formPublico==='function')global.formPublico(id);},parado()?0:230);
@@ -156,7 +296,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   function htmlPartes(){
     var c=(M.painel&&M.painel.conferencia)||{};
     var bt=function(k,t){return '<button class="pill'+(M.parte===k?' active':'')+'" type="button" data-parte="'+k+'">'+t+'</button>';};
-    return bt('geral','Visão geral')+bt('eventos','Eventos')+bt('clientes','Clientes do SAGA')+bt('falecidos','Prováveis falecidos'+(c.sem?' ('+num(c.sem)+' a conferir)':''))+bt('abono','Abono e Tema 1.233')+bt('carga','Carga e LGPD');
+    return bt('geral','Visão geral')+bt('eventos','Eventos')+bt('clientes','Clientes do SAGA')+bt('falecidos','Prováveis falecidos'+(c.sem?' ('+num(c.sem)+' a conferir)':''))+bt('abono','Abono e Tema 1.233')+bt('aposir','IR e aposentadoria')+bt('carga','Carga e LGPD');
   }
   function htmlPreparo(){
     var p=M.painel||{};
@@ -190,6 +330,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     else if(M.parte==='clientes')parteClientes(c);
     else if(M.parte==='falecidos')parteFalecidos(c);
     else if(M.parte==='abono')parteAbono(c);
+    else if(M.parte==='aposir')parteAposIr(c);
     else parteCarga(c);
   }
 
@@ -418,7 +559,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   function estadoCli(){var d=new Date();d.setMonth(d.getMonth()-24);return estadoLista('cli',{cliente:'sim',eventos:CLI_EVT.slice(),de:+(d.getFullYear()+String(d.getMonth()+1).padStart(2,'0'))});}
   async function parteClientes(c){
     if(!M.cli)M.cli=estadoCli();
-    var cab='<div class="ms-bloco"><h3>Clientes do SAGA com evento no Portal</h3><p class="sub">Fichas do SAGA achadas no Portal com certeza (nome completo + 6 dígitos do CPF) que tiveram um evento. Faleceu e deixou pensão = habilitação dos herdeiros; aposentou = abono de permanência, Tema 1.233, férias e licença-prêmio; PSS ou IR que parou = conferir (IR só informativo). Sem os meses em massa.</p><div class="ms-nums" id="cliNums" style="margin-bottom:0"><div class="ms-vazio">Carregando…</div></div></div>';
+    var cab='<div class="ms-bloco"><h3>Clientes do SAGA com evento no Portal</h3><p class="sub">Fichas do SAGA achadas no Portal com certeza (nome completo + 6 dígitos do CPF) que tiveram um evento. Faleceu e deixou pensão = habilitação dos herdeiros; aposentou = abono de permanência, Tema 1.233, férias e licença-prêmio; PSS ou IR que parou = conferir (aposentado por invalidez ou incapacidade: parte "IR e aposentadoria"). Sem os meses em massa.</p><div class="ms-nums" id="cliNums" style="margin-bottom:0"><div class="ms-vazio">Carregando…</div></div></div>';
     parteLista(c,M.cli,cab);
     var r=await sb().rpc('siape_mapa_clientes_resumo',{p_meses:12});var box=$('cliNums');if(!box)return;
     if(r.error){box.innerHTML='<div class="ms-aviso verm">Não deu para contar: '+erro(r.error)+'</div>';return;}
@@ -556,12 +697,15 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   /* ---------- Abono de permanência e Tema 1.233 (24/11, blocos 425 e 426) ---------- */
   // Abono provável = "Outras remunerações eventuais" igual ao PSS do mês no Portal. Tema 1.233 do STJ (Dr. Victor):
   // o abono integra a base do 13º e do 1/3 de férias. Tudo ESTIMATIVA a conferir; só servidores ATIVOS do Mapa.
-  function estadoAbono(){return {uf:'AL',orgao:'',cargo:'',busca:'',cliente:'',abono:'',ferias_sem:false,d13_sem:false,ordem:'valor',
+  // 24/11 (bloco 428, Dr. Victor): o alvo é quem recebe o abono, pelos MAIORES SALÁRIOS (o reflexo no 1/3 e no 13º ninguém recebe: tema novo)
+  var FAIXAS_SAL={ate10:['','10000','até R$ 10 mil'],de10a20:['10000','20000','R$ 10 a 20 mil'],de20a30:['20000','30000','R$ 20 a 30 mil'],acima30:['30000','','acima de R$ 30 mil']};
+  function estadoAbono(){return {uf:'AL',orgao:'',cargo:'',busca:'',cliente:'',abono:'',faixa:'',ferias_sem:false,d13_sem:false,ordem:'salario',
     datas:SD()?SD().vazio():{},pagina:1,dados:null,pedido:0};}
   function reais(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
   function paramsAbono(A,extra){
     var p={uf:A.uf,orgao:A.orgao,cargo:A.cargo,busca:A.busca,cliente:A.cliente,abono:A.abono,ordem:A.ordem,pagina:A.pagina,limite:LIM};
     if(A.ferias_sem)p.ferias_sem=true;if(A.d13_sem)p.d13_sem=true;
+    if(A.faixa&&FAIXAS_SAL[A.faixa]){if(FAIXAS_SAL[A.faixa][0])p.bruto_min=FAIXAS_SAL[A.faixa][0];if(FAIXAS_SAL[A.faixa][1])p.bruto_max=FAIXAS_SAL[A.faixa][1];}
     if(SD()&&SD().qtd(A.datas))Object.assign(p,SD().params(A.datas,true));
     return Object.assign(p,extra||{});
   }
@@ -570,6 +714,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(A.cargo)p.push('cargo: '+A.cargo);if(A.busca)p.push('busca: '+A.busca);if(A.cliente)p.push(A.cliente==='sim'?'clientes do SAGA':'não clientes');
     if(A.abono)p.push({recebe:'recebe abono',nao:'não recebe abono',poderia:'poderia aposentar (35+ anos) e não recebe abono'}[A.abono]);
     if(A.ferias_sem)p.push('1/3 de férias sem o abono');if(A.d13_sem)p.push('13º sem o abono');
+    if(A.faixa&&FAIXAS_SAL[A.faixa])p.push('salário '+FAIXAS_SAL[A.faixa][2]);if(A.ordem==='salario')p.push('maiores salários primeiro');
     if(SD())p=p.concat(SD().descricao(A.datas));
     return p.join(' · ')||'Sem filtro';
   }
@@ -578,6 +723,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     function sel(id,lab,ops,at){return '<select id="'+id+'" aria-label="'+esc(lab)+'">'+ops.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===at?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';}
     c.innerHTML='<div class="ms-aviso"><b>Abono de permanência e Tema 1.233 (STJ).</b> O Portal não tem coluna "abono": ele vem em <b>"Outras remunerações eventuais"</b>, no mesmo valor do PSS do mês (abono provável). '+
         'Aqui aparece, por servidor ativo, se recebe o abono e se o <b>13º</b> e o <b>1/3 de férias</b> foram pagos sem ele nos últimos 5 anos, com a diferença <b>estimada</b>. '+
+        '<b>O alvo é quem recebe o abono, pelos maiores salários</b>: como o tema é novo, ninguém recebe o reflexo no 1/3 de férias e no 13º sem ação judicial; a conta abaixo é só informativa. '+
         '"Poderia aposentar" usa só os anos de serviço público (o Portal não traz idade, sexo nem tempo fora do serviço público). <b>Tudo estimativa a conferir</b> no contracheque e na certidão de tempo.</div>'+
       '<div class="ms-filtros">'+
         '<input class="ms-busca" id="abBusca" type="search" autocomplete="off" placeholder="Nome ou 6 dígitos do CPF" value="'+esc(A.busca)+'" aria-label="Buscar">'+
@@ -585,10 +731,11 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
         '<select id="abOrgao" aria-label="Órgão">'+opcoesOrgao(A.orgao)+'</select>'+
         '<input id="abCargo" type="search" autocomplete="off" placeholder="Cargo (pedaço)" value="'+esc(A.cargo)+'" aria-label="Cargo">'+
         sel('abAbono','Abono',[['','Recebendo abono ou não'],['recebe','Recebe abono'],['nao','Não recebe abono'],['poderia','Poderia aposentar (35+ anos) e não recebe']],A.abono)+
+        sel('abFaixa','Salário',[['','Qualquer salário']].concat(Object.keys(FAIXAS_SAL).map(function(k){return [k,'Salário '+FAIXAS_SAL[k][2]];})),A.faixa)+
         sel('abCli','Cliente',[['','Cliente do SAGA ou não'],['sim','Só clientes do SAGA'],['nao','Só quem não é cliente']],A.cliente)+
         '<label class="ms-chk"><input type="checkbox" id="abFerias"'+(A.ferias_sem?' checked':'')+'> 1/3 de férias sem o abono</label>'+
         '<label class="ms-chk"><input type="checkbox" id="abD13"'+(A.d13_sem?' checked':'')+'> 13º sem o abono</label>'+
-        sel('abOrdem','Ordem',[['valor','Maior diferença estimada primeiro'],['nome','Ordem do nome']],A.ordem)+
+        sel('abOrdem','Ordem',[['salario','Maiores salários primeiro'],['valor','Maior diferença estimada primeiro'],['nome','Ordem do nome']],A.ordem)+
         '<button class="btn" type="button" id="abLimpar">Limpar filtros</button>'+(SD()?SD().html('abDt',A.datas):'')+'</div>'+
       '<div id="abNums"></div>'+
       '<div class="ms-pag" style="justify-content:flex-start;margin:0 0 8px"><span id="abTotal"></span><span class="ms-acoes"><button class="btn" type="button" id="abCsv">Exportar para a Captação (CSV)</button><button class="btn" type="button" id="abPdf">PDF</button></span></div>'+
@@ -600,6 +747,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     $('abOrgao').onchange=function(){A.orgao=this.value;mudou();};
     $('abAbono').onchange=function(){A.abono=this.value;mudou();};
     $('abCli').onchange=function(){A.cliente=this.value;mudou();};
+    $('abFaixa').onchange=function(){A.faixa=this.value;mudou();};
     $('abOrdem').onchange=function(){A.ordem=this.value;mudou();};
     $('abFerias').onchange=function(){A.ferias_sem=this.checked;mudou();};
     $('abD13').onchange=function(){A.d13_sem=this.checked;mudou();};
@@ -608,7 +756,8 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     $('abCsv').onclick=function(){exportarAbono(this);};
     $('abPdf').onclick=function(){pdfAbono(this);};
     $('abNums').onclick=function(e){var b=e.target.closest('[data-ab]');if(!b)return;var k=b.dataset.ab;
-      if(k==='todos'){A.abono='';A.ferias_sem=false;A.d13_sem=false;}else if(k==='ferias')A.ferias_sem=!A.ferias_sem;else if(k==='d13')A.d13_sem=!A.d13_sem;else A.abono=A.abono===k?'':k;
+      if(k.indexOf('sal_')===0){var fx=k.slice(4);A.faixa=A.faixa===fx?'':fx;}
+      else if(k==='todos'){A.abono='';A.ferias_sem=false;A.d13_sem=false;A.faixa='';}else if(k==='ferias')A.ferias_sem=!A.ferias_sem;else if(k==='d13')A.d13_sem=!A.d13_sem;else A.abono=A.abono===k?'':k;
       A.pagina=1;parteAbono(c);};
     carregarAbono();
   }
@@ -619,7 +768,8 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       bt('poderia',num(r.poderia_sem_abono),'poderiam aposentar e não recebem','35+ anos de serviço · estimativa',A.abono==='poderia')+
       bt('ferias',num(r.ferias_sem),'com 1/3 de férias sem o abono','≈ '+reais(r.ferias_dif)+' (estimativa)',A.ferias_sem)+
       bt('d13',num(r.d13_sem),'com 13º sem o abono','≈ '+reais(r.d13_dif)+' (estimativa)',A.d13_sem)+
-      (r.a_conferir?bt('todos',num(r.a_conferir),'com mês que não fechou','conferir no contracheque',false):'')+'</div>';
+      (r.a_conferir?bt('todos',num(r.a_conferir),'com mês que não fechou','conferir no contracheque',false):'')+'</div>'+
+      (r.faixas?'<div class="ms-nums" aria-label="Por salário">'+Object.keys(FAIXAS_SAL).map(function(k){return bt('sal_'+k,num(r.faixas[k]),'salário '+FAIXAS_SAL[k][2],'bruto do último mês',A.faixa===k);}).join('')+'</div>':'');
   }
   async function carregarAbono(){
     var A=M.ab,box=$('abLista');if(!box)return;var meu=++A.pedido;box.classList.add('ms-carregando');
@@ -636,7 +786,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(extra.sem_carga){$('abNums').innerHTML='';$('abTotal').textContent='';
       box.innerHTML='<div class="ms-aviso amar"><b>A carga do abono ainda não foi feita.</b> Os meses do Portal (5 anos) são lidos numa noite, quando for a vez desta carga; depois disso esta lista mostra quem recebe o abono e o 13º e o 1/3 de férias sem ele.</div>';return;}
     A.dados=Object.assign({},extra,{total:r.total,linhas:r.linhas});P.total(r.total);A.pagina=P.pagina;
-    $('abNums').innerHTML=htmlNumsAbono(extra.resumo,A);
+    $('abNums').innerHTML=htmlNumsAbono(extra.resumo,A)+((A.faixa||A.ordem==='salario')&&extra.resumo&&!extra.resumo.faixas?'<div class="ms-aviso amar"><b>A lista abaixo NÃO está filtrada nem ordenada pelo salário:</b> isso chega com o bloco 428.</div>':'');
     var cg=extra.carga||{};
     $('abTotal').innerHTML=num(r.total)+' servidores'+(cg.mes_de?' · <span class="ms-sub" style="display:inline">meses lidos '+esc(mesTxt(cg.mes_de))+' a '+esc(mesTxt(cg.mes_ate))+(cg.em?', carga de '+esc(dataHora(cg.em)):'')+'</span>':'');
     desenharAbono();
@@ -650,7 +800,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
           :(l.abono_valor?'Não recebe agora<span class="ms-sub">último em '+esc(mesTxt(l.abono_ultimo_mes))+'</span>':'Não recebe'+((+l.tempo_servico||0)>=35?'<span class="ms-sub" style="color:#c98500">'+esc(SD()?SD().anos(l.tempo_servico):Math.floor(l.tempo_servico)+' anos')+' de serviço: poderia aposentar? (estimativa)</span>':''));
         var fe=l.ferias_sem?'<b>'+num(l.ferias_sem)+' sem o abono</b><span class="ms-sub">≈ '+esc(reais(l.ferias_dif))+' (estimativa)</span>':(l.ferias_meses?num(l.ferias_com||0)+' com o abono':'—');
         var d13=l.d13_sem?'<b>'+num(l.d13_sem)+' sem o abono</b><span class="ms-sub">≈ '+esc(reais(l.d13_dif))+' (estimativa)</span>':(l.d13_meses?num(l.d13_com||0)+' com o abono':'—');
-        return '<tr'+(cli?' class="ms-destaque"':'')+'><td data-r="Servidor"><b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+
+        return '<tr'+(cli?' class="ms-destaque"':'')+'><td data-r="Servidor"><b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+(l.rem_bruto!=null?'<span class="ms-sub">Salário bruto <b>'+esc(reais(l.rem_bruto))+'</b>'+(l.rem_mes?' em '+esc(mesTxt(l.rem_mes)):'')+'</span>':'')+
             (SD()?'<span class="ms-sub">'+esc(SD().curto({ingresso:l.ingresso,tempo_servico:l.tempo_servico,tempo_estimativa:true}))+'</span>':'')+'</td>'+
           '<td data-r="Abono">'+ab+'</td><td data-r="1/3 de férias">'+fe+'</td><td data-r="13º">'+d13+'</td>'+
           '<td data-r="No SAGA">'+(cli?l.clientes.map(function(k){return '<a href="'+FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'">'+esc(k.codigo||'Ficha')+'</a>';}).join(' '):'<span class="ms-sub">Não é cliente</span>')+'</td>'+
@@ -683,9 +833,9 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       var d=await linhasAbonoTodas(MAX_CSV),ls=d.linhas||[];
       if(d.sem_carga||!ls.length){aviso(d.sem_carga?'A carga do abono ainda não foi feita.':'Nada para exportar com esses filtros.','amar');return;}
       function c(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
-      var linhas=[['Nome no Portal','CPF (mascarado)','Órgão','UF','Cargo','Ingresso no serviço público','Anos de serviço (estimativa)','Abono (provável)','Abono desde','1/3 de férias sem o abono','Diferença estimada férias','13º sem o abono','Diferença estimada 13º','Cliente do SAGA'].map(c).join(';')];
+      var linhas=[['Nome no Portal','CPF (mascarado)','Órgão','UF','Cargo','Ingresso no serviço público','Anos de serviço (estimativa)','Abono (provável)','Abono desde','1/3 de férias sem o abono','Diferença estimada férias','13º sem o abono','Diferença estimada 13º','Salário bruto (último mês)','Cliente do SAGA'].map(c).join(';')];
       ls.forEach(function(l){linhas.push([l.nome,cpfMask(l.cpf6),l.orgao||'',l.uf||'',l.cargo||'',dataBR(l.ingresso),l.tempo_servico==null?'':Math.floor(+l.tempo_servico),l.recebe?'recebe '+l.abono_valor:'não recebe',l.abono_desde?(l.abono_desde_antes?'antes de ':'')+mesTxt(l.abono_desde):'',
-        l.ferias_sem||0,l.ferias_dif||0,l.d13_sem||0,l.d13_dif||0,(l.clientes||[]).map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
+        l.ferias_sem||0,l.ferias_dif||0,l.d13_sem||0,l.d13_dif||0,l.rem_bruto==null?'':l.rem_bruto,(l.clientes||[]).map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
       var blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
       var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='abono-tema-1233.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
       if(d.total>ls.length)aviso('Saíram os '+num(ls.length)+' primeiros de '+num(d.total)+' (limite do arquivo). Filtre mais para pegar o resto.','amar');
@@ -702,8 +852,8 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       if(d.sem_carga||!ls.length){aviso(d.sem_carga?'A carga do abono ainda não foi feita.':'Nada para pôr no PDF com esses filtros.','amar');return;}
       var h='<div class="kpis"><div class="forte"><span>Servidores</span><b>'+num(d.total)+'</b></div><div><span>Recebem abono</span><b>'+num(rs.recebem)+'</b></div><div><span>1/3 de férias sem o abono</span><b>'+num(rs.ferias_sem)+'</b></div><div><span>13º sem o abono</span><b>'+num(rs.d13_sem)+'</b></div><div><span>Diferença estimada</span><b>'+esc(reais((+rs.ferias_dif||0)+(+rs.d13_dif||0)))+'</b></div></div>'+
         '<div class="obs">'+esc(descricaoAbono(M.ab))+'. ESTIMATIVA pelo Portal da Transparência (abono provável = outras remunerações eventuais igual ao PSS); conferir no contracheque. CPF mascarado pelo próprio Portal.</div>'+
-        '<table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Órgão · cargo</th><th>Abono</th><th>Férias sem</th><th>13º sem</th><th>Diferença estimada</th></tr></thead><tbody>'+
-        ls.map(function(l){return '<tr><td>'+esc(l.nome)+'</td><td class="num">'+esc(cpfMask(l.cpf6))+'</td><td>'+esc((l.orgao||'')+(l.cargo?' · '+l.cargo:''))+'</td><td>'+(l.recebe?esc(reais(l.abono_valor)):'não recebe')+'</td><td class="num">'+num(l.ferias_sem)+'</td><td class="num">'+num(l.d13_sem)+'</td><td class="num">'+esc(reais((+l.ferias_dif||0)+(+l.d13_dif||0)))+'</td></tr>';}).join('')+'</tbody></table>';
+        '<table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Órgão · cargo</th><th>Salário</th><th>Abono</th><th>Férias sem</th><th>13º sem</th><th>Diferença estimada</th></tr></thead><tbody>'+
+        ls.map(function(l){return '<tr><td>'+esc(l.nome)+'</td><td class="num">'+esc(cpfMask(l.cpf6))+'</td><td>'+esc((l.orgao||'')+(l.cargo?' · '+l.cargo:''))+'</td><td class="num">'+(l.rem_bruto!=null?esc(reais(l.rem_bruto)):'')+'</td><td>'+(l.recebe?esc(reais(l.abono_valor)):'não recebe')+'</td><td class="num">'+num(l.ferias_sem)+'</td><td class="num">'+num(l.d13_sem)+'</td><td class="num">'+esc(reais((+l.ferias_dif||0)+(+l.d13_dif||0)))+'</td></tr>';}).join('')+'</tbody></table>';
       SagaPdf.imprimir({titulo:'Abono de permanência e Tema 1.233',subtitulo:'Mapa dos servidores · '+num(d.total)+' servidores (estimativa)',arquivo:'abono-tema-1233',paisagem:true,paginas:[h]});
       sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: gerou PDF do abono/Tema 1.233 ('+ls.length+' linhas; '+descricaoAbono(M.ab)+')',p_acao:'consultou'}).then(function(x){if(x.error)aviso('O PDF saiu, mas o registro falhou: '+erro(x.error),'erro');});
     }catch(e){aviso('Não deu para montar o PDF: '+erro(e),'erro');}
@@ -717,7 +867,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       '<p class="sub" style="margin-top:8px">Tabelas da tela preparadas em '+(p.preparado_em?esc(dataHora(p.preparado_em)):'<b>ainda não preparadas</b>')+' (refeitas toda madrugada às 3h50).</p></div>'+
       '<div class="ms-bloco"><h3>Avisos da carga</h3><ul class="ms-lista">'+(p.notas_meses||[]).map(function(n){return '<li>'+(n.mes?'<b>'+esc(mesTxt(n.mes))+'</b> ('+esc(n.lista)+'): ':'')+esc(n.texto)+'</li>';}).join('')+'</ul>'+
       ((p.renomeacoes||[]).length?'<p class="sub" style="margin-top:10px">Mudanças de nome de órgão ou cargo para centenas de pessoas no mesmo mês foram tratadas como renomeação (não viraram evento):</p><div class="ms-rolagem" style="max-height:220px;overflow:auto"><table class="ms-tab"><tbody>'+(p.renomeacoes||[]).map(function(r){return '<tr><td class="n">'+esc(mesTxt(r.mes))+' · '+esc(LISTA[r.lista]||r.lista)+'</td><td>'+esc(String(r.texto||'').replace(/^renomeações ignoradas:\s*/,''))+'</td></tr>';}).join('')+'</tbody></table></div>':'')+'</div>'+
-      '<div class="ms-bloco"><h3>LGPD</h3><ul class="ms-lista"><li><b>Finalidade:</b> '+esc(p.finalidade||'')+'</li><li><b>Mínimo necessário:</b> sem CPF completo (o Portal mostra só 6 dígitos), sem matrícula e sem endereço. Remuneração só como marca (abate-teto, PSS, IR que começou ou parou).</li><li><b>Quem vê:</b> só o administrador geral. Cada exportação (CSV, PDF) e cada conferência vai para o Registro de atividades (módulo Teses).</li><li><b>Dado sensível:</b> IR ou PSS que parou pode indicar doença grave. Fica só como informação e nunca é filtro de captação.</li><li><b>Quanto tempo:</b> enquanto a pessoa estiver no Portal ou for cliente. A regra de limpeza (24 meses fora da lista para quem não é cliente) ainda não está ligada.</li></ul></div>';
+      '<div class="ms-bloco"><h3>LGPD</h3><ul class="ms-lista"><li><b>Finalidade:</b> '+esc(p.finalidade||'')+'</li><li><b>Mínimo necessário:</b> sem CPF completo (o Portal mostra só 6 dígitos), sem matrícula e sem endereço. Remuneração só como marca (abate-teto, PSS, IR que começou ou parou).</li><li><b>Quem vê:</b> só o administrador geral. Cada exportação (CSV, PDF) e cada conferência vai para o Registro de atividades (módulo Teses).</li><li><b>IR e aposentadoria (decisão do Dr. Victor, 24/11):</b> dentro do SAGA a lista de aposentados por invalidez ou incapacidade que ainda pagam IR, ou cujo IR parou, pode ser usada para oferecer a conferência da isenção de IR. O texto é sempre neutro (possível isenção a conferir com o cliente), nenhum motivo é gravado, só o administrador vê e cada exportação é registrada. Nada sai do SAGA. PSS que parou continua só como informação.</li><li><b>Quanto tempo:</b> enquanto a pessoa estiver no Portal ou for cliente. A regra de limpeza (24 meses fora da lista para quem não é cliente) ainda não está ligada.</li></ul></div>';
   }
 
   /* ---------- abrir ---------- */
@@ -733,7 +883,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     var r=await sb().rpc('siape_mapa_painel');
     if(r.error){pane.innerHTML='<div class="ms-aviso verm">Não deu para abrir o Mapa dos servidores: '+erro(r.error)+'</div>';return;}
     M.painel=r.data||{};M.montado=true;if(!M.ev)M.ev=estadoLista('ev');
-    var q=new URLSearchParams(location.search),pt=q.get('mapa');if(pt&&/^(geral|eventos|clientes|falecidos|abono|carga)$/.test(pt))M.parte=pt;
+    var q=new URLSearchParams(location.search),pt=q.get('mapa');if(pt&&/^(geral|eventos|clientes|falecidos|abono|aposir|carga)$/.test(pt))M.parte=pt;
     desenhar();
   }
   async function liberar(){
