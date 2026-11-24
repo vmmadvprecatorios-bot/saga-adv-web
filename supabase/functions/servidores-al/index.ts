@@ -187,13 +187,17 @@ async function rodadaMaceio() {
     const cab = (tab.shift() || []).map((s) => s.trim());
     const ix = (nome: string) => cab.findIndex((c) => c.toLowerCase().startsWith(nome.toLowerCase()));
     const iNome = ix("Servidores"), iCpf = ix("CPF"), iOrg = ix("Secretaria"), iCargo = ix("Cargo"), iVinc = ix("Vínculo"), iRef = ix("Referência"), iBruto = ix("Remuneração Bruta");
+    // bloco 461: verbas do mês (o abono de permanência, o 1/3 de férias e o 13º não vêm separados no CSV)
+    const iVenc = ix("Vencimento"), iBenef = ix("Benefícios"), iEvent = ix("Eventuais"), iPrev = ix("Previdência");
     if (iNome < 0 || iCpf < 0 || iBruto < 0) throw new Error("O CSV de Maceió mudou de colunas: o leitor precisa de ajuste.");
     const esperado = `${MESES[job.mes - 1]}/${job.ano}`;
     const ruins = tab.filter((l) => iRef >= 0 && (l[iRef] || "").toLowerCase() !== esperado).length;
     if (tab.length && ruins === tab.length) throw new Error(`O portal de Maceió devolveu outro mês (${tab[0][iRef]}), não ${esperado}: a pesquisa não pegou.`);
     if (!tab.length) { await rpc("servpub_fechar", { p_carga: job.carga, p_vazia: true }); return { ok: true, mensagem: `Maceió ${job.vinculo} ${job.mes}/${job.ano}: vazio.` }; }
     const rows = tab.map((l) => ({ nome: l[iNome], cpf: l[iCpf], descricao_orgao: iOrg >= 0 ? l[iOrg] : null, cargo: iCargo >= 0 ? l[iCargo] : null,
-      vinculo: iVinc >= 0 ? l[iVinc] : job.vinculo, proventos: l[iBruto], total: null }));
+      vinculo: iVinc >= 0 ? l[iVinc] : job.vinculo, proventos: l[iBruto], total: null,
+      vencimento: iVenc >= 0 ? l[iVenc] : null, beneficios: iBenef >= 0 ? l[iBenef] : null,
+      eventuais: iEvent >= 0 ? l[iEvent] : null, previdencia: iPrev >= 0 ? l[iPrev] : null }));
     for (let i = 0; i < rows.length; i += 300) {
       const lento = await loginLento();
       if (lento) throw new Error(`pausado no meio: ${lento} (o mês será lido de novo na próxima rodada)`);
