@@ -462,8 +462,31 @@
       return true;
     }catch(e){return false;}
   }
+  // 24/11 (Dr. Victor: "ao mudar de uma tela para outra, às vezes a tela INTEIRA fica escura e depois carrega; quero que
+  // só o conteúdo saia e entre, e NÃO o menu lateral nem a barra de cima"). Causa medida: quando a marca da sessão
+  // vence no meio do trabalho (ex.: o banco demorou ou deu erro e a marca ficou só 10 min; a chave de acesso perto de
+  // vencer), a tela nova ficava inteira coberta até o servidor responder (1 a 3 s com o banco ocupado). CONTINUIDADE:
+  // a MESMA pessoa, neste navegador, com a sessão conferida pelo servidor há menos de 12 h, antes do corte das 20h de
+  // quem tem corte e com uso nos últimos 25 min: o menu e a barra de cima aparecem na hora (sem números, foto nem nome:
+  // html.saga-conferindo) e só o CONTEÚDO espera a conferência. Fora disso (outro usuário, login de ontem, depois do
+  // corte, parado há muito tempo) continua tudo coberto como antes (regra "Login sem resquício", 19/11).
+  function corteMaceio(desde){var d=new Date(desde),c=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),23,0,0);return c<=desde?c+86400000:c;}
+  function continuidade(){
+    var t=lerToken();if(!t||!t.refresh_token)return false;
+    try{
+      var m=JSON.parse(localStorage.getItem(MARCA_OK)||'null'),u=t.user&&t.user.id,agora=Date.now();
+      if(!m||!u||m.u!==u||!m.em||agora-m.em>12*3600000||agora<m.em-60000)return false;
+      // corte das 20h: o que o servidor mandou; sem ele (resposta com erro), 20h de Maceió, salvo quem é isento
+      var corte=m.corte||(m.semCorte?0:corteMaceio(m.em));
+      if(corte&&agora>=corte)return false;
+      var ult=parseInt(localStorage.getItem('saga-ultima-atividade')||'0',10);
+      return !!ult&&agora-ult<=25*60000;
+    }catch(e){return false;}
+  }
+  window.sagaSessaoContinua=continuidade;
   var temSessao=!!lerToken();
   var sessaoOk=temSessao&&sessaoConfiavel();
+  var continua=!sessaoOk&&temSessao&&continuidade();
   if(!temSessao){try{localStorage.removeItem(MARCA_OK);}catch(e){}}
   window.sagaSessaoConfiavel=sessaoConfiavel;
 
@@ -477,6 +500,10 @@
     // Menus superior e lateral ficam parados; so o conteudo da tela faz a transicao.
     // O conteudo so aparece quando a tela terminou de buscar os dados (nada pela metade).
     'html.saga-carregando .saga-conteudo{opacity:0 !important;}'+
+    // 24/11: conferindo o login com o menu à vista (continuidade): conteúdo, números, foto e nome só depois de conferir
+    'html.saga-conferindo .saga-conteudo{opacity:0 !important;}'+
+    'html.saga-conferindo #sidebarSaga [id^="navBadge"],html.saga-conferindo #sidebarSaga .nav-badge-chat,html.saga-conferindo #sidebarSaga .nav-badge-dia,html.saga-conferindo #sidebarSaga .nav-badge-mencao,'+
+    'html.saga-conferindo #avatarTop,html.saga-conferindo #notifCount,html.saga-conferindo #onlineText,html.saga-conferindo #crestGold{visibility:hidden !important;}'+
     // Fio fino de carregamento sob o menu superior, so se a espera passar de um instante
     '#sagaCarregando{position:fixed;left:0;right:0;height:2px;z-index:1400;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .2s ease;}'+
     '#sagaCarregando.ativo{opacity:1;}'+
@@ -513,6 +540,7 @@
       'html.saga-ao-lado .app{display:block !important;}html.saga-ao-lado .conteudo{padding:12px 14px 40px !important;}':'');
   (document.head||html).appendChild(estilo);
   html.classList.add('saga-entrando','saga-carregando','saga-fixando');
+  if(continua)html.classList.add('saga-conferindo');
 
   if(!temSessao){
     location.replace(LOGIN);
@@ -552,7 +580,10 @@
     if(!portao)return;var p=portao;portao=null;p.style.opacity='0';setTimeout(function(){p.remove();},reduzAgora()?0:320);
   }
   function reduzAgora(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
-  var portaoEspera=sessaoOk?0:setTimeout(abrirPortao,700);
+  // continuidade: o menu já está à vista (com o fio de carregamento); o aviso "Conferindo o seu login…", que cobre
+  // tudo, só com erro de internet (saga-sessao-rede) ou se passar de 15 s
+  var portaoEspera=sessaoOk?0:setTimeout(abrirPortao,continua?15000:700);
+  if(continua)setTimeout(function(){if(!sessaoOk&&continua&&typeof mostrarFio==='function')mostrarFio();},260);
   window.addEventListener('online',pintarPortao);window.addEventListener('offline',pintarPortao);
   document.addEventListener('saga-sessao-rede',function(ev){portaoErro=(ev.detail&&ev.detail.erro)||'sem resposta do servidor';abrirPortao();pintarPortao();});
 
@@ -560,7 +591,7 @@
   var molduraPedida=false,molduraEsperando=false,mostrarEsperando=false;
   function mostrarMoldura(){
     // 19/11: sessão ainda não conferida: nada aparece (nem o menu); fica anotado para depois
-    if(!sessaoOk){molduraEsperando=true;return;}
+    if(!sessaoOk&&!continua){molduraEsperando=true;return;}
     if(molduraPedida)return;molduraPedida=true;
     // Os menus aparecem na hora, junto com a primeira imagem da tela (esperar as letras deixava tudo apagado por instantes)
     html.classList.remove('saga-entrando');
@@ -568,6 +599,9 @@
   // saga_ui.js conferiu a sessão no servidor: libera o que estava esperando, com o movimento de sempre
   document.addEventListener('saga-sessao-ok',function(){
     if(sessaoOk)return;sessaoOk=true;portaoErro='';fecharPortao();
+    if(continua){continua=false;html.classList.remove('saga-conferindo');
+      // tela que já estava montada (volta pela seta): o conteúdo entra suave, nunca de uma vez
+      if(jaMostrou&&!reduzAgora())document.querySelectorAll('.saga-conteudo').forEach(function(el){try{el.animate([{opacity:0},{opacity:1}],{duration:260,easing:'cubic-bezier(.22,.78,.25,1)'});}catch(e){}});}
     if(molduraEsperando||mostrarEsperando)mostrarMoldura();
     if(mostrarEsperando&&typeof mostrar==='function')mostrar();
   });
@@ -1149,7 +1183,8 @@
       molduraPedida=false;
       if(!sessaoConfiavel()){
         sessaoOk=false;molduraEsperando=true;portaoInicio=Date.now();portaoErro='';
-        portaoEspera=setTimeout(abrirPortao,700);
+        continua=continuidade();if(continua)html.classList.add('saga-conferindo');
+        portaoEspera=setTimeout(abrirPortao,continua?15000:700);
         document.dispatchEvent(new CustomEvent('saga-reconferir'));
       }
       saindo=false;html.classList.remove('saga-carregando');mostrarMoldura();
@@ -1657,6 +1692,16 @@
    versao.txt (gravado pelo ferramentas/versionar.py) e, se a versão no ar for mais nova que a dela, recarrega sozinha
    antes de a pessoa mexer (uma vez por versão, nesta aba); se a pessoa já mexeu, aparece o aviso "Atualizar agora". */
 (function(){
+  // 24/11 (Dr. Victor: "a tela inteira pisca"): recarregar a tela como uma TROCA de tela (o navegador faz a passagem
+  // suave e o menu lateral e a barra de cima ficam parados) em vez do recarregar comum (F5), que apaga tudo e desenha
+  // de novo. Primeiro baixa a tela nova do servidor (cache 'reload', como o F5), depois troca para ela no mesmo lugar
+  // do histórico. Endereço com # (a troca viraria só um pulo na página) ou erro: recarrega do jeito comum.
+  window.sagaRecarregar=function(){
+    var url=location.href.split('#')[0];
+    if(location.hash||!window.fetch){location.reload();return;}
+    try{fetch(url,{cache:'reload',credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;location.replace(url);},function(){location.reload();});}
+    catch(e){location.reload();}
+  };
   try{
     if(window.top!==window)return;
     var sc=document.currentScript,m=sc&&/[?&]v=(\d{12})/.exec(sc.src||'');if(!m)return;
@@ -1669,13 +1714,13 @@
         'background:var(--panel,#212e44);color:var(--text,#e7eaf0);border:1px solid var(--border,rgba(255,255,255,.14));box-shadow:0 14px 34px -12px rgba(0,0,0,.55);font:13px Montserrat,Arial,sans-serif;'+
         'opacity:0;transform:translate(-50%,10px);transition:opacity .32s cubic-bezier(.22,.78,.25,1),transform .32s cubic-bezier(.22,.78,.25,1);max-width:calc(100vw - 32px)';
       d.innerHTML='<span>Há uma versão nova do SAGA.</span><button type="button" class="btn-primary" style="white-space:nowrap">Atualizar agora</button>';
-      d.querySelector('button').onclick=function(){location.reload();};
+      d.querySelector('button').onclick=function(){window.sagaRecarregar();};
       document.body.appendChild(d);requestAnimationFrame(function(){requestAnimationFrame(function(){d.style.opacity='1';d.style.transform='translate(-50%,0)';});});
     }
     fetch('versao.txt?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
       var nova=(String(t).match(/\d{12}/)||[])[0];if(!nova||nova<=minha)return;
       var chave='saga-recarregou-'+nova,ja=null;try{ja=sessionStorage.getItem(chave);}catch(e){}
-      if(!ja&&!mexeu&&Date.now()-inicio<8000){try{sessionStorage.setItem(chave,'1');}catch(e){}location.reload();return;}
+      if(!ja&&!mexeu&&Date.now()-inicio<8000){try{sessionStorage.setItem(chave,'1');}catch(e){}window.sagaRecarregar();return;}
       if(document.body)avisar();else document.addEventListener('DOMContentLoaded',avisar);
     }).catch(function(){});
   }catch(e){}

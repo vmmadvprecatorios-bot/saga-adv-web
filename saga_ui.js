@@ -1081,7 +1081,7 @@
       btnRefresh.addEventListener('click',function(){
         if(btnRefresh.dataset.girando)return;
         btnRefresh.dataset.girando='1';btnRefresh.setAttribute('aria-busy','true');
-        var recarregar=function(){location.reload();};
+        var recarregar=function(){if(global.sagaRecarregar)global.sagaRecarregar();else location.reload();};
         var semMov=false;try{semMov=localStorage.getItem('saga-movimento')==='reduzido';}catch(e){}
         var svg=btnRefresh.querySelector('svg');
         if(semMov||!svg||!svg.animate){recarregar();return;}
@@ -3048,7 +3048,11 @@
     var g=_regrasLogin,ate=Date.now()+12*3600000;
     if(g&&g.ok&&!g.isento&&_proximoCorte)ate=Math.min(ate,_proximoCorte);
     if(!g||g.erro)ate=Date.now()+10*60000;
-    try{localStorage.setItem(MARCA_SESSAO,JSON.stringify({u:idSessaoLocal(),ate:ate}));}catch(e){}
+    // 24/11: em = quando o servidor conferiu; corte = o corte das 20h de quem tem corte; semCorte = isento ou corte desligado
+    // (o saga_guard.js usa para manter o menu à vista enquanto confere de novo: "continuidade")
+    var marca={u:idSessaoLocal(),ate:ate,em:Date.now()};
+    if(g&&g.ok){if(g.isento||!g.fim_dia)marca.semCorte=true;else if(_proximoCorte)marca.corte=_proximoCorte;}
+    try{localStorage.setItem(MARCA_SESSAO,JSON.stringify(marca));}catch(e){}
     document.dispatchEvent(new CustomEvent('saga-sessao-ok'));
   }
   // Página devolvida pela memória do navegador com a sessão sem conferir: confere de novo antes de aparecer
