@@ -272,11 +272,20 @@
     }
     /* PAGINAÇÃO: um lugar só. Quando o padrão do sistema (5/10/50/100/Todos + páginas numeradas, feito por outra conversa)
        existir, trocar SÓ esta função: ela recebe a caixa e o total, e usa S.f.pagina e S.porPagina (lidos em carregarLista). */
+    // 24/11 (Dr. Victor): paginação comum do sistema (saga_paginacao.js: Mostrar 5·10·50·100·Todos, páginas numeradas, Ir para).
+    // "Todos" = até 2.000 por página (o banco aceita até 25.000 por pedido; o Brasil todo dos devedores passa de 1,5 mi: páginas de 2.000 com aviso).
+    var PAG=null;
+    function pagObj(){if(!PAG&&global.SagaPaginacao)PAG=global.SagaPaginacao.criar({tela:'bases-'+cfg.id,rotulo:cfg.palavra[1],aoMudar:function(P){irPagina(P.pagina,P.quantos());}});return PAG;}
+    if(pagObj())S.porPagina=PAG.quantos();
     function paginacao(caixa,total){
-      if(!caixa)return;var pp=S.porPagina,pags=Math.max(1,Math.ceil(total/pp));
-      caixa.innerHTML='<span>página '+num(S.f.pagina)+' de '+num(pags)+'</span><span class="bp-acoes">'+
-        '<button class="btn" type="button" data-pg="-1"'+(S.f.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" data-pg="1"'+(S.f.pagina>=pags?' disabled':'')+'>Próxima</button></span>';
-      caixa.querySelectorAll('[data-pg]').forEach(function(b){b.onclick=function(){irPagina(S.f.pagina+(+b.dataset.pg));};});
+      if(!caixa)return;var P=pagObj();
+      if(!P){var pp=S.porPagina,pags=Math.max(1,Math.ceil(total/pp));
+        caixa.innerHTML='<span>página '+num(S.f.pagina)+' de '+num(pags)+'</span><span class="bp-acoes">'+
+          '<button class="btn" type="button" data-pg="-1"'+(S.f.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" data-pg="1"'+(S.f.pagina>=pags?' disabled':'')+'>Próxima</button></span>';
+        caixa.querySelectorAll('[data-pg]').forEach(function(b){b.onclick=function(){irPagina(S.f.pagina+(+b.dataset.pg));};});return;}
+      P.pagina=S.f.pagina||1;P.total(total);
+      if(P.pagina!==S.f.pagina){S.f.pagina=P.pagina;}
+      caixa.style.display='block';P.render(caixa);
     }
     function irPagina(n,porPagina){if(porPagina)S.porPagina=porPagina;S.f.pagina=Math.max(1,n);carregarLista();var a=pane();if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});}
     async function carregarLista(){
