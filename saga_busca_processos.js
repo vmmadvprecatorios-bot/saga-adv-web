@@ -195,7 +195,7 @@
       + '<button class="bp-btn' + (S.aba === 'comparar' ? ' active' : '') + '" type="button" data-bp="aba" data-v="comparar">Comparar com o Escavador</button></div>';
     h += htmlRobo(d);
     if(S.aba === 'comparar'){ c.innerHTML = h + htmlComparar(d); return; }
-    h += '<div class="bp-filtros">' + [['pendentes', 'Para conferir', k.pendentes], ['seguro', 'Seguros', k.seguro], ['conferir', 'A conferir', k.conferir], ['decididos', 'Já conferidos', k.decididos]].map(function(f){
+    h += '<div class="bp-filtros">' + [['pendentes', 'Para conferir', k.pendentes], ['seguro', 'Seguros', k.seguro], ['conferir', 'A conferir', k.conferir], ['decididos', 'Já conferidos', k.decididos]].concat(k.individuais ? [['individuais', 'Nome comum: individuais', k.individuais]] : []).map(function(f){
       return '<button class="bp-btn' + (S.filtro === f[0] ? ' active' : '') + '" type="button" data-bp="filtro" data-v="' + f[0] + '">' + f[1] + '<b>' + (f[2] || 0) + '</b></button>';
     }).join('') + '</div>';
     h += '<div class="bp-busca"><input id="bpBuscaTxt" type="search" placeholder="Buscar por nome, código VMM ou número" value="' + esc(S.busca) + '" aria-label="Buscar"><button class="bp-btn" type="button" data-bp="buscar">Buscar</button></div>';
@@ -225,6 +225,7 @@
       + (a.trecho ? '<div class="bp-trecho">' + esc(a.trecho) + '</div>' : '')
       + (link ? '<div class="bp-info"><a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">Ver a publicação ↗</a></div>' : '');
     if(a.ja_no_saga) h += '<div class="bp-alerta">Este número já está no cartão ' + esc(a.ja_no_saga_codigo || '') + ' do SAGA.</div>';
+    if(pend && a.individual_nome_comum) h += '<div class="bp-alerta">Nome muito comum e ação individual (1 autor): na maioria das vezes é outra pessoa com o mesmo nome. Confira com cuidado.</div>';
     if(pend && a.numero_atual) h += '<div class="bp-alerta">O cartão já tem o número ' + esc(a.numero_atual) + ': "É este" não troca número; confira na ficha.</div>';
     if(a.decisao === 'nao_e' && a.motivo_nao) h += '<div class="bp-info">Motivo: ' + esc(a.motivo_nao) + '</div>';
     if(S.pode.editar){
