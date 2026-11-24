@@ -15,6 +15,10 @@
   'use strict';
   var L={el:null,abrirPessoa:null,lista:null,passo:'lista',meta:null,arq:null,linhas:[],previa:null,pag:1,filtro:'',
     gravando:false,gravadas:0,listagemId:null,tabela:null,mapa:null,lendo:false};
+  // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js); PL = linhas gravadas, PR = revisão antes de gravar
+  var PL=null,PR=null;
+  function pl(){if(!PL)PL=SagaPaginacao.criar({tela:'base-listagem-linhas',rotulo:'linhas',aoMudar:function(){verLinhas(PL._id,0);}});return PL;}
+  function pr(){if(!PR)PR=SagaPaginacao.criar({tela:'base-listagem-revisar',rotulo:'linhas',aoMudar:function(){desenharLinhas();}});return PR;}
   var LIM=50,LOTE_PREVIA=3000,LOTE_GRAVAR=300,GRANDE=2000;
   var TIPOS={servidores:'Servidores',pensionistas:'Pensionistas',exequentes:'Exequentes / autores',precatorios:'Precatórios e RPVs',outra:'Outra'};
   var ESFERAS={federal:'Federal',estadual:'Estadual',municipal:'Municipal'};
@@ -267,21 +271,22 @@
       }).join('')+'</tbody></table></div>';
     w.onclick=function(e){var b=e.target.closest('[data-ver-lst]');if(b)verLinhas(+b.dataset.verLst,1);};
   }
-  async function verLinhas(id,pag){
+  async function verLinhas(id,reiniciar){
     var l=(L.lista||[]).find(function(x){return +x.id===id;})||{titulo:'Listagem'};
-    var w=$('blLista');if(!w)return;
+    var w=$('blLista');if(!w)return;var P=pl();if(reiniciar||P._id!==id)P.inicio();P._id=id;var meu=P._pedido=(P._pedido||0)+1;
     w.innerHTML='<div class="bu-vazio">Carregando as linhas…</div>';
-    var r=await sb().rpc('base_listagem_linhas_ver',{p_listagem:id,p_pagina:pag,p_limite:LIM});
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('base_listagem_linhas_ver',{p_listagem:id,p_pagina:Math.floor(off/lim)+1,p_limite:lim}).then(function(x){return x.error?x:{linhas:(x.data||{}).linhas,total:(x.data||{}).total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:200,progresso:function(a,t){if(meu===P._pedido&&t>200)w.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
+    if(meu!==P._pedido)return;
     if(r.error){w.innerHTML='<div class="bu-aviso verm">Não deu para ver as linhas: '+erro(r.error)+'</div>';return;}
-    var d=r.data||{},tot=+d.total||0,np=Math.max(1,Math.ceil(tot/LIM));
+    var d=r,tot=+d.total||0;P.total(tot);
     w.innerHTML='<div class="bu-filtros"><button class="btn sec" type="button" id="blVoltarLista">← Listagens</button><b>'+esc(l.titulo)+'</b><span class="bu-sub">'+num(tot)+' linhas</span></div>'+
       '<div class="bu-rolagem"><table class="bu-tab"><thead><tr><th>Nome</th><th>CPF/CNPJ</th><th>Precatório · valor</th><th>Leitura</th><th>Ligada</th></tr></thead><tbody>'+
       (d.linhas||[]).map(function(x){return '<tr><td data-r="Nome">'+(x.base_id?'<button type="button" class="bu-nome" data-pessoa="'+(+x.base_id)+'">'+esc(x.nome||'(sem nome)')+'</button>':esc(x.nome||'(sem nome)'))+(x.pagina?'<span class="bu-sub">página '+esc(x.pagina)+'</span>':'')+'</td>'+
         '<td data-r="CPF/CNPJ" class="n">'+esc(x.doc||'')+'</td><td data-r="Precatório">'+esc(x.numero_precatorio||'')+(x.valor!=null?' '+esc(reais(x.valor)):'')+(x.orgao?'<span class="bu-sub">'+esc(x.orgao)+'</span>':'')+'</td>'+
         '<td data-r="Leitura">'+esc(QUAL[x.qualidade]||x.qualidade||'')+'</td><td data-r="Ligada">'+esc({cpf:'pelo CPF',cnpj:'pelo CNPJ',nome_cpf6:'nome + 6 dígitos',codigo_portal:'código do Portal',nova:'pessoa nova',manual:'à mão'}[x.como]||x.como||'')+'</td></tr>';}).join('')+
-      '</tbody></table></div><div class="bu-pag">Página '+pag+' de '+np+' <button class="btn sec" type="button" id="blAnt"'+(pag<=1?' disabled':'')+'>Anterior</button><button class="btn sec" type="button" id="blProx"'+(pag>=np?' disabled':'')+'>Próxima</button></div>';
-    $('blVoltarLista').onclick=telaLista;
-    $('blAnt').onclick=function(){verLinhas(id,pag-1);};$('blProx').onclick=function(){verLinhas(id,pag+1);};
+      '</tbody></table></div>'+P.html();
+    $('blVoltarLista').onclick=telaLista;P.ligar(w);
   }
 
   /* ----- 1. de onde veio ----- */
@@ -393,7 +398,7 @@
   }
   function depoisDeLer(origem){
     if(!L.linhas.length){msg('Não achei nenhuma pessoa nesse conteúdo (nome ou CPF). Confira o arquivo, as páginas ou as colunas.','amar');return;}
-    L.arq.origem=origem;L.previa=null;L.pag=1;L.filtro='';telaRevisar();
+    L.arq.origem=origem;L.previa=null;pr().inicio();L.filtro='';telaRevisar();
   }
 
   /* ----- 3. revisar e conferir ----- */
@@ -433,8 +438,8 @@
         '<div class="bl-prog" id="blProg" hidden></div><div class="bl-barra" id="blBarra" hidden><i></i></div>'+
         '<div id="blLinhas"></div></div>';
     entrar();
-    L.el.querySelectorAll('[data-flt]').forEach(function(b){b.onclick=function(){L.filtro=b.dataset.flt;L.pag=1;$('blFiltro').value=L.filtro;desenharLinhas();};});
-    $('blFiltro').onchange=function(){L.filtro=this.value;L.pag=1;desenharLinhas();};
+    L.el.querySelectorAll('[data-flt]').forEach(function(b){b.onclick=function(){L.filtro=b.dataset.flt;pr().inicio();$('blFiltro').value=L.filtro;desenharLinhas();};});
+    $('blFiltro').onchange=function(){L.filtro=this.value;pr().inicio();desenharLinhas();};
     $('blVoltar').onclick=telaLer;
     $('blConferir').onclick=conferir;
     $('blGravar').onclick=gravar;
@@ -442,8 +447,7 @@
   }
   function desenharLinhas(){
     var w=$('blLinhas');if(!w)return;
-    var vs=visiveis(),np=Math.max(1,Math.ceil(vs.length/LIM));if(L.pag>np)L.pag=np;
-    var pg=vs.slice((L.pag-1)*LIM,L.pag*LIM);
+    var vs=visiveis(),P=pr(),pg=P.fatia(vs);
     if(!vs.length){w.innerHTML='<div class="bu-vazio">Nenhuma linha neste filtro.</div>';return;}
     w.innerHTML='<div class="bu-rolagem"><table class="bu-tab bl-tab"><thead><tr><th>Vai</th><th>Nome</th><th>CPF/CNPJ</th><th>Outros dados</th><th>Na base</th></tr></thead><tbody>'+
       pg.map(function(p){var l=p[0],i=p[1];
@@ -454,8 +458,8 @@
           '<td data-r="Outros">'+esc(outros)+'</td>'+
           '<td data-r="Na base">'+(l.st?'<span class="bl-st '+esc(l.st)+'">'+esc(ST[l.st]||l.st)+'</span>'+(l.base_id&&L.abrirPessoa?' <button type="button" class="bu-nome" data-pessoa="'+(+l.base_id)+'">'+esc(l.nome_base||'ver')+'</button>':'')+(l.motivo?'<span class="bu-sub">'+esc(l.motivo)+'</span>':''):'<span class="bu-sub">ainda não conferida</span>')+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
-      '<div class="bu-pag">'+num(vs.length)+' linhas · página '+L.pag+' de '+np+' <button class="btn sec" type="button" id="blAnt"'+(L.pag<=1?' disabled':'')+'>Anterior</button><button class="btn sec" type="button" id="blProx"'+(L.pag>=np?' disabled':'')+'>Próxima</button></div>';
-    $('blAnt').onclick=function(){L.pag--;desenharLinhas();};$('blProx').onclick=function(){L.pag++;desenharLinhas();};
+      P.html();
+    P.ligar(w);
     w.querySelectorAll('[data-usar]').forEach(function(x){x.onchange=function(){L.linhas[+x.dataset.usar].usar=x.checked;L.previa=null;x.closest('tr').classList.toggle('bl-fora',!x.checked);atualizarBotoes();};});
     w.querySelectorAll('[data-nome]').forEach(function(x){x.onchange=function(){var l=L.linhas[+x.dataset.nome];l.nome=x.value.replace(/\s+/g,' ').trim();l.qualidade='';l.st=null;fecharLinha(l);L.previa=null;atualizarBotoes();};});
   }

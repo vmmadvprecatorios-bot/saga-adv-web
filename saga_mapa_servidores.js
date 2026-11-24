@@ -15,6 +15,10 @@
     ev:null,cli:null,
     fal:{situacao:'sem',busca:'',pagina:1,dados:null,sel:{}}};
   var LIM=50,MAX_CSV=20000,MAX_PDF=1000;
+  // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js). A página continua em f.pagina; o tamanho fica na escolha da pessoa.
+  var PAGS={};
+  function pagDe(chave,aoMudar){if(!PAGS[chave])PAGS[chave]=SagaPaginacao.criar({tela:'mapa-'+chave,rotulo:chave==='fal'?'fichas':'eventos',aoMudar:aoMudar});return PAGS[chave];}
+  function rolarTopo(){var a=$('aba-mapa');if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});}
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
   var EVT={aposentou:'Aposentou',faleceu:'Faleceu e deixou pensão',pensao_nova:'Pensão nova',perdeu_aposentadoria:'Saiu dos aposentados sem pensão',
     perdeu_pensao:'Pensão encerrada',entrou:'Entrou na lista',saiu:'Saiu da lista',voltou:'Voltou à lista',mudou_orgao:'Mudou de órgão',
@@ -318,10 +322,13 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   }
   async function carregarLista(L){
     var pre=L.chave,box=$(pre+'Lista2');if(!box)return;var meu=++L.pedido;box.classList.add('ms-carregando');
-    var r=await sb().rpc('siape_mapa_eventos',{p:paramsLista(L)});
+    var P=pagDe(pre,function(P){L.f.pagina=P.pagina;carregarLista(L);rolarTopo();});P.pagina=L.f.pagina||1;
+    var extra={};
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('siape_mapa_eventos',{p:paramsLista(L,{pagina:Math.floor(off/lim)+1,limite:lim})}).then(function(x){if(x.error)return x;extra=x.data||{};return {linhas:extra.linhas,total:extra.total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:500,progresso:function(a,t){if(meu===L.pedido&&t>500)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
     if(meu!==L.pedido)return;box.classList.remove('ms-carregando');
     if(r.error){box.innerHTML='<div class="ms-aviso verm">Não deu para buscar os eventos: '+erro(r.error)+'</div>';$(pre+'Total').textContent='';return;}
-    L.dados=r.data||{total:0,linhas:[]};desenharLinhas(L);
+    L.dados=Object.assign({},extra,{total:r.total,linhas:r.linhas});P.total(r.total);L.f.pagina=P.pagina;desenharLinhas(L);
     var temDatas=SD()&&SD().qtd(L.f.datas);
     if(temDatas&&!('datas_preparadas' in L.dados))box.insertAdjacentHTML('afterbegin','<div class="ms-aviso amar"><b>A lista abaixo NÃO está filtrada pelas datas:</b> o filtro por datas e tempo de serviço chega com o bloco 424.</div>');
     else if(temDatas&&L.dados.datas_preparadas===false)box.insertAdjacentHTML('afterbegin','<div class="ms-aviso amar">As datas entram na tabela do Mapa na próxima preparação da noite (3h50). Até lá o filtro por datas não acha ninguém.</div>');
@@ -354,9 +361,8 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
           '<td data-r="Evento"><b>'+esc(EVT[l.evento]||l.evento)+'</b>'+(l.massa?' <span class="ms-chip massa">mês em massa</span>':'')+htmlDetalhe(l)+'</td>'+
           '<td data-r="Pessoa">'+htmlPessoa(l)+'</td><td data-r="No SAGA">'+htmlClientes(l)+'</td><td data-r="Oportunidade">'+htmlOportunidade(l)+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
-      '<div class="ms-pag"><span>página '+num(L.f.pagina)+' de '+num(Math.max(1,Math.ceil((d.total||0)/LIM)))+'</span>'+
-      '<button class="btn" type="button" data-pg="-1"'+(L.f.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" data-pg="1"'+(L.f.pagina*LIM>=(d.total||0)?' disabled':'')+'>Próxima</button></div>';
-    box.querySelectorAll('[data-pg]').forEach(function(b){b.onclick=function(){L.f.pagina+=+b.dataset.pg;carregarLista(L);var a=$('aba-mapa');if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});};});
+      PAGS[pre].html();
+    PAGS[pre].ligar(box);
   }
   function descricao(L){
     var f=L.f,p=[];
@@ -436,10 +442,12 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   }
   async function carregarFal(){
     var F=M.fal,box=$('falLista');if(!box)return;var meu=++M.pedido;box.classList.add('ms-carregando');
-    var r=await sb().rpc('siape_falecidos_listar',{p:{situacao:F.situacao,busca:F.busca,pagina:F.pagina,limite:LIM}});
+    var P=pagDe('fal',function(P){M.fal.pagina=P.pagina;carregarFal();rolarTopo();});P.pagina=F.pagina||1;
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('siape_falecidos_listar',{p:{situacao:F.situacao,busca:F.busca,pagina:Math.floor(off/lim)+1,limite:lim}}).then(function(x){return x.error?x:{linhas:(x.data||{}).linhas,total:(x.data||{}).total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:500});
     if(meu!==M.pedido)return;box.classList.remove('ms-carregando');
     if(r.error){box.innerHTML='<div class="ms-aviso verm">Não deu para buscar os prováveis falecidos: '+erro(r.error)+'</div>';return;}
-    F.dados=r.data||{total:0,linhas:[]};desenharFal();
+    F.dados={total:r.total,linhas:r.linhas};P.total(r.total);F.pagina=P.pagina;desenharFal();
   }
   function desenharFal(){
     var F=M.fal,box=$('falLista'),d=F.dados||{},ls=d.linhas||[];if(!box)return;
@@ -452,10 +460,9 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
           '<td data-r="Pensão">'+(l.pensoes||[]).map(function(p){return '<span class="ms-sub"><b style="color:var(--text)">'+esc(p.pensionista)+'</b> · '+esc(cpfMask(p.cpf6))+' · '+esc(p.orgao||'')+(p.inicio?' · desde '+esc(dataBR(p.inicio)):'')+(p.tipo?' · '+esc(p.tipo):'')+(p.no_portal?'':' · <span class="amar">pensão já fora do Portal</span>')+'</span>';}).join('')+'</td>'+
           '<td data-r="Conferência">'+(o?'<span class="ms-chip" style="--c:'+cor(o.cor)+'"><i></i>'+esc(o.nome)+'</span>':'<span class="ms-sub amar">não conferido</span>')+(l.obs?'<span class="ms-sub">'+esc(l.obs)+'</span>':'')+(l.conferido_em?'<span class="ms-sub">'+esc(l.conferido_por||'')+' · '+esc(dataHora(l.conferido_em))+'</span>':'')+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
-      '<div class="ms-pag"><span>'+num(d.total)+' fichas · página '+num(F.pagina)+' de '+num(Math.max(1,Math.ceil((d.total||0)/LIM)))+'</span><button class="btn" type="button" id="falAnt"'+(F.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" id="falProx"'+(F.pagina*LIM>=(d.total||0)?' disabled':'')+'>Próxima</button></div>';
+      PAGS.fal.html();PAGS.fal.ligar(box);
     box.querySelectorAll('[data-fsel]').forEach(function(ch){ch.onchange=function(){if(ch.checked)F.sel[ch.dataset.fsel]=1;else delete F.sel[ch.dataset.fsel];desenharSelFal();};});
     $('falTodos').onchange=function(){var ch=this.checked;ls.forEach(function(l){if(ch)F.sel[l.pessoa_id]=1;else delete F.sel[l.pessoa_id];});desenharFal();};
-    $('falAnt').onclick=function(){if(F.pagina>1){F.pagina--;carregarFal();}};$('falProx').onclick=function(){F.pagina++;carregarFal();};
     desenharSelFal();
   }
   function desenharSelFal(){

@@ -46,13 +46,13 @@
       '#plSecao .pls-txt span{font-size:11.5px;color:var(--muted);overflow-wrap:anywhere}',
       '#plSecao .pls-sel{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.3px;padding:1px 7px;border-radius:999px;border:1px solid var(--border-soft);margin-right:6px;color:var(--text)}',
       '#plSecao .pls-acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}',
-      '#plSecao .pls-acoes :is(a,button),#plSecao .pls-pag button,#plsNova,.pls-rod button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:10px;font:inherit;font-size:12px;font-weight:500;text-decoration:none;white-space:nowrap;cursor:pointer;color:var(--text);border:1px solid var(--sb-sec-borda,var(--border-soft));background:var(--sb-sec,var(--panel));transition:border-color .2s cubic-bezier(.22,.78,.25,1),background .2s}',
+      '#plSecao .pls-acoes :is(a,button),#plSecao .pls-pag>button,#plsNova,.pls-rod button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 12px;border-radius:10px;font:inherit;font-size:12px;font-weight:500;text-decoration:none;white-space:nowrap;cursor:pointer;color:var(--text);border:1px solid var(--sb-sec-borda,var(--border-soft));background:var(--sb-sec,var(--panel));transition:border-color .2s cubic-bezier(.22,.78,.25,1),background .2s}',
       '#plSecao .pls-acoes :is(a,button):hover,#plsNova:hover,.pls-rod button:hover{border-color:color-mix(in srgb,var(--gold) 50%,var(--border-soft))}',
       '#plSecao .pls-acoes .btn-primario,#plsNova,.pls-rod .btn-primario{border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:color-mix(in srgb,var(--gold) 15%,var(--panel))}',
       '#plsNova{height:36px}',
       '.pls-rod .btn-perigo{color:var(--danger,#e5484d);border-color:color-mix(in srgb,var(--danger,#e5484d) 45%,transparent)}',
-      '#plSecao .pls-acoes :is(a,button):disabled,#plSecao .pls-pag button:disabled{opacity:.45;cursor:default}',
-      '#plSecao .pls-pag{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:12px;color:var(--muted)}',
+      '#plSecao .pls-acoes :is(a,button):disabled,#plSecao .pls-pag>button:disabled{opacity:.45;cursor:default}',
+      '#plSecao .pls-pag{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:12px;color:var(--muted)}#plSecao .pls-pag>.sg-pag{flex:1;margin:0}',
       '#plSecao .pls-erro{border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);border-radius:12px;padding:10px 12px;font-size:12.5px;margin-bottom:10px}',
       '#plSecao .pls-vazio{padding:22px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--border-soft);border-radius:12px}',
       '.pls-mo{position:fixed;inset:0;z-index:2500;display:flex;align-items:safe center;justify-content:center;padding:18px;background:rgba(6,10,20,.6);opacity:0;visibility:hidden;transition:opacity .26s cubic-bezier(.22,.78,.25,1),visibility 0s linear .26s;overflow-y:auto}',
@@ -162,22 +162,28 @@
     if(S.tipo === 'contabeis'){ desenharArquivos(); return; }
     lista.setAttribute('aria-busy', 'true');
     try{
+      var ids = S.busca ? await idsDePessoas(S.busca) : [];
+      if(vez !== S.vez) return;
+      function montar(){
       var q = sb().from('documentos_editaveis').select('id,titulo,modelo,versao,atualizado_em,processo_id,pessoa_id,pessoas(nome_completo,codigo),processos(codigo,numero_processo_cnj)', { count: 'exact' }).eq('tipo', 'planilha').eq('ativo', true);
       if(S.tipo === 'clientes') q = q.not('pessoa_id', 'is', null);
       else if(S.tipo === 'escritorio') q = q.is('pessoa_id', null).or('modelo.is.null,modelo.neq.modelo_planilha');
       else if(S.tipo === 'modelos') q = q.eq('modelo', 'modelo_planilha');
       if(S.busca){
         var termo = S.busca.replace(/[%_\\,()]/g, ' ').trim();
-        var ids = await idsDePessoas(S.busca);
         var ors = ['titulo.ilike.*' + termo + '*'];
         if(ids.length) ors.push('pessoa_id.in.(' + ids.join(',') + ')');
         q = q.or(ors.join(','));
       }
-      q = q.order('atualizado_em', { ascending: false }).range(S.pag * POR_PAG, S.pag * POR_PAG + POR_PAG - 1);
-      var r = await q;
+      return q.order('atualizado_em', { ascending: false });
+      }
+      // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js); S.pag continua contando de 0
+      var P = pag(); P.pagina = (S.pag || 0) + 1;
+      var r = await SagaPaginacao.buscarEmPartes(function(off, lim){ return montar().range(off, off + lim - 1).then(function(x){ return x.error ? x : { linhas: x.data, total: x.count }; }); },
+        { offset: P.offset(), quantos: P.quantos(), lote: 1000 });
       if(vez !== S.vez) return;
       if(r.error) throw r.error;
-      S.lista = r.data || []; S.total = r.count || 0;
+      S.lista = r.linhas || []; S.total = r.total || 0; P.total(S.total); S.pag = P.pagina - 1;
       desenhar();
     }catch(e){
       if(vez !== S.vez) return;
@@ -211,11 +217,10 @@
     l.querySelectorAll('[data-abrir],[data-ficha]').forEach(function(a){ a.addEventListener('click', function(e){ if(e.ctrlKey || e.metaKey || e.button === 1) return; e.preventDefault(); ir(e, a.getAttribute('href')); }); });
     l.querySelectorAll('[data-usar]').forEach(function(b){ b.addEventListener('click', function(){ var d = S.lista.filter(function(x){ return x.id === b.getAttribute('data-usar'); })[0]; escolherDestino({ modelo: d }); }); });
     l.querySelectorAll('[data-tirar]').forEach(function(b){ b.addEventListener('click', function(){ tirar(b.getAttribute('data-tirar')); }); });
-    var paginas = Math.max(1, Math.ceil(S.total / POR_PAG));
-    pg.innerHTML = S.total > POR_PAG ? '<span>' + S.total + ' planilha(s) · página ' + (S.pag + 1) + ' de ' + paginas + '</span><button type="button" class="btn-secundario" id="plsAnt"' + (S.pag ? '' : ' disabled') + '>‹ Anterior</button><button type="button" class="btn-secundario" id="plsProx"' + (S.pag < paginas - 1 ? '' : ' disabled') + '>Próxima ›</button>' : '<span>' + S.total + ' planilha(s)</span>';
-    if($('plsAnt')) $('plsAnt').onclick = function(){ S.pag--; carregar(); };
-    if($('plsProx')) $('plsProx').onclick = function(){ S.pag++; carregar(); };
+    pag().render(pg);
   }
+  var PAG = null;
+  function pag(){ if(!PAG) PAG = SagaPaginacao.criar({ tela: 'planilhas', rotulo: 'planilha(s)', aoMudar: function(P){ S.pag = P.pagina - 1; carregar(); } }); return PAG; }
   function desenharArquivos(){
     var l = $('plsLista'), pg = $('plsPag'), q = S.busca.toLowerCase();
     var arqs = S.arquivos.filter(function(a){ return !q || String(a.nome_arquivo).toLowerCase().indexOf(q) >= 0; });

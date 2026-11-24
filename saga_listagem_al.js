@@ -142,12 +142,16 @@
   function parametros(extra){var f=L.f;return Object.assign({busca:f.busca,achado:f.achado,tese:f.tese,marca:f.marca,qualidade:f.qualidade,cep:f.cep,pagina:f.pagina,limite:LIM},extra||{});}
 
   /* ---------- lista ---------- */
+  // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js); a página continua em L.f.pagina
+  var PAG=null;function pag(){if(!PAG)PAG=SagaPaginacao.criar({tela:'listagem-al',rotulo:'linhas',aoMudar:function(P){L.f.pagina=P.pagina;carregarLista();}});return PAG;}
   async function carregarLista(){
     var box=$('laLista');if(!box)return;var meu=++L.pedido;box.classList.add('la-carregando');
-    var r=await sb().rpc('listagem_al_buscar',{p:parametros()});
+    var P=pag();P.pagina=L.f.pagina||1;
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('listagem_al_buscar',{p:parametros({pagina:Math.floor(off/lim)+1,limite:lim})}).then(function(x){return x.error?x:{linhas:(x.data||{}).linhas,total:(x.data||{}).total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:1000});
     if(meu!==L.pedido)return;box.classList.remove('la-carregando');
     if(r.error){box.innerHTML='<div class="la-aviso la-erro">Não deu para buscar na listagem: '+erro(r.error)+'</div>';return;}
-    L.lista=r.data||{total:0,linhas:[]};desenharLista();
+    L.lista={total:r.total,linhas:r.linhas};P.total(r.total);L.f.pagina=P.pagina;desenharLista();
   }
   function desenharLista(){
     var box=$('laLista');if(!box)return;var d=L.lista||{},ls=d.linhas||[];
@@ -166,12 +170,10 @@
           '<td data-r="Ficha">'+ficha+'</td><td data-r="Ações">'+acoes+'</td>'+
           '<td data-r="Marca">'+(m?'<span class="la-chip" style="--c:'+cor(m.cor)+'"><i></i>'+esc(m.nome)+'</span>':'<span class="la-sub">sem marca</span>')+(l.marca_obs?'<span class="la-sub">'+esc(l.marca_obs)+'</span>':'')+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
-      '<div class="la-pag"><span>'+num(d.total)+' linhas · página '+num(L.f.pagina)+' de '+num(Math.max(1,Math.ceil((d.total||0)/LIM)))+'</span>'+
-      '<button class="btn" type="button" id="laAnt"'+(L.f.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" id="laProx"'+(L.f.pagina*LIM>=(d.total||0)?' disabled':'')+'>Próxima</button></div>';
+      pag().html();
+    pag().ligar(box);
     box.querySelectorAll('[data-sel]').forEach(function(c){c.onchange=function(){var id=Number(c.dataset.sel);if(c.checked)L.sel[id]=1;else delete L.sel[id];L.todosDoFiltro=false;desenharSel();};});
     $('laTodos').onchange=function(){var ch=this.checked;ls.forEach(function(l){if(ch)L.sel[l.id]=1;else delete L.sel[l.id];});L.todosDoFiltro=false;desenharLista();};
-    $('laAnt').onclick=function(){if(L.f.pagina>1){L.f.pagina--;carregarLista();}};
-    $('laProx').onclick=function(){L.f.pagina++;carregarLista();};
     desenharSel();
   }
 
@@ -181,7 +183,7 @@
     var bar=$('laSel');if(!bar)return;var n=qtdSel(),tot=(L.lista&&L.lista.total)||0;
     var opts=marcas().filter(function(m){return m.ativo;}).map(function(m){return '<option value="'+esc(m.id)+'">'+esc(m.nome)+'</option>';}).join('');
     bar.innerHTML=(n?'<span class="q">'+num(n)+(L.todosDoFiltro?' (todas do filtro)':'')+' escolhidas</span>':'<span class="la-sub" style="display:inline">Escolha linhas na lista para marcar.</span>')+
-      (!L.todosDoFiltro&&tot>LIM&&tot<=MAX?'<button class="btn" type="button" id="laTodosFiltro">Escolher todas as '+num(tot)+' do filtro</button>':'')+
+      (!L.todosDoFiltro&&tot>((L.lista&&L.lista.linhas||[]).length)&&tot<=MAX?'<button class="btn" type="button" id="laTodosFiltro">Escolher todas as '+num(tot)+' do filtro</button>':'')+
       (n?'<select id="laMarcaAplicar" aria-label="Marca a aplicar"><option value="">Escolha a marca…</option>'+opts+'<option value="__tirar">Tirar a marca</option></select><input type="text" id="laObs" maxlength="200" placeholder="Observação (opcional)" aria-label="Observação"><button class="btn btn-ouro" type="button" id="laAplicar">Aplicar</button><button class="btn" type="button" id="laDesmarcar">Limpar escolha</button>':'');
     var tf=$('laTodosFiltro');if(tf)tf.onclick=function(){L.todosDoFiltro=true;desenharSel();};
     var ap=$('laAplicar');if(ap)ap.onclick=aplicarMarca;

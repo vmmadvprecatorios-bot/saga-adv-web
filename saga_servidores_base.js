@@ -14,7 +14,9 @@
   var B={montado:false,painel:null,parte:'geral',
     f:{texto:'',situacao:'',fonte:'',clientes:false,de:'',ate:'',uf:'',orgao:'',esfera:'',ente:'',datas:null,pagina:1},entes:null,v423:null,
     lista:null,conf:null,pedido:0};
-  var LIM=50,MAX_CSV=20000;
+  var MAX_CSV=20000;
+  // 24/11 (Dr. Victor): paginação comum (Mostrar 5·10·50·100·Todos), saga_paginacao.js
+  var PAG=null;function pag(){if(!PAG)PAG=SagaPaginacao.criar({tela:'base-pessoas',rotulo:'pessoas',aoMudar:function(P){B.f.pagina=P.pagina;carregarLista();}});return PAG;}
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
   var SIT={ativo:'Ativo',aposentado:'Inativo (aposentado)',pensionista:'Pensionista',falecido_provavel:'Provável falecido',
     falecido_confirmado:'Falecido (confirmado)',saiu_sem_pensao:'Saiu sem deixar pensão',fora_do_portal:'Fora do Portal',sem_portal:'Só em listagem/ficha'};
@@ -187,6 +189,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
   /* ---------- Pessoas ---------- */
   function SD(){return global.SagaServidoresDatas||null;}
   function irPessoas(filtro){
+    pag().inicio();
     B.f={texto:'',situacao:filtro.situacao||'',fonte:filtro.fonte||'',clientes:!!filtro.clientes,de:'',ate:'',uf:filtro.uf||'',orgao:'',esfera:filtro.esfera||'',ente:filtro.ente||'',datas:Object.assign(SD()?SD().vazio():{},filtro.datas||{}),pagina:1};
     trocarParte('pessoas');
   }
@@ -241,9 +244,9 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
     var F=B.f;F.texto=$('buTexto').value.trim();F.situacao=$('buSit').value;F.fonte=$('buFonte').value;F.uf=$('buUf').value;F.esfera=$('buEsfera').value;F.ente=$('buEnte').value;
     F.orgao=$('buOrgao').value.trim();F.de=$('buDe').value;F.ate=$('buAte').value;F.clientes=$('buCli').checked;
   }
-  function params(F,lim,pag){
+  function params(F,lim,off){
     var o={p_texto:F.texto||null,p_situacao:F.situacao||null,p_fonte:F.fonte||null,p_so_clientes:!!F.clientes,
-      p_falecido_de:mesNum(F.de),p_falecido_ate:mesNum(F.ate),p_uf:F.uf||null,p_orgao:F.orgao||null,p_limite:lim,p_offset:(pag-1)*lim};
+      p_falecido_de:mesNum(F.de),p_falecido_ate:mesNum(F.ate),p_uf:F.uf||null,p_orgao:F.orgao||null,p_limite:lim,p_offset:off||0};
     if(F.esfera)o.p_esfera=F.esfera;if(F.ente)o.p_ente=F.ente;
     if(SD()&&SD().qtd(F.datas))o.p_filtros=SD().params(F.datas);
     return o;
@@ -251,14 +254,15 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
   async function carregarLista(){
     var box=$('buLista');if(!box)return;var F=B.f,meu=++B.pedido;box.classList.add('bu-carregando');
     if((F.de&&!mesNum(F.de))||(F.ate&&!mesNum(F.ate))){box.classList.remove('bu-carregando');box.innerHTML='<div class="bu-aviso amar">Mês inválido: use mm/aaaa (ex.: 03/2025).</div>';return;}
-    var r=await sb().rpc('base_buscar',params(F,LIM,F.pagina));
+    var P=pag();P.pagina=B.f.pagina||1;
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('base_buscar',params(F,lim,off)).then(function(x){return x.error?x:{linhas:(x.data||{}).linhas,total:(x.data||{}).total,d:x.data};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:200,progresso:function(a,t){if(meu===B.pedido&&t>200)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
     if(meu!==B.pedido)return;box.classList.remove('bu-carregando');
     if(r.error&&SD()&&SD().qtd(F.datas)&&(r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||''))){box.innerHTML='<div class="bu-aviso amar">O filtro por datas e tempo de serviço ainda não está no banco (chega com o bloco 424). Limpe as datas para buscar.</div>';return;}
     if(r.error&&(F.esfera||F.ente)&&(r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||''))){box.innerHTML='<div class="bu-aviso amar">O filtro por esfera e ente ainda não está no banco (chega com o bloco 423). Tire a esfera e o ente para buscar.</div>';return;}
     if(r.error){box.innerHTML='<div class="bu-aviso verm">Não deu para buscar: '+erro(r.error)+'</div>';return;}
-    var d=r.data||{},ls=d.linhas||[];B.lista=d;
+    var d={linhas:r.linhas,total:r.total},ls=d.linhas||[];B.lista=d;P.total(d.total);B.f.pagina=P.pagina;
     if(!ls.length){box.innerHTML='<div class="bu-vazio">Ninguém com esses filtros.</div>';return;}
-    var pags=Math.max(1,Math.ceil((d.total||0)/LIM));
     box.innerHTML='<div class="bu-rolagem"><table class="bu-tab"><thead><tr><th>Pessoa</th><th>Etiquetas</th><th>Órgão</th><th>Faleceu</th></tr></thead><tbody>'+
       ls.map(function(l){
         return '<tr><td><button type="button" class="bu-nome" data-pessoa="'+(+l.id)+'">'+esc(l.nome||'(sem nome na fonte)')+'</button>'+
@@ -267,24 +271,23 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
           '<td data-r="Etiquetas">'+htmlSelos(l.selos)+'</td><td data-r="Órgão">'+esc(l.orgao||'—')+'</td>'+
           '<td data-r="Faleceu" class="n">'+(l.falecido_mes?esc(mesTxt(l.falecido_mes)):'—')+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
-      '<div class="bu-pag">'+num(d.total)+' pessoas · página '+F.pagina+' de '+pags+
-      '<button class="btn" type="button" id="buAnt"'+(F.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" id="buProx"'+(F.pagina>=pags?' disabled':'')+'>Próxima</button></div>';
-    $('buAnt').onclick=function(){B.f.pagina--;carregarLista();};$('buProx').onclick=function(){B.f.pagina++;carregarLista();};
+      P.html();
+    P.ligar(box);
   }
   async function exportarCsv(){
     var F=B.f,b=$('buCsv');b.disabled=true;b.textContent='Gerando…';
     try{
-      var r=await sb().rpc('base_buscar',params(F,200,1));if(r.error)throw r.error;
+      var r=await sb().rpc('base_buscar',params(F,200,0));if(r.error)throw r.error;
       var total=(r.data||{}).total||0,ls=(r.data.linhas||[]).slice(),pag=2;
       if(total>MAX_CSV){aviso('São '+num(total)+' pessoas: o CSV leva as primeiras '+num(MAX_CSV)+'. Use os filtros para dividir.','amar');}
-      while(ls.length<Math.min(total,MAX_CSV)){var x=await sb().rpc('base_buscar',params(F,200,pag++));if(x.error)throw x.error;var a=x.data.linhas||[];if(!a.length)break;ls=ls.concat(a);}
+      while(ls.length<Math.min(total,MAX_CSV)){var x=await sb().rpc('base_buscar',params(F,200,(pag++-1)*200));if(x.error)throw x.error;var a=x.data.linhas||[];if(!a.length)break;ls=ls.concat(a);}
       var pula=0,linhas=[['Nome','CPF (mascarado)','Situação','Etiquetas','Órgão','UF','Faleceu (mês)','Cliente do SAGA','Ingresso no serviço público','Ingresso no órgão','Aposentadoria','Pensão desde','Anos de serviço público (estimativa para ativos)']];
       ls.forEach(function(l){
         if((l.selos||[]).some(function(s){return s.acao==='nao_enviar';})){pula++;return;}
         linhas.push([l.nome||'',l.doc||'',SIT[l.situacao]||l.situacao,(l.selos||[]).map(function(s){return s.nome;}).join(' | '),l.orgao||'',(l.uf||'')+(UFORIG[l.uf_origem]?' ('+UFORIG[l.uf_origem]+')':''),l.falecido_mes?mesTxt(l.falecido_mes):'',l.ficha_id?'sim':'não'].concat((function(d){d=d||{};return [dataBR(d.ingresso),dataBR(d.ingresso_orgao),dataBR(d.aposentadoria),dataBR(d.pensao_inicio),d.tempo_servico==null?'':Math.floor(+d.tempo_servico)];})(l.datas)));
       });
       var csv='﻿'+linhas.map(function(r){return r.map(function(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}).join(';');}).join('\r\n');
-      var reg=await sb().rpc('base_registrar',{p_resumo:'Base única: exportou CSV ('+(linhas.length-1)+' pessoas; '+pula+' puladas por "Não enviar mais")',p_depois:{filtros:params(F,MAX_CSV,1),linhas:linhas.length-1,puladas:pula}});
+      var reg=await sb().rpc('base_registrar',{p_resumo:'Base única: exportou CSV ('+(linhas.length-1)+' pessoas; '+pula+' puladas por "Não enviar mais")',p_depois:{filtros:params(F,MAX_CSV,0),linhas:linhas.length-1,puladas:pula}});
       if(reg.error)throw reg.error;
       var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download='base-unica.csv';document.body.appendChild(a);a.click();a.remove();
       aviso('CSV gerado com '+num(linhas.length-1)+' pessoas'+(pula?' ('+num(pula)+' puladas por "Não enviar mais")':'')+'. Registrado no Registro de atividades.','');

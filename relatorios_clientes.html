@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611240134"></script>
+<script src="saga_guard.js?v=202611240141"></script>
 <meta charset="UTF-8">
 <!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
@@ -75,7 +75,7 @@ table.tab tbody tr:hover{background:color-mix(in srgb,var(--gold) 6%,transparent
   .kanban{grid-template-columns:repeat(4,82vw)}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611240134">
+<link rel="stylesheet" href="saga_tema.css?v=202611240141">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -117,9 +117,10 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611240134"></script>
-<script src="saga_tribunais.js?v=202611240134"></script>
-<script src="saga_relatorios.js?v=202611240134"></script>
+<script src="saga_ui.js?v=202611240141"></script>
+<script src="saga_paginacao.js?v=202611240141"></script>
+<script src="saga_tribunais.js?v=202611240141"></script>
+<script src="saga_relatorios.js?v=202611240141"></script>
 <script>
 /* =====================================================================
    SAGA · Relatórios (T192, blocos 244 e 245; 17/11/2026, pedido do Dr. Victor)
@@ -206,12 +207,14 @@ function htmlNumero(x){
   var ic='';try{if(window.SagaTribunais&&SagaTribunais.icone)ic=' '+SagaTribunais.icone(x.numero);}catch(e){}
   return '<span class="num-cnj">'+esc(SagaRelatorios.cnj(x.numero))+'</span>'+ic;
 }
+// 24/11 (Dr. Victor): paginação comum (saga_paginacao.js) na Lista e nos Cartões; R.pag continua contando de 0
+var PAG=null;function pag(){if(!PAG)PAG=SagaPaginacao.criar({tela:'relatorios',rotulo:'processos',aoMudar:function(P){R.pag=P.pagina-1;desenhar();window.scrollTo({top:0,behavior:'smooth'});}});return PAG;}
+function paginar(l){var P=pag();P.pagina=(R.pag||0)+1;var pg=P.fatia(l);R.pag=P.pagina-1;return pg;}
 function desenharLista(l){
-  var tot=l.length,ini=R.pag*POR_PAG;if(ini>=tot){R.pag=0;ini=0;}
-  var pg=l.slice(ini,ini+POR_PAG);
+  var pg=paginar(l);
   return '<div class="tabela-wrap"><table class="tab"><thead><tr><th>Cliente</th><th>Processo</th><th>Tese</th><th>Último relatório enviado</th><th>Pedido em aberto</th><th>Responsável</th></tr></thead><tbody>'+
     pg.map(function(x){return '<tr data-proc="'+esc(x.processo_id)+'"><td>'+htmlNome(x)+'</td><td>'+htmlNumero(x)+'</td><td class="mini">'+esc(x.tese||'—')+'</td><td>'+celulaUltimo(x)+'</td><td>'+celulaAberto(x)+'</td><td class="mini">'+esc((x.aberto&&x.aberto.responsavel)||x.responsavel||'—')+'</td></tr>';}).join('')+
-    '</tbody></table></div>'+(tot>POR_PAG?'<div class="pag"><span>'+(ini+1)+'–'+Math.min(ini+POR_PAG,tot)+' de '+tot+'</span><button class="btn" type="button" data-pag="-1"'+(R.pag?'':' disabled')+'>Anterior</button><button class="btn" type="button" data-pag="1"'+(ini+POR_PAG<tot?'':' disabled')+'>Próxima</button></div>':'');
+    '</tbody></table></div>'+pag().html();
 }
 function htmlCartao(x){
   return '<div class="cartao" data-proc="'+esc(x.processo_id)+'">'+htmlNome(x)+'<div>'+htmlNumero(x)+'</div><div class="mini">'+esc(x.tese||'')+'</div><div>'+celulaUltimo(x)+'</div>'+(x.aberto?'<div>'+celulaAberto(x)+'</div>':'')+'</div>';
@@ -235,7 +238,8 @@ function desenhar(){
     area.innerHTML='<div class="vazio"><b>'+(R.lista.length?'Nada encontrado com estes filtros.':'Nenhum relatório ainda.')+'</b>'+(R.lista.length?'':'Use "+ Pedir relatório" ou guarde um relatório na pasta "Relatórios processuais" da ficha do cliente: ele aparece aqui.')+'</div>';
     $('resumo').innerHTML='';return;
   }
-  area.innerHTML=R.visao==='kanban'?desenharKanban(l):(R.visao==='cartoes'?'<div class="cartoes">'+l.map(htmlCartao).join('')+'</div>':desenharLista(l));
+  area.innerHTML=R.visao==='kanban'?desenharKanban(l):(R.visao==='cartoes'?'<div class="cartoes">'+paginar(l).map(htmlCartao).join('')+'</div>'+pag().html():desenharLista(l));
+  if(R.visao!=='kanban')pag().ligar(area);
   var ab=l.filter(function(x){return x.aberto;}).length;
   $('resumo').innerHTML='<b>'+l.length+'</b> processo'+(l.length>1?'s':'')+(ab?' · <b>'+ab+'</b> com pedido em aberto':'')+' · cores: verde até '+R.cfg.verde+' dias, amarelo até '+R.cfg.amarelo+', vermelho acima';
 }
@@ -326,7 +330,6 @@ function ligar(){
   $('area').addEventListener('click',function(e){
     if(e.target.closest('a[data-ficha]'))return; // o link abre a ficha (Ctrl+clique: outra aba)
     if(e.target.closest('.saga-trib, [data-tribunal], .trib-btn'))return;
-    var pg=e.target.closest('[data-pag]');if(pg){R.pag+=parseInt(pg.dataset.pag,10);desenhar();document.querySelector('main.content').scrollTo&&window.scrollTo({top:0,behavior:'smooth'});return;}
     var el=e.target.closest('[data-proc]');if(!el)return;
     var x=achar(el.dataset.proc);if(x)abrirDetalhe(x);
   });

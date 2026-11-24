@@ -138,9 +138,20 @@
   async function carregar(){
     var c = $('bpCorpo'); if(!c) return;
     try{
-      var r = await sb().rpc('busca_proc_painel', { p: { filtro: S.filtro, busca: S.busca || null, pagina: S.pagina, comparacao: S.aba === 'comparar' } });
+      // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js). Com o bloco 463 a função aceita 'limite' e devolve 'total';
+      // sem ele continua de 30 em 30 com Anterior/Próximos.
+      var P = pag(); P.pagina = S.pagina || 1; var extra = null, meu = S.pedidoLista = (S.pedidoLista || 0) + 1;
+      var r = await SagaPaginacao.buscarEmPartes(function(off, lim){
+        return sb().rpc('busca_proc_painel', { p: { filtro: S.filtro, busca: S.busca || null, pagina: Math.floor(off / lim) + 1, limite: lim, comparacao: S.aba === 'comparar' && !extra } }).then(function(x){
+          if(x.error) return x; var d = x.data || {}; var ach = d.achados || [];
+          if(d.total != null && ach.length > lim) ach = ach.slice(0, lim);   // a função manda 1 a mais para saber se há outra página
+          if(!extra) extra = d; return { linhas: ach, total: d.total != null ? d.total : ach.length };
+        });
+      }, { offset: P.offset(), quantos: P.quantos(), lote: 500 });
+      if(meu !== S.pedidoLista) return;
       if(r.error) throw r.error;
-      S.dados = r.data || {}; S.pode = S.dados.pode || S.pode;
+      S.dados = Object.assign({}, extra || {}, { achados: r.linhas }); S.pode = S.dados.pode || S.pode;
+      S.temTotal = extra && extra.total != null; if(S.temTotal){ P.total(r.total); S.pagina = P.pagina; }
       desenhar();
     }catch(e){
       c.innerHTML = '<div class="bp-msg">Não consegui ler a busca de processos: ' + esc(erroTxt(e)) + '. <button class="bp-btn" type="button" data-bp="recarregar">Tentar de novo</button></div>';
@@ -188,12 +199,16 @@
       return '<button class="bp-btn' + (S.filtro === f[0] ? ' active' : '') + '" type="button" data-bp="filtro" data-v="' + f[0] + '">' + f[1] + '<b>' + (f[2] || 0) + '</b></button>';
     }).join('') + '</div>';
     h += '<div class="bp-busca"><input id="bpBuscaTxt" type="search" placeholder="Buscar por nome, código VMM ou número" value="' + esc(S.busca) + '" aria-label="Buscar"><button class="bp-btn" type="button" data-bp="buscar">Buscar</button></div>';
-    var lista = (d.achados || []), mais = lista.length > (d.por_pagina || 30);
+    var lista = (d.achados || []), mais = !S.temTotal && lista.length > (d.por_pagina || 30);
     if(mais) lista = lista.slice(0, d.por_pagina || 30);
     h += '<div class="bp-lista">' + (lista.map(htmlAchado).join('') || '<div class="bp-vazio">' + (S.filtro === 'decididos' ? 'Nenhum achado conferido ainda.' : 'Nenhum achado esperando conferência.') + '</div>') + '</div>';
-    if(S.pagina > 1 || mais) h += '<div class="bp-pag"><button class="bp-btn" type="button" data-bp="pag" data-v="-1"' + (S.pagina > 1 ? '' : ' disabled') + '>‹ Anteriores</button><span>Página ' + S.pagina + '</span><button class="bp-btn" type="button" data-bp="pag" data-v="1"' + (mais ? '' : ' disabled') + '>Próximos ›</button></div>';
+    if(S.temTotal) h += pag().html();
+    else if(S.pagina > 1 || mais) h += '<div class="bp-pag"><button class="bp-btn" type="button" data-bp="pag" data-v="-1"' + (S.pagina > 1 ? '' : ' disabled') + '>‹ Anteriores</button><span>Página ' + S.pagina + '</span><button class="bp-btn" type="button" data-bp="pag" data-v="1"' + (mais ? '' : ' disabled') + '>Próximos ›</button></div>';
     c.innerHTML = h;
+    if(S.temTotal) pag().ligar(c);
   }
+  var PAG = null;
+  function pag(){ if(!PAG) PAG = SagaPaginacao.criar({ tela: 'processos-achados', rotulo: 'achados', aoMudar: function(P){ S.pagina = P.pagina; carregar(); } }); return PAG; }
 
   function htmlAchado(a){
     var pend = a.decisao === 'pendente';

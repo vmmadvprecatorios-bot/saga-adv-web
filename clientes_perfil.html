@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script src="saga_guard.js?v=202611240134"></script>
+<script src="saga_guard.js?v=202611240141"></script>
 <meta charset="UTF-8">
 <!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
@@ -121,7 +121,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:12px}
   .tb td[data-r]::before{content:attr(data-r);display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
 }
 </style>
-<link rel="stylesheet" href="saga_tema.css?v=202611240134">
+<link rel="stylesheet" href="saga_tema.css?v=202611240141">
 </head>
 <body data-theme="dark">
 <header class="topbar" id="topbarSaga"></header>
@@ -165,7 +165,7 @@ table.tb{width:100%;border-collapse:collapse;font-size:12px}
   </section>
   <div class="resumo-topo"><span id="resumo">Carregando…</span><span class="ordem"><label for="fOrdem">Ordenar por</label><select class="ent" id="fOrdem"><option value="nome">Nome</option><option value="idade">Idade (mais velhos primeiro)</option><option value="ingresso">Ano de ingresso</option><option value="aposentadoria">Ano de aposentadoria</option><option value="cadastro">Cadastro mais recente</option></select></span></div>
   <div id="area"></div>
-  <div class="paginacao" id="pag" hidden><button class="btn" type="button" id="pgAnt">Anterior</button><span id="pgInfo"></span><button class="btn" type="button" id="pgProx">Próxima</button></div>
+  <div id="pag" hidden></div>
   <div class="legenda" aria-hidden="true"><span style="--g:#16a34a"><i></i>Ativo no Jurídico</span><span style="--g:#d97706"><i></i>Captação</span><span style="--g:#8a94a8"><i></i>Encerrado</span><span style="--g:#2f6cd6"><i></i>Sacado</span></div>
 </main>
 </div>
@@ -187,8 +187,9 @@ var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsI
 var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 window._sb=_sb;
 </script>
-<script src="saga_ui.js?v=202611240134"></script>
-<script src="saga_pdf.js?v=202611240134"></script>
+<script src="saga_ui.js?v=202611240141"></script>
+<script src="saga_paginacao.js?v=202611240141"></script>
+<script src="saga_pdf.js?v=202611240141"></script>
 <script>
 /* =====================================================================
    SAGA · Clientes por perfil (bloco 138): clientes_perfil_opcoes / clientes_perfil_buscar
@@ -362,14 +363,18 @@ var celular=window.matchMedia('(max-width:760px)');
 function ajustarFiltrosCelular(){var sec=$('filtros');if(celular.matches){if(!sec.dataset.mexido)sec.hidden=true;}else{sec.hidden=false;}var ab=!sec.hidden;$('btnFiltros').setAttribute('aria-expanded',String(ab));$('btnFiltros').firstChild.textContent=ab?'Esconder filtros':'Mostrar filtros';}
 var tmBusca=null;
 function mudou(atraso){marcarBotaoFiltros();desenharCtxTese();clearTimeout(tmBusca);tmBusca=setTimeout(function(){C.pagina=1;buscar();},atraso==null?250:atraso);}
+// 24/11 (Dr. Victor): paginação comum (saga_paginacao.js: Mostrar 5·10·50·100·Todos, páginas numeradas)
+var PAG=null;function pag(){if(!PAG)PAG=SagaPaginacao.criar({tela:'clientes-perfil',rotulo:'clientes',aoMudar:function(P){C.pagina=P.pagina;buscar();window.scrollTo({top:0,behavior:sagaParado()?'auto':'smooth'});}});return PAG;}
+function sagaParado(){try{return localStorage.getItem('saga-movimento')==='reduzido';}catch(e){return false;}}
 async function buscar(){
   var meu=++C.pedido;var area=$('area');area.classList.add('carregando');
-  var p=filtros();p.pagina=C.pagina;p.limite=C.limite;
-  var r=await _sb.rpc('clientes_perfil_buscar',{p:p});
+  var P=pag();P.pagina=C.pagina||1;
+  var r=await SagaPaginacao.buscarEmPartes(function(off,lim){var p=filtros();p.pagina=Math.floor(off/lim)+1;p.limite=lim;return _sb.rpc('clientes_perfil_buscar',{p:p}).then(function(x){return x.error?x:{linhas:(x.data||{}).linhas,total:(x.data||{}).total};});},
+    {offset:P.offset(),quantos:P.quantos(),lote:1000});
   if(meu!==C.pedido)return;
   area.classList.remove('carregando');
   if(r.error){area.innerHTML='<div class="tabela"><div class="vazio"><b>Não foi possível buscar</b>'+esc((window.sagaErroBanco?window.sagaErroBanco(r.error):r.error.message))+'</div></div>';$('resumo').textContent='';$('pag').hidden=true;return;}
-  var d=r.data||{};C.total=d.total||0;C.linhas=d.linhas||[];
+  C.total=r.total||0;C.linhas=r.linhas||[];P.total(C.total);C.pagina=P.pagina;
   desenhar();
 }
 function linhaPerfil(pf){
@@ -406,9 +411,7 @@ function desenhar(){
         '<td class="num" data-r="Aposentadoria">'+(l.ano_aposentadoria||'—')+'</td>'+
         '<td class="c-teses" data-r="Processos e teses"><div class="teses">'+(procs||'<span class="sub">Nenhum processo</span>')+'</div></td></tr>';
     }).join('')+'</tbody></table></div>';
-  var pags=Math.max(1,Math.ceil(C.total/C.limite));
-  $('pag').hidden=pags<=1;$('pgInfo').textContent='Página '+C.pagina+' de '+n(pags);
-  $('pgAnt').disabled=C.pagina<=1;$('pgProx').disabled=C.pagina>=pags;
+  $('pag').hidden=false;pag().render($('pag'));
 }
 function filtrosVazios(){return {texto:'',situacao_funcional:[],orgao:[],cargo:'',uf:[],situacao_vital:'',idade_de:'',idade_ate:'',ingresso_de:'',ingresso_ate:'',aposentadoria_de:'',aposentadoria_ate:'',tese_tem:[],tese_nao_tem:[],fase:'todas',so_com_perfil:true,ordem:'nome',listagem_al:''};}
 
@@ -490,8 +493,6 @@ function ligar(){
   $('fVital').addEventListener('change',function(){mudou(0);});
   $('fListagemAl').addEventListener('change',function(){mudou(0);});
   $('fOrdem').addEventListener('change',function(){mudou(0);});
-  $('pgAnt').addEventListener('click',function(){if(C.pagina>1){C.pagina--;buscar();window.scrollTo({top:0,behavior:'smooth'});}});
-  $('pgProx').addEventListener('click',function(){C.pagina++;buscar();window.scrollTo({top:0,behavior:'smooth'});});
   $('btnLimpar').addEventListener('click',function(){
     ['fTexto','fCargo','fIdade1','fIdade2','fIng1','fIng2','fApo1','fApo2'].forEach(function(id){$(id).value='';});
     $('fVital').value='';$('fListagemAl').value='';C.sel={sit:[],orgao:[],uf:[],tem:[],nao:[]};

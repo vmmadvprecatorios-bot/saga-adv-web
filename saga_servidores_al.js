@@ -13,6 +13,8 @@
     f:{ente:'',lista:'',evento:'',de:'',ate:'',texto:'',orgao:'',cargo:'',portal:false,min:'',max:'',clientes:'',pagina:1},
     pedido:0};
   var LIM=50,MAX_CSV=20000;
+  // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js); a página continua em S.f.pagina
+  var PAG=null;function pag(){if(!PAG)PAG=SagaPaginacao.criar({tela:'servidores-al',rotulo:'pessoas',aoMudar:function(P){S.f.pagina=P.pagina;carregarLista();}});return PAG;}
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
   var ENTE={estado_al:'Estado de Alagoas',municipio_maceio:'Prefeitura de Maceió'};
   var LISTA={ativo:'Ativo',aposentado:'Aposentado',pensionista:'Pensionista'};
@@ -197,12 +199,13 @@ html.saga-movimento-reduzido #aba-servidores_al .sa-corpo{transition:none}
   async function carregarLista(){
     var box=$('saLista2');if(!box)return;var F=S.f,meu=++S.pedido;box.classList.add('sa-carregando');
     if((F.de&&!mesNum(F.de))||(F.ate&&!mesNum(F.ate))){box.classList.remove('sa-carregando');box.innerHTML='<div class="sa-aviso amar">Mês inválido: use mm/aaaa (ex.: 03/2025).</div>';return;}
-    var r=await sb().rpc('servpub_buscar',params(F,LIM,F.pagina));
+    var P=pag();P.pagina=F.pagina||1;
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('servpub_buscar',params(F,lim,Math.floor(off/lim)+1)).then(function(x){return x.error?x:{linhas:(x.data||{}).linhas,total:(x.data||{}).total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:500,progresso:function(a,t){if(meu===S.pedido&&t>500)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
     if(meu!==S.pedido)return;box.classList.remove('sa-carregando');
     if(r.error){box.innerHTML='<div class="sa-aviso verm">Não deu para buscar: '+erro(r.error)+'</div>';return;}
-    var d=r.data||{},ls=d.linhas||[];
+    var d=r,ls=d.linhas||[];P.total(d.total);F.pagina=P.pagina;
     if(!ls.length){box.innerHTML='<div class="sa-vazio">Ninguém com esses filtros.</div>';return;}
-    var pags=Math.max(1,Math.ceil((d.total||0)/LIM));
     box.innerHTML='<div class="sa-rolagem"><table class="sa-tab"><thead><tr><th>Pessoa</th><th>Situação</th><th>Órgão e cargo</th><th>Remuneração</th><th>Na folha</th></tr></thead><tbody>'+
       ls.map(function(l){
         return '<tr><td><button type="button" class="sa-nome" data-pessoa="'+(+l.id)+'">'+esc(l.nome)+'</button>'+
@@ -214,9 +217,8 @@ html.saga-movimento-reduzido #aba-servidores_al .sa-corpo{transition:none}
           '<td data-r="Remuneração" class="n">'+reais(l.ultimo_bruto!=null?l.ultimo_bruto:l.ultimo_liquido)+'<span class="sa-sub">'+(l.ultimo_bruto!=null?'bruto':'líquido')+' de '+esc(mesBR(l.ultimo_mes))+'</span></td>'+
           '<td data-r="Na folha" class="n">'+esc(mesBR(l.primeiro_mes))+' a '+esc(mesBR(l.ultimo_mes))+'</td></tr>';
       }).join('')+'</tbody></table></div>'+
-      '<div class="sa-pag">'+num(d.total)+' pessoas · página '+F.pagina+' de '+pags+
-      '<button class="btn" type="button" id="saAnt"'+(F.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" id="saProx"'+(F.pagina>=pags?' disabled':'')+'>Próxima</button></div>';
-    $('saAnt').onclick=function(){S.f.pagina--;carregarLista();};$('saProx').onclick=function(){S.f.pagina++;carregarLista();};
+      P.html();
+    P.ligar(box);
   }
   async function todasLinhas(F){
     var r=await sb().rpc('servpub_buscar',params(F,500,1));if(r.error)throw r.error;

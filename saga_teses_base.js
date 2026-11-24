@@ -151,14 +151,20 @@
       '<td><div class="tb-dots">'+(dots||'<span style="color:var(--muted)">nenhuma tese no público</span>')+'</div></td></tr>';
   }
   function parametros(extra){var f=B.f,p={produto:f.produto,estado:f.estado,situacao:f.situacao,orgao:f.orgao,uf:f.uf,fase:f.fase,busca:f.busca,pagina:f.pagina,limite:50};for(var k in extra)p[k]=extra[k];return p;}
+  // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js); a página continua em B.f.pagina
+  var PAG=null;function pag(){if(!PAG)PAG=SagaPaginacao.criar({tela:'teses-base',rotulo:'clientes',aoMudar:function(P){B.f.pagina=P.pagina;carregarLista();var t=$('tbConteudo');if(t&&t.scrollIntoView)t.scrollIntoView({block:'start'});}});return PAG;}
   async function carregarLista(){
     var box=$('tbLista');if(!box)return;box.innerHTML='<div class="tb-vazio">Carregando…</div>';
-    var r=await sb().rpc('teses_base_clientes',{p:parametros({})});
+    var P=pag();P.pagina=B.f.pagina||1;var meu=B.pedidoLista=(B.pedidoLista||0)+1,extra={};
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('teses_base_clientes',{p:parametros({pagina:Math.floor(off/lim)+1,limite:lim})}).then(function(x){if(x.error)return x;extra=x.data||{};return {linhas:extra.linhas,total:extra.total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:200,progresso:function(a,t){if(meu===B.pedidoLista&&t>200)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
+    if(meu!==B.pedidoLista)return;
     if(r.error){box.innerHTML='<div class="tb-aviso tb-erro">Não deu para carregar a lista: '+erro(r.error)+'</div>';return;}
-    B.lista=r.data||{};var ls=B.lista.linhas||[],tot=B.lista.total||0,pags=Math.max(1,Math.ceil(tot/50));
+    B.lista=Object.assign({},extra,{linhas:r.linhas,total:r.total});var ls=B.lista.linhas||[],tot=B.lista.total||0;P.total(tot);B.f.pagina=P.pagina;
     if(!ls.length){box.innerHTML='<div class="tb-vazio">Nenhum cliente com esses filtros.</div>';return;}
     box.innerHTML='<div class="tb-rolagem"><table class="tb-tabela"><thead><tr><th>Cliente</th><th>Fase</th><th>Situação</th><th>Órgão</th><th>Teses (público)</th></tr></thead><tbody>'+ls.map(linhaHtml).join('')+'</tbody></table></div>'+
-      '<div class="tb-pag">'+num(tot)+' clientes · página '+B.f.pagina+' de '+pags+' <button class="btn btn-sm" type="button" data-tb-pag="-1"'+(B.f.pagina<=1?' disabled':'')+'>‹ Anterior</button><button class="btn btn-sm" type="button" data-tb-pag="1"'+(B.f.pagina>=pags?' disabled':'')+'>Próxima ›</button></div>';
+      P.html();
+    P.ligar(box);
   }
   function desenharClientes(){
     var box=$('tbConteudo');if(!box)return;
@@ -234,7 +240,6 @@
     $('tbVis').onclick=function(e){var b=e.target.closest('[data-tb-vis]');if(b)trocarVis(b.dataset.tbVis);};
     pane.onclick=function(e){
       var n=e.target.closest('[data-tb-ir]');if(n){irLista(n.dataset.tbIr,n.dataset.tbEst);return;}
-      var pg=e.target.closest('[data-tb-pag]');if(pg){B.f.pagina=Math.max(1,B.f.pagina+Number(pg.dataset.tbPag));carregarLista();var t=$('tbConteudo');if(t&&t.scrollIntoView)t.scrollIntoView({block:'start'});}
     };
     trocarVis(B.vis);
   }
