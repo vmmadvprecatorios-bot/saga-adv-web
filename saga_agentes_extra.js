@@ -58,7 +58,7 @@
     '.ax-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;font-size:10.5px;font-weight:600;background:color-mix(in srgb,var(--gold) 30%,transparent);color:var(--text)}'+
     '.ax-badge[hidden]{display:none}'+
     '.ax-linha{display:flex;gap:8px;flex-wrap:wrap;align-items:center}'+
-    '.ax-linha input[type=date]{height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:0 10px;font-size:12.5px;color:var(--text)}'+
+    '.ax-linha :is(input[type=date],input.saga-cal-vis){height:36px;border-radius:10px;border:1px solid var(--border-soft);background:var(--panel);padding:0 10px;font-size:12.5px;color:var(--text)}'+
     '.ax-erro{margin-top:8px;padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--danger,#e5484d) 55%,transparent);background:color-mix(in srgb,var(--danger,#e5484d) 9%,transparent);font-size:12px;line-height:1.5}'+
     '.ax-erro[hidden]{display:none}'+
     '.ax-nota{font-size:11.5px;color:var(--muted);line-height:1.55}'+

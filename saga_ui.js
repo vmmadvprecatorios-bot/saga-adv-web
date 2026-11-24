@@ -1184,7 +1184,26 @@
   };
   // window.sagaCampoData(input): campo de data dd/mm/aaaa próprio (o do navegador segue o idioma dele: 11/16/2026).
   // Mantém input.value em AAAA-MM-DD (o que as telas já gravam); a pessoa digita só os números.
+  // 24/11 (Dr. Victor: "todo lugar em que eu tiver que digitar uma data, quero o CALENDÁRIO EMBUTIDO"): o
+  // saga_calendario.js (mesma versão deste arquivo) troca SOZINHO todo campo de data do sistema (date, datetime-local,
+  // month e os de texto dd/mm/aaaa) e traz o calendário; ele substitui esta função. Até ele chegar, os pedidos
+  // esperam na fila; se ele não carregar, vale o campo dd/mm/aaaa simples abaixo (campoDataSimples).
+  var _calFila=[],_calFalhou=false;
+  (function(){
+    try{
+      var cs=document.currentScript&&document.currentScript.src||'',vm=cs.match(/[?&]v=(\d+)/),base=cs?cs.replace(/[^\/?#]*(\?.*)?$/,''):'';
+      var sc=document.createElement('script');sc.src=base+'saga_calendario.js'+(vm?'?v='+vm[1]:'');
+      sc.onload=function(){var l=_calFila;_calFila=[];if(global.SagaCalendario)l.forEach(function(i){global.SagaCalendario.preparar(i);});};
+      sc.onerror=function(){_calFalhou=true;console.warn('[SAGA] o calendário (saga_calendario.js) não carregou: os campos de data ficam só com dd/mm/aaaa');var l=_calFila;_calFila=[];l.forEach(campoDataSimples);};
+      (document.head||document.documentElement).appendChild(sc);
+    }catch(e){_calFalhou=true;}
+  })();
   global.sagaCampoData=function(inp){
+    if(global.SagaCalendario)return global.SagaCalendario.preparar(inp);
+    if(_calFalhou)return campoDataSimples(inp);
+    if(inp&&_calFila.indexOf(inp)<0)_calFila.push(inp);return inp;
+  };
+  function campoDataSimples(inp){
     if(!inp||inp.dataset.sagaData)return inp;inp.dataset.sagaData='1';
     var iso=inp.value||'';var vis=document.createElement('input');
     vis.type='text';vis.inputMode='numeric';vis.placeholder='dd/mm/aaaa';vis.maxLength=10;vis.autocomplete='off';
@@ -1204,7 +1223,7 @@
     // valor posto pela tela depois (inp.value = '2026-11-16'): acompanha
     Object.defineProperty(inp,'value',{configurable:true,get:function(){return desc.get.call(inp);},set:function(v){desc.set.call(inp,v);var t=deIso(v);if(vis.value!==t)vis.value=t;}});
     inp._sagaVisivel=vis;return inp;
-  };
+  }
 
   // Troca direta do _sb.rpc('verificar_permissao',{...}) das telas: mesma resposta {data:true|false}, sem ir ao banco
   // quando é a própria pessoa (a lista já veio no saga_inicio); para outra pessoa, pergunta ao banco como antes.
