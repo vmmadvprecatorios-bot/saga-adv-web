@@ -168,6 +168,37 @@ def avaliar_13(s, stats):
         s["lista"].append({"m": m, "t": "13", "pago": round(total, 2), "esperado": round(bas + a, 2) if r != "?" else None, "dif": dif, "r": r})
         stats["d13_" + r] += 1
 
+def _chave_publica():
+    # chave PÚBLICA do site (a mesma que está nas telas); lida da tela de login para não repetir aqui
+    import re
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "login_padrao_metalico.html")
+    m = re.search(r"SUPABASE_KEY\s*=\s*['\"]([^'\"]+)['\"]", open(base, encoding="utf-8").read())
+    return m.group(1) if m else ""
+
+def tempo_login():
+    """Mede o login do SAGA (Authentication): segundos até responder; None se falhar."""
+    req = urllib.request.Request(URL_PORTA.split("/functions/")[0] + "/auth/v1/settings",
+                                 headers={"apikey": _chave_publica()})
+    t = time.time()
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            r.read()
+        return time.time() - t
+    except Exception:  # noqa: BLE001
+        return None
+
+def vigia_login(limite=3.0):
+    """Antes de cada lote: login acima de 3 s (ou sem resposta) = pausa de 60 s e confere de novo (até 15 vezes)."""
+    for vez in range(15):
+        s = tempo_login()
+        if s is not None and s <= limite:
+            return s
+        print(f"  vigia: login {'sem resposta' if s is None else f'{s:.1f} s'} (limite {limite:.0f} s): pausa de 60 s ({vez + 1}/15)", flush=True)
+        time.sleep(60)
+        if not no_horario():
+            sys.exit("Passou das 6h de Maceió durante a pausa do vigia: parei.")
+    sys.exit("Login lento por 15 minutos seguidos: parei a carga para não pesar o banco (rodar de novo depois).")
+
 def enviar(corpo):
     dados = json.dumps(corpo).encode()
     req = urllib.request.Request(URL_PORTA, data=dados, method="POST",
@@ -236,10 +267,12 @@ def main():
     for k in range(0, len(linhas), LOTE):
         if not no_horario():
             sys.exit(f"Passou das 6h de Maceió: parei no lote {k // LOTE} (o resto vai na próxima noite; rodar de novo regrava tudo).")
+        lg = vigia_login()
         r = enviar({"tipo": "siape_abono", "linhas": linhas[k:k + LOTE]})
-        print(f"lote {k // LOTE + 1}: {r.get('gravadas')} gravadas", flush=True)
+        print(f"lote {k // LOTE + 1}: {r.get('gravadas')} gravadas (login {lg:.1f} s)", flush=True)
         time.sleep(a.pausa)
     for k in range(0, len(eventos), LOTE):
+        vigia_login()
         r = enviar({"tipo": "siape_abono_eventos", "linhas": eventos[k:k + LOTE]})
         print(f"eventos {k // LOTE + 1}: {r.get('gravadas')}", flush=True)
         time.sleep(a.pausa)
