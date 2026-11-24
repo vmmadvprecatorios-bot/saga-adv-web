@@ -249,58 +249,58 @@ async function espiarZip(arquivo: string) {
   return { ok: true, arquivo, tamanho, arquivos_no_zip: nomes.slice(0, 5), separador: sep, colunas: cols, exemplos };
 }
 
-// ---------- MEDIR um zip anual do Estado (só leitura): linhas por mês, ordem dos meses, formato do CPF, tempo ----------
-// Usa o descompactador nativo (DecompressionStream deflate-raw) depois do cabeçalho local do zip.
-async function abrirZipTexto(arquivo: string): Promise<{ leitor: ReadableStreamDefaultReader<string>; tamanho: string | null; nome: string }> {
+// ---------- LER um zip anual do Estado em fluxo (fflate: para no fim do arquivo de dentro, sem engasgar com o resto do zip) ----------
+// porLinha recebe cada linha (sem o cabeçalho) e devolve false para parar a leitura.
+async function lerZipLinhas(arquivo: string, porCab: (c: string[]) => void, porLinha: (c: string[]) => boolean | Promise<boolean>) {
   if (!/^folha_(ativo|inativo)-\d{4}\.zip$/.test(arquivo)) throw new Error("Arquivo inválido.");
   const r = await fetch(`${BASE}/media/arquivo/${arquivo}`, { headers: { "User-Agent": "SAGA-ADV (leitura de dados publicos)" }, signal: AbortSignal.timeout(140_000) });
   if (!r.ok || !r.body) throw new Error(`erro ${r.status} ao baixar ${arquivo}`);
-  const bruto = r.body.getReader();
-  let buf = new Uint8Array(0);
-  while (buf.length < 30) { const { value, done } = await bruto.read(); if (done) throw new Error("zip vazio"); buf = juntar(buf, value); }
-  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-  if (dv.getUint32(0, true) !== 0x04034b50) throw new Error("não é um zip");
-  const metodo = dv.getUint16(8, true), flag = dv.getUint16(6, true);
-  const nl = dv.getUint16(26, true), xl = dv.getUint16(28, true);
-  while (buf.length < 30 + nl + xl) { const { value, done } = await bruto.read(); if (done) throw new Error("zip cortado"); buf = juntar(buf, value); }
-  const nome = new TextDecoder().decode(buf.slice(30, 30 + nl));
-  if (metodo !== 8) throw new Error(`zip com método ${metodo} (esperado deflate)`);
-  const resto = buf.slice(30 + nl + xl);
-  const fonte = new ReadableStream<Uint8Array>({
-    start(c) { if (resto.length) c.enqueue(resto); },
-    async pull(c) { const { value, done } = await bruto.read(); if (done) c.close(); else c.enqueue(value); },
-    cancel() { bruto.cancel().catch(() => {}); },
+  const dec = new TextDecoder("latin1");
+  let resto = ""; let cab = false; let parar = false; let fim = false; let primeiro = true;
+  const fila: string[][] = [];
+  const uz = new Unzip((f) => {
+    if (!primeiro) return; primeiro = false;
+    f.ondata = (_e, chunk, final) => {
+      if (parar) return;
+      const partes = (resto + dec.decode(chunk, { stream: !final })).split("\n");
+      resto = final ? "" : (partes.pop() || "");
+      for (const l of partes) {
+        const t = l.replace(/\r$/, ""); if (!t) continue;
+        const c = t.split("|");
+        if (!cab) { cab = true; porCab(c); continue; }
+        fila.push(c);
+      }
+      if (final) fim = true;
+    };
+    f.start();
   });
-  void flag;
-  const leitor = fonte.pipeThrough(new DecompressionStream("deflate-raw")).pipeThrough(new TextDecoderStream("latin1")).getReader();
-  return { leitor, tamanho: r.headers.get("content-length"), nome };
+  uz.register(UnzipInflate);
+  const leitor = r.body.getReader();
+  try {
+    while (!parar && !fim) {
+      const { value, done } = await leitor.read();
+      if (done) { uz.push(new Uint8Array(0), true); fim = true; }
+      else uz.push(value);
+      while (fila.length && !parar) { if (!(await porLinha(fila.shift()!))) parar = true; }
+    }
+    while (fila.length && !parar) { if (!(await porLinha(fila.shift()!))) parar = true; }
+  } finally { try { await leitor.cancel(); } catch (_e) { /* ok */ } }
 }
-function juntar(a: Uint8Array, b: Uint8Array) { const c = new Uint8Array(a.length + b.length); c.set(a); c.set(b, a.length); return c; }
 
 async function medirZip(arquivo: string) {
   const t0 = Date.now();
-  const { leitor, tamanho, nome } = await abrirZipTexto(arquivo);
-  let resto = ""; let cab = ""; const porMes: Record<string, number> = {}; const ordem: string[] = []; const cpfs: Record<string, number> = {};
-  let linhas = 0; let iMes = -1; let iCpf = -1; let mudancas = 0; let ultimo = "";
-  try {
-    for (;;) {
-      const { value, done } = await leitor.read();
-      const pedaco = resto + (value || "");
-      const partes = pedaco.split("\n");
-      resto = done ? "" : (partes.pop() || "");
-      for (const l of partes) {
-        if (!l) continue;
-        if (!cab) { cab = l.replace(/\r$/, ""); const c = cab.split("|"); iMes = c.indexOf("ANO_MES"); iCpf = c.indexOf("CPF"); continue; }
-        const c = l.split("|"); const m = c[iMes] || "?"; linhas++;
-        porMes[m] = (porMes[m] || 0) + 1;
-        if (m !== ultimo) { mudancas++; if (!ordem.includes(m)) ordem.push(m); ultimo = m; }
-        if (linhas % 5000 === 1) { const f = (c[iCpf] || "").replace(/\d/g, "9"); cpfs[f] = (cpfs[f] || 0) + 1; }
-      }
-      if (done) break;
-    }
-  } finally { try { await leitor.cancel(); } catch (_e) { /* ok */ } }
-  return { ok: true, arquivo, nome, tamanho, colunas: cab.split("|"), linhas, por_mes: porMes, ordem_dos_meses: ordem,
-    trocas_de_mes: mudancas, formatos_cpf: cpfs, segundos: (Date.now() - t0) / 1000 };
+  let cols: string[] = []; let iMes = -1, iCpf = -1;
+  const porMes: Record<string, number> = {}; const ordem: string[] = []; const cpfs: Record<string, number> = {};
+  let linhas = 0, trocas = 0, ultimo = "";
+  await lerZipLinhas(arquivo, (c) => { cols = c; iMes = c.indexOf("ANO_MES"); iCpf = c.indexOf("CPF"); }, (c) => {
+    const m = c[iMes] || "?"; linhas++;
+    porMes[m] = (porMes[m] || 0) + 1;
+    if (m !== ultimo) { trocas++; if (!ordem.includes(m)) ordem.push(m); ultimo = m; }
+    if (linhas % 5000 === 1) { const f = (c[iCpf] || "").replace(/\d/g, "9"); cpfs[f] = (cpfs[f] || 0) + 1; }
+    return true;
+  });
+  return { ok: true, arquivo, colunas: cols, linhas, por_mes: porMes, ordem_dos_meses: ordem, trocas_de_mes: trocas,
+    formatos_cpf: cpfs, segundos: (Date.now() - t0) / 1000 };
 }
 
 Deno.serve(async (req) => {
