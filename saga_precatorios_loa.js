@@ -33,6 +33,10 @@
 #aba-loa .pl-aviso.amar{border-left-color:#c98500}
 #aba-loa .pl-erro{border-left-color:var(--danger,#d6452d);color:var(--text)}
 #aba-loa .pl-partes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+#aba-loa .pl-partes .pill{height:34px;padding:0 14px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--border-soft);background:transparent;cursor:pointer;white-space:nowrap;transition:background .22s cubic-bezier(.22,.78,.25,1),color .22s}
+#aba-loa .pl-partes .pill.active{background:color-mix(in srgb,var(--gold) 18%,transparent);border-color:color-mix(in srgb,var(--gold) 55%,transparent);color:var(--text)}
+#aba-loa .pl-partes .pill:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (max-width:700px){#aba-loa .pl-partes .pill{height:40px}}
 #aba-loa .pl-nums{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
 #aba-loa .pl-num{border:1px solid var(--border-soft);border-radius:12px;padding:9px 10px;background:var(--panel);color:var(--text);font:inherit;text-align:left;cursor:pointer;min-height:64px;display:flex;flex-direction:column;gap:2px}
 #aba-loa .pl-num:hover,#aba-loa .pl-num:focus-visible{border-color:var(--gold);outline:0}
@@ -94,7 +98,7 @@
       '<div class="pl-rolagem" style="margin-top:12px"><table class="pl-tab"><thead><tr><th>LOA</th><th>Precatórios no orçamento</th></tr></thead><tbody>'+
       Object.keys(anos).sort().reverse().map(function(a){return '<tr><td data-r="LOA"><a href="#" data-ano="'+esc(a)+'">'+esc(a)+'</a></td><td class="n" data-r="Precatórios">'+num(anos[a])+'</td></tr>';}).join('')+
       '</tbody></table></div>'+
-      '<div class="pl-aviso" style="margin-top:12px"><b>Distribuídos:</b> '+num(d.total)+' · '+Object.keys(SIT).map(function(k){return esc(SIT[k])+' '+num((d.por_situacao||{})[k]);}).join(' · ')+'</div>'+
+      '<div class="pl-aviso" style="margin-top:12px"><a href="meu_lote.html">Abrir Meu dia &gt; Meu lote</a> · <b>Distribuídos:</b> '+num(d.total)+' · '+Object.keys(SIT).map(function(k){return esc(SIT[k])+' '+num((d.por_situacao||{})[k]);}).join(' · ')+'</div>'+
       '<div id="plRobo" style="margin-top:12px"><div class="pl-aviso">Conferindo o robô do TRF5…</div></div>';
   }
   /* ---------- robô do TRF5 (credor e saque): erros sempre à vista ---------- */
@@ -283,9 +287,9 @@
   function aviso(t,tipo){var a=$('plMsg');if(!a)return;a.hidden=false;a.className='pl-aviso'+(tipo==='erro'?' pl-erro':tipo==='amar'?' amar':'');a.innerHTML=t;clearTimeout(aviso._t);if(tipo==='ok')aviso._t=setTimeout(function(){a.hidden=true;},4000);}
   function desenhar(){
     var pane=$('aba-loa');if(!pane)return;
-    var partes=L.admin?[['geral','Visão geral'],['lista','Precatórios'],['habilitacao','Habilitação provável'],['lote','Meu lote']]:[['lote','Meu lote']];
-    if(!L.admin)L.parte='lote';
-    pane.innerHTML='<div class="pl-partes" role="tablist">'+partes.map(function(p){return '<button type="button" class="pill'+(L.parte===p[0]?' active':'')+'" data-parte="'+p[0]+'">'+esc(p[1])+'</button>';}).join('')+'</div>'+
+    var partes=L.soLote?[]:[['geral','Visão geral'],['lista','Precatórios'],['habilitacao','Habilitação provável']];
+    if(L.soLote)L.parte='lote';
+    pane.innerHTML=(partes.length?'<div class="pl-partes" role="tablist">':'<div hidden>')+partes.map(function(p){return '<button type="button" class="pill'+(L.parte===p[0]?' active':'')+'" data-parte="'+p[0]+'">'+esc(p[1])+'</button>';}).join('')+'</div>'+
       '<div class="pl-aviso" id="plMsg" hidden></div><div id="plCorpo"></div>';
     pane.querySelectorAll('[data-parte]').forEach(function(b){b.onclick=function(){
       pane.querySelectorAll('[data-parte]').forEach(function(x){x.classList.toggle('active',x===b);});
@@ -316,7 +320,7 @@
       var r=await Promise.all([sb().rpc('loa_painel'),sb().rpc('loa_opcoes')]);
       if(r[0].error||r[1].error){pane.innerHTML='<div class="pl-aviso pl-erro">Não deu para abrir os Precatórios da LOA: '+erro(r[0].error||r[1].error)+'</div>';return;}
       L.painel=r[0].data||{};L.opcoes=r[1].data||{};
-      var q=new URLSearchParams(location.search).get('loa');if(q&&['geral','lista','habilitacao','lote'].indexOf(q)>=0)L.parte=q;
+      var q=new URLSearchParams(location.search).get('loa');if(q&&['geral','lista','habilitacao'].indexOf(q)>=0)L.parte=q;
       if(L.parte==='habilitacao')L.f={habilitacao:'provavel'};
     }
     L.montado=true;desenhar();
@@ -324,10 +328,15 @@
   async function liberar(){
     try{
       var p=global.sagaPerfil?await global.sagaPerfil():null;L.admin=!!(p&&p.eh_administrador);
-      if(!L.admin){var r=await sb().rpc('loa_meu_lote',{p_situacao:null,p_limite:1,p_offset:0});L.meu=!r.error&&((r.data||{}).total||0)>0;}
-      var bt=$('abaLoa');if(bt){bt.hidden=!(L.admin||L.meu);if(!L.admin)bt.textContent='Meu lote: precatórios';}
-      return L.admin||L.meu;
+      var bt=$('abaLoa');if(bt)bt.hidden=!L.admin;
+      return L.admin;
     }catch(e){return false;}
   }
-  global.SagaPrecatoriosLoa={abrir:abrir,liberar:liberar,_estado:L};
+  // Meu dia > Meu lote (meu_lote.html): a pessoa da Captação vê só o próprio lote, sem depender de Teses
+  async function abrirMeuLote(){
+    estilos();L.soLote=true;L.parte='lote';L.montado=true;
+    var p=global.sagaPerfil?await global.sagaPerfil():null;L.admin=!!(p&&p.eh_administrador);
+    desenhar();
+  }
+  global.SagaPrecatoriosLoa={abrir:abrir,liberar:liberar,abrirMeuLote:abrirMeuLote,_estado:L};
 })(window);

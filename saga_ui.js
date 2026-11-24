@@ -708,6 +708,10 @@
     +'<div class="nav-item" data-tela="minha_parte" id="navMinhaParte" hidden onclick="sagaIrPara(\'financeiro.html?minha=1\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M14.5 9.5c-.4-.9-1.4-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1.1 1.6 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1.1 0-2.1-.6-2.5-1.5M12 6.5V8m0 8v1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
     +'Meus honorários</div>'
+    // Precatórios da LOA (24/11, blocos 467-472): o lote de cada pessoa da Captação; aparece só para quem tem lote
+    +'<div class="nav-item" data-tela="meu_lote" id="navMeuLote" hidden onclick="sagaIrPara(\'meu_lote.html\')">'
+    +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 3v4M16 3v4M8 11h8M8 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>'
+    +'Meu lote<span class="nav-badge-chat nav-badge-dia" id="navBadgeMeuLote" style="display:none" title="Precatórios do seu lote ainda não localizados"></span></div>'
     +'</div><div class="nav-section" data-grupo="processos" role="button" tabindex="0" aria-expanded="true">Processos</div><div class="nav-grupo" data-grupo="processos">'
     +'<div class="nav-item" data-tela="processos_juridico" onclick="sagaIrPara(\'lista_processos_padrao_metalico.html?fase=juridico\')">'
     +'<svg class="nav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0zM8 21h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
@@ -1264,7 +1268,7 @@
   // ===== PRESENCA EM TEMPO REAL =====
   // Cada tela aberta entra no canal "presenca-saga" do Supabase Realtime.
   // Quem fecha o sistema ou perde a conexao sai da lista automaticamente.
-  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',autos_baixar:'Autos para baixar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',planilhas:'Planilhas',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',minha_parte:'Meus honorários',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
+  var NOMES_TELAS={configuracoes:'Configurações',processos:'Processos',processos_juridico:'Jurídico',processos_captacao:'Captação',agenda:'Agenda',tarefas:'Minhas Tarefas',pedidos_claude:'Pedidos do Saga IA',agentes_aprovar:'Para aprovar',autos_baixar:'Autos para baixar',premios:'Normas e prêmio',editor_pdf:'Editor de PDF',chat:'Chat',ponto:'Ponto',colaboradores:'Colaboradores',dashboard:'Painel geral',relatorios_clientes:'Relatórios',parceiros:'Parceiros',modelos:'Modelos',planilhas:'Planilhas',biblioteca:'Biblioteca',financeiro:'Financeiro',precatorios:'Precatórios e RPV',marketing:'Marketing',ficha:'Ficha do Cliente',minha_parte:'Meus honorários',meu_lote:'Meu lote (precatórios)',monitoramento:'Intimações',notas:'Notas',cartas:'Cartas',disparos:'Disparos de e-mail',buscas:'Pedidos de busca',sugestoes:'Sugestões de melhoria',manual:'Manual do SAGA',teses:'Teses e oportunidades',clientes_perfil:'Clientes por perfil',atividades:'Registro de atividades',treinamentos:'Treinamentos',obsidian:'Fichas do agente'};
   var _canalPresenca=null;
   var _telaAtual='';
   // trava até bater o ponto (bloco 162): declarada aqui porque a moldura montada cedo já usa
@@ -2296,8 +2300,20 @@
     }catch(e){}
   }
   // Itens do dia no menu lateral: compromissos de hoje (Agenda) e tarefas de hoje + atrasadas (Minhas Tarefas)
+  // Meu lote (Precatórios da LOA): o item só aparece para quem tem lote; o número = ainda não localizados
+  async function contarMeuLote(){
+    var it=document.getElementById('navMeuLote');if(!it||!global._sb)return;
+    try{
+      var r=await global._sb.rpc('loa_meu_lote',{p_situacao:null,p_limite:1,p_offset:0});
+      if(r.error)return; // bloco 467-471 ainda não aplicado ou sem permissão: o item continua escondido
+      var d=r.data||{},t=+d.total||0,nl=+((d.por_situacao||{}).nao_localizado)||0;
+      it.hidden=t<=0;
+      var b=document.getElementById('navBadgeMeuLote');if(b){b.textContent=nl>99?'99+':String(nl);b.style.display=nl>0?'':'none';}
+    }catch(e){}
+  }
   async function contarDia(){
     if(!global._sb||!_perfilAtual)return;
+    contarMeuLote();
     try{
       var bb=document.getElementById('navBadgeBuscas'),bp=document.getElementById('navBadgePedidosClaude'),mp=document.getElementById('navMinhaParte');
       var podeBuscas=bb&&_minhasPermissoes&&_minhasPermissoes.indexOf('buscas.atender')>=0;

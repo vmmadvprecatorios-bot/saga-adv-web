@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script src="saga_guard.js?v=202611240143"></script>
+<meta charset="UTF-8">
+<!-- Segurança (22/11, laudo): limita de onde vem código e para onde a página manda dados -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:; worker-src 'self' blob: data:; connect-src 'self' https://fmoskdxgjulagedzjxxk.supabase.co wss://fmoskdxgjulagedzjxxk.supabase.co https://nominatim.openstreetmap.org https://api.bcb.gov.br blob: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src 'self' blob: data: https://fmoskdxgjulagedzjxxk.supabase.co https://drive.google.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VMMADV | Meu lote: precatórios</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font:inherit;color:inherit}
+body{min-height:100vh;background:linear-gradient(160deg,var(--navy-1),var(--navy-2) 50%,var(--navy-3));color:var(--text);font-family:Montserrat,Arial,sans-serif;overflow-x:hidden}
+.app{display:flex;position:relative;z-index:1}
+.content{flex:1;padding:27px 28px 42px;min-width:0;min-height:calc(100vh - 64px)}
+.overlay{display:none}.overlay.aberto{display:block}
+.page-head{margin-bottom:16px}
+.page-head h1{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600}
+.page-head p{color:var(--muted);font-size:13px;max-width:80ch;margin-top:4px;line-height:1.5}
+@media (max-width:700px){.content{padding:18px 14px 32px}}
+</style>
+<link rel="stylesheet" href="saga_tema.css?v=202611240143">
+</head>
+<body data-theme="dark">
+<header class="topbar" id="topbarSaga"></header>
+<div class="overlay" id="overlay"></div>
+<div class="app">
+<div class="sidebar" id="sidebarSaga"></div>
+<main class="content">
+  <div class="page-head">
+    <h1>Meu lote: precatórios</h1>
+    <p>Precatórios da LOA distribuídos para você: credores que ainda não são clientes. Localize, faça o contato (quem não é cliente: só pela ANCREF, em tom informativo) e marque a situação. Com interesse, combine com o Dr. Victor o cartão na Captação.</p>
+  </div>
+  <section id="aba-loa"><div class="pl-vazio">Carregando o seu lote…</div></section>
+</main>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+<script src="vendor/supabase-js-2.118.0.js"></script>
+<script>
+var SUPABASE_URL='https://fmoskdxgjulagedzjxxk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtb3NrZHhnanVsYWdlZHpqeHhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NzIyOTEsImV4cCI6MjA5NzQ0ODI5MX0.HstSu8-hw9GC7k3wZPhybYi-gA3W4bmQpeeVcoGqYq8';
+var _sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+window._sb=_sb;
+</script>
+<script src="saga_ui.js?v=202611240143"></script>
+<script src="saga_paginacao.js?v=202611240143"></script>
+<script src="saga_precatorios_loa.js?v=202611240143"></script>
+<script>
+/* =====================================================================
+   SAGA · Meu dia > Meu lote (Precatórios da LOA; blocos 467-472; 24/11/2026, Dr. Victor)
+   A pessoa da Captação vê só o próprio lote (loa_meu_lote): situação do contato e anotação.
+   O banco recusa o lote de outra pessoa; o administrador distribui em Teses e oportunidades.
+   ===================================================================== */
+async function init(){
+  await SagaUI.carregar('meu_lote');
+  var s=await _sb.auth.getSession();if(!s.data||!s.data.session){location.href='login_padrao_metalico.html';return;}
+  await SagaPrecatoriosLoa.abrirMeuLote();
+}
+init().catch(function(e){var a=document.getElementById('aba-loa');if(a)a.innerHTML='<div class="pl-aviso pl-erro">Não deu para abrir o seu lote: '+((window.sagaEsc||String)((window.sagaErroBanco?window.sagaErroBanco(e):(e&&e.message))||'erro'))+'</div>';});
+</script>
+</body>
+</html>
