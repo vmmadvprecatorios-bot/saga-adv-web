@@ -9,6 +9,34 @@ const BASE = "https://transparencia.al.gov.br";
 const ORCAMENTO_MS = 110_000; // a função do servidor tem ~150 s; para antes
 const esperar = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Regra das cargas (23/11/2026): carga grande SÓ das 22h às 6h de Maceió (UTC-3, sem horário de verão),
+// e o vigia do login: se o login do SAGA demorar mais de 3 s, o robô para na hora (o resto fica para a próxima rodada).
+const LIMITE_LOGIN_MS = 3_000;
+function horaMaceio(): number { return (new Date().getUTCHours() + 21) % 24; }
+function dentroDaJanela(): boolean { const h = horaMaceio(); return h >= 22 || h < 6; }
+async function loginLento(): Promise<string> {
+  const t = Date.now();
+  try {
+    const r = await fetch(`${Deno.env.get("SUPABASE_URL")}/auth/v1/health`, {
+      headers: { apikey: Deno.env.get("SUPABASE_ANON_KEY") || "" }, signal: AbortSignal.timeout(LIMITE_LOGIN_MS + 2_000) });
+    await r.text();
+    const ms = Date.now() - t;
+    if (!r.ok) return `o login do SAGA respondeu erro ${r.status}`;
+    return ms > LIMITE_LOGIN_MS ? `o login do SAGA levou ${(ms / 1000).toFixed(1)} s (limite 3 s)` : "";
+  } catch (_e) {
+    return `o login do SAGA não respondeu em ${(LIMITE_LOGIN_MS + 2_000) / 1000} s`;
+  }
+}
+/** Devolve o motivo para parar agora ("" = pode seguir). */
+async function precisaParar(): Promise<string> {
+  if (!dentroDaJanela()) return "fora do horário das cargas (22h às 6h de Maceió)";
+  return await loginLento();
+}
+async function registrarPausa(motivo: string, ente: string) {
+  await admin.rpc("saude_rodada_registrar", { p_robo: "servidores_al", p_ok: true, p_mensagem: `Pausado (${ente}): ${motivo}. Continua na próxima rodada.`,
+    p_lidos: 0, p_novos: 0, p_detalhe: { codigo: "PAUSA_LENTIDAO", ente } });
+}
+
 async function lerJson(url: string): Promise<any> {
   let ultimo = "";
   for (let t = 0; t < 3; t++) {
@@ -37,14 +65,20 @@ async function rodada() {
   const t0 = Date.now();
   let linhas = 0, paginas = 0, meses = 0, detalhes = 0;
   const erros: string[] = [];
+  if (!dentroDaJanela()) return { ok: true, mensagem: "Fora do horário das cargas (22h às 6h de Maceió): nada feito." };
+  const lento0 = await loginLento();
+  if (lento0) { await registrarPausa(lento0, "estado_al"); return { ok: true, mensagem: `Pausado: ${lento0}.` }; }
+  let parouPor = "";
   await rpc("servpub_planejar");
-  while (Date.now() - t0 < ORCAMENTO_MS) {
+  while (Date.now() - t0 < ORCAMENTO_MS && !parouPor) {
     const job = await rpc("servpub_proxima");
     if (!job || job.nada) break;
     const lista = job.lista === "ativo" ? "json-servidores" : "json-servidores-inativos";
     let offset = Number(job.offset) || 0;
     try {
       while (Date.now() - t0 < ORCAMENTO_MS) {
+        parouPor = await precisaParar();
+        if (parouPor) break;
         const url = `${BASE}/pessoal/${lista}/?limit=${job.limite}&offset=${offset}&ano=${job.ano}&mes=${job.mes}`;
         const d = await lerJson(url);
         const total = Number(d?.total ?? 0);
@@ -68,7 +102,7 @@ async function rodada() {
     }
   }
   // cargo, função e vínculo dos ativos (detalhe), aos poucos, quando sobra tempo
-  if (!erros.length && Date.now() - t0 < ORCAMENTO_MS - 15_000) {
+  if (!erros.length && !parouPor && Date.now() - t0 < ORCAMENTO_MS - 15_000) {
     const fila = await rpc("servpub_detalhe_fila", { p_limite: 30 });
     for (const p of fila || []) {
       if (Date.now() - t0 > ORCAMENTO_MS) break;
@@ -86,11 +120,11 @@ async function rodada() {
   }
   const ok = erros.length === 0;
   const mensagem = ok
-    ? `${linhas} linha(s) em ${paginas} página(s); ${meses} mês(es) fechado(s); ${detalhes} detalhe(s) de cargo.`
+    ? `${linhas} linha(s) em ${paginas} página(s); ${meses} mês(es) fechado(s); ${detalhes} detalhe(s) de cargo.${parouPor ? ` Parou antes: ${parouPor}.` : ""}`
     : `Falhou: ${erros.join(" | ")}`;
   await admin.rpc("saude_rodada_registrar", {
     p_robo: "servidores_al", p_ok: ok, p_mensagem: mensagem, p_lidos: linhas, p_novos: meses,
-    p_detalhe: ok ? { paginas, detalhes } : { codigo: "PORTAL", erros }, p_inicio: inicio.toISOString(),
+    p_detalhe: ok ? (parouPor ? { paginas, detalhes, codigo: "PAUSA_LENTIDAO" } : { paginas, detalhes }) : { codigo: "PORTAL", erros }, p_inicio: inicio.toISOString(),
   });
   return { ok, mensagem };
 }
@@ -124,6 +158,9 @@ const MESES = ["janeiro","fevereiro","março","abril","maio","junho","julho","ag
 async function rodadaMaceio() {
   const inicio = new Date();
   let linhas = 0; let msg = ""; let ok = true;
+  if (!dentroDaJanela()) return { ok: true, mensagem: "Fora do horário das cargas (22h às 6h de Maceió): nada feito." };
+  const lento0 = await loginLento();
+  if (lento0) { await registrarPausa(lento0, "municipio_maceio"); return { ok: true, mensagem: `Pausado: ${lento0}.` }; }
   await rpc("servpub_planejar");
   const job = await rpc("servpub_proxima_ente", { p_ente: "municipio_maceio" });
   if (!job || job.nada) return { ok: true, mensagem: "Maceió: nada na fila." };
@@ -158,6 +195,8 @@ async function rodadaMaceio() {
     const rows = tab.map((l) => ({ nome: l[iNome], cpf: l[iCpf], descricao_orgao: iOrg >= 0 ? l[iOrg] : null, cargo: iCargo >= 0 ? l[iCargo] : null,
       vinculo: iVinc >= 0 ? l[iVinc] : job.vinculo, proventos: l[iBruto], total: null }));
     for (let i = 0; i < rows.length; i += 300) {
+      const lento = await loginLento();
+      if (lento) throw new Error(`pausado no meio: ${lento} (o mês será lido de novo na próxima rodada)`);
       await rpc("servpub_receber", { p_carga: job.carga, p_linhas: rows.slice(i, i + 300), p_total: rows.length });
       linhas += Math.min(300, rows.length - i);
     }
