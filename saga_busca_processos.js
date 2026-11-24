@@ -76,6 +76,7 @@
       + '.bp-trecho{margin-top:6px;padding:7px 9px;border-radius:8px;background:color-mix(in srgb,var(--text) 4%,transparent);font-size:11.5px;overflow-wrap:anywhere}'
       + '.bp-alerta{margin-top:6px;font-size:11.5px;color:var(--warning,#d79b1f)}'
       + '.bp-dec{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}'
+      + '.bp-confnome{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}'
       + '.bp-nao{display:none;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}.bp-nao.aberto{display:flex}'
       + '.bp-nao input{flex:1 1 220px;min-width:0;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:0 9px;font:inherit;font-size:12.5px}'
       + '.bp-vazio{color:var(--muted);font-size:12.5px;padding:14px 4px}.bp-msg{font-size:12.5px;padding:9px 12px;border-radius:10px;border:1px solid var(--danger,#e5484d);color:var(--danger,#e5484d);overflow-wrap:anywhere}'
@@ -108,7 +109,7 @@
     j.addEventListener('keydown', function(e){
       if(e.key === 'Enter' && e.target.id === 'bpNumBusca'){ S.n.busca = e.target.value; S.n.pagina = 1; carregarNumeros(); return; }
       if(e.key === 'Enter' && e.target.id === 'bpBuscaTxt'){ S.busca = e.target.value; S.pagina = 1; carregar(); }
-      if(e.key === 'Enter' && e.target.matches('.bp-nao input')){ var c = e.target.closest('[data-achado]'); decidir(c.getAttribute('data-achado'), 'nao_e', e.target.value, c); }
+      if(e.key === 'Enter' && e.target.matches('.bp-nao input')){ var c = e.target.closest('[data-achado]'); if(c) decidir(c.getAttribute('data-achado'), 'nao_e', e.target.value, c); }
     });
     document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && j.classList.contains('aberto')) fechar(); });
     return j;
@@ -268,7 +269,7 @@
       + '<span class="bp-num">' + esc(num) + '</span>' + (n.numero_cnj ? trib(n.numero_cnj) : '') + '<span class="bp-cod">' + esc(n.tribunal || '') + (n.lote ? ' · ' + esc(n.lote) : '') + '</span></div>';
     if(n.credor) h += '<div style="margin-top:4px">Credor: <b>' + esc(n.credor) + '</b>' + (n.ficha ? ' · <a href="' + esc(FICHA + '?pessoa_id=' + encodeURIComponent(n.ficha)) + '">já tem ficha no SAGA ↗</a>' : '') + '</div>';
     if(autores.length > 1) h += '<details class="bp-info"><summary style="cursor:pointer">' + autores.length + ' nomes no polo ativo (ação coletiva: confira qual é o credor deste número)</summary>' + autores.slice(0, 200).map(esc).join(' · ') + '</details>';
-    var info = [n.devedor ? 'Devedor: ' + n.devedor : '', n.orgao, n.assunto, n.origem ? 'Origem: ' + n.origem : '', n.fonte ? 'Fonte: ' + ({ trf5_num: 'Portal de Precatórios TRF5', djen_num: 'DJEN (CNJ) pelo número', djen_origem: 'DJEN (CNJ) pelo processo de origem', manual: 'gravado à mão' }[n.fonte] || n.fonte) : '',
+    var info = [n.devedor ? 'Devedor: ' + n.devedor : '', n.orgao, n.assunto, n.origem ? 'Origem: ' + n.origem : '', n.fonte ? 'Fonte: ' + ({ trf5_num: 'Portal de Precatórios TRF5', djen_num: 'DJEN (CNJ) pelo número', djen_origem: 'DJEN (CNJ) pelo processo de origem', manual: 'gravado à mão', conferido_nome: 'conferido pelo nome no site do tribunal' }[n.fonte] || n.fonte) : '',
       n.ultima_busca_em ? 'consultado em ' + dataHora(n.ultima_busca_em) : ''].filter(Boolean).map(esc).join(' · ');
     if(info) h += '<div class="bp-info">' + info + '</div>';
     if(n.trecho) h += '<div class="bp-trecho">' + esc(n.trecho) + '</div>';
@@ -282,9 +283,44 @@
         + '<input type="text" maxlength="300" placeholder="Observação (opcional)" aria-label="Observação" style="flex:1 1 160px">'
         + '<button class="bp-btn principal" type="button" data-bp="num_manual">Gravar credor</button><button class="bp-btn" type="button" data-bp="num_nada">Não achei</button></div>';
     }
+    h += htmlConferirNome(n);
     return h + '</div>';
   }
+  /* Conferir pelo NOME no site do tribunal (24/11, Dr. Victor, pelo Diário 5; bloco 456): copia o nome, abre a consulta do
+     tribunal por nome da parte no navegador da pessoa e ela marca se o precatório aparece para esse nome. Nada é feito por robô. */
+  function linksNome(trib){ return ((S.nd && S.nd.links && S.nd.links[trib]) || []).filter(function(l){ return (l.modo || 'nome') === 'nome' && urlOk(l.url); }); }
+  function htmlConferirNome(n){
+    var confs = n.conferencias || [], links = linksNome(n.tribunal), h = '';
+    if(confs.length) h += '<div class="bp-info">Conferido pelo nome: ' + confs.map(function(c){
+      return (c.resultado === 'confere' ? '✓ ' : '✗ ') + esc(c.nome) + ' (' + (c.resultado === 'confere' ? 'confere' : 'não confere') + (c.em ? ', ' + dataHora(c.em) : '') + ')' + (c.obs ? ' · ' + esc(c.obs) : '');
+    }).join(' · ') + '</div>';
+    if(!S.pode.editar || n.certeza === 'certo' || (!links.length && n.situacao !== 'sem_fonte')) return h;
+    var nao = confs.filter(function(c){ return c.resultado !== 'confere'; }).map(function(c){ return c.nome; });
+    var sug = n.credor || n.ficha_nome || '';
+    if(nao.indexOf(String(sug).toUpperCase()) >= 0) sug = '';
+    h += '<div class="bp-confnome" data-conf-nome><div class="bp-sub">Conferir pelo nome: copie o nome, procure no site do tribunal pelo nome da parte e veja se este precatório aparece para essa pessoa.</div>'
+      + '<div class="bp-nao aberto"><input type="text" maxlength="200" placeholder="Nome para conferir" aria-label="Nome para conferir no site do tribunal" value="' + esc(sug) + '">'
+      + '<input type="text" maxlength="300" placeholder="Observação (opcional)" aria-label="Observação da conferência" style="flex:1 1 160px"></div>'
+      + '<div class="bp-dec">' + (links.length ? links.map(function(l, i){
+          return '<button class="bp-btn" type="button" data-bp="num_abrir_nome" data-i="' + i + '" data-trib="' + esc(n.tribunal || '') + '">Copiar nome e abrir: ' + esc(l.rotulo || l.url) + ' ↗</button>';
+        }).join('') : '<button class="bp-btn" type="button" data-bp="num_copiar_nome">Copiar nome</button>')
+      + '<button class="bp-btn principal" type="button" data-bp="num_confere" data-v="1">Confere</button><button class="bp-btn" type="button" data-bp="num_confere" data-v="0">Não confere</button></div></div>';
+    return h;
+  }
   async function cliqueNumeros(a, b){
+    if(a === 'num_abrir_nome' || a === 'num_copiar_nome'){
+      var bloco = b.closest('[data-conf-nome]'), nm = bloco ? bloco.querySelector('input').value.trim() : '';
+      if(nm.length < 5){ toast('Escreva o nome completo para conferir.', 'warning'); return; }
+      var copia = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(nm) : Promise.reject(new Error('sem área de transferência'));
+      if(a === 'num_abrir_nome'){
+        var l = linksNome(b.getAttribute('data-trib'))[+b.getAttribute('data-i')], u = l && urlOk(l.url);
+        if(!u){ toast('Link da consulta inválido: peça ao administrador para corrigir.', 'error'); return; }
+        window.open(u, '_blank', 'noopener');
+      }
+      copia.then(function(){ toast('Nome copiado: ' + nm + '. Cole no campo "nome da parte" do site do tribunal.', 'success'); },
+        function(e){ toast('Não consegui copiar o nome (' + erroTxt(e) + '): selecione e copie à mão.', 'warning'); });
+      return;
+    }
     if(a === 'num_recarregar'){ carregarNumeros(); return; }
     if(a === 'num_copiar'){ var v = b.getAttribute('data-v'); try{ await navigator.clipboard.writeText(v); toast('Número copiado: ' + v, 'success'); }catch(e){ toast('Não consegui copiar (' + erroTxt(e) + '): selecione o número e copie.', 'warning'); } return; }
     if(a === 'num_filtro'){ S.n.filtro = b.getAttribute('data-v'); S.n.pagina = 1; carregarNumeros(); return; }
@@ -304,6 +340,17 @@
           + (d.robo_ligado ? '.' : '. O robô está DESLIGADO: busca quando o administrador ligar (das 22h às 6h).');
         toast(S.n.msg, inv.length ? 'warning' : 'success');
       }catch(e){ toast('Não pôs na fila: ' + erroTxt(e), 'error'); }
+      S.ocupado = false; carregarNumeros(); return;
+    }
+    if(a === 'num_confere'){
+      var cardc = b.closest('[data-numero]'), blc = b.closest('[data-conf-nome]'), insc = blc.querySelectorAll('input'), nmc = insc[0].value.trim(), obc = insc[1].value.trim(), ok = b.getAttribute('data-v') === '1';
+      if(nmc.length < 5){ toast('Escreva o nome completo que você conferiu.', 'warning'); return; }
+      S.ocupado = true; cardc.querySelectorAll('button').forEach(function(x){ x.disabled = true; });
+      try{
+        var rc = await sb().rpc('busca_proc_parte_conferir_nome', { p_id: cardc.getAttribute('data-numero'), p_nome: nmc, p_confere: ok, p_obs: obc || null });
+        if(rc.error) throw rc.error;
+        toast(ok ? 'Confere: credor gravado.' : 'Anotado: "' + nmc + '" não confere. O número continua aberto.', 'success');
+      }catch(e){ toast(e && e.code === 'PGRST202' ? 'A conferência pelo nome ainda está sendo instalada no banco (bloco 456, hoje às 19h).' : 'Não gravou a conferência: ' + erroTxt(e), 'error'); }
       S.ocupado = false; carregarNumeros(); return;
     }
     if(a === 'num_manual' || a === 'num_nada'){
