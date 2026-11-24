@@ -73,6 +73,13 @@
 .bp-pane .bp-mini td.n{text-align:right;font-variant-numeric:lining-nums tabular-nums;white-space:nowrap}
 .bp-pane .bp-corpo{transition:opacity .28s cubic-bezier(.22,.78,.25,1)}
 .bp-pane .bp-corpo.entrando{opacity:.35}
+.bp-pane .bp-destaque{border:1px solid color-mix(in srgb,var(--gold) 45%,var(--border-soft));border-radius:12px;padding:10px 12px;margin-bottom:10px;background:color-mix(in srgb,var(--gold) 5%,transparent)}
+.bp-pane .bp-destaque .bp-filtros{margin-bottom:6px}
+.bp-pane .bp-faixa-t{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap}
+.bp-pane .bp-faixa-atalhos{display:flex;gap:6px;flex-wrap:wrap}
+.bp-pane .bp-faixa-atalhos button{font-size:11.5px;padding:4px 10px;border-radius:999px}
+.bp-pane .bp-faixa-atalhos button small{color:var(--muted);margin-left:4px;font-variant-numeric:lining-nums tabular-nums}
+.bp-pane .bp-nota{font-size:11.5px;color:var(--muted);margin:4px 0 0}
 @media (max-width:700px){.bp-pane .bp-filtros input:not([type=checkbox]),.bp-pane .bp-filtros select{min-width:0;flex:1 1 140px}}
 `;
   function estilos(){if($('sagaBasesPublicasCss'))return;var s=document.createElement('style');s.id='sagaBasesPublicasCss';s.textContent=CSS;document.head.appendChild(s);}
@@ -91,11 +98,11 @@
   function identidade(l){return l.pessoa_id&&l.ligacao!=='a_conferir'?'Escritório (VMM): já é cliente':'ANCREF: contato informativo, não é cliente';}
 
   function criar(cfg){
-    var S={montado:false,painel:null,f:Object.assign({pagina:1},cfg.filtroInicial||{}),dados:null,pedido:0,abertos:{}};
+    var S={porPagina:LIM,montado:false,painel:null,f:Object.assign({pagina:1},cfg.filtroInicial||{}),dados:null,pedido:0,abertos:{}};
     function pane(){return $(cfg.pane);}
     function aviso(msg,tipo){var w=$(cfg.id+'Msg');if(!w)return;w.className='bp-aviso'+(tipo==='erro'?' verm':tipo==='amar'?' amar':'');w.innerHTML=msg;w.hidden=!msg;}
     function params(extra){var p={};Object.keys(S.f).forEach(function(k){var v=S.f[k];if(k==='pagina')return;if(v===''||v==null||v===false)return;p[k]=v;});return Object.assign(p,extra||{});}
-    function descricao(){var p=params(),t=[];(cfg.filtros||[]).forEach(function(fl){var v=p[fl.k];if(v==null||v==='')return;if(fl.tipo==='chk')t.push(fl.label);else if(fl.tipo==='select'){var o=(fl.opcoes||[]).find(function(x){return String(x[0])===String(v);});t.push((fl.label?fl.label+': ':'')+(o?o[1]:v));}else if(fl.tipo==='reais')t.push(fl.label+' '+reais(v));else t.push(fl.label+': '+v);});return t.join(' · ')||'Sem filtro';}
+    function descricao(){var p=params(),t=[];(cfg.filtros||[]).forEach(function(fl){var v=p[fl.k];if(v==null||v==='')return;if(fl.tipo==='chk')t.push(fl.label);else if(fl.tipo==='select'){var o=(fl.opcoes||[]).find(function(x){return String(x[0])===String(v);});t.push((fl.label?fl.label+': ':'')+(o?o[1]:v));}else if(fl.tipo==='reais')t.push(fl.label+' '+reais(v));else if(fl.tipo==='faixa'){}else t.push(fl.label+': '+v);});(cfg.filtros||[]).forEach(function(fl){if(fl.tipo!=='faixa')return;var a=p[fl.de],b=p[fl.ate];if(a||b)t.push(fl.label+(a?' de '+reais(a):'')+(b?' até '+reais(b):''));});return t.join(' · ')||'Sem filtro';}
 
     function htmlNumeros(){
       var ns=cfg.numeros(S.painel||{});
@@ -104,14 +111,28 @@
         return (n.filtro?'<button class="bp-num'+(ativo?' active':'')+'" type="button" data-num="'+i+'">':'<div class="bp-num">')+
           '<b>'+esc(n.v)+'</b><span>'+esc(n.t)+'</span>'+(n.sub?'<span>'+esc(n.sub)+'</span>':'')+(n.filtro?'</button>':'</div>');}).join('')+'</div>';
     }
-    function htmlFiltros(){
-      return '<div class="bp-filtros">'+(cfg.filtros||[]).map(function(fl){
+    function faixaAtiva(fl,a){return String(S.f[fl.de]||'')===String(a[1]||'')&&String(S.f[fl.ate]||'')===String(a[2]||'');}
+    function htmlFaixa(fl){
+      var pn=S.painel||{};
+      return '<span class="bp-faixa-t">'+esc(fl.label)+'</span>'+
+        '<input class="bp-reais" id="'+cfg.id+'F_'+fl.de+'" inputmode="numeric" placeholder="de R$" aria-label="'+esc(fl.label)+' de" value="'+esc(S.f[fl.de]?mascaraReais(S.f[fl.de]):'')+'">'+
+        '<input class="bp-reais" id="'+cfg.id+'F_'+fl.ate+'" inputmode="numeric" placeholder="até R$" aria-label="'+esc(fl.label)+' até" value="'+esc(S.f[fl.ate]?mascaraReais(S.f[fl.ate]):'')+'">'+
+        '<span class="bp-faixa-atalhos">'+(fl.atalhos||[]).map(function(a,i){var q=a[3]?a[3](pn):null;
+          return '<button class="btn'+(faixaAtiva(fl,a)?' active':'')+'" type="button" data-faixa="'+i+'">'+esc(a[0])+(q!=null?'<small>'+esc(num(q))+'</small>':'')+'</button>';}).join('')+'</span>';
+    }
+    function htmlUmFiltro(fl){
         var v=S.f[fl.k];var id=cfg.id+'F_'+fl.k;
+        if(fl.tipo==='faixa')return htmlFaixa(fl);
         if(fl.tipo==='busca')return '<input class="bp-busca" id="'+id+'" type="search" placeholder="'+esc(fl.label)+'" value="'+esc(v||'')+'" aria-label="'+esc(fl.label)+'">';
-        if(fl.tipo==='select')return '<select id="'+id+'" aria-label="'+esc(fl.label)+'">'+fl.opcoes.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(v||'')===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';
+        if(fl.tipo==='select')return (fl.destaque?'<span class="bp-faixa-t">'+esc(fl.label)+'</span>':'')+'<select id="'+id+'" aria-label="'+esc(fl.label)+'">'+fl.opcoes.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(v||'')===String(o[0])?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';
         if(fl.tipo==='reais')return '<input class="bp-reais" id="'+id+'" inputmode="numeric" placeholder="'+esc(fl.label)+'" aria-label="'+esc(fl.label)+'" value="'+esc(v?mascaraReais(v):'')+'">';
         if(fl.tipo==='chk')return '<label class="bp-chk"><input type="checkbox" id="'+id+'"'+(v?' checked':'')+'> '+esc(fl.label)+'</label>';
-        return '';}).join('')+'<button class="btn" type="button" id="'+cfg.id+'Limpar">Limpar filtros</button></div>';
+        return '';
+    }
+    function htmlFiltros(){
+      var fs=cfg.filtros||[],dest=fs.filter(function(f){return f.destaque;}),resto=fs.filter(function(f){return !f.destaque;});
+      return (dest.length?'<div class="bp-destaque"><div class="bp-filtros">'+dest.map(htmlUmFiltro).join('')+'</div>'+(cfg.notaDestaque?'<p class="bp-nota">'+esc(cfg.notaDestaque)+'</p>':'')+'</div>':'')+
+        '<div class="bp-filtros">'+resto.map(htmlUmFiltro).join('')+'<button class="btn" type="button" id="'+cfg.id+'Limpar">Limpar filtros</button></div>';
     }
     function desenhar(){
       var p=pane();if(!p)return;var pn=S.painel||{};
@@ -133,8 +154,16 @@
       p.querySelectorAll('[data-num]').forEach(function(b){b.onclick=function(){var n=cfg.numeros(S.painel||{})[+b.dataset.num];if(!n||!n.filtro)return;
         var ja=Object.keys(n.filtro).every(function(k){return String(S.f[k]||'')===String(n.filtro[k]);});
         Object.keys(n.filtro).forEach(function(k){S.f[k]=ja?'':n.filtro[k];});S.f.pagina=1;desenhar();};});
-      var tm=null;function mudou(){S.f.pagina=1;clearTimeout(tm);tm=setTimeout(carregarLista,350);}
-      (cfg.filtros||[]).forEach(function(fl){var el=$(cfg.id+'F_'+fl.k);if(!el)return;
+      var tm=null;function mudou(){S.f.pagina=1;marcarNumeros();clearTimeout(tm);tm=setTimeout(carregarLista,350);}
+      function marcarNumeros(){var ns=cfg.numeros(S.painel||{});p.querySelectorAll('[data-num]').forEach(function(b){var n=ns[+b.dataset.num];b.classList.toggle('active',!!(n&&n.filtro&&Object.keys(n.filtro).every(function(k){return String(S.f[k]||'')===String(n.filtro[k]);})));});}
+      (cfg.filtros||[]).forEach(function(fl){if(fl.tipo!=='faixa')return;
+        [fl.de,fl.ate].forEach(function(k){var el=$(cfg.id+'F_'+k);if(el)el.oninput=function(){el.value=mascaraReais(el.value);S.f[k]=numReais(el.value);marcarAtalhos(fl);mudou();};});
+        p.querySelectorAll('[data-faixa]').forEach(function(b){b.onclick=function(){var a=fl.atalhos[+b.dataset.faixa];var ja=faixaAtiva(fl,a);
+          S.f[fl.de]=ja?'':(a[1]||'');S.f[fl.ate]=ja?'':(a[2]||'');
+          var e1=$(cfg.id+'F_'+fl.de),e2=$(cfg.id+'F_'+fl.ate);if(e1)e1.value=S.f[fl.de]?mascaraReais(S.f[fl.de]):'';if(e2)e2.value=S.f[fl.ate]?mascaraReais(S.f[fl.ate]):'';
+          marcarAtalhos(fl);mudou();};});});
+      function marcarAtalhos(fl){p.querySelectorAll('[data-faixa]').forEach(function(b){b.classList.toggle('active',faixaAtiva(fl,fl.atalhos[+b.dataset.faixa]));});}
+      (cfg.filtros||[]).forEach(function(fl){if(fl.tipo==='faixa')return;var el=$(cfg.id+'F_'+fl.k);if(!el)return;
         if(fl.tipo==='busca')el.oninput=function(){S.f[fl.k]=el.value.trim();mudou();};
         else if(fl.tipo==='select')el.onchange=function(){S.f[fl.k]=el.value;mudou();};
         else if(fl.tipo==='reais')el.oninput=function(){var pos=el.value.length;el.value=mascaraReais(el.value);S.f[fl.k]=numReais(el.value);mudou();};
@@ -144,9 +173,18 @@
       $(cfg.id+'Pdf').onclick=function(){exportarPdf(this);};
       $(cfg.id+'Cruzar').onclick=function(){cruzar(this);};
     }
+    /* PAGINAÇÃO: um lugar só. Quando o padrão do sistema (5/10/50/100/Todos + páginas numeradas, feito por outra conversa)
+       existir, trocar SÓ esta função: ela recebe a caixa e o total, e usa S.f.pagina e S.porPagina (lidos em carregarLista). */
+    function paginacao(caixa,total){
+      if(!caixa)return;var pp=S.porPagina,pags=Math.max(1,Math.ceil(total/pp));
+      caixa.innerHTML='<span>página '+num(S.f.pagina)+' de '+num(pags)+'</span><span class="bp-acoes">'+
+        '<button class="btn" type="button" data-pg="-1"'+(S.f.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" data-pg="1"'+(S.f.pagina>=pags?' disabled':'')+'>Próxima</button></span>';
+      caixa.querySelectorAll('[data-pg]').forEach(function(b){b.onclick=function(){irPagina(S.f.pagina+(+b.dataset.pg));};});
+    }
+    function irPagina(n,porPagina){if(porPagina)S.porPagina=porPagina;S.f.pagina=Math.max(1,n);carregarLista();var a=pane();if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});}
     async function carregarLista(){
       var box=$(cfg.id+'Lista');if(!box)return;var meu=++S.pedido;box.classList.add('entrando');
-      var r=await sb().rpc(cfg.rpcListar,{p:params(),p_limite:LIM,p_offset:(S.f.pagina-1)*LIM});
+      var r=await sb().rpc(cfg.rpcListar,{p:params(),p_limite:S.porPagina,p_offset:(S.f.pagina-1)*S.porPagina});
       if(meu!==S.pedido)return;box.classList.remove('entrando');
       if(r.error){box.innerHTML='<div class="bp-aviso verm">Não deu para carregar a lista: '+erro(r.error)+'. Tente de novo ou mude os filtros.</div>';$(cfg.id+'Total').textContent='';return;}
       var d=S.dados=r.data||{},ls=d.linhas||[];S.abertos={};
@@ -154,9 +192,8 @@
       if(!ls.length){box.innerHTML='<div class="bp-vazio">Ninguém com esses filtros.</div>';return;}
       box.innerHTML='<div class="bp-rolagem"><table class="bp-tab"><thead><tr>'+cfg.colunas.map(function(c){return '<th'+(c.n?' style="text-align:right"':'')+'>'+esc(c.t)+'</th>';}).join('')+'</tr></thead><tbody>'+
         ls.map(function(l,i){return '<tr class="bp-linha" data-i="'+i+'" tabindex="0" aria-expanded="false">'+cfg.colunas.map(function(c){return '<td'+(c.n?' class="n"':'')+'>'+c.html(l)+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>'+
-        '<div class="bp-pag"><span>página '+num(S.f.pagina)+' de '+num(Math.max(1,Math.ceil((d.total||0)/LIM)))+'</span><span class="bp-acoes">'+
-        '<button class="btn" type="button" data-pg="-1"'+(S.f.pagina<=1?' disabled':'')+'>Anterior</button><button class="btn" type="button" data-pg="1"'+(S.f.pagina*LIM>=(d.total||0)?' disabled':'')+'>Próxima</button></span></div>';
-      box.querySelectorAll('[data-pg]').forEach(function(b){b.onclick=function(){S.f.pagina+=+b.dataset.pg;carregarLista();var a=pane();if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});};});
+        '<div class="bp-pag" id="'+cfg.id+'Pag"></div>';
+      paginacao($(cfg.id+'Pag'),d.total||0);
       box.querySelectorAll('tr.bp-linha').forEach(function(tr){
         tr.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(ev){ev.stopPropagation();});});
         function alternar(){abrirDetalhe(tr,ls[+tr.dataset.i]);}
