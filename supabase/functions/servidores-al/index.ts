@@ -3,6 +3,7 @@
 // Lê DEVAGAR a API pública do Portal da Transparência do Estado (sem login, sem captcha) e grava só os dados úteis
 // pelas funções servpub_* (remuneração só quando muda). Cada rodada vai para saude_rodadas (robo 'servidores_al').
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
+import { Unzip, UnzipInflate } from "npm:fflate@0.8.2";
 
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const BASE = "https://transparencia.al.gov.br";
@@ -211,6 +212,43 @@ async function rodadaMaceio() {
   return { ok, mensagem: msg };
 }
 
+
+// ---------- ESPIAR um zip anual do Estado (só leitura): nomes das colunas e 3 linhas com nome/CPF apagados ----------
+async function espiarZip(arquivo: string) {
+  if (!/^folha_(ativo|inativo)-\d{4}\.zip$/.test(arquivo)) throw new Error("Arquivo inválido.");
+  const r = await fetch(`${BASE}/media/arquivo/${arquivo}`, { headers: { "User-Agent": "SAGA-ADV (leitura de dados publicos)" }, signal: AbortSignal.timeout(120_000) });
+  if (!r.ok || !r.body) throw new Error(`erro ${r.status} ao baixar ${arquivo}`);
+  const tamanho = r.headers.get("content-length");
+  const nomes: string[] = []; let texto = ""; let pronto = false;
+  const uz = new Unzip((f) => {
+    nomes.push(f.name);
+    if (nomes.length > 1 || pronto) return;
+    f.ondata = (_e, chunk, final) => {
+      if (pronto) return;
+      texto += new TextDecoder("latin1").decode(chunk);
+      if (texto.split("\n").length > 6 || final) { pronto = true; }
+    };
+    f.start();
+  });
+  uz.register(UnzipInflate);
+  const leitor = r.body.getReader();
+  let lidos = 0;
+  while (!pronto) {
+    const { value, done } = await leitor.read();
+    if (done) { uz.push(new Uint8Array(0), true); break; }
+    lidos += value.length; uz.push(value);
+    if (lidos > 80_000_000) break;
+  }
+  try { await leitor.cancel(); } catch (_e) { /* ok */ }
+  const linhas = texto.split(/\r?\n/).slice(0, 4);
+  const cab = linhas[0] || "";
+  const sep = cab.includes("|") ? "|" : cab.includes(";") ? ";" : ",";
+  const cols = cab.split(sep).map((c) => c.trim());
+  const iApagar = cols.map((c, i) => (/nome|cpf|matr|servidor/i.test(c) ? i : -1)).filter((i) => i >= 0);
+  const exemplos = linhas.slice(1).map((l) => l.split(sep).map((v, i) => (iApagar.includes(i) ? "[apagado]" : v.trim())));
+  return { ok: true, arquivo, tamanho, arquivos_no_zip: nomes.slice(0, 5), separador: sep, colunas: cols, exemplos };
+}
+
 Deno.serve(async (req) => {
   const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
   try {
@@ -221,6 +259,7 @@ Deno.serve(async (req) => {
     const acao = String(corpo.acao || "");
     if (acao === "rotina") return json(await rodada());
     if (acao === "rotina_maceio") return json(await rodadaMaceio());
+    if (acao === "espiar_zip") return json(await espiarZip(String(corpo.arquivo || "")));
     return json({ ok: false, mensagem: "Ação inválida." }, 400);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
