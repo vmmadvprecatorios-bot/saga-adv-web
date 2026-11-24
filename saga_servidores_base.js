@@ -226,7 +226,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
       '<input type="text" class="bu-mes" id="buDe" inputmode="numeric" placeholder="faleceu de mm/aaaa" value="'+esc(F.de)+'" aria-label="Faleceu a partir de">'+
       '<input type="text" class="bu-mes" id="buAte" inputmode="numeric" placeholder="até mm/aaaa" value="'+esc(F.ate)+'" aria-label="Faleceu até">'+
       '<label class="bu-chk"><input type="checkbox" id="buCli"'+(F.clientes?' checked':'')+'> Só clientes do SAGA</label>'+
-      (SD()?SD().html('buDt',F.datas||(F.datas=SD().vazio()),{abono:true}):'')+
+      (SD()?SD().html('buDt',F.datas||(F.datas=SD().vazio()),{abono:true,aposir:true}):'')+
       '<div class="bu-acoes"><button class="btn" type="button" id="buLimpar">Limpar</button><button class="btn" type="button" id="buCsv">CSV para a Captação</button></div></div>'+
       '<div id="buLista"><div class="bu-vazio">Carregando…</div></div></div>';
     ['buDe','buAte'].forEach(function(id){$(id).addEventListener('input',function(e){e.target.value=mesMascara(e.target.value);});});
@@ -250,11 +250,17 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
     if(r.error){B.abono=(r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||''))?'sem_bloco':'erro';B.abonoErro=global.sagaErroBanco?global.sagaErroBanco(r.error):r.error.message;return;}
     B.abono=(r.data&&r.data.sem_carga)?'sem_carga':'ok';
   }
+  // o mesmo para o filtro de aposentado × IR (bloco 427): sem o bloco, avisa e não manda o filtro
+  async function conferirAposIr(){
+    var r=await sb().rpc('siape_apos_ir_listar',{p:{limite:1,busca:'000000'}});
+    if(r.error){B.aposir=(r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||''))?'sem_bloco':'erro';B.aposirErro=global.sagaErroBanco?global.sagaErroBanco(r.error):r.error.message;return;}
+    B.aposir='ok';
+  }
   function params(F,lim,off){
     var o={p_texto:F.texto||null,p_situacao:F.situacao||null,p_fonte:F.fonte||null,p_so_clientes:!!F.clientes,
       p_falecido_de:mesNum(F.de),p_falecido_ate:mesNum(F.ate),p_uf:F.uf||null,p_orgao:F.orgao||null,p_limite:lim,p_offset:off||0};
     if(F.esfera)o.p_esfera=F.esfera;if(F.ente)o.p_ente=F.ente;
-    if(SD()&&SD().qtd(F.datas)){var pf=SD().params(F.datas,B.abono!=='ok');if(Object.keys(pf).length)o.p_filtros=pf;}
+    if(SD()&&SD().qtd(F.datas)){var pf=SD().params(F.datas,B.abono!=='ok',B.aposir!=='ok');if(Object.keys(pf).length)o.p_filtros=pf;}
     return o;
   }
   async function carregarLista(){
@@ -262,6 +268,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
     if((F.de&&!mesNum(F.de))||(F.ate&&!mesNum(F.ate))){box.classList.remove('bu-carregando');box.innerHTML='<div class="bu-aviso amar">Mês inválido: use mm/aaaa (ex.: 03/2025).</div>';return;}
     var P=pag();P.pagina=B.f.pagina||1;
     if(SD()&&SD().temAbono(F.datas)&&B.abono!=='ok')await conferirAbono();
+    if(SD()&&SD().temAposIr&&SD().temAposIr(F.datas)&&B.aposir!=='ok')await conferirAposIr();
     if(meu!==B.pedido)return;
     var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('base_buscar',params(F,lim,off)).then(function(x){return x.error?x:{linhas:(x.data||{}).linhas,total:(x.data||{}).total,d:x.data};});},
       {offset:P.offset(),quantos:P.quantos(),lote:200,progresso:function(a,t){if(meu===B.pedido&&t>200)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
@@ -271,6 +278,7 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
     if(r.error){box.innerHTML='<div class="bu-aviso verm">Não deu para buscar: '+erro(r.error)+'</div>';return;}
     var d={linhas:r.linhas,total:r.total},ls=d.linhas||[];B.lista=d;P.total(d.total);B.f.pagina=P.pagina;
     var avAb=(SD()&&SD().temAbono(F.datas)&&B.abono!=='ok')?'<div class="bu-aviso amar"><b>A lista abaixo NÃO está filtrada pelo abono:</b> '+(B.abono==='sem_carga'?'a carga do abono de permanência ainda não foi feita (dados do Portal, numa noite).':B.abono==='sem_bloco'?'o filtro do abono chega com os blocos 425 e 426.':'não deu para conferir se os dados do abono existem: '+esc(B.abonoErro||''))+'</div>':'';
+    if(SD()&&SD().temAposIr&&SD().temAposIr(F.datas)&&B.aposir!=='ok')avAb+='<div class="bu-aviso amar"><b>A lista abaixo NÃO está filtrada por aposentado × IR:</b> '+(B.aposir==='sem_bloco'?'esse filtro chega com o bloco 427.':'não deu para conferir se o filtro existe: '+esc(B.aposirErro||''))+'</div>';
     if(!ls.length){box.innerHTML=avAb+'<div class="bu-vazio">Ninguém com esses filtros.</div>';return;}
     box.innerHTML=avAb+'<div class="bu-rolagem"><table class="bu-tab"><thead><tr><th>Pessoa</th><th>Etiquetas</th><th>Órgão</th><th>Faleceu</th></tr></thead><tbody>'+
       ls.map(function(l){
@@ -290,10 +298,10 @@ html.saga-movimento-reduzido #aba-base-unica .bu-corpo{transition:none}
       var total=(r.data||{}).total||0,ls=(r.data.linhas||[]).slice(),pag=2;
       if(total>MAX_CSV){aviso('São '+num(total)+' pessoas: o CSV leva as primeiras '+num(MAX_CSV)+'. Use os filtros para dividir.','amar');}
       while(ls.length<Math.min(total,MAX_CSV)){var x=await sb().rpc('base_buscar',params(F,200,(pag++-1)*200));if(x.error)throw x.error;var a=x.data.linhas||[];if(!a.length)break;ls=ls.concat(a);}
-      var pula=0,linhas=[['Nome','CPF (mascarado)','Situação','Etiquetas','Órgão','UF','Faleceu (mês)','Cliente do SAGA','Ingresso no serviço público','Ingresso no órgão','Aposentadoria','Pensão desde','Anos de serviço público (estimativa para ativos)','Abono de permanência (provável)','1/3 de férias sem o abono (Tema 1.233, estimativa)','13º sem o abono (Tema 1.233, estimativa)']];
+      var pula=0,linhas=[['Nome','CPF (mascarado)','Situação','Etiquetas','Órgão','UF','Faleceu (mês)','Cliente do SAGA','Ingresso no serviço público','Ingresso no órgão','Aposentadoria','Pensão desde','Anos de serviço público (estimativa para ativos)','Abono de permanência (provável)','1/3 de férias sem o abono (Tema 1.233, estimativa)','13º sem o abono (Tema 1.233, estimativa)','Aposentado por invalidez/incapacidade × IR (possível isenção a conferir)']];
       ls.forEach(function(l){
         if((l.selos||[]).some(function(s){return s.acao==='nao_enviar';})){pula++;return;}
-        linhas.push([l.nome||'',l.doc||'',SIT[l.situacao]||l.situacao,(l.selos||[]).map(function(s){return s.nome;}).join(' | '),l.orgao||'',(l.uf||'')+(UFORIG[l.uf_origem]?' ('+UFORIG[l.uf_origem]+')':''),l.falecido_mes?mesTxt(l.falecido_mes):'',l.ficha_id?'sim':'não'].concat((function(d){d=d||{};return [dataBR(d.ingresso),dataBR(d.ingresso_orgao),dataBR(d.aposentadoria),dataBR(d.pensao_inicio),d.tempo_servico==null?'':Math.floor(+d.tempo_servico),d.abono?(d.abono.recebe?'recebe'+(d.abono.valor?' '+d.abono.valor:''):'não recebe'):'',d.abono&&d.abono.ferias_sem?d.abono.ferias_sem+' (≈ '+d.abono.ferias_dif+')':'',d.abono&&d.abono.d13_sem?d.abono.d13_sem+' (≈ '+d.abono.d13_dif+')':''];})(l.datas)));
+        linhas.push([l.nome||'',l.doc||'',SIT[l.situacao]||l.situacao,(l.selos||[]).map(function(s){return s.nome;}).join(' | '),l.orgao||'',(l.uf||'')+(UFORIG[l.uf_origem]?' ('+UFORIG[l.uf_origem]+')':''),l.falecido_mes?mesTxt(l.falecido_mes):'',l.ficha_id?'sim':'não'].concat((function(d){d=d||{};return [dataBR(d.ingresso),dataBR(d.ingresso_orgao),dataBR(d.aposentadoria),dataBR(d.pensao_inicio),d.tempo_servico==null?'':Math.floor(+d.tempo_servico),d.abono?(d.abono.recebe?'recebe'+(d.abono.valor?' '+d.abono.valor:''):'não recebe'):'',d.abono&&d.abono.ferias_sem?d.abono.ferias_sem+' (≈ '+d.abono.ferias_dif+')':'',d.abono&&d.abono.d13_sem?d.abono.d13_sem+' (≈ '+d.abono.d13_dif+')':'',d.apos_ir?(d.apos_ir.tipo+': '+(d.apos_ir.paga?'ainda paga IR':d.apos_ir.parou_mes?'IR parou em '+mesTxt(d.apos_ir.parou_mes):'sem IR')):''];})(l.datas)));
       });
       var csv='﻿'+linhas.map(function(r){return r.map(function(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}).join(';');}).join('\r\n');
       var reg=await sb().rpc('base_registrar',{p_resumo:'Base única: exportou CSV ('+(linhas.length-1)+' pessoas; '+pula+' puladas por "Não enviar mais")',p_depois:{filtros:params(F,MAX_CSV,0),linhas:linhas.length-1,puladas:pula}});

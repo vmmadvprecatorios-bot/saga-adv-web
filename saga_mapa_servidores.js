@@ -17,7 +17,7 @@
   var LIM=50,MAX_CSV=20000,MAX_PDF=1000;
   // 24/11 (Dr. Victor): paginação comum (saga_paginacao.js). A página continua em f.pagina; o tamanho fica na escolha da pessoa.
   var PAGS={};
-  function pagDe(chave,aoMudar){if(!PAGS[chave])PAGS[chave]=SagaPaginacao.criar({tela:'mapa-'+chave,rotulo:chave==='fal'?'fichas':chave==='ab'?'servidores':'eventos',aoMudar:aoMudar});return PAGS[chave];}
+  function pagDe(chave,aoMudar){if(!PAGS[chave])PAGS[chave]=SagaPaginacao.criar({tela:'mapa-'+chave,rotulo:chave==='fal'?'fichas':chave==='ab'?'servidores':chave==='ai'?'aposentados':'eventos',aoMudar:aoMudar});return PAGS[chave];}
   function rolarTopo(){var a=$('aba-mapa');if(a&&a.scrollIntoView)a.scrollIntoView({behavior:parado()?'auto':'smooth',block:'start'});}
   var FICHA='ficha_cliente_padrao_metalico_FINAL.html';
   var EVT={aposentou:'Aposentou',faleceu:'Faleceu e deixou pensão',pensao_nova:'Pensão nova',perdeu_aposentadoria:'Saiu dos aposentados sem pensão',
@@ -147,6 +147,146 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     if(typeof global.trocarAba==='function')global.trocarAba('prateleira');
     setTimeout(function(){if(typeof global.abrirPasta==='function')global.abrirPasta(id);},parado()?0:230);
   }
+  /* ---------- IR e aposentadoria por invalidez/incapacidade (24/11, bloco 427) ---------- */
+  // Dr. Victor (24/11, LGPD aprovado): dentro do SAGA pode tratar estes dados públicos para achar quem
+  // pode ter direito à ISENÇÃO DE IR; nada sai do sistema. Texto sempre neutro (nunca fala de doença),
+  // só o administrador geral, cada CSV/PDF vai para o Registro de atividades.
+  var NEUTRO='Possível isenção de IR a conferir com o cliente';
+  function estadoAposIr(){return {uf:'',orgao:'',busca:'',cliente:'',sit:'',tipo:'',meses:24,apos_de:'',apos_ate:'',ordem:'recente',pagina:1,dados:null,pedido:0};}
+  function paramsAposIr(A,extra){
+    var p={uf:A.uf,orgao:A.orgao,busca:A.busca,cliente:A.cliente,apos_ir:A.sit||'qualquer',apos_tipo:A.tipo,ir_meses:A.meses,
+      apos_de:A.apos_de,apos_ate:A.apos_ate,ordem:A.ordem==='nome'?'nome':'',pagina:A.pagina,limite:LIM};
+    return Object.assign(p,extra||{});
+  }
+  var TIPO_AP={invalidez:'Aposentadoria por invalidez',incapacidade:'Aposentadoria por incapacidade'};
+  function descricaoAposIr(A){
+    var p=[];if(A.uf)p.push('UF '+A.uf);if(A.orgao){var o=(((M.painel||{}).orgaos)||[]).find(function(x){return x.cod===A.orgao;});p.push('órgão: '+(o?o.nome:A.orgao));}
+    if(A.busca)p.push('busca: '+A.busca);if(A.cliente)p.push(A.cliente==='sim'?'clientes do SAGA':'não clientes');
+    p.push({'':'ainda paga IR ou IR parou',paga:'ainda paga IR',parou:'IR parou nos últimos '+A.meses+' meses'}[A.sit]);
+    if(A.tipo)p.push(TIPO_AP[A.tipo].toLowerCase());
+    if(A.apos_de||A.apos_ate)p.push('aposentou '+(A.apos_de&&A.apos_ate?'de '+A.apos_de+' a '+A.apos_ate:A.apos_de?'a partir de '+A.apos_de:'até '+A.apos_ate));
+    return p.join(' · ');
+  }
+  function parteAposIr(c){
+    if(!M.ai)M.ai=estadoAposIr();var A=M.ai;
+    function sel(id,lab,ops,at){return '<select id="'+id+'" aria-label="'+esc(lab)+'">'+ops.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(at)?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';}
+    function ano(id,lab,v){return '<input id="'+id+'" type="text" inputmode="numeric" maxlength="4" placeholder="'+esc(lab)+'" value="'+esc(v)+'" aria-label="'+esc(lab)+'" style="width:9em">';}
+    c.innerHTML='<div class="ms-aviso"><b>IR e aposentadoria.</b> Servidores federais do Mapa aposentados <b>por invalidez ou por incapacidade</b> que <b>ainda pagam IR</b> (possível isenção não pedida) ou cujo <b>IR parou</b> nos últimos meses (possível restituição dos 5 anos antes do pedido). '+
+        'Fonte: Portal da Transparência (tipo de aposentadoria e IR do mês); os meses em que o IR parou para a folha inteira ficam de fora. <b>'+NEUTRO+'</b>: a lista não diz o motivo e nada aqui é diagnóstico. Só o administrador vê; nada sai do SAGA além das exportações registradas.</div>'+
+      '<div class="ms-filtros">'+
+        '<input class="ms-busca" id="aiBusca" type="search" autocomplete="off" placeholder="Nome ou 6 dígitos do CPF" value="'+esc(A.busca)+'" aria-label="Buscar">'+
+        sel('aiSit','Situação do IR',[['','Ainda paga IR ou IR parou'],['paga','Ainda paga IR'],['parou','IR parou']],A.sit)+
+        sel('aiMeses','Parou em',[[12,'IR parou nos últimos 12 meses'],[24,'IR parou nos últimos 24 meses'],[36,'IR parou nos últimos 36 meses'],[60,'IR parou nos últimos 60 meses']],A.meses)+
+        sel('aiTipo','Tipo de aposentadoria',[['','Invalidez e incapacidade'],['invalidez','Só invalidez'],['incapacidade','Só incapacidade']],A.tipo)+
+        '<select id="aiUf" aria-label="UF">'+opcoesUf(A.uf)+'</select>'+
+        '<select id="aiOrgao" aria-label="Órgão">'+opcoesOrgao(A.orgao)+'</select>'+
+        sel('aiCli','Cliente',[['','Cliente do SAGA ou não'],['sim','Só clientes do SAGA'],['nao','Só quem não é cliente']],A.cliente)+
+        ano('aiDe','Aposentou de (ano)',A.apos_de)+ano('aiAte','Aposentou até (ano)',A.apos_ate)+
+        sel('aiOrdem','Ordem',[['recente','IR que parou mais recente primeiro'],['nome','Ordem do nome']],A.ordem)+
+        '<button class="btn" type="button" id="aiLimpar">Limpar filtros</button></div>'+
+      '<p class="ms-sub" style="margin:-4px 0 10px">Aposentados não têm UF no Portal: Alagoas aparece pelo órgão (UFAL e IFAL) e fica menor que o real.</p>'+
+      '<div id="aiNums"></div>'+
+      '<div class="ms-pag" style="justify-content:flex-start;margin:0 0 8px"><span id="aiTotal"></span><span class="ms-acoes"><button class="btn" type="button" id="aiCsv">Exportar para a Captação (CSV)</button><button class="btn" type="button" id="aiPdf">PDF</button></span></div>'+
+      '<div id="aiLista"><div class="ms-vazio">Carregando…</div></div>';
+    var tm=null;function mudou(){A.pagina=1;clearTimeout(tm);tm=setTimeout(carregarAposIr,350);}
+    function soAno(el,k){el.oninput=function(){this.value=this.value.replace(/\D/g,'').slice(0,4);var v=this.value;if(!v||v.length===4){A[k]=v;mudou();}};}
+    $('aiBusca').oninput=function(){A.busca=this.value.trim();mudou();};
+    $('aiSit').onchange=function(){A.sit=this.value;mudou();};
+    $('aiMeses').onchange=function(){A.meses=+this.value;mudou();};
+    $('aiTipo').onchange=function(){A.tipo=this.value;mudou();};
+    $('aiUf').onchange=function(){A.uf=this.value;mudou();};
+    $('aiOrgao').onchange=function(){A.orgao=this.value;mudou();};
+    $('aiCli').onchange=function(){A.cliente=this.value;mudou();};
+    $('aiOrdem').onchange=function(){A.ordem=this.value;mudou();};
+    soAno($('aiDe'),'apos_de');soAno($('aiAte'),'apos_ate');
+    $('aiLimpar').onclick=function(){M.ai=estadoAposIr();parteAposIr(c);};
+    $('aiCsv').onclick=function(){exportarAposIr(this);};
+    $('aiPdf').onclick=function(){pdfAposIr(this);};
+    $('aiNums').onclick=function(e){var b=e.target.closest('[data-ai]');if(!b)return;var k=b.dataset.ai;
+      if(k==='todos'){A.sit='';A.tipo='';A.cliente='';}else if(k==='paga'||k==='parou')A.sit=A.sit===k?'':k;
+      else if(k==='cli')A.cliente=A.cliente==='sim'?'':'sim';else A.tipo=A.tipo===k?'':k;
+      A.pagina=1;parteAposIr(c);};
+    carregarAposIr();
+  }
+  function htmlNumsAposIr(r,A,n){
+    r=r||{};function bt(k,v,t,sub,on){return '<button type="button" class="ms-num'+(on?' ms-num-on':'')+'" data-ai="'+k+'"><b>'+v+'</b><span>'+t+'</span>'+(sub?'<small>'+sub+'</small>':'')+'</button>';}
+    return '<div class="ms-nums">'+bt('todos',num((+r.paga||0)+(+r.parou||0)),'aposentados na lista','possível isenção a conferir',false)+
+      bt('paga',num(r.paga),'ainda pagam IR','isenção não pedida?',A.sit==='paga')+
+      bt('parou',num(r.parou),'IR parou','nos últimos '+n+' meses',A.sit==='parou')+
+      bt('invalidez',num(r.invalidez),'por invalidez','',A.tipo==='invalidez')+
+      bt('incapacidade',num(r.incapacidade),'por incapacidade','',A.tipo==='incapacidade')+
+      bt('cli',num(r.clientes),'já são clientes do SAGA','',A.cliente==='sim')+'</div>';
+  }
+  async function carregarAposIr(){
+    var A=M.ai,box=$('aiLista');if(!box)return;var meu=++A.pedido;box.classList.add('ms-carregando');
+    var P=pagDe('ai',function(P){A.pagina=P.pagina;carregarAposIr();rolarTopo();});P.pagina=A.pagina||1;
+    var extra={};
+    var r=await SagaPaginacao.buscarEmPartes(function(off,lim){return sb().rpc('siape_apos_ir_listar',{p:paramsAposIr(A,{pagina:Math.floor(off/lim)+1,limite:lim})}).then(function(x){if(x.error)return x;extra=x.data||{};return {linhas:extra.linhas,total:extra.total};});},
+      {offset:P.offset(),quantos:P.quantos(),lote:500,progresso:function(a,t){if(meu===A.pedido&&t>500)box.innerHTML='<div class="sg-pag-carregando">Carregando '+num(a)+' de '+num(t)+'…</div>';}});
+    if(meu!==A.pedido)return;box.classList.remove('ms-carregando');
+    if(r.error){
+      var falta=r.error.code==='PGRST202'||/could not find the function/i.test(r.error.message||'');
+      box.innerHTML=falta?'<div class="ms-aviso amar"><b>Esta lista ainda não está no banco:</b> chega com o bloco 427.</div>':'<div class="ms-aviso verm">Não deu para buscar a lista: '+erro(r.error)+'</div>';
+      $('aiTotal').textContent='';$('aiNums').innerHTML='';return;
+    }
+    A.dados=Object.assign({},extra,{total:r.total,linhas:r.linhas});P.total(r.total);A.pagina=P.pagina;
+    $('aiNums').innerHTML=htmlNumsAposIr(extra.resumo,A,extra.ir_meses||A.meses);
+    $('aiTotal').innerHTML=num(r.total)+' aposentados'+(extra.ultimo_mes?' · <span class="ms-sub" style="display:inline">IR do Portal até '+esc(mesTxt(extra.ultimo_mes))+'</span>':'');
+    desenharAposIr();
+  }
+  function situacaoIr(l){
+    return l.paga?'<b>Ainda paga IR</b>'+(l.rem_irrf?' '+esc(reais(l.rem_irrf))+'<span class="ms-sub">em '+esc(mesTxt(l.rem_mes))+'</span>':'')
+      :(l.parou_mes?'<b>IR parou</b> em '+esc(mesTxt(l.parou_mes))+'<span class="ms-sub">e continua sem IR</span>':'—');
+  }
+  function desenharAposIr(){
+    var A=M.ai,box=$('aiLista'),ls=(A.dados||{}).linhas||[];
+    if(!ls.length){box.innerHTML='<div class="ms-vazio">Nenhum aposentado com esses filtros.</div>';return;}
+    box.innerHTML='<div class="ms-rolagem"><table class="ms-tab"><thead><tr><th>Aposentado no Portal</th><th>Aposentadoria</th><th>IR</th><th>No SAGA</th></tr></thead><tbody>'+
+      ls.map(function(l){var cli=(l.clientes||[]).length;
+        return '<tr'+(cli?' class="ms-destaque"':'')+'><td data-r="Aposentado"><b>'+esc(l.nome)+'</b><span class="ms-sub">'+esc(cpfMask(l.cpf6))+' · '+esc(l.orgao||'')+(l.uf?' · '+esc(l.uf):'')+'</span>'+(l.cargo?'<span class="ms-sub">'+esc(l.cargo)+'</span>':'')+'</td>'+
+          '<td data-r="Aposentadoria">'+esc(TIPO_AP[l.tipo]||'')+(l.aposentadoria?'<span class="ms-sub">desde '+esc(dataBR(l.aposentadoria))+'</span>':'')+'</td>'+
+          '<td data-r="IR">'+situacaoIr(l)+'<span class="ms-sub">'+esc(NEUTRO)+'</span></td>'+
+          '<td data-r="No SAGA">'+(cli?l.clientes.map(function(k){return '<a href="'+FICHA+'?pessoa_id='+encodeURIComponent(k.pessoa_id)+'">'+esc(k.codigo||'Ficha')+'</a>';}).join(' '):'<span class="ms-sub">Não é cliente</span>')+'</td></tr>';
+      }).join('')+'</tbody></table></div>'+PAGS.ai.html();
+    PAGS.ai.ligar(box);
+  }
+  async function linhasAposIrTodas(limite){
+    var r=await sb().rpc('siape_apos_ir_listar',{p:paramsAposIr(M.ai,{pagina:1,limite:limite})});
+    if(r.error)throw r.error;return r.data||{};
+  }
+  async function exportarAposIr(b){
+    var txt=b.textContent;b.disabled=true;b.textContent='Exportando…';
+    try{
+      var d=await linhasAposIrTodas(MAX_CSV),ls=d.linhas||[];
+      if(!ls.length){aviso('Nada para exportar com esses filtros.','amar');return;}
+      function c(v){v=String(v==null?'':v);if(/^[=+\-@]/.test(v))v="'"+v;return '"'+v.replace(/"/g,'""')+'"';}
+      var linhas=[['Nome no Portal','CPF (mascarado)','Órgão','UF','Cargo','Tipo de aposentadoria','Aposentou em','Situação do IR','IR do último mês','Mês','IR parou em','Observação','Cliente do SAGA'].map(c).join(';')];
+      ls.forEach(function(l){linhas.push([l.nome,cpfMask(l.cpf6),l.orgao||'',l.uf||'',l.cargo||'',TIPO_AP[l.tipo]||'',dataBR(l.aposentadoria),l.paga?'ainda paga IR':(l.parou_mes?'IR parou':''),
+        l.paga?l.rem_irrf:'',mesTxt(l.rem_mes),l.parou_mes?mesTxt(l.parou_mes):'',NEUTRO,(l.clientes||[]).map(function(k){return k.codigo||'';}).join(' | ')].map(c).join(';'));});
+      var blob=new Blob(['﻿'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
+      var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ir-aposentadoria.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+      if(d.total>ls.length)aviso('Saíram os '+num(ls.length)+' primeiros de '+num(d.total)+' (limite do arquivo). Filtre mais para pegar o resto.','amar');
+      var x=await sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: exportou CSV de IR e aposentadoria ('+ls.length+' linhas; '+descricaoAposIr(M.ai)+')',p_acao:'consultou',p_depois:{filtros:paramsAposIr(M.ai,{pagina:1,limite:MAX_CSV}),linhas:ls.length}});
+      if(x.error)aviso('O arquivo saiu, mas o registro da exportação falhou: '+erro(x.error),'erro');
+    }catch(e){aviso('Não deu para exportar: '+erro(e),'erro');}
+    finally{b.disabled=false;b.textContent=txt;}
+  }
+  async function pdfAposIr(b){
+    b.disabled=true;
+    try{
+      await carregar('saga_pdf.js','SagaPdf');
+      var d=await linhasAposIrTodas(MAX_PDF),ls=d.linhas||[],rs=d.resumo||{};
+      if(!ls.length){aviso('Nada para pôr no PDF com esses filtros.','amar');return;}
+      var h='<div class="kpis"><div class="forte"><span>Aposentados</span><b>'+num(d.total)+'</b></div><div><span>Ainda pagam IR</span><b>'+num(rs.paga)+'</b></div><div><span>IR parou</span><b>'+num(rs.parou)+'</b></div><div><span>Já são clientes</span><b>'+num(rs.clientes)+'</b></div></div>'+
+        '<div class="obs">'+esc(descricaoAposIr(M.ai))+'. '+esc(NEUTRO)+'. Fonte: Portal da Transparência (tipo de aposentadoria e IR do mês). CPF mascarado pelo próprio Portal. Documento interno do escritório.</div>'+
+        '<table class="tab"><thead><tr><th>Nome</th><th>CPF</th><th>Órgão · cargo</th><th>Aposentadoria</th><th>IR</th></tr></thead><tbody>'+
+        ls.map(function(l){return '<tr><td>'+esc(l.nome)+'</td><td class="num">'+esc(cpfMask(l.cpf6))+'</td><td>'+esc((l.orgao||'')+(l.cargo?' · '+l.cargo:''))+'</td><td>'+esc((TIPO_AP[l.tipo]||'')+(l.aposentadoria?' · '+dataBR(l.aposentadoria):''))+'</td><td>'+(l.paga?'ainda paga ('+esc(mesTxt(l.rem_mes))+')':'parou em '+esc(mesTxt(l.parou_mes)))+'</td></tr>';}).join('')+'</tbody></table>';
+      SagaPdf.imprimir({titulo:'IR e aposentadoria',subtitulo:'Mapa dos servidores · '+num(d.total)+' aposentados · '+NEUTRO.toLowerCase(),arquivo:'ir-aposentadoria',paisagem:true,paginas:[h]});
+      sb().rpc('siape_registrar',{p_resumo:'Mapa dos servidores: gerou PDF de IR e aposentadoria ('+ls.length+' linhas; '+descricaoAposIr(M.ai)+')',p_acao:'consultou'}).then(function(x){if(x.error)aviso('O PDF saiu, mas o registro falhou: '+erro(x.error),'erro');});
+    }catch(e){aviso('Não deu para montar o PDF: '+erro(e),'erro');}
+    finally{b.disabled=false;}
+  }
+
   function editarPublico(id){
     if(typeof global.trocarAba==='function')global.trocarAba('prateleira');
     setTimeout(function(){if(typeof global.formPublico==='function')global.formPublico(id);},parado()?0:230);
@@ -156,7 +296,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   function htmlPartes(){
     var c=(M.painel&&M.painel.conferencia)||{};
     var bt=function(k,t){return '<button class="pill'+(M.parte===k?' active':'')+'" type="button" data-parte="'+k+'">'+t+'</button>';};
-    return bt('geral','Visão geral')+bt('eventos','Eventos')+bt('clientes','Clientes do SAGA')+bt('falecidos','Prováveis falecidos'+(c.sem?' ('+num(c.sem)+' a conferir)':''))+bt('abono','Abono e Tema 1.233')+bt('carga','Carga e LGPD');
+    return bt('geral','Visão geral')+bt('eventos','Eventos')+bt('clientes','Clientes do SAGA')+bt('falecidos','Prováveis falecidos'+(c.sem?' ('+num(c.sem)+' a conferir)':''))+bt('abono','Abono e Tema 1.233')+bt('aposir','IR e aposentadoria')+bt('carga','Carga e LGPD');
   }
   function htmlPreparo(){
     var p=M.painel||{};
@@ -190,6 +330,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     else if(M.parte==='clientes')parteClientes(c);
     else if(M.parte==='falecidos')parteFalecidos(c);
     else if(M.parte==='abono')parteAbono(c);
+    else if(M.parte==='aposir')parteAposIr(c);
     else parteCarga(c);
   }
 
@@ -418,7 +559,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
   function estadoCli(){var d=new Date();d.setMonth(d.getMonth()-24);return estadoLista('cli',{cliente:'sim',eventos:CLI_EVT.slice(),de:+(d.getFullYear()+String(d.getMonth()+1).padStart(2,'0'))});}
   async function parteClientes(c){
     if(!M.cli)M.cli=estadoCli();
-    var cab='<div class="ms-bloco"><h3>Clientes do SAGA com evento no Portal</h3><p class="sub">Fichas do SAGA achadas no Portal com certeza (nome completo + 6 dígitos do CPF) que tiveram um evento. Faleceu e deixou pensão = habilitação dos herdeiros; aposentou = abono de permanência, Tema 1.233, férias e licença-prêmio; PSS ou IR que parou = conferir (IR só informativo). Sem os meses em massa.</p><div class="ms-nums" id="cliNums" style="margin-bottom:0"><div class="ms-vazio">Carregando…</div></div></div>';
+    var cab='<div class="ms-bloco"><h3>Clientes do SAGA com evento no Portal</h3><p class="sub">Fichas do SAGA achadas no Portal com certeza (nome completo + 6 dígitos do CPF) que tiveram um evento. Faleceu e deixou pensão = habilitação dos herdeiros; aposentou = abono de permanência, Tema 1.233, férias e licença-prêmio; PSS ou IR que parou = conferir (aposentado por invalidez ou incapacidade: parte "IR e aposentadoria"). Sem os meses em massa.</p><div class="ms-nums" id="cliNums" style="margin-bottom:0"><div class="ms-vazio">Carregando…</div></div></div>';
     parteLista(c,M.cli,cab);
     var r=await sb().rpc('siape_mapa_clientes_resumo',{p_meses:12});var box=$('cliNums');if(!box)return;
     if(r.error){box.innerHTML='<div class="ms-aviso verm">Não deu para contar: '+erro(r.error)+'</div>';return;}
@@ -717,7 +858,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
       '<p class="sub" style="margin-top:8px">Tabelas da tela preparadas em '+(p.preparado_em?esc(dataHora(p.preparado_em)):'<b>ainda não preparadas</b>')+' (refeitas toda madrugada às 3h50).</p></div>'+
       '<div class="ms-bloco"><h3>Avisos da carga</h3><ul class="ms-lista">'+(p.notas_meses||[]).map(function(n){return '<li>'+(n.mes?'<b>'+esc(mesTxt(n.mes))+'</b> ('+esc(n.lista)+'): ':'')+esc(n.texto)+'</li>';}).join('')+'</ul>'+
       ((p.renomeacoes||[]).length?'<p class="sub" style="margin-top:10px">Mudanças de nome de órgão ou cargo para centenas de pessoas no mesmo mês foram tratadas como renomeação (não viraram evento):</p><div class="ms-rolagem" style="max-height:220px;overflow:auto"><table class="ms-tab"><tbody>'+(p.renomeacoes||[]).map(function(r){return '<tr><td class="n">'+esc(mesTxt(r.mes))+' · '+esc(LISTA[r.lista]||r.lista)+'</td><td>'+esc(String(r.texto||'').replace(/^renomeações ignoradas:\s*/,''))+'</td></tr>';}).join('')+'</tbody></table></div>':'')+'</div>'+
-      '<div class="ms-bloco"><h3>LGPD</h3><ul class="ms-lista"><li><b>Finalidade:</b> '+esc(p.finalidade||'')+'</li><li><b>Mínimo necessário:</b> sem CPF completo (o Portal mostra só 6 dígitos), sem matrícula e sem endereço. Remuneração só como marca (abate-teto, PSS, IR que começou ou parou).</li><li><b>Quem vê:</b> só o administrador geral. Cada exportação (CSV, PDF) e cada conferência vai para o Registro de atividades (módulo Teses).</li><li><b>Dado sensível:</b> IR ou PSS que parou pode indicar doença grave. Fica só como informação e nunca é filtro de captação.</li><li><b>Quanto tempo:</b> enquanto a pessoa estiver no Portal ou for cliente. A regra de limpeza (24 meses fora da lista para quem não é cliente) ainda não está ligada.</li></ul></div>';
+      '<div class="ms-bloco"><h3>LGPD</h3><ul class="ms-lista"><li><b>Finalidade:</b> '+esc(p.finalidade||'')+'</li><li><b>Mínimo necessário:</b> sem CPF completo (o Portal mostra só 6 dígitos), sem matrícula e sem endereço. Remuneração só como marca (abate-teto, PSS, IR que começou ou parou).</li><li><b>Quem vê:</b> só o administrador geral. Cada exportação (CSV, PDF) e cada conferência vai para o Registro de atividades (módulo Teses).</li><li><b>IR e aposentadoria (decisão do Dr. Victor, 24/11):</b> dentro do SAGA a lista de aposentados por invalidez ou incapacidade que ainda pagam IR, ou cujo IR parou, pode ser usada para oferecer a conferência da isenção de IR. O texto é sempre neutro (possível isenção a conferir com o cliente), nenhum motivo é gravado, só o administrador vê e cada exportação é registrada. Nada sai do SAGA. PSS que parou continua só como informação.</li><li><b>Quanto tempo:</b> enquanto a pessoa estiver no Portal ou for cliente. A regra de limpeza (24 meses fora da lista para quem não é cliente) ainda não está ligada.</li></ul></div>';
   }
 
   /* ---------- abrir ---------- */
@@ -733,7 +874,7 @@ html.saga-movimento-reduzido #aba-mapa .ms-corpo{transition:none}
     var r=await sb().rpc('siape_mapa_painel');
     if(r.error){pane.innerHTML='<div class="ms-aviso verm">Não deu para abrir o Mapa dos servidores: '+erro(r.error)+'</div>';return;}
     M.painel=r.data||{};M.montado=true;if(!M.ev)M.ev=estadoLista('ev');
-    var q=new URLSearchParams(location.search),pt=q.get('mapa');if(pt&&/^(geral|eventos|clientes|falecidos|abono|carga)$/.test(pt))M.parte=pt;
+    var q=new URLSearchParams(location.search),pt=q.get('mapa');if(pt&&/^(geral|eventos|clientes|falecidos|abono|aposir|carga)$/.test(pt))M.parte=pt;
     desenhar();
   }
   async function liberar(){
