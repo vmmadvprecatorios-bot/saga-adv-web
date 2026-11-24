@@ -287,20 +287,58 @@ async function lerZipLinhas(arquivo: string, porCab: (c: string[]) => void, porL
   } finally { try { await leitor.cancel(); } catch (_e) { /* ok */ } }
 }
 
-async function medirZip(arquivo: string) {
-  const t0 = Date.now();
-  let cols: string[] = []; let iMes = -1, iCpf = -1;
-  const porMes: Record<string, number> = {}; const ordem: string[] = []; const cpfs: Record<string, number> = {};
-  let linhas = 0, trocas = 0, ultimo = "";
-  await lerZipLinhas(arquivo, (c) => { cols = c; iMes = c.indexOf("ANO_MES"); iCpf = c.indexOf("CPF"); }, (c) => {
-    const m = c[iMes] || "?"; linhas++;
-    porMes[m] = (porMes[m] || 0) + 1;
-    if (m !== ultimo) { trocas++; if (!ordem.includes(m)) ordem.push(m); ultimo = m; }
-    if (linhas % 5000 === 1) { const f = (c[iCpf] || "").replace(/\d/g, "9"); cpfs[f] = (cpfs[f] || 0) + 1; }
-    return true;
+// Leitura LEVE: percorre os bytes descompactados contando linhas; só decodifica as linhas que interessam
+// (de..ate, contando a partir de 0, sem o cabeçalho). Para de baixar assim que passa de "ate".
+async function lerZipFaixa(arquivo: string, de: number, ate: number, porLinha: (c: string[], n: number) => void): Promise<{ cab: string[]; total: number | null; parou: boolean }> {
+  if (!/^folha_(ativo|inativo)-\d{4}\.zip$/.test(arquivo)) throw new Error("Arquivo inválido.");
+  const r = await fetch(`${BASE}/media/arquivo/${arquivo}`, { headers: { "User-Agent": "SAGA-ADV (leitura de dados publicos)" }, signal: AbortSignal.timeout(140_000) });
+  if (!r.ok || !r.body) throw new Error(`erro ${r.status} ao baixar ${arquivo}`);
+  const dec = new TextDecoder("latin1");
+  let cab: string[] = []; let n = -1; let parar = false; let fim = false; let primeiro = true;
+  let pedaco: Uint8Array = new Uint8Array(0); // começo de linha que ficou no fim do bloco anterior
+  const uz = new Unzip((f) => {
+    if (!primeiro) return; primeiro = false;
+    f.ondata = (_e, chunk, final) => {
+      if (parar) return;
+      let ini = 0;
+      for (let k = 0; k < chunk.length; k++) {
+        if (chunk[k] !== 10) continue;
+        n++;
+        if (n === 0 || (n - 1 >= de && n - 1 < ate)) {
+          let linha: Uint8Array;
+          if (pedaco.length) { linha = juntar(pedaco, chunk.subarray(ini, k)); pedaco = new Uint8Array(0); } else linha = chunk.subarray(ini, k);
+          const t = dec.decode(linha).replace(/\r$/, "");
+          if (n === 0) cab = t.split("|"); else if (t && !t.startsWith("ANO|")) porLinha(t.split("|"), n - 1);
+        } else if (pedaco.length) pedaco = new Uint8Array(0);
+        ini = k + 1;
+        if (n - 1 >= ate - 1 && n > 0) { parar = true; break; }
+      }
+      if (!parar && ini < chunk.length) pedaco = juntar(pedaco, chunk.subarray(ini));
+      if (final) fim = true;
+    };
+    f.start();
   });
-  return { ok: true, arquivo, colunas: cols, linhas, por_mes: porMes, ordem_dos_meses: ordem, trocas_de_mes: trocas,
-    formatos_cpf: cpfs, segundos: (Date.now() - t0) / 1000 };
+  uz.register(UnzipInflate);
+  const leitor = r.body.getReader();
+  try {
+    while (!parar && !fim) {
+      const { value, done } = await leitor.read();
+      if (done) { uz.push(new Uint8Array(0), true); fim = true; } else uz.push(value);
+    }
+  } finally { try { await leitor.cancel(); } catch (_e) { /* ok */ } }
+  return { cab, total: fim && !parar ? n : null, parou: parar };
+}
+function juntar(a: Uint8Array, b: Uint8Array) { const c = new Uint8Array(a.length + b.length); c.set(a); c.set(b, a.length); return c; }
+
+async function medirZip(arquivo: string, de = 0, ate = 0) {
+  const t0 = Date.now();
+  const porMes: Record<string, number> = {}; const cpfs: Record<string, number> = {}; let iMes = -1, iCpf = -1, lidas = 0;
+  const res = await lerZipFaixa(arquivo, de, ate || 1, (c) => {
+    if (iMes < 0) { iMes = c.length - 1; iCpf = 5; }
+    lidas++; porMes[c[iMes]] = (porMes[c[iMes]] || 0) + 1;
+    if (lidas % 2000 === 1) { const f = (c[iCpf] || "").replace(/\d/g, "9"); cpfs[f] = (cpfs[f] || 0) + 1; }
+  });
+  return { ok: true, arquivo, colunas: res.cab, total_linhas: res.total, parou_cedo: res.parou, faixa: [de, ate], lidas, por_mes: porMes, formatos_cpf: cpfs, segundos: (Date.now() - t0) / 1000 };
 }
 
 Deno.serve(async (req) => {
@@ -314,7 +352,7 @@ Deno.serve(async (req) => {
     if (acao === "rotina") return json(await rodada());
     if (acao === "rotina_maceio") return json(await rodadaMaceio());
     if (acao === "espiar_zip") return json(await espiarZip(String(corpo.arquivo || "")));
-    if (acao === "medir_zip") return json(await medirZip(String(corpo.arquivo || "")));
+    if (acao === "medir_zip") return json(await medirZip(String(corpo.arquivo || ""), Number(corpo.de) || 0, Number(corpo.ate) || 0));
     return json({ ok: false, mensagem: "Ação inválida." }, 400);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
