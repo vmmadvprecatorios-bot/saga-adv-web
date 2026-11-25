@@ -225,10 +225,10 @@
       '#hamburger.ativo span:nth-child(1){transform:translateY(6px) rotate(45deg) !important;}'+
       '#hamburger.ativo span:nth-child(2){opacity:0 !important;}'+
       '#hamburger.ativo span:nth-child(3){transform:translateY(-6px) rotate(-45deg) !important;}'+
-      '#topbarSaga .quick-search{width:min(520px,50vw) !important;height:36px !important;display:flex !important;align-items:center !important;gap:8px !important;padding:0 12px !important;border:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;background:rgba(255,255,255,.045) !important;border-radius:10px !important;}'+
+      '#topbarSaga .quick-search{width:min(480px,40vw) !important;max-width:100% !important;height:36px !important;display:flex !important;align-items:center !important;gap:8px !important;padding:0 12px !important;border:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;background:rgba(255,255,255,.045) !important;border-radius:10px !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search{border-color:rgba(19,38,66,.18) !important;background:rgba(255,255,255,.74) !important;}'+
       '#topbarSaga .quick-search svg{color:#8b93a8 !important;flex:0 0 auto !important;}'+
-      '#topbarSaga .quick-search input{border:0 !important;outline:0 !important;background:transparent !important;color:#e8eaf0 !important;font-size:11px !important;width:100% !important;}'+
+      '#topbarSaga .quick-search input{border:0 !important;outline:0 !important;box-shadow:none !important;padding:0 !important;background:transparent !important;color:#e8eaf0 !important;font-size:11px !important;width:100% !important;}'+
       '[data-theme="light"] #topbarSaga .quick-search input{color:#13233a !important;}'+
       '#topbarSaga .presence-btn{border:1px solid color-mix(in srgb,var(--gold) 12%,transparent) !important;background:rgba(255,255,255,.045) !important;border-radius:18px !important;padding:7px 12px !important;display:flex !important;align-items:center !important;gap:7px !important;color:#8b93a8 !important;font-size:11px !important;white-space:nowrap !important;}'+
       '[data-theme="light"] #topbarSaga .presence-btn{border-color:rgba(19,38,66,.18) !important;background:rgba(255,255,255,.74) !important;color:#4a586e !important;}'+
@@ -256,6 +256,8 @@
       '#topbarSaga .notif-grupo-qtd{min-width:22px !important;height:20px !important;padding:0 5px !important;border-radius:6px !important;color:var(--cor-grupo) !important;background:color-mix(in srgb,var(--cor-grupo) 14%,transparent) !important;font-size:10.5px !important;font-weight:600 !important;display:inline-flex !important;align-items:center !important;justify-content:center !important;flex:0 0 auto !important;}'+
       /* Janelas do topo (busca, sino, online): letra fina e sem excesso */
       '#topbarSaga #notifPop,#topbarSaga #presencePop,#topbarSaga #globalSearchPop{padding:6px !important;border-radius:12px !important;box-shadow:0 14px 34px rgba(0,0,0,.28) !important;max-height:min(440px,70vh) !important;overflow-y:auto !important;font-family:Montserrat,Arial,sans-serif !important;}'+
+      /* 25/11 (Dr. Victor): o cartão da busca tem o mesmo canto da caixa; número do processo nunca cortado */
+      '#topbarSaga #globalSearchPop{border-radius:10px !important;}'+
       '#topbarSaga #notifPop .pop-title,#topbarSaga #presencePop .pop-title,#topbarSaga #globalSearchPop .pop-title{padding:8px 8px 4px !important;font-size:9px !important;font-weight:500 !important;letter-spacing:1.2px !important;}'+
       '#topbarSaga .notification-item{display:flex !important;align-items:center !important;gap:10px !important;padding:8px !important;border-radius:8px !important;}'+
       '#topbarSaga .notification-item+.notification-item{border-top:1px solid color-mix(in srgb,var(--text) 7%,transparent) !important;border-top-left-radius:0 !important;border-top-right-radius:0 !important;}'+
@@ -536,16 +538,23 @@
       if(!computador||!r||!r.width){props.forEach(function(k){p.style.removeProperty(k);});return;}
       // Fechando: mantém a posição em que abriu, para o efeito de fechar acontecer no mesmo lugar (antes ela pulava para o canto e "piscava")
       if(!p.classList.contains('open'))return;
-      // Busca: abaixo do campo, na mesma largura. Sino e Online: abaixo do proprio botao, alinhados pela direita.
-      var w=id==='globalSearchPop'?r.width:id==='notifPop'?360:280;
-      var left=id==='globalSearchPop'?r.left:r.right-w;
-      left=Math.max(8,Math.min(left,window.innerWidth-w-8));
+      // Busca: abaixo do campo, na mesma largura (mínimo 400, centralizada na caixa). Sino e Online: abaixo do proprio botao, alinhados pela direita.
+      // 25/11 (Dr. Victor: "o cartão da busca nasce deslocado para a direita"): com a letra Grande/Maior (zoom na página) o navegador
+      // multiplica left/top/width pelo zoom; a escala é medida no próprio cartão (largura pedida × largura que saiu) e as contas
+      // são feitas em pixels da tela, depois divididas por ela. Sem zoom a escala é 1 e nada muda.
+      var wCss=id==='globalSearchPop'?null:id==='notifPop'?360:280;
       p.style.setProperty('position','fixed','important');
-      p.style.setProperty('top',(r.bottom+6)+'px','important');
-      p.style.setProperty('left',left+'px','important');
       p.style.setProperty('right','auto','important');
-      p.style.setProperty('width',w+'px','important');
       p.style.setProperty('transform','none','important');
+      p.style.setProperty('width','400px','important');
+      var escala=(p.getBoundingClientRect().width||400)/400;if(!(escala>0.2&&escala<5))escala=1;
+      var w=id==='globalSearchPop'?Math.max(r.width,400*escala):wCss*escala; // largura em pixels da tela
+      w=Math.min(w,window.innerWidth-16);
+      var left=id==='globalSearchPop'?r.left+(r.width-w)/2:r.right-w;
+      left=Math.max(8,Math.min(left,window.innerWidth-w-8));
+      p.style.setProperty('top',((r.bottom+6)/escala)+'px','important');
+      p.style.setProperty('left',(left/escala)+'px','important');
+      p.style.setProperty('width',(w/escala)+'px','important');
     });
   }
   if(window.MutationObserver){
