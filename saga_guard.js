@@ -1,3 +1,15 @@
+// ===== Marca da atualização (25/11/2026, Dr. Victor: REGRA SUPREMA "ao trocar de tela, a barra de cima e o menu
+// lateral ficam INTACTOS; só o conteúdo troca"). O sagaRecarregar (versão nova, "Atualizar agora", botão Atualizar)
+// abre a MESMA tela com ?saga_v=<marca> para o navegador tratar como TROCA de tela (com a passagem suave que segura
+// o menu e a barra) e não como F5 (que apaga a tela inteira). Aqui, antes de qualquer outro código ler o endereço,
+// a marca sai do endereço (o histórico e o history.state ficam como estavam).
+(function(){
+  try{
+    if(!/[?&]saga_v=/.test(location.search))return;
+    var q=location.search.replace(/([?&])saga_v=[^&]*(&|$)/,function(m,a,b){return b?a:'';}).replace(/[?&]$/,'');
+    history.replaceState(history.state,'',location.pathname+q+location.hash);
+  }catch(e){}
+})();
 // ===== Texto de fora na tela, sempre seguro (21/11/2026, laudo de segurança, item ALTO 1) =====
 // Todo texto que vem do banco, de arquivo ou de outra pessoa e entra em HTML passa por sagaEsc
 // (troca & < > " ' e a crase), também dentro de atributo (title, alt, value, data-*).
@@ -1696,16 +1708,27 @@
   // suave e o menu lateral e a barra de cima ficam parados) em vez do recarregar comum (F5), que apaga tudo e desenha
   // de novo. Primeiro baixa a tela nova do servidor (cache 'reload', como o F5), depois troca para ela no mesmo lugar
   // do histórico. Endereço com # (a troca viraria só um pulo na página) ou erro: recarrega do jeito comum.
+  // 25/11 (Dr. Victor, REGRA SUPREMA): o location.replace para o MESMO endereço o navegador trata como recarregar
+  // (F5): sem a passagem suave, a tela INTEIRA apaga (medido: um quadro todo vazio, sem menu nem barra). Agora o
+  // destino leva a marca ?saga_v= (tirada do endereço logo ao abrir, no topo deste arquivo): para o navegador é uma
+  // troca de tela comum, com o menu e a barra parados, e a tela vem nova do servidor (endereço que ele não guardou).
   window.sagaRecarregar=function(){
     var url=location.href.split('#')[0];
     if(location.hash||!window.fetch){location.reload();return;}
-    try{fetch(url,{cache:'reload',credentials:'same-origin'}).then(function(r){if(!r.ok)throw 0;location.replace(url);},function(){location.reload();});}
-    catch(e){location.reload();}
+    var destino=url.replace(/([?&])saga_v=[^&]*(&|$)/,function(m,a,b){return b?a:'';}).replace(/[?&]$/,'');
+    destino+=(destino.indexOf('?')>=0?'&':'?')+'saga_v='+Date.now().toString(36);
+    // a cópia guardada da tela (sem a marca) também é renovada, para as próximas aberturas
+    try{fetch(url,{cache:'reload',credentials:'same-origin'}).then(function(){},function(){});}catch(e){}
+    try{location.replace(destino);}catch(e){location.reload();}
   };
   try{
     if(window.top!==window)return;
     var sc=document.currentScript,m=sc&&/[?&]v=(\d{12})/.exec(sc.src||'');if(!m)return;
     var minha=m[1],mexeu=false,inicio=Date.now();
+    // passagem do navegador que trouxe esta tela (view transition): a troca para a versão nova espera ela terminar
+    // (trocar no meio dela deixava a tela inteira vazia por ~0,4 s, medido no teste da troca de tela)
+    var passagem=null;
+    try{window.addEventListener('pagereveal',function(ev){if(ev.viewTransition)passagem=ev.viewTransition.finished.catch(function(){});},{once:true});}catch(e){}
     ['pointerdown','keydown'].forEach(function(ev){window.addEventListener(ev,function(){mexeu=true;},{capture:true,once:true});});
     function avisar(){
       if(document.getElementById('sagaVersaoNova'))return;
@@ -1720,7 +1743,27 @@
     fetch('versao.txt?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
       var nova=(String(t).match(/\d{12}/)||[])[0];if(!nova||nova<=minha)return;
       var chave='saga-recarregou-'+nova,ja=null;try{ja=sessionStorage.getItem(chave);}catch(e){}
-      if(!ja&&!mexeu&&Date.now()-inicio<8000){try{sessionStorage.setItem(chave,'1');}catch(e){}window.sagaRecarregar();return;}
+      if(!ja&&!mexeu&&Date.now()-inicio<8000){
+        // 25/11: só troca DEPOIS de a tela ter aparecido (menu e barra desenhados): a passagem do navegador precisa
+        // da imagem da tela de agora para segurar o menu e a barra. Trocar antes (o versao.txt costuma chegar antes da
+        // 1ª imagem) deixava um quadro todo vazio: "pisca a tela inteira".
+        var feito=false;
+        var trocar=function(){if(feito)return;feito=true;
+          if(mexeu||Date.now()-inicio>=8000){if(document.body)avisar();return;}
+          try{sessionStorage.setItem(chave,'1');}catch(e){}
+          var ir=function(){requestAnimationFrame(function(){requestAnimationFrame(function(){window.sagaRecarregar();});});};
+          var vt=document.activeViewTransition;
+          var fimVt=vt&&vt.finished?vt.finished.catch(function(){}):passagem;
+          if(fimVt)Promise.race([fimVt,new Promise(function(ok){setTimeout(ok,1500);})]).then(ir);else ir();};
+        var apareceu=function(){return !document.documentElement.classList.contains('saga-entrando')&&!!document.body;};
+        if(apareceu())trocar();
+        else{
+          var ob=new MutationObserver(function(){if(apareceu()){ob.disconnect();trocar();}});
+          ob.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+          setTimeout(function(){ob.disconnect();if(!feito){feito=true;if(document.body)avisar();else document.addEventListener('DOMContentLoaded',avisar);}},8000);
+        }
+        return;
+      }
       if(document.body)avisar();else document.addEventListener('DOMContentLoaded',avisar);
     }).catch(function(){});
   }catch(e){}

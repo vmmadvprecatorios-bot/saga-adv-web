@@ -27,3 +27,7 @@ Thumbs.db
 # Editores
 .vscode/
 .idea/
+
+# Teste da troca de tela (quadros e a marca do último teste que passou, só deste computador)
+ferramentas/.quadros/
+ferramentas/.teste_troca_de_tela_ok
