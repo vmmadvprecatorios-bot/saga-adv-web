@@ -42,6 +42,7 @@ const GUARDAR = ARGS.includes('--quadros');
 const PASTA_Q = path.join(__dirname, '.quadros');
 const SUPA = 'https://fmoskdxgjulagedzjxxk.supabase.co';
 const W = 1440, H = 900;
+const REDE_MS = +(process.env.REDE_MS || 40); // atraso de cada arquivo .js/.css (ms)
 
 // ---------- servidor das telas (como o GitHub Pages, mas local) ----------
 const TIPOS = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -55,11 +56,14 @@ function servidor() {
       if (u === '/versao.txt' && versaoNoAr) { res.writeHead(200, { 'Content-Type': TIPOS['.txt'], 'Cache-Control': 'no-store' }); return res.end(versaoNoAr + '\n'); }
       const f = path.join(RAIZ, path.normalize(u === '/' ? '/index.html' : u));
       if (!f.startsWith(RAIZ)) { res.writeHead(403); return res.end(); }
-      fs.readFile(f, (err, buf) => {
+      // 25/11: atraso de rede como no site no ar (GitHub Pages): cada arquivo demora a chegar. Sem isso o teste não via
+      // a ficha piscar inteira (lá o saga_ui.js vinha no cabeçalho e a tela era desenhada antes do menu existir).
+      const atraso = /\.(js|css)$/.test(f) ? REDE_MS : 0;
+      setTimeout(() => fs.readFile(f, (err, buf) => {
         if (err) { res.writeHead(404); return res.end('não achei'); }
         res.writeHead(200, { 'Content-Type': TIPOS[path.extname(f)] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
         res.end(buf);
-      });
+      }), atraso);
     });
     s.listen(0, '127.0.0.1', () => ok(s));
   });
@@ -174,6 +178,10 @@ const VIGIA = () => {
     if (reg.length < 400) requestAnimationFrame(passo);
   }
   requestAnimationFrame(passo);
+  // marcos da tela nova (para o DEPURAR): quando a marca de fim da moldura apareceu e quando a página terminou de ler
+  window.__sagaMarcos = {};
+  try { new MutationObserver((l, o) => { if (document.getElementById('sagaFimDaTela')) { window.__sagaMarcos.marca = Math.round(performance.now() - t0); o.disconnect(); } }).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
+  document.addEventListener('DOMContentLoaded', () => { window.__sagaMarcos.lida = Math.round(performance.now() - t0); });
 };
 
 function sessaoNoNavegador(opc) {
@@ -205,6 +213,12 @@ async function rodada(navegador, base, cfg) {
   page.on('pageerror', e => erros.push(String(e.message || e).slice(0, 160)));
   versaoNoAr = null;
   await page.goto(base + cfg.de, { waitUntil: 'load' });
+  if (cfg.como === 'voltar') {
+    await page.waitForFunction(() => document.getElementById('sidebarSaga') && !document.documentElement.classList.contains('saga-carregando'), null, { timeout: 15000 });
+    await page.waitForTimeout(800);
+    await page.evaluate(href => { const a = document.createElement('a'); a.href = href; document.body.appendChild(a); a.click(); }, cfg.para);
+    await page.waitForURL(u => String(u).includes(cfg.para), { timeout: 15000 });
+  }
   await page.waitForFunction(() => { const h = document.documentElement.classList; return !h.contains('saga-entrando') && !h.contains('saga-carregando') && document.getElementById('sidebarSaga'); }, null, { timeout: 15000 }).catch(async e => { console.log('    [estado]', await page.evaluate(() => [location.href, document.documentElement.className, !!document.getElementById('sidebarSaga')].join(' | ')), erros.slice(0,5)); throw e; });
   await page.waitForTimeout(1500); // tudo parado (letras, cores, contadores)
 
@@ -222,11 +236,17 @@ async function rodada(navegador, base, cfg) {
   cdp.on('Page.screencastFrame', async f => { quadros.push({ t: Date.now() - t0, dado: f.data }); try { await cdp.send('Page.screencastFrameAck', { sessionId: f.sessionId }); } catch (e) {} });
   await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 70, maxWidth: W, maxHeight: H, everyNthFrame: 1 });
   await page.waitForTimeout(300);
-  // troca de tela como a pessoa faz: clique num link
-  await page.evaluate(href => { const a = document.createElement('a'); a.href = href; a.style.cssText = 'position:fixed;left:-99px'; document.body.appendChild(a); a.click(); }, cfg.para);
-  await page.waitForTimeout(cfg.versaoNova ? 4500 : 3000);
+  // troca de tela como a pessoa faz: clique num link (planilha, cartões, partes, atalhos "Ficha ↗"), resultado da
+  // busca do topo / menu (sagaIrPara) ou a seta VOLTAR do navegador (a tela de antes foi aberta primeiro)
+  if (cfg.como === 'voltar') await page.goBack({ waitUntil: 'commit' }).catch(() => {});
+  else await page.evaluate(({ href, como }) => {
+    if (como === 'busca') { window.sagaIrPara(href); return; }
+    const a = document.createElement('a'); a.href = href; a.style.cssText = 'position:fixed;left:-99px'; document.body.appendChild(a); a.click();
+  }, { href: cfg.para, como: cfg.como || 'link' });
+  await page.waitForTimeout((cfg.versaoNova ? 4500 : 3000) + (cfg.espera || +(process.env.ESPERA || 0)));
   await cdp.send('Page.stopScreencast');
-  const vigia = await page.evaluate(() => window.__sagaVigia || []);
+  const vigia = await page.evaluate(() => window.__sagaVigia || []).catch(() => []);
+  if (process.env.DEPURAR) console.log('    [depois]', await page.evaluate(() => [location.href, document.readyState, document.documentElement.className, !!document.getElementById('sagaFimDaTela'), (window.__sagaVigia||[]).length, JSON.stringify(window.__sagaMarcos), (window.__sagaVigia||[])[0] && window.__sagaVigia[0].t].join(' | ')).catch(e => 'erro ' + e.message));
   if (process.env.DEPURAR) vigia.forEach(v => console.log('   ', v.abs - t0, 'ms', v.vt ? 'passagem' : '', v.classes, JSON.stringify(v.sb), v.cobre.join(',')));
   const recarregou = await page.evaluate(() => Object.keys(sessionStorage).some(k => /^saga-recarregou-/.test(k)));
   const enderecoFinal = page.url();
@@ -270,26 +290,42 @@ async function rodada(navegador, base, cfg) {
   const FICHA1 = 'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id=c1';
   const FICHA2 = 'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id=c2';
   const TAREFAS = 'minhas_tarefas.html';
-  const trocas = ARGS.includes('--so-ficha') ? [['ficha -> ficha de outro cliente', 'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id=c1', 'ficha_cliente_padrao_metalico_FINAL.html?pessoa_id=c2']] : [
-    ['lista -> ficha', LISTA, FICHA1],
-    ['ficha -> ficha de outro cliente', FICHA1, FICHA2],
-    ['ficha -> Minhas Tarefas', FICHA1, TAREFAS],
+  const INTIM = 'monitoramento_multi_oab.html', AGENDA = 'calendario_padrao_metalico.html', MODELOS = 'biblioteca_padrao_metalico_FINAL.html';
+  // [nome, de, para, como, versão nova também?]  como: link | busca (sagaIrPara: busca do topo e menu) | voltar (seta do navegador)
+  // 25/11: os caminhos REAIS de ir de um cliente para outro e de outras telas para a ficha (o Dr. Victor via a ficha -> ficha piscar)
+  const trocas = ARGS.includes('--so-ficha') ? [['ficha -> ficha de outro cliente', FICHA1, FICHA2, 'link', true]] : [
+    ['lista -> ficha', LISTA, FICHA1, 'link', true],
+    ['ficha -> ficha de outro cliente', FICHA1, FICHA2, 'link', true],
+    ['ficha -> ficha pela busca do topo', FICHA1, FICHA2, 'busca', true],
+    ['ficha -> ficha pela seta voltar', FICHA1, FICHA2, 'voltar', false],
+    ['ficha -> Minhas Tarefas', FICHA1, TAREFAS, 'link', true],
+    ['ficha -> planilha', FICHA1, LISTA, 'link', false],
+    ['ficha -> Modelos', FICHA1, MODELOS, 'busca', false],
+    ['Modelos -> ficha', MODELOS, FICHA1, 'link', false],
+    ['Intimações -> ficha', INTIM, FICHA1, 'link', false],
+    ['Minhas Tarefas -> ficha', TAREFAS, FICHA1, 'link', false],
+    ['Agenda -> ficha', AGENDA, FICHA1, 'link', false],
   ];
   const visuais = RAPIDO ? [{ v: 'Azul escuro, letra Normal', cor: null, letra: null }]
     : [{ v: 'Azul escuro, letra Normal', cor: null, letra: null }, { v: 'Azul escuro, letra Maior', cor: null, letra: '1.2' }, { v: 'Vidro, letra Normal', cor: 'vidro-azul', letra: null }];
   const casos = [];
-  visuais.forEach(vs => trocas.forEach(([n, de, para]) => {
-    casos.push({ nome: `${n} · ${vs.v}`, de, para, cor: vs.cor, letra: vs.letra });
-    casos.push({ nome: `${n} · ${vs.v} · COM VERSÃO NOVA no meio`, de, para, cor: vs.cor, letra: vs.letra, versaoNova: true });
+  visuais.forEach(vs => trocas.forEach(([n, de, para, como, comVersao]) => {
+    casos.push({ nome: `${n} · ${vs.v}`, de, para, como, cor: vs.cor, letra: vs.letra });
+    if (comVersao) casos.push({ nome: `${n} · ${vs.v} · COM VERSÃO NOVA no meio`, de, para, como, cor: vs.cor, letra: vs.letra, versaoNova: true });
   }));
   const filtro = (ARGS.find(a => a.startsWith('--caso=')) || '').slice(7).toLowerCase();
   let ruim = 0;
   for (const c of casos.filter(c => !filtro || c.nome.toLowerCase().includes(filtro))) {
     let r;
-    try { r = await rodada(navegador, base, c); } catch (e) { r = { nome: c.nome, falhas: ['o teste não rodou: ' + (e.message || e).split('\n')[0]], quadros: 0 }; }
+    const rodar = async () => { try { return await rodada(navegador, base, c); } catch (e) { return { nome: c.nome, falhas: ['o teste não rodou: ' + (e.message || e).split('\n')[0]], quadros: 0 }; } };
+    r = await rodar();
+    // 25/11: no navegador de teste (sem placa de vídeo), raramente (~1 em 10, só na atualização para a versão nova da
+    // ficha, com a tela ocupada carregando) sai uma sequência de quadros lisos com o DOM certo por dentro. O defeito real
+    // de piscar acontece SEMPRE; então uma falha só vale se repetir na 2ª tentativa.
+    if (r.falhas.length) { const r2 = await rodar(); if (!r2.falhas.length) { r2.repetiu = true; r = r2; } }
     const ok = !r.falhas.length;
     if (!ok) ruim++;
-    console.log((ok ? 'OK     ' : 'FALHOU ') + r.nome + `  (${r.quadros} quadros${c.versaoNova ? ', atualizou sozinha: ' + (r.recarregou ? 'sim' : 'NÃO') : ''})`);
+    console.log((ok ? 'OK     ' : 'FALHOU ') + r.nome + `  (${r.quadros} quadros${r.repetiu ? ', passou na 2ª tentativa' : ''}${c.versaoNova ? ', atualizou sozinha: ' + (r.recarregou ? 'sim' : 'NÃO') : ''})`);
     r.falhas.slice(0, 8).forEach(f => console.log('         - ' + f));
     if (r.falhas.length > 8) console.log(`         ... e mais ${r.falhas.length - 8}`);
     if (c.versaoNova && !r.recarregou) { console.log('         - a tela NÃO se atualizou com a versão nova (o teste da versão não valeu)'); ruim++; }

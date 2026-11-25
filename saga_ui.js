@@ -2855,12 +2855,37 @@
     try{montarMoldura('');}catch(e){}
     try{travaCedo();}catch(e){}
   }
-  if(document.getElementById('sidebarSaga')||document.getElementById('topbarSaga'))montarMolduraCedo();
-  else document.addEventListener('DOMContentLoaded',montarMolduraCedo);
   // Marca o ponto em que o menu superior e o lateral ja estao montados. O saga_guard.js pede ao navegador
   // (link rel=expect) que so desenhe a primeira imagem da tela nova a partir daqui; ate la a tela anterior
   // continua parada, e na troca de tela so o conteudo muda (os menus nao piscam nem somem).
-  try{if(document.readyState==='loading'&&!document.getElementById('sagaFimDaTela'))document.write('<span id="sagaFimDaTela" hidden></span>');}catch(e){}
+  var _molduraCedoFeita=false;
+  function molduraCedoUmaVez(){if(_molduraCedoFeita)return;_molduraCedoFeita=true;montarMolduraCedo();}
+  function marcarFimDaTela(depoisDe){
+    if(document.getElementById('sagaFimDaTela'))return;
+    var m=document.createElement('span');m.id='sagaFimDaTela';m.hidden=true;
+    if(depoisDe&&depoisDe.parentNode)depoisDe.parentNode.insertBefore(m,depoisDe.nextSibling);else (document.body||document.documentElement).appendChild(m);
+  }
+  if(document.getElementById('sidebarSaga')||document.getElementById('topbarSaga')){
+    molduraCedoUmaVez();
+    try{if(document.readyState==='loading'&&!document.getElementById('sagaFimDaTela'))document.write('<span id="sagaFimDaTela" hidden></span>');}catch(e){}
+  }else{
+    // 25/11 (Dr. Victor: "da ficha de um cliente para a de outro pisca a TELA INTEIRA"): tela que carrega este arquivo
+    // no CABEÇALHO (ficha, Modelos). Antes a marca era escrita aqui mesmo, antes de o menu e a barra existirem: o
+    // navegador desenhava a tela nova SEM menu e SEM barra enquanto os outros arquivos chegavam (no site no ar, ~1 s).
+    // Agora a tela chama window.sagaMolduraAqui() numa linha logo DEPOIS do menu e da barra no HTML: ela monta os
+    // dois e escreve a marca ali (o navegador só aceita a marca escrita pelo leitor da página, não inserida por código).
+    document.addEventListener('DOMContentLoaded',function(){molduraCedoUmaVez();marcarFimDaTela(null);try{marcarConteudo();}catch(e){}});
+  }
+  global.sagaMolduraAqui=function(){
+    molduraCedoUmaVez();
+    // o conteúdo que o leitor ainda vai trazer também ganha a marca de conteúdo (some/aparece sozinho, sem o menu)
+    try{if(document.readyState==='loading'&&global.MutationObserver){
+      var vc=new MutationObserver(function(){try{marcarConteudo();}catch(e){}});
+      vc.observe(document.body,{childList:true,subtree:true});
+      document.addEventListener('DOMContentLoaded',function(){vc.disconnect();},{once:true});
+    }}catch(e){}
+    try{if(document.readyState==='loading'&&!document.getElementById('sagaFimDaTela'))document.write('<span id="sagaFimDaTela" hidden></span>');}catch(e){}
+  };
 
 
   // ===== Lembrete do ponto (10/11, pedido do Dr. Victor) =====
