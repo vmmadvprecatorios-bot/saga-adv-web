@@ -1290,7 +1290,7 @@ async function processarMesBanco(c,k,opc){
     var ant=bancoDe(c.id,mesAnterior(k));
     var carga=PC.jornadaDoDia(colabCalc(c),jornadasDe(c.id),ate).carga||0;
     var f=PC.fechamento(calc.dias,k+'-01',ate,ant&&ant.transportar!==null?ant.transportar:0,carga);
-    var g=await _sb.rpc('ponto_gravar_fechamento',{p_colab:c.id,p_mes:k,p_anterior:f.anterior,p_periodo:f.periodo,p_total:f.total,p_descontar:f.descontar,p_compensar:f.compensar,p_excedente:f.excedente});
+    var g=await _sb.rpc('ponto_gravar_fechamento',{p_colab:c.id,p_mes:k,p_anterior:Math.round(f.anterior),p_periodo:Math.round(f.periodo),p_total:Math.round(f.total),p_descontar:Math.round(f.descontar),p_compensar:Math.round(f.compensar),p_excedente:Math.round(f.excedente)});
     if(g.error||!g.data||!g.data.ok)throw new Error((g.data&&g.data.mensagem)||(g.error&&(window.sagaErroBanco?window.sagaErroBanco(g.error):g.error.message))||'Falha no fechamento');
     row={colaborador_id:c.id,mes:k,saldo_anterior:f.anterior,saldo_periodo:f.periodo,saldo_total:f.total,descontar:f.descontar,compensar:f.compensar,excedente:f.excedente,saldo_pos_fechamento:null,transportar:null,fechado_em:new Date().toISOString(),transportado_em:null,_ate:ate};
     state.banco[c.id+'|'+k]=row;mudou=true;
@@ -1299,7 +1299,7 @@ async function processarMesBanco(c,k,opc){
   if(row&&row.fechado_em&&!row.transportado_em&&hoje>fimKey&&fechKey<fimKey&&dataLocalDe(row.fechado_em)>=fechKey){
     calc=calc||await dadosMes(c,p.a,p.m);
     var t=PC.transporte(calc.dias,diaSeguinte(fechKey),fimKey,row.compensar);
-    var g2=await _sb.rpc('ponto_gravar_transporte',{p_colab:c.id,p_mes:k,p_pos:t.pos,p_transportar:t.transportar});
+    var g2=await _sb.rpc('ponto_gravar_transporte',{p_colab:c.id,p_mes:k,p_pos:Math.round(t.pos),p_transportar:Math.round(t.transportar)});
     if(g2.error||!g2.data||!g2.data.ok)throw new Error((g2.data&&g2.data.mensagem)||(g2.error&&(window.sagaErroBanco?window.sagaErroBanco(g2.error):g2.error.message))||'Falha no transporte');
     row.saldo_pos_fechamento=t.pos;row.transportar=t.transportar;row.transportado_em=new Date().toISOString();mudou=true;
   }
